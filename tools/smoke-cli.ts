@@ -1,4 +1,5 @@
-// Run a built CLI binary and prove three things about it.
+// Run a built CLI binary and prove four things about it: it reports its
+// version, converts a script, carries a JPEG 2000 picture, and lists devices.
 //
 // Cross-compiling is not cross-testing: a Windows binary built on Linux has
 // never executed. So each OS downloads its own artifact and runs this.
@@ -6,6 +7,9 @@
 // A Bun script rather than one bash fragment and one PowerShell fragment,
 // which would drift and neither of which could be tested. It imports
 // nothing outside Node built-ins, so a Windows runner needs no install.
+//
+// Both fixtures default to the checkout's tests/fixtures/, which is where
+// every workflow that calls this already is: none of them copies a fixture.
 //
 //   bun tools/smoke-cli.ts --binary ./screepub
 
@@ -58,7 +62,10 @@ export function checkVersion(result: RunResult, expected: string): void {
   }
 }
 
-export function checkConvertResult(result: RunResult, epubPath: string): void {
+/** Returns the parsed answer, so a caller with a further question about the
+ *  same conversion (checkJpxPicture) asks it of the object this already
+ *  vetted rather than parsing stdout a second time. */
+export function checkConvertResult(result: RunResult, epubPath: string): Record<string, unknown> {
   if (result.exitCode !== 0) {
     throw new Error(`smoke: convert exited ${result.exitCode}: ${result.stderr.trim().slice(0, 500)}`);
   }
@@ -69,6 +76,25 @@ export function checkConvertResult(result: RunResult, epubPath: string): void {
   }
   if (typeof json.pages !== 'number' || json.pages <= 0) {
     throw new Error(`smoke: convert reported ${String(json.pages)} pages; an empty book is not a conversion`);
+  }
+  return json;
+}
+
+/** tests/fixtures/jpx.pdf holds exactly one picture, stored as JPEG 2000,
+ *  and it clears every filter rule. pdf.js keeps its JPEG 2000 decoder
+ *  OUTSIDE its worker and loads it at runtime from a folder the engine
+ *  unpacks (src/parser/pdfjs-wasm.ts), so a compiled binary on another OS is
+ *  exactly where that folder can go missing. And when it does, the
+ *  conversion still SUCCEEDS: the picture is reported as a warning and the
+ *  count is simply absent. That is why a clean exit proves nothing here and
+ *  the count is the assertion. The warnings ride in the message, because on
+ *  a runner nobody can log into they are the whole diagnosis. */
+export function checkJpxPicture(json: Record<string, unknown>): void {
+  if (json.imageCount !== 1) {
+    throw new Error(
+      `smoke: the JPEG 2000 fixture carried ${String(json.imageCount ?? 'no')} picture(s), ` +
+        `expected 1, so the decoder did not load. Warnings: ${JSON.stringify(json.warnings ?? [])}`,
+    );
   }
 }
 
@@ -97,12 +123,14 @@ export function checkDevices(result: RunResult): void {
 export function smokeCli(
   binary: string,
   fixture: string,
+  jpxFixture: string,
   workDir: string,
   expectedVersion: string,
   run: Runner = realRun,
 ): void {
   if (!existsSync(binary)) throw new Error(`smoke: no binary at ${binary}`);
   if (!existsSync(fixture)) throw new Error(`smoke: no fixture at ${fixture}`);
+  if (!existsSync(jpxFixture)) throw new Error(`smoke: no JPEG 2000 fixture at ${jpxFixture}`);
 
   checkVersion(run([binary, '--version']), expectedVersion);
 
@@ -118,6 +146,13 @@ export function smokeCli(
     closeSync(fd);
   }
 
+  // --no-fountain still reports imageCount: it counts what the conversion
+  // carried out of the PDF, not what landed in a picture folder (cli.ts).
+  const jpxEpub = join(workDir, 'smoke-jpx.epub');
+  checkJpxPicture(
+    checkConvertResult(run([binary, jpxFixture, '-o', jpxEpub, '--no-fountain', '--json']), jpxEpub),
+  );
+
   checkDevices(run([binary, 'devices', '--json']));
 }
 
@@ -131,6 +166,7 @@ if (import.meta.main) {
       options: {
         binary: { type: 'string' },
         fixture: { type: 'string' },
+        'jpx-fixture': { type: 'string' },
       },
       strict: true,
       allowPositionals: false,
@@ -138,12 +174,15 @@ if (import.meta.main) {
     if (!values.binary) throw new Error('smoke: --binary <path> is required');
     const repo = join(import.meta.dir, '..');
     const fixture = values.fixture ?? join(repo, 'tests', 'fixtures', 'screenplay.pdf');
+    const jpxFixture = values['jpx-fixture'] ?? join(repo, 'tests', 'fixtures', 'jpx.pdf');
     const version = (
       JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')) as { version: string }
     ).version;
     work = mkdtempSync(join(tmpdir(), 'screepub-smoke-'));
-    smokeCli(values.binary, fixture, work, version);
-    console.log(`smoke: ${values.binary} converts, reports ${version}, and lists devices`);
+    smokeCli(values.binary, fixture, jpxFixture, work, version);
+    console.log(
+      `smoke: ${values.binary} converts, decodes JPEG 2000, reports ${version}, and lists devices`,
+    );
   } catch (err) {
     console.error((err as Error).message);
     process.exitCode = 1;

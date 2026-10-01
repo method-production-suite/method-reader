@@ -81,7 +81,7 @@ describe('a real cross-compile', () => {
       // The one place a compiled artifact is executed locally. On a Mac
       // there is no host target for this tool and this self-skips; CI's
       // Ubuntu jobs cover it there.
-      smokeCli(binaryPath(LINUX, OUT), 'tests/fixtures/screenplay.pdf', OUT, VERSION);
+      smokeCli(binaryPath(LINUX, OUT), 'tests/fixtures/screenplay.pdf', 'tests/fixtures/jpx.pdf', OUT, VERSION);
     },
     300000,
   );
@@ -112,7 +112,7 @@ describe('a real cross-compile', () => {
       const digest = (b: Uint8Array) => createHash('sha256').update(b).digest('hex');
       expect(digest(member!.data)).toBe(digest(readFileSync(bin)));
 
-      smokeCli(bin, 'tests/fixtures/screenplay.pdf', out, VERSION);
+      smokeCli(bin, 'tests/fixtures/screenplay.pdf', 'tests/fixtures/jpx.pdf', out, VERSION);
     },
     300000,
   );

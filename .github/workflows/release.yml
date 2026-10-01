@@ -448,6 +448,11 @@ jobs:
 
   # Cross-compiling is not cross-testing. Each artifact is run on the OS it
   # was built for, converting the committed fixture and listing devices.
+  # smoke-cli.ts also converts tests/fixtures/jpx.pdf and requires its one
+  # JPEG 2000 picture to come through, because pdf.js loads that decoder at
+  # runtime from a folder the engine unpacks (src/parser/pdfjs-wasm.ts), and
+  # a decoder that fails to load still exits 0. Both fixtures come from the
+  # checkout, so neither job copies one.
   #
   # linux-arm64 has no job here: no arm64 runner is assumed available to
   # this repo. It ships built and verified but never executed in CI, and the
@@ -472,7 +477,8 @@ jobs:
 
   # Nobody on this project has a Windows machine. This job is the first time
   # the Windows binary will ever have executed, which is why cross-upload
-  # waits for it.
+  # waits for it. It is also the only place the JPEG 2000 decoder is proven
+  # on Windows: ci.yml smokes the Linux binary on every push, not this one.
   smoke-windows-x64:
     needs: cross-cli
     runs-on: windows-latest
