@@ -27,6 +27,8 @@ import {
   writeImages,
   type ImagesRead,
 } from './library-images';
+// Which pictures a text's notes ask for, read the way the renderers read them.
+import { imageNoteFiles } from './fountain/notes';
 import { adoptSidecar, existingLibraryOutput, libraryOutput, libraryRoot } from './library';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions, keepsScriptSettings } from './settings/app-defaults';
@@ -1126,8 +1128,16 @@ async function main() {
       // Not read at all with the option off. Nothing would be shown, and a
       // folder's warnings are about pictures missing from the book, which
       // someone who turned pictures off is not missing.
+      //
+      // The read is told which pictures the notes ask for, because the
+      // window's Tune re-renders the library book this way on every knob
+      // move: a picture the folder no longer lists (deleted, or an iCloud
+      // copy evicted while offline) would otherwise leave that book a figure
+      // short with no warning at all. The book is still written; the warning
+      // is how the person learns what it lacks. The same loss is what makes
+      // export/artifact.ts keep the library book on the Kindle rebuild.
       let pictures: ImagesRead | undefined;
-      if (formatForConvert.includeImages) pictures = await readImages(input);
+      if (formatForConvert.includeImages) pictures = await readImages(input, imageNoteFiles(text));
       result = await convertFountain(text, { ...opts, images: pictures?.images });
       if (pictures) result.warnings.push(...imageFolderWarnings(pictures));
     } else {

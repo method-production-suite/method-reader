@@ -405,6 +405,25 @@ export function statusFor(phase, message) {
   return { line: STATUS[phase] ?? '', bad: false };
 }
 
+/** What a successful rebuild's answer says the book on disk lacks, as the
+ *  lines shown under the status: the engine's own sentences, each in the
+ *  parentheses the Convert page puts around a conversion's warnings. The
+ *  rebuild rewrites the library book, so a picture the script shows and its
+ *  folder no longer holds is a figure gone from that book, and the engine's
+ *  answer is the only place that says so. "Saved. The book on disk matches
+ *  what you see." stays true beside it, since the preview is rendered from
+ *  the same answer and lacks the same figure.
+ *
+ *  Anything that is not a sentence is dropped rather than shown as "()" or
+ *  "(undefined)", and no warnings at all is an empty list, which is what
+ *  clears the lines a previous rebuild left. */
+export function warningLines(answer) {
+  if (!Array.isArray(answer?.warnings)) return [];
+  return answer.warnings
+    .filter((w) => typeof w === 'string' && w.trim() !== '')
+    .map((w) => `(${w.trim()})`);
+}
+
 /** There is no notice for a surface with no script open: main.js disables
  *  this tab whenever none is, exactly as it does for Read, so a reader can
  *  never be standing here with nothing converted. The one state that IS
@@ -646,6 +665,14 @@ let timer = null;
 let hold = null;
 let pending = {};
 let statusLine = null;
+/** The last successful rebuild's warnings (warningLines), and the caption
+ *  under the status line that shows them. Kept apart from the status line
+ *  because that line moves on to "Changed" the moment a knob does, while the
+ *  book on disk still lacks what the last rebuild said it lacks: these are
+ *  replaced only by the next rebuild that succeeds. Module state rather than
+ *  the node's own text so a full redraw shows them again. */
+let warnings = [];
+let warningsBox = null;
 let controls = new Map();
 /** Which script these knobs belong to; scriptChanged() moves it on. A save
  *  waiting its turn on its book checks it before it starts (settle()), and
@@ -687,6 +714,7 @@ export function scriptChanged() {
   keepRadios = null;
   keepNoteEl = null;
   pending = {};
+  warnings = [];
   clearTimeout(timer);
   timer = null;
   // What was owed belonged to the other script and has just been dropped,
@@ -738,6 +766,7 @@ function draw(status) {
   clear(pane);
   controls = new Map();
   statusLine = null;
+  warningsBox = null;
   if (ctx.state.script === null) return;
 
   const mode = emptyPaneMode(settings, status);
@@ -766,6 +795,7 @@ function draw(status) {
   }
 
   statusLine = el('p', { class: 'caption tune-status', role: 'status' }, '');
+  warningsBox = el('div', { class: 'tune-warnings', role: 'status' });
   pane.append(
     el('h2', { class: 'slug' }, 'This script’s settings'),
     el('p', { class: 'prose' }, LEDE),
@@ -774,12 +804,14 @@ function draw(status) {
         (presetsBox = drawPresets()),
         ...GROUPS.map(drawGroup),
         statusLine,
+        warningsBox,
         el('div', { class: 'tune-foot' }, drawDefaultsFoot(), drawKeepChoice()),
       ),
       drawPreview(),
     ),
   );
   say(status ?? statusFor(isPending(pending) ? 'pending' : 'idle'));
+  showWarnings();
   renderPreview(ctx.state.script?.previewHtml);
 }
 
@@ -1297,6 +1329,8 @@ async function flush() {
     renderReader(script.previewHtml);
     renderPreview(script.previewHtml);
     say(statusFor(isPending(pending) ? 'pending' : 'saved'));
+    warnings = warningLines(answer);
+    showWarnings();
   } catch (err) {
     if (stale()) return;
     giveBack();
@@ -1308,4 +1342,14 @@ function say(status) {
   if (statusLine === null) return;
   text(statusLine, status.line);
   statusLine.classList.toggle('bad', status.bad);
+}
+
+/** Put `warnings` into the caption under the status line, in place, so the
+ *  live region a screen reader is already watching announces them. Hidden
+ *  when there are none, which takes the lines a previous rebuild left. */
+function showWarnings() {
+  if (warningsBox === null) return;
+  clear(warningsBox);
+  warningsBox.append(...warnings.map((line) => el('p', { class: 'caption' }, line)));
+  warningsBox.hidden = warnings.length === 0;
 }

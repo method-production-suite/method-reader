@@ -1508,7 +1508,13 @@ the Mac app should move those two; nothing in the engine needs to change.
   the pictures it just decoded. Every render from a `.fountain` (the CLI's
   Fountain input, which is how Tune re-renders) reads `<stem>.images/` beside
   it through `readImages`, only when the option is on, and adds the folder's
-  warnings; it never writes or prunes that folder. `convertFountain` keeps
+  warnings; it never writes or prunes that folder. Those warnings count each
+  picture the notes ask for and the book lacks once, under its most specific
+  cause: the folder is a link or a file, a listed file would not be read, a
+  listed file was past the cap, or the folder does not list it at all (a
+  deleted file, an evicted iCloud copy, no folder). The book is still
+  written, and Tune shows the answer's warnings under its status line until
+  a rebuild comes back without any. `convertFountain` keeps
   only allowlisted names whose bytes are a PNG. The no-Calibre Kindle rebuild
   (`freshKindleArtifact`'s MOBI rung) reads the folder the same way, and when
   a picture the notes ask for cannot be read it writes the `.mobi` and leaves

@@ -134,6 +134,23 @@ export interface ImagesRead {
    */
   overCap: number;
   /**
+   * Pictures the caller asked for that the folder does not list at all: a
+   * file deleted, an iCloud copy evicted (which renames it to
+   * `.p002-01.png.icloud`, a name no note can carry), or no folder there.
+   *
+   * The one loss the counts above cannot see, since each of them is about a
+   * name the folder DID list. Kept apart from them so that every picture the
+   * script shows and the book lacks is counted exactly once, under the most
+   * specific cause the read knows: a listed name it would not read is
+   * `refused`, a listed name past the cap is `overCap`, a folder that is a
+   * link or a file is `folderRefused` (and this is 0, since nothing in it was
+   * looked at), and only a name the listing never offered lands here.
+   *
+   * Zero unless the caller says what it is looking for (`readImages`'s
+   * `asked`): a folder alone cannot know which of its pictures are missing.
+   */
+  notFound: number;
+  /**
    * Present, and true, when `<stem>.images` exists but is not a folder of its
    * own: a symlink (wherever it points) or a file. Nothing in it is read.
    *
@@ -212,26 +229,37 @@ async function folderAt(dir: string): Promise<'missing' | 'folder' | 'refused'> 
  * Names are taken in order, so a folder holding more than the cap yields the
  * same 60 pictures on every machine.
  *
+ * `asked` is the set of pictures the text's notes name (`imageNoteFiles`),
+ * and it changes nothing about what is read: it only lets the read count the
+ * ones the folder does not list (`ImagesRead.notFound`). A folder that is
+ * missing, or that vanished between the check and the listing, lists none.
+ *
  * Asynchronous where the writer below is not, and for the FIFO's sake: should
  * the `lstat` gate ever regress, a FIFO blocks `readFile` at open, and an
  * asynchronous open blocks one worker thread where a synchronous one would
  * freeze the whole process, test runner included, past any timeout that could
  * report it.
  */
-export async function readImages(fountainPath: string): Promise<ImagesRead> {
+export async function readImages(
+  fountainPath: string,
+  asked: ReadonlySet<string> = new Set(),
+): Promise<ImagesRead> {
   const dir = imagesDirFor(fountainPath);
   const images = new Map<string, Uint8Array>();
   let refused = 0;
   let overCap = 0;
   const at = await folderAt(dir);
-  if (at === 'missing') return { images, refused, overCap };
-  if (at === 'refused') return { images, refused, overCap, folderRefused: true };
+  if (at === 'missing') return { images, refused, overCap, notFound: asked.size };
+  if (at === 'refused') return { images, refused, overCap, notFound: 0, folderRefused: true };
   let names: string[];
   try {
     names = (await readdir(dir)).filter(isSafeImageFile).sort();
   } catch {
-    return { images, refused, overCap }; // gone or unlistable since the check
+    // Gone or unlistable since the check.
+    return { images, refused, overCap, notFound: asked.size };
   }
+  const listed = new Set(names);
+  const notFound = [...asked].filter((name) => !listed.has(name)).length;
   for (const name of names) {
     // `continue` and a count, not `break`. A `break` would make the cap the
     // one loss in this whole feature that nothing anywhere reports: the PDF
@@ -262,7 +290,7 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
       refused++; // one picture lost, the rest unaffected
     }
   }
-  return { images, refused, overCap };
+  return { images, refused, overCap, notFound };
 }
 
 /**
@@ -287,6 +315,13 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
  *     change.
  *   - `folderRefused`: the folder was a link or a file, so nothing in it was
  *     read at all. Said because the other two cannot say it: both are zero.
+ *   - `notFound`: pictures the script shows that the folder does not hold
+ *     under any name it lists. The window's Tune re-renders the library book
+ *     from the `.fountain` on every knob move, so this is a figure gone from
+ *     the book on disk, and without the sentence that re-render reports no
+ *     warnings at all. Its own sentence because it is a different place to
+ *     look: a file that is not there, rather than one that is there and would
+ *     not be read.
  *
  * Takes the whole `ImagesRead` rather than its numbers, for `imageWarnings`'s
  * reason: `kept`, `refused` and `overCap` are three bare numbers with nothing
@@ -312,6 +347,13 @@ export function imageFolderWarnings(read: ImagesRead): string[] {
       read.refused === 1
         ? "1 picture could not be read out of this script's picture folder, so it was left out."
         : `${read.refused} pictures could not be read out of this script's picture folder, so they were left out.`,
+    );
+  }
+  if (read.notFound > 0) {
+    out.push(
+      read.notFound === 1
+        ? '1 picture this script shows could not be found in its picture folder, so the book was made without it.'
+        : `${read.notFound} pictures this script shows could not be found in its picture folder, so the book was made without them.`,
     );
   }
   return out;

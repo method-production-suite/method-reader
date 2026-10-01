@@ -634,10 +634,70 @@ describe('a .fountain input reads its picture folder', () => {
     expect(readdirSync(join(dir, 'x.images')).sort()).toEqual(kept);
     const bare = script();
     rmSync(join(bare, 'x.images'), { recursive: true });
-    const { res, body } = await convert(bare);
-    expect(res.warnings).toEqual([]);
+    const { body } = await convert(bare);
     expect(body).not.toContain('class="figure');
     expect(existsSync(join(bare, 'x.images'))).toBe(false);
+  }, 60000);
+
+  // The window's Tune re-renders the library book this way on every knob
+  // move, so a picture the script shows and the read cannot supply is a
+  // figure gone from the book on disk. The book is still written (Tune has
+  // to keep working), and the answer says what it lacks.
+  test('a picture the folder does not hold is a warning, and the book is still made', async () => {
+    // An iCloud copy evicted while offline is renamed `.p002-01.png.icloud`,
+    // so the folder no longer lists the picture under any name a note uses.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', '.p002-01.png.icloud'), '');
+    const { res, body, images } = await convert(dir);
+    expect(res.ok).toBe(true);
+    expect(res.warnings).toEqual([
+      '1 picture this script shows could not be found in its picture folder, so the book was made without it.',
+    ]);
+    expect(body).toContain(figure('p001-01.png', 40));
+    expect(images).toEqual(['OEBPS/images/p001-01.png']);
+  }, 60000);
+
+  test('a folder that is not there loses every picture, said once', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    const { res, body } = await convert(dir);
+    expect(res.warnings).toEqual([
+      '2 pictures this script shows could not be found in its picture folder, so the book was made without them.',
+    ]);
+    expect(body).not.toContain('class="figure');
+  }, 60000);
+
+  test('each lost picture is said once, under what happened to it', async () => {
+    // p001 is listed and refused (not a PNG), p002 is not listed at all. The
+    // refused one is also absent from what the read hands over, and counting
+    // it again as not found would report three pictures lost out of two.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    const { res } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "1 picture could not be read out of this script's picture folder, so it was left out.",
+      '1 picture this script shows could not be found in its picture folder, so the book was made without it.',
+    ]);
+  }, 60000);
+
+  test('a folder that is a link is said once, as a link', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    mkdirSync(join(dir, 'elsewhere'));
+    writeFileSync(join(dir, 'elsewhere', 'p001-01.png'), png(1));
+    symlinkSync(join(dir, 'elsewhere'), join(dir, 'x.images'));
+    const { res } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "This script's picture folder is not a folder of its own (it is a link or a file), so no pictures were read from it.",
+    ]);
+  }, 60000);
+
+  test('with includeImages off, a missing picture is not a loss and says nothing', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    const { res } = await convert(dir, '--options-json', '{"includeImages":false}');
+    expect(res.warnings).toEqual([]);
   }, 60000);
 });
 

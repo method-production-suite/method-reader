@@ -171,12 +171,12 @@ describe('isImageTemp', () => {
 describe('readImages', () => {
   test('a missing folder is empty and blameless', async () => {
     expect(await readImages(cached(null)))
-      .toEqual({ images: new Map(), refused: 0, overCap: 0 });
+      .toEqual({ images: new Map(), refused: 0, overCap: 0, notFound: 0 });
   });
 
   test('an empty folder likewise', async () => {
     expect(await readImages(cached({})))
-      .toEqual({ images: new Map(), refused: 0, overCap: 0 });
+      .toEqual({ images: new Map(), refused: 0, overCap: 0, notFound: 0 });
   });
 
   test('reads the pictures, keyed by name', async () => {
@@ -374,15 +374,68 @@ describe('readImages', () => {
   });
 });
 
+// The pictures a script's notes ask for (`imageNoteFiles`), handed to the
+// read so it can say which of them the folder does not hold at all. Every
+// lost picture is counted once, under the most specific cause the read knows:
+// a listed name it refused is `refused`, a listed name past the cap is
+// `overCap`, a folder that is a link or a file is `folderRefused`, and only a
+// name the folder does not list is `notFound`.
+describe('readImages, told which pictures the script asks for', () => {
+  const asked = (...names: string[]) => new Set(names);
+
+  test('a picture the folder does not list is not found', async () => {
+    // The iCloud case: an evicted copy is renamed `.p002-01.png.icloud`,
+    // which no note could name, so the listing never offers it as a picture.
+    const fountain = cached({ 'p001-01.png': png(), '.p002-01.png.icloud': png() });
+    const read = await readImages(fountain, asked('p001-01.png', 'p002-01.png'));
+    expect([...read.images.keys()]).toEqual(['p001-01.png']);
+    expect([read.refused, read.overCap, read.notFound]).toEqual([0, 0, 1]);
+  });
+
+  test('a folder that is not there holds none of them', async () => {
+    const read = await readImages(cached(null), asked('p001-01.png', 'p002-01.png'));
+    expect(read.notFound).toBe(2);
+  });
+
+  test('a listed picture the read refused is refused, and not also not found', async () => {
+    const fountain = cached({ 'p001-01.png': new Uint8Array(0) });
+    const read = await readImages(fountain, asked('p001-01.png', 'p002-01.png'));
+    expect([read.refused, read.notFound]).toEqual([1, 1]);
+  });
+
+  test('a listed picture past the cap is over the cap, and not also not found', async () => {
+    const many: Record<string, Uint8Array> = {};
+    for (let i = 1; i <= MAX_IMAGES + 1; i++) many[`p${String(i).padStart(3, '0')}-01.png`] = png();
+    const last = `p0${MAX_IMAGES + 1}-01.png`;
+    const read = await readImages(cached(many), asked('p001-01.png', last));
+    expect(read.images.has(last)).toBe(false);
+    expect([read.overCap, read.notFound]).toEqual([1, 0]);
+  });
+
+  test('a folder that is a link says so once, and counts nothing as not found', async () => {
+    const { fountain } = linkedFolder();
+    const read = await readImages(fountain, asked('p009-01.png', 'p010-01.png'));
+    expect(read.folderRefused).toBe(true);
+    expect(read.notFound).toBe(0);
+    expect(imageFolderWarnings(read)).toHaveLength(1);
+  });
+
+  test('asked for nothing, nothing is missing', async () => {
+    expect((await readImages(cached(null))).notFound).toBe(0);
+    expect((await readImages(cached({ 'p001-01.png': png() }))).notFound).toBe(0);
+  });
+});
+
 describe('imageFolderWarnings', () => {
   /** An `ImagesRead` with the counts under test. `kept` is a real map, since
    * the over-cap sentence adds it to `overCap` to say what the folder held. */
-  const read = (o: { kept?: number; refused?: number; overCap?: number }) => ({
+  const read = (o: { kept?: number; refused?: number; overCap?: number; notFound?: number }) => ({
     images: new Map(
       Array.from({ length: o.kept ?? 0 }, (_, i) => [`p${i}.png`, png()] as const),
     ),
     refused: o.refused ?? 0,
     overCap: o.overCap ?? 0,
+    notFound: o.notFound ?? 0,
   });
 
   test('silence when the folder gave up everything it had', () => {
@@ -420,6 +473,25 @@ describe('imageFolderWarnings', () => {
     expect(out).toHaveLength(2);
     expect(out.some((w) => w.includes('could not be read'))).toBe(true);
     expect(out.some((w) => w.includes(`${MAX_IMAGES + 3} pictures`))).toBe(true);
+  });
+
+  test('pictures the script shows and the folder does not hold are said, with the count', () => {
+    expect(imageFolderWarnings(read({ notFound: 1 }))).toEqual([
+      '1 picture this script shows could not be found in its picture folder, so the book was made without it.',
+    ]);
+    expect(imageFolderWarnings(read({ notFound: 2 }))).toEqual([
+      '2 pictures this script shows could not be found in its picture folder, so the book was made without them.',
+    ]);
+  });
+
+  test('a picture not found and a picture not read are separate sentences', () => {
+    // One is a file that is not there, the other a file that is there and
+    // is not a picture we can carry: different things to go and look at.
+    const out = imageFolderWarnings(read({ refused: 1, notFound: 1 }));
+    expect(out).toHaveLength(2);
+    expect(out.some((w) => w.startsWith('1 picture could not be read'))).toBe(true);
+    expect(out.some((w) => w.startsWith('1 picture this script shows could not be found'))).toBe(true);
+    for (const w of out) expect(w).not.toContain('—');
   });
 });
 

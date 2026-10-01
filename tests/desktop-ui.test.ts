@@ -4046,6 +4046,22 @@ describe('the Tune surface', () => {
     expect(tune.statusFor('elsewhere').line).toBe('');
   });
 
+  test('a rebuild’s warnings are shown as the Convert page shows a conversion’s, and nothing else is', () => {
+    // The engine's sentence for a picture the rebuilt book lacks, in the
+    // parentheses the Convert page puts around a conversion's warnings.
+    const lost = '1 picture this script shows could not be found in its picture folder, so the book was made without it.';
+    expect(tune.warningLines({ ok: true, warnings: [lost] })).toEqual([`(${lost})`]);
+    expect(tune.warningLines({ ok: true, warnings: ['  One.  ', 'Two.'] })).toEqual(['(One.)', '(Two.)']);
+    // No warnings, or none the contract promises, is nothing to show: the
+    // caption is cleared, not filled with "undefined" or an empty pair.
+    expect(tune.warningLines({ ok: true, warnings: [] })).toEqual([]);
+    expect(tune.warningLines({ ok: true })).toEqual([]);
+    expect(tune.warningLines({ ok: true, warnings: 'one' })).toEqual([]);
+    expect(tune.warningLines({ ok: true, warnings: [null, 3, '   ', { line: 'x' }] })).toEqual([]);
+    expect(tune.warningLines(null)).toEqual([]);
+    expect(tune.warningLines(undefined)).toEqual([]);
+  });
+
   test('a read-out carries its unit, and never reads NaN', () => {
     const margin = tune.knobFor('dialogueSideMarginPct');
     expect(tune.displayValue(margin, 20)).toBe('20%');
@@ -4284,6 +4300,48 @@ describe('the Settings page, mounted', () => {
     // Its own storage is the engine's sidecar, not the window's.
     expect(storage.dump()).toEqual({});
     expect(pane.textContent).not.toContain('null');
+  });
+
+  test('a rebuild that left pictures out says so under the status, until one that did not', async () => {
+    // Tune rewrites the library book on every knob move. A picture the
+    // script shows and its folder no longer holds is a figure gone from that
+    // book, and the engine's answer says so; the reader has to see it.
+    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
+    const { pane, knob, tauri, status } = await mountSettings();
+    const caption = () => pane.querySelector('.tune-warnings')!;
+    const lost = '1 picture this script shows could not be found in its picture folder, so the book was made without it.';
+    /** The save and the rebuild for a knob already moved to `value`. */
+    const finish = async (value: string, answer: Record<string, unknown>) => {
+      await SETTLE();
+      tauri.callsTo('settings').filter((c) => c.args.includes('--set')).at(-1)!
+        .answer({ ok: true, settings: { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: Number(value) } });
+      await settle();
+      tauri.pending().find((c) => c.args[1] === '--json' && c.args.includes('-o'))!
+        .answer({ ok: true, previewHtml: '', ...answer });
+      await settle();
+    };
+    const rebuild = async (value: string, answer: Record<string, unknown>) => {
+      knob('dialogueSideMarginPct').input(value);
+      await finish(value, answer);
+    };
+    expect(caption().hidden).toBe(true);
+    expect(caption().getAttribute('role')).toBe('status');
+
+    await rebuild('12', { warnings: [lost] });
+    expect(status()!.textContent).toContain('Saved');
+    expect(caption().hidden).toBe(false);
+    expect(caption().textContent).toBe(`(${lost})`);
+
+    // Still there while the next change is owed: the book on disk still
+    // lacks the picture until a rebuild says otherwise.
+    knob('dialogueSideMarginPct').input('13');
+    expect(caption().textContent).toBe(`(${lost})`);
+    await finish('13', { warnings: [] });
+    expect(caption().hidden).toBe(true);
+    expect(caption().textContent).toBe('');
+
+    await rebuild('14', { warnings: [lost] });
+    expect(caption().textContent).toBe(`(${lost})`);
   });
 
   test('a save that fails is still owed: the next save carries it again, and nothing claims "Saved"', async () => {
