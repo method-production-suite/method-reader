@@ -29,7 +29,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { REPO_DIR } from './build-cli';
-import { UPDATER_KINDS, type PlatformKey } from './build-app-bundle';
+import { MAC_ARCH, UPDATER_KINDS, type PlatformKey } from './build-app-bundle';
 import { MANIFEST_NAME, RELEASE_REPO, manifestEndpoint } from './build-update-manifest';
 import { parsePublicKeyBox, parseSignatureBox } from './update-signature';
 
@@ -56,11 +56,18 @@ export type Verdict =
   | { ok: true; version: string; platforms: string[] }
   | { ok: false; problems: string[] };
 
-/** Every platform a universal macOS build must answer for. Derived from
- *  the same table that names the artifacts, so a new row there widens
- *  this automatically. */
+/** Every platform the macOS build must answer for: darwin-aarch64 alone
+ *  since the release after the identifier release (Apple silicon only).
+ *  Derived from the same table that names the artifacts, so a new row
+ *  there widens this automatically.
+ *
+ *  REQUIRED, not exhaustive: a manifest that also carries darwin-x86_64
+ *  for a real asset with a good signature still passes. This runs weekly
+ *  against whatever release is newest, and until the Apple-silicon-only
+ *  release ships that is the identifier release, whose universal archive
+ *  answers for both keys. */
 export function requiredPlatforms(): PlatformKey[] {
-  return UPDATER_KINDS.filter((k) => k.os === 'macos').flatMap((k) => k.platformKeys('universal'));
+  return UPDATER_KINDS.filter((k) => k.os === 'macos').flatMap((k) => k.platformKeys(MAC_ARCH));
 }
 
 interface ManifestShape {
@@ -104,7 +111,7 @@ export function judgeManifest(
   }
   for (const required of requiredPlatforms()) {
     if (!keys.includes(required)) {
-      problems.push(`${MANIFEST_NAME} has no entry for ${required}, which the universal macOS build must serve`);
+      problems.push(`${MANIFEST_NAME} has no entry for ${required}, which the macOS build must serve`);
     }
   }
 

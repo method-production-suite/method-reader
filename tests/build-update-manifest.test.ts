@@ -84,16 +84,31 @@ describe('the addresses', () => {
 });
 
 describe('collecting what arrived', () => {
-  test('the signed archive becomes one artifact with both darwin platforms and its signature verbatim', () => {
+  test('the signed archive becomes one artifact for Apple silicon, with its signature verbatim', () => {
+    // darwin-aarch64 alone since the release after the identifier release:
+    // the Mac build is Apple silicon only, so the archive no longer answers
+    // for darwin-x86_64 (plan 2026-10-01-f2-handover-amendment.md).
     const dir = arrivals('ok');
     const found = collectSignedArtifacts(dir);
     expect(found).toEqual([
       {
         name: TAR,
         signature: fakeSignatureBox('Screepub.app.tar.gz'),
-        platforms: ['darwin-x86_64', 'darwin-aarch64'],
+        platforms: ['darwin-aarch64'],
       },
     ]);
+  });
+
+  test('an Intel archive arriving is an error, not a darwin-x86_64 row', () => {
+    // The universal era's per-arch names map to nothing now, so a stray
+    // x64 archive stops the manifest instead of being offered to Intel Macs.
+    const dir = arrivals('intel', {
+      extra: {
+        'Screepub-macOS-x64.app.tar.gz': 'gzip bytes',
+        'Screepub-macOS-x64.app.tar.gz.sig': fakeSignatureBox('Screepub-macOS-x64.app.tar.gz'),
+      },
+    });
+    expect(() => collectSignedArtifacts(dir)).toThrow(/Screepub-macOS-x64\.app\.tar\.gz/);
   });
 
   test('installers and checksums are not artifacts, because nothing signed them', () => {
@@ -132,7 +147,7 @@ describe('rendering the manifest', () => {
   const one: SignedArtifact = {
     name: TAR,
     signature: fakeSignatureBox('Screepub.app.tar.gz'),
-    platforms: ['darwin-x86_64', 'darwin-aarch64'],
+    platforms: ['darwin-aarch64'],
   };
   const when = new Date('2026-09-21T18:00:00Z');
 
@@ -140,13 +155,11 @@ describe('rendering the manifest', () => {
     const m = renderManifest('0.6.1', [one], { now: when });
     expect(m.version).toBe('0.6.1');
     expect(m.pub_date).toBe('2026-09-21T18:00:00.000Z');
-    expect(Object.keys(m.platforms).sort()).toEqual(['darwin-aarch64', 'darwin-x86_64']);
-    for (const key of ['darwin-x86_64', 'darwin-aarch64']) {
-      expect(m.platforms[key]).toEqual({
-        url: `https://github.com/ssandweiss/screepub/releases/download/v0.6.1/${TAR}`,
-        signature: one.signature,
-      });
-    }
+    expect(Object.keys(m.platforms)).toEqual(['darwin-aarch64']);
+    expect(m.platforms['darwin-aarch64']).toEqual({
+      url: `https://github.com/ssandweiss/screepub/releases/download/v0.6.1/${TAR}`,
+      signature: one.signature,
+    });
   });
 
   test('the notes point a person at the release page for that version', () => {
@@ -173,20 +186,16 @@ describe('rendering the manifest', () => {
     expect(() => renderManifest('0.6.1', [], { now: when })).toThrow(/no signed/i);
   });
 
-  test('a per-arch pair yields one key each, and a repeated key is an error', () => {
-    const arm: SignedArtifact = { name: 'Screepub-macOS-arm64.app.tar.gz', signature: 'a', platforms: ['darwin-aarch64'] };
-    const x64: SignedArtifact = { name: 'Screepub-macOS-x64.app.tar.gz', signature: 'b', platforms: ['darwin-x86_64'] };
-    const m = renderManifest('0.6.1', [arm, x64], { now: when });
-    expect(m.platforms['darwin-aarch64']!.url).toContain('arm64');
-    expect(m.platforms['darwin-x86_64']!.url).toContain('x64');
-    // Universal AND arm64 both claiming darwin-aarch64: whichever won
-    // would be silent, so neither may.
-    expect(() => renderManifest('0.6.1', [one, arm], { now: when })).toThrow(/darwin-aarch64/);
+  test('a repeated key is an error', () => {
+    // Two archives both claiming darwin-aarch64: whichever won would be
+    // silent, so neither may.
+    const other: SignedArtifact = { name: 'Screepub-other.app.tar.gz', signature: 'a', platforms: ['darwin-aarch64'] };
+    expect(() => renderManifest('0.6.1', [one, other], { now: when })).toThrow(/darwin-aarch64/);
   });
 
   test('the repository can be overridden, for a fork or a dry run', () => {
     const m = renderManifest('0.6.1', [one], { now: when, repo: 'someone/fork' });
-    expect(m.platforms['darwin-x86_64']!.url).toContain('someone/fork');
+    expect(m.platforms['darwin-aarch64']!.url).toContain('someone/fork');
     expect(m.notes).toContain('someone/fork');
   });
 });
@@ -227,7 +236,11 @@ describe('end to end, through the real tool', () => {
     expect(r.exitCode).toBe(0);
     const m = JSON.parse(readFileSync(out, 'utf8'));
     expect(m.version).toBe('0.6.1');
-    expect(Object.keys(m.platforms).sort()).toEqual(['darwin-aarch64', 'darwin-x86_64']);
+    // Apple silicon only. An Intel Mac running an earlier universal build
+    // looks for darwin-x86_64, finds nothing, and its check() rejects; the
+    // window says why in plain words (desktop/ui/update.js).
+    expect(Object.keys(m.platforms)).toEqual(['darwin-aarch64']);
+    expect(m.platforms['darwin-x86_64']).toBeUndefined();
     expect(m.platforms['darwin-aarch64'].signature).toBe(
       fakeSignatureBox('Screepub.app.tar.gz'),
     );

@@ -22,7 +22,9 @@ describe('the triple map', () => {
       'bun-linux-x64': 'x86_64-unknown-linux-gnu',
       'bun-linux-arm64': 'aarch64-unknown-linux-gnu',
       'bun-windows-x64': 'x86_64-pc-windows-msvc',
-      'bun-darwin-x64': 'x86_64-apple-darwin',
+      // Apple silicon only: Intel Macs are not supported after the
+      // identifier release (plan 2026-10-01-f2-handover-amendment.md), so
+      // there is no x86_64-apple-darwin engine to name.
       'bun-darwin-arm64': 'aarch64-apple-darwin',
       // Bun genuinely ships musl-linked Linux targets (verified on this
       // machine with `file`, not assumed); triples checked against
@@ -48,7 +50,6 @@ describe('the triple map', () => {
       'bun-linux-x64': 'elf-x86-64',
       'bun-linux-arm64': 'elf-aarch64',
       'bun-windows-x64': 'pe-x86-64',
-      'bun-darwin-x64': 'macho-x86-64',
       'bun-darwin-arm64': 'macho-arm64',
       // Same ELF machine type as their glibc siblings: libc doesn't change
       // the CPU architecture the header records.
@@ -95,7 +96,6 @@ describe('sidecarFileName', () => {
       'screepub-engine-x86_64-unknown-linux-gnu',
       'screepub-engine-aarch64-unknown-linux-gnu',
       'screepub-engine-x86_64-pc-windows-msvc.exe',
-      'screepub-engine-x86_64-apple-darwin',
       'screepub-engine-aarch64-apple-darwin',
       'screepub-engine-x86_64-unknown-linux-musl',
       'screepub-engine-aarch64-unknown-linux-musl',
@@ -123,8 +123,12 @@ describe('hostBunTarget', () => {
     expect(hostBunTarget('linux', 'x64')).toBe('bun-linux-x64');
     expect(hostBunTarget('linux', 'arm64')).toBe('bun-linux-arm64');
     expect(hostBunTarget('win32', 'x64')).toBe('bun-windows-x64');
-    expect(hostBunTarget('darwin', 'x64')).toBe('bun-darwin-x64');
     expect(hostBunTarget('darwin', 'arm64')).toBe('bun-darwin-arm64');
+  });
+
+  test('an Intel Mac is not a host, and the error says why', () => {
+    expect(() => hostBunTarget('darwin', 'x64')).toThrow(/no sidecar target/i);
+    expect(() => hostBunTarget('darwin', 'x64')).toThrow(/Apple silicon/);
   });
 
   test('an unsupported host throws rather than guessing', () => {
@@ -230,9 +234,9 @@ describe('the two target tables agree', () => {
   test('every release target in build-cli.ts has a sidecar triple', () => {
     // The drift this catches: someone adds a target to the release matrix
     // and the desktop app silently stops shipping an engine for it. The
-    // reverse is allowed — darwin is a sidecar target and not a release
-    // target, deliberately, because signed macOS artifacts come from
-    // app/release.sh.
+    // reverse is allowed — darwin is a sidecar target and not a CROSS
+    // release target, deliberately, because signed macOS artifacts are
+    // built on a Mac by build-cli.ts --mac.
     const sidecarBunTargets = new Set<string>(SIDECAR_TARGETS.map((t) => t.bunTarget));
     for (const t of TARGETS) {
       expect(`${t.id} has a sidecar triple: ${sidecarBunTargets.has(t.bunTarget)}`).toBe(

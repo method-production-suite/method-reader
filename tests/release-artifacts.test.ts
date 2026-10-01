@@ -355,69 +355,76 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(String(upload!.with?.['if-no-files-found'])).toBe('error');
   });
 
-  test('the macOS leg builds ONE universal DMG, never a per-arch pair', () => {
-    // INVERTED 2026-09-20, deliberately: this test used to assert the
-    // opposite, and the reason it did has been removed. A universal bundle
-    // needs a third, lipo'd sidecar, and `build-sidecar.ts --universal` now
-    // makes one -- compiling both darwin slices and fusing them under the
-    // name externalBin resolves for universal-apple-darwin.
-    //
-    // It matters far beyond packaging tidiness. The frozen Swift updater
-    // takes the FIRST .dmg asset on a release and has no architecture
-    // logic, so a per-arch pair is what made an automatic migration off
-    // the Swift app impossible: roughly half of all users would have been
-    // handed an app that cannot open. One artifact makes "the first .dmg"
-    // unambiguous. See docs/adr/2026-09-20-swift-app-migrates-itself.md.
+  test('the macOS leg builds ONE Apple silicon DMG, and nothing Intel or universal', () => {
+    // One Mac row since 2026-09-20, and one ARCH since the release after
+    // the identifier release (owner, 2026-10-01: "Ditch old Intel
+    // completely"; plan 2026-10-01-f2-handover-amendment.md). The
+    // identifier release was the last universal image, because the frozen
+    // Swift updater installs the first .dmg on a release with no
+    // architecture check and had to be carried across on Intel too.
     const rows = rel.jobs['app-bundles']!.strategy?.matrix?.include ?? [];
     const macs = rows.filter((r) => r.os === 'macos-15');
     expect(macs.length).toBe(1);
-    expect(macs[0]!.arch).toBe('universal');
-    // The per-arch SIDECAR names must be gone from the file, not merely
-    // unused by this row: a leftover row or step naming one is how a
-    // second .dmg finds its way back onto the release page. The two
-    // darwin TRIPLES do still appear, in exactly one place -- `rustup
-    // target add`, which installs both because the lipo needs two real
-    // cargo builds. Anywhere else is a per-arch build coming back.
-    const yml = read(join(WORKFLOWS, 'release.yml'));
-    expect(yml).not.toContain('bun-darwin-arm64');
-    expect(yml).not.toContain('bun-darwin-x64');
-    const triples = (yml.match(/(?:aarch64|x86_64)-apple-darwin/g) ?? []).length;
-    expect(triples).toBe(2);
-    expect(yml).toContain('rustup target add x86_64-apple-darwin aarch64-apple-darwin');
+    expect(macs[0]!.arch).toBe('arm64');
+    // Read off the text that EXECUTES, comments out: a comment recording
+    // that the lipo is gone is not the lipo coming back. Anything below in
+    // a command line is an Intel or universal Mac build returning.
+    const commands = read(join(WORKFLOWS, 'release.yml'))
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('#'))
+      .join('\n');
+    for (const gone of ['bun-darwin-x64', 'x86_64-apple-darwin', 'universal-apple-darwin', '--universal', 'lipo']) {
+      expect(`${gone}: ${commands.includes(gone)}`).toBe(`${gone}: false`);
+    }
+    expect(commands).not.toMatch(/arch: universal|--arch universal|ARCH" = universal/);
+    // The one darwin engine target, once: the Mac leg's sidecar build.
+    expect(commands.split('bun-darwin-arm64').length - 1).toBe(1);
   });
 
   test('the cargo triple is named in the tool, not restated in the YAML', () => {
-    // universal-apple-darwin is derived from `--arch universal` inside
-    // tools/build-app-bundle.ts, which is also where the rule lives that a
-    // universal arch must not carry a per-arch target. Restating the
-    // triple here would be a second place for it to drift, and the drift
-    // would be silent: a thin bundle wearing a universal name.
-    // Scoped to the text that EXECUTES: comments explaining where the
-    // triple went are the opposite of restating it, so they come out
-    // first. What must not survive is the triple reaching a command line.
+    // aarch64-apple-darwin is derived for every Mac build inside
+    // tools/build-app-bundle.ts, which is also where an Intel or universal
+    // Mac triple is refused. Restating it here would be a second place for
+    // it to drift. Scoped to the text that EXECUTES: comments explaining
+    // where the triple went are the opposite of restating it.
     const commands = runText(rel.jobs['app-bundles']!)
       .split('\n')
       .filter((l) => !l.trim().startsWith('#'))
       .join('\n');
-    expect(commands).not.toContain('universal-apple-darwin');
-    expect(commands).not.toContain('--target');
-    expect(commands).toContain('--arch universal');
+    expect(commands).not.toContain('apple-darwin');
+    expect(commands).toContain('--arch "$ARCH" --updater');
+    // build-app-bundle.ts is never handed a --target; the sidecar step's
+    // --target is build-sidecar's bun target, not a cargo triple.
+    const build = (rel.jobs['app-bundles']!.steps ?? []).find((s) => /build-app-bundle\.ts/.test(s.run ?? ''))!;
+    expect(build.run!.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n')).not.toContain('--target');
   });
 
-  test('the universal leg installs BOTH darwin rust targets before it builds', () => {
-    // The lipo needs two real cargo builds. The runner's own architecture
-    // is installed already and the other is not -- and naming only one
-    // means the build fails on whichever architecture GitHub's macos-15
-    // image is not. Naming both costs nothing and survives that changing.
-    const steps = rel.jobs['app-bundles']!.steps ?? [];
-    const rustup = steps.findIndex((s) => /rustup target add/.test(s.run ?? ''));
-    const sidecar = steps.findIndex((s) => /build-sidecar\.ts/.test(s.run ?? ''));
-    expect(rustup).toBeGreaterThanOrEqual(0);
-    expect(rustup).toBeLessThan(sidecar);
-    expect(steps[rustup]!.run).toContain('x86_64-apple-darwin');
-    // universal-apple-darwin is tauri's name for the fused output, not a
-    // rustup target. Asking rustup for it by name fails the step.
-    expect(steps[rustup]!.run).not.toContain('rustup target add universal-apple-darwin');
+  test('the install line the release job writes says Apple silicon, not universal', () => {
+    // The notes trailer is the one place a release page itself says what
+    // the Mac download runs on.
+    const text = runText(rel.jobs['release']!);
+    const mac = text.split('\n').find((l) => l.includes('**Mac:**'))!;
+    expect(mac).toContain('Screepub-macOS.dmg');
+    expect(mac).toContain('Apple silicon');
+    expect(mac).toContain('macOS 13 or later');
+    expect(mac).not.toMatch(/universal|Intel/i);
+  });
+
+  test('no rustup step adds a second darwin target', () => {
+    // The universal build needed x86_64-apple-darwin installed beside the
+    // runner's own aarch64 one. The Apple silicon build on an Apple silicon
+    // runner needs nothing added, so the step is gone, not left installing
+    // an Intel target nothing uses.
+    expect(runText(rel.jobs['app-bundles']!)).not.toMatch(/rustup target add/);
+  });
+
+  test('the Mac-only steps are keyed on the runner OS, not on the arch', () => {
+    // While the Mac row was the only universal one, `arch == universal`
+    // meant "the Mac leg". With arm64 that stops being true the day an
+    // arm64 Linux row is added, so the notarization step asks which OS.
+    const notarize = (rel.jobs['app-bundles']!.steps ?? []).find((s) => s.name === 'Notarize and staple the disk image')!;
+    expect(String((notarize as { if?: string }).if)).toBe("runner.os == 'macOS'");
+    expect(JSON.stringify(rel.jobs['app-bundles'])).not.toContain('matrix.arch ==');
   });
 
   test('no leg passes a config overlay that renames the product', () => {
@@ -487,8 +494,8 @@ describe('release.yml ships the cross-platform artifacts', () => {
   test('the macOS leg asks for the updater archive and carries the signing key, macOS only', () => {
     const yml = read(join(WORKFLOWS, 'release.yml'));
     const text = runText(rel.jobs['app-bundles']!);
-    // --updater inside the universal branch, beside the transition overlay.
-    expect(text).toMatch(/if \[ "\$ARCH" = universal \][\s\S]*--updater/);
+    // --updater inside the macOS branch.
+    expect(text).toMatch(/if \[ "\$RUNNER_OS" = macOS \][\s\S]*--updater/);
     // The two secrets reach tauri-cli under its OWN variable names, and
     // only on macOS, in exactly the shape the APPLE_* ones already use.
     expect(yml).toMatch(/TAURI_SIGNING_PRIVATE_KEY: \$\{\{ runner\.os == 'macOS' && secrets\.TAURI_SIGNING_PRIVATE_KEY \|\| '' \}\}/);
@@ -572,16 +579,15 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(rel.jobs['app-upload']!.permissions?.contents).toBe('write');
   });
 
-  test('the universal DMG is smoked, and says which slice went untested', () => {
-    // There is no longer a bundle that skips the smoke entirely: the
-    // universal DMG has a slice the runner can execute, so it is opened
-    // and its engine run like every other. What a green tick still must
-    // not imply is that BOTH slices were exercised, so the notice stays --
-    // now describing half an artifact rather than a whole one.
+  test('the Mac DMG is smoked whole, so no notice about an untested slice', () => {
+    // The universal image carried an Intel slice no runner executed, and
+    // the step said so in a notice. The Apple silicon image is the
+    // runner's own arch, opened and run in full like every other bundle.
     const smoke = (rel.jobs['app-bundles']!.steps ?? []).find((s) =>
       /smoke-bundle\.ts/.test(s.run ?? ''),
     )!.run!;
-    expect(smoke).toMatch(/::notice::/);
+    expect(smoke).not.toMatch(/::notice::/);
+    expect(smoke).not.toMatch(/slice/i);
     // No early exit: the old step RETURNED before the loop on the x86_64
     // leg. Nothing may skip the loop now. Matched as a command on its own
     // line, since the step's own comments talk about exiting 0.
@@ -865,6 +871,10 @@ describe('the app downloads are described where a reader meets them', () => {
       if (!published.has(name)) unpublished.add(name);
     }
   }
+  // Names no row can build any more: the per-arch Mac images of the
+  // universal era. The Mac image carries no arch now (Apple silicon only),
+  // so the loop above cannot produce these, and no page may offer them.
+  for (const gone of ['Screepub-macOS-arm64.dmg', 'Screepub-macOS-x64.dmg']) unpublished.add(gone);
 
   const NUMBER_WORD = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   const install = sectionOf(readme, '## Install');

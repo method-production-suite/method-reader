@@ -8,15 +8,23 @@
 // engine"), not read out of documentation. A wrong triple here compiles
 // cleanly, bundles cleanly, and fails at runtime on someone else's computer.
 //
-// Two tables exist on purpose. tools/build-cli.ts's TARGETS is the RELEASE
-// matrix and holds no darwin row, because a macOS artifact must come signed
-// and notarized from app/release.sh. A sidecar is not a release artifact:
-// it is an input to a build, so darwin belongs here. The same reasoning
-// covers the two Linux musl rows below: nobody ships a musl release
-// artifact, but a contributor's dev machine can be a musl host, so the
-// sidecar table carries them and the release table does not.
+// Two tables exist on purpose. tools/build-cli.ts's TARGETS is the cross
+// RELEASE matrix and holds no darwin row, because a macOS artifact must
+// come signed and notarized (build-cli.ts --mac, on a Mac). A sidecar is not
+// a release artifact: it is an input to a build, so darwin belongs here.
+// The same reasoning covers the two Linux musl rows below: nobody ships a
+// musl release artifact, but a contributor's dev machine can be a musl
+// host, so the sidecar table carries them and the release table does not.
 // tests/sidecar-targets.test.ts pins that the release table is a subset of
 // this one.
+//
+// darwin is Apple silicon ONLY. Intel Macs are not supported after the
+// identifier release (owner, 2026-10-01; plan
+// docs/superpowers/plans/2026-10-01-f2-handover-amendment.md): the window
+// was universal through that release, so the frozen Swift updater could
+// carry Intel installs across, and the release after it builds one slice.
+// An x86_64-apple-darwin row here would build an engine no release ships
+// and no runner tests.
 
 import type { BinaryFormat } from './build-cli';
 
@@ -26,7 +34,6 @@ export type BunTarget =
   | 'bun-linux-arm64'
   | 'bun-linux-arm64-musl'
   | 'bun-windows-x64'
-  | 'bun-darwin-x64'
   | 'bun-darwin-arm64';
 
 export interface SidecarTarget {
@@ -60,12 +67,6 @@ export const SIDECAR_TARGETS: readonly SidecarTarget[] = [
     rustTriple: 'x86_64-pc-windows-msvc',
     exeSuffix: '.exe',
     format: 'pe-x86-64',
-  },
-  {
-    bunTarget: 'bun-darwin-x64',
-    rustTriple: 'x86_64-apple-darwin',
-    exeSuffix: '',
-    format: 'macho-x86-64',
   },
   {
     bunTarget: 'bun-darwin-arm64',
@@ -118,8 +119,15 @@ export function hostBunTarget(platform: string, arch: string): BunTarget {
   if (platform === 'linux' && arch === 'x64') return 'bun-linux-x64';
   if (platform === 'linux' && arch === 'arm64') return 'bun-linux-arm64';
   if (platform === 'win32' && arch === 'x64') return 'bun-windows-x64';
-  if (platform === 'darwin' && arch === 'x64') return 'bun-darwin-x64';
   if (platform === 'darwin' && arch === 'arm64') return 'bun-darwin-arm64';
+  if (platform === 'darwin') {
+    throw new Error(
+      `build-sidecar: no sidecar target for ${platform}/${arch}. The Mac window is built for ` +
+        'Apple silicon only; Intel Macs are not supported after the identifier release ' +
+        '(docs/superpowers/plans/2026-10-01-f2-handover-amendment.md). To build the Apple ' +
+        'silicon engine from here anyway, name it: --target bun-darwin-arm64.',
+    );
+  }
   throw new Error(
     `build-sidecar: no sidecar target for ${platform}/${arch}; known targets are ${KNOWN}`,
   );

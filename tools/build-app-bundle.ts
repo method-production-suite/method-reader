@@ -2,13 +2,21 @@
 //
 //   bun tools/build-app-bundle.ts --version 0.6.0 --out dist/
 //   bun tools/build-app-bundle.ts --version 0.6.0 --out dist/ \
-//     --target aarch64-apple-darwin
-//   bun tools/build-app-bundle.ts --version 0.6.0 --out dist/ \
-//     --arch universal --updater
+//     --arch arm64 --updater
 //       # the release's macOS leg: ALSO the updater archive and its
 //       # signature. Needs TAURI_SIGNING_PRIVATE_KEY (a path or the key
 //       # text) and TAURI_SIGNING_PRIVATE_KEY_PASSWORD (set, and "" for a
 //       # key without one) in the environment.
+//
+// A Mac bundle is Apple silicon ONLY, built with --target
+// aarch64-apple-darwin wherever it runs. The identifier release was the
+// last universal image (the frozen Swift updater installs the first .dmg on
+// a release with no architecture check, so that release had to open on
+// Intel too); from the release after it Intel Macs are not supported
+// (owner, 2026-10-01; plan
+// docs/superpowers/plans/2026-10-01-f2-handover-amendment.md). An x64 or
+// universal Mac bundle is refused rather than built, because it would be
+// published under the one Mac name.
 //
 // A Bun script and not workflow YAML, following tools/build-cli.ts exactly:
 // YAML can only be tested by cutting a release, and a release tool nobody
@@ -39,12 +47,13 @@ import { REPO_DIR, VERSION_RE, writeChecksums, type Spawn } from './build-cli';
 import { parseSignatureBox } from './update-signature';
 
 export type BundleOs = 'linux' | 'macos' | 'windows';
-// 'universal' is macOS-only and is not a CPU: it is a lipo of the other two.
-// It exists because the frozen Swift updater takes the first .dmg on a
-// release and has no architecture logic, so per-arch Mac bundles are what
-// make an automatic migration off that app impossible. See
-// docs/adr/2026-09-14-swift-app-update-path.md.
-export type BundleArch = 'x64' | 'arm64' | 'universal';
+export type BundleArch = 'x64' | 'arm64';
+
+/** The one architecture a Mac bundle is built for, and the cargo triple
+ *  that builds it. Named here and nowhere else: release.yml passes
+ *  `--arch arm64` and never a triple. See the header for why it is one. */
+export const MAC_ARCH: BundleArch = 'arm64';
+export const MAC_TARGET = 'aarch64-apple-darwin';
 
 /** What every artifact this tool handles has in common: a container it
  *  can be checked against, and a scale it must clear. */
@@ -65,8 +74,8 @@ export interface BundleKind extends ArtifactShape {
   /** The directory under `target/[<triple>/]release/bundle/`. */
   dir: string;
   /** The stable published filename. Deliberately ours, not the bundler's:
-   *  tauri names the DMG after productName and the version
-   *  (`Screepub_0.8.0_universal.dmg`), and a page linking to
+   *  tauri names the DMG after productName, the version and the arch
+   *  (`Screepub_0.8.0_aarch64.dmg`), and a page linking to
    *  releases/latest/download/<name> needs a name that never changes. */
   releasedName(version: string, arch: BundleArch): string;
 }
@@ -106,12 +115,13 @@ export const BUNDLE_KINDS: readonly BundleKind[] = [
     releasedName: (_v, arch) => `Screepub-linux-${arch === 'x64' ? 'x86_64' : 'aarch64'}.rpm`,
   },
   {
-    // The universal image takes the Swift app's old name ON PURPOSE, from
-    // the identifier release on (owner, 2026-10-01): every page and outside
+    // The Mac image takes the Swift app's old name ON PURPOSE, from the
+    // identifier release on (owner, 2026-10-01): every page and outside
     // link already points at releases/latest/download/Screepub-macOS.dmg,
     // and the Swift job no longer publishes an image of its own, so this is
-    // the one .dmg the frozen Swift updater can find. Per-arch images are
-    // local builds and say their arch.
+    // the one .dmg the frozen Swift updater can find. Only Apple silicon is
+    // built (MAC_ARCH), so, like the Windows row, the arch is not in the
+    // name; parseBundleArgs and buildBundles refuse any other Mac arch.
     id: 'dmg',
     os: 'macos',
     dir: 'dmg',
@@ -119,7 +129,7 @@ export const BUNDLE_KINDS: readonly BundleKind[] = [
     magic: KOLY_MAGIC,
     magicAt: 'udif-trailer',
     floorBytes: FLOOR,
-    releasedName: (_v, arch) => (arch === 'universal' ? 'Screepub-macOS.dmg' : `Screepub-macOS-${arch}.dmg`),
+    releasedName: () => 'Screepub-macOS.dmg',
   },
   {
     // Only x86-64 ships, so the arch is not in the name; an arm64 Windows
@@ -160,9 +170,13 @@ export const SIGNATURE_EXT = '.sig';
 const GZIP_MAGIC = [0x1f, 0x8b];
 
 /** The key the plugin looks up in latest.json: `<os>-<arch>` of the
- *  RUNNING binary (tauri-plugin-updater, updater.rs, `target()`), so a
- *  universal archive has to answer for both darwin keys. */
-export type PlatformKey = 'darwin-x86_64' | 'darwin-aarch64';
+ *  RUNNING binary (tauri-plugin-updater 2.12.0, updater.rs, `get_urls`,
+ *  which also tries `<os>-<arch>-app` first). Apple silicon only: the
+ *  universal archive of the identifier release answered for darwin-x86_64
+ *  too, and the release after it does not, so an Intel Mac running that
+ *  older build finds no key for itself and check() rejects. The window
+ *  says so in plain words (desktop/ui/update.js). */
+export type PlatformKey = 'darwin-aarch64';
 
 export interface UpdaterKind extends ArtifactShape {
   id: 'app-tar';
@@ -187,19 +201,10 @@ export const UPDATER_KINDS: readonly UpdaterKind[] = [
     magic: GZIP_MAGIC,
     magicAt: 'head',
     floorBytes: FLOOR,
-    // Named like the image beside it: plain when universal, arch otherwise.
-    releasedName: (_v, arch) =>
-      arch === 'universal' ? 'Screepub-macOS.app.tar.gz' : `Screepub-macOS-${arch}.app.tar.gz`,
-    archOf: (name) => {
-      const m = /^Screepub-macOS(?:-(arm64|x64))?\.app\.tar\.gz$/.exec(name);
-      return m ? ((m[1] ?? 'universal') as BundleArch) : undefined;
-    },
-    platformKeys: (arch) =>
-      arch === 'universal'
-        ? ['darwin-x86_64', 'darwin-aarch64']
-        : arch === 'arm64'
-          ? ['darwin-aarch64']
-          : ['darwin-x86_64'],
+    // Named like the image beside it: plain, one Mac arch.
+    releasedName: () => 'Screepub-macOS.app.tar.gz',
+    archOf: (name) => (name === 'Screepub-macOS.app.tar.gz' ? MAC_ARCH : undefined),
+    platformKeys: () => ['darwin-aarch64'],
   },
 ];
 
@@ -414,9 +419,9 @@ export function parseBundleArgs(
       version: { type: 'string' },
       out: { type: 'string' },
       target: { type: 'string' },
-      // process.arch can only ever say what THIS machine is, and a macOS
-      // runner is arm64 or x64 — never universal. So asking for a universal
-      // bundle needs a flag; there is no host to infer it from.
+      // process.arch says what THIS machine is. --arch names another, which
+      // on a Mac is only ever how an Intel Mac asks for the Apple silicon
+      // bundle it can cross-build.
       arch: { type: 'string' },
       config: { type: 'string' },
       updater: { type: 'boolean', default: false },
@@ -441,23 +446,22 @@ export function parseBundleArgs(
     );
   }
   const arch = values.arch ?? hostArch;
-  if (arch !== 'x64' && arch !== 'arm64' && arch !== 'universal') {
+  if (arch === 'universal') {
+    throw new Error(
+      'build-app-bundle: "universal" is not an architecture any more. The identifier release ' +
+        'was the last universal Mac image; a Mac bundle is Apple silicon only (--arch arm64). ' +
+        'See docs/superpowers/plans/2026-10-01-f2-handover-amendment.md.',
+    );
+  }
+  if (arch !== 'x64' && arch !== 'arm64') {
     throw new Error(`build-app-bundle: no app bundle is defined for architecture "${arch}"`);
   }
   const os = osForPlatform(platform);
-  if (arch === 'universal' && os !== 'macos') {
-    throw new Error(
-      `build-app-bundle: "universal" is a macOS-only architecture and this is ${os}. ` +
-        'There is no universal .deb, .rpm or .exe, and allowing it here would render a ' +
-        'filename naming an architecture that does not exist.',
-    );
-  }
-  // A universal ARCH with a per-arch TARGET would produce a thin bundle
-  // wearing a universal name -- the same failure the fat check in
-  // build-sidecar catches one layer down, arriving from the other side. So
-  // the arch implies the target, and an explicit --target still wins,
-  // because overriding it is how you debug one slice.
-  const target = values.target ?? (arch === 'universal' ? 'universal-apple-darwin' : undefined);
+  // The Mac triple is always NAMED, never left to the host: an Intel
+  // machine building "for itself" would make an x64 image and publish it
+  // under the one Mac name. assertAppleSiliconMac refuses any other.
+  const target = values.target ?? (os === 'macos' ? MAC_TARGET : undefined);
+  assertAppleSiliconMac(os, arch, target);
 
   return {
     version,
@@ -468,6 +472,22 @@ export function parseBundleArgs(
     config: values.config,
     updater: values.updater ?? false,
   };
+}
+
+/** A Mac bundle is Apple silicon, built for the Apple silicon triple, or it
+ *  is refused. Called by the parser AND by buildBundles, so a caller that
+ *  builds BundleArgs by hand meets the same rule. No-op off macOS. */
+export function assertAppleSiliconMac(os: BundleOs, arch: BundleArch, target: string | undefined): void {
+  if (os !== 'macos') return;
+  if (arch !== MAC_ARCH || target !== MAC_TARGET) {
+    throw new Error(
+      `build-app-bundle: a Mac bundle is built for Apple silicon only (--arch ${MAC_ARCH}, ` +
+        `target ${MAC_TARGET}), and this asked for arch ${arch}, target ${target ?? '<the host>'}. ` +
+        'Intel Macs are not supported after the identifier release ' +
+        '(docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and an Intel or universal ' +
+        'image would be published under the one Mac name, Screepub-macOS.dmg.',
+    );
+  }
 }
 
 const realSpawn: Spawn = (argv, cwd) => {
@@ -496,11 +516,12 @@ export async function buildBundles(
 ): Promise<string[]> {
   const repoDir = dirs.repoDir ?? REPO_DIR;
   const desktopDir = dirs.desktopDir ?? join(repoDir, 'desktop', 'src-tauri');
+  assertAppleSiliconMac(args.os, args.arch, args.target);
   assertBundleVersions(args.version, repoDir);
   if (args.updater && !env.TAURI_SIGNING_PRIVATE_KEY) {
-    // tauri-cli would fail on exactly this, AFTER the whole universal
-    // build, with "A public key has been found, but no private key".
-    // Twenty minutes is a long way to travel to read one variable.
+    // tauri-cli would fail on exactly this, AFTER the whole Mac build,
+    // with "A public key has been found, but no private key". Twenty
+    // minutes is a long way to travel to read one variable.
     throw new Error(
       'build-app-bundle: --updater needs TAURI_SIGNING_PRIVATE_KEY in the environment, and ' +
         'it is not set. See docs/release-secrets.md §4.',

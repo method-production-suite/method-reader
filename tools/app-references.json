@@ -221,11 +221,6 @@
       "category": "test",
       "breaks": "READS app/release.sh and asserts it still produces the two tarballs and the DMG, that release.yml uploads app/dist/*, and that site/index.html carries exactly three DMG buttons. Roughly eight tests fail at F3; several must change at F2 instead."
     },
-    "tests/sidecar-targets.test.ts": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "A comment naming app/release.sh as the other producer of the macOS targets."
-    },
     "tests/sidecar.test.ts": {
       "refs": 1,
       "category": "note",
@@ -251,11 +246,6 @@
       "category": "artifact",
       "breaks": "The DMG naming rule, written specifically so the Tauri artifact cannot collide with Screepub-macOS.dmg. F2 removes the Desktop infix and this comment with it."
     },
-    "tools/build-sidecar.ts": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "A comment drawing the line between this tool's job and app/release.sh's."
-    },
     "tools/frozen-app-manifest.json": {
       "refs": 67,
       "category": "freeze",
@@ -265,11 +255,6 @@
       "refs": 1,
       "category": "note",
       "breaks": "A comment naming src/ and app/ as the two trees a denylist would otherwise have had to enumerate."
-    },
-    "tools/sidecar-targets.ts": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "A comment saying the signed macOS CLI is notarized from app/release.sh."
     },
     "tools/verify-signing.ts": {
       "refs": 6,

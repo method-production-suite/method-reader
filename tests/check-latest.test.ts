@@ -31,7 +31,6 @@ const manifest = (v: string, over: Partial<Record<string, { url: string; signatu
     notes: 'x',
     pub_date: '2026-09-21T18:00:00.000Z',
     platforms: {
-      'darwin-x86_64': { url: url(v, TAR), signature: SIG },
       'darwin-aarch64': { url: url(v, TAR), signature: SIG },
       ...over,
     },
@@ -40,7 +39,7 @@ const manifest = (v: string, over: Partial<Record<string, { url: string; signatu
 describe('judging a manifest against a release', () => {
   test('a manifest that names the newest release, its assets and their signatures is fine', () => {
     const v = judgeManifest(manifest('0.6.1'), release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
-    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64', 'darwin-x86_64'] });
+    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64'] });
   });
 
   test('a manifest a version behind is the tap failure, and says both versions', () => {
@@ -92,7 +91,6 @@ describe('judging a manifest against a release', () => {
     const otherKey = Buffer.from('1112131415161718', 'hex');
     const foreign = fakeSignatureBox('Screepub.app.tar.gz', otherKey);
     const v = judgeManifest(manifest('0.6.1', {
-      'darwin-x86_64': { url: url('0.6.1', TAR), signature: foreign },
       'darwin-aarch64': { url: url('0.6.1', TAR), signature: foreign },
     }), release('0.6.1'), { [`${TAR}.sig`]: foreign }, PUBKEY);
     expect(v.ok).toBe(false);
@@ -109,14 +107,31 @@ describe('judging a manifest against a release', () => {
     if (!v.ok) expect(v.problems.join('\n')).toMatch(/public key/i);
   });
 
-  test('a manifest missing either darwin key is a problem: the universal build serves both', () => {
-    const only = JSON.stringify({
+  test('a manifest missing darwin-aarch64 is a problem: the Mac build serves it', () => {
+    const intelOnly = JSON.stringify({
       version: '0.6.1',
-      platforms: { 'darwin-aarch64': { url: url('0.6.1', TAR), signature: SIG } },
+      platforms: { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } },
     });
-    const v = judgeManifest(only, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    const v = judgeManifest(intelOnly, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
     expect(v.ok).toBe(false);
-    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-x86_64');
+    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-aarch64');
+  });
+
+  test('darwin-x86_64 is no longer REQUIRED, and a universal-era manifest still passes', () => {
+    // The Mac build is Apple silicon only from the release after the
+    // identifier release, so its manifest has no darwin-x86_64 and must not
+    // be called broken. The other way round stays green on purpose: this
+    // runs weekly against whatever release is newest, and until that
+    // release ships the newest is the identifier release, whose universal
+    // archive answers for both keys. A row for a real asset with a good
+    // signature is not a problem; only a MISSING row is.
+    expect(judgeManifest(manifest('0.6.1'), release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY).ok).toBe(true);
+    const universal = manifest('0.6.1', { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } });
+    expect(judgeManifest(universal, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY)).toEqual({
+      ok: true,
+      version: '0.6.1',
+      platforms: ['darwin-aarch64', 'darwin-x86_64'],
+    });
   });
 
   test('every problem is reported, not just the first', () => {
@@ -160,7 +175,7 @@ describe('checking the live endpoint, with the network stubbed', () => {
       [url('0.6.1', `${TAR}.sig`)]: SIG,
     });
     const v = await checkLatest(fetcher, { repo: REPO, pubkey: PUBKEY });
-    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64', 'darwin-x86_64'] });
+    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64'] });
     // The manifest comes from the redirecting endpoint, not from a
     // versioned url this tool constructed: what is checked is what the
     // app fetches.
