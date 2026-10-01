@@ -230,6 +230,10 @@ describe('the engine contract lives in exactly one file', () => {
       convertForced: argv.convert('/s/script.pdf', { force: true, optionsJson: '{"a":1}' }),
       reconvert: argv.reconvert('/s/script.fountain', '/s/script.epub', '{"a":1}'),
       devices: argv.devices(),
+      devicesQuick: argv.devices({ quick: true }),
+      eject: argv.eject('/Volumes/Kindle'),
+      exportOut: argv.export('/s/script.epub', { forFormat: 'kfx', fountain: '/s/script.fountain', optionsJson: '{"a":1}', out: '/s/out.kfx' }),
+      readerDevice: argv.readerDevice('kobo'),
       send: argv.send('/s/script.epub'),
       sendTo: argv.send('/s/script.epub', 'kindle-1'),
       settings: argv.settings('/s/script.fountain'),
@@ -255,8 +259,9 @@ describe('the engine contract lives in exactly one file', () => {
     };
     // Every builder the interface promises is exercised above.
     expect(Object.keys(argv).sort()).toEqual(
-      ['appSettings', 'convert', 'devices', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
-        'kindleCheck', 'reconvert', 'reveal', 'route', 'routes', 'send', 'settings', 'version'].sort(),
+      ['appSettings', 'convert', 'devices', 'eject', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
+        'kindleCheck', 'readerDevice', 'reconvert', 'reveal', 'route', 'routes', 'send', 'settings',
+        'version'].sort(),
     );
     for (const [name, args] of Object.entries(built)) {
       expect(`${name} has --json: ${args.includes('--json')}`).toBe(`${name} has --json: true`);
@@ -266,6 +271,19 @@ describe('the engine contract lives in exactly one file', () => {
         `${name} args: `,
       );
     }
+  });
+
+  test('the send panel’s new calls are spelled once, here', async () => {
+    const { argv } = await import(join(UI, 'app.js'));
+    expect(argv.devices()).toEqual(['devices', '--json']);
+    expect(argv.devices({ quick: true })).toEqual(['devices', '--json', '--quick']);
+    expect(argv.eject('/Volumes/Kindle')).toEqual(['eject', '/Volumes/Kindle', '--json']);
+    expect(argv.export('/s/b.epub', { forFormat: 'fountain', fountain: '/s/b.fountain', out: '/o/b.fountain' }))
+      .toEqual(['export', '/s/b.epub', '--json', '--for', 'fountain', '--fountain', '/s/b.fountain', '--out', '/o/b.fountain']);
+    // No --out unless asked: the build-ahead and the device send keep their shape.
+    expect(argv.export('/s/b.epub', { forFormat: 'kindle' })).not.toContain('--out');
+    expect(argv.readerDevice('kobo')).toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kobo"}']);
+    expect(argv.readerDevice(null)).toEqual(['app-settings', '--json', '--set', '{"readerDevice":null}']);
   });
 
   test('the Kindle file check is export for kindle with --check, and nothing else', async () => {
@@ -2547,6 +2565,33 @@ describe('the window knows when the engine is working, and can restart', () => {
       expect(app.engineBusy()).toBe(true);
       expect(Bun.peek.status(app.whenIdle())).toBe('pending');
       await route;
+      expect(app.engineBusy()).toBe(false);
+    } finally {
+      delete win.window;
+    }
+  });
+
+  test('an eject counts toward busy, the background devices poll does not', async () => {
+    // device-watch.js polls `devices --quick` every 2 s while a book is open,
+    // so it must not count, for the reason plain `devices` never did. An
+    // eject is somebody's work on a drive, so it counts like a send.
+    const app = await import(join(UI, 'app.js'));
+    await app.whenIdle(); // start from a genuinely idle baseline
+    win.window = {
+      __TAURI__: {
+        core: { invoke: () => new Promise((resolve) => setTimeout(() => resolve('{"ok":true}'), 10)) },
+      },
+    };
+    try {
+      const poll = app.runEngine(app.argv.devices({ quick: true }));
+      expect(app.engineBusy()).toBe(false);
+      expect(Bun.peek.status(app.whenIdle())).toBe('fulfilled');
+      await poll;
+
+      const eject = app.runEngine(app.argv.eject('/Volumes/Kindle'));
+      expect(app.engineBusy()).toBe(true);
+      expect(Bun.peek.status(app.whenIdle())).toBe('pending');
+      await eject;
       expect(app.engineBusy()).toBe(false);
     } finally {
       delete win.window;

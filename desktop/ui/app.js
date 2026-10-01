@@ -43,7 +43,19 @@ export const argv = {
     [fountain, '--json', '--preview-inline', '-o', epubPath,
       '--options-json', optionsJson],
 
-  devices: () => ['devices', '--json'],
+  /** What is plugged in. `quick` leaves out the reMarkable probe: the window
+   *  polls this every two seconds while a book is open (device-watch.js), and
+   *  a docked reMarkable is learnt from the send panel's full `routes`. */
+  devices: ({ quick = false } = {}) =>
+    ['devices', '--json', quick ? '--quick' : null].filter((a) => a !== null),
+
+  /** Safely remove the reader at `volume`, a path `devices` listed. The
+   *  engine refuses any other disk (unknown-device). */
+  eject: (volume) => ['eject', volume, '--json'],
+
+  /** The reader the person said is theirs, app-wide (the send panel's
+   *  cards). Null forgets it. */
+  readerDevice: (kind) => ['app-settings', '--json', '--set', JSON.stringify({ readerDevice: kind })],
 
   send: (file, deviceId = null) =>
     ['send', file, '--json', deviceId ? '--device' : null, deviceId]
@@ -52,10 +64,11 @@ export const argv = {
   settings: (fountain, set = null) =>
     ['settings', fountain, '--json', set ? '--set' : null, set].filter((a) => a !== null),
 
-  export: (epub, { forFormat, fountain = null, optionsJson = null }) =>
+  export: (epub, { forFormat, fountain = null, optionsJson = null, out = null }) =>
     ['export', epub, '--json', '--for', forFormat,
       fountain ? '--fountain' : null, fountain,
-      optionsJson ? '--options-json' : null, optionsJson].filter((a) => a !== null),
+      optionsJson ? '--options-json' : null, optionsJson,
+      out ? '--out' : null, out].filter((a) => a !== null),
 
   /** Which Kindle file `export --for kindle` would hand over on this
    *  computer (KFX, AZW3 or MOBI), whether the one beside the book is
@@ -159,12 +172,12 @@ let settleTimer = null;
 
 /** Whether a call is worth counting toward "the engine is busy".
  *
- *  `devices` is not: send.js polls it every 2 s while the Send tab is open,
- *  and each poll takes about 1.5 s on its own (the reMarkable probe
- *  timeout). It is never mid-job — killing a listing loses nothing — so
- *  counting it would flash "Restarting after this finishes…" on a tab that
- *  is just sitting there polling, and WITH a quiet period, could hold a
- *  restart off indefinitely for as long as that tab stayed open.
+ *  `devices` is not: device-watch.js polls `devices --quick` every 2 s
+ *  for as long as a book is open. It is never mid-job (killing a listing
+ *  loses nothing), so counting it would flash "Restarting after this
+ *  finishes…" on a window that is just sitting there polling, and WITH a
+ *  quiet period, could hold a restart off indefinitely for as long as a
+ *  book stayed open. `eject` IS counted: it is somebody's work on a drive.
  *
  *  `kfx-status` is not either, for the same reason: kfx.js's probe() runs
  *  it when the Send tab opens and again every time the window gets focus
