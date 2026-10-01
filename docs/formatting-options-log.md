@@ -1072,7 +1072,7 @@ and the suite will say so if you forget.
 
 ## Mac app notes
 
-**These eighteen options now have two interfaces, not one.** Besides the
+**These options now have two interfaces, not one** (eighteen in the frozen Swift rail; the window has nineteen, since the rail never gained `includeImages`). Besides the
 SwiftUI reader rail described below, they are the **Tune surface of the
 cross-platform Tauri window** (`desktop/ui/tune.js`), in the same four groups
 — the page, dialogue, the text, what the book carries — plus the four
@@ -1257,22 +1257,15 @@ the Mac app should move those two; nothing in the engine needs to change.
   the ones that are art, and records each kept one in the `.fountain` as an
   invisible Fountain note, `[[img: p012-01.png w=71 full]]`, with its pixels
   as a PNG in a `<stem>.images/` folder beside it.
-- **The book does not change in this phase (phase 1 of images in the
-  book).** Both renderers drop the note
-  unread: a standalone note is a `note` token, which neither renderer's switch
-  emits, and a note folded into a line goes through `stripNotes` (#18). A
-  note above the first heading (where a title card's lands) opens no section
-  either: `tokensToBody` skips it while no section is open, because a section
-  of notes alone would be an empty "Opening" in the contents, a blank page
-  under `scenePageBreaks`, and every scene anchor one along. So the EPUB
-  and the MOBI render exactly what they did before this entry, and the reader
-  never sees a picture yet. One thing in the EPUB does change, and on
-  purpose: its `dc:identifier` is a hash of the `.fountain` text (`renderBooks`
-  in `src/convert.ts`; the text is the identity), so a script whose
-  `.fountain` gains notes gets a new identifier, and a reader that indexes by
-  it treats the re-converted book as a new one. A script with no pictures
-  keeps its identifier. Showing them is phase 2 (the `includeImages` option and
-  EPUB figures), phase 3 (MOBI image records) and phase 4 (cover promotion):
+- **Recognition alone never changes the book.** Whether a note renders is
+  #19a's option; with it off, both renderers drop the note unread, exactly
+  as they did before pictures existed. One thing in the EPUB changes whatever
+  the option says, and on purpose: its `dc:identifier` is a hash of the
+  `.fountain` text (`renderBooks` in `src/convert.ts`; the text is the
+  identity), so a script whose `.fountain` gains notes gets a new identifier,
+  and a reader that indexes by it treats the re-converted book as a new one.
+  A script with no pictures keeps its identifier. The MOBI shows no picture
+  yet (phase 3), and the title card does not become a cover yet (phase 4):
   `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
 - **Where a picture comes from, and where it lands.** Extraction finds the
   pictures on the operator list the text pass already fetched, and reads
@@ -1449,9 +1442,8 @@ the Mac app should move those two; nothing in the engine needs to change.
   screenplay in 1.54 s (main 1.53 s), and script 7 as scanned in 0.09 s (main
   0.09 s), best of two. Run ahead of the guards, the same pass makes those
   16.7 s and 3.7 s.
-- **Default:** always on. There is no knob in this phase; phase 2's
-  `includeImages` will gate rendering, not recognition, so the notes stay in
-  the `.fountain` whatever it is set to.
+- **Default:** always on. `includeImages` (#19a) gates rendering, not
+  recognition, so the notes and the folder stay whatever it is set to.
 - **Code:** `src/parser/images.ts` (`collectImagePlacements`, `toRgb`,
   `IMAGE_MAX_EDGE`, `IMAGE_BUDGET_MS`, `isGeneratedImageFile`),
   `src/parser/artwork.ts` (every threshold, `keepArtwork`, `MAX_IMAGES`,
@@ -1461,3 +1453,83 @@ the Mac app should move those two; nothing in the engine needs to change.
   `nextNonImage`, `anchorsPageMarker`), `src/fountain/notes.ts`
   (`parseImgNote`, `isSafeImageFile`), `src/library-images.ts`,
   `src/convert.ts` (`imageWarnings`), `src/cli.ts`, `src/cli-errors.ts`.
+
+### 19a. Pictures in the book (option `includeImages`, default ON; 2026-10-01)
+- **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
+  EPUB and in the reader preview:
+  `<p class="figure wNN"><img src="../images/pNNN-NN.png" alt="Illustration"/></p>`,
+  with ` figure-full` added to the class for a plate that filled its page.
+  `alt` is never empty, because an empty one declares the picture
+  decorative. The Tune page's switch is "Pictures from the script", in
+  "What the book carries". On by default (owner, 2026-10-01): the filters
+  refused every bit of furniture the corpus audit found, and a reader who
+  does not want pictures turns them off once.
+- **One predicate decides.** `rendersImage(raw, includeImages, have)` in
+  `src/fountain/notes.ts`: the option is on, the note parses (the allowlist
+  is inside `parseImgNote`), and the picture is in the set the caller can
+  actually ship. The renderer and the section opener ask the same question,
+  so they cannot disagree. A note above the first heading (a title card's)
+  opens an "Opening" section only when its picture renders; otherwise the
+  body is byte-identical to the text-only one. With the Opening present the
+  first scene is `sc-002`, so a reader that keeps its place by section id
+  lands one scene off when the switch flips on such a script (known, not
+  fixed).
+- **Width, as a class.** The note's `w=` rounds to the nearest five,
+  clamped to 5..100, and `p.wNN img { width: NN%; }` sets it: a class, not an
+  inline style, because the reader preview's CSP refuses `style=`
+  attributes. Only the width is authored; `.figure img { height: auto; }`
+  lets the height follow. Height is unbounded and `max-height` is no remedy
+  (Kindle strips it): a plate taller than the page slices across pages on
+  Blink. No keep on `.figure`, measured inert on Blink 2026-08-11 (17 seam
+  offsets, identical pages).
+- **The full-page plate.** `p.figure-full { margin: 0; page-break-before:
+  always; page-break-after: always; }`, on the `<p>`, never a wrapper (#8b).
+  The margin is zero because a top margin survives a forced break: under
+  `.figure`'s margin a plate within about 1em of the page height stopped
+  fitting and Blink moved it on, leaving a blank page in front (measured
+  2026-10-01, images.pdf's title card at 6x8in). The break overrides the
+  scene heading's `break-after: avoid`, so a heading directly above a plate
+  ends its page alone; CSS 2.1 has no rule that holds the two together once
+  the plate outgrows the page. No column spelling, like the scene break.
+- **Only in a book that shows one.** The figure rules are added to the
+  stylesheet only when the body used a picture (`hasFigures`, derived from
+  `usedImages` at both call sites), so a picture-less book's sheet is
+  byte-identical to the one before this entry.
+- **Packaging.** Each picture the body used, and only those, ships as
+  `OEBPS/images/NAME`, STORED rather than deflated (PNG is already
+  compressed, and Tune re-renders the book on every move), with a manifest
+  item `image/png`, never in the spine. Ids are `img-` plus the name's stem
+  reduced to `[A-Za-z0-9_-]`, bumped `-2`, `-3` against every id the package
+  already writes, since `a.b.png` and `a-b.png` would otherwise collide.
+  `buildEpub` throws on a used name it was not given the bytes for, rather
+  than ship a book epubcheck rejects; every caller builds the names and the
+  bytes from one array, so it cannot fire.
+- **Where the pictures come from, per route.** A PDF conversion hands over
+  the pictures it just decoded. Every render from a `.fountain` (the CLI's
+  Fountain input, which is how Tune re-renders) reads `<stem>.images/` beside
+  it through `readImages`, only when the option is on, and adds the folder's
+  warnings; it never writes or prunes that folder. `convertFountain` keeps
+  only allowlisted names whose bytes are a PNG. The no-Calibre Kindle rebuild
+  (`freshKindleArtifact`'s MOBI rung) reads the folder the same way, and when
+  a picture the notes ask for cannot be read it writes the `.mobi` and leaves
+  the library EPUB as it was, rather than rewrite it without that picture.
+- **The preview.** The same `tokensToBody` call as the book, with each `src`
+  a `data:image/png;base64,...` URI, so what you proof is what ships. The
+  window's CSP is `default-src 'self'; img-src 'self' data:` and nothing
+  else is loosened (pinned in `tests/desktop-shell.test.ts`). Measured
+  2026-10-01 on the corpus's heaviest picture document (60 pictures,
+  16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
+  answer from 26 KB to 22.09 MB, so the preview is built on every render
+  rather than only on request.
+- **Not yet:** the MOBI carries no picture (phase 3); AZW3 and KFX get
+  them through Calibre from the EPUB. Unverified on device, and the subject
+  of the torture.pdf pictures section of `tools/device-checklist.ts`: KFX and
+  RMSDK on the forced breaks, the blank page, the heading above a plate, and
+  how a tall plate slices.
+- **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
+  `src/epub/html.ts` (`place`, the figure, `usedImages`, `imageSrc`,
+  `tokensToPreviewHtml`), `src/epub/css.ts` (the figure block,
+  `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`, `imageIds`),
+  `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,
+  `src/export/artifact.ts`, `desktop/ui/tune.js`,
+  `desktop/src-tauri/tauri.conf.json`.
