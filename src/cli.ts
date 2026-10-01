@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // screepub — screenplay PDF → Fountain → reflowable EPUB3.
 import { parseArgs } from 'node:util';
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { basename, delimiter, dirname, extname, join } from 'node:path';
 import { readFile, writeFile, rename, rm } from 'node:fs/promises';
 // Inlined by `bun build --compile`, so the shipped binary reports the same
@@ -59,14 +59,18 @@ starts from the format defaults you chose in the app, if you chose any, and
 otherwise from Screepub's own.
 
 Options:
-  -o, --output <file>    EPUB output path (default: <input>.epub)
+  -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
+                         must already exist, and so must --fountain's and
+                         --preview-html's
   --library              write into the library folder instead of beside the
                          input: <library>/<stem>/<stem>.epub. The library is
                          <Documents>/Screepub: ~/Documents on macOS and
                          Windows, and XDG_DOCUMENTS_DIR (else ~/Documents)
                          elsewhere; a folder chosen with screepub app-settings
                          overrides that, and $SCREEPUB_LIBRARY overrides both
-  --fountain <file>      Fountain output path (default: <input>.fountain for PDF input)
+  --fountain <file>      Fountain output path, PDF input only. Default: the
+                         EPUB's path ending in .fountain, so <input>.fountain,
+                         or out/x.fountain for -o out/x.epub
   --no-fountain          skip writing the intermediate .fountain file
   --title <text>         override detected title
   --author <text>        override detected author
@@ -439,6 +443,34 @@ function fail(error: JsonError): never {
     console.error(`screepub: ${error.message}`);
   }
   process.exit(1);
+}
+
+/** Refuse an output path whose folder is not there, before any work is done.
+ *
+ * Refused, not made. The library makes its own folders because the engine
+ * chose that path; a path the caller typed is theirs, and making folders
+ * from it turns a typo (`-o Docuemnts/x.epub`) into a stray folder holding
+ * the book. Refusing is also the choice that can be relaxed later without
+ * breaking a caller, where taking folder-making away again could not.
+ *
+ * Only a folder that is missing, or is a file, is answered here. Any other
+ * reason stat gives (no permission to look) is left to the write itself. */
+function checkOutputFolder(flag: string, path: string): void {
+  const dir = dirname(path);
+  let isFolder: boolean;
+  try {
+    isFolder = statSync(dir).isDirectory();
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code !== 'ENOENT' && code !== 'ENOTDIR') return;
+    fail({
+      code: 'usage',
+      message: `the folder for ${flag} does not exist: ${dir}. Make it first, or choose a folder that exists`,
+    });
+  }
+  if (!isFolder) {
+    fail({ code: 'usage', message: `${flag} needs a folder to write into, and ${dir} is a file` });
+  }
 }
 
 function showHelp(usage: string = USAGE): never {
@@ -916,6 +948,10 @@ async function main() {
 
   const input = positionals[0];
   const ext = extname(input).toLowerCase();
+  // The two kinds of input a conversion takes. Anything else is refused as
+  // unsupported-type when the conversion starts.
+  const isPdf = ext === '.pdf';
+  const isFountain = ext === '.fountain' || ext === '.txt';
   // --fountain names where a PDF's .fountain is written. Beside
   // --no-fountain, one of the two would silently lose; on a .fountain or
   // .txt input, no .fountain is written at all (only a PDF produces one), so
@@ -929,7 +965,7 @@ async function main() {
       message: 'pass --fountain or --no-fountain, not both (--no-fountain writes no .fountain for --fountain to name)',
     });
   }
-  if (values.fountain !== undefined && (ext === '.fountain' || ext === '.txt')) {
+  if (values.fountain !== undefined && isFountain) {
     fail({
       code: 'usage',
       message: `a ${ext} input takes no --fountain (only a PDF conversion writes a .fountain)`,
@@ -944,6 +980,17 @@ async function main() {
       code: 'usage',
       message: 'pass --library or -o, not both: -o already says where the output goes',
     });
+  }
+  // The three paths a caller can name, held to one rule (checkOutputFolder),
+  // and checked before the conversion: finding a missing folder only at the
+  // write cost a whole conversion and ended in node:fs's ENOENT and a stack
+  // trace. The .mobi and --debug's .elements.json go beside the -o file, so
+  // its check covers them. Only for an input this run can convert: any other
+  // gets the unsupported-type refusal, which says the more useful thing.
+  if (isPdf || isFountain) {
+    if (values.output !== undefined) checkOutputFolder('-o', values.output);
+    if (values.fountain !== undefined) checkOutputFolder('--fountain', values.fountain);
+    if (values['preview-html']) checkOutputFolder('--preview-html', values['preview-html']);
   }
   let format: Record<string, unknown> | undefined;
   if (values.options !== undefined && values['options-json'] !== undefined) {
@@ -1089,11 +1136,10 @@ async function main() {
   const opts = { title: values.title, author: values.author, force: values.force, mobi: values.mobi, format: formatForConvert, onProgress };
 
   let result: ConvertResult;
-  const isPdf = ext === '.pdf';
   try {
     if (isPdf) {
       result = await convertPdf(new Uint8Array(await readFile(input)), opts);
-    } else if (ext === '.fountain' || ext === '.txt') {
+    } else if (isFountain) {
       result = await convertFountain(await readFile(input, 'utf8'), opts);
     } else {
       fail({

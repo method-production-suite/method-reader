@@ -1,5 +1,5 @@
 import { afterAll, describe, test, expect } from 'bun:test';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { mapConversionError } from '../src/cli-errors';
@@ -178,6 +178,73 @@ describe('cli --json contract', () => {
     const result = JSON.parse(stdout);
     const sample = await Bun.file(`${FIXTURES}engine-result-sample.json`).json();
     expect(Object.keys(result).sort()).toEqual(Object.keys(sample).sort());
+  }, 60000);
+});
+
+// An output path whose folder is not there used to convert the whole script
+// and then die inside node:fs: a raw ENOENT and a stack trace in a terminal,
+// and code `internal` under --json, which the window heads "The engine did
+// not answer". Now it is refused before anything is read or written, in the
+// CLI's own one line, naming the folder. The folder is never made for the
+// caller: `-o Docuemnts/x.epub` must not grow a Docuemnts folder.
+describe('an output folder that does not exist', () => {
+  const missing = `${SCRATCH}/no-such-folder`;
+  const outputs = [
+    ['-o', 'x.epub'],
+    ['--fountain', 'x.fountain'],
+    ['--preview-html', 'x.html'],
+  ] as const;
+
+  /** The run, with `flag` aimed into the missing folder. Under the other two
+   * flags -o still names a real folder, so the book NOT being there proves
+   * the refusal came before the conversion wrote anything. */
+  function argsFor(flag: string, file: string, beside: string): string[] {
+    const args = [FIXTURE_PDF, flag, `${missing}/${file}`];
+    if (flag !== '-o') args.push('-o', beside);
+    return args;
+  }
+
+  for (const [flag, file] of outputs) {
+    test(`${flag}: one line naming the folder, nothing written`, async () => {
+      const beside = `${SCRATCH}/missing-folder-text${flag}.epub`;
+      const { stdout, stderr, exitCode } = await runCli(argsFor(flag, file, beside));
+      expect(exitCode).toBe(1);
+      expect(stdout).toBe('');
+      const lines = stderr.trim().split('\n');
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toStartWith('screepub: ');
+      expect(lines[0]).toContain(flag);
+      expect(lines[0]).toContain(missing);
+      expect(lines[0]).not.toContain('ENOENT');
+      expect(lines[0]).not.toContain('—');
+      expect(existsSync(missing)).toBe(false);
+      expect(existsSync(beside)).toBe(false);
+    }, 60000);
+
+    test(`${flag} under --json: a usage answer naming the folder`, async () => {
+      const beside = `${SCRATCH}/missing-folder-json${flag}.epub`;
+      const { stdout, exitCode } = await runCli([...argsFor(flag, file, beside), '--json']);
+      expect(exitCode).toBe(1);
+      expect(stdout.trim().split('\n')).toHaveLength(1);
+      const answer = JSON.parse(stdout);
+      expect(answer.ok).toBe(false);
+      expect(answer.error.code).toBe('usage');
+      expect(answer.error.message).toContain(flag);
+      expect(answer.error.message).toContain(missing);
+      expect(existsSync(missing)).toBe(false);
+      expect(existsSync(beside)).toBe(false);
+    }, 60000);
+  }
+
+  test('a "folder" that is really a file is named as one', async () => {
+    const notAFolder = `${SCRATCH}/plain-file.txt`;
+    writeFileSync(notAFolder, 'not a folder');
+    const { stdout, exitCode } = await runCli([FIXTURE_PDF, '-o', `${notAFolder}/x.epub`, '--json']);
+    expect(exitCode).toBe(1);
+    const answer = JSON.parse(stdout);
+    expect(answer.error.code).toBe('usage');
+    expect(answer.error.message).toContain(notAFolder);
+    expect(answer.error.message).toContain('is a file');
   }, 60000);
 });
 
