@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test';
+import { afterEach, describe, test, expect, spyOn } from 'bun:test';
 import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
 import {
@@ -8,6 +8,11 @@ import {
   ScannedPdfError,
   NotAScreenplayError,
 } from '../src/convert';
+import { extractDocument } from '../src/parser/extract';
+// Namespaces, not named imports, because the spies below replace a binding
+// on the module itself: that is what the code under test calls through.
+import * as pictures from '../src/parser/images';
+import * as png from '../src/parser/png';
 
 // Committed, invented, and safe to publish — see tools/make-fixture.py.
 const PUBLIC = new URL('./fixtures/', import.meta.url).pathname;
@@ -242,6 +247,105 @@ describe('convertPdf carries the pictures', () => {
     const result = await convertFountain('Title: T\n\nINT. A - DAY\n\n[[img: p001-01.png w=71]]\n');
     expect(result.images).toEqual([]);
   });
+});
+
+// Both refusals are decided by the TEXT, so a document either guard turns away
+// must not pay for its pictures first. Decoding them ahead of the guards
+// costs a scan on the local corpus 3.7s to refuse instead of 0.09s. Counted
+// with spies rather than timed, because a clock in a unit test measures the
+// machine. The two spies are the expensive halves of the work: waiting for a
+// picture's pixels, and deflating them into a PNG.
+//
+// Neither committed refusal fixture can show this: blank-pages.pdf and
+// prose.pdf carry no pictures, so they cost nothing either way. The cases are
+// images.pdf with its text taken away (a scan: every picture, no words) and
+// with its words disguised (a document with words and pictures but no scene
+// and no speaker), each edited IN PLACE so every byte offset stays valid, the
+// way the broken-picture test above builds its document.
+describe('a refused document does not pay for its pictures', () => {
+  const spies: { mockRestore(): void }[] = [];
+  afterEach(() => {
+    for (const s of spies.splice(0)) s.mockRestore();
+  });
+  const watch = () => {
+    const resolves = spyOn(pictures, 'resolveImageData');
+    const encodes = spyOn(png, 'encodePng');
+    spies.push(resolves, encodes);
+    return () => ({ resolves: resolves.mock.calls.length, encodes: encodes.mock.calls.length });
+  };
+
+  /**
+   * images.pdf with every text block run through `edit`, byte for byte.
+   *
+   * The pattern is the exact shape tools/make-fixture.py writes a page's text
+   * in, and the count is asserted rather than assumed: a regenerated fixture
+   * that writes its text differently has to fail HERE, not quietly hand the
+   * tests below an unedited screenplay.
+   */
+  async function edited(edit: (pdf: Uint8Array, from: number, to: number) => void) {
+    const pdf = await bytes(`${PUBLIC}images.pdf`);
+    // windows-1252, which is what 'latin1' means to TextDecoder: one UTF-16
+    // unit per byte, so a string index IS a byte offset. Only ever used to
+    // find places; the bytes are edited in the original array.
+    const text = new TextDecoder('latin1').decode(pdf);
+    const blocks = [...text.matchAll(/\nBT\n\/F1 12 Tf\n[\s\S]*?\nET\n/g)];
+    expect(blocks).toHaveLength(5);
+    for (const b of blocks) edit(pdf, b.index! + 1, b.index! + b[0].length - 1);
+    return pdf;
+  }
+
+  /** Every word gone: spaces in place of each text block. */
+  const scan = () => edited((pdf, from, to) => pdf.fill(0x20, from, to));
+
+  /** Every capital in every string turned to `x`, which leaves nothing a
+   * scene heading or a cue could be made of while keeping every line. */
+  const disguised = () =>
+    edited((pdf, from, to) => {
+      let inString = false;
+      for (let i = from; i < to; i++) {
+        const c = pdf[i];
+        if (inString && c === 0x5c) {
+          i++; // an escape: whatever follows is not the string's end
+          continue;
+        }
+        if (c === 0x28) inString = true;
+        else if (c === 0x29) inString = false;
+        else if (inString && c >= 0x41 && c <= 0x5a) pdf[i] = 0x78;
+      }
+    });
+
+  test('the spies see the work when a document is converted', async () => {
+    // The control, without which the zeros below prove nothing: a spy that
+    // missed the calls would read 0 on every document.
+    const counts = watch();
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    expect(result.images.length).toBe(2);
+    expect(counts().resolves).toBeGreaterThan(0);
+    expect(counts().encodes).toBeGreaterThan(0);
+  }, 60000);
+
+  test('a scan is refused without resolving or encoding a single picture', async () => {
+    const counts = watch();
+    await expect(convertPdf(await scan())).rejects.toThrow(ScannedPdfError);
+    expect(counts()).toEqual({ resolves: 0, encodes: 0 });
+  }, 60000);
+
+  test('a document that is not a screenplay is refused the same way', async () => {
+    const counts = watch();
+    await expect(convertPdf(await disguised())).rejects.toThrow(NotAScreenplayError);
+    expect(counts()).toEqual({ resolves: 0, encodes: 0 });
+  }, 60000);
+
+  test('both edited documents still carry the pictures they did not pay for', async () => {
+    // So the zeros above are savings and not an absence: read in full, the
+    // scan keeps pictures (more than images.pdf does, since a sheet with no
+    // text cannot have a watermark behind it), and the disguised document
+    // converted with --force, which overrules the one guard that can be
+    // overruled, carries the same two the original does.
+    expect((await extractDocument(await scan())).images.length).toBeGreaterThan(0);
+    const forced = await convertPdf(await disguised(), { force: true });
+    expect(forced.images.map((i) => i.name)).toEqual(['p001-01.png', 'p002-01.png']);
+  }, 60000);
 });
 
 // The wiring, which no committed fixture can reach: a document has to carry

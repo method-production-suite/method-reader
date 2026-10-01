@@ -2,7 +2,7 @@
 // fountain-js tokens → XHTML chapters → EPUB bytes.
 import { createHash } from 'node:crypto';
 import { Fountain } from 'fountain-js';
-import { extractDocument, type ImageStats } from './parser/extract';
+import { extractText, type ImageStats } from './parser/extract';
 import { parseLines } from './parser/index';
 import type { ParsedScreenplay } from './parser/types';
 import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/serialize';
@@ -215,21 +215,38 @@ export async function convertPdf(
 ): Promise<ConvertResult> {
   const warnings: string[] = [];
 
-  const { lines, pageCount, spacingRepairs, images: rawImages, imageStats } = await extractDocument(
+  // The text only. The pictures are located on the way past and decoded
+  // further down, once neither refusal can fire: both are decided by the
+  // text, so a document that is going to be turned away has no business
+  // paying for its pictures first (see extractText for what that cost).
+  const doc = await extractText(
     pdfBytes,
     undefined,
     (page, pages) => opts.onProgress?.('parse', (page / pages) * PARSE_SHARE),
   );
-  // BEFORE anything is handed back, which is what keeps a scan's pixels off
-  // the caller's disk. A 13-sheet scan really does encode 13 full-page PNGs on
-  // the way here (measured 2026-08-11 on the local corpus: 6.1 MB in 3.7s,
-  // which is what the image budget caps for a longer one), and every byte of
-  // it leaves through this throw rather than in a result somebody writes down.
+  const { lines, pageCount, spacingRepairs } = doc;
   if (lines.length < pageCount * MIN_LINES_PER_PAGE) {
     throw new ScannedPdfError(pageCount, lines.length);
   }
 
-  const screenplay = parseLines(lines, rawImages);
+  // Parsed WITHOUT the pictures for the guard, which is exactly what the
+  // guard would see with them: `insertImages` only ever adds `image`
+  // elements, so it can neither make nor unmake a scene heading or a line of
+  // dialogue. `parseLines` is pure over its inputs, so this parse is also the
+  // final one whenever the document keeps no pictures (the common case), and
+  // parsing again with them gives what one parse with them always gave.
+  const textOnly = parseLines(lines);
+  const sceneCount = textOnly.scenes.length;
+  const dialogueCount = textOnly.elements.filter((e) => e.type === 'dialogue').length;
+  if (sceneCount === 0 && dialogueCount === 0 && !opts.force) {
+    throw new NotAScreenplayError();
+  }
+
+  // Past both refusals, so now the pixels. Nothing a caller could write down
+  // exists before this line, which is also what keeps a scan's pixels off the
+  // caller's disk: there are none.
+  const { images: rawImages, imageStats } = await doc.decodeImages();
+  const screenplay = rawImages.length > 0 ? parseLines(lines, rawImages) : textOnly;
   // Straight off the raw images: each already carries the filename
   // `toRawImages` assigned it, and `toFountain` writes that same name into the
   // note, so nothing here has to pair anything with the element stream. Built
@@ -237,11 +254,6 @@ export async function convertPdf(
   // which are about these.
   const images: BookImage[] = rawImages.map((img) => ({ name: img.file, bytes: img.bytes }));
 
-  const sceneCount = screenplay.scenes.length;
-  const dialogueCount = screenplay.elements.filter((e) => e.type === 'dialogue').length;
-  if (sceneCount === 0 && dialogueCount === 0 && !opts.force) {
-    throw new NotAScreenplayError();
-  }
   if (sceneCount === 0) {
     warnings.push('No scene headings detected: the EPUB will have no scene navigation.');
   }

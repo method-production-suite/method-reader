@@ -1361,8 +1361,10 @@ the Mac app should move those two; nothing in the engine needs to change.
   could not be unpacked. The ordinary refusals above are never warned about,
   since nearly every real script has some. Separately, `IMAGE_BUDGET_MS =
   20000` bounds a document's whole image pass (resolve, convert, downscale,
-  encode), so a 120-sheet scan cannot spend half a minute on pictures the
-  scanned guard (#14) then throws away.
+  encode), so a document of distinct full-page pictures cannot spend half a
+  minute on them. A document either guard refuses (#14, #15) never starts
+  that pass: both are decided on the text alone, and the pictures are decoded
+  only once both have passed (`extractText` in extract.ts).
 - **A picture cannot split a speech or cost a cue its speaker.** The
   serializer's two neighbour tests look past pictures: cue demotion (a cue
   with no speech under it becomes action) and the `(CONT'D)` rejoin (#8) both
@@ -1416,11 +1418,12 @@ the Mac app should move those two; nothing in the engine needs to change.
   the cap warning given; 60 PNGs, 15.8 MB). Script 7 is refused as scanned
   (#14) on both sides and writes no `.fountain`. **What it costs is time.**
   Scripts 1, 3, 4 and 5 convert within 0.01 s of before; script 2 goes from
-  0.30 s to 0.60 s; forced script 6 from 1.6 s to 16.8 s, the worst case. And
-  the image pass runs BEFORE both guards, so a refusal pays it too: script 6
-  takes 16.9 s to be refused as not a screenplay (1.5 s before), and script 7
-  takes 3.7 s to be refused as scanned (under 0.1 s before). `IMAGE_BUDGET_MS`
-  is what bounds that, at 20 s.
+  0.30 s to 0.60 s; forced script 6 from 1.6 s to 16.8 s, the worst case. A
+  refusal costs what it cost before pictures existed, because the image pass
+  runs only after both guards have passed: script 6 is refused as not a
+  screenplay in 1.54 s (main 1.53 s), and script 7 as scanned in 0.09 s (main
+  0.09 s), best of two. Run ahead of the guards, the same pass makes those
+  16.7 s and 3.7 s.
 - **Default:** always on. There is no knob in this phase; phase 2's
   `includeImages` will gate rendering, not recognition, so the notes stay in
   the `.fountain` whatever it is set to.

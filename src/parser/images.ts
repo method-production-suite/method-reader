@@ -500,18 +500,23 @@ export const IMAGE_MAX_EDGE = 1400;
  * timeout is per image, which is the right shape for one damaged XObject and
  * the wrong shape for sixty: a lookbook whose images all fail would stall five
  * minutes with no error and no progress, which reads to the user as a hang
- * rather than as a slow conversion. But an earlier version of this constant
- * charged only the WAIT, and the case that exposes it is not a damaged file at
- * all — it is a scan. Every sheet of a 300dpi scan is a distinct full-page
- * image, so the pixels arrive instantly (nothing to wait for), the encode
- * cache never hits (no two sheets alike), and MAX_IMAGES cannot help because
- * the cap is applied to work already done. Measured 2026-08-07 (bun 1.3.14):
- * one 2550x3300 sheet of realistic paper noise is 22ms of downscale plus
- * 219ms of deflate, so 120 sheets is 29 seconds of CPU and 141 MB of encoded
- * pixels — every byte of it thrown away moments later by `ScannedPdfError`.
- * Twenty-eight seconds is twenty-eight seconds whether it went on waiting or
- * on deflating, so the budget now covers resolve, convert, downscale and
- * encode. That scan stops around sheet 82 instead of running to the end.
+ * rather than as a slow conversion. And charging only the WAIT would miss the
+ * expensive case, which is not a damaged file at all but a document of
+ * scanned sheets: every one is a distinct full-page image, so the pixels
+ * arrive instantly (nothing to wait for), the encode cache never hits (no two
+ * sheets alike), and MAX_IMAGES cannot help because the cap is applied to work
+ * already done. Measured 2026-08-07 (bun 1.3.14): one 2550x3300 sheet of
+ * realistic paper noise is 22ms of downscale plus 219ms of deflate, so 120
+ * sheets is 29 seconds of CPU and 141 MB of encoded pixels. Twenty-eight
+ * seconds is twenty-eight seconds whether it went on waiting or on deflating,
+ * so the budget covers resolve, convert, downscale and encode, and that
+ * document stops around sheet 82 instead of running to the end.
+ *
+ * Which documents CAN spend it: only ones that cleared both of convert.ts's
+ * guards, because the pictures are decoded after them (see `extractText`). A
+ * plain scan never gets here, since it has no text and is refused on that; a
+ * forced lookbook of photographed boards, or a script with a scanned appendix,
+ * is the document this ceiling is for.
  *
  * The number survives charging the work because of one piece of arithmetic:
  * 60 images (MAX_IMAGES) at that same worst-case 241ms is 14.5s, inside this
