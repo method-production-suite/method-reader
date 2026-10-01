@@ -150,3 +150,32 @@ export function parseImgNote(inner: string): ImageRef | undefined {
   }
   return { file, widthPct, fullPage };
 }
+
+/**
+ * Whether an `[[img: ...]]` note becomes a figure: the option is on, the note
+ * parses (the allowlist is inside parseImgNote), and the picture is in the
+ * set the caller can actually ship. The ONE place this is decided, so the
+ * renderer, the section opener and (in phase 4) the cover agree.
+ *
+ * `raw` is the note token's text as fountain-js hands it over, which is the
+ * INNER text, brackets already stripped: the same string parseImgNote reads,
+ * passed straight through.
+ *
+ * The three gates answer different questions and none stands in for another.
+ * `includeImages` is the reader's choice. parseImgNote is the security
+ * boundary, so a name a careless caller let into `have` still fails it.
+ * `have` is honesty about the book: a note outlives its picture whenever a
+ * `.fountain` is moved or its folder pruned, and a figure pointing at a file
+ * the book does not carry is an invalid EPUB (RSC-007), not a missing plate.
+ * A note failing any gate renders nothing, exactly as every other note does.
+ */
+export function rendersImage(
+  raw: string,
+  includeImages: boolean,
+  have: ReadonlySet<string>,
+): ImageRef | undefined {
+  if (!includeImages) return undefined;
+  const img = parseImgNote(raw);
+  if (!img || !have.has(img.file)) return undefined;
+  return img;
+}

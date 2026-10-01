@@ -1,5 +1,7 @@
 import { describe, test, expect } from 'bun:test';
-import { fmtClasses, fmtSizeStep, isSafeImageFile, parseImgNote, stripNotes } from '../src/fountain/notes';
+import {
+  fmtClasses, fmtSizeStep, isSafeImageFile, parseImgNote, rendersImage, stripNotes,
+} from '../src/fountain/notes';
 
 describe('stripNotes', () => {
   test('a leading note and the newline it sat on both go', () => {
@@ -246,5 +248,45 @@ describe('isSafeImageFile', () => {
 
   test('accepts the names this engine writes', () => {
     expect(isSafeImageFile('p001-01.png')).toBe(true);
+  });
+});
+
+describe('rendersImage', () => {
+  // The one place that decides whether a picture note becomes a figure. Three
+  // gates, each able to say no on its own, and each tested with the other two
+  // open so a gate that stopped working cannot hide behind its neighbours.
+  const have = new Set(['p001-01.png', 'p002-01.png']);
+
+  test('a note that passes every gate gives back the parsed picture', () => {
+    expect(rendersImage('img: p001-01.png w=42', true, have)).toEqual({
+      file: 'p001-01.png', widthPct: 42, fullPage: false,
+    });
+    expect(rendersImage('img: p002-01.png w=100 full', true, have)).toEqual({
+      file: 'p002-01.png', widthPct: 100, fullPage: true,
+    });
+  });
+
+  test('the option off renders nothing, even for a picture that is there', () => {
+    expect(rendersImage('img: p001-01.png w=42', false, have)).toBeUndefined();
+  });
+
+  test('a hostile name renders nothing, even if the set somehow holds it', () => {
+    // The allowlist is the security boundary and `have` is not: a caller
+    // that put a traversal string into its set must still get no figure.
+    const poisoned = new Set([...have, '../../x.png', 'a/b.png']);
+    expect(rendersImage('img: ../../x.png w=42', true, poisoned)).toBeUndefined();
+    expect(rendersImage('img: a/b.png w=42', true, poisoned)).toBeUndefined();
+  });
+
+  test('a name the caller cannot ship renders nothing', () => {
+    // A moved .fountain, a pruned folder: the note outlives its picture. A
+    // figure pointing at a file the book does not carry is an invalid EPUB.
+    expect(rendersImage('img: p009-01.png w=42', true, have)).toBeUndefined();
+    expect(rendersImage('img: p001-01.png w=42', true, new Set())).toBeUndefined();
+  });
+
+  test('a note that is not a picture note renders nothing', () => {
+    expect(rendersImage('fmt: sans +1', true, have)).toBeUndefined();
+    expect(rendersImage('a writer\'s note', true, have)).toBeUndefined();
   });
 });
