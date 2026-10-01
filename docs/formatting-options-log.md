@@ -1,15 +1,16 @@
-# Formatting decisions log — future Mac app options registry
+# Formatting decisions log — the options registry
 
 Every formatting behavior Screepub applies, logged as it was tuned
 (2026-07-22, initial build + two feedback rounds on a real script). The print
 geometry and Kindle CSS constraints behind these choices live in
 `docs/screenplay-format-reference.md` — read that first when adjusting. Each entry is
-written as a **toggle or slider in the Mac app** (the reader window's rail;
-2026-07-22, moved out of Settings 2026-07-30): the engine's FormatOptions
+written as a **toggle or slider in the window** (its Settings page, drawn
+by `desktop/ui/tune.js`; until piece F3 deleted it, the Swift Mac app's
+reader rail was the first home of these knobs): the engine's FormatOptions
 (`src/options.ts`) is the single knob surface, reachable via
-`--options file.json` on the CLI and mirrored by `FormatSettings` in the
-app. Entries below marked "not built" remain future work; everything else
-is live.
+`--options file.json` on the CLI and through `screepub settings` from the
+window. Entries below marked "not built" remain future work; everything
+else is live.
 
 **Where a conversion's options come from (2026-09-14):** explicit flag
 (`--options` / `--options-json`) over the script's sidecar
@@ -109,9 +110,12 @@ and the suite will say so if you forget.
   CSS only to its generated inline ToC. Cure is
   `--disable-remove-fake-margins`, which lets the EPUB's own % geometry
   (and the `dialogueSideMarginPct` knob) flow through to AZW3
-  unchanged. Guarded by `tests/export-calibre.test.ts`: one test pins the
-  flag in the recipe, and a real-Calibre one (weekly on CI) explodes an
-  AZW3 and finds the margins, ported at F3 from the Swift app's own check.
+  unchanged. `tests/export-calibre.test.ts` pins the flag in the recipe.
+  A real-Calibre test there (weekly on CI, ported at F3 from the Swift
+  app's own check) explodes an AZW3 and finds the margins, but it is an
+  OUTCOME check only: on Calibre 9.11.0 it stays green with the flag
+  removed, so nothing in the suite proves the flag is still needed. It
+  stays on the strength of the user report above.
   Code: `src/export/calibre.ts` (`CALIBRE_FORMAT_GUARDS`).
 
 ### 2b. Cue & parenthetical alignment (option, default centered)
@@ -484,8 +488,8 @@ and the suite will say so if you forget.
   format matters: KFX only. AZW3 and MOBI ignore these properties, so a
   sideload in either format would look identical whether the rule fired or
   not.
-- **Code:** `src/options.ts`, `src/epub/css.ts`, app FormatSettings +
-  ReaderRail.
+- **Code:** `src/options.ts`, `src/epub/css.ts`, and the window's control
+  in `desktop/ui/tune.js`.
 
 ## Cleanup & rejoining
 
@@ -1077,7 +1081,8 @@ and the suite will say so if you forget.
 **These eighteen options are the Tune surface of the Tauri window**
 (`desktop/ui/tune.js`), the one Mac app since the identifier release. The
 older SwiftUI reader rail described below was their first interface; that
-app is retired and no longer published. The Tune surface keeps the same four
+app is retired, no longer published, and since piece F3 gone from this
+repository. The Tune surface keeps the same four
 groups (the page, dialogue, the text, what the book carries), plus the four
 `Read from the PDF` knobs. The window owns no formatting rule of its own: it
 reaches every option through the CLI, `screepub settings <fountain> --set`
@@ -1260,4 +1265,4 @@ engine needs to change.
   `stampLineFmt`), `src/parser/group.ts`, `src/parser/classify.ts`,
   `src/fountain/serialize.ts` (`fmtNote`), `src/fountain/notes.ts`,
   `src/epub/html.ts` + `src/epub/css.ts`, `src/mobi/html.ts`,
-  `src/options.ts`, app FormatSettings + ReaderRail.
+  `src/options.ts`, and the window's control in `desktop/ui/tune.js`.

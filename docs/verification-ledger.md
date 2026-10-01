@@ -45,7 +45,8 @@ switched on, installs the window in its place.
 
 - `ci.yml`, on every push: the engine's test suite and typecheck on Linux,
   the command-line archives built for every target and the Linux one run,
-  and a Mac job that builds the older Mac app and runs its own checks.
+  and the compiled command line converting a fixture on a Mac, checked with
+  epubcheck.
 - `desktop.yml`, on every push: the window compiles on macOS, Windows and
   Linux, each platform's bundles are produced, and the engine inside each one
   runs and converts a fixture without installing anything. No runner has a
@@ -60,8 +61,8 @@ switched on, installs the window in its place.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after the identifier release), and
-  the older Mac app's AZW3 and KEPUB checks still pass against Calibre's
-  newest version.
+  the engine's Calibre tests (AZW3, KEPUB, the KFX plugin listing) still
+  pass against Calibre's newest version.
 
 **Verified by nobody**
 
