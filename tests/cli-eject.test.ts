@@ -149,6 +149,30 @@ describe('ejectCommand: the command per platform', () => {
     expect(result).toEqual({ ejected: 'E:\\' });
   });
 
+  test('win32: a listed volume that is not a drive root is refused, and PowerShell never starts', async () => {
+    // A UNC share, a path with a quote in it, and a subfolder (reachable via
+    // SCREEPUB_VOLUME_ROOTS) that would otherwise map to the whole D: drive.
+    for (const volume of ['\\\\server\\share\\Kindle', "E:\\it's\\Kindle", 'D:\\stuff\\Kindle']) {
+      const reader: ConnectedDevice = { kind: 'kindle', name: 'Kindle', volume };
+      const { run, calls } = recordingRun();
+      const err = await caught(ejectCommand(volume, { platform: 'win32', devices: async () => [reader], run }));
+      expect(codeOf(err)).toBe('unknown-device');
+      expect(calls).toEqual([]);
+    }
+  });
+
+  test('ejectCommands on win32: a drive root, with or without its backslash, and nothing else', () => {
+    const line = (drive: string) =>
+      `(New-Object -comObject Shell.Application).Namespace(17).ParseName('${drive}').InvokeVerb('Eject')`;
+    for (const root of ['E:\\', 'E:', 'e:\\']) {
+      const commands = ejectCommands(root, 'win32');
+      expect(Array.isArray(commands) && commands[0][commands[0].length - 1]).toBe(line('E:'));
+    }
+    for (const other of ['D:\\stuff\\Kindle', '\\\\server\\share', "E:\\'", 'E:\\\\', 'Kindle']) {
+      expect(ejectCommands(other, 'win32')).toBe('not-a-drive-root');
+    }
+  });
+
   test('ejectCommands is pure: linux needs the device first', () => {
     expect(ejectCommands('/Volumes/Kindle', 'darwin')).toEqual([['diskutil', 'eject', '/Volumes/Kindle']]);
     expect(ejectCommands('/run/media/sam/KOBOeReader', 'linux')).toBe('needs-device');

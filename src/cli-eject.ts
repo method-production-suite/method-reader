@@ -87,6 +87,11 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
   // caller spelled it (a trailing slash, say).
   const listed = reader.volume as string;
   let commands = ejectCommands(listed, platform);
+  if (commands === 'not-a-drive-root') {
+    // Windows ejects whole drives only; a reader listed as a folder on one
+    // (or a share) is not something this verb may remove.
+    throw new CliError('unknown-device', `not a whole drive Screepub can eject: ${volume}`);
+  }
   if (commands === 'needs-device') {
     // findmnt exits 1 with nothing to say for a folder that is not a mount
     // point; that is the same "no device" as an empty answer.

@@ -15,25 +15,32 @@ export interface EjectRun {
  *  enough for that and short enough that the window's button comes back. */
 export const EJECT_TIMEOUT_MS = 20_000;
 
-/** The Windows drive a volume root names, like `E:` for `E:\`; null when it
- *  names none. Only a letter and a colon ever reach the PowerShell line, so
- *  nothing in a volume path can be read as script. */
+/** The Windows drive a volume names, like `E:` for `E:\`, but ONLY when the
+ *  volume is exactly a drive root (`X:\` or `X:`); null for anything else,
+ *  a subfolder, a UNC share, or a path with a quote in it. So only a letter
+ *  and a colon ever reach the PowerShell line, nothing in a volume path can
+ *  be read as script, and a folder on a drive never ejects the whole drive. */
 export function windowsDrive(volume: string): string | null {
-  const match = /^([A-Za-z]):/.exec(volume);
+  const match = /^([A-Za-z]):\\?$/.exec(volume);
   return match ? `${match[1].toUpperCase()}:` : null;
 }
 
 /** The per-OS argv lists for one eject; pure, so tests read them.
  *
  * darwin: `diskutil eject <volume>`.
- * win32: the shell's own Eject verb on the drive, through PowerShell.
+ * win32: the shell's own Eject verb on the drive, through PowerShell, and
+ * only for a drive root ('not-a-drive-root' otherwise; the caller refuses).
  * Everything else (Linux): udisksctl works on the block DEVICE, not the
  * mount point, so the caller first asks findmnt for it ('needs-device')
  * and then runs linuxEjectCommands. */
-export function ejectCommands(volume: string, platform: NodeJS.Platform): string[][] | 'needs-device' {
+export function ejectCommands(
+  volume: string,
+  platform: NodeJS.Platform,
+): string[][] | 'needs-device' | 'not-a-drive-root' {
   if (platform === 'darwin') return [['diskutil', 'eject', volume]];
   if (platform === 'win32') {
-    const drive = windowsDrive(volume) ?? volume;
+    const drive = windowsDrive(volume);
+    if (drive === null) return 'not-a-drive-root';
     return [
       [
         'powershell',
