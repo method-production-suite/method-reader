@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'bun:test';
+import { Fountain } from 'fountain-js';
 import { extractDocument } from '../src/parser/extract';
 import { parseLines } from '../src/parser/index';
 import { toFountain } from '../src/fountain/serialize';
@@ -379,7 +380,7 @@ describe('images merged into the element stream', () => {
 
   test('two images at the same y keep the order they arrived in', () => {
     // Equal y is not a tie the merge has to break: it drains the queue in
-    // order, so the paint order `toRawImages`s stable sort preserved survives
+    // order, so the paint order `toRawImages`'s stable sort preserved survives
     // one more stage. A comparator-based insertion could quietly reverse them.
     expect(
       onlyImage(
@@ -419,7 +420,7 @@ describe('images merged into the element stream', () => {
   });
 
   test('an images array in the wrong order is normalized, not misplaced', () => {
-    // parseLines is exported and Task 9 wires convert.ts into it. Today
+    // parseLines is exported, so any caller can hand it pictures. Today
     // `toRawImages` hands this half over already sorted, so the sort inside
     // insertImages is a no-op — which is exactly why it needs its own test: a
     // caller that builds RawImage[] some other way must not silently scatter
@@ -551,12 +552,37 @@ describe('images merged into the element stream', () => {
     expect(els.filter((e) => e.type === 'dialogue').length).toBe(1);
   });
 
+  test('a plate between the halves of a page-split speech does not split it', () => {
+    // Why insertImages runs AFTER mergeSplitSpeeches. That pass joins the
+    // halves only when nothing but furniture sits between them, and a plate
+    // at the top of page 2, under the page number and above the continuation,
+    // sits exactly there. Merged in first, the picture would end the run and
+    // one speech would come out as two with the plate between them; merged in
+    // after, the continuation is already folded into the first half.
+    const els = parseLines(
+      [
+        line('ODILE', 44, 200, 1),
+        line('Speech nineteen. If this line sits alone at the top or the', 29, 188, 1),
+        line('13.', 87, 756, 2),
+        line('bottom of a page, the keep failed.', 29, 720, 2),
+        line('INT. NEXT ROOM - DAY', 17, 690, 2),
+      ],
+      [image(740, 2, 'p002-01.png')],
+    ).elements;
+    expect(els.map((e) => e.type)).toEqual([
+      'character', 'dialogue', 'page-number', 'image', 'scene',
+    ]);
+    expect(els.filter((e) => e.type === 'dialogue').map((e) => e.text)).toEqual([
+      'Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed.',
+    ]);
+  });
+
   describe('a plate in a page seam, with page markers on', () => {
-    // Both of these are serializer defects, and they are asserted HERE rather
+    // Each of these was a serializer defect, and they are asserted HERE rather
     // than only in serialize.test.ts because their reachability is the whole
     // point: hand-built elements can be dismissed as a shape the parser never
-    // makes, and these are shapes it makes from ordinary lines. Page 1 carries
-    // a heading and action so it is not read as a title page.
+    // makes, and these are shapes it makes from ordinary lines. Page 1 opens
+    // on a heading so nothing on it is read as a title page.
     const markers = { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true };
 
     test('a cue at the foot of a page keeps the speech under the next page plate', () => {
@@ -634,10 +660,12 @@ describe('images merged into the element stream', () => {
     // a misplaced picture stays a misplaced picture and does not take a speech
     // with it. If these go red because someone gave both streams a second
     // ordering key, delete the tests rather than the fix.
+    // As extraction hands it over: left column, then right, with the right
+    // column's cue flagged `dualRight` (extract.ts sets it on that line only).
     const dualExchange = [
       line('BUNNY', 40, 500, 1),
       line('Left one.', 30, 488, 1),
-      line('CASSIUS', 40, 500, 1),
+      { ...line('CASSIUS', 40, 500, 1), dualRight: true },
       line('Right one.', 30, 488, 1),
     ];
 
@@ -657,19 +685,29 @@ describe('images merged into the element stream', () => {
       // speech to close: both speeches survive intact, and the picture comes
       // out one speech later than the sheet drew it.
       expect(toFountain(parseLines(dualExchange))).toBe(
-        '@BUNNY\nLeft one.\n\n@CASSIUS\nRight one.\n',
+        '@BUNNY\nLeft one.\n\n@CASSIUS ^\nRight one.\n',
       );
-      expect(toFountain(parseLines(dualExchange, [image(494, 1, 'p001-01.png')]))).toBe(
-        '@BUNNY\nLeft one.\n\n[[img: p001-01.png w=71]]\n\n@CASSIUS\nRight one.\n',
+      const out = toFountain(parseLines(dualExchange, [image(494, 1, 'p001-01.png')]));
+      expect(out).toBe(
+        '@BUNNY\nLeft one.\n\n[[img: p001-01.png w=71]]\n\n@CASSIUS ^\nRight one.\n',
       );
+      // Nor does the note between the columns break the pair: fountain-js
+      // still reads one dual exchange, with the note inside it.
+      expect(new Fountain().parse(out, true).tokens.map((t) => t.type)).toEqual([
+        'dual_dialogue_begin',
+        'dialogue_begin', 'character', 'dialogue', 'dialogue_end',
+        'note',
+        'dialogue_begin', 'character', 'dialogue', 'dialogue_end',
+        'dual_dialogue_end',
+      ]);
     });
 
     test('an image between a cue and its speech costs NOTHING in ONE column', () => {
       // The general case, and the one that is not an ordering exception at
       // all: nothing about this stream is out of order, a picture simply sat
-      // between a cue and the line under it. This is the regression test for
-      // the serializer fix — it asserted the broken output when the merge
-      // landed, and the repaired output now.
+      // between a cue and the line under it. What keeps the `@` and the
+      // speaker here is serialize.ts's lookahead past the image, and this is
+      // the test that goes red from the parser's side if it stops looking.
       const singleColumn = [
         line('BUNNY', 40, 500, 1),
         line('Her line.', 30, 470, 1),

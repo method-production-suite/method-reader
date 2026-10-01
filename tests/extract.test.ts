@@ -358,6 +358,15 @@ describe('dual dialogue marking', () => {
     expect(lines[0].dualRight).toBeUndefined();
     expect(lines[2].text).toBe('DEV');
     expect(lines[2].dualRight).toBe(true);
+    // And each right-column line keeps the y of the row it was printed on,
+    // the same as the left-column line beside it. That shared y is the
+    // premise of the dual-dialogue picture rule in insertImages
+    // (src/parser/index.ts): the right column's y restarts at the top of the
+    // exchange, so a picture inside it lands among the left column's lines.
+    expect(lines[1].text).toBe('rewind it again.');
+    expect(lines[3].text).toBe('maybe if you were faster');
+    expect(lines[2].y).toBe(lines[0].y);
+    expect(lines[3].y).toBe(lines[1].y);
   });
 });
 

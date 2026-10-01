@@ -107,11 +107,17 @@ export function parseLines(lines: RawLine[], images: RawImage[] = []): ParsedScr
   // Step 5.8: merge the pictures in where they sat on the page (registry #19).
   //
   // AFTER mergeSplitSpeeches, and both halves of that are load-bearing. Not
-  // earlier, because steps 4 to 5.6 are length-preserving and `rescueCues`
-  // depends on it: `blocks[i]` must still pair with `elements[i]`, and an image
-  // element has no block. Not later, because `extractScenes` records an
-  // `elementIndex` into whatever array it is handed, so the images have to be
-  // in the stream before the metadata passes count positions in it.
+  // earlier, because that pass joins a page-split speech only when nothing but
+  // furniture sits between its halves, and a plate at the top of the second
+  // page, under the page number and above the continuation, sits exactly
+  // there: merged in first, it ends the run, and one speech comes out as two
+  // with the picture between them (parser-pipeline.test.ts, "a plate between
+  // the halves of a page-split speech does not split it"). Earlier still would
+  // also break `rescueCues`, which needs `blocks[i]` to pair with
+  // `elements[i]`, and an image element has no block. Not later, because
+  // `extractScenes` records an `elementIndex` into whatever array it is
+  // handed, so the images have to be in the stream before the metadata passes
+  // count positions in it.
   const withImages = insertImages(merged, images, nextId);
 
   // Step 6: Build metadata
@@ -209,30 +215,29 @@ function mergeSplitSpeeches(elements: ScreenplayElement[]): ScreenplayElement[] 
  * The ONE exception: `deinterleaveDualDialogue` emits a simultaneous exchange
  * as the left column followed by the right column, and the right column's y
  * values restart at the top of the region. An image whose y falls inside that
- * region therefore lands among the LEFT column's lines — and until the
- * serializer learned to see past a picture, the cost was not merely that it
- * was in the wrong place.
+ * region therefore lands among the LEFT column's lines instead of after the
+ * whole exchange.
  *
- * What it used to cost, because framing this as misplacement is what let its
- * severity read as settled: an image between a cue and its speech split them,
- * and `prepare` in serialize.ts demotes a `character` whose NEXT element is
- * neither dialogue nor parenthetical. So the cue lost its `@`, the speech lost
- * its speaker, and one dialogue block rendered as three action paragraphs.
- * Measured, not reasoned: `@BUNNY\nLeft one.` became
- * `BUNNY\n\np001-01.png\n\nLeft one.`. That lookahead now skips images, and
- * the emitter holds the note until the speech closes, so
- * tests/parser-pipeline.test.ts asserts the REPAIRED string,
- * `@BUNNY\nLeft one.\n\n[[img: p001-01.png w=71]]\n\n@CASSIUS\nRight one.`,
- * rather than the element types, which read the same either way.
+ * What that costs is a misplaced picture and nothing more, and the reason is
+ * in serialize.ts, not here. Landing between a cue and its speech, as the
+ * pinned case does, makes the shape `prepare` would demote: it turns a
+ * `character` whose NEXT element is neither dialogue nor parenthetical into
+ * action, which would cost the cue its `@` and the speech its speaker. Its
+ * lookahead skips images, and the emitter holds the note until the speech
+ * closes, so both speeches survive and the picture follows the left one.
+ * tests/parser-pipeline.test.ts asserts that whole string,
+ * `@BUNNY\nLeft one.\n\n[[img: p001-01.png w=71]]\n\n@CASSIUS ^\nRight one.`,
+ * rather than the element types, which would read the same if the speech
+ * were lost. The note does not break the pair either: fountain-js still reads
+ * one dual exchange with the note inside it, and that is pinned there too.
  *
- * Still pinned rather than fixed HERE, on two counts. The fix belongs where
- * the lookahead is: this is the general "an image interrupts a speech"
- * problem, not a dual-dialogue one, and serialize.ts returns the `@` and the
- * speaker in every case, dual or not. And a picture printed INSIDE a
- * two-column simultaneous speech is a document the corpus does not contain,
- * so what is left (the picture reading between the two columns' speeches
- * rather than after them) is worth less than a second ordering key on both
- * streams.
+ * Pinned rather than fixed HERE, on two counts. The guard belongs where the
+ * lookahead is: an image interrupting a speech is a general problem, not a
+ * dual-dialogue one, and serialize.ts handles it in every case, dual or not.
+ * And a picture printed INSIDE a two-column simultaneous speech is a document
+ * the corpus does not contain, so what is left (the picture reading between
+ * the two columns' speeches rather than after them) is worth less than a
+ * second ordering key on both streams.
  */
 function insertImages(
   elements: ScreenplayElement[],
