@@ -21,12 +21,15 @@
 //
 //   =anchor apple generic and certificate leaf[subject.OU] = "XSRB3D643J"
 //
-// and that is strictly WEAKER than UpdateInstall.swift's: it drops both
-// Developer ID certificate-chain clauses, and for the app it drops the
-// bundle identifier. An artifact can satisfy the shorthand and still be
-// refused by the installer, which is precisely the gap step 3 exists to
-// close. tests/verify-signing.test.ts pins the strings below against the
-// Swift that builds them.
+// and that is strictly WEAKER than what the Swift app's installer pins: it
+// drops both Developer ID certificate-chain clauses, and for the app it
+// drops the bundle identifier. An artifact can satisfy the shorthand and
+// still be refused by the installer, which is precisely the gap step 3
+// exists to close. tests/verify-signing.test.ts pins the strings below
+// literally, with the Swift that built them quoted beside the pin. The
+// Swift source left this repository at piece F3; the installed apps that
+// run it did not, so these strings are a contract with apps in the wild
+// and this file is where it is written down.
 //
 // It also answers step 4 without anyone installing anything. The two
 // releases differ in exactly one variable, the identifier, so "would the
@@ -105,13 +108,16 @@ export function codesignDisplayArgv(target: string): string[] {
 //   Screepub-Desktop-macOS-universal.dmg   rejected, Unnotarized Developer ID
 //   the .app inside the latter              accepted, Notarized Developer ID
 //
-// So this is a regression against the DMG that ships today, and
-// app/release.sh is the reference: sign, notarize, staple, validate.
+// So this was a regression against the DMG that shipped then, and the
+// Swift app's release script was the reference: sign, notarize, staple,
+// validate. release.yml's "Notarize and staple the disk image" step does
+// the same to the window's image now.
 
 /** `-t open`, not `-t exec`: the thing being assessed is a disk image a
- *  person double-clicks. The primary-signature context is app/release.sh's
- *  too, and its comment records why: without it an unsigned-but-stapled
- *  image reports "no usable signature", a red flag that is not real. */
+ *  person double-clicks. The primary-signature context is what the Swift
+ *  app's release script used too, and its comment recorded why: without it
+ *  an unsigned-but-stapled image reports "no usable signature", a red flag
+ *  that is not real. */
 export function spctlAssessArgv(target: string): string[] {
   return ['spctl', '-a', '-t', 'open', '--context', 'context:primary-signature', '-v', target];
 }
@@ -233,8 +239,8 @@ export function describeVerdict(
       `the DMG is NOT notarized: no stapled ticket, and Gatekeeper says ` +
         `"Unnotarized Developer ID". Signing is fine and the updater does not care, ` +
         `but a person who downloads this and double-clicks it meets Gatekeeper, and ` +
-        `Screepub-macOS.dmg does not do this to them. tauri-bundler notarizes the .app ` +
-        `and never the image; app/release.sh notarizes and staples the image too.`,
+        `a release image must not do this to them. tauri-bundler notarizes the .app ` +
+        `and never the image; release.yml's notarize step must notarize and staple the image too.`,
     );
   } else {
     fail(

@@ -231,11 +231,6 @@
       "category": "test",
       "breaks": "One describe block mirrors kit-check main.swift:774-812 pair for pair, which is what makes \"those 17 checks are replaced\" checkable rather than asserted. It cites the Swift by path and line deliberately. At F3 the mirror loses its counterpart and the block becomes ordinary tests with a comment saying where they came from; the assertions do not change, because they are about src/update/compare.ts."
     },
-    "tests/verify-signing.test.ts": {
-      "refs": 12,
-      "category": "test",
-      "breaks": "Reads app/Sources/ScreepubKit/UpdateInstall.swift and pins verify-signing.ts's codesign requirement strings against it, clause by clause. This is the cross-pin that stops the release gate checking a paraphrase; it is also the thing that stops working the moment app/ is gone. At F3 the requirements have no upstream left, so either they become this repository's own definition with the Swift quoted in a comment, or the gate goes with the frozen updater it serves."
-    },
     "tools/build-app-bundle.ts": {
       "refs": 3,
       "category": "artifact",
@@ -250,11 +245,6 @@
       "refs": 1,
       "category": "note",
       "breaks": "A comment naming src/ and app/ as the two trees a denylist would otherwise have had to enumerate."
-    },
-    "tools/verify-signing.ts": {
-      "refs": 6,
-      "category": "test",
-      "breaks": "Carries UpdateInstaller's teamID, bundleID and both designated requirements, because the whole point is to check a published DMG against what the FROZEN app will actually demand of it. Its source of truth is a Swift file in app/. The notarization section added 2026-09-21 also cites app/release.sh and Screepub-macOS.dmg, as the reference behaviour and the comparison artifact: both become historical notes at F3 rather than breakage, since the checks themselves are about the Tauri DMG. Goes with tests/verify-signing.test.ts."
     }
   }
 }
