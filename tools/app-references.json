@@ -96,11 +96,6 @@
       "category": "doc",
       "breaks": "A live instruction to the notes author: edit app/Sources/ScreepubApp/ReaderRail.swift when a bullet announces a UI change. Not a record — a procedure that would tell someone to edit a deleted file."
     },
-    "docs/retired-coverage.md": {
-      "refs": 55,
-      "category": "note",
-      "breaks": "The decision record for the 171 kit-check assertions that have no bun test counterpart. It cites Swift sources and kit-check sections by name throughout, because naming what is lost is its whole job. The 52nd reference, added 2026-09-14, is UpdateInstall.swift in the note recording that the owner chose a FULL ported self-update: that moved self-update-installer's 26 checks from accept-loss to port, so the file now names the Swift source those checks have to be reproduced FROM rather than merely mourned. The 53rd and 54th, added 2026-09-20, are in the kfx-install-plugin row: it now names app/Packages/KFXKit's vendored zip and its PROVENANCE.md in order to say that we STOPPED shipping them, which is a reference that exists to record a removal. It OUTLIVES app/: at F3 its rows stop describing code that exists and start describing what was given up, which is the record a later maintainer needs. Do not delete it with the directory."
-    },
     "src/cli-devices.ts": {
       "refs": 1,
       "category": "note",

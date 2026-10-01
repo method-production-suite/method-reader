@@ -60,9 +60,15 @@ import { join } from 'node:path';
  * spec is explicit that the sweep must exclude them "or it will fight them
  * forever".
  *
+ * docs/retired-coverage.md joined them at F3. It is the gate-2 record of
+ * what the Swift app's checks covered and what became of each, so its whole
+ * job is to name Swift sources and kit-check line ranges. Once the
+ * directory is gone it is a dated record like the plans, not a live claim,
+ * and rewriting it to avoid the names would erase what it records.
+ *
  * This test and tools/app-references.json are also excluded: they name
  * every token in the list by construction, so counting them measures the
- * sweep, not the tree. They are the last two files F3 removes.
+ * sweep, not the tree.
  *
  * ── THE SHAPE OF THE PIN ──────────────────────────────────────────────
  *
@@ -91,6 +97,7 @@ const NOT_SWEPT = [
   /^docs\/superpowers\//,
   /^docs\/adr\//,
   /^docs\/releases\//,
+  /^docs\/retired-coverage\.md$/,
   /^tools\/app-references\.json$/,
   /^tests\/app-references\.test\.ts$/,
 ];
@@ -313,24 +320,14 @@ describe('the sweep is not vacuous', () => {
     expect(countIn('working-directory: desktop/src-tauri\n')).toBe(0);
   });
 
-  test('the inventory still names the couplings that make F3 expensive', () => {
-    // Anchors. An emptied inventory agreeing with an emptied scan is the
-    // failure mode; these five are the ones the spec and the F1 report call
-    // out by name, and each is a different KIND of breakage.
-    const f = inventory.files;
-    // Reads a file inside app/ for its content: the brand-token source.
-    expect(f['tests/theme-colors.ts']?.category).toBe('test');
-    // A macOS CI job that is coverage, not legacy weight.
-    expect(f['.github/workflows/ci.yml']?.category).toBe('build');
-    // An entire workflow reachable only through `working-directory: app`.
-    expect(f['.github/workflows/weekly-toolchain.yml']?.category).toBe('build');
-    // A license document with two live paths inside app/Packages/KFXKit.
-    expect(f['THIRD-PARTY-NOTICES.md']?.category).toBe('doc');
-    // (A fifth anchor, site/index.html's download buttons, left at the
-    // identifier release: the buttons point at Screepub-macOS.dmg, which is
-    // the window's image from then on, not a coupling to app/.)
-    expect(Object.keys(f).length).toBeGreaterThan(40);
-  });
+  // There was an anchors test here: the inventory had to keep naming
+  // theme-colors.ts, ci.yml, weekly-toolchain.yml and THIRD-PARTY-NOTICES.md
+  // and hold more than 40 rows, because before F3 an emptied inventory
+  // agreeing with an emptied scan was the failure mode. At F3 emptying it is
+  // the job, so the anchors went with the first rows F3 resolved. What still
+  // stops a scan that sees nothing from passing is the two tests either side
+  // of this note: the patterns must match the forms they exist for, and the
+  // swept slice of the tree must be the whole tree.
 
   test('the sweep covers the whole tree, not an empty slice of it', () => {
     // A broken NOT_SWEPT list, a failed git ls-files, or a cwd mistake all
@@ -341,6 +338,7 @@ describe('the sweep is not vacuous', () => {
     expect(files).toContain('.github/workflows/weekly-toolchain.yml');
     expect(files.some((x) => x.startsWith('app/'))).toBe(false);
     expect(files.some((x) => x.startsWith('docs/superpowers/'))).toBe(false);
+    expect(files).not.toContain('docs/retired-coverage.md');
   });
 });
 
