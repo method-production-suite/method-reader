@@ -33,9 +33,9 @@ describe('brand component previews', () => {
   const expected = [
     'brad', 'page-frame', 'title-block', 'slugline',
     'transition-rule', 'buttons', 'device-table', 'shot-frame',
-    // The app's four states. These existed as designed things in
-    // Theme.swift/ContentView.swift long before they existed here, which
-    // meant the website had no vocabulary for anything happening and the
+    // The app's four states. These existed as designed things in the
+    // Swift Mac app's views long before they existed here, which meant
+    // the website had no vocabulary for anything happening and the
     // designs were invisible to everyone outside the Swift source.
     'drop-well', 'progress', 'failure-notice', 'result-card',
   ];

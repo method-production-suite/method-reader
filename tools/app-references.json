@@ -46,30 +46,10 @@
       "category": "doc",
       "breaks": "Two live paths inside app/Packages/KFXKit (PROVENANCE.md and LICENSE) plus the Screepub.app resource path. This is a LICENSE document: a dangling path in it is a compliance defect, not a typo. F3 acceptance criterion 13."
     },
-    "brand/README.md": {
-      "refs": 5,
-      "category": "doc",
-      "breaks": "Describes the frozen Swift copy of the brand tokens: tokens.json became the source on 2026-09-23 (F3 criterion 12), and the drift check skips once app/ is gone. At F3, drop the sentences about the Swift copy."
-    },
-    "brand/tokens.css": {
-      "refs": 2,
-      "category": "note",
-      "breaks": "Comments saying which values mirror Theme.swift."
-    },
-    "brand/tokens.json": {
-      "refs": 12,
-      "category": "test",
-      "breaks": "`\"from\": \"Theme.swift\"` on seven tokens is now provenance, not a pin: this file is the source of truth and tests/brand-tokens.test.ts checks the frozen Swift copy against it, skipping once app/Sources/ScreepubApp/Theme.swift is gone. F3 criterion 12 is already satisfied and needs no further change here."
-    },
     "desktop/ui/feedback.js": {
       "refs": 4,
       "category": "note",
       "breaks": "Comments only. The file is a PORT of app/Sources/ScreepubKit/Feedback.swift and says so, including why it builds the URL with URLSearchParams where the Swift could not. Nothing executes against app/. Same treatment at F3 as the test that cites it: rewrite the provenance to name the commit that ported it rather than deleting the fact that it was ported. This row was missing when the interface pass merged at 4e74939, where the sweep failed on the branch's own tip; added on main with the merge."
-    },
-    "desktop/ui/style.css": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "A comment naming Theme.swift as what the token values are re-checked against."
     },
     "desktop/ui/tune.js": {
       "refs": 3,
@@ -135,16 +115,6 @@
       "refs": 3,
       "category": "note",
       "breaks": "Names UpdateCheck.swift as what it was ported from. Provenance, not a dependency: the code is pure TypeScript and keeps working when app/ goes. Worth keeping until F3 anyway, because the git-describe downgrade rule is the least obvious thing in the file and the Swift comment is where its reason was first written down."
-    },
-    "tests/brand-components.test.ts": {
-      "refs": 2,
-      "category": "note",
-      "breaks": "A comment crediting Theme.swift/ContentView.swift as where the components existed first."
-    },
-    "tests/brand-tokens.test.ts": {
-      "refs": 10,
-      "category": "test",
-      "breaks": "Guarded, not broken: the Theme.swift comparison runs inside test.skipIf(!themeSwiftExists) and every other test in the file reads only tokens.json, tokens.css and the component previews. Once app/Sources/ScreepubApp/Theme.swift is gone the one guarded test skips instead of failing; F3 criterion 12 is already satisfied."
     },
     "tests/build-cli.test.ts": {
       "refs": 1,
@@ -220,11 +190,6 @@
       "refs": 1,
       "category": "note",
       "breaks": "A comment saying the assertion was ported verbatim from kit-check."
-    },
-    "tests/theme-colors.ts": {
-      "refs": 5,
-      "category": "test",
-      "breaks": "READS app/Sources/ScreepubApp/Theme.swift and parses it. The single hardest F3 dependency: it is the only file outside app/ that opens a file inside app/ for its CONTENT rather than its existence."
     },
     "tests/update-compare.test.ts": {
       "refs": 9,

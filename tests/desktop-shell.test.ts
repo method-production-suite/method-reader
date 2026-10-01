@@ -557,9 +557,9 @@ describe('the desktop CSS copy of the brand tokens does not drift', () => {
   // 404s even in `cargo run`. style.css therefore inlines the seven core
   // colours literally, copied by hand from brand/tokens.json. A hand copy
   // is exactly the kind of value this repo already refuses to trust to a
-  // human (see tests/brand-tokens.test.ts pinning the web tokens to
-  // Theme.swift, and format-defaults.json pinned by two suites) — so pin
-  // this copy the same way, against the one JSON source of truth.
+  // human (see tests/brand-tokens.test.ts pinning tokens.css to
+  // tokens.json, and tests/options.test.ts pinning format-defaults.json) —
+  // so pin this copy the same way, against the one JSON source of truth.
   const CSS = readFileSync(join(REPO, 'desktop', 'ui', 'style.css'), 'utf8');
   const TOKENS = JSON.parse(readFileSync(join(REPO, 'brand', 'tokens.json'), 'utf8')).colors;
 
