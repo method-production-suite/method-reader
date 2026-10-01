@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import JSZip from 'jszip';
 import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
+import { convertFountain } from '../src/convert';
 import { encodePng } from '../src/parser/png';
 // A namespace, not a named import, because the spy below replaces the binding
 // on the module itself: that is what the code under test calls through.
@@ -130,8 +131,77 @@ describe('the MOBI rebuild and the picture folder', () => {
     writeFileSync(epub, 'stale');
     return { fountain, epub, plate };
   }
-  const rebuild = (fountain: string, epub: string, format = DEFAULT_FORMAT_OPTIONS) =>
-    freshKindleArtifact({ epub, fountainPath: fountain, format, calibreAvailable: false, kfxReady: false });
+  const rebuild = (
+    fountain: string,
+    epub: string,
+    format = DEFAULT_FORMAT_OPTIONS,
+    onStage?: (stage: string) => void,
+  ) => freshKindleArtifact({ epub, fountainPath: fountain, format, calibreAvailable: false, kfxReady: false, onStage });
+
+  /** The pictures an EPUB carries, by entry path. */
+  const figuresIn = async (epub: string) =>
+    Object.values((await JSZip.loadAsync(readFileSync(epub))).files)
+      .filter((f) => !f.dir && f.name.startsWith('OEBPS/images/'))
+      .map((f) => f.name)
+      .sort();
+
+  /** A library script with two figures, and the book an earlier conversion
+   * built from its folder while both pictures were there: dated ten seconds
+   * back, as a book converted before this export would be. */
+  async function libraryBook() {
+    const dir = scratch();
+    const fountain = join(dir, 'Script.fountain');
+    const text = 'Title: Test\n\nINT. ROOM - DAY\n\n[[img: p001-01.png w=40]]\n\nA line of action.\n\n'
+      + '[[img: p002-01.png w=60]]\n\nAnother line.\n';
+    writeFileSync(fountain, text);
+    const folder = join(dir, 'Script.images');
+    mkdirSync(folder);
+    const plates = new Map([
+      ['p001-01.png', encodePng(new Uint8Array([0, 128, 255]), 1, 1)],
+      ['p002-01.png', encodePng(new Uint8Array([255, 128, 0]), 1, 1)],
+    ]);
+    for (const [name, bytes] of plates) writeFileSync(join(folder, name), bytes);
+    const epub = join(dir, 'Script.epub');
+    writeFileSync(epub, (await convertFountain(text, { format: DEFAULT_FORMAT_OPTIONS, images: plates })).epub);
+    const earlier = new Date(Date.now() - 10_000);
+    utimesSync(epub, earlier, earlier);
+    // The control, without which "the book is unchanged" proves nothing: it
+    // starts out carrying both pictures.
+    expect(await figuresIn(epub)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    return { fountain, folder, epub };
+  }
+
+  /** The rung against a damaged folder: the library book is left exactly as
+   * it was, date included (the window tells one version of the book from the
+   * next by it), and the .mobi it writes is current, so the next export
+   * reuses it instead of rebuilding against the same loss. */
+  async function expectBookKept(fountain: string, epub: string) {
+    const bytes = readFileSync(epub);
+    const date = statSync(epub).mtimeMs;
+    const stages: string[] = [];
+    const out = await rebuild(fountain, epub, DEFAULT_FORMAT_OPTIONS, (s) => stages.push(s));
+    expect(out).toBe(mobiSibling(epub));
+    expect(readFileSync(out).length).toBeGreaterThan(0);
+    expect(readFileSync(epub)).toEqual(bytes);
+    expect(statSync(epub).mtimeMs).toBe(date);
+    expect(statSync(out).mtimeMs).toBeGreaterThan(date);
+    expect(kindleArtifactPlan(epub, { calibreAvailable: false, kfxReady: false }).fresh).toBe(true);
+    expect(await rebuild(fountain, epub, DEFAULT_FORMAT_OPTIONS, (s) => stages.push(s))).toBe(out);
+    expect(stages).toEqual(['rebuilding the Kindle file…']);
+  }
+
+  test('a picture the folder lost leaves the library book as it was', async () => {
+    const { fountain, folder, epub } = await libraryBook();
+    // An iCloud placeholder: the name is still there, the picture is not.
+    writeFileSync(join(folder, 'p002-01.png'), new Uint8Array(0));
+    await expectBookKept(fountain, epub);
+  });
+
+  test('a picture folder that is gone leaves the library book as it was', async () => {
+    const { fountain, folder, epub } = await libraryBook();
+    rmSync(folder, { recursive: true });
+    await expectBookKept(fountain, epub);
+  });
 
   test('the EPUB it rewrites keeps its figure and the picture behind it', async () => {
     const { fountain, epub, plate } = library();

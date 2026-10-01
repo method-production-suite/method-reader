@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { writeFileAtomicSync } from '../atomic-write';
 import { convertFountain } from '../convert';
+import { imageNoteFiles } from '../fountain/notes';
 import { readImages } from '../library-images';
 import type { FormatOptions } from '../options';
 import { azw3Sibling, toAzw3 } from './calibre';
@@ -81,8 +82,9 @@ export interface FreshKindleArtifactOptions {
  * engine.
  *
  * NOTE: the MOBI branch REWRITES `epub` in place before it writes the .mobi
- * beside it — this function can mutate the EPUB it was handed, not just
- * produce the Kindle file. */
+ * beside it, unless the rebuild would leave out a picture the script names:
+ * this function can mutate the EPUB it was handed, not just produce the
+ * Kindle file. */
 export async function freshKindleArtifact(opts: FreshKindleArtifactOptions): Promise<string> {
   const { epub, fountainPath, format, calibreAvailable, kfxReady, onStage } = opts;
 
@@ -109,22 +111,39 @@ export async function freshKindleArtifact(opts: FreshKindleArtifactOptions): Pro
 
   onStage?.('rebuilding the Kindle file…');
   const fountainText = await Bun.file(fountainPath).text();
-  // The EPUB written below replaces the library book, so it has to be built
-  // with the script's pictures, read from the folder beside its .fountain
-  // under the same rules as every other render from the text; built without
-  // them, this rung would strip every figure from the library book. Not read
-  // with the option off, when no figure would be shown.
+  // This rung renders the EPUB and the MOBI together from the .fountain, and
+  // the EPUB it renders replaces the library book. So it is built with the
+  // script's pictures, read from the folder beside the .fountain under the
+  // same rules as every other render from the text. With the option off the
+  // folder is not read and the book is rebuilt without pictures, which is
+  // what the setting asks for.
   //
-  // The folder's warnings (imageFolderWarnings) are dropped here, knowingly.
-  // This function answers with a path, and the export answer it feeds has
-  // stages but no warnings, so there is nowhere to say them. And they would
-  // describe the EPUB, a side effect of this rung, not the MOBI it hands
-  // over, which shows no picture at all yet: a sentence about pictures left
-  // out of a file that carries none would mislead more than it told. The
-  // conversion that last built the library book from this same folder said
-  // them when it did. When the MOBI carries pictures, these belong in the
-  // export answer.
-  const images = format.includeImages ? (await readImages(fountainPath)).images : undefined;
+  // With the option on, the library book is replaced only when the rebuild
+  // carries every picture the script's notes ask for. A folder damaged since
+  // the book was built (an iCloud placeholder, a deleted file, the folder
+  // moved or refused, the cap reached) would otherwise turn the book into a
+  // weaker copy of itself, silently, and every route that sends the EPUB
+  // (Kobo, Apple Books, Save EPUB) would send the weaker one. One rule covers
+  // all of those, because each of them leaves a name the notes ask for out of
+  // the folder's read. Kept, the book stays the one its last conversion
+  // built. The MOBI is written either way and loses nothing, since it shows
+  // no picture at all yet; written after the EPUB, it is newer than the book,
+  // so the staleness rule above reads it as current and the next export
+  // reuses it instead of rebuilding against the same loss.
+  //
+  // Nothing reports the missing picture, or the folder's own warnings
+  // (imageFolderWarnings). This function answers with a path, and the export
+  // answer it feeds has stages but no warnings, so there is nowhere yet to
+  // say them; and the file it hands over, the MOBI, lost nothing. Once the
+  // MOBI carries pictures (phase 3), a missing one is a loss in the file
+  // being sent, and saying so belongs in the export answer.
+  let images: ReadonlyMap<string, Uint8Array> | undefined;
+  let keepLibraryBook = false;
+  if (format.includeImages) {
+    const read = (await readImages(fountainPath)).images;
+    images = read;
+    keepLibraryBook = [...imageNoteFiles(fountainText)].some((name) => !read.has(name));
+  }
   const result = await convertFountain(fountainText, { format, mobi: true, images });
   if (!result.mobi) {
     throw new RegenerationFailedError('the engine reported success but produced no .mobi');
@@ -137,7 +156,7 @@ export async function freshKindleArtifact(opts: FreshKindleArtifactOptions): Pro
   // EPUB's, which needsRegeneration would then trust as fresh forever. Same
   // discipline as cli.ts's writeFileAtomic, settings/sidecar.ts and
   // export/kfx.ts.
-  writeFileAtomicSync(epub, result.epub);
+  if (!keepLibraryBook) writeFileAtomicSync(epub, result.epub);
   writeFileAtomicSync(mobi, result.mobi);
   return mobi;
 }

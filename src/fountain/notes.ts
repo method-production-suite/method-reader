@@ -7,6 +7,7 @@
 // beside slug.ts, as the one copy both renderers import (the registry #5b
 // precedent) rather than two regexes that drift.
 
+import { Fountain } from 'fountain-js';
 import type { ImageRef, SizeStep } from '../parser/types';
 
 /** Any note. Bracket-free inside, so an unterminated `[[` matches nothing and
@@ -178,4 +179,27 @@ export function rendersImage(
   const img = parseImgNote(raw);
   if (!img || !have.has(img.file)) return undefined;
   return img;
+}
+
+/**
+ * Every picture a whole Fountain text's notes ask for, by filename: the set a
+ * folder would have to hold for a render of this text to show every figure
+ * it names.
+ *
+ * Read the way the renderers read it, rather than by a regex over the text:
+ * fountain-js tokenizes it exactly as convert.ts does, and a `note` token's
+ * text goes through parseImgNote, the same parse rendersImage applies. So a
+ * note no render would ever turn into a figure asks for nothing: one refused
+ * by the allowlist, one folded into a line of action (a note inside another
+ * token's text is stripped as text), one in a commented-out block. Counting
+ * those would report pictures missing that no book could have shown.
+ */
+export function imageNoteFiles(fountainText: string): Set<string> {
+  const files = new Set<string>();
+  for (const t of new Fountain().parse(fountainText, true).tokens) {
+    if (t.type !== 'note') continue;
+    const img = parseImgNote(t.text ?? '');
+    if (img) files.add(img.file);
+  }
+  return files;
 }

@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import {
-  fmtClasses, fmtSizeStep, isSafeImageFile, parseImgNote, rendersImage, stripNotes,
+  fmtClasses, fmtSizeStep, imageNoteFiles, isSafeImageFile, parseImgNote, rendersImage, stripNotes,
 } from '../src/fountain/notes';
 
 describe('stripNotes', () => {
@@ -288,5 +288,38 @@ describe('rendersImage', () => {
   test('a note that is not a picture note renders nothing', () => {
     expect(rendersImage('fmt: sans +1', true, have)).toBeUndefined();
     expect(rendersImage('a writer\'s note', true, have)).toBeUndefined();
+  });
+});
+
+describe('imageNoteFiles', () => {
+  // The pictures a whole text asks for, which is the question a rebuild asks
+  // before it replaces a book: does the folder still hold all of them? Read
+  // the way the renderers read the text, so a note they would never turn into
+  // a figure is not counted as a picture the folder lost.
+  test('names the picture of every picture note, once each', () => {
+    const text = [
+      'INT. ROOM - DAY',
+      '[[img: p001-01.png w=40]]',
+      'A line of action.',
+      '[[img: p002-01.png w=100 full]]',
+      '[[img: p001-01.png w=40]]',
+    ].join('\n\n');
+    expect([...imageNoteFiles(text)].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+  });
+
+  test('a note no renderer would show a picture for asks for nothing', () => {
+    const text = [
+      'INT. ROOM - DAY',
+      '[[fmt: sans]]',
+      "[[a writer's note]]",
+      // Refused by the allowlist inside parseImgNote.
+      '[[img: ../x.png w=40]]',
+      '[[img: p003-01.jpg w=40]]',
+      // Folded into a line of action, where the renderers strip it as text.
+      'A line with [[img: p004-01.png w=40]] folded into it.',
+      // Commented out.
+      '/* [[img: p005-01.png w=40]] */',
+    ].join('\n\n');
+    expect([...imageNoteFiles(text)]).toEqual([]);
   });
 });
