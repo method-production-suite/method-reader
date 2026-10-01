@@ -78,10 +78,25 @@ jobs:
           ./build/screepub-engine tests/fixtures/screenplay.pdf \
             -o "$RUNNER_TEMP/smoke.epub" --mobi --json | tee "$RUNNER_TEMP/smoke.json"
           grep -q '"ok":true' "$RUNNER_TEMP/smoke.json"
+      # The two fixtures whose books carry figures (registry #19a): images.pdf
+      # keeps two pictures, jpx.pdf one JPEG 2000 picture the compiled binary
+      # must decode with the decoder it unpacks at run time. --no-fountain,
+      # because the pictures ride in the EPUB either way and nothing should
+      # be written beside the committed fixtures.
+      - name: Compiled binary converts the picture fixtures
+        run: |
+          ./build/screepub-engine tests/fixtures/images.pdf --no-fountain \
+            -o "$RUNNER_TEMP/images.epub" --json | tee "$RUNNER_TEMP/images.json"
+          grep -q '"imageCount":2' "$RUNNER_TEMP/images.json"
+          ./build/screepub-engine tests/fixtures/jpx.pdf --no-fountain \
+            -o "$RUNNER_TEMP/jpx.epub" --json | tee "$RUNNER_TEMP/jpx.json"
+          grep -q '"imageCount":1' "$RUNNER_TEMP/jpx.json"
       - name: epubcheck the output
         run: |
           brew install epubcheck
           epubcheck "$RUNNER_TEMP/smoke.epub"
+          epubcheck "$RUNNER_TEMP/images.epub"
+          epubcheck "$RUNNER_TEMP/jpx.epub"
   # Bun cross-compiles every target from one machine, so a broken target is
   # a red push instead of a surprise at tag time. The verification lives in
   # tools/build-cli.ts, which is unit-tested and hand-runnable; this job is
