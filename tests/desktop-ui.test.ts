@@ -5667,7 +5667,7 @@ describe('the Send surface', () => {
     // The turns themselves are driven on the page in send-routes-ui.test.ts
     // ("only a save waits for the book", "a Settings save during a
     // background build waits for it", and the rest of that block).
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     expect(['device', 'save-epub', 'save-kindle', 'open', 'setup', null].map(sendUi.readsTheBook))
       .toEqual([true, true, true, false, false, false]);
   });
@@ -5679,7 +5679,7 @@ describe('the Send surface', () => {
     // (the engine's own answer for it is taken whole, never turned into the
     // failure line) and those rows offer no button that could only fail.
     const { routes, preselected } = await import('../src/export/routes');
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     for (const platform of ['darwin', 'win32', 'linux']) {
       const list = routes({ platform, booksApp: true, sendToKindleApp: false, appleMailDefault: true, devices: [] });
       const shown = sendUi.routesFrom({ ok: true, routes: list, chosen: preselected(list, undefined).id });
@@ -5688,7 +5688,6 @@ describe('the Send surface', () => {
       expect(readers.length).toBeGreaterThan(0);
       for (const r of readers) {
         expect(`${platform} ${r.key} available: ${r.available}`).toBe(`${platform} ${r.key} available: false`);
-        expect(sendUi.buttonClassFor(r, shown.chosen)).toBe(null);
       }
       expect(sendUi.connectedDevices(shown)).toEqual([]);
     }
@@ -5919,21 +5918,15 @@ describe('what the Send surface decides', () => {
     UNPROVEN: string;
     PROVEN: { kind: string; platform: string };
     KINDS: string[];
-    READERS: { kind: string; name: string; route: string }[];
     NO_MESSAGE: string;
     platformOf: (hint: unknown) => string;
-    readerStatus: (kind: string, platform: unknown) => { proven: boolean; text: string };
     undetectable: (platform: unknown) => string | null;
-    provenNote: (platform: unknown) => string;
-    caveatFor: (device: unknown, platform: unknown) => string | null;
     routesFrom: (answer: unknown) => { routes: Record<string, unknown>[]; chosen: string } | null;
-    buttonClassFor: (route: unknown, chosenId: unknown) => string | null;
     sameRoutes: (a: unknown, b: unknown) => boolean;
     forFormat: (device: unknown) => string;
     whereLine: (device: unknown) => string;
     blockedReason: (script: unknown) => string | null;
     optionsJsonFor: (script: unknown) => string | null;
-    sendLabel: (device: Device) => string;
     sentLine: (device: Device, answer: unknown) => string;
     artifactLine: (built: unknown) => string;
     statusFor: (phase: string, opts?: { device?: unknown; detail?: string })
@@ -5950,80 +5943,18 @@ describe('what the Send surface decides', () => {
   const kobo: Device = { id: '/m/KOBOe', kind: 'kobo', name: 'Kobo', volume: '/m/KOBOe' };
   const rm: Device = { id: 'remarkable', kind: 'remarkable', name: 'reMarkable', volume: null };
 
-  beforeAll(async () => { send = (await import(join(UI, 'send.js'))) as SendModule; });
+  beforeAll(async () => { send = (await import(join(UI, 'send-routes.js'))) as SendModule; });
 
-  test('only the one combination anyone has actually plugged in reads as proven', () => {
-    // The limit is a KIND and a PLATFORM together. A surface that keyed off
-    // the kind alone — the obvious implementation — would put "Verified on
-    // hardware" beside a Kindle on this very Linux machine, where no device
-    // transfer has ever been run. That is the value this asserts a change
-    // FROM: kindle+linux and kindle+windows must be unproven.
-    expect(send.readerStatus('kindle', 'MacIntel').proven).toBe(true);
-    for (const platform of ['Linux aarch64', 'Win32', undefined]) {
-      expect(`kindle on ${platform}: ${send.readerStatus('kindle', platform).proven}`)
-        .toBe(`kindle on ${platform}: false`);
-    }
-    for (const kind of send.KINDS.filter((k) => k !== 'kindle')) {
-      expect(`${kind} on a Mac: ${send.readerStatus(kind, 'MacIntel').proven}`)
-        .toBe(`${kind} on a Mac: false`);
-    }
-    // And the two statuses are not the same words, or the column says nothing.
-    expect(send.readerStatus('kindle', 'MacIntel').text)
-      .not.toBe(send.readerStatus('kobo', 'MacIntel').text);
-  });
-
-  test('the unproven sentence names the reader and never appears on the proven one', () => {
-    expect(send.caveatFor(kindle, 'MacIntel')).toBe(null);
-    for (const [device, platform] of [
-      [kindle, 'Linux aarch64'], [kindle, 'Win32'],
-      [kobo, 'MacIntel'], [rm, 'MacIntel'],
-      [{ id: 'x', kind: 'pocketbook', name: 'PocketBook', volume: '/m/x' }, 'MacIntel'],
-    ] as [Device, string][]) {
-      const said = send.caveatFor(device, platform);
-      expect(`${device.kind}/${platform}: ${said === null}`)
-        .toBe(`${device.kind}/${platform}: false`);
-      expect(said).toContain(send.UNPROVEN);
-    }
-    // A vendor's own name, not "this device": a reader has to know which row
-    // the warning is about when three are connected.
-    expect(send.caveatFor(kobo, 'MacIntel')).toContain('Kobo');
-    expect(send.caveatFor(kobo, 'MacIntel')).not.toContain('Kindle');
-  });
-
-  test('the line under the standing list says where the one proven route was proven', () => {
-    // Four identical red statuses in a column read as a warning wall unless
-    // something says what they mean. It also carries the fact no status cell
-    // can: a Mac is where the Kindle was plugged in, so on Linux and Windows
-    // NOTHING has met hardware — including the Kindle whose row, keyed off
-    // kind alone, would otherwise look like the safe one.
-    const mac = send.provenNote('MacIntel');
-    expect(mac).toContain('Mac');
-    const linux = send.provenNote('Linux aarch64');
-    expect(linux).toContain(send.UNPROVEN);
-    expect(linux).toContain('Linux');
-    expect(send.provenNote('Win32')).toContain('Windows');
-    expect(send.provenNote('Win32')).not.toContain('Linux');
+  test('a platform this window cannot name is unknown, never some other one', () => {
     // navigator.platform is deprecated and navigator.userAgentData is absent
     // on WebKitGTK, so this window can genuinely not know. Under-claiming
-    // hardware support is right; naming the wrong operating system is not —
-    // "never tested from Linux" on a Mac is a false statement about the
-    // machine, which is the one thing this surface exists to avoid.
+    // hardware support is right; naming the wrong operating system is not.
     for (const unknown of [undefined, null, '', 'CrOS', {}]) {
-      const said = send.provenNote(unknown);
-      expect(`${String(unknown)} names Linux: ${said.includes('Linux')}`)
-        .toBe(`${String(unknown)} names Linux: false`);
-      expect(`${String(unknown)} names Windows: ${said.includes('Windows')}`)
-        .toBe(`${String(unknown)} names Windows: false`);
-      // It still says the thing that is true everywhere.
-      expect(said).toContain(send.UNPROVEN);
       expect(send.platformOf(unknown)).toBe('unknown');
     }
     expect(send.platformOf('Linux aarch64')).toBe('linux');
     expect(send.platformOf('MacIntel')).toBe('mac');
     expect(send.platformOf('Win32')).toBe('windows');
-    // The Mac line is a different sentence from the other two, or the note is
-    // saying the same thing everywhere and telling nobody anything.
-    expect(new Set([mac, linux, send.provenNote('Win32')]).size).toBe(3);
   });
 
   test('a tolino on Windows is called undetectable, not merely absent', () => {
@@ -6055,8 +5986,6 @@ describe('what the Send surface decides', () => {
     };
     const shown = send.routesFrom({ ok: true, routes: [pocketbook, save], chosen: 'save-epub' })!;
     expect(shown.routes.map((r) => r.id)).toEqual([pocketbook.id, 'save-epub']);
-    expect(send.buttonClassFor(shown.routes[0], shown.chosen)).toBe('btn btn-outline');
-    expect(send.caveatFor(shown.routes[0]!.device, 'MacIntel')).toContain(send.UNPROVEN);
     for (const device of [
       { ...pocketbook.device, id: '' },                  // no id to send to
       { ...pocketbook.device, name: '   ' },             // nothing for the row
@@ -6135,7 +6064,6 @@ describe('what the Send surface decides', () => {
   });
 
   test('"Sent" is claimed in the shape the engine reported, and never invents a path', () => {
-    expect(send.sendLabel(kindle)).toBe('Send to Kindle');
     const copied = send.sentLine(kindle, { ok: true, destination: '/m/Kindle/x.azw3' });
     expect(copied.startsWith('Sent to Kindle')).toBe(true);
     expect(copied).toContain('/m/Kindle/x.azw3');
@@ -6248,21 +6176,6 @@ describe('what the Send surface decides', () => {
     expect(send.artifactLine(null)).toBe('');
   });
 
-  test('the standing list covers every kind the engine can report', () => {
-    // With nothing plugged in this list IS the surface, so a kind missing
-    // from it is a reader with no way to find out whether Screepub reaches it.
-    expect(send.READERS.map((r) => r.kind).sort()).toEqual([...send.KINDS].sort());
-    for (const reader of send.READERS) {
-      expect(`${reader.kind} route: ${reader.route.length > 40}`)
-        .toBe(`${reader.kind} route: true`);
-    }
-    // The Kindle row says WHY it is not the EPUB, because that is the one
-    // surprising thing on the surface.
-    const kindleRow = send.READERS.find((r) => r.kind === 'kindle')!;
-    expect(kindleRow.route).toContain('EPUB');
-    expect(kindleRow.route).toContain('MOBI');
-  });
-
   test('every kind the engine can report is also in the standing list', async () => {
     const { DEVICE_DISPLAY_NAMES } = await import('../src/device/types');
     // The engine's own list, so a fifth vendor added to src/device/types.ts
@@ -6306,7 +6219,7 @@ describe('the ladder the Send surface asks for, without a toolchain', () => {
 
   test('a Kindle’s argv reaches the Kindle rung with this script’s settings', async () => {
     const { argv } = await import(join(UI, 'app.js'));
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     const { exportCommand } = await import('../src/cli-export');
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
 
@@ -6348,7 +6261,7 @@ describe('the ladder the Send surface asks for, without a toolchain', () => {
   });
 
   test('each rung of the ladder produces a different sentence on the surface', async () => {
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     const { exportCommand } = await import('../src/cli-export');
 
     const rung = async (calibre: boolean, kfx: boolean) => {

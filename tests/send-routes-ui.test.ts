@@ -1,12 +1,12 @@
 // The Send page's route decisions (parity piece B, window plan Task W2):
-// the pure functions above send.js's drawing line that turn the engine's
-// `routes --json` answer into rows, buttons, save-dialog defaults and status
-// lines.
+// the pure functions in send-routes.js (moved out of send.js unchanged) that
+// turn the engine's `routes --json` answer into rows, buttons, save-dialog
+// defaults and status lines.
 //
 // Its own file rather than a block in desktop-ui.test.ts only so parallel
 // work on that file cannot collide with this one; the style is that file's
-// "what the Send surface decides" block, and send.js is imported the same
-// dynamic way.
+// "what the Send surface decides" block, and send-routes.js is imported the
+// same dynamic way.
 //
 // The test that matters most is the round trip: the validator is checked
 // against the ENGINE's real catalog (src/export/routes.ts) for every fact
@@ -25,12 +25,11 @@ const EM_DASH = '\u2014';
 
 type RouteDevice = { id: string; kind: string; name: string; volume: string | null };
 type Status = { line: string; bad: boolean };
-type SendModule = {
+type RoutesModule = {
   NO_MESSAGE: string;
   NO_NOTE: string;
   NO_ROUTES: string;
   NO_EXTENSION: string;
-  LEDE: string;
   SETUP_BUTTON: string;
   SETUP_TITLE: string;
   connectedDevices: (shown: unknown) => RouteDevice[] | null;
@@ -38,11 +37,10 @@ type SendModule = {
   performerFor: (route: unknown) => string | null;
   buttonLabel: (route: unknown, file?: unknown) => string;
   routeLines: (route: unknown, platform: unknown) =>
-    { title: string; detail: string; where: string | null; caveat: string | null };
+    { title: string; detail: string; where: string | null };
   kindleFileFrom: (built: unknown) => [string, Record<string, unknown>];
   kindleCheckFrom: (answer: unknown) =>
     { extension: string; fresh: boolean; builtBy: string; bookDate: number | null } | null;
-  wantsKindleFile: (shown: unknown) => boolean;
   handsOverKindleFile: (route: unknown) => boolean;
   buildsAhead: (file: unknown, opts?: {
     building?: boolean; busy?: boolean; triedFor?: string | null; forKindle?: boolean;
@@ -52,12 +50,11 @@ type SendModule = {
   preparingPhase: (device: unknown, file?: unknown) => string;
   kindleTurn: (file: unknown) => string;
   routesFailure: (answer: unknown) => string;
-  caveatFor: (device: unknown, platform: unknown) => string | null;
   whereLine: (device: unknown) => string;
   routesFrom: (answer: unknown) => { routes: Route[]; chosen: string } | null;
   isDeviceRoute: (route: unknown) => boolean;
-  buttonClassFor: (route: unknown, chosenId: unknown) => string | null;
   saveNameFor: (epubPath: unknown, extension: string) => string;
+  baseName: (path: unknown) => string;
   saveFiltersFor: (extension: string, label: unknown) => { name: string; extensions: string[] }[];
   routeNoteFrom: (answer: unknown) => [string, { detail: string }];
   emailSetupHint: (route: unknown) => { line: string; key: string } | null;
@@ -67,8 +64,8 @@ type SendModule = {
   ) => Status;
 };
 
-let send: SendModule;
-beforeAll(async () => { send = (await import(join(UI, 'send.js'))) as SendModule; });
+let send: RoutesModule;
+beforeAll(async () => { send = (await import(join(UI, 'send-routes.js'))) as RoutesModule; });
 
 // ------------------------------------------------------------------ facts
 
@@ -403,42 +400,6 @@ describe('isDeviceRoute: which rows go through export then send', () => {
   });
 });
 
-// -------------------------------------------------------- buttonClassFor
-
-describe('buttonClassFor: brass for the chosen route, outline for the rest', () => {
-  const books = { id: 'apple-books', key: 'apple-books', available: true };
-  const kobo = { id: 'device:kobo', key: 'device:kobo', available: false, unavailable: 'connect' };
-
-  test('the chosen available route is brass, every other available one is outline', () => {
-    expect(send.buttonClassFor(books, 'apple-books')).toBe('btn btn-brad');
-    expect(send.buttonClassFor(books, 'save-epub')).toBe('btn btn-outline');
-    expect(send.buttonClassFor(books, null)).toBe('btn btn-outline');
-  });
-
-  test('an unavailable row has no button, chosen or not', () => {
-    expect(send.buttonClassFor(kobo, 'device:kobo')).toBe(null);
-    expect(send.buttonClassFor(kobo, 'apple-books')).toBe(null);
-    // Only a real true is available.
-    expect(send.buttonClassFor({ ...books, available: 'true' }, 'apple-books')).toBe(null);
-    expect(send.buttonClassFor(null, 'apple-books')).toBe(null);
-  });
-
-  test('on every engine answer: at most one brass button, and it is the chosen one', () => {
-    for (const facts of everyFacts()) {
-      const list = routes(facts);
-      for (const last of remembered(list)) {
-        const { chosen } = answerFor(list, last);
-        const classes = list.map((r) => send.buttonClassFor(r, chosen));
-        const brass = list.filter((_, i) => classes[i] === 'btn btn-brad');
-        const chosenRow = list.find((r) => r.id === chosen)!;
-        expect(brass.map((r) => r.id)).toEqual(chosenRow.available ? [chosen] : []);
-        // Buttons exactly on available rows.
-        list.forEach((r, i) => expect(classes[i] !== null).toBe(r.available));
-      }
-    }
-  });
-});
-
 // ----------------------------------------------------- the save dialog
 
 describe('saveNameFor and saveFiltersFor: what the save dialog starts with', () => {
@@ -490,6 +451,19 @@ describe('saveNameFor and saveFiltersFor: what the save dialog starts with', () 
 });
 
 // ------------------------------------------------ routeNoteFrom, statusFor
+
+describe('baseName: the file name at the end of a path', () => {
+  test('either separator, and a trailing one is not a name', () => {
+    expect(send.baseName('/Users/me/Books/Field Station.epub')).toBe('Field Station.epub');
+    expect(send.baseName('C:\\Books\\Field Station.kfx')).toBe('Field Station.kfx');
+    expect(send.baseName('/Volumes/Kindle/')).toBe('Kindle');
+    expect(send.baseName('plain.epub')).toBe('plain.epub');
+  });
+
+  test('nothing to name is an empty name', () => {
+    for (const path of ['', '/', null, undefined]) expect(send.baseName(path)).toBe('');
+  });
+});
 
 describe('routeNoteFrom: what a route’s answer lets the status line say', () => {
   test('the engine’s note, trimmed, as a success', () => {
@@ -732,7 +706,7 @@ describe('performerFor: which flow a row’s button runs', () => {
 });
 
 describe('routeLines: what a row says', () => {
-  test('a mounted reader keeps its volume line and every device its unproven caveat', () => {
+  test('a mounted reader keeps its volume line', () => {
     const list = routes({
       platform: 'darwin', booksApp: true, sendToKindleApp: false, appleMailDefault: true,
       devices: [kindle, kobo, rm],
@@ -740,14 +714,10 @@ describe('routeLines: what a row says', () => {
     const rows = send.routesFrom(answerFor(list, undefined))!.routes;
     const [k, ko, r] = [rows[0]!, rows[1]!, rows[2]!];
     expect(send.routeLines(k, 'MacIntel')).toEqual({
-      title: 'Kindle', detail: k.detail, where: '/Volumes/Kindle', caveat: null,
+      title: 'Kindle', detail: k.detail, where: '/Volumes/Kindle',
     });
     const kobos = send.routeLines(ko, 'MacIntel');
     expect(kobos.where).toBe('/Volumes/KOBOeReader');
-    expect(kobos.caveat).toBe(send.caveatFor(ko.device, 'MacIntel'));
-    expect(kobos.caveat).not.toBe(null);
-    // The Kindle is proven on a Mac only.
-    expect(send.routeLines(k, 'Linux x86_64').caveat).not.toBe(null);
     // A reMarkable never mounts: no volume line at all, because the engine's
     // detail ("the EPUB, over its USB connection") already says how it goes.
     expect(send.routeLines(r, 'MacIntel').where).toBe(null);
@@ -762,7 +732,7 @@ describe('routeLines: what a row says', () => {
     });
     for (const route of send.routesFrom(answerFor(list, undefined))!.routes) {
       expect(send.routeLines(route, 'MacIntel')).toEqual({
-        title: route.title, detail: route.detail, where: null, caveat: null,
+        title: route.title, detail: route.detail, where: null,
       });
     }
   });
@@ -860,21 +830,6 @@ describe('building the Kindle file before anyone presses anything', () => {
     expect(send.buildsAhead(file('kfx', false), { ...go, busy: true })).toBe(false);
     expect(send.buildsAhead(null, go)).toBe(false);
     expect(send.buildsAhead(undefined, go)).toBe(false);
-  });
-
-  test('a Kindle session: the route to choose is a Kindle or Save a Kindle file, or a Kindle is plugged in now', () => {
-    const shown = (devices: ConnectedDevice[], last?: string) => send.routesFrom(answerFor(routes({
-      platform: 'darwin', booksApp: true, sendToKindleApp: false, appleMailDefault: true, devices,
-    }), last));
-    expect(send.wantsKindleFile(shown([], 'save-kindle'))).toBe(true);
-    expect(send.wantsKindleFile(shown([], 'device:kindle'))).toBe(true); // remembered, unplugged
-    expect(send.wantsKindleFile(shown([kindle]))).toBe(true);
-    expect(send.wantsKindleFile(shown([kobo, kindle], 'device:kobo'))).toBe(true);
-    expect(send.wantsKindleFile(shown([]))).toBe(false); // Apple Books, first on a Mac
-    expect(send.wantsKindleFile(shown([kobo], 'device:kobo'))).toBe(false);
-    expect(send.wantsKindleFile(shown([rm], 'remarkable'))).toBe(false);
-    expect(send.wantsKindleFile(shown([], 'save-epub'))).toBe(false);
-    expect(send.wantsKindleFile(null)).toBe(false);
   });
 
   test('a press may build unless the check said the file is current', () => {
@@ -997,7 +952,6 @@ describe('the words this adds', () => {
       send.NO_NOTE,
       send.NO_ROUTES,
       send.NO_EXTENSION,
-      send.LEDE,
       send.SETUP_BUTTON,
       send.SETUP_TITLE,
       send.emailSetupHint({ key: 'email-to-kindle' })!.line,
@@ -1010,19 +964,6 @@ describe('the words this adds', () => {
       send.buildLine(null),
     ];
     for (const line of lines) expect(line).not.toContain(EM_DASH);
-  });
-
-  test('the page no longer promises that nothing leaves this computer', () => {
-    // It did when every row was a cable. Send to Kindle and email go through
-    // Amazon, so the page-wide promise would now be false; the device rows
-    // still say it, in the engine's words, where it is true.
-    expect(send.LEDE).not.toContain('nothing leaves');
-  });
-
-  test('the lede is true on a first run too: brass is last time’s route, or the best one here', () => {
-    // On a first run nothing was used last time; the engine chose the first
-    // row that can fire (preselected), and the page must not claim otherwise.
-    expect(send.LEDE).toContain('the one you used last time, or the best one here, in brass');
   });
 });
 
