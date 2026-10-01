@@ -456,8 +456,11 @@ export function tokensToPreviewHtml(
     format: resolved,
   });
   const doc = body.files[0]?.xhtml ?? xhtmlDoc('Script', '');
+  // The figure rules follow the body, as they do in the book: present when
+  // this document shows a picture, absent (and the sheet unchanged) when not.
+  const css = screenplayCss(resolved, { hasFigures: body.usedImages.size > 0 });
   return doc.replace(
     /<link rel="stylesheet"[^>]*\/>/,
-    () => `<style>\n${screenplayCss(resolved)}</style>`,
+    () => `<style>\n${css}</style>`,
   );
 }

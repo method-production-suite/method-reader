@@ -675,6 +675,181 @@ describe('figures', () => {
   });
 });
 
+// ── figure CSS (registry #19) ────────────────────────────
+
+describe('figure CSS', () => {
+  // A spread of option sets, so a figure block that leaned on one knob's
+  // value, or a seam that moved under one, shows up in some row.
+  const FORMATS = [
+    DEFAULT_FORMAT_OPTIONS,
+    resolveFormatOptions({ scenePageBreaks: true }),
+    resolveFormatOptions({ keepSpeechesWhole: true, keepSceneHeadingWithScene: false }),
+    resolveFormatOptions({ elementSpacingEm: 0.6, justifyText: true }),
+    resolveFormatOptions({ cueAlignment: 'indented', fontFamily: 'serif' }),
+    resolveFormatOptions({ printSplitMinimums: false, includeImages: false }),
+  ];
+  const WIDTHS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
+  const FIGURE_SELECTORS = [
+    '.figure', '.figure img', ...WIDTHS.map((n) => `p.w${n} img`), 'p.figure-full',
+  ];
+  const withFigures = (o = DEFAULT_FORMAT_OPTIONS) => screenplayCss(o, { hasFigures: true });
+  const TITLE_PAGE = '/* Title page */';
+
+  test('without figures the sheet is the one every caller already gets', () => {
+    for (const o of FORMATS) {
+      expect(screenplayCss(o, { hasFigures: false })).toBe(screenplayCss(o));
+    }
+    expect(screenplayCss(DEFAULT_FORMAT_OPTIONS)).toBe(SCREENPLAY_CSS);
+  });
+
+  test('without figures the sheet styles no figure and no image', () => {
+    for (const o of FORMATS) {
+      const css = screenplayCss(o);
+      for (const r of eachRule(css)) {
+        expect(r.selector, r.selector).not.toMatch(/\.figure|\bimg\b|\bp\.w\d/);
+      }
+      expect(css).not.toContain('.figure');
+    }
+  });
+
+  test('without figures the seam is exactly as it was: one blank line between p.centered and the title page', () => {
+    // The figure block is spliced in here, so this is where a stray newline
+    // from the splice would land in EVERY book, pictures or not. Pinned
+    // character for character, since the corpus promise is byte-identity.
+    expect(screenplayCss(DEFAULT_FORMAT_OPTIONS)).toContain(
+      `p.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n${TITLE_PAGE}\n`,
+    );
+    expect(screenplayCss(resolveFormatOptions({ elementSpacingEm: 0.6 }))).toContain(
+      `p.centered {\n  text-align: center;\n  margin: 0.6em 0;\n}\n\n${TITLE_PAGE}\n`,
+    );
+  });
+
+  test('with figures the sheet is that sheet plus one block, between p.centered and the title page', () => {
+    for (const o of FORMATS) {
+      const without = screenplayCss(o);
+      const withF = withFigures(o);
+      const at = without.indexOf(TITLE_PAGE);
+      expect(at).toBeGreaterThan(0);
+      // Everything before the seam and everything after it is untouched.
+      expect(withF.slice(0, at)).toBe(without.slice(0, at));
+      expect(withF.endsWith(without.slice(at))).toBe(true);
+      const block = withF.slice(at, withF.length - (without.length - at));
+      // The seam it opens sits right after p.centered.
+      expect(withF.slice(0, at)).toMatch(/p\.centered \{[^}]*\}\n\n$/);
+      // It holds the figure rules, in this order, and nothing else.
+      expect(eachRule(block).map((r) => r.selector)).toEqual(FIGURE_SELECTORS);
+      // And it ends with the same one blank line every rule here does.
+      expect(block.endsWith('}\n\n')).toBe(true);
+    }
+  });
+
+  test('the figure box: element spacing above and below, centred, in em', () => {
+    expect(ruleFor(withFigures(), '.figure')).toContain('margin: 1em 0;');
+    expect(ruleFor(withFigures(), '.figure')).toContain('text-align: center;');
+    const tight = withFigures(resolveFormatOptions({ elementSpacingEm: 0.6 }));
+    expect(ruleFor(tight, '.figure')).toContain('margin: 0.6em 0;');
+  });
+
+  test('the picture keeps its aspect: the height follows the width', () => {
+    const img = ruleFor(withFigures(), '.figure img');
+    expect(img).toContain('height: auto;');
+    expect(img).not.toContain('width');
+  });
+
+  test('twenty width rules, 5% to 100% of the column in steps of five', () => {
+    const css = withFigures();
+    for (const n of WIDTHS) {
+      expect(ruleFor(css, `p.w${n} img`)).toMatch(new RegExp(`\\{\\s*width: ${n}%;\\s*\\}$`));
+    }
+    expect(eachRule(css).filter((r) => /^p\.w\d+ img$/.test(r.selector))).toHaveLength(20);
+  });
+
+  test('a full-page plate ends the page before it and the page it is on', () => {
+    const full = ruleFor(withFigures(), 'p.figure-full');
+    expect(full).toContain('page-break-before: always;');
+    expect(full).toContain('page-break-after: always;');
+    expect(full).not.toContain('avoid');
+  });
+
+  test('figures add no keep, no multicol spelling, and leave every existing pin as it was', () => {
+    // No keep on .figure: it holds one line box, so there is no break inside
+    // it to forbid, and a keep measured inert (the css.ts header has the
+    // numbers). The forced breaks are `always`, which the avoid inventory
+    // does not count, and like the scene break they have no column spelling.
+    for (const o of FORMATS) {
+      const without = screenplayCss(o);
+      const withF = withFigures(o);
+      const avoids = (css: string) =>
+        css.match(/^\s*(?:page-)?break-(?:after|before|inside):\s*avoid;/gm) ?? [];
+      expect(avoids(withF)).toEqual(avoids(without));
+      const carrying = (css: string, re: RegExp) =>
+        eachRule(css).filter((r) => re.test(r.body)).map((r) => r.selector);
+      expect(carrying(withF, /:\s*avoid;/)).toEqual(carrying(without, /:\s*avoid;/));
+      expect(carrying(withF, /-webkit-column-break/)).toEqual(carrying(without, /-webkit-column-break/));
+      expect(carrying(withF, /\b(?:widows|orphans):/)).toEqual(carrying(without, /\b(?:widows|orphans):/));
+      expect(carrying(withF, /:\s*always;/)).toEqual([
+        ...carrying(without, /:\s*always;/), 'p.figure-full',
+      ]);
+      expect(ruleFor(withF, '.figure')).not.toMatch(/break|keep/);
+    }
+  });
+
+  test('the figure sheet keeps the stylesheet invariants', () => {
+    // Horizontal in %, vertical in em, no max-width anywhere (not even in a
+    // comment: the sheet ships its comments), no line-height, CSS 2.1 value
+    // syntax, no fixed units, and no brace inside a comment, which would
+    // shift every rule boundary the tests read after it.
+    for (const o of FORMATS) {
+      const css = withFigures(o);
+      expect(css).not.toContain('max-width');
+      expect(css).not.toContain('max-height');
+      const block = eachRule(css)
+        .filter((r) => FIGURE_SELECTORS.includes(r.selector))
+        .map((r) => r.body).join('\n');
+      expect(block).not.toContain('line-height');
+      expect(block).not.toMatch(/\b(?:min|max|clamp|var|calc)\(/);
+      expect(block).not.toMatch(/\d(?:px|pt|cm|mm|in)\b/);
+      for (const c of css.match(/\/\*[\s\S]*?\*\//g) ?? []) expect(c).not.toMatch(/[{}]/);
+    }
+  });
+
+  test('every class the figure rules style is one the renderer emits, and every one it emits is styled', () => {
+    // The renderer rounds a note's width to a step of five inside 5..100 and
+    // writes it as a class; the sheet defines one rule per step. Two files,
+    // one set: proved by running the renderer over every width a note can
+    // carry, not by reading either file's source.
+    const have = new Set(['p001-01.png']);
+    const emitted = new Set<string>();
+    for (let w = -5; w <= 105; w++) {
+      for (const full of ['', ' full']) {
+        const xhtml = tokensToBody(
+          new Fountain().parse(`INT. A - DAY\n\n[[img: p001-01.png w=${w}${full}]]\n`, true).tokens,
+          { images: have },
+        ).files[0].xhtml;
+        const m = /<p class="([^"]*)"><img /.exec(xhtml);
+        expect(m, `w=${w}${full}`).not.toBeNull();
+        for (const cls of m![1].split(/\s+/)) emitted.add(cls);
+      }
+    }
+    const block = eachRule(withFigures())
+      .filter((r) => FIGURE_SELECTORS.includes(r.selector))
+      .map((r) => r.selector).join(' ');
+    const styled = new Set([...block.matchAll(/\.([a-z][a-z0-9-]*)/g)].map((m) => m[1]));
+    expect([...styled].sort()).toEqual([...emitted].sort());
+    expect(styled.size).toBe(22);
+  });
+
+  test('a preview that shows no figure carries no figure rules', () => {
+    // The preview derives the flag from the body it rendered, as the book
+    // does, so a script whose note has no picture to show styles none.
+    const html = tokensToPreviewHtml(
+      new Fountain().parse('INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nAfter.\n', true).tokens,
+    );
+    expect(html).not.toContain('.figure');
+    expect(html).toContain(screenplayCss(DEFAULT_FORMAT_OPTIONS));
+  });
+});
+
 // ── dual dialogue side-by-side ───────────────────────────
 
 describe('dual dialogue table rendering', () => {

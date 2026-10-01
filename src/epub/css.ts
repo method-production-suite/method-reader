@@ -34,9 +34,12 @@
 // on h2.scene-heading) but not on a structural div, and does not propagate
 // a last child's break-after to its parent, so the wrapper→dialogue
 // boundary went ungoverned and cues stranded on device (#8b, 2026-09-14).
-// Two mechanisms sit outside that list and cost less than an avoid link:
+// Three mechanisms sit outside that list and cost less than an avoid link:
 //     page-break-before: always  section.scene (gated: scenePageBreaks, off)
 //       — ends a page rather than refusing to, so it grows no chunk.
+//     page-break-before + -after: always  p.figure-full (only in a book that
+//       shows a figure, registry #19) — the same "ends a page" shape, around
+//       a plate that filled its printed page.
 //     widows/orphans on p.action and p.dialogue (gated: printSplitMinimums,
 //       on, registry #17) — bounded to about one line per seam, and the one
 //       rule here whose OFF state emits a value (1) rather than nothing.
@@ -45,7 +48,36 @@
 // spelling. It is a second spelling of existing keeps, not a new one, but
 // it does newly make those wrappers unbreakable on engines where nothing
 // kept before, with the same gap cost. Its selector list is DERIVED from
-// the keep set (see columnKeeps below), so it cannot drift.
+// the keep set (see columnKeeps below), so it cannot drift. It re-spells
+// keeps only: neither forced break above has a column spelling.
+//
+// The figure rules (registry #19) are in the sheet only when the body shows
+// a figure, so a script without pictures gets the sheet it always got, byte
+// for byte. Their reasons live here rather than beside them because every
+// comment down there SHIPS, inlined into the preview besides:
+//   1. The width is a CLASS, p.w5 to p.w100 in steps of five, not an inline
+//      style: the reader preview is an iframe whose CSP refuses `style=`
+//      attributes, and twenty short rules serve the book and the preview
+//      from one markup path. An explicit width on a replaced element IS its
+//      used width, so w100 is exactly the text column and nothing can
+//      overflow it; no max-width is missed (and Kindle strips one anyway).
+//   2. No keep on .figure, deliberately. The box holds exactly one line box,
+//      so there is no break opportunity inside it to forbid, and when it is
+//      taller than the page `avoid` yields. Measured 2026-08-11 on Blink at
+//      6x8in: 17 seam offsets, keep against no keep, identical page counts
+//      and identical text on every page. NOT because an image cannot be
+//      split: it can (note 4), and docs/device-map.md §6 has KF8 honoring
+//      break-inside: avoid on images.
+//   3. p.figure-full's forced breaks sit on the <p>, never a wrapper, for
+//      the reason the cue chain does (#8b). At the very start or end of the
+//      book they have nothing to break from; Blink suppresses both (no blank
+//      page, measured 2026-08-11). Unverified on KFX and RMSDK: a
+//      device-pass line, not a fact.
+//   4. Height is unbounded. The class caps the width; the height is `auto`,
+//      and max-height is no remedy, since Kindle strips it. A plate taller
+//      than the page slices across pages on Blink (a 1:2 picture at w100
+//      spans two at 6x8in, keep or no keep). Whether KFX and RMSDK slice,
+//      scale or clip is the second device-pass line.
 //
 // Which renderer honors what, with sources: docs/device-map.md §6.
 import type { FormatOptions } from '../options';
@@ -59,7 +91,25 @@ const FONT_STACKS: Record<FormatOptions['fontFamily'], string> = {
 
 const em = (v: number) => `${Number(v.toFixed(2))}em`;
 
-export function screenplayCss(o: FormatOptions): string {
+/** The widths a figure class can name: html.ts rounds a note's width to the
+ * nearest five inside 5..100, so these twenty steps are every class it
+ * writes. tests/epub.test.ts runs the renderer over every width to hold the
+ * two files to one set. */
+const FIGURE_WIDTHS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
+
+/**
+ * The stylesheet for one book.
+ *
+ * `hasFigures` says whether the body shows at least one picture. Each caller
+ * derives it from the BookBody it is styling (`usedImages.size > 0`) rather
+ * than threading it through FormatOptions: it is a fact about this book, not
+ * a choice a reader makes. False by default, so every caller that does not
+ * ask gets, byte for byte, the sheet a book without pictures always had.
+ */
+export function screenplayCss(
+  o: FormatOptions,
+  { hasFigures = false }: { hasFigures?: boolean } = {},
+): string {
   const gap = o.elementSpacingEm;
   const sceneBreak = o.scenePageBreaks
     ? '\nsection.scene { page-break-before: always; }\n'
@@ -107,6 +157,41 @@ export function screenplayCss(o: FormatOptions): string {
   // multi-paragraph speeches and on action — plus wherever that keep
   // yields, since `avoid` gives way when a wrapper outgrows the page.
   const minLines = o.printSplitMinimums ? 2 : 1;
+  // The figure rules, or nothing at all. Built with its own leading newline,
+  // like sceneBreak, so that when it is empty the seam between p.centered and
+  // the title page is exactly the one blank line it always was.
+  const figures = hasFigures
+    ? `
+/* A picture carried out of the source PDF (registry #19). These rules are
+   only in a book that shows one. No keep, on purpose: this box holds one
+   line box, so there is nothing inside it to keep together. The reasons in
+   full are in src/epub/css.ts, above screenplayCss; this file is generated
+   from it, so that header is not here. */
+.figure {
+  margin: ${em(gap)} 0;
+  text-align: center;
+}
+
+/* Only the width is authored, so the height follows the aspect ratio. A
+   defensive restatement of the initial value, against a reading system
+   whose own stylesheet sets a height on images. */
+.figure img {
+  height: auto;
+}
+
+/* The width the picture had on the printed page, as a share of the text
+   column to the nearest five. A class rather than an inline style, which
+   the reader preview refuses. */
+${FIGURE_WIDTHS.map((n) => `p.w${n} img { width: ${n}%; }`).join('\n')}
+
+/* A plate that filled its printed page gets a page here too: before puts it
+   at the top of one, after stops the next paragraph sharing what is left. */
+p.figure-full {
+  page-break-before: always;
+  page-break-after: always;
+}
+`
+    : '';
 
   return `
 html, body {
@@ -244,7 +329,7 @@ p.centered {
   text-align: center;
   margin: ${em(gap)} 0;
 }
-
+${figures}
 /* Title page */
 section.titlepage {
   text-align: center;
