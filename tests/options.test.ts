@@ -37,13 +37,14 @@ describe('resolveFormatOptions', () => {
   test('defaults match the canonical format-defaults.json both suites pin', async () => {
     // The same file kit-check decodes into FormatSettings and compares to
     // FormatSettings.defaults — the two languages can no longer drift
-    // silently. Nineteen literals, one source of truth. The frozen Swift
+    // silently. Twenty literals, one source of truth. The frozen Swift
     // mirror knows eighteen of them: its synthesized decoder ignores
-    // includeImages, so a key added here needs no Swift to stay green.
-    // This equality is the pin that covers the nineteenth.
+    // includeImages and promoteCoverImage, so a key added here needs no
+    // Swift to stay green. This equality is the pin that covers those two.
     const canonical = await Bun.file(new URL('../format-defaults.json', import.meta.url)).json();
     expect(DEFAULT_FORMAT_OPTIONS).toEqual(canonical);
     expect(canonical.includeImages).toBe(true);
+    expect(canonical.promoteCoverImage).toBe(true);
   });
 
   test('numeric knobs are clamped to sane ranges', () => {
@@ -96,6 +97,16 @@ describe('resolveFormatOptions', () => {
     // would turn every script's pictures off on a stray 0.
     expect(
       resolveFormatOptions({ includeImages: 0 } as Record<string, unknown>).includeImages,
+    ).toBe(true);
+  });
+
+  test('promoteCoverImage defaults to true and accepts a boolean', () => {
+    expect(resolveFormatOptions({}).promoteCoverImage).toBe(true);
+    expect(resolveFormatOptions({ promoteCoverImage: false }).promoteCoverImage).toBe(false);
+    // Falsy-but-invalid, as for its neighbours: a `Boolean(p[key])`
+    // regression would take every title card off its cover on a stray 0.
+    expect(
+      resolveFormatOptions({ promoteCoverImage: 0 } as Record<string, unknown>).promoteCoverImage,
     ).toBe(true);
   });
 

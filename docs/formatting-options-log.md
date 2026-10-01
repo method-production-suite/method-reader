@@ -1077,7 +1077,7 @@ and the suite will say so if you forget.
 
 ## Mac app notes
 
-**These options now have two interfaces, not one** (eighteen in the frozen Swift rail; the window has nineteen, since the rail never gained `includeImages`). Besides the
+**These options now have two interfaces, not one** (eighteen in the frozen Swift rail; the window has twenty, since the rail never gained `includeImages` or `promoteCoverImage`). Besides the
 SwiftUI reader rail described below, they are the **Tune surface of the
 cross-platform Tauri window** (`desktop/ui/tune.js`), in the same four groups
 — the page, dialogue, the text, what the book carries — plus the four
@@ -1269,8 +1269,10 @@ the Mac app should move those two; nothing in the engine needs to change.
   `.fountain` text (`renderBooks` in `src/convert.ts`; the text is the
   identity), so a script whose `.fountain` gains notes gets a new identifier,
   and a reader that indexes by it treats the re-converted book as a new one.
-  A script with no pictures keeps its identifier. The title card does not
-  become a cover yet (phase 4):
+  A script with no pictures keeps its identifier. Making a designed title
+  card the book's cover is an option of its own, `promoteCoverImage`,
+  described under #19a; it changes no `.fountain`, so it moves no
+  identifier. The design:
   `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
 - **Where a picture comes from, and where it lands.** Extraction finds the
   pictures on the operator list the text pass already fetched, and reads
@@ -1462,7 +1464,8 @@ the Mac app should move those two; nothing in the engine needs to change.
 ### 19a. Pictures in the book (option `includeImages`, default ON; 2026-10-01)
 - **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
   EPUB, in the reader preview, and in the engine's own MOBI (its form there
-  is under **The MOBI** below). In the EPUB and the preview:
+  is under **The MOBI** below), except a title card the EPUB makes its cover
+  (**The cover** below). In the EPUB and the preview:
   `<p class="figure wNN"><img src="../images/pNNN-NN.png" alt="Illustration"/></p>`,
   with ` figure-full` added to the class for a plate that filled its page.
   `alt` is never empty, because an empty one declares the picture
@@ -1474,12 +1477,18 @@ the Mac app should move those two; nothing in the engine needs to change.
   `src/fountain/notes.ts`: the option is on, the note parses (the allowlist
   is inside `parseImgNote`), and the picture is in the set the caller can
   actually ship. The renderer and the section opener ask the same question,
-  so they cannot disagree. A note above the first heading (a title card's)
-  opens an "Opening" section only when its picture renders; otherwise the
-  body is byte-identical to the text-only one. With the Opening present the
-  first scene is `sc-002`, so a reader that keeps its place by section id
-  lands one scene off when the switch flips on such a script (known, not
-  fixed).
+  so they cannot disagree: whether the note draws a figure IN THE FLOW,
+  which is rendersImage's yes for every note but the cover's
+  (`art.inFlow` in `src/epub/html.ts`). A note above the first heading (a
+  title card's) opens an "Opening" section only when it draws a figure
+  there; otherwise the body is byte-identical to the text-only one. By
+  default a full-page card at the very front is the cover and draws
+  nothing in the flow, so a card-only front opens no Opening and its scene
+  ids are the same with pictures on or off. With `promoteCoverImage` off,
+  the card opens the Opening and the first scene is `sc-002`, so a reader
+  that keeps its place by section id lands one scene off when the cover
+  switch flips on such a script, or the pictures switch while the cover is
+  off (known, not fixed).
 - **Width, as a class.** The note's `w=` rounds to the nearest five,
   clamped to 5..100, and `p.wNN img { width: NN%; }` sets it: a class, not an
   inline style, because the reader preview's CSP refuses `style=`
@@ -1500,9 +1509,10 @@ the Mac app should move those two; nothing in the engine needs to change.
 - **Only in a book that shows one.** The figure rules are added to the
   stylesheet only when the body used a picture (`hasFigures`, derived from
   `usedImages` at both call sites), so a picture-less book's sheet is
-  byte-identical to the one before this entry.
-- **Packaging.** Each picture the body used, and only those, ships as
-  `OEBPS/images/NAME`, STORED rather than deflated (PNG is already
+  byte-identical to the one before this entry. `usedImages` is what the
+  pages draw, so a cover, on no page, adds no rules.
+- **Packaging.** Each picture the body used, and the cover, and only those,
+  ships as `OEBPS/images/NAME`, STORED rather than deflated (PNG is already
   compressed, and Tune re-renders the book on every move), with a manifest
   item `image/png`, never in the spine. Ids are `img-` plus the name's stem
   reduced to `[A-Za-z0-9_-]`, bumped `-2`, `-3` against every id the package
@@ -1510,6 +1520,45 @@ the Mac app should move those two; nothing in the engine needs to change.
   `buildEpub` throws on a used name it was not given the bytes for, rather
   than ship a book epubcheck rejects; every caller builds the names and the
   bytes from one array, so it cannot fire.
+- **The cover (option `promoteCoverImage`, default ON; 2026-10-01).** A
+  designed title card becomes the EPUB's cover instead of its first page,
+  so a library shows artwork rather than a grey rectangle. The Tune switch
+  is "Title card as the cover", under "Pictures from the script", and it is
+  live (the preview below loses or regains the card). The one rule is
+  `pickCover(tokens, format, have)` in `src/fountain/cover.ts`, a module of
+  the slug.ts and notes.ts kind so that every renderer asks the same
+  question. Walking the body in order (the title page block is not body
+  content), the cover is the first picture note `rendersImage` would draw,
+  if it is full-page and nothing stands ahead of it but notes that draw
+  nothing. Anything else first means no cover: text, a heading of either
+  kind, a picture that is not full-page, and also a page marker, a
+  synopsis, a section or a forced page break, which draw nothing but open
+  the Opening themselves, so a card behind one would sit in a section the
+  cover left empty. Our own writer puts none of those ahead of a card.
+  Position, never page number. Off unless `includeImages` is on too, and
+  through `rendersImage` it can never pick a picture the book cannot ship.
+  The card's note leaves the flow (by note, not by filename: the same plate
+  shown again later is drawn there), and the body names the picture in
+  `coverImage`. `buildEpub` ships it beside `usedImages` and declares it
+  both ways: `properties="cover-image"` on its manifest item, the EPUB 3
+  spelling, and `<meta name="cover" content="ID"/>` in the metadata, the
+  OPF 2 one. Either alone carried the card through calibre 9.11 to AZW3
+  and through Kindle Previewer 3 to KFX, and with neither the KFX wore
+  Previewer's generated grey placeholder (measured 2026-08-11). Shipping it
+  is the hazard: nothing on a page points at it, so a packager that shipped
+  only `usedImages` would drop its bytes, its manifest item and both
+  declarations, and the book would still validate and read. epubcheck
+  5.4.0 passes images.pdf's and torture.pdf's books clean, and it also
+  passes a cover meta naming an id no item has, so the packager declares
+  only an item it is writing (all measured 2026-10-01). A book whose one
+  picture is its cover draws no figure and carries no figure rules. With
+  the option off every book is the one before covers: checked 2026-10-01
+  against the engine at d5bd60e on all five committed PDF fixtures, every
+  EPUB entry (the `dcterms:modified` stamp aside), the `.fountain`, the
+  preview and the `.mobi` identical. The engine's `.mobi` does not use it
+  yet: it keeps the card on its page and names no cover. Whether the cover
+  reaches a device's library grid, and what each device shows inside the
+  book, is unverified.
 - **Where the pictures come from, per route.** A PDF conversion hands over
   the pictures it just decoded. Every render from a `.fountain` (the CLI's
   Fountain input, which is how Tune re-renders) reads `<stem>.images/` beside
@@ -1534,7 +1583,9 @@ the Mac app should move those two; nothing in the engine needs to change.
   staleness rule, so later exports reuse it, still without the picture, until
   the book itself is rebuilt.
 - **The preview.** The same `tokensToBody` call as the book, with each `src`
-  a `data:image/png;base64,...` URI, so what you proof is what ships. The
+  a `data:image/png;base64,...` URI, so what you proof is what ships, and
+  a title card that became the cover is left out of it as it is left out of
+  the book's pages. The
   window's CSP is `default-src 'self'; img-src 'self' data:` and nothing
   else is loosened (pinned in `tests/desktop-shell.test.ts`). Measured
   2026-10-01 on the corpus's heaviest picture document (60 pictures,
@@ -1652,9 +1703,11 @@ the Mac app should move those two; nothing in the engine needs to change.
   MobileRead wiki's KindleGen page. If any of the three fails on the device,
   the `.mobi` goes back to text only.
 - **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
-  `src/epub/html.ts` (`place`, the figure, `usedImages`, `imageSrc`,
-  `tokensToPreviewHtml`), `src/epub/css.ts` (the figure block,
-  `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`, `imageIds`),
+  `src/fountain/cover.ts` (`pickCover`),
+  `src/epub/html.ts` (`place`, the figure, `art.inFlow`, `usedImages`,
+  `coverImage`, `imageSrc`, `tokensToPreviewHtml`), `src/epub/css.ts` (the
+  figure block, `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`,
+  `imageIds`, the cover declarations),
   `src/mobi/html.ts` (`mobiArt`, the figure, `recindex`),
   `src/mobi/writer.ts` (the image records, fields 80, 108 and 194),
   `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,

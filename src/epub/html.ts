@@ -4,9 +4,11 @@
 import type { Token } from 'fountain-js';
 import type { FormatOptions } from '../options';
 import { DEFAULT_FORMAT_OPTIONS } from '../options';
+import type { ImageRef } from '../parser/types';
 import { screenplayCss } from './css';
 import { isMiniSlug } from '../fountain/slug';
 import { fmtClasses, rendersImage, stripNotes } from '../fountain/notes';
+import { pickCover } from '../fountain/cover';
 
 export interface BodyFile {
   /** filename-safe id, e.g. "body001" */
@@ -32,8 +34,22 @@ export interface BookBody {
    * picture the folder holds but no page shows is dead weight inside the
    * book, and a picture a page shows but the manifest omits is an invalid
    * EPUB rather than a heavy one. Empty for every book without figures.
+   *
+   * The cover is not in here unless a page also draws it: it is on no page.
+   * That keeps this set the answer to "does any page draw a figure", which
+   * is what decides the stylesheet's figure rules, in the book and in the
+   * preview alike.
    */
   usedImages: Set<string>;
+  /**
+   * The picture `pickCover` made the book's cover, if any: on no page, and
+   * still in the book. The packager ships it beside `usedImages` and
+   * declares it. Leaving it out of what ships would drop its bytes, then its
+   * manifest item, then both declarations, and the book would still
+   * validate and still read, with a grey rectangle in the library where the
+   * card should be.
+   */
+  coverImage?: string;
 }
 
 /** Keep each body file comfortably under Kindle's per-flow size warnings. */
@@ -105,15 +121,18 @@ interface MarkerState {
  * The pictures a book may show, where their markup points, and the ones it
  * did show.
  *
- * `have` is what the caller can actually ship: a note names a file, and this
- * says whether that file is there to be packaged. It is checked ON TOP of the
- * filename allowlist (both inside rendersImage), never instead of it. `src`
- * turns a filename into the `<img>` address, which is the one thing the book
- * and the preview disagree about: a path inside the zip for one, a `data:`
- * URI for the other, with the same markup around both.
+ * `inFlow` is the one question asked of a note, by the renderer and by the
+ * section opener alike: the figure it draws on a page, or nothing. That is
+ * rendersImage's answer (the option, the filename allowlist, and whether the
+ * caller can ship the file) for every note except the cover's, which is on no
+ * page. One predicate rather than two copies, so a section is never opened
+ * for a note that then draws nothing. `src` turns a filename into the `<img>`
+ * address, which is the one thing the book and the preview disagree about: a
+ * path inside the zip for one, a `data:` URI for the other, with the same
+ * markup around both.
  */
 interface Art {
-  have: ReadonlySet<string>;
+  inFlow: (note: Token) => ImageRef | undefined;
   src: (file: string) => string;
   used: Set<string>;
 }
@@ -277,10 +296,10 @@ function renderBlocks(
       }
       case 'note': {
         // A standalone `[[img: ...]]` is a picture carried out of the PDF
-        // (registry #19). Every other note, and a picture note the predicate
-        // turns down, renders nothing: notes are invisible by spec. `raw` is the token's inner text,
-        // brackets already stripped, which is what rendersImage reads.
-        const img = rendersImage(raw, format.includeImages, art.have);
+        // (registry #19). Every other note, a picture note the predicate
+        // turns down, and the cover's note render nothing here: notes are
+        // invisible by spec, and the cover is on no page.
+        const img = art.inFlow(t);
         if (!img) break;
         // The width rides as a CLASS in steps of five, not an inline style:
         // the reader preview is an iframe whose CSP refuses `style=`
@@ -342,7 +361,8 @@ interface SceneSection {
 /**
  * Split body tokens into anchored scene sections, then pack sections into
  * as few files as the size budget allows. Content before the first scene
- * heading becomes an "Opening" section.
+ * heading becomes an "Opening" section; a title card that became the cover
+ * is not content on any page, so it opens nothing.
  */
 export function tokensToBody(
   tokens: Token[],
@@ -360,12 +380,20 @@ export function tokensToBody(
 ): BookBody {
   const maxBytes = opts.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
   const format = opts.format ?? DEFAULT_FORMAT_OPTIONS;
+  const have = opts.images ?? new Set<string>();
+  const body = tokens.filter((t) => !t.is_title);
+  // The title card, when promoteCoverImage makes it the cover. pickCover is
+  // the one rule, in a module of its own so every renderer asks the same
+  // question, and it asks rendersImage of the same `have`, so the cover is
+  // always a picture this book can ship.
+  const cover = pickCover(body, format, have);
   const art: Art = {
-    have: opts.images ?? new Set(),
+    inFlow: (note) => (note === cover?.token
+      ? undefined
+      : rendersImage(note.text ?? '', format.includeImages, have)),
     src: opts.imageSrc ?? bookImageSrc,
     used: new Set(),
   };
-  const body = tokens.filter((t) => !t.is_title);
 
   const groups: { title: string; tokens: Token[] }[] = [];
   let current: { title: string; tokens: Token[] } | null = null;
@@ -382,12 +410,17 @@ export function tokensToBody(
       // `[[img: ...]]` exactly there. Dropping one loses nothing, since there
       // is no section yet for it to be invisible in.
       //
-      // A note that DOES render, a title card whose picture the caller can
-      // ship, is content, and opens the Opening like any other. The question
-      // is asked of rendersImage, the same predicate renderBlocks asks, so a
+      // A note that DOES render in the flow, a title card whose picture the
+      // caller can ship, is content, and opens the Opening like any other.
+      // The cover's note is on no page, so it is dropped here like any note
+      // that renders nothing, and a card-only front gives no Opening. The
+      // question is `art.inFlow`, the same one renderBlocks asks, so a
       // section is never opened for a note that then renders nothing.
-      if (!current && t.type === 'note'
-        && !rendersImage(t.text ?? '', format.includeImages, art.have)) continue;
+      //
+      // pickCover only chooses a card with nothing ahead of it but notes
+      // this line drops, so the cover's note always reaches this line with
+      // no section open, and never lands in a section it would leave empty.
+      if (!current && t.type === 'note' && !art.inFlow(t)) continue;
       if (!current) {
         current = { title: 'Opening', tokens: [] };
         groups.push(current);
@@ -437,7 +470,7 @@ export function tokensToBody(
   }
   flush();
 
-  return { files, toc, pageList, usedImages: art.used };
+  return { files, toc, pageList, usedImages: art.used, coverImage: cover?.file };
 }
 
 /**
@@ -447,7 +480,9 @@ export function tokensToBody(
  *
  * `images` is the pictures the notes may show, by filename: the same ones the
  * book is handed, so the preview shows exactly the figures the book does
- * (rendersImage decides both). Self-contained covers them too:
+ * (rendersImage decides both). That includes leaving out a title card that
+ * became the cover: the cover is on none of the book's pages, and the
+ * preview is those pages. Self-contained covers the pictures too:
  * the window hands this document to an iframe as text, so there is no
  * container for a path to point into, and each picture rides inside its
  * `<img>` as a data: URI instead. That src is the only thing about a figure

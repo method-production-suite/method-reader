@@ -63,23 +63,26 @@ export function imageIds(names: readonly string[], taken: ReadonlySet<string>): 
 }
 
 /**
- * The pictures to put in the container: each name the body shows, once, in
- * the order the body first shows it, with the first bytes passed under that
- * name.
+ * The pictures to put in the container: each name the book points at, once,
+ * in the order it first points at it, with the first bytes passed under that
+ * name. A page's `<img>` points at a picture, and so does the cover
+ * declaration, so `used` is the body's figures plus its cover.
  *
- * Only what the body shows, because a picture in the container that no page
- * points at is dead weight in a format where weight is the whole problem, and
- * epubcheck is clean about it, so nothing else would ever say so. Once,
- * because a second manifest item for one file is OPF-074.
+ * Only what the book points at, because a picture in the container that
+ * nothing points at is dead weight in a format where weight is the whole
+ * problem, and epubcheck is clean about it, so nothing else would ever say
+ * so. Once, because a second manifest item for one file is OPF-074.
  *
- * A name the body shows with no bytes behind it THROWS. The `<img>` is
+ * A name the book points at with no bytes behind it THROWS. The `<img>` is
  * already in the body, so the only alternative is a book that fails
  * validation (RSC-007, measured on images.pdf) and shows a broken picture,
  * with no channel back from here to say why: this returns bytes, not
- * warnings. It cannot happen to a caller that builds the renderer's `images`
- * set and this list from one array, since rendersImage shows only what that
- * set holds; a throw is how a caller that does not finds out, in its first
- * test rather than a reader's hands.
+ * warnings. For the cover the alternative is quieter and no better, a book
+ * with no cover where the reader was promised one. It cannot happen to a
+ * caller that builds the renderer's `images` set and this list from one
+ * array, since rendersImage shows only what that set holds and pickCover
+ * picks only what rendersImage would show; a throw is how a caller that does
+ * not finds out, in its first test rather than a reader's hands.
  */
 function picturesToShip(used: ReadonlySet<string>, images: readonly BookImage[]): BookImage[] {
   const byName = new Map<string, BookImage>();
@@ -119,11 +122,12 @@ function packageOpf(
   // Pictures are RESOURCES: manifested, never in the spine (an itemref must
   // name a content document), and with no `properties`, which is for nav,
   // cover-image, scripted, svg and remote-resources, none of which a plate in
-  // the flow is. The href is relative to this file at OEBPS/, so
+  // the flow is. The one exception is the cover, below: `cover-image` is
+  // exactly what it is. The href is relative to this file at OEBPS/, so
   // `images/NAME`, while the body at OEBPS/text/ spells the same file
   // `../images/NAME`. `image/png` holds because only allowlisted `.png` names
-  // reach here (usedImages is filled by rendersImage's yes alone), and every
-  // caller's bytes are PNGs it made or checked.
+  // reach here (usedImages and the cover are both rendersImage's yes alone),
+  // and every caller's bytes are PNGs it made or checked.
   //
   // Ids are assigned against every id this document writes for itself, the
   // metadata's `uid` included, since XML ids are unique across the whole
@@ -133,9 +137,36 @@ function packageOpf(
     images.map((img) => img.name),
     new Set(['uid', 'nav', 'css', 'titlepage', ...body.files.map((f) => f.id)]),
   );
+  // The cover, found in the list the CONTAINER is getting rather than taken
+  // on the body's word, so a declaration can only ever name an item this
+  // document writes. `-1` is a book with no cover, the only answer when the
+  // body names none; picturesToShip has already thrown if it named one whose
+  // bytes never arrived.
+  //
+  // That guard matters because nothing downstream would catch the miss:
+  // epubcheck does not resolve `<meta name="cover">`, which is outside the
+  // EPUB 3 vocabulary, and validates images.pdf's book with its meta pointed
+  // at a made-up id with no error and no warning (measured with epubcheck
+  // 5.4.0, 2026-10-01). Only a reader looking for the cover would find
+  // nothing there.
+  const coverAt = body.coverImage === undefined
+    ? -1
+    : images.findIndex((img) => img.name === body.coverImage);
   const imageItems = images
-    .map((img, i) => `\n    <item id="${ids[i]}" href="images/${escapeXml(img.name)}" media-type="image/png"/>`)
+    .map((img, i) => `\n    <item id="${ids[i]}" href="images/${escapeXml(img.name)}" media-type="image/png"`
+      + `${i === coverAt ? ' properties="cover-image"' : ''}/>`)
     .join('');
+  // BOTH cover spellings. `properties="cover-image"` above is the EPUB 3
+  // declaration; `<meta name="cover">` is the OPF 2 one every EPUB 2 era
+  // reader still looks for, and the Kindle side of this project is EPUB 2 era
+  // pipelines. Measured through calibre 9.11 and Kindle Previewer 3
+  // (2026-08-11), either one alone carries the card to AZW3 and to KFX, so
+  // the pair is redundancy against a reader that knows only one of them, at
+  // no cost: epubcheck passes the package with both. What the declaration
+  // itself buys is not redundant: the same book with the card in the flow
+  // and no cover declared converts to a KFX wearing Previewer's own grey
+  // placeholder.
+  const coverMeta = coverAt >= 0 ? `\n    <meta name="cover" content="${ids[coverAt]}"/>` : '';
   const spine = body.files.map((f) => `    <itemref idref="${f.id}"/>`).join('\n');
   const creator = meta.author ? `    <dc:creator>${escapeXml(meta.author)}</dc:creator>\n` : '';
 
@@ -155,7 +186,7 @@ function packageOpf(
     <dc:title>${escapeXml(meta.title)}</dc:title>
 ${creator}    <dc:language>${meta.language ?? 'en'}</dc:language>
     <meta property="dcterms:modified">${modified}</meta>
-    <meta property="ibooks:specified-fonts">true</meta>
+    <meta property="ibooks:specified-fonts">true</meta>${coverMeta}
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
@@ -234,9 +265,10 @@ ${author}</section>
  * Assemble a complete EPUB3 file.
  *
  * `images` is every picture the caller HAS; `body.usedImages` is what the
- * pages show, and the container carries exactly those (picturesToShip says
- * why both halves of "exactly" matter). Empty by default, which is right for
- * every body that shows no picture and a thrown error for one that does.
+ * pages show and `body.coverImage` the cover, and the container carries
+ * exactly those (picturesToShip says why both halves of "exactly" matter).
+ * Empty by default, which is right for every body that shows no picture and
+ * a thrown error for one that does.
  */
 export async function buildEpub(
   meta: BookMeta,
@@ -244,7 +276,12 @@ export async function buildEpub(
   format: FormatOptions = DEFAULT_FORMAT_OPTIONS,
   images: readonly BookImage[] = [],
 ): Promise<Uint8Array> {
-  const shipped = picturesToShip(body.usedImages, images);
+  // The cover first: it stands ahead of every figure in the script, so this
+  // is still the order the book first points at each picture.
+  const pointedAt = new Set(body.coverImage === undefined
+    ? body.usedImages
+    : [body.coverImage, ...body.usedImages]);
+  const shipped = picturesToShip(pointedAt, images);
   // ?? rather than spread-with-default: a caller passing an explicit
   // `identifier: undefined` would clobber a spread default and crash the
   // non-null assertion downstream.
@@ -262,7 +299,9 @@ export async function buildEpub(
   zip.file('OEBPS/nav.xhtml', navXhtml(resolved, body, format.includeTitlePage));
   // The figure rules ride only in a book that shows a figure, so a book
   // without pictures carries the sheet it always did. Asked of the body, as
-  // the preview asks it; picturesToShip has already made the two agree.
+  // the preview asks it; picturesToShip has already made the two agree. A
+  // cover is on no page, so a book whose one picture is its cover gets no
+  // rules for it.
   zip.file('OEBPS/style.css', screenplayCss(format, { hasFigures: body.usedImages.size > 0 }));
   if (format.includeTitlePage) {
     zip.file('OEBPS/titlepage.xhtml', titlePageXhtml(resolved));

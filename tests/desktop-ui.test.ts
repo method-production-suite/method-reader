@@ -3736,9 +3736,9 @@ describe('the Tune surface', () => {
   let tune: Record<string, any>;
   beforeAll(async () => { tune = await import(join(UI, 'tune.js')); });
 
-  test('the nineteen are the engine’s nineteen, in both directions', async () => {
-    // A surface with eighteen has silently dropped one and a reader would
-    // never know which; a twentieth invented here would be sent to the
+  test('the twenty are the engine’s twenty, in both directions', async () => {
+    // A surface with nineteen has silently dropped one and a reader would
+    // never know which; a twenty-first invented here would be sent to the
     // engine and discarded by resolveFormatOptions without a word.
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
     expect([...tune.OPTION_KEYS].sort()).toEqual(Object.keys(DEFAULT_FORMAT_OPTIONS).sort());
@@ -3811,10 +3811,13 @@ describe('the Tune surface', () => {
     //
     // So the grouping is derived from the engine and checked against it,
     // three ways and exhaustively:
-    //   live      — read by the preview builder (src/epub/html.ts, css.ts)
+    //   live      — read by the preview builder (src/epub/html.ts, css.ts,
+    //               and src/fountain/cover.ts, which html.ts asks on every
+    //               render which picture leaves the flow for the cover)
     //   book      — read only where the BOOK is packaged (src/epub/build.ts)
     //   reconvert — read while the PDF becomes a script (fountain/serialize)
-    const preview = engine('src', 'epub', 'html.ts') + engine('src', 'epub', 'css.ts');
+    const preview = engine('src', 'epub', 'html.ts') + engine('src', 'epub', 'css.ts')
+      + engine('src', 'fountain', 'cover.ts');
     const packaging = engine('src', 'epub', 'build.ts');
     const serialize = engine('src', 'fountain', 'serialize.ts');
 
@@ -3844,7 +3847,7 @@ describe('the Tune surface', () => {
     // pass the loop above by accident.
     const count = (effect: string) =>
       tune.KNOBS.filter((k: any) => k.effect === effect).length;
-    expect([count('live'), count('book'), count('reconvert')]).toEqual([14, 1, 4]);
+    expect([count('live'), count('book'), count('reconvert')]).toEqual([15, 1, 4]);
   });
 
   test('the knobs that cannot move the preview say so, in the reader’s words', () => {
@@ -3882,6 +3885,24 @@ describe('the Tune surface', () => {
     expect(pictures.help).not.toContain('—');
   });
 
+  test('the cover switch sits under the pictures switch, and says what moves', () => {
+    // Under the pictures, because it is about one of them. Live, because the
+    // preview is the book's own body and the card leaves that body when it
+    // becomes the cover: flipping this on a script with a title card adds
+    // or removes the card at the front of the preview. Its help says so, and
+    // says what a script without a card needs to hear.
+    const front = tune.GROUPS.find((g: any) => g.id === 'front');
+    const keys = front.knobs.map((k: any) => k.key);
+    expect(keys.indexOf('promoteCoverImage')).toBe(keys.indexOf('includeImages') + 1);
+    const cover = tune.knobFor('promoteCoverImage');
+    expect([cover.kind, cover.effect]).toEqual(['toggle', 'live']);
+    expect(cover.label).toBe('Title card as the cover');
+    expect(cover.help).toContain('cover');
+    expect(cover.help).toContain('preview');
+    expect(cover.help.toLowerCase()).toContain('same book either way');
+    expect(cover.help).not.toContain('—');
+  });
+
   test('a knob that is doing nothing says why, rather than vanishing', () => {
     // The cue indents mean nothing while cues are centered. Hiding them
     // takes the explanation away with the control, and the reader is left
@@ -3900,9 +3921,9 @@ describe('the Tune surface', () => {
       if (knob.needs !== undefined) continue;
       expect(tune.idleReason(knob, centered), `${knob.key} idles for no reason`).toBe(null);
     }
-    // Nothing is removed from the surface by a setting: nineteen controls
-    // are nineteen controls whatever the script is tuned to.
-    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(19);
+    // Nothing is removed from the surface by a setting: twenty controls
+    // are twenty controls whatever the script is tuned to.
+    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(20);
   });
 
   test('a control’s value becomes something the engine will keep, or nothing', () => {
@@ -3950,7 +3971,7 @@ describe('the Tune surface', () => {
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
     const whole = tune.settingsFrom({ settings: { ...DEFAULT_FORMAT_OPTIONS } });
     expect(whole).toEqual({ ...DEFAULT_FORMAT_OPTIONS });
-    // One key short: eighteen controls and one slider at NaN.
+    // One key short: nineteen controls and one slider at NaN.
     const short: Record<string, unknown> = { ...DEFAULT_FORMAT_OPTIONS };
     delete short.cueIndentPct;
     expect(tune.settingsFrom({ settings: short })).toBe(null);
@@ -3966,7 +3987,7 @@ describe('the Tune surface', () => {
     expect(tune.settingsFrom({ settings: [] })).toBe(null);
     expect(tune.settingsFrom({})).toBe(null);
     expect(tune.settingsFrom(undefined)).toBe(null);
-    // A twentieth knob from a newer engine survives the round trip rather
+    // A twenty-first knob from a newer engine survives the round trip rather
     // than being quietly dropped out of the script's settings.
     const future = tune.settingsFrom({
       settings: { ...DEFAULT_FORMAT_OPTIONS, sceneNumberSide: 'left' },
@@ -4077,7 +4098,7 @@ describe('the Tune surface', () => {
     expect(tune.NOT_SET).toBe('not set');
   });
 
-  test('two settings objects are compared by the nineteen, not by identity', () => {
+  test('two settings objects are compared by the twenty, not by identity', () => {
     const a: Record<string, unknown> = { extra: 1 };
     for (const key of tune.OPTION_KEYS) a[key] = 1;
     a.fontFamily = 'serif';
@@ -4270,7 +4291,7 @@ describe('the Settings page, mounted', () => {
     expect(indent.disabled).toBe(true);
     expect(why().textContent).toBe(idleSentence);
     // Nothing is removed from the page by a setting.
-    expect(pane.querySelectorAll('.knob').length).toBe(19);
+    expect(pane.querySelectorAll('.knob').length).toBe(20);
   });
 
   test('a moved knob is saved through the engine once it settles, and the book rebuilt with the whole of the settings', async () => {
@@ -7875,7 +7896,7 @@ describe('a refused file is no longer a dead end', () => {
 
 });
 
-describe('nineteen settings stop arriving as one wall', () => {
+describe('twenty settings stop arriving as one wall', () => {
   // Every one was open at once, under five headings, which is a long
   // scroll of controls most of which nobody is looking for. Each group folds
   // now, and the first is open so the surface never opens as a list of five
@@ -7890,11 +7911,11 @@ describe('nineteen settings stop arriving as one wall', () => {
   });
 
   test('every group is still reachable, none is dropped', () => {
-    // Folding is not hiding: all five headings remain, and all nineteen knobs
+    // Folding is not hiding: all five headings remain, and all twenty knobs
     // remain under them. A "compact" that quietly retired a setting would
     // leave it applying to every conversion with no way to find it.
     expect(tune.GROUPS.length).toBe(5);
-    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(19);
+    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(20);
   });
 });
 
@@ -7934,7 +7955,7 @@ describe('the settings explain themselves in the reader\'s words', () => {
     // finding nothing, which is the failure mode of every sweep like this.
     const tune: any = await import(join(UI, 'tune.js'));
     const all = tune.GROUPS.flatMap((g: any) => g.knobs.map((k: any) => k.label));
-    expect(all.length).toBe(19);
+    expect(all.length).toBe(20);
     expect(ENGINE_WORDS.some((w) => 'Applies on new-format Kindle (KFX)'.includes(w))).toBe(true);
   });
 });

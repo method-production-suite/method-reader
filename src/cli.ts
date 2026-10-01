@@ -75,8 +75,11 @@ Pictures carried out of a PDF are written as PNGs in a <name>.images folder
 beside the .fountain, and the .fountain names each one in an [[img: ...]]
 note. The EPUB shows each picture where its note sits, and so does a later
 conversion of that .fountain, which reads the folder and never writes it.
-The includeImages option takes them out of the book; the notes and the
-folder stay. The .mobi shows the same pictures as the EPUB.
+The one exception is a full-page title card the script opens with: the EPUB
+makes it the book's cover instead of its first page, and turning the
+promoteCoverImage option off keeps it on its page. The includeImages option
+takes them all out of the book; the notes and the folder stay. The .mobi
+carries the same pictures as the EPUB and keeps the title card on its page.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub)

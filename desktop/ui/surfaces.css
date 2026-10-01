@@ -511,7 +511,7 @@
   .scene-link { transition: none; }
 }
 
-/* Tune — a form set on a script page. Nineteen controls is where an
+/* Tune — a form set on a script page. Twenty controls is where an
  * interface most easily becomes a wall of switches, so the row is built to
  * be read rather than scanned: the label in the structure face at reading
  * size on the left, the control ranged right against it, and the sentence
@@ -520,7 +520,7 @@
  * it sits in. */
 /* A column now, not a row of loose buttons: a label, the choices, and the
  * warning that they overwrite everything below. The warning is the point —
- * pressing one of these replaces all nineteen settings, and the row never
+ * pressing one of these replaces all twenty settings, and the row never
  * said so. */
 .presets { margin: var(--space-6) 0 var(--space-8); }
 .presets-label { margin: 0 0 var(--space-2); }
@@ -545,7 +545,7 @@
 .btn-small { font-size: var(--text-label); padding: 6px 18px; letter-spacing: 0.07em; }
 
 /* Knobs on the left, the script on the right. The preview is the argument
- * for the whole surface: most of these nineteen change what the page looks
+ * for the whole surface: most of these twenty change what the page looks
  * like, and a setting you have to leave the screen to evaluate is a setting
  * you adjust by guessing.
  *

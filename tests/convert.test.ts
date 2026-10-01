@@ -277,16 +277,41 @@ describe('convertPdf carries the pictures', () => {
     expect(result.warnings).toEqual([]);
   }, 60000);
 
-  test('the title card opens an Opening that holds its figure, and the scenes follow it', async () => {
-    // images.pdf's title card is a note ABOVE the first heading in the
-    // .fountain. The conversion hands the renderer the pictures it carried,
-    // so that note is a figure: content, which opens a section of its own
-    // ("Opening") the way any line above the first heading does, and every
-    // heading's anchor sits one along from the script's own count.
+  test('the title card becomes the cover: declared, shipped, off the pages, and sc-001 is the first scene', async () => {
+    // images.pdf's title card is a full-page note ABOVE the first heading in
+    // the .fountain, with nothing ahead of it but the title page block. By
+    // default it is the book's cover, so no section opens for it and every
+    // heading keeps the script's own count.
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
     expect(result.fountainText.indexOf('[[img: p001-01.png')).toBeLessThan(
       result.fountainText.indexOf('INT. ARCHIVE ROOM - DAY'),
     );
+    const zip = await JSZip.loadAsync(result.epub);
+    const entries = await tocOf(zip);
+    expect(entries.map((m) => m[2])).toEqual(result.screenplay!.scenes.map((s) => s.heading));
+    expect(entries[0][1]).toBe('sc-001');
+    const body = await bodyOf(zip);
+    expect(body).not.toContain('p001-01.png');
+    expect(body).toContain('<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>');
+    // Off the pages but in the book: its bytes, its item, both declarations.
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    for (const img of result.images) {
+      expect([...await zip.file(`OEBPS/images/${img.name}`)!.async('uint8array')]).toEqual([...img.bytes]);
+    }
+    const opf = await zip.file('OEBPS/package.opf')!.async('string');
+    expect(opf).toContain('<meta name="cover" content="img-p001-01"/>');
+    expect(opf).toContain(
+      '<item id="img-p001-01" href="images/p001-01.png" media-type="image/png" properties="cover-image"/>',
+    );
+  }, 60000);
+
+  test('with promoteCoverImage off, the title card opens an Opening that holds its figure, and the scenes follow it', async () => {
+    // The book before covers. The conversion hands the renderer the pictures
+    // it carried, so the card's note is a figure: content, which opens a
+    // section of its own ("Opening") the way any line above the first
+    // heading does, and every heading's anchor sits one along from the
+    // script's own count.
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format: { promoteCoverImage: false } });
     const zip = await JSZip.loadAsync(result.epub);
     const entries = await tocOf(zip);
     expect(entries.map((m) => m[2])).toEqual([
@@ -304,6 +329,10 @@ describe('convertPdf carries the pictures', () => {
     for (const img of result.images) {
       expect([...await zip.file(`OEBPS/images/${img.name}`)!.async('uint8array')]).toEqual([...img.bytes]);
     }
+    // And says nothing about a cover.
+    const opf = await zip.file('OEBPS/package.opf')!.async('string');
+    expect(opf).not.toContain('name="cover"');
+    expect(opf).not.toContain('cover-image');
   }, 60000);
 
   test('with includeImages off, the book is the one a script without pictures gets', async () => {
@@ -472,12 +501,16 @@ describe('the preview is handed the pictures the book is', () => {
     new Map(images.map((img) => [img.name, img.bytes]));
   const dataSrcs = (html: string) => (html.match(/<img src="data:image\/png;base64,/g) ?? []).length;
 
-  test('a PDF conversion’s preview shows the pictures it carried', async () => {
-    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
-    expect(dataSrcs(result.previewHtml)).toBe(2);
-    expect(result.previewHtml)
-      .toBe(tokensToPreviewHtml(tokens, resolveFormatOptions(), pictureMap(result.images)));
+  test('a PDF conversion’s preview shows the pictures its pages show', async () => {
+    // By default the title card is the cover, on none of the book's pages,
+    // so the preview shows the panel alone; with the cover off, both.
+    for (const [format, shown] of [[{}, 1], [{ promoteCoverImage: false }, 2]] as const) {
+      const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format });
+      const tokens = new Fountain().parse(result.fountainText, true).tokens;
+      expect(dataSrcs(result.previewHtml)).toBe(shown);
+      expect(result.previewHtml)
+        .toBe(tokensToPreviewHtml(tokens, resolveFormatOptions(format), pictureMap(result.images)));
+    }
   }, 60000);
 
   test('with includeImages off, a PDF conversion’s preview shows none', async () => {

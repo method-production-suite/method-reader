@@ -1,4 +1,4 @@
-// Tune: this script's own formatting. Nineteen knobs, saved beside the
+// Tune: this script's own formatting. Twenty knobs, saved beside the
 // script, and re-rendered into Read as they move.
 //
 // The window decides nothing about what a knob MEANS: the engine owns the
@@ -23,7 +23,10 @@ import { render as renderReader, splitPreview, dressFrame } from './read.js';
  *  against a cached .fountain and the re-rendered document compared byte for
  *  byte. The nineteenth, includeImages, is live by construction: html.ts
  *  passes it to the one predicate that decides whether a figure is written
- *  (a source test in tests/desktop-ui.test.ts checks html.ts names it).
+ *  (a source test in tests/desktop-ui.test.ts checks html.ts names it). So
+ *  is the twentieth, promoteCoverImage: html.ts asks src/fountain/cover.ts
+ *  on every render which picture is the cover, and that picture leaves the
+ *  body the preview shows (the same source test reads cover.ts).
  *  The three effects:
  *
  *  'live'      the preview changes the moment this moves.
@@ -39,7 +42,7 @@ import { render as renderReader, splitPreview, dressFrame } from './read.js';
  *  the honest move. */
 export const EFFECTS = ['live', 'book', 'reconvert'];
 
-/** The nineteen, grouped by what a reader is trying to change rather than by
+/** The twenty, grouped by what a reader is trying to change rather than by
  *  where the engine consumes them — with the one exception above, where
  *  where-it-is-consumed IS what a reader needs to know. `help` explains WHY,
  *  carried over from the Mac app's rail (app/Sources/ScreepubApp/
@@ -152,6 +155,16 @@ export const GROUPS = [
         help: 'Shows the drawings and photos the PDF carried, in the book and in the '
           + 'preview, where they sat in the script. A script with no pictures makes the '
           + 'same book either way.',
+      },
+      {
+        // Live as well: the preview is the book's own pages, and a card that
+        // becomes the cover leaves them, so this adds or removes the card at
+        // the front of the preview. What it is FOR, the picture a library
+        // shows, is outside the book's pages, so the help says that part.
+        key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle',
+        help: 'When a script opens with a full-page picture before its first scene, the '
+          + 'book uses it as its cover instead of its first page, so the preview leaves '
+          + 'it out. A script without one makes the same book either way.',
       },
     ],
   },
@@ -304,7 +317,7 @@ export function restorePending(owed, pending) {
 }
 
 /** The engine's settings answer, or null if it is not one. Checked key by
- *  key against the nineteen and against each knob's own kind: a surface that
+ *  key against the twenty and against each knob's own kind: a surface that
  *  trusted a malformed answer would draw an empty select or a slider at NaN
  *  and give a reader no idea why. Extra keys are carried through untouched —
  *  a future engine knob this window has never heard of must survive a round
@@ -441,7 +454,7 @@ export const LEDE = 'These settings belong to this script alone. They are kept w
   + 'match, so what you send is what you see.';
 
 /** "Start from" said nothing about what pressing one does. It does not nudge
- *  a setting or set a baseline to build on: it REPLACES all nineteen. The
+ *  a setting or set a baseline to build on: it REPLACES all twenty. The
  *  SwiftUI version said so on screen and this one did not. */
 export const PRESET_LABEL = 'Load a preset';
 export const PRESET_NOTE = 'Overwrites every setting below.';
@@ -468,7 +481,7 @@ export const READING = 'Reading this script’s settings…';
  *  `defaults` (Screepub's own, unconditionally, the same field settingsFrom
  *  already reads as "this script's shipped defaults"). Both are validated
  *  the identical way a script's own settings are, through settingsFrom
- *  itself: an app default that fails the nineteen-knob check is one this
+ *  itself: an app default that fails the twenty-knob check is one this
  *  window cannot safely claim anything about. */
 export function appDefaultsFrom(answer) {
   return settingsFrom({ settings: answer?.appDefaults });
@@ -1070,7 +1083,7 @@ export function groupStartsOpen(index) {
 function drawGroup(group, index) {
   // <details> rather than a toggle of our own: the open state, the keyboard
   // and the announcement all come from the platform. Folding, never
-  // dropping — all five groups and all nineteen knobs are still here, because
+  // dropping — all five groups and all twenty knobs are still here, because
   // a setting that cannot be found still applies to every conversion.
   return el('details', { class: 'knob-group', open: groupStartsOpen(index) ? '' : null },
     el('summary', { class: 'subslug knob-group-title' }, group.title),

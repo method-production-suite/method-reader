@@ -53,6 +53,12 @@ export interface FormatOptions {
    * the picture folder stay put either way, so flipping this needs no
    * re-parse. A script with no pictures renders identically on or off */
   includeImages: boolean;
+  /** make a designed title card the book's cover: a full-page picture that
+   * is the first thing the script shows, ahead of its first scene heading,
+   * leaves the flow and is declared the cover, so a library shows artwork
+   * instead of a grey rectangle (src/fountain/cover.ts). Needs includeImages;
+   * a script without such a card renders identically on or off */
+  promoteCoverImage: boolean;
 }
 
 export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
@@ -75,6 +81,7 @@ export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
   printSplitMinimums: true,
   preserveFontShifts: true,
   includeImages: true,
+  promoteCoverImage: true,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -121,5 +128,6 @@ export function resolveFormatOptions(
     printSplitMinimums: bool('printSplitMinimums'),
     preserveFontShifts: bool('preserveFontShifts'),
     includeImages: bool('includeImages'),
+    promoteCoverImage: bool('promoteCoverImage'),
   };
 }

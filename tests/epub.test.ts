@@ -2,7 +2,7 @@ import { describe, test, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { Fountain } from 'fountain-js';
 import JSZip from 'jszip';
-import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
+import { tokensToBody, tokensToPreviewHtml, type BookBody } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { SCREENPLAY_CSS, screenplayCss } from '../src/epub/css';
 import { ruleFor, eachRule } from './css-rules';
@@ -531,6 +531,8 @@ describe('page markers in XHTML', () => {
 describe('figures', () => {
   const ON = DEFAULT_FORMAT_OPTIONS;
   const OFF = { ...DEFAULT_FORMAT_OPTIONS, includeImages: false };
+  // Pictures on and the card left in the flow: the book before covers.
+  const NO_COVER = { ...DEFAULT_FORMAT_OPTIONS, promoteCoverImage: false };
   const HAVE = new Set(['p001-01.png', 'p002-01.png']);
   const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
   const bodyOf = (src: string, opts: Parameters<typeof tokensToBody>[1] = {}) =>
@@ -634,7 +636,9 @@ describe('figures', () => {
     // toFountain writes a title card's note above the first scene heading.
     // Whether it opens an "Opening" section is the predicate's answer, the
     // same one that decides whether it renders: a section is opened for a
-    // figure, never for a note that will render nothing.
+    // figure in the flow, never for a note that will render nothing there.
+    // These are the book with the cover option off; the cover's own
+    // describe follows.
     const card = '[[img: p001-01.png w=100 full]]\n\n';
     const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
 
@@ -646,7 +650,7 @@ describe('figures', () => {
     });
 
     test('(b) pictures on and present: an Opening holds the figure, and the scenes follow from sc-002', () => {
-      const body = bodyOf(card + script, { format: ON, images: HAVE });
+      const body = bodyOf(card + script, { format: NO_COVER, images: HAVE });
       expect(body.toc).toEqual([
         { title: 'Opening', href: 'text/body001.xhtml#sc-001' },
         { title: 'INT. LAB - DAY', href: 'text/body001.xhtml#sc-002' },
@@ -656,21 +660,114 @@ describe('figures', () => {
         /<section class="scene" id="sc-001">\s*<p class="figure w100 figure-full"><img src="\.\.\/images\/p001-01\.png" alt="Illustration"\/><\/p>\s*<\/section>\s*<section class="scene" id="sc-002">\s*<h2 class="scene-heading">INT\. LAB - DAY<\/h2>/,
       );
       expect([...body.usedImages]).toEqual(['p001-01.png']);
+      expect(body.coverImage).toBeUndefined();
     });
 
     test('(c) pictures on but missing: identical to (a)', () => {
       const plain = bodyOf(script, { format: OFF, images: HAVE });
-      expect(bodyOf(card + script, { format: ON, images: new Set(['p002-01.png']) })).toEqual(plain);
-      expect(bodyOf(card + script, { format: ON })).toEqual(plain);
+      for (const format of [ON, NO_COVER]) {
+        expect(bodyOf(card + script, { format, images: new Set(['p002-01.png']) })).toEqual(plain);
+        expect(bodyOf(card + script, { format })).toEqual(plain);
+      }
     });
 
     test('a note that renders and one that does not, in either order, open one Opening', () => {
       const dead = '[[img: p009-01.png w=50]]\n\n';
       for (const src of [dead + card + script, card + dead + script]) {
-        const body = bodyOf(src, { format: ON, images: HAVE });
+        const body = bodyOf(src, { format: NO_COVER, images: HAVE });
         expect(body.toc.map((e) => e.title)).toEqual(['Opening', 'INT. LAB - DAY', 'EXT. YARD - NIGHT']);
         expect(body.files[0].xhtml.match(/<p class="figure/g)).toHaveLength(1);
       }
+    });
+  });
+
+  describe('the title card as the cover', () => {
+    // pickCover's choice (tests/cover.test.ts has the rule) leaves the flow:
+    // the book shows it as its cover instead, so the body is the body of the
+    // same script without the card, and says which picture is the cover for
+    // the packager to declare.
+    const card = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+    /** Everything about a body but which picture is its cover. */
+    const pages = ({ coverImage: _, ...rest }: BookBody) => rest;
+
+    test('the card is not drawn, opens no Opening, and the first scene is sc-001', () => {
+      for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+        const body = bodyOf(head + card + script, { format: ON, images: HAVE });
+        expect(body.coverImage).toBe('p001-01.png');
+        expect(body.toc).toEqual([
+          { title: 'INT. LAB - DAY', href: 'text/body001.xhtml#sc-001' },
+          { title: 'EXT. YARD - NIGHT', href: 'text/body001.xhtml#sc-002' },
+        ]);
+        expect(body.files[0].xhtml).not.toContain('class="figure');
+        // The body of the script with no card at all, every file and entry:
+        // only the cover field tells them apart.
+        const plain = bodyOf(head + script, { format: ON, images: HAVE });
+        expect(pages(body)).toEqual(pages(plain));
+      }
+    });
+
+    test('usedImages stays what the pages draw, so the cover is not in it', () => {
+      // The packager ships the cover from coverImage. usedImages is what
+      // decides the stylesheet's figure rules, and a book whose one picture
+      // is its cover draws no figure on any page.
+      const body = bodyOf(card + script, { format: ON, images: HAVE });
+      expect(body.usedImages.size).toBe(0);
+    });
+
+    test('so a card-only front reads the same with pictures on or off', () => {
+      // With the cover on, switching pictures off takes away the cover and
+      // nothing else: no Opening comes or goes, so no scene changes its id.
+      const on = bodyOf(card + script, { format: ON, images: HAVE });
+      const off = bodyOf(card + script, { format: OFF, images: HAVE });
+      expect(pages(on)).toEqual(pages(off));
+    });
+
+    test('pictures after the card are drawn where they sit', () => {
+      const body = bodyOf(
+        `${card}INT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nWork.\n`,
+        { format: ON, images: HAVE },
+      );
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.files[0].xhtml).toContain(
+        '<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>',
+      );
+      expect(body.files[0].xhtml).not.toContain('p001-01.png');
+      expect([...body.usedImages]).toEqual(['p002-01.png']);
+    });
+
+    test('the same plate shown again later is drawn there: only the card note leaves the flow', () => {
+      // Compared by note, not by filename. Our own writer names each picture
+      // once, but a hand-written script may show its card again in act three.
+      const body = bodyOf(`${card}${script}\n${card}`, { format: ON, images: HAVE });
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.files[0].xhtml.match(/<p class="figure w100 figure-full">/g)).toHaveLength(1);
+      expect(body.files[0].xhtml).toMatch(/Rest\.<\/p>\s*<p class="figure w100 figure-full">/);
+      expect([...body.usedImages]).toEqual(['p001-01.png']);
+    });
+
+    test('a note that renders nothing, in either place, does not stop the cover', () => {
+      const dead = '[[img: p009-01.png w=50]]\n\n';
+      for (const src of [dead + card + script, card + dead + script]) {
+        const body = bodyOf(src, { format: ON, images: HAVE });
+        expect(body.coverImage).toBe('p001-01.png');
+        expect(body.toc.map((e) => e.title)).toEqual(['INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+      }
+    });
+
+    test('a cold open after the card still opens the Opening, which holds only the cold open', () => {
+      const body = bodyOf(`${card}A cold open.\n\n${script}`, { format: ON, images: HAVE });
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.toc.map((e) => e.title)).toEqual(['Opening', 'INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+      expect(body.files[0].xhtml).toMatch(
+        /<section class="scene" id="sc-001">\s*<p class="action">A cold open\.<\/p>\s*<\/section>/,
+      );
+    });
+
+    test('with promoteCoverImage off, nothing is the cover and the card is the Opening', () => {
+      const body = bodyOf(card + script, { format: NO_COVER, images: HAVE });
+      expect(body.coverImage).toBeUndefined();
+      expect(body.toc[0].title).toBe('Opening');
     });
   });
 });

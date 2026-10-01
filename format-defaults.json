@@ -17,5 +17,6 @@
   "justifyText": false,
   "printSplitMinimums": true,
   "preserveFontShifts": true,
-  "includeImages": true
+  "includeImages": true,
+  "promoteCoverImage": true
 }

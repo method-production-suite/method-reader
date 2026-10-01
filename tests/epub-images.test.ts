@@ -202,6 +202,88 @@ describe('the pictures a book carries', () => {
   });
 });
 
+// ── the cover ────────────────────────────────────────────
+
+// The title card as the cover: the body leaves it out of the flow and names it
+// (tests/epub.test.ts), and the packager ships it and says it is the cover.
+describe('the cover in the package', () => {
+  const CARD = '[[img: p001-01.png w=100 full]]\n\n';
+  const SCRIPT = 'INT. LAB - DAY\n\nWork.\n';
+  const coverBody = (src = CARD + SCRIPT, format = DEFAULT_FORMAT_OPTIONS, names = ['p001-01.png']) =>
+    tokensToBody(new Fountain().parse(src, true).tokens, { format, images: new Set(names) });
+  const metadataOf = (opf: string) => /<metadata[^>]*>([\s\S]*)<\/metadata>/.exec(opf)![1];
+
+  test('a cover no page draws still ships: its bytes, its manifest item, and both declarations', async () => {
+    // The hazard: the cover is on no page, so nothing in the body points at
+    // it. A packager that shipped only what the pages draw would drop its
+    // bytes, then its manifest item, then the declarations, and the book
+    // would still validate and still read, with a grey rectangle in the
+    // library. Every one of the three is asserted here for that reason.
+    const bytes = png(7);
+    const body = coverBody();
+    expect(body.coverImage).toBe('p001-01.png');
+    expect(body.usedImages.size).toBe(0);
+    const { zip, opf } = await open(await buildEpub(
+      META, body, DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes }],
+    ));
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png']);
+    expect([...await zip.file('OEBPS/images/p001-01.png')!.async('uint8array')]).toEqual([...bytes]);
+    expect(imageItems(opf)).toEqual([
+      '<item id="img-p001-01" href="images/p001-01.png" media-type="image/png" properties="cover-image"/>',
+    ]);
+    expect(metadataOf(opf)).toContain('<meta name="cover" content="img-p001-01"/>');
+    // A resource like every picture, never in the spine.
+    expect(/<spine>([\s\S]*)<\/spine>/.exec(opf)![1]).not.toContain('img');
+  });
+
+  test('one item is the cover-image, and the meta names that same item', async () => {
+    const src = `${CARD}INT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nWork.\n`;
+    const body = coverBody(src, DEFAULT_FORMAT_OPTIONS, ['p001-01.png', 'p002-01.png']);
+    const { opf } = await open(await buildEpub(META, body, DEFAULT_FORMAT_OPTIONS, [
+      { name: 'p002-01.png', bytes: png(2) },
+      { name: 'p001-01.png', bytes: png(1) },
+    ]));
+    expect(imageItems(opf)).toHaveLength(2);
+    const covers = imageItems(opf).filter((item) => item.includes('properties='));
+    expect(covers).toHaveLength(1);
+    expect(covers[0]).toContain('href="images/p001-01.png"');
+    expect(covers[0]).toContain('properties="cover-image"');
+    const id = /id="([^"]+)"/.exec(covers[0])![1];
+    expect(opf.match(/<meta name="cover"[^>]*\/>/g)).toEqual([`<meta name="cover" content="${id}"/>`]);
+  });
+
+  test('a book without a cover declares none', async () => {
+    const off = resolveFormatOptions({ promoteCoverImage: false });
+    for (const body of [bodyShowing(['p001-01.png']), coverBody(CARD + SCRIPT, off)]) {
+      expect(body.coverImage).toBeUndefined();
+      const { opf } = await open(await buildEpub(
+        META, body, DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
+      ));
+      expect(opf).not.toContain('name="cover"');
+      expect(opf).not.toContain('cover-image');
+    }
+  });
+
+  test('a book whose one picture is its cover carries no figure rules', async () => {
+    // No page draws a figure, so the sheet is the one a book without
+    // pictures gets: the rules follow what the pages show, not what ships.
+    const format = resolveFormatOptions({ elementSpacingEm: 0.6 });
+    const { zip } = await open(await buildEpub(
+      META, coverBody(CARD + SCRIPT, format), format, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(await zip.file('OEBPS/style.css')!.async('string')).toBe(screenplayCss(format));
+  });
+
+  test('a cover nobody handed over is a caller bug, and says so', async () => {
+    // The same throw as a figure's, reached through the cover alone: no
+    // page draws this picture, so only the cover asks for its bytes.
+    const body = coverBody();
+    expect(body.usedImages.size).toBe(0);
+    await expect(buildEpub(META, body, DEFAULT_FORMAT_OPTIONS, []))
+      .rejects.toThrow(/p001-01\.png/);
+  });
+});
+
 describe('picture ids', () => {
   test('img- plus the name without its extension, reduced to letters, digits, _ and -', () => {
     // The prefix is load-bearing: an XML id may not start with a digit, and
@@ -261,8 +343,12 @@ describe('the preview carries the pictures it shows', () => {
   const tokens = () => new Fountain().parse(fountainText, true).tokens;
   const DATA = 'data:image/png;base64,';
 
+  // The title card left in the flow, so both pictures are figures here; the
+  // cover's effect on the preview is its own test below.
+  const NO_COVER = resolveFormatOptions({ promoteCoverImage: false });
+
   test('each figure inlines its picture as a data: URI that decodes to the very bytes', () => {
-    const html = tokensToPreviewHtml(tokens(), DEFAULT_FORMAT_OPTIONS, pictures);
+    const html = tokensToPreviewHtml(tokens(), NO_COVER, pictures);
     const srcs = [...html.matchAll(/<img src="([^"]+)"/g)].map((m) => m[1]);
     expect(srcs).toHaveLength(2);
     expect([...pictures.keys()]).toEqual(['p001-01.png', 'p002-01.png']);
@@ -292,6 +378,19 @@ describe('the preview carries the pictures it shows', () => {
       () => `<style>\n${screenplayCss(format, { hasFigures: true })}</style>`,
     ));
     expect(asBook).not.toContain(DATA);
+  });
+
+  test('with the title card as the cover, the preview leaves it out, as the book’s pages do', () => {
+    // The preview is the book's body, and the cover is on none of its pages.
+    // So by default it opens on the first scene (sc-001 is the first section
+    // id, so no Opening stands ahead of it), and the panel is its only
+    // picture.
+    const html = tokensToPreviewHtml(tokens(), DEFAULT_FORMAT_OPTIONS, pictures);
+    const srcs = [...html.matchAll(/<img src="([^"]+)"/g)].map((m) => m[1]);
+    expect(srcs).toEqual([`${DATA}${Buffer.from(pictures.get('p002-01.png')!).toString('base64')}`]);
+    expect(html).toContain(
+      '<section class="scene" id="sc-001">\n<h2 class="scene-heading">INT. ARCHIVE ROOM - DAY</h2>',
+    );
   });
 
   test('with includeImages off, or no pictures in hand, the preview is the one it always was', () => {
@@ -344,11 +443,28 @@ describe('epubcheck', () => {
     return { body, epub: await buildEpub({ ...META, title }, body, DEFAULT_FORMAT_OPTIONS, images) };
   };
 
-  checked(`the book convertPdf builds from images.pdf validates clean${SKIPPED}`, async () => {
-    const { zip } = await open(book);
+  checked(`the book convertPdf builds from images.pdf validates clean, cover declared${SKIPPED}`, async () => {
+    const { zip, opf } = await open(book);
     expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    // The default book declares its title card as the cover, both ways, so
+    // this is epubcheck's verdict on the declarations as well as the pictures.
+    expect(opf).toContain('<meta name="cover" content="img-p001-01"/>');
+    expect(opf).toContain('href="images/p001-01.png" media-type="image/png" properties="cover-image"');
     const path = join(SCRATCH, 'images.epub');
     writeFileSync(path, book);
+    const { ok, out } = epubcheck(path);
+    expect(ok, out).toBe(true);
+  }, 120000);
+
+  checked(`the book convertPdf builds from torture.pdf validates clean, cover declared${SKIPPED}`, async () => {
+    // The device pass's book: a title card in front and three pictures in
+    // the flow, two of them full-page plates that are not the cover.
+    const result = await convertPdf(new Uint8Array(await Bun.file(`${PUBLIC}torture.pdf`).arrayBuffer()));
+    const { opf } = await open(result.epub);
+    expect(opf).toContain('<meta name="cover" content="img-p001-01"/>');
+    expect(opf.match(/properties="cover-image"/g)).toHaveLength(1);
+    const path = join(SCRATCH, 'torture.epub');
+    writeFileSync(path, result.epub);
     const { ok, out } = epubcheck(path);
     expect(ok, out).toBe(true);
   }, 120000);

@@ -103,6 +103,7 @@ describe('the book built from torture.pdf (#19a)', () => {
   let zip: JSZip;
   let body = '';
   let nav = '';
+  let opf = '';
   beforeAll(async () => {
     const result = await convertPdf(await torture());
     zip = await JSZip.loadAsync(result.epub);
@@ -111,6 +112,7 @@ describe('the book built from torture.pdf (#19a)', () => {
       .sort();
     body = (await Promise.all(files.map((n) => zip.file(n)!.async('string')))).join('');
     nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
+    opf = await zip.file('OEBPS/package.opf')!.async('string');
   }, 60000);
 
   const figure = (file: string, cls: string) =>
@@ -123,17 +125,36 @@ describe('the book built from torture.pdf (#19a)', () => {
     expect(images).toEqual([CARD, PANEL, PLATE, TALL].map((f) => `OEBPS/images/${f}`));
   });
 
-  test('the title card is an Opening section of its own, ahead of the first scene', () => {
-    // No cover in this phase: a full-page picture before the first scene
-    // heading opens an "Opening" section, and that section holds the card
-    // and nothing else.
-    expect(body).toContain(
+  test('the title card is the cover: on no page, and the book opens on the first scene', () => {
+    // A full-page picture before the first scene heading, with nothing but
+    // the title page block ahead of it, so by default it is the book's
+    // cover: declared both ways, and on none of the pages.
+    expect(body).not.toContain(`images/${CARD}`);
+    expect(opf).toContain('<meta name="cover" content="img-p001-01"/>');
+    expect(opf).toContain(`href="images/${CARD}" media-type="image/png" properties="cover-image"`);
+    const toc = [...nav.matchAll(/<li><a href="[^"]*">([^<]*)<\/a><\/li>/g)].map((m) => m[1]);
+    expect(toc[0]).toBe('INT. ARCHIVE BASEMENT - NIGHT');
+    expect(body).toMatch(/<section class="scene" id="sc-001">\n<h2 class="scene-heading">INT\. ARCHIVE BASEMENT - NIGHT<\/h2>/);
+  });
+
+  test('with promoteCoverImage off, the title card is an Opening section of its own', async () => {
+    // The book before covers: the card opens an "Opening" section, and that
+    // section holds the card and nothing else.
+    const result = await convertPdf(await torture(), { format: { promoteCoverImage: false } });
+    const off = await JSZip.loadAsync(result.epub);
+    const offBody = (await Promise.all(Object.keys(off.files)
+      .filter((n) => /^OEBPS\/text\/body\d+\.xhtml$/.test(n))
+      .sort()
+      .map((n) => off.file(n)!.async('string')))).join('');
+    expect(offBody).toContain(
       `<section class="scene" id="sc-001">\n${figure(CARD, 'figure w100 figure-full')}\n</section>`,
     );
-    const toc = [...nav.matchAll(/<li><a href="[^"]*">([^<]*)<\/a><\/li>/g)].map((m) => m[1]);
+    const offNav = await off.file('OEBPS/nav.xhtml')!.async('string');
+    const toc = [...offNav.matchAll(/<li><a href="[^"]*">([^<]*)<\/a><\/li>/g)].map((m) => m[1]);
     expect(toc[0]).toBe('Opening');
     expect(toc[1]).toBe('INT. ARCHIVE BASEMENT - NIGHT');
-  });
+    expect(await off.file('OEBPS/package.opf')!.async('string')).not.toContain('cover-image');
+  }, 60000);
 
   test('the panel and the tall plate stay in the flow at their own widths', () => {
     // 42 and 56 round to the nearest step of five, and neither is full-page:

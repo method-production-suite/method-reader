@@ -72,7 +72,7 @@ export function settingsCommand(options: SettingsOptions): SettingsResult {
       throw new CliError('bad-settings', '--set must be a JSON object');
     }
     // Overlaid on the CURRENT settings, not on the defaults: one moved knob
-    // must not silently reset the other eighteen. Clamping is
+    // must not silently reset the other nineteen. Clamping is
     // resolveFormatOptions', not a second copy of it.
     settings = resolveFormatOptions(parsed as Record<string, unknown>, settings);
     saveScriptSettings(settings, options.fountain);
