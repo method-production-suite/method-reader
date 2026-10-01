@@ -34,5 +34,8 @@ minimumReleaseAge = 86400
 # tests/isolate-app-settings.ts for what each half does and why both exist.
 # The second preload does the same for Calibre's settings folder, with its
 # own line in .env.test; tests/isolate-calibre-config.ts explains it.
+# The third removes the pdf.js decoder folder the engine unpacks into the
+# system temp folder, which its own exit handler cannot do under bun test;
+# tests/remove-pdfjs-decoders.ts explains it.
 [test]
-preload = ["./tests/isolate-app-settings.ts", "./tests/isolate-calibre-config.ts"]
+preload = ["./tests/isolate-app-settings.ts", "./tests/isolate-calibre-config.ts", "./tests/remove-pdfjs-decoders.ts"]

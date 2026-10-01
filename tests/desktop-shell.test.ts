@@ -1154,6 +1154,12 @@ describe('what sidecar.rs says about a quit mid-call is true of the engine', () 
       // adopted sidecar
       'src/atomic-write.ts': 2,
       'src/replace-file.ts': 1,
+      // In place, and safe to be: pdf.js's image decoders, copied into a
+      // private folder the engine makes fresh in the system temp folder and
+      // removes at exit. Nothing outside that one process ever reads it, so
+      // even a kill mid-copy loses nothing of the user's, and the comment,
+      // which names what a person would miss, has nothing to add.
+      'src/parser/pdfjs-wasm.ts': 1,
     });
     const sidecar = rustSources.find((f) => basename(f.name) === 'sidecar.rs')!.text;
     const comment = sidecar.slice(sidecar.indexOf('pub async fn run('), sidecar.indexOf('let (mut rx'));

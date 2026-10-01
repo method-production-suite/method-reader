@@ -4,6 +4,7 @@ import './pdfjs-shims';
 import { isCueText } from './cue';
 import type { FamilyBucket, FontRun, RawLine, SizeStep } from './types';
 import { getDocument, OPS } from 'pdfjs-dist/build/pdf.mjs';
+import type { OpList } from './images';
 
 /**
  * Extract raw lines from a PDF buffer.
@@ -235,11 +236,6 @@ export interface UnderlineMark {
   x0: number;
   x1: number;
   y: number;
-}
-
-interface OpList {
-  fnArray: ArrayLike<number>;
-  argsArray: ArrayLike<unknown>;
 }
 
 // Geometry bounds, calibrated 2026-08-04 against the local generator set.
