@@ -1314,8 +1314,11 @@ the Mac app should move those two; nothing in the engine needs to change.
   none. `--no-fountain` writes neither. Reading the folder back refuses
   symlinks, directories and FIFOs, any file over `MAX_IMAGE_FILE_BYTES`
   (derived from `IMAGE_MAX_EDGE`, so it is what this engine's encoder could
-  have written), and anything that is not a PNG. Only the folder itself is
-  ever created, never a missing parent. A folder that cannot be written is the
+  have written), and anything that is not a PNG. The folder itself has to be
+  a folder of its own: a symlink (wherever it points) or a file at that path
+  is never followed, so writing refuses it as `unwritable`, the prune leaves
+  it alone, and reading it back reads nothing and says why. Only the folder
+  itself is ever created, never a missing parent. A folder that cannot be written is the
   `unwritable` error, naming the folder and what was already written, and
   saying the `.fountain` was not updated: on a re-conversion the previous one
   stays, still naming the previous pictures. The `--json` answer gains `imagesPath` (where a folder was

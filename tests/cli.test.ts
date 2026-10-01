@@ -9,6 +9,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -340,6 +341,10 @@ describe('the picture folder beside the .fountain', () => {
     // away), so the message has to say it was not updated.
     const dir = freshDir();
     await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    // Marked, because the second run converts the SAME PDF: a .fountain
+    // rewritten ahead of its pictures would come out byte-identical to the
+    // old one, and an unmarked comparison would pass with the order broken.
+    writeFileSync(join(dir, 'out.fountain'), '\n[[marker: from the run before]]\n', { flag: 'a' });
     const before = readFileSync(join(dir, 'out.fountain'), 'utf8');
     expect(before).toContain('[[img: p001-01.png');
     chmodSync(join(dir, 'out.images'), 0o555);
@@ -352,6 +357,37 @@ describe('the picture folder beside the .fountain', () => {
     expect(err.code).toBe('unwritable');
     expect(err.message).toContain('The .fountain was not updated.');
     expect(readFileSync(join(dir, 'out.fountain'), 'utf8')).toBe(before);
+    expect(before).toContain('[[marker: from the run before]]');
+  }, 60000);
+
+  test('a picture folder that is a symlink is unwritable, and its target is untouched', async () => {
+    // Adopted, the link was written THROUGH and its target pruned: the
+    // target gained the new pictures and lost a p009-01.png of its own.
+    const dir = freshDir();
+    const elsewhere = freshDir();
+    writeFileSync(join(elsewhere, 'p009-01.png'), png(9));
+    symlinkSync(elsewhere, join(dir, 'out.images'));
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain(join(dir, 'out.images'));
+    expect(readdirSync(elsewhere)).toEqual(['p009-01.png']);
+    expect(existsSync(join(dir, 'out.fountain'))).toBe(false);
+  }, 60000);
+
+  test('a script with no pictures never prunes through a symlinked folder', async () => {
+    // The other door: with nothing to write the CLI only prunes, and the
+    // prune would delete the link target's p009-01.png as a stale picture.
+    const dir = freshDir();
+    const elsewhere = freshDir();
+    writeFileSync(join(elsewhere, 'p009-01.png'), png(9));
+    symlinkSync(elsewhere, join(dir, 'out.images'));
+    const { exitCode } = await runCli([`${FIXTURE_PDF}`, '-o', join(dir, 'out.epub')]);
+    expect(exitCode).toBe(0);
+    expect(readdirSync(elsewhere)).toEqual(['p009-01.png']);
   }, 60000);
 
   test('a folder whose parent is missing is unwritable, and no parent is made', async () => {

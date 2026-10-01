@@ -133,6 +133,38 @@ export interface ImagesRead {
    * filtered through: only names a note could carry ever reach this loop.
    */
   overCap: number;
+  /**
+   * Present, and true, when `<stem>.images` exists but is not a folder of its
+   * own: a symlink (wherever it points) or a file. Nothing in it is read.
+   *
+   * OPTIONAL and absent on the happy path, like `ImageStats.decodersUnavailable`,
+   * because it is not a count: it says the whole folder was refused, which is
+   * the one reason for an empty read a user can act on.
+   */
+  folderRefused?: true;
+}
+
+/**
+ * What is at a picture folder's path: nothing, a real folder, or something
+ * this module will not touch (a symlink, wherever it points, or a file).
+ *
+ * `lstat`, for the reason the entry gate in `readImages` uses it: everything
+ * that opens a path follows a link, so a `<stem>.images` that is a symlink
+ * would be read from, written into and pruned as if it were ours, and the
+ * prune deletes this engine's own picture names in whatever folder the link
+ * names. Nothing this engine writes is ever a symlink, so refusing one costs
+ * nothing real.
+ *
+ * Any failure to ask counts as `missing`, which is what the callers did with
+ * a folder they could not list before this check existed: an empty read, and
+ * nothing to prune.
+ */
+async function folderAt(dir: string): Promise<'missing' | 'folder' | 'refused'> {
+  try {
+    return (await lstat(dir)).isDirectory() ? 'folder' : 'refused';
+  } catch {
+    return 'missing';
+  }
 }
 
 /**
@@ -146,8 +178,10 @@ export interface ImagesRead {
  * locked file costs its own picture and not the ones listed after it. The
  * losses are COUNTED rather than swallowed — see `ImagesRead.refused`.
  *
- * Bounded on five axes, because none of this comes from us:
+ * Bounded on six axes, because none of this comes from us:
  *
+ *   - the FOLDER has to be a folder of its own (see `folderAt`). A symlinked
+ *     or file-shaped one is refused whole, and said so (`folderRefused`);
  *   - the NAME has to be one a note could have written, since it goes on to be
  *     a zip entry path and an href in an EPUB manifest;
  *   - the entry has to be a REGULAR FILE, and `lstat` is what asks — `stat`
@@ -189,11 +223,14 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
   const images = new Map<string, Uint8Array>();
   let refused = 0;
   let overCap = 0;
+  const at = await folderAt(dir);
+  if (at === 'missing') return { images, refused, overCap };
+  if (at === 'refused') return { images, refused, overCap, folderRefused: true };
   let names: string[];
   try {
     names = (await readdir(dir)).filter(isSafeImageFile).sort();
   } catch {
-    return { images, refused, overCap }; // no folder, or not a folder
+    return { images, refused, overCap }; // gone or unlistable since the check
   }
   for (const name of names) {
     // `continue` and a count, not `break`. A `break` would make the cap the
@@ -248,6 +285,8 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
  *     re-rendering from its own library, where nobody assembled anything and
  *     the cause is an iCloud placeholder, a moved library or a permissions
  *     change.
+ *   - `folderRefused`: the folder was a link or a file, so nothing in it was
+ *     read at all. Said because the other two cannot say it: both are zero.
  *
  * Takes the whole `ImagesRead` rather than its numbers, for `imageWarnings`'s
  * reason: `kept`, `refused` and `overCap` are three bare numbers with nothing
@@ -256,6 +295,11 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
  */
 export function imageFolderWarnings(read: ImagesRead): string[] {
   const out: string[] = [];
+  if (read.folderRefused) {
+    out.push(
+      "This script's picture folder is not a folder of its own (it is a link or a file), so no pictures were read from it.",
+    );
+  }
   const kept = read.images.size;
   if (read.overCap > 0) {
     out.push(
@@ -289,8 +333,14 @@ export function imageFolderWarnings(read: ImagesRead): string[] {
  * Never creates the folder: a conversion that carries no pictures still has to
  * clear the last one's, and it must not leave an empty folder behind for a
  * script that has no art.
+ *
+ * Never reaches through a link either. The CLI calls this on its own when a
+ * conversion has no pictures, so the folder check (`folderAt`) is made here
+ * and not only in `writeImages`: a symlinked folder is left alone and nothing
+ * is removed, wherever it points.
  */
 export async function pruneImages(dir: string, keep: Set<string>): Promise<number> {
+  if ((await folderAt(dir)) !== 'folder') return 0;
   let existing: string[];
   try {
     existing = await readdir(dir);
@@ -330,6 +380,13 @@ export async function pruneImages(dir: string, keep: Set<string>): Promise<numbe
  * failure than a folder that gains files; and since nothing but our own output
  * is ever deleted, adopting costs the user nothing they had.
  *
+ * Only a FOLDER, though. A symlink at this path, wherever it points, or a
+ * file, is refused before anything is written, with ENOTDIR (which the CLI
+ * reports as `unwritable`). Adopting a link writes the pictures into its
+ * target and then prunes the target, deleting any of this engine's picture
+ * names it holds, which is the one data loss the prune's narrow name test
+ * cannot prevent on its own.
+ *
  * Each file lands atomically (atomic-write.ts: temp then rename), so a
  * conversion racing a reader is never observed half-written. The FOLDER is
  * not atomic: a reader can catch it with some pictures present and others
@@ -350,12 +407,17 @@ export async function writeImages(
   // The folder and never its parents, so not `recursive`. The parent is
   // wherever the .fountain goes, and when that is not there the path is
   // wrong: building it would put the pictures somewhere nobody asked for, so
-  // a missing parent throws ENOENT and the caller reports it. EEXIST is the
-  // adopted folder above, and a FILE of that name gets past here only to fail
-  // on the first write inside it.
+  // a missing parent throws ENOENT and the caller reports it. EEXIST is
+  // whatever already holds the name, which the check after it sorts into the
+  // folder to adopt and the link or file to refuse.
   await mkdir(dir).catch((err: NodeJS.ErrnoException) => {
     if (err.code !== 'EEXIST') throw err;
   });
+  if ((await folderAt(dir)) !== 'folder') {
+    throw Object.assign(new Error(`${dir} is not a folder of its own (a link or a file)`), {
+      code: 'ENOTDIR',
+    });
+  }
   const written = new Set<string>();
   for (const img of images) {
     writeFileAtomicSync(join(dir, img.name), img.bytes);

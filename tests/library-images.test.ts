@@ -54,6 +54,23 @@ function cached(files: Record<string, Uint8Array> | null): string {
  */
 const png = (tag = 0) => encodePng(new Uint8Array([tag, 0, 0]), 1, 1);
 
+/**
+ * A folder somewhere else holding one of this engine's own picture names, and
+ * a `.fountain` whose `<stem>.images` is a symlink to it. The name inside is
+ * one the prune would delete and the reader would accept, so following the
+ * link is visible from every side: a read finds it, a prune removes it, a
+ * write lands beside it.
+ */
+function linkedFolder(): { fountain: string; dir: string; elsewhere: string } {
+  const elsewhere = join(SCRATCH, `elsewhere-${seq++}`);
+  mkdirSync(elsewhere);
+  writeFileSync(join(elsewhere, 'p009-01.png'), png(9));
+  const fountain = cached(null);
+  const dir = imagesDirFor(fountain);
+  symlinkSync(elsewhere, dir);
+  return { fountain, dir, elsewhere };
+}
+
 /** A PNG header followed by padding, for the tests that are about SIZE. */
 function pngOfSize(bytes: number): Uint8Array {
   const out = new Uint8Array(bytes);
@@ -239,6 +256,29 @@ describe('readImages', () => {
     const { images, refused } = await readImages(fountain);
     expect([...images.keys()]).toEqual(['p001-01.png']);
     expect(refused).toBe(1);
+  });
+
+  test('a picture folder that is itself a symlink is not followed, and says so', async () => {
+    // The gate above asks about each ENTRY; this is the folder. Followed, a
+    // link named `a.images` carries whatever folder it points at into the
+    // book, which is the same confused deputy one level up.
+    const { fountain } = linkedFolder();
+    const read = await readImages(fountain);
+    expect(read.images.size).toBe(0);
+    expect(read.folderRefused).toBe(true);
+    const warnings = imageFolderWarnings(read);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('picture folder');
+    expect(warnings[0]).toContain('not a folder');
+  });
+
+  test('so is a file where the folder should be', async () => {
+    const fountain = cached(null);
+    writeFileSync(imagesDirFor(fountain), png());
+    const read = await readImages(fountain);
+    expect(read.images.size).toBe(0);
+    expect(read.folderRefused).toBe(true);
+    expect(imageFolderWarnings(read)).toHaveLength(1);
   });
 
   test('a directory named like a picture is refused, not read', async () => {
@@ -427,6 +467,14 @@ describe('pruneImages', () => {
     expect(await pruneImages(dir, new Set())).toBe(0);
     expect(await readdir(dir).catch(() => 'gone')).toBe('gone');
   });
+
+  test('never deletes through a symlinked folder', async () => {
+    // The CLI calls this on its own for a script with no pictures left, so it
+    // needs the folder check itself, not only through writeImages.
+    const { dir, elsewhere } = linkedFolder();
+    expect(await pruneImages(dir, new Set())).toBe(0);
+    expect(await readdir(elsewhere)).toEqual(['p009-01.png']);
+  });
 });
 
 describe('writeImages', () => {
@@ -453,6 +501,17 @@ describe('writeImages', () => {
     await expect(
       writeImages(imagesDirFor(fountain), [{ name: 'p001-01.png', bytes: png() }]),
     ).rejects.toThrow();
+  });
+
+  test('a symlinked folder is refused, and nothing lands in or leaves its target', async () => {
+    // Adopting it would write THROUGH the link and then prune the link's
+    // target: measured before this guard, the target gained the new picture
+    // and lost its p009-01.png. ENOTDIR, which the CLI reports as
+    // `unwritable` (cli-errors.ts), the same answer a FILE at this path gets.
+    const { dir, elsewhere } = linkedFolder();
+    await expect(writeImages(dir, [{ name: 'p001-01.png', bytes: png() }]))
+      .rejects.toMatchObject({ code: 'ENOTDIR' });
+    expect(await readdir(elsewhere)).toEqual(['p009-01.png']);
   });
 
   test('makes the folder itself and never its parents', async () => {
