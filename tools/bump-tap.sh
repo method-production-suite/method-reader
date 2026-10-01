@@ -36,12 +36,22 @@ for f in "$CASK" "$FORMULA"; do
   [ -f "$f" ] || { echo "not a tap checkout: $f missing" >&2; exit 1; }
 done
 
+# The release's asset list, read ONCE: every decision below (the digest,
+# and whether the release still serves Intel) comes from the same answer.
+# Fail closed: if the list cannot be read, nothing is written. (Read per
+# asset with `|| true`, a transient failure on the Intel lookup once looked
+# exactly like "no Intel tarball".) One "name sha256:<hex>" line per asset.
+if ! ASSETS="$(gh api "repos/$REPO/releases/tags/v$VERSION" \
+    -q '.assets[] | "\(.name) \(.digest)"' 2>/dev/null)"; then
+  echo "bump-tap: could not read the assets of release v$VERSION; nothing written" >&2
+  echo "bump-tap: is release v$VERSION published? Try again if GitHub was having a moment." >&2
+  exit 1
+fi
 digest() {
-  gh api "repos/$REPO/releases/tags/v$VERSION" \
-    -q ".assets[] | select(.name == \"$1\") | .digest" 2>/dev/null \
-    | sed 's/^sha256://'
+  printf '%s\n' "$ASSETS" | awk -v n="$1" '$1 == n { sub(/^sha256:/, "", $2); print $2 }'
 }
-ARM_SHA="$(digest screepub-cli-macos-arm64.tar.gz || true)"
+has_asset() { printf '%s\n' "$ASSETS" | awk -v n="$1" '$1 == n { found = 1 } END { exit !found }'; }
+ARM_SHA="$(digest screepub-cli-macos-arm64.tar.gz)"
 
 # Check the SHAPE, not merely that something came back. For a tag with no
 # release, `gh api` prints its 404 JSON body on STDOUT — so a non-empty
@@ -67,8 +77,7 @@ check_sha "$ARM_SHA" screepub-cli-macos-arm64.tar.gz
 # copy of this script writes; bumping it with this one would drop Intel
 # brew users a release early. Refused, before anything is written.
 INTEL=screepub-cli-macos-x64.tar.gz
-INTEL_SHA="$(digest "$INTEL" || true)"
-if [ ${#INTEL_SHA} -eq 64 ] && [ -z "$(printf '%s' "$INTEL_SHA" | tr -d '0-9a-f')" ]; then
+if has_asset "$INTEL"; then
   echo "bump-tap: release v$VERSION still carries $INTEL, so its tap serves Intel Macs too." >&2
   echo "bump-tap: this script writes the Apple-silicon-only tap of the releases after it." >&2
   echo "bump-tap: bump v$VERSION with its own script: git show v$VERSION:tools/bump-tap.sh > /tmp/bump-tap.sh" >&2
@@ -86,8 +95,16 @@ fi
 # open. So from here on the cask is DISABLED: `brew install --cask` stops
 # with "has been disabled because it is now downloaded from the releases
 # page and updates itself!" (Homebrew's DeprecateDisable.message puts the
-# because: text after "because it"). Same date as deprecate! would take:
-# the day of the bump, so it is disabled at once.
+# because: text after "because it").
+#
+# The DATE must already be past wherever the person is: Homebrew compares
+# it with the user's LOCAL day (cask/dsl.rb disable!: a date after
+# Date.today only deprecates, and still installs), so "today in UTC" from a
+# US-evening tag left the cask installable in the Americas until local
+# midnight, saying "It will be disabled on" that day. So a deprecate!
+# keeps its OWN date, which the identifier release's tap job wrote at
+# least one release earlier; a cask with neither gets the day Intel was
+# dropped, fixed, so a second run writes the same bytes.
 #
 # Where it goes is Homebrew's rule, not ours: `brew style` wants deprecate!
 # and disable! as one stanza group right after the livecheck block (found by
@@ -95,13 +112,25 @@ fi
 # deprecate! line is replaced where it stands; with neither, the line is
 # inserted there. A cask already disabled is left alone, which keeps this
 # script's rule: a second run produces no diff.
-DISABLE='  disable! date: "'"$(date -u +%Y-%m-%d)"'", because: "is now downloaded from the releases page and updates itself"'
+INTEL_DROPPED="2026-10-01"
+DEPRECATED_ON="$(awk '/^  deprecate! date: "/ && !done {
+  s = $0; sub(/^  deprecate! date: "/, "", s); sub(/".*/, "", s); print s; done = 1
+}' "$CASK")"
+case "$DEPRECATED_ON" in
+  [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+  *) DEPRECATED_ON="" ;;
+esac
+disable_line() { # <date>
+  printf '  disable! date: "%s", because: "is now downloaded from the releases page and updates itself"' "$1"
+}
 if grep -q '^  disable! ' "$CASK"; then
   :
 elif grep -q '^  deprecate! ' "$CASK"; then
+  DISABLE="$(disable_line "${DEPRECATED_ON:-$INTEL_DROPPED}")"
   awk -v line="$DISABLE" '/^  deprecate! / { print line; next } { print }' "$CASK" > "$CASK.new"
   mv "$CASK.new" "$CASK"
 else
+  DISABLE="$(disable_line "$INTEL_DROPPED")"
   awk -v line="$DISABLE" '
     { print }
     /^  livecheck do/ { inlive = 1 }

@@ -129,18 +129,29 @@ export function judgeManifest(
   }
 
   // After Intel was dropped the one window archive is Apple silicon only.
-  // A darwin-x86_64 row pointing at it would hand an Intel copy a build it
-  // cannot run. Before (a release still carrying the Intel tarball), the
-  // archive is universal and the same url answers both keys, rightly.
+  // An Intel row pointing at it would hand an Intel copy a build it cannot
+  // run. Both Intel keys: tauri-plugin-updater 2.12.0's get_urls tries
+  // `<os>-<arch>-app` before `<os>-<arch>`, so darwin-x86_64-app is the one
+  // an Intel copy of the .app finds first. Before (a release still carrying
+  // the Intel tarball), the archive is universal and one url answers every
+  // key, rightly.
   const intelEra = release.assets.some((a) => a.name === INTEL_CLI_ASSET);
-  const x86 = platforms['darwin-x86_64'];
-  const arm = platforms['darwin-aarch64'];
-  if (!intelEra && x86 && arm && typeof x86.url === 'string' && x86.url === arm.url) {
-    problems.push(
-      `darwin-x86_64 points at ${x86.url}, the same archive as darwin-aarch64, and release ` +
-        `${release.tagName} is Apple silicon only (it carries no ${INTEL_CLI_ASSET}): an Intel copy ` +
-        'would install a build it cannot run',
+  if (!intelEra) {
+    const armUrls = new Set(
+      ['darwin-aarch64', 'darwin-aarch64-app']
+        .map((k) => platforms[k]?.url)
+        .filter((u): u is string => typeof u === 'string'),
     );
+    for (const key of ['darwin-x86_64-app', 'darwin-x86_64']) {
+      const u = platforms[key]?.url;
+      if (typeof u === 'string' && armUrls.has(u)) {
+        problems.push(
+          `${key} points at ${u}, the same archive as darwin-aarch64, and release ` +
+            `${release.tagName} is Apple silicon only (it carries no ${INTEL_CLI_ASSET}): an Intel ` +
+            'copy would install a build it cannot run',
+        );
+      }
+    }
   }
 
   const assetsByUrl = new Map(release.assets.map((a) => [a.url, a]));

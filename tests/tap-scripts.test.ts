@@ -79,10 +79,12 @@ const BARE_CASK = `cask "screepub" do
 end
 `;
 
-/** The cask as the identifier release's tap job leaves it: deprecated. */
+/** The cask as the identifier release's tap job leaves it: deprecated, on
+ *  the day that job ran. */
+const DEPRECATED_ON = '2026-09-30';
 const CASK = BARE_CASK.replace(
   '  end\n\n  app',
-  '  end\n\n  deprecate! date: "2026-10-01", because: "is now downloaded from the releases page and updates itself"\n\n  app',
+  `  end\n\n  deprecate! date: "${DEPRECATED_ON}", because: "is now downloaded from the releases page and updates itself"\n\n  app`,
 );
 
 /** A `gh` that answers from files in its own directory: the newest
@@ -90,9 +92,17 @@ const CASK = BARE_CASK.replace(
  *  them), and per-asset digests for ONE release, the way GitHub reports
  *  them ("sha256:<hex>"). A tag it does not hold gets GitHub's 404 body on
  *  stdout and exit 1, which is exactly what the scripts must not mistake
- *  for a digest. */
-function fakeGh(tag: string, opts: { release: string; assets: Record<string, string>; formula?: string; cask?: string }) {
+ *  for a digest. Asked for the whole asset list (a -q with no select),
+ *  it answers "name sha256:<hex>" per asset. With `flaky`, every query
+ *  that could reveal the Intel tarball (the list, or a lookup by that
+ *  name) fails the way a transient API error does: nothing on stdout,
+ *  exit 1. */
+function fakeGh(
+  tag: string,
+  opts: { release: string; assets: Record<string, string>; formula?: string; cask?: string; flaky?: boolean },
+) {
   const dir = mkdtempSync(join(WORK, `gh-${tag}-`));
+  if (opts.flaky) writeFileSync(join(dir, 'flaky'), '');
   writeFileSync(join(dir, 'newest'), `v${opts.release}\n`);
   writeFileSync(join(dir, 'release'), `v${opts.release}`);
   writeFileSync(
@@ -122,6 +132,13 @@ if [ "$1" = api ]; then
         shift
       done
       name="$(printf '%s' "$q" | sed -n 's/.*select(.name == "\\([^"]*\\)").*/\\1/p')"
+      if [ -e "$here/flaky" ] && { [ -z "$name" ] || [ "$name" = screepub-cli-macos-x64.tar.gz ]; }; then
+        echo "gh: HTTP 502: Bad Gateway" >&2; exit 1
+      fi
+      if [ -z "$name" ]; then
+        awk -F'\\t' '{ print $1 " sha256:" $2 }' "$here/assets.tsv"
+        exit 0
+      fi
       awk -F'\\t' -v n="$name" '$1 == n { print "sha256:" $2 }' "$here/assets.tsv"
       exit 0 ;;
   esac
@@ -189,8 +206,15 @@ describe('tools/bump-tap.sh, run against a tap', () => {
     // release to an Intel Mac that installed it, so it must not install.
     const cask = readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8');
     expect(cask).not.toMatch(/^ {2}deprecate! /m);
+    // The deprecation's OWN date, already past. Homebrew compares the date
+    // with the user's LOCAL day (cask/dsl.rb: a date after Date.today only
+    // deprecates), so a date of "today in UTC" left the cask installable
+    // in the Americas for a US-evening tag.
     expect(cask).toMatch(
-      /^ {2}disable! date: "\d{4}-\d{2}-\d{2}", because: "is now downloaded from the releases page and updates itself"$/m,
+      new RegExp(
+        `^ {2}disable! date: "${DEPRECATED_ON}", because: "is now downloaded from the releases page and updates itself"$`,
+        'm',
+      ),
     );
     expect(cask.replace(/^ {2}disable! [^\n]*$/m, 'NOTICE')).toBe(
       CASK.replace(/^ {2}deprecate! [^\n]*$/m, 'NOTICE'),
@@ -205,6 +229,26 @@ describe('tools/bump-tap.sh, run against a tap', () => {
     expect(run('bump-tap.sh', ['0.8.0', tap], gh).status).toBe(0);
     const cask = readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8');
     expect(cask).toMatch(/ {2}livecheck do\n[\s\S]*?\n {2}end\n\n {2}disable! date: "[0-9-]+", because: "[^"]+"\n\n {2}app "Screepub\.app"/);
+    // A fixed date, already past everywhere: the day Intel was dropped.
+    // Not "today", for the time-zone reason above, and fixed so a second
+    // run writes the same bytes.
+    expect(cask).toContain('  disable! date: "2026-10-01", ');
+  });
+
+  test('a release whose asset list cannot be read writes nothing', () => {
+    // One read of the asset list decides both the digest and whether the
+    // release still serves Intel. A transient API failure must stop the
+    // bump: read separately with `|| true`, a failed Intel lookup used to
+    // look like "no Intel tarball" and let the identifier release be
+    // bumped Apple-silicon-only.
+    const gh = fakeGh('flaky', { release: '0.7.5', assets: { [ARM]: ARM_SHA, [INTEL]: sha('2') }, flaky: true });
+    const before = twoArchFormula('0.7.4', sha('1'), sha('2'));
+    const tap = tapCheckout('flaky', before);
+    const r = run('bump-tap.sh', ['0.7.5', tap], gh);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain('v0.7.5');
+    expect(readFileSync(join(tap, 'Formula', 'screepub.rb'), 'utf8')).toBe(before);
+    expect(readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8')).toBe(CASK);
   });
 
   test('a release that still carries the Intel tarball is refused, and nothing is written', () => {
@@ -347,6 +391,21 @@ describe('tools/check-tap.sh, judging the published tap', () => {
     const r = run('check-tap.sh', [], badIntel);
     expect(r.status).not.toBe(0);
     expect(r.stdout).toContain(INTEL);
+  });
+
+  test('an Apple silicon release whose cask says BOTH deprecate! and disable! is an error', () => {
+    // Homebrew asks deprecated? before disabled?, so a cask carrying both
+    // lines still installs.
+    const both = disabledCask().replace(
+      /^( {2}disable! [^\n]*)$/m,
+      '  deprecate! date: "2026-09-30", because: "is now downloaded from the releases page and updates itself"\n$1',
+    );
+    expect(both).toMatch(/^ {2}deprecate! /m);
+    expect(both).toMatch(/^ {2}disable! /m);
+    const gh = fakeGh('both', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', ARM_SHA), cask: both });
+    const r = run('check-tap.sh', [], gh);
+    expect(r.status).not.toBe(0);
+    expect(r.stdout).toMatch(/deprecate!.*still installs|still installs.*deprecate!/);
   });
 
   test('a cask with no retirement notice at all is an error, before and after', () => {

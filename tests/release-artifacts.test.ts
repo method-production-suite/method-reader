@@ -258,6 +258,10 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(crib).toContain('depends_on arch: :arm64');
     expect(crib).toMatch(/if\/else on the CPU/);
     expect(crib).toContain('disable!');
+    // Keeping the deprecation's own, past, date: Homebrew compares it with
+    // the user's LOCAL day, and "today" can still be tomorrow somewhere.
+    expect(crib).toContain('keeping its date');
+    expect(crib).not.toMatch(/today/);
   });
 
   test('the checks job fails a tag whose three version files disagree', () => {
@@ -1205,6 +1209,17 @@ describe('the developer docs describe the Apple silicon build', () => {
     expect(read('docs/device-map.md')).not.toMatch(/universal Mac\s+build/);
   });
 
+  test('CONTRIBUTING.md and the ledger describe the weekly cask check the same way', () => {
+    // check-tap.sh wants deprecate! while a release carries the Intel
+    // tarball and disable! after; both pages say so in the same words.
+    const words = 'retired (deprecated, and disabled from the release after the identifier release)';
+    for (const file of ['CONTRIBUTING.md', 'docs/verification-ledger.md']) {
+      const flat = read(file).replace(/\s+/g, ' ');
+      expect(`${file}: ${flat.includes(words)}`).toBe(`${file}: true`);
+      expect(flat).not.toContain('cask still says it is deprecated');
+    }
+  });
+
   test('CONTRIBUTING.md says an Intel Mac cannot run the window, where it says to build it', () => {
     // `build-sidecar.ts --host` refuses an Intel Mac now, so the two-line
     // quick start would fail there with no word of why.
@@ -1231,5 +1246,7 @@ describe('the developer docs describe the Apple silicon build', () => {
     // two-arch formula and a deprecated cask.
     expect(runbook).toMatch(/if\/else on the CPU/);
     expect(runbook).toContain('disable!');
+    expect(runbook).toContain('keeping its date');
+    expect(runbook).not.toContain("that day's date");
   });
 });

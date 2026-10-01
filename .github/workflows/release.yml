@@ -328,7 +328,7 @@ jobs:
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
             printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`) and disables the retired cask.\n\n' "$V"
-            printf 'By hand: if the formula still holds the identifier release'"'"'s if/else on the CPU, replace the whole if/else with the one url and sha256 below, and add `depends_on arch: :arm64` on the line before `depends_on :macos`. In `Casks/screepub.rb`, change `deprecate!` to `disable!` (same arguments, today'"'"'s date). The tag is literal in the url:\n\n```ruby\n'
+            printf 'By hand: if the formula still holds the identifier release'"'"'s if/else on the CPU, replace the whole if/else with the one url and sha256 below, and add `depends_on arch: :arm64` on the line before `depends_on :macos`. In `Casks/screepub.rb`, change `deprecate!` to `disable!`, keeping its date (already past, as Homebrew needs). The tag is literal in the url:\n\n```ruby\n'
             printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"

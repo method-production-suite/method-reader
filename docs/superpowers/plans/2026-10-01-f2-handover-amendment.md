@@ -300,6 +300,14 @@ bridge, for Swift installs on Intel that update while F2 is the newest
 release. F2 carries one Intel change of its own, the window's plain-words
 update message (below), because F2 is the last build an Intel Mac runs.
 
+**Release order: a REQUIREMENT, not a preference.** Merge F2 to main and
+TAG it before `cli-move` is merged. `cli-move` sits on F2, so a main that
+already contains it has no F2 left to tag: an "F2" tagged from there would
+ship the Apple-silicon-only image, a `latest.json` with no darwin-x86_64,
+an arm64-only formula and a DISABLED cask at F2 itself, and the bridge
+above would never exist. So: merge F2, tag F2, let it go public, and only
+then merge `cli-move` for N+2.
+
 **What N+2 does** (branch `cli-move`, built 2026-10-01, not pushed):
 
 - The Mac image, still `Screepub-macOS.dmg`, is Apple silicon only.
@@ -328,7 +336,13 @@ update message (below), because F2 is the last build an Intel Mac runs.
   an Intel Mac that installs the cask after N+2 ships, and time does not
   help that one. Disabled, `brew install --cask screepub` stops with
   "has been disabled because it is now downloaded from the releases page
-  and updates itself!". Checked against Homebrew's `cask/dsl.rb` and
+  and updates itself!". The `disable!` keeps the `deprecate!` line's own
+  date (or, with neither, 2026-10-01): Homebrew compares it with the
+  user's LOCAL day and only deprecates while it is in the future, so a
+  "today in UTC" left the cask installable in the Americas after a
+  US-evening tag. `check-tap.sh` also fails a cask that keeps a
+  `deprecate!` beside its `disable!`: Homebrew asks deprecated? first, so
+  such a cask still installs. Checked against Homebrew's `cask/dsl.rb` and
   `deprecate_disable.rb`; `brew style` passes on the written cask, from
   both the published cask and a deprecated one.
 
@@ -347,8 +361,12 @@ update message (below), because F2 is the last build an Intel Mac runs.
   because F2 is the last build an Intel Mac runs: carried by N+2 it would
   never be seen there. "This copy", because an Apple silicon Mac running
   F2 under Rosetta gets the same answer. A version remembered from an
-  earlier check is forgotten, so the label stops offering an install that
-  cannot happen. A window older than F2 shows the plugin's raw text.
+  earlier check is forgotten, so from the NEXT launch the label stops
+  offering an install that cannot happen (this launch's label stays:
+  `update-flow.js`'s `checkAnswered` ignores errors). That only matters if
+  a release ships between F2 and N+2: with N+2 straight after F2, an F2
+  window on Intel never found anything newer to remember. A window older
+  than F2 shows the plugin's raw text.
 - **Homebrew**: `brew install` and `brew upgrade` stop with "The arm64
   architecture is required for this software." and leave the installed
   copy alone. Every `brew upgrade` repeats it until the person runs

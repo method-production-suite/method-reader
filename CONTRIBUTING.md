@@ -106,8 +106,9 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   Mac downloads, builds every bundle and archive, checks each one before
   uploading, and publishes the window's update manifest.
 - **Weekly**: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is deprecated, and
-  the frozen Mac app's checks still pass against Calibre's newest version.
+  newest release, the retired Homebrew cask still says it is retired
+  (deprecated, and disabled from the release after the identifier release),
+  and the frozen Mac app's checks still pass against Calibre's newest version.
 
 ## Licensing of contributions
 

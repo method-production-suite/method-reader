@@ -259,8 +259,9 @@ cask. By hand: the FIRST bump after the identifier release starts from
 its two-arch tap, so besides the url and the SHA, replace the formula's
 whole if/else on the CPU with the one url and sha256, add
 `depends_on arch: :arm64` on the line before `depends_on :macos`, and in
-`homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!` (same
-arguments, that day's date). Later bumps change the url and the SHA only.
+`homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!`, keeping
+its date and its `because:` (Homebrew compares the date with the user's
+local day, so it must already be past). Later bumps change the url and the SHA only.
 `tools/bump-tap.sh` refuses a release that still carries
 `screepub-cli-macos-x64.tar.gz`: bump the identifier release or anything
 older with that tag's own copy of the script. Verify before pushing:

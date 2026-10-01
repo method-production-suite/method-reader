@@ -90,6 +90,12 @@ if ! printf '%s\n' "$CASK" | grep -q "^  $CASK_WANT! "; then
   echo "::error::the frozen cask must say $CASK_WANT! for release v$VERSION ($CASK_WHY), and it does not"
   FAIL=1
 fi
+# Disabled means no deprecate! left beside it: Homebrew asks deprecated?
+# before disabled?, so a cask carrying both lines still installs.
+if [ "$INTEL_ERA" -eq 0 ] && printf '%s\n' "$CASK" | grep -q '^  deprecate! '; then
+  echo "::error::the frozen cask still has a deprecate! line, and a cask with deprecate! still installs whatever else it says; release v$VERSION wants disable! alone"
+  FAIL=1
+fi
 if [ "$(printf '%s\n' "$FORMULA_V" | grep -c .)" -ne 1 ]; then
   echo "::error::the formula's download urls disagree: $(printf '%s' "$FORMULA_V" | tr '\n' ' ')"
   FAIL=1

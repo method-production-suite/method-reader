@@ -154,6 +154,29 @@ describe('judging a manifest against a release', () => {
     }
   });
 
+  test('the same holds for darwin-x86_64-app, which the plugin tries first', () => {
+    // tauri-plugin-updater 2.12.0's get_urls looks up `<os>-<arch>-<installer>`
+    // before `<os>-<arch>`, so an Intel copy of the .app finds this key first.
+    const appKey = manifest('0.6.1', { 'darwin-x86_64-app': { url: url('0.6.1', TAR), signature: SIG } });
+    const v = judgeManifest(appKey, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(v.ok).toBe(false);
+    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-x86_64-app points at');
+    // And the arch-specific aarch64 key is an Apple silicon archive too.
+    const viaAppArm = JSON.stringify({
+      version: '0.6.1',
+      platforms: {
+        'darwin-aarch64': { url: url('0.6.1', TAR), signature: SIG },
+        'darwin-aarch64-app': { url: url('0.6.1', TAR), signature: SIG },
+        'darwin-x86_64-app': { url: url('0.6.1', TAR), signature: SIG },
+      },
+    });
+    const w = judgeManifest(viaAppArm, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(w.ok).toBe(false);
+    // In the universal era both keys may share the archive, -app or not.
+    const universalEra = release('0.6.1', [TAR, `${TAR}.sig`, 'latest.json', 'Screepub-macOS.dmg', INTEL_CLI]);
+    expect(judgeManifest(appKey, universalEra, { [`${TAR}.sig`]: SIG }, PUBKEY).ok).toBe(true);
+  });
+
   test('every problem is reported, not just the first', () => {
     const v = judgeManifest(
       manifest('0.6.0', { 'darwin-aarch64': { url: url('0.6.0', TAR), signature: SIG } }),
