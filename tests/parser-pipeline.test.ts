@@ -283,6 +283,7 @@ describe('extraction returns pictures beside the text', () => {
   test('the images fixture keeps the art and refuses the furniture', async () => {
     const bytes = new Uint8Array(await Bun.file('tests/fixtures/images.pdf').arrayBuffer());
     const result = await extractDocument(bytes);
+    expect(result.lines.length).toBeGreaterThan(0);
     expect(result.pageCount).toBe(5);
     expect(typeof result.spacingRepairs).toBe('number');
     expect(result.images.map((i) => i.file)).toEqual(['p001-01.png', 'p002-01.png']);

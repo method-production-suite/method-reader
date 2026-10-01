@@ -1167,11 +1167,15 @@ describe('what the Convert surface decides', () => {
 
   test('every code the engine can refuse with gets a heading that names a cause', () => {
     const codes = ['scanned', 'not-screenplay', 'password', 'unreadable',
-      'unsupported-type', 'bad-options', 'usage', 'internal'];
+      'unsupported-type', 'bad-options', 'usage', 'library', 'unwritable', 'internal'];
     const headings = new Set<string>();
     for (const code of codes) {
       const { heading } = convert.failureFor({ code, message: 'x' });
       expect(`${code}: ${heading}`).not.toBe(`${code}: `);
+      // Its OWN entry, not the fallback: failureFor answers an unknown code
+      // with the `internal` heading, so a code missing from the table would
+      // still pass the line above while telling the reader the engine broke.
+      expect(`${code} in HEADINGS: ${code in convert.HEADINGS}`).toBe(`${code} in HEADINGS: true`);
       // A heading that is the same for every code names nothing.
       headings.add(heading);
     }

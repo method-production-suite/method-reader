@@ -30,7 +30,12 @@ export interface JsonError {
     // message is the row's fix), and one whose app, page or folder did not
     // open (its message names which).
     | 'route-unavailable'
-    | 'route-failed';
+    | 'route-failed'
+    // The picture folder beside the .fountain could not be written. An
+    // output we could not write, as opposed to an input we could not read:
+    // its own code because the fix is different. The caller has to look at
+    // the place the pictures were going, not at the script they handed over.
+    | 'unwritable';
   message: string;
 }
 
@@ -58,6 +63,48 @@ export function mapConversionError(err: unknown): JsonError | null {
     return { code: 'unreadable', message: `cannot read the input file (${fsCode})` };
   }
   return null;
+}
+
+/** A filesystem answer that means "not there, not allowed, or no room", as
+ * opposed to a bug in us. */
+const WRITE_REFUSALS = new Set([
+  'ENOENT', 'EACCES', 'EPERM', 'EEXIST', 'ENOSPC', 'EROFS', 'EISDIR', 'ENOTDIR',
+]);
+
+/**
+ * Map a failed write of the picture folder to `unwritable`, or null for a
+ * throw that is not the filesystem refusing (the caller's catch-all owns
+ * those: a bug of ours should still arrive as `internal` rather than be
+ * dressed up as the disk's fault).
+ *
+ * Named for the FOLDER the pictures were going to, never the path that threw:
+ * the atomic writer fails on its temp file, so the raw error reads
+ * `ENOENT: ... open '/lib/.p001-01.png.80708.tmp'`, which is an implementation
+ * detail in text a person reads, the leak `bad-options` has its own code to
+ * avoid.
+ *
+ * PARTIAL OUTPUT is stated rather than avoided. The book is written before
+ * its pictures, so a conversion that fails here has already put a complete
+ * EPUB on disk. Deleting it to make the failure tidy would be worse (a book
+ * the reader can open is not something to throw away because its pictures
+ * could not be saved), so the answer stays a failure and the message says
+ * what is there.
+ */
+export function unwritableError(
+  folder: string,
+  err: unknown,
+  alreadyWritten: readonly string[],
+): JsonError | null {
+  const code = (err as NodeJS.ErrnoException)?.code;
+  if (!code || !WRITE_REFUSALS.has(code)) return null;
+  const already =
+    alreadyWritten.length === 0
+      ? ''
+      : ` ${alreadyWritten.join(', ')} ${alreadyWritten.length === 1 ? 'was' : 'were'} already written.`;
+  return {
+    code: 'unwritable',
+    message: `cannot write the pictures to ${folder} (${code}).${already}`,
+  };
 }
 
 /** A failure that already knows its contract code. Thrown by the device

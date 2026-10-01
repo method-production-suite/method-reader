@@ -22,18 +22,6 @@ import { pdfjsWasmDir } from './pdfjs-wasm';
 
 export type { ImageStats } from './images';
 
-/**
- * Extract raw lines from a PDF buffer.
- * Each line has: text, indent (0-100%), y position, page number.
- * Indent is normalized as percentage of page width — this makes the
- * parser work across different PDF generators and page sizes.
- */
-
-/**
- * Extract lines AND the true page count in a single document load.
- * NOTE: pdf.js transfers the underlying ArrayBuffer to its worker — the
- * caller's `pdfBytes` is detached afterwards. Pass a copy if you still need it.
- */
 /// Called once per page as extraction advances. `pages` is the number of
 /// pages this run will actually visit (so it honors `maxPages`), which makes
 /// `page / pages` a usable fraction from the very first tick.
@@ -42,6 +30,9 @@ export type PageProgress = (page: number, pages: number) => void;
 /** Everything one pass over a PDF produces. Named because a caller that wants
  * to talk about it should not have to spell `Awaited<ReturnType<...>>`. */
 export interface ExtractResult {
+  /** Each line's text, indent, y position and page number. Indent is a
+   * percentage of page width (0-100), which is what makes the parser work
+   * across PDF generators and page sizes. */
   lines: RawLine[];
   /** The DOCUMENT's page count, which is not the number of pages this run
    * visited when `maxPages` is set. */
@@ -54,6 +45,13 @@ export interface ExtractResult {
   imageStats: ImageStats;
 }
 
+/**
+ * Read a PDF in a single document load: its lines, its true page count, and
+ * its pictures, in one pass over the pages (see ExtractResult).
+ *
+ * NOTE: pdf.js transfers the underlying ArrayBuffer to its worker, so the
+ * caller's `pdfBytes` is detached afterwards. Pass a copy if you still need it.
+ */
 export async function extractDocument(
   pdfBytes: Uint8Array,
   maxPages?: number,

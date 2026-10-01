@@ -203,3 +203,62 @@ describe('when the decoders cannot be unpacked', () => {
     ]);
   });
 });
+
+// extractDocument asks for the decoder folder PER DOCUMENT (its comment says
+// why), and this is the test that holds it to that. A copy of the path cached
+// at module scope looks identical until the folder goes away under it, which
+// removePdfjsWasmDir does on purpose, and then every JPEG2000 picture after
+// it is lost.
+//
+// In a SUBPROCESS, and it has to be: in this process an earlier JPX decode
+// (the describes above) has already loaded and memoized the decoder, so a
+// stale path would never be read and the test would pass against the defect.
+// A fresh process has decoded nothing. The script asks for removal FIRST,
+// before any document: with the per-document rule that is a no-op and the
+// extraction makes a fresh folder; with a module-scope copy, the folder made
+// at import is the one removed, and the extraction is handed its path.
+describe('a decoder folder removed between documents', () => {
+  const ROOT = new URL('..', import.meta.url).pathname;
+  let result: { images: number; failed: number } | null = null;
+  let stderr = '';
+
+  beforeAll(async () => {
+    const script = join(SCRATCH, 'removed-first.ts');
+    writeFileSync(
+      script,
+      [
+        `import { extractDocument } from ${JSON.stringify(`${ROOT}src/parser/extract.ts`)};`,
+        `import { removePdfjsWasmDir } from ${JSON.stringify(`${ROOT}src/parser/pdfjs-wasm.ts`)};`,
+        'removePdfjsWasmDir();',
+        `const pdf = new Uint8Array(await Bun.file(${JSON.stringify(`${ROOT}tests/fixtures/jpx.pdf`)}).arrayBuffer());`,
+        'const out = await extractDocument(pdf);',
+        'console.log(JSON.stringify({ images: out.images.length, failed: out.imageStats.failed }));',
+      ].join('\n'),
+    );
+    // Its own temp folder inside this file's scratch, so the decoder folder
+    // the child unpacks never lands in the real one (the child's exit hook
+    // removes it either way).
+    const tmp = mkdtempSync(join(SCRATCH, 'child-tmp-'));
+    const proc = Bun.spawn([process.execPath, script], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+      env: { ...process.env, TMPDIR: tmp },
+    });
+    const [out, err] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+    stderr = err.trim();
+    try {
+      result = JSON.parse(out.trim().split('\n').at(-1) ?? '');
+    } catch {
+      result = null;
+    }
+  });
+
+  test('still decodes the JPEG2000 picture, because the next document asks afresh', () => {
+    // stderr rides along so a child that crashed says why in the diff.
+    expect({ result, stderr }).toEqual({ result: { images: 1, failed: 0 }, stderr: '' });
+  });
+});

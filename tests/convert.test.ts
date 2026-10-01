@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import {
   convertPdf,
   convertFountain,
+  imageWarnings,
   ScannedPdfError,
   NotAScreenplayError,
 } from '../src/convert';
@@ -156,5 +157,181 @@ describe('convertFountain previewHtml', () => {
     const result = await convertFountain(src, {});
     expect(result.previewHtml).toContain('class="dialogue-block"');
     expect(result.previewHtml).toContain('<style>');
+  });
+});
+
+// The pixels leave convert.ts NAMED and unwritten. Everything about this
+// describe is about that line: convert.ts does no filesystem work and the
+// CLI owns disk, so the test for "the folder appears" is in cli.test.ts and
+// the test for "the bytes are here at all" is this one.
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+describe('convertPdf carries the pictures', () => {
+  test('both kept pictures come back as named PNG bytes', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    expect(result.images.map((i) => i.name)).toEqual(['p001-01.png', 'p002-01.png']);
+    for (const img of result.images) {
+      expect([...img.bytes.slice(0, 8)]).toEqual(PNG_MAGIC);
+      expect(img.bytes.length).toBeGreaterThan(100);
+    }
+  }, 60000);
+
+  test('every name carried is a name the .fountain asks for', async () => {
+    // The join the whole feature rests on: the note names a file and the
+    // picture folder has to hold that exact name. Nothing pairs them
+    // positionally, so a renumbering on either side shows up here.
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    expect(result.images.length).toBeGreaterThan(0);
+    for (const img of result.images) {
+      expect(result.fountainText).toContain(`[[img: ${img.name}`);
+    }
+  }, 60000);
+
+  test('a script with no pictures returns an empty array and says nothing', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`));
+    expect(result.images).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  }, 60000);
+
+  test('a healthy picture document warns about nothing', async () => {
+    // The two warnings below are exceptional by design. If either fired on a
+    // document whose pictures all arrived, it would fire on every conversion,
+    // which is how a warning stops being read.
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    expect(result.warnings).toEqual([]);
+  }, 60000);
+
+  test('a picture pdf.js cannot decode is reported, not silently missing', async () => {
+    // The failure the design is most afraid of, made real: a script that
+    // loses its art with no error reads exactly like one that never had
+    // pictures. Clobbering an image XObject's payload IN PLACE keeps every
+    // byte offset in the file valid, so this is a fixture with one broken
+    // picture rather than a broken fixture.
+    const pdf = await bytes(`${PUBLIC}images.pdf`);
+    const text = new TextDecoder('latin1').decode(pdf);
+    const at = text.search(/\/Subtype\s*\/Image/);
+    const from = text.indexOf('stream', at) + 'stream\n'.length;
+    const to = text.indexOf('endstream', from);
+    // Asserted, not assumed: a regenerated fixture that compresses its object
+    // headers has to fail HERE rather than quietly test nothing.
+    expect(at).toBeGreaterThan(0);
+    expect(to - from).toBeGreaterThan(100);
+    pdf.fill(0x41, from + 4, to - 4);
+
+    const result = await convertPdf(pdf);
+    // The title card is gone (it is the picture that was broken) and the
+    // panel on sheet 2 is untouched: filenames are per page, so losing one
+    // does not renumber the other.
+    expect(result.images.map((i) => i.name)).toEqual(['p002-01.png']);
+    expect(result.warnings).toEqual([
+      '1 picture could not be read out of the PDF, so it was left out.',
+    ]);
+  }, 60000);
+
+  test('the scanned guard fires before any picture is carried', async () => {
+    // Not a statement about disk (nothing here writes), but about ORDER:
+    // ScannedPdfError has to leave through the throw, never through a result
+    // carrying full-page PNGs for the caller to write down.
+    await expect(convertPdf(await bytes(`${PUBLIC}blank-pages.pdf`)))
+      .rejects.toThrow(ScannedPdfError);
+  }, 60000);
+
+  test('Fountain input carries nothing out', async () => {
+    // Its pictures already sit in the folder beside it; there is no PDF to
+    // carry them out of, so there is nothing for a caller to write.
+    const result = await convertFountain('Title: T\n\nINT. A - DAY\n\n[[img: p001-01.png w=71]]\n');
+    expect(result.images).toEqual([]);
+  });
+});
+
+// The wiring, which no committed fixture can reach: a document has to carry
+// more than MAX_IMAGES pictures before convertPdf has anything to say. The
+// local corpus has exactly one, and it is the only place the count that
+// reaches `imageWarnings` is the count a real extraction produced rather than
+// one a test wrote down.
+describe.skipIf(!existsSync(`${PRIVATE}pitchdeck.pdf`))('the cap warning, wired up', () => {
+  test('a document over the cap says how many it has and how many it kept', async () => {
+    const result = await convertPdf(await bytes(`${PRIVATE}pitchdeck.pdf`), { force: true });
+    expect(result.images.length).toBe(60);
+    expect(result.warnings.some((w) => /Only the first 60 were kept\./.test(w))).toBe(true);
+  }, 120000);
+});
+
+describe('the image warnings', () => {
+  // Exported and tested directly because no clean fixture can produce either
+  // input: `overCap` needs a 61-picture document and `failed` needs an XObject
+  // pdf.js cannot decode. The wording is the deliverable (both counts exist to
+  // be said out loud to a filmmaker), so it is pinned here rather than left to
+  // whichever document happens to trip it.
+  const stats = (over: number, failed: number) => ({
+    overCap: over,
+    failed,
+    droppedBy: { pixels: 0, width: 0, height: 0, area: 0, furniture: 0, background: 0 },
+  });
+  /** The pictures that DID make it, which is all this needs of them. */
+  const carried = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ name: `p00${i}-01.png`, bytes: new Uint8Array(1) }));
+
+  test('silence when every picture was carried', () => {
+    expect(imageWarnings(stats(0, 0), carried(12))).toEqual([]);
+  });
+
+  test('the cap says how many were found and how many made it', () => {
+    const [w] = imageWarnings(stats(13, 0), carried(60));
+    expect(w).toContain('73');
+    expect(w).toContain('60');
+    expect(w).not.toMatch(/overCap|MAX_IMAGES|undefined|NaN/);
+  });
+
+  test('a lost picture is reported even when others were kept', () => {
+    const [w] = imageWarnings(stats(0, 3), carried(5));
+    expect(w).toContain('3');
+    expect(w).toMatch(/pictures/);
+  });
+
+  test('one lost picture is singular', () => {
+    expect(imageWarnings(stats(0, 1), [])[0]).toMatch(/1 picture (?!s)/);
+  });
+
+  test('both counts are reported, cap first', () => {
+    const ws = imageWarnings(stats(2, 2), carried(60));
+    expect(ws).toHaveLength(2);
+    expect(ws[0]).toContain('62');
+  });
+
+  test('no em dashes, and nothing a reader has to be a programmer to parse', () => {
+    for (const w of [...imageWarnings(stats(9, 9), carried(60))]) {
+      expect(w).not.toContain('—');
+      expect(w).toMatch(/^[A-Z0-9]/);
+      expect(w.endsWith('.')).toBe(true);
+    }
+  });
+
+  // `decodersUnavailable` is the one cause of a lost picture that is OURS
+  // rather than the file's: pdf.js loads its JPEG2000 and JBIG2 decoders from a
+  // directory we have to write at startup (src/parser/pdfjs-wasm.ts), and if
+  // that write fails every picture in those formats fails at once. The count
+  // alone would send a filmmaker off to re-export a script that was fine.
+  const undecodable = (failed: number) => ({ ...stats(0, failed), decodersUnavailable: true });
+
+  test('a decoder failure says so, beside the count and not instead of it', () => {
+    const ws = imageWarnings(undecodable(34), []);
+    expect(ws).toHaveLength(2);
+    expect(ws[0]).toContain('34');
+    expect(ws[1]).toMatch(/JPEG2000/);
+  });
+
+  test('and says nothing at all when no picture was actually lost', () => {
+    // A machine that cannot write a temp directory still converts a script
+    // with no JPEG2000 in it perfectly, which is nearly every script. Warning
+    // there is how a warning stops being read.
+    expect(imageWarnings(undecodable(0), carried(3))).toEqual([]);
+  });
+
+  test('the cause sentence is plain English too', () => {
+    const [, cause] = imageWarnings(undecodable(2), []);
+    expect(cause).not.toContain('—');
+    expect(cause).not.toMatch(/wasm|wasmUrl|pdf\.js|decodersUnavailable/);
+    expect(cause.endsWith('.')).toBe(true);
   });
 });

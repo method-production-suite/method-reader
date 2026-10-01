@@ -2,7 +2,7 @@
 // fountain-js tokens → XHTML chapters → EPUB bytes.
 import { createHash } from 'node:crypto';
 import { Fountain } from 'fountain-js';
-import { extractDocument } from './parser/extract';
+import { extractDocument, type ImageStats } from './parser/extract';
 import { parseLines } from './parser/index';
 import type { ParsedScreenplay } from './parser/types';
 import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/serialize';
@@ -33,6 +33,20 @@ export class NotAScreenplayError extends Error {
     );
     this.name = 'NotAScreenplayError';
   }
+}
+
+/**
+ * One picture on its way out of a conversion: the bytes, and the name the
+ * `.fountain` note refers to it by.
+ *
+ * Named, NOT pathed. convert.ts does no filesystem work and never has (it
+ * imports `node:crypto` and nothing else from the platform), so where these
+ * land is the caller's business: the CLI writes them into the picture folder
+ * beside the `.fountain` (src/library-images.ts).
+ */
+export interface BookImage {
+  name: string;
+  bytes: Uint8Array;
 }
 
 export interface ConvertOptions {
@@ -73,6 +87,94 @@ export interface ConvertResult {
    *  Reported rather than hidden: this edits the author's text, so the
    *  number is part of the answer. Normally 0. */
   spacingRepairs: number;
+  /** The pictures a PDF conversion carried, for the caller to write into the
+   * folder beside the `.fountain`, whose `[[img: ...]]` notes name them. The
+   * book does not show them yet (that is phase 2), so today the folder is
+   * their only copy. Always empty on Fountain input, which has no PDF to
+   * carry them out of. */
+  images: BookImage[];
+}
+
+/**
+ * What to tell someone about the pictures that did not make it.
+ *
+ * Both counts are EXCEPTIONAL. The ordinary losses — a letterhead, a rule, a
+ * watermark — are `droppedBy`, and warning about those would warn on nearly
+ * every real script, which is how a warning stops being read. These two are
+ * the ones a filmmaker cannot see for themselves:
+ *
+ *   - `overCap`: the conversion is missing art that cleared every filter.
+ *     Silent truncation reads as "we carried everything" when we did not.
+ *   - `failed`: pixels we could not get out of the PDF at all. This is the one
+ *     that matters more, because a script that loses its art with no error
+ *     reads exactly like a script that never had pictures. It picks up a
+ *     second sentence naming the cause in the one case where the cause is
+ *     ours and not the file's — see `decodersUnavailable`.
+ *
+ * `failed` counts PLACEMENTS, so it can name a picture that would have been
+ * dropped as furniture anyway — a corrupt logo on one sheet is "1 picture
+ * could not be read" even though a healthy one would never have been carried
+ * either. Reporting that is the deliberate trade: the alternative is judging a
+ * picture whose pixels we do not have, and the failure this exists to catch
+ * (every image failing at once) is invisible any other way.
+ *
+ * Takes the pictures themselves rather than a count of them, because a count
+ * would be a second bare number beside `stats.overCap` and `stats.failed` with
+ * nothing to stop it being the wrong one — the hazard `collectPageImages`
+ * spends an object to avoid. `imageWarnings(stats, stats.overCap)` would
+ * compile fine against a `number` and produce a sentence wrong in both halves.
+ *
+ * Two things the WORDING is careful about, both learned by reading it back as
+ * a filmmaker rather than as its author:
+ *
+ *   - "Screepub found N pictures", not "this script has N". The total is a
+ *     fact about our filters, not about the document: letterhead, rules and
+ *     watermarks are already excluded from it, so it matches nothing a reader
+ *     can count in their own PDF, and claiming otherwise invites them to go
+ *     looking for the difference.
+ *   - the two numbers DO NOT ADD UP, on purpose. `failed` counts placements,
+ *     some of which the filters would have dropped anyway, so "found 126, kept
+ *     60" beside "3 could not be read" is not 126 = 60 + 63 + 3. Neither
+ *     sentence invites the arithmetic, and neither should be edited into a
+ *     single one that does.
+ *
+ * "Kept", not "in the book": this counts what the conversion carried out of
+ * the PDF, which is what the picture folder holds. A book shows only what its
+ * own renderer packages, and today that is none of them. A warning is
+ * user-facing copy, so it claims the thing that is true in every state.
+ *
+ * Exported for its own tests. Neither count is reachable from a fixture that
+ * is not deliberately damaged: `overCap` needs a 61-picture document, and
+ * `failed` needs an XObject pdf.js cannot decode.
+ */
+export function imageWarnings(stats: ImageStats, carried: readonly BookImage[]): string[] {
+  const out: string[] = [];
+  const kept = carried.length;
+  if (stats.overCap > 0) {
+    out.push(
+      `Screepub found ${kept + stats.overCap} pictures in this script. Only the first ${kept} were kept.`,
+    );
+  }
+  if (stats.failed > 0) {
+    out.push(
+      stats.failed === 1
+        ? '1 picture could not be read out of the PDF, so it was left out.'
+        : `${stats.failed} pictures could not be read out of the PDF, so they were left out.`,
+    );
+    // Only ever BESIDE that sentence, never instead of it and never alone: it
+    // names a cause, and a cause with nothing to explain is noise on a script
+    // that never had a JPEG2000 picture in it. Worth saying when there IS
+    // something to explain, because it is the one entry in this function that
+    // is not about the user's file. Every other loss here means "your PDF"; a
+    // temp directory we could not write means "us", and the sentence above
+    // would otherwise send someone to re-export a script that was fine.
+    if (stats.decodersUnavailable) {
+      out.push(
+        'Screepub could not unpack its picture decoders, so pictures stored as JPEG2000 or JBIG2 could not be read.',
+      );
+    }
+  }
+  return out;
 }
 
 function resolveMeta(detected: TitleMeta, opts: ConvertOptions): BookMeta {
@@ -113,14 +215,28 @@ export async function convertPdf(
 ): Promise<ConvertResult> {
   const warnings: string[] = [];
 
-  const { lines, pageCount, spacingRepairs } = await extractDocument(pdfBytes, undefined, (page, pages) =>
-    opts.onProgress?.('parse', (page / pages) * PARSE_SHARE),
+  const { lines, pageCount, spacingRepairs, images: rawImages, imageStats } = await extractDocument(
+    pdfBytes,
+    undefined,
+    (page, pages) => opts.onProgress?.('parse', (page / pages) * PARSE_SHARE),
   );
+  // BEFORE anything is handed back, which is what keeps a scan's pixels off
+  // the caller's disk. A 13-sheet scan really does encode 13 full-page PNGs on
+  // the way here (measured 2026-08-11 on the local corpus: 6.1 MB in 3.7s,
+  // which is what the image budget caps for a longer one), and every byte of
+  // it leaves through this throw rather than in a result somebody writes down.
   if (lines.length < pageCount * MIN_LINES_PER_PAGE) {
     throw new ScannedPdfError(pageCount, lines.length);
   }
 
-  const screenplay = parseLines(lines);
+  const screenplay = parseLines(lines, rawImages);
+  // Straight off the raw images: each already carries the filename
+  // `toRawImages` assigned it, and `toFountain` writes that same name into the
+  // note, so nothing here has to pair anything with the element stream. Built
+  // beside the parse that consumed the same array, and before the warnings,
+  // which are about these.
+  const images: BookImage[] = rawImages.map((img) => ({ name: img.file, bytes: img.bytes }));
+
   const sceneCount = screenplay.scenes.length;
   const dialogueCount = screenplay.elements.filter((e) => e.type === 'dialogue').length;
   if (sceneCount === 0 && dialogueCount === 0 && !opts.force) {
@@ -129,6 +245,7 @@ export async function convertPdf(
   if (sceneCount === 0) {
     warnings.push('No scene headings detected: the EPUB will have no scene navigation.');
   }
+  warnings.push(...imageWarnings(imageStats, images));
 
   const format = resolveFormatOptions(opts.format);
   const meta = resolveMeta(extractTitleMeta(screenplay.elements), opts);
@@ -137,7 +254,7 @@ export async function convertPdf(
   const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format);
   opts.onProgress?.('render', 1);
 
-  return { epub, mobi, previewHtml, fountainText, screenplay, meta, warnings, spacingRepairs };
+  return { epub, mobi, previewHtml, fountainText, screenplay, meta, warnings, spacingRepairs, images };
 }
 
 /** A forced cue line still carrying a (CONT'D) — the shape serialize.ts
@@ -189,5 +306,8 @@ export async function convertFountain(
     spacingRepairs: 0,
     meta,
     warnings: stageOneWarnings(fountainText, format),
+    // Nothing to carry: the pictures a `.fountain` names already sit in its
+    // folder, and reading them back for the book is phase 2.
+    images: [],
   };
 }
