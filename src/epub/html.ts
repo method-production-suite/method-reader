@@ -444,15 +444,37 @@ export function tokensToBody(
  * The whole script as ONE self-contained HTML document — the same section
  * markup as the EPUB body, with the stylesheet inlined instead of linked.
  * This is the app's reader-preview surface: what you proof is what ships.
+ *
+ * `images` is the pictures the notes may show, by filename: the same ones the
+ * book is handed, so the preview shows exactly the figures the book does
+ * (rendersImage decides both). Self-contained covers them too:
+ * the window hands this document to an iframe as text, so there is no
+ * container for a path to point into, and each picture rides inside its
+ * `<img>` as a data: URI instead. That src is the only thing about a figure
+ * the two disagree on. The window's CSP admits data: for pictures and for
+ * nothing else (tests/desktop-shell.test.ts pins it).
+ *
+ * Every picture is inlined at full size, on every render: the document grows
+ * by about four thirds of the bytes of the pictures it shows. On the heaviest
+ * picture document measured, sixty plates, Tune's re-render stayed inside
+ * the budget the plan set for it (about a second, and 25 MB of JSON), so
+ * the preview is not built lazily or from smaller copies. Smaller preview
+ * copies are the fallback if a heavier document breaks that budget, and
+ * choosing them is a design decision, not a fix.
  */
 export function tokensToPreviewHtml(
   tokens: Token[],
   format: Partial<FormatOptions> = {},
+  images: ReadonlyMap<string, Uint8Array> = new Map(),
 ): string {
   const resolved: FormatOptions = { ...DEFAULT_FORMAT_OPTIONS, ...format };
   const body = tokensToBody(tokens, {
     maxFileBytes: Number.MAX_SAFE_INTEGER,
     format: resolved,
+    images: new Set(images.keys()),
+    // Encoded only for a figure that is drawn, so a picture the notes never
+    // place, or one the option leaves out, costs nothing here.
+    imageSrc: (file) => `data:image/png;base64,${Buffer.from(images.get(file)!).toString('base64')}`,
   });
   const doc = body.files[0]?.xhtml ?? xhtmlDoc('Script', '');
   // The figure rules follow the body, as they do in the book: present when

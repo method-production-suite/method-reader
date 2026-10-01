@@ -2,7 +2,7 @@ import { afterEach, describe, test, expect, spyOn } from 'bun:test';
 import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
 import { Fountain } from 'fountain-js';
-import { tokensToBody } from '../src/epub/html';
+import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { screenplayCss } from '../src/epub/css';
 import { resolveFormatOptions } from '../src/options';
@@ -399,6 +399,53 @@ describe('convertFountain renders the pictures it is handed', () => {
     expect(await bodyOf(withMap)).toBe(await bodyOf(without));
     expect(await bodyOf(withMap)).not.toContain('class="figure');
     expect(imageEntries(withMap)).toEqual([]);
+  });
+});
+
+// The reader preview is rendered from the same pictures as the book, so what
+// the window shows is what the book shows. What the preview does with them is
+// epub-images.test.ts's subject; these are about the pictures reaching it.
+describe('the preview is handed the pictures the book is', () => {
+  const pictureMap = (images: { name: string; bytes: Uint8Array }[]) =>
+    new Map(images.map((img) => [img.name, img.bytes]));
+  const dataSrcs = (html: string) => (html.match(/<img src="data:image\/png;base64,/g) ?? []).length;
+
+  test('a PDF conversion’s preview shows the pictures it carried', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    expect(dataSrcs(result.previewHtml)).toBe(2);
+    expect(result.previewHtml)
+      .toBe(tokensToPreviewHtml(tokens, resolveFormatOptions(), pictureMap(result.images)));
+  }, 60000);
+
+  test('with includeImages off, a PDF conversion’s preview shows none', async () => {
+    const format = resolveFormatOptions({ includeImages: false });
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format: { includeImages: false } });
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    expect(dataSrcs(result.previewHtml)).toBe(0);
+    expect(result.previewHtml).toBe(tokensToPreviewHtml(tokens, format));
+  }, 60000);
+
+  test('a script without pictures gets the preview it got before', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`));
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    expect(result.previewHtml).toBe(tokensToPreviewHtml(tokens, resolveFormatOptions()));
+  }, 60000);
+
+  test('a .fountain’s preview shows the pictures it is handed, after the same filter as the book', async () => {
+    const src = 'Title: T\n\nINT. LAB - DAY\n\nBefore.\n\n[[img: p001-01.png w=40]]\n\n'
+      + 'Between.\n\n[[img: p002-01.png w=60]]\n\nAfter.\n';
+    const plate = png.encodePng(new Uint8Array([200, 10, 10]), 1, 1);
+    // The second is a JPEG under a PNG's name: no picture to the book, and so
+    // none to the preview either.
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+    const { previewHtml } = await convertFountain(src, {
+      images: new Map([['p001-01.png', plate], ['p002-01.png', jpeg]]),
+    });
+    expect(previewHtml).toContain(
+      `<p class="figure w40"><img src="data:image/png;base64,${Buffer.from(plate).toString('base64')}" alt="Illustration"/></p>`,
+    );
+    expect(dataSrcs(previewHtml)).toBe(1);
   });
 });
 

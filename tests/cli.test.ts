@@ -575,6 +575,20 @@ describe('a .fountain input reads its picture folder', () => {
     expect(res.imageCount).toBeUndefined();
   }, 60000);
 
+  test('the window’s re-render answer shows the same pictures, each one inside its figure', async () => {
+    // Exactly the window's Tune call: the .fountain, --json, --preview-inline.
+    // The preview has no folder to point into, so each picture rides in its
+    // `<img>` as a data: URI, in the figure the book uses.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res } = await convert(dir, '--preview-inline');
+    const inlined = (tag: number, w: number) =>
+      `<p class="figure w${w}"><img src="data:image/png;base64,${Buffer.from(png(tag)).toString('base64')}" alt="Illustration"/></p>`;
+    expect(res.previewHtml).toContain(inlined(1, 40));
+    expect(res.previewHtml).toContain(inlined(2, 60));
+  }, 60000);
+
   test('a picture the folder will not give up is a warning, and no figure', async () => {
     // One file that is not a PNG under a PNG's name, and one symlink to a
     // perfectly good picture: the reader refuses both, and each is a plate

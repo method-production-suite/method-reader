@@ -192,7 +192,8 @@ function resolveMeta(detected: TitleMeta, opts: ConvertOptions): BookMeta {
  * (rendersImage); the packager is handed the BYTES, and ships only what the
  * body showed. Both come from this one array, which is what keeps buildEpub's
  * "shown but not given" throw out of reach: no name can be in the set without
- * its bytes being in the list.
+ * its bytes being in the list. The reader preview is handed the same array as
+ * a map, so the window shows the figures the book does and no others.
  */
 async function renderBooks(
   fountainText: string,
@@ -213,7 +214,11 @@ async function renderBooks(
   };
   const body = tokensToBody(tokens, { format, images: new Set(images.map((img) => img.name)) });
   const epub = await buildEpub(withId, body, format, images);
-  const previewHtml = tokensToPreviewHtml(tokens, format);
+  // First bytes win for a name passed twice, as they do in buildEpub, so the
+  // preview shows the picture the book ships.
+  const byName = new Map<string, Uint8Array>();
+  for (const img of images) if (!byName.has(img.name)) byName.set(img.name, img.bytes);
+  const previewHtml = tokensToPreviewHtml(tokens, format, byName);
   const mobi = wantMobi
     ? buildMobi({ title: meta.title, author: meta.author, html: tokensToMobiHtml(tokens, meta, format) })
     : undefined;

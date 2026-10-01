@@ -391,7 +391,7 @@ const landed = new Map();
 let libraryGeneration = 0;
 
 // The bar's width is the one value the window computes rather than declares,
-// and CSP `default-src 'self'` refuses an inline style. A constructed
+// and the CSP's `default-src 'self'` refuses an inline style. A constructed
 // stylesheet is the way in that the CSP allows; the number written into it is
 // an integer 0..100 from nextProgress() and nothing else.
 let fillSheet = null;

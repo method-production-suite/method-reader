@@ -9,10 +9,13 @@
 // HOW, and why it is not simpler than this — all four routes were measured
 // in a real window before this was written:
 //
-//   * The window's CSP is `default-src 'self'`, which blocks every inline
-//     style, INCLUDING a <style> inside an <iframe srcdoc>: srcdoc frames
-//     inherit the parent's policy. Leaving the engine's <style> in place
-//     renders an unstyled script with no error anywhere.
+//   * The window's CSP is `default-src 'self'; img-src 'self' data:`. Its
+//     default blocks every inline style, INCLUDING a <style> inside an
+//     <iframe srcdoc>: srcdoc frames inherit the parent's policy. Leaving
+//     the engine's <style> in place renders an unstyled script with no
+//     error anywhere. The `data:` pictures are the one thing it lets in,
+//     for the figures: the engine writes each picture into its <img>, so
+//     the frame draws them with no help from here.
 //   * CSSOM is not blocked. So the <style> is lifted out of the document
 //     and its text is adopted as a constructed stylesheet instead — same
 //     bytes, same rules, nothing rewritten.

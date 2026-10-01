@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { Fountain } from 'fountain-js';
 import JSZip from 'jszip';
 import { buildEpub, imageIds, type BookImage } from '../src/epub/build';
-import { tokensToBody } from '../src/epub/html';
+import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
 import { screenplayCss } from '../src/epub/css';
 import { convertPdf } from '../src/convert';
 import { DEFAULT_FORMAT_OPTIONS, resolveFormatOptions } from '../src/options';
@@ -239,6 +239,75 @@ describe('picture ids', () => {
     for (const id of ids) expect(id).toMatch(/^[A-Za-z_][A-Za-z0-9_.-]*$/);
     expect(imageItems(opf)).toHaveLength(5);
     expect(imageEntries(zip).sort()).toEqual(names.map((n) => `OEBPS/images/${n}`).sort());
+  });
+});
+
+// ── the reader preview ───────────────────────────────────
+
+// The preview is one self-contained document the window hands an iframe as
+// text, so there is no container for a figure's path to point into. It
+// carries each picture inside the `<img>` instead, and nothing else about the
+// figure differs from the book's.
+describe('the preview carries the pictures it shows', () => {
+  // images.pdf's own .fountain and the pictures its conversion carried: the
+  // pair the window's re-render reads back from the library.
+  let fountainText = '';
+  let pictures: ReadonlyMap<string, Uint8Array> = new Map();
+  beforeAll(async () => {
+    const result = await convertPdf(new Uint8Array(await Bun.file(`${PUBLIC}images.pdf`).arrayBuffer()));
+    fountainText = result.fountainText;
+    pictures = new Map(result.images.map((img) => [img.name, img.bytes]));
+  }, 60000);
+  const tokens = () => new Fountain().parse(fountainText, true).tokens;
+  const DATA = 'data:image/png;base64,';
+
+  test('each figure inlines its picture as a data: URI that decodes to the very bytes', () => {
+    const html = tokensToPreviewHtml(tokens(), DEFAULT_FORMAT_OPTIONS, pictures);
+    const srcs = [...html.matchAll(/<img src="([^"]+)"/g)].map((m) => m[1]);
+    expect(srcs).toHaveLength(2);
+    expect([...pictures.keys()]).toEqual(['p001-01.png', 'p002-01.png']);
+    srcs.forEach((src, i) => {
+      expect(src.startsWith(DATA)).toBe(true);
+      const decoded = Buffer.from(src.slice(DATA.length), 'base64');
+      expect([...decoded]).toEqual([...pictures.get(`p00${i + 1}-01.png`)!]);
+    });
+  });
+
+  test('it is the book’s own body, with each src pointed at the bytes and the sheet inlined', () => {
+    // One markup path. Put each data: URI back to the book's path and the
+    // preview is the body file the book would hold, figure rules and all, so
+    // a figure cannot look one way in the window and another on a reader.
+    const format = resolveFormatOptions({ elementSpacingEm: 0.6 });
+    const html = tokensToPreviewHtml(tokens(), format, pictures);
+    const named = new Map([...pictures].map(([name, bytes]) => [Buffer.from(bytes).toString('base64'), name]));
+    const asBook = html.replace(
+      /src="data:image\/png;base64,([^"]*)"/g,
+      (_, b64: string) => `src="../images/${named.get(b64)}"`,
+    );
+    const book = tokensToBody(tokens(), {
+      format, images: new Set(pictures.keys()), maxFileBytes: Number.MAX_SAFE_INTEGER,
+    }).files[0].xhtml;
+    expect(asBook).toBe(book.replace(
+      /<link rel="stylesheet"[^>]*\/>/,
+      () => `<style>\n${screenplayCss(format, { hasFigures: true })}</style>`,
+    ));
+    expect(asBook).not.toContain(DATA);
+  });
+
+  test('with includeImages off, or no pictures in hand, the preview is the one it always was', () => {
+    // Off: the pictures in hand change nothing. None in hand, or an empty
+    // map, is the two-argument call every caller made before pictures
+    // existed, and all four are the same document to the byte: no figure,
+    // no data:, and a stylesheet without the figure rules.
+    const on = DEFAULT_FORMAT_OPTIONS;
+    const off = resolveFormatOptions({ includeImages: false });
+    const plain = tokensToPreviewHtml(tokens(), on);
+    expect(tokensToPreviewHtml(tokens(), on, new Map())).toBe(plain);
+    expect(tokensToPreviewHtml(tokens(), off, pictures)).toBe(plain);
+    expect(tokensToPreviewHtml(tokens(), off)).toBe(plain);
+    expect(plain).not.toContain('class="figure');
+    expect(plain).not.toContain('data:');
+    expect(plain).toContain(`<style>\n${screenplayCss(on)}</style>`);
   });
 });
 

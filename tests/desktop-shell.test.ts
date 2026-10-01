@@ -510,6 +510,31 @@ describe('the window is granted no more than it needs', () => {
     expect(CONFIG.identifier).not.toBe('com.darkwell.screepub');
   });
 
+  test('the content security policy is the window’s own files, plus pictures written into the page', () => {
+    // Pinned whole, because a policy is loosened one clause at a time and
+    // every clause reads as harmless on its own.
+    //
+    // `default-src 'self'`: everything the window loads comes from its own
+    // bundled files. It is also what refuses every inline script and style,
+    // including a <style> inside the reader's srcdoc frame, and the window
+    // works around that with constructed stylesheets (read.js, convert.js)
+    // rather than by loosening it.
+    //
+    // `img-src 'self' data:`: the reader preview carries each picture inside
+    // its `<img>` as a data: URI, because the preview is one document handed
+    // to an iframe as text, with no folder for a path to point into. A srcdoc
+    // frame inherits this policy, so without `data:` every figure in the
+    // reader is a broken image. `'self'` is repeated because naming img-src
+    // REPLACES default-src for pictures rather than adding to it: without it,
+    // pictures would lose the window's own origin, which default-src gave
+    // them. The window ships no image file today, so that half is about not
+    // narrowing anything, not about a file that needs it.
+    //
+    // Nothing else. No 'unsafe-inline', no blob:, and data: for pictures
+    // only: a data: script or stylesheet is as much a way in as an inline one.
+    expect(CONFIG.app.security.csp).toBe("default-src 'self'; img-src 'self' data:");
+  });
+
   test('the frontend is static files, not a dev server', () => {
     // A `devUrl` or a `beforeDevCommand` would reintroduce the npm
     // toolchain this piece deliberately does without.
