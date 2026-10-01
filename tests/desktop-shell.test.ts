@@ -1144,7 +1144,7 @@ describe('what sidecar.rs says about a quit mid-call is true of the engine', () 
     return found;
   };
 
-  test('every engine write is temp-then-rename except the ones the comment names', () => {
+  test('every engine write is temp-then-rename except the ones the comment names, and the decoder copy into a private temp folder', () => {
     expect(engineWrites()).toEqual({
       // temp-then-rename: the writeFileAtomic helpers and their like
       'src/cli.ts': 2, // writeFileAtomic, and the --debug dump written in place

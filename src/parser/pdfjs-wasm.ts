@@ -144,8 +144,8 @@ export const DECODER_FILES: readonly (readonly [string, string])[] = [
  * `.wasm` is never shipped (see the header) and every JPX picture goes
  * through the import.
  */
-export function decoderBaseUrl(dir: string): string {
-  return `${dir}/`;
+export function decoderBaseUrl(folder: string): string {
+  return `${folder}/`;
 }
 
 /**
@@ -165,7 +165,7 @@ export function decoderBaseUrl(dir: string): string {
  */
 export function materializeDecoders(makeDir: () => string): string | null {
   try {
-    const dir = makeDir();
+    const folder = makeDir();
     // read + write, and NOT the `copyFileSync` this obviously wants to be.
     // Inside a compiled binary the source is a bunfs path, which `copyfile(2)`
     // knows nothing about: `copyFileSync` fails ENOENT on the very path
@@ -173,21 +173,24 @@ export function materializeDecoders(makeDir: () => string): string | null {
     // in the compiled binary — in a dev checkout the source is a real
     // node_modules file and copyFileSync works fine, so this is a tidy-up that
     // would pass every test here and break only what ships.
-    for (const [name, src] of DECODER_FILES) writeFileSync(join(dir, name), readFileSync(src));
-    return decoderBaseUrl(dir);
+    for (const [name, src] of DECODER_FILES) writeFileSync(join(folder, name), readFileSync(src));
+    return decoderBaseUrl(folder);
   } catch {
     return null;
   }
 }
 
-/** Where the decoders were put, or null. Memoized INCLUDING the null: the copy
- * is once per process, and so is the failure — a temp directory that refused
- * once will refuse again, and retrying per document would pay for it per page
- * of a lookbook. */
-let dir: string | null | undefined;
+/** The `wasmUrl` handed out (the folder plus its `/`), or null if the copy
+ * failed, or undefined before the first ask. Memoized INCLUDING the null, so
+ * the copy is made once and a failure is not retried per document: a temp
+ * directory that refused once will refuse again, and retrying would pay for it
+ * per page of a lookbook. Until `removePdfjsWasmDir`, which clears either
+ * answer, so the next ask copies afresh. */
+let wasmUrl: string | null | undefined;
 
-/** The folder this process MADE, which is not always `dir`: a folder whose
- * copy failed halfway leaves `dir` null and is still ours to remove. */
+/** The folder this process MADE, which is not always behind `wasmUrl`: a
+ * folder whose copy failed halfway leaves `wasmUrl` null and is still ours to
+ * remove. */
 let made: string | null = null;
 
 /** Whether the `exit` hook is registered. Once per process, however many
@@ -196,8 +199,8 @@ let made: string | null = null;
 let exitHooked = false;
 
 export function pdfjsWasmDir(): string | null {
-  if (dir === undefined) {
-    dir = materializeDecoders(() => {
+  if (wasmUrl === undefined) {
+    wasmUrl = materializeDecoders(() => {
       // mkdtemp, not a fixed name, and the unpredictability is the point: this
       // directory holds a JavaScript module that pdf.js will IMPORT AND RUN, so
       // a guessable path under a shared /tmp would let another user on the
@@ -218,7 +221,7 @@ export function pdfjsWasmDir(): string | null {
       return made;
     });
   }
-  return dir;
+  return wasmUrl;
 }
 
 /**
@@ -233,6 +236,18 @@ export function pdfjsWasmDir(): string | null {
  * one new folder per run), and this repo once collected 23,000 `screepub-*`
  * folders that way (tests/temp-hygiene.test.ts).
  *
+ * ONLY SAFE WITH NO DOCUMENT OPEN. pdf.js does not ask us for the folder
+ * again once a document is open: `getDocument` hands the string to the worker,
+ * where `WasmImage.setOptions` keeps it in a static field shared by every
+ * document in the process, and a decoder reads it whenever it loads its
+ * module: the first time any document needs that decoder, and again after
+ * `clearGlobalCaches` (which a document's cleanup runs) has emptied the
+ * memoized module. Only the next `getDocument` replaces the string. So a
+ * document still open when its folder goes can lose JPEG2000 or JBIG2
+ * pictures it has not decoded yet, counted as failed and with nothing
+ * pointing here. Both callers run when the work is over: at exit, and after
+ * the last test file.
+ *
  * Synchronous, because an `exit` handler cannot await. Never throws: there is
  * nothing useful to do about a folder that will not go, and a throw at exit
  * would turn a successful conversion into a non-zero status.
@@ -240,7 +255,7 @@ export function pdfjsWasmDir(): string | null {
 export function removePdfjsWasmDir(): void {
   const doomed = made;
   made = null;
-  dir = undefined;
+  wasmUrl = undefined;
   if (doomed === null) return;
   try {
     rmSync(doomed, { recursive: true, force: true });

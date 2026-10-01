@@ -112,6 +112,81 @@ describe('removePdfjsWasmDir', () => {
     removePdfjsWasmDir();
     expect(() => removePdfjsWasmDir()).not.toThrow();
   });
+
+  test('registers its exit hook once, however often the folder is remade', () => {
+    // Once per process, not once per folder: a hook per folder would pile up
+    // listeners for as long as a process keeps remaking it. And it has to be
+    // THIS function, which is what the plain-bun tests below then watch run.
+    pdfjsWasmDir();
+    const before = process.listenerCount('exit');
+    for (let i = 0; i < 3; i++) {
+      removePdfjsWasmDir();
+      pdfjsWasmDir();
+    }
+    expect(process.listenerCount('exit')).toBe(before);
+    expect(process.listeners('exit').filter((l) => l === removePdfjsWasmDir)).toHaveLength(1);
+  });
+});
+
+/** Run a process to the end. stderr is kept only so that a failing assertion
+ * on the result prints it; stdout only when the caller reads it. */
+async function finish(
+  cmd: string[],
+  opts: { cwd: string; tmp: string; stdout?: boolean },
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  const proc = Bun.spawn(cmd, {
+    cwd: opts.cwd,
+    env: { ...process.env, TMPDIR: opts.tmp },
+    stdout: opts.stdout ? 'pipe' : 'ignore',
+    stderr: 'pipe',
+  });
+  const [code, stdout, stderr] = await Promise.all([
+    proc.exited,
+    opts.stdout ? new Response(proc.stdout).text() : '',
+    new Response(proc.stderr).text(),
+  ]);
+  return { code, stdout, stderr };
+}
+
+// THE cleanup that ships: `bun src/cli.ts` and the compiled binary remove the
+// folder from an `exit` hook, and nothing else does. Under `bun test` the
+// preload removes it instead (`exit` never fires there), which is exactly why
+// these run the engine under PLAIN bun: in-process, a hook that did nothing
+// would be covered up by the preload and every test above would stay green.
+// Each case gets its own temp folder inside SCRATCH, so "empty afterwards" is
+// about that one process and nothing else on the machine.
+describe('the exit hook, in a process that is not bun test', () => {
+  const probe = (name: string, ending: string) => {
+    const file = join(SCRATCH, name);
+    writeFileSync(file, [
+      `import { pdfjsWasmDir } from '${ROOT}src/parser/pdfjs-wasm';`,
+      'console.log(pdfjsWasmDir());',
+      ending,
+    ].join('\n'));
+    return file;
+  };
+
+  for (const [label, ending, code] of [
+    ['when the script runs off its end', '', 0],
+    ['when it calls process.exit, as the CLI does', 'process.exit(3);', 3],
+  ] as const) {
+    test(`removes the folder ${label}`, async () => {
+      const tmp = join(SCRATCH, `exit-${code}-tmp`);
+      mkdirSync(tmp);
+      const run = await finish([process.execPath, probe(`exit-${code}.ts`, ending)], {
+        cwd: SCRATCH,
+        tmp,
+        stdout: true,
+      });
+      expect(run).toMatchObject({ code });
+      // Made, and made in THIS temp folder: otherwise "gone afterwards" would
+      // pass for a process that never made one.
+      const made = run.stdout.trim();
+      expect(made).toStartWith(`${tmp}/screepub-pdfjs-`);
+      expect(existsSync(made)).toBe(false);
+      expect(readdirSync(tmp)).toEqual([]);
+    });
+  }
 });
 
 describe('a bun test run', () => {
@@ -120,26 +195,28 @@ describe('a bun test run', () => {
     // tests/remove-pdfjs-decoders.ts: `exit` never fires under bun test, so
     // without that line every run leaves a folder behind. A nested run with
     // its temp folder pointed into SCRATCH, so the count is of that run alone
-    // and not of whatever else on the machine shares the real one.
+    // and not of whatever else on the machine shares the real one. cwd is the
+    // repo, so the nested run reads this repo's bunfig.toml.
     const tmp = join(SCRATCH, 'nested-tmp');
     mkdirSync(tmp);
-    const probe = join(SCRATCH, 'opens-decoders.test.ts');
-    writeFileSync(probe, [
-      "import { expect, test } from 'bun:test';",
+    // Where the nested test writes down the folder it made: outside its temp
+    // folder, so the record survives the cleanup it is evidence for. The exit
+    // code cannot be that evidence, because bun test exits 0 on a file that
+    // registers no test at all (bun 1.3.14), and an empty temp folder is what
+    // a run that never made one leaves too.
+    const record = join(SCRATCH, 'nested-made.txt');
+    const file = join(SCRATCH, 'opens-decoders.test.ts');
+    writeFileSync(file, [
+      "import { test } from 'bun:test';",
+      "import { writeFileSync } from 'node:fs';",
       `import { pdfjsWasmDir } from '${ROOT}src/parser/pdfjs-wasm';`,
-      "test('unpacks the decoders', () => expect(pdfjsWasmDir()).toStartWith(process.env.TMPDIR!));",
+      `test('unpacks the decoders', () => writeFileSync(${JSON.stringify(record)}, pdfjsWasmDir()!));`,
     ].join('\n'));
-    const proc = Bun.spawn(['bun', 'test', probe], {
-      cwd: ROOT,
-      env: { ...process.env, TMPDIR: tmp },
-      stdout: 'pipe',
-      stderr: 'pipe',
-    });
-    const [code, err] = await Promise.all([proc.exited, new Response(proc.stderr).text()]);
-    // Passed, so the folder WAS made in this temp folder; empty after, so it
-    // was removed. Either alone passes on a run that never made one.
-    expect(err).toContain('1 pass');
-    expect(code).toBe(0);
+    const run = await finish([process.execPath, 'test', file], { cwd: ROOT, tmp });
+    expect(run).toMatchObject({ code: 0 });
+    const made = readFileSync(record, 'utf8');
+    expect(made).toStartWith(`${tmp}/screepub-pdfjs-`);
+    expect(existsSync(made)).toBe(false);
     expect(readdirSync(tmp)).toEqual([]);
   });
 });
