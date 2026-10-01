@@ -159,7 +159,7 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 - `kindle`: the best Kindle file this computer makes, climbing KFX, then AZW3, then MOBI.
 - `kfx`: a KFX file, and only that.
 - `azw3`: an AZW3 file, and only that.
-- `mobi`: the engine's own MOBI, and only that. It needs `--fountain`.
+- `mobi`: the engine's own MOBI, and only that; the EPUB is left as it is. It needs `--fountain`.
 - `fountain`: the script's `.fountain`, as it is. It needs `--fountain`.
 
 `kfx`, `azw3` and `mobi` refuse, with an error, when this computer lacks the

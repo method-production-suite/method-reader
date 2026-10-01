@@ -6,6 +6,7 @@ import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
 import {
   mobiSibling,
   availableFormats,
+  freshArtifactOf,
   freshKindleArtifact,
   kindleArtifactPlan,
   CannotRegenerateError,
@@ -359,4 +360,38 @@ test('a fresh plan is what the ladder hands back, untouched', async () => {
   });
   expect(out).toBe(plan.path);
   expect(readFileSync(out, 'utf8')).toBe('azw3');
+});
+
+test('an explicit MOBI rung writes the .mobi and leaves the EPUB, and every sibling built from it, alone', async () => {
+  // Only the ladder's MOBI rung (no Calibre: the EPUB must be regenerated)
+  // rewrites the book. Asking for the MOBI by name on any machine must not,
+  // or a .kfx or .azw3 already beside it goes stale for nothing.
+  const dir = scratch();
+  const fountain = join(dir, 'Script.fountain');
+  writeFileSync(fountain, 'Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n');
+  const epub = join(dir, 'Script.epub');
+  writeFileSync(epub, 'the book as it is');
+  const azw3 = azw3Sibling(epub);
+  writeFileSync(azw3, 'azw3');
+  const past = new Date(Date.now() - 60_000);
+  utimesSync(epub, past, past);
+  const later = new Date(Date.now() - 30_000);
+  utimesSync(azw3, later, later);
+  const before = statSync(epub).mtimeMs;
+
+  // calibreAvailable is not consulted by a named rung; nothing here can
+  // reach Calibre, because the MOBI rung is the engine's own work.
+  const out = await freshArtifactOf('mobi', {
+    epub,
+    fountainPath: fountain,
+    format: DEFAULT_FORMAT_OPTIONS,
+    calibreAvailable: true,
+    kfxReady: false,
+  });
+
+  expect(out).toBe(mobiSibling(epub));
+  expect(readFileSync(out).length).toBeGreaterThan(0);
+  expect(readFileSync(epub, 'utf8')).toBe('the book as it is');
+  expect(statSync(epub).mtimeMs).toBe(before);
+  expect(kindleArtifactPlan(epub, { calibreAvailable: true, kfxReady: false }).fresh).toBe(true);
 });

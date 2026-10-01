@@ -104,7 +104,7 @@ export async function freshKindleArtifact(
   builders: RungBuilders = REAL_BUILDERS,
 ): Promise<string> {
   const rung = ladderRung({ calibreAvailable: opts.calibreAvailable, kfxReady: opts.kfxReady });
-  return freshArtifactOf(rung, opts, builders);
+  return buildRung(rung, opts, builders, true);
 }
 
 /** One named rung, never the ladder: the caller asked for exactly this
@@ -112,17 +112,31 @@ export async function freshKindleArtifact(
  * staleness rule (freshness.ts, through rungPlan) says it is current, and
  * builds it again only when it is not: KFX and AZW3 convert straight from
  * the present EPUB, and the MOBI rung re-runs the engine. The ladder is
- * this function with the rung chosen for it, so each rung's work has one
+ * this work with the rung chosen for it, so each rung's work has one
  * copy. `opts.calibreAvailable` and `opts.kfxReady` are not consulted:
  * toKfx and toAzw3 each refuse with their own error when their tools are
  * missing.
  *
- * NOTE: the MOBI rung REWRITES `epub` in place before it writes the .mobi
- * beside it. */
+ * Unlike the ladder's MOBI rung, the named one writes ONLY the .mobi: the
+ * EPUB is left exactly as it was, so a .kfx or .azw3 already built from it
+ * stays current. */
 export async function freshArtifactOf(
   rung: KindleRung,
   opts: FreshKindleArtifactOptions,
   builders: RungBuilders = REAL_BUILDERS,
+): Promise<string> {
+  return buildRung(rung, opts, builders, false);
+}
+
+/** The one copy of each rung's work. `fromLadder` matters to the MOBI rung
+ * alone: the ladder lands there only when there is no Calibre, and then the
+ * EPUB is regenerated alongside the .mobi; a rung asked for by name leaves
+ * the book alone. */
+async function buildRung(
+  rung: KindleRung,
+  opts: FreshKindleArtifactOptions,
+  builders: RungBuilders,
+  fromLadder: boolean,
 ): Promise<string> {
   const { epub, fountainPath, format, onStage } = opts;
 
@@ -161,7 +175,7 @@ export async function freshArtifactOf(
   // EPUB's, which needsRegeneration would then trust as fresh forever. Same
   // discipline as cli.ts's writeFileAtomic, settings/sidecar.ts and
   // export/kfx.ts.
-  writeFileAtomicSync(epub, result.epub);
+  if (fromLadder) writeFileAtomicSync(epub, result.epub);
   writeFileAtomicSync(mobi, result.mobi);
   return mobi;
 }
