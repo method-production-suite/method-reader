@@ -122,25 +122,6 @@ record, and each crate's licence text is in its published source.
 
 ---
 
-## KFX Output plugin for Calibre 2.12.0: GPL-3.0 (aggregated, not linked)
-
-Copyright John Howell (jhowell), with a Traditional-Chinese rendering fix by
-lcandy2. Carried only inside the older Mac app, which is no longer
-published, as an unmodified zip
-(`KFXKit_KFXKit.bundle/Vendor/KFX_Output_plugin.zip`, full GPL-3 text beside
-it), and installed into **your own copy of Calibre** only when you choose to,
-where it runs as part of Calibre, a separate GPL-3 program. It is never
-linked into Screepub or KFXKit. Provenance:
-`app/Packages/KFXKit/Sources/KFXKit/Vendor/PROVENANCE.md`. The `KFXKit`
-package itself is MIT: see `app/Packages/KFXKit/LICENSE`.
-
-The window and the command line carry no copy: `screepub kfx-install`
-downloads the plugin from Calibre's own plugin index and has Calibre install
-it.
-
-Either way the plugin drives Amazon's **Kindle Previewer** (not bundled,
-proprietary, installed by you) to perform the actual KFX conversion.
-
 ## Courier Prime 1.203: SIL Open Font License 1.1
 
 Copyright (c) 2015 Alan Dague-Greene, Quote-Unquote Apps.
@@ -172,3 +153,13 @@ are unmodified upstream builds. Full licence text:
 Previewer are optional and used only if you installed them yourself:
 Screepub runs your copy of `ebook-convert` to produce AZW3, and, with the KFX
 plugin, KFX. No Calibre or Amazon code is distributed with Screepub.
+
+The **KFX Output plugin for Calibre** (GPL-3.0, copyright John Howell) is not
+distributed either. `screepub kfx-install`, or the Install button on the Send
+page, downloads it from Calibre's own plugin index and has **your own copy of
+Calibre** install it, only when you ask, where it runs as part of Calibre.
+The plugin drives Amazon's Kindle Previewer (proprietary, installed by you)
+to perform the actual KFX conversion. Releases of the older Mac app, which is
+no longer published, carried an unmodified 2.12.0 copy of the plugin (with a
+Traditional-Chinese rendering fix by lcandy2), aggregated rather than linked,
+with the full GPL-3 text and their own copy of this notice beside it.

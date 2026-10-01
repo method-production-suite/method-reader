@@ -1,26 +1,6 @@
 {
   "$comment": "The blast radius of deleting app/ — every tracked file OUTSIDE app/ that names the SwiftUI app, its directory, its build commands or the release artifacts only it produces. Enforced by tests/app-references.test.ts, which defines what counts as a reference and why. `refs` is a CEILING: it may fall (that is progress toward piece F3), never rise without a row being updated deliberately. `category` is what would break: build = a workflow or script that executes or packages app/; test = a bun test that reads app/ or asserts about its artifacts; artifact = names a release artifact or bundle only the Swift app produces; doc = user-facing prose that becomes false; note = a comment citing app/ as provenance, stale rather than broken; freeze = the F1 freeze machinery itself. See docs/superpowers/specs/2026-09-14-retire-swiftui-design.md (F3 acceptance criterion 11: this file is empty when the retirement is done).",
   "files": {
-    "CLAUDE.md": {
-      "refs": 7,
-      "category": "doc",
-      "breaks": "The architecture section's FROZEN app/ bullet, both Swift build commands (labelled frozen since 2026-09-30, when the intro and architecture were moved to the Tauri window and the count fell from 16), and the format-defaults.json invariant that says BOTH options.test.ts and kit-check pin it (F3 acceptance criterion 14 rewrites that sentence)."
-    },
-    "CONTRIBUTING.md": {
-      "refs": 8,
-      "category": "doc",
-      "breaks": "The contributor build commands: app/build-app.sh and `swift run kit-check`, plus the description of CI's app job."
-    },
-    "SECURITY.md": {
-      "refs": 1,
-      "category": "doc",
-      "breaks": "Names app/screepub-engine.entitlements in the threat-model section."
-    },
-    "THIRD-PARTY-NOTICES.md": {
-      "refs": 11,
-      "category": "doc",
-      "breaks": "Two live paths inside app/Packages/KFXKit (PROVENANCE.md and LICENSE) plus the Screepub.app resource path. This is a LICENSE document: a dangling path in it is a compliance defect, not a typo. F3 acceptance criterion 13."
-    },
     "desktop/ui/feedback.js": {
       "refs": 4,
       "category": "note",
@@ -30,26 +10,6 @@
       "refs": 3,
       "category": "note",
       "breaks": "A comment crediting the Mac app's rail (app/Sources/ScreepubApp/) as the origin of the tune panel."
-    },
-    "docs/device-map.md": {
-      "refs": 2,
-      "category": "doc",
-      "breaks": "\"Current support (app code, verified against ScreepubKit)\" is the provenance line for the support table; it stops being a checkable claim at F3."
-    },
-    "docs/formatting-options-log.md": {
-      "refs": 13,
-      "category": "doc",
-      "breaks": "The options registry names Swift files as the implementing code for three behaviours and kit-check as their guard. CLAUDE.md calls this file the app's options registry, so a stale entry here misleads by design."
-    },
-    "docs/mac-qa.md": {
-      "refs": 6,
-      "category": "note",
-      "breaks": "The gate-1 QA checklist. It names Screepub.app and the flat ~/Documents/Screepub layout because its whole job is telling a tester how the shipping app and its replacement differ while BOTH are installed. The fifth reference, added 2026-09-14, is UpdateInstall.swift: the checklist now records that the updater refusal is structural rather than predicted, because the identifier pin is an exact match, and points at the ADR that decides what F2 ships because of it. At F2 the coexistence sections stop applying; at F3 the file should go, since the gate it describes will have been passed, and this reference goes with it because the ADR it points to outlives the file."
-    },
-    "docs/release-notes-template.md": {
-      "refs": 5,
-      "category": "doc",
-      "breaks": "A live instruction to the notes author: edit app/Sources/ScreepubApp/ReaderRail.swift when a bullet announces a UI change. Not a record — a procedure that would tell someone to edit a deleted file."
     },
     "src/cli-devices.ts": {
       "refs": 1,
@@ -80,11 +40,6 @@
       "refs": 1,
       "category": "note",
       "breaks": "A comment citing Export.swift's mobiSibling(for:)."
-    },
-    "src/settings/presets.ts": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "Repeats the claim that options.test.ts AND kit-check both pin format-defaults.json. That sentence becomes false at F3 (criterion 14), in source rather than in a doc."
     },
     "src/update/compare.ts": {
       "refs": 3,
@@ -140,11 +95,6 @@
       "refs": 1,
       "category": "note",
       "breaks": "A comment citing Export.swift's kfxReady."
-    },
-    "tests/options.test.ts": {
-      "refs": 1,
-      "category": "note",
-      "breaks": "A comment saying kit-check decodes the same format-defaults.json."
     },
     "tests/release-app-step.test.ts": {
       "refs": 1,

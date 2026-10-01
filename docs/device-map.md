@@ -317,7 +317,8 @@ marked in §5.
 
 ## 5. Gap analysis: Screepub today vs the map
 
-Current support (app code, verified against ScreepubKit):
+Support when this gap analysis was written (verified then against the Swift
+app's code; the engine's `src/device/` and `src/export/` carry all of it now):
 
 - **Kindle MSC** via volume signature; AZW3 (ebook-convert), KFX (when the
   Calibre+plugin+Previewer toolchain exists), engine MOBI as fallback.
@@ -334,7 +335,7 @@ What the map says we are missing, tiered by leverage:
    (upload otherwise lands in the tablet's last-browsed folder). Plus
    interface-level detection (`10.11.99.0/29` on any interface = cable
    present, so "web interface off" becomes a distinct message) and a 100 MB
-   guard. File: `RemarkableDevice.swift`.
+   guard. File: `src/device/remarkable.ts`.
 2. **Apple Books justification/fonts — DONE 2026-07-30:** emit
    `<meta property="ibooks:specified-fonts">true</meta>` in the EPUB OPF.
    One engine line; without it Books force-justifies ragged-right screenplay

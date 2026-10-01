@@ -44,7 +44,7 @@ producer, an agency, or a stranger, and Screepub opens it.
   install something else is a real finding.
 - **Signing and entitlement weaknesses.** The Mac command-line converter is
   signed with JIT entitlements because Bun needs them
-  (`app/screepub-engine.entitlements`). If those are exploitable beyond what
+  (`tools/macos/screepub-cli.entitlements`). If those are exploitable beyond what
   Bun requires, we want to know.
 
 ## What's out of scope

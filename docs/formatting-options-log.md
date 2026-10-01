@@ -109,8 +109,10 @@ and the suite will say so if you forget.
   CSS only to its generated inline ToC. Cure is
   `--disable-remove-fake-margins`, which lets the EPUB's own % geometry
   (and the `dialogueSideMarginPct` knob) flow through to AZW3
-  unchanged. Guarded by the kit-check "AZW3 keeps dialogue-block side
-  margins" check. Code: `app/Sources/ScreepubKit/EbookConvert.swift`.
+  unchanged. Guarded by `tests/export-calibre.test.ts`: one test pins the
+  flag in the recipe, and a real-Calibre one (weekly on CI) explodes an
+  AZW3 and finds the margins, ported at F3 from the Swift app's own check.
+  Code: `src/export/calibre.ts` (`CALIBRE_FORMAT_GUARDS`).
 
 ### 2b. Cue & parenthetical alignment (option, default centered)
 - **What:** print's fixed cue indent only *optically* centers names on
@@ -766,8 +768,8 @@ and the suite will say so if you forget.
   `scenePageBreaks` on 2026-07-30 (#1). Keeps stay EPUB-only; forced
   breaks no longer are.
 - **Code:** `src/options.ts` (`keepSpeechesWhole`), `src/epub/css.ts`
-  (`speechKeep` → `.dialogue-block`),
-  `app/Sources/ScreepubKit/FormatSettings.swift`.
+  (`speechKeep` → `.dialogue-block`), and the window's control in
+  `desktop/ui/tune.js`.
 
 ### 9. Page furniture stripping
 - **What:** page numbers (bare/dashed/labeled), shooting-script scene
@@ -1086,15 +1088,15 @@ change the preview" caveat there as in the Swift rail: they are decided while
 the PDF is being read and only the next conversion from the PDF can apply
 them.
 
-**The two interfaces disagree about how many those are, and the window is
-the one that is right.** The rail's grouping stays as it is, frozen with the
-retired app. `ReaderRail.swift`'s `From the PDF` section holds
-two knobs (`rejoinSplitDialogue`, `contdMode`) and says in a comment that
-they are "the only knobs consumed in fountain/serialize.ts". They are not:
+**The two interfaces disagreed about how many those are, and the window was
+the one that was right.** The retired Swift app's reader rail kept its
+grouping to the end: its `From the PDF` section held
+two knobs (`rejoinSplitDialogue`, `contdMode`) and said in a comment that
+they were "the only knobs consumed in fountain/serialize.ts". They are not:
 `showPageMarkers` and `dualDialogue` are read there too (serialize.ts's
 `= pg N` marker and its `^` caret), so both are written INTO the `.fountain`
 when the PDF is read and neither can move a preview that re-renders from
-that cached `.fountain`. The Swift rail files them under `Content` and
+that cached `.fountain`. The Swift rail filed them under `Content` and
 `Dialogue`, where they read as live knobs. `desktop/ui/tune.js` groups all
 four together under `Read from the PDF` with the caveat, and nothing in the
 engine needs to change.
@@ -1117,7 +1119,8 @@ engine needs to change.
   KEPUB via Calibre when the "as KEPUB" checkbox on the result page's
   send block is on — shown only while Kobo is the chosen destination
   (default OFF — Kobo's kepub renderer mis-justifies em-dashes/
-  ellipses, endemic in dialogue; kit-check verifies koboSpan markup);
+  ellipses, endemic in dialogue; `tests/export-calibre.test.ts` verifies
+  koboSpan markup against a real Calibre);
   tolino → EPUB into root `Books/`; reMarkable → original PDF over the
   USB web interface (its EPUB renderer re-typesets, so reflow adds
   nothing on a 7.8–11.8" screen). Detection: `.kobo` dir, tolino
@@ -1125,8 +1128,9 @@ engine needs to change.
 - **Script preview reader (2026-07-22):** READ SCRIPT on the result page
   opens a window rendering the engine's real preview HTML
   (`--preview-html`; the same markup as the EPUB with the CSS inlined).
-  The rail edits a per-script sidecar (`<Stem>.screepub.json`,
-  ScriptSettings.swift, lenient per-field decode) with debounced,
+  The rail edits a per-script sidecar (`<Stem>.screepub.json`, in the
+  Swift app's ScriptSettings then and `src/settings/sidecar.ts` now,
+  lenient per-field decode) with debounced,
   serialized re-renders from the cached .fountain; "Save as app
   defaults" promotes sidecar values to the global keys
   (AppSettings.setFormatSettings). Every re-render rewrites the
@@ -1145,11 +1149,14 @@ engine needs to change.
   `keepSpeechesWhole`, #17's `printSplitMinimums` and #18's
   `preserveFontShifts`), grouped Page / Dialogue / Text / Content / From
   the PDF. Settings keeps General (library, updates) and Devices (default
-  preset, KFX toolchain, tolino/reMarkable notes). **Adding a knob means
-  adding one control to `ReaderRail.swift`** — there is deliberately no
+  preset, KFX toolchain, tolino/reMarkable notes). **Adding a knob meant
+  adding one control to the rail** — there is deliberately no
   second surface to keep in sync. Settings sets the coarse default via a
-  preset; per-script tuning belongs beside a live render.
-- **Device presets (2026-07-22):** `DevicePreset` (ScreepubKit) bundles
+  preset; per-script tuning belongs beside a live render. (That was the
+  Swift app's rail. In the window the one surface is the Settings page,
+  and adding a knob means adding it to `GROUPS` in `desktop/ui/tune.js`.)
+- **Device presets (2026-07-22):** `DevicePreset` (the Swift app's; now
+  `DEVICE_PRESETS` in `src/settings/presets.ts`) bundles
   a full FormatSettings per device class — "Kindle e-ink (6\")" is the
   baseline (== defaults); "Phone / narrow screen" flips dual dialogue to
   sequential (side-by-side halves are an unreadable sliver on a narrow
@@ -1158,8 +1165,10 @@ engine needs to change.
   Devices "Load device preset", or per-script via the reader rail's own
   "Load device preset" (then persisted to the sidecar). Responsive
   reflow is impossible in a fixed e-book, so a conversion-time preset is
-  the mechanism. Adding a preset: extend the `DevicePreset` enum only —
-  the two menus and kit-check iterate `allCases`.
+  the mechanism. Adding a preset: add an entry to `DEVICE_PRESETS` in
+  `src/settings/presets.ts` only. The engine hands the list to the window,
+  whose Settings page draws a button for each (`presetsFrom` in
+  `desktop/ui/tune.js`).
 
 ### 18. Block font shifts (option, default ON; 2026-08-04)
 - **What:** `preserveFontShifts` renders block-level font family and size

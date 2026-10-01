@@ -34,10 +34,12 @@ describe('resolveFormatOptions', () => {
     expect(resolveFormatOptions(undefined)).toEqual(DEFAULT_FORMAT_OPTIONS);
   });
 
-  test('defaults match the canonical format-defaults.json both suites pin', async () => {
-    // The same file kit-check decodes into FormatSettings and compares to
-    // FormatSettings.defaults — the two languages can no longer drift
-    // silently. Eighteen literals, one source of truth.
+  test('defaults match the canonical format-defaults.json', async () => {
+    // The one pin on this file since F3. Until then the Swift app's own
+    // checks decoded the same file and compared it to the Swift defaults,
+    // so the two languages could not drift silently. With the Swift app
+    // gone, options.ts and this file are the only two copies, and this is
+    // what keeps them one.
     const canonical = await Bun.file(new URL('../format-defaults.json', import.meta.url)).json();
     expect(DEFAULT_FORMAT_OPTIONS).toEqual(canonical);
   });

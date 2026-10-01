@@ -64,8 +64,8 @@ and two SHAs on one page both look official.
    `registryChanges` is a shortlist to judge, not a list to transcribe:
    for 0.5.0 it named 11 entries and 6 became bullets. Read the entries
    for FACTS. See the contamination warning in section 5.
-4. **`app/Sources/ScreepubApp/ReaderRail.swift`** if a bullet announces a
-   new switch. That file holds the exact label the reader will see.
+4. **`desktop/ui/tune.js`** if a bullet announces a new switch. That file
+   holds the exact label the reader will see on the window's Settings page.
 
 ## 1. Caps, with 0.5.0's actuals as calibration
 
@@ -206,9 +206,9 @@ what was it doing before, what does it do now, what do I do about it.
    "on by default. Turn it off if you'd rather fit more on each page."
    A switch with no stated reason to touch it reads as a switch nobody
    should touch.
-7. **Name the control exactly as the reader rail labels it, once**, in the
+7. **Name the control exactly as the Settings page labels it, once**, in the
    sentence that tells the reader they can change it. Get the string from
-   `ReaderRail.swift`, not from the registry, which describes options in
+   `desktop/ui/tune.js`, not from the registry, which describes options in
    its own words. This applies when a bullet announces a new switch or
    invites the reader to go change something. A fix bullet that merely
    describes what an existing setting does may use plain English.
@@ -432,7 +432,8 @@ why neither format is named.
 
 - `df1403a A selector-exact CSS rule extractor, with the shadowing case pinned`
 - `9f96a6d options.test.ts extracts rules by exact selector, not by lucky regex`
-- `a7c24c8 kit-check proves every sidecar merge line, not just three of them`
+- `a7c24c8`, which made the Swift app's own checks prove every sidecar
+  merge line, not just three of them
 - Plus the whole `test-hardening` branch these sit on: 5 commits, 296
   lines added.
 
