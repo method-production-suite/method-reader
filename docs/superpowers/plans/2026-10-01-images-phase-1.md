@@ -693,6 +693,16 @@ Each gets its own plan, written against the code phase 1 leaves:
   `tests/serialize.test.ts`'s byte-stability test ("is byte-stable under a
   settings flip") regains its `includeImages: false` flip beside the
   `preserveFontShifts` one (the test's comment says where).
+  TWO TRAPS left by phase 1's final review: (1) `src/epub/html.ts`
+  `tokensToBody` skips a `note` token while no section is open (so an
+  invisible note cannot open an empty "Opening"); once an image note
+  RENDERS, that skip would silently drop the title card, which is exactly
+  a note above the first heading, so a rendering image note must open the
+  Opening section. (2) Pictures are decoded after the last page's progress
+  tick and before the first render tick, so a picture-heavy script holds
+  the progress bar near 85% for the whole picture pass (about 15 s at 60
+  pictures): give the decode its own share (for example text 0-60%,
+  pictures 60-85%), which changes the values the window reads.
 - **Phase 3, Kindle:** MOBI image records (port `92d232e`), and a device
   check of AZW3 and KFX with a figure.
 - **Phase 4, Cover:** `promoteCoverImage` (default ON, owner), both cover
