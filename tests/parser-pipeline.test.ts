@@ -1,7 +1,9 @@
 import { describe, test, expect } from 'bun:test';
 import { extractDocument } from '../src/parser/extract';
 import { parseLines } from '../src/parser/index';
-import type { RawLine } from '../src/parser/types';
+import { toFountain } from '../src/fountain/serialize';
+import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
+import type { RawImage, RawLine } from '../src/parser/types';
 
 // The first direct tests of the post-extraction pipeline (parseLines):
 // everything else exercises it only through fixture PDFs.
@@ -286,6 +288,396 @@ describe('extraction returns pictures beside the text', () => {
     expect(result.images.map((i) => i.pageNum)).toEqual([1, 2]);
     expect(result.imageStats.droppedBy).toEqual({
       pixels: 1, width: 1, height: 0, area: 0, furniture: 5, background: 1,
+    });
+  });
+});
+
+describe('images merged into the element stream', () => {
+  // parseLines takes two ordered streams and interleaves them (registry #19).
+  // Everything here is about POSITION: which element a picture lands next to,
+  // and what the metadata passes make of one.
+
+  /// A `RawImage` as `toRawImages` would hand it over — already named, already
+  /// measured against the page. `y` is the TOP edge in PDF user space, the same
+  /// axis and direction RawLine uses, so a high y is high on the sheet.
+  function image(y: number, pageNum: number, file: string, over: Partial<RawImage> = {}): RawImage {
+    return {
+      file,
+      pageNum,
+      y,
+      // 50% of the page is 71% of a 6-inch column, and nowhere near full-page.
+      pageWidthPct: 50,
+      pageHeightPct: 20,
+      bytes: new Uint8Array([1]),
+      ...over,
+    };
+  }
+  const typesOf = (ls: RawLine[], imgs: RawImage[]) =>
+    parseLines(ls, imgs).elements.map((e) => e.type);
+  const onlyImage = (ls: RawLine[], imgs: RawImage[]) =>
+    parseLines(ls, imgs).elements.filter((e) => e.type === 'image');
+
+  test('an image lands between the elements it sat between on the page', () => {
+    expect(
+      typesOf(
+        [
+          line('INT. WAREHOUSE - DAY', 15, 700, 1),
+          line('The panel above shows the shot.', 15, 500, 1),
+        ],
+        [image(600, 1, 'p001-01.png')],
+      ),
+    ).toEqual(['scene', 'image', 'action']);
+  });
+
+  test('an image above everything on its page comes first', () => {
+    expect(
+      typesOf(
+        [line('INT. A - DAY', 15, 700, 1), line('Someone waits.', 15, 600, 1)],
+        [image(760, 1, 'p001-01.png')],
+      ),
+    ).toEqual(['image', 'scene', 'action']);
+  });
+
+  test('an image below everything on its page comes last', () => {
+    expect(
+      typesOf(
+        [line('INT. A - DAY', 15, 700, 1), line('Someone waits.', 15, 600, 1)],
+        [image(100, 1, 'p001-01.png')],
+      ),
+    ).toEqual(['scene', 'action', 'image']);
+  });
+
+  test('several images and several elements on one page interleave', () => {
+    // The case a single insertion point could not get right: three images,
+    // none of them adjacent to each other in the finished stream.
+    expect(
+      typesOf(
+        [
+          line('INT. A - DAY', 15, 700, 1),
+          line('Someone waits.', 15, 600, 1),
+          line('Someone leaves.', 15, 500, 1),
+        ],
+        [image(650, 1, 'p001-01.png'), image(550, 1, 'p001-02.png'), image(450, 1, 'p001-03.png')],
+      ),
+    ).toEqual(['scene', 'image', 'action', 'image', 'action', 'image']);
+  });
+
+  test('the filename rides through untouched, in the order it was handed over', () => {
+    // parseLines does NOT number anything: `toRawImages` assigned these names
+    // where it assigned the order, and a second counter here would be a second
+    // thing to keep in step. This pins the pass-through, not the naming rule.
+    const els = onlyImage(
+      [line('INT. A - DAY', 15, 700, 1)],
+      [image(600, 1, 'p001-01.png'), image(400, 1, 'p001-02.png')],
+    );
+    expect(els.map((e) => e.img?.file)).toEqual(['p001-01.png', 'p001-02.png']);
+    // And it is the element's TEXT as well, which is what keeps the element
+    // non-empty: toFountain drops anything that trims to nothing, and an image
+    // has no words of its own to put there.
+    expect(els.map((e) => e.text)).toEqual(['p001-01.png', 'p001-02.png']);
+  });
+
+  test('two images at the same y keep the order they arrived in', () => {
+    // Equal y is not a tie the merge has to break: it drains the queue in
+    // order, so the paint order `toRawImages`s stable sort preserved survives
+    // one more stage. A comparator-based insertion could quietly reverse them.
+    expect(
+      onlyImage(
+        [line('INT. A - DAY', 15, 700, 1), line('Someone waits.', 15, 500, 1)],
+        [image(600, 1, 'p001-01.png'), image(600, 1, 'p001-02.png')],
+      ).map((e) => e.img?.file),
+    ).toEqual(['p001-01.png', 'p001-02.png']);
+  });
+
+  test('the rendered width is remapped from the page to the text column', () => {
+    // 50% of an 8.5" sheet is 71% of the 6.0" column the script is set in.
+    expect(
+      onlyImage([line('INT. A - DAY', 15, 700, 1)], [image(600, 1, 'p001-01.png')])[0].img!.widthPct,
+    ).toBe(71);
+  });
+
+  test('a picture wider than the column is asked to fill the column, no more', () => {
+    // The title-card case: 85% of the sheet is 121% of the column.
+    const [img] = onlyImage(
+      [line('INT. A - DAY', 15, 700, 1)],
+      [image(600, 1, 'p001-01.png', { pageWidthPct: 85 })],
+    );
+    expect(img.img!.widthPct).toBe(100);
+  });
+
+  test('a full-page image is flagged, an inline one is not', () => {
+    // Both halves, or the flag could be a constant `true`. 90 x 88 is 79% of
+    // the page against the 70% bar; the helper's 50 x 20 is 10%.
+    const big = onlyImage(
+      [line('INT. A - DAY', 15, 700, 1)],
+      [image(750, 1, 'p001-01.png', { pageWidthPct: 90, pageHeightPct: 88 })],
+    );
+    expect(big[0].img!.fullPage).toBe(true);
+    expect(
+      onlyImage([line('INT. A - DAY', 15, 700, 1)], [image(600, 1, 'p001-01.png')])[0].img!.fullPage,
+    ).toBe(false);
+  });
+
+  test('an images array in the wrong order is normalized, not misplaced', () => {
+    // parseLines is exported and Task 9 wires convert.ts into it. Today
+    // `toRawImages` hands this half over already sorted, so the sort inside
+    // insertImages is a no-op — which is exactly why it needs its own test: a
+    // caller that builds RawImage[] some other way must not silently scatter
+    // pictures through the book. Handed over backwards on purpose.
+    const sp = parseLines(
+      [
+        line('INT. A - DAY', 15, 700, 1),
+        line('Someone waits.', 15, 500, 1),
+        line('INT. B - DAY', 15, 700, 2),
+      ],
+      [image(600, 2, 'p002-01.png'), image(600, 1, 'p001-01.png')],
+    );
+    expect(sp.elements.map((e) => e.type)).toEqual([
+      'scene', 'image', 'action', 'scene', 'image',
+    ]);
+    expect(sp.elements.filter((e) => e.type === 'image').map((e) => e.img!.file))
+      .toEqual(['p001-01.png', 'p002-01.png']);
+  });
+
+  test('an image level with a line sits below it: the two y are different edges', () => {
+    // A line's y is its BASELINE (extract.ts takes the text item's own origin)
+    // and an image's is its TOP edge, so a picture whose y equals a line's y
+    // starts where that line's glyphs sit and runs downward. Equality is
+    // therefore not a coin toss: the line is above, and goes first.
+    expect(
+      typesOf(
+        [line('INT. A - DAY', 15, 700, 1), line('Someone waits.', 15, 600, 1)],
+        [image(600, 1, 'p001-01.png')],
+      ),
+    ).toEqual(['scene', 'action', 'image']);
+  });
+
+  test('ordering is by page first and only then down the page', () => {
+    // The image on page 1 sits at the BOTTOM of it (y 100) and the one on
+    // page 2 at the top (y 750): compare y alone and they come out reversed.
+    expect(
+      typesOf(
+        [line('INT. A - DAY', 15, 700, 1), line('INT. B - DAY', 15, 700, 2)],
+        [image(100, 1, 'p001-01.png'), image(750, 2, 'p002-01.png')],
+      ),
+    ).toEqual(['scene', 'image', 'image', 'scene']);
+  });
+
+  test('an image on a page with no text at all still lands between the pages', () => {
+    // A plate sheet: nothing on page 2 but the picture.
+    expect(
+      typesOf(
+        [line('INT. A - DAY', 15, 700, 1), line('INT. C - DAY', 15, 700, 3)],
+        [image(400, 2, 'p002-01.png')],
+      ),
+    ).toEqual(['scene', 'image', 'scene']);
+  });
+
+  test('an image past the last text element is kept, and counts toward pageCount', () => {
+    // A closing full-page plate. The tail loop is the only thing that carries
+    // it, and the sheet it sits on is a real page of the document.
+    const sp = parseLines([line('INT. A - DAY', 15, 700, 1)], [image(700, 4, 'p004-01.png')]);
+    expect(sp.elements.map((e) => e.type)).toEqual(['scene', 'image']);
+    expect(sp.pageCount).toBe(4);
+  });
+
+  test('an image is never a speaking character and never a scene', () => {
+    const sp = parseLines([line('INT. A - DAY', 15, 700, 1)], [image(600, 1, 'p001-01.png')]);
+    expect(sp.scenes.length).toBe(1);
+    expect(sp.characters.length).toBe(0);
+  });
+
+  test('scene elementIndex counts the images that precede it', () => {
+    // Why insertImages runs BEFORE the metadata passes: elementIndex is an
+    // index into the array the caller receives, so it has to be computed over
+    // the finished stream.
+    const sp = parseLines(
+      [line('INT. A - DAY', 15, 700, 1), line('INT. B - DAY', 15, 400, 1)],
+      [image(760, 1, 'p001-01.png'), image(500, 1, 'p001-02.png')],
+    );
+    expect(sp.elements.map((e) => e.type)).toEqual(['image', 'scene', 'image', 'scene']);
+    expect(sp.scenes.map((s) => s.elementIndex)).toEqual([1, 3]);
+  });
+
+  test('character firstAppearance counts the images too', () => {
+    // The same index into the same array as `elementIndex`, and it has no
+    // consumer today — which is exactly why it is pinned here. A mutation
+    // sweep showed that counting characters over the pre-image stream survives
+    // everything else in the suite, so the day something reads this field it
+    // would have read a stale index with every test green.
+    const sp = parseLines(
+      [line('INT. A - DAY', 15, 700, 1), line('NOOR', 43, 600, 1), line('Her line.', 29, 588, 1)],
+      [image(760, 1, 'p001-01.png')],
+    );
+    expect(sp.elements.map((e) => e.type)).toEqual(['image', 'scene', 'character', 'dialogue']);
+    expect(sp.characters).toEqual([
+      { name: 'NOOR', baseName: 'NOOR', dialogueCount: 1, firstAppearance: 2 },
+    ]);
+  });
+
+  test('omitting images changes nothing', () => {
+    const lines = [line('INT. A - DAY', 15, 700, 1), line('Some action.', 15, 600, 1)];
+    expect(parseLines(lines).elements.map((e) => e.type)).toEqual(['scene', 'action']);
+    expect(parseLines(lines, []).elements).toEqual(parseLines(lines).elements);
+  });
+
+  test('a text element carries the y of its block, which is what the merge reads', () => {
+    // Named directly because everything above rests on it: drop `y` in
+    // classifyBlock and no image can find an anchor.
+    const els = parseLines([
+      line('INT. A - DAY', 15, 700, 1),
+      line('Someone waits.', 15, 600, 1),
+    ]).elements;
+    expect(els.map((e) => e.y)).toEqual([700, 600]);
+  });
+
+  test('a speech split across a page does not derail the images after it', () => {
+    // mergeSplitSpeeches folds the second half into the FIRST element, which
+    // keeps page 1's y=188 while sitting between two page-2 elements. The
+    // merge must not read that stale anchor as "page 2 is over".
+    const els = parseLines(
+      [
+        line('ODILE', 44, 200, 1),
+        line('Speech nineteen. If this line sits alone at the top or the', 29, 188, 1),
+        line('13.', 87, 756, 2),
+        line('bottom of a page, the keep failed.', 29, 720, 2),
+        line('INT. NEXT ROOM - DAY', 17, 690, 2),
+      ],
+      [image(700, 2, 'p002-01.png')],
+    ).elements;
+    expect(els.map((e) => e.type)).toEqual([
+      'character', 'dialogue', 'page-number', 'image', 'scene',
+    ]);
+    expect(els.filter((e) => e.type === 'dialogue').length).toBe(1);
+  });
+
+  describe('a plate in a page seam, with page markers on', () => {
+    // Both of these are serializer defects, and they are asserted HERE rather
+    // than only in serialize.test.ts because their reachability is the whole
+    // point: hand-built elements can be dismissed as a shape the parser never
+    // makes, and these are shapes it makes from ordinary lines. Page 1 carries
+    // a heading and action so it is not read as a title page.
+    const markers = { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true };
+
+    test('a cue at the foot of a page keeps the speech under the next page plate', () => {
+      const sp = parseLines(
+        [
+          line('INT. ROOM - DAY', 17, 700, 1),
+          line('The lamp holds.', 17, 400, 1),
+          line('BUNNY', 40, 72, 1),        // last line of page 1
+          line('Her line.', 30, 700, 2),   // her speech, under the plate
+          line('INT. NEXT - DAY', 17, 660, 2),
+        ],
+        [image(756, 2, 'p002-01.png')],    // the plate, above her speech
+      );
+      expect(sp.elements.map((e) => e.type)).toEqual([
+        'scene', 'action', 'character', 'image', 'dialogue', 'scene',
+      ]);
+      expect(toFountain(sp, undefined, markers)).toBe(
+        'INT. ROOM - DAY\n\nThe lamp holds.\n\n@BUNNY\nHer line.\n\n' +
+          '[[img: p002-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n',
+      );
+    });
+
+    // A speech split by a page, with the plate somewhere in the seam. The two
+    // cases below differ ONLY in the picture's y — below the continuation cue
+    // or above it — and they must serialize the same, because where a plate
+    // sits on the sheet is not a fact about whether a speech continues.
+    const contdSeam = [
+      line('INT. ROOM - DAY', 17, 700, 1),
+      line('BUNNY', 40, 200, 1),
+      line('First half.', 30, 188, 1),
+      line("BUNNY (CONT'D)", 40, 740, 2),
+      line('second half.', 30, 660, 2),
+      line('INT. NEXT - DAY', 17, 600, 2),
+    ];
+    const seamOutput =
+      'INT. ROOM - DAY\n\n@BUNNY\nFirst half.\nsecond half.\n\n' +
+      '[[img: p002-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n';
+
+    test('a plate BELOW the cue does not re-split the rejoined speech', () => {
+      const sp = parseLines(contdSeam, [image(700, 2, 'p002-01.png')]);
+      // rejoinSplitDialogue drops the repeated cue, so the block is OPEN when
+      // the plate arrives — which is the condition that makes this bite.
+      expect(sp.elements.map((e) => e.type)).toEqual([
+        'scene', 'character', 'dialogue', 'character', 'image', 'dialogue', 'scene',
+      ]);
+      expect(toFountain(sp, undefined, markers)).toBe(seamOutput);
+    });
+
+    test('a plate ABOVE the cue does not switch the rejoin off', () => {
+      // A plate at the top of a sheet with the continuation cue under it is
+      // ordinary layout, and it used to stand in the slot prepare's rejoin
+      // loop reads as "the previous element" — so the repeated cue survived
+      // and the reader got a duplicated (CONT'D) with one speech in two
+      // blocks. Same lines, same picture, 60pt higher.
+      const sp = parseLines(contdSeam, [image(760, 2, 'p002-01.png')]);
+      expect(sp.elements.map((e) => e.type)).toEqual([
+        'scene', 'character', 'dialogue', 'image', 'character', 'dialogue', 'scene',
+      ]);
+      expect(toFountain(sp, undefined, markers)).toBe(seamOutput);
+    });
+  });
+
+  describe('THE EXCEPTION: an image inside a dual-dialogue region', () => {
+    // The one place the element stream is NOT ordered by descending y.
+    // deinterleaveDualDialogue emits the left column and then the right, and
+    // the right column's y values restart at the top of the exchange — so the
+    // first element below the picture is a left-column one, and that is where
+    // it goes, in front of that column's first speech instead of after the
+    // whole exchange.
+    //
+    // Pinned rather than fixed HERE: a picture printed inside a two-column
+    // simultaneous speech is not a document the corpus contains, and the cost
+    // of the misplacement is now bounded — serialize.ts's cue lookahead sees
+    // past an image and its emitter holds the note until the speech closes, so
+    // a misplaced picture stays a misplaced picture and does not take a speech
+    // with it. If these go red because someone gave both streams a second
+    // ordering key, delete the tests rather than the fix.
+    const dualExchange = [
+      line('BUNNY', 40, 500, 1),
+      line('Left one.', 30, 488, 1),
+      line('CASSIUS', 40, 500, 1),
+      line('Right one.', 30, 488, 1),
+    ];
+
+    test('lands among the left column instead of after the exchange', () => {
+      expect(typesOf(dualExchange, [image(494, 1, 'p001-01.png')])).toEqual([
+        'character', 'image', 'dialogue', 'character', 'dialogue',
+      ]);
+    });
+
+    test('and the cost is a misplaced picture, nothing more', () => {
+      // The assertion the element types cannot make, and the reason this is
+      // asserted one layer down. `prepare` in serialize.ts demotes a
+      // `character` whose next element is neither dialogue nor parenthetical,
+      // and the image is now that next element — so this used to cost BUNNY
+      // her `@`, leaving one dialogue block to render as three action
+      // paragraphs. The lookahead skips images and the note waits for the
+      // speech to close: both speeches survive intact, and the picture comes
+      // out one speech later than the sheet drew it.
+      expect(toFountain(parseLines(dualExchange))).toBe(
+        '@BUNNY\nLeft one.\n\n@CASSIUS\nRight one.\n',
+      );
+      expect(toFountain(parseLines(dualExchange, [image(494, 1, 'p001-01.png')]))).toBe(
+        '@BUNNY\nLeft one.\n\n[[img: p001-01.png w=71]]\n\n@CASSIUS\nRight one.\n',
+      );
+    });
+
+    test('an image between a cue and its speech costs NOTHING in ONE column', () => {
+      // The general case, and the one that is not an ordering exception at
+      // all: nothing about this stream is out of order, a picture simply sat
+      // between a cue and the line under it. This is the regression test for
+      // the serializer fix — it asserted the broken output when the merge
+      // landed, and the repaired output now.
+      const singleColumn = [
+        line('BUNNY', 40, 500, 1),
+        line('Her line.', 30, 470, 1),
+      ];
+      expect(toFountain(parseLines(singleColumn))).toBe('@BUNNY\nHer line.\n');
+      expect(toFountain(parseLines(singleColumn, [image(480, 1, 'p001-01.png')]))).toBe(
+        '@BUNNY\nHer line.\n\n[[img: p001-01.png w=71]]\n',
+      );
     });
   });
 });
