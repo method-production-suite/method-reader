@@ -126,6 +126,7 @@ export function rendersImage(
 
 - [ ] When the book being emailed is over 50 MB (Amazon's limit for email to Kindle), the route says so before opening Mail, in plain words with no em dash, and names the web uploader (200 MB) as the alternative. Test with a stubbed size.
 - [ ] Commit: "Images: emailing a book too large for Kindle says so first".
+- Built as a REFUSAL, not the spec's "warns": past 50 MB Amazon drops the mail without a word, so opening Mail anyway would only hand the reader a send that cannot arrive. The message names the Send to Kindle app or web page (200 MB). Known gap: the route list does not dim the email row for a large book, though `routes <epub>` is given the book; the reader learns on click.
 
 ### Task 10: The device sheets
 
