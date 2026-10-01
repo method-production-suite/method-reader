@@ -1,9 +1,11 @@
 # Design: images in the script, carried into the e-book (the rebuild)
 
-Date: 2026-10-01 · Status: **DRAFT, not approved.** Written while the owner
-was away; every product choice below is a recommendation until he answers
-the four questions in "Decisions for the owner". Technical choices are
-made here and say so, so they can be overruled in one line.
+Date: 2026-10-01 · Status: **APPROVED by the owner, 2026-10-01** ("design
+approved fire away"), after answering the four questions in "Decisions for
+the owner" with every recommendation: pictures on by default, the title
+card as the cover by default, ship after the identifier release, and the
+MOBI fallback carries pictures. The technical choices stand as written.
+Phase 1's plan: `docs/superpowers/plans/2026-10-01-images-phase-1.md`.
 
 Supersedes, as a plan of record: the August design on branch
 `worktree-images` (spec 838da41, plan 7110fa7). That branch stays as
