@@ -2,9 +2,25 @@
 // headless Bun/Node: modern pdf.js build + DOM shims, no browser worker.
 import './pdfjs-shims';
 import { isCueText } from './cue';
-import type { FamilyBucket, FontRun, RawLine, SizeStep } from './types';
+import type { FamilyBucket, FontRun, RawImage, RawLine, SizeStep } from './types';
 import { getDocument, OPS } from 'pdfjs-dist/build/pdf.mjs';
-import type { OpList } from './images';
+// ONE edge for the whole image feature. images.ts owns the collection and the
+// join to artwork.ts's judgements; this module reads pages and lines, hands
+// over what a page produced, and asks for the pile back at the end.
+import {
+  collectPageImages,
+  finishImages,
+  newImageRun,
+  type EncodedCandidate,
+  type ImageStats,
+  type OpList,
+} from './images';
+// pdf.js loads its JPEG2000, JBIG2 and CCITT decoders from a directory at
+// runtime rather than from its own bundle, and without one every image in
+// those formats fails to decode. See pdfjs-wasm.ts.
+import { pdfjsWasmDir } from './pdfjs-wasm';
+
+export type { ImageStats } from './images';
 
 /**
  * Extract raw lines from a PDF buffer.
@@ -23,22 +39,64 @@ import type { OpList } from './images';
 /// `page / pages` a usable fraction from the very first tick.
 export type PageProgress = (page: number, pages: number) => void;
 
+/** Everything one pass over a PDF produces. Named because a caller that wants
+ * to talk about it should not have to spell `Awaited<ReturnType<...>>`. */
+export interface ExtractResult {
+  lines: RawLine[];
+  /** The DOCUMENT's page count, which is not the number of pages this run
+   * visited when `maxPages` is set. */
+  pageCount: number;
+  /** How many text items `repairPhantomSpaces` rewrote. */
+  spacingRepairs: number;
+  /** The pictures that cleared artwork.ts, in reading order. */
+  images: RawImage[];
+  /** What became of the pictures, including the ones that did not make it. */
+  imageStats: ImageStats;
+}
+
 export async function extractDocument(
   pdfBytes: Uint8Array,
   maxPages?: number,
   onProgress?: PageProgress,
-): Promise<{ lines: RawLine[]; pageCount: number; spacingRepairs: number }> {
-  const pdf = await getDocument({ data: pdfBytes }).promise;
+): Promise<ExtractResult> {
+  // Asked BEFORE the document, and asked even for a script with no pictures in
+  // it, because `wasmUrl` is a load-time option: pdf.js hands it to the worker
+  // inside `docParams` and there is no later door. Null on a temp directory we
+  // could not write, which is not fatal — the document still converts, minus
+  // any JPEG2000 or JBIG2 picture in it — so it travels out on the stats
+  // instead, where the warning can say why the pictures are missing.
+  //
+  // Asked PER DOCUMENT, never held in a constant here, for two reasons. The
+  // folder can go away between documents (removePdfjsWasmDir, which
+  // tests/pdfjs-wasm.test.ts calls mid-run) and only pdfjsWasmDir() knows to
+  // make a fresh one. And every getDocument re-sets the worker's one
+  // process-wide copy of this string (`WasmImage.setOptions`), while a decoder
+  // that FAILED to load stays failed (its memoized module promise) until a
+  // document cleanup clears it, which this engine never runs. So one open
+  // without the folder, when the folder exists, would cost later documents
+  // their JPEG2000 pictures as well.
+  const wasmUrl = pdfjsWasmDir();
+  const pdf = await getDocument({ data: pdfBytes, wasmUrl: wasmUrl ?? undefined }).promise;
   const allLines: RawLine[] = [];
   // Counted, not silent. repairPhantomSpaces edits an author's words, so the
   // number rides out with the result and the app can say so. A count that
   // suddenly jumps on a script is how anyone would notice it misfiring.
   let spacingRepairs = 0;
+  const candidates: EncodedCandidate[] = [];
+  const sizes: { width: number; height: number }[] = [];
+  // ONE budget for the whole document, threaded through every page: the
+  // per-image timeout alone would let a lookbook of damaged XObjects stall for
+  // minutes. The same object also caches encoded pixels, so a logo on ninety
+  // sheets is deflated twice rather than ninety times — twice because pdf.js
+  // renames a picture when it promotes it on the second sheet it appears on.
+  // See ImageRun.encoded.
+  const run = newImageRun();
 
   const lastPage = maxPages ? Math.min(pdf.numPages, maxPages) : pdf.numPages;
   for (let pageNum = 1; pageNum <= lastPage; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.0 });
+    sizes.push({ width: viewport.width, height: viewport.height });
     const textContent = await page.getTextContent();
     const ops = await operatorList(page);
     stampFontStyles(page, textContent.items);
@@ -49,6 +107,24 @@ export async function extractDocument(
 
     const pageLines = groupItemsIntoLines(textContent.items, viewport.width, pageNum);
     allLines.push(...pageLines);
+    // The same operator list the text pass just read, so the only new work
+    // per page is the walk itself; the pixels are the expensive part and only
+    // images that are actually painted cost anything. A null list (a page
+    // pdf.js could not build one for) gives no pictures, just as the text pass
+    // above gets unresolved fonts and no underlines or repairs from it.
+    //
+    // INSIDE the loop, holding this page's own stores, and not deferred to a
+    // second pass over the document: pdf.js drops an incoming image once a
+    // page's operator-list intent is gone, so anything that frees a page
+    // (`page.cleanup()`) before its pixels are asked for buys silence rather
+    // than an error — see collectPageImages for what that costs, measured.
+    // Nothing here frees pages today; whoever adds it must add it BELOW this
+    // call. The text-line count goes with it because it is a fact about THIS
+    // page, and it is what tells a designed title card apart from a watermark
+    // printed behind a full page of script.
+    candidates.push(
+      ...(await collectPageImages(page, ops, { pageNum, textLines: pageLines.length }, run)),
+    );
     // After the work, not before: a tick means "page N is done", so the
     // fraction never claims progress the parser has not actually made.
     onProgress?.(pageNum, lastPage);
@@ -59,7 +135,18 @@ export async function extractDocument(
   // Courier script (registry #18).
   stampLineFmt(allLines);
 
-  return { lines: allLines, pageCount: pdf.numPages, spacingRepairs };
+  // Which pictures are art is a DOCUMENT fact too, for the same shape of
+  // reason: repetition is only visible once every sheet has been read. The
+  // page count handed over is the whole document's, not this run's, which is
+  // what `keepArtwork` asks for.
+  const { images, imageStats } = finishImages(candidates, sizes, pdf.numPages, run);
+  // Set here rather than inside finishImages, which counts what became of the
+  // pictures and knows nothing about how pdf.js was configured. Only when it
+  // actually failed: absent means the decoders were in place, so a caller
+  // cannot read this as "no JPEG2000 in this document".
+  if (!wasmUrl) imageStats.decodersUnavailable = true;
+
+  return { lines: allLines, pageCount: pdf.numPages, spacingRepairs, images, imageStats };
 }
 
 interface TextItem {

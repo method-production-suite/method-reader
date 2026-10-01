@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'bun:test';
+import { extractDocument } from '../src/parser/extract';
 import { parseLines } from '../src/parser/index';
 import type { RawLine } from '../src/parser/types';
 
@@ -268,5 +269,23 @@ describe('a speech split by a page boundary is one speech', () => {
     const speeches = elements.filter((e) => e.type === 'dialogue');
     expect(speeches.length).toBe(1);
     expect(speeches[0].text).toBe('First half.');
+  });
+});
+
+describe('extraction returns pictures beside the text', () => {
+  // The pipeline's INPUT, not parseLines: the one place in this file a real
+  // PDF is opened, because the claim is about what one page loop hands over.
+  // tests/images-fixture.test.ts pins the pictures in detail; this pins that
+  // the text-side fields kept their shape when the image fields joined them.
+  test('the images fixture keeps the art and refuses the furniture', async () => {
+    const bytes = new Uint8Array(await Bun.file('tests/fixtures/images.pdf').arrayBuffer());
+    const result = await extractDocument(bytes);
+    expect(result.pageCount).toBe(5);
+    expect(typeof result.spacingRepairs).toBe('number');
+    expect(result.images.map((i) => i.file)).toEqual(['p001-01.png', 'p002-01.png']);
+    expect(result.images.map((i) => i.pageNum)).toEqual([1, 2]);
+    expect(result.imageStats.droppedBy).toEqual({
+      pixels: 1, width: 1, height: 0, area: 0, furniture: 5, background: 1,
+    });
   });
 });
