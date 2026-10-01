@@ -76,7 +76,7 @@ beside the .fountain, and the .fountain names each one in an [[img: ...]]
 note. The EPUB shows each picture where its note sits, and so does a later
 conversion of that .fountain, which reads the folder and never writes it.
 The includeImages option takes them out of the book; the notes and the
-folder stay. The .mobi does not show them yet.
+folder stay. The .mobi shows the same pictures as the EPUB.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub)
@@ -1335,9 +1335,9 @@ async function main() {
         // CONVERSION carried out of the PDF, a fact about the conversion and
         // not about anything on disk: under --no-fountain it is reported with
         // no folder beside it at all. Nor is it how many the book shows,
-        // which depends on includeImages and on the format. A .fountain
-        // input reports neither: it writes no folder and carries nothing out
-        // of a PDF, even when its book shows the pictures it read.
+        // which depends on includeImages. A .fountain input reports neither:
+        // it writes no folder and carries nothing out of a PDF, even when its
+        // book shows the pictures it read.
         imagesPath,
         imageCount: result.images.length > 0 ? result.images.length : undefined,
         // The sidecar this conversion actually rendered with, so the window

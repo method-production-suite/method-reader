@@ -1607,7 +1607,23 @@ the Mac app should move those two; nothing in the engine needs to change.
   the blank page, the heading above a plate, and how a tall plate slices;
   and, for the `.mobi` sideloaded over USB, whether the pictures are there,
   whether the plate's page breaks hold, and whether an older Kindle refuses a
-  picture over the single-record cap.
+  picture over the single-record cap. That last has a book of its own:
+  `bun tools/mobi-picture-probe.ts --out <folder>` writes
+  `screepub-picture-probe.mobi` (and the same book as an EPUB, to compare),
+  built by the engine's own renderer and writer, the same bytes every run. It
+  carries three PNGs of about 2 KB, about 200 KB and about 1.4 MB (the last a
+  full-page plate the size of the largest real one), each after a line of
+  action naming its size, and measures which of them an older Kindle shows
+  from a `.mobi`. The 2 KB one tells "no PNG at all" from "no PNG this
+  large". The probe exists because both writers this one follows point
+  that way. Calibre's MOBI output never writes a PNG: it makes every picture
+  a JPEG by default (for older MOBI viewers, its option's help says), and
+  with its keep-originals option turns a PNG into a GIF, because "the idiotic
+  Kindle cannot display some PNG" (its source comment). Amazon's kindlegen
+  offered `-image64K` and `-image128K` caps. Checked 2026-10-01
+  against calibre's source (`ebooks/mobi/utils.py`, `mobi_output.py`) and the
+  MobileRead wiki's KindleGen page. If any of the three fails on the device,
+  the `.mobi` goes back to text only.
 - **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
   `src/epub/html.ts` (`place`, the figure, `usedImages`, `imageSrc`,
   `tokensToPreviewHtml`), `src/epub/css.ts` (the figure block,
