@@ -579,7 +579,7 @@ describe('images merged into the element stream', () => {
   });
 
   describe('a plate in a page seam, with page markers on', () => {
-    // Each of these was a serializer defect, and they are asserted HERE rather
+    // Each of these pins a serializer rule, and they are asserted HERE rather
     // than only in serialize.test.ts because their reachability is the whole
     // point: hand-built elements can be dismissed as a shape the parser never
     // makes, and these are shapes it makes from ordinary lines. Page 1 opens
@@ -634,10 +634,11 @@ describe('images merged into the element stream', () => {
 
     test('a plate ABOVE the cue does not switch the rejoin off', () => {
       // A plate at the top of a sheet with the continuation cue under it is
-      // ordinary layout, and it used to stand in the slot prepare's rejoin
-      // loop reads as "the previous element" — so the repeated cue survived
-      // and the reader got a duplicated (CONT'D) with one speech in two
-      // blocks. Same lines, same picture, 60pt higher.
+      // ordinary layout, and it sits in the slot that prepare's rejoin loop
+      // would read as "the previous element" if the loop did not look past
+      // images. Read that way, the repeated cue survives and the reader gets a
+      // duplicated (CONT'D) with one speech in two blocks. Same lines, same
+      // picture, 60pt higher.
       const sp = parseLines(contdSeam, [image(760, 2, 'p002-01.png')]);
       expect(sp.elements.map((e) => e.type)).toEqual([
         'scene', 'character', 'dialogue', 'image', 'character', 'dialogue', 'scene',
@@ -656,7 +657,7 @@ describe('images merged into the element stream', () => {
     //
     // Pinned rather than fixed HERE: a picture printed inside a two-column
     // simultaneous speech is not a document the corpus contains, and the cost
-    // of the misplacement is now bounded — serialize.ts's cue lookahead sees
+    // of the misplacement is bounded — serialize.ts's cue lookahead sees
     // past an image and its emitter holds the note until the speech closes, so
     // a misplaced picture stays a misplaced picture and does not take a speech
     // with it. If these go red because someone gave both streams a second
@@ -680,11 +681,11 @@ describe('images merged into the element stream', () => {
       // The assertion the element types cannot make, and the reason this is
       // asserted one layer down. `prepare` in serialize.ts demotes a
       // `character` whose next element is neither dialogue nor parenthetical,
-      // and the image is now that next element — so this used to cost BUNNY
-      // her `@`, leaving one dialogue block to render as three action
-      // paragraphs. The lookahead skips images and the note waits for the
-      // speech to close: both speeches survive intact, and the picture comes
-      // out one speech later than the sheet drew it.
+      // and the image is that next element — so a lookahead that stopped at
+      // it would cost BUNNY her `@`, leaving one dialogue block to render as
+      // three action paragraphs. The lookahead skips images and the note
+      // waits for the speech to close: both speeches survive intact, and the
+      // picture comes out one speech later than the sheet drew it.
       expect(toFountain(parseLines(dualExchange))).toBe(
         '@BUNNY\nLeft one.\n\n@CASSIUS ^\nRight one.\n',
       );

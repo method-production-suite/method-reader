@@ -689,7 +689,10 @@ Each gets its own plan, written against the code phase 1 leaves:
   EPUB figures as `<p class="figure wNN">` with width classes in 5%
   steps; packaging only the pictures the book uses; the preview's CSP
   gains `img-src 'self' data:`; `src/export/artifact.ts` reads the
-  folder through `library-images.ts`.
+  folder through `library-images.ts`. When `includeImages` lands,
+  `tests/serialize.test.ts`'s byte-stability test ("is byte-stable under a
+  settings flip") regains its `includeImages: false` flip beside the
+  `preserveFontShifts` one (the test's comment says where).
 - **Phase 3, Kindle:** MOBI image records (port `92d232e`), and a device
   check of AZW3 and KFX with a figure.
 - **Phase 4, Cover:** `promoteCoverImage` (default ON, owner), both cover

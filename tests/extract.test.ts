@@ -367,6 +367,10 @@ describe('dual dialogue marking', () => {
     expect(lines[3].text).toBe('maybe if you were faster');
     expect(lines[2].y).toBe(lines[0].y);
     expect(lines[3].y).toBe(lines[1].y);
+    // And those shared values are the rows' real y, since a pair of NaNs (or
+    // of any one wrong number) would agree with each other just as well.
+    expect(lines[0].y).toBe(700);
+    expect(lines[1].y).toBe(688);
   });
 });
 

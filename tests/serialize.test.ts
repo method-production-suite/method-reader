@@ -332,7 +332,7 @@ describe('toFountain with images', () => {
     // Unreachable through parseLines, which sets `img` on every image element
     // it mints — so this pins the fallback rather than a path. The wrong
     // answer is loud: the `default:` branch would print the bare filename as
-    // an action line, which is what this case used to do.
+    // an action line.
     const out = toFountain(
       screenplay([
         el({ text: 'INT. A - DAY', type: 'scene' }),
@@ -543,8 +543,9 @@ describe('toFountain with images', () => {
     // `case 'image'` can defer anything — and the defect the deferral exists
     // to prevent comes straight back, but only with showPageMarkers on.
     // A cue at the foot of page 1, the plate at the top of page 2, the speech
-    // under it. This used to emit "@BUNNY" as its own paragraph, which
-    // fountain-js re-parses as action with the "@" shown to the reader.
+    // under it. With the image anchoring a marker, this emits "@BUNNY" as its
+    // own paragraph, which fountain-js re-parses as action with the "@" shown
+    // to the reader.
     const els = () => [
       el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
       { ...img('p002-01.png'), pageNum: 2 },
@@ -625,12 +626,12 @@ describe('toFountain with images', () => {
   });
 
   test('markers on: a parenthetical at the top of a page keeps its speech too', () => {
-    // No image in this one. The guard's OTHER two clauses were uncovered for
-    // the same shape — a mutation sweep removing `!== 'parenthetical'`
-    // survived the whole suite — and the failure mode is the one this task
-    // just fixed for images: the marker branch closes the block, the
-    // continuation lands with no cue, and the speech breaks in half. Kept
-    // beside the image cases because it is one guard and one rule.
+    // No image in this one. It pins that a parenthetical is not a marker
+    // anchor (anchorsPageMarker leaves it out, as it does dialogue), and the
+    // failure it guards against is the image cases' own: the marker branch
+    // closes the block, the continuation lands with no cue, and the speech
+    // breaks in half. Kept beside the image cases because it is one guard and
+    // one rule.
     const out = toFountain(
       screenplay([
         el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
@@ -651,8 +652,9 @@ describe('toFountain with images', () => {
     // The second reachable shape, same root cause. rejoinSplitDialogue drops
     // a (CONT'D) cue whose speech continues on the next page, leaving
     // character | dialogue | image | dialogue — so the block is open when the
-    // plate arrives and the continuation lands with no cue above it. It used
-    // to come out as a loose action paragraph.
+    // plate arrives. A page marker anchored on the plate would close that
+    // block and leave the continuation with no cue above it: a loose action
+    // paragraph.
     const out = toFountain(
       screenplay([
         el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),

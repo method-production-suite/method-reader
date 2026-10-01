@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { fmtClasses, fmtSizeStep, parseImgNote, stripNotes } from '../src/fountain/notes';
+import { fmtClasses, fmtSizeStep, isSafeImageFile, parseImgNote, stripNotes } from '../src/fountain/notes';
 
 describe('stripNotes', () => {
   test('a leading note and the newline it sat on both go', () => {
@@ -172,6 +172,16 @@ describe('parseImgNote', () => {
     expect(parseImgNote('img: /tmp/x.png')).toBeUndefined();
   });
 
+  test('a name that only STARTS like a picture is refused: the allowlist is anchored at the end', () => {
+    // The `.png` has to be where the name stops. Every case above fails on a
+    // character before the extension; these are clean up to `a.png` and carry
+    // the payload after it, so only the closing anchor refuses them.
+    expect(parseImgNote('img: a.png/../../x')).toBeUndefined();
+    expect(parseImgNote('img: a.png.exe')).toBeUndefined();
+    expect(parseImgNote('img: a.png\\..\\x')).toBeUndefined();
+    expect(parseImgNote('img: a.png%2f..%2fx')).toBeUndefined();
+  });
+
   test('refuses anything that is not a .png', () => {
     expect(parseImgNote('img: script.fountain')).toBeUndefined();
     expect(parseImgNote('img: payload.svg')).toBeUndefined();
@@ -220,5 +230,21 @@ describe('parseImgNote', () => {
     for (const f of ['p001-01.png', 'p999-99.png', 'p1000-01.png']) {
       expect(parseImgNote(`img: ${f} w=71`)?.file, f).toBe(f);
     }
+  });
+});
+
+describe('isSafeImageFile', () => {
+  // The allowlist as the picture folder's reader meets it: names off a
+  // directory listing, which arrive as bytes and can hold what a note's
+  // `\S+` never could (a newline, a NUL, a trailing space). The whole name
+  // must match, from its first character to its last, on ONE line.
+  test('refuses a name with anything around it, a line break included', () => {
+    for (const name of ['x.png\n', '\nx.png', 'x.png\0', 'x.png ', 'a.png\n../../b']) {
+      expect(`${JSON.stringify(name)}: ${isSafeImageFile(name)}`).toBe(`${JSON.stringify(name)}: false`);
+    }
+  });
+
+  test('accepts the names this engine writes', () => {
+    expect(isSafeImageFile('p001-01.png')).toBe(true);
   });
 });

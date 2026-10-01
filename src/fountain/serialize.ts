@@ -107,12 +107,12 @@ function isBody(el: ScreenplayElement): boolean {
 /**
  * True when a page marker may be anchored to this element.
  *
- * A POSITIVE list, and that is the point. This lived inline as three negative
- * clauses, and the exclusion form is exactly what let `image` through it: a
- * type added to ElementType joined the anchoring set by default, silently
- * acquiring the power to close an open speech (the marker branch calls
- * closeBlock itself). Here a new type anchors nothing until someone says it
- * does, and the switch is exhaustive with no `default`, so adding one to
+ * A POSITIVE list, and that is the point. An exclusion list (anchor anything
+ * that is not dialogue, a parenthetical or a page number) admits every type
+ * added to ElementType by default, and with it the power to close an open
+ * speech, since the marker branch calls closeBlock itself; `image` is exactly
+ * such a type. Here a new type anchors nothing until someone says it does,
+ * and the switch is exhaustive with no `default`, so adding one to
  * ElementType stops the typecheck until that decision is made.
  *
  * The rule it encodes: a marker is a navigation anchor onto a line of text a
