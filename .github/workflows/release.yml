@@ -12,7 +12,7 @@ name: release
 on:
   push:
     tags: ['v*']
-  # Re-run entry point: a transient notarization or Rosetta failure used
+  # Re-run entry point: a transient notarization failure used
   # to mean deleting and re-pushing the tag. Dispatch runs against the
   # chosen ref; the version comes from the tag that ref carries.
   workflow_dispatch:
@@ -73,8 +73,8 @@ jobs:
             exit 1
           fi
 
-          # package.json must agree with the tag. app/release.sh checks this
-          # too, but only after certs are on disk, minutes in.
+          # package.json must agree with the tag. tools/build-cli.ts checks
+          # this too, but only after certs are on disk, minutes in.
           PKG="$(git cat-file blob "$GITHUB_SHA:package.json" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")"
           [ "$PKG" = "$VERSION" ] || {
             echo "::error file=package.json::package.json says $PKG but the tag says $VERSION"; exit 1; }
@@ -147,7 +147,7 @@ jobs:
         working-directory: app
   release:
     needs: checks
-    runs-on: macos-15   # Apple Silicon; Swift 6 toolchain
+    runs-on: macos-15   # codesign and notarytool need a Mac
     permissions:
       contents: write   # create the GitHub Release + upload assets
     steps:
@@ -156,9 +156,6 @@ jobs:
         with:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
-
-      - name: Ensure Rosetta (x86_64 Swift slice builds under it)
-        run: sudo softwareupdate --install-rosetta --agree-to-license
 
       - name: Import Developer ID certificate
         env:
@@ -214,14 +211,23 @@ jobs:
           echo "$AC_KEY_B64" | base64 --decode > "$RUNNER_TEMP/ac_api_key.p8"
           echo "AC_API_KEY_PATH=$RUNNER_TEMP/ac_api_key.p8" >> "$GITHUB_ENV"
 
-      - name: Build, sign, notarize, package
+      - name: Build, sign and notarize the macOS command-line tool
         env:
           VERSION: ${{ github.ref_name }}   # 'v0.2.0'; stripped below
           AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
-          export VERSION="${VERSION#v}"
-          app/release.sh
+          set -euo pipefail
+          # The formula's two tarballs. This used to be the Swift app's
+          # release script; since the CLI move it is tools/build-cli.ts,
+          # which compiles each arch, signs it (hardened runtime, the CLI's
+          # entitlements), checks what the signature says, notarizes it,
+          # and only THEN packages it, so each tarball holds the signed
+          # bytes. It refuses a tag package.json does not name, and a
+          # missing notary key before compiling anything.
+          # AC_API_KEY_PATH comes from the step above, via GITHUB_ENV.
+          bun tools/build-cli.ts --version "${VERSION#v}" --out "$RUNNER_TEMP/cli-mac" \
+            --mac --sign "$SIGN_IDENTITY" --notarize
 
       - name: Publish GitHub Release
         env:
@@ -269,9 +275,9 @@ jobs:
             printf '%s\n\n' "**Mac:** download \`Screepub-macOS.dmg\` (notarized, universal, macOS 13 or later), open it, drag Screepub to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
             printf '%s\n' "Command-line tool for macOS, SHA-256:"
             printf '\n```\n'
-            shasum -a 256 \
-              app/dist/screepub-cli-macos-arm64.tar.gz \
-              app/dist/screepub-cli-macos-x64.tar.gz | sed 's|app/dist/||'
+            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 \
+                screepub-cli-macos-arm64.tar.gz \
+                screepub-cli-macos-x64.tar.gz )
             printf '```\n'
           } >> "$NOTES"
 
@@ -291,14 +297,12 @@ jobs:
             gh release edit "$TAG" --title "Screepub $VERSION" --notes-file "$NOTES"
           fi
 
-          # NOT app/dist/Screepub-macOS.dmg: that is the Swift app, still
-          # built by app/release.sh (which also builds these two tarballs)
-          # until the CLI move, and never published again. The window's
-          # image of the same name comes from app-upload, and the frozen
-          # Swift updater must find exactly one .dmg.
+          # The two tarballs, and never an image: the window's
+          # Screepub-macOS.dmg comes from app-upload, and the frozen Swift
+          # updater must find exactly one .dmg.
           gh release upload "$TAG" \
-            app/dist/screepub-cli-macos-arm64.tar.gz \
-            app/dist/screepub-cli-macos-x64.tar.gz \
+            "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" \
+            "$RUNNER_TEMP/cli-mac/screepub-cli-macos-x64.tar.gz" \
             --clobber
 
       # The fallback for when the `tap` job below cannot run (no TAP_TOKEN)
@@ -315,8 +319,8 @@ jobs:
           # Plain command substitution and no arrays: this job runs on
           # macos-15, whose bash is 3.2, and a bash-3.2 array trap has
           # already killed one release here after notarization.
-          ARM="$(shasum -a 256 app/dist/screepub-cli-macos-arm64.tar.gz | cut -d' ' -f1)"
-          X64="$(shasum -a 256 app/dist/screepub-cli-macos-x64.tar.gz | cut -d' ' -f1)"
+          ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
+          X64="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-x64.tar.gz" | cut -d' ' -f1)"
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
             printf '`Formula/screepub.rb` (the tag is literal in BOTH urls)\n\n```ruby\n'
@@ -456,9 +460,10 @@ jobs:
 
   # Bun cross-compiles every target from one machine, so the Linux and
   # Windows artifacts cost one free Ubuntu runner rather than a per-OS build
-  # matrix. The macOS artifacts are NOT built here: app/release.sh signs and
-  # notarizes them on the macOS runner above, notarization needs Apple's
-  # toolchain, and tools/bump-tap.sh hardcodes their filenames.
+  # matrix. The macOS artifacts are NOT built here: the release job above
+  # builds, signs and notarizes them with `build-cli.ts --mac` on its macOS
+  # runner (notarization needs Apple's toolchain), and tools/bump-tap.sh
+  # hardcodes their filenames.
   #
   # The matrix and every verification live in tools/build-cli.ts, which is
   # unit-tested and hand-runnable. This job is a thin caller on purpose:
@@ -691,9 +696,7 @@ jobs:
       # Signing and notarization are tauri-bundler's own, read from the
       # secrets docs/release-secrets.md already documents under different
       # names. macos/sign.rs builds its own keychain and imports the
-      # certificate itself, so this job runs no `security` command;
-      # app/release.sh is neither read nor modified, and the DMG users
-      # already download keeps being produced by that path, untouched.
+      # certificate itself, so this job runs no `security` command.
       - name: Write the App Store Connect API key
         if: runner.os == 'macOS'
         env:

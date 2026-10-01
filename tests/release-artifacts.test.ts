@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'bun:test';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { TARGETS } from '../tools/build-cli';
+import { TARGETS, MAC_TARGETS } from '../tools/build-cli';
 import {
   BUNDLE_KINDS,
   kindsForOs,
@@ -23,12 +23,12 @@ const MACOS_CLI_ASSETS = [
  *  name did not change, on purpose. */
 const MACOS_ASSETS = ['Screepub-macOS.dmg', ...MACOS_CLI_ASSETS];
 
-describe('the macOS release path is untouched by the cross-platform builder', () => {
+describe('the macOS CLI is built apart from the cross set', () => {
   test('the cross builder emits no macOS artifact, by name or by target', () => {
-    // app/release.sh signs and NOTARIZES the macOS binaries, which needs
-    // Apple's toolchain on a Mac. A cross-compiled Mach-O could not be
-    // notarized, so an added darwin row here would quietly replace a
-    // Gatekeeper-clean download with a warning screen.
+    // The macOS binaries are signed and NOTARIZED on a Mac by the release
+    // job (`build-cli.ts --mac`). A cross-compiled, unsigned Mach-O from the
+    // Ubuntu job would quietly replace a Gatekeeper-clean download with a
+    // warning screen, so the cross table carries no darwin row.
     for (const t of TARGETS) {
       expect(t.bunTarget).not.toContain('darwin');
       expect(t.format.startsWith('macho')).toBe(false);
@@ -40,11 +40,10 @@ describe('the macOS release path is untouched by the cross-platform builder', ()
     }
   });
 
-  test('app/release.sh still produces the two tarballs and the DMG', () => {
-    const sh = read('app/release.sh');
-    expect(sh).toContain('screepub-cli-macos-$ARCH.tar.gz');
-    expect(sh).toContain('Screepub-macOS.dmg');
-    expect(sh).toContain('notarytool submit');
+  test('the Mac table builds exactly the formula\'s two tarballs', () => {
+    // Since the CLI move these come from build-cli.ts's MAC_TARGETS, not
+    // the Swift app's release script; the names are the ones the tap reads.
+    expect(MAC_TARGETS.map((t) => t.archiveName).sort()).toEqual([...MACOS_CLI_ASSETS].sort());
   });
 
   test('tools/bump-tap.sh bumps the formula\'s two tarballs and only deprecates the cask', () => {
@@ -102,8 +101,9 @@ const uploadedBy = (job: Job): string[] => {
   const code = runText(job).split('\n').filter((l) => !/^\s*#/.test(l)).join('\n').replace(/\\\n/g, ' ');
   const files: string[] = [];
   for (const m of code.matchAll(/gh release upload\s+([^\n]+)/g)) {
-    for (const tok of m[1]!.split(/\s+/)) {
-      if (!tok || tok.startsWith('-') || tok.startsWith('"$')) continue;
+    for (const raw of m[1]!.split(/\s+/)) {
+      const tok = raw.replace(/^"(.*)"$/, '$1');
+      if (!tok || tok.startsWith('-') || tok === '$TAG') continue;
       files.push(tok.replace(/^.*\//, ''));
     }
   }
@@ -218,7 +218,8 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // comment is not an upload. (The first version of this check grepped the
     // whole step and passed on a comment that NAMES the Swift image.)
     const text = runText(rel.jobs['release']!);
-    expect(text).toContain('app/release.sh');
+    expect(text).toContain('bun tools/build-cli.ts --version');
+    expect(text).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
     expect(uploadedBy(rel.jobs['release']!).sort()).toEqual([...MACOS_CLI_ASSETS].sort());
     // The frozen Swift updater takes the first .dmg on a release; the
     // window's image (from app-upload) must be the only one.
@@ -247,7 +248,7 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // is structural rather than a matter of step order.
     expect(needs('release')).toEqual(['checks']);
     const release = runText(rel.jobs['release']!);
-    expect(release).toContain('app/release.sh');
+    expect(release).toContain('--sign "$SIGN_IDENTITY" --notarize');
     // And the version check is NOT duplicated into the signing job.
     expect(release).not.toContain('desktop/src-tauri/tauri.conf.json');
   });
@@ -626,10 +627,16 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(text).not.toMatch(/SHA256SUMS(?!-app)/);
   });
 
-  test('the Swift release path builds the CLI and publishes none of the Swift app', () => {
+  test('the release job builds the macOS CLI itself, signed and notarized, and no Swift app', () => {
+    // Since the CLI move the Swift release script is not run at all: the
+    // tarballs come from build-cli.ts --mac, which signs before packaging
+    // and refuses to start without the notary key.
     const release = runText(rel.jobs['release']!);
-    expect(release).toContain('app/release.sh');
-    for (const name of MACOS_CLI_ASSETS) expect(release).toContain(`app/dist/${name}`);
+    expect(release).not.toContain('app/release.sh');
+    expect(release).not.toContain('app/dist/');
+    expect(release).not.toMatch(/rosetta/i);
+    expect(release).toMatch(/bun tools\/build-cli\.ts --version "\$\{VERSION#v\}" --out "\$RUNNER_TEMP\/cli-mac"/);
+    expect(release).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
     expect(uploadedBy(rel.jobs['release']!)).not.toContain('Screepub-macOS.dmg');
     // The new jobs must not touch the Swift build, the CLI or the tap.
     for (const jobName of ['app-bundles', 'app-upload']) {
