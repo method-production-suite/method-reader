@@ -397,7 +397,11 @@ describe('cli --progress', () => {
     const result = JSON.parse(stdout);
     expect(result.ok).toBe(true);
 
-    const ticks = stderr.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).progress);
+    // Every stderr line is a progress event. The one 'page' event carries the
+    // first real page's text (tests/first-page.test.ts); the rest are ticks.
+    const events = stderr.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).progress);
+    expect(events.filter((e) => e.stage === 'page').length).toBe(1);
+    const ticks = events.filter((e) => e.stage !== 'page');
     expect(ticks.length).toBeGreaterThan(0);
     for (const t of ticks) {
       expect(['parse', 'render']).toContain(t.stage);

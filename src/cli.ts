@@ -1220,8 +1220,15 @@ async function main() {
         process.stderr.write(`${JSON.stringify({ progress: { stage, percent } })}\n`);
       }
     : undefined;
+  // The first real page, once, so the window can type it out while the rest
+  // converts (spec decision 17). Same stream and writer as the ticks above.
+  const onFirstPage = values.progress
+    ? (page: number, paragraphs: string[]) => {
+        process.stderr.write(`${JSON.stringify({ progress: { stage: 'page', page, paragraphs } })}\n`);
+      }
+    : undefined;
 
-  const opts = { title: values.title, author: values.author, force: values.force, mobi: values.mobi, format: formatForConvert, onProgress };
+  const opts = { title: values.title, author: values.author, force: values.force, mobi: values.mobi, format: formatForConvert, onProgress, onFirstPage };
 
   let result: ConvertResult;
   try {
