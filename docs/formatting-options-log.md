@@ -1521,6 +1521,17 @@ the Mac app should move those two; nothing in the engine needs to change.
   16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
   answer from 26 KB to 22.09 MB, so the preview is built on every render
   rather than only on request.
+- **Measured on the corpus, 2026-10-01 (phase 1 tip against phase 2's):**
+  the `.fountain` is byte-identical for all six scripts that convert. The
+  four with no kept picture make an identical EPUB, entry for entry. The two
+  with pictures differ only by the images folder, one STORED PNG per picture
+  shown, the manifest items, the figure lines and the figure CSS block; the
+  one whose plate precedes its first heading also gains the Opening, which
+  renumbers its scene anchors by one and retitles its first body file.
+  With `includeImages` off every script's EPUB equals the phase 1 book.
+  Both picture books pass epubcheck clean, conversion time is unchanged,
+  and the 60-picture deck's Tune re-render answers 22 MB in 0.19 s on the
+  engine side.
 - **Not yet:** the MOBI carries no picture (phase 3); AZW3 and KFX get
   them through Calibre from the EPUB. Unverified on device, and the subject
   of the torture.pdf pictures section of `tools/device-checklist.ts`: KFX and
