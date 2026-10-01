@@ -14,6 +14,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import JSZip from 'jszip';
 import { mapConversionError, unwritableError } from '../src/cli-errors';
 import { encodePng } from '../src/parser/png';
 
@@ -522,6 +523,107 @@ describe('the picture folder beside the .fountain', () => {
       expect(name.startsWith('.')).toBe(false);
       expect(statSync(join(dir, 'out.images', name)).size).toBeGreaterThan(100);
     }
+  }, 60000);
+});
+
+// The other direction: a `.fountain` handed back to the CLI (the window's
+// re-render does exactly this) finds its pictures in the same folder a PDF
+// conversion wrote. What the reader accepts is library-images.test.ts's
+// subject; these are about the wiring, and about the folder being READ here
+// and never written.
+describe('a .fountain input reads its picture folder', () => {
+  let seq = 0;
+  /** A script whose notes name two pictures, and the folder beside it. */
+  const script = () => {
+    const dir = join(SCRATCH, `fountain-images-${seq++}`);
+    mkdirSync(dir);
+    writeFileSync(
+      join(dir, 'x.fountain'),
+      'Title: T\n\nINT. LAB - DAY\n\nBefore.\n\n[[img: p001-01.png w=40]]\n\n'
+        + 'Between.\n\n[[img: p002-01.png w=60]]\n\nAfter.\n',
+    );
+    mkdirSync(join(dir, 'x.images'));
+    return dir;
+  };
+  const png = (tag = 0) => encodePng(new Uint8Array([tag, 0, 0]), 1, 1);
+  const convert = async (dir: string, ...extra: string[]) => {
+    const { stdout, exitCode } = await runCli([
+      join(dir, 'x.fountain'), '-o', join(dir, 'x.epub'), '--json', ...extra,
+    ]);
+    expect(exitCode).toBe(0);
+    const res = JSON.parse(stdout);
+    const zip = await JSZip.loadAsync(readFileSync(join(dir, 'x.epub')));
+    const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
+    const images = Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir).sort();
+    return { res, body, images };
+  };
+  const figure = (name: string, w: number) =>
+    `<p class="figure w${w}"><img src="../images/${name}" alt="Illustration"/></p>`;
+
+  test('the notes render the pictures beside them, and the book carries them', async () => {
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res, body, images } = await convert(dir);
+    expect(res.warnings).toEqual([]);
+    expect(body).toContain(figure('p001-01.png', 40));
+    expect(body).toContain(figure('p002-01.png', 60));
+    expect(images).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    // Nothing was written, so the answer names no folder and counts nothing:
+    // both fields are about what a PDF conversion carried out.
+    expect(res.imagesPath).toBeUndefined();
+    expect(res.imageCount).toBeUndefined();
+  }, 60000);
+
+  test('a picture the folder will not give up is a warning, and no figure', async () => {
+    // One file that is not a PNG under a PNG's name, and one symlink to a
+    // perfectly good picture: the reader refuses both, and each is a plate
+    // missing from the book that someone has to be told about.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    writeFileSync(join(dir, 'elsewhere.png'), png(2));
+    symlinkSync(join(dir, 'elsewhere.png'), join(dir, 'x.images', 'p002-01.png'));
+    const { res, body, images } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "2 pictures could not be read out of this script's picture folder, so they were left out.",
+    ]);
+    expect(body).not.toContain('class="figure');
+    expect(images).toEqual([]);
+  }, 60000);
+
+  test('with includeImages off, the folder is not read at all', async () => {
+    // A folder that warns whenever it is read, so silence is proof it was
+    // not: off means no figure, and no sentence about pictures the reader
+    // chose not to see.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res, body, images } = await convert(dir, '--options-json', '{"includeImages":false}');
+    expect(res.warnings).toEqual([]);
+    expect(body).not.toContain('class="figure');
+    expect(images).toEqual([]);
+    // The control: the same folder, read, does warn.
+    const on = await convert(dir);
+    expect(on.res.warnings).toEqual([
+      "1 picture could not be read out of this script's picture folder, so it was left out.",
+    ]);
+  }, 60000);
+
+  test('the folder is never written or pruned, and none is made', async () => {
+    // A PDF conversion owns the folder; a render from the text only reads
+    // it. A stale picture of our own naming and a crashed run's temp would
+    // both go under a PDF conversion's prune, and both stay here.
+    const dir = script();
+    const kept = ['.p003-01.png.999.tmp', 'p001-01.png', 'p002-01.png', 'p009-09.png'];
+    for (const name of kept) writeFileSync(join(dir, 'x.images', name), png());
+    await convert(dir);
+    expect(readdirSync(join(dir, 'x.images')).sort()).toEqual(kept);
+    const bare = script();
+    rmSync(join(bare, 'x.images'), { recursive: true });
+    const { res, body } = await convert(bare);
+    expect(res.warnings).toEqual([]);
+    expect(body).not.toContain('class="figure');
+    expect(existsSync(join(bare, 'x.images'))).toBe(false);
   }, 60000);
 });
 

@@ -3,6 +3,9 @@ import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
 import { Fountain } from 'fountain-js';
 import { tokensToBody } from '../src/epub/html';
+import { buildEpub } from '../src/epub/build';
+import { screenplayCss } from '../src/epub/css';
+import { resolveFormatOptions } from '../src/options';
 import {
   convertPdf,
   convertFountain,
@@ -173,6 +176,23 @@ describe('convertFountain previewHtml', () => {
 // the test for "the bytes are here at all" is this one.
 const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
+/** The contents' entries, as [match, anchor, title]. */
+async function tocOf(zip: JSZip) {
+  const nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
+  const toc = nav.slice(nav.indexOf('epub:type="toc"'), nav.indexOf('</nav>'));
+  return [...toc.matchAll(/<a href="[^"#]*#(sc-\d+)">([^<]*)<\/a>/g)];
+}
+
+/** Every body file, in reading order, as one string. */
+async function bodyOf(zip: JSZip) {
+  const names = Object.keys(zip.files).filter((n) => /^OEBPS\/text\/body\d+\.xhtml$/.test(n)).sort();
+  return (await Promise.all(names.map((n) => zip.file(n)!.async('string')))).join('');
+}
+
+// Files only: JSZip lists a folder entry for each directory a path implies.
+const imageEntries = (zip: JSZip) =>
+  Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir).sort();
+
 describe('convertPdf carries the pictures', () => {
   test('both kept pictures come back as named PNG bytes', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
@@ -200,46 +220,79 @@ describe('convertPdf carries the pictures', () => {
     expect(result.warnings).toEqual([]);
   }, 60000);
 
-  test('the book lists exactly the script’s headings, with no Opening the notes made', async () => {
+  test('the title card opens an Opening that holds its figure, and the scenes follow it', async () => {
     // images.pdf's title card is a note ABOVE the first heading in the
-    // .fountain. convertPdf does not yet hand its pictures to the renderer,
-    // so the note renders nothing, and if it opened a section the book would
-    // gain an empty one, an "Opening" in its contents, and every scene anchor
-    // one along. When convertPdf passes its pictures, this book gains the
-    // Opening the next test shows, and this test changes with it.
+    // .fountain. The conversion hands the renderer the pictures it carried,
+    // so that note is a figure: content, which opens a section of its own
+    // ("Opening") the way any line above the first heading does, and every
+    // heading's anchor sits one along from the script's own count.
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
     expect(result.fountainText.indexOf('[[img: p001-01.png')).toBeLessThan(
       result.fountainText.indexOf('INT. ARCHIVE ROOM - DAY'),
     );
     const zip = await JSZip.loadAsync(result.epub);
-    const nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
-    const toc = nav.slice(nav.indexOf('epub:type="toc"'), nav.indexOf('</nav>'));
-    const entries = [...toc.matchAll(/<a href="[^"#]*#(sc-\d+)">([^<]*)<\/a>/g)];
-    expect(entries.map((m) => m[2])).toEqual(result.screenplay!.scenes.map((s) => s.heading));
-    expect(entries[0][1]).toBe('sc-001');
-    const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
-    expect(body).not.toMatch(/<section class="scene" id="[^"]*">\s*<\/section>/);
-    expect(body.match(/<section class="scene"/g)).toHaveLength(result.screenplay!.scenes.length);
-  }, 60000);
-
-  test('rendered with its own pictures, the title card opens an Opening and the scenes follow it', async () => {
-    // The same .fountain and the same pictures convertPdf returns, through
-    // the renderer with the set a caller that ships them would pass. The
-    // title card is content now, so it earns the Opening the previous test
-    // forbids an empty note, and every heading moves one along on purpose.
-    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
-    const body = tokensToBody(tokens, { images: new Set(result.images.map((i) => i.name)) });
-    expect(body.toc.map((e) => e.title)).toEqual([
+    const entries = await tocOf(zip);
+    expect(entries.map((m) => m[2])).toEqual([
       'Opening', ...result.screenplay!.scenes.map((s) => s.heading),
     ]);
-    expect(body.toc[1].href.endsWith('#sc-002')).toBe(true);
-    const xhtml = body.files.map((f) => f.xhtml).join('');
-    expect(xhtml).toMatch(
+    expect(entries[1][1]).toBe('sc-002');
+    const body = await bodyOf(zip);
+    expect(body).toMatch(
       /<section class="scene" id="sc-001">\s*<p class="figure w100 figure-full"><img src="\.\.\/images\/p001-01\.png" alt="Illustration"\/><\/p>\s*<\/section>/,
     );
-    expect(xhtml).toContain('<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>');
-    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+    expect(body).toContain('<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>');
+    // And the book carries what its pages point at: the bytes the conversion
+    // carried, under the names the notes use, and nothing else.
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    for (const img of result.images) {
+      expect([...await zip.file(`OEBPS/images/${img.name}`)!.async('uint8array')]).toEqual([...img.bytes]);
+    }
+  }, 60000);
+
+  test('with includeImages off, the book is the one a script without pictures gets', async () => {
+    // The notes render nothing, so the title card's opens nothing either: an
+    // empty section would be an "Opening" in the contents, a blank page under
+    // scenePageBreaks, and every scene anchor one along. Compared with the
+    // renderer's own answer for the same text with no pictures in hand, so
+    // "nothing" is checked rather than described.
+    const format = resolveFormatOptions({ includeImages: false });
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format: { includeImages: false } });
+    // Still carried: the option is about the book, and the folder is written
+    // either way, so turning it back on needs no re-conversion.
+    expect(result.images.map((i) => i.name)).toEqual(['p001-01.png', 'p002-01.png']);
+    const zip = await JSZip.loadAsync(result.epub);
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    expect(await bodyOf(zip)).toBe(tokensToBody(tokens, { format }).files.map((f) => f.xhtml).join(''));
+    const entries = await tocOf(zip);
+    expect(entries.map((m) => m[2])).toEqual(result.screenplay!.scenes.map((s) => s.heading));
+    expect(entries[0][1]).toBe('sc-001');
+    expect(imageEntries(zip)).toEqual([]);
+    expect(await zip.file('OEBPS/package.opf')!.async('string')).not.toContain('image/png');
+    expect(await zip.file('OEBPS/style.css')!.async('string')).toBe(screenplayCss(format));
+  }, 60000);
+
+  test('a script without pictures gets the book it got before pictures could reach one', async () => {
+    // Every entry, in order and byte for byte, against the render that hands
+    // the renderer no pictures at all, which is the whole of what this
+    // pipeline did before it carried them. The one line two runs of the same
+    // conversion disagree on is the dcterms:modified stamp, so it is the one
+    // line set aside.
+    const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`));
+    const format = resolveFormatOptions();
+    const got = await JSZip.loadAsync(result.epub);
+    const opf = await got.file('OEBPS/package.opf')!.async('string');
+    const identifier = opf.match(/<dc:identifier[^>]*>([^<]+)</)![1];
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const want = await JSZip.loadAsync(
+      await buildEpub({ identifier, ...result.meta }, tokensToBody(tokens, { format }), format),
+    );
+    const strip = (s: string) => s.replace(/<meta property="dcterms:modified">[^<]*<\/meta>/, '');
+    expect(Object.keys(got.files)).toEqual(Object.keys(want.files));
+    for (const name of Object.keys(want.files)) {
+      if (want.files[name].dir) continue;
+      expect(strip(await got.file(name)!.async('string')), name)
+        .toBe(strip(await want.file(name)!.async('string')));
+    }
   }, 60000);
 
   test('a healthy picture document warns about nothing', async () => {
@@ -287,9 +340,65 @@ describe('convertPdf carries the pictures', () => {
 
   test('Fountain input carries nothing out', async () => {
     // Its pictures already sit in the folder beside it; there is no PDF to
-    // carry them out of, so there is nothing for a caller to write.
-    const result = await convertFountain('Title: T\n\nINT. A - DAY\n\n[[img: p001-01.png w=71]]\n');
-    expect(result.images).toEqual([]);
+    // carry them out of, so there is nothing for a caller to write. That
+    // holds when it is handed the folder's pictures to render, too: those
+    // came from the folder, and writing them back would be a copy onto
+    // themselves.
+    const src = 'Title: T\n\nINT. A - DAY\n\n[[img: p001-01.png w=71]]\n';
+    expect((await convertFountain(src)).images).toEqual([]);
+    const plate = png.encodePng(new Uint8Array([0, 0, 0]), 1, 1);
+    expect((await convertFountain(src, { images: new Map([['p001-01.png', plate]]) })).images).toEqual([]);
+  });
+});
+
+// The re-render's half: a `.fountain` and the pictures read from the folder
+// beside it (src/library-images.ts does the reading; convert.ts never touches
+// a disk). What reaches the book is decided by the map it is handed, filtered
+// again here because any caller may hand one over.
+describe('convertFountain renders the pictures it is handed', () => {
+  const SRC = 'Title: T\n\nINT. LAB - DAY\n\nBefore.\n\n[[img: p001-01.png w=40]]\n\nAfter.\n';
+  const FIGURE = '<p class="figure w40"><img src="../images/p001-01.png" alt="Illustration"/></p>';
+  const plate = () => png.encodePng(new Uint8Array([200, 10, 10]), 1, 1);
+
+  test('a note whose picture is in the map is a figure, and the book carries the picture', async () => {
+    const bytes = plate();
+    const zip = await JSZip.loadAsync(
+      (await convertFountain(SRC, { images: new Map([['p001-01.png', bytes]]) })).epub,
+    );
+    expect(await bodyOf(zip)).toContain(FIGURE);
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png']);
+    expect([...await zip.file('OEBPS/images/p001-01.png')!.async('uint8array')]).toEqual([...bytes]);
+  });
+
+  test('a picture the map holds and no note names stays out of the book', async () => {
+    const zip = await JSZip.loadAsync((await convertFountain(SRC, {
+      images: new Map([['p001-01.png', plate()], ['p009-01.png', plate()]]),
+    })).epub);
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png']);
+  });
+
+  test('bytes that are not a PNG are no picture, whatever the name says', async () => {
+    // A JPEG renamed `.png` would be declared image/png in the manifest and
+    // fail epubcheck (OPF-029, PKG-022). The folder's reader already refuses
+    // one, and counts it; this is the same refusal for a map from anywhere
+    // else, so the note renders nothing rather than a book that fails.
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+    const zip = await JSZip.loadAsync(
+      (await convertFountain(SRC, { images: new Map([['p001-01.png', jpeg]]) })).epub,
+    );
+    expect(await bodyOf(zip)).not.toContain('class="figure');
+    expect(imageEntries(zip)).toEqual([]);
+  });
+
+  test('with includeImages off, the map changes nothing', async () => {
+    const off = { includeImages: false };
+    const without = await JSZip.loadAsync((await convertFountain(SRC, { format: off })).epub);
+    const withMap = await JSZip.loadAsync((await convertFountain(SRC, {
+      format: off, images: new Map([['p001-01.png', plate()]]),
+    })).epub);
+    expect(await bodyOf(withMap)).toBe(await bodyOf(without));
+    expect(await bodyOf(withMap)).not.toContain('class="figure');
+    expect(imageEntries(withMap)).toEqual([]);
   });
 });
 

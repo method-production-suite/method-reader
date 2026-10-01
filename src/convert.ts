@@ -11,6 +11,8 @@ import { buildEpub, type BookImage, type BookMeta } from './epub/build';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { tokensToMobiHtml } from './mobi/html';
 import { buildMobi } from './mobi/writer';
+import { isSafeImageFile } from './fountain/notes';
+import { isPng } from './parser/png';
 
 /** Below this many text lines per page, the PDF has no usable text layer. */
 const MIN_LINES_PER_PAGE = 3;
@@ -85,9 +87,10 @@ export interface ConvertResult {
   spacingRepairs: number;
   /** The pictures a PDF conversion carried, for the caller to write into the
    * folder beside the `.fountain`, whose `[[img: ...]]` notes name them. The
-   * renderers do not receive pictures, so the book shows none and the folder
-   * is their only copy. Always empty on Fountain input, which has no PDF to
-   * carry them out of. */
+   * EPUB shows the ones its notes place when `includeImages` is on, but the
+   * folder is the copy every later render reads, so these are carried with
+   * the option off too. Always empty on Fountain input, which has no PDF to
+   * carry them out of: the pictures it renders came from its folder. */
   images: BookImage[];
 }
 
@@ -136,8 +139,9 @@ export interface ConvertResult {
  *
  * "Kept", not "in the book": this counts what the conversion carried out of
  * the PDF, which is what the picture folder holds. A book shows only what its
- * own renderer packages, and today that is none of them. A warning is
- * user-facing copy, so it claims the thing that is true in every state.
+ * own renderer packages, which depends on `includeImages` and on the format
+ * (the MOBI shows none). A warning is user-facing copy, so it claims the
+ * thing that is true in every state.
  *
  * Exported for its own tests. Neither count is reachable from a fixture that
  * is not deliberately damaged: `overCap` needs a 61-picture document, and
@@ -180,11 +184,22 @@ function resolveMeta(detected: TitleMeta, opts: ConvertOptions): BookMeta {
   };
 }
 
+/**
+ * The books for one `.fountain`, with the pictures its notes may show.
+ *
+ * `images` is every picture the caller holds. The renderer is told their
+ * NAMES, and shows a figure only for a note whose picture is among them
+ * (rendersImage); the packager is handed the BYTES, and ships only what the
+ * body showed. Both come from this one array, which is what keeps buildEpub's
+ * "shown but not given" throw out of reach: no name can be in the set without
+ * its bytes being in the list.
+ */
 async function renderBooks(
   fountainText: string,
   meta: BookMeta,
   wantMobi: boolean,
   format: FormatOptions,
+  images: readonly BookImage[],
 ) {
   const { tokens } = new Fountain().parse(fountainText, true);
   // The book's identity is its CONTENT, not the moment of rendering. The
@@ -196,7 +211,8 @@ async function renderBooks(
     identifier: `urn:screepub:${createHash('sha256').update(fountainText).digest('hex').slice(0, 32)}`,
     ...meta,
   };
-  const epub = await buildEpub(withId, tokensToBody(tokens, { format }), format);
+  const body = tokensToBody(tokens, { format, images: new Set(images.map((img) => img.name)) });
+  const epub = await buildEpub(withId, body, format, images);
   const previewHtml = tokensToPreviewHtml(tokens, format);
   const mobi = wantMobi
     ? buildMobi({ title: meta.title, author: meta.author, html: tokensToMobiHtml(tokens, meta, format) })
@@ -259,7 +275,7 @@ export async function convertPdf(
   const meta = resolveMeta(extractTitleMeta(screenplay.elements), opts);
   const fountainText = toFountain(screenplay, { title: meta.title, author: meta.author }, format);
   opts.onProgress?.('render', PARSE_SHARE);
-  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format);
+  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images);
   opts.onProgress?.('render', 1);
 
   return { epub, mobi, previewHtml, fountainText, screenplay, meta, warnings, spacingRepairs, images };
@@ -289,10 +305,20 @@ function stageOneWarnings(fountainText: string, format: FormatOptions): string[]
   ];
 }
 
+export interface FountainConvertOptions extends ConvertOptions {
+  /**
+   * The pictures this text's `[[img: ...]]` notes may show, by filename: the
+   * shape `readImages` (src/library-images.ts) returns for the folder beside
+   * a `.fountain`. Absent, no note shows a picture, which is the honest
+   * answer for a caller with no folder to read.
+   */
+  images?: ReadonlyMap<string, Uint8Array>;
+}
+
 /** Pipeline for Fountain text input (stage 1 skipped). */
 export async function convertFountain(
   fountainText: string,
-  opts: ConvertOptions = {},
+  opts: FountainConvertOptions = {},
 ): Promise<ConvertResult> {
   const { tokens } = new Fountain().parse(fountainText, true);
   const detected: TitleMeta = {
@@ -301,7 +327,16 @@ export async function convertFountain(
   };
   const format = resolveFormatOptions(opts.format);
   const meta = resolveMeta(detected, opts);
-  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format);
+  // Filtered again, though the folder's reader already refuses both and
+  // counts them: this is a public entry, and a map can come from anywhere.
+  // Bytes that are not a PNG would be declared image/png in the manifest and
+  // fail epubcheck (OPF-029, PKG-022), so they are no picture and the note
+  // renders nothing. The name check repeats the allowlist rendersImage
+  // applies, so `have` never holds a name no note could carry.
+  const images: BookImage[] = [...(opts.images ?? [])]
+    .filter(([name, bytes]) => isSafeImageFile(name) && isPng(bytes))
+    .map(([name, bytes]) => ({ name, bytes }));
+  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images);
 
   return {
     epub,
@@ -315,8 +350,8 @@ export async function convertFountain(
     meta,
     warnings: stageOneWarnings(fountainText, format),
     // Nothing to carry: the pictures a `.fountain` names already sit in its
-    // folder, and nothing reads them back for the book, since the renderers
-    // do not receive pictures.
+    // folder, which is where the ones rendered above were read from. Handing
+    // them back would invite a caller to write them over themselves.
     images: [],
   };
 }

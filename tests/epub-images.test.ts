@@ -255,17 +255,17 @@ function epubcheck(path: string): { ok: boolean; out: string } {
 }
 
 describe('epubcheck', () => {
-  // images.pdf through the phase-1 path, which yields the .fountain and the
-  // pictures it names, then rendered and packaged here directly: convertPdf
-  // does not hand its pictures to the renderer yet.
+  // images.pdf through the whole pipeline: the book convertPdf builds, with
+  // the pictures it carried. The collision case below reuses those pictures
+  // under hand-made names, rendered and packaged here directly.
   let pictures: BookImage[] = [];
-  let fountainText = '';
+  let book: Uint8Array = new Uint8Array();
   let title = '';
   beforeAll(async () => {
     if (!EPUBCHECK) return;
     const result = await convertPdf(new Uint8Array(await Bun.file(`${PUBLIC}images.pdf`).arrayBuffer()));
     pictures = result.images;
-    fountainText = result.fountainText;
+    book = result.epub;
     title = result.meta.title;
   }, 60000);
 
@@ -275,11 +275,11 @@ describe('epubcheck', () => {
     return { body, epub: await buildEpub({ ...META, title }, body, DEFAULT_FORMAT_OPTIONS, images) };
   };
 
-  checked(`a book built from images.pdf with its pictures validates clean${SKIPPED}`, async () => {
-    const { body, epub } = await build(pictures, fountainText);
-    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+  checked(`the book convertPdf builds from images.pdf validates clean${SKIPPED}`, async () => {
+    const { zip } = await open(book);
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
     const path = join(SCRATCH, 'images.epub');
-    writeFileSync(path, epub);
+    writeFileSync(path, book);
     const { ok, out } = epubcheck(path);
     expect(ok, out).toBe(true);
   }, 120000);

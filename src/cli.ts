@@ -16,10 +16,17 @@ import {
   type ConvertStage,
 } from './convert';
 import { mapConversionError, unwritableError, CliError, errorMessage, type JsonError } from './cli-errors';
-// The picture folder beside a .fountain. Its policy (what may be written, what
-// may be pruned) lives there, not here, because nothing in cli.ts can be
-// unit-tested: importing it runs main().
-import { imagesDirFor, pruneImages, writeImages } from './library-images';
+// The picture folder beside a .fountain. Its policy (what may be read, what
+// may be written, what may be pruned) lives there, not here, because nothing
+// in cli.ts can be unit-tested: importing it runs main().
+import {
+  imageFolderWarnings,
+  imagesDirFor,
+  pruneImages,
+  readImages,
+  writeImages,
+  type ImagesRead,
+} from './library-images';
 import { adoptSidecar, existingLibraryOutput, libraryOutput, libraryRoot } from './library';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions, keepsScriptSettings } from './settings/app-defaults';
@@ -64,7 +71,10 @@ otherwise from Screepub's own.
 
 Pictures carried out of a PDF are written as PNGs in a <name>.images folder
 beside the .fountain, and the .fountain names each one in an [[img: ...]]
-note. The book does not show them yet.
+note. The EPUB shows each picture where its note sits, and so does a later
+conversion of that .fountain, which reads the folder and never writes it.
+The includeImages option takes them out of the book; the notes and the
+folder stay. The .mobi does not show them yet.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub)
@@ -1102,7 +1112,20 @@ async function main() {
     if (isPdf) {
       result = await convertPdf(new Uint8Array(await readFile(input)), opts);
     } else if (ext === '.fountain' || ext === '.txt') {
-      result = await convertFountain(await readFile(input, 'utf8'), opts);
+      const text = await readFile(input, 'utf8');
+      // The pictures this text's notes name sit in the folder a PDF
+      // conversion wrote beside it, under the same stem, whichever of the two
+      // extensions the text now carries. Read only, never written or pruned:
+      // that folder belongs to the conversion that filled it, and this run
+      // has no pictures of its own to put there.
+      //
+      // Not read at all with the option off. Nothing would be shown, and a
+      // folder's warnings are about pictures missing from the book, which
+      // someone who turned pictures off is not missing.
+      let pictures: ImagesRead | undefined;
+      if (formatForConvert.includeImages) pictures = await readImages(input);
+      result = await convertFountain(text, { ...opts, images: pictures?.images });
+      if (pictures) result.warnings.push(...imageFolderWarnings(pictures));
     } else {
       fail({
         code: 'unsupported-type',
@@ -1298,7 +1321,9 @@ async function main() {
         // CONVERSION carried out of the PDF, a fact about the conversion and
         // not about anything on disk: under --no-fountain it is reported with
         // no folder beside it at all. Nor is it how many the book shows,
-        // which today is none.
+        // which depends on includeImages and on the format. A .fountain
+        // input reports neither: it writes no folder and carries nothing out
+        // of a PDF, even when its book shows the pictures it read.
         imagesPath,
         imageCount: result.images.length > 0 ? result.images.length : undefined,
         // The sidecar this conversion actually rendered with, so the window
