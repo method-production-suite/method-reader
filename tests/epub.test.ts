@@ -771,6 +771,15 @@ describe('figure CSS', () => {
     expect(full).not.toContain('avoid');
   });
 
+  test('a full-page plate has no vertical margin, which would push it past a blank page', () => {
+    // A top margin survives a forced break. Under .figure's margin a plate
+    // within about 1em of the page height stopped fitting and Blink moved it
+    // to the next page, leaving the page after the break blank (measured on
+    // images.pdf's title card at 6x8in). The plate's own rule cancels it;
+    // p.figure-full outranks .figure by specificity, so order cannot undo it.
+    expect(ruleFor(withFigures(), 'p.figure-full')).toMatch(/(^|[{;\s])margin: 0;/);
+  });
+
   test('figures add no keep, no multicol spelling, and leave every existing pin as it was', () => {
     // No keep on .figure: it holds one line box, so there is no break inside
     // it to forbid, and a keep measured inert (the css.ts header has the

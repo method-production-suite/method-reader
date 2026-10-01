@@ -34,12 +34,18 @@
 // on h2.scene-heading) but not on a structural div, and does not propagate
 // a last child's break-after to its parent, so the wrapper→dialogue
 // boundary went ungoverned and cues stranded on device (#8b, 2026-09-14).
-// Three mechanisms sit outside that list and cost less than an avoid link:
+// Three mechanisms sit outside that list. None grows a chunk the way an
+// avoid link does, because each ends a page rather than refusing to; what
+// they cost is white space instead:
 //     page-break-before: always  section.scene (gated: scenePageBreaks, off)
-//       — ends a page rather than refusing to, so it grows no chunk.
+//       — up to a page of white at every scene, which is why it is opt-in.
 //     page-break-before + -after: always  p.figure-full (only in a book that
-//       shows a figure, registry #19) — the same "ends a page" shape, around
-//       a plate that filled its printed page.
+//       shows a figure, registry #19) — the same shape around a plate that
+//       filled its printed page, and the same cost, paid only where the
+//       script itself gave a picture a page. It overrides the scene heading's
+//       break-after: avoid, so a heading directly above a plate ends its page
+//       alone; CSS 2.1 has no rule that keeps the two together once the plate
+//       outgrows what is left of the page.
 //     widows/orphans on p.action and p.dialogue (gated: printSplitMinimums,
 //       on, registry #17) — bounded to about one line per seam, and the one
 //       rule here whose OFF state emits a value (1) rather than nothing.
@@ -70,9 +76,13 @@
 //      break-inside: avoid on images.
 //   3. p.figure-full's forced breaks sit on the <p>, never a wrapper, for
 //      the reason the cue chain does (#8b). At the very start or end of the
-//      book they have nothing to break from; Blink suppresses both (no blank
-//      page, measured 2026-08-11). Unverified on KFX and RMSDK: a
-//      device-pass line, not a fact.
+//      book they have nothing to break from, and Blink suppresses both
+//      (measured 2026-08-11). The plate also has NO vertical margin: after a
+//      forced break a top margin is kept, so a plate within about 1em of the
+//      page height no longer fit beneath it and Blink pushed it to the next
+//      page, leaving a blank one in front (measured 2026-10-01 on images.pdf's
+//      title card at 6x8in, and with a heading above a mid-book plate).
+//      Unverified on KFX and RMSDK: a device-pass line, not a fact.
 //   4. Height is unbounded. The class caps the width; the height is `auto`,
 //      and max-height is no remedy, since Kindle strips it. A plate taller
 //      than the page slices across pages on Blink (a 1:2 picture at w100
@@ -185,8 +195,12 @@ export function screenplayCss(
 ${FIGURE_WIDTHS.map((n) => `p.w${n} img { width: ${n}%; }`).join('\n')}
 
 /* A plate that filled its printed page gets a page here too: before puts it
-   at the top of one, after stops the next paragraph sharing what is left. */
+   at the top of one, after stops the next paragraph sharing what is left.
+   No margin: the plate owns its page, and a top margin kept after the break
+   is what pushes a page-tall plate onto the next page and leaves a blank
+   one in front of it. */
 p.figure-full {
+  margin: 0;
   page-break-before: always;
   page-break-after: always;
 }
