@@ -194,3 +194,26 @@ injected clock). The measured-layout test (headless Chrome) covers the
 result screen at 900, 1280 and 1800 wide. A live check in the browser pane
 with the real engine on scratch folders, as in the layout pass. The owner's
 hands on a test build, including a real Eject of his Kindle.
+
+## Clarified while planning part 2 (2026-10-01)
+
+Settled against the code as it is; none changes what the owner approved.
+
+- The asterisk sentence for a Kindle off a Mac reads "never tried with a real
+  Kindle on Windows (or Linux) yet", because a real Kindle has been tried, on
+  a Mac. Apple Books gets no asterisk: it is verified on a Mac, and off a Mac
+  its card only saves the EPUB.
+- Decision 6's follow-ups (web, then email) open "Other ways", at the head of
+  its *Send it* group; the calm screen keeps one brass and one plain button.
+- Show in Finder and the book's path move into "Other ways". The "(by
+  author)" line goes; engine warnings stay under the counts.
+- "Save the EPUB" and "Save a Kindle file" are not repeated in *Send it*:
+  *Save a file* covers them.
+- The background poll uses a new `devices --quick` (no reMarkable probe, like
+  `routes --quick`), so it costs nothing to run every two seconds; a docked
+  reMarkable shows up from the panel's full `routes` answer instead.
+- What must survive leaving the page lives on the window's state object.
+- The Kindle heads-up does not show on the result screen itself (its brass
+  button already says the same) or during a conversion.
+- Kobo, tolino or reMarkable not plugged in: the brass is "Save the EPUB",
+  with a line saying to plug it in to copy.
