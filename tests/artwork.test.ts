@@ -382,7 +382,7 @@ describe('FULL_PAGE_AREA_FRAC', () => {
     // Exported for the ImageRef builder and not consumed in this module, so no
     // other test here constrains it: a mutation sweep found that raising it to
     // 0.75 survives everything. A BAND and not an exact pin, because this is
-    // one of the numbers Task 18 is expected to move, and a test that forbids
+    // one of the numbers a corpus retune is expected to move, and a test that forbids
     // a legitimate retune gets deleted rather than consulted.
     //
     // Ceiling: the fixture's own title card, 75.6% of its page. Above that the

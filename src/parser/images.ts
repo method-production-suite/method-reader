@@ -90,7 +90,8 @@ function concat(m: ArrayLike<number>, t: ArrayLike<number>): number[] {
  * that happens in collectPageImages, not here.)
  *
  * Two operator cases beyond `q`/`cm`/`Q` decide whether this is right on real
- * files, and each was read out of pdfjs-dist 6.2.108 rather than assumed:
+ * files, and each was read out of pdfjs-dist rather than assumed (6.2.108,
+ * and re-checked on 6.3.289):
  *
  *   - A form XObject does NOT expand into save/transform ops. Its /Matrix rides
  *     on `paintFormXObjectBegin` and the renderer saves, applies it, and
@@ -223,13 +224,13 @@ export interface PdfImage {
   height: number;
   /** pdf.js ImageKind: 1 GRAYSCALE_1BPP, 2 RGB_24BPP, 3 RGBA_32BPP. There is
    * no fourth — pdf.js's own `putBinaryImageData` throws `bad image kind` on
-   * anything else (pdfjs-dist 6.2.108, pdf.mjs `ImageKind`). */
+   * anything else (pdf.mjs `ImageKind`, re-checked on 6.3.289). */
   kind: 1 | 2 | 3;
   /** All THREE, and the choice is pdf.js's. The direct DeviceRGB and DeviceGray
-   * paths hand back the decode stream's own bytes as a Uint8Array
-   * (pdf.worker.mjs:33974) — which is all six pictures in
-   * tests/fixtures/images.pdf — while the general colour-space fallback
-   * allocates a Uint8ClampedArray (pdf.worker.mjs:33784, :33794). `null` is the
+   * paths in `PDFImage.createImageData` hand back the decode stream's own
+   * bytes as a Uint8Array — which is all six pictures in
+   * tests/fixtures/images.pdf — while the general colour-space fallback in the
+   * same function allocates a Uint8ClampedArray. `null` is the
    * bitmap path, where the pixels are an ImageBitmap and this field is emptied
    * rather than omitted. A probe sees whichever its sample happens to use, and
    * narrowing to that one is a lie TypeScript would then enforce on every
@@ -267,7 +268,8 @@ export const IMAGE_RESOLVE_TIMEOUT_MS = 5_000;
  * the pdf.js source.
  *
  * pdf.js's own renderer picks the store by that `g_` prefix instead
- * (pdf.mjs: `data.startsWith("g_") ? this.commonObjs.get(data) : ...`). We
+ * (`CanvasGraphics.getObject` in pdf.mjs:
+ * `data.startsWith("g_") ? this.commonObjs.get(data) : ...`). We
  * race both rather than copy it: the prefix is an internal naming convention,
  * and the price of it changing under us is precisely the silent stall above,
  * where the price of racing is one extra pending map entry.
@@ -353,19 +355,25 @@ export function toRgb(img: PdfImage): Uint8Array | null {
   // bug and never bad input, throws a stage later with nothing pointing back
   // here. That is the obscurity assertRgb exists to prevent. pdf.js will hand
   // one over: outside the branch that prefers the decoded image's own
-  // dimensions it validates the dict as `typeof width === "number" &&
-  // width > 0` and nothing more (pdf.worker.mjs:33205).
+  // dimensions, the `PDFImage` constructor validates the dict as
+  // `typeof width === "number" && width > 0` and nothing more (re-checked on
+  // 6.3.289).
   if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1) return null;
   // `{ data: null, bitmap }` is the shape pdf.js returns when it holds an
-  // ImageBitmap instead of pixels, and TWO independent doors lead there.
-  // OffscreenCanvas is the expected one (pdf.worker.mjs:33672, :33703, :33809),
-  // gated on `isOffscreenCanvasSupported`, which `isNodeJS` defaults off
-  // (pdf.mjs:15225) and the worker clears again against its own FeatureTest
-  // (pdf.worker.mjs:60588). The second is gated on NO such thing:
-  // createImageData asks `#getImage` unconditionally (pdf.worker.mjs:33686)
-  // and only `ImageDecoder` being undefined under Bun turns it back
-  // (pdf.worker.mjs:5318). Shut today through both, one runtime bump from not,
-  // and a property read on null the moment either opens.
+  // ImageBitmap instead of pixels, and TWO independent doors lead there, both
+  // in `PDFImage.createImageData`. Re-read on 6.3.289:
+  //   - OffscreenCanvas, the expected one, gated on `isOffscreenCanvasSupported`,
+  //     which `getDocument` defaults off under a Node-like runtime and
+  //     `BasePdfManager` clears again against the worker's own FeatureTest.
+  //   - `#getImage`, which createImageData asks unconditionally on the direct
+  //     DeviceRGB/DeviceGray path, before it reads a byte. It returns a bitmap
+  //     only through a JPEG stream's `getTransferableImage`, which on 6.3.289
+  //     needs `JpegStream.canUseImageDecoder`: the `isImageDecoderSupported`
+  //     option (off by default under a Node-like runtime) AND an `ImageDecoder`
+  //     global, which Bun does not have. (The August note, on 6.2.108, found
+  //     this door gated only by the missing global.)
+  // Shut today through both, one runtime bump or one option from not, and a
+  // property read on null the moment either opens.
   if (!data) return null;
   const px = w * h;
 
@@ -393,19 +401,19 @@ export function toRgb(img: PdfImage): Uint8Array | null {
     // this way clears keepArtwork exactly as a good one does. White is the page
     // a screenplay is read on, and it is what pdf.js itself writes for a fully
     // transparent pixel when it un-premultiplies a matted mask
-    // (pdf.worker.mjs:33625).
+    // (`PDFImage.#undoPreblend`).
     //
     // The alpha is STRAIGHT, not premultiplied, so this is the ordinary blend
-    // and not `c + 255 * (1 - a)`: fillOpacity writes the alpha byte on its own
-    // and leaves the colour alone (pdf.worker.mjs:33566), and pdf.js copies
-    // these bytes into a canvas ImageData unchanged (pdf.mjs:10616), which is a
-    // non-premultiplied contract.
+    // and not `c + 255 * (1 - a)`: `PDFImage.fillOpacity` writes the alpha byte
+    // on its own and leaves the colour alone, and pdf.js copies these bytes
+    // into a canvas ImageData unchanged (`putBinaryImageData` in pdf.mjs),
+    // which is a non-premultiplied contract. All three re-checked on 6.3.289.
     //
     // The limitation, written down because a device pass is where it will
     // surface: a reader in dark mode gets a WHITE surround wherever the source
     // was transparent. Carrying it properly needs an alpha-capable encoder and
-    // a renderer that honors it, which is the soft-mask work the design puts
-    // out of scope.
+    // a renderer that honors it, which is soft-mask work neither the August
+    // design nor today's spec takes on: both flatten transparency onto white.
     const out = new Uint8Array(px * 3);
     for (let i = 0; i < px; i++) {
       const a = data[i * 4 + 3];
@@ -466,19 +474,21 @@ export function toRgb(img: PdfImage): Uint8Array | null {
  * claim that it did cited 1236 x 1648 while being smaller than the 1648. Two
  * places it falls short, neither of them fatal:
  *
- *   - a `.figure-full` plate is drawn at `width: 100%` of the text column with
- *     `height: auto` (css.ts note 4), so a portrait title card filling that
- *     same 1236 asks for about 1648 px of height and is handed 1400;
+ *   - a full-page plate is meant to fill the full width of the text column with
+ *     its height following (how the renderers draw it is phase 2), so a
+ *     portrait title card filling that same 1236 asks for about 1648 px of
+ *     height and is handed 1400;
  *   - the 10" class is past 1400 on its SHORT edge before height enters it.
  *     docs/device-map.md §2.6 puts reMarkable at 10.3" and 226-229 PPI, which
- *     is about 1404 across; the Kindle Scribe and the Supernote Manta (10.7"
- *     at ~300 PPI, §2.6) are further out again.
+ *     is about 1404 across; the Supernote Manta (10.7" at ~300 PPI, §2.6) and
+ *     the Kindle Scribe (§2.1) are further out again.
  *
  * The trade is deliberate rather than overlooked. Each of those is a mild
  * upscale of one plate on one device, where raising the edge costs every book
  * that carries any picture at all — and it is worse to raise than it looks,
- * because `MAX_SIDECAR_BYTES` is computed from this: past about 1670 our own
- * output stops being readable back (cli-sidecar.ts).
+ * because the size cap that src/library-images.ts reads the picture folder
+ * back under is computed from this: past about 1670 our own output stops
+ * being readable back.
  */
 export const IMAGE_MAX_EDGE = 1400;
 
@@ -556,7 +566,7 @@ export interface ImageRun {
    * and encoded TWICE rather than once per sheet. Twice, not once, and the
    * number is pdf.js's: it only promotes an image to the document-wide store
    * from the SECOND page it appears on (`GlobalImageCache.NUM_PAGES_THRESHOLD
-   * = 2`, pdf.worker.mjs:31958), so a repeated picture carries a page-local id
+   * = 2`, re-checked on 6.3.289), so a repeated picture carries a page-local id
    * on its first sheet and a `g_` id ever after. Two keys, two encodes,
    * however many sheets. Measured on tests/fixtures/images.pdf: its ten paints
    * are 7 distinct encodes rather than 10 — six pictures, of which the logo is
@@ -569,22 +579,23 @@ export interface ImageRun {
    *
    * Where it helps LEAST is where the cost is highest, which is worth knowing
    * before trusting it: promotion to the global store stops once that store
-   * holds ten images AND 50 MB (`MIN_IMAGES_TO_CACHE`, `MAX_BYTE_SIZE`,
-   * :31959-31960, and `#cacheLimitReached` needs both). A lookbook of large
+   * holds ten images AND 50 MB (`GlobalImageCache.MIN_IMAGES_TO_CACHE` and
+   * `MAX_BYTE_SIZE`, and its `#cacheLimitReached` needs both). A lookbook of large
    * pictures can therefore keep page-local ids throughout and miss on every
    * sheet. Correctness does not depend on any of this; only the saving does.
    *
    * A hit hands out the SAME `Uint8Array`, so two kept images of one picture
    * share one buffer — and `toRgb` already promises the bytes are ours rather
    * than a view into pdf.js's store, which this does not change. Nothing
-   * downstream may MUTATE image bytes: the zip writer and the MOBI image
-   * records copy them in, and an in-place edit would rewrite the other
-   * placement too.
+   * downstream may MUTATE image bytes: the EPUB zip writer (phase 2) and the
+   * MOBI image records (phase 3) are to copy them in, and an in-place edit
+   * would rewrite the other placement too.
    *
    * Safe to key on the id: pdf.js builds a page store's ids as
-   * `img_p{pageIndex}_{n}` (pdf.worker.mjs:34507 over the local id factory,
-   * :59013) and the document-wide ones as `g_{docId}_...` (:59610), so one id
-   * means one picture for the life of the document.
+   * `img_p{pageIndex}_{n}` (`PartialEvaluator.buildPaintImageXObject` over the
+   * `Page`'s local id factory) and the document-wide ones as `g_{docId}_...`
+   * (the same function, prefixing the `PDFDocument`'s `getDocId`), so one id
+   * means one picture for the life of the document. Re-checked on 6.3.289.
    *
    * SUCCESSES only. A miss is a timing fact rather than a fact about the
    * picture — pixels arrive from the worker after the operator list that asked
@@ -686,8 +697,10 @@ async function encodePlacement(
  *
  * Pixels MUST be resolved while the page's operator-list intent is alive.
  * pdf.js drops an incoming image outright once `pageProxy._intentStates.size
- * === 0` (pdf.mjs:16543, pdfjs-dist 6.2.108), and `page.cleanup()` is what
- * empties that. Measured, not quoted: a `cleanup()` between `getOperatorList`
+ * === 0` (the "obj" handler in `WorkerTransport.setupMessageHandler`, pdf.mjs;
+ * the code re-checked on 6.3.289, the measurement below made on 6.2.108), and
+ * `page.cleanup()` is what empties that. Measured, not quoted: a `cleanup()`
+ * between `getOperatorList`
  * and this call costs SIX of the ten paints in tests/fixtures/images.pdf, and
  * the four that survive are only the ones pdf.js had already parked in
  * commonObjs — so the loss is silent, partial, and would look exactly like a
@@ -749,7 +762,8 @@ export async function collectPageImages(
 }
 
 /**
- * Deterministic sidecar filename, so re-converting reproduces byte for byte.
+ * Deterministic filename inside the picture folder (`<stem>.images/`), so
+ * re-converting reproduces byte for byte.
  *
  * NOT exported, and that is the whole design: `RawImage.file` is the one
  * filename anything downstream ever needs, and a second caller would mean a
@@ -765,8 +779,9 @@ function imageFileName(pageNum: number, indexOnPage: number): string {
  *
  * Exported where `imageFileName` is not, because this asks a different
  * question and a caller outside the parser genuinely needs it: whoever
- * REWRITES a sidecar folder has to know which files in it are its own, and
- * "any name a note could carry" is not that set. `notes.ts`'s allowlist is
+ * REWRITES the picture folder (src/library-images.ts) has to know which files
+ * in it are its own, and "any name a note could carry" is not that set. The
+ * filename allowlist in notes.ts (`isSafeImageFile`) is
  * deliberately wide — it accepts a hand-written `board-01.png` because a
  * `.fountain` is allowed to name one — so pruning against it deletes the
  * user's pictures out of a folder they filled themselves. That is a data-loss
@@ -789,8 +804,9 @@ export function isGeneratedImageFile(name: string): boolean {
  * Kept candidates as `RawImage`, in reading order and named for where they sit.
  *
  * SORTED here (page ascending, y descending — PDF user space puts the top of a
- * sheet at the high y), and not left in paint order. Task 7 merges this array
- * against the element stream on exactly that ordering, so it has to be a fact
+ * sheet at the high y), and not left in paint order. `insertImages` in
+ * src/parser/index.ts merges this array against the element stream on
+ * exactly that ordering, so it has to be a fact
  * rather than a hope: a generator is free to paint the bottom panel of a strip
  * first. The sort is after `keepArtwork`'s cap and cannot change WHICH images
  * survive, only their order; equal-y placements keep their paint order, since

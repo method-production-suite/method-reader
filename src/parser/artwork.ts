@@ -1,5 +1,5 @@
 /**
- * What separates a picture from furniture (registry #19a).
+ * What separates a picture from furniture (registry #19).
  *
  * Every threshold here exists because a real PDF is full of images nobody
  * wants in a book: spacer pixels, logo glyphs, revision bullets, letterhead,
@@ -8,7 +8,7 @@
  * are looking at.
  *
  * PROVENANCE, and read this before moving anything. Every number below was
- * chosen BY EYE from the design document on 2026-08-06, against no real
+ * chosen BY EYE from the August design document on 2026-08-06, against no real
  * script: `tests/fixtures/images.pdf` was built to exercise these rules, so it
  * could only ever show they are self-consistent, never that they are right.
  *
@@ -40,16 +40,16 @@
  * file changes when a real script proves a threshold wrong; those two edits are
  * never in the same commit. png.ts draws the same line around itself for the
  * same reason, and states it in its own header. The practical half matters too:
- * pdf.js's modern build touches DOMMatrix at module scope, so every file that
- * reaches it inherits an import-ORDER footgun — importing pdf.mjs under Bun
- * with no shim loaded is a bare `ReferenceError: DOMMatrix is not defined` from
- * pdf.mjs:10460 (pdfjs-dist 6.2.108), before a line of ours runs. The numbers
- * below are the likeliest thing in this feature to be hand-tuned after a device
- * or corpus pass, and asserting that a 20x20pt image is too small to be art
- * should not require a shim.
+ * every file that reaches pdf.js inherits an import-ORDER rule. The modern
+ * build needs the DOMMatrix shim for rendering and the statically imported
+ * worker, and quiet-pdfjs.ts has to patch console.warn before pdf.mjs is
+ * evaluated; see pdfjs-shims.ts. The numbers below are the likeliest thing in
+ * this feature to be hand-tuned after a device or corpus pass, and asserting
+ * that a 20x20pt image is too small to be art should not require a shim.
  *
- * These thresholds are NOT format options (the design's "no size options in
- * v1"): they are documented behavior with a rationale, like the revision-star
+ * These thresholds are NOT format options (the August design allowed no size
+ * options, and today's spec has "No greyscale or size controls in this
+ * design"): they are documented behavior with a rationale, like the revision-star
  * and page-furniture rules. They are also written down twice — `make-fixture.py`
  * states each fixture picture's margin to the ONE threshold that governs it —
  * so tests/artwork.test.ts reproduces those six boxes and pins both copies of
@@ -107,8 +107,8 @@
  * not-a-screenplay guard refuses before any of it renders. So the floor has
  * 0.8 of a point of daylight against ART and about half a point against
  * EVERYTHING, and the second number is the one a retune actually has to clear.
- * #19a stated the raw figure and the art margin in one sentence as though they
- * were one pair; they are not.
+ * The August registry's #19a stated the raw figure and the art margin in one
+ * sentence as though they were one pair; they are not.
  */
 const MIN_AREA_FRAC = 0.03;      // of the page
 const MIN_WIDTH_FRAC = 0.10;     // of page width
@@ -163,7 +163,8 @@ const MIN_PIXELS = 32;
  * still in the corpus: one hash, four distinct pages, eight candidates. Worth
  * spelling out because `droppedBy` is quoted by page count everywhere else in
  * this file and reports placements, and reading one as the other is how "19"
- * and "11 and 4" came to sit two paragraphs apart looking like a contradiction. Worth knowing about that plate: the XObject is at FULL
+ * and "11 and 4" came to sit two paragraphs apart looking like a
+ * contradiction. Worth knowing about that plate: the XObject is at FULL
  * opacity and the ghosting is a graphics-state alpha applied where it is
  * painted, so a book that kept it would show eleven full-strength copies of
  * the poster, not eleven faint ones. What the page looks like is not what the
@@ -313,7 +314,7 @@ export function columnWidthPct(pageWidthPct: number): number {
  * (docs/device-map.md, T5 — the tightest of the delivery routes; the web
  * upload allows 200 MB).
  *
- * 2026-08-07, MEASURED, and it is worse than the design's estimate: sixty
+ * 2026-08-07, MEASURED, and it is worse than the August design's estimate: sixty
  * pictures out of a real 30-page pitch deck came to 16.3 MB, not the ~6 MB a
  * 100 KB panel predicts. A panel averages nearer 270 KB once it is a
  * full-bleed plate rather than a storyboard thumbnail, which is exactly what a
@@ -324,7 +325,7 @@ export function columnWidthPct(pageWidthPct: number): number {
  * Sixty still stands, and the measurement is the argument FOR it rather than
  * against: this is the conservative end of a range whose upper bound is much
  * closer than anyone thought. Raise it only with a measurement, not with the
- * estimate. The reasons not to are conversion time and the sidecar folder,
+ * estimate. The reasons not to are conversion time and the picture folder,
  * plus now the email route actually being in sight.
  *
  * How often it bites, 2026-08-12: one document in seven, and that one offered
@@ -393,7 +394,8 @@ export interface ArtworkVerdict<T> {
    * filters dropping letterhead is the normal case, nearly every real script
    * has some, and a caller warning about it would warn on every conversion,
    * which is how a warning stops being read. The cap is the exceptional one,
-   * and the design asks for a warning precisely because silent truncation
+   * and the August design asked for a warning, as today's spec does ("keeping
+   * the first 60 and warning"), precisely because silent truncation
    * reads as "we carried everything" when we did not. `kept.length + overCap`
    * is what a caller needs to say "this script has 73 pictures and Screepub
    * carried 60".
@@ -475,8 +477,9 @@ export function keepArtwork<T extends ImageCandidate>(
   // than only the ones that clear the size floors. Whether something is
   // furniture is a question about the picture and the document, not about one
   // placement's size: letterhead scaled down on the title page is still
-  // letterhead, and the design's wording ("does not appear on 3 or more
-  // pages") has no size qualifier in it.
+  // letterhead. The August design's wording ("does not appear on 3 or more
+  // pages") had no size qualifier in it, and neither does today's spec's
+  // ("the same picture on 3 or more pages").
   const pagesByHash = new Map<string, Set<number>>();
   for (const c of candidates) {
     let seen = pagesByHash.get(c.hash);
@@ -501,7 +504,7 @@ export function keepArtwork<T extends ImageCandidate>(
     // arithmetic over a CTM this module does not own.
     //
     // Where the safe form actually bites is not symmetric, and it is worth
-    // being exact because registry #19a gets written from this file. The PIXEL
+    // being exact because registry #19 gets written from this file. The PIXEL
     // floor is alone: nothing else reads srcPx, so naive there means a NaN
     // reaches the encoder's dimensions unopposed. The three BOX floors share
     // one backstop — `areaFrac` is `wFrac * hFrac`, so a NaN in either linear

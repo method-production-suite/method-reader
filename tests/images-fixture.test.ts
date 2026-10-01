@@ -10,9 +10,12 @@
 // module. Same split by concern, under a shared prefix, as
 // torture.test.ts / torture-layout / torture-markup / torture-coverage.
 //
-// MUST stay the first import, like extract.test.ts: pdf.mjs builds a
-// `new DOMMatrix()` at module scope, so evaluating it before the shim throws
-// ReferenceError on load and every test in the file fails as one.
+// Stays the first import, like extract.test.ts. Not because pdf.mjs cannot
+// load without it: on pdfjs-dist 6.3.289 a bare import loads under bun 1.3.14
+// (checked 2026-10-01). It hands getDocument the statically imported worker,
+// gives the modern build the DOMMatrix shim it needs for rendering, and lets
+// quiet-pdfjs.ts patch console.warn before pdf.mjs is evaluated; see
+// pdfjs-shims.ts.
 import '../src/parser/pdfjs-shims';
 import { test, expect, describe, beforeAll } from 'bun:test';
 import { getDocument } from 'pdfjs-dist/build/pdf.mjs';

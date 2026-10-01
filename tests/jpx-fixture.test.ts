@@ -12,8 +12,12 @@
 // on failure) cannot see the thing that actually broke, which is pdf.js finding
 // the files. Only opening a document with a JPX image in it can.
 //
-// MUST stay the first import, like extract.test.ts: pdf.mjs builds a
-// `new DOMMatrix()` at module scope.
+// Stays the first import, like extract.test.ts. Not because pdf.mjs cannot
+// load without it: on pdfjs-dist 6.3.289 a bare import loads under bun 1.3.14
+// (checked 2026-10-01). It hands getDocument the statically imported worker,
+// gives the modern build the DOMMatrix shim it needs for rendering, and lets
+// quiet-pdfjs.ts patch console.warn before pdf.mjs is evaluated; see
+// pdfjs-shims.ts.
 import '../src/parser/pdfjs-shims';
 import { test, expect, describe, beforeAll, afterAll } from 'bun:test';
 import { getDocument } from 'pdfjs-dist/build/pdf.mjs';
@@ -75,8 +79,9 @@ const JPX_SEED = 71;
 describe('the decoder directory', () => {
   test('carries exactly the filenames pdf.js will ask for', () => {
     // pdf.js concatenates these onto wasmUrl (`WasmImage._filename` and
-    // `._noWasmFilename`, pdfjs-dist 6.2.108). A name that drifts is a decoder
-    // that ships and is never found, which fails silently.
+    // `._noWasmFilename`, re-checked on 6.3.289; tests/pdfjs-wasm.test.ts reads
+    // them out of the installed worker). A name that drifts is a decoder that
+    // ships and is never found, which fails silently.
     expect(DECODER_FILES.map(([name]) => name)).toEqual([
       'openjpeg_nowasm_fallback.js',
       'jbig2.wasm',

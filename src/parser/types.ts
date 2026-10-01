@@ -59,16 +59,16 @@ export interface ScreenplayElement {
    * `goesBefore` in index.ts.
    *
    * Optional because several suites in tests/ build this interface by hand with
-   * an `el()` helper that omits it — not because the parser ever leaves it out:
-   * `classifyBlock` sets it on every element it mints, and the image elements
-   * `insertImages` adds carry one too.
+   * an `el()` helper that omits it — not because the parser is meant to leave
+   * it out: it is set where elements are made (classify.ts), and the image
+   * elements `insertImages` adds carry one too.
    */
   y?: number;
 }
 
 /** An image as the .fountain and both renderers see it (registry #19). */
 export interface ImageRef {
-  /** filename inside the sidecar folder */
+  /** filename inside the picture folder (`<stem>.images/`) */
   file: string;
   /**
    * Rendered width as a percentage of the script's TEXT COLUMN.
@@ -130,15 +130,15 @@ export interface RawLine {
 /** An image carried out of the PDF, positioned alongside RawLine. */
 export interface RawImage {
   /**
-   * Sidecar filename, assigned where the image is numbered (images.ts,
+   * Filename in the picture folder, assigned where the image is numbered (images.ts,
    * `toRawImages`) and never derived again.
    *
    * Deterministic from the page and the order on it, so re-converting the same
    * PDF reproduces the same `.fountain` and the same folder. It lives on the
    * raw image rather than being rebuilt at each stage because the name has to
-   * be one string in three places — the `[[img: ...]]` note, the sidecar file,
-   * and the manifest entry in each renderer — and a second derivation is a
-   * second per-page counter to keep in step.
+   * be one string in three places — the `[[img: ...]]` note, the file in the
+   * picture folder, and the manifest entry in each renderer (phase 2/3) — and
+   * a second derivation is a second per-page counter to keep in step.
    */
   file: string;
   pageNum: number;
@@ -147,8 +147,8 @@ export interface RawImage {
    *
    * The ONLY geometry that survives to here, and deliberately: a picture's
    * horizontal offset is not carried, because nothing places one by it. The
-   * renderers centre a figure (`.figure { text-align: center }`) and size it
-   * from `ImageRef.widthPct`, so a left edge would be a field with a plausible
+   * renderers (phase 2/3) are to centre a figure and size it from
+   * `ImageRef.widthPct`, so a left edge would be a field with a plausible
    * meaning and no reader — which is what `indent` was until 2026-08-12. */
   y: number;
   /**
@@ -168,8 +168,9 @@ export interface RawImage {
    * The OUTPUT dimensions are not a field beside it. They were, until
    * 2026-08-12, and nothing ever read them: the renderers work from the
    * `.fountain` and never see a `RawImage`, so there was no path to a consumer
-   * — and the MOBI arm's refusal to write a pixel width (mobi/html.ts) reads
-   * as contradicted by a `pxWidth` sitting two modules upstream. Anything that
+   * — and the MOBI arm's refusal to write a pixel width (mobi/html.ts, in the
+   * renderers' phase 2/3) would read as contradicted by a `pxWidth` sitting
+   * two modules upstream. Anything that
    * genuinely needs them can read the IHDR, which is where they are true. */
   bytes: Uint8Array;
 }

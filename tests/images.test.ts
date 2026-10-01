@@ -3,9 +3,11 @@
 // loop: a stub answers however it is written, and a regression in the loop
 // should not report against a file named for the parser module.
 //
-// MUST stay the first import, like extract.test.ts: pdf.mjs builds a
-// `new DOMMatrix()` at module scope, so evaluating it before the shim throws
-// ReferenceError on load and every test in the file fails as one.
+// Stays the first import, like extract.test.ts. Not because pdf.mjs cannot
+// load without it: on pdfjs-dist 6.3.289 a bare import loads under bun 1.3.14
+// (checked 2026-10-01). The modern build needs the DOMMatrix shim for
+// rendering, and quiet-pdfjs.ts has to patch console.warn before pdf.mjs is
+// evaluated or its module-scope notice prints; see pdfjs-shims.ts.
 import '../src/parser/pdfjs-shims';
 import { test, expect, describe } from 'bun:test';
 import { OPS } from 'pdfjs-dist/build/pdf.mjs';
@@ -159,8 +161,9 @@ describe('collectImagePlacements', () => {
     //
     // Which is a real judgement call, because we DIVERGE from pdf.js here: its
     // renderer makes restore() on an empty stack a no-op that keeps the CTM
-    // (pdf.mjs, `restore()`: `if (this.stateStack.length === 0) ... return`).
-    // extract.ts:190 chose otherwise and so does this walk. A viewer has to show
+    // (pdf.mjs, `CanvasGraphics.restore`: `if (this.stateStack.length === 0)
+    // ... return`). extract.ts's collectUnderlineMarks chose otherwise and so
+    // does this walk. A viewer has to show
     // something for a corrupt content stream; a best-effort extractor does not,
     // and would rather park one image at the origin, where every size floor
     // downstream catches it, than carry a matrix it no longer trusts across
@@ -247,9 +250,10 @@ describe('toRgb', () => {
 
   test('reads the Uint8Array pdf.js actually sends, not only a clamped one', () => {
     // Every image in tests/fixtures/images.pdf arrives as a plain Uint8Array:
-    // the direct DeviceRGB path hands back the decode stream's own buffer
-    // (pdf.worker.mjs:33974). Only the general colour-space fallback allocates
-    // a Uint8ClampedArray (:33784, :33794), so narrowing the field to the one a
+    // the direct DeviceRGB path in `PDFImage.createImageData` hands back the
+    // decode stream's own buffer. Only the general colour-space fallback in
+    // the same function allocates a Uint8ClampedArray, so narrowing the field
+    // to the one a
     // design probe happens to sample is a type no real image satisfies.
     const data = new Uint8Array([9, 8, 7]);
     expect([...toRgb({ width: 1, height: 1, kind: 2, data })!]).toEqual([9, 8, 7]);
@@ -373,17 +377,18 @@ describe('toRgb', () => {
     // Number.isFinite this returns 15 well-formed bytes labelled 2.5x2, and
     // png.ts's assertRgb throws on them a stage later, having documented that a
     // mismatch there can only be our own bug. pdf.js supplies the input:
-    // outside the branch that prefers the decoded image's own dimensions it
-    // checks the dict as `typeof width === "number" && width > 0`
-    // (pdf.worker.mjs:33205).
+    // outside the branch that prefers the decoded image's own dimensions, the
+    // `PDFImage` constructor checks the dict as
+    // `typeof width === "number" && width > 0`.
     expect(toRgb({ width: 2.5, height: 2, kind: 2, data: new Uint8Array(64) })).toBeNull();
     expect(toRgb({ width: 2, height: Number.NaN, kind: 2, data: new Uint8Array(64) })).toBeNull();
   });
 
   test('refuses the bitmap shape, where pdf.js sends no pixels at all', () => {
-    // `{ data: null, bitmap }` is what createImageData returns when it has an
-    // ImageBitmap: through OffscreenCanvas (pdf.worker.mjs:33809), or through
-    // the ungated `#getImage` (:33686) that only a missing ImageDecoder stops.
+    // `{ data: null, bitmap }` is what `PDFImage.createImageData` returns when
+    // it has an ImageBitmap: through OffscreenCanvas, or through `#getImage`,
+    // which it asks unconditionally and which a JPEG stream answers only with
+    // an ImageDecoder (see toRgb for both gates, as read on 6.3.289).
     // Both shut under Bun today. No cast needed to reach this, and that is the
     // point: the field is typed for what pdf.js actually returns, so the guard
     // is visibly load-bearing rather than visibly dead.
@@ -741,8 +746,9 @@ describe('toRawImages', () => {
   });
 
   test('sorts by page ascending and y descending, whatever order it was painted', () => {
-    // Task 7 merges this array against the element stream on exactly that
-    // ordering, so it has to be a fact rather than a hope: a generator is free
+    // `insertImages` in src/parser/index.ts merges this array against the
+    // element stream on exactly that ordering, so it has to be a fact rather
+    // than a hope: a generator is free
     // to paint the bottom panel of a strip first, and page order out of
     // extract.ts is only as good as the paint order.
     const imgs = toRawImages(
@@ -755,8 +761,9 @@ describe('toRawImages', () => {
   });
 });
 
-// The predicate the CLI deletes by. A drift between the namer and this is
-// silent — the sidecar prune simply stops recognizing its own files and leaves
+// The predicate the picture folder's prune deletes by (src/library-images.ts).
+// A drift between the namer and this is silent — the picture folder's prune
+// simply stops recognizing its own files and leaves
 // a stale picture in the book — so the pairing is pinned on real output,
 // including the sizes `padStart` does not truncate.
 describe('isGeneratedImageFile', () => {

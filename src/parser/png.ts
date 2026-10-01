@@ -1,7 +1,8 @@
 // Minimal PNG encoder and box downscaler.
 //
 // pdf.js hands back DECODED pixels and never the original JPEG (there is no
-// public route to the raw stream, as of pdfjs-dist 6.2.108), so anything
+// public route to the raw stream, as of pdfjs-dist 6.2.108, and still none on
+// 6.3.289's PDFDocumentProxy or PDFPageProxy, re-checked), so anything
 // Screepub carries into a book is a re-encode. That makes the bytes ours to
 // choose, which is the whole reason this file exists rather than a
 // dependency: the same judgement that produced the hand-built PalmDB
@@ -171,7 +172,7 @@ const PNG_HEADER_BYTES = 29;
  * a 45-byte prefix of a real plate is clean here and clean in epubcheck, so a
  * file with a good header and ruined pixels is a corrupt picture that both
  * tools pass. That is a decoder's job, and a decoder is not what stands
- * between a sidecar folder and a book that will not validate.
+ * between a picture folder and a book that will not validate.
  *
  * Nothing this engine encodes can fail it — `encodePng` writes this same
  * signature and IHDR below — so the callers that need it are the ones handling
