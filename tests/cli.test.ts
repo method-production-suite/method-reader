@@ -425,9 +425,10 @@ describe('the picture folder beside the .fountain', () => {
 
   test('--no-fountain writes no folder either', async () => {
     // The folder is the .fountain's other half: the notes are what name these
-    // files, so suppressing one suppresses both. Today that does discard the
-    // pixels (the book shows no pictures yet, so it holds no copy of its own),
-    // which is what asking for no intermediates means.
+    // files, so suppressing one suppresses both. The pictures are not lost
+    // with it: the book carries its own copy of every one it shows. What goes
+    // is only the copy a later render from the text would read, and there is
+    // no text to render from, which is what asking for no intermediates means.
     const dir = freshDir();
     const { stdout } = await runCli([
       `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--no-fountain', '--json',
@@ -438,6 +439,9 @@ describe('the picture folder beside the .fountain', () => {
     // folder, and the conversion produced them.
     expect(res.imageCount).toBe(2);
     expect(readdirSync(dir)).toEqual(['out.epub']);
+    const zip = await JSZip.loadAsync(readFileSync(join(dir, 'out.epub')));
+    expect(Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir).sort())
+      .toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
   }, 60000);
 
   test('--fountain elsewhere takes the folder with it', async () => {

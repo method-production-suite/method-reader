@@ -43,7 +43,9 @@ describe('which pictures torture.pdf keeps (#19)', () => {
 
   test('the letterhead on every sheet is refused as furniture, and nothing else is refused', () => {
     // The furniture rule at document scale: one logo on all 17 sheets, far
-    // past the three-sheet threshold. images.pdf owns the other five rules.
+    // past the three-sheet threshold. images.pdf refuses one picture by each
+    // of four rules (pixels, width, furniture, background), and height and
+    // area are pinned only by hand-built candidates in tests/artwork.test.ts.
     expect(out.imageStats.droppedBy).toEqual({
       pixels: 0, width: 0, height: 0, area: 0, furniture: 17, background: 0,
     });

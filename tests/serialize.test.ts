@@ -347,8 +347,10 @@ describe('toFountain with images', () => {
     // The .fountain is the cache boundary: toFountain output must not move
     // when a rendering option changes, or the app re-renders a "new" book
     // from a cached parse. `preserveFontShifts` gates RENDERING, so it may not
-    // move a byte here. No option gates pictures yet; when one does, its flip
-    // belongs in this test beside this one, for the same reason.
+    // move a byte here. Nor may `includeImages`, the option that gates
+    // pictures: it decides whether the BOOK shows a figure, and the note has
+    // to stay in the text either way so that turning pictures back on finds
+    // them again.
     const doc = () =>
       screenplay([
         el({ text: 'INT. A - DAY', type: 'scene' }),
@@ -361,6 +363,9 @@ describe('toFountain with images', () => {
     // dropped the note under BOTH settings.
     expect(canonical).toContain('[[img: p001-01.png w=71]]');
     expect(toFountain(doc(), undefined, { ...DEFAULT_FORMAT_OPTIONS, preserveFontShifts: false }))
+      .toBe(canonical);
+    expect(DEFAULT_FORMAT_OPTIONS.includeImages).toBe(true);
+    expect(toFountain(doc(), undefined, { ...DEFAULT_FORMAT_OPTIONS, includeImages: false }))
       .toBe(canonical);
   });
 
