@@ -1600,6 +1600,21 @@ the Mac app should move those two; nothing in the engine needs to change.
   Both picture books pass epubcheck clean, conversion time is unchanged,
   and the 60-picture deck's Tune re-render answers 22 MB in 0.19 s on the
   engine side.
+- **Measured on the corpus for the MOBI, 2026-10-01 (phase 2 tip against
+  phase 3's):** the `.fountain`, the picture folders and the EPUB are
+  identical for all six scripts that convert, and so is the MOBI of every
+  script without a picture; with `includeImages` off every MOBI equals the
+  phase 2 one. In the two picture scripts each image record is exactly the
+  picture the EPUB ships, in first-use order, every `recindex` opens the
+  record the EPUB shows at that spot, and the text is the old text plus
+  figure paragraphs and page breaks only. Conversion time is unchanged. What
+  it costs is size: the one-picture script's MOBI goes from 149 KB to
+  1.59 MB, the 60-picture deck's from 17 KB to 16.6 MB, and 23 of the 61
+  records are over 127 KiB (the largest 2.0 MB), which is why the probe
+  below matters. Two notes, neither from this phase: the deck carries 7
+  pictures byte-identical to another (deduplicated by name, not content,
+  2.76 MB), and the MOBI's unique id is hashed from the text's length, so
+  flipping `includeImages` gives a picture book a new one.
 - **On a device:** AZW3 and KFX get the pictures through Calibre from the
   EPUB, and the engine's MOBI carries its own (above). None of it is
   verified on device yet, and it is the subject of the torture.pdf pictures
