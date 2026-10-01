@@ -117,6 +117,32 @@ describe('tokensToBody', () => {
     expect(body.toc[1].title).toBe('INT. LAB - DAY');
   });
 
+  test('a picture note before the first heading opens no section', () => {
+    // A standalone note renders nothing, so a group made only of notes is an
+    // EMPTY section: an "Opening" in the nav, a blank page wherever
+    // scenePageBreaks is on, and every scene anchor moved one along. The
+    // whole body is compared, files and toc and page list, with and without a
+    // title page, because "the book does not change" is the claim.
+    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const note = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+    for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+      const plain = bodyOf(head + script);
+      expect(bodyOf(head + note + script)).toEqual(plain);
+      expect(bodyOf(head + note + note + script)).toEqual(plain);
+    }
+    expect(bodyOf(note + script).toc.map((e) => e.title)).toEqual(['INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+  });
+
+  test('a note ahead of real opening content leaves that Opening as it was', () => {
+    // Skipping the note must not swallow the cold open that follows it.
+    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const open = 'A cold open.\n\nINT. LAB - DAY\n\nWork.\n';
+    const noted = bodyOf(`[[img: p001-01.png w=100 full]]\n\n${open}`);
+    expect(noted).toEqual(bodyOf(open));
+    expect(noted.toc[0].title).toBe('Opening');
+  });
+
   test('script with no scene headings yields one section', () => {
     const body = tokensToBody(new Fountain().parse('Just action.\n\nMore action.\n', true).tokens);
     expect(body.files).toHaveLength(1);
@@ -672,6 +698,16 @@ describe('tokensToPreviewHtml', () => {
   test('empty tokens still fall back to a styled document', () => {
     const html = tokensToPreviewHtml([]);
     expect(html).toContain('<style>');
+  });
+
+  test('a picture note before the first heading adds no section to the preview', () => {
+    // The Read window builds its scene rail from every section.scene in this
+    // document, so an empty one would be an "Opening" the script never had.
+    const of = (src: string) => tokensToPreviewHtml(new Fountain().parse(src, true).tokens);
+    const script = 'Title: T\n\nINT. KITCHEN - DAY\n\nA kettle screams.\n';
+    const noted = of(script.replace('INT.', '[[img: p001-01.png w=100 full]]\n\nINT.'));
+    expect(noted).toBe(of(script));
+    expect(noted.match(/<section class="scene"/g)).toHaveLength(1);
   });
 });
 

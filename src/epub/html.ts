@@ -277,6 +277,13 @@ export function tokensToBody(
       current = { title: t.text ?? 'Scene', tokens: [t] };
       groups.push(current);
     } else {
+      // A standalone note renders nothing (renderBlocks' default case), so
+      // one may not be what opens the Opening: a group of nothing but notes is
+      // an empty section, which is an "Opening" in the contents, a blank page
+      // under scenePageBreaks and every scene anchor one along. toFountain
+      // writes a title card's `[[img: ...]]` exactly there. Dropping it loses
+      // nothing, since there is no section yet for it to be invisible in.
+      if (!current && t.type === 'note') continue;
       if (!current) {
         current = { title: 'Opening', tokens: [] };
         groups.push(current);

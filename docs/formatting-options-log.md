@@ -1260,7 +1260,11 @@ the Mac app should move those two; nothing in the engine needs to change.
 - **The book does not change in this phase (phase 1 of images in the
   book).** Both renderers drop the note
   unread: a standalone note is a `note` token, which neither renderer's switch
-  emits, and a note folded into a line goes through `stripNotes` (#18). So the
+  emits, and a note folded into a line goes through `stripNotes` (#18). A
+  note above the first heading (where a title card's lands) opens no section
+  either: `tokensToBody` skips it while no section is open, because a section
+  of notes alone would be an empty "Opening" in the contents, a blank page
+  under `scenePageBreaks`, and every scene anchor one along. So the
   EPUB and the MOBI are what they were before this entry, and the reader never
   sees a picture yet. Showing them is phase 2 (the `includeImages` option and
   EPUB figures), phase 3 (MOBI image records) and phase 4 (cover promotion):

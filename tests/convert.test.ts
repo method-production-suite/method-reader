@@ -198,6 +198,26 @@ describe('convertPdf carries the pictures', () => {
     expect(result.warnings).toEqual([]);
   }, 60000);
 
+  test('the book lists exactly the script’s headings, with no Opening the notes made', async () => {
+    // images.pdf's title card is a note ABOVE the first heading in the
+    // .fountain. The note renders nothing, so if it opened a section the book
+    // would gain an empty one, an "Opening" in its contents, and every scene
+    // anchor one along, on a script whose book is supposed not to change.
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    expect(result.fountainText.indexOf('[[img: p001-01.png')).toBeLessThan(
+      result.fountainText.indexOf('INT. ARCHIVE ROOM - DAY'),
+    );
+    const zip = await JSZip.loadAsync(result.epub);
+    const nav = await zip.file('OEBPS/nav.xhtml')!.async('string');
+    const toc = nav.slice(nav.indexOf('epub:type="toc"'), nav.indexOf('</nav>'));
+    const entries = [...toc.matchAll(/<a href="[^"#]*#(sc-\d+)">([^<]*)<\/a>/g)];
+    expect(entries.map((m) => m[2])).toEqual(result.screenplay!.scenes.map((s) => s.heading));
+    expect(entries[0][1]).toBe('sc-001');
+    const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
+    expect(body).not.toMatch(/<section class="scene" id="[^"]*">\s*<\/section>/);
+    expect(body.match(/<section class="scene"/g)).toHaveLength(result.screenplay!.scenes.length);
+  }, 60000);
+
   test('a healthy picture document warns about nothing', async () => {
     // The two warnings below are exceptional by design. If either fired on a
     // document whose pictures all arrived, it would fire on every conversion,
