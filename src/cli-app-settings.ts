@@ -5,7 +5,7 @@
 // `lastRoute` (piece B) is not writable from here. Like the other verb
 // handlers, this RETURNS a result and never prints; cli.ts owns stdout.
 import { accessSync, constants, mkdirSync } from 'node:fs';
-import { CliError, errorMessage } from './cli-errors';
+import { CliError, plainReason } from './cli-errors';
 import {
   chosenLibraryPath, envLibraryOverride, libraryRoot, platformLibraryDefault,
   resolvedIfAbsolute,
@@ -63,23 +63,6 @@ export interface AppSettingsResult {
   /** Whether a new library conversion keeps the settings it started from
    * (the pin in src/cli.ts): true unless `false` is stored. */
   keepScriptSettings: boolean;
-}
-
-/** Node's fs error codes, translated to a sentence fragment a person who has
- * never seen an errno can act on. Falls back to the raw message for
- * anything not covered, so a code this list has not met yet is still
- * reported rather than swallowed. */
-function plainReason(err: unknown): string {
-  const code = (err as NodeJS.ErrnoException)?.code;
-  if (code === 'EACCES' || code === 'EPERM') return 'permission denied';
-  if (code === 'ENOTDIR') return 'part of that path is not a folder';
-  // mkdirSync(recursive) on a path that ALREADY EXISTS AS A FILE (the exact
-  // target, not a parent segment: that case is ENOTDIR above) fails EEXIST.
-  if (code === 'EEXIST') return 'that is a file, not a folder';
-  if (code === 'EROFS') return 'that location is read-only';
-  if (code === 'ENOSPC') return 'no space left on the disk';
-  if (code === 'ENAMETOOLONG') return 'that path is too long';
-  return errorMessage(err);
 }
 
 /** Pure check for `libraryPath`: no filesystem access at all. `null` reads

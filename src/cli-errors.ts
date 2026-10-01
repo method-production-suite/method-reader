@@ -13,6 +13,8 @@ export interface JsonError {
     | 'internal'
     // The library folder could not be opened or made.
     | 'library'
+    // An output we could not write, as opposed to an input we could not read.
+    | 'unwritable'
     // Device commands (piece B). Same contract, same stdout rule.
     | 'no-devices'
     | 'ambiguous-device'
@@ -88,4 +90,40 @@ export class CliError extends Error {
  * every site that turns a caught unknown into a contract error. */
 export function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** A filesystem answer that means "not there, not allowed, or no room", as
+ * opposed to a bug in us. */
+const WRITE_REFUSALS = new Set([
+  'ENOENT', 'EACCES', 'EPERM', 'EEXIST', 'ENOSPC', 'EROFS', 'EISDIR', 'ENOTDIR',
+]);
+
+/** Whether a failed write is the filesystem refusing, and so `unwritable`:
+ * the caller's to fix. Anything else is left to the caller's catch-all, so a
+ * bug of ours still arrives as `internal` rather than dressed up as the
+ * disk's fault. */
+export function isWriteRefusal(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException)?.code;
+  return code !== undefined && WRITE_REFUSALS.has(code);
+}
+
+/** Node's fs error codes, translated to a sentence fragment a person who has
+ * never seen an errno can act on. Falls back to the raw message for
+ * anything not covered, so a code this list has not met yet is still
+ * reported rather than swallowed. Shared by app-settings (making the library
+ * folder, saving the settings file) and a conversion's own output writes. */
+export function plainReason(err: unknown): string {
+  const code = (err as NodeJS.ErrnoException)?.code;
+  if (code === 'EACCES' || code === 'EPERM') return 'permission denied';
+  if (code === 'ENOTDIR') return 'part of that path is not a folder';
+  // mkdirSync(recursive) on a path that ALREADY EXISTS AS A FILE (the exact
+  // target, not a parent segment: that case is ENOTDIR above) fails EEXIST.
+  if (code === 'EEXIST') return 'that is a file, not a folder';
+  // The mirror image: a file written (or renamed) onto a path that is a
+  // folder.
+  if (code === 'EISDIR') return 'that is a folder, not a file';
+  if (code === 'EROFS') return 'that location is read-only';
+  if (code === 'ENOSPC') return 'no space left on the disk';
+  if (code === 'ENAMETOOLONG') return 'that path is too long';
+  return errorMessage(err);
 }

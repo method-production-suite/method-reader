@@ -31,6 +31,7 @@ export const HEADINGS = {
   'bad-options': 'Bad settings',
   'usage': 'Bad settings',
   'library': 'No way into the library',
+  'unwritable': 'Screepub could not save this script\'s files',
   'internal': 'The engine did not answer',
 };
 

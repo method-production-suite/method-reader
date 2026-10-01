@@ -1,8 +1,8 @@
 import { afterAll, describe, test, expect } from 'bun:test';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mapConversionError } from '../src/cli-errors';
+import { isWriteRefusal, mapConversionError } from '../src/cli-errors';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const FIXTURES = new URL('./fixtures/', import.meta.url).pathname;
@@ -187,13 +187,15 @@ describe('cli --json contract', () => {
 // not answer". Now it is refused before anything is read or written, in the
 // CLI's own one line, naming the folder. The folder is never made for the
 // caller: `-o Docuemnts/x.epub` must not grow a Docuemnts folder.
+/** The three output paths a caller can name, each with a file name it takes. */
+const OUTPUTS = [
+  ['-o', 'x.epub'],
+  ['--fountain', 'x.fountain'],
+  ['--preview-html', 'x.html'],
+] as const;
+
 describe('an output folder that does not exist', () => {
   const missing = `${SCRATCH}/no-such-folder`;
-  const outputs = [
-    ['-o', 'x.epub'],
-    ['--fountain', 'x.fountain'],
-    ['--preview-html', 'x.html'],
-  ] as const;
 
   /** The run, with `flag` aimed into the missing folder. Under the other two
    * flags -o still names a real folder, so the book NOT being there proves
@@ -204,7 +206,7 @@ describe('an output folder that does not exist', () => {
     return args;
   }
 
-  for (const [flag, file] of outputs) {
+  for (const [flag, file] of OUTPUTS) {
     test(`${flag}: one line naming the folder, nothing written`, async () => {
       const beside = `${SCRATCH}/missing-folder-text${flag}.epub`;
       const { stdout, stderr, exitCode } = await runCli(argsFor(flag, file, beside));
@@ -248,6 +250,105 @@ describe('an output folder that does not exist', () => {
   }, 60000);
 });
 
+// The rest of what can stop an output being written. A path that IS a folder
+// is known before converting, so it is refused there like a missing folder.
+// A write that fails anyway (no permission, a full disk, a folder sitting
+// where a default output goes) used to end as a stack trace, or as code
+// `internal` naming the hidden `.<name>.<pid>.tmp` the write goes through.
+// It is now `unwritable`, in one line, naming the path the caller chose. Only
+// the filesystem refusing gets that code: a throw that is a bug of ours stays
+// `internal` (isWriteRefusal, below).
+describe('an output that cannot be written', () => {
+  for (const [flag, file] of OUTPUTS) {
+    test(`${flag} naming a folder is refused before converting`, async () => {
+      const folder = `${SCRATCH}/names-a-folder${flag}`;
+      mkdirSync(folder);
+      const beside = `${SCRATCH}/names-a-folder-beside${flag}.epub`;
+      const args = [FIXTURE_PDF, flag, folder, '--json'];
+      if (flag !== '-o') args.push('-o', beside);
+      const { stdout, exitCode } = await runCli(args);
+      expect(exitCode).toBe(1);
+      const answer = JSON.parse(stdout);
+      expect(answer.error.code).toBe('usage');
+      expect(answer.error.message).toContain(flag);
+      expect(answer.error.message).toContain(folder);
+      expect(answer.error.message).toContain('is a folder');
+      expect(existsSync(beside)).toBe(false);
+    }, 60000);
+
+    test(`${flag} into a folder with no write permission: unwritable, naming the path`, async () => {
+      const locked = `${SCRATCH}/no-write${flag}`;
+      mkdirSync(locked);
+      chmodSync(locked, 0o555);
+      const target = `${locked}/${file}`;
+      const args = [FIXTURE_PDF, flag, target, '--json'];
+      if (flag !== '-o') args.push('-o', `${SCRATCH}/no-write-beside${flag}.epub`);
+      try {
+        const { stdout, exitCode } = await runCli(args);
+        expect(exitCode).toBe(1);
+        expect(stdout.trim().split('\n')).toHaveLength(1);
+        const answer = JSON.parse(stdout);
+        expect(answer.ok).toBe(false);
+        expect(answer.error.code).toBe('unwritable');
+        expect(answer.error.message).toContain(target);
+        expect(answer.error.message).toContain('permission denied');
+        expect(answer.error.message).not.toContain('.tmp');
+      } finally {
+        chmodSync(locked, 0o755);
+      }
+    }, 60000);
+  }
+
+  test('without --json it is one line, not a stack trace', async () => {
+    const locked = `${SCRATCH}/no-write-text`;
+    mkdirSync(locked);
+    chmodSync(locked, 0o555);
+    try {
+      const { stdout, stderr, exitCode } = await runCli([FIXTURE_PDF, '-o', `${locked}/x.epub`]);
+      expect(exitCode).toBe(1);
+      expect(stdout).toBe('');
+      const lines = stderr.trim().split('\n');
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toStartWith('screepub: ');
+      expect(lines[0]).toContain(`${locked}/x.epub`);
+      expect(lines[0]).not.toContain('—');
+    } finally {
+      chmodSync(locked, 0o755);
+    }
+  }, 60000);
+
+  test('a folder where the default output goes: named in plain words, no temp file left', async () => {
+    // No -o, so no path to check up front: the book goes beside the input,
+    // and a folder already sits at that name.
+    const dir = `${SCRATCH}/default-collides`;
+    mkdirSync(dir);
+    writeFileSync(`${dir}/x.pdf`, new Uint8Array(await Bun.file(FIXTURE_PDF).arrayBuffer()));
+    mkdirSync(`${dir}/x.epub`);
+    const { stdout, exitCode } = await runCli([`${dir}/x.pdf`, '--no-fountain', '--json']);
+    expect(exitCode).toBe(1);
+    const answer = JSON.parse(stdout);
+    expect(answer.error.code).toBe('unwritable');
+    expect(answer.error.message).toContain(`${dir}/x.epub`);
+    expect(answer.error.message).toContain('a folder, not a file');
+    expect(answer.error.message).not.toContain('.tmp');
+    expect(readdirSync(dir).sort()).toEqual(['x.epub', 'x.pdf']);
+  }, 60000);
+
+  test('--debug\'s dump, written in place rather than through a temp file, fails the same way', async () => {
+    const dir = `${SCRATCH}/debug-collides`;
+    mkdirSync(dir);
+    mkdirSync(`${dir}/x.elements.json`);
+    const { stdout, exitCode } = await runCli([
+      FIXTURE_PDF, '-o', `${dir}/x.epub`, '--no-fountain', '--debug', '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const answer = JSON.parse(stdout);
+    expect(answer.error.code).toBe('unwritable');
+    expect(answer.error.message).toContain(`${dir}/x.elements.json`);
+    expect(answer.error.message).toContain('a folder, not a file');
+  }, 60000);
+});
+
 describe('conversion error mapping', () => {
   test('password detection is typed, not substring', () => {
     expect(mapConversionError({ name: 'PasswordException', message: 'No password given' })?.code)
@@ -262,6 +363,16 @@ describe('conversion error mapping', () => {
       const err = Object.assign(new Error(code), { code });
       expect(mapConversionError(err)?.code).toBe('unreadable');
     }
+  });
+
+  test('only the filesystem refusing counts as unwritable', () => {
+    for (const code of ['ENOENT', 'EACCES', 'EPERM', 'EEXIST', 'ENOSPC', 'EROFS', 'EISDIR', 'ENOTDIR']) {
+      expect(`${code}: ${isWriteRefusal(Object.assign(new Error(code), { code }))}`).toBe(`${code}: true`);
+    }
+    // A bug of ours must arrive as `internal`, not be dressed up as the
+    // disk's fault.
+    expect(isWriteRefusal(new TypeError('cannot read properties of undefined'))).toBe(false);
+    expect(isWriteRefusal('a string throw')).toBe(false);
   });
 
   test('a corrupt PDF maps to unreadable with pdf.js named exceptions', () => {

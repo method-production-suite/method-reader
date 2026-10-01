@@ -1167,7 +1167,7 @@ describe('what the Convert surface decides', () => {
 
   test('every code the engine can refuse with gets a heading that names a cause', () => {
     const codes = ['scanned', 'not-screenplay', 'password', 'unreadable',
-      'unsupported-type', 'bad-options', 'usage', 'internal'];
+      'unsupported-type', 'bad-options', 'usage', 'unwritable', 'internal'];
     const headings = new Set<string>();
     for (const code of codes) {
       const { heading } = convert.failureFor({ code, message: 'x' });

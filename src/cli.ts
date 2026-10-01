@@ -15,7 +15,9 @@ import {
   type ConvertResult,
   type ConvertStage,
 } from './convert';
-import { mapConversionError, CliError, errorMessage, type JsonError } from './cli-errors';
+import {
+  mapConversionError, CliError, errorMessage, isWriteRefusal, plainReason, type JsonError,
+} from './cli-errors';
 import { adoptSidecar, existingLibraryOutput, libraryOutput, libraryRoot } from './library';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions, keepsScriptSettings } from './settings/app-defaults';
@@ -392,7 +394,7 @@ async function writeFileAtomic(
   data: Uint8Array | string,
   enc?: BufferEncoding,
 ): Promise<void> {
-  const tmp = join(dirname(path), `.${basename(path)}.${process.pid}.tmp`);
+  const tmp = tempPathFor(path);
   try {
     await writeFile(tmp, data, enc);
     await rename(tmp, path);
@@ -400,6 +402,40 @@ async function writeFileAtomic(
     await rm(tmp, { force: true }).catch(() => {});
     throw error;
   }
+}
+
+/** The hidden temp sibling writeFileAtomic writes through. One derivation,
+ * so writeOutput's failure message can find it and take it out. */
+function tempPathFor(path: string): string {
+  return join(dirname(path), `.${basename(path)}.${process.pid}.tmp`);
+}
+
+/** One of this conversion's outputs, written atomically, or the run ends
+ * here as `unwritable` in one line naming `path`. A write the filesystem
+ * refuses is the caller's to fix (a read-only folder, a full disk), not an
+ * engine fault, and it used to reach them as a stack trace, or as
+ * `internal`. The reason is in plain words where plainReason knows the code;
+ * where it does not, the raw one names the temp file, which the caller never
+ * chose and cannot find, so `path` replaces it (cli-export's resolveOut does
+ * the same for a saved copy). */
+async function writeOutput(
+  path: string,
+  data: Uint8Array | string,
+  enc?: BufferEncoding,
+): Promise<void> {
+  try {
+    await writeFileAtomic(path, data, enc);
+  } catch (err) {
+    writeFailed(path, err);
+  }
+}
+
+/** The one way a failed output write is reported. A throw that is not the
+ * filesystem refusing goes on up to the catch-all, as `internal`. */
+function writeFailed(path: string, err: unknown): never {
+  if (!isWriteRefusal(err)) throw err;
+  const reason = plainReason(err).split(tempPathFor(path)).join(path);
+  fail({ code: 'unwritable', message: `could not write ${path}: ${reason}` });
 }
 
 /** Print one line on stdout and WAIT for it to leave this process.
@@ -445,17 +481,21 @@ function fail(error: JsonError): never {
   process.exit(1);
 }
 
-/** Refuse an output path whose folder is not there, before any work is done.
+/** Refuse an output path that cannot be a file in a folder, before any work
+ * is done: its folder is not there, is a file, or the path is itself a
+ * folder.
  *
- * Refused, not made. The library makes its own folders because the engine
- * chose that path; a path the caller typed is theirs, and making folders
- * from it turns a typo (`-o Docuemnts/x.epub`) into a stray folder holding
- * the book. Refusing is also the choice that can be relaxed later without
- * breaking a caller, where taking folder-making away again could not.
+ * A missing folder is refused, not made. The library makes its own folders
+ * because the engine chose that path; a path the caller typed is theirs,
+ * and making folders from it turns a typo (`-o Docuemnts/x.epub`) into a
+ * stray folder holding the book. Refusing is also the choice that can be
+ * relaxed later without breaking a caller, where taking folder-making away
+ * again could not.
  *
- * Only a folder that is missing, or is a file, is answered here. Any other
- * reason stat gives (no permission to look) is left to the write itself. */
-function checkOutputFolder(flag: string, path: string): void {
+ * Only what stat can say for certain is answered here. Any other reason
+ * (no permission to look) is left to the write itself, which writeOutput
+ * reports as `unwritable`. */
+function checkOutputPath(flag: string, path: string): void {
   const dir = dirname(path);
   let isFolder: boolean;
   try {
@@ -470,6 +510,15 @@ function checkOutputFolder(flag: string, path: string): void {
   }
   if (!isFolder) {
     fail({ code: 'usage', message: `${flag} needs a folder to write into, and ${dir} is a file` });
+  }
+  let pathIsFolder = false;
+  try {
+    pathIsFolder = statSync(path).isDirectory();
+  } catch {
+    // Not there yet, which is the usual case: the write makes it.
+  }
+  if (pathIsFolder) {
+    fail({ code: 'usage', message: `${flag} needs a file name, and ${path} is a folder` });
   }
 }
 
@@ -981,16 +1030,17 @@ async function main() {
       message: 'pass --library or -o, not both: -o already says where the output goes',
     });
   }
-  // The three paths a caller can name, held to one rule (checkOutputFolder),
+  // The three paths a caller can name, held to one rule (checkOutputPath),
   // and checked before the conversion: finding a missing folder only at the
   // write cost a whole conversion and ended in node:fs's ENOENT and a stack
   // trace. The .mobi and --debug's .elements.json go beside the -o file, so
-  // its check covers them. Only for an input this run can convert: any other
-  // gets the unsupported-type refusal, which says the more useful thing.
+  // its check covers their folder. Only for an input this run can convert:
+  // any other gets the unsupported-type refusal, which says the more useful
+  // thing. What no check can see coming is writeOutput's to report.
   if (isPdf || isFountain) {
-    if (values.output !== undefined) checkOutputFolder('-o', values.output);
-    if (values.fountain !== undefined) checkOutputFolder('--fountain', values.fountain);
-    if (values['preview-html']) checkOutputFolder('--preview-html', values['preview-html']);
+    if (values.output !== undefined) checkOutputPath('-o', values.output);
+    if (values.fountain !== undefined) checkOutputPath('--fountain', values.fountain);
+    if (values['preview-html']) checkOutputPath('--preview-html', values['preview-html']);
   }
   let format: Record<string, unknown> | undefined;
   if (values.options !== undefined && values['options-json'] !== undefined) {
@@ -1193,28 +1243,35 @@ async function main() {
   // -o into a library folder keeps everything together.
   const stem = join(dirname(epubPath), basename(epubPath, extname(epubPath)));
 
-  await writeFileAtomic(epubPath, result.epub);
+  await writeOutput(epubPath, result.epub);
 
   let mobiPath: string | undefined;
   if (values.mobi && result.mobi) {
     mobiPath = `${stem}.mobi`;
-    await writeFileAtomic(mobiPath, result.mobi);
+    await writeOutput(mobiPath, result.mobi);
   }
 
   let fountainPath: string | undefined;
   if (isPdf && !values['no-fountain']) {
     fountainPath = values.fountain ?? `${stem}.fountain`;
-    await writeFileAtomic(fountainPath, result.fountainText, 'utf8');
+    await writeOutput(fountainPath, result.fountainText, 'utf8');
   }
   let previewPath: string | undefined;
   if (values['preview-html']) {
     previewPath = values['preview-html'];
-    await writeFileAtomic(previewPath, result.previewHtml, 'utf8');
+    await writeOutput(previewPath, result.previewHtml, 'utf8');
   }
   let debugPath: string | undefined;
   if (values.debug && result.screenplay) {
     debugPath = `${stem}.elements.json`;
-    await writeFile(debugPath, JSON.stringify(result.screenplay, null, 2), 'utf8');
+    // In place, not through writeOutput's temp file (sidecar.rs's quit
+    // comment says so, and a test holds it to that); only a failure is
+    // reported the same way.
+    try {
+      await writeFile(debugPath, JSON.stringify(result.screenplay, null, 2), 'utf8');
+    } catch (err) {
+      writeFailed(debugPath, err);
+    }
   }
 
   // Placed after every write above, not right after the library folder
