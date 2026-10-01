@@ -1322,8 +1322,9 @@ describe('what the Convert surface decides', () => {
 
   // The other half of the pin above: the sequence is read off the engine
   // itself rather than typed out here, so a change to the shares in
-  // src/convert.ts or to the CLI's throttle shows up as a failing test rather
-  // than as a stuck bar. Once without pictures and once with, because the two
+  // src/convert.ts shows up as a failing test rather than as a stuck bar. (A
+  // throttle that drops a stage's first line does not fail here, since later
+  // lines still name the stage; tests/cli.test.ts pins that.) Once without pictures and once with, because the two
   // take different roads through the stages.
   async function engineLabels(fixture: string) {
     const root = new URL('..', import.meta.url).pathname;

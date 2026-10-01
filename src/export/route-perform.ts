@@ -127,7 +127,7 @@ export const realSizeOf: SizeOf = (path) => statSync(path).size;
 function tooLargeForEmail(bytes: number): string {
   const mb = String(Math.ceil(bytes / 100_000) / 10);
   return `This book is too large for Kindle email. It is ${mb} MB, and Amazon takes up to 50 MB by email ` +
-    'and drops anything larger without a word. Send it with Send to Kindle instead, which takes up to 200 MB.';
+    'and drops anything larger without a word. Send it with the Send to Kindle app or web page instead, which take up to 200 MB.';
 }
 
 /** A new Mail message with the book attached. Only offered when Apple Mail

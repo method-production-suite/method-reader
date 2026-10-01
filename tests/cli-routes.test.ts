@@ -465,7 +465,7 @@ describe("route email-to-kindle: Amazon's 50 MB limit", () => {
   // seam: no test here writes a 50 MB file.
   const tooLarge = (mb: string) =>
     `This book is too large for Kindle email. It is ${mb} MB, and Amazon takes up to 50 MB by email ` +
-    'and drops anything larger without a word. Send it with Send to Kindle instead, which takes up to 200 MB.';
+    'and drops anything larger without a word. Send it with the Send to Kindle app or web page instead, which take up to 200 MB.';
 
   test('a book over the limit is refused before Mail opens, naming Send to Kindle, and is NOT remembered', async () => {
     const epub = book();

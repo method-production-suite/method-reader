@@ -69,7 +69,7 @@ export type ConvertStage = 'parse' | 'pictures' | 'render';
  * Reading the pages dominates wall-clock on a script without pictures, which
  * is most of them, so it owns the largest share. Decoding the pictures
  * dominates on a picture-heavy script (a 60-picture document spends about
- * 17 s there, most of its conversion), so it gets a share of its own and the
+ * 15 s of its 17 s conversion there), so it gets a share of its own and the
  * bar keeps moving through it. The shares are fixed before the text pass has
  * seen whether there are any pictures, so a script without them steps
  * straight from 0.6 to 0.85 as its pages finish: a jump forward, never a

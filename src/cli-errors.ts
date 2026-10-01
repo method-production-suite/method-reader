@@ -26,9 +26,10 @@ export interface JsonError {
     | 'kfx-install-failed'
     // Showing a file in the file manager (parity piece C).
     | 'reveal-failed'
-    // The route verb (parity piece B): a route that cannot fire here (its
-    // message is the row's fix), and one whose app, page or folder did not
-    // open (its message names which).
+    // The route verb (parity piece B): a route that cannot fire here, or
+    // cannot carry this book (Kindle email past Amazon's size limit); its
+    // message is the fix. And one whose app, page or folder did not open
+    // (its message names which).
     | 'route-unavailable'
     | 'route-failed'
     // The picture folder beside the .fountain could not be written. An
