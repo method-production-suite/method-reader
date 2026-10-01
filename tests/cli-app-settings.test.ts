@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { appSettingsCommand } from '../src/cli-app-settings';
 import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
-import { readAppSettings, writeAppSettings } from '../src/settings/app';
+import { READER_DEVICES, readAppSettings, writeAppSettings } from '../src/settings/app';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-cli-app-settings-'));
@@ -591,8 +591,107 @@ describe('appSettingsCommand: keepScriptSettings', () => {
     } catch (e) { err = e; }
     expect(codeOf(err)).toBe('usage');
     expect((err as Error).message).toBe(
-      'app-settings --set takes only libraryPath, formatDefaults and keepScriptSettings, not "theme"',
+      'app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not "theme"',
     );
+  });
+});
+
+describe('appSettingsCommand: readerDevice, animatePage, typewriterSounds', () => {
+  const deps = (file: string) => ({ settingsPath: file, platform: 'linux' as const, env: env() });
+
+  test('a fresh file reports no device, the page animation on, the typewriter sounds off', () => {
+    const result = appSettingsCommand({}, deps(settingsFile()));
+    expect(result.readerDevice).toBeNull();
+    expect(result.animatePage).toBe(true);
+    expect(result.typewriterSounds).toBe(false);
+  });
+
+  test('a device is stored, reported back, and removed by null', () => {
+    const file = settingsFile();
+    const set = appSettingsCommand({ set: '{"readerDevice":"kobo"}' }, deps(file));
+    expect(set.readerDevice).toBe('kobo');
+    expect(readAppSettings(file).readerDevice).toBe('kobo');
+    expect(appSettingsCommand({}, deps(file)).readerDevice).toBe('kobo');
+
+    const cleared = appSettingsCommand({ set: '{"readerDevice":null}' }, deps(file));
+    expect(cleared.readerDevice).toBeNull();
+    expect('readerDevice' in readAppSettings(file)).toBe(false);
+  });
+
+  test('every known device is accepted', () => {
+    for (const device of READER_DEVICES) {
+      const result = appSettingsCommand({ set: JSON.stringify({ readerDevice: device }) }, deps(settingsFile()));
+      expect(result.readerDevice).toBe(device);
+    }
+  });
+
+  test('an unknown device is refused with bad-settings and the file is byte-identical', () => {
+    const file = settingsFile();
+    writeAppSettings({ lastRoute: 'usb', readerDevice: 'kindle' }, file);
+    const before = readFileSync(file, 'utf8');
+    for (const bad of ['"nook"', '3', 'true', '"Kobo"']) {
+      let caught: unknown;
+      try {
+        appSettingsCommand({ set: `{"readerDevice":${bad}}` }, deps(file));
+      } catch (err) {
+        caught = err;
+      }
+      expect(codeOf(caught)).toBe('bad-settings');
+      expect(readFileSync(file, 'utf8')).toBe(before);
+    }
+  });
+
+  test('both switches are stored and reported', () => {
+    const file = settingsFile();
+    const result = appSettingsCommand({ set: '{"animatePage":false,"typewriterSounds":true}' }, deps(file));
+    expect(result.animatePage).toBe(false);
+    expect(result.typewriterSounds).toBe(true);
+    const onDisk = readAppSettings(file);
+    expect(onDisk.animatePage).toBe(false);
+    expect(onDisk.typewriterSounds).toBe(true);
+  });
+
+  test('null puts a switch back to its default', () => {
+    const file = settingsFile();
+    appSettingsCommand({ set: '{"animatePage":false,"typewriterSounds":true}' }, deps(file));
+    const result = appSettingsCommand({ set: '{"animatePage":null,"typewriterSounds":null}' }, deps(file));
+    expect(result.animatePage).toBe(true);
+    expect(result.typewriterSounds).toBe(false);
+    expect('animatePage' in readAppSettings(file)).toBe(false);
+    expect('typewriterSounds' in readAppSettings(file)).toBe(false);
+  });
+
+  test('a non-boolean for either switch is bad-settings and writes nothing', () => {
+    const file = settingsFile();
+    writeAppSettings({ lastRoute: 'usb' }, file);
+    const before = readFileSync(file, 'utf8');
+    for (const patch of [
+      '{"animatePage":"false"}', '{"typewriterSounds":1}',
+      '{"animatePage":false,"typewriterSounds":"yes"}',
+    ]) {
+      let caught: unknown;
+      try {
+        appSettingsCommand({ set: patch }, deps(file));
+      } catch (err) {
+        caught = err;
+      }
+      expect(codeOf(caught)).toBe('bad-settings');
+      expect(readFileSync(file, 'utf8')).toBe(before);
+    }
+  });
+
+  test('setting one key keeps every other key in the file', () => {
+    const file = settingsFile();
+    const library = scratch('kept-lib');
+    writeAppSettings({ lastRoute: 'usb', libraryPath: library, keepScriptSettings: false }, file);
+    appSettingsCommand({ set: '{"readerDevice":"tolino"}' }, deps(file));
+    appSettingsCommand({ set: '{"animatePage":false}' }, deps(file));
+    const onDisk = readAppSettings(file);
+    expect(onDisk.lastRoute).toBe('usb');
+    expect(onDisk.libraryPath).toBe(library);
+    expect(onDisk.keepScriptSettings).toBe(false);
+    expect(onDisk.readerDevice).toBe('tolino');
+    expect(onDisk.animatePage).toBe(false);
   });
 });
 

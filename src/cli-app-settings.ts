@@ -1,7 +1,9 @@
 // The `app-settings` verb: where books land, and what new scripts start
 // from. Reads and writes the three keys of the app settings file that belong
 // to piece C: `libraryPath`, `formatDefaults` and `keepScriptSettings` (the
-// Settings page's "When a PDF is converted" choice, spec 2026-09-24).
+// Settings page's "When a PDF is converted" choice, spec 2026-09-24), plus
+// the window's three remembered choices: `readerDevice`, `animatePage` and
+// `typewriterSounds` (send-from-convert spec, decisions 3 and 21).
 // `lastRoute` (piece B) is not writable from here. Like the other verb
 // handlers, this RETURNS a result and never prints; cli.ts owns stdout.
 import { accessSync, constants, mkdirSync } from 'node:fs';
@@ -11,7 +13,10 @@ import {
   resolvedIfAbsolute,
 } from './library';
 import { DEFAULT_FORMAT_OPTIONS, resolveFormatOptions, type FormatOptions } from './options';
-import { appSettingsPath, homeFolder, writeAppSettings, type AppSettings } from './settings/app';
+import {
+  appSettingsPath, homeFolder, READER_DEVICES, readAppSettings, writeAppSettings,
+  type AppSettings, type ReaderDevice,
+} from './settings/app';
 import { appDefaultOptions, appDefaultsCustomized, keepsScriptSettings } from './settings/app-defaults';
 
 type Env = Record<string, string | undefined>;
@@ -19,7 +24,10 @@ type Env = Record<string, string | undefined>;
 // The only three keys this verb may write. Anything else, most notably
 // `lastRoute` (piece B's key in the same file), is refused before anything
 // is touched, so this verb can never step on a setting it does not own.
-const WRITABLE_KEYS = ['libraryPath', 'formatDefaults', 'keepScriptSettings'] as const;
+const WRITABLE_KEYS = [
+  'libraryPath', 'formatDefaults', 'keepScriptSettings',
+  'readerDevice', 'animatePage', 'typewriterSounds',
+] as const;
 
 export interface AppSettingsOptions {
   /** A JSON object with any of `libraryPath`, `formatDefaults` and
@@ -63,6 +71,12 @@ export interface AppSettingsResult {
   /** Whether a new library conversion keeps the settings it started from
    * (the pin in src/cli.ts): true unless `false` is stored. */
   keepScriptSettings: boolean;
+  /** The reader the person said is theirs, or null when none is stored. */
+  readerDevice: ReaderDevice | null;
+  /** Whether the first page animates in; true unless `false` is stored. */
+  animatePage: boolean;
+  /** Whether the typewriter sounds play; false unless `true` is stored. */
+  typewriterSounds: boolean;
 }
 
 /** Pure check for `libraryPath`: no filesystem access at all. `null` reads
@@ -123,7 +137,29 @@ function validatedKeepScriptSettings(value: unknown): boolean | undefined {
   return value;
 }
 
+/** `readerDevice` from a validated `--set` patch: `undefined` to remove the
+ * key, or one of READER_DEVICES. Pure. */
+function validatedReaderDevice(value: unknown): ReaderDevice | undefined {
+  if (value === null) return undefined;
+  if (typeof value !== 'string' || !(READER_DEVICES as readonly string[]).includes(value)) {
+    throw new CliError('bad-settings', `readerDevice must be one of ${READER_DEVICES.join(', ')} or null`);
+  }
+  return value as ReaderDevice;
+}
+
+/** A boolean switch from a validated `--set` patch: `undefined` to remove
+ * the key (back to its default), or the boolean itself. Pure. */
+function validatedSwitch(name: string, value: unknown): boolean | undefined {
+  if (value === null) return undefined;
+  if (typeof value !== 'boolean') {
+    throw new CliError('bad-settings', `${name} must be true, false or null`);
+  }
+  return value;
+}
+
 function buildAnswer(file: string, platform: NodeJS.Platform, env: Env): AppSettingsResult {
+  const stored = readAppSettings(file);
+  const device = stored.readerDevice;
   return {
     file,
     library: {
@@ -137,6 +173,10 @@ function buildAnswer(file: string, platform: NodeJS.Platform, env: Env): AppSett
     shippedDefaults: DEFAULT_FORMAT_OPTIONS,
     customized: appDefaultsCustomized(file),
     keepScriptSettings: keepsScriptSettings(file),
+    readerDevice:
+      typeof device === 'string' && (READER_DEVICES as readonly string[]).includes(device) ? device as ReaderDevice : null,
+    animatePage: stored.animatePage !== false,
+    typewriterSounds: stored.typewriterSounds === true,
   };
 }
 
@@ -167,7 +207,7 @@ export function appSettingsCommand(
       if (!(WRITABLE_KEYS as readonly string[]).includes(key)) {
         throw new CliError(
           'usage',
-          `app-settings --set takes only libraryPath, formatDefaults and keepScriptSettings, not "${key}"`,
+          `app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not "${key}"`,
         );
       }
     }
@@ -175,11 +215,17 @@ export function appSettingsCommand(
     const hasLibraryPath = 'libraryPath' in patch;
     const hasFormatDefaults = 'formatDefaults' in patch;
     const hasKeepScriptSettings = 'keepScriptSettings' in patch;
+    const hasReaderDevice = 'readerDevice' in patch;
+    const hasAnimatePage = 'animatePage' in patch;
+    const hasTypewriterSounds = 'typewriterSounds' in patch;
 
     // An empty object changes nothing: it answers like a plain read rather
     // than writing (and potentially overwriting an existing, even corrupt,
     // file with) `{}`.
-    if (!hasLibraryPath && !hasFormatDefaults && !hasKeepScriptSettings) {
+    if (
+      !hasLibraryPath && !hasFormatDefaults && !hasKeepScriptSettings &&
+      !hasReaderDevice && !hasAnimatePage && !hasTypewriterSounds
+    ) {
       return buildAnswer(file, platform, env);
     }
 
@@ -194,6 +240,12 @@ export function appSettingsCommand(
     if (hasFormatDefaults) write.formatDefaults = validatedFormatDefaults(patch.formatDefaults);
     if (hasKeepScriptSettings) {
       write.keepScriptSettings = validatedKeepScriptSettings(patch.keepScriptSettings);
+    }
+
+    if (hasReaderDevice) write.readerDevice = validatedReaderDevice(patch.readerDevice);
+    if (hasAnimatePage) write.animatePage = validatedSwitch('animatePage', patch.animatePage);
+    if (hasTypewriterSounds) {
+      write.typewriterSounds = validatedSwitch('typewriterSounds', patch.typewriterSounds);
     }
 
     // Phase 2: the one side effect (creating and probing the chosen
