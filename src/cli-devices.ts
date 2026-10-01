@@ -31,6 +31,9 @@ export const VERBS = [
   // book leaves Screepub, and performing one of them).
   'routes',
   'route',
+  // 2026-10-01: eject joined for send from Convert (spec decision 12): it
+  // safely removes a reader the engine itself lists, and nothing else.
+  'eject',
 ] as const;
 export type Verb = (typeof VERBS)[number];
 

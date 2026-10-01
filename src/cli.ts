@@ -28,11 +28,12 @@ import { settingsCommand } from './cli-settings';
 import { exportCommand } from './cli-export';
 import { appSettingsCommand } from './cli-app-settings';
 import { revealCommand } from './cli-reveal';
+import { ejectCommand } from './cli-eject';
 import { kfxInstallCommand, kfxStatusCommand, installLines, setupLines } from './cli-kfx';
 import { routeCommand, routesCommand, routesLines } from './cli-routes';
 import { kfxPossible } from './export/kfx-setup';
 import { routeFacts } from './export/route-facts';
-import type { ListDevicesOptions } from './device/list';
+import { listDevices, type ListDevicesOptions } from './device/list';
 
 const USAGE = `screepub: screenplay PDF → reflowable EPUB3 (via Fountain)
 
@@ -100,6 +101,7 @@ Commands:
   screepub app-settings [--set <json>] [--json]
                                             where books land, and what new scripts start from
   screepub reveal <file> [--json]           show a file in the system's file manager
+  screepub eject <volume> [--json]          safely remove a reader before unplugging it
   screepub kfx-status [--json]              can this computer make KFX for a Kindle?
   screepub kfx-install [--json]             add the KFX plugin to Calibre (online)
   screepub routes <file.epub> [--quick] [--json]
@@ -234,6 +236,21 @@ Usage:
 <file> must be a full path to a file that already exists. On macOS, Finder
 opens with the file itself selected. On Windows and Linux, the file's
 folder opens instead.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+`;
+
+const EJECT_USAGE = `screepub eject: safely remove a reader before unplugging it
+
+Usage:
+  screepub eject <volume> [--json]
+
+<volume> must be the full path of a reader that \`screepub devices\` lists
+right now, such as /Volumes/Kindle or E:\\. Any other disk is refused.
+On macOS this runs diskutil eject; on Linux, udisksctl unmount and then
+power-off; on Windows, the shell's own Eject.
 
 Options:
   --json                 machine-readable result on stdout (for the app)
@@ -379,6 +396,7 @@ function verbUsage(verb: Verb): string {
   if (verb === 'update-should-check') return UPDATE_SHOULD_CHECK_USAGE;
   if (verb === 'app-settings') return APP_SETTINGS_USAGE;
   if (verb === 'reveal') return REVEAL_USAGE;
+  if (verb === 'eject') return EJECT_USAGE;
   return SEND_USAGE;
 }
 
@@ -654,6 +672,7 @@ const VERB_FLAGS: Record<Verb, readonly VerbFlag[]> = {
   // For some keys only: routeCommand refuses each for every key that cannot
   // act on it.
   route: ['--out', '--fountain', '--options-json'],
+  eject: [],
 };
 
 /** The order a call carrying SEVERAL foreign flags hears about them in, kept
@@ -876,6 +895,21 @@ async function runVerb(verb: Verb, args: string[]): Promise<void> {
       }
       // Human mode: nothing on success. There is nothing left to say once
       // the file manager is the thing showing the answer.
+      return;
+    }
+
+    if (verb === 'eject') {
+      if (positionals.length !== 1) {
+        fail({ code: 'usage', message: 'expected exactly one reader volume to eject (see --help)' });
+      }
+      const result = await ejectCommand(positionals[0], {
+        devices: () => listDevices({ ...deviceSeams(), skipRemarkable: true }),
+      });
+      if (jsonMode) {
+        console.log(JSON.stringify({ ok: true, ...result }));
+        return;
+      }
+      console.log(`Ejected ${result.ejected}. It is safe to unplug.`);
       return;
     }
 

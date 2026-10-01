@@ -32,7 +32,9 @@ export interface JsonError {
     // message is the row's fix), and one whose app, page or folder did not
     // open (its message names which).
     | 'route-unavailable'
-    | 'route-failed';
+    | 'route-failed'
+    // A reader that would not eject (send from Convert): something has a file open, or the tool timed out.
+    | 'eject-failed';
   message: string;
 }
 

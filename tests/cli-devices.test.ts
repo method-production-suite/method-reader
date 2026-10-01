@@ -84,7 +84,8 @@ test('VERBS is the single list of known verbs', () => {
   // `routes` joined on 2026-09-23 too (parity piece B):
   // the Send page's list of every way a book can leave. `route` joined the
   // same day: it performs one of them (Apple Books, Amazon, Mail, a saved
-  // copy) and remembers it.
+  // copy) and remembers it. `eject` joined on 2026-10-01 (send from
+  // Convert, spec decision 12): it safely removes a reader the engine lists.
   expect([...VERBS]).toEqual([
     'devices',
     'send',
@@ -98,6 +99,7 @@ test('VERBS is the single list of known verbs', () => {
     'reveal',
     'routes',
     'route',
+    'eject',
   ]);
 });
 

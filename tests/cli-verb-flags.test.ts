@@ -61,6 +61,7 @@ const VERB_SHAPE: Record<Verb, { own: string[]; positionals: string[] }> = {
   reveal: { own: [], positionals: ['/nowhere/x.epub'] },
   routes: { own: ['--quick'], positionals: ['/nowhere/x.epub'] },
   route: { own: ['--out', '--fountain', '--options-json'], positionals: ['save-kindle', '/nowhere/x.epub'] },
+  eject: { own: [], positionals: ['/nowhere/Kindle'] },
 };
 
 describe('every verb refuses every flag that is not its own', () => {
