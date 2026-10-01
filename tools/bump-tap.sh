@@ -61,20 +61,48 @@ check_sha() { # <value> <asset-name>
 }
 check_sha "$ARM_SHA" screepub-cli-macos-arm64.tar.gz
 
-# --- cask: RETIRED at the identifier release (owner, 2026-10-01) --------
+# This script writes the Apple-silicon-only tap. A release that still
+# carries the Intel tarball (the identifier release, and every one before
+# it) is served by a two-arch formula and a deprecated cask, which ITS OWN
+# copy of this script writes; bumping it with this one would drop Intel
+# brew users a release early. Refused, before anything is written.
+INTEL=screepub-cli-macos-x64.tar.gz
+INTEL_SHA="$(digest "$INTEL" || true)"
+if [ ${#INTEL_SHA} -eq 64 ] && [ -z "$(printf '%s' "$INTEL_SHA" | tr -d '0-9a-f')" ]; then
+  echo "bump-tap: release v$VERSION still carries $INTEL, so its tap serves Intel Macs too." >&2
+  echo "bump-tap: this script writes the Apple-silicon-only tap of the releases after it." >&2
+  echo "bump-tap: bump v$VERSION with its own script: git show v$VERSION:tools/bump-tap.sh > /tmp/bump-tap.sh" >&2
+  exit 1
+fi
+
+# --- cask: RETIRED at the identifier release, DISABLED after it ---------
 # The app updates itself and is downloaded from the releases page, so the
 # cask is never bumped again: it stays pinned to the last Swift release it
-# served, and a brew install of it gets an app whose own updater carries it
-# to the window. What it gains, once, is Homebrew's deprecation notice, so
-# `brew` tells people instead of silently serving a frozen version.
+# served. The identifier release DEPRECATED it, which still installs that
+# Swift app, whose own updater then carried people to the window. From the
+# release after it that is a trap: the window is Apple silicon only, and
+# the Swift updater installs the newest image with no architecture check,
+# so an Intel Mac that installs this cask would be offered an app it cannot
+# open. So from here on the cask is DISABLED: `brew install --cask` stops
+# with "has been disabled because it is now downloaded from the releases
+# page and updates itself!" (Homebrew's DeprecateDisable.message puts the
+# because: text after "because it"). Same date as deprecate! would take:
+# the day of the bump, so it is disabled at once.
 #
-# Where it goes is Homebrew's rule, not ours: `brew style` wants it as its
-# own stanza group right after the livecheck block (found by running it;
-# placed after `homepage` it fails Cask/StanzaOrder). Inserted only if
-# absent, which keeps this script's rule: a second run produces no diff.
-DEPRECATION='  deprecate! date: "'"$(date -u +%Y-%m-%d)"'", because: "is now downloaded from the releases page and updates itself"'
-if ! grep -q '^  deprecate! ' "$CASK"; then
-  awk -v line="$DEPRECATION" '
+# Where it goes is Homebrew's rule, not ours: `brew style` wants deprecate!
+# and disable! as one stanza group right after the livecheck block (found by
+# running it; placed after `homepage` it fails Cask/StanzaOrder). A
+# deprecate! line is replaced where it stands; with neither, the line is
+# inserted there. A cask already disabled is left alone, which keeps this
+# script's rule: a second run produces no diff.
+DISABLE='  disable! date: "'"$(date -u +%Y-%m-%d)"'", because: "is now downloaded from the releases page and updates itself"'
+if grep -q '^  disable! ' "$CASK"; then
+  :
+elif grep -q '^  deprecate! ' "$CASK"; then
+  awk -v line="$DISABLE" '/^  deprecate! / { print line; next } { print }' "$CASK" > "$CASK.new"
+  mv "$CASK.new" "$CASK"
+else
+  awk -v line="$DISABLE" '
     { print }
     /^  livecheck do/ { inlive = 1 }
     inlive && /^  end$/ && !done { print ""; print line; done = 1; inlive = 0 }
@@ -149,8 +177,11 @@ mv "$FORMULA.new" "$FORMULA"
 # and serve the OLD version — the exact shape of failure this whole thread
 # is about. So assert the result rather than trusting the write.
 fail() { echo "bump-tap: $1" >&2; exit 1; }
-grep -q '^  deprecate! date: "[0-9-]*", because: ' "$CASK" \
-  || fail "cask deprecation did not take (no livecheck block to insert it after?)"
+grep -q '^  disable! date: "[0-9-]*", because: ' "$CASK" \
+  || fail "cask disable! did not take (no livecheck block to insert it after?)"
+if grep -q '^  deprecate! ' "$CASK"; then
+  fail "cask still carries deprecate! beside disable!"
+fi
 grep -q "/download/v$VERSION/screepub-cli-macos-arm64\.tar\.gz" "$FORMULA" \
   || fail "formula arm64 url did not take"
 grep -q "\"$ARM_SHA\"" "$FORMULA" || fail "formula arm64 sha256 did not take"
@@ -163,5 +194,5 @@ if grep "/download/v[^/]*/" "$FORMULA" | grep -qv "/download/v$VERSION/"; then
 fi
 
 echo "tap rewritten to $VERSION"
-echo "  cask    retired (deprecated, never bumped)"
+echo "  cask    retired (disabled, never bumped)"
 echo "  formula arm64 $ARM_SHA (Apple silicon only)"

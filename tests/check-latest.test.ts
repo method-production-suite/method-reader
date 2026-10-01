@@ -16,6 +16,9 @@ import { FAKE_KEY_ID, fakePublicKeyBox, fakeSignatureBox } from './signature-box
 
 const REPO = 'ssandweiss/screepub';
 const TAR = 'Screepub-macOS.app.tar.gz';
+/** The Intel command-line tarball: carried by the identifier release and
+ *  every release before it, by none after. */
+const INTEL_CLI = 'screepub-cli-macos-x64.tar.gz';
 const url = (v: string, name: string) => `https://github.com/${REPO}/releases/download/v${v}/${name}`;
 const SIG = fakeSignatureBox('Screepub.app.tar.gz');
 const PUBKEY = fakePublicKeyBox();
@@ -120,18 +123,35 @@ describe('judging a manifest against a release', () => {
   test('darwin-x86_64 is no longer REQUIRED, and a universal-era manifest still passes', () => {
     // The Mac build is Apple silicon only from the release after the
     // identifier release, so its manifest has no darwin-x86_64 and must not
-    // be called broken. The other way round stays green on purpose: this
-    // runs weekly against whatever release is newest, and until that
-    // release ships the newest is the identifier release, whose universal
-    // archive answers for both keys. A row for a real asset with a good
-    // signature is not a problem; only a MISSING row is.
+    // be called broken. The identifier release and older stay green: this
+    // runs weekly against whatever release is newest, and until the next
+    // one ships that is the identifier release, whose UNIVERSAL archive
+    // answers for both keys. A release from that era is the one that still
+    // carries the Intel command-line tarball; the two went together.
     expect(judgeManifest(manifest('0.6.1'), release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY).ok).toBe(true);
     const universal = manifest('0.6.1', { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } });
-    expect(judgeManifest(universal, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY)).toEqual({
+    const universalEra = release('0.6.1', [TAR, `${TAR}.sig`, 'latest.json', 'Screepub-macOS.dmg', INTEL_CLI]);
+    expect(judgeManifest(universal, universalEra, { [`${TAR}.sig`]: SIG }, PUBKEY)).toEqual({
       ok: true,
       version: '0.6.1',
       platforms: ['darwin-aarch64', 'darwin-x86_64'],
     });
+  });
+
+  test('after Intel was dropped, darwin-x86_64 on the Apple silicon archive is a problem', () => {
+    // A release with no Intel command-line tarball has an Apple-silicon-only
+    // window archive. Offered to an Intel copy under darwin-x86_64, it would
+    // install a build that cannot run there, and the old window would stop
+    // opening on that Mac.
+    const intelToArm = manifest('0.6.1', { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } });
+    const v = judgeManifest(intelToArm, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(v.ok).toBe(false);
+    if (!v.ok) {
+      const text = v.problems.join('\n');
+      expect(text).toContain('darwin-x86_64');
+      expect(text).toContain(url('0.6.1', TAR));
+      expect(text).toMatch(/Apple silicon/);
+    }
   });
 
   test('every problem is reported, not just the first', () => {

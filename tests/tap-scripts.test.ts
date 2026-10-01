@@ -61,7 +61,8 @@ const twoArchFormula = (v: string, arm: string, x64: string) => `class Screepub 
 end
 `;
 
-const CASK = `cask "screepub" do
+/** The retired cask, before its retirement notice. */
+const BARE_CASK = `cask "screepub" do
   version "0.7.3"
   sha256 "${sha('c')}"
 
@@ -74,11 +75,15 @@ const CASK = `cask "screepub" do
     strategy :github_latest
   end
 
-  deprecate! date: "2026-10-01", because: "is now downloaded from the releases page and updates itself"
-
   app "Screepub.app"
 end
 `;
+
+/** The cask as the identifier release's tap job leaves it: deprecated. */
+const CASK = BARE_CASK.replace(
+  '  end\n\n  app',
+  '  end\n\n  deprecate! date: "2026-10-01", because: "is now downloaded from the releases page and updates itself"\n\n  app',
+);
 
 /** A `gh` that answers from files in its own directory: the newest
  *  release's tag, the tap's two files (base64, as the contents API sends
@@ -178,6 +183,43 @@ describe('tools/bump-tap.sh, run against a tap', () => {
     // The formula still has no version stanza: brew reads it from the url.
     expect(formula).not.toMatch(/^\s*version "/m);
     expect(r.stdout).toContain('tap rewritten to 0.8.0');
+    // The cask: the identifier release DEPRECATED it; from the release
+    // after it, it is DISABLED, in the same place. It stays pinned to the
+    // last Swift release, whose updater would offer this Apple-silicon-only
+    // release to an Intel Mac that installed it, so it must not install.
+    const cask = readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8');
+    expect(cask).not.toMatch(/^ {2}deprecate! /m);
+    expect(cask).toMatch(
+      /^ {2}disable! date: "\d{4}-\d{2}-\d{2}", because: "is now downloaded from the releases page and updates itself"$/m,
+    );
+    expect(cask.replace(/^ {2}disable! [^\n]*$/m, 'NOTICE')).toBe(
+      CASK.replace(/^ {2}deprecate! [^\n]*$/m, 'NOTICE'),
+    );
+  });
+
+  test('a cask with no retirement notice yet gets the disable! after its livecheck block', () => {
+    // Homebrew's stanza order (Cask/StanzaOrder) groups deprecate! and
+    // disable! together, right after livecheck.
+    const gh = fakeGh('bare', { release: '0.8.0', assets: { [ARM]: ARM_SHA } });
+    const tap = tapCheckout('bare', twoArchFormula('0.7.4', sha('1'), sha('2')), BARE_CASK);
+    expect(run('bump-tap.sh', ['0.8.0', tap], gh).status).toBe(0);
+    const cask = readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8');
+    expect(cask).toMatch(/ {2}livecheck do\n[\s\S]*?\n {2}end\n\n {2}disable! date: "[0-9-]+", because: "[^"]+"\n\n {2}app "Screepub\.app"/);
+  });
+
+  test('a release that still carries the Intel tarball is refused, and nothing is written', () => {
+    // The identifier release and older serve Intel through Homebrew. Bumped
+    // with THIS script (from a main that already has it), the tap would
+    // drop Intel brew users a release early.
+    const gh = fakeGh('f2', { release: '0.7.5', assets: { [ARM]: ARM_SHA, [INTEL]: sha('2') } });
+    const before = twoArchFormula('0.7.4', sha('1'), sha('2'));
+    const tap = tapCheckout('f2', before);
+    const r = run('bump-tap.sh', ['0.7.5', tap], gh);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain(INTEL);
+    expect(r.stderr).toContain('git show v0.7.5:tools/bump-tap.sh');
+    expect(readFileSync(join(tap, 'Formula', 'screepub.rb'), 'utf8')).toBe(before);
+    expect(readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8')).toBe(CASK);
   });
 
   test('a second run at the same version changes nothing', () => {
@@ -217,18 +259,35 @@ describe('tools/check-tap.sh, judging the published tap', () => {
 
   /** What bump-tap.sh writes, read back from a real run, so the two
    *  scripts are tested against each other and not against a guess. */
-  const bumped = (v: string, arm: string): string => {
-    const gh = fakeGh(`write-${v}`, { release: v, assets: { [ARM]: arm } });
-    const tap = tapCheckout(`write-${v}`, twoArchFormula('0.7.4', sha('1'), sha('2')));
+  const bumpedTap = (v: string, arm: string): { formula: string; cask: string } => {
+    const gh = fakeGh(`write-${v}-${arm[0]}`, { release: v, assets: { [ARM]: arm } });
+    const tap = tapCheckout(`write-${v}-${arm[0]}`, twoArchFormula('0.7.4', sha('1'), sha('2')));
     expect(run('bump-tap.sh', [v, tap], gh).status).toBe(0);
-    return readFileSync(join(tap, 'Formula', 'screepub.rb'), 'utf8');
+    return {
+      formula: readFileSync(join(tap, 'Formula', 'screepub.rb'), 'utf8'),
+      cask: readFileSync(join(tap, 'Casks', 'screepub.rb'), 'utf8'),
+    };
   };
+  const bumped = (v: string, arm: string): string => bumpedTap(v, arm).formula;
+  /** The cask bump-tap.sh leaves: disabled. Made per test, not at collection. */
+  const disabledCask = (): string => bumpedTap('0.8.0', sha('a')).cask;
 
-  test('an Apple silicon release served by the formula bump-tap.sh writes is fine', () => {
-    const gh = fakeGh('ok', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', ARM_SHA), cask: CASK });
+  test('an Apple silicon release served by the tap bump-tap.sh writes is fine', () => {
+    const tap = bumpedTap('0.8.0', ARM_SHA);
+    const gh = fakeGh('ok', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: tap.formula, cask: tap.cask });
     const r = run('check-tap.sh', [], gh);
     expect(r.stdout).toContain('The tap serves 0.8.0');
+    expect(r.stdout).toContain('retired (disabled)');
     expect(r.status).toBe(0);
+  });
+
+  test('an Apple silicon release whose cask is only deprecated is an error', () => {
+    // The deprecated cask still installs the last Swift release, whose
+    // updater would offer this release to an Intel Mac. It must be disabled.
+    const gh = fakeGh('deponly', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', ARM_SHA), cask: CASK });
+    const r = run('check-tap.sh', [], gh);
+    expect(r.status).not.toBe(0);
+    expect(r.stdout).toContain('disable!');
   });
 
   test('a formula still serving an Intel tarball the release does not carry is an error', () => {
@@ -238,7 +297,7 @@ describe('tools/check-tap.sh, judging the published tap', () => {
       release: '0.8.0',
       assets: { [ARM]: ARM_SHA },
       formula: twoArchFormula('0.8.0', ARM_SHA, sha('2')),
-      cask: CASK,
+      cask: disabledCask(),
     });
     const r = run('check-tap.sh', [], gh);
     expect(r.status).not.toBe(0);
@@ -249,7 +308,7 @@ describe('tools/check-tap.sh, judging the published tap', () => {
     // Without it brew would install an arm64 binary on an Intel Mac, where
     // it cannot run, instead of refusing with a reason.
     const formula = bumped('0.8.0', ARM_SHA).replace('  depends_on arch: :arm64\n', '');
-    const gh = fakeGh('noarch', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula, cask: CASK });
+    const gh = fakeGh('noarch', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula, cask: disabledCask() });
     const r = run('check-tap.sh', [], gh);
     expect(r.status).not.toBe(0);
     expect(r.stdout).toContain('depends_on arch: :arm64');
@@ -257,7 +316,7 @@ describe('tools/check-tap.sh, judging the published tap', () => {
 
   test('a wrong Apple silicon digest is an error', () => {
     const gh = fakeGh('wrongsha', {
-      release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', sha('b')), cask: CASK,
+      release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', sha('b')), cask: disabledCask(),
     });
     const r = run('check-tap.sh', [], gh);
     expect(r.status).not.toBe(0);
@@ -271,7 +330,17 @@ describe('tools/check-tap.sh, judging the published tap', () => {
     // digests still checked.
     const formula = twoArchFormula('0.7.5', ARM_SHA, sha('2'));
     const ok = fakeGh('f2', { release: '0.7.5', assets: { [ARM]: ARM_SHA, [INTEL]: sha('2') }, formula, cask: CASK });
-    expect(run('check-tap.sh', [], ok).status).toBe(0);
+    const okRun = run('check-tap.sh', [], ok);
+    expect(okRun.status).toBe(0);
+    expect(okRun.stdout).toContain('retired (deprecated)');
+    // Its cask is deprecated, not disabled: a disabled cask while the
+    // identifier release is newest means the tap ran ahead of the release.
+    const early = fakeGh('f2-early', {
+      release: '0.7.5', assets: { [ARM]: ARM_SHA, [INTEL]: sha('2') }, formula, cask: disabledCask(),
+    });
+    const earlyRun = run('check-tap.sh', [], early);
+    expect(earlyRun.status).not.toBe(0);
+    expect(earlyRun.stdout).toContain('deprecate!');
     const badIntel = fakeGh('f2-bad', {
       release: '0.7.5', assets: { [ARM]: ARM_SHA, [INTEL]: sha('3') }, formula, cask: CASK,
     });
@@ -280,11 +349,21 @@ describe('tools/check-tap.sh, judging the published tap', () => {
     expect(r.stdout).toContain(INTEL);
   });
 
-  test('a cask with no deprecation is still an error', () => {
-    const cask = CASK.replace(/\n {2}deprecate! [^\n]*\n/, '\n');
-    const gh = fakeGh('nodeprecate', { release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', ARM_SHA), cask });
-    const r = run('check-tap.sh', [], gh);
-    expect(r.status).not.toBe(0);
-    expect(r.stdout).toContain('deprecate!');
+  test('a cask with no retirement notice at all is an error, before and after', () => {
+    const after = fakeGh('bare-after', {
+      release: '0.8.0', assets: { [ARM]: ARM_SHA }, formula: bumped('0.8.0', ARM_SHA), cask: BARE_CASK,
+    });
+    const a = run('check-tap.sh', [], after);
+    expect(a.status).not.toBe(0);
+    expect(a.stdout).toContain('disable!');
+    const before = fakeGh('bare-before', {
+      release: '0.7.5',
+      assets: { [ARM]: ARM_SHA, [INTEL]: sha('2') },
+      formula: twoArchFormula('0.7.5', ARM_SHA, sha('2')),
+      cask: BARE_CASK,
+    });
+    const b = run('check-tap.sh', [], before);
+    expect(b.status).not.toBe(0);
+    expect(b.stdout).toContain('deprecate!');
   });
 });

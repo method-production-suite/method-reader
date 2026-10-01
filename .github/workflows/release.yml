@@ -218,7 +218,7 @@ jobs:
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
           set -euo pipefail
-          # The formula's two tarballs. This used to be the Swift app's
+          # The formula's tarball. This used to be the Swift app's
           # release script; since the CLI move it is tools/build-cli.ts,
           # which compiles it, signs it (hardened runtime, the CLI's
           # entitlements), checks what the signature says, notarizes it,
@@ -308,11 +308,13 @@ jobs:
       # The fallback for when the `tap` job below cannot run (no TAP_TOKEN)
       # or fails: the SHA, somewhere a person can copy from, so the bump is
       # paste-and-commit rather than download-and-hash. The CASK was
-      # retired at the identifier release and is never bumped again;
-      # tools/bump-tap.sh adds its deprecation notice once. The formula is
-      # Apple silicon only from the release after the identifier release,
-      # which changed its SHAPE (one url, `depends_on arch: :arm64`), so
-      # the sheet says to run bump-tap.sh, which writes it whole.
+      # retired at the identifier release (deprecated) and is never bumped
+      # again; from the release after it, tools/bump-tap.sh turns that
+      # deprecate! into disable!. The formula is Apple silicon only from
+      # that release too, which changed its SHAPE (one url,
+      # `depends_on arch: :arm64`), so the sheet says to run bump-tap.sh,
+      # which writes both, and says what a hand bump of the first such
+      # release must change besides the url.
       - name: Tap bump crib sheet
         env:
           VERSION: ${{ github.ref_name }}
@@ -325,7 +327,8 @@ jobs:
           ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`). By hand, the tag is literal in the url:\n\n```ruby\n' "$V"
+            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`) and disables the retired cask.\n\n' "$V"
+            printf 'By hand: if the formula still holds the identifier release'"'"'s if/else on the CPU, replace the whole if/else with the one url and sha256 below, and add `depends_on arch: :arm64` on the line before `depends_on :macos`. In `Casks/screepub.rb`, change `deprecate!` to `disable!` (same arguments, today'"'"'s date). The tag is literal in the url:\n\n```ruby\n'
             printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -51,22 +51,23 @@ describe('the macOS CLI is built apart from the cross set', () => {
     expect(MAC_TARGETS.map((t) => t.archiveName)).not.toContain(RETIRED_MACOS_CLI);
   });
 
-  test('tools/bump-tap.sh serves the Apple silicon tarball only and only deprecates the cask', () => {
+  test('tools/bump-tap.sh serves the Apple silicon tarball only and only disables the cask', () => {
     // The Homebrew tap serves the macOS CLI. It must not learn about the
     // Linux or Windows artifacts: brew has no business installing either,
     // and tap-freshness.yml would go red on a formula it cannot audit.
-    // The CASK was retired at the identifier release: never bumped again,
-    // so the script reads no image digest and rewrites no cask version.
-    // What it does to the formula is EXECUTED in tests/tap-scripts.test.ts.
+    // The CASK was retired at the identifier release (deprecated) and is
+    // disabled from the release after it: never bumped again, so the
+    // script reads no image digest and rewrites no cask version.
+    // What it does to both files is EXECUTED in tests/tap-scripts.test.ts.
     const sh = read('tools/bump-tap.sh');
     for (const name of MACOS_CLI_ASSETS) expect(sh).toContain(name);
     expect(sh).toContain('depends_on arch: :arm64');
-    // Named only by the check that the rewrite left it behind.
+    // Named only by the refusal to bump a release that still carries it.
     expect(sh.split(RETIRED_MACOS_CLI).length - 1).toBeLessThanOrEqual(1);
     expect(sh).not.toContain('Hardware::CPU');
     expect(sh).not.toContain('Screepub-macOS.dmg');
     expect(sh).not.toMatch(/s\|\^  version/);
-    expect(sh).toContain('deprecate! date:');
+    expect(sh).toContain('disable! date:');
     expect(sh.toLowerCase()).not.toContain('linux');
     expect(sh.toLowerCase()).not.toContain('windows');
     for (const t of TARGETS) expect(sh).not.toContain(t.archiveName);
@@ -245,6 +246,18 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // it cannot come back unnoticed.
     expect(read(join(WORKFLOWS, 'release.yml'))).not.toContain(RETIRED_MACOS_CLI);
     expect(read(join(WORKFLOWS, 'release.yml'))).not.toMatch(/\bX64=|\$X64\b/);
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toMatch(/formula's two tarballs/);
+  });
+
+  test('the crib sheet says what the first hand bump must change, not only the url', () => {
+    // The tap a person bumps by hand first holds the identifier release's
+    // two-arch formula and deprecated cask. Pasting a url and a SHA into it
+    // leaves the if/else on the CPU in place and the cask installable.
+    const crib = (rel.jobs['release']!.steps ?? []).find((s) => s.name === 'Tap bump crib sheet')!.run!;
+    expect(crib).toContain('tools/bump-tap.sh');
+    expect(crib).toContain('depends_on arch: :arm64');
+    expect(crib).toMatch(/if\/else on the CPU/);
+    expect(crib).toContain('disable!');
   });
 
   test('the checks job fails a tag whose three version files disagree', () => {
@@ -1176,6 +1189,9 @@ describe('the developer docs describe the Apple silicon build', () => {
       expect(() => parseSidecarArgs(args, 'darwin', 'arm64')).not.toThrow();
     }
     expect(desktop).toContain('bun tools/build-sidecar.ts --target bun-darwin-arm64');
+    // An Intel Mac can still BUILD the Apple silicon bundle, but has no
+    // aarch64 standard library until it is added.
+    expect(desktop).toContain('rustup target add aarch64-apple-darwin');
     const cargoTargets = [...desktop.matchAll(/cargo tauri build --target (\S+)/g)].map((m) => m[1]);
     expect(cargoTargets).toEqual([MAC_TARGET]);
     for (const gone of ['--universal', 'universal-apple-darwin', 'x86_64-apple-darwin', 'lipo']) {
@@ -1187,6 +1203,16 @@ describe('the developer docs describe the Apple silicon build', () => {
   test('CONTRIBUTING.md and the device map no longer speak of a universal Mac build', () => {
     expect(read('CONTRIBUTING.md')).not.toMatch(/universal Mac\s+build/);
     expect(read('docs/device-map.md')).not.toMatch(/universal Mac\s+build/);
+  });
+
+  test('CONTRIBUTING.md says an Intel Mac cannot run the window, where it says to build it', () => {
+    // `build-sidecar.ts --host` refuses an Intel Mac now, so the two-line
+    // quick start would fail there with no word of why.
+    const contributing = read('CONTRIBUTING.md');
+    const at = contributing.indexOf('bun tools/build-sidecar.ts --host');
+    expect(at).toBeGreaterThan(-1);
+    const after = contributing.slice(at, at + 800).replace(/\s+/g, ' ');
+    expect(after).toContain('An Intel Mac cannot run the window');
   });
 
   test('the release runbook counts one Mac CLI tarball and one SHA', () => {
@@ -1201,5 +1227,9 @@ describe('the developer docs describe the Apple silicon build', () => {
     expect(runbook).not.toMatch(/`screepub-cli-macos-x64\.tar\.gz` from the `release` job/);
     expect(runbook).toContain('One SHA is needed');
     expect(runbook).toContain('depends_on arch: :arm64');
+    // The first bump by hand starts from the identifier release's tap: a
+    // two-arch formula and a deprecated cask.
+    expect(runbook).toMatch(/if\/else on the CPU/);
+    expect(runbook).toContain('disable!');
   });
 });

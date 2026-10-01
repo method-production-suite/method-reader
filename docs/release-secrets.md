@@ -245,18 +245,25 @@ See `homebrew-tap/Formula/screepub.rb` for the working form.
 One SHA is needed, for the one command-line tarball: Apple Silicon only
 since the release after the identifier release, so the formula has one
 url and says `depends_on arch: :arm64`. The cask is retired (deprecated
-at the identifier release) and is never bumped again. The release's "Tap
-bump crib sheet" step writes the SHA into the run's summary. To get it
-after the fact:
+at the identifier release, disabled from the release after it) and is
+never bumped again. The release's "Tap bump crib sheet" step writes the
+SHA into the run's summary. To get it after the fact:
 
 ```bash
 gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
 ```
 
 Then run `tools/bump-tap.sh X.Y.Z homebrew-tap`, which writes
-`homebrew-tap/Formula/screepub.rb` whole from that digest (or edit its one
-url and one SHA by hand), leave `homebrew-tap/Casks/screepub.rb` alone,
-and verify before pushing:
+`homebrew-tap/Formula/screepub.rb` whole from that digest and disables the
+cask. By hand: the FIRST bump after the identifier release starts from
+its two-arch tap, so besides the url and the SHA, replace the formula's
+whole if/else on the CPU with the one url and sha256, add
+`depends_on arch: :arm64` on the line before `depends_on :macos`, and in
+`homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!` (same
+arguments, that day's date). Later bumps change the url and the SHA only.
+`tools/bump-tap.sh` refuses a release that still carries
+`screepub-cli-macos-x64.tar.gz`: bump the identifier release or anything
+older with that tag's own copy of the script. Verify before pushing:
 
 ```bash
 brew style Formula/screepub.rb
@@ -275,9 +282,10 @@ honest:
 
 - **The bumper: `release.yml`'s `tap` job, running `tools/bump-tap.sh`.**
   `needs: release`, so it cannot start before the assets exist. It clones
-  the tap, leaves the retired cask alone (adding Homebrew's `deprecate!`
-  stanza once, if it is missing), writes the formula whole (one url, one
-  SHA, `depends_on arch: :arm64`), runs `brew style`, and commits. Checksums come from
+  the tap, retires the cask for good (its `deprecate!` becomes `disable!`,
+  once: the last Swift app it installs would offer an Intel Mac an app it
+  cannot open), writes the formula whole (one url, one SHA,
+  `depends_on arch: :arm64`), runs `brew style`, and commits. Checksums come from
   the digests GitHub reports per asset, so nothing is downloaded and
   nothing is re-hashed. Prereleases are skipped: a hyphen in the tag must
   never become what `brew install` hands out.
@@ -287,7 +295,8 @@ honest:
   manual path intact.
 
 - **The floor: `release.yml`'s "Tap bump crib sheet" step**, writing the
-  version and both formula SHAs into `$GITHUB_STEP_SUMMARY`. This is the
+  version and the formula's SHA into `$GITHUB_STEP_SUMMARY`, with what
+  the first hand bump must change besides it. This is the
   fallback for a missing token or a failed bump, so the hand edit is
   paste-and-commit rather than a download-and-hash chore.
 
@@ -295,7 +304,8 @@ honest:
   reads the tap's cask and formula STRAIGHT FROM GITHUB and fails when
   the formula pins something other than the newest release or carries a
   SHA that does not match that release's assets, or when the cask is not
-  marked deprecated. No secret needed, both repos
+  retired the way that release wants (deprecated while a release still
+  carries the Intel tarball, disabled after). No secret needed, both repos
   being public.
 
   - `release.yml`'s **`tap-check`** job, `needs: tap`, is the per-release

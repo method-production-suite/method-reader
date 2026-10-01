@@ -42,7 +42,9 @@ Installable bundles are built by `bun tools/build-app-bundle.ts`, which calls
     cargo tauri build --target aarch64-apple-darwin --bundles app,dmg
 
 The engine is named for the target rather than for the machine, so this
-works the same on any Mac. `build-app-bundle.ts` builds every Mac bundle
+works the same on any Mac. An Intel Mac can still build it (not run it),
+after `rustup target add aarch64-apple-darwin` once: rustup installs only
+the machine's own target by default. `build-app-bundle.ts` builds every Mac bundle
 for that target and refuses any other: Intel Macs are not supported after
 the identifier release, the last whose image was universal (two engines
 fused into one), and an Intel or universal image would be published under

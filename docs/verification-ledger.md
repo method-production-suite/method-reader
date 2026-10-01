@@ -58,7 +58,8 @@ switched on, installs the window in its place.
   runner's own kind, so all of it runs; of the identifier release's universal
   `.dmg`, the last, only the ARM half ran.
 - Weekly: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is deprecated, and
+  newest release, the retired Homebrew cask still says it is retired
+  (deprecated, and disabled from the release after the identifier release), and
   the older Mac app's AZW3 and KEPUB checks still pass against Calibre's
   newest version.
 

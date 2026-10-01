@@ -421,7 +421,8 @@ export function parseBundleArgs(
       target: { type: 'string' },
       // process.arch says what THIS machine is. --arch names another, which
       // on a Mac is only ever how an Intel Mac asks for the Apple silicon
-      // bundle it can cross-build.
+      // bundle it can cross-build, once `rustup target add
+      // aarch64-apple-darwin` has installed that target's standard library.
       arch: { type: 'string' },
       config: { type: 'string' },
       updater: { type: 'boolean', default: false },
@@ -485,7 +486,9 @@ export function assertAppleSiliconMac(os: BundleOs, arch: BundleArch, target: st
         `target ${MAC_TARGET}), and this asked for arch ${arch}, target ${target ?? '<the host>'}. ` +
         'Intel Macs are not supported after the identifier release ' +
         '(docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and an Intel or universal ' +
-        'image would be published under the one Mac name, Screepub-macOS.dmg.',
+        'image would be published under the one Mac name, Screepub-macOS.dmg. An Intel Mac can ' +
+        'still cross-build the Apple silicon bundle: rustup target add aarch64-apple-darwin, ' +
+        'then --arch arm64.',
     );
   }
 }

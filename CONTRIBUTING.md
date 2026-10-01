@@ -41,6 +41,11 @@ bun tools/build-sidecar.ts --host    # build the engine the window runs
 cd desktop/src-tauri && cargo run    # open the window
 ```
 
+An Intel Mac cannot run the window any more: it is built for Macs with
+Apple Silicon only, and `--host` refuses an Intel Mac with that reason.
+The engine still runs there from source (`bun src/cli.ts`); cross-building
+the Apple Silicon bundle from one is in desktop/README.md.
+
 [desktop/README.md](desktop/README.md) covers bundles, the Apple Silicon
 Mac build and how the window talks to the engine.
 [docs/developers.md](docs/developers.md) covers the command line, the
