@@ -112,6 +112,9 @@ export interface ImagesRead {
    * This is the number that separates "this script has no art" from "this
    * script's art is on a drive that is not here", which on the Fountain path
    * is the only signal there is.
+   *
+   * Only the script's own names count when the caller says what those are
+   * (`readImages`'s `asked`); the same goes for `overCap`.
    */
   refused: number;
   /**
@@ -230,9 +233,13 @@ async function folderAt(dir: string): Promise<'missing' | 'folder' | 'refused'> 
  * same 60 pictures on every machine.
  *
  * `asked` is the set of pictures the text's notes name (`imageNoteFiles`),
- * and it changes nothing about what is read: it only lets the read count the
- * ones the folder does not list (`ImagesRead.notFound`). A folder that is
- * missing, or that vanished between the check and the listing, lists none.
+ * and it changes nothing about what is read. It lets the read count the ones
+ * the folder does not list (`ImagesRead.notFound`), and, when it names any,
+ * narrows `refused` and `overCap` to its own names: a stray file no note names
+ * is no loss to the book, and the window's Tune would otherwise say a picture
+ * was left out of one that lacks none. Empty, as the Kindle rebuild passes it,
+ * every name counts. A folder that is missing, or that vanished between the
+ * check and the listing, lists none.
  *
  * Asynchronous where the writer below is not, and for the FIFO's sake: should
  * the `lstat` gate ever regress, a FIFO blocks `readFile` at open, and an
@@ -260,6 +267,11 @@ export async function readImages(
   }
   const listed = new Set(names);
   const notFound = [...asked].filter((name) => !listed.has(name)).length;
+  // Told what the script shows, a loss is only a loss if it is one of those:
+  // a stray file no note names costs the book nothing, and counting it would
+  // have Tune say a picture was left out of a book that lacks none. Told
+  // nothing, every name a note could carry might be one, as before.
+  const counts = (name: string) => asked.size === 0 || asked.has(name);
   for (const name of names) {
     // `continue` and a count, not `break`. A `break` would make the cap the
     // one loss in this whole feature that nothing anywhere reports: the PDF
@@ -267,14 +279,14 @@ export async function readImages(
     // lose plates in silence. Nothing below the cap runs for these, so the
     // cost of walking the tail is one loop iteration each.
     if (images.size >= MAX_IMAGES) {
-      overCap++;
+      if (counts(name)) overCap++;
       continue;
     }
     const path = join(dir, name);
     try {
       const info = await lstat(path);
       if (!info.isFile() || info.size > MAX_IMAGE_FILE_BYTES) {
-        refused++;
+        if (counts(name)) refused++;
         continue;
       }
       // The content gate has to come after the read, which is the one thing
@@ -282,12 +294,12 @@ export async function readImages(
       // stat'ed. The cost is bounded by the size gate that just ran.
       const bytes = new Uint8Array(await readFile(path));
       if (!isPng(bytes)) {
-        refused++;
+        if (counts(name)) refused++;
         continue;
       }
       images.set(name, bytes);
     } catch {
-      refused++; // one picture lost, the rest unaffected
+      if (counts(name)) refused++; // one picture lost, the rest unaffected
     }
   }
   return { images, refused, overCap, notFound };

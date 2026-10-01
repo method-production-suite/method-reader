@@ -424,6 +424,54 @@ describe('readImages, told which pictures the script asks for', () => {
     expect((await readImages(cached(null))).notFound).toBe(0);
     expect((await readImages(cached({ 'p001-01.png': png() }))).notFound).toBe(0);
   });
+
+  // The script's own pictures are what a warning about this book is about.
+  // A stray file no note names costs the book nothing, so Tune must not say
+  // a picture was left out because of one.
+  test('a stray file no note names is not a refusal when the script says what it shows', async () => {
+    const fountain = cached({
+      'p001-01.png': png(1),
+      'p002-01.png': png(2),
+      'stray.png': new Uint8Array(0),
+    });
+    const read = await readImages(fountain, asked('p001-01.png', 'p002-01.png'));
+    expect([...read.images.keys()]).toEqual(['p001-01.png', 'p002-01.png']);
+    expect([read.refused, read.overCap, read.notFound]).toEqual([0, 0, 0]);
+    expect(imageFolderWarnings(read)).toEqual([]);
+  });
+
+  test('nor is a stray past the cap', async () => {
+    // Sixty good pictures fill the cap, the script's one picture among them;
+    // the two strays after them are turned away and the book lacks nothing.
+    const many: Record<string, Uint8Array> = {};
+    for (let i = 1; i <= MAX_IMAGES; i++) many[`p${String(i).padStart(3, '0')}-01.png`] = png();
+    many['x-stray-1.png'] = png();
+    many['x-stray-2.png'] = png();
+    const read = await readImages(cached(many), asked('p001-01.png'));
+    expect(read.images.has('p001-01.png')).toBe(true);
+    expect([read.refused, read.overCap]).toEqual([0, 0]);
+  });
+
+  test('a picture the script shows is still counted beside a stray that is not', async () => {
+    const fountain = cached({
+      'p001-01.png': new Uint8Array(0),
+      'stray.png': new Uint8Array(0),
+    });
+    const read = await readImages(fountain, asked('p001-01.png'));
+    expect(read.refused).toBe(1);
+  });
+
+  test('asked for nothing, every refused file still counts, strays included', async () => {
+    // The Kindle rebuild reads the folder without saying what the script
+    // shows (export/artifact.ts), and keeps today's count.
+    const fountain = cached({ 'p001-01.png': png(), 'stray.png': new Uint8Array(0) });
+    expect((await readImages(fountain)).refused).toBe(1);
+    expect((await readImages(fountain, asked())).refused).toBe(1);
+    const many: Record<string, Uint8Array> = {};
+    for (let i = 1; i <= MAX_IMAGES; i++) many[`p${String(i).padStart(3, '0')}-01.png`] = png();
+    many['x-stray-1.png'] = png();
+    expect((await readImages(cached(many))).overCap).toBe(1);
+  });
 });
 
 describe('imageFolderWarnings', () => {

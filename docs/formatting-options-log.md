@@ -1518,7 +1518,9 @@ the Mac app should move those two; nothing in the engine needs to change.
   picture the notes ask for and the book lacks once, under its most specific
   cause: the folder is a link or a file, a listed file would not be read, a
   listed file was past the cap, or the folder does not list it at all (a
-  deleted file, an evicted iCloud copy, no folder). The book is still
+  deleted file, an evicted iCloud copy, no folder). A file no note names is
+  not counted at all, unreadable or past the cap: the book lacks nothing for
+  it. The book is still
   written, and Tune shows the answer's warnings under its status line until
   a rebuild comes back without any. `convertFountain` keeps
   only allowlisted names whose bytes are a PNG. The no-Calibre Kindle rebuild
