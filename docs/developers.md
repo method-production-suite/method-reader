@@ -147,7 +147,9 @@ email, and saving a copy) with the one you chose last time marked. `route
 `save-epub` or `save-kindle`. `route kindle-email-setup` opens Amazon's
 Personal Document Settings page. The saves need an absolute `--out` path;
 Apple Books and email are Mac only, and email needs Apple Mail as the default
-mail app. `routes --quick` skips the second and a half spent looking for a
+mail app. Email refuses a book over 50 MB, Amazon's limit for email (it drops
+a larger one without a word), and points to Send to Kindle, which takes up to
+200 MB. `routes --quick` skips the second and a half spent looking for a
 docked reMarkable.
 
 A Kindle gets its best rendering from KFX, which needs Calibre, Amazon's

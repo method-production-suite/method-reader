@@ -319,7 +319,8 @@ Keys:
   send-to-kindle         open Amazon's Send to Kindle app with the book, or
                          its web page and the book's folder
   email-to-kindle        open a Mail message with the book attached (on a
-                         Mac, with Apple Mail as the default mail app)
+                         Mac, with Apple Mail as the default mail app). A
+                         book over 50 MB is refused: Amazon drops it
   save-epub              save a copy of the EPUB at --out
   save-kindle            save a Kindle file (KFX, AZW3 or MOBI) at --out
   kindle-email-setup     open Amazon's settings page, where your Kindle's
