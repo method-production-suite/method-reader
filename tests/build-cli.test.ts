@@ -1041,12 +1041,19 @@ describe('signing a Mac binary', () => {
   }
 
   test('signArgv is the exact codesign invocation the shipped CLI was signed with', () => {
+    // --identifier because the Swift app's release script signed a file
+    // named screepub-cli-<arch>, and codesign takes the identifier from the
+    // file name. This one signs a file named `screepub`, so without it the
+    // binary's designated requirement would change (review, 2026-10-01).
     expect(signArgv(ARM, '/tmp/out', ID)).toEqual([
       'codesign', '--force', '--options', 'runtime', '--timestamp',
       '--entitlements', MAC_ENTITLEMENTS,
+      '--identifier', 'screepub-cli-arm64',
       '--sign', ID,
       '/tmp/out/macos-arm64/screepub',
     ]);
+    const X = MAC_TARGETS.find((t) => t.id === 'macos-x64')!;
+    expect(signArgv(X, '/tmp/out', ID)).toContain('screepub-cli-x64');
   });
 
   test('signs, then verifies, then reads back the flags, in that order', () => {
@@ -1125,17 +1132,44 @@ describe('notarizing a Mac binary', () => {
         seen.push(argv);
         // Stand in for ditto: make the zip it would have made.
         if (argv[0] === 'ditto') writeFileSync(argv[argv.length - 1]!, 'zip');
-        return { exitCode: 0, stderr: '' };
+        return { exitCode: 0, stderr: '', stdout: argv[0] === 'xcrun' ? '{"id":"2efe2717-52ef-43a5-96dc-0797e4ca1041","message":"Processing complete","status":"Accepted"}' : '' };
       };
       mkdirSync(buildDir(X64, dir), { recursive: true });
       notarizeTarget(X64, dir, CREDS, spawn);
       const zip = join(dir, 'macos-x64', 'screepub-notarize.zip');
+      // --output-format json, the way tauri-macos-sign 2.3.4 asks it (the
+      // code that notarizes the window every release): the verdict is read
+      // from the answer, not inferred from the exit code.
       expect(seen).toEqual([
         ['ditto', '-c', '-k', binaryPath(X64, dir), zip],
         ['xcrun', 'notarytool', 'submit', zip, '--key', '/k/ac.p8', '--key-id', 'KEYID',
-          '--issuer', 'ISSUER', '--wait'],
+          '--issuer', 'ISSUER', '--output-format', 'json', '--wait'],
       ]);
       expect(existsSync(zip)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('an exit of 0 with a status other than Accepted is a failure, with the id to look up', () => {
+    const dir = mkdtempSync(join(SCRATCH, 'notary-'));
+    try {
+      const answer = (stdout: string) => (argv: string[]) => {
+        if (argv[0] === 'ditto') {
+          writeFileSync(argv[argv.length - 1]!, 'zip');
+          return { exitCode: 0, stderr: '', stdout: '' };
+        }
+        return { exitCode: 0, stderr: '', stdout };
+      };
+      mkdirSync(buildDir(X64, dir), { recursive: true });
+      const invalid = answer('{"id":"abc-123","message":"Processing complete","status":"Invalid"}');
+      expect(() => notarizeTarget(X64, dir, CREDS, invalid)).toThrow(/Invalid/);
+      expect(() => notarizeTarget(X64, dir, CREDS, invalid)).toThrow(/abc-123/);
+      expect(() => notarizeTarget(X64, dir, CREDS, invalid)).toThrow(/notarytool log/);
+      // An answer that is not the JSON asked for is not a pass either.
+      expect(() => notarizeTarget(X64, dir, CREDS, answer('Processing complete'))).toThrow(/macos-x64/);
+      expect(() => notarizeTarget(X64, dir, CREDS, answer(''))).toThrow(/macos-x64/);
+      expect(existsSync(join(dir, 'macos-x64', 'screepub-notarize.zip'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

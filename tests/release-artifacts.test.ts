@@ -638,6 +638,14 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(release).toMatch(/bun tools\/build-cli\.ts --version "\$\{VERSION#v\}" --out "\$RUNNER_TEMP\/cli-mac"/);
     expect(release).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
     expect(uploadedBy(rel.jobs['release']!)).not.toContain('Screepub-macOS.dmg');
+    // The notes' checksums, the upload and the crib sheet all read the
+    // build's --out folder: a path drifting in one of the three would kill
+    // the release after both notarizations (review, 2026-10-01).
+    const out = '$RUNNER_TEMP/cli-mac';
+    for (const name of MACOS_CLI_ASSETS) {
+      expect(release.split(`${out}/${name}`).length - 1).toBeGreaterThanOrEqual(2); // upload + crib
+    }
+    expect(release).toContain(`cd "${out}" && shasum -a 256`); // the notes
     // The new jobs must not touch the Swift build, the CLI or the tap.
     for (const jobName of ['app-bundles', 'app-upload']) {
       const text = runText(rel.jobs[jobName]!);

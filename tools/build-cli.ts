@@ -149,8 +149,9 @@ export interface Target {
   format: BinaryFormat;
   packaging: 'tar.gz' | 'zip';
   /** The name the binary has INSIDE the archive, so `tar -xzf` and
-   *  `Expand-Archive` both drop a runnable `screepub` in the cwd — the same
-   *  arrangement as the macOS tarballs app/release.sh produces. */
+   *  `Expand-Archive` both drop a runnable `screepub` in the cwd, which is
+   *  also what the Homebrew formula's `bin.install` expects of the macOS
+   *  tarballs. */
   binaryName: string;
   archiveName: string;
 }
@@ -238,8 +239,9 @@ export function archivePath(target: Target, outDir: string): string {
 
 /** Which target, if any, this machine can actually execute. Pure, so the
  *  mapping is tested rather than only observed on whatever host ran the
- *  suite. macOS answers `undefined` on purpose: this tool builds no macOS
- *  artifact, so a Mac has no host target here. */
+ *  suite. macOS answers `undefined` on purpose: the CROSS table has no
+ *  macOS row, so a Mac has no host target in it. The Mac table has its own
+ *  mapping, macTargetIdForHost. */
 export function targetIdForHost(platform: string, arch: string): TargetId | undefined {
   if (platform === 'linux' && arch === 'x64') return 'linux-x64';
   if (platform === 'linux' && arch === 'arm64') return 'linux-arm64';
@@ -357,9 +359,9 @@ export function parseBuildArgs(argv: string[]): BuildArgs {
 
 /** `screepub --version` reports package.json's version, inlined at compile
  *  time; the --version flag changes nothing about the binary. So the flag's
- *  job is to be CHECKED. app/release.sh applies the same guard on the macOS
- *  side, and for the same reason: a binary that disagrees with its tag lies
- *  about itself in every bug report it ever appears in. */
+ *  job is to be CHECKED, on the cross and the --mac builds alike: a binary
+ *  that disagrees with its tag lies about itself in every bug report it
+ *  ever appears in. */
 export function assertPackageVersion(version: string, repoDir: string = REPO_DIR): void {
   const pkg = JSON.parse(readFileSync(join(repoDir, 'package.json'), 'utf8')) as {
     version?: string;
@@ -376,6 +378,8 @@ export function assertPackageVersion(version: string, repoDir: string = REPO_DIR
 export interface SpawnResult {
   exitCode: number;
   stderr: string;
+  /** Only the callers that read an answer (notarytool) look at this. */
+  stdout?: string;
 }
 export type Spawn = (argv: string[], cwd: string) => SpawnResult;
 
@@ -384,7 +388,7 @@ const realSpawn: Spawn = (argv, cwd) => {
   // answered as a failed run so the caller's message names the target.
   try {
     const proc = Bun.spawnSync(argv, { cwd, stdout: 'pipe', stderr: 'pipe' });
-    return { exitCode: proc.exitCode ?? 1, stderr: proc.stderr.toString() };
+    return { exitCode: proc.exitCode ?? 1, stderr: proc.stderr.toString(), stdout: proc.stdout.toString() };
   } catch (err) {
     return { exitCode: 127, stderr: `${argv[0]}: ${(err as Error).message}` };
   }
@@ -440,6 +444,11 @@ export function signArgv(
   return [
     'codesign', '--force', '--options', 'runtime', '--timestamp',
     '--entitlements', entitlements,
+    // The identifier the shipped CLI has always had. The Swift app's
+    // release script signed a file named screepub-cli-<arch>, and codesign
+    // takes the identifier from the file name; this signs one named
+    // `screepub`, so it says so, or the designated requirement changes.
+    '--identifier', `screepub-cli-${target.id.replace(/^macos-/, '')}`,
     '--sign', identity,
     binaryPath(target, outDir),
   ];
@@ -514,16 +523,37 @@ export function notarizeTarget(
 ): void {
   const zip = join(buildDir(target, outDir), 'screepub-notarize.zip');
   try {
-    for (const [argv, what] of [
-      [['ditto', '-c', '-k', binaryPath(target, outDir), zip], 'ditto'],
-      [['xcrun', 'notarytool', 'submit', zip, '--key', creds.keyPath, '--key-id', creds.keyId,
-        '--issuer', creds.issuer, '--wait'], 'notarytool submit'],
-    ] as const) {
-      const { exitCode, stderr } = spawn([...argv], repoDir);
+    const run = (argv: string[], what: string): string => {
+      const { exitCode, stderr, stdout } = spawn(argv, repoDir);
       if (exitCode !== 0) {
         throw new Error(`build-cli: ${target.id}: ${what} failed (exit ${exitCode})\n${stderr.trim()}`);
       }
+      return stdout ?? '';
+    };
+    run(['ditto', '-c', '-k', binaryPath(target, outDir), zip], 'ditto');
+    // The verdict is READ, not inferred from the exit code: --output-format
+    // json and status "Accepted", exactly as tauri-macos-sign 2.3.4 does
+    // for the window every release (its NotarytoolSubmitOutput: id, status,
+    // message). Anything else, including an answer that is not that JSON,
+    // fails here with the id needed for `xcrun notarytool log`.
+    const answer = run(
+      ['xcrun', 'notarytool', 'submit', zip, '--key', creds.keyPath, '--key-id', creds.keyId,
+        '--issuer', creds.issuer, '--output-format', 'json', '--wait'],
+      'notarytool submit',
+    );
+    let verdict: { id?: string; status?: string; message?: string };
+    try {
+      verdict = JSON.parse(answer);
+    } catch {
+      throw new Error(`build-cli: ${target.id}: notarytool's answer was not JSON:\n${answer.trim() || '<empty>'}`);
     }
+    if (verdict.status !== 'Accepted') {
+      throw new Error(
+        `build-cli: ${target.id}: notarization ${verdict.status ?? 'returned no status'} ` +
+          `(${verdict.message ?? 'no message'}); see \`xcrun notarytool log ${verdict.id ?? '<no id>'}\``,
+      );
+    }
+    console.log(`   ${target.id}: notarized, ${verdict.id}`);
   } finally {
     rmSync(zip, { force: true });
   }

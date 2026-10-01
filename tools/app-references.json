@@ -251,11 +251,6 @@
       "category": "artifact",
       "breaks": "The DMG naming rule, written specifically so the Tauri artifact cannot collide with Screepub-macOS.dmg. F2 removes the Desktop infix and this comment with it."
     },
-    "tools/build-cli.ts": {
-      "refs": 3,
-      "category": "note",
-      "breaks": "Comments explaining that the signed macOS CLI comes from app/release.sh instead."
-    },
     "tools/build-sidecar.ts": {
       "refs": 1,
       "category": "note",
