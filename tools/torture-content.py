@@ -204,4 +204,42 @@ CONTENT = [
                    "is trivially short, because the fallback measures the "
                    "taller of the pair and a stub would never reach it.")]),
     ("pagebreak", ""),
-] + saturation()
+] + saturation() + [
+
+    # ---- the pictures (registry #19 and #19a) ----------------------------
+    #
+    # Three sheets after the saturation run, each built around one picture
+    # that make-fixture.py draws beneath its text (torture_placements). That
+    # is also where each picture's geometry, and its margin to the threshold
+    # that governs it, is stated. The other two pictures need no text here:
+    # the title card sits behind the title sheet, and the letterhead is on
+    # every sheet as furniture the book must leave out.
+    ("pagebreak", ""),
+    ("scene", "INT. ART DEPARTMENT - DAY"),
+    # Rows 2..12 belong to the storyboard panel. The heading takes row 0 and
+    # its blank row 1, so padding to 14 puts this action a full line clear of
+    # the panel's bottom edge rather than grazing it: images.pdf's sheet 2
+    # reserves the same band for the same picture.
+    ("atline", 14),
+    ("action", "WREN pins a storyboard panel to the wall, printed small."),
+    ("character", "WREN"),
+    ("dialogue", "Under half a column wide, and not a thumbnail."),
+    ("pagebreak", ""),
+
+    # A scene heading with a full-page plate directly under it and nothing
+    # else on the sheet. The plate's forced break before it overrides the
+    # heading's keep-with-next, so the device pass is asked whether the
+    # heading ends up alone at the foot of a page or travels with the plate.
+    ("scene", "INT. MAP ROOM - NIGHT"),
+    ("pagebreak", ""),
+
+    # The tall plate: its height in the BOOK follows the source aspect
+    # (1:2.75) at the width its note asks for, so on a 3:4 e-reader screen it
+    # comes out taller than the page at any font size, and the device pass
+    # is asked whether a reader slices it, scales it or clips it. It is under
+    # the full-page threshold on purpose: a full-page figure's forced breaks
+    # would give it a page of its own and hide the very overflow being asked
+    # about.
+    ("scene", "INT. FIRE STAIRS - CONTINUOUS"),
+    ("action", "A production still, printed tall."),
+]

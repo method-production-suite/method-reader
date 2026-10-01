@@ -114,7 +114,7 @@ bun tools/bump-version.ts <version>   # release bump: all 4 version files + desk
   character name reach an assertion, a doc, or a screenshot.
 - Committed fixtures: `screenplay.pdf` (clean happy path), `prose.pdf` and
   `blank-pages.pdf` (the not-a-screenplay and scanned guards), and
-  **`torture.pdf`** — 14 sheets exercising every content-driven registry
+  **`torture.pdf`** — 17 sheets exercising every content-driven registry
   behavior, whose coverage is tracked row-by-row in
   `tools/torture-manifest.json`. `bun tools/device-checklist.ts` prints the
   device-side half of that manifest for a hardware pass. And

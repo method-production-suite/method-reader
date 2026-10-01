@@ -187,7 +187,7 @@ def parse_markup(s):
 
     Offsets index the PLAIN text, so wrapping can slice by character and
     re-derive styles without ever seeing a marker. Unbalanced markers raise:
-    a typo buried in 14 sheets of content must fail at generation rather
+    a typo buried in pages of content must fail at generation rather
     than produce a fixture that quietly tests nothing.
     """
     plain, spans, open_at, pos, out_len = [], [], {}, 0, 0
@@ -1088,19 +1088,104 @@ def _load_sibling(filename, modname):
 
 
 def _torture_content():
-    """tools/torture-content.py: 14 sheets of screenplay, as data."""
+    """tools/torture-content.py: 17 sheets of screenplay, as data."""
     return _load_sibling("torture-content.py", "torture_content")
+
+
+# --- torture's pictures ---------------------------------------------------
+# Five pictures, so a device pass can ask its picture questions of the same book as
+# every other row (registry #19 for which are kept, #19a for how the book
+# shows them). Every fraction below is against the 612x792 sheet, and
+# `columnWidthPct` remaps a page share to a COLUMN share by dividing by
+# 0.706 (artwork.ts), which is where each `w=` comes from.
+#
+# The four that are not the letterhead deliberately do NOT repeat: one sheet
+# each, so the furniture rule cannot reach them and every one must arrive as
+# art. None has transparency (every picture here is plain RGB), so this
+# fixture cannot show how a reader composites one onto a dark page.
+
+# Pictures only torture draws, kept out of IMAGES so images.pdf does not gain
+# unused objects and its bytes stay what fixture-stability.test.ts pins.
+TORTURE_IMAGES = {             # name -> (px width, px height, gradient seed)
+    # The full-page plate under a scene heading. Its seed differs from every
+    # other picture's so no two encode to the same PNG.
+    "imPlate": (279, 333, 241),
+    # The tall plate. Its SOURCE is 1:2.75, which alone decides how tall it
+    # renders: the book sets a width and lets the height follow the aspect.
+    "imTall": (200, 550, 211),
+}
+
+# The title card, behind the title rows exactly as images.pdf draws it:
+# 522x702pt is 75.6% of the sheet, 5.6 points over the 70% that makes it
+# full-page and 14 under the background rule's 90%. It stands ahead of every
+# scene heading, so the book opens on it in a section of its own.
+TORTURE_CARD = ("imCard", 45, 45, 522, 702)
+
+# 180pt wide is 29.4% of the sheet and 41.6% of the text column, so the note
+# reads w=42. Area 5.0% against the 3% floor, both edges far over the 32px
+# minimum. Spans y 570..705, under the heading's row and inside the rows
+# torture-content.py reserves with an atline.
+TORTURE_PANEL = ("imPanel", 108, 570, 180, 135)
+
+# 558x666pt is 91.2% x 84.1% of the sheet: 76.7% of its area, 6.7 points over
+# the full-page mark and 13.3 under the background rule's 90%, on a sheet of
+# two text lines against that rule's 20. 91.2% of the sheet is 129% of the
+# column, so the note reads w=100 full. Its top edge at 702 sits below the
+# heading's baseline at 720, which is what puts the heading first.
+TORTURE_PLATE = ("imPlate", 27, 36, 558, 666)
+
+# 240x660pt is 39.2% x 83.3% of the sheet: 32.7% of its area, far UNDER the
+# 70% full-page mark, so it stays in the flow with no forced break to hide
+# behind. w=56, and at 1:2.75 that renders taller than the page on a 3:4
+# e-reader screen. Its top edge at 672 clears the action's baseline at 696.
+TORTURE_TALL = ("imTall", 186, 12, 240, 660)
+
+
+def torture_placements():
+    """(name, x, y, w, h) per sheet, drawn UNDER the text like a real PDF.
+
+    Built from the flowed page count rather than written out, so a sheet
+    added earlier in torture-content.py cannot leave the last three pictures
+    on the wrong pages: the panel, the plate and the tall plate are always
+    the last three sheets, which is where that file puts them.
+    """
+    n_pages = 1 + len(flow_torture(_torture_content().CONTENT))
+    if n_pages < 4:
+        raise SystemExit("torture_placements: need a title sheet and the "
+                         "three picture sheets")
+    # The letterhead the furniture rule has to catch on REPETITION alone: on
+    # every sheet, in the bottom margin, and large enough (200x100pt) to clear
+    # every size floor. Seventeen sheets is far past the 3-sheet rule.
+    sheets = [[("imLogo", *LOGO)] for _ in range(n_pages)]
+    sheets[0].insert(0, TORTURE_CARD)
+    sheets[-3].insert(0, TORTURE_PANEL)
+    sheets[-2].insert(0, TORTURE_PLATE)
+    sheets[-1].insert(0, TORTURE_TALL)
+    return sheets
+
+
+def torture_xobject_bodies():
+    """Only the names torture actually draws, from IMAGES and TORTURE_IMAGES
+    both. Apart from `xobject_bodies()` so images.pdf stays as it is."""
+    specs = {**IMAGES, **TORTURE_IMAGES}
+    drawn = {p[0] for sheet in torture_placements() for p in sheet}
+    return {name: image_xobject(*specs[name]) for name in sorted(drawn)}
 
 
 def torture_streams():
     mod = _torture_content()
     pages = flow_torture(mod.CONTENT)
-    return [title_stream(mod.TITLE)] + [
+    streams = [title_stream(mod.TITLE)] + [
         torture_content_stream(p, i + 1) for i, p in enumerate(pages)
     ]
+    return ["".join(place(*p) for p in sheet) + s
+            for sheet, s in zip(torture_placements(), streams)]
 
 
 KINDS["torture"] = torture_streams
+XOBJECTS["torture"] = lambda: (
+    torture_xobject_bodies(),
+    [[p[0] for p in sheet] for sheet in torture_placements()])
 
 
 # --- demo: the invented feature the README and site pictures show ---------

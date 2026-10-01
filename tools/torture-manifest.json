@@ -21,7 +21,7 @@
 
   { "entry": "5a", "title": "Scene heading keeps its context (keep-with-next chain)",
     "covered": true, "page": 8, "side": "device",
-    "how": "12 scene headings, several landing near page seams across the saturation run" },
+    "how": "15 scene headings, several landing near page seams across the saturation run" },
 
   { "entry": "5b", "title": "Mini-slugs, micro-headings not scenes",
     "covered": true, "page": 2, "side": "both",
@@ -113,7 +113,7 @@
 
   { "entry": "12", "title": "Scene-level TOC",
     "covered": true, "page": 1, "side": "device",
-    "how": "12 scenes across the fixture, enough for a TOC with real structure" },
+    "how": "15 scenes across the fixture, enough for a TOC with real structure" },
 
   { "entry": "13", "title": "Shooting-script scene numbers, kept in Fountain, hidden in EPUB",
     "covered": true, "page": 1, "side": "both",
@@ -136,6 +136,21 @@
     "how": "a chyron action block in Helvetica, three inserts at 10/15/18pt covering -1/+1/+2, and a dialogue line in the second face; each asserted to emit the exact [[fmt: ...]] note, and the rest of the fixture asserted to emit none" },
 
   { "entry": "19", "title": "Pictures recognised, recorded as notes",
-    "covered": false,
-    "why": "torture.pdf carries no pictures in phase 1. images.pdf owns the six rules (two pictures kept, four refused, each by a different rule) and jpx.pdf owns the JPEG 2000 decoder. Nothing renders a picture yet, so there is nothing for a device pass to look at; the book side arrives with phase 2" }
+    "covered": true, "page": 0, "side": "both",
+    "how": "five pictures, of which the book must keep exactly four. The title card behind the title sheet (522x702pt, 75.6% of the sheet, so full-page), the storyboard panel on sheet 14 (180pt, 42% of the text column), the map plate under its heading on sheet 15 (558x666pt, 76.7% of the sheet, so full-page) and the tall plate on sheet 16 (240x660pt, 56% of the column, under the full-page mark): each on one sheet only, so repetition cannot reach it and it must arrive as art. And a 200x100pt letterhead on all 17 sheets, the furniture rule at document scale, which must reach the book as nothing at all. tests/torture-pictures.test.ts asserts the four kept, all 17 refusals as furniture, and each note's width and full-page verdict. images.pdf still owns the other five rules, one picture per rule, and jpx.pdf the JPEG 2000 decoder. Picture files are named by PDF page, one more than the sheet: sheet 14's panel is p015-01.png",
+    "deviceChecks": [
+      "the letterhead is nowhere in the book. Every sheet of the PDF carries the same 200x100pt logo in its bottom margin, and the book must show none of it: not on the title card's page, not under a scene, not at the end. If it appears even once, report the page it is on",
+      "nothing that was art is missing. The book shows four pictures: the title card at the front, the storyboard panel on sheet 14, the map plate on sheet 15 and the tall plate on sheet 16. A missing one is reported by its sheet"
+    ] },
+
+  { "entry": "19a", "title": "Pictures in the book (option, default ON)",
+    "covered": true, "page": 14, "side": "both",
+    "how": "the title card stands ahead of every scene heading, so the book opens on an Opening section holding it alone as a full-page figure (w100, figure-full); the panel on sheet 14 and the tall plate on sheet 16 stay in the flow at w40 and w55; and on sheet 15 a scene heading sits directly above the map plate, a full-page figure, with nothing between them. Asserted on the built EPUB by tests/torture-pictures.test.ts, and the book validates clean under epubcheck. What only a device can answer is listed under The pictures",
+    "deviceChecks": [
+      "the title card is the first page of the body, on a page of its own. It comes straight after the generated title page, where Begin Reading lands, as wide as the text column or as large as the page allows, and shares its page with nothing: the first scene heading starts on the next page",
+      "no blank page in front of the title card. Its break before has nothing to break from, and the plate carries no margin that could push it onto a second page. Verified in Chrome only, not yet on KFX or on Kobo and tolino: a blank page between the title page and the card is the failure",
+      "the storyboard panel on sheet 14 holds its width: a little under half the text column, centered, with its heading above it and the action below. Not a thumbnail, not full width, and nothing running off the right edge at any font size",
+      "a heading above a full-page plate. On sheet 15, INT. MAP ROOM - NIGHT sits directly above the map plate, whose break before overrides the heading's keep with what follows; in Chrome the heading ends its page alone. On the device: is the heading alone at the foot of a page, or carried onto the plate's page? Either answer is a verdict worth recording",
+      "a plate taller than the page. The tall plate on sheet 16 is 1:2.75 at the source and set at 55% of the text column, so on a 3:4 e-reader screen it runs past one page at any font size, and it is under the full-page mark on purpose so no forced break hides that. Chrome slices it across pages; whether the reader slices it, scales it to fit, or clips it is the question, and 'it scaled' is as useful a report as 'it broke'"
+    ] }
 ]
