@@ -41,8 +41,8 @@ bun tools/build-sidecar.ts --host    # build the engine the window runs
 cd desktop/src-tauri && cargo run    # open the window
 ```
 
-[desktop/README.md](desktop/README.md) covers bundles, the universal Mac
-build and how the window talks to the engine.
+[desktop/README.md](desktop/README.md) covers bundles, the Apple Silicon
+Mac build and how the window talks to the engine.
 [docs/developers.md](docs/developers.md) covers the command line, the
 library and the architecture.
 

@@ -19,7 +19,6 @@ unpack it, and run it.
 | Machine | File |
 | --- | --- |
 | Mac, Apple Silicon | `screepub-cli-macos-arm64.tar.gz` |
-| Mac, Intel | `screepub-cli-macos-x64.tar.gz` |
 | Linux, Intel or AMD | `screepub-cli-linux-x64.tar.gz` |
 | Linux, ARM (Asahi, Raspberry Pi, ARM servers) | `screepub-cli-linux-arm64.tar.gz` |
 | Windows, 64-bit | `screepub-cli-windows-x64.zip` |
@@ -29,13 +28,17 @@ tar -xzf screepub-cli-linux-x64.tar.gz
 ./screepub script.pdf
 ```
 
-On a Mac, Homebrew installs the same converter and keeps it current:
+There is no build for Intel Macs: Screepub supports Macs with Apple
+Silicon only.
+
+On a Mac with Apple Silicon, Homebrew installs the same converter and keeps
+it current:
 
 ```bash
 brew install --formula ssandweiss/tap/screepub
 ```
 
-The Mac archives are signed and notarized. `SHA256SUMS` on the release page
+The Mac archive is signed and notarized. `SHA256SUMS` on the release page
 covers the Linux and Windows archives. The Windows build is unsigned, so
 SmartScreen warns the first time it runs: choose **More info**, then **Run
 anyway**.

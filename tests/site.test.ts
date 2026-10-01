@@ -180,7 +180,7 @@ describe('"Every download" links version-free names, each with a status', () => 
     // If one of these ledger lines goes, someone has done the thing: move
     // that file's row on the site up to match, then update this test.
     expect(nobody).toContain('Installing the `.deb`, the `.rpm` or the `.exe`');
-    expect(nobody).toContain('The Intel SLICE of the universal macOS `.dmg`');
+    expect(nobody).toContain("The Intel SLICE of the identifier release's universal `.dmg`");
     for (const [file, os] of bundles) {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);

@@ -7,8 +7,9 @@ knowledge, formatting rules, settings and send routes are all in `src/`
 (TypeScript), where the CLI and the window share one implementation and one
 test suite. See [ADR 2026-09-12](../docs/adr/2026-09-12-cross-platform-tauri.md).
 
-It ships for macOS (one universal `.dmg`, `Screepub-macOS.dmg`), Windows (an
-NSIS installer) and Linux (`.deb` and `.rpm`), built by `release.yml` on
+It ships for macOS (one `.dmg` for Macs with Apple Silicon,
+`Screepub-macOS.dmg`), Windows (an NSIS installer) and Linux (`.deb` and
+`.rpm`), built by `release.yml` on
 every tag. On a Mac it is `Screepub.app` with the identifier
 `com.darkwell.screepub`, the identity the older Swift Mac app had, so that
 app's own updater installs the window in its place. Who has checked which
@@ -34,18 +35,19 @@ checks for it (see "How Tauri finds the engine" below).
 Installable bundles are built by `bun tools/build-app-bundle.ts`, which calls
 `cargo tauri build` for you (install the Tauri CLI with
 `cargo install tauri-cli --version 2.11.4 --locked`, the version CI pins). A
-**universal macOS** build, which is what a release ships:
+**macOS** build, which is what a release ships, is for Apple Silicon only:
 
-    rustup target add x86_64-apple-darwin        # once
-    bun tools/build-sidecar.ts --universal       # both slices, then lipo
+    bun tools/build-sidecar.ts --target bun-darwin-arm64
     cd desktop/src-tauri
-    cargo tauri build --target universal-apple-darwin \
-      --bundles app,dmg
+    cargo tauri build --target aarch64-apple-darwin --bundles app,dmg
 
-Bun compiles one architecture at a time, so the universal sidecar is a lipo
-of two real builds. `--universal` builds both, fuses them, and checks the
-result really holds both slices: `lipo` exits 0 when handed a single input,
-and a thin engine inside a universal bundle would fail on every Intel Mac.
+The engine is named for the target rather than for the machine, so this
+works the same on any Mac. `build-app-bundle.ts` builds every Mac bundle
+for that target and refuses any other: Intel Macs are not supported after
+the identifier release, the last whose image was universal (two engines
+fused into one), and an Intel or universal image would be published under
+the one Mac name. See
+[the plan](../docs/superpowers/plans/2026-10-01-f2-handover-amendment.md).
 
 `cargo tauri build` may rewrite `Cargo.toml`'s `features = []` lists; they
 are committed in the spelling the CLI writes, so a rewrite is a no-op. If it

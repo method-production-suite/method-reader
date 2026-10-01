@@ -2,8 +2,10 @@ import { describe, test, expect } from 'bun:test';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { TARGETS, MAC_TARGETS } from '../tools/build-cli';
+import { parseSidecarArgs } from '../tools/build-sidecar';
 import {
   BUNDLE_KINDS,
+  MAC_TARGET,
   kindsForOs,
   type BundleArch,
   type BundleOs,
@@ -837,6 +839,19 @@ describe('the two limits are stated where a reader meets them', () => {
     expect(developers).toContain('\n## Install the command-line converter\n');
   });
 
+  test('the developer page offers no Intel Mac download, and says Homebrew is Apple Silicon only', () => {
+    // Reads docs/developers.md alone: the README is another session's, and
+    // still says Intel until its own branch lands. Intel Macs are not
+    // supported after the identifier release (plan
+    // 2026-10-01-f2-handover-amendment.md), so the page must not offer the
+    // Intel tarball the release no longer carries.
+    const install = sectionOf(developers, '## Install the command-line converter');
+    expect(install).not.toContain(RETIRED_MACOS_CLI);
+    expect(install).not.toMatch(/\| Mac, Intel \|/);
+    expect(install.replace(/\s+/g, ' ')).toContain('On a Mac with Apple Silicon, Homebrew installs');
+    expect(install).toContain('The Mac archive is signed and notarized');
+  });
+
   test('the README says device support off macOS is unproven, and names the tolino case', () => {
     const lower = readme.toLowerCase();
     expect(lower).toContain('tolino');
@@ -978,7 +993,9 @@ describe('the app downloads are described where a reader meets them', () => {
     );
     const nobody = ledger.slice(ledger.indexOf('**Verified by nobody**'));
     expect(nobody).toContain('Installing the `.deb`, the `.rpm` or the `.exe`');
-    expect(nobody).toContain('The Intel SLICE of the universal macOS `.dmg`');
+    // History since Intel was dropped: the identifier release's universal
+    // image was the last with an Intel slice, and it never ran.
+    expect(nobody).toContain("The Intel SLICE of the identifier release's universal `.dmg`");
     for (const [file, os] of published) {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
@@ -1089,24 +1106,40 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     expect(person).not.toContain('amd64');
     // The Mac window: installed by hand, and updated from a release.
     expect(person).toContain('/Applications');
-    expect(/universal/i.test(person)).toBe(true);
     expect(person).toContain('0.7.2 to 0.7.3');
+    // Every Mac a person used is Apple Silicon, which is now the only kind
+    // the Mac download is built for (Intel dropped after the identifier
+    // release), so the list no longer speaks of "the ARM half".
+    const flat = person.replace(/\s+/g, ' ');
+    expect(flat).toContain('Each Mac that ran these is Apple Silicon, the only kind the Mac download is built for');
+    expect(flat).not.toMatch(/ARM half/);
   });
 
   test('the "nobody" list keeps what nobody has done, and only that', () => {
     expect(nobody).not.toMatch(/`\.dmg` or `\.exe` has been\s+installed/);
     expect(nobody).toContain('.exe');
-    expect(/slice/i.test(nobody)).toBe(true);
     expect(nobody).not.toContain('x86_64-apple-darwin');
+    // The Intel slice never ran, and is now history: the identifier
+    // release's universal image was the last to carry one.
+    const intel = nobody.slice(nobody.indexOf('- The Intel SLICE'));
+    const bullet = intel.slice(0, intel.indexOf('\n- ')).replace(/\s+/g, ' ');
+    expect(bullet).toContain('the last Mac download to carry one');
+    expect(bullet).toContain('never ran');
+    expect(bullet).toContain('Apple Silicon only');
+    expect(bullet).not.toMatch(/has never executed/);
   });
 
-  test('the CI list says what release.yml does, and that only the ARM half runs', () => {
+  test('the CI list says what release.yml does, and that the Mac image runs whole', () => {
     // release.yml has built, signed and notarized the Mac window on every tag
-    // since 0.7.0; the ledger must not still say it never ran.
+    // since 0.7.0; the ledger must not still say it never ran. The image is
+    // Apple Silicon only after the identifier release, the runner's own
+    // kind, so all of it runs and the smoke step prints no slice notice.
     expect(ci).toContain('release.yml');
     expect(ci).toMatch(/notariz/);
     expect(ci).not.toMatch(/never run|never been run|has not run|never executed/);
-    expect(ci).toMatch(/ARM half/);
+    const flat = ci.replace(/\s+/g, ' ');
+    expect(flat).toContain('The Mac `.dmg` is built for Apple Silicon only');
+    expect(flat).not.toMatch(/prints a notice/);
   });
 
   test('every relative link in the ledger resolves', () => {
@@ -1121,5 +1154,52 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     const desktop = read('desktop/README.md');
     expect(desktop).toContain('docs/verification-ledger.md');
     expect(desktop).not.toContain('Verified by nobody');
+  });
+});
+
+describe('the developer docs describe the Apple silicon build', () => {
+  // Intel Macs are not supported after the identifier release, so the
+  // universal build (two engines lipo'd, a universal cargo target) is gone.
+  // A developer doc still describing it hands a contributor commands that
+  // fail. README.md and site/ are not read here: another session owns them.
+  const desktop = read('desktop/README.md');
+
+  test('desktop/README.md documents only commands the tools accept', () => {
+    // Every build-sidecar line in the doc is parsed by the real parser, as
+    // an Apple Silicon Mac would run it, and every cargo target it names is
+    // the one build-app-bundle.ts builds a Mac bundle for.
+    const sidecarLines = [...desktop.matchAll(/^\s*bun tools\/build-sidecar\.ts ([^#\n]*)/gm)].map((m) =>
+      m[1]!.trim().split(/\s+/),
+    );
+    expect(sidecarLines.length).toBeGreaterThanOrEqual(2);
+    for (const args of sidecarLines) {
+      expect(() => parseSidecarArgs(args, 'darwin', 'arm64')).not.toThrow();
+    }
+    expect(desktop).toContain('bun tools/build-sidecar.ts --target bun-darwin-arm64');
+    const cargoTargets = [...desktop.matchAll(/cargo tauri build --target (\S+)/g)].map((m) => m[1]);
+    expect(cargoTargets).toEqual([MAC_TARGET]);
+    for (const gone of ['--universal', 'universal-apple-darwin', 'x86_64-apple-darwin', 'lipo']) {
+      expect(`${gone}: ${desktop.includes(gone)}`).toBe(`${gone}: false`);
+    }
+    expect(desktop).not.toMatch(/one universal `\.dmg`/);
+  });
+
+  test('CONTRIBUTING.md and the device map no longer speak of a universal Mac build', () => {
+    expect(read('CONTRIBUTING.md')).not.toMatch(/universal Mac\s+build/);
+    expect(read('docs/device-map.md')).not.toMatch(/universal Mac\s+build/);
+  });
+
+  test('the release runbook counts one Mac CLI tarball and one SHA', () => {
+    // The sections recording the 2026-08 per-arch flip are dated history
+    // and keep their two-arch blocks; what is checked here is the live
+    // instructions: the re-run, the by-hand bump and the bumper.
+    const runbook = read('docs/release-secrets.md').replace(/\s+/g, ' ');
+    expect(runbook).not.toContain('Two SHAs are needed');
+    expect(runbook).not.toContain('two urls, two SHAs');
+    expect(runbook).not.toContain("rewrites the formula's two urls and two SHAs");
+    expect(runbook).not.toContain('after the full universal build');
+    expect(runbook).not.toMatch(/`screepub-cli-macos-x64\.tar\.gz` from the `release` job/);
+    expect(runbook).toContain('One SHA is needed');
+    expect(runbook).toContain('depends_on arch: :arm64');
   });
 });

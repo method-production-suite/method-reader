@@ -108,7 +108,7 @@ What holds this together, in the order it runs:
   the tagged commit's config).
 - The macOS leg runs `tools/build-app-bundle.ts --updater`, which refuses
   to START without the private key rather than failing after the full
-  universal build, then publishes
+  build, then publishes
   `Screepub-macOS.app.tar.gz` and its `.sig`.
 - `app-upload` writes `latest.json` from what arrived
   (`tools/build-update-manifest.ts`) and uploads it LAST, so nothing it
@@ -143,9 +143,9 @@ gh run watch --exit-status
 ```
 
 Green run → the existing GitHub Release for that tag gets its assets
-re-uploaded (the window's `Screepub-macOS.dmg`, universal, from
-`app-upload`, and `screepub-cli-macos-arm64.tar.gz` and
-`screepub-cli-macos-x64.tar.gz` from the `release` job): every upload step
+re-uploaded (the window's `Screepub-macOS.dmg`, Apple Silicon only, from
+`app-upload`, and `screepub-cli-macos-arm64.tar.gz` from the `release`
+job): every upload step
 is idempotent (`gh release upload --clobber`), so this rebuilds and
 re-notarizes the real release rather than minting a fake one. Nothing to
 delete afterward.
@@ -155,6 +155,12 @@ open it, drag to Applications, double-click, and convert a PDF — that's
 what confirms notarization + the sidecar entitlements are correct.
 
 ## The Homebrew tap: flipped to per-arch, DONE 2026-08-07 at v0.5.2
+
+**Superseded in shape** at the release after the identifier release, when
+Intel Macs were dropped: the formula serves one tarball,
+`screepub-cli-macos-arm64.tar.gz`, says `depends_on arch: :arm64`, and is
+written whole by `tools/bump-tap.sh`. The per-arch record below is kept
+for its lessons, which still hold.
 
 **Status: done and pushed** (`ssandweiss/homebrew-tap@a2034f3`). The
 section below is kept for the reasoning; the paste-ready block in it was
@@ -236,17 +242,21 @@ See `homebrew-tap/Formula/screepub.rb` for the working form.
 
 ### Bumping the tap by hand
 
-Two SHAs are needed, one per command-line tarball. The cask is retired
-(deprecated at the identifier release) and is never bumped again. The
-release's "Tap bump crib sheet" step writes both SHAs into the run's
-summary. To get them after the fact:
+One SHA is needed, for the one command-line tarball: Apple Silicon only
+since the release after the identifier release, so the formula has one
+url and says `depends_on arch: :arm64`. The cask is retired (deprecated
+at the identifier release) and is never bumped again. The release's "Tap
+bump crib sheet" step writes the SHA into the run's summary. To get it
+after the fact:
 
 ```bash
 gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
 ```
 
-Then edit `homebrew-tap/Formula/screepub.rb` (two urls, two SHAs), leave
-`homebrew-tap/Casks/screepub.rb` alone, and verify before pushing:
+Then run `tools/bump-tap.sh X.Y.Z homebrew-tap`, which writes
+`homebrew-tap/Formula/screepub.rb` whole from that digest (or edit its one
+url and one SHA by hand), leave `homebrew-tap/Casks/screepub.rb` alone,
+and verify before pushing:
 
 ```bash
 brew style Formula/screepub.rb
@@ -266,8 +276,8 @@ honest:
 - **The bumper: `release.yml`'s `tap` job, running `tools/bump-tap.sh`.**
   `needs: release`, so it cannot start before the assets exist. It clones
   the tap, leaves the retired cask alone (adding Homebrew's `deprecate!`
-  stanza once, if it is missing), rewrites the formula's two
-  urls and two SHAs, runs `brew style`, and commits. Checksums come from
+  stanza once, if it is missing), writes the formula whole (one url, one
+  SHA, `depends_on arch: :arm64`), runs `brew style`, and commits. Checksums come from
   the digests GitHub reports per asset, so nothing is downloaded and
   nothing is re-hashed. Prereleases are skipped: a hyphen in the tag must
   never become what `brew install` hands out.
