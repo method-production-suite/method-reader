@@ -1,4 +1,0 @@
-{
-  "$comment": "The blast radius of deleting app/ — every tracked file OUTSIDE app/ that names the SwiftUI app, its directory, its build commands or the release artifacts only it produces. Enforced by tests/app-references.test.ts, which defines what counts as a reference and why. `refs` is a CEILING: it may fall (that is progress toward piece F3), never rise without a row being updated deliberately. `category` is what would break: build = a workflow or script that executes or packages app/; test = a bun test that reads app/ or asserts about its artifacts; artifact = names a release artifact or bundle only the Swift app produces; doc = user-facing prose that becomes false; note = a comment citing app/ as provenance, stale rather than broken; freeze = the F1 freeze machinery itself. See docs/superpowers/specs/2026-09-14-retire-swiftui-design.md (F3 acceptance criterion 11: this file is empty when the retirement is done).",
-  "files": {}
-}
