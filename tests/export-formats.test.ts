@@ -29,3 +29,13 @@ test('KFX wins even when Calibre is not detected separately', () => {
   expect(fileExtension('kindle', { calibreAvailable: false, kfxReady: true })).toBe('kfx');
   expect(formatLabel('kindle', { calibreAvailable: false, kfxReady: true })).toContain('KFX');
 });
+
+test('a named file type is its own extension and label, whatever the toolchain', () => {
+  const names = { kfx: 'KFX', azw3: 'AZW3', mobi: 'MOBI', fountain: 'Fountain' } as const;
+  for (const format of ['kfx', 'azw3', 'mobi', 'fountain'] as const) {
+    for (const state of [{ calibreAvailable: false, kfxReady: false }, { calibreAvailable: true, kfxReady: true }]) {
+      expect(fileExtension(format, state)).toBe(format);
+      expect(formatLabel(format, state).startsWith(`${names[format]}:`)).toBe(true);
+    }
+  }
+});

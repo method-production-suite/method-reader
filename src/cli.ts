@@ -95,7 +95,7 @@ Commands:
                                             send an existing file to one
   screepub settings <file.fountain> [--set <json>] [--json]
                                             read/write a script's own settings
-  screepub export <file.epub> [--for kindle|epub] [--json]
+  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--json]
                                             the file you would put on a reader
   screepub app-settings [--set <json>] [--json]
                                             where books land, and what new scripts start from
@@ -169,16 +169,20 @@ Options:
 const EXPORT_USAGE = `screepub export: the file you would put on a reader
 
 Usage:
-  screepub export <file.epub> [--for kindle|epub] [--fountain <f>] [--out <path>] [--json]
-  screepub export <file.epub> --for kindle --check [--json]
+  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--fountain <f>] [--out <path>] [--json]
+  screepub export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
 \`screepub send\` moves it. Kindle climbs KFX → AZW3 → MOBI, taking the best
-rung this machine can reach.
+rung this machine can reach. kfx, azw3 and mobi each make only that file,
+and refuse when this computer lacks its tools. fountain hands over the
+script itself.
 
 Options:
-  --for <kindle|epub>    which file you want (default epub)
-  --fountain <file>      the script's .fountain, needed to rebuild a MOBI
+  --for <type>           which file you want (default epub): epub, kindle,
+                         kfx, azw3, mobi or fountain
+  --fountain <file>      the script's .fountain: required by mobi and
+                         fountain, and used to rebuild a MOBI for kindle
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
                          extension must match the file produced)

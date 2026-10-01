@@ -4,7 +4,7 @@ import { convertFountain } from '../convert';
 import type { FormatOptions } from '../options';
 import { azw3Sibling, toAzw3 } from './calibre';
 import { modifiedDate, needsRegeneration } from './freshness';
-import type { ExportFormat, ToolchainState } from './formats';
+import { ladderRung, type ExportFormat, type KindleRung, type ToolchainState } from './formats';
 import { kfxSibling, toKfx } from './kfx';
 
 export class RegenerationFailedError extends Error {
@@ -53,13 +53,21 @@ export interface KindleArtifactPlan {
   bookDate: number | null;
 }
 
-/** The rung freshKindleArtifact takes, and whether it would reuse or build.
- * The ladder asks this same question before it builds, so `export --check`
- * (which answers from here) and the build itself cannot disagree. */
-export function kindleArtifactPlan(epub: string, state: ToolchainState): KindleArtifactPlan {
-  const path = state.kfxReady ? kfxSibling(epub) : state.calibreAvailable ? azw3Sibling(epub) : mobiSibling(epub);
-  const builtBy = state.kfxReady || state.calibreAvailable ? 'calibre' : 'screepub';
+/** One rung's file beside `epub`, without building anything: where it
+ * lives, whether the one there now is current (a sibling no older than its
+ * EPUB is reused), and what builds it when it is not. Every build asks this
+ * same question first, so `export --check` (which answers from here) and
+ * the build itself cannot disagree. */
+export function rungPlan(rung: KindleRung, epub: string): KindleArtifactPlan {
+  const path = rung === 'kfx' ? kfxSibling(epub) : rung === 'azw3' ? azw3Sibling(epub) : mobiSibling(epub);
+  const builtBy = rung === 'mobi' ? 'screepub' : 'calibre';
   return { path, fresh: !needsRegeneration(path, epub), builtBy, bookDate: modifiedDate(epub) };
+}
+
+/** The rung freshKindleArtifact takes on this machine, and whether it would
+ * reuse or build. */
+export function kindleArtifactPlan(epub: string, state: ToolchainState): KindleArtifactPlan {
+  return rungPlan(ladderRung(state), epub);
 }
 
 export interface FreshKindleArtifactOptions {
@@ -73,34 +81,67 @@ export interface FreshKindleArtifactOptions {
   onStage?: (stage: string) => void;
 }
 
-/** A Kindle-format file guaranteed current with `epub`. Every rung reuses
- * the file already beside the EPUB when the staleness rule (freshness.ts)
- * says it is current, and builds it again only when it is not: KFX and AZW3
- * convert straight from the present EPUB, and the MOBI branch re-runs the
- * engine.
- *
- * NOTE: the MOBI branch REWRITES `epub` in place before it writes the .mobi
- * beside it — this function can mutate the EPUB it was handed, not just
- * produce the Kindle file. */
-export async function freshKindleArtifact(opts: FreshKindleArtifactOptions): Promise<string> {
-  const { epub, fountainPath, format, calibreAvailable, kfxReady, onStage } = opts;
+/** What builds the two Calibre rungs: the real ones by default. A test
+ * passes its own, so a wrong branch can never reach a real Calibre. */
+export interface RungBuilders {
+  kfx: (epub: string, onStage?: (stage: string) => void) => Promise<string>;
+  azw3: (epub: string) => Promise<string>;
+}
 
-  // One staleness rule for every rung (kindleArtifactPlan): the EPUB is the
-  // sole input and the flags are constant, so a sibling no older than its
-  // EPUB is the previous run's answer. For KFX that turns a ~20s Kindle
-  // Previewer cold start into a file stat; for AZW3 it is why "Save a Kindle
-  // file" does not convert twice on a Calibre-only machine (the window's
-  // `export --for kindle` to learn the extension, then `route save-kindle`).
-  // toKfx and toAzw3 write scratch-then-rename, so a partial file never
-  // appears at the path to be trusted.
-  const plan = kindleArtifactPlan(epub, { calibreAvailable, kfxReady });
+const REAL_BUILDERS: RungBuilders = {
+  kfx: (epub, onStage) => toKfx(epub, onStage),
+  azw3: (epub) => toAzw3(epub),
+};
+
+/** A Kindle-format file guaranteed current with `epub`: the ladder's rung
+ * for this machine (formats.ts's ladderRung), made by freshArtifactOf.
+ *
+ * NOTE: the MOBI rung REWRITES `epub` in place before it writes the .mobi
+ * beside it, so this function can change the EPUB it was handed, not just
+ * produce the Kindle file. */
+export async function freshKindleArtifact(
+  opts: FreshKindleArtifactOptions,
+  builders: RungBuilders = REAL_BUILDERS,
+): Promise<string> {
+  const rung = ladderRung({ calibreAvailable: opts.calibreAvailable, kfxReady: opts.kfxReady });
+  return freshArtifactOf(rung, opts, builders);
+}
+
+/** One named rung, never the ladder: the caller asked for exactly this
+ * file. Every rung reuses the file already beside the EPUB when the
+ * staleness rule (freshness.ts, through rungPlan) says it is current, and
+ * builds it again only when it is not: KFX and AZW3 convert straight from
+ * the present EPUB, and the MOBI rung re-runs the engine. The ladder is
+ * this function with the rung chosen for it, so each rung's work has one
+ * copy. `opts.calibreAvailable` and `opts.kfxReady` are not consulted:
+ * toKfx and toAzw3 each refuse with their own error when their tools are
+ * missing.
+ *
+ * NOTE: the MOBI rung REWRITES `epub` in place before it writes the .mobi
+ * beside it. */
+export async function freshArtifactOf(
+  rung: KindleRung,
+  opts: FreshKindleArtifactOptions,
+  builders: RungBuilders = REAL_BUILDERS,
+): Promise<string> {
+  const { epub, fountainPath, format, onStage } = opts;
+
+  // One staleness rule for every rung: the EPUB is the sole input and the
+  // flags are constant, so a sibling no older than its EPUB is the previous
+  // run's answer. For KFX that turns a ~20s Kindle Previewer cold start into
+  // a file stat; for AZW3 it is why "Save a Kindle file" does not convert
+  // twice on a Calibre-only machine (the window's `export --for kindle` to
+  // learn the extension, then `route save-kindle`). toKfx and toAzw3 write
+  // scratch-then-rename, so a partial file never appears at the path to be
+  // trusted.
+  const plan = rungPlan(rung, epub);
   if (plan.fresh) return plan.path;
 
-  if (kfxReady) return toKfx(epub, onStage);
+  if (rung === 'kfx') return builders.kfx(epub, onStage);
 
-  if (calibreAvailable) {
+  if (rung === 'azw3') {
     onStage?.('converting to AZW3 for Kindle…');
-    return toAzw3(epub);
+    return builders.azw3(epub);
   }
 
   const mobi = plan.path;

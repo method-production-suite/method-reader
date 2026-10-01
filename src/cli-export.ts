@@ -9,14 +9,23 @@ import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path
 import { CliError, errorMessage } from './cli-errors';
 import {
   availableFormats,
+  freshArtifactOf,
   freshKindleArtifact as realFreshKindleArtifact,
   kindleArtifactPlan,
+  rungPlan,
   type FreshKindleArtifactOptions,
   type KindleArtifactPlan,
+  type RungBuilders,
 } from './export/artifact';
 import { isCalibreAvailable } from './export/calibre';
-import { fileExtension, formatLabel, type ExportFormat } from './export/formats';
-import { kfxStatus as realKfxStatus, type KfxStatus } from './export/kfx';
+import {
+  EXPORT_FORMATS,
+  fileExtension,
+  formatLabel,
+  type ExportFormat,
+  type KindleRung,
+} from './export/formats';
+import { kfxMissing, kfxStatus as realKfxStatus, type KfxStatus } from './export/kfx';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions } from './settings/app-defaults';
 import { loadScriptSettings } from './settings/sidecar';
@@ -31,19 +40,22 @@ export interface ExportResult {
   /** --check only: whether the file at `path` is current (the EPUB always
    * is: it is the book itself). */
   fresh?: boolean;
-  /** --check, --for kindle only: what builds the file when it is not. */
+  /** --check, --for kindle, kfx, azw3 or mobi only: what builds the file
+   * when it is not current. */
   builtBy?: KindleArtifactPlan['builtBy'];
-  /** --check, --for kindle only: when the EPUB was last written (ms), which
-   * tells the window one version of the book from the next. */
+  /** --check, --for kindle, kfx, azw3 or mobi only: when the EPUB was last
+   * written (ms), which tells the window one version of the book from the
+   * next. */
   bookDate?: number | null;
 }
 
 export interface ExportOptions {
   /** An EXISTING .epub — the conversion's primary output. */
   epub: string;
-  /** 'epub' (default) or 'kindle'. */
+  /** One of EXPORT_FORMATS; 'epub' when absent. */
   for?: string;
-  /** The script's .fountain, needed only by the MOBI rung. */
+  /** The script's .fountain: required by `mobi` (the rebuild) and
+   * `fountain` (the file itself), and used by the ladder's MOBI rung. */
   fountain?: string;
   /** This script's settings, as --options-json carries them elsewhere. */
   optionsJson?: string;
@@ -77,6 +89,10 @@ export interface ExportDeps {
   calibreAvailable?: CalibreProbe;
   kfxStatus?: KfxProbe;
   freshKindleArtifact?: KindleLadder;
+  /** What builds the KFX and AZW3 rungs (the real toKfx and toAzw3 when
+   * absent). The explicit rungs and the default ladder both build through
+   * these, so a test can drive every branch with no Calibre reachable. */
+  rungBuilders?: RungBuilders;
   /** Where to read the app-wide format defaults from. Defaults to the
    * production app settings file (`appSettingsPath()`); a test points this
    * at a scratch file so it never touches a real one. */
@@ -185,9 +201,10 @@ export async function exportCommand(
   deps: ExportDeps = {},
 ): Promise<ExportResult> {
   const wanted = options.for ?? 'epub';
-  if (wanted !== 'epub' && wanted !== 'kindle') {
-    throw new CliError('usage', `--for takes epub or kindle, not "${wanted}"`);
+  if (!(EXPORT_FORMATS as readonly string[]).includes(wanted)) {
+    throw new CliError('usage', `--for takes epub, kindle, kfx, azw3, mobi or fountain, not "${wanted}"`);
   }
+  const format = wanted as ExportFormat;
 
   // The file is checked FIRST, before any toolchain probe: a typo must not
   // pay Calibre's ~1s Python start to be reported.
@@ -214,6 +231,16 @@ export async function exportCommand(
   if (options.out !== undefined && !isAbsolute(options.out)) {
     throw new CliError('usage', 'the path given with --out must be absolute');
   }
+  // A named file type knows its extension before any work, unlike the
+  // ladder (`kindle`), which learns it only from the rung it reaches.
+  if (options.out !== undefined && format !== 'epub' && format !== 'kindle') {
+    checkOutExtension(options.out, format);
+  }
+  // The MOBI rebuild and the script itself both ARE the .fountain, so
+  // without it there is nothing to make.
+  if ((format === 'mobi' || format === 'fountain') && options.fountain === undefined) {
+    throw new CliError('usage', `--for ${format} needs the script's .fountain: pass it with --fountain`);
+  }
 
   // Parsed here, before the epub branch returns and before any toolchain
   // probe: --options-json is either well-formed argv or it is not, and that
@@ -226,7 +253,35 @@ export async function exportCommand(
 
   const calibreAvailable = (deps.calibreAvailable ?? isCalibreAvailable)();
   const available = availableFormats(options.epub, calibreAvailable);
-  const format: ExportFormat = wanted;
+
+  if (format === 'fountain') {
+    // The script as it is: no toolchain, no build, always current.
+    const script = options.fountain as string;
+    let scriptIsFile = false;
+    try {
+      scriptIsFile = statSync(script).isFile();
+    } catch {
+      scriptIsFile = false;
+    }
+    if (!scriptIsFile) {
+      throw new CliError('unreadable', `cannot read the script to export: ${script}`);
+    }
+    const state = { calibreAvailable, kfxReady: false };
+    const path = options.out !== undefined ? await resolveOut(script, options.out) : script;
+    return {
+      path,
+      format,
+      extension: fileExtension(format, state),
+      label: formatLabel(format, state),
+      available,
+      stages: [],
+      ...(options.check === true ? { fresh: true } : {}),
+    };
+  }
+
+  if (format === 'kfx' || format === 'azw3' || format === 'mobi') {
+    return exportRung(format, options, deps, { calibreAvailable, available, formatOptions });
+  }
 
   if (format === 'epub') {
     const state = { calibreAvailable, kfxReady: false };
@@ -269,7 +324,9 @@ export async function exportCommand(
   const stages: string[] = [];
   let path: string;
   try {
-    path = await (deps.freshKindleArtifact ?? realFreshKindleArtifact)({
+    const ladder: KindleLadder = deps.freshKindleArtifact
+      ?? ((opts) => realFreshKindleArtifact(opts, deps.rungBuilders));
+    path = await ladder({
       epub: options.epub,
       fountainPath: options.fountain ?? null,
       format: formatOptions,
@@ -305,4 +362,76 @@ export async function exportCommand(
     available,
     stages,
   };
+}
+
+/** `--for kfx`, `azw3` or `mobi`: one rung by name, never the ladder, so a
+ * missing toolchain is a refusal and never a quieter rung. `--out`'s
+ * extension and `--fountain`'s presence were already checked by the
+ * caller, before any probe. The refusals come before --check's answer as
+ * well as before a build: a rung this computer cannot make has no plan to
+ * report. */
+async function exportRung(
+  rung: KindleRung,
+  options: ExportOptions,
+  deps: ExportDeps,
+  known: { calibreAvailable: boolean; available: ExportFormat[]; formatOptions: FormatOptions },
+): Promise<ExportResult> {
+  const { calibreAvailable, available, formatOptions } = known;
+  // Only KFX needs Kindle Previewer's status (the ~1s probe); AZW3 needs
+  // Calibre alone and MOBI is the engine's own work.
+  let kfxReady = false;
+  if (rung === 'kfx') {
+    const kfx = await (deps.kfxStatus ?? realKfxStatus)();
+    if (!kfx.ready) {
+      const missing = kfxMissing(kfx);
+      const why = missing.length > 0 ? `it needs ${missing.join(' and ')}` : 'its tools are not ready';
+      throw new CliError('export-failed', `this computer cannot make a KFX file yet: ${why}`);
+    }
+    kfxReady = true;
+  }
+  if (rung === 'azw3' && !calibreAvailable) {
+    throw new CliError('export-failed', 'this computer cannot make an AZW3 file without Calibre');
+  }
+  const state = { calibreAvailable, kfxReady };
+  const extension = fileExtension(rung, state);
+  const label = formatLabel(rung, state);
+
+  if (options.check === true) {
+    const plan = rungPlan(rung, options.epub);
+    return {
+      path: plan.path,
+      format: rung,
+      extension,
+      label,
+      available,
+      stages: [],
+      fresh: plan.fresh,
+      builtBy: plan.builtBy,
+      bookDate: plan.bookDate,
+    };
+  }
+
+  const stages: string[] = [];
+  let path: string;
+  try {
+    path = await freshArtifactOf(
+      rung,
+      {
+        epub: options.epub,
+        fountainPath: options.fountain ?? null,
+        format: formatOptions,
+        calibreAvailable,
+        kfxReady,
+        onStage: (stage) => stages.push(stage),
+      },
+      deps.rungBuilders,
+    );
+  } catch (err) {
+    // The rung's own errors only, as in the ladder's branch above: every
+    // CliError this verb raises is thrown outside this try.
+    throw new CliError('export-failed', errorMessage(err));
+  }
+  if (options.out !== undefined) path = await resolveOut(path, options.out);
+
+  return { path, format: rung, extension, label, available, stages };
 }
