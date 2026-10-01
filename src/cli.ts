@@ -5,7 +5,9 @@ import { existsSync, statSync } from 'node:fs';
 import { basename, delimiter, dirname, extname, join } from 'node:path';
 import { readFile, writeFile, rename, rm } from 'node:fs/promises';
 // Inlined by `bun build --compile`, so the shipped binary reports the same
-// version as the tag that built it. release.sh checks the two agree.
+// version as the tag that built it. release.yml's checks job refuses a tag
+// package.json does not match, and tools/build-cli.ts refuses a --version
+// that differs from it.
 import pkg from '../package.json' with { type: 'json' };
 import {
   convertPdf,

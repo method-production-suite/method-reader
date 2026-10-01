@@ -852,7 +852,8 @@ jobs:
       # A checkout and bun, which this job used to do without: the update
       # manifest is built by a tool, for the reason every file in tools/
       # gives. The download therefore lands in `arrivals`, no longer under
-      # the name that in a checkout is the Swift app's source directory.
+      # the name that, in a checkout, was the Swift app's source directory
+      # until piece F3 deleted it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:

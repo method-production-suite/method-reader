@@ -72,8 +72,9 @@ export async function pluginInstalled(
  * of falling back to AZW3. (INSTALL_SNIPPET below guards against the same
  * name for the same reason.) The renamed copies count because they convert:
  * the old Swift app installed one, "KFX Output (Fix Traditional Chinese)",
- * and a reader who has it keeps KFX. The Swift app itself still tests for
- * the substring (KFXToolchain.pluginMarker), companion and all.
+ * and a reader who has it keeps KFX. The Swift app itself tested for the
+ * substring (KFXToolchain.pluginMarker), companion and all, and installed
+ * copies still do; see it at any tag before F3, e.g. v0.7.4.
  *
  * The listing is a table, not a line per name: each plugin row is its type,
  * then its name, then its version, then whether it is disabled, padded into

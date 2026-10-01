@@ -50,7 +50,7 @@ const bad = (stderr = 'not signed at all'): RunResult => ({ exitCode: 1, stdout:
 describe('the pinned requirements are the retired app’s, not a paraphrase', () => {
   // What every installed copy of the Swift app runs, quoted from its
   // UpdateInstaller, unchanged in every Swift release from v0.4.0 on (see
-  // it at tag v0.7.4 for the file as it last stood):
+  // it at any tag before F3, e.g. v0.7.4):
   //
   //   public static let teamID = "XSRB3D643J"
   //   public static let bundleID = "com.darkwell.screepub"

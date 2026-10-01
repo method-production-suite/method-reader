@@ -5,8 +5,9 @@
 /// the colour literals out of the Swift Mac app's theme, because the
 /// brand tokens were first pinned FROM that theme and, after 2026-09-23,
 /// the theme was checked against them. The theme left with the Swift app,
-/// so that parser and the comparison went with it (the last version is at
-/// tag v0.7.4). brand/tokens.json is the only source of the colours now.
+/// so that parser and the comparison went with it (see them at any tag
+/// before F3, e.g. v0.7.4). brand/tokens.json is the only source of the
+/// colours now.
 export type Rgba = { r: number; g: number; b: number; a: number };
 
 export function fromHex(h: string): Rgba {
