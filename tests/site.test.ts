@@ -187,8 +187,8 @@ describe('"Every download" links version-free names, each with a status', () => 
     }
     // Installed by hand, and updated from a release, on an Apple Silicon
     // Mac. That is the evidence behind "verified by a person"; if the ledger
-    // ever loses it, the claim goes too. The Intel half has never run, and
-    // the row says so rather than implying it.
+    // ever loses it, the claim goes too. Intel Macs are not
+    // offered the app, so the row has nothing to say about them.
     const person = ledger.slice(
       ledger.indexOf('**Verified on a real machine, by a person**'),
       ledger.indexOf('**Verified only by CI'),
@@ -201,7 +201,9 @@ describe('"Every download" links version-free names, each with a status', () => 
     const mac = row(MAC_DMG);
     expect(mac).toContain(VERIFIED);
     expect(mac).toContain('Apple Silicon');
-    expect(mac).toContain('Intel');
+    // Apple silicon only from the release after the identifier one: the row
+    // no longer mentions Intel at all.
+    expect(mac).not.toContain('Intel');
     // The pre-identifier-release name 404s now; no page may link it.
     expect(site).not.toContain('Screepub-Desktop-macOS-universal.dmg');
   });
