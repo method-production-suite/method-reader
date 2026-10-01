@@ -696,7 +696,7 @@ describe('MOBI image records', () => {
 
   test('a book with no pictures is byte for byte the book from before image records, dates aside', () => {
     // SHA-256 of this book with the PDB dates zeroed, captured from the
-    // writer and renderer at b63ae74, the last commit before either could
+    // writer and renderer at 0c71095, the last commit before either could
     // carry a picture. No pictures and an empty list are the same book.
     const BEFORE = 'c77dd2c56516cc252110b3d5bf3cea230f66c42e869c0534fbe8f89e3826d53c';
     const sha = (b: Uint8Array) => createHash('sha256').update(masked(b)).digest('hex');

@@ -518,7 +518,7 @@ describe('the preview is handed the pictures the book is', () => {
 describe('the MOBI is handed the pictures the book is', () => {
   const ON = resolveFormatOptions();
   // SHA-256 of each book's .mobi with the PDB dates (bytes 36 to 43) zeroed,
-  // made by the code at b63ae74, the last commit before a MOBI could carry a
+  // made by the code at 0c71095, the last commit before a MOBI could carry a
   // picture, where includeImages changed nothing in it. The CLI's --mobi
   // file and convertPdf's are the same bytes, so these are the books a
   // person was handed. Pinned as books rather than as the renderer called
