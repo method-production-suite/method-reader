@@ -526,6 +526,155 @@ describe('page markers in XHTML', () => {
   });
 });
 
+// ── figures (registry #19) ───────────────────────────────
+
+describe('figures', () => {
+  const ON = DEFAULT_FORMAT_OPTIONS;
+  const OFF = { ...DEFAULT_FORMAT_OPTIONS, includeImages: false };
+  const HAVE = new Set(['p001-01.png', 'p002-01.png']);
+  const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
+  const bodyOf = (src: string, opts: Parameters<typeof tokensToBody>[1] = {}) =>
+    tokensToBody(tokensOf(src), opts);
+  const scene = (note: string) => `INT. LAB - DAY\n\nBefore.\n\n${note}\n\nAfter.\n`;
+
+  test('a picture note with its picture present becomes a figure where it sat', () => {
+    const body = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON, images: HAVE });
+    expect(body.files[0].xhtml).toMatch(
+      /<p class="action">Before\.<\/p>\s*<p class="figure w40"><img src="\.\.\/images\/p002-01\.png" alt="Illustration"\/><\/p>\s*<p class="action">After\.<\/p>/,
+    );
+    expect([...body.usedImages]).toEqual(['p002-01.png']);
+  });
+
+  test('a full-page picture says so in its class', () => {
+    const body = bodyOf(scene('[[img: p001-01.png w=100 full]]'), { format: ON, images: HAVE });
+    expect(body.files[0].xhtml).toContain(
+      '<p class="figure w100 figure-full"><img src="../images/p001-01.png" alt="Illustration"/></p>',
+    );
+  });
+
+  test('the width class is the note’s width to the nearest five, inside 5 to 100', () => {
+    // Twenty classes rather than an inline style: the preview is an iframe
+    // whose CSP refuses `style=` attributes, and one markup path serves both.
+    const classOf = (w: string) => {
+      const xhtml = bodyOf(scene(`[[img: p002-01.png w=${w}]]`), { format: ON, images: HAVE }).files[0].xhtml;
+      return /<p class="figure (w\d+)"/.exec(xhtml)?.[1];
+    };
+    expect(classOf('42')).toBe('w40');
+    expect(classOf('43')).toBe('w45');
+    expect(classOf('97')).toBe('w95');
+    expect(classOf('98')).toBe('w100');
+    expect(classOf('1')).toBe('w5');
+    expect(classOf('7')).toBe('w5');
+    expect(classOf('8')).toBe('w10');
+  });
+
+  test('the alt text is never empty, because an empty alt calls the picture decoration', () => {
+    const xhtml = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON, images: HAVE }).files[0].xhtml;
+    expect(xhtml).toContain('alt="Illustration"');
+    expect(xhtml).not.toContain('alt=""');
+  });
+
+  test('a picture the caller cannot ship renders nothing and is not reported as used', () => {
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n');
+    const missing = bodyOf(scene('[[img: p009-01.png w=42]]'), { format: ON, images: HAVE });
+    expect(missing).toEqual(plain);
+    expect(missing.usedImages.size).toBe(0);
+  });
+
+  test('pictures off renders nothing, even with every picture present', () => {
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n', { format: OFF });
+    const off = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: OFF, images: HAVE });
+    expect(off).toEqual(plain);
+    expect(off.usedImages.size).toBe(0);
+  });
+
+  test('a caller that passes no pictures renders exactly what it did before', () => {
+    // Every existing caller passes none. The default is the empty set, so
+    // their books do not move by a byte with the option on.
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n');
+    expect(bodyOf(scene('[[img: p002-01.png w=42]]'))).toEqual(plain);
+    expect(bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON })).toEqual(plain);
+  });
+
+  test('usedImages names each picture once, however often it is shown', () => {
+    const src = 'INT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nMid.\n\n'
+      + '[[img: p002-01.png w=42]]\n\nINT. YARD - DAY\n\n[[img: p001-01.png w=60]]\n';
+    const body = bodyOf(src, { format: ON, images: HAVE });
+    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+    expect(body.files[0].xhtml.match(/<p class="figure/g)).toHaveLength(3);
+  });
+
+  test('the src comes from the caller’s resolver, escaped as an attribute', () => {
+    // The preview points the same markup at a data: URI. Whatever a resolver
+    // returns goes through escapeXml, so a quote cannot end the attribute.
+    const body = bodyOf(scene('[[img: p002-01.png w=42]]'), {
+      format: ON, images: HAVE, imageSrc: (file) => `x?f=${file}&a="b"`,
+    });
+    expect(body.files[0].xhtml).toContain(
+      '<img src="x?f=p002-01.png&amp;a=&quot;b&quot;" alt="Illustration"/>',
+    );
+  });
+
+  test('a figure declines a pending page marker, which lands on the next text instead', () => {
+    // serialize.ts's anchorsPageMarker rule, held on this side of the
+    // .fountain too: a picture is not a line of text a reader can land on.
+    const body = bodyOf(
+      'INT. LAB - DAY\n\nBefore.\n\n= pg 7\n\n[[img: p002-01.png w=42]]\n\nAfter.\n',
+      { format: ON, images: HAVE },
+    );
+    const xhtml = body.files[0].xhtml;
+    expect(xhtml).toMatch(/<p class="figure w40"><img [^>]*\/><\/p>/);
+    expect(xhtml).toMatch(
+      /<p class="action"><span[^>]*class="page-marker"[^>]*>7\.<\/span>After\.<\/p>/,
+    );
+    expect(body.pageList.map((p) => p.label)).toEqual(['7']);
+  });
+
+  describe('a picture note before the first heading', () => {
+    // toFountain writes a title card's note above the first scene heading.
+    // Whether it opens an "Opening" section is the predicate's answer, the
+    // same one that decides whether it renders: a section is opened for a
+    // figure, never for a note that will render nothing.
+    const card = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+
+    test('(a) pictures off: the body is the note-free body, byte for byte', () => {
+      for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+        const plain = bodyOf(head + script, { format: OFF, images: HAVE });
+        expect(bodyOf(head + card + script, { format: OFF, images: HAVE })).toEqual(plain);
+      }
+    });
+
+    test('(b) pictures on and present: an Opening holds the figure, and the scenes follow from sc-002', () => {
+      const body = bodyOf(card + script, { format: ON, images: HAVE });
+      expect(body.toc).toEqual([
+        { title: 'Opening', href: 'text/body001.xhtml#sc-001' },
+        { title: 'INT. LAB - DAY', href: 'text/body001.xhtml#sc-002' },
+        { title: 'EXT. YARD - NIGHT', href: 'text/body001.xhtml#sc-003' },
+      ]);
+      expect(body.files[0].xhtml).toMatch(
+        /<section class="scene" id="sc-001">\s*<p class="figure w100 figure-full"><img src="\.\.\/images\/p001-01\.png" alt="Illustration"\/><\/p>\s*<\/section>\s*<section class="scene" id="sc-002">\s*<h2 class="scene-heading">INT\. LAB - DAY<\/h2>/,
+      );
+      expect([...body.usedImages]).toEqual(['p001-01.png']);
+    });
+
+    test('(c) pictures on but missing: identical to (a)', () => {
+      const plain = bodyOf(script, { format: OFF, images: HAVE });
+      expect(bodyOf(card + script, { format: ON, images: new Set(['p002-01.png']) })).toEqual(plain);
+      expect(bodyOf(card + script, { format: ON })).toEqual(plain);
+    });
+
+    test('a note that renders and one that does not, in either order, open one Opening', () => {
+      const dead = '[[img: p009-01.png w=50]]\n\n';
+      for (const src of [dead + card + script, card + dead + script]) {
+        const body = bodyOf(src, { format: ON, images: HAVE });
+        expect(body.toc.map((e) => e.title)).toEqual(['Opening', 'INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+        expect(body.files[0].xhtml.match(/<p class="figure/g)).toHaveLength(1);
+      }
+    });
+  });
+});
+
 // ── dual dialogue side-by-side ───────────────────────────
 
 describe('dual dialogue table rendering', () => {

@@ -42,10 +42,10 @@ describe('settingsCommand', () => {
   test('--set writes the sidecar and reports the merged result', () => {
     const result = settingsCommand({ fountain, set: '{"justifyText":true}' });
     expect(result.settings.justifyText).toBe(true);
-    // The other seventeen must survive: a naive implementation that stored
+    // The other eighteen must survive: a naive implementation that stored
     // the partial would report a settings object with one key.
     expect(result.settings.contdMode).toBe('auto');
-    expect(Object.keys(result.settings)).toHaveLength(18);
+    expect(Object.keys(result.settings)).toHaveLength(19);
     const onDisk = JSON.parse(readFileSync(result.sidecar, 'utf8'));
     expect(onDisk.justifyText).toBe(true);
     expect(onDisk.contdMode).toBe('auto');

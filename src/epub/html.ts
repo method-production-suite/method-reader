@@ -6,7 +6,7 @@ import type { FormatOptions } from '../options';
 import { DEFAULT_FORMAT_OPTIONS } from '../options';
 import { screenplayCss } from './css';
 import { isMiniSlug } from '../fountain/slug';
-import { fmtClasses, stripNotes } from '../fountain/notes';
+import { fmtClasses, rendersImage, stripNotes } from '../fountain/notes';
 
 export interface BodyFile {
   /** filename-safe id, e.g. "body001" */
@@ -26,6 +26,14 @@ export interface BookBody {
   toc: TocEntry[];
   /** Page markers, in document order, for the EPUB3 page-list nav. */
   pageList: { label: string; href: string }[];
+  /**
+   * Picture filenames that actually reached a page, so the packager can zip
+   * and manifest exactly these. Both halves of "exactly" are load-bearing: a
+   * picture the folder holds but no page shows is dead weight inside the
+   * book, and a picture a page shows but the manifest omits is an invalid
+   * EPUB rather than a heavy one. Empty for every book without figures.
+   */
+  usedImages: Set<string>;
 }
 
 /** Keep each body file comfortably under Kindle's per-flow size warnings. */
@@ -94,13 +102,35 @@ interface MarkerState {
 }
 
 /**
+ * The pictures a book may show, where their markup points, and the ones it
+ * did show.
+ *
+ * `have` is what the caller can actually ship: a note names a file, and this
+ * says whether that file is there to be packaged. It is checked ON TOP of the
+ * filename allowlist (both inside rendersImage), never instead of it. `src`
+ * turns a filename into the `<img>` address, which is the one thing the book
+ * and the preview disagree about: a path inside the zip for one, a `data:`
+ * URI for the other, with the same markup around both.
+ */
+interface Art {
+  have: ReadonlySet<string>;
+  src: (file: string) => string;
+  used: Set<string>;
+}
+
+/** Where a figure points inside the EPUB: OEBPS/images/, one up from the
+ * body files in OEBPS/text/. */
+const bookImageSrc = (file: string) => `../images/${file}`;
+
+/**
  * Render body tokens (no title-page tokens) as discrete blocks — one string
  * per paragraph, with a complete dialogue block as a single string.
  */
 function renderBlocks(
   tokens: Token[],
   format: FormatOptions,
-  markers: MarkerState = { pending: null, landed: [] },
+  markers: MarkerState,
+  art: Art,
 ): string[] {
   const blocks: string[] = [];
   let speech: Cell[] | null = null;
@@ -108,6 +138,13 @@ function renderBlocks(
   // construct Kindle's renderer honors (floats/inline-block are not
   // reliable under Enhanced Typesetting).
   let dual: { left: Cell[]; right: Cell[]; side: 'left' | 'right' } | null = null;
+  // A block, into whichever stream is open. `emit` is this plus the pending
+  // page marker; call this one directly only where a block must DECLINE a
+  // marker, which today is the figure alone.
+  const place = (s: string, kind: Cell['kind'] = 'other') => {
+    if (speech) speech.push({ kind, html: s });
+    else blocks.push(s);
+  };
   const emit = (s: string, kind: Cell['kind'] = 'other') => {
     // A pending page marker slips inside this block's opening tag — costing
     // no line of its own — and is consumed once it lands.
@@ -119,8 +156,7 @@ function renderBlocks(
         markers.pending = null;
       }
     }
-    if (speech) speech.push({ kind, html: s });
-    else blocks.push(s);
+    place(s, kind);
   };
   // A speech is a flat run of paragraphs: cue, any parentheticals, then the
   // dialogue. NO wrapper. What holds a cue to its speech is the CSS chain on
@@ -239,8 +275,56 @@ function renderBlocks(
         }
         break;
       }
+      case 'note': {
+        // A standalone `[[img: ...]]` is a picture carried out of the PDF
+        // (registry #19). Every other note, and a picture note the predicate
+        // turns down, renders nothing, which is where all notes lived until
+        // now: notes are invisible by spec. `raw` is the token's inner text,
+        // brackets already stripped, which is what rendersImage reads.
+        const img = rendersImage(raw, format.includeImages, art.have);
+        if (!img) break;
+        // The width rides as a CLASS in steps of five, not an inline style:
+        // the reader preview is an iframe whose CSP refuses `style=`
+        // attributes, and twenty short CSS 2.1 rules serve the book and the
+        // preview from one markup path. The clamp repeats parseImgNote's on
+        // purpose: rounding a width already in 5..100 cannot leave it, but
+        // this line is what promises the class is one of the twenty the
+        // stylesheet defines, and that promise should not rest on a parser
+        // in another file staying as it is.
+        const step = Math.min(100, Math.max(5, Math.round(img.widthPct / 5) * 5));
+        const full = img.fullPage ? ' figure-full' : '';
+        // A <p>, not a <div>. The KFX converter honors a break on a paragraph
+        // and ignores one on a structural wrapper (#8b), and a full-page
+        // plate's breaks sit on this element. Whether a paragraph holding
+        // only a picture counts there is a device-check item, not a measured
+        // fact. Not <figure> either: there is no caption to group, and
+        // docs/device-map.md says nothing about HTML5 grouping elements in
+        // the CSS-2.1-era engines (RMSDK, KF8).
+        //
+        // One alt for every picture: nothing in a PNG lifted out of a PDF
+        // says what it depicts, so there is no honest description to write.
+        // It is not EMPTY, though: `alt=""` declares an image decorative and
+        // a screen reader then skips it silently, which for a storyboard
+        // panel or a title card is a lie about the book.
+        //
+        // The src is escaped although a book path cannot need it (the
+        // allowlist admits no `&`, `<` or `"`): the resolver is the caller's,
+        // and the preview's returns a data: URI this file never inspects.
+        //
+        // `place`, not `emit`: a figure declines a pending page marker,
+        // because an image is not a line of text a reader can land on. That
+        // is serialize.ts's `anchorsPageMarker` rule, held on this side of
+        // the .fountain too: our own writer never puts a marker in front of
+        // a plate, and a hand-written file that does gets the same answer.
+        place(
+          `<p class="figure w${step}${full}">`
+            + `<img src="${escapeXml(art.src(img.file))}" alt="Illustration"/></p>\n`,
+        );
+        art.used.add(img.file);
+        break;
+      }
       default:
-        // structural/no-render tokens: title page, page breaks, notes, etc.
+        // structural/no-render tokens: title page, page breaks, etc.
         break;
     }
   }
@@ -263,10 +347,25 @@ interface SceneSection {
  */
 export function tokensToBody(
   tokens: Token[],
-  opts: { maxFileBytes?: number; format?: FormatOptions } = {},
+  opts: {
+    maxFileBytes?: number;
+    format?: FormatOptions;
+    /** Picture filenames the caller can ship. Empty by default, which renders
+     * no figures at all: the honest answer for a caller with no folder to
+     * draw them from, and the reason every caller that predates pictures
+     * renders exactly what it did. */
+    images?: ReadonlySet<string>;
+    /** Where a figure's `<img>` points; the book's own path by default. */
+    imageSrc?: (file: string) => string;
+  } = {},
 ): BookBody {
   const maxBytes = opts.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
   const format = opts.format ?? DEFAULT_FORMAT_OPTIONS;
+  const art: Art = {
+    have: opts.images ?? new Set(),
+    src: opts.imageSrc ?? bookImageSrc,
+    used: new Set(),
+  };
   const body = tokens.filter((t) => !t.is_title);
 
   const groups: { title: string; tokens: Token[] }[] = [];
@@ -277,13 +376,19 @@ export function tokensToBody(
       current = { title: t.text ?? 'Scene', tokens: [t] };
       groups.push(current);
     } else {
-      // A standalone note renders nothing (renderBlocks' default case), so
-      // one may not be what opens the Opening: a group of nothing but notes is
-      // an empty section, which is an "Opening" in the contents, a blank page
-      // under scenePageBreaks and every scene anchor one along. toFountain
-      // writes a title card's `[[img: ...]]` exactly there. Dropping it loses
-      // nothing, since there is no section yet for it to be invisible in.
-      if (!current && t.type === 'note') continue;
+      // A note that renders nothing may not be what opens the Opening: a
+      // group of nothing but such notes is an empty section, which is an
+      // "Opening" in the contents, a blank page under scenePageBreaks and
+      // every scene anchor one along. toFountain writes a title card's
+      // `[[img: ...]]` exactly there. Dropping one loses nothing, since there
+      // is no section yet for it to be invisible in.
+      //
+      // A note that DOES render, a title card whose picture the caller can
+      // ship, is content, and opens the Opening like any other. The question
+      // is asked of rendersImage, the same predicate renderBlocks asks, so a
+      // section is never opened for a note that then renders nothing.
+      if (!current && t.type === 'note'
+        && !rendersImage(t.text ?? '', format.includeImages, art.have)) continue;
       if (!current) {
         current = { title: 'Opening', tokens: [] };
         groups.push(current);
@@ -298,7 +403,7 @@ export function tokensToBody(
   const sections: SceneSection[] = groups.map((g, i) => {
     const anchor = `sc-${String(i + 1).padStart(3, '0')}`;
     markers.landed = [];
-    const html = `<section class="scene" id="${anchor}">\n${renderBlocks(g.tokens, format, markers).join('')}</section>\n`;
+    const html = `<section class="scene" id="${anchor}">\n${renderBlocks(g.tokens, format, markers, art).join('')}</section>\n`;
     return { anchor, title: g.title, html, pageLabels: markers.landed };
   });
 
@@ -333,7 +438,7 @@ export function tokensToBody(
   }
   flush();
 
-  return { files, toc, pageList };
+  return { files, toc, pageList, usedImages: art.used };
 }
 
 /**

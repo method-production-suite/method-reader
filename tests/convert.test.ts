@@ -1,6 +1,8 @@
 import { afterEach, describe, test, expect, spyOn } from 'bun:test';
 import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
+import { Fountain } from 'fountain-js';
+import { tokensToBody } from '../src/epub/html';
 import {
   convertPdf,
   convertFountain,
@@ -200,9 +202,11 @@ describe('convertPdf carries the pictures', () => {
 
   test('the book lists exactly the script’s headings, with no Opening the notes made', async () => {
     // images.pdf's title card is a note ABOVE the first heading in the
-    // .fountain. The note renders nothing, so if it opened a section the book
-    // would gain an empty one, an "Opening" in its contents, and every scene
-    // anchor one along, on a script whose book is supposed not to change.
+    // .fountain. convertPdf does not yet hand its pictures to the renderer,
+    // so the note renders nothing, and if it opened a section the book would
+    // gain an empty one, an "Opening" in its contents, and every scene anchor
+    // one along. When convertPdf passes its pictures, this book gains the
+    // Opening the next test shows, and this test changes with it.
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
     expect(result.fountainText.indexOf('[[img: p001-01.png')).toBeLessThan(
       result.fountainText.indexOf('INT. ARCHIVE ROOM - DAY'),
@@ -216,6 +220,26 @@ describe('convertPdf carries the pictures', () => {
     const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
     expect(body).not.toMatch(/<section class="scene" id="[^"]*">\s*<\/section>/);
     expect(body.match(/<section class="scene"/g)).toHaveLength(result.screenplay!.scenes.length);
+  }, 60000);
+
+  test('rendered with its own pictures, the title card opens an Opening and the scenes follow it', async () => {
+    // The same .fountain and the same pictures convertPdf returns, through
+    // the renderer with the set a caller that ships them would pass. The
+    // title card is content now, so it earns the Opening the previous test
+    // forbids an empty note, and every heading moves one along on purpose.
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const body = tokensToBody(tokens, { images: new Set(result.images.map((i) => i.name)) });
+    expect(body.toc.map((e) => e.title)).toEqual([
+      'Opening', ...result.screenplay!.scenes.map((s) => s.heading),
+    ]);
+    expect(body.toc[1].href.endsWith('#sc-002')).toBe(true);
+    const xhtml = body.files.map((f) => f.xhtml).join('');
+    expect(xhtml).toMatch(
+      /<section class="scene" id="sc-001">\s*<p class="figure w100 figure-full"><img src="\.\.\/images\/p001-01\.png" alt="Illustration"\/><\/p>\s*<\/section>/,
+    );
+    expect(xhtml).toContain('<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>');
+    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
   }, 60000);
 
   test('a healthy picture document warns about nothing', async () => {

@@ -83,9 +83,11 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 - **Log formatting changes** in
   [`docs/formatting-options-log.md`](docs/formatting-options-log.md), the
   registry of every formatting option.
-- **Keep defaults in sync.** `src/options.ts`, the root
-  `format-defaults.json` and the frozen Mac app's `kit-check` pin the same
-  defaults; change them together.
+- **Keep defaults in sync.** `src/options.ts` and the root
+  `format-defaults.json` must match; change them together. The frozen Mac
+  app's `kit-check` reads the same file but ignores keys it does not know,
+  so a new option needs no Swift. Changing a default the Mac app already
+  knows still means changing its copy there too.
 - **Keep the window logic-free.** Decisions belong in `src/`; the window only
   builds argument lists and draws the engine's answer.
 - Run `bun test` and `bunx tsc --noEmit` before you push.

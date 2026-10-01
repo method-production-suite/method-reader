@@ -48,6 +48,11 @@ export interface FormatOptions {
    * #18). Off renders every block in the body face; the notes stay in the
    * .fountain either way, so flipping this needs no re-parse */
   preserveFontShifts: boolean;
+  /** render the pictures the PDF carried, as figures where their notes sit
+   * (registry #19). Off renders none; like the font shifts, the notes and
+   * the picture folder stay put either way, so flipping this needs no
+   * re-parse. A script with no pictures renders identically on or off */
+  includeImages: boolean;
 }
 
 export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
@@ -69,6 +74,7 @@ export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
   justifyText: false,
   printSplitMinimums: true,
   preserveFontShifts: true,
+  includeImages: true,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -114,5 +120,6 @@ export function resolveFormatOptions(
     justifyText: bool('justifyText'),
     printSplitMinimums: bool('printSplitMinimums'),
     preserveFontShifts: bool('preserveFontShifts'),
+    includeImages: bool('includeImages'),
   };
 }

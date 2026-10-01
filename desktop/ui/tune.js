@@ -1,4 +1,4 @@
-// Tune: this script's own formatting. Eighteen knobs, saved beside the
+// Tune: this script's own formatting. Nineteen knobs, saved beside the
 // script, and re-rendered into Read as they move.
 //
 // The window decides nothing about what a knob MEANS: the engine owns the
@@ -19,8 +19,10 @@ import { render as renderReader, splitPreview, dressFrame } from './read.js';
 // ---------------------------------------------------------------- decisions
 
 /** Why a knob can be on this surface and still not change the page behind
- *  it. Measured, not assumed — every one of the eighteen was flipped against
- *  a cached .fountain and the re-rendered document compared byte for byte:
+ *  it. Measured, not assumed — every one of the first eighteen was flipped
+ *  against a cached .fountain and the re-rendered document compared byte for
+ *  byte. The nineteenth, includeImages, decides whether html.ts writes a
+ *  figure at all, which the source test in tests/desktop-ui.test.ts checks:
  *
  *  'live'      the preview changes the moment this moves.
  *  'book'      the BOOK changes and the preview cannot show it. The preview
@@ -35,7 +37,7 @@ import { render as renderReader, splitPreview, dressFrame } from './read.js';
  *  the honest move. */
 export const EFFECTS = ['live', 'book', 'reconvert'];
 
-/** The eighteen, grouped by what a reader is trying to change rather than by
+/** The nineteen, grouped by what a reader is trying to change rather than by
  *  where the engine consumes them — with the one exception above, where
  *  where-it-is-consumed IS what a reader needs to know. `help` explains WHY,
  *  carried over from the Mac app's rail (app/Sources/ScreepubApp/
@@ -138,6 +140,16 @@ export const GROUPS = [
         key: 'showSceneNumbers', label: 'Scene numbers', kind: 'toggle',
         help: 'Only shows numbers the script already carried. Screepub never invents them: '
           + 'a numbered draft is a decision someone made, not a formatting choice.',
+      },
+      {
+        // Live, unlike the title page beside it: a figure is markup html.ts
+        // writes into the body, so the preview shows it. The engine keeps the
+        // pictures and their places either way, so switching back needs no
+        // new conversion.
+        key: 'includeImages', label: 'Pictures from the script', kind: 'toggle',
+        help: 'Shows the drawings and photos the PDF carried, in the book and in the '
+          + 'preview, where they sat in the script. A script with no pictures makes the '
+          + 'same book either way.',
       },
     ],
   },
@@ -290,7 +302,7 @@ export function restorePending(owed, pending) {
 }
 
 /** The engine's settings answer, or null if it is not one. Checked key by
- *  key against the eighteen and against each knob's own kind: a surface that
+ *  key against the nineteen and against each knob's own kind: a surface that
  *  trusted a malformed answer would draw an empty select or a slider at NaN
  *  and give a reader no idea why. Extra keys are carried through untouched —
  *  a future engine knob this window has never heard of must survive a round
@@ -408,7 +420,7 @@ export const LEDE = 'These settings belong to this script alone. They are kept w
   + 'match, so what you send is what you see.';
 
 /** "Start from" said nothing about what pressing one does. It does not nudge
- *  a setting or set a baseline to build on: it REPLACES all eighteen. The
+ *  a setting or set a baseline to build on: it REPLACES all nineteen. The
  *  SwiftUI version said so on screen and this one did not. */
 export const PRESET_LABEL = 'Load a preset';
 export const PRESET_NOTE = 'Overwrites every setting below.';
@@ -435,7 +447,7 @@ export const READING = 'Reading this script’s settings…';
  *  `defaults` (Screepub's own, unconditionally, the same field settingsFrom
  *  already reads as "this script's shipped defaults"). Both are validated
  *  the identical way a script's own settings are, through settingsFrom
- *  itself: an app default that fails the eighteen-knob check is one this
+ *  itself: an app default that fails the nineteen-knob check is one this
  *  window cannot safely claim anything about. */
 export function appDefaultsFrom(answer) {
   return settingsFrom({ settings: answer?.appDefaults });
@@ -1011,7 +1023,8 @@ async function writeKeep(keep, mine, seq) {
 }
 
 /** Which groups arrive open. Only the first: five shut boxes is a surface
- *  with nothing on it, and eighteen open controls is the wall this replaced.
+ *  with nothing on it, and every control open at once is the wall this
+ *  replaced.
  *
  *  Exported so the rule is a fact rather than an inline literal, and so a
  *  later "remember what was open" can be added without hunting for where the
@@ -1023,7 +1036,7 @@ export function groupStartsOpen(index) {
 function drawGroup(group, index) {
   // <details> rather than a toggle of our own: the open state, the keyboard
   // and the announcement all come from the platform. Folding, never
-  // dropping — all five groups and all eighteen knobs are still here, because
+  // dropping — all five groups and all nineteen knobs are still here, because
   // a setting that cannot be found still applies to every conversion.
   return el('details', { class: 'knob-group', open: groupStartsOpen(index) ? '' : null },
     el('summary', { class: 'subslug knob-group-title' }, group.title),

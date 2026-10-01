@@ -26,7 +26,7 @@ describe('appDefaultOptions', () => {
     const result = appDefaultOptions(path);
     expect(result.dialogueSideMarginPct).toBe(5);
     // Everything else stays the shipped value: a partial stored object must
-    // not blank out the seventeen knobs it did not mention.
+    // not blank out the eighteen knobs it did not mention.
     expect(result.contdMode).toBe(DEFAULT_FORMAT_OPTIONS.contdMode);
   });
 
