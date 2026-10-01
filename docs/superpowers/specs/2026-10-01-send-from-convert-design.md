@@ -1,6 +1,6 @@
 # Design: send from the result screen, device first
 
-Date: 2026-10-01 · Status: for the owner's review. Built from four
+Date: 2026-10-01 · Status: approved by the owner on 2026-10-01. Built from four
 mockups (3-send, 4-send, 5-live and its two revisions). Second layout design
 for the window, after the layout pass (2026-09-29).
 
