@@ -1,21 +1,20 @@
 import { afterEach, describe, test, expect, spyOn } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
 import { Fountain } from 'fountain-js';
 import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { screenplayCss } from '../src/epub/css';
-import { resolveFormatOptions, type FormatOptions } from '../src/options';
+import { resolveFormatOptions } from '../src/options';
 import {
   convertPdf,
   convertFountain,
   imageWarnings,
   ScannedPdfError,
   NotAScreenplayError,
-  type ConvertResult,
 } from '../src/convert';
-import { mobiArt, tokensToMobiHtml } from '../src/mobi/html';
-import { buildMobi } from '../src/mobi/writer';
+import { mobiArt } from '../src/mobi/html';
 import { extractDocument } from '../src/parser/extract';
 import { maskPdbDates, mobiPictures } from './helpers/mobi-records';
 // Namespaces, not named imports, because the spies below replace a binding
@@ -506,14 +505,19 @@ describe('the preview is handed the pictures the book is', () => {
 // under the wrong number is a wrong picture on the page.
 describe('the MOBI is handed the pictures the book is', () => {
   const ON = resolveFormatOptions();
-  const OFF = resolveFormatOptions({ includeImages: false });
-  /** The MOBI a conversion's text makes with no pictures in hand: today's
-   * renderer and writer, called directly. */
-  const textOnly = (result: ConvertResult, format: FormatOptions) => buildMobi({
-    title: result.meta.title,
-    author: result.meta.author,
-    html: tokensToMobiHtml(new Fountain().parse(result.fountainText, true).tokens, result.meta, format),
-  });
+  // SHA-256 of each book's .mobi with the PDB dates (bytes 36 to 43) zeroed,
+  // made by the code at b63ae74, the last commit before a MOBI could carry a
+  // picture, where includeImages changed nothing in it. The CLI's --mobi
+  // file and convertPdf's are the same bytes, so these are the books a
+  // person was handed. Pinned as books rather than as the renderer called
+  // again: a drift here changes every Kindle book without pictures, which is
+  // most of them. A change to the fixture's .fountain moves these too, so
+  // rule that out first.
+  const BEFORE_PICTURES = {
+    screenplay: '7bf143e1fede70bbc73b12ad6a9c43d65aa7fe59aaf6c66cd53cb357951d75e4',
+    imagesOff: '4fc4e4d51fd22649c4f99421281bc946ebcf6643576131213e017166741f24d1',
+  };
+  const maskedSha = (b: Uint8Array) => createHash('sha256').update(maskPdbDates(b)).digest('hex');
 
   test('a PDF conversion’s MOBI carries the EPUB’s pictures, byte for byte, in mobiArt’s order', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
@@ -526,20 +530,20 @@ describe('the MOBI is handed the pictures the book is', () => {
     expect(mobiPictures(result.mobi!)).toEqual(shipped);
   }, 60000);
 
-  test('with includeImages off, the MOBI has no picture records: it is the text-only MOBI', async () => {
+  test('with includeImages off, the MOBI has no picture records: it is the book from before pictures', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), {
       mobi: true, format: { includeImages: false },
     });
     // Still carried out of the PDF, so the off switch is the only reason.
     expect(result.images).toHaveLength(2);
     expect(mobiPictures(result.mobi!)).toEqual([]);
-    expect(maskPdbDates(result.mobi!)).toEqual(maskPdbDates(textOnly(result, OFF)));
+    expect(maskedSha(result.mobi!)).toBe(BEFORE_PICTURES.imagesOff);
   }, 60000);
 
   test('a script without pictures gets the MOBI it got before', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`), { mobi: true });
     expect(mobiPictures(result.mobi!)).toEqual([]);
-    expect(maskPdbDates(result.mobi!)).toEqual(maskPdbDates(textOnly(result, ON)));
+    expect(maskedSha(result.mobi!)).toBe(BEFORE_PICTURES.screenplay);
   }, 60000);
 
   describe('from a .fountain and the pictures it is handed', () => {

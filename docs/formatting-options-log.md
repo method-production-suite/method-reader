@@ -1572,10 +1572,15 @@ the Mac app should move those two; nothing in the engine needs to change.
   past the pictures. `buildMobi` throws on a `recindex` its records cannot
   answer (00000, or past the last picture), since a reader would open FLIS
   or a text record there and show it; every caller numbers the markup and
-  orders the bytes from `mobiArt`, so it cannot fire. Each picture is one record holding its PNG
-  exactly as it was handed over, and a book with no pictures is the book
-  this writer built before records existed, byte for byte with the PDB dates
-  (bytes 36 to 43) masked, pinned by hash. The file is assembled from typed
+  orders the bytes from `mobiArt`, so it cannot fire. Each picture is one
+  record holding its PNG exactly as it was handed over, and a book with no
+  pictures is the book this writer built before records existed, byte for
+  byte with the PDB dates (bytes 36 to 43) masked. That is pinned by hash
+  three times, each hash made by the code before records: a sample book in
+  `tests/mobi.test.ts`, and the `--mobi` output of `screenplay.pdf` and of
+  `images.pdf` with the option off in `tests/convert.test.ts`. The EPUBs of
+  both fixtures are byte-identical across that change too, with the clock
+  pinned (checked 2026-10-01). The file is assembled from typed
   arrays: copied in a byte at a time, the corpus's heaviest picture document
   (60 pictures) cost about 390 MB of transient memory (measured 2026-10-01).
   Calibre's MOBI reader, run inside `bun test`, gives `images.pdf`'s two
