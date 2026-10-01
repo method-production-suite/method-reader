@@ -15,7 +15,9 @@
 //     the engine's <style> in place renders an unstyled script with no
 //     error anywhere. The `data:` pictures are the one thing it lets in,
 //     for the figures: the engine writes each picture into its <img>, so
-//     the frame draws them with no help from here.
+//     the frame draws them with no help from here. (That half was measured
+//     in headless Chrome under this exact policy, with this file's own
+//     splitPreview and dressFrame, not yet in the window itself.)
 //   * CSSOM is not blocked. So the <style> is lifted out of the document
 //     and its text is adopted as a constructed stylesheet instead — same
 //     bytes, same rules, nothing rewritten.

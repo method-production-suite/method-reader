@@ -532,7 +532,10 @@ describe('the window is granted no more than it needs', () => {
     //
     // Nothing else. No 'unsafe-inline', no blob:, and data: for pictures
     // only: a data: script or stylesheet is as much a way in as an inline one.
-    expect(CONFIG.app.security.csp).toBe("default-src 'self'; img-src 'self' data:");
+    // The whole security object, not just `csp`: a `devCsp`, `headers` or
+    // `assetProtocol` key beside it could loosen the window without touching
+    // the policy string.
+    expect(CONFIG.app.security).toEqual({ csp: "default-src 'self'; img-src 'self' data:" });
   });
 
   test('the frontend is static files, not a dev server', () => {

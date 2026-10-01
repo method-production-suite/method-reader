@@ -456,10 +456,11 @@ export function tokensToBody(
  *
  * Every picture is inlined at full size, on every render: the document grows
  * by about four thirds of the bytes of the pictures it shows. On the heaviest
- * picture document measured, sixty plates, Tune's re-render stayed inside
- * the budget the plan set for it (about a second, and 25 MB of JSON), so
- * the preview is not built lazily or from smaller copies. Smaller preview
- * copies are the fallback if a heavier document breaks that budget, and
+ * picture document measured, sixty plates, the ENGINE's re-render stayed
+ * inside the budget the plan set for it (174 ms, 22 MB of JSON). The WINDOW's
+ * side of that answer is unmeasured: carrying, parsing and framing 22 MB has
+ * never been timed there, and the caps (60 pictures, 1400 px) allow several
+ * times that. Smaller preview copies are the fallback if it is slow, and
  * choosing them is a design decision, not a fix.
  */
 export function tokensToPreviewHtml(
