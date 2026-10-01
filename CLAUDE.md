@@ -53,10 +53,10 @@ bun tools/bump-version.ts <version>   # release bump: all 4 version files + desk
   `--options file.json` ↔ the window's Settings page. Defaults are pinned to
   root `format-defaults.json` by BOTH suites (options.test.ts,
   kit-check): change options.ts and format-defaults.json together or a
-  suite fails. The Swift side ignores keys it does not know (the frozen
-  app decodes the file with synthesized `Decodable`), so a new option needs
-  no Swift; changing a default the Swift app already knows still means
-  changing `FormatSettings.defaults` too.
+  suite fails. The Swift check decodes the file with `JSONDecoder` into a
+  synthesized `Decodable`, which ignores keys it does not know, so a new
+  option needs no Swift; changing a default the Swift app already knows
+  still means changing `FormatSettings.defaults` too.
 - `src/convert.ts` — orchestration + scanned/non-screenplay guards.
 - `src/device/` + `src/export/` — device detection, USB copy, and every
   send route (Calibre and KFX builds, Books, Mail, Send to Kindle). The

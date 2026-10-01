@@ -19,10 +19,12 @@ import { render as renderReader, splitPreview, dressFrame } from './read.js';
 // ---------------------------------------------------------------- decisions
 
 /** Why a knob can be on this surface and still not change the page behind
- *  it. Measured, not assumed — every one of the first eighteen was flipped
+ *  it. Measured, not assumed: every one of the first eighteen was flipped
  *  against a cached .fountain and the re-rendered document compared byte for
- *  byte. The nineteenth, includeImages, decides whether html.ts writes a
- *  figure at all, which the source test in tests/desktop-ui.test.ts checks:
+ *  byte. The nineteenth, includeImages, is live by construction: html.ts
+ *  passes it to the one predicate that decides whether a figure is written
+ *  (a source test in tests/desktop-ui.test.ts checks html.ts names it).
+ *  The three effects:
  *
  *  'live'      the preview changes the moment this moves.
  *  'book'      the BOOK changes and the preview cannot show it. The preview

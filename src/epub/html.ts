@@ -278,8 +278,7 @@ function renderBlocks(
       case 'note': {
         // A standalone `[[img: ...]]` is a picture carried out of the PDF
         // (registry #19). Every other note, and a picture note the predicate
-        // turns down, renders nothing, which is where all notes lived until
-        // now: notes are invisible by spec. `raw` is the token's inner text,
+        // turns down, renders nothing: notes are invisible by spec. `raw` is the token's inner text,
         // brackets already stripped, which is what rendersImage reads.
         const img = rendersImage(raw, format.includeImages, art.have);
         if (!img) break;

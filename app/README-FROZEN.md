@@ -61,7 +61,10 @@ an accepted loss.
 
 `format-defaults.json` is pinned by **both** `tests/options.test.ts` and
 `kit-check` (see the root `CLAUDE.md`). While this directory lives, that is
-a double pin and both change together.
+a double pin for the keys Swift knows: changing one of their defaults means
+changing `FormatSettings.defaults` too. A NEW key needs no Swift, and must
+not get any: kit-check decodes with `JSONDecoder`, which ignores keys it
+does not know, and the freeze guard refuses Swift edits.
 
 ## When it may go
 
