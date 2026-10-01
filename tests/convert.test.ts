@@ -170,10 +170,22 @@ describe('convertFountain warns when a stage-1 option cannot apply', () => {
 
   test('strip requested but (CONT’D) is already baked into the cues', async () => {
     const result = await convertFountain(WITH_CONTD, { format: { contdMode: 'strip' } });
-    expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]).toContain("(CONT'D)");
-    // Must name the fix, not just the failure.
-    expect(result.warnings[0]).toMatch(/re-?convert/i);
+    // Said to a writer, not to whoever wrote the engine: the window's Tune
+    // shows every engine warning under each rebuild, and the Convert page
+    // shows it when a .fountain is dropped. It names the fix, not just the
+    // failure, and a script that never had a PDF of Screepub's reads it
+    // truthfully too: converting the script's PDF is what removes it.
+    expect(result.warnings).toEqual([
+      "This book still shows (CONT'D): it is written into the script the book was made from. "
+        + "Removing it takes effect when you convert the script's PDF.",
+    ]);
+  });
+
+  test('the warning carries no word only the engine knows', async () => {
+    const [said] = (await convertFountain(WITH_CONTD, { format: { contdMode: 'strip' } })).warnings;
+    for (const word of ['contdMode', 'strip', '.fountain', 'Fountain', 're-convert', '—']) {
+      expect(said).not.toContain(word);
+    }
   });
 
   test('the cues really do keep their (CONT’D), which is what the warning is about', async () => {

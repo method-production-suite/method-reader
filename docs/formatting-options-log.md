@@ -526,7 +526,12 @@ and the suite will say so if you forget.
   `strip` does not. This used to exit 0 and silently change nothing;
   `convertFountain` now returns a warning for the provable case (strip
   requested, `(CONT'D)` cues present), which reaches `--json`, the CLI's
-  human output, and the app. #8 gets no runtime warning because
+  human output, and the app. Since 2026-10-01 it is worded for a writer
+  ("This book still shows (CONT'D): it is written into the script the book
+  was made from. Removing it takes effect when you convert the script's
+  PDF."), because the window's Tune shows every engine warning under each
+  rebuild and the old sentence named the option key and the file format.
+  #8 gets no runtime warning because
   `serialize.ts` drops `(MORE)` unconditionally, so an unrejoined split is
   indistinguishable from an ordinary same-speaker continuation — a guessed
   warning would be worse than this note. The reader rail groups both under

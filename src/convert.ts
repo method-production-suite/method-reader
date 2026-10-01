@@ -318,13 +318,19 @@ const CONTD_CUE = /^@.*\(\s*CONT['’]?D\.?\s*\)/im;
  * here, and `rejoinSplitDialogue` leaves nothing to detect: serialize.ts
  * drops (MORE) markers unconditionally, so an unrejoined split is not
  * distinguishable from an ordinary same-speaker continuation. That one is a
- * documented limitation (registry §8) rather than a guessed warning. */
+ * documented limitation (registry §8) rather than a guessed warning.
+ *
+ * Worded for a writer, because a writer is who reads it: the window's Tune
+ * shows every engine warning under each rebuild, and the Convert page shows
+ * it when a `.fountain` is dropped. No option key, file extension or format
+ * name. "The script's PDF" rather than "the PDF" because the second reader
+ * may never have converted one: their (CONT'D) came from whatever wrote the
+ * text, and converting the PDF of that script is still what removes it. */
 function stageOneWarnings(fountainText: string, format: FormatOptions): string[] {
   if (format.contdMode !== 'strip' || !CONTD_CUE.test(fountainText)) return [];
   return [
-    "contdMode \"strip\" was not applied: (CONT'D) is written into the .fountain " +
-      'when the PDF is read, so it cannot be removed from Fountain input. ' +
-      'Re-convert the original PDF with this setting to strip it.',
+    "This book still shows (CONT'D): it is written into the script the book was made from. " +
+      "Removing it takes effect when you convert the script's PDF.",
   ];
 }
 
