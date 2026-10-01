@@ -26,10 +26,11 @@
 // green. What makes the duplication safe is that arithmetic has nothing to
 // drift, not a cross-check that does not exist.)
 //
-// MUST stay the first import: pdf.js's modern build touches DOMMatrix at module
-// scope, so anything that loads pdf.mjs before the shim dies on load. This file
-// is imported by unit tests that never open a document, which is exactly where
-// that ordering bites.
+// The shims come first, like everywhere pdf.mjs is loaded: they hand
+// getDocument the statically imported worker, supply DOMMatrix for rendering,
+// and let quiet-pdfjs.ts patch console.warn before pdf.mjs is evaluated. (Not
+// because a bare import dies: on pdfjs-dist 6.3.289 it loads under bun 1.3.14,
+// checked 2026-10-01; see pdfjs-shims.ts.)
 import './pdfjs-shims';
 import { OPS } from 'pdfjs-dist/build/pdf.mjs';
 import { downscaleRgb, encodePng } from './png';
