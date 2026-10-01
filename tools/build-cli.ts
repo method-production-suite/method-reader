@@ -5,8 +5,8 @@
 // release tool nobody can run locally is a release tool nobody can debug.
 //
 // Two tables, never mixed. TARGETS is the cross-compiled Linux and Windows
-// set the cross job builds on Ubuntu. MAC_TARGETS is the two per-arch macOS
-// tarballs the Homebrew formula serves, and it is reachable ONLY with --mac,
+// set the cross job builds on Ubuntu. MAC_TARGETS is the Apple silicon
+// tarball the Homebrew formula serves, and it is reachable ONLY with --mac,
 // which also demands --sign <identity> or an explicit --unsigned: an unsigned
 // Mach-O is a Gatekeeper warning for everyone who downloads it, so the cross
 // job (which never passes --mac) still cannot produce one by accident. The
@@ -98,12 +98,12 @@ export function detectBinaryFormat(head: Uint8Array): BinaryFormat {
   // carries 20-byte fat_arch records; FAT_MAGIC_64 carries 32-byte
   // fat_arch_64, whose offset and size fields are 64-bit.
   //
-  // Both arches are REQUIRED to answer 'macho-universal'. A one-slice fat
-  // file is a thin binary wearing a universal wrapper, and the whole reason
-  // this format exists here is that the frozen Swift updater has no
-  // architecture logic (ADR 2026-09-14): shipping it a fat DMG that is
-  // secretly arm64-only would strand exactly the Intel users it is meant to
-  // reach, and it would do it silently.
+  // Both arches are REQUIRED to answer 'macho-universal'; a one-slice fat
+  // file is a thin binary wearing a universal wrapper. Nothing is BUILT
+  // universal any more (Intel Macs are not supported after the identifier
+  // release), and no row names this format or 'macho-x86-64'. They stay
+  // in the detector so a binary that came out wrong is refused naming
+  // what it really is, rather than "unknown".
   const beMagic = u32be(0);
   if (beMagic === 0xcafebabe || beMagic === 0xcafebabf) {
     const stride = beMagic === 0xcafebabf ? 32 : 20;
@@ -138,7 +138,7 @@ export function readBinaryFormat(path: string): BinaryFormat {
   }
 }
 
-export type MacTargetId = 'macos-arm64' | 'macos-x64';
+export type MacTargetId = 'macos-arm64';
 export type TargetId = 'linux-x64' | 'linux-arm64' | 'windows-x64' | MacTargetId;
 
 export interface Target {
@@ -187,10 +187,13 @@ export const TARGETS: readonly Target[] = [
   },
 ];
 
-/** The Homebrew formula's two downloads. Per-arch, not universal: bun embeds
- *  its whole runtime in every slice, so a lipo'd CLI is two ~65 MB binaries
- *  of which any machine runs half, and brew can pick the arch where a
- *  browser cannot. The archive names are tools/bump-tap.sh's, unchanged. */
+/** The Homebrew formula's one download: Apple silicon. Through the
+ *  identifier release there was an x64 row beside it; from the release
+ *  after it Intel Macs are not supported (owner, 2026-10-01; plan
+ *  docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and the
+ *  formula says `depends_on arch: :arm64`. Still a table, so the cross
+ *  set's machinery serves it unchanged. The archive name is
+ *  tools/bump-tap.sh's, unchanged. */
 export const MAC_TARGETS: readonly Target[] = [
   {
     id: 'macos-arm64',
@@ -199,14 +202,6 @@ export const MAC_TARGETS: readonly Target[] = [
     packaging: 'tar.gz',
     binaryName: 'screepub',
     archiveName: 'screepub-cli-macos-arm64.tar.gz',
-  },
-  {
-    id: 'macos-x64',
-    bunTarget: 'bun-darwin-x64',
-    format: 'macho-x86-64',
-    packaging: 'tar.gz',
-    binaryName: 'screepub',
-    archiveName: 'screepub-cli-macos-x64.tar.gz',
   },
 ];
 
@@ -255,10 +250,10 @@ export function hostTarget(): Target | undefined {
 }
 
 /** The Mac table's own host mapping, kept apart from targetIdForHost so that
- *  one still answers "nothing" on a Mac: the cross set has no Mac host. */
+ *  one still answers "nothing" on a Mac: the cross set has no Mac host. An
+ *  Intel Mac answers nothing here too: nothing it could build ships. */
 export function macTargetIdForHost(platform: string, arch: string): MacTargetId | undefined {
   if (platform === 'darwin' && arch === 'arm64') return 'macos-arm64';
-  if (platform === 'darwin' && arch === 'x64') return 'macos-x64';
   return undefined;
 }
 
@@ -812,7 +807,7 @@ export async function buildAll(args: BuildArgs, floors: Floors = RELEASE_FLOORS)
   if (stray.length) {
     throw new Error(`build-cli: ${stray.join(', ')} build only with --mac`);
   }
-  // Before any compile: a missing notary key found after two 60 MB builds is
+  // Before any compile: a missing notary key found after a 60 MB build is
   // a release that died late for a reason it could have named first.
   const creds = args.mac?.notarize ? notaryCredentials() : undefined;
   mkdirSync(args.outDir, { recursive: true });

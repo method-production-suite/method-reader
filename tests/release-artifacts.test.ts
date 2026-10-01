@@ -12,12 +12,14 @@ import {
 const WORKFLOWS = '.github/workflows';
 const read = (p: string) => readFileSync(p, 'utf8');
 
-/** The Mac command-line tarballs: what the release job uploads, and what
- *  the Homebrew formula serves. */
-const MACOS_CLI_ASSETS = [
-  'screepub-cli-macos-arm64.tar.gz',
-  'screepub-cli-macos-x64.tar.gz',
-];
+/** The Mac command-line tarball: what the release job uploads, and what
+ *  the Homebrew formula serves. ONE since the release after the identifier
+ *  release: Apple silicon only (owner, 2026-10-01; plan
+ *  2026-10-01-f2-handover-amendment.md). */
+const MACOS_CLI_ASSETS = ['screepub-cli-macos-arm64.tar.gz'];
+/** The Intel tarball every release through the identifier release carried.
+ *  Nothing may build, upload, hash or serve it again. */
+const RETIRED_MACOS_CLI = 'screepub-cli-macos-x64.tar.gz';
 /** Every Mac download by name. The image was the Swift app's until the
  *  identifier release and is the window's since (owner, 2026-10-01); the
  *  name did not change, on purpose. */
@@ -40,20 +42,26 @@ describe('the macOS CLI is built apart from the cross set', () => {
     }
   });
 
-  test('the Mac table builds exactly the formula\'s two tarballs', () => {
+  test('the Mac table builds exactly the formula\'s one tarball', () => {
     // Since the CLI move these come from build-cli.ts's MAC_TARGETS, not
-    // the Swift app's release script; the names are the ones the tap reads.
-    expect(MAC_TARGETS.map((t) => t.archiveName).sort()).toEqual([...MACOS_CLI_ASSETS].sort());
+    // the Swift app's release script; the name is the one the tap reads.
+    expect(MAC_TARGETS.map((t) => t.archiveName)).toEqual(MACOS_CLI_ASSETS);
+    expect(MAC_TARGETS.map((t) => t.archiveName)).not.toContain(RETIRED_MACOS_CLI);
   });
 
-  test('tools/bump-tap.sh bumps the formula\'s two tarballs and only deprecates the cask', () => {
+  test('tools/bump-tap.sh serves the Apple silicon tarball only and only deprecates the cask', () => {
     // The Homebrew tap serves the macOS CLI. It must not learn about the
     // Linux or Windows artifacts: brew has no business installing either,
     // and tap-freshness.yml would go red on a formula it cannot audit.
     // The CASK was retired at the identifier release: never bumped again,
     // so the script reads no image digest and rewrites no cask version.
+    // What it does to the formula is EXECUTED in tests/tap-scripts.test.ts.
     const sh = read('tools/bump-tap.sh');
     for (const name of MACOS_CLI_ASSETS) expect(sh).toContain(name);
+    expect(sh).toContain('depends_on arch: :arm64');
+    // Named only by the check that the rewrite left it behind.
+    expect(sh.split(RETIRED_MACOS_CLI).length - 1).toBeLessThanOrEqual(1);
+    expect(sh).not.toContain('Hardware::CPU');
     expect(sh).not.toContain('Screepub-macOS.dmg');
     expect(sh).not.toMatch(/s\|\^  version/);
     expect(sh).toContain('deprecate! date:');
@@ -213,7 +221,7 @@ describe('release.yml ships the cross-platform artifacts', () => {
     }
   });
 
-  test('the macOS release job uploads exactly the two CLI tarballs, and no image', () => {
+  test('the macOS release job uploads exactly the one CLI tarball, and no image', () => {
     // Read off the `gh release upload` commands themselves: a name in a
     // comment is not an upload. (The first version of this check grepped the
     // whole step and passed on a comment that NAMES the Swift image.)
@@ -226,6 +234,15 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(uploadedBy(rel.jobs['release']!).some((f) => f.endsWith('.dmg'))).toBe(false);
     // And it has NOT quietly become responsible for the new ones.
     for (const t of TARGETS) expect(text).not.toContain(t.archiveName);
+  });
+
+  test('nothing in the release workflow builds, hashes or uploads an Intel Mac CLI', () => {
+    // Every Intel artifact goes at the release after the identifier
+    // release. Read off the whole file, comments included: no line may
+    // name the x64 tarball, so a hash, an upload or a crib-sheet line for
+    // it cannot come back unnoticed.
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toContain(RETIRED_MACOS_CLI);
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toMatch(/\bX64=|\$X64\b/);
   });
 
   test('the checks job fails a tag whose three version files disagree', () => {

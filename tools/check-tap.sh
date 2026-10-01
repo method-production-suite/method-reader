@@ -11,7 +11,8 @@
 # checkout showed 0.4.2, because the edits were never committed and
 # `homebrew-tap/` is hidden from `git status` by `.git/info/exclude`.
 #
-# Needs no secret. Both repos are public.
+# Needs no secret. Both repos are public. tests/tap-scripts.test.ts runs it
+# against a fake tap and a fake `gh`.
 # bash 3.2 safe: no arrays, no process substitution.
 set -euo pipefail
 
@@ -39,7 +40,8 @@ FORMULA="$(fetch Formula/screepub.rb)"
 # that it says so: a cask that is frozen and NOT deprecated serves an old
 # app to anyone who installs it, silently, which is the failure this file
 # exists to catch. The formula deliberately has no `version` (it audits as
-# redundant), so its version is literal in both urls, and both must agree.
+# redundant), so its version is literal in its url (or, through the
+# identifier release, in both of its urls, which must agree).
 FORMULA_V="$(printf '%s\n' "$FORMULA" \
   | sed -n 's|.*/releases/download/v\([^/]*\)/.*|\1|p' | sort -u)"
 
@@ -53,7 +55,7 @@ if ! printf '%s\n' "$CASK" | grep -q '^  deprecate! '; then
   FAIL=1
 fi
 if [ "$(printf '%s\n' "$FORMULA_V" | grep -c .)" -ne 1 ]; then
-  echo "::error::the formula's two download urls disagree: $(printf '%s' "$FORMULA_V" | tr '\n' ' ')"
+  echo "::error::the formula's download urls disagree: $(printf '%s' "$FORMULA_V" | tr '\n' ' ')"
   FAIL=1
 elif [ "$FORMULA_V" != "$VERSION" ]; then
   echo "::error::the formula pins $FORMULA_V but the newest release is $VERSION"
@@ -80,10 +82,34 @@ check_sha() { # <asset> <human name> <file contents>
   fi
 }
 check_sha "screepub-cli-macos-arm64.tar.gz" "the formula" "$FORMULA"
-check_sha "screepub-cli-macos-x64.tar.gz"   "the formula" "$FORMULA"
+
+# Intel. The identifier release is the last to carry an Intel tarball; from
+# the release after it Intel Macs are not supported (owner, 2026-10-01;
+# plan docs/superpowers/plans/2026-10-01-f2-handover-amendment.md). Keyed
+# on what the RELEASE carries, never on a version number, so each release
+# is judged as it shipped: one that still has the tarball (the weekly
+# check reads the identifier release until the next one is tagged) keeps
+# its two-arch formula and both digests; one without it must be served by
+# a formula that names no Intel url and says `depends_on arch: :arm64`, or
+# brew on an Intel Mac downloads a missing file, or installs a binary that
+# cannot run there.
+INTEL="screepub-cli-macos-x64.tar.gz"
+INTEL_SHA="$(digest "$INTEL" || true)"
+if [ ${#INTEL_SHA} -eq 64 ] && [ -z "$(printf '%s' "$INTEL_SHA" | tr -d '0-9a-f')" ]; then
+  check_sha "$INTEL" "the formula" "$FORMULA"
+else
+  if printf '%s\n' "$FORMULA" | grep -q 'screepub-cli-macos-x64'; then
+    echo "::error::the formula still serves $INTEL, which release v$VERSION does not carry (Apple silicon only)"
+    FAIL=1
+  fi
+  if ! printf '%s\n' "$FORMULA" | grep -q '^  depends_on arch: :arm64$'; then
+    echo "::error::the formula does not say depends_on arch: :arm64, so brew would install an Apple silicon binary on an Intel Mac"
+    FAIL=1
+  fi
+fi
 
 if [ "$FAIL" -ne 0 ]; then
-  echo "::notice::Bump https://github.com/$TAP — tools/bump-tap.sh does it (and deprecates the cask once), and the release run's summary carries the two SHAs. See docs/release-secrets.md."
+  echo "::notice::Bump https://github.com/$TAP — tools/bump-tap.sh does it (and deprecates the cask once), and the release run's summary carries the SHA. See docs/release-secrets.md."
   exit 1
 fi
 echo "The tap serves $VERSION, with matching checksums."

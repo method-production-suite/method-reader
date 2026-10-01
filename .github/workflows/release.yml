@@ -220,11 +220,13 @@ jobs:
           set -euo pipefail
           # The formula's two tarballs. This used to be the Swift app's
           # release script; since the CLI move it is tools/build-cli.ts,
-          # which compiles each arch, signs it (hardened runtime, the CLI's
+          # which compiles it, signs it (hardened runtime, the CLI's
           # entitlements), checks what the signature says, notarizes it,
-          # and only THEN packages it, so each tarball holds the signed
+          # and only THEN packages it, so the tarball holds the signed
           # bytes. It refuses a tag package.json does not name, and a
-          # missing notary key before compiling anything.
+          # missing notary key before compiling anything. Apple silicon
+          # only: the Intel tarball went with Intel Macs, after the
+          # identifier release (plan 2026-10-01-f2-handover-amendment.md).
           # AC_API_KEY_PATH comes from the step above, via GITHUB_ENV.
           bun tools/build-cli.ts --version "${VERSION#v}" --out "$RUNNER_TEMP/cli-mac" \
             --mac --sign "$SIGN_IDENTITY" --notarize
@@ -276,8 +278,7 @@ jobs:
             printf '%s\n' "Command-line tool for macOS, SHA-256:"
             printf '\n```\n'
             ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 \
-                screepub-cli-macos-arm64.tar.gz \
-                screepub-cli-macos-x64.tar.gz )
+                screepub-cli-macos-arm64.tar.gz )
             printf '```\n'
           } >> "$NOTES"
 
@@ -297,19 +298,21 @@ jobs:
             gh release edit "$TAG" --title "Screepub $VERSION" --notes-file "$NOTES"
           fi
 
-          # The two tarballs, and never an image: the window's
+          # The one tarball, and never an image: the window's
           # Screepub-macOS.dmg comes from app-upload, and the frozen Swift
           # updater must find exactly one .dmg.
           gh release upload "$TAG" \
             "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" \
-            "$RUNNER_TEMP/cli-mac/screepub-cli-macos-x64.tar.gz" \
             --clobber
 
       # The fallback for when the `tap` job below cannot run (no TAP_TOKEN)
-      # or fails: the two SHAs, somewhere a person can copy from, so the
-      # bump is paste-and-commit rather than download-and-hash. The CASK
-      # was retired at the identifier release and is never bumped again;
-      # tools/bump-tap.sh adds its deprecation notice once.
+      # or fails: the SHA, somewhere a person can copy from, so the bump is
+      # paste-and-commit rather than download-and-hash. The CASK was
+      # retired at the identifier release and is never bumped again;
+      # tools/bump-tap.sh adds its deprecation notice once. The formula is
+      # Apple silicon only from the release after the identifier release,
+      # which changed its SHAPE (one url, `depends_on arch: :arm64`), so
+      # the sheet says to run bump-tap.sh, which writes it whole.
       - name: Tap bump crib sheet
         env:
           VERSION: ${{ github.ref_name }}
@@ -320,12 +323,10 @@ jobs:
           # macos-15, whose bash is 3.2, and a bash-3.2 array trap has
           # already killed one release here after notarization.
           ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
-          X64="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-x64.tar.gz" | cut -d' ' -f1)"
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf '`Formula/screepub.rb` (the tag is literal in BOTH urls)\n\n```ruby\n'
-            printf '    url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n    sha256 "%s"\n' "$V" "$ARM"
-            printf '    url ".../download/v%s/screepub-cli-macos-x64.tar.gz"\n    sha256 "%s"\n' "$V" "$X64"
+            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`). By hand, the tag is literal in the url:\n\n```ruby\n' "$V"
+            printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -460,10 +461,10 @@ jobs:
 
   # Bun cross-compiles every target from one machine, so the Linux and
   # Windows artifacts cost one free Ubuntu runner rather than a per-OS build
-  # matrix. The macOS artifacts are NOT built here: the release job above
-  # builds, signs and notarizes them with `build-cli.ts --mac` on its macOS
+  # matrix. The macOS artifact is NOT built here: the release job above
+  # builds, signs and notarizes it with `build-cli.ts --mac` on its macOS
   # runner (notarization needs Apple's toolchain), and tools/bump-tap.sh
-  # hardcodes their filenames.
+  # hardcodes its filename.
   #
   # The matrix and every verification live in tools/build-cli.ts, which is
   # unit-tested and hand-runnable. This job is a thin caller on purpose:

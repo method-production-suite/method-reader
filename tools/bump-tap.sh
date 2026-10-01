@@ -10,7 +10,7 @@
 # before. Inline in a workflow it can only be tested by cutting a release.
 # Here it can be run against a real checkout, and its most useful property
 # checked directly: run it at the version the tap already serves and the
-# diff must be EMPTY.
+# diff must be EMPTY. tests/tap-scripts.test.ts runs it against a fake tap.
 #
 # SHAs come from the digests GitHub reports for the release assets, so
 # nothing is downloaded and nothing is re-hashed. The release body quotes
@@ -42,7 +42,6 @@ digest() {
     | sed 's/^sha256://'
 }
 ARM_SHA="$(digest screepub-cli-macos-arm64.tar.gz || true)"
-X64_SHA="$(digest screepub-cli-macos-x64.tar.gz || true)"
 
 # Check the SHAPE, not merely that something came back. For a tag with no
 # release, `gh api` prints its 404 JSON body on STDOUT — so a non-empty
@@ -61,7 +60,6 @@ check_sha() { # <value> <asset-name>
   fi
 }
 check_sha "$ARM_SHA" screepub-cli-macos-arm64.tar.gz
-check_sha "$X64_SHA" screepub-cli-macos-x64.tar.gz
 
 # --- cask: RETIRED at the identifier release (owner, 2026-10-01) --------
 # The app updates itself and is downloaded from the releases page, so the
@@ -84,45 +82,86 @@ if ! grep -q '^  deprecate! ' "$CASK"; then
   mv "$CASK.new" "$CASK"
 fi
 
-# --- formula: no version stanza (it audits as redundant), so the tag is
-# literal in BOTH urls, and each sha256 is the line after its own url.
-# Positional by design: keyed off the url immediately above it, so the two
-# checksums can never be swapped.
-awk -v arm="$ARM_SHA" -v x64="$X64_SHA" -v v="$VERSION" '
-  /screepub-cli-macos-arm64\.tar\.gz/ {
-    sub(/\/download\/v[^\/]*\//, "/download/v" v "/"); print; want = "arm"; next
-  }
-  /screepub-cli-macos-x64\.tar\.gz/ {
-    sub(/\/download\/v[^\/]*\//, "/download/v" v "/"); print; want = "x64"; next
-  }
-  want != "" && /^[[:space:]]*sha256 "/ {
-    sub(/"[0-9a-f]*"/, "\"" (want == "arm" ? arm : x64) "\""); print; want = ""; next
-  }
-  { print }
-' "$FORMULA" > "$FORMULA.new"
+# --- formula: Apple silicon only, written WHOLE --------------------------
+# Through the identifier release the formula served two tarballs from an
+# if/else on the CPU. From the release after it Intel Macs are
+# not supported (owner, 2026-10-01; plan
+# docs/superpowers/plans/2026-10-01-f2-handover-amendment.md): one tarball,
+# and `depends_on arch: :arm64`, so brew on an Intel Mac refuses with
+# Homebrew's own "The arm64 architecture is required for this software."
+# rather than installing a binary that cannot run there.
+#
+# Written whole rather than patched, because the edit changes the file's
+# SHAPE (a two-branch block becomes one url) and a pattern rewrite would
+# need to know both shapes forever. The whole file is a pure function of
+# the version and the digest, so a second run is byte-identical, which is
+# this script's rule. The tap's formula is therefore this script's output:
+# change it HERE.
+#
+# Two things brew enforces, both learned the hard way:
+#  - NO version stanza. Homebrew scans the version out of the tag in the
+#    url, and an explicit one audits as redundant. So the tag is literal.
+#  - `depends_on arch:` BEFORE `depends_on :macos`. brew style's
+#    FormulaAudit/DependencyOrder sorts dependencies by name, and "arch"
+#    sorts before "macos".
+# (The heredoc is unquoted so $REPO, $VERSION and $ARM_SHA expand: no other
+# dollar sign or backtick may appear in it. Ruby's #{bin} is safe.)
+cat > "$FORMULA.new" <<EOF
+class Screepub < Formula
+  desc "Screenplay PDF to reflowable EPUB3/MOBI converter"
+  homepage "https://github.com/$REPO"
+  # Written whole by tools/bump-tap.sh in the screepub repository at every
+  # release: edit it there, not here. Apple silicon only since the release
+  # after the identifier release; Intel Macs are no longer supported.
+  url "https://github.com/$REPO/releases/download/v$VERSION/screepub-cli-macos-arm64.tar.gz"
+  sha256 "$ARM_SHA"
+  license "AGPL-3.0-or-later"
+
+  livecheck do
+    url "https://github.com/$REPO/releases/latest"
+    strategy :github_latest
+  end
+
+  # A signed, notarized Mach-O built by the project's release workflow.
+  # There is no source build here, so no bottles.
+  depends_on arch: :arm64
+  depends_on :macos
+
+  def install
+    # The tarball holds a single file, already named plain screepub.
+    bin.install "screepub"
+  end
+
+  test do
+    # Pins the download to the version this formula claims: a stale url or a
+    # mismatched asset fails here rather than at somebody's prompt.
+    assert_match version.to_s, shell_output("#{bin}/screepub --version")
+    assert_match "screenplay", shell_output("#{bin}/screepub --help")
+  end
+end
+EOF
 mv "$FORMULA.new" "$FORMULA"
 
 # --- prove the edits actually landed -----------------------------------
-# Both rewrites are pattern matches against a structure this script
-# assumes. If the tap is ever restructured, the patterns stop matching and
-# every edit becomes a silent no-op that commits cleanly and serves the
-# OLD version — the exact shape of failure this whole thread is about. So
-# assert the result rather than trusting the substitution.
+# The cask edit is a pattern match against a structure this script
+# assumes, and the formula is a template someone will one day edit. If
+# either goes wrong, the result must fail here rather than commit cleanly
+# and serve the OLD version — the exact shape of failure this whole thread
+# is about. So assert the result rather than trusting the write.
 fail() { echo "bump-tap: $1" >&2; exit 1; }
 grep -q '^  deprecate! date: "[0-9-]*", because: ' "$CASK" \
   || fail "cask deprecation did not take (no livecheck block to insert it after?)"
 grep -q "/download/v$VERSION/screepub-cli-macos-arm64\.tar\.gz" "$FORMULA" \
   || fail "formula arm64 url did not take"
-grep -q "/download/v$VERSION/screepub-cli-macos-x64\.tar\.gz"   "$FORMULA" \
-  || fail "formula x64 url did not take"
 grep -q "\"$ARM_SHA\"" "$FORMULA" || fail "formula arm64 sha256 did not take"
-grep -q "\"$X64_SHA\"" "$FORMULA" || fail "formula x64 sha256 did not take"
-if grep -q "/download/v[^/]*/" "$FORMULA" \
-   && grep "/download/v[^/]*/" "$FORMULA" | grep -qv "/download/v$VERSION/"; then
+grep -q '^  depends_on arch: :arm64$' "$FORMULA" || fail "formula does not declare arm64"
+if grep -q 'screepub-cli-macos-x64' "$FORMULA"; then
+  fail "formula still names the Intel tarball"
+fi
+if grep "/download/v[^/]*/" "$FORMULA" | grep -qv "/download/v$VERSION/"; then
   fail "formula still carries a url for some other version"
 fi
 
 echo "tap rewritten to $VERSION"
 echo "  cask    retired (deprecated, never bumped)"
-echo "  formula arm64 $ARM_SHA"
-echo "  formula x64   $X64_SHA"
+echo "  formula arm64 $ARM_SHA (Apple silicon only)"
