@@ -1,7 +1,9 @@
 import { describe, test, expect } from 'bun:test';
 import { Fountain } from 'fountain-js';
 import { extractTitleMeta, toFountain } from '../src/fountain/serialize';
+import { parseImgNote } from '../src/fountain/notes';
 import { tokensToBody } from '../src/epub/html';
+import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
 import type { ScreenplayElement, ParsedScreenplay } from '../src/parser/types';
 
 let idCounter = 0;
@@ -223,6 +225,451 @@ describe('toFountain', () => {
       ]),
     );
     expect(out).toBe('ORPHAN CUE\n\nThe lights go out.\n');
+  });
+});
+
+describe('toFountain with images', () => {
+  const img = (file: string, over: Partial<ScreenplayElement['img']> = {}): ScreenplayElement =>
+    el({
+      text: file,
+      type: 'image',
+      img: { file, widthPct: 71, fullPage: false, ...over },
+    });
+  const noteTokens = (out: string) =>
+    new Fountain().parse(out, true).tokens.filter((t) => t.type === 'note');
+
+  test('writes a standalone note with a blank line either side', () => {
+    const out = toFountain(
+      screenplay([
+        el({ text: 'INT. A - DAY', type: 'scene' }),
+        img('p001-01.png'),
+        el({ text: 'Someone waits.', type: 'action' }),
+      ]),
+    );
+    expect(out).toBe('INT. A - DAY\n\n[[img: p001-01.png w=71]]\n\nSomeone waits.\n');
+  });
+
+  test('marks a full-page image', () => {
+    const out = toFountain(
+      screenplay([img('p001-01.png', { widthPct: 100, fullPage: true })]),
+    );
+    expect(out).toContain('[[img: p001-01.png w=100 full]]');
+  });
+
+  test('round-trips through fountain-js as its own note token', () => {
+    // The whole encoding rests on this: a note GLUED to text folds into that
+    // text's token instead, which is exactly what the fmt notes rely on. So
+    // the separation is not cosmetic, and a string assertion cannot see it.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'INT. A - DAY', type: 'scene' }),
+        img('p001-01.png'),
+        el({ text: 'Someone waits.', type: 'action' }),
+      ]),
+    );
+    const { tokens } = new Fountain().parse(out, true);
+    expect(tokens.map((t) => t.type)).toEqual(['scene_heading', 'note', 'action']);
+    // Brackets already stripped by the tokenizer — which is why parseImgNote
+    // takes the INNER text and, unlike fmtClasses, matches no brackets.
+    expect(tokens[1].text).toBe('img: p001-01.png w=71');
+  });
+
+  test('what the serializer writes is what the reader parses', () => {
+    // Both directions in one assertion. Either half can be changed alone and
+    // stay green in its own suite; the pair cannot.
+    const out = toFountain(
+      screenplay([img('p012-03.png', { widthPct: 43, fullPage: false }),
+                  img('p012-04.png', { widthPct: 100, fullPage: true })]),
+    );
+    expect(noteTokens(out).map((t) => parseImgNote(t.text!))).toEqual([
+      { file: 'p012-03.png', widthPct: 43, fullPage: false },
+      { file: 'p012-04.png', widthPct: 100, fullPage: true },
+    ]);
+  });
+
+  test('an image on a detected title page still reaches the body', () => {
+    // isBody() drops title-page elements. The designed title card is the one
+    // exception, and it is also the most valuable image in the document.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'MY TITLE', type: 'action', isTitlePage: true }),
+        { ...img('p001-01.png'), isTitlePage: true },
+        el({ text: 'INT. HOUSE - DAY', type: 'scene' }),
+      ]),
+    );
+    expect(out).toBe('[[img: p001-01.png w=71]]\n\nINT. HOUSE - DAY\n');
+  });
+
+  test('an unreadable image is still dropped', () => {
+    // The title-page exemption is not an exemption from everything: whatever
+    // marked an element unreadable was not looking at its `isTitlePage` flag.
+    const out = toFountain(
+      screenplay([
+        { ...img('p001-01.png'), isReadable: false },
+        el({ text: 'INT. HOUSE - DAY', type: 'scene' }),
+      ]),
+    );
+    expect(out).toBe('INT. HOUSE - DAY\n');
+  });
+
+  test('two images in a row are two notes, not one paragraph', () => {
+    const out = toFountain(
+      screenplay([img('p001-01.png'), img('p001-02.png')]),
+    );
+    expect(out).toBe('[[img: p001-01.png w=71]]\n\n[[img: p001-02.png w=71]]\n');
+    expect(noteTokens(out).map((t) => t.text)).toEqual([
+      'img: p001-01.png w=71', 'img: p001-02.png w=71',
+    ]);
+  });
+
+  test('an image as the only element of the document', () => {
+    // The degenerate ends of the stream: nothing before it and nothing after.
+    expect(toFountain(screenplay([img('p001-01.png')])))
+      .toBe('[[img: p001-01.png w=71]]\n');
+  });
+
+  test('an image element with no img is emitted as nothing at all', () => {
+    // Unreachable through parseLines, which sets `img` on every image element
+    // it mints — so this pins the fallback rather than a path. The wrong
+    // answer is loud: the `default:` branch would print the bare filename as
+    // an action line, which is what this case used to do.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'INT. A - DAY', type: 'scene' }),
+        el({ text: 'p001-01.png', type: 'image' }),
+        el({ text: 'Someone waits.', type: 'action' }),
+      ]),
+    );
+    expect(out).toBe('INT. A - DAY\n\nSomeone waits.\n');
+  });
+
+  test('is byte-stable under a settings flip, like the fmt notes', () => {
+    // The .fountain is the cache boundary: toFountain output must not move
+    // when a rendering option changes, or the app re-renders a "new" book
+    // from a cached parse. `preserveFontShifts` gates RENDERING, so it may not
+    // move a byte here. No option gates pictures yet; when one does, its flip
+    // belongs in this test beside this one, for the same reason.
+    const doc = () =>
+      screenplay([
+        el({ text: 'INT. A - DAY', type: 'scene' }),
+        img('p001-01.png'),
+        el({ text: 'Someone waits.', type: 'action', fmt: { family: 'sans' } }),
+      ]);
+    const canonical = toFountain(doc(), undefined, DEFAULT_FORMAT_OPTIONS);
+    // Pin the note's presence first: without this, the equality below would
+    // also hold in the failure mode it exists to catch — a serializer that
+    // dropped the note under BOTH settings.
+    expect(canonical).toContain('[[img: p001-01.png w=71]]');
+    expect(toFountain(doc(), undefined, { ...DEFAULT_FORMAT_OPTIONS, preserveFontShifts: false }))
+      .toBe(canonical);
+  });
+
+  // ── an image that interrupts a speech ──────────────────
+
+  test('an image between a cue and its speech does not destroy the speech', () => {
+    // `prepare` demotes a cue whose next element is neither dialogue nor
+    // parenthetical. An image is not evidence of that, so the lookahead skips
+    // it — and the note is then held until the speech closes, because a cue
+    // alone in its own paragraph is not a cue to fountain-js either: it
+    // re-parses as action with the "@" showing as literal text.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY' }),
+        img('p001-01.png'),
+        el({ text: 'Her line.', type: 'dialogue', character: 'BUNNY' }),
+      ]),
+    );
+    expect(out).toBe('@BUNNY\nHer line.\n\n[[img: p001-01.png w=71]]\n');
+    const { tokens } = new Fountain().parse(out, true);
+    expect(tokens.map((t) => t.type)).toEqual([
+      'dialogue_begin', 'character', 'dialogue', 'dialogue_end', 'note',
+    ]);
+  });
+
+  test('an image inside a speech is deferred past it, in order', () => {
+    // Two of them, so "deferred" cannot be "kept the last one".
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY' }),
+        el({ text: 'First half.', type: 'dialogue', character: 'BUNNY' }),
+        img('p001-01.png'),
+        el({ text: 'Second half.', type: 'dialogue', character: 'BUNNY' }),
+        img('p001-02.png'),
+        el({ text: 'INT. NEXT - DAY', type: 'scene' }),
+      ]),
+    );
+    expect(out).toBe(
+      '@BUNNY\nFirst half.\nSecond half.\n\n' +
+        '[[img: p001-01.png w=71]]\n\n[[img: p001-02.png w=71]]\n\nINT. NEXT - DAY\n',
+    );
+  });
+
+  test('a deferred image is never dropped when the speech ends the document', () => {
+    // The flush has to happen in the final closeBlock too, or a picture on
+    // the last page of a script that ends on dialogue vanishes.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY' }),
+        el({ text: 'Her line.', type: 'dialogue', character: 'BUNNY' }),
+        img('p009-01.png'),
+      ]),
+    );
+    expect(out).toBe('@BUNNY\nHer line.\n\n[[img: p009-01.png w=71]]\n');
+  });
+
+  test('with no speech open the picture is written where it stands', () => {
+    // "Why not just always defer?" — because a stray dialogue element (one
+    // whose cue the parser never found) is written straight to the output
+    // with no block ever opening, and a note held past it comes out on the
+    // wrong side of it. Deferral is for an OPEN speech and nothing else.
+    const out = toFountain(
+      screenplay([
+        img('p001-01.png'),
+        el({ text: 'An orphan line with no cue.', type: 'dialogue' }),
+      ]),
+    );
+    expect(out).toBe('[[img: p001-01.png w=71]]\n\nAn orphan line with no cue.\n');
+  });
+
+  test('a cue with genuinely nothing under it is still demoted', () => {
+    // The lookahead skips images; it must not skip everything. An image is
+    // not dialogue, and a cue followed by ONLY an image has no speech.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'ORPHAN CUE', type: 'character', character: 'ORPHAN CUE' }),
+        img('p001-01.png'),
+        el({ text: 'The lights go out.', type: 'action' }),
+      ]),
+    );
+    expect(out).toBe(
+      'ORPHAN CUE\n\n[[img: p001-01.png w=71]]\n\nThe lights go out.\n',
+    );
+  });
+
+  test('the lookahead skips images and ONLY images', () => {
+    // A cue, then action, then somebody else's speech further down. "Skip
+    // until you find dialogue" reaches that speech and keeps the cue, and a
+    // cue alone in its paragraph re-parses as action with the "@" showing. A
+    // mutation sweep found that version and nothing else in the suite saw it,
+    // because every other orphan cue in here has nothing after it at all.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'ORPHAN CUE', type: 'character', character: 'ORPHAN CUE' }),
+        el({ text: 'The lights go out.', type: 'action' }),
+        el({ text: 'NOOR', type: 'character', character: 'NOOR' }),
+        el({ text: 'Her line.', type: 'dialogue', character: 'NOOR' }),
+      ]),
+    );
+    expect(out).toBe('ORPHAN CUE\n\nThe lights go out.\n\n@NOOR\nHer line.\n');
+    expect(out).not.toContain('@ORPHAN CUE');
+  });
+
+  test('an image between a cue and a parenthetical keeps the cue', () => {
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY' }),
+        img('p001-01.png'),
+        el({ text: '(quietly)', type: 'parenthetical', character: 'BUNNY' }),
+        el({ text: 'Her line.', type: 'dialogue', character: 'BUNNY' }),
+      ]),
+    );
+    expect(out).toBe('@BUNNY\n(quietly)\nHer line.\n\n[[img: p001-01.png w=71]]\n');
+  });
+
+  test('a page marker never separates a deferred image from its own page', () => {
+    // The page-marker branch calls closeBlock() itself, and the flush lives
+    // inside closeBlock — so a picture from page 1 comes out on page 1's side
+    // of the "= pg 2" marker, attached to the speech it interrupted.
+    const out = toFountain(
+      screenplay([
+        el({ text: '1.', type: 'page-number', pageNum: 1 }),
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+        el({ text: 'Her line.', type: 'dialogue', character: 'BUNNY', pageNum: 1 }),
+        { ...img('p001-01.png'), pageNum: 1 },
+        el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 2 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true },
+    );
+    expect(out).toBe(
+      '@BUNNY\nHer line.\n\n[[img: p001-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n',
+    );
+  });
+
+  test('an image never anchors a page marker', () => {
+    // A marker is a navigation anchor onto a line of text, and a picture is
+    // not one — so a page that OPENS on a plate defers its marker to the next
+    // real element, exactly as a page opening on the tail of a speech does.
+    // Nothing is deferred here (no block is open), so this is the rule stated
+    // on its own, away from the speech-corruption case below that forces it.
+    const out = toFountain(
+      screenplay([
+        el({ text: '1.', type: 'page-number', pageNum: 1 }),
+        el({ text: 'Someone waits.', type: 'action', pageNum: 1 }),
+        { ...img('p002-01.png'), pageNum: 2 },
+        el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 2 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true },
+    );
+    expect(out).toBe(
+      'Someone waits.\n\n[[img: p002-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n',
+    );
+  });
+
+  test('a sheet holding nothing but a plate gets no marker of its own', () => {
+    // The deliberate consequence of the rule above, named so it is a decision
+    // and not a surprise: page 2 is a full-page plate with no text on it, so
+    // the next marker the reader sees is page 3's.
+    const out = toFountain(
+      screenplay([
+        el({ text: '1.', type: 'page-number', pageNum: 1 }),
+        el({ text: 'Someone waits.', type: 'action', pageNum: 1 }),
+        { ...img('p002-01.png', { widthPct: 100, fullPage: true }), pageNum: 2 },
+        el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 3 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true },
+    );
+    expect(out).toBe(
+      'Someone waits.\n\n[[img: p002-01.png w=100 full]]\n\n= pg 3\n\nINT. NEXT - DAY\n',
+    );
+    expect(out).not.toContain('= pg 2');
+  });
+
+  test('markers on: a plate at the top of a page does not break the speech under it', () => {
+    // The page-marker branch runs BEFORE the switch and calls closeBlock()
+    // itself, so an image left out of its guard closes an open speech before
+    // `case 'image'` can defer anything — and the defect the deferral exists
+    // to prevent comes straight back, but only with showPageMarkers on.
+    // A cue at the foot of page 1, the plate at the top of page 2, the speech
+    // under it. This used to emit "@BUNNY" as its own paragraph, which
+    // fountain-js re-parses as action with the "@" shown to the reader.
+    const els = () => [
+      el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+      { ...img('p002-01.png'), pageNum: 2 },
+      el({ text: 'Her line.', type: 'dialogue', character: 'BUNNY', pageNum: 2 }),
+      el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 2 }),
+    ];
+    const out = toFountain(screenplay(els()), undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true });
+    expect(out).toBe(
+      '@BUNNY\nHer line.\n\n[[img: p002-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n',
+    );
+    const { tokens } = new Fountain().parse(out, true);
+    expect(tokens.map((t) => t.type)).toEqual([
+      'dialogue_begin', 'character', 'dialogue', 'dialogue_end',
+      'note', 'synopsis', 'scene_heading',
+    ]);
+    // And the marker is the ONLY difference the toggle makes, which is the
+    // property that says the two knobs are independent. Off is spelled out:
+    // markers default ON, so the defaults are the "on" half, not the "off".
+    const off = toFountain(screenplay(els()), undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: false });
+    expect(off).toBe(out.replace('\n\n= pg 2', ''));
+  });
+
+  test("a plate above a (CONT'D) cue does not switch the rejoin off", () => {
+    // The backward half of "a picture is not evidence about its neighbours".
+    // prepare's rejoin loop asks whether the PREVIOUS element is this
+    // speaker's dialogue; a plate at the top of the sheet stood in that slot
+    // and answered no, so the repeated cue survived and one speech came out
+    // as two blocks with a duplicated "BUNNY (CONT'D)". The reader saw
+    // rejoinSplitDialogue silently switched off by a picture.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+        el({ text: 'First half.', type: 'dialogue', character: 'BUNNY', pageNum: 1 }),
+        { ...img('p002-01.png'), pageNum: 2 },
+        el({ text: "BUNNY (CONT'D)", type: 'character', character: 'BUNNY', pageNum: 2 }),
+        el({ text: 'second half.', type: 'dialogue', character: 'BUNNY', pageNum: 2 }),
+      ]),
+    );
+    expect(out).toBe(
+      '@BUNNY\nFirst half.\nsecond half.\n\n[[img: p002-01.png w=71]]\n',
+    );
+    expect(out).not.toContain("(CONT'D)");
+  });
+
+  test('and the rejoin is still a toggle, not a thing images turned on', () => {
+    // The other half of that assertion: with rejoinSplitDialogue off the
+    // repeated cue must come back, or the fix above would have hard-coded a
+    // behaviour the option is supposed to control. Markers pinned off, so the
+    // one knob under test is the only one that moved: they default ON, and
+    // the restored cue would anchor "= pg 2", which this test is not about.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+        el({ text: 'First half.', type: 'dialogue', character: 'BUNNY', pageNum: 1 }),
+        { ...img('p002-01.png'), pageNum: 2 },
+        el({ text: "BUNNY (CONT'D)", type: 'character', character: 'BUNNY', pageNum: 2 }),
+        el({ text: 'second half.', type: 'dialogue', character: 'BUNNY', pageNum: 2 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, rejoinSplitDialogue: false, showPageMarkers: false },
+    );
+    expect(out).toBe(
+      "@BUNNY\nFirst half.\n\n[[img: p002-01.png w=71]]\n\n@BUNNY (CONT'D)\nsecond half.\n",
+    );
+  });
+
+  test('the emitted width is an integer even if the element carries a fraction', () => {
+    // WIDTH_WORD reads integers only, so a fractional width parses back as the
+    // default 100 and every picture renders full-column with nothing red.
+    // Today columnWidthPct rounds, which is why this can only be reached by
+    // hand — and is exactly why the round is repeated at the emit site rather
+    // than trusted from a module away.
+    const out = toFountain(screenplay([img('p001-01.png', { widthPct: 71.4 })]));
+    expect(out).toBe('[[img: p001-01.png w=71]]\n');
+    expect(parseImgNote(noteTokens(out)[0].text!)?.widthPct).toBe(71);
+  });
+
+  test('markers on: a parenthetical at the top of a page keeps its speech too', () => {
+    // No image in this one. The guard's OTHER two clauses were uncovered for
+    // the same shape — a mutation sweep removing `!== 'parenthetical'`
+    // survived the whole suite — and the failure mode is the one this task
+    // just fixed for images: the marker branch closes the block, the
+    // continuation lands with no cue, and the speech breaks in half. Kept
+    // beside the image cases because it is one guard and one rule.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+        el({ text: 'First half.', type: 'dialogue', character: 'BUNNY', pageNum: 1 }),
+        el({ text: '(quietly)', type: 'parenthetical', character: 'BUNNY', pageNum: 2 }),
+        el({ text: 'second half.', type: 'dialogue', character: 'BUNNY', pageNum: 2 }),
+        el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 2 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true },
+    );
+    expect(out).toBe(
+      '@BUNNY\nFirst half.\n(quietly)\nsecond half.\n\n= pg 2\n\nINT. NEXT - DAY\n',
+    );
+  });
+
+  test('markers on: a plate in a page-break seam does not re-split the speech', () => {
+    // The second reachable shape, same root cause. rejoinSplitDialogue drops
+    // a (CONT'D) cue whose speech continues on the next page, leaving
+    // character | dialogue | image | dialogue — so the block is open when the
+    // plate arrives and the continuation lands with no cue above it. It used
+    // to come out as a loose action paragraph.
+    const out = toFountain(
+      screenplay([
+        el({ text: 'BUNNY', type: 'character', character: 'BUNNY', pageNum: 1 }),
+        el({ text: 'First half.', type: 'dialogue', character: 'BUNNY', pageNum: 1 }),
+        { ...img('p002-01.png'), pageNum: 2 },
+        el({ text: 'second half.', type: 'dialogue', character: 'BUNNY', pageNum: 2 }),
+        el({ text: 'INT. NEXT - DAY', type: 'scene', pageNum: 2 }),
+      ]),
+      undefined,
+      { ...DEFAULT_FORMAT_OPTIONS, showPageMarkers: true },
+    );
+    expect(out).toBe(
+      '@BUNNY\nFirst half.\nsecond half.\n\n[[img: p002-01.png w=71]]\n\n' +
+        '= pg 2\n\nINT. NEXT - DAY\n',
+    );
+    const { tokens } = new Fountain().parse(out, true);
+    expect(tokens.filter((t) => t.type === 'action')).toEqual([]);
   });
 });
 

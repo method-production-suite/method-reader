@@ -720,6 +720,25 @@ describe('font shifts', () => {
     }
   });
 
+  test('an image note renders nothing, in every shape it can arrive in', () => {
+    // The .fountain records pictures before any renderer draws one, so until
+    // one does, the note has to stay as invisible as any other. Three shapes:
+    // on its own (what toFountain writes), after the speech it was deferred
+    // past (likewise), and glued to a line by a hand edit, which folds it into
+    // that line's token for stripNotes to remove.
+    const sources = [
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n@WREN\nHer line.\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\nSomeone waits.\n',
+    ];
+    for (const src of sources) {
+      const out = render(src);
+      expect(out, src).toContain('Someone waits.');
+      expect(out, src).not.toContain('img:');
+      expect(out, src).not.toContain('p001-01.png');
+    }
+  });
+
   test('a malformed fmt note strips clean and adds nothing', () => {
     const out = render('INT. A - DAY\n\n[[fmt: chartreuse]]\nStill fine.\n');
     expect(out).toContain('<p class="action">Still fine.</p>');

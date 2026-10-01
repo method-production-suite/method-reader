@@ -391,4 +391,20 @@ describe('font shifts', () => {
     expect(out).toContain('He leaves quickly.');
     expect(out).not.toContain('[[');
   });
+
+  test('an image note renders nothing here either', () => {
+    // The same three shapes as the EPUB test: standalone, deferred past a
+    // speech, and glued to a line by a hand edit.
+    const sources = [
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n@WREN\nHer line.\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\nSomeone waits.\n',
+    ];
+    for (const src of sources) {
+      const out = html(src);
+      expect(out, src).toContain('Someone waits.');
+      expect(out, src).not.toContain('img:');
+      expect(out, src).not.toContain('p001-01.png');
+    }
+  });
 });
