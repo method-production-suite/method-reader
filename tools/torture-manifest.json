@@ -133,5 +133,9 @@
 
   { "entry": "18", "title": "Block font shifts",
     "covered": true, "page": 6, "side": "both",
-    "how": "a chyron action block in Helvetica, three inserts at 10/15/18pt covering -1/+1/+2, and a dialogue line in the second face; each asserted to emit the exact [[fmt: ...]] note, and the rest of the fixture asserted to emit none" }
+    "how": "a chyron action block in Helvetica, three inserts at 10/15/18pt covering -1/+1/+2, and a dialogue line in the second face; each asserted to emit the exact [[fmt: ...]] note, and the rest of the fixture asserted to emit none" },
+
+  { "entry": "19", "title": "Pictures recognised, recorded as notes",
+    "covered": false,
+    "why": "torture.pdf carries no pictures in phase 1. images.pdf owns the six rules (two pictures kept, four refused, each by a different rule) and jpx.pdf owns the JPEG 2000 decoder. Nothing renders a picture yet, so there is nothing for a device pass to look at; the book side arrives with phase 2" }
 ]

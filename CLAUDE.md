@@ -116,7 +116,13 @@ bun tools/bump-version.ts <version>   # release bump: all 4 version files + desk
   device-side half of that manifest for a hardware pass. And
   **`field-station.pdf`**, the invented 18-page feature every README and site
   picture shows; the site's own scene sits on its pages 14 to 18, and
-  `tests/field-station.test.ts` checks that. All five regenerate from
+  `tests/field-station.test.ts` checks that. **`images.pdf`** pins the six
+  rules that tell a picture from page furniture (registry #19): two pictures
+  kept and four refused, each by a different rule, with every picture's margin
+  to its one governing threshold stated in `make-fixture.py`. **`jpx.pdf`**
+  pins the JPEG 2000 decoder pdf.js loads from outside its bundle: its one
+  lossless picture must decode pixel for pixel, and `tools/smoke-cli.ts`
+  converts it with each compiled CLI it smokes. All seven regenerate from
   `make-fixture.py`, and `tests/fixture-stability.test.ts` fails if any but
   `torture.pdf` stops reproducing byte-for-byte.
 - No test may read or write the real app settings file: `bunfig.toml`

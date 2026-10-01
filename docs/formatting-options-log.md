@@ -1250,3 +1250,184 @@ the Mac app should move those two; nothing in the engine needs to change.
   `src/fountain/serialize.ts` (`fmtNote`), `src/fountain/notes.ts`,
   `src/epub/html.ts` + `src/epub/css.ts`, `src/mobi/html.ts`,
   `src/options.ts`, app FormatSettings + ReaderRail.
+
+### 19. Pictures recognised, recorded as notes (always on, no option; 2026-10-01)
+- **What:** a PDF conversion finds the pictures a script paints (storyboard
+  panels, reference stills, a lookbook plate, a designed title card), keeps
+  the ones that are art, and records each kept one in the `.fountain` as an
+  invisible Fountain note, `[[img: p012-01.png w=71 full]]`, with its pixels
+  as a PNG in a `<stem>.images/` folder beside it.
+- **The book does not change in this phase (phase 1 of images in the
+  book).** Both renderers drop the note
+  unread: a standalone note is a `note` token, which neither renderer's switch
+  emits, and a note folded into a line goes through `stripNotes` (#18). So the
+  EPUB and the MOBI are what they were before this entry, and the reader never
+  sees a picture yet. Showing them is phase 2 (the `includeImages` option and
+  EPUB figures), phase 3 (MOBI image records) and phase 4 (cover promotion):
+  `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
+- **Where a picture comes from, and where it lands.** Extraction runs the
+  image pass on the operator list the text pass already fetched, one page at a
+  time, and reads each picture's pixels while the page is live (pdf.js drops
+  them once the page is released). Pixels are flattened onto WHITE, since the
+  PNG is colour type 2 with no alpha and a transparent pixel would otherwise
+  take whatever colour was stored under it, frequently black; downscaled so
+  the longer edge is at most `IMAGE_MAX_EDGE = 1400` px (clear of every e-ink
+  panel Screepub ships to: a Paperwhite is 1236x1648); and encoded at parse
+  time. Kept pictures join the element stream where they sat on the page:
+  page ascending, then top edge descending, a text line first on a tie
+  (`insertImages`, step 5.8 of `parseLines`). That step runs after
+  `mergeSplitSpeeches`, so a plate at the top of a page cannot split a speech
+  the page break split, and before the metadata passes, so scene indices count
+  it.
+- **The note:** `[[img: <file> w=<N>]]`, with ` full` before the closing
+  brackets when the picture covers at least `FULL_PAGE_AREA_FRAC = 0.70` of
+  its sheet. `<file>` is `pNNN-NN.png`, the page number and the picture's
+  order on that page, so a re-conversion reproduces byte for byte. `w=` is an
+  INTEGER percentage of the script's TEXT COLUMN, not of the page (6.0 of an
+  8.5 inch sheet, 70.6%), clamped to 5..100: the e-book has no print margins,
+  so measuring against the page would set every picture about 30% too
+  narrow. Always serialized, like #18's notes, because the `.fountain` is the
+  cache boundary and has to stay byte-stable under a later settings flip. One
+  reader, `parseImgNote` in `src/fountain/notes.ts` (the #5b/#18 rule: one
+  module, imported by everything that reads the note). It is case-sensitive on
+  `img:`, a width it cannot read means 100 (too large beats too small to see),
+  and the filename must pass the allowlist.
+- **The allowlist is a security boundary, not tidiness:**
+  `^[A-Za-z0-9._-]{1,64}\.png$`. A `.fountain` can be hand-edited or arrive
+  from someone else, and this string becomes a zip entry path and a filename
+  read off disk. So the class holds no separator, no `%`, nothing absolute,
+  and only a lowercase `.png`, and a name that fails is dropped, never
+  repaired. The end anchor is pinned by notes that only it refuses
+  (`a.png/../../x`, `a.png.exe`). The picture folder's reader applies the same
+  `isSafeImageFile` rather than a second check. Its PRUNE uses a narrower test
+  (`isGeneratedImageFile`, only names the engine writes), so a user's own
+  `board-01.png` in that folder is never deleted.
+- **The folder:** `<stem>.images/` beside the `.fountain` (in the script's
+  library folder under `--library`), written by the CLI through
+  `src/library-images.ts`, pictures first so the `.fountain` never names a
+  file that is not there. A run removes the generated pictures it did not
+  produce, and a run with no pictures clears the last one's folder and creates
+  none. `--no-fountain` writes neither. Reading the folder back refuses
+  symlinks, directories and FIFOs, any file over `MAX_IMAGE_FILE_BYTES`
+  (derived from `IMAGE_MAX_EDGE`, so it is what this engine's encoder could
+  have written), and anything that is not a PNG. A folder that cannot be
+  written is the `unwritable` error, naming the folder and what was already
+  written. The `--json` answer gains `imagesPath` (where a folder was
+  written) and `imageCount` (how many pictures the conversion carried, which
+  `--no-fountain` reports too); both are omitted when there is nothing to say.
+- **What counts as a picture: six rules, in this order, and the first to fire
+  is the one reported** (`keepArtwork` in `src/parser/artwork.ts`; its
+  `droppedBy` histogram is the retune instrument, counted in PLACEMENTS):
+  1. **Pixels:** `MIN_PIXELS = 32` source pixels on each edge, as the paint
+     operator declared them. A 16x16 logo glyph is not worth carrying however
+     large the page draws it.
+  2. **Width:** `MIN_WIDTH_FRAC = 0.10` of page width, for a tall narrow strip
+     (a sidebar rule, a revision bar) that the area floor cannot see.
+  3. **Height:** `MIN_HEIGHT_FRAC = 0.03` of page height. It can barely fire
+     while the area floor is also 3%: a box under 3% of page height reaches 3%
+     of the area only by being wider than the page.
+  4. **Area:** `MIN_AREA_FRAC = 0.03` of the page (about 1.9 by 1.45 inches on
+     US Letter), the product of the two linear fractions. Aimed at decoration,
+     not at logos: a letterhead logo clears it, which is what rule 5 is for.
+     Do not raise it to catch one.
+  5. **Furniture:** the identical picture on `FURNITURE_PAGES = 3` or more
+     distinct sheets, OR on at least `FURNITURE_SHARE_MIN_PAGES = 2` sheets
+     that are also `FURNITURE_FRAC = 0.25` of the document. Sameness is a hash
+     of the ENCODED PNG, because one logo is often a different pdf.js object on
+     every sheet. The sibling of `suppressBoilerplate` (#9), set to catch
+     earlier: a false positive there hides a line of script, here it loses a
+     picture. `FURNITURE_SHARE_MIN_PAGES` is derived rather than chosen:
+     without it a lone picture in a four-sheet document is 25% "repeated".
+  6. **Background:** covering `BACKGROUND_AREA_FRAC = 0.90` of a page that
+     also carries `BACKGROUND_TEXT_LINES = 20` or more text lines (about a
+     third of a 55-line page). Neither half means anything alone: the text
+     count is what tells a watermark printed behind the script from a designed
+     title card of the same geometry.
+  Every comparison is written `!(value >= floor)`, so a NaN out of a
+  degenerate transform is refused rather than kept. Where that bites is not
+  symmetric: the pixel floor is the only check that reads the source pixels,
+  and the area floor alone backstops all three box floors, because a NaN in
+  either linear fraction poisons the area. None of these is a format option
+  (this design has no size or greyscale controls): they are documented
+  behaviour with a rationale, like #7 and #9.
+- **The cap:** `MAX_IMAGES = 60` per document, keeping a PREFIX in document
+  order rather than the largest. A size-ranked subset illustrates page 3 and
+  page 40 and nothing between, which reads as damage; a prefix reads as the
+  art stopping. Over the cap the user is told so ("Screepub found 126
+  pictures in this script. Only the first 60 were kept."). The only other
+  picture warnings are pictures that could not be read, and decoders that
+  could not be unpacked. The ordinary refusals above are never warned about,
+  since nearly every real script has some. Separately, `IMAGE_BUDGET_MS =
+  20000` bounds a document's whole image pass (resolve, convert, downscale,
+  encode), so a 120-sheet scan cannot spend half a minute on pictures the
+  scanned guard (#14) then throws away.
+- **A picture cannot split a speech or cost a cue its speaker.** The
+  serializer's two neighbour tests look past pictures: cue demotion (a cue
+  with no speech under it becomes action) and the `(CONT'D)` rejoin (#8) both
+  read the nearest element that is not an image, so a plate between a cue and
+  its speech, or in a page seam between a speech's halves, changes neither. A
+  note that lands inside an open speech waits and is written right after the
+  speech closes, a few lines lower than the PDF drew it, because a cue alone
+  in its own paragraph is not a cue to fountain-js. And a picture never
+  anchors a page marker (#13a): it is not a line of text a reader can land on.
+  One imprecision is pinned rather than fixed: a picture printed inside a
+  dual-dialogue region follows the LEFT speech, because the right column's y
+  restarts at the top of the exchange (#10a). Both speeches survive, and
+  fountain-js still reads one exchange.
+- **JPEG 2000, JBIG2 and CCITT** are decoded by modules pdf.js loads from
+  OUTSIDE its bundle, through `wasmUrl`; without them every such picture is
+  lost silently. `src/parser/pdfjs-wasm.ts` embeds them and unpacks them into
+  a private temp folder, asked for per document. A machine where that folder
+  cannot be made still converts, and the warning says the cause is ours.
+  `tests/fixtures/jpx.pdf` is the guard, and `tools/smoke-cli.ts` converts it
+  with every compiled CLI it smokes and requires `imageCount` 1: the Linux
+  binary on every push (ci.yml), Linux and Windows at a tag (release.yml).
+- **Provenance of the numbers.** Every threshold was chosen by eye from the
+  August design on 2026-08-06, against no real script, then **audited against
+  the private corpus on 2026-08-12 (commit `1337863`), and none moved.** Seven
+  documents (five feature screenplays, a 110-page script-plus-lookbook, a
+  30-page pitch deck): 207 painted placements, 83 kept, 58 refused by these
+  rules, 66 lost to the cap, every kept picture looked at, and no false
+  positive or false negative in a document that passes the guards. The
+  margins it left: area, the smallest kept picture a reader wanted is 3.30% of
+  its page against a largest refusal of 2.54% (the smallest keep of any kind
+  is 3.02%, pitch-deck decoration, so a retune has about half a point to clear,
+  not 0.8); width, 13.1% kept against 9.6% refused; pixels, a smallest kept
+  edge of 110 px against the one refusal, an 84x17 blank strip. Rule 5
+  accounts for 19 of the 58 refusals and every one was right; rule 6 fired
+  once, on a sheet of exactly 20 lines, which is support and not proof. The
+  known blind spot is the hash: a producer that re-rasterizes its logo per
+  page defeats it, and the size floors caught that case instead.
+  `artwork.ts` keeps each of these beside its constant. `tests/fixtures/
+  images.pdf` pins every rule, with each picture's margin to its one governing
+  threshold stated in `tools/make-fixture.py`; a fixture can show the numbers
+  are self-consistent, never that they are right.
+- **Measured on the corpus, 2026-10-01: the `.fountain` gains notes and
+  nothing else.** Every PDF in the local set converted with `origin/main` and
+  with this phase, `.fountain` against `.fountain`. The only added lines are
+  `[[img: ...]]` notes and the blank line after each; no line was removed or
+  changed anywhere. Per script, anonymised in sorted order: scripts 1, 3, 4
+  and 5 are byte-identical (no picture kept). Script 2 gains 1 note, a
+  full-page plate on its second sheet (1 PNG, 1.4 MB). Script 6 is refused as
+  not a screenplay (#15) on both sides; converted with `--force` to measure
+  it, it gains 60 notes, 13 of them full-page (126 pictures found, 60 kept,
+  the cap warning given; 60 PNGs, 15.8 MB). Script 7 is refused as scanned
+  (#14) on both sides and writes no `.fountain`. **What it costs is time.**
+  Scripts 1, 3, 4 and 5 convert within 0.01 s of before; script 2 goes from
+  0.30 s to 0.60 s; forced script 6 from 1.6 s to 16.8 s, the worst case. And
+  the image pass runs BEFORE both guards, so a refusal pays it too: script 6
+  takes 16.9 s to be refused as not a screenplay (1.5 s before), and script 7
+  takes 3.7 s to be refused as scanned (under 0.1 s before). `IMAGE_BUDGET_MS`
+  is what bounds that, at 20 s.
+- **Default:** always on. There is no knob in this phase; phase 2's
+  `includeImages` will gate rendering, not recognition, so the notes stay in
+  the `.fountain` whatever it is set to.
+- **Code:** `src/parser/images.ts` (`collectImagePlacements`, `toRgb`,
+  `IMAGE_MAX_EDGE`, `IMAGE_BUDGET_MS`, `isGeneratedImageFile`),
+  `src/parser/artwork.ts` (every threshold, `keepArtwork`, `MAX_IMAGES`,
+  `columnWidthPct`, `isFullPage`), `src/parser/png.ts`,
+  `src/parser/pdfjs-wasm.ts`, `src/parser/extract.ts`, `src/parser/index.ts`
+  (`insertImages`), `src/fountain/serialize.ts` (`imgNote`, `prevNonImage`,
+  `nextNonImage`, `anchorsPageMarker`), `src/fountain/notes.ts`
+  (`parseImgNote`, `isSafeImageFile`), `src/library-images.ts`,
+  `src/convert.ts` (`imageWarnings`), `src/cli.ts`, `src/cli-errors.ts`.
