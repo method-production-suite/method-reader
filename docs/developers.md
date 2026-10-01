@@ -64,7 +64,7 @@ bun src/cli.ts <input.pdf | input.fountain> [options]
 | `--title` / `--author` | override detected metadata |
 | `--force` | convert even if it doesn't look like a screenplay |
 | `--json` | machine-readable result (the contract between the window and the engine) |
-| `--progress` | NDJSON progress on **stderr** while converting |
+| `--progress` | NDJSON progress on **stderr** while converting: `{"progress":{"stage":...,"percent":N}}` ticks, plus one `{"progress":{"stage":"page","page":N,"paragraphs":[...]}}` line, sent once, for the first page that is not a title page, as plain paragraphs |
 | `--debug` | dump classified elements as JSON |
 
 A verb is only a verb when no file of that name exists, so a script saved as
@@ -119,6 +119,11 @@ app defaults reaches only scripts converted afterwards. That is the default,
 `app-settings --set '{"keepScriptSettings": false}'`) saves nothing, so a new
 script follows the app defaults until it is tuned.
 
+`app-settings --set` also takes three keys the window remembers:
+`readerDevice` (the reader the person said is theirs; default `null`, none),
+`animatePage` (whether the first page types in; default `true`) and
+`typewriterSounds` (whether the typewriter sounds play; default `false`).
+
 `screepub reveal <file>` shows a converted file in the system's file manager.
 
 The app settings live in one small file outside the library:
@@ -133,9 +138,10 @@ overrides that folder everywhere.
 ```bash
 bun src/cli.ts devices [--json]                          # list connected e-readers
 bun src/cli.ts send <file> [--device <id>] [--json]      # send an existing file to one
-bun src/cli.ts export <file.epub> [--for kindle|epub]    # the file you would put on a reader
+bun src/cli.ts export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain]  # the file you would put on a reader
 bun src/cli.ts routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
 bun src/cli.ts route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
+bun src/cli.ts eject <volume> [--json]                   # safely remove a reader before unplugging
 bun src/cli.ts kfx-status [--json]                       # can this computer make KFX for a Kindle?
 bun src/cli.ts kfx-install [--json]                      # install the KFX plugin into Calibre (online)
 ```
@@ -146,6 +152,25 @@ and does not convert. For a mounted volume it copies the file where that
 vendor indexes it; for a reMarkable it uploads over HTTP to the docked
 tablet, which accepts only PDF and EPUB. With several readers connected,
 `--device` is required.
+
+`export --for` takes six values:
+
+- `epub`: the EPUB itself (the default).
+- `kindle`: the best Kindle file this computer makes, climbing KFX, then AZW3, then MOBI.
+- `kfx`: a KFX file, and only that.
+- `azw3`: an AZW3 file, and only that.
+- `mobi`: the engine's own MOBI, and only that. It needs `--fountain`.
+- `fountain`: the script's `.fountain`, as it is. It needs `--fountain`.
+
+`kfx`, `azw3` and `mobi` refuse, with an error, when this computer lacks the
+tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
+`export` never sends. It makes or reuses the file, and `send` moves it.
+
+`eject <volume>` takes the full path of a reader that `devices` lists right
+now, such as `/Volumes/Kindle` or `E:\`, and refuses any other disk. It runs
+`diskutil eject` on macOS, `udisksctl unmount` then `power-off` on Linux, and
+the shell's own Eject on Windows. A reader that will not eject (a file is
+open, say) fails with the code `eject-failed`.
 
 `routes` lists every other way out too (Apple Books, Amazon's Send to Kindle,
 email, and saving a copy) with the one you chose last time marked. `route
