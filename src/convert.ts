@@ -7,7 +7,7 @@ import { parseLines } from './parser/index';
 import type { ParsedScreenplay } from './parser/types';
 import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/serialize';
 import { tokensToBody, tokensToPreviewHtml } from './epub/html';
-import { buildEpub, type BookMeta } from './epub/build';
+import { buildEpub, type BookImage, type BookMeta } from './epub/build';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { tokensToMobiHtml } from './mobi/html';
 import { buildMobi } from './mobi/writer';
@@ -35,19 +35,15 @@ export class NotAScreenplayError extends Error {
   }
 }
 
-/**
- * One picture on its way out of a conversion: the bytes, and the name the
- * `.fountain` note refers to it by.
- *
- * Named, NOT pathed. convert.ts does no filesystem work and never has (it
- * imports `node:crypto` and nothing else from the platform), so where these
- * land is the caller's business: the CLI writes them into the picture folder
- * beside the `.fountain` (src/library-images.ts).
- */
-export interface BookImage {
-  name: string;
-  bytes: Uint8Array;
-}
+// One picture on its way out of a conversion: the bytes, and the name the
+// `.fountain` note refers to it by. The shape is the packager's, defined in
+// src/epub/build.ts so the two cannot drift, and re-exported here so callers
+// of convert.ts need not reach past it. Named, NOT pathed: convert.ts does no
+// filesystem work and never has (it imports `node:crypto` and nothing else
+// from the platform), so where these land is the caller's business: the CLI
+// writes them into the picture folder beside the `.fountain`
+// (src/library-images.ts).
+export type { BookImage };
 
 export interface ConvertOptions {
   title?: string;

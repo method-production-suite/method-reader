@@ -1,0 +1,303 @@
+// The pictures a book carries (registry #19): which ones go into the
+// container, how they are stored, and how the package document lists them.
+// The figure markup is tests/epub.test.ts's; this file starts where the body
+// has already decided which pictures it shows.
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { Fountain } from 'fountain-js';
+import JSZip from 'jszip';
+import { buildEpub, imageIds, type BookImage } from '../src/epub/build';
+import { tokensToBody } from '../src/epub/html';
+import { screenplayCss } from '../src/epub/css';
+import { convertPdf } from '../src/convert';
+import { DEFAULT_FORMAT_OPTIONS, resolveFormatOptions } from '../src/options';
+
+const PUBLIC = new URL('./fixtures/', import.meta.url).pathname;
+const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-epub-images-'));
+afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
+
+// Enough of a PNG for everything below except epubcheck, which reads the
+// picture: the signature, then bytes that tell one picture from another.
+const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const png = (...tail: number[]) => new Uint8Array([...SIGNATURE, ...tail]);
+
+const META = { title: 'T', identifier: 'urn:screepub:test' };
+
+/** A body that shows each named picture once, in order, as tokensToBody
+ * renders it for a caller that has them all. */
+function bodyShowing(names: string[], format = DEFAULT_FORMAT_OPTIONS) {
+  const notes = names.map((n) => `[[img: ${n} w=50]]\n\n`).join('');
+  const tokens = new Fountain().parse(`INT. LAB - DAY\n\nBefore.\n\n${notes}After.\n`, true).tokens;
+  return tokensToBody(tokens, { format, images: new Set(names) });
+}
+
+async function open(bytes: Uint8Array) {
+  const zip = await JSZip.loadAsync(bytes);
+  const opf = await zip.file('OEBPS/package.opf')!.async('string');
+  return { zip, opf };
+}
+
+// Files only: JSZip writes a folder entry for each directory a path implies,
+// OEBPS/text/ included, so OEBPS/images/ appears beside the first picture.
+const imageEntries = (zip: JSZip) =>
+  Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir);
+const imageItems = (opf: string) => opf.match(/<item [^>]*media-type="image\/png"[^>]*\/>/g) ?? [];
+
+/**
+ * The compression method each entry's LOCAL header records (0 stored,
+ * 8 deflated), read off the bytes rather than asked of JSZip, so the answer
+ * is what a reading system's unzip will see.
+ */
+function methods(bytes: Uint8Array): Map<string, number> {
+  const out = new Map<string, number>();
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  for (let i = 0; i + 30 <= bytes.length && dv.getUint32(i, true) === 0x04034b50;) {
+    const nameLen = dv.getUint16(i + 26, true);
+    const name = new TextDecoder().decode(bytes.subarray(i + 30, i + 30 + nameLen));
+    out.set(name, dv.getUint16(i + 8, true));
+    i += 30 + nameLen + dv.getUint16(i + 28, true) + dv.getUint32(i + 18, true);
+  }
+  return out;
+}
+
+describe('the pictures a book carries', () => {
+  test('a picture the body shows ships under its own name, bytes untouched, with its manifest item', async () => {
+    const bytes = png(1, 2, 3);
+    const { zip, opf } = await open(await buildEpub(
+      META, bodyShowing(['p001-01.png']), DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes }],
+    ));
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png']);
+    expect([...await zip.file('OEBPS/images/p001-01.png')!.async('uint8array')]).toEqual([...bytes]);
+    expect(imageItems(opf)).toEqual([
+      '<item id="img-p001-01" href="images/p001-01.png" media-type="image/png"/>',
+    ]);
+  });
+
+  test('a picture the body does not show is not shipped, however it was passed', async () => {
+    // Dead weight in a format where weight is the whole problem, and no
+    // validator will mention it: epubcheck is clean about an extra picture,
+    // manifested or not (measured 2026-08-11), so this filter is the only
+    // thing that catches it.
+    const { zip, opf } = await open(await buildEpub(
+      META, bodyShowing(['p001-01.png']), DEFAULT_FORMAT_OPTIONS,
+      [{ name: 'p009-01.png', bytes: png(9) }, { name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png']);
+    expect(opf).not.toContain('p009-01');
+  });
+
+  test('a body that shows no picture gets no picture, whatever the caller holds', async () => {
+    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens);
+    const { zip, opf } = await open(await buildEpub(
+      META, plain, DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(imageEntries(zip)).toEqual([]);
+    expect(imageItems(opf)).toEqual([]);
+  });
+
+  test('a book without pictures is the book it was: same entries, same bytes, same manifest', async () => {
+    // Passing pictures nobody shows must change nothing, and the manifest
+    // seam the picture items join is pinned line for line: a stray newline
+    // there would land in every book.
+    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens);
+    const strip = (s: string) => s.replace(/<meta property="dcterms:modified">[^<]*<\/meta>/, '');
+    const a = await JSZip.loadAsync(await buildEpub(META, plain));
+    const b = await JSZip.loadAsync(await buildEpub(
+      META, plain, DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(Object.keys(b.files)).toEqual(Object.keys(a.files));
+    for (const name of Object.keys(a.files)) {
+      if (a.files[name].dir) continue;
+      expect(strip(await b.file(name)!.async('string')), name)
+        .toBe(strip(await a.file(name)!.async('string')));
+    }
+    const opf = await a.file('OEBPS/package.opf')!.async('string');
+    expect(opf).toContain(
+      '  <manifest>\n'
+      + '    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>\n'
+      + '    <item id="css" href="style.css" media-type="text/css"/>\n'
+      + '    <item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>\n'
+      + '    <item id="body001" href="text/body001.xhtml" media-type="application/xhtml+xml"/>\n'
+      + '  </manifest>\n',
+    );
+  });
+
+  test('a name passed twice ships once, the first bytes with it', async () => {
+    // Two manifest items for one file is OPF-074; two zip entries under one
+    // path is a container some unzips refuse.
+    const bytes = await buildEpub(
+      META, bodyShowing(['p001-01.png']), DEFAULT_FORMAT_OPTIONS,
+      [{ name: 'p001-01.png', bytes: png(1) }, { name: 'p001-01.png', bytes: png(2) }],
+    );
+    const { zip, opf } = await open(bytes);
+    expect(imageItems(opf)).toHaveLength(1);
+    expect([...methods(bytes).keys()].filter((n) => n === 'OEBPS/images/p001-01.png')).toHaveLength(1);
+    expect([...await zip.file('OEBPS/images/p001-01.png')!.async('uint8array')]).toEqual([...png(1)]);
+  });
+
+  test('a picture the body shows but nobody handed over is a caller bug, and says so', async () => {
+    // The `<img>` is already in the body, so leaving the file out would ship
+    // an invalid book (RSC-007) that looks fine until a reader opens it.
+    await expect(buildEpub(META, bodyShowing(['p001-01.png', 'p002-01.png']), DEFAULT_FORMAT_OPTIONS, [
+      { name: 'p001-01.png', bytes: png(1) },
+    ])).rejects.toThrow(/p002-01\.png/);
+    await expect(buildEpub(META, bodyShowing(['p001-01.png']))).rejects.toThrow(/p001-01\.png/);
+  });
+
+  test('pictures are stored, not deflated, and everything else still deflates', async () => {
+    // A PNG is already deflated: deflating sixty plates again saved 0.3% for
+    // about 330 ms (measured 2026-08-11), and Tune rebuilds the book on every
+    // move.
+    const bytes = await buildEpub(
+      META, bodyShowing(['p001-01.png', 'p002-01.png']), DEFAULT_FORMAT_OPTIONS,
+      [{ name: 'p001-01.png', bytes: png(1) }, { name: 'p002-01.png', bytes: png(2) }],
+    );
+    const m = methods(bytes);
+    expect(m.get('OEBPS/images/p001-01.png')).toBe(0);
+    expect(m.get('OEBPS/images/p002-01.png')).toBe(0);
+    expect(m.get('mimetype')).toBe(0);
+    expect(m.get('OEBPS/text/body001.xhtml')).toBe(8);
+    expect(m.get('OEBPS/package.opf')).toBe(8);
+  });
+
+  test('a picture is a resource: manifested, never in the spine, no properties', async () => {
+    const { opf } = await open(await buildEpub(
+      META, bodyShowing(['p001-01.png']), DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(imageItems(opf)).toHaveLength(1);
+    const spine = /<spine>([\s\S]*)<\/spine>/.exec(opf)![1];
+    expect(spine).not.toContain('img');
+    expect(imageItems(opf).join('')).not.toContain('properties=');
+  });
+
+  test('the manifest href and the figure src name the same zip entry', async () => {
+    // The package document sits at OEBPS/ and the body at OEBPS/text/, so
+    // one file is spelled two ways. Resolved, not reasoned about: one wrong
+    // `../` is RSC-007 on one side and a broken picture on the other.
+    const { zip, opf } = await open(await buildEpub(
+      META, bodyShowing(['p001-01.png']), DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    const href = /<item id="img-[^"]*" href="([^"]+)"/.exec(opf)![1];
+    const xhtml = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
+    const src = /<img src="([^"]+)"/.exec(xhtml)![1];
+    const resolve = (ref: string, from: string) => new URL(ref, `file:///${from}`).pathname.slice(1);
+    expect(resolve(href, 'OEBPS/package.opf')).toBe('OEBPS/images/p001-01.png');
+    expect(resolve(src, 'OEBPS/text/body001.xhtml')).toBe('OEBPS/images/p001-01.png');
+  });
+
+  test('the stylesheet carries the figure rules exactly when the book ships a picture', async () => {
+    const format = resolveFormatOptions({ elementSpacingEm: 0.6 });
+    const shown = await JSZip.loadAsync(await buildEpub(
+      META, bodyShowing(['p001-01.png'], format), format, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(await shown.file('OEBPS/style.css')!.async('string'))
+      .toBe(screenplayCss(format, { hasFigures: true }));
+    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens, { format });
+    const none = await JSZip.loadAsync(await buildEpub(
+      META, plain, format, [{ name: 'p001-01.png', bytes: png(1) }],
+    ));
+    expect(await none.file('OEBPS/style.css')!.async('string')).toBe(screenplayCss(format));
+  });
+});
+
+describe('picture ids', () => {
+  test('img- plus the name without its extension, reduced to letters, digits, _ and -', () => {
+    // The prefix is load-bearing: an XML id may not start with a digit, and
+    // `9-plate.png` clears the filename allowlist.
+    expect(imageIds(['p001-01.png', '9-plate.png', 'a_b.png', 'x.y.z.png'], new Set()))
+      .toEqual(['img-p001-01', 'img-9-plate', 'img-a_b', 'img-x-y-z']);
+  });
+
+  test('names that reduce alike are bumped -2, -3 against every id already taken', () => {
+    // `.` is inside the filename allowlist and outside the id class, so
+    // `a.b.png` and `a-b.png` both want img-a-b. Two items sharing an id is
+    // RSC-005 twice plus RSC-008 for the item it displaced (measured
+    // 2026-08-11). The bump is checked against everything taken, so a folder
+    // that also holds `a-b-2.png` is bumped again rather than colliding.
+    expect(imageIds(['a.b.png', 'a-b.png', 'a-b-2.png'], new Set()))
+      .toEqual(['img-a-b', 'img-a-b-2', 'img-a-b-2-2']);
+    expect(imageIds(['a-b-2.png', 'a.b.png', 'a-b.png'], new Set()))
+      .toEqual(['img-a-b-2', 'img-a-b', 'img-a-b-3']);
+  });
+
+  test('the ids the package document already uses are taken too', () => {
+    expect(imageIds(['cover.png', 'cover.png'], new Set(['img-cover'])))
+      .toEqual(['img-cover-2', 'img-cover-3']);
+  });
+
+  test('every id in a built package document is unique and a legal XML name', async () => {
+    const names = ['a.b.png', 'a-b.png', 'a-b-2.png', '9-plate.png', 'p001-01.png'];
+    const { zip, opf } = await open(await buildEpub(
+      META, bodyShowing(names), DEFAULT_FORMAT_OPTIONS,
+      names.map((name, i) => ({ name, bytes: png(i) })),
+    ));
+    const ids = [...opf.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toContain('uid');
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(id).toMatch(/^[A-Za-z_][A-Za-z0-9_.-]*$/);
+    expect(imageItems(opf)).toHaveLength(5);
+    expect(imageEntries(zip).sort()).toEqual(names.map((n) => `OEBPS/images/${n}`).sort());
+  });
+});
+
+// ── epubcheck ────────────────────────────────────────────
+
+const EPUBCHECK = Bun.which('epubcheck');
+const checked = EPUBCHECK ? test : test.skip;
+const SKIPPED = EPUBCHECK ? '' : ' (skipped: epubcheck is not on PATH; brew install epubcheck)';
+
+function epubcheck(path: string): { ok: boolean; out: string } {
+  const run = Bun.spawnSync([EPUBCHECK!, path], { stdout: 'pipe', stderr: 'pipe' });
+  const out = `${run.stdout.toString()}\n${run.stderr.toString()}`;
+  return { ok: run.exitCode === 0 && out.includes('No errors or warnings detected'), out };
+}
+
+describe('epubcheck', () => {
+  // images.pdf through the phase-1 path, which yields the .fountain and the
+  // pictures it names, then rendered and packaged here directly: convertPdf
+  // does not hand its pictures to the renderer yet.
+  let pictures: BookImage[] = [];
+  let fountainText = '';
+  let title = '';
+  beforeAll(async () => {
+    if (!EPUBCHECK) return;
+    const result = await convertPdf(new Uint8Array(await Bun.file(`${PUBLIC}images.pdf`).arrayBuffer()));
+    pictures = result.images;
+    fountainText = result.fountainText;
+    title = result.meta.title;
+  }, 60000);
+
+  const build = async (images: BookImage[], text: string) => {
+    const tokens = new Fountain().parse(text, true).tokens;
+    const body = tokensToBody(tokens, { images: new Set(images.map((i) => i.name)) });
+    return { body, epub: await buildEpub({ ...META, title }, body, DEFAULT_FORMAT_OPTIONS, images) };
+  };
+
+  checked(`a book built from images.pdf with its pictures validates clean${SKIPPED}`, async () => {
+    const { body, epub } = await build(pictures, fountainText);
+    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+    const path = join(SCRATCH, 'images.epub');
+    writeFileSync(path, epub);
+    const { ok, out } = epubcheck(path);
+    expect(ok, out).toBe(true);
+  }, 120000);
+
+  checked(`names that reduce to the same id still validate clean${SKIPPED}`, async () => {
+    // The collision case end to end, with real pictures under hand-made
+    // names, since only a folder somebody else filled can hold this pair.
+    const renamed = [
+      { name: 'a.b.png', bytes: pictures[0].bytes },
+      { name: 'a-b.png', bytes: pictures[1].bytes },
+    ];
+    const text = 'INT. LAB - DAY\n\nBefore.\n\n[[img: a.b.png w=40]]\n\n'
+      + 'Between.\n\n[[img: a-b.png w=100 full]]\n\nAfter.\n';
+    const { body, epub } = await build(renamed, text);
+    expect(body.usedImages.size).toBe(2);
+    const path = join(SCRATCH, 'collision.epub');
+    writeFileSync(path, epub);
+    const { ok, out } = epubcheck(path);
+    expect(ok, out).toBe(true);
+  }, 120000);
+});
