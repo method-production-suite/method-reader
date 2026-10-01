@@ -49,9 +49,16 @@ import { join } from 'node:path';
  * which is the PATTERNS list below. `cd app` is deliberately not in it.
  *
  * Provenance is still allowed, in words: "the Swift app's converter", with
- * tag v0.7.4 (the newest release whose tree has app/) or the porting commit
- * for a reader who wants the original. That is how F3 rewrote every
- * comment it found, and it is what the failure message below asks for.
+ * any tag before F3 (v0.7.4, say; the releases between it and F3 still
+ * carry app/ too) or the porting commit for a reader who wants the
+ * original. That is how F3 rewrote every comment it found, and it is what
+ * the failure message below asks for.
+ *
+ * Which means the two Swift patterns ban Swift anywhere outside the dated
+ * records, not only the old app's. That is right today, when no Swift is
+ * meant to exist here. If the window ever needs a Tauri macOS plugin
+ * written in Swift, these patterns will flag it, and the fix is an
+ * allowance here for that plugin's directory, not a looser pattern.
  *
  * ── WHAT IS NOT SWEPT, AND WHY ────────────────────────────────────────
  *
@@ -68,15 +75,23 @@ import { join } from 'node:path';
  * it is a dated record like the plans, and rewriting it to avoid the names
  * would erase what it records.
  *
+ * docs/history/, the dated build notes and transcripts the window's docs
+ * point at for how it was built. Same reasoning as the plans.
+ *
+ * app/ itself. The first half answers for it; sweeping the same files here
+ * too would report a leftover file twice, the second time with the wrong
+ * advice.
+ *
  * This file, which names every token in the list by construction.
  */
 
 const REPO = new URL('..', import.meta.url).pathname;
 
-/** The dated records (see above) and this file. app/ itself is not listed:
- *  half 1 is what answers for it. */
+/** The dated records, app/ (half 1 answers for it) and this file; see above. */
 const NOT_SWEPT = [
+  /^app\//,
   /^docs\/superpowers\//,
+  /^docs\/history\//,
   /^docs\/adr\//,
   /^docs\/releases\//,
   /^docs\/retired-coverage\.md$/,
@@ -110,6 +125,13 @@ const PATTERNS: { name: string; re: RegExp; what: string }[] = [
   // says "the Swift app" any more. The Swift app's own artifacts lived under
   // app/dist/, which the path rule above catches.
 ];
+
+/** Only what git already tracks under the given pathspecs. */
+function gitTracked(...pathspecs: string[]): string[] {
+  const proc = Bun.spawnSync(['git', 'ls-files', '-z', '--cached', '--', ...pathspecs], { cwd: REPO });
+  if (!proc.success) throw new Error('git ls-files failed: ' + proc.stderr.toString());
+  return proc.stdout.toString().split('\0').filter(Boolean);
+}
 
 /** git ls-files with the given pathspecs: TRACKED, plus untracked and not
  *  ignored.
@@ -168,9 +190,9 @@ const FIX = [
   'engine) or desktop/ (the window).',
   '',
   'If the reference is provenance, say it in words: "the Swift app\'s',
-  'converter", and for a reader who wants the original, tag v0.7.4 (the',
-  'newest release whose tree still has the directory) or the commit that',
-  'ported it. That is how F3 rewrote every comment it found.',
+  'converter", and for a reader who wants the original, any tag before F3',
+  '(v0.7.4, say) or the commit that ported it. That is how F3 rewrote every',
+  'comment it found.',
 ].join('\n');
 
 function fail(title: string, lines: string[]): never {
@@ -179,18 +201,21 @@ function fail(title: string, lines: string[]): never {
 
 describe('the Swift app stays retired', () => {
   test('app/ holds nothing git would commit', () => {
+    // IGNORED files do not count, so a Mac that built the Swift app before
+    // F3 passes as it stands: its leftover build folders are named in
+    // .gitignore (pinned by the last test in this block). Anything else
+    // that turns up is either the directory coming back into git, or a
+    // stray file git would add, and the two get different advice.
     const files = gitFiles('app');
     if (files.length) {
-      // The one innocent way to get here: a Mac that built the Swift app
-      // before F3 still has SwiftPM's output folder, which .gitignore
-      // stopped naming when the directory went. It is build output, never
-      // source, and deleting it is the fix.
-      const leftover = files.every((f) => f.startsWith('app/.build/'));
+      const tracked = gitTracked('app');
       fail(
-        leftover
-          ? 'app/ holds the Swift app\'s old build output (app/.build/), left on this Mac from before F3. Delete it: rm -rf app'
-          : 'app/ is back. It was deleted at F3 and must stay gone.',
-        files.slice(0, 20),
+        tracked.length
+          ? 'app/ is back in git. It was deleted at F3 and must stay gone.'
+          : 'app/ holds files that git would add. If they are left over on this Mac from ' +
+              'before F3 and you did not mean to add them, delete the folder: rm -rf app. ' +
+              'If you are recreating the Swift app, read on.',
+        (tracked.length ? tracked : files).slice(0, 20),
       );
     }
     expect(files).toEqual([]);
@@ -208,6 +233,25 @@ describe('the Swift app stays retired', () => {
       ]);
     }
     expect([...found.keys()]).toEqual([]);
+  });
+
+  test('the build output the Swift app left on Macs that built it is ignored, not reported', () => {
+    // Measured at review, 2026-10-01: Sam's main checkout and the
+    // layout-pass worktree each hold a 407 MB app/.build/ (SwiftPM output),
+    // plus app/build/ and app/dist/. Once git stops tracking app/, anything
+    // there that is not ignored is "untracked": both halves above would fail
+    // on it with advice about recreating the app, every run would read
+    // thousands of build files, and a `git add -A` would stage them. So the
+    // ignore rules must cover every folder SwiftPM and the old build scripts
+    // wrote, including a nested package's own .build.
+    const ignored = (path: string) =>
+      Bun.spawnSync(['git', 'check-ignore', '-q', '--no-index', path], { cwd: REPO }).exitCode === 0;
+    for (const p of ['app/.build/x', 'app/build/x', 'app/dist/x', 'app/Packages/KFXKit/.build/x']) {
+      expect(ignored(p), `${p} is not ignored`).toBe(true);
+    }
+    // And no wider: a rule that hid app/ itself would blind the first half.
+    expect(ignored('app/Sources/Probe.swift')).toBe(false);
+    expect(ignored('app/Package.swift')).toBe(false);
   });
 });
 
@@ -271,6 +315,7 @@ describe('the sweep is not vacuous', () => {
     expect(files).toContain('CLAUDE.md');
     expect(files).toContain('.github/workflows/weekly-toolchain.yml');
     expect(files.some((x) => x.startsWith('docs/superpowers/'))).toBe(false);
+    expect(files.some((x) => x.startsWith('docs/history/'))).toBe(false);
     expect(files).not.toContain('docs/retired-coverage.md');
   });
 });
