@@ -179,10 +179,15 @@ describe('cli --json contract', () => {
   });
 
   test('the success payload keys match the committed contract sample', async () => {
-    // Every optional output is requested so every key is present; the
-    // sample is the SAME file kit-check decodes into EngineResult, so a
-    // key rename must break one suite or the other before it breaks the
-    // app.
+    // Every optional output the sample carries is requested, so each of its
+    // keys is present. Three keys are conditional and absent from the sample
+    // on purpose: imagesPath and imageCount appear only when the conversion
+    // carried pictures (screenplay.pdf has none; '--json reports the folder
+    // and the count' below pins both on images.pdf), and settingsPath only
+    // when the conversion used the script's saved settings (a
+    // <script>.screepub.json sidecar). The sample is the SAME file kit-check
+    // decodes into EngineResult, so a key rename must break one suite or the
+    // other before it breaks the app.
     const out = `${SCRATCH}/contract.epub`;
     const { stdout } = await runCli([
       `${FIXTURES}screenplay.pdf`, '-o', out, '--json', '--mobi', '--debug',
@@ -319,9 +324,52 @@ describe('the picture folder beside the .fountain', () => {
     expect(err.message).toContain(`${join(dir, 'out.epub')} was already written`);
     expect(err.message).not.toContain('.tmp');
     expect(existsSync(join(dir, 'out.epub'))).toBe(true);
-    // Pictures before text: the .fountain never names files that are not
-    // there, so a failed folder leaves no .fountain behind.
+    // Pictures before text: a failed folder stops the run before the
+    // .fountain is written, so a first conversion leaves none and a
+    // re-conversion leaves the OLD one, still naming the old pictures (the
+    // next test). Either way the message says it was not updated.
     expect(existsSync(join(dir, 'out.fountain'))).toBe(false);
+    expect(err.message).toContain('The .fountain was not updated.');
+  }, 60000);
+
+  test('a failed RE-conversion keeps the old .fountain, naming the old pictures', async () => {
+    // The same failure one conversion later, which is the common one: the
+    // .fountain from the run before is still there, still names that run's
+    // pictures, and the new EPUB beside it does not match it. Nothing here
+    // deletes it (a .fountain the user can re-render is not ours to throw
+    // away), so the message has to say it was not updated.
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    const before = readFileSync(join(dir, 'out.fountain'), 'utf8');
+    expect(before).toContain('[[img: p001-01.png');
+    chmodSync(join(dir, 'out.images'), 0o555);
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    chmodSync(join(dir, 'out.images'), 0o755);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain('The .fountain was not updated.');
+    expect(readFileSync(join(dir, 'out.fountain'), 'utf8')).toBe(before);
+  }, 60000);
+
+  test('a folder whose parent is missing is unwritable, and no parent is made', async () => {
+    // --fountain into a directory that does not exist. The folder is made,
+    // never its parents: building them would put the pictures somewhere the
+    // user did not ask for.
+    const dir = freshDir();
+    const fountain = join(dir, 'missing', 'deeper', 'x.fountain');
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--fountain', fountain, '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain(join(dir, 'missing', 'deeper', 'x.images'));
+    expect(err.message).toContain('(ENOENT)');
+    expect(err.message).not.toContain('.tmp');
+    expect(readdirSync(dir)).toEqual(['out.epub']);
   }, 60000);
 
   // The scanned guard throws inside convert.ts, before it returns anything,
@@ -480,9 +528,20 @@ describe('a picture folder that cannot be written', () => {
 
   test('says what was already written, in one sentence that agrees with itself', () => {
     expect(unwritableError('/lib/A.images', refusal('ENOSPC'), ['/lib/A.epub'])?.message)
-      .toBe('cannot write the pictures to /lib/A.images (ENOSPC). /lib/A.epub was already written.');
+      .toBe(
+        'cannot write the pictures to /lib/A.images (ENOSPC). /lib/A.epub was already written. ' +
+          'The .fountain was not updated.',
+      );
     expect(unwritableError('/lib/A.images', refusal('ENOSPC'), ['/lib/A.epub', '/lib/A.mobi'])?.message)
       .toContain('/lib/A.epub, /lib/A.mobi were already written.');
+  });
+
+  test('says the .fountain was not updated, which is always true here', () => {
+    // The folder is written before the .fountain, so on this path the
+    // .fountain is never the new one: a first conversion has none, and a
+    // re-conversion keeps the previous one, naming the previous pictures.
+    expect(unwritableError('/lib/A.images', refusal('EACCES'), [])?.message)
+      .toBe('cannot write the pictures to /lib/A.images (EACCES). The .fountain was not updated.');
   });
 
   test('anything that is not the disk refusing is left to the catch-all', () => {

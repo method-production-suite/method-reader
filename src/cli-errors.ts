@@ -89,6 +89,13 @@ const WRITE_REFUSALS = new Set([
  * the reader can open is not something to throw away because its pictures
  * could not be saved), so the answer stays a failure and the message says
  * what is there.
+ *
+ * And what is NOT there. The `.fountain` is written after its pictures, so on
+ * this path it is never the new one: a first conversion has none, and a
+ * re-conversion keeps the previous run's, which still names the previous
+ * pictures and no longer matches the EPUB beside it. The folder itself may
+ * hold some new pictures among the old. That is always true here, so the
+ * message always says the `.fountain` was not updated.
  */
 export function unwritableError(
   folder: string,
@@ -103,7 +110,7 @@ export function unwritableError(
       : ` ${alreadyWritten.join(', ')} ${alreadyWritten.length === 1 ? 'was' : 'were'} already written.`;
   return {
     code: 'unwritable',
-    message: `cannot write the pictures to ${folder} (${code}).${already}`,
+    message: `cannot write the pictures to ${folder} (${code}).${already} The .fountain was not updated.`,
   };
 }
 

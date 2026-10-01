@@ -89,8 +89,8 @@ export interface ConvertResult {
   spacingRepairs: number;
   /** The pictures a PDF conversion carried, for the caller to write into the
    * folder beside the `.fountain`, whose `[[img: ...]]` notes name them. The
-   * book does not show them yet (that is phase 2), so today the folder is
-   * their only copy. Always empty on Fountain input, which has no PDF to
+   * renderers do not receive pictures, so the book shows none and the folder
+   * is their only copy. Always empty on Fountain input, which has no PDF to
    * carry them out of. */
   images: BookImage[];
 }
@@ -307,7 +307,8 @@ export async function convertFountain(
     meta,
     warnings: stageOneWarnings(fountainText, format),
     // Nothing to carry: the pictures a `.fountain` names already sit in its
-    // folder, and reading them back for the book is phase 2.
+    // folder, and nothing reads them back for the book, since the renderers
+    // do not receive pictures.
     images: [],
   };
 }

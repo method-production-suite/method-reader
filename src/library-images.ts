@@ -196,11 +196,11 @@ export async function readImages(fountainPath: string): Promise<ImagesRead> {
     return { images, refused, overCap }; // no folder, or not a folder
   }
   for (const name of names) {
-    // `continue` and a count, not `break`. Breaking made the cap the one loss
-    // in this whole feature that nothing anywhere reports: the PDF path warns
-    // about exactly this (`overCap`), and a folder read back was losing plates
-    // in silence. Nothing below the cap runs for these, so the cost of walking
-    // the tail is one loop iteration each.
+    // `continue` and a count, not `break`. A `break` would make the cap the
+    // one loss in this whole feature that nothing anywhere reports: the PDF
+    // path warns about exactly this (`overCap`), and a folder read back would
+    // lose plates in silence. Nothing below the cap runs for these, so the
+    // cost of walking the tail is one loop iteration each.
     if (images.size >= MAX_IMAGES) {
       overCap++;
       continue;
@@ -281,11 +281,10 @@ export function imageFolderWarnings(read: ImagesRead): string[] {
  *
  * NOT `isSafeImageFile`: that one is the read side's allowlist, deliberately
  * wide enough to accept any name a hand-written note could carry. Pruning
- * against it meant that converting into a directory a user had filled with
- * their own `board-01.png` and `sunset.png` deleted both — measured. An
- * earlier version of this comment claimed the prune was bounded to "names our
- * own writer could have produced" while the code applied the wide list; the
- * claim is now the code.
+ * against it would delete a user's own `board-01.png` and `sunset.png` from a
+ * directory they filled themselves (measured: it deletes both). So the prune
+ * is bounded to names our own writer could have produced, and
+ * `isGeneratedImageFile` is that set.
  *
  * Never creates the folder: a conversion that carries no pictures still has to
  * clear the last one's, and it must not leave an empty folder behind for a
@@ -348,7 +347,15 @@ export async function writeImages(
   dir: string,
   images: readonly { name: string; bytes: Uint8Array }[],
 ): Promise<void> {
-  await mkdir(dir, { recursive: true });
+  // The folder and never its parents, so not `recursive`. The parent is
+  // wherever the .fountain goes, and when that is not there the path is
+  // wrong: building it would put the pictures somewhere nobody asked for, so
+  // a missing parent throws ENOENT and the caller reports it. EEXIST is the
+  // adopted folder above, and a FILE of that name gets past here only to fail
+  // on the first write inside it.
+  await mkdir(dir).catch((err: NodeJS.ErrnoException) => {
+    if (err.code !== 'EEXIST') throw err;
+  });
   const written = new Set<string>();
   for (const img of images) {
     writeFileAtomicSync(join(dir, img.name), img.bytes);

@@ -46,11 +46,11 @@ function cached(files: Record<string, Uint8Array> | null): string {
 /**
  * A REAL one-pixel PNG, told apart from another by the colour of that pixel.
  *
- * It used to be `new Uint8Array(n).fill(0x41)` — filler under a name that
- * claimed otherwise, which was harmless until the reader started looking at
- * content. Now a test written with filler would be refused for the right
- * reason while claiming to prove something else, so the helper produces what
- * it is named after and identity rides on the bytes rather than the length.
+ * Real because the reader checks content (`isPng`): filler bytes under this
+ * name would be refused by the content gate, and a test about some other gate
+ * would pass for that reason while claiming to prove something else. So the
+ * helper produces what it is named after, and identity rides on the bytes
+ * rather than the length.
  */
 const png = (tag = 0) => encodePng(new Uint8Array([tag, 0, 0]), 1, 1);
 
@@ -227,12 +227,15 @@ describe('readImages', () => {
   });
 
   test('a symlink is not followed, whatever it points at', async () => {
-    // `stat` answers for the TARGET, so this carried someone else's file into
-    // the book as a picture. `lstat` asks about the entry.
+    // The target is a REAL PNG outside the folder, so the entry check is the
+    // only gate that can refuse it: `stat` answers for the target, which
+    // passes the size and content gates and would carry a file from anywhere
+    // on the disk into the book. `lstat` asks about the entry, and an entry
+    // that is a symlink is not a regular file.
     const fountain = cached({ 'p001-01.png': png() });
-    const secret = join(SCRATCH, 'private.txt');
-    writeFileSync(secret, 'not a picture');
-    symlinkSync(secret, join(imagesDirFor(fountain), 'p004-01.png'));
+    const outside = join(SCRATCH, 'outside.png');
+    writeFileSync(outside, png(7));
+    symlinkSync(outside, join(imagesDirFor(fountain), 'p004-01.png'));
     const { images, refused } = await readImages(fountain);
     expect([...images.keys()]).toEqual(['p001-01.png']);
     expect(refused).toBe(1);
@@ -284,9 +287,10 @@ describe('readImages', () => {
   test('the ones the cap turned away are COUNTED, not dropped in silence', async () => {
     // The PDF path treats this exact loss as worth a warning (`overCap` in
     // convert.ts), on the grounds that silent truncation reads as "we carried
-    // everything". The folder path lost it for free until now: it breaks out
-    // of the loop, so five perfectly good plates went missing with `refused`
-    // at 0 and nothing said anywhere.
+    // everything". The folder path counts it the same way: readImages walks
+    // past the cap with `continue` and counts each name it turns away, so
+    // five perfectly good plates over the ceiling are reported, not lost with
+    // `refused` at 0 and nothing said anywhere.
     //
     // Its OWN count rather than `refused`, because the two are different
     // sentences. A refused picture could not be read; these could, and were
@@ -449,5 +453,17 @@ describe('writeImages', () => {
     await expect(
       writeImages(imagesDirFor(fountain), [{ name: 'p001-01.png', bytes: png() }]),
     ).rejects.toThrow();
+  });
+
+  test('makes the folder itself and never its parents', async () => {
+    // The folder sits beside a .fountain, so its parent is wherever that
+    // .fountain goes. A parent that is not there is a path the caller got
+    // wrong, and building it would put pictures somewhere nobody asked for.
+    const base = join(SCRATCH, `case-${seq++}`);
+    mkdirSync(base);
+    const dir = join(base, 'missing', 'deeper', 'x.images');
+    await expect(writeImages(dir, [{ name: 'p001-01.png', bytes: png() }]))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await readdir(base)).toEqual([]);
   });
 });
