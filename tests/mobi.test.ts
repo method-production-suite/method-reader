@@ -640,9 +640,26 @@ describe('MOBI image records', () => {
     expect(ascii(recs[h.fcis], 0, 4)).toBe('FCIS');
   });
 
+  test('a recindex the records cannot answer is a caller bug, and says which', () => {
+    // A reader finds recindex N at the first image record plus N - 1 and
+    // takes whatever record sits there. Past the last picture that is FLIS,
+    // and 00000 is the last text record: a wrong record on the page, never a
+    // missing picture, so nothing downstream would ever notice.
+    const showing = (...ns: string[]) =>
+      ns.map((n) => `<p align="center"><img recindex="${n}" alt="Illustration"/></p>`).join('\n');
+    const at = (html: string, images?: Uint8Array[]) => () => buildMobi({ title: 'T', html, images });
+    expect(at(showing('00001', '00003'), PICTURES)).toThrow(/recindex="00003"/);
+    expect(at(showing('00000', '00002'), PICTURES)).toThrow(/recindex="00000"/);
+    // With no pictures at all, every number is out of range.
+    expect(at(showing('00001'))).toThrow(/recindex="00001"/);
+    expect(at(showing('00001'), [])).toThrow(/recindex="00001"/);
+    // The control: every number the records answer builds.
+    expect(at(showing('00001', '00002', '00001'), PICTURES)).not.toThrow();
+  });
+
   test('a large picture rides whole', () => {
-    // Bigger than a text record by three orders of magnitude, and past
-    // anything a 16-bit length could hold.
+    // About 490 text records' worth in one record, and past anything a
+    // 16-bit length could hold.
     const big = new Uint8Array(2_000_000).map((_, i) => (i * 31) & 0xff);
     const mobi = build([big]);
     const h = header(mobi);

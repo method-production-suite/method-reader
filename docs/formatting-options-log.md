@@ -1565,10 +1565,14 @@ the Mac app should move those two; nothing in the engine needs to change.
   picture's own index); 194, the last content record, which reaches the last
   picture rather than stopping at the text (both extend it over their
   pictures; this is the silent one, since a reader that stops at the text
-  finds the pictures and ignores them); and 80, the first record past the
-  text (both point it at the index record after their text, and this writer
-  writes no index records, so here it is the first picture). FLIS and FCIS
-  move down past the pictures. Each picture is one record holding its PNG
+  finds the pictures and ignores them); and 80, the first non-text record,
+  by rule rather than arithmetic (both point it at an index record, and
+  kindlegen's sits past a one-byte pad record after its text; this writer
+  writes neither, so here it is the first picture). FLIS and FCIS move down
+  past the pictures. `buildMobi` throws on a `recindex` its records cannot
+  answer (00000, or past the last picture), since a reader would open FLIS
+  or a text record there and show it; every caller numbers the markup and
+  orders the bytes from `mobiArt`, so it cannot fire. Each picture is one record holding its PNG
   exactly as it was handed over, and a book with no pictures is the book
   this writer built before records existed, byte for byte with the PDB dates
   (bytes 36 to 43) masked, pinned by hash. The file is assembled from typed
