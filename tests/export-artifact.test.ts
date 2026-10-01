@@ -1,8 +1,15 @@
-import { afterAll, test, expect } from 'bun:test';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, existsSync, utimesSync, rmSync, statSync } from 'node:fs';
+import { afterAll, afterEach, describe, test, expect, spyOn } from 'bun:test';
+import {
+  mkdirSync, mkdtempSync, writeFileSync, readFileSync, readdirSync, existsSync, utimesSync, rmSync, statSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import JSZip from 'jszip';
 import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
+import { encodePng } from '../src/parser/png';
+// A namespace, not a named import, because the spy below replaces the binding
+// on the module itself: that is what the code under test calls through.
+import * as libraryImages from '../src/library-images';
 import {
   mobiSibling,
   availableFormats,
@@ -95,6 +102,61 @@ test('the MOBI branch rebuilds from the .fountain and writes a .mobi', async () 
   expect(existsSync(out)).toBe(true);
   // Documented side effect: this branch rewrites the EPUB in place.
   expect(readFileSync(epub, 'utf8')).not.toBe('stale');
+});
+
+// The MOBI rung rewrites the library EPUB in place, from the .fountain, so it
+// has to find that script's pictures the way every other render from the
+// text does (src/library-images.ts), or a Kindle export on a machine without
+// Calibre would strip them from the library book. The MOBI itself carries
+// none; these are about the EPUB it rewrites on the way.
+describe('the MOBI rebuild and the picture folder', () => {
+  const spies: { mockRestore(): void }[] = [];
+  afterEach(() => {
+    for (const s of spies.splice(0)) s.mockRestore();
+  });
+
+  /** A library script whose one note names a picture in its folder. */
+  function library() {
+    const dir = scratch();
+    const fountain = join(dir, 'Script.fountain');
+    writeFileSync(
+      fountain,
+      'Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n\n[[img: p001-01.png w=40]]\n\nAnother line.\n',
+    );
+    mkdirSync(join(dir, 'Script.images'));
+    const plate = encodePng(new Uint8Array([0, 128, 255]), 1, 1);
+    writeFileSync(join(dir, 'Script.images', 'p001-01.png'), plate);
+    const epub = join(dir, 'Script.epub');
+    writeFileSync(epub, 'stale');
+    return { fountain, epub, plate };
+  }
+  const rebuild = (fountain: string, epub: string, format = DEFAULT_FORMAT_OPTIONS) =>
+    freshKindleArtifact({ epub, fountainPath: fountain, format, calibreAvailable: false, kfxReady: false });
+
+  test('the EPUB it rewrites keeps its figure and the picture behind it', async () => {
+    const { fountain, epub, plate } = library();
+    await rebuild(fountain, epub);
+    const zip = await JSZip.loadAsync(readFileSync(epub));
+    const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
+    expect(body).toContain('<p class="figure w40"><img src="../images/p001-01.png" alt="Illustration"/></p>');
+    expect([...await zip.file('OEBPS/images/p001-01.png')!.async('uint8array')]).toEqual([...plate]);
+  });
+
+  test('with includeImages off, the folder is not read and the EPUB carries no picture', async () => {
+    const reads = spyOn(libraryImages, 'readImages');
+    spies.push(reads);
+    // The control, without which the zero below proves nothing: with the
+    // option on, the spy sees the read.
+    const on = library();
+    await rebuild(on.fountain, on.epub);
+    expect(reads).toHaveBeenCalledTimes(1);
+
+    const off = library();
+    await rebuild(off.fountain, off.epub, { ...DEFAULT_FORMAT_OPTIONS, includeImages: false });
+    expect(reads).toHaveBeenCalledTimes(1);
+    const zip = await JSZip.loadAsync(readFileSync(off.epub));
+    expect(Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/'))).toEqual([]);
+  });
 });
 
 test('the rebuild writes through temp files and leaves none behind', async () => {

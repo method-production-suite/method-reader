@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { writeFileAtomicSync } from '../atomic-write';
 import { convertFountain } from '../convert';
+import { readImages } from '../library-images';
 import type { FormatOptions } from '../options';
 import { azw3Sibling, toAzw3 } from './calibre';
 import { modifiedDate, needsRegeneration } from './freshness';
@@ -108,7 +109,23 @@ export async function freshKindleArtifact(opts: FreshKindleArtifactOptions): Pro
 
   onStage?.('rebuilding the Kindle file…');
   const fountainText = await Bun.file(fountainPath).text();
-  const result = await convertFountain(fountainText, { format, mobi: true });
+  // The EPUB written below replaces the library book, so it has to be built
+  // with the script's pictures, read from the folder beside its .fountain
+  // under the same rules as every other render from the text; built without
+  // them, this rung would strip every figure from the library book. Not read
+  // with the option off, when no figure would be shown.
+  //
+  // The folder's warnings (imageFolderWarnings) are dropped here, knowingly.
+  // This function answers with a path, and the export answer it feeds has
+  // stages but no warnings, so there is nowhere to say them. And they would
+  // describe the EPUB, a side effect of this rung, not the MOBI it hands
+  // over, which shows no picture at all yet: a sentence about pictures left
+  // out of a file that carries none would mislead more than it told. The
+  // conversion that last built the library book from this same folder said
+  // them when it did. When the MOBI carries pictures, these belong in the
+  // export answer.
+  const images = format.includeImages ? (await readImages(fountainPath)).images : undefined;
+  const result = await convertFountain(fountainText, { format, mobi: true, images });
   if (!result.mobi) {
     throw new RegenerationFailedError('the engine reported success but produced no .mobi');
   }
