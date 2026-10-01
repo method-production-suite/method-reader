@@ -83,6 +83,48 @@ describe('convertPdf', () => {
   }, 60000);
 });
 
+describe('convertPdf progress', () => {
+  // One fraction across the whole job, shared out by stage: reading the
+  // pages 0 to 0.6, reading the pictures 0.6 to 0.85, building the book 0.85
+  // to 1. The CLI's --progress lines and the window's bar carry these
+  // numbers as they are.
+  async function ticksOf(name: string): Promise<[string, number][]> {
+    const ticks: [string, number][] = [];
+    await convertPdf(await bytes(`${PUBLIC}${name}`), {
+      onProgress: (stage, fraction) => ticks.push([stage, fraction]),
+    });
+    return ticks;
+  }
+  const of = (ticks: [string, number][], stage: string) =>
+    ticks.filter(([s]) => s === stage).map(([, f]) => f);
+  const inOrder = (ticks: [string, number][]) => {
+    const fractions = ticks.map(([, f]) => f);
+    expect([...fractions].sort((a, b) => a - b)).toEqual(fractions);
+  };
+
+  test('a document with pictures passes through all three stages, in order, never back', async () => {
+    const ticks = await ticksOf('images.pdf');
+    expect([...new Set(ticks.map(([s]) => s))]).toEqual(['parse', 'pictures', 'render']);
+    inOrder(ticks);
+    expect(of(ticks, 'parse').at(-1)).toBeCloseTo(0.6, 10);
+    // The pictures stage is named the moment it starts, before its first page
+    // is decoded, and ends where building the book begins.
+    expect(of(ticks, 'pictures')[0]).toBeCloseTo(0.6, 10);
+    expect(of(ticks, 'pictures').at(-1)).toBeCloseTo(0.85, 10);
+    expect(of(ticks, 'render')).toEqual([0.85, 1]);
+  }, 60000);
+
+  test('a document without pictures goes straight from the pages to the book', async () => {
+    // No "reading the pictures" that sits there with nothing to read: the
+    // stage is never named, and the bar steps from 0.6 to 0.85.
+    const ticks = await ticksOf('screenplay.pdf');
+    expect([...new Set(ticks.map(([s]) => s))]).toEqual(['parse', 'render']);
+    inOrder(ticks);
+    expect(of(ticks, 'parse').at(-1)).toBeCloseTo(0.6, 10);
+    expect(of(ticks, 'render')).toEqual([0.85, 1]);
+  }, 60000);
+});
+
 // Shape only — a feature-length script exercises paths the 5-page fixture
 // cannot (page-break interruptions, CONT'D runs, a deep character roster).
 describe.skipIf(!hasPrivate)('convertPdf on a full-length script', () => {

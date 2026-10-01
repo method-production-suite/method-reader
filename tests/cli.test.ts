@@ -724,7 +724,7 @@ describe('cli --progress', () => {
     const ticks = stderr.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).progress);
     expect(ticks.length).toBeGreaterThan(0);
     for (const t of ticks) {
-      expect(['parse', 'render']).toContain(t.stage);
+      expect(['parse', 'pictures', 'render']).toContain(t.stage);
       expect(t.percent).toBeGreaterThanOrEqual(0);
       expect(t.percent).toBeLessThanOrEqual(100);
     }
@@ -733,6 +733,30 @@ describe('cli --progress', () => {
     const percents = ticks.map((t: { percent: number }) => t.percent);
     expect([...percents].sort((a, b) => a - b)).toEqual(percents);
     expect(percents.at(-1)).toBe(100);
+  }, 60000);
+
+  test('names each stage as it begins, even where the percent does not move', async () => {
+    // The throttle drops a line that repeats the last percent, and a stage
+    // can begin at the very percent the one before it ended on: images.pdf's
+    // pages end at 60 and its pictures begin there, and its pictures end at
+    // 85 where building the book begins. Dropping those lines would leave
+    // the read-out naming the stage that already finished.
+    const { stderr, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', `${SCRATCH}/prog-pictures.epub`, '--no-fountain',
+      '--json', '--progress',
+    ]);
+    expect(exitCode).toBe(0);
+    const ticks: { stage: string; percent: number }[] = stderr.trim().split('\n').filter(Boolean)
+      .map((l) => JSON.parse(l).progress);
+    const firsts = ticks.filter((t, i) => i === 0 || ticks[i - 1].stage !== t.stage);
+    expect(firsts.slice(1)).toEqual([
+      { stage: 'pictures', percent: 60 },
+      { stage: 'render', percent: 85 },
+    ]);
+    expect(ticks.at(-1)).toEqual({ stage: 'render', percent: 100 });
+    // Still throttled within a stage: no two lines say the same thing.
+    const said = ticks.map((t) => `${t.stage} ${t.percent}`);
+    expect(new Set(said).size).toBe(said.length);
   }, 60000);
 
   test('is opt-in: no --progress means no stderr', async () => {

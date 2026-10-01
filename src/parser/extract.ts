@@ -8,6 +8,7 @@ import { getDocument, OPS } from 'pdfjs-dist/build/pdf.mjs';
 // join to artwork.ts's judgements; this module reads pages and lines, hands
 // over what a page produced, and asks for the pile back at the end.
 import {
+  collectImagePlacements,
   collectPageImages,
   finishImages,
   newImageRun,
@@ -22,9 +23,11 @@ import { pdfjsWasmDir } from './pdfjs-wasm';
 
 export type { ImageStats } from './images';
 
-/// Called once per page as extraction advances. `pages` is the number of
-/// pages this run will actually visit (so it honors `maxPages`), which makes
-/// `page / pages` a usable fraction from the very first tick.
+/// Called as a pass over the pages advances: `page` is how many pages it has
+/// finished and `pages` how many it will visit, which makes `page / pages` a
+/// usable fraction from the very first tick. The text pass visits every page
+/// this run reads (so `pages` honors `maxPages`); the picture pass visits
+/// only the pages that place a picture (see `decodeImages`).
 export type PageProgress = (page: number, pages: number) => void;
 
 /** What the pass over the pages knows as soon as it has read them: the text,
@@ -58,11 +61,18 @@ export interface PendingExtract extends ExtractedText {
   /**
    * Resolve, encode and judge the pictures the page pass located.
    *
+   * `onProgress` hears about the pages that place a picture, and only those:
+   * one tick at 0 before the first of them, so a caller can name the stage
+   * the moment it begins rather than after its first page, and one after
+   * each. A document that places none never calls it, so a caller that names
+   * the stage from its ticks never shows a stage with nothing in it.
+   *
    * Asked for at most once in effect: a second call hands back the first
    * call's promise, so a document still gets exactly ONE image run (one
-   * budget, one encode cache, one failure count), however it is called.
+   * budget, one encode cache, one failure count), however it is called. The
+   * first call's `onProgress` is the one that hears the ticks.
    */
-  decodeImages(): Promise<ExtractedImages>;
+  decodeImages(onProgress?: PageProgress): Promise<ExtractedImages>;
 }
 
 /**
@@ -175,7 +185,7 @@ export async function extractText(
   // than an error (see collectPageImages for what that costs, measured).
   // Nothing in this engine frees pages. Whoever adds it must add it after the
   // promise below has settled, never in the page loop above.
-  const decode = async (): Promise<ExtractedImages> => {
+  const decode = async (onProgress?: PageProgress): Promise<ExtractedImages> => {
     // ONE budget for the whole document, threaded through every page: the
     // per-image timeout alone would let a lookbook of damaged XObjects stall
     // for minutes. The same object also caches encoded pixels, so a logo on
@@ -184,11 +194,20 @@ export async function extractText(
     // appears on. See ImageRun.encoded.
     const run = newImageRun();
     const candidates: EncodedCandidate[] = [];
+    // Only the pages that place a picture, which changes nothing about the
+    // result: collectPageImages finds nothing on any other page and touches
+    // nothing in the run. The filter is for the ticks, so they count the work
+    // this loop actually does and a document with no pictures never ticks at
+    // all. Finding the placements twice costs one walk over each operator
+    // list, which is nothing beside decoding a single picture.
+    const withPictures = pending.filter((p) => collectImagePlacements(p.ops).length > 0);
+    if (withPictures.length > 0) onProgress?.(0, withPictures.length);
     // In page order, so the budget is spent and the encode cache is filled in
     // document order: the cap and the budget both rely on that (see
     // IMAGE_BUDGET_MS).
-    for (const p of pending) {
+    for (const [done, p] of withPictures.entries()) {
       candidates.push(...(await collectPageImages(p.page, p.ops, p.info, run)));
+      onProgress?.(done + 1, withPictures.length);
     }
     // Which pictures are art is a DOCUMENT fact too, for the same shape of
     // reason as the font pass: repetition is only visible once every sheet has
@@ -208,7 +227,7 @@ export async function extractText(
     lines: allLines,
     pageCount: pdf.numPages,
     spacingRepairs,
-    decodeImages: () => (decoded ??= decode()),
+    decodeImages: (onProgress) => (decoded ??= decode(onProgress)),
   };
 }
 

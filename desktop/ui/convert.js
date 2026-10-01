@@ -192,33 +192,42 @@ export function stillOpenNote(script) {
   return `${title} is still open. This changed nothing about it.`;
 }
 
+/** What the read-out calls each stage the engine names, in the order the
+ *  engine passes through them. A Map, so a stage name that happens to be an
+ *  Object method finds nothing. */
+const STAGE_LABELS = new Map([
+  ['parse', 'reading the pages'],
+  ['pictures', 'reading the pictures'],
+  ['render', 'building the book'],
+]);
+const STAGE_ORDER = [...STAGE_LABELS.keys()];
+
 /** The bar's next position, given where it already is and one progress line.
- *  The engine's percent is ALREADY the whole pipeline's: src/convert.ts's
- *  PARSE_SHARE puts page extraction at 0..85 and rendering at 85..100, and
- *  the stage name only says which of the two the reader is waiting on.
- *  (Observed: a 3,601-page script emits parse 6..85 then render 85, render
- *  100.) Re-weighting it here would discount it twice and park the bar at
- *  72% for the whole tail of the parse. So the number is taken as given,
- *  clamped, and never allowed to fall — a late line from the stage that just
- *  ended, an unknown stage and a percent that is not a number are all
- *  ignored rather than drawn. */
+ *  The engine's percent is ALREADY the whole pipeline's: src/convert.ts
+ *  shares it out as the pages 0..60, the pictures 60..85 and the book
+ *  85..100, and the stage name only says which one the reader is waiting on.
+ *  A script that places no picture never names the pictures: its pages hand
+ *  straight over to the book. Re-weighting the percent here would discount
+ *  it twice and park the bar partway for the whole tail of a stage. So the
+ *  number is taken as given, clamped, and never allowed to fall: a late line
+ *  from a stage that has ended, an unknown stage and a percent that is not a
+ *  number are all ignored rather than drawn. */
 export function nextProgress(previous, line) {
   const stage = line?.stage;
   const percent = Number(line?.percent);
-  if (stage !== 'parse' && stage !== 'render') return previous;
+  const named = STAGE_LABELS.get(stage);
+  if (named === undefined) return previous;
   if (!Number.isFinite(percent)) return previous;
   const next = Math.min(100, Math.max(0, Math.round(percent)));
   if (next < previous.percent) return previous;
+  // The stage never walks back either: a late line from an earlier one can
+  // carry the very percent of the handover. The bar before any line has a
+  // null stage, which comes before them all (-1).
+  if (STAGE_ORDER.indexOf(stage) < STAGE_ORDER.indexOf(previous.stage)) return previous;
   // Standing still at the same percent is still news if the stage changed:
-  // the engine crosses into rendering at 85 without the bar moving.
+  // the engine crosses from one stage into the next without the bar moving.
   if (next === previous.percent && stage === previous.stage) return previous;
-  return {
-    percent: next,
-    stage,
-    label: stage === 'parse'
-      ? `reading the pages (${next}%)`
-      : `building the book (${next}%)`,
-  };
+  return { percent: next, stage, label: `${named} (${next}%)` };
 }
 
 /** The name at the end of a path, whichever slash the OS used. */

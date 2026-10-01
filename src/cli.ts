@@ -1093,13 +1093,16 @@ async function main() {
   // is exactly one parseable object, and the app decodes it as such; a
   // progress line on stdout would corrupt every conversion the app runs.
   // Ticks are throttled to whole percents so a 300-page script emits ~100
-  // lines rather than one per page per stage.
-  let lastPercent = -1;
+  // lines rather than one per page per stage. A new stage is always news,
+  // though: one can begin at the very percent the last one ended on, and
+  // dropping that line would leave the window naming a stage that is over.
+  let last = '';
   const onProgress = values.progress
     ? (stage: ConvertStage, fraction: number) => {
         const percent = Math.round(fraction * 100);
-        if (percent === lastPercent) return;
-        lastPercent = percent;
+        const said = `${stage} ${percent}`;
+        if (said === last) return;
+        last = said;
         process.stderr.write(`${JSON.stringify({ progress: { stage, percent } })}\n`);
       }
     : undefined;

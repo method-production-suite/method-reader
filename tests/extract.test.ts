@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import {
   collectUnderlineMarks,
   extractDocument,
+  extractText,
   familyBucket,
   groupItemsIntoLines,
   markUnderlinesItem,
@@ -728,6 +729,39 @@ describe('extractDocument progress', () => {
     const { pageCount, lines } = await extractDocument(await bytes());
     expect(pageCount).toBe(5);
     expect(lines.length).toBeGreaterThan(0);
+  });
+});
+
+describe('decodeImages progress', () => {
+  // On a picture-heavy document decoding the pictures takes longer than
+  // reading the text, so it reports its own ticks rather than leaving the bar
+  // standing still. It counts only the pages that place a picture: a page
+  // with none costs nothing here, and counting it would spread the ticks over
+  // work that is not being done.
+  const fixture = async (name: string) =>
+    new Uint8Array(await Bun.file(`tests/fixtures/${name}`).arrayBuffer());
+
+  test('ticks once before the first picture page and once after each, with the total', async () => {
+    // images.pdf places at least one picture on each of its five pages
+    // (make-fixture.py's SHEET_PLACEMENTS).
+    const doc = await extractText(await fixture('images.pdf'));
+    const ticks: [number, number][] = [];
+    const { images } = await doc.decodeImages((done, total) => ticks.push([done, total]));
+    expect(images.length).toBeGreaterThan(0);
+    expect(ticks).toEqual([[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5]]);
+  });
+
+  test('a document that places no picture never ticks, so no caller names the stage', async () => {
+    const doc = await extractText(await fixture('screenplay.pdf'));
+    const ticks: [number, number][] = [];
+    const { images } = await doc.decodeImages((done, total) => ticks.push([done, total]));
+    expect(images).toEqual([]);
+    expect(ticks).toEqual([]);
+  });
+
+  test('is optional: decoding works with no callback', async () => {
+    const doc = await extractText(await fixture('images.pdf'));
+    expect((await doc.decodeImages()).images.length).toBeGreaterThan(0);
   });
 });
 

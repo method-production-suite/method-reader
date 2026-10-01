@@ -57,14 +57,27 @@ export interface ConvertOptions {
   onProgress?: (stage: ConvertStage, fraction: number) => void;
 }
 
-/** The stages a caller can be told about, in the order they occur. */
-export type ConvertStage = 'parse' | 'render';
+/** The stages a caller can be told about, in the order they occur. A
+ * document that places no picture never reaches 'pictures': its pages hand
+ * straight over to 'render'. */
+export type ConvertStage = 'parse' | 'pictures' | 'render';
 
 /**
- * Page extraction dominates wall-clock on any real script, so it owns most
- * of the bar. Rendering is comparatively fixed-cost and gets the tail.
+ * Where the pictures and the book begin on the bar, as fractions of the whole
+ * job; the pages fill everything before the first.
+ *
+ * Reading the pages dominates wall-clock on a script without pictures, which
+ * is most of them, so it owns the largest share. Decoding the pictures
+ * dominates on a picture-heavy script (a 60-picture document spends about
+ * 17 s there, most of its conversion), so it gets a share of its own and the
+ * bar keeps moving through it. The shares are fixed before the text pass has
+ * seen whether there are any pictures, so a script without them steps
+ * straight from 0.6 to 0.85 as its pages finish: a jump forward, never a
+ * wait. Rendering is comparatively fixed-cost and keeps the tail it has
+ * always had.
  */
-const PARSE_SHARE = 0.85;
+const PICTURES_START = 0.6;
+const RENDER_START = 0.85;
 
 export interface ConvertResult {
   epub: Uint8Array;
@@ -232,7 +245,7 @@ export async function convertPdf(
   const doc = await extractText(
     pdfBytes,
     undefined,
-    (page, pages) => opts.onProgress?.('parse', (page / pages) * PARSE_SHARE),
+    (page, pages) => opts.onProgress?.('parse', (page / pages) * PICTURES_START),
   );
   const { lines, pageCount, spacingRepairs } = doc;
   if (lines.length < pageCount * MIN_LINES_PER_PAGE) {
@@ -255,7 +268,9 @@ export async function convertPdf(
   // Past both refusals, so now the pixels. Nothing a caller could write down
   // exists before this line, which is also what keeps a scan's pixels off the
   // caller's disk: there are none.
-  const { images: rawImages, imageStats } = await doc.decodeImages();
+  const { images: rawImages, imageStats } = await doc.decodeImages((page, pages) =>
+    opts.onProgress?.('pictures', PICTURES_START + (page / pages) * (RENDER_START - PICTURES_START)),
+  );
   const screenplay = rawImages.length > 0 ? parseLines(lines, rawImages) : textOnly;
   // Straight off the raw images: each already carries the filename
   // `toRawImages` assigned it, and `toFountain` writes that same name into the
@@ -272,7 +287,7 @@ export async function convertPdf(
   const format = resolveFormatOptions(opts.format);
   const meta = resolveMeta(extractTitleMeta(screenplay.elements), opts);
   const fountainText = toFountain(screenplay, { title: meta.title, author: meta.author }, format);
-  opts.onProgress?.('render', PARSE_SHARE);
+  opts.onProgress?.('render', RENDER_START);
   const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images);
   opts.onProgress?.('render', 1);
 

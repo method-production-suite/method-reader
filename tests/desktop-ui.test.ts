@@ -530,6 +530,9 @@ describe('the Convert surface', () => {
     // A late line from earlier in the run does not move the bar back.
     tauri.emit('engine-line', '{"progress":{"stage":"parse","percent":20}}');
     expect(readOut()).toBe('reading the pages (40%)');
+    tauri.emit('engine-line', '{"progress":{"stage":"pictures","percent":70}}');
+    expect(readOut()).toBe('reading the pictures (70%)');
+    expect(fill()).toBe('.fill { width: 70%; }');
     tauri.emit('engine-line', '{"progress":{"stage":"render","percent":85}}');
     expect(readOut()).toBe('building the book (85%)');
     expect(fill()).toBe('.fill { width: 85%; }');
@@ -1250,23 +1253,23 @@ describe('what the Convert surface decides', () => {
   });
 
   test('the bar follows the engine\u2019s own percent, which is already the whole job', () => {
-    // Measured against the engine, not assumed: a 3,601-page script emits
-    // parse 6..85 and then render 85, render 100, because src/convert.ts
-    // has already applied PARSE_SHARE. A window that re-weighted those
-    // numbers would stall at 72% for the entire tail of the parse and then
-    // leap to the end — which is exactly what the first draft of this
-    // surface did, and what a live run caught.
+    // The engine's percent is already shared out by stage in src/convert.ts:
+    // the pages 0..60, the pictures 60..85, the book 85..100. A window that
+    // re-weighted those numbers would stall partway for the entire tail of a
+    // stage and then leap to the end, which is exactly what the first draft
+    // of this surface did, and what a live run caught.
     let at = convert.PROGRESS_START;
     const seen: number[] = [];
     for (const line of [
       { stage: 'parse', percent: 6 }, { stage: 'parse', percent: 44 },
-      { stage: 'parse', percent: 85 }, { stage: 'render', percent: 85 },
-      { stage: 'render', percent: 100 },
+      { stage: 'parse', percent: 60 }, { stage: 'pictures', percent: 60 },
+      { stage: 'pictures', percent: 73 }, { stage: 'pictures', percent: 85 },
+      { stage: 'render', percent: 85 }, { stage: 'render', percent: 100 },
     ]) {
       at = convert.nextProgress(at, line);
       seen.push(at.percent);
     }
-    expect(seen).toEqual([6, 44, 85, 85, 100]);
+    expect(seen).toEqual([6, 44, 60, 60, 73, 85, 85, 100]);
     // Every step forward or level, never back.
     for (let i = 1; i < seen.length; i += 1) expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1]);
   });
@@ -1275,19 +1278,30 @@ describe('what the Convert surface decides', () => {
     expect(convert.PROGRESS_START.label).toBe('starting up');
     expect(convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 40 }).label)
       .toBe('reading the pages (40%)');
-    // Crossing into rendering is news even though the bar does not move: the
-    // engine hands over at 85 on both sides of the boundary.
-    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 85 });
-    expect(parsed.label).toBe('reading the pages (85%)');
-    const rendering = convert.nextProgress(parsed, { stage: 'render', percent: 85 });
+    // Crossing into the next stage is news even though the bar does not move:
+    // the engine hands over at the same percent on both sides of each
+    // boundary.
+    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 60 });
+    expect(parsed.label).toBe('reading the pages (60%)');
+    const pictures = convert.nextProgress(parsed, { stage: 'pictures', percent: 60 });
+    expect(pictures.label).toBe('reading the pictures (60%)');
+    expect(pictures.percent).toBe(60);
+    const decoded = convert.nextProgress(pictures, { stage: 'pictures', percent: 85 });
+    expect(decoded.label).toBe('reading the pictures (85%)');
+    const rendering = convert.nextProgress(decoded, { stage: 'render', percent: 85 });
     expect(rendering.label).toBe('building the book (85%)');
     expect(rendering.percent).toBe(85);
+    // A script with no pictures never names that stage: the pages hand
+    // straight over to the book.
+    expect(convert.nextProgress(parsed, { stage: 'render', percent: 85 }).label)
+      .toBe('building the book (85%)');
   });
 
   test('a line that is late, unknown or malformed leaves the bar alone', () => {
     const half = convert.nextProgress(convert.PROGRESS_START, { stage: 'render', percent: 50 });
     for (const junk of [
       { stage: 'parse', percent: 20 },      // a parse line arriving after render began
+      { stage: 'pictures', percent: 40 },   // a pictures line arriving after render began
       { stage: 'render', percent: 50 },     // the percent it is already showing
       { stage: 'polish', percent: 99 },     // a stage this window does not know
       { stage: 'render', percent: 'lots' }, // not a number
@@ -1297,16 +1311,25 @@ describe('what the Convert surface decides', () => {
     }
     // ...and a percent outside the contract is clamped, not drawn past the end.
     expect(convert.nextProgress(half, { stage: 'render', percent: 900 }).percent).toBe(100);
+    // A late line from an earlier stage at the very percent of the handover
+    // does not walk the read-out back either.
+    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 60 });
+    const pictures = convert.nextProgress(parsed, { stage: 'pictures', percent: 60 });
+    expect(convert.nextProgress(pictures, { stage: 'parse', percent: 60 })).toBe(pictures);
+    const rendering = convert.nextProgress(pictures, { stage: 'render', percent: 85 });
+    expect(convert.nextProgress(rendering, { stage: 'pictures', percent: 85 })).toBe(rendering);
   });
 
-  test('the percents the engine really emits drive the bar from end to end', async () => {
-    // The other half of the pin above: the sequence is read off the engine
-    // itself rather than typed out here, so a change to PARSE_SHARE or to
-    // the throttle shows up as a failing test rather than as a stuck bar.
+  // The other half of the pin above: the sequence is read off the engine
+  // itself rather than typed out here, so a change to the shares in
+  // src/convert.ts or to the CLI's throttle shows up as a failing test rather
+  // than as a stuck bar. Once without pictures and once with, because the two
+  // take different roads through the stages.
+  async function engineLabels(fixture: string) {
     const root = new URL('..', import.meta.url).pathname;
     const proc = Bun.spawn(
-      ['bun', join(root, 'src', 'cli.ts'), join(root, 'tests', 'fixtures', 'screenplay.pdf'),
-        '--json', '--progress', '-o', join(SCRATCH, 'convert-progress.epub')],
+      ['bun', join(root, 'src', 'cli.ts'), join(root, 'tests', 'fixtures', fixture),
+        '--json', '--progress', '--no-fountain', '-o', join(SCRATCH, `progress-${fixture}.epub`)],
       { stdout: 'pipe', stderr: 'pipe' },
     );
     const [stderr] = await Promise.all([new Response(proc.stderr).text(), proc.exited]);
@@ -1317,14 +1340,27 @@ describe('what the Convert surface decides', () => {
     let at = convert.PROGRESS_START;
     const seen = lines.map((line: { stage: string; percent: number }) => {
       at = convert.nextProgress(at, line);
-      return at.percent;
+      return at;
     });
-    for (let i = 1; i < seen.length; i += 1) expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1]);
+    const percents = seen.map((p: Progress) => p.percent);
+    for (let i = 1; i < percents.length; i += 1) expect(percents[i]).toBeGreaterThanOrEqual(percents[i - 1]);
     // It starts somewhere near the beginning and finishes AT the end: a bar
     // that stopped at 72% would satisfy monotonicity and still be wrong.
-    expect(seen[0]).toBeLessThan(50);
+    expect(percents[0]).toBeLessThan(50);
     expect(at.percent).toBe(100);
     expect(at.label).toBe('building the book (100%)');
+    // The stages the read-out named, in order, each once.
+    return seen.map((p: Progress) => p.label.replace(/ \(\d+%\)$/, ''))
+      .filter((label: string, i: number, all: string[]) => i === 0 || all[i - 1] !== label);
+  }
+
+  test('the percents the engine really emits drive the bar from end to end', async () => {
+    expect(await engineLabels('screenplay.pdf')).toEqual(['reading the pages', 'building the book']);
+  }, 60000);
+
+  test('a script with pictures names the pictures between the pages and the book', async () => {
+    expect(await engineLabels('images.pdf'))
+      .toEqual(['reading the pages', 'reading the pictures', 'building the book']);
   }, 60000);
 
   test('the counts read as a sentence, singular included', () => {
