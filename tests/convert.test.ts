@@ -271,10 +271,15 @@ describe('convertPdf carries the pictures', () => {
     expect(await zip.file('OEBPS/style.css')!.async('string')).toBe(screenplayCss(format));
   }, 60000);
 
-  test('a script without pictures gets the book it got before pictures could reach one', async () => {
-    // Every entry, in order and byte for byte, against the render that hands
-    // the renderer no pictures at all, which is the whole of what this
-    // pipeline did before it carried them. The one line two runs of the same
+  test('for a script without pictures, convertPdf adds nothing to what the renderer and packager make alone', async () => {
+    // Every entry, in order and byte for byte, against today's renderer and
+    // packager called directly with no pictures in hand. What this proves is
+    // narrow: the picture wiring in convert.ts changes nothing for a script
+    // that has none. It does NOT prove the book matches the one made before
+    // pictures could reach a book, because both sides run today's
+    // tokensToBody and buildEpub, so a change inside either one moves both
+    // sides together and this stays green. Sameness with the older code is
+    // what the corpus diff checks. The one line two runs of the same
     // conversion disagree on is the dcterms:modified stamp, so it is the one
     // line set aside.
     const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`));

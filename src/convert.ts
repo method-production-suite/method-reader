@@ -37,14 +37,7 @@ export class NotAScreenplayError extends Error {
   }
 }
 
-// One picture on its way out of a conversion: the bytes, and the name the
-// `.fountain` note refers to it by. The shape is the packager's, defined in
-// src/epub/build.ts so the two cannot drift, and re-exported here so callers
-// of convert.ts need not reach past it. Named, NOT pathed: convert.ts does no
-// filesystem work and never has (it imports `node:crypto` and nothing else
-// from the platform), so where these land is the caller's business: the CLI
-// writes them into the picture folder beside the `.fountain`
-// (src/library-images.ts).
+// The packager's picture shape, documented where it is defined (src/epub/build.ts).
 export type { BookImage };
 
 export interface ConvertOptions {
