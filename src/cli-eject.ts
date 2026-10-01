@@ -83,8 +83,8 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     return answer.stdout;
   };
 
-  // The command names the volume exactly as the engine listed it, not as the
-  // caller spelled it (a trailing slash, say).
+  // The command, and the answer, name the volume exactly as the engine
+  // listed it, not as the caller spelled it (a trailing slash, say).
   const listed = reader.volume as string;
   let commands = ejectCommands(listed, platform);
   if (commands === 'not-a-drive-root') {
@@ -100,5 +100,5 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     commands = linuxEjectCommands(device);
   }
   for (const argv of commands) await step(argv);
-  return { ejected: volume };
+  return { ejected: listed };
 }

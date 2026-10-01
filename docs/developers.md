@@ -160,7 +160,7 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 - `kfx`: a KFX file, and only that.
 - `azw3`: an AZW3 file, and only that.
 - `mobi`: the engine's own MOBI, and only that; the EPUB is left as it is. It needs `--fountain`.
-- `fountain`: the script's `.fountain`, as it is. It needs `--fountain`.
+- `fountain`: the script's `.fountain`, as it is. It needs `--fountain`, and that file must end in `.fountain`.
 
 `kfx`, `azw3` and `mobi` refuse, with an error, when this computer lacks the
 tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
@@ -168,8 +168,9 @@ tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
 
 `eject <volume>` takes the full path of a reader that `devices` lists right
 now, such as `/Volumes/Kindle` or `E:\`, and refuses any other disk. It runs
-`diskutil eject` on macOS, `udisksctl unmount` then `power-off` on Linux, and
-the shell's own Eject on Windows. A reader that will not eject (a file is
+`diskutil eject` on macOS, `udisksctl unmount` then `power-off` on Linux (only
+for a volume that is itself a mount point), and the shell's own Eject on
+Windows (only for a whole drive, such as `E:\`). A reader that will not eject (a file is
 open, say) fails with the code `eject-failed`.
 
 `routes` lists every other way out too (Apple Books, Amazon's Send to Kindle,

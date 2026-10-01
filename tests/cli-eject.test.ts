@@ -69,8 +69,10 @@ describe('ejectCommand: refusals come before anything runs', () => {
 
   test('the comparison is on resolved paths: a trailing slash still names the reader', async () => {
     const { run, calls } = recordingRun();
-    await ejectCommand('/Volumes/Kindle/', { platform: 'darwin', devices: async () => [kindle], run });
+    const result = await ejectCommand('/Volumes/Kindle/', { platform: 'darwin', devices: async () => [kindle], run });
     expect(calls).toEqual([['diskutil', 'eject', '/Volumes/Kindle']]);
+    // The answer names the volume as the engine listed it, too.
+    expect(result).toEqual({ ejected: '/Volumes/Kindle' });
   });
 
   test('a reMarkable (no volume) never matches anything', async () => {

@@ -1122,6 +1122,36 @@ describe('export --for one named file type', () => {
     });
   });
 
+  test('fountain refuses a --fountain file that is not a .fountain, as usage, and writes nothing', async () => {
+    const notScript = join(dir, 'Script.txt');
+    writeFileSync(notScript, 'Title: Test\n');
+    const out = join(dir, 'saved', 'Copy.fountain');
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'fountain', fountain: notScript, out },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('usage');
+    expect(answer.message).toContain('.fountain');
+    expect(existsSync(out)).toBe(false);
+  });
+
+  test('mobi with a --fountain that cannot be read is unreadable, before --check and before any probe', async () => {
+    const gone = join(dir, 'Gone.fountain');
+    const calibreNeverAsked = () => {
+      throw new Error('Calibre must not be probed for a script that cannot be read');
+    };
+    for (const check of [false, true]) {
+      const before = readdirSync(dir).sort();
+      const answer = await codeAndMessage(exportCommand(
+        { epub, for: 'mobi', fountain: gone, ...(check ? { check: true } : {}) },
+        { calibreAvailable: calibreNeverAsked, kfxStatus: kfxNeverAsked, ...safe },
+      ));
+      expect(`check=${check}: ${answer.code}`).toBe(`check=${check}: unreadable`);
+      expect(answer.message).toBe(`cannot read the script to export: ${gone}`);
+      expect(readdirSync(dir).sort()).toEqual(before);
+    }
+  });
+
   test('kfx with the toolchain not ready is export-failed, names what is missing, and writes nothing', async () => {
     const before = readdirSync(dir).sort();
     const answer = await codeAndMessage(exportCommand(

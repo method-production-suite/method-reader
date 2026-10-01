@@ -196,6 +196,20 @@ async function resolveOut(artifactPath: string, out: string): Promise<string> {
   return out;
 }
 
+/** The script behind `--for mobi` and `--for fountain` is a file that is
+ * there, or the export is 'unreadable'. One check, for both. */
+function checkScriptReadable(script: string): void {
+  let isFile = false;
+  try {
+    isFile = statSync(script).isFile();
+  } catch {
+    isFile = false;
+  }
+  if (!isFile) {
+    throw new CliError('unreadable', `cannot read the script to export: ${script}`);
+  }
+}
+
 export async function exportCommand(
   options: ExportOptions,
   deps: ExportDeps = {},
@@ -241,6 +255,13 @@ export async function exportCommand(
   if ((format === 'mobi' || format === 'fountain') && options.fountain === undefined) {
     throw new CliError('usage', `--for ${format} needs the script's .fountain: pass it with --fountain`);
   }
+  // `--for fountain` hands the file over as the script, so it must be one.
+  if (format === 'fountain' && extname(options.fountain as string).toLowerCase() !== '.fountain') {
+    throw new CliError('usage', `--for fountain takes a .fountain file, not ${options.fountain}`);
+  }
+  // Both read the script, so a script that is not there is refused here,
+  // before --check answers and before any probe or build.
+  if (format === 'mobi' || format === 'fountain') checkScriptReadable(options.fountain as string);
 
   // Parsed here, before the epub branch returns and before any toolchain
   // probe: --options-json is either well-formed argv or it is not, and that
@@ -255,17 +276,9 @@ export async function exportCommand(
   const available = availableFormats(options.epub, calibreAvailable);
 
   if (format === 'fountain') {
-    // The script as it is: no toolchain, no build, always current.
+    // The script as it is: no toolchain, no build, always current. Its
+    // extension and readability were checked above.
     const script = options.fountain as string;
-    let scriptIsFile = false;
-    try {
-      scriptIsFile = statSync(script).isFile();
-    } catch {
-      scriptIsFile = false;
-    }
-    if (!scriptIsFile) {
-      throw new CliError('unreadable', `cannot read the script to export: ${script}`);
-    }
     const state = { calibreAvailable, kfxReady: false };
     const path = options.out !== undefined ? await resolveOut(script, options.out) : script;
     return {
