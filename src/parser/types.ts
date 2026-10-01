@@ -149,7 +149,7 @@ export interface RawImage {
    * horizontal offset is not carried, because nothing places one by it. The
    * renderers (phase 2/3) are to centre a figure and size it from
    * `ImageRef.widthPct`, so a left edge would be a field with a plausible
-   * meaning and no reader — which is what `indent` was until 2026-08-12. */
+   * meaning and no reader. */
   y: number;
   /**
    * Rendered size on the sheet, as a percentage of PAGE width and height.
@@ -165,13 +165,10 @@ export interface RawImage {
   pageHeightPct: number;
   /** Encoded PNG, and the only thing here that carries pixels.
    *
-   * The OUTPUT dimensions are not a field beside it. They were, until
-   * 2026-08-12, and nothing ever read them: the renderers work from the
-   * `.fountain` and never see a `RawImage`, so there was no path to a consumer
-   * — and the MOBI arm's refusal to write a pixel width (mobi/html.ts, in the
-   * renderers' phase 2/3) would read as contradicted by a `pxWidth` sitting
-   * two modules upstream. Anything that
-   * genuinely needs them can read the IHDR, which is where they are true. */
+   * The OUTPUT dimensions are not a field beside it, because nothing could
+   * read one: the renderers work from the `.fountain` and never see a
+   * `RawImage`. Anything that genuinely needs them can read the IHDR, which
+   * is where they are true. */
   bytes: Uint8Array;
 }
 

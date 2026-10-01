@@ -277,13 +277,11 @@ function insertImages(
     // classified here, it is being kept out of a classification that would
     // cost it something.
     //
-    // What it costs, stated as it stands today rather than as it once did:
-    // `extractTitleMeta` in serialize.ts joins the readable title-page
-    // elements into the book's TITLE, so a flagged image would put
-    // "p001-01.png" in the metadata. `isBody` used to be the other half of
-    // this, and is NOT any more — it exempts images from the title-page filter
-    // outright, so the designed title card survives whichever way this flag
-    // goes. The two comments would otherwise justify each other in a circle.
+    // What it costs: `extractTitleMeta` in serialize.ts joins the readable
+    // title-page elements into the book's TITLE, so a flagged image would put
+    // "p001-01.png" in the metadata. That is the whole reason. `isBody` does
+    // not depend on this flag: it exempts images from the title-page filter
+    // outright, so the designed title card survives whichever way it goes.
     isTitlePage: false,
     isReadable: true,
     img: {
@@ -331,12 +329,11 @@ function insertImages(
 // SCENE_NUMBER pattern with the classifier that mints those markers, and
 // splitting them would mean exporting the regex or keeping two of it.
 //
-// It used to say "and stays unit-testable without this file's pdf.js import
-// chain". This file has no pdf.js in its chain and never did: it imports
-// group, classify, title-page, boilerplate, rescue and artwork, and not one of
-// those reaches pdf.mjs. extract.ts is where that hazard lives, and index.ts
-// does not import it — which is the whole reason parseLines takes lines
-// instead of bytes.
+// Not because of pdf.js: this file has none in its chain. It imports group,
+// classify, title-page, boilerplate, rescue and artwork, and not one of those
+// reaches pdf.mjs. extract.ts is where that hazard lives, and index.ts does
+// not import it, which is the whole reason parseLines takes lines instead of
+// bytes.
 
 function extractCharacters(elements: ScreenplayElement[]): CharacterInfo[] {
   const charMap = new Map<string, { dialogueCount: number; firstAppearance: number }>();

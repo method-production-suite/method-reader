@@ -1264,20 +1264,34 @@ the Mac app should move those two; nothing in the engine needs to change.
   note above the first heading (where a title card's lands) opens no section
   either: `tokensToBody` skips it while no section is open, because a section
   of notes alone would be an empty "Opening" in the contents, a blank page
-  under `scenePageBreaks`, and every scene anchor one along. So the
-  EPUB and the MOBI are what they were before this entry, and the reader never
-  sees a picture yet. Showing them is phase 2 (the `includeImages` option and
+  under `scenePageBreaks`, and every scene anchor one along. So the EPUB
+  and the MOBI render exactly what they did before this entry, and the reader
+  never sees a picture yet. One thing in the EPUB does change, and on
+  purpose: its `dc:identifier` is a hash of the `.fountain` text (`renderBooks`
+  in `src/convert.ts`; the text is the identity), so a script whose
+  `.fountain` gains notes gets a new identifier, and a reader that indexes by
+  it treats the re-converted book as a new one. A script with no pictures
+  keeps its identifier. Showing them is phase 2 (the `includeImages` option and
   EPUB figures), phase 3 (MOBI image records) and phase 4 (cover promotion):
   `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
-- **Where a picture comes from, and where it lands.** Extraction runs the
-  image pass on the operator list the text pass already fetched, one page at a
-  time, and reads each picture's pixels while the page is live (pdf.js drops
-  them once the page is released). Pixels are flattened onto WHITE, since the
+- **Where a picture comes from, and where it lands.** Extraction finds the
+  pictures on the operator list the text pass already fetched, and reads
+  their pixels only once both guards (#14, #15) have passed
+  (`extractText`'s `decodeImages`), while every page is still live: pdf.js
+  drops a page's pixels once the page is released, and this engine never
+  releases one. Pixels are flattened onto WHITE, since the
   PNG is colour type 2 with no alpha and a transparent pixel would otherwise
   take whatever colour was stored under it, frequently black; downscaled so
-  the longer edge is at most `IMAGE_MAX_EDGE = 1400` px (clear of every e-ink
-  panel Screepub ships to: a Paperwhite is 1236x1648); and encoded at parse
-  time. Kept pictures join the element stream where they sat on the page:
+  the longer edge is at most `IMAGE_MAX_EDGE = 1400` px; and encoded at parse
+  time. 1400 is a size cap, not a panel measurement: it refuses to carry a
+  4000 px lookbook scan at full size, and it is comfortably over the width any
+  figure is drawn at on the 6-inch class a script is usually read on (a
+  Paperwhite panel is 1236 across). It does not clear every panel Screepub
+  ships to: a portrait full-page plate filling a Paperwhite's width asks for
+  about 1648 px of height and is handed 1400, and the 10-inch class
+  (reMarkable, Supernote Manta, Kindle Scribe) is past 1400 on its short edge.
+  Each is a mild upscale of one plate on one device, where raising the cap
+  costs every book with a picture in it. Kept pictures join the element stream where they sat on the page:
   page ascending, then top edge descending, a text line first on a tie
   (`insertImages`, step 5.8 of `parseLines`). That step runs after
   `mergeSplitSpeeches`, so a plate at the top of a page cannot split a speech
@@ -1410,9 +1424,13 @@ the Mac app should move those two; nothing in the engine needs to change.
   known blind spot is the hash: a producer that re-rasterizes its logo per
   page defeats it, and the size floors caught that case instead.
   `artwork.ts` keeps each of these beside its constant. `tests/fixtures/
-  images.pdf` pins every rule, with each picture's margin to its one governing
-  threshold stated in `tools/make-fixture.py`; a fixture can show the numbers
-  are self-consistent, never that they are right.
+  images.pdf` keeps two pictures and refuses four, each by a different rule
+  (pixels, width, furniture, background), with each picture's margin to its
+  one governing threshold stated in `tools/make-fixture.py`. Height and area
+  refuse nothing in it: area is pinned only from the keep side, by pictures
+  that must clear it (imTiny by half a point), and both boundaries are pinned
+  by hand-built candidates in `tests/artwork.test.ts`. A fixture can show the
+  numbers are self-consistent, never that they are right.
 - **Measured on the corpus, 2026-10-01: the `.fountain` gains notes and
   nothing else.** Every PDF in the local set converted with `origin/main` and
   with this phase, `.fountain` against `.fountain`. The only added lines are

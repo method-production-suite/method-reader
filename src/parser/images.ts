@@ -21,10 +21,9 @@
 // rule (registry 5b, 18) is actually about. Each copy is pinned by the suite of
 // the file it lives in — extract.test.ts on the underline geometry,
 // images.test.ts on the placement geometry — so breaking either is a failing
-// test in that file. (An earlier version of this note claimed both suites would
-// fail at once. They would not: break the copy here and extract.test.ts stays
-// green. What makes the duplication safe is that arithmetic has nothing to
-// drift, not a cross-check that does not exist.)
+// test in that file, and ONLY in that file: break the copy here and
+// extract.test.ts stays green. What makes the duplication safe is that
+// arithmetic has nothing to drift, not a cross-check between the suites.
 //
 // The shims come first, like everywhere pdf.mjs is loaded: they hand
 // getDocument the statically imported worker, supply DOMMatrix for rendering,
@@ -467,13 +466,12 @@ export function toRgb(img: PdfImage): Uint8Array | null {
  * time instead it would put a format option inside the parser and break that
  * invariant.
  *
- * WHAT 1400 CLEARS, and this note used to claim more: it is a size cap, not a
- * panel measurement. It refuses to carry a 4000px lookbook scan at full size,
- * which is the point, and it is comfortably over the width any figure is drawn
- * at on the 6" class a script is usually read on (a Paperwhite panel is 1236
- * across). It does NOT clear every panel Screepub ships to, and the earlier
- * claim that it did cited 1236 x 1648 while being smaller than the 1648. Two
- * places it falls short, neither of them fatal:
+ * WHAT 1400 CLEARS: it is a size cap, not a panel measurement. It refuses to
+ * carry a 4000px lookbook scan at full size, which is the point, and it is
+ * comfortably over the width any figure is drawn at on the 6" class a script
+ * is usually read on (a Paperwhite panel is 1236 across). It does NOT clear
+ * every panel Screepub ships to: a Paperwhite is 1236 x 1648, and 1648 is
+ * more than 1400. Two places it falls short, neither of them fatal:
  *
  *   - a full-page plate is meant to fill the full width of the text column with
  *     its height following (how the renderers draw it is phase 2), so a
@@ -847,10 +845,9 @@ export function toRawImages(
 /**
  * What became of the pictures, for a caller that wants to say so.
  *
- * Three of the four fields are USER-FACING, and this note used to say none of
- * them were: `imageWarnings` in convert.ts turns `overCap` and `failed` into a
- * sentence each, and `decodersUnavailable` adds the one cause of a failure
- * that is ours rather than the file's. Read that function for why those two
+ * Three of the four fields are USER-FACING: `imageWarnings` in convert.ts
+ * turns `overCap` and `failed` into a sentence each, and `decodersUnavailable`
+ * adds the one cause of a failure that is ours rather than the file's. Read that function for why those two
  * losses get a warning and the ordinary ones do not.
  *
  * `droppedBy` is the one that still has no consumer, and it is kept anyway. It

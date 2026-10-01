@@ -107,8 +107,8 @@
  * not-a-screenplay guard refuses before any of it renders. So the floor has
  * 0.8 of a point of daylight against ART and about half a point against
  * EVERYTHING, and the second number is the one a retune actually has to clear.
- * The August registry's #19a stated the raw figure and the art margin in one
- * sentence as though they were one pair; they are not.
+ * The raw figure and the art margin are two different pairs, so quote them
+ * apart.
  */
 const MIN_AREA_FRAC = 0.03;      // of the page
 const MIN_WIDTH_FRAC = 0.10;     // of page width
@@ -520,15 +520,15 @@ export function keepArtwork<T extends ImageCandidate>(
     // because a legitimate picture may overhang the sheet and the bound is
     // therefore not a one-liner.
     //
-    // This used to say "unreachable short of a degenerate CTM". The corpus
-    // reached it on 2026-08-12: a pitch deck painted a real still inside a box
-    // 33.6x the page's width, so its area fraction came out at 3357% of the
-    // sheet. Nothing bad followed, and that is worth being precise about
-    // rather than lucky about — the picture was art and keeping it was right,
-    // and `columnWidthPct`'s upper clamp meant the book set it at the text
-    // column like any other. So the missing bound costs a WRONG-BY-ANY-MEASURE
-    // box its refusal, and costs a correct one nothing. Still no upper bound,
-    // now for a measured reason instead of an assumed one.
+    // Reachable on real files, not only on a degenerate CTM: the 2026-08-12
+    // corpus pass found a pitch deck painting a real still inside a box 33.6x
+    // the page's width, so its area fraction came out at 3357% of the sheet.
+    // Nothing bad followed, and that is worth being precise about rather than
+    // lucky about — the picture was art and keeping it was right, and
+    // `columnWidthPct`'s upper clamp meant the book set it at the text column
+    // like any other. So the missing bound costs a WRONG-BY-ANY-MEASURE box
+    // its refusal, and costs a correct one nothing, which is the measured
+    // reason there is no upper bound.
     if (!(c.srcPxWidth >= MIN_PIXELS) || !(c.srcPxHeight >= MIN_PIXELS)) return 'pixels';
 
     const wFrac = (c.x1 - c.x0) / pageWidth;

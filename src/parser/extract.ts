@@ -184,8 +184,9 @@ export async function extractText(
     // appears on. See ImageRun.encoded.
     const run = newImageRun();
     const candidates: EncodedCandidate[] = [];
-    // In page order, as the loop above used to, so the budget is spent and
-    // the encode cache is filled in exactly the order it always was.
+    // In page order, so the budget is spent and the encode cache is filled in
+    // document order: the cap and the budget both rely on that (see
+    // IMAGE_BUDGET_MS).
     for (const p of pending) {
       candidates.push(...(await collectPageImages(p.page, p.ops, p.info, run)));
     }

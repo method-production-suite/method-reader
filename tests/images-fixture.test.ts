@@ -167,7 +167,9 @@ describe('extractDocument on the image fixture', () => {
   });
 
   test('attributes every drop to the rule the fixture built for it', () => {
-    // The fixture's whole point, end to end: one picture per rule. `width` and
+    // The fixture's whole point, end to end: four refusals, each by a
+    // different rule. Height and area refuse nothing here (their boundaries
+    // are hand-built in artwork.test.ts). `width` and
     // not `area` for imSmall (20x20pt from 200x200px) because the linear
     // floors are asked first, and `background` and not `furniture` for imMark
     // because it sits on one sheet. Six counts plus kept plus overCap add up

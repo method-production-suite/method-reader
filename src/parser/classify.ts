@@ -64,9 +64,9 @@ const AGE_LITTLE = /^(LITTLE|BABY)\s+(.+)$/;
 
 // Fallback counter used only when classifyBlock is called directly without an
 // explicit `nextId` (e.g. unit tests exercising classification in isolation).
-// Real parses — `parseLines` in index.ts, which is the only one; there is no
-// `parse()` and has not been — thread their own closure-scoped counter through
-// `nextId` instead, so concurrent parseLines calls never share state.
+// Real parses (`parseLines` in index.ts, the only entry point) thread their
+// own closure-scoped counter through `nextId` instead, so concurrent
+// parseLines calls never share state.
 let defaultElementCounter = 0;
 
 export function resetCounter(): void {
