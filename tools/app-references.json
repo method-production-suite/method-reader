@@ -161,11 +161,6 @@
       "category": "note",
       "breaks": "A comment citing Export.swift's mobiSibling(for:) precedent."
     },
-    "tests/frozen-app.test.ts": {
-      "refs": 31,
-      "category": "freeze",
-      "breaks": "The freeze guard itself. It reads app/ and app/README-FROZEN.md, so F3 deletes it in the same commit as the directory."
-    },
     "tests/mobi.test.ts": {
       "refs": 1,
       "category": "note",
@@ -200,11 +195,6 @@
       "refs": 3,
       "category": "artifact",
       "breaks": "The DMG naming rule, written specifically so the Tauri artifact cannot collide with Screepub-macOS.dmg. F2 removes the Desktop infix and this comment with it."
-    },
-    "tools/frozen-app-manifest.json": {
-      "refs": 67,
-      "category": "freeze",
-      "breaks": "The frozen inventory of app/'s Swift files. F3 deletes it with the directory."
     },
     "tools/release-notes.ts": {
       "refs": 1,

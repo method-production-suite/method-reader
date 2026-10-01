@@ -75,7 +75,7 @@ import { join } from 'node:path';
  * The FILE SET is exact — a file that starts referring to app/ without a
  * row fails, and so does a row whose file no longer refers to app/ at all
  * (a stale row is a lie about the blast radius). The PER-FILE COUNT is a
- * CEILING, matching tests/frozen-app.test.ts: references may fall freely,
+ * CEILING, as the F1 freeze guard's was: references may fall freely,
  * because every one that falls is progress toward F3, but a file cannot
  * quietly grow new ones. Exact counts would fail on an unrelated copy edit
  * to README.md, and a guard that fails for reasons nobody cares about is a
