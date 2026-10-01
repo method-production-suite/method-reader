@@ -49,7 +49,7 @@ const FLAGS: Record<string, string[]> = {
 
 /** What each verb owns, and a well-formed set of positionals for it. */
 const VERB_SHAPE: Record<Verb, { own: string[]; positionals: string[] }> = {
-  devices: { own: [], positionals: [] },
+  devices: { own: ['--quick'], positionals: [] },
   send: { own: ['--device'], positionals: ['/nowhere/x.epub'] },
   settings: { own: ['--set'], positionals: ['/nowhere/x.fountain'] },
   export: { own: ['--for', '--fountain', '--options-json', '--out', '--check'], positionals: ['/nowhere/x.epub'] },

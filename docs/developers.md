@@ -136,7 +136,7 @@ overrides that folder everywhere.
 ## Devices and routes
 
 ```bash
-bun src/cli.ts devices [--json]                          # list connected e-readers
+bun src/cli.ts devices [--quick] [--json]                # list connected e-readers
 bun src/cli.ts send <file> [--device <id>] [--json]      # send an existing file to one
 bun src/cli.ts export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain]  # the file you would put on a reader
 bun src/cli.ts routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
@@ -147,7 +147,8 @@ bun src/cli.ts kfx-install [--json]                      # install the KFX plugi
 ```
 
 `devices` lists USB-mounted Kindle, Kobo and tolino volumes, plus a
-reMarkable if its USB web interface answers. `send` delivers an existing file
+reMarkable if its USB web interface answers. `devices --quick` skips the
+reMarkable probe, as `routes --quick` does. `send` delivers an existing file
 and does not convert. For a mounted volume it copies the file where that
 vendor indexes it; for a reMarkable it uploads over HTTP to the docked
 tablet, which accepts only PDF and EPUB. With several readers connected,

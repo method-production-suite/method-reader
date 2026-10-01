@@ -130,6 +130,20 @@ describe('screepub devices', () => {
       { id: 'remarkable', kind: 'remarkable', name: 'reMarkable', volume: null },
     ]);
   });
+
+  test('--quick lists mounted readers without asking for a reMarkable', async () => {
+    let asked = 0;
+    const answering = Bun.serve({ port: 0, fetch: () => { asked += 1; return new Response('[]'); } });
+    const { root } = kindleRoot();
+    const { stdout, exitCode } = await runCli(['devices', '--quick', '--json'], {
+      SCREEPUB_VOLUME_ROOTS: root,
+      SCREEPUB_REMARKABLE_ENDPOINT: `http://127.0.0.1:${answering.port}`,
+    });
+    answering.stop(true);
+    expect(exitCode).toBe(0);
+    expect(soleJson(stdout).devices.map((d: { kind: string }) => d.kind)).toEqual(['kindle']);
+    expect(asked).toBe(0);
+  });
 });
 
 function kindleRoot(): { root: string; volume: string } {

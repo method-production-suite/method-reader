@@ -91,7 +91,7 @@ Options:
       --version          print the version and exit
 
 Commands:
-  screepub devices [--json]                 list connected e-readers
+  screepub devices [--quick] [--json]       list connected e-readers
   screepub send <file> [--device <id>] [--json]
                                             send an existing file to one
   screepub settings <file.fountain> [--set <json>] [--json]
@@ -125,12 +125,13 @@ Each verb has its own --help.
 const DEVICES_USAGE = `screepub devices: list every connected e-reader
 
 Usage:
-  screepub devices [--json]
+  screepub devices [--quick] [--json]
 
 Lists USB-mounted Kindle, Kobo and tolino volumes, plus a docked reMarkable if
 its USB web interface answers. Nothing connected is an empty list, not an error.
 
 Options:
+  --quick                answer at once, without looking for a reMarkable
   --json                 machine-readable result on stdout (for the app)
   -h, --help             show this help
 `;
@@ -658,7 +659,7 @@ type VerbFlag = `--${Exclude<Extract<keyof VerbValues, string>, 'json' | 'help'>
  * type-check until it has a row; tests/cli-verb-flags.test.ts runs every verb
  * against every flag. */
 const VERB_FLAGS: Record<Verb, readonly VerbFlag[]> = {
-  devices: [],
+  devices: ['--quick'],
   send: ['--device'],
   settings: ['--set'],
   export: ['--for', '--fountain', '--options-json', '--out', '--check'],
@@ -730,7 +731,7 @@ async function runVerb(verb: Verb, args: string[]): Promise<void> {
       if (positionals.length > 0) {
         fail({ code: 'usage', message: `devices takes no arguments (got "${positionals[0]}")` });
       }
-      const { devices } = await devicesCommand(deviceSeams());
+      const { devices } = await devicesCommand({ ...deviceSeams(), skipRemarkable: values.quick });
       if (jsonMode) {
         console.log(JSON.stringify({ ok: true, devices }));
         return;
