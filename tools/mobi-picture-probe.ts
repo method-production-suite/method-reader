@@ -1,25 +1,36 @@
 // bun tools/mobi-picture-probe.ts --out <folder>
 //
-// Builds a small book for one question only a device can answer: how large
-// a picture an older Kindle accepts in a .mobi. Writes two files into the
+// Builds small books for one question only a device can answer: how large
+// a picture an older Kindle accepts in a .mobi. Writes five files into the
 // folder, creating it if need be:
 //
-//   screepub-picture-probe.mobi  the file to copy to the Kindle's documents folder
-//   screepub-picture-probe.epub  the same book as an EPUB, to compare it with
+//   screepub-picture-probe.mobi         all three pictures in one book
+//   screepub-picture-probe.epub         that book as an EPUB, to compare it with
+//   screepub-picture-probe-2kb.mobi     the 2 KB picture alone
+//   screepub-picture-probe-200kb.mobi   the 200 KB picture alone
+//   screepub-picture-probe-1400kb.mobi  the 1.4 MB plate alone
 //
-// Both come from one .fountain text through convertFountain, the route a
+// The four .mobi files all go to the Kindle's documents folder. The single
+// books are there for the failure the combined one cannot report on: if one
+// record too large makes the Kindle refuse the whole book, the combined book
+// says only that something failed, and the smaller sizes still answer from
+// books of their own. Each has its own title (Picture Probe 2 KB, and so on),
+// so the library tells them apart.
+//
+// Every book comes from a .fountain text through convertFountain, the route a
 // re-render from a .fountain takes, so the probe is built by the engine's own
-// renderer and writer rather than a copy of them. The book shows three
-// pictures, each announced by a line of action that names its size: about
-// 2 KB, about 200 KB, and about 1.4 MB as a full-page plate. The middle one
-// is past the single-record cap older Kindle firmware is reported to have
+// renderer and writer rather than a copy of them. The combined book shows the
+// three pictures, each announced by a line of action that names its size:
+// about 2 KB, about 200 KB, and about 1.4 MB as a full-page plate. The middle
+// one is past the single-record cap older Kindle firmware is reported to have
 // (about 127 KB); the last is the size of the largest full-page plate
 // measured in a real script. Why a cap is plausible at all is in registry
 // #19a's "On a device" bullet.
 //
 // Every run writes the same bytes: the pictures are drawn from seeded static,
-// and the build runs with its clock fixed. So a finding on one copy holds for
-// every copy. Prints the three sizes. Exit codes: 0 done, 1 refused or failed.
+// and each build runs with its clock fixed. So a finding on one copy holds
+// for every copy. Prints the files and the three sizes. Exit codes: 0 done,
+// 1 refused or failed.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -36,6 +47,23 @@ export interface ProbePicture {
   bytes: Uint8Array;
   /** Set as a full-page plate, as the largest real plates are. */
   fullPage: boolean;
+  /**
+   * Its size as the single book that holds it alone is named, in the file
+   * name and in the title. Fixed rather than measured, so the files are
+   * called the same whatever a different zlib makes of the bytes; the line of
+   * action inside each book is the measured size.
+   */
+  nominal: { file: string; title: string };
+}
+
+/** The file the single book holding `picture` alone is written to. */
+export function singleMobiFile(picture: ProbePicture): string {
+  return `screepub-picture-probe-${picture.nominal.file}.mobi`;
+}
+
+/** The title of the single book holding `picture` alone. */
+export function singleTitle(picture: ProbePicture): string {
+  return `Picture Probe ${picture.nominal.title}`;
 }
 
 /** mulberry32: a small seeded generator, so every run draws the same static. */
@@ -96,9 +124,18 @@ function drawPicture(width: number, height: number, staticW: number, staticH: nu
  */
 export function probePictures(): ProbePicture[] {
   return [
-    { name: 'p001-01.png', bytes: drawPicture(480, 360, 13, 13, 1), fullPage: false },
-    { name: 'p002-01.png', bytes: drawPicture(480, 360, 256, 255, 2), fullPage: false },
-    { name: 'p003-01.png', bytes: drawPicture(600, 800, 584, 784, 3), fullPage: true },
+    {
+      name: 'p001-01.png', bytes: drawPicture(480, 360, 13, 13, 1), fullPage: false,
+      nominal: { file: '2kb', title: '2 KB' },
+    },
+    {
+      name: 'p002-01.png', bytes: drawPicture(480, 360, 256, 255, 2), fullPage: false,
+      nominal: { file: '200kb', title: '200 KB' },
+    },
+    {
+      name: 'p003-01.png', bytes: drawPicture(600, 800, 584, 784, 3), fullPage: true,
+      nominal: { file: '1400kb', title: '1.4 MB' },
+    },
   ];
 }
 
@@ -111,19 +148,24 @@ export function plainSize(bytes: number): string {
   return bytes < 1_000_000 ? `${Math.round(bytes / 1000)} KB` : `${(bytes / 1_000_000).toFixed(1)} MB`;
 }
 
-/** The probe's script: three short scenes, one picture each, each picture
- * announced by a line that names its size. Invented, like every fixture. */
-export function probeScript(pictures: readonly ProbePicture[]): string {
+/** The probe's script: a short scene per picture, each picture announced by
+ * a line that names its size. Invented, like every fixture. The combined book
+ * is all three under the title Picture Probe; a single book is one picture
+ * under a title of its own. */
+export function probeScript(pictures: readonly ProbePicture[], title = 'Picture Probe'): string {
   const scenes = ['INT. TEST ROOM - DAY', 'INT. LONG HALLWAY - NIGHT', 'EXT. ROOFTOP - DAWN'];
-  const lines = ['Title: Picture Probe', 'Author: Marlow Penn', ''];
+  const lines = [`Title: ${title}`, 'Author: Marlow Penn', ''];
+  const one = pictures.length === 1;
   pictures.forEach((picture, i) => {
     lines.push(scenes[i], '');
     if (i === 0) {
       lines.push(
-        'A plain room, kept for one question: which of three pictures this Kindle shows.',
+        one
+          ? 'A plain room, kept for one question: whether this Kindle shows the picture in it.'
+          : 'A plain room, kept for one question: which of three pictures this Kindle shows.',
         '',
-        'Each picture is a black frame around a grey checkerboard with a patch of static in it. '
-          + 'The bigger the file, the more of it is static.',
+        `${one ? 'The picture is' : 'Each picture is'} a black frame around a grey checkerboard `
+          + 'with a patch of static in it. The bigger the file, the more of it is static.',
         '',
       );
     }
@@ -164,27 +206,55 @@ async function atFixedClock<T>(at: number, build: () => Promise<T>): Promise<T> 
 /** The build time both books record, whenever they are built. */
 const BUILT_AT = Date.UTC(2026, 9, 1);
 
-/** Both books and the pictures they carry, built as the CLI builds a
- * .fountain's books with Screepub's own defaults (includeImages on). */
-export async function buildProbe(): Promise<{ mobi: Uint8Array; epub: Uint8Array; pictures: ProbePicture[] }> {
+/** One single-picture book: its file, its title, its picture and its .mobi. */
+export interface SingleProbe {
+  file: string;
+  title: string;
+  picture: ProbePicture;
+  mobi: Uint8Array;
+}
+
+/** The books and the pictures they carry, built as the CLI builds a
+ * .fountain's books with Screepub's own defaults (includeImages on): the
+ * combined book as a .mobi and an EPUB, and each picture alone in a .mobi of
+ * its own, smallest first. */
+export async function buildProbe(): Promise<{
+  mobi: Uint8Array;
+  epub: Uint8Array;
+  pictures: ProbePicture[];
+  singles: SingleProbe[];
+}> {
   const pictures = probePictures();
-  const images = new Map(pictures.map((p) => [p.name, p.bytes]));
-  const result = await atFixedClock(BUILT_AT, () => convertFountain(probeScript(pictures), { mobi: true, images }));
-  return { mobi: result.mobi!, epub: result.epub, pictures };
+  const build = (shown: readonly ProbePicture[], title?: string) =>
+    atFixedClock(BUILT_AT, () => convertFountain(probeScript(shown, title), {
+      mobi: true,
+      images: new Map(shown.map((p) => [p.name, p.bytes])),
+    }));
+  const combined = await build(pictures);
+  const singles: SingleProbe[] = [];
+  for (const picture of pictures) {
+    const title = singleTitle(picture);
+    singles.push({ file: singleMobiFile(picture), title, picture, mobi: (await build([picture], title)).mobi! });
+  }
+  return { mobi: combined.mobi!, epub: combined.epub, pictures, singles };
 }
 
 if (import.meta.main) {
   try {
     const { values } = parseArgs({ args: Bun.argv.slice(2), options: { out: { type: 'string' } } });
     if (values.out === undefined) throw new Error('usage: bun tools/mobi-picture-probe.ts --out <folder>');
-    const { mobi, epub, pictures } = await buildProbe();
+    const { mobi, epub, pictures, singles } = await buildProbe();
     mkdirSync(values.out, { recursive: true });
     writeFileSync(join(values.out, MOBI_FILE), mobi);
     writeFileSync(join(values.out, EPUB_FILE), epub);
+    for (const single of singles) writeFileSync(join(values.out, single.file), single.mobi);
+    const width = Math.max(MOBI_FILE.length, EPUB_FILE.length, ...singles.map((s) => s.file.length));
     console.log(`Wrote the probe to ${values.out}:`);
-    console.log(`  ${MOBI_FILE}  copy this one to the Kindle's documents folder`);
-    console.log(`  ${EPUB_FILE}  the same book as an EPUB, to compare`);
-    console.log('The three pictures, in the order the book shows them:');
+    console.log(`  ${MOBI_FILE.padEnd(width)}  Picture Probe, all three pictures`);
+    for (const single of singles) console.log(`  ${single.file.padEnd(width)}  ${single.title}, that picture alone`);
+    console.log(`  ${EPUB_FILE.padEnd(width)}  Picture Probe as an EPUB, to compare`);
+    console.log("Copy the four .mobi files to the Kindle's documents folder.");
+    console.log('The three pictures, in the order Picture Probe shows them:');
     pictures.forEach((p, i) => {
       const plate = p.fullPage ? ', a full-page plate' : '';
       console.log(`  ${i + 1}. about ${plainSize(p.bytes.length)} (${p.bytes.length.toLocaleString('en-US')} bytes)${plate}`);

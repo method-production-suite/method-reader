@@ -1,7 +1,8 @@
-// tools/mobi-picture-probe.ts builds the book a device pass copies to an
+// tools/mobi-picture-probe.ts builds the books a device pass copies to an
 // older Kindle to learn how large a picture its .mobi may carry (registry
-// #19a, torture manifest row 19a). Run here as a real process, the way the
-// pass runs it, and judged by the files it writes.
+// #19a, torture manifest row 19a): one with all three pictures, and one per
+// picture. Run here as a real process, the way the pass runs it, and judged
+// by the files it writes.
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,7 +10,21 @@ import { join } from 'node:path';
 import JSZip from 'jszip';
 import { isPng } from '../src/parser/png';
 import { mobiPictures } from './helpers/mobi-records';
-import { EPUB_FILE, MOBI_FILE, plainSize, probePictures } from '../tools/mobi-picture-probe';
+import {
+  EPUB_FILE,
+  MOBI_FILE,
+  plainSize,
+  probePictures,
+  singleMobiFile,
+} from '../tools/mobi-picture-probe';
+
+/** The single-picture books' files, smallest first, spelled out rather than
+ * derived: these are the names the device check tells a person to copy. */
+const SINGLE_FILES = [
+  'screepub-picture-probe-2kb.mobi',
+  'screepub-picture-probe-200kb.mobi',
+  'screepub-picture-probe-1400kb.mobi',
+];
 
 const ROOT = join(import.meta.dir, '..');
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-mobi-picture-probe-'));
@@ -21,6 +36,8 @@ interface Run {
   stderr: string;
   mobi: Uint8Array;
   epub: Uint8Array;
+  /** The single-picture books, in SINGLE_FILES order. */
+  singles: Uint8Array[];
 }
 
 async function runProbe(out: string): Promise<Run> {
@@ -41,8 +58,14 @@ async function runProbe(out: string): Promise<Run> {
     stderr,
     mobi: new Uint8Array(readFileSync(join(out, MOBI_FILE))),
     epub: new Uint8Array(readFileSync(join(out, EPUB_FILE))),
+    singles: SINGLE_FILES.map((file) => new Uint8Array(readFileSync(join(out, file)))),
   };
 }
+
+/** The PDB name: the title, as the writer stores it in the first 32 bytes. */
+const pdbName = (b: Uint8Array) => new TextDecoder().decode(b.slice(0, 32)).replace(/\0+$/, '');
+/** The PDB header's unique id seed, which the writer hashes from the title. */
+const uidSeed = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(68);
 
 /** The .mobi's text records joined: the markup, read the way a reader reads
  * it, from the PDB's record list and the PalmDOC header's record count. */
@@ -60,11 +83,40 @@ describe('the picture probe', () => {
     run = await runProbe(join(SCRATCH, 'first'));
   }, 60000);
 
-  test('writes the .mobi and the .epub, and prints the three sizes', () => {
+  test('writes the .mobi, the .epub and a .mobi per size, and prints the files and the three sizes', () => {
     expect(run.exitCode, run.stderr).toBe(0);
     expect(run.stdout).toContain(MOBI_FILE);
     expect(run.stdout).toContain(EPUB_FILE);
+    for (const file of SINGLE_FILES) expect(run.stdout).toContain(file);
+    expect(probePictures().map(singleMobiFile)).toEqual(SINGLE_FILES);
     for (const size of ['about 2 KB', 'about 200 KB', 'about 1.4 MB']) expect(run.stdout).toContain(size);
+  });
+
+  // If one record too large makes the Kindle refuse the whole book, the
+  // combined book can only say that something failed. Each size alone in a
+  // book of its own still answers.
+  test('each single book holds its one picture, the same bytes as the combined book’s', () => {
+    const combined = mobiPictures(run.mobi);
+    run.singles.forEach((book, i) => {
+      expect(mobiPictures(book), SINGLE_FILES[i]).toEqual([combined[i]]);
+      const html = mobiMarkup(book);
+      const line = html.indexOf(`<p>The next picture is about ${plainSize(combined[i].length)}.`);
+      const img = html.indexOf('<img recindex="00001"');
+      expect(line, SINGLE_FILES[i]).toBeGreaterThanOrEqual(0);
+      expect(img, SINGLE_FILES[i]).toBeGreaterThan(line);
+    });
+    // The plate is a plate in its own book too.
+    expect(mobiMarkup(run.singles[2])).toContain(
+      '<mbp:pagebreak/>\n<p align="center"><img recindex="00001" alt="Illustration"/></p>\n<mbp:pagebreak/>',
+    );
+  });
+
+  test('the four books carry four titles and four ids, so a library tells them apart', () => {
+    const books = [run.mobi, ...run.singles];
+    expect(books.map(pdbName)).toEqual([
+      'Picture Probe', 'Picture Probe 2 KB', 'Picture Probe 200 KB', 'Picture Probe 1.4 MB',
+    ]);
+    expect(new Set(books.map(uidSeed)).size).toBe(4);
   });
 
   test('the pictures land where the device check needs them: tiny, past the 127 KB cap, and a real plate’s size', () => {
@@ -112,6 +164,7 @@ describe('the picture probe', () => {
     const again = await runProbe(join(SCRATCH, 'second'));
     expect(again.mobi).toEqual(run.mobi);
     expect(again.epub).toEqual(run.epub);
+    expect(again.singles).toEqual(run.singles);
     expect(mobiPictures(run.mobi)).toEqual(probePictures().map((p) => p.bytes));
   }, 60000);
 
