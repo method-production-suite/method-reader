@@ -47,9 +47,14 @@ export function ejectCommands(volume: string, platform: NodeJS.Platform): string
   return 'needs-device';
 }
 
-/** Linux: the question that finds the block device behind a mount point. */
+/** Linux: the question that finds the block device behind a mount point.
+ *  `--mountpoint`, never `--target`: a tolino is recognised by its folder
+ *  name alone, so a listed volume can be a plain folder on an ordinary disk,
+ *  and `--target` would walk up to the filesystem holding it and name that
+ *  disk. `--mountpoint` answers nothing (exit 1) for a folder that is not a
+ *  mount point itself, and the caller refuses. */
 export function findDeviceCommand(volume: string): string[] {
-  return ['findmnt', '-n', '-o', 'SOURCE', '--target', volume];
+  return ['findmnt', '-n', '-o', 'SOURCE', '--mountpoint', volume];
 }
 
 /** Linux: unmount, then power off, in that order. */

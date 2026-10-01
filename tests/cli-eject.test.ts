@@ -96,7 +96,7 @@ describe('ejectCommand: the command per platform', () => {
     );
     const result = await ejectCommand(linuxKobo.volume!, { platform: 'linux', devices: async () => [linuxKobo], run });
     expect(calls).toEqual([
-      ['findmnt', '-n', '-o', 'SOURCE', '--target', '/run/media/sam/KOBOeReader'],
+      ['findmnt', '-n', '-o', 'SOURCE', '--mountpoint', '/run/media/sam/KOBOeReader'],
       ['udisksctl', 'unmount', '-b', '/dev/sdb1'],
       ['udisksctl', 'power-off', '-b', '/dev/sdb1'],
     ]);
@@ -120,6 +120,21 @@ describe('ejectCommand: the command per platform', () => {
     const err = await caught(ejectCommand(linuxKobo.volume!, { platform: 'linux', devices: async () => [linuxKobo], run }));
     expect(codeOf(err)).toBe('eject-failed');
     expect(calls.length).toBe(1);
+  });
+
+  test('linux: a reader that is a plain folder, not a mount point, never reaches the disk it sits on', async () => {
+    // A tolino is recognised by its folder name alone, so a listed volume can
+    // be a folder on an ordinary disk. findmnt --mountpoint answers nothing
+    // (and exits 1) for such a folder; --target would have walked up to the
+    // containing filesystem and named the parent disk.
+    const tolino: ConnectedDevice = { kind: 'tolino', name: 'tolino', volume: '/home/sam/tolino' };
+    const { run, calls } = recordingRun((argv) =>
+      argv.includes('--target') ? { code: 0, stdout: '/dev/sda2\n', stderr: '' } : { code: 1, stdout: '', stderr: '' },
+    );
+    const err = await caught(ejectCommand(tolino.volume!, { platform: 'linux', devices: async () => [tolino], run }));
+    expect(codeOf(err)).toBe('eject-failed');
+    expect((err as Error).message).toBe('could not eject /home/sam/tolino: could not find the device behind it');
+    expect(calls).toEqual([['findmnt', '-n', '-o', 'SOURCE', '--mountpoint', '/home/sam/tolino']]);
   });
 
   test('win32: the PowerShell line names the drive E: for the volume E:\\', async () => {

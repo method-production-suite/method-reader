@@ -60,8 +60,10 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     new CliError('eject-failed', `could not eject ${volume}${detail ? `: ${detail}` : ''}`);
 
   /** One step, raced against the timeout so even a runner that never
-   *  answers cannot hold the window's button forever. */
-  const step = async (argv: string[]): Promise<string> => {
+   *  answers cannot hold the window's button forever. `anyExit` hands back
+   *  stdout whatever the exit code, for a question whose silence is itself
+   *  the answer. */
+  const step = async (argv: string[], anyExit = false): Promise<string> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<null>((resolve) => {
       timer = setTimeout(() => resolve(null), timeoutMs);
@@ -77,7 +79,7 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     if (answer === null || answer.code === null) {
       throw failed('it took too long to answer');
     }
-    if (answer.code !== 0) throw failed(firstLine(answer.stderr, answer.stdout));
+    if (answer.code !== 0 && !anyExit) throw failed(firstLine(answer.stderr, answer.stdout));
     return answer.stdout;
   };
 
@@ -86,7 +88,9 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
   const listed = reader.volume as string;
   let commands = ejectCommands(listed, platform);
   if (commands === 'needs-device') {
-    const device = firstLine(await step(findDeviceCommand(listed)));
+    // findmnt exits 1 with nothing to say for a folder that is not a mount
+    // point; that is the same "no device" as an empty answer.
+    const device = firstLine(await step(findDeviceCommand(listed), true));
     if (device === '') throw failed('could not find the device behind it');
     commands = linuxEjectCommands(device);
   }
