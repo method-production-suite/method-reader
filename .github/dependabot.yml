@@ -52,6 +52,3 @@ updates:
       dependencies:
         patterns: ["*"]
         update-types: ["minor", "patch"]
-
-# No SwiftPM entry on purpose: app/Package.swift declares only local
-# targets, so there is nothing external to update.

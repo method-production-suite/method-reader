@@ -3,8 +3,8 @@
 # fixtures in tests/fixtures/; nothing self-skips for want of them (that
 # guard was removed: see tests/fixture-stability.test.ts). The real scripts
 # in root fixtures/ are private and never reach CI. No runner here has
-# Calibre, so the engine's Calibre tests and kit-check's conversion checks
-# skip; .github/workflows/weekly-toolchain.yml runs them with Calibre.
+# Calibre, so the engine's Calibre tests skip;
+# .github/workflows/weekly-toolchain.yml runs them with Calibre.
 name: ci
 # site/ and brand/ ship to a browser, not into a converted book, and neither
 # is touched by the engine suite. Skipping them keeps a copy edit off the
@@ -49,14 +49,6 @@ jobs:
             echo "::error file=package.json::package.json says $V but $F is missing or empty. Every version ships notes: add that file, or revert the bump."
             exit 1
           }
-  app:
-    runs-on: macos-15   # Swift 6 toolchain (macos-14 ships 5.10)
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: swift build -c release
-        working-directory: app
-      - run: swift run -c release kit-check
-        working-directory: app
   # The shipped CLI is the bun-COMPILED binary, whose distinct failure
   # modes (pdf.js's dynamic worker import, the inlined package.json) only
   # exist after compilation — before this job they were first exercised

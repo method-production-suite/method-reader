@@ -1,31 +1,6 @@
 {
   "$comment": "The blast radius of deleting app/ — every tracked file OUTSIDE app/ that names the SwiftUI app, its directory, its build commands or the release artifacts only it produces. Enforced by tests/app-references.test.ts, which defines what counts as a reference and why. `refs` is a CEILING: it may fall (that is progress toward piece F3), never rise without a row being updated deliberately. `category` is what would break: build = a workflow or script that executes or packages app/; test = a bun test that reads app/ or asserts about its artifacts; artifact = names a release artifact or bundle only the Swift app produces; doc = user-facing prose that becomes false; note = a comment citing app/ as provenance, stale rather than broken; freeze = the F1 freeze machinery itself. See docs/superpowers/specs/2026-09-14-retire-swiftui-design.md (F3 acceptance criterion 11: this file is empty when the retirement is done).",
   "files": {
-    ".github/dependabot.yml": {
-      "refs": 2,
-      "category": "note",
-      "breaks": "A comment explaining why there is no SwiftPM ecosystem entry: it names app/Package.swift. Goes with the directory."
-    },
-    ".github/workflows/ci.yml": {
-      "refs": 6,
-      "category": "build",
-      "breaks": "The `app` job: swift build + `swift run kit-check` on macos-15, working-directory: app. This job is COVERAGE (171 of kit-check's 264 checks exist nowhere else) and must survive until F3, then be deleted whole."
-    },
-    ".github/workflows/release.yml": {
-      "refs": 28,
-      "category": "build",
-      "breaks": "The macOS Swift job (working-directory: app), app/release.sh, the three app/dist assets it uploads, and the tap crib sheet that hashes them. ALSO, since 2026-09-21, the notarization step's comment cites app/release.sh as the reference for notarize+staple on the DMG: that is provenance, not a dependency, and the step keeps working when app/ goes. NOTE for whoever greps: this file ALSO says `path: app` and `cd app` in the app-bundles/app-upload jobs, and those are the TAURI bundle staging directory, not this repository directory. Do not delete them."
-    },
-    ".github/workflows/weekly-toolchain.yml": {
-      "refs": 5,
-      "category": "build",
-      "breaks": "The kit-check job is `swift run -c release kit-check` with working-directory: app, on macos-15 with Calibre. F3 deletes that job only: the same file now holds the engine-calibre job, which runs the engine's Calibre tests from the repo root and never touches app/. The kit-check job is reachable only through `working-directory: app`, which a grep for \"app/\" does not see."
-    },
-    ".gitignore": {
-      "refs": 3,
-      "category": "build",
-      "breaks": "Ignores app/build/, app/dist/, app/.build/ — the SwiftPM and release output paths."
-    },
     "CLAUDE.md": {
       "refs": 7,
       "category": "doc",
@@ -175,11 +150,6 @@
       "refs": 1,
       "category": "test",
       "breaks": "The notarization step's test names app/release.sh as the reference for the submit/staple/validate sequence it asserts. Provenance in a comment, not a dependency: the assertions are about release.yml's own bash and survive app/ being deleted."
-    },
-    "tests/release-artifacts.test.ts": {
-      "refs": 14,
-      "category": "test",
-      "breaks": "READS app/release.sh and asserts it still produces the two tarballs and the DMG, that release.yml uploads app/dist/*, and that site/index.html carries exactly three DMG buttons. Roughly eight tests fail at F3; several must change at F2 instead."
     },
     "tests/sidecar.test.ts": {
       "refs": 1,

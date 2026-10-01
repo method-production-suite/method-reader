@@ -26,9 +26,6 @@ npm-debug.log*
 # publishable ones in tests/fixtures/ are committed on purpose.
 /fixtures/
 /out/
-app/build/
-app/dist/
-app/.build/
 __pycache__/
 
 # Superpowers worktrees (scratch, never committed)

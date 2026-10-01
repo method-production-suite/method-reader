@@ -141,10 +141,6 @@ jobs:
           bun tools/update-signature.ts --pubkey-from-config "$RUNNER_TEMP/tauri.conf.json"
       - run: bunx tsc --noEmit
       - run: bun test
-      - run: swift build -c release
-        working-directory: app
-      - run: swift run -c release kit-check
-        working-directory: app
   release:
     needs: checks
     runs-on: macos-15   # codesign and notarytool need a Mac
@@ -243,15 +239,15 @@ jobs:
           # accepts a `-rc1`-style suffix, so prereleases are a supported
           # concept -- but nothing downstream honored that until now.
           # Without --prerelease, `gh release create` marks EVERY tag,
-          # including v0.5.0-rc1, as a normal release. app/Sources/
-          # ScreepubKit/UpdateCheck.swift no longer polls
-          # `GET /releases/latest`; for the in-app notes sheet it lists
-          # every release (`/releases?per_page=30`) and its own select()
-          # filters out anything GitHub marks isPrerelease. That filter
-          # reads the very flag this step sets, so it reinforces the need
-          # for --prerelease rather than replacing it: skip this flag and
-          # a release candidate becomes an ordinary release both to
-          # GitHub and to select().
+          # including v0.5.0-rc1, as a normal release. The retired Swift
+          # app's update checker, still running on any Mac that never
+          # updated, does not poll `GET /releases/latest`; for its notes
+          # sheet it lists every release (`/releases?per_page=30`) and its
+          # own select() filters out anything GitHub marks isPrerelease.
+          # That filter reads the very flag this step sets, so it
+          # reinforces the need for --prerelease rather than replacing it:
+          # skip this flag and a release candidate becomes an ordinary
+          # release both to GitHub and to select().
           # Expanded below with the ${arr[@]+...} guard, never bare.
           # The runner is macOS, whose bash is 3.2, where expanding an EMPTY
           # array under `set -u` is an unbound-variable error rather than
@@ -765,8 +761,8 @@ jobs:
       # it got through the v0.6.0 gate. A PERSON cares: a browser
       # download carries the quarantine attribute and Gatekeeper assesses
       # the image when they double-click it. The Swift app's image never
-      # did that to anyone, because app/release.sh notarizes and staples
-      # the container, and this is that same sequence. Since the identifier
+      # did that to anyone, because its release script notarized and
+      # stapled the container, and this is that same sequence. Since the identifier
       # release this image IS Screepub-macOS.dmg, the one people download.
       #
       # BEFORE the smoke step on purpose, so the bytes that get mounted

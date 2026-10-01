@@ -674,8 +674,9 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // tarballs come from build-cli.ts --mac, which signs before packaging
     // and refuses to start without the notary key.
     const release = runText(rel.jobs['release']!);
-    expect(release).not.toContain('app/release.sh');
-    expect(release).not.toContain('app/dist/');
+    // No path into the Swift app's old directory (its release script, its
+    // dist folder), and no Rosetta, which only the Swift build needed.
+    expect(release).not.toMatch(/(?<![\w./-])app\//);
     expect(release).not.toMatch(/rosetta/i);
     expect(release).toMatch(/bun tools\/build-cli\.ts --version "\$\{VERSION#v\}" --out "\$RUNNER_TEMP\/cli-mac"/);
     expect(release).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
@@ -691,7 +692,7 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // The new jobs must not touch the Swift build, the CLI or the tap.
     for (const jobName of ['app-bundles', 'app-upload']) {
       const text = runText(rel.jobs[jobName]!);
-      expect(text).not.toContain('app/release.sh');
+      expect(text).not.toMatch(/(?<![\w./-])app\//);
       expect(text).not.toContain('bump-tap');
       for (const name of MACOS_CLI_ASSETS) expect(text).not.toContain(name);
     }

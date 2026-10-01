@@ -1,8 +1,9 @@
-# kit-check's Calibre-dependent regression checks (AZW3 keeps the
-# dialogue column's margins; KEPUB carries koboSpan markup) are gated on
-# an installed Calibre and previously ran only on the maintainer's Mac.
-# Weekly is the right cadence: they guard against CALIBRE behavior
-# changes, which arrive on brew's schedule, not this repo's.
+# The engine's Calibre-dependent tests (AZW3 keeps the dialogue column's
+# margins; KEPUB carries koboSpan markup; the KFX plugin listing) are gated
+# on an installed Calibre, which no ci.yml runner has. Weekly is the right
+# cadence: they guard against CALIBRE behavior changes, which arrive on
+# brew's schedule, not this repo's. Until piece F3 this file also ran the
+# Swift Mac app's own Calibre checks; that job went with the app.
 # Least privilege + pinned actions, matching ci.yml.
 name: weekly-toolchain
 on:
@@ -12,14 +13,6 @@ on:
 permissions:
   contents: read
 jobs:
-  calibre-kit-check:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install Calibre
-        run: brew install --cask calibre
-      - run: swift run -c release kit-check
-        working-directory: app
   # The ENGINE's Calibre tests, against whatever Calibre brew serves this
   # week. ci.yml's runners have no Calibre, so there every test that needs
   # a real ebook-convert or calibre-customize skips, and a Calibre release
@@ -27,9 +20,9 @@ jobs:
   # would otherwise surface only on the maintainer's Mac. Here it goes red
   # within a week.
   #
-  # Run from the repo root with bun alone, on purpose: this job must not
-  # depend on the Swift job above or anything it builds, so removing that
-  # job later leaves this one untouched. `bun test` from the root picks up
+  # Run from the repo root with bun alone, on purpose: it never depended
+  # on the Swift job that used to sit beside it, which is why deleting that
+  # job left this one untouched. `bun test` from the root picks up
   # bunfig.toml's preloads and .env.test, so every Calibre spawn reads a
   # scratch copy of the (here empty) Calibre settings folder, never a real
   # one.
