@@ -210,7 +210,7 @@ const NON_SHIPPING_PREFIXES = ['docs/', 'tests/', '.github/', 'tools/', 'site/',
 /**
  * Whether ANY changed path ships to a reader.
  *
- * A denylist, not an allowlist (`src/`, `app/`), on purpose: the two fail
+ * A denylist, not an allowlist (`src/`, `desktop/`), on purpose: the two fail
  * differently. A denylist gap (a new non-shipping top-level directory not
  * yet listed) costs an occasional wasted drafting pass on nothing —
  * cheap, and it corrects itself the first time someone notices. An

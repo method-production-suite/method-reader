@@ -1,5 +1,6 @@
-// A pre-filled bug report. Ported from app/Sources/ScreepubKit/Feedback.swift,
-// which is frozen, so this is the live copy.
+// A pre-filled bug report. Ported in 4e74939 from the Swift Mac app's
+// Feedback type (deleted at piece F3; see it at tag v0.7.4), so this is the
+// only copy.
 //
 // Pure, and deliberately in the window rather than in src/: nothing but a
 // window has a browser to open, and the CLI has no use for a GitHub issue
@@ -22,7 +23,7 @@ export const NEW_ISSUE_BASE = 'https://github.com/ssandweiss/screepub/issues/new
  *  versions are the two facts the person reporting is least likely to know
  *  offhand and least able to get wrong if the app fills them in.
  *
- *  Built with URLSearchParams rather than by hand. Feedback.swift had to
+ *  Built with URLSearchParams rather than by hand. The Swift version had to
  *  patch a literal "+" to %2B afterwards, because URLComponents leaves it
  *  alone and a query parser then reads it as a space — so "C++" arrived as
  *  "C  ". URLSearchParams encodes it correctly to begin with, which is why

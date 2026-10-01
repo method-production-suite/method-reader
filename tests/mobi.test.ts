@@ -18,7 +18,7 @@ EXT. YARD - NIGHT
 `;
 
 // tokensToMobiHtml takes FormatOptions with no default on purpose (same
-// reason Export.swift's kfxReady has none): a call site that forgets it
+// reason the Swift app's kfxReady had none): a call site that forgets it
 // would silently render with scenePageBreaks off rather than fail.
 const OPTS = resolveFormatOptions({});
 

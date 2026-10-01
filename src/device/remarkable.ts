@@ -68,21 +68,20 @@ export async function uploadToRemarkable(
 ): Promise<void> {
   const ext = extname(file).replace(/^\./, '').toLowerCase();
   if (!remarkableAccepts(file)) {
-    // BYTE-IDENTICAL to RemarkableDevice.swift's wording, trailing period and
-    // all, as are the other three RemarkableUploadError messages below. Piece
-    // A ported this module from the Swift deliberately and its review verified
-    // the error text matched; the Swift stays the source of truth until the
-    // Mac app retires (piece F), KitCheck still runs against it, and a reader
-    // diffing the two modules must find them saying the same thing. Do not
-    // reword these while app/ exists — cli-devices.ts's own pre-check was
-    // brought into line with THIS text, not the other way round.
+    // Byte-identical to the Swift Mac app's reMarkable device wording,
+    // trailing period and all, as are the other three RemarkableUploadError
+    // messages below. Piece A ported this module from the Swift deliberately
+    // (a84c4e8) and its review verified the error text matched. The Swift
+    // was the source of truth until piece F3 deleted it; this text is now,
+    // and it is free to change. cli-devices.ts's own pre-check was brought
+    // into line with THIS text, not the other way round, so change both.
     throw new RemarkableUploadError(`reMarkable accepts PDF and EPUB, not .${ext}.`);
   }
 
   // Fail the whole send before any bytes move or any state changes.
   //
-  // DIVERGENCE from RemarkableDevice.swift, deliberately: it reads the size
-  // as `try? ... ?? 0`, so an unreadable file sails past the size guard as
+  // DIVERGENCE from the Swift app's version, deliberately: it read the size
+  // as `try? ... ?? 0`, so an unreadable file sailed past the size guard as
   // "0 bytes" and into the POST. Here statSync throws and the send stops —
   // the safer behavior, and the honest one: a file we cannot stat is a file
   // we cannot upload either.

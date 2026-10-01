@@ -217,8 +217,8 @@ describe("release.yml's notarization step, executed as bash", () => {
     // The validate is not decoration. `stapler staple` can exit 0 on
     // paths that leave no ticket, and an image without one is the exact
     // defect this step exists to prevent, so the result is asserted
-    // rather than trusted. app/release.sh does the same three, plus the
-    // spctl, and it is the reference.
+    // rather than trusted. The Swift app's release script did the same
+    // three, plus the spctl, and it was the reference.
     const { dir, lines } = withDmgs('one', ['Screepub-macOS.dmg']);
     const r = runStep(NOTARIZE_STEP, dir, env);
     expect(r.status).toBe(0);

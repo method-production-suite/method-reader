@@ -540,10 +540,10 @@ describe('the frontend owns the contract', () => {
   });
 });
 
-describe('nothing under app/ or src/ was drawn into this', () => {
-  test('no Rust file references the Swift app or the engine sources', () => {
+describe('nothing outside desktop/ was drawn into the Rust shell', () => {
+  test('no Rust file references the engine sources', () => {
     for (const { name, text } of rustSources) {
-      expect(`${name} reaches outside desktop/: ${/\.\.\/\.\.\/(app|src)\b/.test(text)}`).toBe(
+      expect(`${name} reaches outside desktop/: ${/\.\.\/\.\.\/src\b/.test(text)}`).toBe(
         `${name} reaches outside desktop/: false`,
       );
     }
@@ -795,8 +795,8 @@ describe('what the Linux package tells a user about itself', () => {
   });
 
   test('the AGPL text and the third-party notices travel with the binary', () => {
-    // app/build-app.sh puts both inside Screepub.app for exactly this
-    // reason: the AGPL requires the licence to accompany the work, and the
+    // The Swift app's build script put both inside its bundle for exactly
+    // this reason: the AGPL requires the licence to accompany the work, and the
     // compiled engine embeds Apache-2.0 and MIT libraries. Paths are
     // relative to tauri.conf.json, hence ../../.
     expect(CONFIG.bundle.resources).toEqual({

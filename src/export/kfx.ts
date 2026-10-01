@@ -142,7 +142,7 @@ export async function kfxStatus(): Promise<KfxStatus> {
 
 /** The sibling `.kfx` for a given EPUB — same directory, same stem. Exported
  * so callers (including a later export-ladder task) derive the path here
- * rather than repeating the regex; mirrors Export.swift's mobiSibling(for:)
+ * rather than repeating the regex; mirrors the Swift app's mobiSibling(for:)
  * precedent. */
 export function kfxSibling(epub: string): string {
   return `${epub.replace(/\.epub$/i, '')}.kfx`;

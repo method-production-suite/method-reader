@@ -89,8 +89,8 @@ test('calibreTool refuses a same-named file on PATH that is not executable', () 
   }
 });
 
-// Mirrors kit-check: environment-dependent checks self-skip rather than fail,
-// so CI stays green on bare runners.
+// As the Swift app's own checks did: environment-dependent checks self-skip
+// rather than fail, so CI stays green on bare runners.
 const withCalibre = calibreTool('ebook-convert') ? bunTest : bunTest.skip;
 // The inverse: these assert the missing-tool error path, which is only true
 // to test when Calibre is genuinely absent from this machine.
@@ -146,7 +146,7 @@ test('toKepub converts to .kepub then renames to .kepub.epub (fake ebook-convert
 
     // toKepub converts to the RAW .kepub path (the extension is what makes
     // ebook-convert emit KEPUB at all) and passes the same guard trio as
-    // toAzw3. EbookConvert.swift omits the guards here; this port applies
+    // toAzw3. The Swift app's converter omitted the guards here; this port applies
     // them deliberately, because remove-fake-margins is an input-side
     // heuristic that strips the dialogue column's side margins before the
     // output format is even chosen -- see the note on toKepub. A regression
@@ -252,12 +252,12 @@ withCalibre('toKepub names its output .kepub.epub AND emits koboSpan markup', as
   // The filename alone proves nothing: the BROKEN single-step form produces
   // a file with this same name -- a plain EPUB with no koboSpan markup at
   // all. koboSpan is the only assertion that discriminates the two, which is
-  // why kit-check asserted both halves (KitCheck/main.swift:349-350) and why
+  // why the Swift app's checks asserted both halves and why
   // the fake-tool test above cannot stand in for it: it self-skips on every
   // machine that actually has Calibre.
   const out = await toKepub(await minimalEpub());
   expect(out.endsWith('.kepub.epub')).toBe(true);
-  // kit-check used zipgrep; an EPUB is a deflated zip, so the marker is not
+  // The Swift check used zipgrep; an EPUB is a deflated zip, so the marker is not
   // in the raw bytes and the entries have to be inflated to see it.
   const zip = await JSZip.loadAsync(readFileSync(out));
   const entries = Object.values(zip.files).filter((f) => !f.dir);

@@ -8,8 +8,8 @@ import type { ConnectedDevice } from '../src/device/types';
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-device-transfer-'));
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 
-/** Mirrors kit-check's tempDir(): a uniquely-rooted directory whose own name
- * is the "volume name" under test. */
+/** Mirrors the Swift app's tempDir() check helper: a uniquely-rooted
+ * directory whose own name is the "volume name" under test. */
 function volume(name: string, subdirs: string[] = []): string {
   const dir = join(mkdtempSync(join(SCRATCH, 'test-')), name);
   mkdirSync(dir, { recursive: true });

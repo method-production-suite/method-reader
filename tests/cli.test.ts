@@ -166,10 +166,11 @@ describe('cli --json contract', () => {
   });
 
   test('the success payload keys match the committed contract sample', async () => {
-    // Every optional output is requested so every key is present; the
-    // sample is the SAME file kit-check decodes into EngineResult, so a
-    // key rename must break one suite or the other before it breaks the
-    // app.
+    // Every optional output is requested so every key is present. Until
+    // piece F3 the Swift app's own checks decoded this same sample as the
+    // consumer, so a key rename had to break one suite or the other; that
+    // half went with the app, and this is the producer's pin against the
+    // committed record of the keys.
     const out = `${SCRATCH}/contract.epub`;
     const { stdout } = await runCli([
       `${FIXTURES}screenplay.pdf`, '-o', out, '--json', '--mobi', '--debug',
