@@ -75,8 +75,11 @@ if (pictures.length > 0) {
   out.push('book as everything above. What each picture is, and which sheet it is');
   out.push('on, is in the #19 and #19a entries above.');
   out.push('');
-  out.push('Read them in the KFX or the AZW3. The .mobi carries no pictures yet,');
-  out.push('so a MOBI without them is not a finding.');
+  out.push('Read them in the KFX or the AZW3, and in the .mobi Screepub builds');
+  out.push('itself when Calibre is absent, which carries them too. The .mobi has');
+  out.push('no way to give a picture a share of the text column, so the device');
+  out.push('sizes each one there: a width unlike the KFX\'s is not a finding in');
+  out.push('the .mobi.');
   out.push('');
   out.push('Dark mode has nothing to show here: none of these pictures has');
   out.push('transparency, so each is a solid rectangle on a dark page as on a');

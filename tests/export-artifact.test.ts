@@ -8,6 +8,7 @@ import JSZip from 'jszip';
 import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
 import { convertFountain } from '../src/convert';
 import { encodePng } from '../src/parser/png';
+import { mobiPictures } from './helpers/mobi-records';
 // A namespace, not a named import, because the spy below replaces the binding
 // on the module itself: that is what the code under test calls through.
 import * as libraryImages from '../src/library-images';
@@ -108,8 +109,8 @@ test('the MOBI branch rebuilds from the .fountain and writes a .mobi', async () 
 // The MOBI rung rewrites the library EPUB in place, from the .fountain, so it
 // has to find that script's pictures the way every other render from the
 // text does (src/library-images.ts), or a Kindle export on a machine without
-// Calibre would strip them from the library book. The MOBI itself carries
-// none; these are about the EPUB it rewrites on the way.
+// Calibre would strip them from the library book. The .mobi it hands over is
+// rendered from the same read, so it carries them too.
 describe('the MOBI rebuild and the picture folder', () => {
   const spies: { mockRestore(): void }[] = [];
   afterEach(() => {
@@ -168,20 +169,23 @@ describe('the MOBI rebuild and the picture folder', () => {
     // The control, without which "the book is unchanged" proves nothing: it
     // starts out carrying both pictures.
     expect(await figuresIn(epub)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
-    return { fountain, folder, epub };
+    return { fountain, folder, epub, plates };
   }
 
   /** The rung against a damaged folder: the library book is left exactly as
    * it was, date included (the window tells one version of the book from the
-   * next by it), and the .mobi it writes is current, so the next export
-   * reuses it instead of rebuilding against the same loss. */
-  async function expectBookKept(fountain: string, epub: string) {
+   * next by it); the .mobi it writes carries the pictures that could be read
+   * (`carried`, in the script's order) and goes without the rest; and that
+   * .mobi is current, so the next export reuses it instead of rebuilding
+   * against the same loss. */
+  async function expectBookKept(fountain: string, epub: string, carried: Uint8Array[]) {
     const bytes = readFileSync(epub);
     const date = statSync(epub).mtimeMs;
     const stages: string[] = [];
     const out = await rebuild(fountain, epub, DEFAULT_FORMAT_OPTIONS, (s) => stages.push(s));
     expect(out).toBe(mobiSibling(epub));
     expect(readFileSync(out).length).toBeGreaterThan(0);
+    expect(mobiPictures(readFileSync(out))).toEqual(carried);
     expect(readFileSync(epub)).toEqual(bytes);
     expect(statSync(epub).mtimeMs).toBe(date);
     expect(statSync(out).mtimeMs).toBeGreaterThan(date);
@@ -190,17 +194,25 @@ describe('the MOBI rebuild and the picture folder', () => {
     expect(stages).toEqual(['rebuilding the Kindle file…']);
   }
 
-  test('a picture the folder lost leaves the library book as it was', async () => {
-    const { fountain, folder, epub } = await libraryBook();
-    // An iCloud placeholder: the name is still there, the picture is not.
-    writeFileSync(join(folder, 'p002-01.png'), new Uint8Array(0));
-    await expectBookKept(fountain, epub);
+  test('from an intact folder, the .mobi carries every picture, in the script’s order', async () => {
+    const { fountain, epub, plates } = await libraryBook();
+    const out = await rebuild(fountain, epub);
+    expect(mobiPictures(readFileSync(out))).toEqual([plates.get('p001-01.png')!, plates.get('p002-01.png')!]);
+    // And the library book it rewrote still carries both.
+    expect(await figuresIn(epub)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
   });
 
-  test('a picture folder that is gone leaves the library book as it was', async () => {
+  test('a picture the folder lost leaves the library book as it was, and the .mobi without it', async () => {
+    const { fountain, folder, epub, plates } = await libraryBook();
+    // An iCloud placeholder: the name is still there, the picture is not.
+    writeFileSync(join(folder, 'p002-01.png'), new Uint8Array(0));
+    await expectBookKept(fountain, epub, [plates.get('p001-01.png')!]);
+  });
+
+  test('a picture folder that is gone leaves the library book as it was, and the .mobi without pictures', async () => {
     const { fountain, folder, epub } = await libraryBook();
     rmSync(folder, { recursive: true });
-    await expectBookKept(fountain, epub);
+    await expectBookKept(fountain, epub, []);
   });
 
   test('the EPUB it rewrites keeps its figure and the picture behind it', async () => {

@@ -5,15 +5,19 @@ import { Fountain } from 'fountain-js';
 import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { screenplayCss } from '../src/epub/css';
-import { resolveFormatOptions } from '../src/options';
+import { resolveFormatOptions, type FormatOptions } from '../src/options';
 import {
   convertPdf,
   convertFountain,
   imageWarnings,
   ScannedPdfError,
   NotAScreenplayError,
+  type ConvertResult,
 } from '../src/convert';
+import { mobiArt, tokensToMobiHtml } from '../src/mobi/html';
+import { buildMobi } from '../src/mobi/writer';
 import { extractDocument } from '../src/parser/extract';
+import { maskPdbDates, mobiPictures } from './helpers/mobi-records';
 // Namespaces, not named imports, because the spies below replace a binding
 // on the module itself: that is what the code under test calls through.
 import * as pictures from '../src/parser/images';
@@ -493,6 +497,82 @@ describe('the preview is handed the pictures the book is', () => {
       `<p class="figure w40"><img src="data:image/png;base64,${Buffer.from(plate).toString('base64')}" alt="Illustration"/></p>`,
     );
     expect(dataSrcs(previewHtml)).toBe(1);
+  });
+});
+
+// The engine's MOBI is rendered from the same pictures as the EPUB and the
+// preview, and mobiArt decides which of them ride. A MOBI names a picture by
+// record NUMBER, so these read the records back in order: a right picture
+// under the wrong number is a wrong picture on the page.
+describe('the MOBI is handed the pictures the book is', () => {
+  const ON = resolveFormatOptions();
+  const OFF = resolveFormatOptions({ includeImages: false });
+  /** The MOBI a conversion's text makes with no pictures in hand: today's
+   * renderer and writer, called directly. */
+  const textOnly = (result: ConvertResult, format: FormatOptions) => buildMobi({
+    title: result.meta.title,
+    author: result.meta.author,
+    html: tokensToMobiHtml(new Fountain().parse(result.fountainText, true).tokens, result.meta, format),
+  });
+
+  test('a PDF conversion’s MOBI carries the EPUB’s pictures, byte for byte, in mobiArt’s order', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
+    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const { order } = mobiArt(tokens, ON, new Set(result.images.map((img) => img.name)));
+    // The control, without which two empty lists would agree.
+    expect(order).toEqual(['p001-01.png', 'p002-01.png']);
+    const zip = await JSZip.loadAsync(result.epub);
+    const shipped = await Promise.all(order.map((name) => zip.file(`OEBPS/images/${name}`)!.async('uint8array')));
+    expect(mobiPictures(result.mobi!)).toEqual(shipped);
+  }, 60000);
+
+  test('with includeImages off, the MOBI has no picture records: it is the text-only MOBI', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), {
+      mobi: true, format: { includeImages: false },
+    });
+    // Still carried out of the PDF, so the off switch is the only reason.
+    expect(result.images).toHaveLength(2);
+    expect(mobiPictures(result.mobi!)).toEqual([]);
+    expect(maskPdbDates(result.mobi!)).toEqual(maskPdbDates(textOnly(result, OFF)));
+  }, 60000);
+
+  test('a script without pictures gets the MOBI it got before', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`), { mobi: true });
+    expect(mobiPictures(result.mobi!)).toEqual([]);
+    expect(maskPdbDates(result.mobi!)).toEqual(maskPdbDates(textOnly(result, ON)));
+  }, 60000);
+
+  describe('from a .fountain and the pictures it is handed', () => {
+    // Shown out of name order, one shown twice, a JPEG under a PNG's name,
+    // and a picture no note names.
+    const SRC = 'Title: T\n\nINT. LAB - DAY\n\n[[img: p002-01.png w=40]]\n\nBetween.\n\n'
+      + '[[img: p001-01.png w=60]]\n\nAgain.\n\n[[img: p002-01.png w=40]]\n\n'
+      + '[[img: p003-01.png w=50]]\n\nAfter.\n';
+    const red = png.encodePng(new Uint8Array([200, 10, 10]), 1, 1);
+    const blue = png.encodePng(new Uint8Array([10, 10, 200]), 1, 1);
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+    const MAP = new Map([
+      ['p001-01.png', blue],
+      ['p002-01.png', red],
+      ['p003-01.png', jpeg],
+      ['p009-01.png', png.encodePng(new Uint8Array([10, 200, 10]), 1, 1)],
+    ]);
+
+    test('the MOBI carries what the EPUB does, in the order the script first shows it', async () => {
+      const result = await convertFountain(SRC, { mobi: true, images: MAP });
+      // Script order, each once: the repeat names the first record again.
+      expect(mobiPictures(result.mobi!)).toEqual([red, blue]);
+      const zip = await JSZip.loadAsync(result.epub);
+      expect(imageEntries(zip)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    });
+
+    test('with includeImages off, the map changes nothing in the MOBI', async () => {
+      const format = { includeImages: false };
+      const without = await convertFountain(SRC, { mobi: true, format });
+      const withMap = await convertFountain(SRC, { mobi: true, format, images: MAP });
+      expect(mobiPictures(withMap.mobi!)).toEqual([]);
+      expect(maskPdbDates(withMap.mobi!)).toEqual(maskPdbDates(without.mobi!));
+    });
   });
 });
 

@@ -9,7 +9,7 @@ import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/seriali
 import { tokensToBody, tokensToPreviewHtml } from './epub/html';
 import { buildEpub, type BookImage, type BookMeta } from './epub/build';
 import { resolveFormatOptions, type FormatOptions } from './options';
-import { tokensToMobiHtml } from './mobi/html';
+import { mobiArt, tokensToMobiHtml } from './mobi/html';
 import { buildMobi } from './mobi/writer';
 import { isSafeImageFile } from './fountain/notes';
 import { isPng } from './parser/png';
@@ -93,10 +93,11 @@ export interface ConvertResult {
   spacingRepairs: number;
   /** The pictures a PDF conversion carried, for the caller to write into the
    * folder beside the `.fountain`, whose `[[img: ...]]` notes name them. The
-   * EPUB shows the ones its notes place when `includeImages` is on, but the
-   * folder is the copy every later render reads, so these are carried with
-   * the option off too. Always empty on Fountain input, which has no PDF to
-   * carry them out of: the pictures it renders came from its folder. */
+   * EPUB and the MOBI show the ones its notes place when `includeImages` is
+   * on, but the folder is the copy every later render reads, so these are
+   * carried with the option off too. Always empty on Fountain input, which
+   * has no PDF to carry them out of: the pictures it renders came from its
+   * folder. */
   images: BookImage[];
 }
 
@@ -145,9 +146,8 @@ export interface ConvertResult {
  *
  * "Kept", not "in the book": this counts what the conversion carried out of
  * the PDF, which is what the picture folder holds. A book shows only what its
- * own renderer packages, which depends on `includeImages` and on the format
- * (the MOBI shows none). A warning is user-facing copy, so it claims the
- * thing that is true in every state.
+ * own renderer packages, which depends on `includeImages`. A warning is
+ * user-facing copy, so it claims the thing that is true in every state.
  *
  * Exported for its own tests. Neither count is reachable from a fixture that
  * is not deliberately damaged: `overCap` needs a 61-picture document, and
@@ -199,7 +199,9 @@ function resolveMeta(detected: TitleMeta, opts: ConvertOptions): BookMeta {
  * body showed. Both come from this one array, which is what keeps buildEpub's
  * "shown but not given" throw out of reach: no name can be in the set without
  * its bytes being in the list. The reader preview is handed the same array as
- * a map, so the window shows the figures the book does and no others.
+ * a map, so the window shows the figures the book does and no others, and so
+ * is the MOBI: `mobiArt` asks the EPUB's question of the same names, and its
+ * order is both the markup's record numbers and the order the bytes go in.
  */
 async function renderBooks(
   fountainText: string,
@@ -221,13 +223,21 @@ async function renderBooks(
   const body = tokensToBody(tokens, { format, images: new Set(images.map((img) => img.name)) });
   const epub = await buildEpub(withId, body, format, images);
   // First bytes win for a name passed twice, as they do in buildEpub, so the
-  // preview shows the picture the book ships.
+  // preview and the MOBI show the picture the EPUB ships.
   const byName = new Map<string, Uint8Array>();
   for (const img of images) if (!byName.has(img.name)) byName.set(img.name, img.bytes);
   const previewHtml = tokensToPreviewHtml(tokens, format, byName);
-  const mobi = wantMobi
-    ? buildMobi({ title: meta.title, author: meta.author, html: tokensToMobiHtml(tokens, meta, format) })
-    : undefined;
+  let mobi: Uint8Array | undefined;
+  if (wantMobi) {
+    const art = mobiArt(tokens, format, new Set(byName.keys()));
+    mobi = buildMobi({
+      title: meta.title,
+      author: meta.author,
+      html: tokensToMobiHtml(tokens, meta, format, art),
+      // Every name in `order` came out of byName, so none is missing here.
+      images: art.order.map((name) => byName.get(name)!),
+    });
+  }
   return { epub, mobi, previewHtml };
 }
 

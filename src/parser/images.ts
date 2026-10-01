@@ -591,9 +591,9 @@ export interface ImageRun {
    * A hit hands out the SAME `Uint8Array`, so two kept images of one picture
    * share one buffer — and `toRgb` already promises the bytes are ours rather
    * than a view into pdf.js's store, which this does not change. Nothing
-   * downstream may MUTATE image bytes: the EPUB zip writer (phase 2) and the
-   * MOBI image records (phase 3) are to copy them in, and an in-place edit
-   * would rewrite the other placement too.
+   * downstream may MUTATE image bytes: the EPUB's zip writer and the MOBI's
+   * image records take them as they are, and an in-place edit would rewrite
+   * the other placement too.
    *
    * Safe to key on the id: pdf.js builds a page store's ids as
    * `img_p{pageIndex}_{n}` (`PartialEvaluator.buildPaintImageXObject` over the

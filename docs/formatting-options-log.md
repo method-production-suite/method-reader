@@ -1264,8 +1264,8 @@ the Mac app should move those two; nothing in the engine needs to change.
   `.fountain` text (`renderBooks` in `src/convert.ts`; the text is the
   identity), so a script whose `.fountain` gains notes gets a new identifier,
   and a reader that indexes by it treats the re-converted book as a new one.
-  A script with no pictures keeps its identifier. The MOBI shows no picture
-  yet (phase 3), and the title card does not become a cover yet (phase 4):
+  A script with no pictures keeps its identifier. The title card does not
+  become a cover yet (phase 4):
   `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
 - **Where a picture comes from, and where it lands.** Extraction finds the
   pictures on the operator list the text pass already fetched, and reads
@@ -1456,7 +1456,8 @@ the Mac app should move those two; nothing in the engine needs to change.
 
 ### 19a. Pictures in the book (option `includeImages`, default ON; 2026-10-01)
 - **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
-  EPUB and in the reader preview:
+  EPUB, in the reader preview, and in the engine's own MOBI (its form there
+  is under **The MOBI** below). In the EPUB and the preview:
   `<p class="figure wNN"><img src="../images/pNNN-NN.png" alt="Illustration"/></p>`,
   with ` figure-full` added to the class for a plate that filled its page.
   `alt` is never empty, because an empty one declares the picture
@@ -1516,9 +1517,15 @@ the Mac app should move those two; nothing in the engine needs to change.
   written, and Tune shows the answer's warnings under its status line until
   a rebuild comes back without any. `convertFountain` keeps
   only allowlisted names whose bytes are a PNG. The no-Calibre Kindle rebuild
-  (`freshKindleArtifact`'s MOBI rung) reads the folder the same way, and when
-  a picture the notes ask for cannot be read it writes the `.mobi` and leaves
-  the library EPUB as it was, rather than rewrite it without that picture.
+  (`freshKindleArtifact`'s MOBI rung) reads the folder the same way and hands
+  that one read to both books. When a picture the notes ask for cannot be
+  read, it leaves the library EPUB as it was, rather than rewrite it without
+  that picture, and writes the `.mobi` without it: the `.mobi` is the file
+  being handed over, so it carries the pictures that were read. Nothing says
+  so yet, because the export answer has stages and no warnings; that channel
+  is an open item. Written after the book, that `.mobi` is current by the
+  staleness rule, so later exports reuse it, still without the picture, until
+  the book itself is rebuilt.
 - **The preview.** The same `tokensToBody` call as the book, with each `src`
   a `data:image/png;base64,...` URI, so what you proof is what ships. The
   window's CSP is `default-src 'self'; img-src 'self' data:` and nothing
@@ -1527,6 +1534,52 @@ the Mac app should move those two; nothing in the engine needs to change.
   16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
   answer from 26 KB to 22.09 MB, so the preview is built on every render
   rather than only on request.
+- **The MOBI.** The engine's own `.mobi`, the Kindle file built when
+  Calibre is absent, carries the same pictures as the EPUB. A picture in
+  MOBI 6 is a RECORD after the text, named from the markup by number:
+  `<p align="center"><img recindex="00001" alt="Illustration"/></p>`,
+  1-based and five digits, the form calibre 9.11.0 and kindlegen 2.9 both
+  wrote (measured 2026-08-11 with `calibre-debug --inspect-mobi`). A centred
+  `<p>`, because this dialect aligns by attribute. The markup and the records
+  are one numbering with two ends, and a disagreement between them shows the
+  WRONG picture rather than none, so the numbering exists once: `mobiArt` in
+  `src/mobi/html.ts`. It asks `rendersImage` of the same names the EPUB is
+  given, so both books of a script show the same pictures, and lists them in
+  the order the body first shows them, each once (a picture shown twice is
+  one record named twice). The renderer numbers its figures from that list,
+  and `renderBooks` hands `buildMobi` the bytes in the same order.
+  **No width,** and that is a refusal rather than an omission: the note's
+  `w=` is a share of the text column, which this dialect cannot state. The
+  only width it attests is a pixel count, and not even the picture's own
+  (calibre wrote `width="672" height="504"` for a 240x180 plate), so the
+  device sizes the picture. **A full-page plate** gets `<mbp:pagebreak/>`
+  before and after it, this dialect's one break primitive. Like the EPUB's,
+  it is not gated by `scenePageBreaks`; neither break is taken at the start
+  or the end of the body, so neither end of the book gets a blank page; and
+  there are never two in a row, so a scene heading straight after a plate
+  takes the plate's break rather than adding its own. A figure declines a
+  pending page marker (#13a), as the EPUB's does. **The header** names the
+  pictures in three fields, each read back from the built bytes in
+  `tests/mobi.test.ts`, each following both reference writers: 108, the
+  first image record, as an ABSOLUTE record number (both wrote their first
+  picture's own index); 194, the last content record, which reaches the last
+  picture rather than stopping at the text (both extend it over their
+  pictures; this is the silent one, since a reader that stops at the text
+  finds the pictures and ignores them); and 80, the first record past the
+  text (both point it at the index record after their text, and this writer
+  writes no index records, so here it is the first picture). FLIS and FCIS
+  move down past the pictures. Each picture is one record holding its PNG
+  exactly as it was handed over, and a book with no pictures is the book
+  this writer built before records existed, byte for byte with the PDB dates
+  (bytes 36 to 43) masked, pinned by hash. The file is assembled from typed
+  arrays: copied in a byte at a time, the corpus's heaviest picture document
+  (60 pictures) cost about 390 MB of transient memory (measured 2026-10-01).
+  Calibre's MOBI reader, run inside `bun test`, gives `images.pdf`'s two
+  pictures back byte-identical, in order, each from the right `<img>`.
+  **Size:** older Kindle firmware is reported to cap a single image record at
+  about 127 KB. That is unverified on device and a device-pass item. The
+  engine does not shrink a picture to fit it, and the corpus has pictures far
+  past it (a full-page plate of 1.4 MB).
 - **Measured on the corpus, 2026-10-01 (phase 1 tip against phase 2's):**
   the `.fountain` is byte-identical for all six scripts that convert. The
   four with no kept picture make an identical EPUB, entry for entry. The two
@@ -1538,15 +1591,20 @@ the Mac app should move those two; nothing in the engine needs to change.
   Both picture books pass epubcheck clean, conversion time is unchanged,
   and the 60-picture deck's Tune re-render answers 22 MB in 0.19 s on the
   engine side.
-- **Not yet:** the MOBI carries no picture (phase 3); AZW3 and KFX get
-  them through Calibre from the EPUB. Unverified on device, and the subject
-  of the torture.pdf pictures section of `tools/device-checklist.ts`: KFX and
-  RMSDK on the forced breaks, the blank page, the heading above a plate, and
-  how a tall plate slices.
+- **On a device:** AZW3 and KFX get the pictures through Calibre from the
+  EPUB, and the engine's MOBI carries its own (above). None of it is
+  verified on device yet, and it is the subject of the torture.pdf pictures
+  section of `tools/device-checklist.ts`: KFX and RMSDK on the forced breaks,
+  the blank page, the heading above a plate, and how a tall plate slices;
+  and, for the `.mobi` sideloaded over USB, whether the pictures are there,
+  whether the plate's page breaks hold, and whether an older Kindle refuses a
+  picture over the single-record cap.
 - **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
   `src/epub/html.ts` (`place`, the figure, `usedImages`, `imageSrc`,
   `tokensToPreviewHtml`), `src/epub/css.ts` (the figure block,
   `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`, `imageIds`),
+  `src/mobi/html.ts` (`mobiArt`, the figure, `recindex`),
+  `src/mobi/writer.ts` (the image records, fields 80, 108 and 194),
   `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,
   `src/export/artifact.ts`, `desktop/ui/tune.js`,
   `desktop/src-tauri/tauri.conf.json`.
