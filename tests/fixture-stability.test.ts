@@ -12,17 +12,21 @@ afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 // this, a refactor for one kind could silently change screenplay.pdf and
 // every integration test would quietly start asserting against different
 // input. (torture.pdf is not pinned here; its placement is checked through
-// --emit-layout instead.) images.pdf earns its place twice over: it is the
-// one kind whose objects carry binary streams, so it is the one that would
-// notice if the emitter stopped being byte-exact about them.
+// --emit-layout instead.) The two picture fixtures also notice if the
+// emitter stops being byte-exact about binary streams, but only images.pdf
+// has binary streams that come from the HOST zlib; jpx.pdf's J2K codestream
+// is copied through verbatim and involves no compressor.
 //
 // TRAP, if images.pdf fails here and the others pass: its bytes include
 // deflate output from the HOST zlib, and the format pins only what
-// decompresses back out, not how it was packed. We author on macOS and CI
-// runs ubuntu-latest, and zlib-ng differs at the same level. So a binary
-// inequality on this fixture ALONE points at the compressor, not at
-// make-fixture.py's emitter -- decompress both sides and compare the pixels
-// before believing the generator changed. Deliberately left as a byte
+// decompresses back out, not how it was packed. Any zlib build whose deflate
+// output differs (zlib-ng, a forked or hardware-accelerated zlib) packs the
+// same pixels into different bytes. So a binary inequality on this fixture
+// ALONE points at the compressor, not at make-fixture.py's emitter --
+// decompress both sides and compare the pixels before believing the
+// generator changed. What has been checked: images.pdf was regenerated
+// byte-identically on Linux with zlib 1.2.13 / Python 3.11 on 2026-10-01;
+// the Mac it was authored on is zlib 1.2.12. Deliberately left as a byte
 // comparison anyway: the whole point is that a committed fixture is a fixed
 // input, and a looser check here would stop catching real emitter drift.
 //
