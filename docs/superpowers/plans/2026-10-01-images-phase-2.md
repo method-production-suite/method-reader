@@ -38,6 +38,8 @@
 
 ### Task 1: The option and its toggle
 
+> Tasks 1 and 2 are ONE implementer task, in that order of commits. tests/desktop-ui.test.ts fails the moment the option exists without a Tune toggle ("the eighteen are the engine's eighteen"), and a toggle marked `'live'` fails unless `src/epub/html.ts` or `css.ts` mentions its key. So html.ts calls the predicate with `format.includeImages` spelled out.
+
 **Files:** `src/options.ts`, `format-defaults.json`, `tests/options.test.ts`, `desktop/ui/tune.js`, `tests/desktop-ui.test.ts`, `CLAUDE.md`, `CONTRIBUTING.md`, `app/README-FROZEN.md` (only if `tests/frozen-app.test.ts` allows a non-Swift edit there; check first).
 
 - [ ] Failing tests first: `tests/options.test.ts` gains `includeImages` in its defaults equality (`toEqual` against format-defaults.json, so both files move together) and a resolve test (`resolveFormatOptions({ includeImages: 0 })` gives `true`; `false` gives `false`). The desktop-ui parity test (keys equal `DEFAULT_FORMAT_OPTIONS` keys) fails until the toggle exists.
@@ -59,15 +61,15 @@
  *  the renderer, the section opener and (in phase 4) the cover agree. */
 export function rendersImage(
   raw: string,
-  format: { includeImages: boolean },
+  includeImages: boolean,
   have: ReadonlySet<string>,
 ): ImageRef | undefined
 ```
 
   Tests: off gives undefined; a hostile name gives undefined; a name not in `have` gives undefined; otherwise the parsed ref.
-- [ ] html.ts: split `emit` into `place` (the block only) and `emit` (the block plus the pending page marker), as August did (d35d911); a figure goes through `place`, so it never takes a page marker, mirroring serialize.ts's `anchorsPageMarker`. The `note` case: `const img = rendersImage(raw, format, have)`; if set, place `<p class="figure wNN[ figure-full]"><img src="SRC" alt="Illustration"/></p>` where NN is `Math.min(100, Math.max(5, Math.round(img.widthPct / 5) * 5))` and SRC comes from `imageSrc(file)` (default `../images/${file}`). `alt` is not empty on purpose (empty declares the picture decorative).
+- [ ] html.ts: split `emit` into `place` (the block only) and `emit` (the block plus the pending page marker), as August did (d35d911); a figure goes through `place`, so it never takes a page marker, mirroring serialize.ts's `anchorsPageMarker`. The `note` case: `const img = rendersImage(raw, format.includeImages, have)`; if set, place `<p class="figure wNN[ figure-full]"><img src="SRC" alt="Illustration"/></p>` where NN is `Math.min(100, Math.max(5, Math.round(img.widthPct / 5) * 5))` and SRC comes from `imageSrc(file)` (default `../images/${file}`). `alt` is not empty on purpose (empty declares the picture decorative).
 - [ ] `tokensToBody(tokens, { format, images?: ReadonlySet<string>, imageSrc?: (file: string) => string })` returns `usedImages: Set<string>`. `images` defaults to empty: every existing caller renders exactly what it did.
-- [ ] Phase 1's trap: `tokensToBody` skips a note while no section is open. Now: a note opens the Opening only when `rendersImage(...)` says it renders. Tests: (a) pictures OFF, a title-card note before the first heading: the body is byte-identical to the note-free text (phase 1's guarantee kept); (b) pictures ON with the picture present: an Opening section holds the figure, and the headings follow from sc-002; (c) ON but the picture missing from `have`: identical to (a). Rewrite tests/convert.test.ts ~200-216 (images.pdf's sections) to expect (b).
+- [ ] Phase 1's trap: `tokensToBody` skips a note while no section is open. Now: a note opens the Opening only when `rendersImage(raw, format.includeImages, have)` says it renders. Tests: (a) pictures OFF, a title-card note before the first heading: the body is byte-identical to the note-free text (phase 1's guarantee kept); (b) pictures ON with the picture present: an Opening section holds the figure, and the headings follow from sc-002; (c) ON but the picture missing from `have`: identical to (a). Rewrite tests/convert.test.ts ~200-216 (images.pdf's sections) to expect (b).
 - [ ] Commit: "Images: the figure, decided by one predicate, placed without a page marker".
 
 ### Task 3: The figure's CSS
