@@ -5697,8 +5697,9 @@ describe('the Send surface', () => {
 describe('the Send page’s device send, mounted', () => {
   // send.js mounted on the fake page and pressed. The route list, the two
   // saves, the apps and the keyboard are driven in send-routes-ui.test.ts;
-  // what is here is the device send's own flow (sendTo), which that file
-  // only exercises on the happy path, and the reach table's fold.
+  // the device send's own flow (sendTo) moved with it to the send panel,
+  // and is driven in send-panel-ui.test.ts. What is left here is the KFX
+  // checklist on the Send page.
   const FOUNTAIN = '/lib/send-page/Field Station.fountain';
   const EPUB = '/lib/send-page/Field Station.epub';
   const kobo = { kind: 'kobo' as const, name: 'KOBOeReader', volume: '/Volumes/KOBOeReader' };
@@ -5762,65 +5763,6 @@ describe('the Send page’s device send, mounted', () => {
     return { send, pane, ctx, status, tauri: page.tauri, page, poll: () => tickPoll?.() };
   }
 
-  test('a device send reads this script’s settings first, exports with them, then copies what was built', async () => {
-    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
-    const tuned = { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: 27, fontFamily: 'serif' };
-    const { pane, status, tauri } = await mountSend({ settings: null });
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    // Not read yet, so read now: an export without them would rebuild the
-    // book with the engine's defaults.
-    const read = tauri.callsTo('settings');
-    expect(read.map((c) => c.args)).toEqual([['settings', FOUNTAIN, '--json']]);
-    expect(tauri.callsTo('export').filter((c) => !c.args.includes('--check'))).toEqual([]);
-    read[0].answer({ ok: true, settings: tuned });
-    await settle();
-    const build = tauri.callsTo('export').filter((c) => !c.args.includes('--check'));
-    expect(build.length).toBe(1);
-    expect(JSON.parse(build[0].args[build[0].args.indexOf('--options-json') + 1])).toEqual(tuned);
-    build[0].answer({ ok: true, path: EPUB, extension: 'epub', label: 'EPUB' });
-    await settle();
-    tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' });
-    await settle();
-    expect(tauri.callsTo('send').map((c) => c.args)).toEqual([['send', EPUB, '--json', '--device', '/Volumes/KOBOeReader']]);
-    expect(status().textContent).toContain('Sent to KOBOeReader');
-  });
-
-  test('a refused export is the whole answer: nothing is copied, and the engine’s sentence is the alarm', async () => {
-    const { pane, status, tauri } = await mountSend();
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    tauri.callsTo('export').find((c) => !c.args.includes('--check'))!
-      .answer({ ok: false, error: { code: 'export-failed', message: 'The book could not be read.' } });
-    await settle();
-    expect(tauri.callsTo('send')).toEqual([]);
-    expect(status().textContent).toBe('The book could not be read.');
-    expect(status().classList.contains('bad')).toBe(true);
-    expect(pane.button('Copy to KOBOeReader').disabled).toBe(false);
-  });
-
-  test('while a send runs every button is out of reach and the poll leaves the rows alone; a script opened meanwhile hears nothing of it', async () => {
-    const { send, pane, ctx, status, tauri, poll } = await mountSend();
-    const before = pane.buttons();
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    expect(before.every((b) => b.disabled)).toBe(true);
-    // A poll that answers mid-send does not rebuild fresh, live buttons
-    // under it: the MOBI rung rewrites the book, so a second send is a race.
-    poll();
-    await settle();
-    expect(pane.buttons()).toEqual(before);
-    expect(pane.buttons().every((b) => b.disabled)).toBe(true);
-
-    ctx.state.script = { title: 'Second', fountainPath: '/lib/second/second.fountain', epubPath: '/lib/second/second.epub', settings: {} };
-    send.scriptChanged();
-    tauri.callsTo('export').find((c) => !c.args.includes('--check') && c.args[1] === EPUB)!
-      .answer({ ok: true, path: EPUB, extension: 'epub', label: 'EPUB' });
-    await settle();
-    expect(tauri.callsTo('send')).toEqual([]);
-    expect(status().textContent).toBe('');
-  });
-
   test('the KFX installer runs only from its button, and an install and a route never overlap', async () => {
     // It downloads third-party code and writes into the reader's Calibre, and
     // a plugin swapped under a running KFX build is not worth finding out about.
@@ -5879,16 +5821,6 @@ describe('the Send page’s device send, mounted', () => {
     p.fireWindow('focus');
     await settle();
     expect(probes().length).toBe(2);
-  });
-
-  test('what Screepub can reach is folded away, shut, with the note on where the one route was proven', async () => {
-    const { send, pane } = await mountSend();
-    const fold = pane.querySelector('details.reach')!;
-    expect(fold.querySelector('summary')!.textContent).toBe(send.REACH_HEADING);
-    // <details> is open only when the attribute is there at all.
-    expect(fold.hasAttribute('open')).toBe(false);
-    expect(fold.open).toBe(false);
-    expect(fold.querySelector('.reader-note')!.textContent).toBe(send.provenNote('MacIntel'));
   });
 });
 
