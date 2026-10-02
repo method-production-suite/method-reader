@@ -141,6 +141,7 @@ by 800.
 | `send-panel.js` | the right half of Convert's result: the device cards, the one brass button, Other ways, Eject, the Kindle file built ahead |
 | `device.js` | the panel's rules: which cards, which button is brass, which asterisk, which file rows, what Eject and the heads-up say |
 | `send-routes.js` | what sending decides without drawing: the engine's route list and Kindle file answers read, the status line's words, the Save box's defaults |
+| `requests.js` | the request service: "My device isn't here" and the asterisk's It worked / It did not work, posted to the Worker in `services/device-requests/`; the window's one `fetch`, and the one origin the CSP's `connect-src` adds |
 | `device-watch.js` | the two-second `devices --quick` poll, running whenever a script is open |
 | `heads-up.js` | "Kindle plugged in. Copy <Title>?" at the top of whatever page is showing |
 | `kfx.js` | the send panel's KFX checklist |

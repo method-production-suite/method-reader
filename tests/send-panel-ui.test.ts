@@ -37,6 +37,8 @@ async function mountPanel(o: {
   realFocus?: boolean;
   /** The panel's clock (ctx.timers), for the reMarkable's slow look. */
   timers?: unknown;
+  /** The request service's fetch (ctx.fetch): never the real one here. */
+  fetch?: unknown;
 } = {}) {
   // One page at a time: a second mount in one test puts the first away, so
   // its globals go back in the right order.
@@ -74,6 +76,7 @@ async function mountPanel(o: {
     },
     goTo: () => {}, convertAgain: () => {},
     ...(o.timers === undefined ? {} : { timers: o.timers }),
+    fetch: o.fetch ?? (async () => { throw new Error('a test reached the request service without a stand-in'); }),
     devices: {
       current: () => (plugged === null ? null : plugged.map(dev)),
       subscribe: (fn: (l: unknown) => void) => { subs.add(fn); return () => subs.delete(fn); },
@@ -172,19 +175,6 @@ describe('the cards', () => {
     expect(p.node.visibleText).not.toContain('plug the Kindle in');
   });
 
-  test('My device isn’t here: the placeholder, which stores nothing', async () => {
-    const p = await mountPanel();
-    p.node.button('My device isn’t here').click();
-    const box = p.node.querySelector('.device-missing')!;
-    expect(box.querySelector('p')!.textContent).toBe('Screepub does not know it yet. Tell us which one and we will look at adding it. Until then, the EPUB works on most readers.');
-    box.button('Tell us on GitHub').click();
-    await settle();
-    expect(p.page.tauri.opened[0]).toStartWith('https://github.com/ssandweiss/screepub/issues/new?');
-    box.button('Back').click();
-    expect(p.cards().length).toBe(6);
-    expect(p.tauri.calls.some((c) => c.args.includes('--set'))).toBe(false);
-  });
-
   test('a card plugged in while the cards are up is marked without a redraw stealing the keyboard', async () => {
     const p = await mountPanel();
     const kindleCard = p.node.button('Kindle');
@@ -209,7 +199,7 @@ describe('the cards', () => {
 });
 
 describe('the asterisk', () => {
-  test('a Kobo card and the Kobo calm screen carry it; pressing shows the note; tell us opens an issue', async () => {
+  test('a Kobo card and the Kobo calm screen carry it; pressing shows the note and its two answers', async () => {
     const cards = await mountPanel();
     const slot = cards.node.button('Kobo').parentNode!;
     expect(slot.querySelector('.asterisk')).not.toBeNull();
@@ -222,11 +212,10 @@ describe('the asterisk', () => {
     star.click();
     expect(note.hidden).toBe(false);
     expect(star.getAttribute('aria-expanded')).toBe('true');
-    expect(note.textContent).toContain('never tried on a real Kobo yet');
-    expect(note.textContent).toEndWith('If it works for you, tell us.');
-    note.button('tell us').click();
-    await settle();
-    expect(p.page.tauri.opened.length).toBe(1);
+    expect(note.querySelector('.asterisk-said')!.textContent)
+      .toBe('Built and tested in code, never tried on a real Kobo yet. If you try it, tell us how it went.');
+    expect(note.button('It worked').className).toBe('btn-quiet');
+    expect(note.button('It did not work').className).toBe('btn-quiet');
     star.click();
     expect(note.hidden).toBe(true);
   });
@@ -240,6 +229,196 @@ describe('the asterisk', () => {
     const p = await mountPanel({ state: { readerDevice: 'kindle' }, platform: 'Win32' });
     expect(p.node.querySelector('.calm .asterisk-note')!.textContent)
       .toContain('never tried with a real Kindle on Windows yet');
+  });
+});
+
+/** A stand-in for the request service: every post kept, each answered by
+ *  `reply` (a Response, or a throw for offline), or held when it returns
+ *  HOLD until the test lets it go. */
+function requestService(reply: (body: any) => Response | typeof HOLD = () => okReply()) {
+  const posts: { url: string; body: any }[] = [];
+  const held: Array<(r: Response) => void> = [];
+  const fetch = async (url: string, init: RequestInit) => {
+    const body = JSON.parse(String(init.body));
+    posts.push({ url, body });
+    const r = reply(body);
+    if (r === HOLD) return new Promise<Response>((resolve) => held.push(resolve));
+    return r;
+  };
+  return { fetch, posts, release: async (r: Response = okReply()) => { held.shift()!(r); await settle(); } };
+}
+const okReply = () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+const refusal = (status: number, error: string) => new Response(JSON.stringify({ ok: false, error }), { status });
+const offline = (): Response => { throw new TypeError('Load failed'); };
+/** The app's version, as the window reads it (notes.js, which a release bump rewrites). */
+const VERSION: string = (await import(join(UI, 'notes.js'))).RELEASE.version;
+
+describe('My device isn’t here', () => {
+  async function openMissing(o: Parameters<typeof mountPanel>[0] = {}) {
+    const p = await mountPanel(o);
+    p.node.button('My device isn’t here').click();
+    await settle();
+    const box = p.node.querySelector('.device-missing')!;
+    return {
+      ...p, box,
+      field: () => box.querySelector('input')!,
+      send: () => box.querySelector('[data-key="device-request-send"]')!,
+      said: () => box.querySelector('.request-status')!,
+    };
+  }
+
+  test('one field, labelled, up to 80 characters, its Send, and a line on what is sent', async () => {
+    const m = await openMissing();
+    const field = m.field();
+    expect(field.getAttribute('maxlength')).toBe('80');
+    const label = m.box.querySelector('label')!;
+    expect(label.textContent).toBe('Which device?');
+    expect(label.getAttribute('for')).toBe(field.id);
+    expect(m.send().textContent).toBe('Send');
+    expect(m.box.querySelector('.request-note')!.textContent)
+      .toBe('Sends the device’s name, Screepub’s version and your platform. Nothing else.');
+    // Nothing to send yet.
+    expect(m.send().disabled).toBe(true);
+    field.input('   ');
+    expect(m.send().disabled).toBe(true);
+    field.input('PocketBook Era');
+    expect(m.send().disabled).toBe(false);
+    // The EPUB and Back are still there.
+    expect(m.box.button('Save the EPUB…')).not.toBeNull();
+    m.box.button('Back').click();
+    expect(m.cards().length).toBe(6);
+  });
+
+  test('Send posts the name, the version and the platform, waits, then thanks and clears the field', async () => {
+    const service = requestService(() => HOLD);
+    const m = await openMissing({ fetch: service.fetch });
+    m.field().input('  PocketBook Era ');
+    m.send().click();
+    await settle();
+    expect(service.posts).toEqual([{
+      url: expect.stringMatching(/^https:\/\/screepub-device-requests\..+\.workers\.dev\/request$/),
+      body: { kind: 'device', device: 'PocketBook Era', version: VERSION, platform: 'mac' },
+    }]);
+    // In flight: no second press.
+    expect(m.send().disabled).toBe(true);
+    m.send().click();
+    await settle();
+    expect(service.posts.length).toBe(1);
+    await service.release();
+    expect(m.said().textContent).toBe('Thanks. We count every request.');
+    expect(m.said().className).not.toContain('bad');
+    expect(m.field().value).toBe('');
+    expect(m.send().disabled).toBe(true);
+    // Nothing went to the engine or a browser.
+    expect(m.tauri.calls.some((c) => c.args.includes('--set'))).toBe(false);
+    expect(m.page.tauri.opened).toEqual([]);
+  });
+
+  test('offline: the text stays, it says it could not send, and Try again sends it again', async () => {
+    let fail = true;
+    const service = requestService(() => (fail ? offline() : okReply()));
+    const m = await openMissing({ fetch: service.fetch });
+    m.field().input('Boox Note');
+    m.send().click();
+    await settle();
+    expect(m.field().value).toBe('Boox Note');
+    expect(m.said().textContent).toBe('Could not send. Check that this computer is online, then try again.');
+    expect(m.said().className).toContain('bad');
+    expect(m.send().textContent).toBe('Try again');
+    expect(m.send().disabled).toBe(false);
+    fail = false;
+    m.send().click();
+    await settle();
+    expect(service.posts.map((p) => p.body.device)).toEqual(['Boox Note', 'Boox Note']);
+    expect(m.said().textContent).toBe('Thanks. We count every request.');
+    expect(m.send().textContent).toBe('Send');
+  });
+
+  test('too many, or any refusal: the text stays and it says why', async () => {
+    const service = requestService(() => refusal(429, 'Too many requests from here this hour. Try again later.'));
+    const m = await openMissing({ fetch: service.fetch });
+    m.field().input('Boox Note');
+    m.send().click();
+    await settle();
+    expect(m.field().value).toBe('Boox Note');
+    expect(m.said().textContent).toBe('Could not send: too many requests from this computer this hour. Try again later.');
+    expect(m.send().textContent).toBe('Try again');
+  });
+
+  test('what was typed outlives going Back and coming again; the last line does not', async () => {
+    const m = await openMissing({ fetch: requestService(() => offline()).fetch });
+    m.field().input('Boox Note');
+    m.send().click();
+    await settle();
+    m.box.button('Back').click();
+    m.node.button('My device isn’t here').click();
+    const again = m.node.querySelector('.device-missing')!;
+    expect(again.querySelector('input')!.value).toBe('Boox Note');
+    expect(again.querySelector('.request-status')!.textContent).toBe('');
+  });
+});
+
+describe('It worked / It did not work', () => {
+  const answers = (note: FakeNode) => ({
+    worked: () => note.querySelector('[data-key="worked-kobo"]'),
+    not: () => note.querySelector('[data-key="not-worked-kobo"]'),
+    said: () => note.querySelector('.report-status')!,
+  });
+
+  test('a press posts the report and thanks; the answers go', async () => {
+    const service = requestService();
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, fetch: service.fetch });
+    const note = p.node.querySelector('.calm .asterisk-note')!;
+    const a = answers(note);
+    a.not()!.click();
+    await settle();
+    expect(service.posts.map((x) => x.body)).toEqual([
+      { kind: 'report', route: 'kobo', worked: false, version: VERSION, platform: 'mac' },
+    ]);
+    expect(a.said().textContent).toBe('Thanks. We count every request.');
+    expect(a.worked()).toBeNull();
+    expect(a.not()).toBeNull();
+    expect(p.page.tauri.opened).toEqual([]);
+  });
+
+  test('a failure says so, and Try again sends the same answer', async () => {
+    let fail = true;
+    const service = requestService(() => (fail ? offline() : okReply()));
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, fetch: service.fetch });
+    const note = p.node.querySelector('.calm .asterisk-note')!;
+    const a = answers(note);
+    a.worked()!.click();
+    await settle();
+    expect(a.said().textContent).toBe('Could not send. Check that this computer is online, then try again.');
+    expect(a.said().className).toContain('bad');
+    fail = false;
+    note.button('Try again').click();
+    await settle();
+    expect(service.posts.map((x) => x.body.worked)).toEqual([true, true]);
+    expect(a.said().textContent).toBe('Thanks. We count every request.');
+    expect(note.querySelector('[data-key="report-again-kobo"]')).toBeNull();
+  });
+
+  test('held: neither answer can be pressed twice', async () => {
+    const service = requestService(() => HOLD);
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, fetch: service.fetch });
+    const a = answers(p.node.querySelector('.calm .asterisk-note')!);
+    a.worked()!.click();
+    await settle();
+    expect(a.worked()!.disabled).toBe(true);
+    expect(a.not()!.disabled).toBe(true);
+    a.not()!.click();
+    await settle();
+    expect(service.posts.length).toBe(1);
+    await service.release();
+  });
+
+  test('a Kindle on Linux reports as kindle-linux', async () => {
+    const service = requestService();
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, platform: 'Linux x86_64', fetch: service.fetch });
+    p.node.querySelector('.calm .asterisk-note')!.querySelector('[data-key="worked-kindle"]')!.click();
+    await settle();
+    expect(service.posts[0].body).toEqual({ kind: 'report', route: 'kindle-linux', worked: true, version: VERSION, platform: 'linux' });
   });
 });
 
@@ -926,7 +1105,8 @@ describe('Other ways', () => {
     const kobo = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Kobo')!;
     expect(kobo.className).toContain('route-unavailable');
     expect(kobo.querySelector('.route-detail')!.textContent).not.toBe('');
-    expect(kobo.querySelectorAll('button').filter((b) => !b.className.includes('asterisk') && b.textContent !== 'tell us')).toEqual([]);
+    const star = kobo.querySelector('.asterisk-wrap')!;
+    expect(kobo.querySelectorAll('button').filter((b) => !star.contains(b))).toEqual([]);
     expect(kobo.querySelector('.asterisk')).not.toBeNull();
     // The email row keeps its first-time step.
     const email = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Send to Kindle email')!;

@@ -138,6 +138,10 @@ Screepub reaches the network only when you ask it to:
   Send to Kindle page and its Kindle settings page, and the Calibre and
   Kindle Previewer download pages.
 - **Installing the KFX plugin**: fetched from Calibre's own plugin index.
+- **Screepub's request service**, only when you press **Send** in **My device
+  isn't here** or answer **It worked** or **It did not work** beside an
+  asterisk. It carries the device's name (or which reader and your answer),
+  the app's version and your platform, and nothing else.
 - **Updates, only if you say yes.** The window asks once; with your yes, it
   checks GitHub at most once a day, and **Check for updates** checks once.
   An update downloads only when you choose to install it, and its signature

@@ -29,7 +29,7 @@ export const DEVICES = [
 ];
 export const KINDS = DEVICES.map((d) => d.kind);
 export const MISSING = { kind: 'missing', name: 'My device isn’t here', sub: null };
-/** The placeholder part 4 replaces with the request field. */
+/** "My device isn't here": the sentence over the request field. */
 export const MISSING_LINE = 'Screepub does not know it yet. Tell us which one and we will look at adding it. '
   + 'Until then, the EPUB works on most readers.';
 
@@ -60,7 +60,7 @@ const OS = { windows: 'Windows', linux: 'Linux' };
 /** What pressing or hovering the asterisk says, or null when there is none. */
 export function asteriskNote(kind, platform) {
   if (!unproven(kind, platform)) return null;
-  const tail = 'yet. If it works for you, tell us.';
+  const tail = 'yet. If you try it, tell us how it went.';
   if (kind === PROVEN.kind) {
     const where = OS[platformOf(platform)] ?? 'this kind of computer';
     return `Built and tested in code, never tried with a real Kindle on ${where} ${tail}`;

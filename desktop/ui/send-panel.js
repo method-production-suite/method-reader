@@ -10,18 +10,18 @@
 // ctx.state.readerDevice, ctx.state.sendResult (the line and the Eject
 // button), ctx.state.devices. What has to outlive a book (Kindle builds and
 // their line) stays module-level, as it was in send.js.
-import { runEngine, argv, openUrl, saveDialog } from './app.js';
+import { runEngine, argv, saveDialog } from './app.js';
 import { settingsFrom } from './tune.js';
 import { inTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
 import { canFocus } from './focus.js';
-import { newIssueUrl, osLabel } from './feedback.js';
 import { RELEASE } from './notes.js';
 import {
   HEADING as KFX_HEADING, mountKfx, kfxShown, kfxHidden, kfxRedraw, kfxInstalling,
 } from './kfx.js';
 import * as D from './device.js';
 import * as R from './send-routes.js';
+import * as Q from './requests.js';
 
 let ctx = null;
 let host = null;
@@ -129,6 +129,10 @@ export const REMARKABLE_LOOK_MS = 10_000;
 /** That clock while it runs, and the timers it was started on. */
 let remarkableTimer = null;
 let remarkableClock = null;
+
+/** "My device isn't here": what is typed in its field, whether a send is
+ *  out, and what the last one said. Module-level, so a redraw keeps it. */
+const request = { draft: '', busy: false, said: null };
 
 const PLUGGED_IN = 'Plugged in';
 const platform = () => navigator.userAgentData?.platform ?? navigator.platform;
@@ -382,8 +386,10 @@ function draw() {
   }
   clear(body);
   if (mode === 'cards') body.append(drawCards());
-  else if (mode === 'missing') body.append(missingPanel());
-  else body.append(drawCalm());
+  else if (mode === 'missing') {
+    body.append(missingPanel());
+    drawRequest();
+  } else body.append(drawCalm());
   if (owed) payBrassOwed(focused, key);
   else if (focused !== null && !body.contains(focused)) giveBackFocus(key);
   // The calm screen's first draw for this book asks for its route list: a
@@ -554,6 +560,8 @@ async function chooseDevice(kind) {
 
 function showMissing() {
   mode = 'missing';
+  // What the last send said was for that visit; what was typed stays.
+  if (!request.busy) request.said = null;
   draw();
 }
 
@@ -1113,25 +1121,77 @@ async function ejectNow() {
 
 // ---------------------------------------------------------------- missing
 
-/** "My device isn't here", for now: a sentence, a door to a GitHub issue
- *  (the one URL the window may already open), the EPUB as the fallback, and
- *  Back. Part 4 of the spec replaces the inside of this function with the
- *  request field and its Send. It stores nothing. */
+/** "My device isn't here" (spec decisions 14 and 15): a sentence, one field
+ *  for the device's name and its Send, a line on what goes, then the EPUB
+ *  as the fallback and Back. Send posts to the request service
+ *  (requests.js) and nothing else: the field keeps its text until the
+ *  service says yes, and a failure says so with Try again. Nothing queued.
+ *  What was typed lives in `request`, so a redraw or Back and again keeps
+ *  it; the line under it is for this visit only. */
 function missingPanel() {
+  const field = el('input', {
+    type: 'text', id: 'device-request-name', class: 'request-field', 'data-key': 'device-request-name',
+    maxlength: String(Q.MAX_DEVICE), autocomplete: 'off', spellcheck: 'false',
+    oninput: () => { request.draft = field.value; drawRequest(); },
+  });
+  field.value = request.draft;
   return el('div', { class: 'device-missing' },
     el('p', { class: 'prose' }, D.MISSING_LINE),
+    el('div', { class: 'request' },
+      el('label', { class: 'request-label', for: field.id }, Q.LABEL),
+      el('div', { class: 'request-row' },
+        field,
+        el('button', {
+          type: 'button', class: 'btn btn-outline', 'data-key': 'device-request-send', onclick: sendDeviceRequest,
+        }, Q.SEND)),
+      el('p', { class: 'caption request-note' }, Q.WHAT_IS_SENT),
+      el('p', { class: 'caption request-status', role: 'status' }, '')),
     el('div', { class: 'calm-ways' },
-      el('button', {
-        type: 'button', class: 'btn btn-outline', 'data-key': 'missing-tell',
-        onclick: () => openUrl(newIssueUrl({
-          appVersion: RELEASE.version, osVersion: osLabel(platform()),
-          context: 'A reader Screepub does not list yet: ',
-        })),
-      }, 'Tell us on GitHub'),
       el('button', { type: 'button', class: 'btn-quiet', 'data-key': 'save-epub', onclick: () => saveFile('epub') },
         'Save the EPUB…'),
       el('button', { type: 'button', class: 'btn-quiet', 'data-key': 'missing-back', onclick: () => { mode = 'cards'; draw(); } },
         'Back')));
+}
+
+/** The field, its button and its line, set from `request` in place, so the
+ *  keyboard stays where it is. Called after every draw of the panel too. */
+function drawRequest() {
+  const box = body?.querySelector('.device-missing .request') ?? null;
+  if (box === null) return;
+  const field = box.querySelector('[data-key="device-request-name"]');
+  const send = box.querySelector('[data-key="device-request-send"]');
+  const said = box.querySelector('.request-status');
+  if (field.value !== request.draft) field.value = request.draft;
+  field.readOnly = request.busy;
+  send.disabled = request.busy || request.draft.trim() === '';
+  text(send, request.said?.bad ? Q.TRY_AGAIN : Q.SEND);
+  text(said, request.said?.line ?? '');
+  said.className = request.said?.bad ? 'caption request-status bad' : 'caption request-status';
+}
+
+async function sendDeviceRequest() {
+  if (request.busy || request.draft.trim() === '') return;
+  request.busy = true;
+  drawRequest();
+  const answer = await Q.postRequest(
+    Q.deviceForm(request.draft, { version: RELEASE.version, platform: platform() }), requestFetch());
+  request.busy = false;
+  if (answer.ok) request.draft = '';
+  request.said = { line: answer.line, bad: !answer.ok };
+  drawRequest();
+  // The press disabled the button under the keyboard: give it somewhere to be.
+  const box = body?.querySelector('.device-missing .request') ?? null;
+  if (box !== null && !box.contains(document.activeElement)) {
+    const next = answer.ok ? box.querySelector('[data-key="device-request-name"]') : box.querySelector('[data-key="device-request-send"]');
+    next?.focus();
+  }
+}
+
+/** The fetch the request service is reached with: the window's own, or a
+ *  stand-in a test hands in on ctx. */
+function requestFetch() {
+  if (typeof ctx?.fetch === 'function') return ctx.fetch;
+  return typeof fetch === 'function' ? fetch.bind(globalThis) : undefined;
 }
 
 /** Save one file type where the Save box says. The type is the extension,
@@ -1190,14 +1250,16 @@ async function saveFile(type) {
 // --------------------------------------------------------------- asterisk
 
 /** The mark on what nobody has run on that hardware: pressing pins the note
- *  open, hovering shows it. The note's last two words are a button that
- *  opens a report. */
+ *  open, hovering shows it. The note ends with two answers, It worked and
+ *  It did not work, posted to the request service (requests.js) as a
+ *  report, when there is a route to report on. */
 function asterisk(kind) {
   const said = D.asteriskNote(kind, platform());
   if (said === null) return null;
-  const note = el('p', { class: 'caption asterisk-note', hidden: true }, said.replace(/ tell us\.$/, ' '),
-    el('button', { type: 'button', class: 'btn-quiet', 'data-key': `tell-${kind}`, onclick: tellUs(kind) }, 'tell us'),
-    '.');
+  const route = Q.reportRoute(kind, platform());
+  const note = el('p', { class: 'caption asterisk-note', hidden: true },
+    el('span', { class: 'asterisk-said' }, said),
+    route === null ? null : reportAnswers(kind));
   let pinned = false;
   const star = el('button', {
     type: 'button', class: 'asterisk', 'aria-expanded': 'false', 'data-key': `asterisk-${kind}`,
@@ -1213,11 +1275,40 @@ function asterisk(kind) {
   return el('span', { class: 'asterisk-wrap' }, star, note);
 }
 
-/** A report on a reader nobody here has tried: whether it worked. */
-function tellUs(kind) {
-  return () => openUrl(newIssueUrl({
-    appVersion: RELEASE.version,
-    osVersion: osLabel(platform()),
-    context: `Sending to a ${D.nameOf(kind)} on ${osLabel(platform())}: it worked / it did not work (delete one).`,
-  }));
+/** It worked / It did not work, and the line that answers a press: thanks,
+ *  which takes the two away, or could not send, with Try again for the same
+ *  answer. Both are dead while one is out. */
+function reportAnswers(kind) {
+  const said = el('span', { class: 'report-status', role: 'status' }, '');
+  const answers = el('span', { class: 'report-answers' });
+  let busy = false;
+  let last = null;
+  const draw = (state) => {
+    clear(answers);
+    if (state?.ok) return;
+    const quiet = (key, label, onclick) => el('button', {
+      type: 'button', class: 'btn-quiet', 'data-key': key, disabled: busy, onclick,
+    }, label);
+    if (state !== null && !state.ok) {
+      answers.append(quiet(`report-again-${kind}`, Q.TRY_AGAIN, () => report(last)));
+      return;
+    }
+    answers.append(
+      quiet(`worked-${kind}`, Q.WORKED, () => report(true)),
+      quiet(`not-worked-${kind}`, Q.DID_NOT_WORK, () => report(false)));
+  };
+  const report = async (worked) => {
+    if (busy) return;
+    busy = true;
+    last = worked;
+    for (const button of answers.querySelectorAll('button')) button.disabled = true;
+    const answer = await Q.postRequest(
+      Q.reportForm(kind, worked, { version: RELEASE.version, platform: platform() }), requestFetch());
+    busy = false;
+    text(said, answer.line);
+    said.className = answer.ok ? 'report-status' : 'report-status bad';
+    draw(answer);
+  };
+  draw(null);
+  return el('span', { class: 'report' }, answers, said);
 }

@@ -52,9 +52,9 @@ describe('the asterisk', () => {
   });
   test('it says the spec’s sentence, by name, and is true for a Kindle off a Mac', () => {
     expect(d.asteriskNote('kobo', 'MacIntel'))
-      .toBe('Built and tested in code, never tried on a real Kobo yet. If it works for you, tell us.');
+      .toBe('Built and tested in code, never tried on a real Kobo yet. If you try it, tell us how it went.');
     expect(d.asteriskNote('kindle', 'Win32'))
-      .toBe('Built and tested in code, never tried with a real Kindle on Windows yet. If it works for you, tell us.');
+      .toBe('Built and tested in code, never tried with a real Kindle on Windows yet. If you try it, tell us how it went.');
     expect(d.asteriskNote('kindle', 'MacIntel')).toBe(null);
   });
 });
