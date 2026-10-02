@@ -35,6 +35,8 @@ async function mountPanel(o: {
   /** restoreFocus moves the keyboard as main.js's does (the first live
    *  control in the Convert pane), rather than only counting the ask. */
   realFocus?: boolean;
+  /** The panel's clock (ctx.timers), for the reMarkable's slow look. */
+  timers?: unknown;
 } = {}) {
   // One page at a time: a second mount in one test puts the first away, so
   // its globals go back in the right order.
@@ -71,6 +73,7 @@ async function mountPanel(o: {
       if (o.realFocus) node.querySelectorAll('button').find((b) => !b.disabled)?.focus();
     },
     goTo: () => {}, convertAgain: () => {},
+    ...(o.timers === undefined ? {} : { timers: o.timers }),
     devices: {
       current: () => (plugged === null ? null : plugged.map(dev)),
       subscribe: (fn: (l: unknown) => void) => { subs.add(fn); return () => subs.delete(fn); },
@@ -439,6 +442,76 @@ const kindleBuild = ['export', EPUB, '--json', '--for', 'kindle', '--fountain', 
 const builtKfx = { ok: true, path: '/lib/field-station/Field Station.kfx', extension: 'kfx', label: 'KFX' };
 const quit = { ok: false, error: { code: 'export-failed', message: 'Kindle Previewer quit.' } };
 const sentKfx = { ok: true, destination: '/Volumes/Kindle/documents/Field Station.kfx' };
+
+describe('a reMarkable docked after the result appears', () => {
+  // The background poll is `devices --quick`, which never lists a
+  // reMarkable, so the calm screen for one looks again on its own, slowly.
+  const RM: ConnectedDevice = { kind: 'remarkable', name: 'reMarkable', volume: null };
+  function clock() {
+    let next = 0;
+    const live = new Map<number, { fn: () => void; ms: number }>();
+    return {
+      setInterval: (fn: () => void, ms: number) => { next += 1; live.set(next, { fn, ms }); return next; },
+      clearInterval: (id: number) => { live.delete(id); },
+      setTimeout: globalThis.setTimeout.bind(globalThis),
+      clearTimeout: globalThis.clearTimeout.bind(globalThis),
+      live: () => [...live.values()],
+      async tick() { for (const t of [...live.values()]) t.fn(); await settle(); },
+    };
+  }
+  const full = (p: Mounted) => p.tauri.callsTo('routes').filter((c) => !c.args.includes('--quick'));
+
+  test('the calm screen asks the full list every ten seconds, and offers the tablet once it is docked', async () => {
+    let docked = false;
+    const timers = clock();
+    const p = await mountPanel({ state: { readerDevice: 'remarkable' }, timers,
+      engine: (a) => (a[0] === 'routes' ? listed(docked ? [RM] : []) : undefined) });
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    expect(timers.live().map((t) => t.ms)).toEqual([10_000]);
+    const asked = full(p).length;
+    docked = true;
+    await timers.tick();
+    expect(full(p).length).toBe(asked + 1);
+    expect(p.tauri.callsTo('routes').length).toBe(asked * 2 + 1);
+    expect(p.brass()!.textContent).toBe('Upload to reMarkable');
+  });
+
+  test('the window getting the focus back asks too', async () => {
+    let docked = false;
+    const p = await mountPanel({ state: { readerDevice: 'remarkable' }, timers: clock(),
+      engine: (a) => (a[0] === 'routes' ? listed(docked ? [RM] : []) : undefined) });
+    docked = true;
+    p.page.fireWindow('focus');
+    await settle();
+    expect(p.brass()!.textContent).toBe('Upload to reMarkable');
+  });
+
+  test('it stops when the panel is hidden, and never runs for another reader or on the cards', async () => {
+    const timers = clock();
+    const p = await mountPanel({ state: { readerDevice: 'remarkable' }, timers });
+    p.panel.panelHidden();
+    expect(timers.live()).toEqual([]);
+    p.panel.panelShown();
+    await settle();
+    expect(timers.live().length).toBe(1);
+    p.node.button('Different device').click();
+    expect(timers.live()).toEqual([]);
+    const kobo = clock();
+    await mountPanel({ state: { readerDevice: 'kobo' }, timers: kobo });
+    expect(kobo.live()).toEqual([]);
+  });
+
+  test('a send running asks nothing on the tick', async () => {
+    const timers = clock();
+    const p = await mountPanel({ state: { readerDevice: 'remarkable' }, devices: [RM], timers,
+      engine: (a) => (a[0] === 'routes' ? listed([RM]) : undefined) });
+    p.brass()!.click();
+    await settle();
+    const asked = p.tauri.callsTo('routes').length;
+    await timers.tick();
+    expect(p.tauri.callsTo('routes').length).toBe(asked);
+  });
+});
 
 describe('the Kindle file, named on its button and built ahead', () => {
   test('the button that hands over a Kindle file says which file, as the engine’s check named it', async () => {

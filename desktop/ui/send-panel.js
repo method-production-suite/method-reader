@@ -43,7 +43,8 @@ let drawn = null;
 let routesFault = null;
 /** The book whose route list this panel has asked for since it was mounted.
  *  The calm screen asks on its first draw; after that only a change in what
- *  is plugged in asks again, never a timer. */
+ *  is plugged in asks again, never a timer (except for a reMarkable reader:
+ *  lookForRemarkable()). */
 let askedFor = null;
 /** A list that changed while a send held the panel: asked for once it ends. */
 let owed = false;
@@ -120,6 +121,14 @@ let kfxOpen = false;
 /** What convert.js hands in to sit at the foot of Save a file (Show in
  *  Finder, the book's path). Moved into each redraw, never rebuilt here. */
 let footer = [];
+/** How often the calm screen for a reMarkable asks the full route list
+ *  again. The background poll is `devices --quick`, which never probes for
+ *  one, so a tablet docked after the result appeared would otherwise never
+ *  be offered. Slow on purpose: the probe can run to its whole timeout. */
+export const REMARKABLE_LOOK_MS = 10_000;
+/** That clock while it runs, and the timers it was started on. */
+let remarkableTimer = null;
+let remarkableClock = null;
 
 const platform = () => navigator.userAgentData?.platform ?? navigator.platform;
 const devicesNow = () => ctx.devices?.current?.() ?? null;
@@ -132,6 +141,7 @@ export function mountPanel(node, context, { footer: under = [] } = {}) {
   footer = under;
   waysOpen = false;
   brassOwed = null;
+  lookForRemarkable();
   closeKfx();
   kfxNode = el('section', { class: 'kfx-setup', 'aria-label': KFX_HEADING });
   kfxNode.hidden = true;
@@ -205,6 +215,7 @@ async function start() {
 
 export function panelShown() {
   showing = true;
+  lookForRemarkable();
   // What is plugged in changed while the panel was away: ask again.
   if (mode === 'calm' && askedFor !== mountedBook) draw();
   // Removed first: a second show without a hide must not listen twice.
@@ -224,6 +235,7 @@ export function panelShown() {
 
 export function panelHidden() {
   showing = false;
+  lookForRemarkable();
   aheadWanted = false;
   window.removeEventListener('focus', onFocus);
   if (kfxOpen) kfxHidden();
@@ -242,6 +254,8 @@ export function copyTo(device) {
  *  app, and it never starts a build. */
 function onFocus() {
   checkKindle({ ahead: false });
+  // A reMarkable docked while the reader was in another app.
+  if (remarkableWanted() && !sending) refresh();
 }
 
 /** Ask the engine about this script's Kindle file (`export --check`): which
@@ -361,6 +375,28 @@ function draw() {
     askedFor = mountedBook;
     refresh({ quick: true });
     refresh();
+  }
+  lookForRemarkable();
+}
+
+/** Whether the slow look for a docked reMarkable should run: the calm
+ *  screen, on screen, for a reader who said reMarkable. */
+function remarkableWanted() {
+  return showing && host !== null && mode === 'calm' && ctx?.state.readerDevice === 'remarkable';
+}
+
+/** Start or stop the slow look, as remarkableWanted() now says. A tick
+ *  during a send asks nothing (and owes nothing): the next tick asks. */
+function lookForRemarkable() {
+  const wanted = remarkableWanted();
+  if (wanted && remarkableTimer === null) {
+    remarkableClock = ctx.timers ?? globalThis;
+    remarkableTimer = remarkableClock.setInterval(() => {
+      if (remarkableWanted() && !sending) refresh();
+    }, REMARKABLE_LOOK_MS);
+  } else if (!wanted && remarkableTimer !== null) {
+    remarkableClock.clearInterval(remarkableTimer);
+    remarkableTimer = null;
   }
 }
 
