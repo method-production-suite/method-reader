@@ -142,6 +142,49 @@ describe('Other ways', () => {
     const all = shown.routes.filter((x: any) => !x.key.startsWith('save-')).map((x: any) => x.id);
     expect(new Set([offer.brass.route.id, ...rows.map((x: any) => x.id)])).toEqual(new Set(all));
   });
+  const folded = (items: any[]) => items.filter((x) => x.fold).map((x) => x.fold);
+  const kept = (items: any[]) => items.filter((x) => x.route).map((x) => x.route.title);
+
+  test('Send it folds the readers that only need plugging in or docking into one line, where the first was', () => {
+    const shown = shownFor('darwin', []);
+    const offer = d.offerFor({ device: 'kindle', platform: 'MacIntel', shown });
+    const items = d.foldUnplugged(d.sendItRows(shown, offer));
+    expect(folded(items)).toEqual([{
+      kinds: ['kindle', 'kobo', 'tolino', 'remarkable'],
+      names: ['Kindle', 'Kobo', 'tolino', 'reMarkable'],
+      tail: ': plug in or dock over USB to send.',
+      line: 'Kindle, Kobo, tolino and reMarkable: plug in or dock over USB to send.',
+    }]);
+    // Nothing else is folded, and nothing is lost: what can run stays a row.
+    expect(kept(items)).toEqual(['Send to Kindle email', 'Apple Books']);
+    const rows = d.sendItRows(shown, offer);
+    const first = rows.findIndex((x: any) => x.key.startsWith('device:') || x.key === 'remarkable');
+    expect(items.findIndex((x: any) => x.fold)).toBe(first);
+  });
+
+  test('only plug-ins say plug in; a plugged-in reader is never folded; one alone stays a row', () => {
+    const shown = shownFor('darwin', [kindle, rm]);
+    const offer = d.offerFor({ device: 'kindle', platform: 'MacIntel', shown });
+    const items = d.foldUnplugged(d.sendItRows(shown, offer));
+    expect(folded(items).map((f: any) => f.line)).toEqual(['Kobo and tolino: plug in over USB to send.']);
+    expect(kept(items)).toContain('reMarkable');
+    const one = shownFor('darwin', [kindle, kobo, rm]);
+    const alone = d.foldUnplugged(d.sendItRows(one, d.offerFor({ device: 'kindle', platform: 'MacIntel', shown: one })));
+    expect(folded(alone)).toEqual([]);
+    expect(kept(alone)).toContain('tolino');
+  });
+
+  test('dimmed for any other reason stays a row: email needing setup, a tolino on Windows, a reMarkable still being looked for', () => {
+    const win = shownFor('win32', []);
+    const items = d.foldUnplugged(d.sendItRows(win, d.offerFor({ device: 'kobo', platform: 'Win32', shown: win })));
+    expect(folded(items).map((f: any) => f.line)).toEqual(['Kindle, Kobo and reMarkable: plug in or dock over USB to send.']);
+    expect(kept(items)).toEqual(expect.arrayContaining(['tolino', 'Send to Kindle email', 'Apple Books']));
+    const looking = shownFor('darwin', [], { remarkableChecked: false });
+    const still = d.foldUnplugged(d.sendItRows(looking, d.offerFor({ device: 'kobo', platform: 'MacIntel', shown: looking })));
+    expect(kept(still)).toContain('reMarkable');
+    expect(folded(still).map((f: any) => f.names)).toEqual([['Kindle', 'Kobo', 'tolino']]);
+  });
+
   test('Save a file: five types, each with who it is for', () => {
     const rows = d.saveRows({ fountainPath: '/l/a.fountain' }, kfx);
     expect(rows.map((x: any) => x.type)).toEqual(['epub', 'kfx', 'azw3', 'mobi', 'fountain']);

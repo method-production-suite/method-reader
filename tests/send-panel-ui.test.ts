@@ -1048,6 +1048,11 @@ function openWays(p: Mounted) {
   p.node.button('Other ways').click();
   return p.node.querySelector('section.other-ways')!;
 }
+/** A line's words without its asterisks (each carries its own note). */
+const words = (node: FakeNode): string => node.childNodes.map((k) => {
+  if (k.nodeType === 3) return k.textContent;
+  return k.classList.contains('asterisk-wrap') ? '' : words(k);
+}).join('');
 const saveRow = (p: Mounted, type: string) => p.node.querySelector(`.save-row[data-type="${type}"]`)!;
 const saveButton = (p: Mounted, type: string) => saveRow(p, type).querySelector('button')!;
 const notReady = { ok: true, ...kfxSetup({ calibre: true, previewer: true, pluginInstalled: false, ready: false }, 'darwin') };
@@ -1098,20 +1103,51 @@ describe('Other ways', () => {
     expect(p.status().textContent).toBe('Added to Apple Books.');
   });
 
-  test('a dimmed route keeps its fix and has no button; a Kobo row carries the asterisk', async () => {
-    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+  test('a dimmed route keeps its fix and has no button; a tolino row carries the asterisk', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, platform: 'Win32',
+      engine: (a) => (a[0] === 'routes' ? (() => {
+        const list = routes({ platform: 'win32', booksApp: false, sendToKindleApp: false, appleMailDefault: false, devices: [] });
+        return { ok: true, routes: list, chosen: preselected(list, undefined).id };
+      })() : undefined) });
     const ways = openWays(p);
     const rows = ways.querySelectorAll('.device-row');
-    const kobo = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Kobo')!;
-    expect(kobo.className).toContain('route-unavailable');
-    expect(kobo.querySelector('.route-detail')!.textContent).not.toBe('');
-    const star = kobo.querySelector('.asterisk-wrap')!;
-    expect(kobo.querySelectorAll('button').filter((b) => !star.contains(b))).toEqual([]);
-    expect(kobo.querySelector('.asterisk')).not.toBeNull();
-    // The email row keeps its first-time step.
-    const email = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Send to Kindle email')!;
+    const tolino = rows.find((r) => r.querySelector('.device-name')!.textContent === 'tolino')!;
+    expect(tolino.className).toContain('route-unavailable');
+    expect(tolino.querySelector('.route-detail')!.textContent).toContain('cannot be found on Windows');
+    const star = tolino.querySelector('.asterisk-wrap')!;
+    expect(tolino.querySelectorAll('button').filter((b) => !star.contains(b))).toEqual([]);
+  });
+
+  test('readers that only need plugging in or docking share one muted line, each untried one with its own asterisk', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    const ways = openWays(p);
+    const group = ways.querySelectorAll('.ways-group')[0];
+    const lines = group.querySelectorAll('.ways-folded');
+    expect(lines.length).toBe(1);
+    expect(words(lines[0])).toBe('Kindle, Kobo, tolino and reMarkable: plug in or dock over USB to send.');
+    // A Kindle on a Mac is proven; the other three each keep their note and answers.
+    expect(lines[0].querySelectorAll('.asterisk').map((s) => s.dataset.key))
+      .toEqual(['asterisk-kobo', 'asterisk-tolino', 'asterisk-remarkable']);
+    expect(lines[0].querySelector('.asterisk-note')!.textContent).toContain('never tried on a real Kobo yet');
+    expect(lines[0].querySelector('[data-key="worked-tolino"]')).not.toBeNull();
+    // None of them is a row of its own any more.
+    const names = group.querySelectorAll('.device-row .device-name').map((n) => n.textContent);
+    for (const name of ['Kindle', 'Kobo', 'tolino', 'reMarkable']) expect(names).not.toContain(name);
+    // The email row keeps its first-time step: rows dimmed for other reasons stay rows.
+    const email = group.querySelectorAll('.device-row').find((r) => r.querySelector('.device-name')!.textContent === 'Send to Kindle email')!;
     expect(email.querySelector('.route-hint')!.textContent).toContain('First time?');
     expect(email.button('Open Amazon’s page').className).toBe('btn-quiet');
+  });
+
+  test('a reader plugged in leaves the line for a row of its own, with its button', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    openWays(p);
+    await p.plug([KOBO]);
+    const group = p.node.querySelectorAll('.ways-group')[0];
+    expect(words(group.querySelector('.ways-folded')!)).toBe('Kindle, tolino and reMarkable: plug in or dock over USB to send.');
+    const kobo = group.querySelectorAll('.device-row').find((r) => r.querySelector('.device-name')!.textContent === 'KOBOeReader')!;
+    expect(kobo.className).toBe('device-row');
+    expect(kobo.button('Copy to KOBOeReader').disabled).toBe(false);
   });
 
   test('Save KFX: the Save box first, named for the book, then export --for kfx --out, in the Kindle line, with the build line', async () => {

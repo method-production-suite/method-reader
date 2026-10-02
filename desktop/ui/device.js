@@ -155,6 +155,38 @@ export function sendItRows(shown, offer) {
   ];
 }
 
+/** The engine's fix on a reader row that is dimmed only because nothing of
+ *  its kind is plugged in or docked (src/export/routes.ts), and the verb
+ *  each one asks for. */
+const UNPLUGGED = { 'plug in over USB to send': 'plug in', 'dock over USB to send': 'dock' };
+
+const unplugged = (route) => !route.available && route.unavailable === 'connect'
+  && kindOfRoute(route) !== null && Object.hasOwn(UNPLUGGED, route.detail);
+
+/** "Kobo, tolino and reMarkable". */
+const listed = (names) => (names.length < 2 ? names.join('')
+  : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`);
+
+/** Send it, with the reader rows that only need plugging in or docking
+ *  folded into one muted line where the first of them was: `{ route }` for
+ *  a row, `{ fold }` for the line, which names each kind (so each can carry
+ *  its own asterisk) and says what to do. Fewer than two stay rows; a
+ *  plugged-in reader, or one dimmed for any other reason, is never folded. */
+export function foldUnplugged(rows) {
+  const folding = rows.filter(unplugged);
+  if (folding.length < 2) return rows.map((route) => ({ route }));
+  const verbs = [...new Set(folding.map((r) => UNPLUGGED[r.detail]))];
+  const names = folding.map((r) => r.title);
+  const tail = `: ${verbs.join(' or ')} over USB to send.`;
+  const fold = { kinds: folding.map(kindOfRoute), names, tail, line: `${listed(names)}${tail}` };
+  const items = [];
+  for (const route of rows) {
+    if (!unplugged(route)) items.push({ route });
+    else if (route === folding[0]) items.push({ fold });
+  }
+  return items;
+}
+
 export const SAVE_TYPES = [
   { type: 'epub', label: 'EPUB', who: 'Most readers, Apple Books, and email.' },
   { type: 'kfx', label: 'KFX', who: 'Modern Kindles over USB, with the best layout.' },

@@ -660,7 +660,7 @@ function drawOtherWays(offer) {
   const section = el('section', { class: 'other-ways', 'aria-label': D.OTHER_WAYS },
     el('div', { class: 'ways-group' },
       el('h3', { class: 'ways-heading' }, D.SEND_IT),
-      ...D.sendItRows(drawn, offer).map(routeRow)),
+      ...D.foldUnplugged(D.sendItRows(drawn, offer)).map((item) => (item.fold ? foldedLine(item.fold) : routeRow(item.route)))),
     el('div', { class: 'ways-group' },
       el('h3', { class: 'ways-heading' }, D.SAVE_A_FILE),
       ...D.saveRows(ctx.state.script, kindle).map(saveRow),
@@ -695,6 +695,20 @@ function routeRow(route) {
     ),
     button,
   );
+}
+
+/** The readers that only need plugging in or docking, as one muted line
+ *  (device.js's foldUnplugged()): each name followed by its own asterisk
+ *  when nobody has tried it, so every note still says which reader it is
+ *  about and reports on that one. */
+function foldedLine(fold) {
+  const parts = [];
+  fold.names.forEach((name, i) => {
+    parts.push(el('span', { class: 'folded-name' }, name), asterisk(fold.kinds[i]));
+    if (i < fold.names.length - 2) parts.push(', ');
+    else if (i === fold.names.length - 2) parts.push(' and ');
+  });
+  return el('div', { class: 'ways-folded' }, ...parts, fold.tail);
 }
 
 /** One file type: who it is for, and Save…, or why not and, for a Kindle
