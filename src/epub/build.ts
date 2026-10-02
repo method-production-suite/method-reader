@@ -92,8 +92,8 @@ function picturesToShip(used: ReadonlySet<string>, images: readonly BookImage[])
   const missing = [...used].filter((name) => !byName.has(name));
   if (missing.length > 0) {
     throw new Error(
-      `The book shows ${missing.join(', ')} but was not given the picture, `
-        + 'so it would point at a file it does not carry.',
+      `The book shows or uses as its cover ${missing.join(', ')} but was not given `
+        + 'the picture, so it would point at a file it does not carry.',
     );
   }
   return [...used].map((name) => byName.get(name)!);

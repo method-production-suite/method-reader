@@ -153,8 +153,8 @@ export const GROUPS = [
         // new conversion.
         key: 'includeImages', label: 'Pictures from the script', kind: 'toggle',
         help: 'Shows the drawings and photos the PDF carried, in the book and in the '
-          + 'preview, where they sat in the script. A script with no pictures makes the '
-          + 'same book either way.',
+          + 'preview, where they sat in the script (a title card can become the cover '
+          + 'instead, below). A script with no pictures makes the same book either way.',
       },
       {
         // Live as well: the preview is the book's own pages, and a card that
@@ -164,7 +164,8 @@ export const GROUPS = [
         key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle',
         help: 'When a script opens with a full-page picture before its first scene, the '
           + 'book uses it as its cover instead of its first page, so the preview leaves '
-          + 'it out. A script without one makes the same book either way.',
+          + 'it out. Needs Pictures from the script on. A script without one makes the '
+          + 'same book either way.',
       },
     ],
   },
