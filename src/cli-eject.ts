@@ -101,7 +101,17 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     // point; that is the same "no device" as an empty answer.
     const device = firstLine(await step(findDeviceCommand(listed), true));
     if (device === '') throw failed('could not find the device behind it');
-    commands = linuxEjectCommands(device);
+    const [unmount, powerOff] = linuxEjectCommands(device);
+    await step(unmount);
+    // Unmounted is safe to unplug. Power-off is a courtesy (it spins the
+    // drive down, and some systems refuse it without a password), so its
+    // failure does not make the reader any less ejected.
+    try {
+      await step(powerOff);
+    } catch {
+      // Already safe.
+    }
+    return { ejected: listed };
   }
   for (const argv of commands) await step(argv);
   return { ejected: listed };

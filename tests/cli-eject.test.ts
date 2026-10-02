@@ -117,6 +117,20 @@ describe('ejectCommand: the command per platform', () => {
     expect(calls.map((argv) => argv[1])).toEqual(['-n', 'unmount']);
   });
 
+  test('linux: unmounted but the power-off refused is still ejected: an unmounted drive is safe to unplug', async () => {
+    // Otherwise the window keeps the button, and the next press finds the
+    // reader no longer listed and says it is not plugged in any more.
+    for (const answer of [{ code: 1, stdout: '', stderr: 'Error powering off drive: not authorized\n' }, { code: null, stdout: '', stderr: '' }]) {
+      const { run, calls } = recordingRun((argv) =>
+        argv[0] === 'findmnt' ? { code: 0, stdout: '/dev/sdb1\n', stderr: '' }
+          : argv[1] === 'power-off' ? answer : { code: 0, stdout: '', stderr: '' },
+      );
+      const result = await ejectCommand(linuxKobo.volume!, { platform: 'linux', devices: async () => [linuxKobo], run });
+      expect(result).toEqual({ ejected: '/run/media/sam/KOBOeReader' });
+      expect(calls.map((argv) => argv[1])).toEqual(['-n', 'unmount', 'power-off']);
+    }
+  });
+
   test('linux: findmnt naming no device is eject-failed, and udisksctl never runs', async () => {
     const { run, calls } = recordingRun(() => ({ code: 0, stdout: '\n', stderr: '' }));
     const err = await caught(ejectCommand(linuxKobo.volume!, { platform: 'linux', devices: async () => [linuxKobo], run }));
