@@ -75,6 +75,15 @@ const kindleLines = new Map();
  *  script and a hidden page, and a panel that comes back to its book must
  *  find it still going rather than start another. */
 const builds = new Map();
+/** What each book's last background build was started for (attemptKey()),
+ *  so the panel builds ahead once per version of a book and kind of file
+ *  (buildsAhead()'s `triedFor`). At module level, as `builds` is: a hide and
+ *  a show, or a new script and back, is still the same version of the book. */
+const triedFor = new Map();
+/** From panelShown() to panelHidden(): the panel may build ahead, when the
+ *  check says so and this is a Kindle session. Either can be known first, so
+ *  each looks again when it changes (maybeBuildAhead()). */
+let aheadWanted = false;
 /** The build line and its bar, and the line's own node. Built once per
  *  mount and moved into each calm screen, so the live region stays the
  *  same node across redraws. */
@@ -109,6 +118,7 @@ export function mountPanel(node, context) {
     mountedBook = book;
     drawn = null;
     routesFault = null;
+    aheadWanted = false;
   }
   if (book !== kindleBook) {
     kindle = null;
@@ -159,10 +169,113 @@ export function panelShown() {
   showing = true;
   // What is plugged in changed while the panel was away: ask again.
   if (mode === 'calm' && askedFor !== mountedBook) draw();
+  // Removed first: a second show without a hide must not listen twice.
+  window.removeEventListener('focus', onFocus);
+  window.addEventListener('focus', onFocus);
+  // What the last visit learnt is kept (the button keeps naming the file),
+  // but not whether the file is current: a Settings save may have rewritten
+  // the book since, and a press before the check answers must put the build
+  // line up rather than trust a send from before. Unknown, not stale, so
+  // nothing is built ahead on it either.
+  if (kindle !== null) kindle = { ...kindle, fresh: null };
+  aheadWanted = true;
+  checkKindle();
 }
 
 export function panelHidden() {
   showing = false;
+  aheadWanted = false;
+  window.removeEventListener('focus', onFocus);
+}
+
+/** Back from somewhere else, perhaps from installing Kindle Previewer: the
+ *  Kindle file may be a different kind now, so the button is named again.
+ *  Only named: focus comes back after every Save box and every switch of
+ *  app, and it never starts a build. */
+function onFocus() {
+  checkKindle({ ahead: false });
+}
+
+/** Ask the engine about this script's Kindle file (`export --check`): which
+ *  file this computer makes, and whether the one beside the book is current.
+ *  It takes its turn on the book (book-queue.js), so a save still settling
+ *  on the Settings page lands first and the answer is about the book as it
+ *  will be. A check that fails names nothing: the button keeps its plain
+ *  words, and a press still builds and says what went wrong in its own
+ *  words. `ahead` false names the file and nothing more: the check on a
+ *  focus return and the one after a build never start a build. */
+async function checkKindle({ ahead = true } = {}) {
+  const script = ctx?.state.script;
+  if (host === null || R.blockedReason(script) !== null) return;
+  const book = script.epubPath;
+  // A build already out for this book knows what it is building, and until
+  // it lands the check could only say "out of date".
+  const running = builds.get(book);
+  if (running !== undefined) {
+    if (running.file !== null) useKindle(book, running.file);
+    return;
+  }
+  const mine = era;
+  let answer = null;
+  try {
+    answer = await onBook(book, 'check', argv.kindleCheck(book));
+  } catch {
+    // As a refusal: nothing known.
+  }
+  if (era !== mine) return;
+  useKindle(book, R.kindleCheckFrom(answer));
+  if (ahead) maybeBuildAhead();
+}
+
+/** Start the build ahead if everything buildsAhead() asks for is so right
+ *  now, on a panel that is on screen. A Kindle session is the reader saying
+ *  Kindle, or one plugged in now (device.js's kindleSession()). */
+function maybeBuildAhead() {
+  if (!aheadWanted || !showing) return;
+  const script = ctx.state.script;
+  const book = script?.epubPath;
+  if (kindleBook !== book) return;
+  if (!R.buildsAhead(kindle, {
+    building: builds.has(book),
+    busy: sending || kfxInstalling(),
+    triedFor: triedFor.get(book) ?? null,
+    forKindle: D.kindleSession(ctx.state.readerDevice, devicesNow()),
+  })) return;
+  triedFor.set(book, R.attemptKey(kindle));
+  buildInBackground(script);
+}
+
+/** What is known about this book's Kindle file, onto the brass button. */
+function useKindle(book, file) {
+  kindle = file;
+  kindleBook = book;
+  // Nothing is redrawn under a send; the next change catches up.
+  if (mode === 'calm' && !sending && labelledWith !== (kindle?.extension ?? null)) draw();
+}
+
+/** Build the Kindle file now, on the book's turn, so a press finds it built
+ *  or building. It is an engine call like any other, so an update's restart
+ *  waits for it (app.js counts every `export` that builds). A build that
+ *  fails says nothing here: nobody asked for it, and a press builds again
+ *  and says what went wrong in the engine's own words.
+ *
+ *  One that worked is followed by a check, not by taking the file as
+ *  current: a Settings save that waited behind the build rebuilds the book
+ *  right after it, and a press that trusted the build would then rebuild the
+ *  Kindle file with no line up. The check waits behind that save and says.
+ *  It never starts a build of its own: a file the engine still calls out of
+ *  date straight after being built (a book dated in the future) would
+ *  otherwise build again, and again, for as long as the panel is open. */
+function buildInBackground(script) {
+  const book = script.epubPath;
+  const run = track(book, kindle, onKindleFile(book, argv.export(book, {
+    forFormat: 'kindle',
+    fountain: script.fountainPath,
+    optionsJson: R.optionsJsonFor(script),
+  })));
+  run.then((answer) => {
+    if (answer?.ok === true && showing) checkKindle({ ahead: false });
+  }, () => {});
 }
 
 /** The book cannot be sent (no EPUB on disk): send.js's words for it. */
@@ -289,6 +402,8 @@ function onDevices(list) {
     owed = true;
     return;
   }
+  // A Kindle just plugged in makes this a Kindle session.
+  maybeBuildAhead();
   if (mode === 'cards') {
     markCards(list);
     return;
@@ -375,6 +490,7 @@ async function refresh({ quick = false } = {}) {
   drawn = shown;
   routesFault = null;
   if (mode === 'calm') draw();
+  maybeBuildAhead();
 }
 
 /** The list could not be read: the engine's sentence (or NO_ROUTES) in the
@@ -394,7 +510,9 @@ function repoll() {
 }
 
 /** What follows a send or a route: a list owed while it ran is asked for
- *  (for whatever book is showing now), or one that worked asks again. */
+ *  (for whatever book is showing now), or one that worked asks again. A
+ *  check that landed meanwhile was refused as busy, so the build ahead is
+ *  looked at again too. */
 function afterFlow(worked, stale) {
   if (owed) {
     owed = false;
@@ -404,6 +522,7 @@ function afterFlow(worked, stale) {
   } else if (worked && !stale) {
     repoll();
   }
+  if (!stale) maybeBuildAhead();
 }
 
 /** The brass button: a reader through sendTo(), with its phases; Save the

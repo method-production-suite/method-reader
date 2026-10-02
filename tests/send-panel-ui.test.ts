@@ -371,3 +371,372 @@ describe('the calm screen', () => {
     expect(p.restored()).toBe(0);
   });
 });
+
+type Mounted = Awaited<ReturnType<typeof mountPanel>>;
+const isCheck = (args: string[]) => args[0] === 'export' && args.includes('--check');
+/** Answer the oldest held call to `verb` (an export that builds, never a
+ *  check), and hand back what it was asked. */
+async function answer(p: Mounted, verb: string, value: unknown) {
+  const call = p.tauri.pending().find((c) => c.args[0] === verb && !isCheck(c.args));
+  if (call === undefined) throw new Error(`nothing asked the engine for ${verb}: ${p.tauri.pending().map((c) => c.args[0])}`);
+  call.answer(value);
+  await settle();
+  return call.args;
+}
+async function answerNewest(p: Mounted, verb: string, value: unknown) {
+  const call = p.tauri.pending().filter((c) => c.args[0] === verb && !isCheck(c.args)).at(-1);
+  if (call === undefined) throw new Error(`nothing asked the engine for ${verb}`);
+  call.answer(value);
+  await settle();
+}
+/** Answer the oldest held Kindle file check. */
+async function answerCheck(p: Mounted, value: unknown) {
+  const call = p.tauri.pending().find((c) => isCheck(c.args));
+  if (call === undefined) throw new Error(`nothing asked for a Kindle file check: ${p.tauri.pending().map((c) => c.args[0])}`);
+  call.answer(value);
+  await settle();
+  return call.args;
+}
+/** Every held export that builds (not a check). */
+const building = (p: Mounted) => p.tauri.pending().filter((c) => c.args[0] === 'export' && !isCheck(c.args)).length;
+/** The build line while the Kindle file builds, or null when its block is
+ *  hidden or off screen (the bar with it). */
+function buildLine(p: Mounted) {
+  const block = p.node.querySelector('.kindle-build');
+  if (block === null || block.hidden) return null;
+  expect(block.querySelector('.build-sweep')).not.toBeNull();
+  return block.querySelector('.kindle-build-line')!.textContent;
+}
+/** `export --check`'s answer for a machine that makes `extension`. */
+const checked = (extension: string, fresh: boolean, bookDate = 1000) => ({
+  ok: true, path: `/lib/field-station/Field Station.${extension}`, format: 'kindle', extension,
+  label: extension.toUpperCase(), available: ['epub', 'kindle'], stages: [], fresh,
+  builtBy: extension === 'mobi' ? 'screepub' : 'calibre', bookDate,
+});
+const HALF_A_MINUTE = 'Building the Kindle file. This takes about half a minute.';
+const kindleBuild = ['export', EPUB, '--json', '--for', 'kindle', '--fountain', FOUNTAIN,
+  '--options-json', JSON.stringify({ dialogueSideMarginPct: 27 })];
+const builtKfx = { ok: true, path: '/lib/field-station/Field Station.kfx', extension: 'kfx', label: 'KFX' };
+const quit = { ok: false, error: { code: 'export-failed', message: 'Kindle Previewer quit.' } };
+const sentKfx = { ok: true, destination: '/Volumes/Kindle/documents/Field Station.kfx' };
+
+describe('the Kindle file, named on its button and built ahead', () => {
+  test('the button that hands over a Kindle file says which file, as the engine’s check named it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    expect(p.brass()!.textContent).toBe('Copy to Kindle');
+    expect(await answerCheck(p, checked('kfx', true))).toEqual(['export', EPUB, '--json', '--for', 'kindle', '--check']);
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
+    // A Kobo's button hands over the EPUB, and is not renamed.
+    const kobo = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO], check: checked('kfx', true) });
+    expect(kobo.brass()!.textContent).toBe('Copy to KOBOeReader');
+  });
+
+  test('a check that lands after the button renames it, and the keyboard stays on it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    p.brass()!.focus();
+    await answerCheck(p, checked('azw3', true));
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.azw3)');
+    expect(p.page.doc.activeElement).toBe(p.brass());
+    expect(p.restored()).toBe(0);
+  });
+
+  test('a check that fails names nothing: the button keeps its plain words', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE],
+      check: { ok: false, error: { code: 'unreadable', message: 'Cannot read the book.' } } });
+    expect(p.brass()!.textContent).toBe('Copy to Kindle');
+    expect(p.status().textContent).toBe('');
+  });
+
+  test('the check is asked again when the window gets the focus back: a toolchain installed meanwhile renames the button', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    await answerCheck(p, checked('azw3', true));
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.azw3)');
+    p.page.fireWindow('focus'); // back from installing Kindle Previewer
+    await answerCheck(p, checked('kfx', true));
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
+    p.panel.panelHidden();
+    p.page.fireWindow('focus');
+    await settle();
+    expect(p.tauri.pending()).toEqual([]);
+  });
+
+  test('the result appearing with the Kindle file current builds nothing', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', true) });
+    expect(building(p)).toBe(0);
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('a Kindle chosen and the file out of date: one build starts as the result appears, with its line and bar under the brass', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE],
+      check: { ok: true, path: '/x.kfx', format: 'kindle', extension: 'kfx', label: 'KFX', available: ['epub', 'kindle'], stages: [], fresh: false, builtBy: 'calibre', bookDate: 1000 } });
+    await settle();
+    const exports = p.tauri.callsTo('export').filter((c) => !c.args.includes('--check'));
+    expect(exports.map((c) => c.args)).toEqual([['export', EPUB, '--json', '--for', 'kindle', '--fountain', FOUNTAIN, '--options-json', '{"dialogueSideMarginPct":27}']]);
+    expect(p.node.querySelector('.calm .kindle-build-line')!.textContent).toBe('Building the Kindle file. This takes about half a minute.');
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
+  });
+
+  test('the build ahead says nothing when it is done, and a press after it may build and says so', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    expect(building(p)).toBe(0);
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    // Every button still works while it builds: nothing was pressed.
+    expect(p.node.buttons().every((b) => !b.disabled)).toBe(true);
+    expect(await answer(p, 'export', builtKfx)).toEqual(kindleBuild);
+    expect(buildLine(p)).toBe(null);
+    // Nobody asked for it, so a build that worked says nothing more. The
+    // engine is asked again whether the file is current (a save may have
+    // waited behind the build and changed the book), and that check never
+    // starts a build of its own.
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+    expect(p.status().textContent).toBe('');
+    // So a press now may build, and says so.
+    p.brass()!.click();
+    await settle();
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    await answer(p, 'send', sentKfx);
+  });
+
+  test('its turn comes after a save still waiting on the book, so it builds what the reader last set', async () => {
+    const { inTurn } = await import(join(UI, 'book-queue.js'));
+    let free: () => void = () => {};
+    const saving = inTurn(EPUB, 'save', () => new Promise<void>((resolve) => { free = resolve; }));
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    // The check itself waits its turn behind the save.
+    expect(p.tauri.callsTo('export')).toEqual([]);
+    free();
+    await saving;
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', builtKfx);
+    await answerCheck(p, checked('kfx', true));
+  });
+
+  test('with no Calibre to build it (the engine’s MOBI), nothing starts before a press', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('mobi', false) });
+    expect(building(p)).toBe(0);
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('a build already running is not started again when the panel shows again; the book changing since starts the next', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1);
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    // Back on the result: no second build, and no check either (until the
+    // build lands it could only say out of date).
+    expect(p.tauri.pending().map((c) => c.args[0])).toEqual(['export']);
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    expect(buildLine(p)).toBe(null);
+    await answerCheck(p, checked('kfx', true));
+    expect(building(p)).toBe(0);
+
+    // A setting changed on the Settings page, which rebuilt the book: a new
+    // date, and the engine's check says the Kindle file is out of date.
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    await answerCheck(p, checked('kfx', false, 2000));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', builtKfx);
+    await answerCheck(p, checked('kfx', true, 2000));
+  });
+
+  test('a build that failed is not tried again by focus or a return to the result; the next version of the book is', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', quit);
+    // Focus comes back after every Save box and every switch of app. Each
+    // return asks the check again (it names the file), and none builds.
+    for (let i = 0; i < 3; i += 1) {
+      p.page.fireWindow('focus');
+      await answerCheck(p, checked('kfx', false));
+      expect(building(p)).toBe(0);
+    }
+    // Nor does leaving the result and coming back to the same book.
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+    expect(buildLine(p)).toBe(null);
+    // A Settings save rewrote the book: a new version, built once more.
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    await answerCheck(p, checked('kfx', false, 2000));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', builtKfx);
+    await answerCheck(p, checked('kfx', true, 2000));
+  });
+
+  test('a check refused as busy (a copy running) is looked at again when the copy ends', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO, KINDLE], check: HOLD });
+    p.brass()!.click();
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1); // the Kobo's own export, for the EPUB
+    await answer(p, 'export', { ok: false, error: { code: 'export-failed', message: 'No book.' } });
+    expect(building(p)).toBe(1); // now the Kindle file, built ahead
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    await answerCheck(p, checked('kfx', true));
+  });
+
+  test('a check that answers after the panel is hidden starts nothing', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    p.panel.panelHidden();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+  });
+
+  test('a Kindle plugged in after the panel is hidden starts nothing either', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('kfx', false) });
+    p.panel.panelHidden();
+    await p.plug([KINDLE]);
+    expect(building(p)).toBe(0);
+  });
+
+  test('a Kobo reader with no Kindle in sight never starts Kindle Previewer; a Kindle plugged in does', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO], check: checked('kfx', false) });
+    expect(building(p)).toBe(0);
+    expect(buildLine(p)).toBe(null);
+    await p.plug([KOBO, KINDLE]);
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+  });
+
+  test('a Kindle plugged in while the cards are still up starts the build too', async () => {
+    const p = await mountPanel({ check: checked('kfx', false) });
+    expect(p.cards().length).toBe(6);
+    expect(building(p)).toBe(0);
+    await p.plug([KINDLE]);
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', builtKfx);
+  });
+
+  test('back on the result, a press before the check answers puts the bar up, even after a press that found the file current', async () => {
+    // The review's probe: a send found the file current; the book was then
+    // rebuilt on the Settings page; back on the result, the press came
+    // before the check could say so, and a whole KFX build ran with no line.
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    await answerCheck(p, checked('kfx', true));
+    p.brass()!.click();
+    await settle();
+    expect(buildLine(p)).toBe(null); // current: a lookup
+    expect(p.status().textContent).toBe('Getting the book ready for Kindle…');
+    await answer(p, 'export', builtKfx);
+    await answer(p, 'send', sentKfx);
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    // The button still names the file while the check is out.
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
+    p.brass()!.click();
+    await settle();
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    expect(p.status().textContent).toBe('');
+    // The check lands mid-press: busy, so it starts nothing of its own.
+    await answerCheck(p, checked('kfx', false, 2000));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', builtKfx);
+    expect(buildLine(p)).toBe(null);
+    await answer(p, 'send', sentKfx);
+  });
+
+  test('Copy to Kindle pressed mid-build waits for it, then copies what it made', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    await answerCheck(p, checked('kfx', false));
+    p.brass()!.click();
+    await settle();
+    // No second build: the press waits behind the one running.
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    expect(p.node.buttons().every((b) => b.disabled)).toBe(true);
+    await answer(p, 'export', builtKfx);
+    // Its own export now runs, and finds the file that build just made (the
+    // engine's freshness rule): the line stays up until that answers.
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    expect(await answer(p, 'export', builtKfx)).toEqual(kindleBuild);
+    expect(buildLine(p)).toBe(null);
+    expect(p.status().textContent).toBe('Copying it to Kindle…');
+    expect(await answer(p, 'send', sentKfx))
+      .toEqual(['send', '/lib/field-station/Field Station.kfx', '--json', '--device', '/Volumes/Kindle']);
+    expect(p.status().textContent).toBe('Field Station is on your Kindle. Eject it before you unplug.');
+  });
+
+  test('a copy to a Kobo during a background build starts at once: both only read the book', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO, KINDLE], check: checked('kfx', false) });
+    expect(building(p)).toBe(1);
+    p.brass()!.click();
+    await settle();
+    expect(p.status().textContent).toBe('Getting the book ready for KOBOeReader…');
+    // Two exports out at once: the build, and this one for the EPUB.
+    expect(building(p)).toBe(2);
+    expect(p.tauri.pending().filter((c) => c.args[0] === 'export').map((c) => c.args.slice(3, 5).join(' ')))
+      .toEqual(['--for kindle', '--for epub']);
+    await answerNewest(p, 'export', { ok: true, path: EPUB, extension: 'epub', label: 'EPUB' });
+    await answer(p, 'send', { ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' });
+    expect(p.status().textContent).toBe('Field Station is on your KOBOeReader. Eject it before you unplug.');
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+  });
+
+  test('a Settings save during a background build waits for it: the build reads the book, the save rewrites it', async () => {
+    const { inTurn, holders } = await import(join(UI, 'book-queue.js'));
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', false) });
+    expect(holders(EPUB)).toEqual(['kindle']);
+    let saved = false;
+    const saving = inTurn(EPUB, 'save', () => { saved = true; });
+    await settle();
+    expect(saved).toBe(false);
+    await answer(p, 'export', builtKfx);
+    await saving;
+    expect(saved).toBe(true);
+  });
+
+  test('a build that fails says nothing (nobody asked), and the press builds again with the line up', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: checked('kfx', false) });
+    await answer(p, 'export', quit);
+    expect(buildLine(p)).toBe(null);
+    expect(p.status().textContent).toBe('');
+    p.brass()!.click();
+    await settle();
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', quit);
+    expect(p.status().textContent).toBe('Kindle Previewer quit.');
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('a save that waited behind the build and changed the book: the check after it says so, and a press puts the line up', async () => {
+    // The gap the check after a build closes: without it, the panel would
+    // take the build's file as current, and a press after the save would
+    // rebuild it for half a minute with nothing on screen.
+    const { inTurn } = await import(join(UI, 'book-queue.js'));
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD });
+    await answerCheck(p, checked('kfx', false));
+    let free: () => void = () => {};
+    const saving = inTurn(EPUB, 'save', () => new Promise<void>((resolve) => { free = resolve; }));
+    await answer(p, 'export', builtKfx);
+    // The check waits for the save.
+    expect(p.tauri.pending()).toEqual([]);
+    free();
+    await saving;
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+    p.brass()!.click();
+    await settle();
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    expect(buildLine(p)).toBe(null);
+    await answer(p, 'send', sentKfx);
+  });
+});
