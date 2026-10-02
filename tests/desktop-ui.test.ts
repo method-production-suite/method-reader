@@ -5943,28 +5943,35 @@ describe('what the Send surface decides', () => {
   const kobo: Device = { id: '/m/KOBOe', kind: 'kobo', name: 'Kobo', volume: '/m/KOBOe' };
   const rm: Device = { id: 'remarkable', kind: 'remarkable', name: 'reMarkable', volume: null };
 
-  beforeAll(async () => { send = (await import(join(UI, 'send-routes.js'))) as SendModule; });
+  // platformOf and undetectable as the device model hands them on: the
+  // device cards and their lines read them through device.js.
+  let device: Pick<SendModule, 'platformOf' | 'undetectable'>;
+
+  beforeAll(async () => {
+    send = (await import(join(UI, 'send-routes.js'))) as SendModule;
+    device = (await import(join(UI, 'device.js'))) as Pick<SendModule, 'platformOf' | 'undetectable'>;
+  });
 
   test('a platform this window cannot name is unknown, never some other one', () => {
     // navigator.platform is deprecated and navigator.userAgentData is absent
     // on WebKitGTK, so this window can genuinely not know. Under-claiming
     // hardware support is right; naming the wrong operating system is not.
     for (const unknown of [undefined, null, '', 'CrOS', {}]) {
-      expect(send.platformOf(unknown)).toBe('unknown');
+      expect(device.platformOf(unknown)).toBe('unknown');
     }
-    expect(send.platformOf('Linux aarch64')).toBe('linux');
-    expect(send.platformOf('MacIntel')).toBe('mac');
-    expect(send.platformOf('Win32')).toBe('windows');
+    expect(device.platformOf('Linux aarch64')).toBe('linux');
+    expect(device.platformOf('MacIntel')).toBe('mac');
+    expect(device.platformOf('Win32')).toBe('windows');
   });
 
   test('a tolino on Windows is called undetectable, not merely absent', () => {
     // It is identified by the name of its volume and a Windows drive root
     // carries none. Left unsaid, a missing row reads as a bad cable.
-    const said = send.undetectable('Win32');
+    const said = device.undetectable('Win32');
     expect(said).toContain('tolino');
     expect(said).toContain('Windows');
     for (const platform of ['MacIntel', 'Linux aarch64', undefined]) {
-      expect(`${platform}: ${send.undetectable(platform)}`).toBe(`${platform}: null`);
+      expect(`${platform}: ${device.undetectable(platform)}`).toBe(`${platform}: null`);
     }
   });
 
