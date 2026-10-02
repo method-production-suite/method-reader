@@ -10,14 +10,16 @@
 // ctx.state.readerDevice, ctx.state.sendResult (the line and the Eject
 // button), ctx.state.devices. What has to outlive a book (Kindle builds and
 // their line) stays module-level, as it was in send.js.
-import { runEngine, argv, openUrl } from './app.js';
+import { runEngine, argv, openUrl, saveDialog } from './app.js';
 import { settingsFrom } from './tune.js';
 import { inTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
 import { canFocus } from './focus.js';
 import { newIssueUrl, osLabel } from './feedback.js';
 import { RELEASE } from './notes.js';
-import { kfxRedraw, kfxInstalling } from './kfx.js';
+import {
+  HEADING as KFX_HEADING, mountKfx, kfxShown, kfxHidden, kfxRedraw, kfxInstalling,
+} from './kfx.js';
 import * as D from './device.js';
 import * as R from './send-routes.js';
 
@@ -103,15 +105,31 @@ let sending = false;
  *  status line beside a script that was never sent. Same shape as tune.js's
  *  `era`. */
 let era = 0;
+/** Other ways, open or shut. Kept across the calm screen's redraws (a
+ *  plug-in redraws it), shut again for each new mount. */
+let waysOpen = false;
+/** The KFX checklist's place (kfx.js draws into it), built once per mount
+ *  and moved into each redraw like the build line, so kfx.js keeps drawing
+ *  into the same node. `kfxOpen` is whether Set it up put it on screen. */
+let kfxNode = null;
+let kfxOpen = false;
+/** What convert.js hands in to sit at the foot of Save a file (Show in
+ *  Finder, the book's path). Moved into each redraw, never rebuilt here. */
+let footer = [];
 
 const platform = () => navigator.userAgentData?.platform ?? navigator.platform;
 const devicesNow = () => ctx.devices?.current?.() ?? null;
 
-export function mountPanel(node, context) {
+export function mountPanel(node, context, { footer: under = [] } = {}) {
   unsubscribe?.();
   host = node;
   ctx = context;
   mode = null;
+  footer = under;
+  waysOpen = false;
+  closeKfx();
+  kfxNode = el('section', { class: 'kfx-setup', 'aria-label': KFX_HEADING });
+  kfxNode.hidden = true;
   const book = ctx.state.script?.epubPath ?? null;
   if (book !== mountedBook) {
     era += 1;
@@ -180,12 +198,15 @@ export function panelShown() {
   if (kindle !== null) kindle = { ...kindle, fresh: null };
   aheadWanted = true;
   checkKindle();
+  // The checklist left open asks the machine again, as it does on a focus.
+  if (kfxOpen) kfxShown();
 }
 
 export function panelHidden() {
   showing = false;
   aheadWanted = false;
   window.removeEventListener('focus', onFocus);
+  if (kfxOpen) kfxHidden();
 }
 
 /** Back from somewhere else, perhaps from installing Kindle Previewer: the
@@ -442,12 +463,124 @@ function drawCalm() {
     routesFault === null ? null : el('p', { class: 'fault-body' }, routesFault),
     ...lines.map((line) => el('p', { class: 'caption calm-line' }, line)),
     el('div', { class: 'calm-ways' },
-      el('button', { type: 'button', class: 'btn btn-outline', 'data-key': 'other-ways', 'aria-expanded': 'false' },
-        D.OTHER_WAYS),
+      el('button', {
+        type: 'button', class: 'btn btn-outline', 'data-key': 'other-ways', 'aria-expanded': String(waysOpen),
+        onclick: toggleWays,
+      }, D.OTHER_WAYS),
       el('button', {
         type: 'button', class: 'btn-quiet', 'data-key': 'different',
         onclick: () => { mode = 'cards'; draw(); },
-      }, D.DIFFERENT)));
+      }, D.DIFFERENT)),
+    drawOtherWays(offer));
+}
+
+// ------------------------------------------------------------- other ways
+
+/** Open or shut Other ways in place: no redraw, so the keyboard stays on
+ *  the toggle. Shutting it puts the KFX checklist away too. */
+function toggleWays() {
+  waysOpen = !waysOpen;
+  const section = body.querySelector('section.other-ways');
+  if (section !== null) section.hidden = !waysOpen;
+  body.querySelector('[data-key="other-ways"]')?.setAttribute('aria-expanded', String(waysOpen));
+  if (!waysOpen) closeKfx();
+}
+
+/** Every way there is, in two groups (spec decision 10). Send it: the
+ *  offer's follow-ups first, then every other route the engine lists, dimmed
+ *  ones with their fix (device.js's sendItRows()); outlined, never brass.
+ *  Save a file: every file type Screepub makes, each with who it is for;
+ *  then the KFX checklist when Set it up opened it, then convert.js's foot. */
+function drawOtherWays(offer) {
+  const section = el('section', { class: 'other-ways', 'aria-label': D.OTHER_WAYS },
+    el('div', { class: 'ways-group' },
+      el('h3', { class: 'ways-heading' }, D.SEND_IT),
+      ...D.sendItRows(drawn, offer).map(routeRow)),
+    el('div', { class: 'ways-group' },
+      el('h3', { class: 'ways-heading' }, D.SAVE_A_FILE),
+      ...D.saveRows(ctx.state.script, kindle).map(saveRow),
+      kfxOpen ? kfxNode : null,
+      ...footer));
+  section.hidden = !waysOpen;
+  return section;
+}
+
+/** One route, as send.js drew it: its title, the engine's detail, where a
+ *  mounted reader is, the email row's first-time step, and its button, or
+ *  none when it is dimmed. The asterisk beside a reader nobody has tried. */
+function routeRow(route) {
+  const lines = R.routeLines(route, platform());
+  const hint = R.emailSetupHint(route);
+  const kind = D.kindOfRoute(route);
+  const button = route.available ? el('button', {
+    type: 'button', class: 'btn btn-outline', 'data-key': route.id,
+    disabled: sending || kfxInstalling(), onclick: () => choose(route),
+  }, R.buttonLabel(route, kindle)) : null;
+  return el('div', { class: route.available ? 'device-row' : 'device-row route-unavailable' },
+    el('div', { class: 'device-what' },
+      el('p', { class: 'device-name' }, lines.title),
+      kind === null ? null : asterisk(kind),
+      el('p', { class: 'route-detail' }, lines.detail),
+      lines.where === null ? null : el('p', { class: 'device-where' }, lines.where),
+      hint === null ? null : el('p', { class: 'caption route-hint' }, hint.line, ' ',
+        el('button', {
+          type: 'button', class: 'btn-quiet', 'data-key': hint.key, disabled: sending || kfxInstalling(),
+          onclick: () => keepFocus(hint.key, () => perform({ key: hint.key, title: R.SETUP_TITLE })),
+        }, R.SETUP_BUTTON)),
+    ),
+    button,
+  );
+}
+
+/** One file type: who it is for, and Save…, or why not and, for a Kindle
+ *  file the tools cannot make yet, Set it up. */
+function saveRow(row) {
+  const key = `save-file-${row.type}`;
+  const act = row.available
+    ? el('button', {
+      type: 'button', class: 'btn btn-outline', 'data-key': key,
+      disabled: sending || kfxInstalling(), onclick: () => keepFocus(key, () => saveFile(row.type)),
+    }, 'Save…')
+    : null;
+  return el('div', { class: row.available ? 'save-row' : 'save-row route-unavailable', 'data-type': row.type },
+    el('div', { class: 'device-what' },
+      el('p', { class: 'device-name' }, row.label),
+      el('p', { class: 'route-detail' }, row.who),
+      row.fix === null ? null : el('p', { class: 'caption route-fix' }, row.fix),
+      row.setup ? el('button', {
+        type: 'button', class: 'btn-quiet', 'data-key': `setup-${row.type}`, onclick: openKfx,
+      }, D.SET_IT_UP) : null),
+    act);
+}
+
+/** Set it up: kfx.js's checklist, in place under Save a file. */
+function openKfx() {
+  if (kfxOpen) return;
+  kfxOpen = true;
+  draw();
+  // After the draw: kfx.js draws only into a node that is in the page.
+  mountKfx(kfxNode, {
+    // A build counts: the plugin must not be swapped under a KFX conversion.
+    isSending: () => sending || builds.size > 0,
+    // The reader asked for it, so it is always relevant here.
+    devices: () => [],
+    onBusy: (on) => {
+      for (const button of buttons()) if (!kfxNode.contains(button)) button.disabled = on;
+      // An install just ended: the Kindle file may be a KFX from now on, and
+      // on a Kindle session it is worth starting.
+      if (!on) checkKindle();
+    },
+    restoreFocus: () => ctx.restoreFocus(),
+  });
+  kfxShown();
+}
+
+/** The checklist put away: off screen, and no longer asking on a focus. */
+function closeKfx() {
+  if (!kfxOpen) return;
+  kfxOpen = false;
+  kfxHidden();
+  kfxNode?.remove();
 }
 
 /** Every route this book can take, as `screepub routes` lists them. `quick`
@@ -620,10 +753,11 @@ function onKindleFile(book, args) {
 /** Count `run`, an export that may build this book's Kindle file, as a build
  *  for as long as it is out: the build line and its bar stay up until the
  *  last one for the book answers. Hands `run` back, answer and all. */
-function track(book, file, run) {
-  const entry = builds.get(book) ?? { runs: 0, file };
+function track(book, file, run, extension = file?.extension ?? null) {
+  const entry = builds.get(book) ?? { runs: 0, file, extension };
   entry.runs += 1;
   if (file !== null) entry.file = file;
+  if (extension !== null) entry.extension = extension;
   builds.set(book, entry);
   showBuild();
   kfxRedraw();
@@ -650,7 +784,7 @@ function showBuild() {
   const running = builds.get(ctx.state.script?.epubPath) ?? null;
   buildNote.hidden = running === null;
   if (running === null) return;
-  const words = R.buildLine(running.file?.extension ?? null);
+  const words = R.buildLine(running.extension ?? null);
   // Only when the words change: rewritten into a live region, the same words
   // can be read out again.
   if (buildWords.textContent !== words) text(buildWords, words);
@@ -797,10 +931,57 @@ function missingPanel() {
         'Back')));
 }
 
-/** Save one file type where the Save box says. Filled in with Other ways'
- *  Save a file group. */
-function saveFile(type) {
-  void type;
+/** Save one file type where the Save box says. The type is the extension,
+ *  so the box comes first; the engine builds (or finds) the file and writes
+ *  it there (`export --for <type> --out`). The window never writes a file.
+ *  A Kindle file waits in the Kindle line behind any build of this book, and
+ *  puts the build line up unless the check said that very file is current;
+ *  EPUB and Fountain only copy. Under the same `sending` flag and `era`
+ *  discipline as sendTo() and perform(). */
+async function saveFile(type) {
+  if (sending || kfxInstalling()) return;
+  sending = true;
+  const mine = era;
+  const stale = () => era !== mine;
+  for (const button of buttons()) button.disabled = true;
+  artifactNote.hidden = true;
+  try {
+    kfxRedraw();
+    await ensureSettings();
+    if (stale()) return;
+    const script = ctx.state.script;
+    const book = script.epubPath;
+    const row = D.SAVE_TYPES.find((t) => t.type === type);
+    const out = await saveDialog({
+      defaultPath: R.saveNameFor(book, type), filters: R.saveFiltersFor(type, row.label),
+    });
+    if (stale() || out === null) return;
+    const call = argv.export(book, {
+      forFormat: type, fountain: script.fountainPath, optionsJson: R.optionsJsonFor(script), out,
+    });
+    let answer;
+    if (D.saveTurn(type) === 'kindle') {
+      say(R.statusFor('idle'));
+      const same = kindleBook === book && kindle?.extension === type;
+      const run = inKindleLine(book, () => onBook(book, 'kindle', call));
+      answer = await (same && !R.mayBuild(kindle) ? run : track(book, same ? kindle : null, run, type));
+      if (answer?.ok === true && same) builtNow(book);
+    } else {
+      say(R.statusFor('saving'));
+      answer = await onBook(book, 'copy', call);
+    }
+    if (stale()) return;
+    say(answer?.ok === true
+      ? { line: `Saved ${R.baseName(answer.path)}.`, bad: false }
+      : R.statusFor('failed', { detail: R.failureMessage(answer) }));
+  } catch (err) {
+    if (!stale()) say(R.statusFor('failed', { detail: err.message }));
+  } finally {
+    sending = false;
+    for (const button of buttons()) button.disabled = false;
+    kfxRedraw();
+    afterFlow(false, stale());
+  }
 }
 
 // --------------------------------------------------------------- asterisk

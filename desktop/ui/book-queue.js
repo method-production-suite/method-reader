@@ -49,9 +49,11 @@ export const TURNS = {
   // Copy to a Kindle, and the save of it, on a computer without Calibre, or
   // before the page knows which rung this computer takes).
   'kindle-mobi': WRITE,
-  // send.js: a Kindle file Calibre builds from the EPUB, beside it (KFX,
-  // AZW3): the build the page starts as it opens, Save a Kindle file, Copy
-  // to a Kindle, and the save of it.
+  // send-panel.js: a Kindle file built beside the EPUB without touching it:
+  // the ladder's KFX or AZW3 (Calibre), the build the result starts as it
+  // appears and Copy to a Kindle; and every Save of a KFX, an AZW3 or a MOBI
+  // (`export --for <type>`, whose MOBI rung, unlike the ladder's, leaves the
+  // EPUB alone).
   //
   // Which of these two a Kindle export takes is read off the page's last
   // `export --check` (send.js's kindleTurn()), not the engine's run itself,
@@ -68,7 +70,8 @@ export const TURNS = {
   // it, and the copy to a Kobo, a tolino or a reMarkable), and the copy of
   // any file to any reader, a Kindle's included.
   send: READ,
-  // send.js: Save the EPUB.
+  // send-panel.js: a Save of the EPUB or the Fountain (`export --for epub`,
+  // `--for fountain`), which copies the file where the Save box said.
   copy: READ,
   // send.js: `export --check`, the Kindle file's date against the book's.
   check: READ,

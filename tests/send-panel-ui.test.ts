@@ -8,6 +8,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import type { ConnectedDevice } from '../src/device/types';
 import { preselected, routes } from '../src/export/routes';
+import { kfxSetup } from '../src/export/kfx-setup';
 import { fakePage, HOLD, settle, type FakePage } from './helpers/fake-dom';
 
 const UI = join(import.meta.dir, '..', 'desktop', 'ui');
@@ -193,7 +194,7 @@ describe('the asterisk', () => {
 
   test('a Kindle on a Mac carries none', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kindle' } });
-    expect(p.node.querySelector('.calm .asterisk')).toBeNull();
+    expect(p.node.querySelector('.calm-act .asterisk')).toBeNull();
   });
 
   test('a Kindle on Windows does, in its own words', async () => {
@@ -738,5 +739,475 @@ describe('the Kindle file, named on its button and built ahead', () => {
     await answer(p, 'export', builtKfx);
     expect(buildLine(p)).toBe(null);
     await answer(p, 'send', sentKfx);
+  });
+});
+
+/** The Save box the panel opened, answered: a path, or null for a cancel. */
+async function chooseSave(p: Mounted, path: string | null) {
+  const box = p.tauri.dialogs.shift();
+  if (box === undefined) throw new Error('no Save box is open');
+  box.resolve(path);
+  await settle();
+  return box.options;
+}
+/** Other ways, opened. */
+function openWays(p: Mounted) {
+  p.node.button('Other ways').click();
+  return p.node.querySelector('section.other-ways')!;
+}
+const saveRow = (p: Mounted, type: string) => p.node.querySelector(`.save-row[data-type="${type}"]`)!;
+const saveButton = (p: Mounted, type: string) => saveRow(p, type).querySelector('button')!;
+const notReady = { ok: true, ...kfxSetup({ calibre: true, previewer: true, pluginInstalled: false, ready: false }, 'darwin') };
+const installed = {
+  ok: true, version: '2.20.1', removed: [],
+  setup: kfxSetup({ calibre: true, previewer: true, pluginInstalled: true, ready: true }, 'darwin'),
+};
+const kfxProbe = (said: unknown) => (a: string[]) => (a[0] === 'kfx-status' ? said : undefined);
+const installButton = (p: Mounted) => p.node.querySelectorAll('button').find((b) => b.dataset.step === 'plugin')!;
+
+describe('Other ways', () => {
+  test('opens in place, in two groups: the device’s follow-ups lead Send it, every file type is in Save a file', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE] });
+    const toggle = p.node.button('Other ways');
+    expect(p.node.querySelector('section.other-ways')!.hidden).toBe(true);
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(p.node.querySelector('section.other-ways')!.hidden).toBe(false);
+    const groups = p.node.querySelectorAll('.ways-group');
+    expect(groups.map((g) => g.querySelector('.ways-heading')!.textContent)).toEqual(['Send it', 'Save a file']);
+    const sendTitles = groups[0].querySelectorAll('.device-name').map((n) => n.textContent);
+    expect(sendTitles.slice(0, 2)).toEqual(['Send to Kindle web', 'Send to Kindle email']);
+    expect(sendTitles).not.toContain('Save the EPUB');
+    expect(sendTitles).not.toContain('Save a Kindle file');
+    // The brass one is not listed again, and nothing in the list is brass.
+    expect(sendTitles).not.toContain('Kindle');
+    expect(groups[0].querySelectorAll('.btn-brad')).toEqual([]);
+    expect(groups[1].querySelectorAll('.save-row .device-name').map((n) => n.textContent))
+      .toEqual(['EPUB', 'KFX', 'AZW3', 'MOBI', 'Fountain']);
+    expect(saveRow(p, 'azw3').querySelector('.route-detail')!.textContent).toBe('Older Kindles over USB.');
+    // Open across a redraw, and closed again by the same button.
+    await p.plug([KINDLE, KOBO]);
+    expect(p.node.querySelector('section.other-ways')!.hidden).toBe(false);
+    p.node.button('Other ways').click();
+    expect(p.node.querySelector('section.other-ways')!.hidden).toBe(true);
+    expect(p.node.button('Other ways').getAttribute('aria-expanded')).toBe('false');
+  });
+
+  test('a Send it row runs its route, outlined, through the same flow as the brass', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' },
+      engine: (a) => (a[0] === 'route' ? { ok: true, note: 'Added to Apple Books.' } : undefined) });
+    const ways = openWays(p);
+    const books = ways.button('Add to Apple Books');
+    expect(books.className).toBe('btn btn-outline');
+    books.click();
+    await settle();
+    expect(p.tauri.callsTo('route').map((c) => c.args)).toEqual([['route', 'apple-books', EPUB, '--json']]);
+    expect(p.status().textContent).toBe('Added to Apple Books.');
+  });
+
+  test('a dimmed route keeps its fix and has no button; a Kobo row carries the asterisk', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    const ways = openWays(p);
+    const rows = ways.querySelectorAll('.device-row');
+    const kobo = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Kobo')!;
+    expect(kobo.className).toContain('route-unavailable');
+    expect(kobo.querySelector('.route-detail')!.textContent).not.toBe('');
+    expect(kobo.querySelectorAll('button').filter((b) => !b.className.includes('asterisk') && b.textContent !== 'tell us')).toEqual([]);
+    expect(kobo.querySelector('.asterisk')).not.toBeNull();
+    // The email row keeps its first-time step.
+    const email = rows.find((r) => r.querySelector('.device-name')!.textContent === 'Send to Kindle email')!;
+    expect(email.querySelector('.route-hint')!.textContent).toContain('First time?');
+    expect(email.button('Open Amazon’s page').className).toBe('btn-quiet');
+  });
+
+  test('Save KFX: the Save box first, named for the book, then export --for kfx --out, in the Kindle line, with the build line', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    expect(builds(p)).toEqual([]);
+    const options = await chooseSave(p, '/Users/ann/Desktop/Field Station.kfx');
+    expect(options).toEqual({ defaultPath: 'Field Station.kfx', filters: [{ name: 'KFX', extensions: ['kfx'] }] });
+    expect(builds(p).map((c) => c.args)).toEqual([[
+      'export', EPUB, '--json', '--for', 'kfx', '--fountain', FOUNTAIN, '--options-json', '{"dialogueSideMarginPct":27}',
+      '--out', '/Users/ann/Desktop/Field Station.kfx']]);
+    expect(p.node.querySelector('.kindle-build-line')!.textContent).toBe(HALF_A_MINUTE);
+    expect(p.node.buttons().filter((b) => !b.disabled)).toEqual([]);
+    await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.kfx', extension: 'kfx', label: 'KFX' });
+    expect(buildLine(p)).toBe(null);
+    expect(p.status().textContent).toBe('Saved Field Station.kfx.');
+  });
+
+  test('a cancelled Save box asks the engine nothing and says nothing', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    openWays(p);
+    saveButton(p, 'fountain').click();
+    await settle();
+    expect(await chooseSave(p, null)).toEqual({ defaultPath: 'Field Station.fountain', filters: [{ name: 'Fountain', extensions: ['fountain'] }] });
+    expect(builds(p)).toEqual([]);
+    expect(p.status().textContent).toBe('');
+    expect(p.node.buttons().every((b) => !b.disabled)).toBe(true);
+  });
+
+  test('a saved file is named on the status line; a refusal is the engine’s sentence', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    openWays(p);
+    saveButton(p, 'epub').click();
+    await settle();
+    await chooseSave(p, '/Users/ann/Desktop/Field Station.epub');
+    expect(p.status().textContent).toBe('Saving…');
+    expect(await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.epub', extension: 'epub', label: 'EPUB' }))
+      .toEqual(['export', EPUB, '--json', '--for', 'epub', '--fountain', FOUNTAIN, '--options-json', '{"dialogueSideMarginPct":27}',
+        '--out', '/Users/ann/Desktop/Field Station.epub']);
+    expect(p.status().textContent).toBe('Saved Field Station.epub.');
+    expect(p.status().classList.contains('bad')).toBe(false);
+
+    saveButton(p, 'mobi').click();
+    await settle();
+    await chooseSave(p, '/Users/ann/Desktop/Field Station.mobi');
+    await answer(p, 'export', { ok: false, error: { code: 'export-failed', message: 'The script could not be read.' } });
+    expect(p.status().textContent).toBe('The script could not be read.');
+    expect(p.status().classList.contains('bad')).toBe(true);
+  });
+
+  test('a script this window has no settings for is asked for them before the save builds', async () => {
+    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
+    const tuned = { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: 27, fontFamily: 'serif' };
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, script: { settings: null },
+      engine: (a) => (a[0] === 'settings' ? { ok: true, settings: tuned } : undefined) });
+    openWays(p);
+    saveButton(p, 'azw3').click();
+    await settle();
+    await chooseSave(p, '/Users/ann/Desktop/Field Station.azw3');
+    const args = builds(p)[0].args;
+    expect(args.slice(0, 5)).toEqual(['export', EPUB, '--json', '--for', 'azw3']);
+    expect(JSON.parse(args[args.indexOf('--options-json') + 1])).toEqual(tuned);
+    expect(buildLine(p)).toBe('Building the Kindle file. This takes a moment.');
+    await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+  });
+
+  test('MOBI and Fountain are greyed for a book made without a .fountain', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, script: { fountainPath: null } });
+    openWays(p);
+    for (const type of ['mobi', 'fountain']) {
+      expect(saveRow(p, type).className).toContain('route-unavailable');
+      expect(saveRow(p, type).querySelector('button')).toBeNull();
+      expect(saveRow(p, type).querySelector('.route-fix')!.textContent)
+        .toBe('This book was made without a .fountain, so there is none to work from.');
+    }
+  });
+
+  test('KFX greyed with Set it up when the ladder stops at AZW3; Set it up shows the checklist in place', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('azw3', true), engine: kfxProbe(notReady) });
+    openWays(p);
+    const row = saveRow(p, 'kfx');
+    expect(row.className).toContain('route-unavailable');
+    expect(row.querySelector('.route-fix')!.textContent).toBe('This computer cannot make one yet.');
+    expect(row.buttons().map((b) => b.textContent)).toEqual(['Set it up']);
+    expect(row.button('Set it up').className).toBe('btn-quiet');
+    // AZW3 stays live: Calibre is there.
+    expect(saveButton(p, 'azw3').textContent).toBe('Save…');
+    // Not on the page, and the machine not asked, until it is wanted.
+    expect(p.node.querySelector('section.kfx-setup')).toBeNull();
+    expect(p.tauri.callsTo('kfx-status')).toEqual([]);
+    row.button('Set it up').click();
+    await settle();
+    expect(p.tauri.callsTo('kfx-status').length).toBe(1);
+    const block = p.node.querySelector('section.kfx-setup')!;
+    expect(block.hidden).toBe(false);
+    const { HEADING } = await import(join(UI, 'kfx.js'));
+    expect(block.getAttribute('aria-label')).toBe(HEADING);
+    expect(block.querySelector('.state-label')!.textContent).toBe(HEADING);
+    expect(block.querySelectorAll('.device-row').length).toBeGreaterThan(0);
+    // Closing Other ways puts it away, and it asks nothing more.
+    p.node.button('Other ways').click();
+    expect(p.node.querySelector('section.kfx-setup')).toBeNull();
+    p.page.fireWindow('focus');
+    await settle();
+    expect(p.tauri.callsTo('kfx-status').length).toBe(1);
+  });
+
+  test('with no Calibre, AZW3 is greyed too, with the same Set it up', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('mobi', true) });
+    openWays(p);
+    for (const type of ['kfx', 'azw3']) expect(saveRow(p, type).button('Set it up')).toBeDefined();
+    expect(saveButton(p, 'mobi').textContent).toBe('Save…');
+  });
+
+  test('the KFX checklist is asked one probe at a time, on Set it up and on focus, and not once the panel is hidden', async () => {
+    // Re-homed from desktop-ui's KFX checklist on the Send page.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('azw3', true), engine: kfxProbe(HOLD) });
+    openWays(p);
+    saveRow(p, 'kfx').button('Set it up').click();
+    await settle();
+    const probes = () => p.tauri.callsTo('kfx-status');
+    expect(probes().length).toBe(1);
+    p.page.fireWindow('focus');
+    p.page.fireWindow('focus');
+    await settle();
+    expect(probes().length).toBe(1);
+    probes()[0].answer({ ok: false });
+    await settle();
+    p.page.fireWindow('focus');
+    await settle();
+    expect(probes().length).toBe(2);
+    probes()[1].answer({ ok: false });
+    await settle();
+    p.panel.panelHidden();
+    p.page.fireWindow('focus');
+    await settle();
+    expect(probes().length).toBe(2);
+  });
+
+  test('the KFX installer runs only from its button, and an install and a send never overlap', async () => {
+    // Re-homed from desktop-ui's KFX checklist on the Send page. It downloads
+    // third-party code and writes into the reader's Calibre.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('azw3', true), engine: kfxProbe(notReady) });
+    openWays(p);
+    saveRow(p, 'kfx').button('Set it up').click();
+    await settle();
+    p.page.fireWindow('focus');
+    await settle();
+    expect(p.tauri.callsTo('kfx-install')).toEqual([]);
+    const books = () => p.node.querySelector('section.other-ways')!.button('Add to Apple Books');
+    installButton(p).click();
+    await settle();
+    expect(p.tauri.callsTo('kfx-install').length).toBe(1);
+    // The busy hook takes every other button out of reach while it runs.
+    expect(books().disabled).toBe(true);
+    expect(p.brass()!.disabled).toBe(true);
+    books().click();
+    await settle();
+    expect(p.tauri.callsTo('route')).toEqual([]);
+    p.tauri.callsTo('kfx-install')[0].answer({ ok: false, error: { code: 'kfx-install-failed', message: 'No network.' } });
+    await settle();
+    expect(books().disabled).toBe(false);
+
+    // And the other way round: a route running holds the installer off.
+    books().click();
+    await settle();
+    expect(p.tauri.callsTo('route').length).toBe(1);
+    installButton(p).click();
+    await settle();
+    expect(p.tauri.callsTo('kfx-install').length).toBe(1);
+    p.tauri.callsTo('route')[0].answer({ ok: true, note: 'Added.' });
+    await settle();
+  });
+
+  test('the KFX plugin cannot be installed under a running Kindle build (re-homed)', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('azw3', false), engine: kfxProbe(notReady) });
+    expect(building(p)).toBe(1);
+    openWays(p);
+    saveRow(p, 'kfx').button('Set it up').click();
+    await settle();
+    expect(installButton(p).disabled).toBe(true);
+    await answer(p, 'export', { ok: true, path: '/lib/field-station/Field Station.azw3', extension: 'azw3' });
+    expect(installButton(p).disabled).toBe(false);
+  });
+
+  test('a KFX install that ends asks the check again, so the brass and the KFX row follow', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: HOLD,
+      engine: (a) => (a[0] === 'kfx-status' ? notReady : a[0] === 'kfx-install' ? installed : undefined) });
+    await answerCheck(p, checked('azw3', true));
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.azw3)');
+    openWays(p);
+    saveRow(p, 'kfx').button('Set it up').click();
+    await settle();
+    installButton(p).click();
+    await settle();
+    await answerCheck(p, checked('kfx', true));
+    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
+    expect(saveButton(p, 'kfx').textContent).toBe('Save…');
+    // The checklist stays up to say it worked.
+    expect(p.node.querySelector('section.kfx-setup')!.hidden).toBe(false);
+  });
+
+  test('an AZW3 built ahead, then the KFX plugin installed: exactly one KFX build ahead', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD,
+      engine: (a) => (a[0] === 'kfx-status' ? notReady : a[0] === 'kfx-install' ? installed : undefined) });
+    await answerCheck(p, checked('azw3', false));
+    expect(building(p)).toBe(1);
+    await answer(p, 'export', { ok: true, path: '/lib/field-station/Field Station.azw3', extension: 'azw3' });
+    await answerCheck(p, checked('azw3', true));
+    expect(building(p)).toBe(0);
+    openWays(p);
+    saveRow(p, 'kfx').button('Set it up').click();
+    await settle();
+    installButton(p).click();
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    // It fails; a focus return does not try it again.
+    await answer(p, 'export', quit);
+    p.page.fireWindow('focus');
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+  });
+
+  test('a check refused as busy (a Save box open) is looked at again when the save ends', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    openWays(p);
+    saveButton(p, 'epub').click();
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0); // the Save box is up: busy
+    await chooseSave(p, null);
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    await answerCheck(p, checked('kfx', true));
+  });
+
+  test('Save the EPUB during a background build starts at once: both only read the book', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', false) });
+    expect(building(p)).toBe(1);
+    openWays(p);
+    saveButton(p, 'epub').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.epub');
+    expect(p.status().textContent).toBe('Saving…');
+    expect(building(p)).toBe(2);
+    await answerNewest(p, 'export', { ok: true, path: '/Users/me/Desktop/Field Station.epub', extension: 'epub' });
+    expect(p.status().textContent).toBe('Saved Field Station.epub.');
+    // The build is still going, and still says so.
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+  });
+
+  test('Save KFX pressed mid-build waits for that build, and the line stays up until it is done', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', false) });
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    // No second build: the press waits behind the one running.
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    expect(p.status().textContent).toBe('');
+    expect(p.node.buttons().every((b) => b.disabled)).toBe(true);
+    await answer(p, 'export', builtKfx);
+    // Its own export now runs, and finds the file that build just made: the
+    // line stays up until that answers.
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    expect((await answer(p, 'export', { ...builtKfx, path: '/Users/me/Desktop/Field Station.kfx' })).slice(3, 5))
+      .toEqual(['--for', 'kfx']);
+    expect(buildLine(p)).toBe(null);
+    expect(p.status().textContent).toBe('Saved Field Station.kfx.');
+  });
+
+  test('a press finds the file current: no build line', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('kfx', true) });
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    expect(building(p)).toBe(1);
+    expect(buildLine(p)).toBe(null);
+    await answer(p, 'export', builtKfx);
+  });
+
+  test('back on the result, Save KFX pressed before the check answers puts the bar up, even after a press that found the file current', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', true) });
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    expect(buildLine(p)).toBe(null);
+    await answer(p, 'export', builtKfx);
+    p.tauri.respond((a) => (isCheck(a) ? HOLD : a[0] === 'routes' ? listed([]) : HOLD));
+    p.panel.panelHidden();
+    p.panel.panelShown();
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answerCheck(p, checked('kfx', false, 2000));
+    await answer(p, 'export', builtKfx);
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('Save MOBI builds beside the book without rewriting it, so it starts beside a copy', async () => {
+    const { inTurn, holders } = await import(join(UI, 'book-queue.js'));
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('mobi', false) });
+    let copied: () => void = () => {};
+    const copying = inTurn(EPUB, 'copy', () => new Promise<void>((resolve) => { copied = resolve; }));
+    openWays(p);
+    saveButton(p, 'mobi').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.mobi');
+    expect(building(p)).toBe(1);
+    expect(holders(EPUB)).toEqual(['copy', 'kindle']);
+    expect(buildLine(p)).toBe('Building the Kindle file. This takes a moment.');
+    await answer(p, 'export', { ok: true, path: '/Users/me/Desktop/Field Station.mobi', extension: 'mobi' });
+    copied();
+    await copying;
+  });
+
+  test('a build that fails says nothing (nobody asked), and Save KFX builds again with the line up', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('kfx', false) });
+    await answer(p, 'export', quit);
+    expect(buildLine(p)).toBe(null);
+    expect(p.status().textContent).toBe('');
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', quit);
+    expect(p.status().textContent).toBe('Kindle Previewer quit.');
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('a save that waited behind the build and changed the book: Save KFX after it puts the line up', async () => {
+    const { inTurn } = await import(join(UI, 'book-queue.js'));
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD });
+    await answerCheck(p, checked('kfx', false));
+    let free: () => void = () => {};
+    const saving = inTurn(EPUB, 'save', () => new Promise<void>((resolve) => { free = resolve; }));
+    await answer(p, 'export', builtKfx);
+    free();
+    await saving;
+    await settle();
+    await answerCheck(p, checked('kfx', false));
+    expect(building(p)).toBe(0);
+    openWays(p);
+    saveButton(p, 'kfx').click();
+    await settle();
+    await chooseSave(p, '/Users/me/Desktop/Field Station.kfx');
+    expect(buildLine(p)).toBe(HALF_A_MINUTE);
+    await answer(p, 'export', builtKfx);
+    expect(buildLine(p)).toBe(null);
+  });
+
+  test('the keyboard goes back to the Save button after its Save box is cancelled', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    openWays(p);
+    saveButton(p, 'epub').focus();
+    saveButton(p, 'epub').click();
+    await settle();
+    // The Save box has the focus; when it closes, the window's own handler
+    // would put it on the page's first live stop.
+    p.page.doc.body.focus();
+    await chooseSave(p, null);
+    expect(p.page.doc.activeElement).toBe(saveButton(p, 'epub'));
+    expect(p.restored()).toBe(0);
+  });
+
+  test('Show in Finder and the book’s path sit at the foot of Save a file', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    const reveal = p.page.doc.createElement('button');
+    reveal.textContent = 'Show in Finder';
+    const path = p.page.doc.createElement('p');
+    path.textContent = EPUB;
+    p.panel.mountPanel(p.node, p.ctx, { footer: [reveal, path] });
+    await settle();
+    openWays(p);
+    const save = p.node.querySelectorAll('.ways-group')[1];
+    expect(save.childNodes.slice(-2)).toEqual([reveal, path]);
+    // Still there after a redraw.
+    await p.plug([KOBO]);
+    expect(p.node.querySelectorAll('.ways-group')[1].childNodes.slice(-2)).toEqual([reveal, path]);
   });
 });
