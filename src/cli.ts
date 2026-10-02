@@ -1214,11 +1214,15 @@ async function main() {
   // lines rather than one per page per stage.
   let lastPercent = -1;
   const onProgress = values.progress
-    ? (stage: ConvertStage, fraction: number) => {
+    ? (stage: ConvertStage, fraction: number, reading?: { page: number; pages: number }) => {
         const percent = Math.round(fraction * 100);
-        if (percent === lastPercent) return;
+        // The last page is always said, even on a percent already said, so
+        // "Reading page N of M" ends on M rather than a page short of it.
+        const last = reading !== undefined && reading.page === reading.pages;
+        if (percent === lastPercent && !last) return;
         lastPercent = percent;
-        process.stderr.write(`${JSON.stringify({ progress: { stage, percent } })}\n`);
+        const line = reading === undefined ? { stage, percent } : { stage, percent, ...reading };
+        process.stderr.write(`${JSON.stringify({ progress: line })}\n`);
       }
     : undefined;
   // The first real page, once, so the window can type it out while the rest

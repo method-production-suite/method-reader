@@ -48,9 +48,11 @@ export interface ConvertOptions {
   /**
    * Called as the conversion advances, so a caller can show determinate
    * progress instead of a spinner. `fraction` is 0..1 across the whole
-   * pipeline, not just the current stage.
+   * pipeline, not just the current stage. While pages are read, `reading`
+   * says which page has been reached and how many there are, for the
+   * window's "Reading page N of M" (spec decision 17).
    */
-  onProgress?: (stage: ConvertStage, fraction: number) => void;
+  onProgress?: (stage: ConvertStage, fraction: number, reading?: { page: number; pages: number }) => void;
   /**
    * Called at most once, as soon as the first page that is not a title page
    * has been read, with that page's words as plain paragraphs (spec decision
@@ -126,7 +128,7 @@ export async function convertPdf(
       firstPageSent = true;
       opts.onFirstPage(page, pageParagraphs(pageLines));
     }
-    opts.onProgress?.('parse', (page / pages) * PARSE_SHARE);
+    opts.onProgress?.('parse', (page / pages) * PARSE_SHARE, { page, pages });
   });
   if (lines.length < pageCount * MIN_LINES_PER_PAGE) {
     throw new ScannedPdfError(pageCount, lines.length);

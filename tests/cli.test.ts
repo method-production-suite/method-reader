@@ -409,6 +409,17 @@ describe('cli --progress', () => {
       expect(t.percent).toBeLessThanOrEqual(100);
     }
 
+    // A reading tick names the page it has reached and how many there are,
+    // for the window's "Reading page N of M" (spec decision 17).
+    const reading = ticks.filter((t) => t.stage === 'parse');
+    expect(reading.length).toBeGreaterThan(0);
+    for (const t of reading) {
+      expect(Number.isInteger(t.page)).toBe(true);
+      expect(t.page).toBeGreaterThanOrEqual(1);
+      expect(t.page).toBeLessThanOrEqual(t.pages);
+    }
+    expect(reading.at(-1).page).toBe(reading.at(-1).pages);
+
     // A bar that goes backwards is worse than no bar.
     const percents = ticks.map((t: { percent: number }) => t.percent);
     expect([...percents].sort((a, b) => a - b)).toEqual(percents);
