@@ -234,6 +234,8 @@ describe('the engine contract lives in exactly one file', () => {
       eject: argv.eject('/Volumes/Kindle'),
       exportOut: argv.export('/s/script.epub', { forFormat: 'kfx', fountain: '/s/script.fountain', optionsJson: '{"a":1}', out: '/s/out.kfx' }),
       readerDevice: argv.readerDevice('kobo'),
+      animatePage: argv.animatePage(false),
+      typewriterSounds: argv.typewriterSounds(true),
       send: argv.send('/s/script.epub'),
       sendTo: argv.send('/s/script.epub', 'kindle-1'),
       settings: argv.settings('/s/script.fountain'),
@@ -259,9 +261,9 @@ describe('the engine contract lives in exactly one file', () => {
     };
     // Every builder the interface promises is exercised above.
     expect(Object.keys(argv).sort()).toEqual(
-      ['appSettings', 'convert', 'devices', 'eject', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
+      ['animatePage', 'appSettings', 'convert', 'devices', 'eject', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
         'kindleCheck', 'readerDevice', 'reconvert', 'reveal', 'route', 'routes', 'send', 'settings',
-        'version'].sort(),
+        'typewriterSounds', 'version'].sort(),
     );
     for (const [name, args] of Object.entries(built)) {
       expect(`${name} has --json: ${args.includes('--json')}`).toBe(`${name} has --json: true`);
@@ -284,6 +286,14 @@ describe('the engine contract lives in exactly one file', () => {
     expect(argv.export('/s/b.epub', { forFormat: 'kindle' })).not.toContain('--out');
     expect(argv.readerDevice('kobo')).toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kobo"}']);
     expect(argv.readerDevice(null)).toEqual(['app-settings', '--json', '--set', '{"readerDevice":null}']);
+  });
+
+  test('the page’s two switches are written the way the reader’s device is', async () => {
+    const { argv } = await import(join(UI, 'app.js'));
+    expect(argv.animatePage(false)).toEqual(['app-settings', '--json', '--set', '{"animatePage":false}']);
+    expect(argv.animatePage(true)).toEqual(['app-settings', '--json', '--set', '{"animatePage":true}']);
+    expect(argv.typewriterSounds(true)).toEqual(['app-settings', '--json', '--set', '{"typewriterSounds":true}']);
+    expect(argv.typewriterSounds(false)).toEqual(['app-settings', '--json', '--set', '{"typewriterSounds":false}']);
   });
 
   test('the Kindle file check is export for kindle with --check, and nothing else', async () => {

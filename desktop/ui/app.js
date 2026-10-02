@@ -57,6 +57,11 @@ export const argv = {
    *  cards). Null forgets it. */
   readerDevice: (kind) => ['app-settings', '--json', '--set', JSON.stringify({ readerDevice: kind })],
 
+  /** The Settings page's two switches for the page that writes itself
+   *  while a script converts, app-wide like the reader's device. */
+  animatePage: (on) => ['app-settings', '--json', '--set', JSON.stringify({ animatePage: on })],
+  typewriterSounds: (on) => ['app-settings', '--json', '--set', JSON.stringify({ typewriterSounds: on })],
+
   send: (file, deviceId = null) =>
     ['send', file, '--json', deviceId ? '--device' : null, deviceId]
       .filter((a) => a !== null),
