@@ -8835,6 +8835,68 @@ describe('no screen prints a stray "null"', () => {
   });
 });
 
+describe('the Kindle heads-up, mounted on its own', () => {
+  // heads-up.js on the fake page with a stand-in watcher, for what the
+  // booted window cannot reach: the window never closes a script, so the
+  // reset main.js makes when none is open is driven here.
+  let page: FakePage | null = null;
+  afterEach(async () => { await page?.close(); page = null; });
+  const kindle = { id: '/Volumes/Kindle', kind: 'kindle', name: 'Kindle', volume: '/Volumes/Kindle' };
+
+  async function mounted() {
+    page = fakePage();
+    const { mountHeadsUp } = await import(join(UI, 'heads-up.js'));
+    const sheet = page.doc.createElement('div');
+    const tabs = page.doc.createElement('nav');
+    sheet.append(tabs, page.doc.createElement('section'));
+    page.doc.body.append(sheet);
+    const subs: Array<(list: unknown) => void> = [];
+    const copied: unknown[] = [];
+    const later: Array<() => void> = [];
+    const state = { script: { title: 'Field Station' } as unknown };
+    const heads = mountHeadsUp(sheet, {
+      watcher: { subscribe: (fn: (list: unknown) => void) => { subs.push(fn); return () => {}; } },
+      state,
+      onResult: () => false,
+      busy: () => false,
+      copyTo: (d: unknown) => copied.push(d),
+      restoreFocus: () => {},
+      timers: { setTimeout: (fn: () => void) => { later.push(fn); return later.length; }, clearTimeout: () => {} },
+    });
+    const box = sheet.querySelector('.heads-up')!;
+    return { heads, box, sheet, tabs, state, copied, tell: (list: unknown) => { for (const fn of subs) fn(list); } };
+  }
+
+  test('it sits right under the tabs, hidden, until a Kindle is news', async () => {
+    const m = await mounted();
+    expect(m.sheet.childNodes.indexOf(m.box)).toBe(1);
+    expect(m.box.hidden).toBe(true);
+    m.tell([]);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+    m.box.button('Copy it').click();
+    expect(m.copied).toEqual([kindle]);
+    expect(m.box.hidden).toBe(true);
+  });
+
+  test('a list it cannot read changes nothing', async () => {
+    const m = await mounted();
+    m.tell([]);
+    m.tell(null);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+  });
+
+  test('reset, when no script is open, makes the next list a seed again', async () => {
+    const m = await mounted();
+    m.tell([]);
+    m.heads.reset();
+    expect(m.box.hidden).toBe(true);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(true);
+  });
+});
+
 describe('the window, booted whole', () => {
   // main.js imported the way index.html loads it, on the fake page: the real
   // frame, the three surfaces mounted in it, the window's own shortcut and the
@@ -8998,6 +9060,123 @@ describe('the window, booted whole', () => {
     // The panel's first card: the boot engine refuses app-settings, so no
     // reader is stored and the cards are asked.
     expect(w.doc.activeElement as unknown).toBe(w.surface('convert').button('Kindle'));
+  });
+
+  const KINDLE_ON = { id: '/Volumes/Kindle', kind: 'kindle', name: 'Kindle', volume: '/Volumes/Kindle' };
+  /** Answer the newest devices poll with `devices`, then let it land. */
+  async function poll(win: BootedWindow, devices: unknown[]) {
+    win.tauri.callsTo('devices').at(-1)!.answer({ ok: true, devices });
+    await settle();
+  }
+  /** The next tick of the devices poll, answered. */
+  async function tickWith(win: BootedWindow, devices: unknown[]) {
+    win.tickInterval();
+    await poll(win, devices);
+  }
+  const headsUp = (win: BootedWindow) => win.doc.querySelector('.heads-up')!;
+
+  test('a Kindle plugged in while a book is open: one line at the top of the page, Copy or Not now', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []); // the first list only seeds
+    expect(headsUp(w).hidden).toBe(true);
+    await tickWith(w, [KINDLE_ON]);
+    const line = headsUp(w);
+    expect(line.hidden).toBe(false);
+    expect(line.querySelector('.heads-up-line')!.textContent).toBe('Kindle plugged in. Copy Field Station?');
+    expect(line.getAttribute('role')).toBe('status');
+    expect(line.buttons().map((b) => b.textContent)).toEqual(['Copy it', 'Not now']);
+    // At the top of the sheet, under the tabs, whatever page is showing.
+    const sheet = w.doc.querySelector('.sheet')!;
+    expect(sheet.childNodes.indexOf(line)).toBe(sheet.childNodes.indexOf(w.doc.querySelector('.tabs')!) + 1);
+    // Never sends without a press.
+    expect(w.tauri.callsTo('send')).toEqual([]);
+    expect(w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))).toEqual([]);
+  });
+
+  test('Copy goes to the result and copies to that Kindle', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('tune').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    expect(headsUp(w).hidden).toBe(true);
+    expect(w.showing()).toBe('convert');
+    expect(w.surface('convert').dataset.state).toBe('done');
+    // This script's settings are read first (the Settings page had not
+    // answered yet), then the Kindle file is made, then copied.
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    const exported = w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'));
+    expect(exported.map((c) => c.args.slice(0, 5))).toEqual([['export', '/lib/Field Station/Field Station.epub', '--json', '--for', 'kindle']]);
+    exported[0].answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    expect(w.tauri.callsTo('send').map((c) => c.args))
+      .toEqual([['send', '/lib/Field Station/Field Station.azw3', '--json', '--device', '/Volumes/Kindle']]);
+  });
+
+  test('Not now, or eight seconds, takes it away; the same Kindle does not bring it back until it is unplugged', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    const notNow = headsUp(w).button('Not now');
+    notNow.focus();
+    notNow.click();
+    expect(headsUp(w).hidden).toBe(true);
+    // The keyboard is not left on a button that has gone.
+    expect(w.doc.activeElement).not.toBe(notNow);
+    expect(w.surface('read').contains(w.doc.activeElement)).toBe(true);
+    // Still plugged in: not news.
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+    // Unplugged and plugged in again: news again, and it goes by itself.
+    await tickWith(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.runTimeouts();
+    expect(headsUp(w).hidden).toBe(true);
+    expect(w.tauri.callsTo('send')).toEqual([]);
+  });
+
+  test('not on the result screen, where the card and the brass already say it', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(w.showing()).toBe('convert');
+    expect(headsUp(w).hidden).toBe(true);
+    // And that plug-in is spent: moving to Read does not bring it up late.
+    w.tab('read').click();
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('a Kindle already plugged in when the book opened is not news', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('not while a conversion runs', async () => {
+    w = await bootWindow(SCRATCH, {
+      respond: (args) => (args[0] === '/s/Second.pdf' ? HOLD : engine(args)), timers: true,
+    });
+    await open(w, '/s/Field Station.pdf');
+    await poll(w, []);
+    w.tauri.emit('tauri://drag-drop', { paths: ['/s/Second.pdf'], position: { x: 1, y: 1 } });
+    await settle();
+    expect(w.surface('convert').dataset.state).toBe('working');
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
   });
 
   test('a file dragged over the window marks the well, and a drop converts the first real path, from any surface', async () => {

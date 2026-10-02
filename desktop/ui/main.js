@@ -1,6 +1,6 @@
 // Boots the window: the frame, the three surfaces, the release notes, the
-// keyboard, the devices poll while a book is open, and the one line that
-// proves the engine is there.
+// keyboard, the devices poll while a book is open and the Kindle heads-up
+// it feeds, and the one line that proves the engine is there.
 import { runEngine, argv, onFileDrag, onDialogClosed } from './app.js';
 import { shouldAsk, updateLabel, labelActionable } from './update.js';
 import { flow } from './update-flow.js';
@@ -12,6 +12,7 @@ import * as read from './read.js';
 import * as tune from './tune.js';
 import * as notes from './notes-surface.js';
 import { createWatcher } from './device-watch.js';
+import { mountHeadsUp } from './heads-up.js';
 
 /** Everything the surfaces share. One object, passed in, never read as a
  *  global from another module. */
@@ -90,6 +91,9 @@ function restoreFocus() {
 
 onDialogClosed(restoreFocus);
 
+/** The Kindle heads-up, once it is mounted below. */
+let headsUp = null;
+
 const context = {
   state,
   goTo: (id) => frame.setSurface(id),
@@ -115,6 +119,11 @@ const context = {
     if (showing === 'convert') restoreFocus();
     else frame.setSurface('convert');
   },
+  /** The heads-up's Copy: the result, on Convert, copying to that reader. */
+  copyTo(device) {
+    frame.setSurface('convert');
+    convert.copyTo(device);
+  },
   /** Called whenever the script on screen changes, so the other surfaces
    *  stop showing a book that is no longer open, and the devices poll runs
    *  exactly while one is. */
@@ -122,7 +131,10 @@ const context = {
     const open = state.script !== null;
     for (const id of NEEDS_SCRIPT) frame.enable(id, open);
     if (open) watcher.start();
-    else watcher.stop();
+    else {
+      watcher.stop();
+      headsUp?.reset();
+    }
     for (const surface of Object.values(surfaces)) surface.scriptChanged?.();
   },
 };
@@ -150,6 +162,18 @@ frame.onSurface((id) => {
     if (on) surfaces[name].show?.();
     else surfaces[name].hide?.();
   }
+});
+
+// "Kindle plugged in. Copy <Title>?" at the top of whatever page is showing,
+// except the result, whose card and brass button already say it, and never
+// mid-conversion.
+headsUp = mountHeadsUp(frame.sheet, {
+  watcher,
+  state,
+  onResult: () => showing === 'convert' && panes.convert.dataset.state === 'done',
+  busy: () => convert.converting(),
+  copyTo: (device) => context.copyTo(device),
+  restoreFocus,
 });
 
 // A file dragged onto the window lands on Convert, whatever was on screen.
