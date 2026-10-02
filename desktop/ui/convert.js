@@ -17,6 +17,8 @@ import { newIssueUrl, osLabel } from './feedback.js';
 import { RELEASE } from './notes.js';
 import { resultPage } from './result-page.js';
 import { mountPanel, panelShown, panelHidden, copyTo as panelCopyTo } from './send-panel.js';
+import { beginShow, canShow, pageSwitchesFrom } from './page-show.js';
+import { createTypewriter } from './typewriter.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -378,6 +380,9 @@ let pane = null;
 let chooseButton = null;
 let unlistenProgress = null;
 let busy = false;
+/** The page writing itself while a script converts (page-show.js), or null.
+ *  It can outlive the conversion: the result appears beside it. */
+let pageShow = null;
 /** Whether this surface is the one on screen (show() to hide()): the send
  *  panel builds the Kindle file ahead and listens for focus only then. */
 let shown = false;
@@ -476,6 +481,7 @@ function icon() {
  *  here would be throwing away the only copy in memory. */
 export function reset() {
   if (busy) return;
+  stopShow();
   panelHidden();
   drawWell();
 }
@@ -590,6 +596,10 @@ async function probeLibrary(gen, slot) {
   } catch {
     return;
   }
+  // The page's two switches ride on the same answer (Settings shows them),
+  // whatever has happened to the well since.
+  const switches = pageSwitchesFrom(answer);
+  if (switches !== null) Object.assign(ctx.state, switches);
   if (gen !== libraryGeneration || pane.dataset.state !== 'idle') return;
   const library = libraryFrom(answer);
   if (library === null) return;
@@ -667,6 +677,7 @@ export function convertAgain() {
 export async function convertPath(path, { force = false } = {}) {
   if (busy) return;
   busy = true;
+  stopShow();
   // A conversion is this surface's business, wherever it was started from: a
   // drop on the Read surface and Ctrl-O on Tune both end up here. One rule,
   // one place — and it fires on a file, never on the ASK for one.
@@ -686,6 +697,7 @@ export async function convertPath(path, { force = false } = {}) {
     // Rust could not start the engine, or the engine printed something that
     // is not its contract. Its sentence is still the most useful one there
     // is, so it is shown the same way the engine's own would be.
+    stopShow();
     drawFailure({ code: 'internal', message: err.message }, path);
     return;
   } finally {
@@ -698,8 +710,31 @@ export async function convertPath(path, { force = false } = {}) {
     if (typeof answer.epubPath === 'string') landed.set(path, answer.epubPath);
     drawResult(path, answer);
   } else {
+    // The engine sends the page before it refuses a file: the typed page
+    // goes, and the refusal shows as it always has.
+    stopShow();
     drawFailure(answer.error, path);
   }
+}
+
+/** The show, ended and forgotten, if one is running. */
+function stopShow() {
+  pageShow?.cancel();
+  pageShow = null;
+}
+
+/** The engine's first page arrived: the page writes itself where the
+ *  result's will sit, unless the reader or the system said not to. */
+function startShow(path, line) {
+  if (pageShow !== null || !canShow(ctx.state, line)) return;
+  const mine = beginShow(pane, line.paragraphs, {
+    name: fileName(path),
+    clock: ctx.clock,
+    sounds: ctx.state.typewriterSounds === true ? createTypewriter() : null,
+    onEnd: () => { if (pageShow === mine) pageShow = null; },
+  });
+  pageShow = mine;
+  ctx.restoreFocus();
 }
 
 /** The progress screen. `waiting` is waitingLabel's line while the
@@ -716,6 +751,11 @@ function drawProgress(path, waiting = null) {
   let at = PROGRESS_START;
 
   unlistenProgress = onProgress((line) => {
+    if (line?.stage === 'page') {
+      startShow(path, line);
+      return;
+    }
+    pageShow?.progress(line);
     const moved = nextProgress(at, line);
     if (moved === at) return;
     at = moved;
@@ -761,7 +801,6 @@ function drawResult(path, answer) {
  *  (send-panel.js) and three quiet links (spec decision 2). */
 function paintResult() {
   const script = ctx.state.script;
-  clear(pane);
   pane.dataset.state = 'done';
   pane.dataset.book = script.epubPath ?? '';
   delete pane.dataset.errorCode;
@@ -788,17 +827,21 @@ function paintResult() {
   }, revealLabel(navigator.userAgentData?.platform ?? navigator.platform));
 
   const panelNode = el('div', { class: 'send-panel' });
-  pane.append(el('div', { class: 'result' },
-    resultPage(script),
-    el('div', { class: 'result-side' },
-      el('h2', { class: 'result-title' }, readyLine(script.title)),
-      el('p', { class: 'book-count' }, countsLine(script)),
-      ...script.warnings.map((w) => el('p', { class: 'caption' }, `(${w})`)),
-      panelNode,
-      el('div', { class: 'asides' },
-        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('read') }, 'Read it'),
-        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('tune') }, 'Settings'),
-        el('button', { type: 'button', class: 'btn-quiet', onclick: reset }, 'Convert another')))));
+  const side = el('div', { class: 'result-side' },
+    el('h2', { class: 'result-title' }, readyLine(script.title)),
+    el('p', { class: 'book-count' }, countsLine(script)),
+    ...script.warnings.map((w) => el('p', { class: 'caption' }, `(${w})`)),
+    panelNode,
+    el('div', { class: 'asides' },
+      el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('read') }, 'Read it'),
+      el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('tune') }, 'Settings'),
+      el('button', { type: 'button', class: 'btn-quiet', onclick: reset }, 'Convert another')));
+  // A page still writing itself keeps its box, so the result's page lands
+  // in the same place under it; otherwise the result is drawn afresh.
+  if (!(pageShow?.adopt(side, script) ?? false)) {
+    clear(pane);
+    pane.append(el('div', { class: 'result' }, resultPage(script), side));
+  }
   mountPanel(panelNode, ctx, { footer: [reveal, el('p', { class: 'path-note' }, script.epubPath ?? ''), note] });
   if (shown) panelShown();
 }

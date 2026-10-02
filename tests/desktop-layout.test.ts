@@ -220,7 +220,7 @@ describe('each Settings section is a box', () => {
 
   test('the foot is one element, so it can be one box', () => {
     const tune = readFileSync(join(UI, 'tune.js'), 'utf8');
-    expect(tune).toMatch(/el\('div', \{ class: 'tune-foot' \},\s*drawDefaultsFoot\(\),\s*drawKeepChoice\(\)\)/);
+    expect(tune).toMatch(/el\('div', \{ class: 'tune-foot' \},\s*drawDefaultsFoot\(\),\s*drawKeepChoice\(\),\s*drawPageSwitches\(\)\)/);
   });
 
   test('in a narrow block the boxes stay a measure wide, not the whole column', () => {

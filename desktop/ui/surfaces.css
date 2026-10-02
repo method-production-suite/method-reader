@@ -258,6 +258,27 @@
   overflow: hidden;
 }
 .result-page-frame { display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
+/* The page that writes itself (page-show.js): while a script converts, the
+ * result's own box, in its own place, with the typed page over where the
+ * result's page will be, and a slim line under it saying which page the
+ * engine is reading. The typed page lifts away (opacity) at the end. */
+#surface-convert[data-show] { max-width: none; }
+.result[data-showing] { grid-template-areas: "page side" "line side"; }
+.result-page.page-show { position: relative; }
+.page-show-frame {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: block; border: 0; pointer-events: none;
+  background: var(--paper);
+  transition: opacity 0.25s var(--ease);
+}
+.page-show-frame.page-show-gone { opacity: 0; }
+.page-show-line { grid-area: line; margin: var(--space-2) 0 0; text-align: center; }
+/* The page's words, whole from the first moment, for a screen reader: the
+ * typing is for eyes. Out of sight, not out of the page. */
+.page-show-words {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
 .result-side {
   grid-area: side;
   min-width: 0;
@@ -273,6 +294,9 @@
     row-gap: var(--space-7);
   }
   .result-page { width: 400px; max-width: 100%; justify-self: center; }
+}
+@container (max-width: 879px) {
+  .result[data-showing] { grid-template-areas: "side" "page" "line"; }
 }
 .result-title {
   font-family: var(--font-structure); font-weight: 700; font-size: var(--text-body);
@@ -776,8 +800,10 @@
  * fieldset's own border and padding go, so it reads as part of the foot
  * rather than a box inside it; the legend wears the state-label caps the
  * preset row already uses for "Load a preset". Each option is the radio and
- * its label on one line, with its explanation under the label. */
-.keep-choice {
+ * its label on one line, with its explanation under the label. "While a
+ * script converts", the page's two switches, wears the same: checkboxes
+ * where the keep choice has radios. */
+.keep-choice, .page-switches {
   margin: var(--space-6) 0 0;
   padding: 0;
   border: none;

@@ -400,6 +400,14 @@ export class FakeDocument extends FakeNode {
     t.nodeValue = String(value);
     return t;
   }
+  /** A copy of a node from any fake document, owned by this one. */
+  importNode(node: FakeNode, deep = false): FakeNode {
+    const copy = new FakeNode(node.localName, this, node.nodeType);
+    copy.nodeValue = node.nodeValue;
+    for (const [name, value] of node.attributes) copy.setAttribute(name, value);
+    if (deep) for (const kid of node.childNodes) copy.append(this.importNode(kid, true));
+    return copy;
+  }
 }
 
 /** Every class name used anywhere in this subtree. */
