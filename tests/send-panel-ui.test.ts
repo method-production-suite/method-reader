@@ -637,9 +637,11 @@ describe('the Kindle file, named on its button and built ahead', () => {
     await answer(p, 'send', sentKfx);
     p.panel.panelHidden();
     p.panel.panelShown();
-    // The button still names the file while the check is out.
-    expect(p.brass()!.textContent).toBe('Copy to Kindle (.kfx)');
-    p.brass()!.click();
+    // Eject holds the brass place now; the copy is pressed again from Other
+    // ways, and its button still names the file while the check is out.
+    expect(p.brass()!.textContent).toBe('Eject Kindle');
+    const again = openWays(p).button('Copy to Kindle (.kfx)');
+    again.click();
     await settle();
     expect(buildLine(p)).toBe(HALF_A_MINUTE);
     expect(p.status().textContent).toBe('');
@@ -1209,5 +1211,84 @@ describe('Other ways', () => {
     // Still there after a redraw.
     await p.plug([KOBO]);
     expect(p.node.querySelectorAll('.ways-group')[1].childNodes.slice(-2)).toEqual([reveal, path]);
+  });
+});
+
+describe('after a copy over USB', () => {
+  const ON_IT = 'Field Station is on your KOBOeReader. Eject it before you unplug.';
+  async function copied() {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO],
+      engine: (a) => (a[0] === 'export' && !a.includes('--check') ? { ok: true, path: EPUB, label: 'EPUB' }
+        : a[0] === 'send' ? { ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' } : undefined) });
+    p.brass()!.click();
+    await settle();
+    return p;
+  }
+
+  test('Eject <name> becomes the brass button, with the reminder', async () => {
+    const p = await copied();
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+    expect(p.node.querySelectorAll('.calm .btn-brad').length).toBe(1);
+    expect(p.status().textContent).toBe(ON_IT);
+    // The copy is still there to press again, in Other ways.
+    expect(openWays(p).button('Copy to KOBOeReader').className).toBe('btn btn-outline');
+  });
+
+  test('Eject asks the engine for that volume only; done, the button goes and the line says so', async () => {
+    const p = await copied();
+    p.brass()!.click();
+    await settle();
+    expect(p.status().textContent).toBe('Ejecting KOBOeReader…');
+    expect(p.brass()!.disabled).toBe(true);
+    const call = p.tauri.callsTo('eject')[0];
+    expect(call.args).toEqual(['eject', '/Volumes/KOBOeReader', '--json']);
+    call.answer({ ok: true, ejected: '/Volumes/KOBOeReader' });
+    await settle();
+    expect(p.tauri.callsTo('eject').length).toBe(1);
+    expect(p.status().textContent).toBe('Your KOBOeReader is ejected. You can unplug it now.');
+    // The poll still lists it until it goes.
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+    expect(p.brass()!.disabled).toBe(false);
+  });
+
+  test('a reader that will not eject says why and keeps the button', async () => {
+    const p = await copied();
+    p.brass()!.click();
+    await settle();
+    p.tauri.callsTo('eject')[0].answer({ ok: false, error: { code: 'eject-failed', message: 'could not eject /Volumes/KOBOeReader: a file is open' } });
+    await settle();
+    expect(p.status().textContent).toBe('could not eject /Volumes/KOBOeReader: a file is open');
+    expect(p.status().classList.contains('bad')).toBe(true);
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+    expect(p.brass()!.disabled).toBe(false);
+  });
+
+  test('the line and the button are drawn again on return (spec 13)', async () => {
+    const p = await copied();
+    p.panel.panelHidden();
+    p.panel.mountPanel(p.node, p.ctx);
+    p.panel.panelShown();
+    await settle();
+    expect(p.ctx.state.sendResult.eject.volume).toBe('/Volumes/KOBOeReader');
+    expect(p.status().textContent).toBe(ON_IT);
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+  });
+
+  test('unplugged without ejecting: the button goes, the line stays', async () => {
+    const p = await copied();
+    await p.plug([]);
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    expect(p.status().textContent).toBe(ON_IT);
+    expect(p.ctx.state.sendResult.eject).toBe(null);
+  });
+
+  test('a different book does not inherit the reminder', async () => {
+    const p = await copied();
+    p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    await settle();
+    expect(p.status().textContent).toBe('');
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+    expect(p.ctx.state.sendResult).toBe(null);
   });
 });

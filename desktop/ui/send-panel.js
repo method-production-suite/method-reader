@@ -157,6 +157,11 @@ export function mountPanel(node, context, { footer: under = [] } = {}) {
   body = el('div', { class: 'panel-body' });
   clear(host);
   host.append(body, statusLine, artifactNote);
+  // What the last send said about this book, and its Eject button, drawn
+  // again (spec decision 13); another book's is forgotten.
+  const kept = ctx.state.sendResult ?? null;
+  if (kept !== null && kept.book === book) show(kept);
+  else ctx.state.sendResult = null;
   unsubscribe = ctx.devices?.subscribe?.(onDevices) ?? null;
   showBuild();
   start();
@@ -347,10 +352,30 @@ function buttons() {
   return host === null ? [] : [...host.querySelectorAll('button')];
 }
 
+/** The status line, kept on the window's state with the book it is about,
+ *  so a return to the result draws it again. `eject` is kept as it was
+ *  unless the call says otherwise: a save after a copy does not make the
+ *  reader safe to unplug. */
 function say(status) {
   if (statusLine === null) return;
+  const before = ctx.state.sendResult;
+  const kept = before?.book === mountedBook ? before.eject : null;
+  ctx.state.sendResult = {
+    book: mountedBook, line: status.line, bad: status.bad,
+    eject: status.eject === undefined ? kept : status.eject,
+  };
+  show(status);
+}
+
+function show(status) {
   text(statusLine, status.line);
   statusLine.classList.toggle('bad', status.bad);
+}
+
+/** The reader the last copy left mounted, while it still needs ejecting. */
+function ejectPending() {
+  const kept = ctx.state.sendResult;
+  return kept?.book === mountedBook ? kept.eject ?? null : null;
 }
 
 // ------------------------------------------------------------------ cards
@@ -418,6 +443,12 @@ function showMissing() {
 /** What is plugged in changed (device-watch.js, through ctx.devices). */
 function onDevices(list) {
   ctx.state.devices = list;
+  // Unplugged without ejecting: the button goes, the line stays.
+  const eject = ejectPending();
+  if (eject !== null && !D.ejectStillThere(eject, list)) {
+    ctx.state.sendResult = { ...ctx.state.sendResult, eject: null };
+    if (mode === 'calm' && !sending) draw();
+  }
   if (sending) {
     // The copy finishes first; the list is asked for when it does.
     owed = true;
@@ -448,10 +479,17 @@ function drawCalm() {
   const kind = ctx.state.readerDevice;
   const offer = D.offerFor({ device: kind, platform: platform(), shown: drawn, kindle });
   labelledWith = kindle?.extension ?? null;
-  const brass = offer?.brass ?? null;
+  // After a copy over USB, Eject takes the brass place (spec decision 12),
+  // and the copy it replaced is listed in Other ways for a second press.
+  const eject = ejectPending();
+  const brass = eject === null ? offer?.brass ?? null : null;
   const lines = routesFault === null ? offer?.lines ?? [] : [];
   return el('div', { class: 'calm' },
     el('div', { class: 'calm-act' },
+      eject === null ? null : el('button', {
+        type: 'button', class: 'btn btn-brad', 'data-key': 'eject',
+        disabled: sending || kfxInstalling(), onclick: () => keepFocus('eject', ejectNow),
+      }, D.ejectLabel(eject)),
       brass === null ? null : el('button', {
         type: 'button', class: 'btn btn-brad', 'data-key': brass.route.id,
         disabled: sending || kfxInstalling(), onclick: () => choose(brass.route),
@@ -471,7 +509,7 @@ function drawCalm() {
         type: 'button', class: 'btn-quiet', 'data-key': 'different',
         onclick: () => { mode = 'cards'; draw(); },
       }, D.DIFFERENT)),
-    drawOtherWays(offer));
+    drawOtherWays(offer === null || eject === null ? offer : { ...offer, brass: null }));
 }
 
 // ------------------------------------------------------------- other ways
@@ -848,8 +886,10 @@ async function sendTo(device) {
     }
     worked = true;
     // On a reader that mounts: "<Title> is on your <name>. Eject it before
-    // you unplug." The engine's own line for one that does not.
+    // you unplug.", with Eject in the brass place. The engine's own line for
+    // one that does not.
     say(D.copiedState(script.title, device, sent));
+    draw();
     const what = R.artifactLine(built);
     text(artifactNote, what);
     artifactNote.hidden = what === '';
@@ -905,6 +945,35 @@ async function perform(route) {
     for (const button of buttons()) button.disabled = false;
     kfxRedraw();
     afterFlow(worked, stale());
+  }
+}
+
+/** Eject the reader the last copy left mounted (`screepub eject`, which
+ *  refuses any volume it would not list as a reader). Under the same
+ *  `sending` flag as every other flow, and on no book's turn: it touches no
+ *  book. Done or unplugged, the button goes; refused, it stays, with the
+ *  engine's sentence. */
+async function ejectNow() {
+  const eject = ejectPending();
+  if (eject === null || sending || kfxInstalling()) return;
+  sending = true;
+  const mine = era;
+  const stale = () => era !== mine;
+  for (const button of buttons()) button.disabled = true;
+  try {
+    kfxRedraw();
+    say({ line: `Ejecting ${eject.name}…`, bad: false });
+    const answer = await runEngine(argv.eject(eject.volume));
+    if (stale()) return;
+    say(D.ejectOutcome(answer, eject));
+  } catch (err) {
+    if (!stale()) say({ line: err.message, bad: true });
+  } finally {
+    sending = false;
+    for (const button of buttons()) button.disabled = false;
+    kfxRedraw();
+    if (!stale() && mode === 'calm') draw();
+    afterFlow(false, stale());
   }
 }
 
