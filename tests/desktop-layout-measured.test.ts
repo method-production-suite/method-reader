@@ -20,7 +20,7 @@
 // CI); the CSS pins in desktop-layout.test.ts still run there.
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CHROME } from '../tools/capture/cdp';
@@ -114,6 +114,7 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
 
   beforeAll(async () => {
     library = realpathSync(mkdtempSync(join(SCRATCH, 'library-')));
+    mkdirSync(join(library, '.no-volumes'), { recursive: true });
     const runEngine = async (args: string[]): Promise<EngineResult> => {
       const proc = Bun.spawn([process.execPath, join(REPO, 'src', 'cli.ts'), ...args], {
         cwd: REPO,
@@ -121,7 +122,13 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
         // A scratch library, and a settings folder under it that is never
         // made, so the engine reads no settings at all (the capture tool's
         // own arrangement). process.env carries the Calibre guard on.
-        env: { ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.layout-app-settings') },
+        env: {
+          ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.layout-app-settings'),
+          // No real reader, ever: an empty mount parent, and a reMarkable
+          // address nothing listens on.
+          SCREEPUB_VOLUME_ROOTS: join(library, '.no-volumes'),
+          SCREEPUB_REMARKABLE_ENDPOINT: 'http://127.0.0.1:9',
+        },
       });
       running.add(proc);
       try {

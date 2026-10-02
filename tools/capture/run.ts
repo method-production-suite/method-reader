@@ -159,6 +159,15 @@ function engineRunner(engine: string[], library: string, running: Set<Running>, 
     // server turns into a 500.
     if (closing()) return { code: null, stdout: '', stderr: 'capture: cleaning up, so no new engine calls' };
     let proc;
+    // Made before every call, not once: emptyLibrary() clears the library
+    // between shots. A missing root lists nothing too (volumes.ts skips it),
+    // but an empty folder is the arrangement the tests pin.
+    const noVolumes = join(library, '.no-volumes');
+    try {
+      mkdirSync(noVolumes, { recursive: true });
+    } catch (e) {
+      return { code: null, stdout: '', stderr: `capture: could not make ${noVolumes}: ${messageOf(e)}` };
+    }
     try {
       proc = Bun.spawn([...engine, ...args], {
         stdin: 'ignore',
@@ -168,10 +177,17 @@ function engineRunner(engine: string[], library: string, running: Set<Running>, 
         // otherwise become the base under every conversion this run makes,
         // which means the pictures would drift with whatever the developer
         // running this tool last chose in their own app settings. A folder
-        // under the SCRATCH library that this run never creates or writes
-        // to reads back as no settings at all, the same guarantee the test
-        // suite's own SCREEPUB_CONFIG_DIR gives it.
-        env: { ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.capture-app-settings') },
+        // under the SCRATCH library, cleared with it before every shot,
+        // reads back as no settings at all, the same guarantee the test
+        // suite's own SCREEPUB_CONFIG_DIR gives it. The only write the gate
+        // lets into it is a card's reader device.
+        env: {
+          ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.capture-app-settings'),
+          // No real reader, ever: an empty mount parent, and a reMarkable
+          // address nothing listens on.
+          SCREEPUB_VOLUME_ROOTS: noVolumes,
+          SCREEPUB_REMARKABLE_ENDPOINT: 'http://127.0.0.1:9',
+        },
       });
     } catch (e) {
       return { code: null, stdout: '', stderr: `capture: could not start the engine: ${messageOf(e)}` };

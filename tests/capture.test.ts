@@ -62,13 +62,37 @@ describe('the engine gate', () => {
 
   test('it refuses anything that reaches devices or writes outside the demo library, naming it', () => {
     for (const args of [
-      argv.devices(),
       argv.send(inLib('field-station.epub')),
       argv.export(inLib('field-station.epub'), { forFormat: 'kindle' }),
+      argv.eject('/Volumes/Kindle'),
+      argv.route('send-to-kindle', inLib('field-station.epub')),
     ]) {
       const a = gateEngineCall(args, ctx);
       expect(a.allow).toBe(false);
       if (!a.allow) expect(a.reason).toContain(args[0]!);
+    }
+  });
+
+  test('it allows the result screen’s reads: devices, the routes and the Kindle check for the demo book', () => {
+    const E = inLib('field-station.epub');
+    for (const args of [
+      argv.devices(), argv.devices({ quick: true }),
+      argv.routes(E), argv.routes(E, { quick: true }), argv.kindleCheck(E),
+      ...['kindle', 'apple', 'kobo', 'tolino', 'remarkable'].map((k) => argv.readerDevice(k)),
+    ]) {
+      const a = gateEngineCall(args, ctx);
+      expect(`${args.join(' ')}: ${a.allow}`).toBe(`${args.join(' ')}: true`);
+    }
+  });
+
+  test('but not for a book outside the library, nor any other app-settings write', () => {
+    for (const args of [
+      argv.routes('/Users/someone/elsewhere.epub'), argv.kindleCheck(`${ctx.library}-evil/x.epub`),
+      argv.readerDevice('nook'), argv.appSettings('{"readerDevice":"kobo","libraryPath":"/x"}'),
+      argv.export(inLib('field-station.epub'), { forFormat: 'epub', out: inLib('copy.epub') }),
+    ]) {
+      const a = gateEngineCall(args, ctx);
+      expect(`${args.join(' ')}: ${a.allow}`).toBe(`${args.join(' ')}: false`);
     }
   });
 
@@ -354,10 +378,10 @@ describe('the capture server', () => {
       expect((await s.engine(argv.version(), {})).status).toBe(403);
       expect((await s.engine(argv.version(), { 'x-capture-token': 'guess' })).status).toBe(403);
       expect(s.calls).toEqual([]);
-      const r = await s.engine(argv.devices());
+      const r = await s.engine(argv.eject('/Volumes/Kindle'));
       expect(r.status).toBe(403);
-      expect(await r.text()).toContain('devices --json');
-      expect(s.refused).toEqual([expect.stringContaining('devices --json')]);
+      expect(await r.text()).toContain('eject /Volumes/Kindle --json');
+      expect(s.refused).toEqual([expect.stringContaining('eject /Volumes/Kindle --json')]);
       expect(s.calls).toEqual([]);
       expect((await s.engine('not json')).status).toBe(400);
       expect((await s.engine([1, 2])).status).toBe(400);
