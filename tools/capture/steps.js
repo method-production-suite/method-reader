@@ -90,6 +90,25 @@ const SHOTS = {
   },
   async result() {
     await dropped();
+    // The first-time question, never the calm screen: the capture's scratch
+    // settings hold no reader's device, so the panel shows the device cards,
+    // which need no `routes` answer. The calm screen would be drawn from what
+    // this machine has (Apple Books, Amazon's app, the Mail default, the
+    // Calibre and KFX tools) and differ from one computer to the next.
+    await until(() => {
+      if (q('#surface-convert .send-panel .calm')) {
+        throw new Error('the result shows the calm screen, so the capture\'s settings name a reader; ' +
+          'the picture would depend on this machine\'s apps');
+      }
+      return q('#surface-convert .send-panel .device-cards');
+    }, 'the device cards');
+    // The book's own first page, typeset, beside them.
+    const frame = q('#surface-convert .result-page-frame');
+    if (frame) {
+      await until(() => frame.contentDocument?.querySelector('section.scene'), 'the first page');
+      await frame.contentDocument.fonts.ready;
+      await settled(frame.contentDocument);
+    }
   },
   async read() {
     await dropped();
