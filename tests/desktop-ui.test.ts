@@ -9130,6 +9130,33 @@ describe('the window, booted whole', () => {
       .toEqual([['send', '/lib/Field Station/Field Station.azw3', '--json', '--device', '/Volumes/Kindle']]);
   });
 
+  test('Copy from the line with no reader chosen yet ends on Eject Kindle, and the panel remembers a Kindle', async () => {
+    // The panel was on the cards (the boot engine stores no reader), which
+    // draw no Eject: spec decision 12 says a USB copy ends with one.
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    expect(w.surface('convert').querySelector('.device-cards')).not.toBeNull();
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))[0]
+      .answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    w.tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/Kindle/documents/Field Station.azw3' });
+    await settle();
+    const convert = w.surface('convert');
+    expect(convert.querySelector('.device-cards')).toBeNull();
+    expect(convert.querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+    expect(convert.querySelector('.send-status')!.textContent).toBe('Field Station is on your Kindle. Eject it before you unplug.');
+    // Stored as a card press stores it, so the cards are not asked again.
+    expect(w.tauri.callsTo('app-settings').map((c) => c.args).at(-1))
+      .toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kindle"}']);
+  });
+
   test('Not now, or eight seconds, takes it away; the same Kindle does not bring it back until it is unplugged', async () => {
     w = await bootWindow(SCRATCH, { respond: engine, timers: true });
     await open(w, '/s/Field Station.pdf');

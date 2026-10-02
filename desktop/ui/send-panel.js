@@ -940,7 +940,20 @@ async function sendTo(device) {
     // On a reader that mounts: "<Title> is on your <name>. Eject it before
     // you unplug.", with Eject in the brass place. The engine's own line for
     // one that does not.
-    say(D.copiedState(script.title, device, sent));
+    const copied = D.copiedState(script.title, device, sent);
+    say(copied);
+    // Eject is drawn only on the calm screen (spec decision 12: a USB copy
+    // ends with it), and the heads-up can start a copy while the cards or
+    // "My device isn't here" are up. So the panel goes calm; and with no
+    // reader chosen yet, this one is chosen, stored as a card press stores
+    // it, quietly: the copy's line is what the reader needs to see.
+    if (copied.eject !== null && mode !== 'calm') {
+      if ((ctx.state.readerDevice ?? null) === null && D.KINDS.includes(device.kind)) {
+        ctx.state.readerDevice = device.kind;
+        runEngine(argv.readerDevice(device.kind)).catch(() => {});
+      }
+      mode = 'calm';
+    }
     draw();
     const what = R.artifactLine(built);
     text(artifactNote, what);

@@ -1301,6 +1301,33 @@ describe('after a copy over USB', () => {
     expect(p.ctx.state.sendResult.eject).toBe(null);
   });
 
+  test('a copy started from the heads-up while My device isn’t here is up still ends on Eject (spec 12)', async () => {
+    const p = await mountPanel({ devices: [KINDLE],
+      engine: (a) => (a[0] === 'export' && !a.includes('--check') ? { ok: true, path: '/lib/f/F.azw3', extension: 'azw3', label: 'AZW3' }
+        : a[0] === 'send' ? { ok: true, destination: '/Volumes/Kindle/documents/F.azw3' }
+          : a.includes('--set') ? { ok: true, readerDevice: 'kindle' } : undefined) });
+    p.node.button('My device isn’t here').click();
+    await settle();
+    await p.panel.copyTo(dev(KINDLE));
+    await settle();
+    expect(p.brass()!.textContent).toBe('Eject Kindle');
+    expect(p.status().textContent).toBe('Field Station is on your Kindle. Eject it before you unplug.');
+    expect(p.ctx.state.readerDevice).toBe('kindle');
+  });
+
+  test('a reader already chosen is kept: a Kindle copied to from a Kobo reader’s cards still shows Eject', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KINDLE],
+      engine: (a) => (a[0] === 'export' && !a.includes('--check') ? { ok: true, path: '/lib/f/F.azw3', extension: 'azw3', label: 'AZW3' }
+        : a[0] === 'send' ? { ok: true, destination: '/Volumes/Kindle/documents/F.azw3' } : undefined) });
+    p.node.button('Different device').click();
+    await settle();
+    await p.panel.copyTo(dev(KINDLE));
+    await settle();
+    expect(p.brass()!.textContent).toBe('Eject Kindle');
+    expect(p.ctx.state.readerDevice).toBe('kobo');
+    expect(p.tauri.callsTo('app-settings').filter((c) => c.args.includes('--set'))).toEqual([]);
+  });
+
   test('a different book does not inherit the reminder', async () => {
     const p = await copied();
     p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
