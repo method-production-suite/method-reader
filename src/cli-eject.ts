@@ -13,6 +13,8 @@ import {
   findDeviceCommand,
   linuxEjectCommands,
   spawnEject,
+  STILL_IN_USE,
+  WINDOWS_STILL_MOUNTED,
   type EjectRun,
 } from './device/eject';
 
@@ -79,6 +81,8 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     if (answer === null || answer.code === null) {
       throw failed('it took too long to answer');
     }
+    // The Windows script's own exit: the Eject verb ran, the drive stayed.
+    if (platform === 'win32' && answer.code === WINDOWS_STILL_MOUNTED) throw failed(STILL_IN_USE);
     if (answer.code !== 0 && !anyExit) throw failed(firstLine(answer.stderr, answer.stdout));
     return answer.stdout;
   };

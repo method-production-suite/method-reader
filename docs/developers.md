@@ -171,8 +171,10 @@ tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
 now, such as `/Volumes/Kindle` or `E:\`, and refuses any other disk. It runs
 `diskutil eject` on macOS, `udisksctl unmount` then `power-off` on Linux (only
 for a volume that is itself a mount point), and the shell's own Eject on
-Windows (only for a whole drive, such as `E:\`). A reader that will not eject (a file is
-open, say) fails with the code `eject-failed`.
+Windows (only for a whole drive, such as `E:\`, and then it waits up to five
+seconds for the drive to go, because that verb reports success even when it
+stays). A reader that will not eject (a file is open, say) fails with the code
+`eject-failed`.
 
 `routes` lists every other way out too (Apple Books, Amazon's Send to Kindle,
 email, and saving a copy) with the one you chose last time marked. `route

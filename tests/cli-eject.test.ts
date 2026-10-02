@@ -145,10 +145,24 @@ describe('ejectCommand: the command per platform', () => {
     expect(calls.length).toBe(1);
     const argv = calls[0];
     expect(argv[0]).toBe('powershell');
-    expect(argv[argv.length - 1]).toBe(
-      "(New-Object -comObject Shell.Application).Namespace(17).ParseName('E:').InvokeVerb('Eject')",
-    );
+    const script = argv[argv.length - 1];
+    expect(script.startsWith(
+      "(New-Object -comObject Shell.Application).Namespace(17).ParseName('E:').InvokeVerb('Eject');",
+    )).toBe(true);
+    // Then it waits for the drive to really go, naming it by the same letter.
+    expect(script).toContain("Test-Path 'E:\\'");
     expect(result).toEqual({ ejected: 'E:\\' });
+  });
+
+  test('win32: the Eject verb answered but the drive is still there (a file open) is eject-failed, in plain words', async () => {
+    // The shell's Eject verb exits 0 even when the drive is busy; the script
+    // then finds the drive still mounted after its wait and exits 3.
+    const { run } = recordingRun(() => ({ code: 3, stdout: '', stderr: '' }));
+    const err = await caught(ejectCommand('E:\\', { platform: 'win32', devices: async () => [winKindle], run }));
+    expect(codeOf(err)).toBe('eject-failed');
+    expect((err as Error).message).toBe(
+      'could not eject E:\\: something on this computer is still using the reader. Close it and try again.',
+    );
   });
 
   test('win32: a listed volume that is not a drive root is refused, and PowerShell never starts', async () => {
@@ -164,11 +178,13 @@ describe('ejectCommand: the command per platform', () => {
   });
 
   test('ejectCommands on win32: a drive root, with or without its backslash, and nothing else', () => {
-    const line = (drive: string) =>
-      `(New-Object -comObject Shell.Application).Namespace(17).ParseName('${drive}').InvokeVerb('Eject')`;
     for (const root of ['E:\\', 'E:', 'e:\\']) {
       const commands = ejectCommands(root, 'win32');
-      expect(Array.isArray(commands) && commands[0][commands[0].length - 1]).toBe(line('E:'));
+      const script = Array.isArray(commands) ? commands[0][commands[0].length - 1] : '';
+      expect(script).toContain("ParseName('E:').InvokeVerb('Eject')");
+      expect(script).toContain("Test-Path 'E:\\'");
+      // Only that letter: nothing else from the volume reaches the script.
+      expect(script.replace(/'E:\\?'/g, '').match(/'[A-Za-z]:/)).toBeNull();
     }
     for (const other of ['D:\\stuff\\Kindle', '\\\\server\\share', "E:\\'", 'E:\\\\', 'Kindle']) {
       expect(ejectCommands(other, 'win32')).toBe('not-a-drive-root');

@@ -41,17 +41,24 @@ export function ejectCommands(
   if (platform === 'win32') {
     const drive = windowsDrive(volume);
     if (drive === null) return 'not-a-drive-root';
-    return [
-      [
-        'powershell',
-        '-NoProfile',
-        '-NonInteractive',
-        '-Command',
-        `(New-Object -comObject Shell.Application).Namespace(17).ParseName('${drive}').InvokeVerb('Eject')`,
-      ],
-    ];
+    return [['powershell', '-NoProfile', '-NonInteractive', '-Command', windowsEjectScript(drive)]];
   }
   return 'needs-device';
+}
+
+/** How the Windows script says the drive was still there after its wait. */
+export const WINDOWS_STILL_MOUNTED = 3;
+export const STILL_IN_USE = 'something on this computer is still using the reader. Close it and try again.';
+
+/** The Shell's Eject verb answers at once and exits 0 even when the drive
+ *  is busy and stays, so the script then looks for the drive for up to five
+ *  seconds (20 x 250 ms) and exits WINDOWS_STILL_MOUNTED if it is still
+ *  there. `drive` is windowsDrive()'s answer, a letter and a colon and
+ *  nothing else, so nothing from the volume path can be read as script. */
+function windowsEjectScript(drive: string): string {
+  return `(New-Object -comObject Shell.Application).Namespace(17).ParseName('${drive}').InvokeVerb('Eject'); `
+    + `for ($i = 0; $i -lt 20; $i++) { if (-not (Test-Path '${drive}\\')) { exit 0 }; Start-Sleep -Milliseconds 250 }; `
+    + `exit ${WINDOWS_STILL_MOUNTED}`;
 }
 
 /** Linux: the question that finds the block device behind a mount point.
