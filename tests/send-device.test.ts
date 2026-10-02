@@ -76,6 +76,8 @@ describe('offerFor: the one brass button', () => {
   test('Amazon’s app, when the engine says it is installed, is the same lead under its own name', () => {
     const o = d.offerFor({ device: 'kindle', platform: 'MacIntel', shown: shownFor('darwin', [], { sendToKindleApp: true }) });
     expect(o.brass.label).toBe('Send to Kindle app');
+    // The app takes the book itself: there is nothing to drag.
+    expect(o.lines).toEqual([d.PLUG_KINDLE]);
   });
   test('Apple: Add to Apple Books on a Mac, Save the EPUB elsewhere with its line', () => {
     expect(d.offerFor({ device: 'apple', platform: 'MacIntel', shown: shownFor('darwin', []) }).brass.route.key)
@@ -89,7 +91,7 @@ describe('offerFor: the one brass button', () => {
       .toBe('Copy to KOBOeReader');
     const away = d.offerFor({ device: 'kobo', platform: 'MacIntel', shown: shownFor('darwin', []) });
     expect(away.brass.route.key).toBe('save-epub');
-    expect(away.lines).toEqual(['Plug your Kobo in over USB and this becomes Copy to Kobo.']);
+    expect(away.lines).toEqual(['Plug your Kobo in over USB and this becomes a Copy button.']);
     expect(d.offerFor({ device: 'remarkable', platform: 'MacIntel', shown: shownFor('darwin', [rm]) }).brass.route.key)
       .toBe('remarkable');
     expect(d.offerFor({ device: 'tolino', platform: 'Win32', shown: shownFor('win32', []) }).lines)

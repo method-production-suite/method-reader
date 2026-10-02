@@ -212,7 +212,7 @@ describe('the calm screen', () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' } });
     await settle();
     expect(p.brass()!.textContent).toBe('Save the EPUB…');
-    expect(p.node.querySelector('.calm-line')!.textContent).toBe('Plug your Kobo in over USB and this becomes Copy to Kobo.');
+    expect(p.node.querySelector('.calm-line')!.textContent).toBe('Plug your Kobo in over USB and this becomes a Copy button.');
     expect(p.node.querySelectorAll('.calm .btn-brad').length).toBe(1);
     expect(p.node.button('Other ways').className).toContain('btn-outline');
     expect(p.node.button('Different device').className).toContain('btn-quiet');

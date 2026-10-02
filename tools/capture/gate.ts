@@ -64,7 +64,8 @@ export function gateEngineCall(args: readonly string[], ctx: GateContext): GateA
   // The Convert page's library line (parity piece C) reads the app settings
   // every time the drop area draws. The READ only, whole: argv.appSettings()
   // with no --set writes nothing, and the capture points SCREEPUB_CONFIG_DIR
-  // at a scratch folder besides. Any --set is a write and stays refused.
+  // at a scratch folder besides. The one write allowed is the reader's
+  // device, below; any other --set is refused.
   if (same(args, argv.appSettings())) return ALLOW;
 
   // The result screen's device poll and its one-off full listing. The

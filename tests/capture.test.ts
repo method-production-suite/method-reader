@@ -60,7 +60,7 @@ describe('the engine gate', () => {
     }
   });
 
-  test('it refuses anything that reaches devices or writes outside the demo library, naming it', () => {
+  test('it refuses copies, sends, builds and ejects, naming each', () => {
     for (const args of [
       argv.send(inLib('field-station.epub')),
       argv.export(inLib('field-station.epub'), { forFormat: 'kindle' }),

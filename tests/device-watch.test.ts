@@ -65,4 +65,48 @@ describe('the devices poll', () => {
     calls[0].resolve({ ok: true, devices: [kindle] }); await flush();
     expect(watcher.current()).toBe(null);
   });
+  test('a subscriber that throws does not keep the change from the ones after it', async () => {
+    const { watcher, calls, flush } = rig();
+    const heard: unknown[] = [];
+    const errors: unknown[] = [];
+    const was = console.error;
+    console.error = (...a: unknown[]) => { errors.push(a); };
+    try {
+      watcher.subscribe(() => { throw new Error('a broken listener'); });
+      watcher.subscribe((list: unknown) => heard.push(list));
+      watcher.start();
+      calls[0].resolve({ ok: true, devices: [kindle] });
+      await flush();
+    } finally {
+      console.error = was;
+    }
+    expect(heard).toEqual([[kindle]]);
+    expect(errors.length).toBe(1);
+    expect(watcher.current()).toEqual([kindle]);
+  });
+  test('an ask from before stop never blocks the first ask of a new start', async () => {
+    const { watcher, calls, flush } = rig();
+    watcher.start();
+    watcher.stop();
+    watcher.start();
+    expect(calls.length).toBe(2);
+    calls[1].resolve({ ok: true, devices: [kindle] });
+    await flush();
+    expect(watcher.current()).toEqual([kindle]);
+    // The old ask landing late changes nothing, and does not free the new
+    // start's guard early: a tick while the new ask is out asks nothing.
+    calls[0].resolve({ ok: true, devices: [] });
+    await flush();
+    expect(watcher.current()).toEqual([kindle]);
+  });
+  test('the old ask settling does not let a new start ask twice at once', async () => {
+    const { watcher, calls, tick, flush } = rig();
+    watcher.start();
+    watcher.stop();
+    watcher.start();
+    calls[0].resolve({ ok: true, devices: [] });
+    await flush();
+    tick();
+    expect(calls.length).toBe(2);
+  });
 });

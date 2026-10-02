@@ -90,8 +90,12 @@ export function plugLine(kind, platform) {
     return 'Dock it over USB, with its USB web interface switched on, and this becomes Upload to reMarkable.';
   }
   const name = nameOf(kind);
-  return `Plug your ${name} in over USB and this becomes Copy to ${name}.`;
+  return `Plug your ${name} in over USB and this becomes a Copy button.`;
 }
+
+/** The engine's button for Send to Kindle on the web (src/export/routes.ts).
+ *  Only that one needs the drag line: Amazon's Mac app takes the book itself. */
+export const WEB_BUTTON = 'Send to Kindle web';
 
 const available = (shown, test) => shown.routes.find((r) => r.available && test(r)) ?? null;
 const keyed = (key) => (r) => r.key === key;
@@ -112,7 +116,8 @@ export function offerFor({ device, platform, shown, kindle = null }) {
     const web = act(available(shown, keyed('send-to-kindle')));
     const mail = act(available(shown, keyed('email-to-kindle')));
     if (usb !== null) return { ...base, brass: act(usb), next: [web, mail].filter(Boolean) };
-    return { ...base, brass: web ?? save, next: [mail].filter(Boolean), lines: web ? [WEB_LINE, PLUG_KINDLE] : [PLUG_KINDLE] };
+    const drag = web?.route.button === WEB_BUTTON;
+    return { ...base, brass: web ?? save, next: [mail].filter(Boolean), lines: drag ? [WEB_LINE, PLUG_KINDLE] : [PLUG_KINDLE] };
   }
   if (device === 'apple') {
     const books = platformOf(platform) === 'mac' ? available(shown, keyed('apple-books')) : null;

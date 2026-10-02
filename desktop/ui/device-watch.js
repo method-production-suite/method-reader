@@ -21,25 +21,39 @@ export function devicesFrom(answer) {
 
 export function createWatcher({ run, every = POLL_MS, timers = globalThis }) {
   let timer = null;
-  let out = 0;
   let era = 0;
+  // The era whose ask is out, or null. Tied to the era, so an ask from
+  // before a stop() never blocks the first ask of the next start().
+  let outFor = null;
   let list = null;
   const subs = new Set();
+  function tell(next) {
+    for (const fn of [...subs]) {
+      // Each listener on its own: one that throws must not keep the change
+      // from the rest.
+      try {
+        fn(next);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
   async function ask() {
-    if (out > 0) return;
-    out += 1;
     const mine = era;
+    if (outFor === mine) return;
+    outFor = mine;
+    let next = null;
     try {
-      const next = devicesFrom(await run(argv.devices({ quick: true })));
-      if (mine !== era || next === null) return;
-      if (list !== null && JSON.stringify(list) === JSON.stringify(next)) return;
-      list = next;
-      for (const fn of [...subs]) fn(list);
+      next = devicesFrom(await run(argv.devices({ quick: true })));
     } catch {
       // A listing that failed changes nothing; the next tick asks again.
     } finally {
-      out -= 1;
+      if (outFor === mine) outFor = null;
     }
+    if (mine !== era || next === null) return;
+    if (list !== null && JSON.stringify(list) === JSON.stringify(next)) return;
+    list = next;
+    tell(list);
   }
   return {
     start() {
