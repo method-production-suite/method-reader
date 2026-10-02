@@ -111,6 +111,16 @@ describe('the cards', () => {
     expect(again.node.querySelector('.calm')).not.toBeNull();
   });
 
+  test('a card pressed from the keyboard hands it to the brass button, not the asterisk before it', async () => {
+    const p = await mountPanel({ engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : undefined) });
+    const card = p.node.button('Kobo');
+    card.focus();
+    card.click();
+    await settle();
+    expect(p.brass()).not.toBeNull();
+    expect(p.page.doc.activeElement).toBe(p.brass());
+  });
+
   test('a store the engine refuses still answers this session, and says why', async () => {
     const p = await mountPanel({ engine: (a) => (a.includes('--set') ? { ok: false, error: { code: 'bad-settings', message: 'the settings file is read-only' } } : undefined) });
     p.node.button('Kindle').click();
@@ -1365,11 +1375,22 @@ describe('the route list, as the Send page used to be driven', () => {
     expect(p.restored()).toBe(0);
   });
 
-  test('when the focused route is gone, the page’s own plan takes the keyboard', async () => {
+  test('when the focused route is gone, the brass button in its place takes the keyboard', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO] });
     p.brass()!.focus();
     await p.plug([]);
     expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    expect(p.page.doc.activeElement).toBe(p.brass());
+    expect(p.restored()).toBe(0);
+  });
+
+  test('with no brass button drawn yet, the page’s own plan takes the keyboard', async () => {
+    const p = await mountPanel({ engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : held(a)) });
+    const card = p.node.button('Kobo');
+    card.focus();
+    card.click();
+    await settle();
+    expect(p.brass()).toBeNull();
     expect(p.restored()).toBe(1);
   });
 

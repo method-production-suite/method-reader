@@ -108,6 +108,10 @@ let era = 0;
 /** Other ways, open or shut. Kept across the calm screen's redraws (a
  *  plug-in redraws it), shut again for each new mount. */
 let waysOpen = false;
+/** A card was pressed from the keyboard before the brass button existed (it
+ *  waits on the route list): where the page's plan parked the focus then.
+ *  The brass takes it when it is drawn, unless the reader has moved it on. */
+let brassOwed = null;
 /** The KFX checklist's place (kfx.js draws into it), built once per mount
  *  and moved into each redraw like the build line, so kfx.js keeps drawing
  *  into the same node. `kfxOpen` is whether Set it up put it on screen. */
@@ -127,6 +131,7 @@ export function mountPanel(node, context, { footer: under = [] } = {}) {
   mode = null;
   footer = under;
   waysOpen = false;
+  brassOwed = null;
   closeKfx();
   kfxNode = el('section', { class: 'kfx-setup', 'aria-label': KFX_HEADING });
   kfxNode.hidden = true;
@@ -335,6 +340,7 @@ function draw() {
   else if (mode === 'missing') body.append(missingPanel());
   else body.append(drawCalm());
   if (focused !== null && !body.contains(focused)) giveBackFocus(key);
+  else payBrassOwed();
   // The calm screen's first draw for this book asks for its route list: a
   // quick answer first, then the full one.
   if (mode === 'calm' && askedFor !== mountedBook) {
@@ -345,13 +351,32 @@ function draw() {
 }
 
 /** The keyboard, back on the control with this data-key when it can still
- *  take the focus. Otherwise focus.js's plan picks the page's first stop, as
- *  after every other redraw in this window. */
+ *  take the focus. Gone (a card pressed, so the cards are gone too): the
+ *  brass button, the one thing the reader came for, rather than the asterisk
+ *  that sits before it. Otherwise focus.js's plan picks the page's first
+ *  stop, as after every other redraw in this window. */
 function giveBackFocus(key) {
   const same = key === null ? null
     : buttons().find((button) => button.dataset.key === key);
+  const brass = body?.querySelector('.btn-brad') ?? null;
+  brassOwed = null;
   if (canFocus(same)) same.focus();
-  else ctx.restoreFocus();
+  else if (canFocus(brass)) brass.focus();
+  else {
+    ctx.restoreFocus();
+    if (mode === 'calm') brassOwed = { at: document.activeElement };
+  }
+}
+
+/** The brass button drawn at last after a card press: it takes the focus,
+ *  but only from where the page's plan parked it. */
+function payBrassOwed() {
+  if (brassOwed === null || mode !== 'calm') { brassOwed = null; return; }
+  if (document.activeElement !== brassOwed.at) { brassOwed = null; return; }
+  const brass = body?.querySelector('.btn-brad') ?? null;
+  if (!canFocus(brass)) return;
+  brassOwed = null;
+  brass.focus();
 }
 
 /** Every button in the panel, so a send can take all of them out of reach. */

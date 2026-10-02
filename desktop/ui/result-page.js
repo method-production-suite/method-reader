@@ -27,9 +27,14 @@ export function resultPage(script) {
     if (!inside?.body || inside.body.childElementCount === 0) return;
     dressFrame(frame, css);
     // The frame's own scroll, not scrollIntoView: that would scroll the
-    // window around the frame too.
+    // window around the frame too. Stopped a line and a half short of the
+    // scene, so its heading has the page's air above it rather than sitting
+    // flush against the frame's edge.
     const scene = inside.querySelector('section.scene');
-    if (scene) frame.contentWindow?.scrollTo(0, scene.offsetTop);
+    if (scene) {
+      const em = parseFloat(frame.contentWindow?.getComputedStyle?.(inside.body)?.fontSize) || 16;
+      frame.contentWindow?.scrollTo(0, Math.max(0, scene.offsetTop - 1.5 * em));
+    }
   });
   frame.setAttribute('srcdoc', doc);
   box.append(frame);

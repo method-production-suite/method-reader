@@ -73,7 +73,12 @@ const SCRIPT_COLUMN = 706;
 const SETTINGS_COLUMN = 420;
 const GAP = 32; // --space-7 at a 16px root
 
-interface ResultBox { result: Box; page: Box; side: Box; brass: Box | null; cards: Box[]; overflowX: boolean }
+interface ResultBox {
+  result: Box; page: Box; side: Box; brass: Box | null; cards: Box[]; overflowX: boolean;
+  /** The first scene's top, measured inside the first page's frame from the
+   *  frame's own top edge; null while the frame has no scene drawn. */
+  sceneTop: number | null;
+}
 
 interface Measured {
   frame: { vw: number; sheet: Box; brads: number[]; firstTab: Box; foot: Box };
@@ -103,6 +108,10 @@ const RESULT = `(() => { ${BOX}
     side: box(${q('#surface-convert .result-side')}), brass: brass ? box(brass) : null,
     cards: [...document.querySelectorAll('#surface-convert .device-card')].map(box),
     overflowX: document.documentElement.scrollWidth > window.innerWidth,
+    sceneTop: (() => {
+      const scene = ${q('#surface-convert .result-page-frame')}?.contentDocument?.querySelector('section.scene');
+      return scene ? scene.getBoundingClientRect().top : null;
+    })(),
   };
 })()`;
 
@@ -420,6 +429,14 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
         expect(brass).not.toBeNull();
         expect(brass!.left).toBeGreaterThanOrEqual(get(size.name).calm.side.left - PX);
         expect(brass!.right).toBeLessThanOrEqual(get(size.name).calm.side.right + PX);
+      });
+
+      test('the first page opens on its first scene with room above it, not flush against the frame', () => {
+        for (const r of [get(size.name).cards, get(size.name).calm]) {
+          expect(r.sceneTop).not.toBeNull();
+          expect(r.sceneTop!).toBeGreaterThanOrEqual(12);
+          expect(r.sceneTop!).toBeLessThanOrEqual(48);
+        }
       });
     });
   }
