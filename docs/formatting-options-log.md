@@ -1271,7 +1271,7 @@ the Mac app should move those two; nothing in the engine needs to change.
   and a reader that indexes by it treats the re-converted book as a new one.
   A script with no pictures keeps its identifier. Making a designed title
   card the book's cover is an option of its own, `promoteCoverImage`,
-  described under #19a; it changes no `.fountain`, so it moves no
+  described under #19b; it changes no `.fountain`, so it moves no
   identifier. The design:
   `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
 - **Where a picture comes from, and where it lands.** Extraction finds the
@@ -1778,8 +1778,16 @@ the Mac app should move those two; nothing in the engine needs to change.
   declared. That deletion is reported to reach only the library tile: the
   cover still shows inside the book, and the `.mobi` also draws the card
   on its first page. Kobo, tolino and Apple Books take the EPUB itself, so
-  they are handed both declarations. The checks are the torture manifest's
-  19b row, printed by `tools/device-checklist.ts`.
+  they are handed both declarations. One more risk is the `.mobi`'s own:
+  EXTH 201 names a PNG record, which neither Calibre nor kindlegen ever
+  writes, so an older Kindle's thumbnailer could balk at it. The device
+  pass tells that apart from a picture failure by sideloading the same book
+  built with the cover off; if only the cover-off one works, the `.mobi`
+  drops its cover record, not its pictures. The rule cannot tell a title
+  card from any other full-page plate at the front (a map before FADE IN,
+  say): such a plate becomes the cover too, and the switch is the remedy.
+  The checks are the torture manifest's 19b row, printed by
+  `tools/device-checklist.ts`.
 - **Measured on the corpus, 2026-10-01 (images-carry tip d5bd60e against
   this entry's tip):** six of the seven scripts convert (one, the
   60-picture deck, is not a screenplay and converts only when forced; the

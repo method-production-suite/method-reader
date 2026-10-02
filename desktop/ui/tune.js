@@ -164,8 +164,8 @@ export const GROUPS = [
         key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle',
         help: 'When a script opens with a full-page picture before its first scene, the '
           + 'book uses it as its cover instead of its first page, so the preview leaves '
-          + 'it out. Needs Pictures from the script on. A script without one makes the '
-          + 'same book either way.',
+          + 'it out. A Kindle book built without Calibre keeps it on its page too. Needs '
+          + 'Pictures from the script on. A script without one makes the same book either way.',
       },
     ],
   },
