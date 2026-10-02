@@ -61,6 +61,12 @@ export function mountHeadsUp(sheet, {
 
   return {
     close,
+    /** The page under it changed (another tab, a result drawn): the line
+     *  never stays over the result, where the brass button says the same,
+     *  nor over a conversion. */
+    recheck() {
+      if (!box.hidden && (onResult() || busy())) close();
+    },
     /** No script open: the next list seeds again, so a Kindle left plugged
      *  in is not news to the next book. */
     reset() {

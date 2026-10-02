@@ -48,6 +48,11 @@ describe('the devices poll', () => {
     tick(); calls[2].resolve({ ok: true, devices: [kindle] }); await flush();
     expect(heard).toEqual([[], [kindle]]);
   });
+  test('a reader listed with an empty name is named for its kind, so no line reads "Eject " or "on your ."', () => {
+    const list = w.devicesFrom({ ok: true, devices: [{ ...kindle, name: '' }, { id: '/m/z', kind: 'pocketbook', name: '  ', volume: '/m/z' }] });
+    expect(list.map((d: { name: string }) => d.name)).toEqual(['Kindle', 'reader']);
+    expect(list[0]).toEqual(kindle);
+  });
   test('a refusal, a throw or a malformed answer keeps the last list', async () => {
     const { watcher, calls, tick, flush } = rig();
     watcher.start();

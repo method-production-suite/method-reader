@@ -9224,6 +9224,31 @@ describe('the window, booted whole', () => {
     expect(headsUp(w).hidden).toBe(true);
   });
 
+  test('the line goes away when the reader arrives on the result while it is up', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.tab('convert').click();
+    expect(w.showing()).toBe('convert');
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('and when another book converted from elsewhere lands its result under it', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.tauri.emit('tauri://drag-drop', { paths: ['/s/Second.pdf'], position: { x: 1, y: 1 } });
+    await settle();
+    expect(w.surface('convert').dataset.state).toBe('done');
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
   test('a Kindle already plugged in when the book opened is not news', async () => {
     w = await bootWindow(SCRATCH, { respond: engine, timers: true });
     await open(w, '/s/Field Station.pdf');
@@ -9315,5 +9340,24 @@ describe('every dressed frame follows the desktop’s theme', () => {
     expect(preview.sheet()).toContain('background: #1C1A17');
     expect(result.sheet()).toContain('p { margin: 0 }');
     expect(gone.sheet()).toContain('background: #F4EFE4');
+  });
+
+  test('a frame that left the window is let go at the next dressing, not kept until a theme change', async () => {
+    g.document = { documentElement: {} };
+    g.getComputedStyle = () => ({ getPropertyValue: () => '#222' });
+    g.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const frameOf = () => ({
+      isConnected: true,
+      contentDocument: { adoptedStyleSheets: [] },
+      contentWindow: { CSSStyleSheet: class { replaceSync() {} } },
+    });
+    const { dressFrame, dressedCount } = await import(`${join(UI, 'read.js')}?theme-prune`);
+    const results = Array.from({ length: 5 }, frameOf);
+    for (const f of results) {
+      dressFrame(f, '');
+      // Each new result replaces the last one's frame, as the result page does.
+      for (const other of results) if (other !== f) other.isConnected = false;
+    }
+    expect(dressedCount()).toBe(1);
   });
 });

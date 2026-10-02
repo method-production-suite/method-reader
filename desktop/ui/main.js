@@ -136,6 +136,7 @@ const context = {
       headsUp?.reset();
     }
     for (const surface of Object.values(surfaces)) surface.scriptChanged?.();
+    headsUp?.recheck();
   },
 };
 
@@ -162,6 +163,7 @@ frame.onSurface((id) => {
     if (on) surfaces[name].show?.();
     else surfaces[name].hide?.();
   }
+  headsUp?.recheck();
 });
 
 // "Kindle plugged in. Copy <Title>?" at the top of whatever page is showing,

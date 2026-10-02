@@ -607,11 +607,20 @@ export function dressFrame(frame, engineCss) {
 /** Every frame dressed here, with the sheet it was dressed in, so a change
  *  of the desktop's theme re-dresses all of them: Read's page, the result's
  *  first page and the Settings preview alike. A frame no longer in the
- *  window is dropped at the next change rather than dressed. */
+ *  window is dropped at the next change, or the next dressing, rather than
+ *  dressed. */
 const dressed = new Map();
 let themeQuery = null;
 
+/** How many frames are being followed: for tests, which check that a frame
+ *  that has left the window is let go. */
+export const dressedCount = () => dressed.size;
+
 function followTheme(frame, engineCss) {
+  // Let go of frames that have left the window now too, not only at a theme
+  // change: every new result draws a new frame, and a desktop that never
+  // changes theme would otherwise keep every one of them.
+  for (const each of [...dressed.keys()]) if (each.isConnected === false) dressed.delete(each);
   dressed.set(frame, engineCss);
   if (themeQuery !== null || typeof matchMedia !== 'function') return;
   themeQuery = matchMedia('(prefers-color-scheme: dark)');

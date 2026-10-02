@@ -6,16 +6,19 @@
 // Uncounted toward busy (app.js's countsTowardBusy): a listing is never
 // anybody's work.
 import { argv } from './app.js';
+import { nameOf } from './device.js';
 
 export const POLL_MS = 2000;
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 
-/** `devices --json`'s list, rebuilt clean, or null when it is not one. */
+/** `devices --json`'s list, rebuilt clean, or null when it is not one. A
+ *  reader with an empty name is named for its kind ("Kindle", or "reader"),
+ *  so the Eject button and its line never read "Eject " or "on your .". */
 export function devicesFrom(answer) {
   if (answer?.ok !== true || !Array.isArray(answer.devices)) return null;
   const list = answer.devices.map((d) => (d && isText(d.id) && isText(d.kind) && typeof d.name === 'string'
     && (typeof d.volume === 'string' || d.volume === null)
-    ? { id: d.id, kind: d.kind, name: d.name, volume: d.volume } : null));
+    ? { id: d.id, kind: d.kind, name: isText(d.name) ? d.name : nameOf(d.kind), volume: d.volume } : null));
   return list.includes(null) ? null : list;
 }
 

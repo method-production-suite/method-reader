@@ -73,6 +73,19 @@ describe('offerFor: the one brass button', () => {
     expect(o.next.map((a: any) => a.route.key)).toEqual(['email-to-kindle']);
     expect(o.lines).toEqual([d.WEB_LINE, d.PLUG_KINDLE]);
   });
+  test('no Kindle plugged in and Send to Kindle out of reach: email leads, before Save the EPUB (spec 6)', () => {
+    const shown = shownFor('darwin', []);
+    shown.routes = shown.routes.map((route: any) => (route.key === 'send-to-kindle'
+      ? { ...route, available: false, unavailable: 'platform' } : route));
+    const o = d.offerFor({ device: 'kindle', platform: 'MacIntel', shown });
+    expect(o.brass.route.key).toBe('email-to-kindle');
+    expect(o.next).toEqual([]);
+    expect(o.lines).toEqual([d.PLUG_KINDLE]);
+    // Neither: the EPUB, as before.
+    shown.routes = shown.routes.map((route: any) => (route.key === 'email-to-kindle'
+      ? { ...route, available: false, unavailable: 'setup' } : route));
+    expect(d.offerFor({ device: 'kindle', platform: 'MacIntel', shown }).brass.route.key).toBe('save-epub');
+  });
   test('Amazon’s app, when the engine says it is installed, is the same lead under its own name', () => {
     const o = d.offerFor({ device: 'kindle', platform: 'MacIntel', shown: shownFor('darwin', [], { sendToKindleApp: true }) });
     expect(o.brass.label).toBe('Send to Kindle app');

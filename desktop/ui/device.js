@@ -117,7 +117,11 @@ export function offerFor({ device, platform, shown, kindle = null }) {
     const mail = act(available(shown, keyed('email-to-kindle')));
     if (usb !== null) return { ...base, brass: act(usb), next: [web, mail].filter(Boolean) };
     const drag = web?.route.button === WEB_BUTTON;
-    return { ...base, brass: web ?? save, next: [mail].filter(Boolean), lines: drag ? [WEB_LINE, PLUG_KINDLE] : [PLUG_KINDLE] };
+    // Decision 6's order: the web, then email, and only then the EPUB.
+    const brass = web ?? mail ?? save;
+    return {
+      ...base, brass, next: [mail].filter((a) => a !== null && a !== brass), lines: drag ? [WEB_LINE, PLUG_KINDLE] : [PLUG_KINDLE],
+    };
   }
   if (device === 'apple') {
     const books = platformOf(platform) === 'mac' ? available(shown, keyed('apple-books')) : null;
