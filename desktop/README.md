@@ -138,6 +138,9 @@ by 800.
 | `focus.js` | where the keyboard lands on each page |
 | `convert.js` `read.js` `tune.js` `notes-surface.js` | one page each (`tune.js` is the Settings page) |
 | `result-page.js` | the left half of Convert's result: the book's first page |
+| `page-show.js` | the page that writes itself while a script converts: the typed page in the result's box, the wave, the slim reading line |
+| `page-timing.js` | the show's clock: which character is typed when, which blocks have formed, when it ends, when a key sounds |
+| `typewriter.js` | the key and bell sounds, made with Web Audio |
 | `send-panel.js` | the right half of Convert's result: the device cards, the one brass button, Other ways, Eject, the Kindle file built ahead |
 | `device.js` | the panel's rules: which cards, which button is brass, which asterisk, which file rows, what Eject and the heads-up say |
 | `send-routes.js` | what sending decides without drawing: the engine's route list and Kindle file answers read, the status line's words, the Save box's defaults |
