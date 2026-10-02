@@ -8971,6 +8971,16 @@ describe('the window, booted whole', () => {
     expect(onBar()).toEqual(['convert', 'read', 'tune']);
   });
 
+  test('a finished conversion hands the keyboard to the panel’s first card, not to Read it under it', async () => {
+    // Found live, 2026-10-01: the cards wait on the engine's answer about the
+    // stored reader, and the result had already parked the keyboard on the
+    // first control it had, Read it.
+    w = await bootWindow(SCRATCH, { respond: engine });
+    await open(w, '/s/Field Station.pdf');
+    await settle();
+    expect(w.doc.activeElement).toBe(w.surface('convert').button('Kindle'));
+  });
+
   test('Read’s Send goes back to the result, drawn again if the well replaced it, with the keyboard on the panel', async () => {
     w = await bootWindow(SCRATCH, { respond: engine });
     await open(w, '/s/Field Station.pdf');
@@ -8978,6 +8988,8 @@ describe('the window, booted whole', () => {
     expect(w.surface('convert').dataset.state).toBe('idle');
     w.tab('read').click();
     const send = w.surface('read').button('Send');
+    // Read shows its notice here (no script drawn): a box beside Convert it
+    // again. In the script's head it is quiet; see the read-head test.
     expect(send.className).toContain('btn-outline');
     send.click();
     await settle();
@@ -9205,5 +9217,47 @@ describe('the window, booted whole', () => {
     await settle();
     expect(w.showing()).toBe('convert');
     expect(conversions(w).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf', '/s/Field Station.pdf']);
+  });
+});
+
+describe('every dressed frame follows the desktop’s theme', () => {
+  // Found live, 2026-10-01: switching the desktop to dark redrew Read's page
+  // but left the result's first page and the Settings preview on light
+  // paper until they were drawn again. The listener lived in Read alone.
+  const g = globalThis as unknown as Record<string, unknown>;
+  const NAMES = ['document', 'matchMedia', 'getComputedStyle'];
+  const saved: Record<string, unknown> = {};
+  beforeEach(() => { for (const k of NAMES) saved[k] = g[k]; });
+  afterEach(() => { for (const k of NAMES) { if (saved[k] === undefined) delete g[k]; else g[k] = saved[k]; } });
+
+  test('a theme change re-dresses the result page and the preview too, and leaves a detached frame alone', async () => {
+    let paper = '#F4EFE4';
+    const changes: Array<() => void> = [];
+    g.document = { documentElement: {} };
+    g.getComputedStyle = () => ({ getPropertyValue: (name: string) => (name === '--paper' ? paper : '#222') });
+    g.matchMedia = () => ({ matches: false, addEventListener: (_: string, fn: () => void) => changes.push(fn) });
+    const frameOf = (connected: boolean) => {
+      const doc = { adoptedStyleSheets: [] as Array<{ text: string }> };
+      return {
+        isConnected: connected,
+        contentDocument: doc,
+        contentWindow: { CSSStyleSheet: class { text = ''; replaceSync(t: string) { this.text = t; } } },
+        sheet: () => doc.adoptedStyleSheets[0]?.text ?? '',
+      };
+    };
+    const { dressFrame } = await import(`${join(UI, 'read.js')}?theme-follow`);
+    const result = frameOf(true);
+    const preview = frameOf(true);
+    const gone = frameOf(true);
+    for (const f of [result, preview, gone]) expect(dressFrame(f, 'p { margin: 0 }')).toBe(true);
+    gone.isConnected = false;
+    expect(changes.length).toBe(1);
+
+    paper = '#1C1A17';
+    changes[0]();
+    expect(result.sheet()).toContain('background: #1C1A17');
+    expect(preview.sheet()).toContain('background: #1C1A17');
+    expect(result.sheet()).toContain('p { margin: 0 }');
+    expect(gone.sheet()).toContain('background: #F4EFE4');
   });
 });

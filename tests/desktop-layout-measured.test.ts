@@ -84,7 +84,7 @@ interface Measured {
   frame: { vw: number; sheet: Box; brads: number[]; firstTab: Box; foot: Box };
   cards: ResultBox;
   calm: ResultBox;
-  read: { rail: Box; stage: Box; frame: Box; railShown: boolean };
+  read: { rail: Box; stage: Box; frame: Box; railShown: boolean; toggle: Box; send: Box };
   tune: {
     split: Box; knobs: Box; preview: Box; previewFrame: Box;
     position: string; stickyTop: number; rem: number; innerHeight: number;
@@ -247,6 +247,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           rail: box(rail), stage: box(${q('#surface-read .script-stage')}),
           frame: box(${q('#surface-read .script-frame')}),
           railShown: getComputedStyle(rail).visibility === 'visible' && getComputedStyle(rail).opacity === '1',
+          toggle: box(${q('#surface-read .read-head .index-toggle')}),
+          send: box(${q('#surface-read .read-head .read-send')}),
         };
       })()`);
 
@@ -357,6 +359,13 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           near(stage.width, SCRIPT_COLUMN, 'script width');
           near(frame.width, SCRIPT_COLUMN, 'script frame width');
           near(stage.top, rail.top, 'script top vs index top');
+        });
+
+        test('Read: Send is a quiet word in the head’s row, a step after Hide scenes, not a box beside it', () => {
+          const { toggle, send } = get(size.name).read;
+          near(send.top, toggle.top, 'send top vs hide scenes top', 2);
+          expect(send.height).toBeLessThanOrEqual(toggle.height + PX);
+          expect(send.left - toggle.right).toBeGreaterThanOrEqual(16);
         });
 
         test('Settings: a 420 column, the preview filling the rest of the block', () => {

@@ -492,6 +492,8 @@
   font-family: var(--font-structure); font-size: var(--text-note);
   color: var(--ink-muted); margin: 2px 0 0;
 }
+/* Send sits in the head's row of quiet words, a step after Hide scenes. */
+.read-head .read-send { margin-left: var(--space-5); }
 
 /* Two columns: a slot for the scene index, then the script. The script keeps
  * the width its frame had at the old 1000px page cap (706px), so its lines

@@ -188,6 +188,16 @@ async function start() {
     }
     if (host !== mine || !host.isConnected) return;
     ctx.state.readerDevice = D.readerDeviceFrom(answer);
+    mode = ctx.state.readerDevice === null ? 'cards' : 'calm';
+    // While the engine answered, the result parked the keyboard on the
+    // first control it had, the quiet links under this panel. The panel is
+    // the work, so the plan picks again now that it is drawn (the panel
+    // comes first). A reader who moved on in the meantime is left alone.
+    const parked = document.activeElement;
+    draw();
+    const links = host.parentNode?.querySelector?.('.asides');
+    if (parked !== null && links?.contains?.(parked) && parked === links.querySelector('button')) ctx.restoreFocus();
+    return;
   }
   mode = ctx.state.readerDevice === null ? 'cards' : 'calm';
   draw();
