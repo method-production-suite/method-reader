@@ -999,17 +999,21 @@ answer is yes, so it can be checked without installing anything.
 
 ## 6. Try to send to a reader
 
-Plug in your Kindle. Open **Send**.
+Convert a script. The result asks what you read on: press **Kindle**. The
+question is not asked again (a quiet **Different device** brings it back).
 
-Every row currently says *never run on real hardware* — that is honest, not
-broken. The only device transfer anyone has ever done was a Kindle over USB
-from a Mac, and that was the **old** app.
+Plug in your Kindle. Its card, or the brass button, says so with a green
+dot, and the brass button becomes **Copy to Kindle**, naming the file type.
 
-So this step is the most valuable thing you can do: press Send and see what
-happens. Whether it works or fails, it is the first real hardware evidence
-this app has ever had. If the file lands, check it opens on the device and
-that the format is what you expected (KFX if you have the Calibre toolchain,
-AZW3 otherwise, MOBI as the floor).
+A Kindle on a Mac is the one combination that has been tried on real
+hardware; every other reader carries an asterisk that says it has not.
+
+So this step is the most valuable thing you can do: press Copy to Kindle and
+see what happens. Whether it works or fails, it is real hardware evidence. If
+the file lands, the brass button becomes **Eject Kindle** with a line saying
+to eject before you unplug. Press it, check the Kindle can be unplugged, and
+that the book opens on the device in the format you expected (KFX if you have
+the Calibre toolchain, AZW3 otherwise, MOBI as the floor).
 
 ---
 
