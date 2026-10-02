@@ -1401,13 +1401,29 @@ describe('after a copy over USB', () => {
     expect(p.tauri.callsTo('app-settings').filter((c) => c.args.includes('--set'))).toEqual([]);
   });
 
-  test('a different book does not inherit the reminder', async () => {
+  test('a different book keeps the pending Eject and its line (spec 13), and ejecting it there clears it', async () => {
     const p = await copied();
+    p.ctx.state.script = { ...p.ctx.state.script, title: 'Other', epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    p.panel.panelShown();
+    await settle();
+    expect(p.status().textContent).toBe(ON_IT);
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+    p.brass()!.click();
+    await settle();
+    expect(p.tauri.callsTo('eject')[0].args).toEqual(['eject', '/Volumes/KOBOeReader', '--json']);
+    p.tauri.callsTo('eject')[0].answer({ ok: true, ejected: '/Volumes/KOBOeReader' });
+    await settle();
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+  });
+
+  test('a different book does not inherit a line with no Eject behind it', async () => {
+    const p = await copied();
+    await p.plug([]);
     p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
     p.panel.mountPanel(p.node, p.ctx);
     await settle();
     expect(p.status().textContent).toBe('');
-    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
     expect(p.ctx.state.sendResult).toBe(null);
   });
 });

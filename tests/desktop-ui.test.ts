@@ -9157,6 +9157,35 @@ describe('the window, booted whole', () => {
       .toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kindle"}']);
   });
 
+  test('the Eject reminder outlives converting another book, until the Kindle is unplugged (spec 13)', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))[0]
+      .answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    w.tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/Kindle/documents/Field Station.azw3' });
+    await settle();
+    const ON_IT = 'Field Station is on your Kindle. Eject it before you unplug.';
+    expect(w.surface('convert').querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+
+    await open(w, '/s/Second.pdf');
+    const convert = w.surface('convert');
+    expect(convert.querySelector('h2')!.textContent).toContain('Second');
+    expect(convert.querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+    expect(convert.querySelector('.send-status')!.textContent).toBe(ON_IT);
+
+    // Unplugged without ejecting: the button goes.
+    await tickWith(w, []);
+    expect(convert.buttons('Eject Kindle')).toEqual([]);
+  });
+
   test('Not now, or eight seconds, takes it away; the same Kindle does not bring it back until it is unplugged', async () => {
     w = await bootWindow(SCRATCH, { respond: engine, timers: true });
     await open(w, '/s/Field Station.pdf');

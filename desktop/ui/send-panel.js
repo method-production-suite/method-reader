@@ -173,10 +173,15 @@ export function mountPanel(node, context, { footer: under = [] } = {}) {
   clear(host);
   host.append(body, statusLine, artifactNote);
   // What the last send said about this book, and its Eject button, drawn
-  // again (spec decision 13); another book's is forgotten.
+  // again (spec decision 13). Another book's line is forgotten, but never a
+  // reader still waiting to be ejected: its button and its line (naming the
+  // book that was copied) come along until it is ejected or unplugged.
   const kept = ctx.state.sendResult ?? null;
   if (kept !== null && kept.book === book) show(kept);
-  else ctx.state.sendResult = null;
+  else if (kept?.eject) {
+    ctx.state.sendResult = { book, line: kept.eject.line ?? '', bad: false, eject: kept.eject };
+    show(ctx.state.sendResult);
+  } else ctx.state.sendResult = null;
   unsubscribe = ctx.devices?.subscribe?.(onDevices) ?? null;
   showBuild();
   start();
@@ -442,12 +447,12 @@ function buttons() {
 
 /** The status line, kept on the window's state with the book it is about,
  *  so a return to the result draws it again. `eject` is kept as it was
- *  unless the call says otherwise: a save after a copy does not make the
- *  reader safe to unplug. */
+ *  unless the call says otherwise, whichever book it was copied from: a
+ *  save after a copy does not make the reader safe to unplug. */
 function say(status) {
   if (statusLine === null) return;
   const before = ctx.state.sendResult;
-  const kept = before?.book === mountedBook ? before.eject : null;
+  const kept = before?.eject ?? null;
   ctx.state.sendResult = {
     book: mountedBook, line: status.line, bad: status.bad,
     eject: status.eject === undefined ? kept : status.eject,
@@ -460,10 +465,10 @@ function show(status) {
   statusLine.classList.toggle('bad', status.bad);
 }
 
-/** The reader the last copy left mounted, while it still needs ejecting. */
+/** The reader the last copy left mounted, while it still needs ejecting,
+ *  whichever book was copied to it. */
 function ejectPending() {
-  const kept = ctx.state.sendResult;
-  return kept?.book === mountedBook ? kept.eject ?? null : null;
+  return ctx.state.sendResult?.eject ?? null;
 }
 
 // ------------------------------------------------------------------ cards
@@ -977,7 +982,9 @@ async function sendTo(device) {
     // you unplug.", with Eject in the brass place. The engine's own line for
     // one that does not.
     const copied = D.copiedState(script.title, device, sent);
-    say(copied);
+    // The eject carries its own line, so it can be said again beside the
+    // next book while the reader is still waiting to be ejected.
+    say(copied.eject === null ? copied : { ...copied, eject: { ...copied.eject, line: copied.line } });
     // Eject is drawn only on the calm screen (spec decision 12: a USB copy
     // ends with it), and the heads-up can start a copy while the cards or
     // "My device isn't here" are up. So the panel goes calm; and with no

@@ -746,8 +746,9 @@ function drawProgress(path, waiting = null) {
 function drawResult(path, answer) {
   ctx.state.script = scriptFrom(path, answer);
   // What the last send said is about the book it was sent; another book's
-  // line and Eject button are not this one's (the panel checks too).
-  if (ctx.state.sendResult && ctx.state.sendResult.book !== ctx.state.script.epubPath) {
+  // line is not this one's (the panel checks too). A reader still waiting
+  // to be ejected is kept, whatever book it holds (spec decision 13).
+  if (ctx.state.sendResult && ctx.state.sendResult.book !== ctx.state.script.epubPath && !ctx.state.sendResult.eject) {
     ctx.state.sendResult = null;
   }
   paintResult();
