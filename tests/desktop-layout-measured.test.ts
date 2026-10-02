@@ -88,6 +88,8 @@ interface Measured {
   tune: {
     split: Box; knobs: Box; preview: Box; previewFrame: Box;
     position: string; stickyTop: number; rem: number; innerHeight: number;
+    /** The page's heading and its Send, and a quiet button to measure Send by. */
+    heading: Box; send: Box; sendClass: string;
     scrolledBy: number; knobsAfter: Box; previewAfter: Box; previewFrameAfter: Box;
   };
 }
@@ -257,7 +259,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
       await p.evaluate('window.scrollTo(0, 0)');
       await p.evaluate(twoFrames);
       const before = await p.evaluate<Pick<Measured['tune'],
-        'split' | 'knobs' | 'preview' | 'previewFrame' | 'position' | 'stickyTop' | 'rem' | 'innerHeight'>>(`(() => { ${BOX}
+        'split' | 'knobs' | 'preview' | 'previewFrame' | 'position' | 'stickyTop' | 'rem' | 'innerHeight'
+        | 'heading' | 'send' | 'sendClass'>>(`(() => { ${BOX}
         const preview = ${q('#surface-tune .tune-preview')};
         const style = getComputedStyle(preview);
         return {
@@ -266,6 +269,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           position: style.position, stickyTop: parseFloat(style.top) || 0,
           rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
           innerHeight: window.innerHeight,
+          heading: box(${q('#surface-tune .tune-head .slug')}), send: box(${q('#surface-tune .tune-head .tune-send')}),
+          sendClass: ${q('#surface-tune .tune-head .tune-send')}.className,
         };
       })()`);
       // Far enough that an unpinned preview would have gone above its pinned
@@ -314,6 +319,16 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
     const sheetCentre = sheetLeft + size.sheet.width / 2;
 
     describe(`at ${size.name}`, () => {
+      test('Settings: Send is a quiet word on the heading’s line, to its right, not a box under it', () => {
+        const { heading, send, sendClass } = get(size.name).tune;
+        const { toggle } = get(size.name).read;
+        expect(sendClass.split(' ')).toContain('btn-quiet');
+        near(send.top, heading.top, 'send top vs heading top', 2);
+        // No taller than Read's quiet Hide scenes.
+        expect(send.height).toBeLessThanOrEqual(toggle.height + PX);
+        expect(send.left - heading.right).toBeGreaterThanOrEqual(16);
+      });
+
       test('the viewport is the size asked for', () => {
         expect(get(size.name).frame.vw).toBe(size.width);
       });

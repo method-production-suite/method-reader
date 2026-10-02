@@ -775,7 +775,7 @@ function draw(status) {
  *  even when its settings are out of reach. */
 function sendButton() {
   return el('button', {
-    type: 'button', class: 'btn btn-outline tune-send', onclick: () => ctx.sendBook?.(),
+    type: 'button', class: 'btn-quiet tune-send', onclick: () => ctx.sendBook?.(),
   }, SEND_BOOK);
 }
 

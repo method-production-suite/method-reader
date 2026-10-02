@@ -888,6 +888,10 @@
 /* The one line that makes a claim about a file on disk. It sits at the foot
  * of the form, where the reader's eye lands after the last knob. */
 .tune-status { min-height: 1.4em; margin-top: 0; }
+
+/* The page's heading and, on its line to the right, Send: a quiet word as
+ * on Read's head, not a box between the heading and the lede. */
+.tune-head { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--space-5); }
 .tune-status.bad { color: var(--alarm); }
 
 /* The rows in Other ways (and in the KFX checklist): brand/components/
