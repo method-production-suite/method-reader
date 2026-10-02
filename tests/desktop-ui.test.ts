@@ -428,6 +428,7 @@ describe('the Convert surface', () => {
     platform?: string;
     script?: Record<string, unknown> | null;
     ask?: { should: () => boolean; answer: (on: boolean) => void };
+    state?: Record<string, unknown>;
   } = {}) {
     page = fakePage({ respond: options.engine ?? (() => HOLD), platform: options.platform });
     copies += 1;
@@ -437,10 +438,11 @@ describe('the Convert surface', () => {
     const went: string[] = [];
     let restored = 0;
     const ctx = {
-      state: { script: options.script ?? null, reducedMotion: true },
+      state: { script: options.script ?? null, reducedMotion: true, ...options.state } as Record<string, any>,
       goTo: (id: string) => went.push(id),
       restoreFocus: () => { restored += 1; },
       scriptChanged: () => {},
+      convertAgain: () => {},
       updates: options.ask === undefined
         ? undefined
         : { shouldAsk: options.ask.should, answer: options.ask.answer },
@@ -558,13 +560,83 @@ describe('the Convert surface', () => {
     expect(tauri.listening('engine-line')).toBe(0);
   });
 
-  test('Show in Finder asks the engine to show this book, and says only what went wrong', async () => {
-    const { convert, pane, tauri } = await mountConvert({
-      engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+  test('the result is a page and a panel: "<Title> is ready", one line of counts, the panel, three quiet links', async () => {
+    const { convert, pane } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    expect(pane.dataset.state).toBe('done');
+    expect(pane.querySelector('.result .result-page')).not.toBeNull();
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Field Station is ready');
+    expect(pane.querySelector('.result .book-count')!.textContent).toBe('18 pages, 12 scenes');
+    expect(pane.querySelector('.result .send-panel')).not.toBeNull();
+    expect(pane.querySelectorAll('.result .asides button').map((b) => b.textContent)).toEqual(['Read it', 'Settings', 'Convert another']);
+    expect(pane.querySelectorAll('button').some((b) => b.textContent === 'Send to a reader')).toBe(false);
+    // The "(by author)" line went; the engine's warnings stay under the counts.
+    expect(pane.textContent).not.toContain('A. Writer');
+  });
+
+  test('the result’s page is the book’s own first page, in a frame nothing inside can run in', async () => {
+    const { convert, pane } = await mountConvert({
+      engine: (a) => (a[0].endsWith('.pdf')
+        ? { ...converted(a[0]), previewHtml: '<?xml version="1.0"?><html><head><style>p{}</style></head><body><section class="scene"><p>INT. FIELD STATION</p></section></body></html>' }
+        : HOLD),
     });
     await convert.convertPath('/s/Field Station.pdf');
+    const frame = pane.querySelector('.result-page iframe.result-page-frame')!;
+    expect(frame.getAttribute('sandbox')).toBe('allow-same-origin');
+    expect(frame.getAttribute('tabindex')).toBe('-1');
+    expect(pane.querySelector('.result-page')!.getAttribute('aria-hidden')).toBe('true');
+    // The stylesheet comes out (the CSP will not run it), the page goes in.
+    const doc = frame.getAttribute('srcdoc')!;
+    expect(doc).toStartWith('<!doctype html>');
+    expect(doc).toContain('INT. FIELD STATION');
+    expect(doc).not.toContain('<style>');
+  });
+
+  test('showResult draws the open book’s result again after Convert another, without converting', async () => {
+    const { convert, pane, tauri } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    pane.button('Convert another').click();
+    expect(pane.dataset.state).toBe('idle');
+    convert.showResult();
+    expect(pane.dataset.state).toBe('done');
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Field Station is ready');
+    expect(tauri.calls.filter((c) => c.args[0].endsWith('.pdf')).length).toBe(1);
+  });
+
+  test('showResult on the result already up redraws nothing, so a copy in progress keeps its buttons', async () => {
+    const { convert, pane } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    const panel = pane.querySelector('.send-panel');
+    const another = pane.button('Convert another');
+    convert.showResult();
+    expect(pane.querySelector('.send-panel')).toBe(panel);
+    expect(pane.button('Convert another')).toBe(another);
+  });
+
+  test('showResult with no book open, or mid-conversion, leaves the page alone', async () => {
+    const { convert, pane } = await mountConvert();
+    convert.showResult();
+    expect(pane.dataset.state).toBe('idle');
+    const going = convert.convertPath('/s/Field Station.pdf');
+    await settle();
+    convert.showResult();
+    expect(pane.dataset.state).toBe('working');
+    page!.tauri.callsTo('/s/Field Station.pdf')[0].answer(refused('scanned', 'No text.'));
+    await going;
+  });
+
+  test('Show in Finder asks the engine to show this book, and says only what went wrong', async () => {
+    // It sits at the foot of Other ways' Save a file now, under the panel's
+    // calm screen (a reader who chose a Kobo before).
+    const { convert, pane, tauri } = await mountConvert({
+      engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+      state: { readerDevice: 'kobo' },
+    });
+    await convert.convertPath('/s/Field Station.pdf');
+    pane.button('Other ways').click();
     const show = pane.button(convert.revealLabel('MacIntel'));
-    const note = () => pane.querySelectorAll('p.caption').at(-1)!;
+    expect(show.closest('section.other-ways')).not.toBeNull();
+    const note = () => pane.querySelector('.path-note')!.nextSibling!;
 
     show.click();
     const reveal = tauri.callsTo('reveal');
@@ -588,12 +660,13 @@ describe('the Convert surface', () => {
   test('a reveal answer that arrives after the screen moved on lands nowhere', async () => {
     const { convert, pane, tauri } = await mountConvert({
       engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+      state: { readerDevice: 'kobo' },
     });
     await convert.convertPath('/s/First.pdf');
     pane.button(convert.revealLabel('MacIntel')).click();
     // Another script converts while the first reveal is still out.
     await convert.convertPath('/s/Second.pdf');
-    expect(pane.querySelector('.book-title')!.textContent).toBe('Second');
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Second is ready');
     tauri.callsTo('reveal')[0].answer(refused('internal', 'Could not show First.'));
     await settle();
     expect(pane.visibleText).not.toContain('Could not show First.');
@@ -808,72 +881,37 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
   // the last time it converted it, and a PDF it has not converted has no
   // book anything here can be holding, so that one converts at once.
   //
-  // A stub document just big enough for dom.js and convert.js's drawing;
-  // the engine is a queue of unanswered calls the test answers itself.
-  class Node {
-    kids: Node[] = [];
-    parent: Node | null = null;
-    attrs = new Map<string, string>();
-    dataset: Record<string, string> = {};
-    className = '';
-    hidden = false;
-    disabled = false;
-    text = '';
-    constructor(readonly tag: string) {}
-    append(...nodes: (Node | string)[]) {
-      for (const n of nodes) {
-        const node = typeof n === 'string' ? Object.assign(new Node('#text'), { text: n }) : n;
-        node.parent = this;
-        this.kids.push(node);
-      }
-    }
-    get firstChild() { return this.kids[0] ?? null; }
-    removeChild(node: Node) { this.kids.splice(this.kids.indexOf(node), 1); node.parent = null; return node; }
-    get textContent(): string { return this.tag === '#text' ? this.text : this.kids.map((k) => k.textContent).join(''); }
-    set textContent(value: string) { this.kids = []; this.append(value); }
-    setAttribute(name: string, value: string) { this.attrs.set(name, value); }
-    getAttribute(name: string) { return this.attrs.get(name) ?? null; }
-    addEventListener() {}
-    querySelector() { return null; }
-    get classList() { return { toggle: () => true, contains: () => false, add: () => {}, remove: () => {} }; }
+  // The real convert.js on the fake page (tests/helpers/fake-dom.ts), with
+  // every engine call held for the test to answer: the result it draws now
+  // mounts the send panel, which needs a page that behaves like one.
+  let page: FakePage | null = null;
+  afterEach(async () => { await page?.close(); page = null; });
+  async function mounted(tag: string) {
+    page = fakePage();
+    const convert = await import(`${join(UI, 'convert.js')}?${tag}`);
+    const pane = page.pane();
+    pane.id = 'surface-convert';
+    convert.mount(pane, {
+      state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {}, convertAgain: () => {},
+    });
+    return { convert, pane, tauri: page.tauri };
   }
-  const g = globalThis as unknown as Record<string, unknown>;
-  afterEach(() => { delete g.window; delete g.document; delete g.CSSStyleSheet; });
+  const pdfCalls = (tauri: FakePage['tauri'], pdf?: string) =>
+    tauri.pending().filter((c) => c.args[1] === '--json' && c.args[0].endsWith('.pdf') && (pdf === undefined || c.args[0] === pdf));
 
   test('a PDF converted before waits for whatever holds its book; one never converted does not', async () => {
-    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const asked: { args: string[]; resolve: (stdout: string) => void }[] = [];
-    g.document = {
-      createElement: (tag: string) => new Node(tag),
-      createElementNS: (_ns: string, tag: string) => new Node(tag),
-      createTextNode: (value: string) => Object.assign(new Node('#text'), { text: value }),
-      adoptedStyleSheets: [],
-    };
-    g.CSSStyleSheet = class { replaceSync() {} };
-    g.window = {
-      __TAURI__: {
-        core: { invoke: (_cmd: string, { args }: { args: string[] }) => new Promise<string>((resolve) => asked.push({ args, resolve })) },
-        event: { listen: async () => () => {} },
-      },
-    };
-    const convert = await import(`${join(UI, 'convert.js')}?turns`);
+    const { convert, tauri } = await mounted('turns');
     const { inTurn } = await import(join(UI, 'book-queue.js'));
-    const ctx = { state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {} };
-    convert.mount(new Node('section'), ctx);
-    const conversions = () => asked.filter((call) => call.args[1] === '--json' && call.args[0].endsWith('.pdf'));
     const answer = async (pdf: string, epubPath: string) => {
-      const call = conversions().find((c) => c.args[0] === pdf)!;
-      asked.splice(asked.indexOf(call), 1);
-      call.resolve(JSON.stringify({ ok: true, title: 'Field Station', epubPath, fountainPath: epubPath.replace(/epub$/, 'fountain'), previewHtml: '' }));
-      await tick();
-      await tick();
+      pdfCalls(tauri, pdf)[0].answer({ ok: true, title: 'Field Station', epubPath, fountainPath: epubPath.replace(/epub$/, 'fountain'), previewHtml: '' });
+      await settle();
     };
     const BOOK = '/lib/field-station/Field Station.epub';
 
     // The first conversion: no book known, asked at once.
     const first = convert.convertPath('/s/Field Station.pdf');
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
     await answer('/s/Field Station.pdf', BOOK);
     await first;
 
@@ -883,19 +921,19 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
 
     // Another PDF has no book this window has touched: at once.
     const other = convert.convertPath('/s/Other.pdf');
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Other.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Other.pdf']);
     await answer('/s/Other.pdf', '/lib/other/Other.epub');
     await other;
 
     // The same PDF again rewrites the book the send holds: it waits.
     const again = convert.convertPath('/s/Field Station.pdf');
-    await tick();
-    expect(conversions()).toEqual([]);
+    await settle();
+    expect(pdfCalls(tauri)).toEqual([]);
     free();
     await sending;
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
     await answer('/s/Field Station.pdf', BOOK);
     await again;
   });
@@ -903,46 +941,19 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
   test('while it waits its turn the read-out says what for, then "starting up" once it starts', async () => {
     // A conversion that waited out a half-minute Kindle build used to sit on
     // "starting up" the whole time, which reads as a stuck engine.
-    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const asked: { args: string[]; resolve: (stdout: string) => void }[] = [];
-    g.document = {
-      createElement: (tag: string) => new Node(tag),
-      createElementNS: (_ns: string, tag: string) => new Node(tag),
-      createTextNode: (value: string) => Object.assign(new Node('#text'), { text: value }),
-      adoptedStyleSheets: [],
-    };
-    g.CSSStyleSheet = class { replaceSync() {} };
-    g.window = {
-      __TAURI__: {
-        core: { invoke: (_cmd: string, { args }: { args: string[] }) => new Promise<string>((resolve) => asked.push({ args, resolve })) },
-        event: { listen: async () => () => {} },
-      },
-    };
-    const convert = await import(`${join(UI, 'convert.js')}?waiting`);
+    const { convert, pane, tauri } = await mounted('waiting');
     const { inTurn } = await import(join(UI, 'book-queue.js'));
-    const pane = new Node('section');
-    convert.mount(pane, { state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {} });
-    const readOut = (): string => {
-      const walk = (n: Node): Node | null => {
-        if (n.className === 'read-out') return n;
-        for (const k of n.kids) { const found = walk(k); if (found) return found; }
-        return null;
-      };
-      return walk(pane)?.textContent ?? '(none)';
-    };
-    const conversion = () => asked.find((c) => c.args[1] === '--json' && c.args[0] === '/s/Night Shift.pdf');
+    const readOut = (): string => pane.querySelector('.read-out')?.textContent ?? '(none)';
+    const conversion = () => pdfCalls(tauri, '/s/Night Shift.pdf')[0];
     const BOOK = '/lib/night-shift/Night Shift.epub';
     const answer = async () => {
-      const call = conversion()!;
-      asked.splice(asked.indexOf(call), 1);
-      call.resolve(JSON.stringify({ ok: true, title: 'Night Shift', epubPath: BOOK, fountainPath: BOOK.replace(/epub$/, 'fountain'), previewHtml: '' }));
-      await tick();
-      await tick();
+      conversion().answer({ ok: true, title: 'Night Shift', epubPath: BOOK, fountainPath: BOOK.replace(/epub$/, 'fountain'), previewHtml: '' });
+      await settle();
     };
 
     // Free book: straight to "starting up".
     const first = convert.convertPath('/s/Night Shift.pdf');
-    await tick();
+    await settle();
     expect(readOut()).toBe(convert.PROGRESS_START.label);
     await answer();
     await first;
@@ -951,18 +962,16 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
     let free: () => void = () => {};
     const building = inTurn(BOOK, 'kindle', () => new Promise<void>((resolve) => { free = resolve; }));
     const again = convert.convertPath('/s/Night Shift.pdf');
-    await tick();
+    await settle();
     expect(conversion()).toBeUndefined();
     expect(readOut()).toBe('Waiting for the Kindle file to finish building…');
     free();
     await building;
-    await tick();
+    await settle();
     expect(conversion()).toBeDefined();
     expect(readOut()).toBe(convert.PROGRESS_START.label);
     await answer();
     await again;
-    for (const call of asked.splice(0)) call.resolve(JSON.stringify({ ok: false }));
-    await tick();
   });
 
   test('waitingLabel names the turn a conversion waits for, the longest wait first', async () => {
@@ -1147,7 +1156,8 @@ describe('what the Convert surface decides', () => {
     withoutCliRemedy: (message: unknown, flag: unknown) => string;
     stillOpenNote: (script: unknown) => string | null;
     fileName: (path: unknown) => string;
-    countLine: (answer: unknown) => string;
+    countsLine: (script: unknown) => string;
+    readyLine: (title: unknown) => string;
     scriptFrom: (path: string, answer: unknown) => Record<string, unknown>;
     droppedPath: (paths: unknown) => string | null;
     revealFailureMessage: (answer: unknown) => string | null;
@@ -1341,17 +1351,21 @@ describe('what the Convert surface decides', () => {
     expect(at.label).toBe('building the book (100%)');
   }, 60000);
 
-  test('the counts read as a sentence, singular included', () => {
-    expect(convert.countLine({ pages: 5, scenes: 5, characters: 3 }))
-      .toBe('5 pages. 5 scenes.\n3 speaking characters.');
-    expect(convert.countLine({ pages: 1, scenes: 1, characters: 1 }))
-      .toBe('1 page. 1 scene.\n1 speaking character.');
-    expect(convert.countLine({ pages: 2, scenes: 0, characters: 0 }))
-      .toBe('2 pages. 0 scenes.\n0 speaking characters.');
+  test('the counts are one line, singular included', () => {
+    expect(convert.countsLine({ pages: 19, scenes: 11 })).toBe('19 pages, 11 scenes');
+    expect(convert.countsLine({ pages: 1, scenes: 1 })).toBe('1 page, 1 scene');
+    expect(convert.countsLine({ pages: 1 })).toBe('1 page');
+    expect(convert.countsLine({ pages: 19, scenes: null })).toBe('19 pages');
     // The engine omits the counts entirely for a .fountain input; "undefined
     // pages" is worse than no line at all.
-    expect(convert.countLine({ title: 'x' })).toBe('');
-    expect(convert.countLine({ pages: 4 })).toBe('4 pages.');
+    expect(convert.countsLine({ title: 'x' })).toBe('');
+    expect(convert.countsLine(null)).toBe('');
+  });
+
+  test('the result’s heading says the book is ready', () => {
+    expect(convert.readyLine('Field Station')).toBe('Field Station is ready');
+    expect(convert.readyLine('  Field Station ')).toBe('Field Station is ready');
+    expect(convert.readyLine('')).toBe('The book is ready');
   });
 
   test('the script object tasks 9–11 read is complete whatever the engine sent', () => {
@@ -8832,10 +8846,13 @@ describe('the window, booted whole', () => {
     };
   };
   /** The engine: --version and the library probe answered, a PDF converted,
-   *  anything else (Settings' read, Send's poll) held. */
+   *  the send panel's Kindle file check refused (it takes a turn on the
+   *  book, and a conversion again waits for it), anything else (Settings'
+   *  read, the devices poll) held. */
   const engine = (args: string[]) => {
     if (args[0] === '--version') return { ok: true, version: '0.0.0' };
     if (args[0] === 'app-settings') return { ok: false, error: { code: 'internal', message: 'no' } };
+    if (args[0] === 'export' && args.includes('--check')) return { ok: false, error: { code: 'internal', message: 'no' } };
     if (args[0].endsWith('.pdf')) return blankBook(args[0]);
     return HOLD;
   };
@@ -8919,7 +8936,9 @@ describe('the window, booted whole', () => {
     w.doc.activeElement = null;
     w.tauri.dialogs.shift()!.resolve(null);
     await settle();
-    expect(w.doc.activeElement as unknown).toBe(w.surface('convert').button('Send to a reader'));
+    // The panel's first card: the boot engine refuses app-settings, so no
+    // reader is stored and the cards are asked.
+    expect(w.doc.activeElement as unknown).toBe(w.surface('convert').button('Kindle'));
   });
 
   test('a file dragged over the window marks the well, and a drop converts the first real path, from any surface', async () => {

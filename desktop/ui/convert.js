@@ -15,6 +15,8 @@ import { WAITING } from './tune.js';
 import { el, clear, text } from './dom.js';
 import { newIssueUrl, osLabel } from './feedback.js';
 import { RELEASE } from './notes.js';
+import { resultPage } from './result-page.js';
+import { mountPanel, panelShown, panelHidden, copyTo as panelCopyTo } from './send-panel.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -40,7 +42,7 @@ export const HEADINGS = {
  *  to carry the name went with it. */
 export const WORDMARK = 'Screepub';
 
-/** The drop well's words, exported the way send.js and tune.js export theirs,
+/** The drop well's words, exported the way device.js and tune.js export theirs,
  *  so a test can read the copy without mounting a surface.
  *
  *  `limits` used to name TWO of the engine's four guards, a scan and a
@@ -183,7 +185,7 @@ export function failureFor(input) {
 
 /** What the refusal says about the book that was already open. A file the
  *  engine would not read produced nothing to replace it with, so it replaces
- *  nothing: Read, Tune and Send keep the script they had. Saying so is the
+ *  nothing: Read, Settings and the send panel keep the script they had. Saying so is the
  *  other half — a reader who has just been refused should not have to guess
  *  whether the work they were tuning survived. */
 export function stillOpenNote(script) {
@@ -227,20 +229,21 @@ export function fileName(path) {
   return parts.length === 0 ? String(path ?? '') : parts[parts.length - 1];
 }
 
-/** The book introducing itself. The counts are the fastest way to confirm
- *  the parse was right: a wrong character count means the cues were misread.
- *  A count the engine did not send is left out rather than printed as
- *  "undefined pages". */
-export function countLine(answer) {
-  const say = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}.`;
-  const first = [
-    Number.isFinite(answer?.pages) ? say(answer.pages, 'page') : null,
-    Number.isFinite(answer?.scenes) ? say(answer.scenes, 'scene') : null,
-  ].filter((p) => p !== null).join(' ');
-  const second = Number.isFinite(answer?.characters)
-    ? say(answer.characters, 'speaking character')
-    : '';
-  return [first, second].filter((p) => p !== '').join('\n');
+/** The result's one line of counts ("19 pages, 11 scenes", spec decision
+ *  2): the fastest way to confirm the parse was right. A count the engine
+ *  did not send is left out rather than printed as "undefined pages". */
+export function countsLine(script) {
+  const say = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  return [
+    Number.isFinite(script?.pages) ? say(script.pages, 'page') : null,
+    Number.isFinite(script?.scenes) ? say(script.scenes, 'scene') : null,
+  ].filter((p) => p !== null).join(', ');
+}
+
+/** The result's heading. */
+export function readyLine(title) {
+  const name = typeof title === 'string' ? title.trim() : '';
+  return `${name === '' ? 'The book' : name} is ready`;
 }
 
 /** The one object tasks 9–11 read. Everything optional is normalised here,
@@ -375,10 +378,13 @@ let pane = null;
 let chooseButton = null;
 let unlistenProgress = null;
 let busy = false;
+/** Whether this surface is the one on screen (show() to hide()): the send
+ *  panel builds the Kindle file ahead and listens for focus only then. */
+let shown = false;
 /** The library book each PDF converted in this window landed as, read off
  *  the engine's answer. Converting one of them again writes that book
- *  afresh, the same file the Settings page's save rebuilds and the Send
- *  page's send copies, so it takes its turn on it (book-queue.js). A PDF
+ *  afresh, the same file the Settings page's save rebuilds and the send
+ *  panel copies, so it takes its turn on it (book-queue.js). A PDF
  *  not in here has no book anything in this window has touched, so nothing
  *  can be holding it, and it converts at once. The window never works out
  *  a library path itself; the engine owns that (src/library.ts). */
@@ -410,10 +416,22 @@ export function mount(node, context) {
 }
 
 export function show() {
+  shown = true;
+  if (pane.dataset.state === 'done') panelShown();
   // The surface's first stop for a keyboard. It used to name the well's
   // button, which is only on screen in one of this surface's four states;
   // the plan in focus.js picks the first control there actually is.
   ctx.restoreFocus();
+}
+
+export function hide() {
+  shown = false;
+  panelHidden();
+}
+
+/** Whether a conversion is running (the Kindle heads-up waits it out). */
+export function converting() {
+  return busy;
 }
 
 export function choose() {
@@ -451,12 +469,14 @@ function icon() {
  *  the one screen that says what Screepub wants from you.
  *
  *  It does NOT close the script that is open. The book stays behind the well,
- *  so Read, Settings and Send stay reachable and a reader who pressed this by
+ *  so Read and Settings stay reachable, their Send button brings the result
+ *  back (showResult), and a reader who pressed this by
  *  mistake has lost nothing. "Convert another" is an invitation, not a
  *  discard — and the engine has already done the work, so throwing it away
  *  here would be throwing away the only copy in memory. */
 export function reset() {
   if (busy) return;
+  panelHidden();
   drawWell();
 }
 
@@ -630,7 +650,7 @@ async function pickFileThenConvert() {
 }
 
 /** "Convert it again", wherever it is offered (Read's blank notice, the
- *  Settings fault screen, Send's "no book" screen): convert the open
+ *  Settings fault screen, the send panel's "no book" line): convert the open
  *  script's own source again, which takes its book's turn like any other
  *  conversion of that file, and show the progress here. A script whose
  *  source this window never knew, or a conversion already under way, has
@@ -686,6 +706,7 @@ export async function convertPath(path, { force = false } = {}) {
  *  conversion waits its book's turn, or null; the read-out shows it until
  *  started() says the engine has been asked. */
 function drawProgress(path, waiting = null) {
+  panelHidden();
   clear(pane);
   pane.dataset.state = 'working';
   paintFill(PROGRESS_START.percent);
@@ -723,11 +744,26 @@ function drawProgress(path, waiting = null) {
 }
 
 function drawResult(path, answer) {
+  ctx.state.script = scriptFrom(path, answer);
+  // What the last send said is about the book it was sent; another book's
+  // line and Eject button are not this one's (the panel checks too).
+  if (ctx.state.sendResult && ctx.state.sendResult.book !== ctx.state.script.epubPath) {
+    ctx.state.sendResult = null;
+  }
+  paintResult();
+  ctx.scriptChanged();
+  ctx.restoreFocus();
+}
+
+/** The result screen: the book's first page on the left (result-page.js),
+ *  and on the right "<Title> is ready", the counts, the send panel
+ *  (send-panel.js) and three quiet links (spec decision 2). */
+function paintResult() {
+  const script = ctx.state.script;
   clear(pane);
   pane.dataset.state = 'done';
+  pane.dataset.book = script.epubPath ?? '';
   delete pane.dataset.errorCode;
-  ctx.state.script = scriptFrom(path, answer);
-  const script = ctx.state.script;
 
   // Show in Finder asks the ENGINE now (owner decision, 2026-09-23): the
   // window's old reveal permission was fixed to the library's old path, and
@@ -737,50 +773,55 @@ function drawResult(path, answer) {
   // another script, or opened a different book, would otherwise land on
   // whatever the pane shows by then, not on the book it was actually about,
   // and a stale refusal would survive a later success too. Every update
-  // below only ever touches this one element, wherever it still is.
+  // below only ever touches this one element, wherever it still is. It and
+  // the book's path sit at the foot of Other ways' Save a file now.
   const note = el('p', { class: 'caption', hidden: true }, '');
-  async function showInFinder() {
-    const said = await revealNote(runEngine, script.epubPath);
-    text(note, said);
-    note.hidden = said === '';
-  }
+  const reveal = el('button', {
+    type: 'button',
+    class: 'btn-quiet',
+    onclick: async () => {
+      const said = await revealNote(runEngine, script.epubPath);
+      text(note, said);
+      note.hidden = said === '';
+    },
+  }, revealLabel(navigator.userAgentData?.platform ?? navigator.platform));
 
-  pane.append(
-    el('div', { class: 'announce' },
-      el('p', { class: 'book-title' }, script.title),
-      script.author ? el('p', { class: 'book-by' }, `(by ${script.author})`) : null,
-      el('p', { class: 'book-count' }, countLine(answer)),
+  const panelNode = el('div', { class: 'send-panel' });
+  pane.append(el('div', { class: 'result' },
+    resultPage(script),
+    el('div', { class: 'result-side' },
+      el('h2', { class: 'result-title' }, readyLine(script.title)),
+      el('p', { class: 'book-count' }, countsLine(script)),
       ...script.warnings.map((w) => el('p', { class: 'caption' }, `(${w})`)),
-    ),
-    el('div', { class: 'send' },
-      el('button', { type: 'button', class: 'btn btn-brad', onclick: () => ctx.goTo('send') },
-        'Send to a reader'),
+      panelNode,
       el('div', { class: 'asides' },
-        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('read') },
-          'Read it'),
-        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('tune') },
-          'Settings'),
-        // Where the book actually is. The path is printed below, but a path
-        // is something you read and then have to act on yourself; this is
-        // the acting.
-        el('button', {
-          type: 'button',
-          class: 'btn-quiet',
-          onclick: showInFinder,
-        }, revealLabel(navigator.userAgentData?.platform ?? navigator.platform)),
-        el('button', { type: 'button', class: 'btn-quiet', onclick: reset },
-          'Convert another'),
-      ),
-    ),
-    el('p', { class: 'path-note' }, script.epubPath),
-    note,
-  );
+        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('read') }, 'Read it'),
+        el('button', { type: 'button', class: 'btn-quiet', onclick: () => ctx.goTo('tune') }, 'Settings'),
+        el('button', { type: 'button', class: 'btn-quiet', onclick: reset }, 'Convert another')))));
+  mountPanel(panelNode, ctx, { footer: [reveal, el('p', { class: 'path-note' }, script.epubPath ?? ''), note] });
+  if (shown) panelShown();
+}
 
-  ctx.scriptChanged();
-  ctx.restoreFocus();
+/** The open book's result, drawn again if the well (or a refusal) replaced
+ *  it: the Read and Settings pages' Send button, and the heads-up. On the
+ *  result already up it redraws nothing, so a copy in progress keeps its
+ *  buttons. */
+export function showResult() {
+  const script = ctx?.state.script ?? null;
+  if (busy || script === null) return;
+  if (pane.dataset.state === 'done' && pane.dataset.book === (script.epubPath ?? '')) return;
+  paintResult();
+}
+
+/** The heads-up's Copy: the result, then a copy to that reader. */
+export function copyTo(device) {
+  showResult();
+  if (pane.dataset.state !== 'done') return Promise.resolve();
+  return panelCopyTo(device);
 }
 
 function drawFailure(error, path) {
+  panelHidden();
   clear(pane);
   pane.dataset.state = 'failed';
   const refusal = failureFor(error);
@@ -816,15 +857,15 @@ function drawFailure(error, path) {
   // The script that was already open stays open: see stillOpenNote. The
   // refusal is news about the file that was just refused, not about the book
   // in the library, and clearing the open script here used to take Read,
-  // Tune and Send away from a book that was still perfectly good.
+  // Settings and sending away from a book that was still perfectly good.
   const kept = stillOpenNote(ctx.state.script);
 
   // Built through el() rather than appended straight to the pane, because
   // el() drops a null child and Node.append() renders it as the literal word
   // "null". The `kept` line is absent whenever no script is open, which is
   // the COMMON case on a refusal, so this screen has been printing a stray
-  // "null" under its buttons. Exactly the defect send.js's drawEmpty records
-  // having shipped once already, on the same mistake, which is why it is
+  // "null" under its buttons. Exactly the defect the old Send page's empty
+  // state shipped once already, on the same mistake, which is why it is
   // worth fixing in the same shape rather than with a conditional here.
   pane.append(el('div', { class: 'fault-body-block' },
     el('p', { class: 'smash' }, 'Smash cut to:'),

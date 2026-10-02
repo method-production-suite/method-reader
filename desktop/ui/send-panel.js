@@ -214,6 +214,13 @@ export function panelHidden() {
   if (kfxOpen) kfxHidden();
 }
 
+/** A copy to `device`, a reader the watcher listed (the Kindle heads-up's
+ *  Copy): the same flow as a card's brass button, with no route row needed. */
+export function copyTo(device) {
+  if (host === null || R.blockedReason(ctx.state.script) !== null) return Promise.resolve();
+  return sendTo(device);
+}
+
 /** Back from somewhere else, perhaps from installing Kindle Previewer: the
  *  Kindle file may be a different kind now, so the button is named again.
  *  Only named: focus comes back after every Save box and every switch of
