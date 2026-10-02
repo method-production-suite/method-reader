@@ -20,7 +20,9 @@ export const SURFACES = [
   // plainly a settings screen. Renaming the module and the surface id would
   // churn focus plans, panel ids and a dozen test references to buy nothing.
   { id: 'tune', label: 'Settings' },
-  { id: 'send', label: 'Send' },
+  // No Send: sending is the last step of converting, so it lives on
+  // Convert's result (spec 2026-10-01, decision 1), and Read and Settings
+  // carry a Send button back to it.
 ];
 
 /** The revision stamp's words. "rev" is what a script's own revision mark

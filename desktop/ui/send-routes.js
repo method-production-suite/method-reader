@@ -210,7 +210,7 @@ export function mayBuild(file) {
   return file?.fresh !== true;
 }
 
-/** Whether the Send page starts building the Kindle file as it opens,
+/** Whether the send panel starts building the Kindle file as the result appears,
  *  before anyone presses anything, so a press finds it built or building.
  *  Every condition, in one place:
  *  - the engine's check (kindleCheckFrom()) says the file is out of date:

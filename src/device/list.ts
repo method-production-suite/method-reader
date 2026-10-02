@@ -14,7 +14,7 @@ export interface ListDevicesOptions {
   /** List only what the mount scan sees, and never start the reMarkable
    *  probe. The probe waits out its whole timeout on every machine with no
    *  tablet docked, so a caller that has to answer at once (`routes --quick`,
-   *  the Send page's first rows) leaves the tablet out and asks again in
+   *  the send panel's first answer) leaves the tablet out and asks again in
    *  full. */
   skipRemarkable?: boolean;
   /** Seams, injected only by tests. Production uses the two real functions. */

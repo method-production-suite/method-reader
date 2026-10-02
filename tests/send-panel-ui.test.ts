@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import type { ConnectedDevice } from '../src/device/types';
 import { preselected, routes } from '../src/export/routes';
 import { kfxSetup } from '../src/export/kfx-setup';
-import { fakePage, HOLD, settle, type FakePage } from './helpers/fake-dom';
+import { FakeNode, fakePage, HOLD, settle, type FakePage } from './helpers/fake-dom';
 
 const UI = join(import.meta.dir, '..', 'desktop', 'ui');
 const EPUB = '/lib/field-station/Field Station.epub';
@@ -269,6 +269,8 @@ describe('the calm screen', () => {
     expect(p.tauri.callsTo('send').map((c) => c.args)).toEqual([['send', EPUB, '--json', '--device', '/Volumes/KOBOeReader']]);
     expect(p.status().textContent).toBe('Field Station is on your KOBOeReader. Eject it before you unplug.');
     expect(p.status().classList.contains('bad')).toBe(false);
+    // It worked, so the engine remembers it: the list is asked for again.
+    expect(p.tauri.callsTo('routes').length).toBe(3);
   });
 
   test('a refused export copies nothing and says the engine’s sentence', async () => {
@@ -1290,5 +1292,252 @@ describe('after a copy over USB', () => {
     expect(p.status().textContent).toBe('');
     expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
     expect(p.ctx.state.sendResult).toBe(null);
+  });
+});
+
+// Re-homed from send-routes-ui.test.ts's mounted block, which drove the
+// Send page (send.js) before it was deleted: every behaviour of that page
+// the panel still has, driven here on the panel. The route list is held
+// where a test needs to answer it by hand, quick and full apart.
+describe('the route list, as the Send page used to be driven', () => {
+  const RM: ConnectedDevice = { kind: 'remarkable', name: 'reMarkable', volume: null };
+  const held = (a: string[]) => (a[0] === 'routes' || a[0] === 'route' ? HOLD : undefined);
+  const routeCalls = (p: Mounted, book = EPUB) => p.tauri.callsTo('routes').filter((c) => c.args[1] === book);
+  /** Answer every held routes call for `book` with `value`, oldest first. */
+  async function answerAll(p: Mounted, value: unknown, book = EPUB) {
+    for (const call of p.tauri.pending().filter((c) => c.args[0] === 'routes' && c.args[1] === book)) call.answer(value);
+    await settle();
+  }
+  const row = (p: Mounted | FakeNode, title: string): FakeNode => {
+    const within: FakeNode = p instanceof FakeNode ? p : p.node;
+    return within.querySelectorAll('.device-row')
+      .find((r) => r.querySelector('.device-name')!.textContent === title)!;
+  };
+
+  test('the quick answer is drawn at once, and the reMarkable row fills in when the full one lands', async () => {
+    // The quick answer leaves out the reMarkable probe, which with no tablet
+    // docked runs to its whole timeout with nothing on screen.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    openWays(p);
+    await answer(p, 'routes', listed([KOBO], { remarkableChecked: false }));
+    expect(p.tauri.pending().filter((c) => c.args[0] === 'routes').length).toBe(1);
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+    expect(row(p, 'reMarkable').textContent).toContain('checking whether one is docked…');
+    expect(row(p, 'reMarkable').className).toContain('route-unavailable');
+    await answer(p, 'routes', listed([KOBO, RM]));
+    expect(row(p, 'reMarkable').className).toBe('device-row');
+    expect(row(p, 'reMarkable').button('Upload to reMarkable').disabled).toBe(false);
+  });
+
+  test('a full answer that lands before the quick one is not replaced by it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    await answerNewest(p, 'routes', listed([KOBO, RM]));
+    await answer(p, 'routes', listed([KOBO], { remarkableChecked: false }));
+    expect(p.node.buttons('Upload to reMarkable').length).toBe(1);
+    expect(p.node.textContent).not.toContain('checking whether one is docked');
+  });
+
+  test('a list in a shape the window cannot read is its own line, never a short list, until a good one comes', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    const broken = listed([]);
+    (broken.routes[0] as { title: unknown }).title = '';
+    await answerAll(p, broken);
+    expect(p.node.querySelector('.calm .fault-body')!.textContent)
+      .toBe('The engine listed the ways to send this book in a shape this window cannot read.');
+    expect(p.brass()).toBeNull();
+    expect(openWays(p).querySelectorAll('.device-row')).toEqual([]);
+    await p.plug([]);
+    await answerAll(p, listed([]));
+    expect(p.node.querySelector('.calm .fault-body')).toBeNull();
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+  });
+
+  test('the same list again redraws nothing, so the keyboard stays put', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    openWays(p);
+    const save = saveButton(p, 'epub');
+    save.focus();
+    const asked = p.tauri.callsTo('routes').length;
+    await p.plug([]);
+    expect(p.tauri.callsTo('routes').length).toBe(asked + 2);
+    expect(save.isConnected).toBe(true);
+    expect(p.page.doc.activeElement).toBe(save);
+    expect(p.restored()).toBe(0);
+  });
+
+  test('when the focused route is gone, the page’s own plan takes the keyboard', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO] });
+    p.brass()!.focus();
+    await p.plug([]);
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    expect(p.restored()).toBe(1);
+  });
+
+  test('a list that was out when a route began lands without touching the panel; the ask after the route does', async () => {
+    // A rebuild mid-route would hand back fresh, enabled buttons and let a
+    // second route (or a send) start while the first is still running.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    await answerAll(p, listed([]));
+    await p.plug([KOBO]);
+    openWays(p).button('Add to Apple Books').click();
+    await answerAll(p, listed([KOBO]));
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    expect(p.node.buttons().every((b) => b.disabled)).toBe(true);
+    await answer(p, 'route', { ok: true, note: 'Added to Apple Books.' });
+    expect(p.node.buttons().every((b) => !b.disabled)).toBe(true);
+    await answerAll(p, listed([KOBO]));
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+  });
+
+  test('an older list that lands after the ask a route made cannot put the old brass back', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    await answerAll(p, listed([KOBO]));
+    await p.plug([]); // out before the route below starts...
+    openWays(p).button('Add to Apple Books').click();
+    await answer(p, 'route', { ok: true, note: 'Added to Apple Books.' });
+    await answerNewest(p, 'routes', listed([]));
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+    await answerAll(p, listed([KOBO])); // ...and back last
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+  });
+
+  test('an answer about the last book is not drawn on the next one’s panel', async () => {
+    // The routes answer is about a BOOK: a refusal for the old one ("cannot
+    // read it") would stand under the new one's title as if it were its.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: held });
+    p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    await settle();
+    await answerAll(p, { ok: false, error: { code: 'unreadable', message: 'Cannot read the book.' } });
+    expect(p.node.querySelector('.calm .fault-body')).toBeNull();
+    expect(p.node.querySelector('.calm-line')!.textContent).toBe('Looking for every way to send it…');
+    expect(routeCalls(p, '/lib/other/Other.epub').length).toBe(2);
+    await answerAll(p, listed([]), '/lib/other/Other.epub');
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+  });
+
+  test('a route from Send it: every button dead while it runs, the engine’s note after, then the list again', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: (a) => (a[0] === 'route' ? HOLD : undefined) });
+    openWays(p).button('Add to Apple Books').click();
+    expect(p.status().textContent).toBe('Opening Apple Books…');
+    expect(p.node.buttons().every((b) => b.disabled)).toBe(true);
+    const asked = p.tauri.callsTo('routes').length;
+    const args = await answer(p, 'route', { ok: true, key: 'apple-books', note: 'Added to Apple Books.' });
+    expect(args).toEqual(['route', 'apple-books', EPUB, '--json']);
+    expect(p.status().textContent).toBe('Added to Apple Books.');
+    expect(p.status().classList.contains('bad')).toBe(false);
+    expect(p.node.buttons().every((b) => !b.disabled)).toBe(true);
+    expect(p.tauri.callsTo('routes').length).toBe(asked + 1);
+  });
+
+  test('a book replaced mid-route hears nothing about it, and asks for no list for it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: (a) => (a[0] === 'route' ? HOLD : undefined) });
+    openWays(p).button('Add to Apple Books').click();
+    p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    await settle();
+    await answer(p, 'route', { ok: true, note: 'Added to Apple Books.' });
+    expect(p.status().textContent).toBe('');
+    expect(routeCalls(p).length).toBe(2);
+  });
+
+  test('only a save waits for the book: a route that opens another program asks at once', async () => {
+    // Apple Books, Send to Kindle and Mail hand the book's path to another
+    // program and return; the engine reads nothing of the book. A save
+    // copies the book itself, so it waits for whatever holds the book.
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, engine: (a) => (a[0] === 'route' ? HOLD : undefined) });
+    const { inTurn } = await import(join(UI, 'book-queue.js'));
+    let free: () => void = () => {};
+    const holding = inTurn(EPUB, 'save', () => new Promise<void>((resolve) => { free = resolve; }));
+    try {
+      openWays(p).button('Add to Apple Books').click();
+      expect(p.tauri.callsTo('route').length).toBe(1);
+      await answer(p, 'route', { ok: true, note: 'Added to Apple Books.' });
+      saveButton(p, 'epub').click();
+      await settle();
+      await chooseSave(p, '/Users/me/Desktop/Field Station.epub');
+      expect(builds(p)).toEqual([]);
+    } finally {
+      free();
+      await holding;
+    }
+    await settle();
+    expect(builds(p).map((c) => c.args.slice(0, 5))).toEqual([['export', EPUB, '--json', '--for', 'epub']]);
+  });
+
+  test('the email row’s first-time link asks the engine to open Amazon’s page, and the keyboard comes back to it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, engine: (a) => (a[0] === 'route' ? HOLD : undefined) });
+    const link = row(openWays(p), 'Send to Kindle email').button('Open Amazon’s page');
+    link.focus();
+    link.click();
+    expect(p.status().textContent).toBe('Opening Amazon’s page…');
+    p.page.doc.body.focus();
+    expect(await answer(p, 'route', { ok: false, error: { code: 'open-failed', message: 'No browser.' } }))
+      .toEqual(['route', 'kindle-email-setup', '--json']);
+    expect(p.status().textContent).toBe('No browser.');
+    expect(p.page.doc.activeElement).toBe(row(p, 'Send to Kindle email').button('Open Amazon’s page'));
+    row(p, 'Send to Kindle email').button('Open Amazon’s page').click();
+    await answer(p, 'route', { ok: true, note: 'Opened Amazon’s page.' });
+    expect(p.status().textContent).toBe('Opened Amazon’s page.');
+  });
+
+  test('a dimmed email row still offers the first-time link, and no send button', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' },
+      engine: (a) => (a[0] === 'routes' ? listed([], { appleMailDefault: false }) : undefined) });
+    const email = row(openWays(p), 'Send to Kindle email');
+    expect(email.className).toContain('route-unavailable');
+    expect(email.querySelectorAll('button').map((b) => b.textContent)).toEqual(['Open Amazon’s page']);
+  });
+
+  test('another page or another book meanwhile leaves the keyboard where it is', async () => {
+    // Nothing to take it from when the reader has moved on.
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, engine: (a) => (a[0] === 'route' ? HOLD : undefined) });
+    p.brass()!.focus();
+    p.brass()!.click();
+    p.node.hidden = true; // the reader went to Read meanwhile
+    await answer(p, 'route', { ok: false, error: { code: 'x', message: 'No.' } });
+    expect(p.restored()).toBe(0);
+    p.node.hidden = false;
+
+    p.brass()!.focus();
+    p.brass()!.click();
+    p.ctx.state.script = { ...p.ctx.state.script, epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    await settle();
+    const before = p.restored();
+    await answer(p, 'route', { ok: false, error: { code: 'x', message: 'No.' } });
+    expect(p.restored()).toBe(before);
+  });
+
+  test('Send it: every other route in the engine’s order, outlined, the engine’s detail as written, dimmed ones with no button', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE, KOBO, RM] });
+    const said = listed([KINDLE, KOBO, RM]);
+    const ways = openWays(p);
+    const rows = ways.querySelectorAll('.ways-group')[0].querySelectorAll('.device-row');
+    const titles = rows.map((r) => r.querySelector('.device-name')!.textContent);
+    // The Kindle's follow-ups lead; the rest keep the engine's order; the
+    // brass one and the two saves are not listed.
+    const rest = said.routes.filter((r) => !['save-epub', 'save-kindle', 'send-to-kindle', 'email-to-kindle'].includes(r.key)
+      && r.device?.kind !== 'kindle');
+    expect(titles).toEqual(['Send to Kindle web', 'Send to Kindle email', ...rest.map((r) => r.title)]);
+    for (const r of rows) {
+      const route = said.routes.find((x) => x.title === r.querySelector('.device-name')!.textContent)!;
+      expect(r.querySelector('.route-detail')!.textContent).toBe(route.detail);
+      const own = r.querySelectorAll('button').filter((b) => b.dataset.key === route.id);
+      if (route.available) {
+        expect(r.className).toBe('device-row');
+        expect(own.map((b) => b.className)).toEqual(['btn btn-outline']);
+        expect(own[0].textContent).toBe(route.button);
+      } else {
+        expect(r.className).toBe('device-row route-unavailable');
+        expect(own).toEqual([]);
+      }
+    }
+    // A mounted reader keeps its volume line; a docked reMarkable, which
+    // never mounts, is described once, in the engine's words.
+    expect(row(p, 'KOBOeReader').querySelector('.device-where')!.textContent).toBe('/Volumes/KOBOeReader');
+    expect(row(p, 'reMarkable').querySelectorAll('.route-detail').map((n) => n.textContent))
+      .toEqual(['the EPUB, over its USB connection']);
+    expect(row(p, 'reMarkable').querySelector('.device-where')).toBeNull();
   });
 });

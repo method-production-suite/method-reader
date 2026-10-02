@@ -15,6 +15,7 @@ import { runEngine, argv, holdEngine } from './app.js';
 import { inTurn, holders, beforeEveryTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
 import { render as renderReader, splitPreview, dressFrame } from './read.js';
+import { SEND_BOOK } from './device.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -362,8 +363,8 @@ export const STATUS = {
  *  half-minute KFX build has the book. A save REWRITES the book, so it waits
  *  for every turn running on it, and readers run side by side: the order
  *  here is which one it names when several are, the longest wait first. The
- *  Send page starts a Kindle file build as it opens, so that is the usual
- *  one. */
+ *  send panel starts a Kindle file build as the result appears, so that is
+ *  the usual one. */
 export const WAITING = {
   kindle: 'Waiting for the Kindle file to finish building…',
   'kindle-mobi': 'Waiting for the Kindle file to finish building…',
@@ -732,7 +733,7 @@ function draw(status) {
     // has not been asked yet. mount() and scriptChanged() both draw before
     // show() ever calls load(). A reader opening Settings on an ordinary
     // script used to see the fault screen for exactly this long, every time.
-    pane.append(el('p', { class: 'caption' }, READING));
+    pane.append(el('div', { class: 'tune-head' }, el('p', { class: 'caption' }, READING), sendButton()));
     return;
   }
   if (mode === 'fault') {
@@ -740,7 +741,7 @@ function draw(status) {
     // pane, which renders one as the word "null". `status` is always a bad
     // one here: that is what emptyPaneMode used to decide this branch.
     pane.append(el('div', { class: 'fault-body-block' },
-      el('h2', { class: 'slug' }, FAULT.slug),
+      el('div', { class: 'tune-head' }, el('h2', { class: 'slug' }, FAULT.slug), sendButton()),
       el('p', { class: 'prose' }, FAULT.line),
       el('p', { class: 'caption bad' }, status.line),
       el('div', { class: 'read-ways' },
@@ -753,7 +754,7 @@ function draw(status) {
 
   statusLine = el('p', { class: 'caption tune-status', role: 'status' }, '');
   pane.append(
-    el('h2', { class: 'slug' }, 'This script’s settings'),
+    el('div', { class: 'tune-head' }, el('h2', { class: 'slug' }, 'This script’s settings'), sendButton()),
     el('p', { class: 'prose' }, LEDE),
     el('div', { class: 'tune-split' },
       el('div', { class: 'tune-knobs' },
@@ -767,6 +768,15 @@ function draw(status) {
   );
   say(status ?? statusFor(isPending(pending) ? 'pending' : 'idle'));
   renderPreview(ctx.state.script?.previewHtml);
+}
+
+/** Back to the result, where the book is sent from (main.js's sendBook).
+ *  On every state of this page with a script open: the book may be fine
+ *  even when its settings are out of reach. */
+function sendButton() {
+  return el('button', {
+    type: 'button', class: 'btn btn-outline tune-send', onclick: () => ctx.sendBook?.(),
+  }, SEND_BOOK);
 }
 
 /** The script, beside the knobs that change it.

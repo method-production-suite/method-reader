@@ -1,5 +1,6 @@
-// Boots the window: the frame, the five surfaces, the keyboard, and the one
-// line that proves the engine is there.
+// Boots the window: the frame, the three surfaces, the release notes, the
+// keyboard, the devices poll while a book is open, and the one line that
+// proves the engine is there.
 import { runEngine, argv, onFileDrag, onDialogClosed } from './app.js';
 import { shouldAsk, updateLabel, labelActionable } from './update.js';
 import { flow } from './update-flow.js';
@@ -9,16 +10,29 @@ import { el } from './dom.js';
 import * as convert from './convert.js';
 import * as read from './read.js';
 import * as tune from './tune.js';
-import * as send from './send.js';
 import * as notes from './notes-surface.js';
+import { createWatcher } from './device-watch.js';
 
 /** Everything the surfaces share. One object, passed in, never read as a
  *  global from another module. */
 export const state = {
   script: null,
+  /** What is plugged in, as the devices poll last listed it. */
   devices: [],
+  /** The reader's device (app settings `readerDevice`): undefined until the
+   *  send panel has read it, then null for none chosen, or a kind. */
+  readerDevice: undefined,
+  /** What the last send said, and its Eject button, kept with the book it
+   *  was about so the result draws them again on any return. */
+  sendResult: null,
   reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
 };
+
+// What is plugged in, asked every two seconds while a book is open (spec
+// decision 16). scriptChanged below starts and stops it; the send panel and
+// the Kindle heads-up listen through context.devices.
+const watcher = createWatcher({ run: runEngine });
+watcher.subscribe((list) => { state.devices = list; });
 
 const root = document.getElementById('app');
 const frame = mountFrame(root);
@@ -51,10 +65,10 @@ frame.onRev(() => {
   notesSheet.showModal();
 });
 
-const surfaces = { convert, read, tune, send };
+const surfaces = { convert, read, tune };
 
 /** The surfaces that have nothing to show until a script is open. */
-const NEEDS_SCRIPT = ['read', 'tune', 'send'];
+const NEEDS_SCRIPT = ['read', 'tune'];
 
 // Which surface is on screen. Kept here rather than asked of the frame,
 // because it is what decides where the keyboard goes back to.
@@ -89,11 +103,26 @@ const context = {
   /** "Convert it again" on any surface: the open script's source, converted
    *  again on Convert. convert.js owns the conversion; this only carries it. */
   convertAgain: () => convert.convertAgain(),
+  /** What is plugged in: the watcher's last list, and its changes. */
+  devices: {
+    current: () => watcher.current(),
+    subscribe: (fn) => watcher.subscribe(fn),
+  },
+  /** Read's and Settings' Send: the open book's result, on Convert, with the
+   *  keyboard on its first control. */
+  sendBook() {
+    convert.showResult();
+    if (showing === 'convert') restoreFocus();
+    else frame.setSurface('convert');
+  },
   /** Called whenever the script on screen changes, so the other surfaces
-   *  stop showing a book that is no longer open. */
+   *  stop showing a book that is no longer open, and the devices poll runs
+   *  exactly while one is. */
   scriptChanged() {
     const open = state.script !== null;
     for (const id of NEEDS_SCRIPT) frame.enable(id, open);
+    if (open) watcher.start();
+    else watcher.stop();
     for (const surface of Object.values(surfaces)) surface.scriptChanged?.();
   },
 };
@@ -148,8 +177,8 @@ addEventListener('keydown', (event) => {
   }
 });
 
-// No script yet, so Read, Tune and Send start out of reach. Going through
-// scriptChanged rather than three enable() calls keeps one rule for which
+// No script yet, so Read and Settings start out of reach. Going through
+// scriptChanged rather than two enable() calls keeps one rule for which
 // surfaces a script unlocks.
 context.scriptChanged();
 frame.setSurface('convert');

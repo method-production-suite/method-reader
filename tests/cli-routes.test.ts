@@ -821,7 +821,7 @@ describe('screepub routes (through the CLI)', () => {
   test('--quick answers without asking the reMarkable, and says the tablet is still being looked for', async () => {
     // A stand-in tablet on this machine that takes every request and never
     // answers, so no real network is involved: a full `routes` waits out the
-    // probe's whole timeout on it, which is the wait the Send page's first
+    // probe's whole timeout on it, which is the wait the send panel's first
     // rows used to sit behind. The quick answer must not ask it at all.
     let asked = 0;
     const tablet = Bun.serve({

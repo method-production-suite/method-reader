@@ -32,6 +32,7 @@
 // pure exported function above the line, tested directly. Below the line is
 // drawing, which holds no rule of its own and rides on the live run.
 import { el, clear } from './dom.js';
+import { SEND_BOOK } from './device.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -436,7 +437,8 @@ function draw() {
     el('div', { class: 'read-head' },
       el('h2', { class: 'read-title' }, script.title),
       script.author ? el('p', { class: 'read-by' }, `by ${script.author}`) : null,
-      indexButton),
+      indexButton,
+      sendButton()),
   );
 
   rail = el('nav', { class: 'scene-rail', 'aria-label': 'Scenes', onkeydown: onRailKey });
@@ -491,8 +493,17 @@ function drawNotice(notice) {
         type: 'button',
         class: 'btn btn-outline',
         onclick: () => ctx.convertAgain(),
-      }, notice.way)),
+      }, notice.way),
+      // The notice says the book itself can still be sent.
+      sendButton()),
   );
+}
+
+/** Back to the result, where the book is sent from (main.js's sendBook). */
+function sendButton() {
+  return el('button', {
+    type: 'button', class: 'btn btn-outline read-send', onclick: () => ctx.sendBook?.(),
+  }, SEND_BOOK);
 }
 
 /** The frame has a document. Give it the sheet, the rail and the place. */

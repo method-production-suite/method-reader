@@ -64,7 +64,7 @@ export interface ExportOptions {
    * be absolute, checked before any toolchain probe or ladder run. */
   out?: string;
   /** Say which file this machine hands over and whether the one on disk is
-   * current, and build nothing: the window asks this when the Send page
+   * current, and build nothing: the window asks this when the send panel
    * opens, to name the file on its rows and to decide whether to start a
    * slow build before anyone presses anything. */
   check?: boolean;

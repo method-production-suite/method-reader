@@ -919,7 +919,7 @@ async function runVerb(verb: Verb, args: string[]): Promise<void> {
         fail({ code: 'usage', message: 'expected exactly one .epub (see --help)' });
       }
       // --quick leaves the reMarkable probe out, and says so on its row:
-      // the Send page draws this at once, then asks again in full.
+      // the send panel draws this at once, then asks again in full.
       const answer = await routesCommand(positionals[0], {
         facts: () => routeFacts({}, { ...deviceSeams(), skipRemarkable: values.quick }),
       });

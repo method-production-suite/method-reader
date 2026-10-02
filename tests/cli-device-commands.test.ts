@@ -175,7 +175,7 @@ describe('screepub send', () => {
     expect(result.destination).toBe(join(volume, 'documents', 'Script.epub'));
     expect(readFileSync(result.destination, 'utf8')).toBe('book-bytes');
     // It worked, so it is remembered: by kind, in the settings file under
-    // SCREEPUB_CONFIG_DIR, as the Send page's choice next time.
+    // SCREEPUB_CONFIG_DIR, as the send panel's choice next time.
     expect(JSON.parse(readFileSync(join(config, 'settings.json'), 'utf8'))).toEqual({
       lastRoute: 'device:kindle',
     });

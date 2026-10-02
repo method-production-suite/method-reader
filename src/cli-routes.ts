@@ -52,8 +52,8 @@ export function requireBook(epub: string): void {
   }
 }
 
-/** Read-only: reads the settings file, never writes it. The Send page polls
- *  this every couple of seconds, and a poll that wrote would race the one
+/** Read-only: reads the settings file, never writes it. The send panel asks
+ *  this whenever what is plugged in changes, and a read that wrote would race the one
  *  write that matters, `route` or `send` remembering a choice that worked.
  *
  *  The file is shared and hand-editable, so `lastRoute` may hold anything.
@@ -178,7 +178,7 @@ function refuseFlags(options: RouteOptions, who: string, allowed: { out: boolean
  *  request alone (the key, the book, which flags this key takes) is refused
  *  BEFORE any probe, build or open, so a mistyped command never opens
  *  anything and never waits on anything to be told so. Then availability,
- *  from the same catalog the Send page draws (so the engine never performs a
+ *  from the same catalog the send panel draws (so the engine never performs a
  *  row the page shows dimmed); then the work; then, on success only, the
  *  memory.
  *

@@ -82,7 +82,7 @@ test('VERBS is the single list of known verbs', () => {
   // reveal joined the same day (parity piece C: show a file in the
   // system's file manager).
   // `routes` joined on 2026-09-23 too (parity piece B):
-  // the Send page's list of every way a book can leave. `route` joined the
+  // the send panel's list of every way a book can leave. `route` joined the
   // same day: it performs one of them (Apple Books, Amazon, Mail, a saved
   // copy) and remembers it. `eject` joined on 2026-10-01 (send from
   // Convert, spec decision 12): it safely removes a reader the engine lists.
@@ -365,7 +365,7 @@ describe('send remembers the route that worked', () => {
     writeFileSync(settingsPath, JSON.stringify({ lastRoute: 'save-epub', libraryPath: '/kept' }));
     await sendCommand({ file: book(), scan: () => [device], probe: async () => false, settingsPath });
     // A path would go stale the moment the reader was unplugged; the kind is
-    // what the Send page can find again. Piece C's keys share the file.
+    // what the send panel can find again. Piece C's keys share the file.
     expect(remembered(settingsPath)).toEqual({ lastRoute: 'device:kindle', libraryPath: '/kept' });
   });
 

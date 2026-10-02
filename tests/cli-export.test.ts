@@ -440,7 +440,7 @@ describe('exportCommand: app-wide defaults underneath --options-json', () => {
     expect(seen.format?.dialogueSideMarginPct).toBe(5);
   });
 
-  // What the window actually sends (desktop/ui/send.js's optionsJsonFor):
+  // What the window actually sends (desktop/ui/send-routes.js's optionsJsonFor):
   // a FULL FormatOptions object read back from `screepub settings`, so an
   // app default the ladder would otherwise supply is already baked in and
   // this changes nothing observable for it. Proven here rather than
@@ -480,7 +480,7 @@ describe('exportCommand: app-wide defaults underneath --options-json', () => {
   });
 });
 
-// Review fix: send.js's own comment (ensureSettings, around line 552) says
+// Review fix: send-panel.js's own comment (ensureSettings) says
 // "the Kindle rung that does will fall back to this script's defaults", but
 // until now the export command never read the script's sidecar at all, only
 // the app-wide ones. When export is told which script it is (--fountain),
