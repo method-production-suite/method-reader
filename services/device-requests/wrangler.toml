@@ -1,0 +1,11 @@
+name = "screepub-device-requests"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "screepub-device-requests"
+# PLACEHOLDER: paste the database_id that `bunx wrangler d1 create
+# screepub-device-requests` prints, then deploy. See README.md.
+database_id = "PASTE-DATABASE-ID-HERE"
