@@ -8,11 +8,11 @@
 // the CSP's connect-src names this one address (tauri.conf.json).
 import { platformOf } from './send-routes.js';
 
-/** PLACEHOLDER until the Worker is deployed: the owner's workers.dev
- *  subdomain, the part `bunx wrangler deploy` prints between the Worker's
- *  name and `.workers.dev`. Change the CSP's connect-src in
+/** The owner's workers.dev subdomain, as `bunx wrangler deploy` printed it
+ *  on 2026-10-02 (services/device-requests). If it ever changes, change the
+ *  CSP's connect-src in
  *  desktop/src-tauri/tauri.conf.json to match (a test holds them together). */
-export const SUBDOMAIN = 'YOUR-SUBDOMAIN';
+export const SUBDOMAIN = 'samuelsandweiss';
 export const REQUEST_URL = `https://screepub-device-requests.${SUBDOMAIN}.workers.dev/request`;
 
 export const MAX_DEVICE = 80;

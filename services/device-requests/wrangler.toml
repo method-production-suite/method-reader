@@ -6,6 +6,6 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "screepub-device-requests"
-# PLACEHOLDER: paste the database_id that `bunx wrangler d1 create
-# screepub-device-requests` prints, then deploy. See README.md.
-database_id = "PASTE-DATABASE-ID-HERE"
+# Created by `bunx wrangler d1 create screepub-device-requests`, 2026-10-02.
+# An identifier, not a secret: deploying still needs the owner's login.
+database_id = "343f8b66-876c-40e7-8cb4-9dcc6ba544b0"
