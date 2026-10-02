@@ -236,6 +236,8 @@ async function renderBooks(
       html: tokensToMobiHtml(tokens, meta, format, art),
       // Every name in `order` came out of byName, so none is missing here.
       images: art.order.map((name) => byName.get(name)!),
+      // The EPUB's cover, named as one of those records (registry #19b).
+      coverIndex: art.coverIndex,
     });
   }
   return { epub, mobi, previewHtml };

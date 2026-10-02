@@ -1465,7 +1465,7 @@ the Mac app should move those two; nothing in the engine needs to change.
 - **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
   EPUB, in the reader preview, and in the engine's own MOBI (its form there
   is under **The MOBI** below), except a title card the EPUB makes its cover
-  (**The cover** below). In the EPUB and the preview:
+  (#19b). In the EPUB and the preview:
   `<p class="figure wNN"><img src="../images/pNNN-NN.png" alt="Illustration"/></p>`,
   with ` figure-full` added to the class for a plate that filled its page.
   `alt` is never empty, because an empty one declares the picture
@@ -1482,7 +1482,7 @@ the Mac app should move those two; nothing in the engine needs to change.
   (`art.inFlow` in `src/epub/html.ts`). A note above the first heading (a
   title card's) opens an "Opening" section only when it draws a figure
   there; otherwise the body is byte-identical to the text-only one. By
-  default a full-page card at the very front is the cover and draws
+  default a full-page card at the very front is the cover (#19b) and draws
   nothing in the flow, so a card-only front opens no Opening and its scene
   ids are the same with pictures on or off. With `promoteCoverImage` off,
   the card opens the Opening and the first scene is `sc-002`, so a reader
@@ -1511,54 +1511,19 @@ the Mac app should move those two; nothing in the engine needs to change.
   `usedImages` at both call sites), so a picture-less book's sheet is
   byte-identical to the one before this entry. `usedImages` is what the
   pages draw, so a cover, on no page, adds no rules.
-- **Packaging.** Each picture the body used, and the cover, and only those,
-  ships as `OEBPS/images/NAME`, STORED rather than deflated (PNG is already
-  compressed, and Tune re-renders the book on every move), with a manifest
-  item `image/png`, never in the spine. Ids are `img-` plus the name's stem
-  reduced to `[A-Za-z0-9_-]`, bumped `-2`, `-3` against every id the package
-  already writes, since `a.b.png` and `a-b.png` would otherwise collide.
+- **Packaging.** Each picture the body used, and the cover (#19b), and
+  only those, ships as `OEBPS/images/NAME`, STORED rather than deflated
+  (PNG is already compressed, and Tune re-renders the book on every
+  move), with a manifest item `image/png`, never in the spine. Ids are
+  `img-` plus the name's stem reduced to `[A-Za-z0-9_-]`, bumped `-2`,
+  `-3` against every id the package already writes, since `a.b.png` and
+  `a-b.png` would otherwise collide.
   `buildEpub` throws on a used name it was not given the bytes for, rather
   than ship a book epubcheck rejects; every caller builds the names and the
   bytes from one array, so it cannot fire.
-- **The cover (option `promoteCoverImage`, default ON; 2026-10-01).** A
-  designed title card becomes the EPUB's cover instead of its first page,
-  so a library shows artwork rather than a grey rectangle. The Tune switch
-  is "Title card as the cover", under "Pictures from the script", and it is
-  live (the preview below loses or regains the card). The one rule is
-  `pickCover(tokens, format, have)` in `src/fountain/cover.ts`, a module of
-  the slug.ts and notes.ts kind so that every renderer asks the same
-  question. Walking the body in order (the title page block is not body
-  content), the cover is the first picture note `rendersImage` would draw,
-  if it is full-page and nothing stands ahead of it but notes that draw
-  nothing. Anything else first means no cover: text, a heading of either
-  kind, a picture that is not full-page, and also a page marker, a
-  synopsis, a section or a forced page break, which draw nothing but open
-  the Opening themselves, so a card behind one would sit in a section the
-  cover left empty. Our own writer puts none of those ahead of a card.
-  Position, never page number. Off unless `includeImages` is on too, and
-  through `rendersImage` it can never pick a picture the book cannot ship.
-  The card's note leaves the flow (by note, not by filename: the same plate
-  shown again later is drawn there), and the body names the picture in
-  `coverImage`. `buildEpub` ships it beside `usedImages` and declares it
-  both ways: `properties="cover-image"` on its manifest item, the EPUB 3
-  spelling, and `<meta name="cover" content="ID"/>` in the metadata, the
-  OPF 2 one. Either alone carried the card through calibre 9.11 to AZW3
-  and through Kindle Previewer 3 to KFX, and with neither the KFX wore
-  Previewer's generated grey placeholder (measured 2026-08-11). Shipping it
-  is the hazard: nothing on a page points at it, so a packager that shipped
-  only `usedImages` would drop its bytes, its manifest item and both
-  declarations, and the book would still validate and read. epubcheck
-  5.4.0 passes images.pdf's and torture.pdf's books clean, and it also
-  passes a cover meta naming an id no item has, so the packager declares
-  only an item it is writing (all measured 2026-10-01). A book whose one
-  picture is its cover draws no figure and carries no figure rules. With
-  the option off every book is the one before covers: checked 2026-10-01
-  against the engine at d5bd60e on all five committed PDF fixtures, every
-  EPUB entry (the `dcterms:modified` stamp aside), the `.fountain`, the
-  preview and the `.mobi` identical. The engine's `.mobi` does not use it
-  yet: it keeps the card on its page and names no cover. Whether the cover
-  reaches a device's library grid, and what each device shows inside the
-  book, is unverified.
+- **The cover** is #19b: by default a full-page title card at the very
+  front becomes the EPUB's cover instead of its first page, and the MOBI
+  names it as its cover while keeping it on its page.
 - **Where the pictures come from, per route.** A PDF conversion hands over
   the pictures it just decoded. Every render from a `.fountain` (the CLI's
   Fountain input, which is how Tune re-renders) reads `<stem>.images/` beside
@@ -1605,7 +1570,9 @@ the Mac app should move those two; nothing in the engine needs to change.
   given, so both books of a script show the same pictures, and lists them in
   the order the body first shows them, each once (a picture shown twice is
   one record named twice). The renderer numbers its figures from that list,
-  and `renderBooks` hands `buildMobi` the bytes in the same order.
+  and `renderBooks` hands `buildMobi` the bytes in the same order. A title
+  card that is the book's cover is one of those figures here, on its page,
+  and the header names its record as the cover (#19b).
   **No width,** and that is a refusal rather than an omission: the note's
   `w=` is a share of the text column, which this dialect cannot state. The
   only width it attests is a pixel count, and not even the picture's own
@@ -1703,13 +1670,141 @@ the Mac app should move those two; nothing in the engine needs to change.
   MobileRead wiki's KindleGen page. If any of the three fails on the device,
   the `.mobi` goes back to text only.
 - **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
-  `src/fountain/cover.ts` (`pickCover`),
   `src/epub/html.ts` (`place`, the figure, `art.inFlow`, `usedImages`,
-  `coverImage`, `imageSrc`, `tokensToPreviewHtml`), `src/epub/css.ts` (the
+  `imageSrc`, `tokensToPreviewHtml`), `src/epub/css.ts` (the
   figure block, `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`,
-  `imageIds`, the cover declarations),
+  `imageIds`),
   `src/mobi/html.ts` (`mobiArt`, the figure, `recindex`),
   `src/mobi/writer.ts` (the image records, fields 80, 108 and 194),
   `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,
   `src/export/artifact.ts`, `desktop/ui/tune.js`,
   `desktop/src-tauri/tauri.conf.json`.
+
+### 19b. The title card as the cover (option `promoteCoverImage`, default ON; 2026-10-01)
+- **What:** a designed title card becomes the book's cover, so a library
+  shows artwork rather than a grey rectangle. The EPUB (and the preview)
+  takes the card off its pages and declares it the cover; the engine's MOBI
+  names it as the cover and keeps it on its page. The Tune switch is
+  "Title card as the cover", under "Pictures from the script" (#19a), and
+  it is live: the preview is the EPUB's own pages, so flipping it adds or
+  removes the card at the front of the preview. On by default (owner,
+  2026-10-01). Off unless `includeImages` is on too.
+- **The rule.** `pickCover(tokens, format, have)` in
+  `src/fountain/cover.ts`, a module of the slug.ts and notes.ts kind, so
+  that the EPUB and the MOBI of one script wear the same cover or none.
+  Walking the body in order (the title page block is not body content),
+  the cover is the first picture note `rendersImage` would draw, if it is
+  full-page and nothing stands ahead of it but notes that draw nothing.
+  Anything else first means no cover: text, a heading of either kind, a
+  picture that is not full-page, and also a page marker, a synopsis, a
+  section or a forced page break, which draw nothing but open the Opening
+  (#19a) themselves, so a card behind one would sit in a section the cover
+  left empty. Our own writer puts none of those ahead of a card. Position,
+  never page number. A script with no scene heading at all can still have
+  a cover, since "before the first heading" is then the whole document.
+  Through `rendersImage` it can never pick a picture the book cannot ship.
+- **The EPUB.** The card's note leaves the flow (by note, not by filename:
+  the same plate shown again later is drawn there), and the body names the
+  picture in `coverImage`, beside `usedImages` rather than in it, since
+  `usedImages` is what the pages draw. `buildEpub` ships it with the
+  figures and declares it both ways: `properties="cover-image"` on its
+  manifest item, the EPUB 3 spelling, and `<meta name="cover"
+  content="ID"/>` in the metadata, the OPF 2 one. Shipping it is the
+  hazard: nothing on a page points at it, so a packager that shipped only
+  `usedImages` would drop its bytes, its manifest item and both
+  declarations, and the book would still validate and read. epubcheck does
+  not catch a bad declaration either: 5.4.0 passes a cover meta naming an
+  id no item has, so the packager declares only an item it is writing. It
+  passes images.pdf's and torture.pdf's books clean (all measured
+  2026-10-01). A book whose one picture is its cover draws no figure and
+  carries no figure rules. A card-only front opens no Opening, so its
+  first scene is `sc-001` with pictures on or off; with this option off
+  the card opens the Opening and the first scene is `sc-002` (the
+  renumbering #19a describes). With the option off every book is the one
+  before covers: checked 2026-10-01 against the engine at d5bd60e on all
+  five committed PDF fixtures that convert, every EPUB entry (the
+  `dcterms:modified` stamp aside), the `.fountain`, the preview and the
+  `.mobi` identical.
+- **The MOBI.** `mobiArt` carries `coverIndex`, the card's place in its
+  `order`, from `pickCover` asked of the same tokens, format and names, and
+  `buildMobi` writes it as **EXTH 201**: the cover as a RECORD offset from
+  the first image record (field 108), 0-based, a 4-byte value in a 12-byte
+  record. The two reference writers pin that shape by disagreeing on the
+  value: calibre 9.11.0 wrote 0 with its cover in its first image record,
+  and kindlegen 2.9 wrote 1 with a body picture first and the cover second,
+  neither an absolute record number (both read back with `calibre-debug
+  --inspect-mobi`, 2026-08-11). It counts records, not pictures, but here
+  every record from the first image record to FLIS is a picture, so the
+  two are one. No 202 thumbnail, which both of them also write: a
+  thumbnail is a smaller copy, this engine has nothing to shrink one with,
+  and pointing 202 at the full-size record would be a different claim. The
+  record sits in type order between 100 and 501, and only when there is a
+  cover. What moves with it, each read back from the built bytes in
+  `tests/mobi.test.ts`: the EXTH block's length (12 more) and count (one
+  more), and field 84, the full name's offset (12 more), which still lands
+  on the title on a 4-byte boundary; record 0 grows by 12 and every PDB
+  offset after it with it. What does not: the MOBI header's length (232)
+  and its EXTH flag (0x40 at 128), the padding, every other EXTH record,
+  every other record, and fields 80, 108, 194, 200 and 208. Taking the 12
+  bytes back out and restoring the three fields that count them gives the
+  book without a cover, byte for byte, and a book without a cover is the
+  book from before covers (the three masked hashes of #19a still pass).
+  `buildMobi` throws on a cover index the pictures cannot answer
+  (negative, fractional, or past the last picture, where a reader would
+  take FLIS for the cover); no caller can reach it. **The card stays on
+  its page:** this book's pages are the same with the option on or off,
+  where the EPUB's lose the card. That is measured rather than defensive.
+  Calibre's MOBI reader looks the cover record up under a `.jpg` name and
+  writes a PNG record out as `.png`, so it cannot take a PNG as the cover
+  (2026-08-11), and every picture this engine writes is a PNG. Inside
+  `bun test`, calibre 9.11.0 (2026-10-01): images.pdf's MOBI, with EXTH
+  201 naming its PNG card, converts to an EPUB with no cover meta and no
+  cover item, while the card comes back first in the flow, byte for byte,
+  beside the other plate; a MOBI of two small JPEGs with 201 = 1 converts
+  with the SECOND as its cover, byte for byte, and the same book without
+  201 takes the first (the reader's fallback when no record is named), so
+  the 1 is what was read. A card kept only as the cover could vanish from
+  the book; kept on its page, the worst case is the card met twice. Kindle
+  Previewer cannot settle it, since it refuses every third-party MOBI 6.
+- **AZW3 and KFX** are built by Calibre from the EPUB, so they carry the
+  EPUB's cover. Either declaration alone carried the card through calibre
+  9.11 to AZW3 and through Kindle Previewer 3 to KFX, and with neither the
+  KFX wore Previewer's generated grey placeholder (measured 2026-08-11).
+  The EPUB they are built from has the card on no page.
+- **On a device:** unverified, and the risk is the library grid. Amazon's
+  servers delete covers on USB-sent non-Amazon books, deliberately on
+  Colorsoft and newer (`docs/device-map.md` §2.1), so a sideloaded `.mobi`,
+  AZW3 or KFX may show a plain tile there however well its cover is
+  declared. That deletion is reported to reach only the library tile: the
+  cover still shows inside the book, and the `.mobi` also draws the card
+  on its first page. Kobo, tolino and Apple Books take the EPUB itself, so
+  they are handed both declarations. The checks are the torture manifest's
+  19b row, printed by `tools/device-checklist.ts`.
+- **Measured on the corpus, 2026-10-01 (images-carry tip d5bd60e against
+  this entry's tip):** six of the seven scripts convert (one, the
+  60-picture deck, is not a screenplay and converts only when forced; the
+  seventh is a scan and both refuse it). The `.fountain` is identical for
+  all six, and the four without pictures make an identical EPUB, entry for
+  entry with `dcterms:modified` masked, and an identical MOBI with the PDB
+  dates masked. Two gain a cover, and only those two: the one-picture
+  script, whose full-page plate precedes its first heading, and the deck,
+  which opens on a full-page picture with nothing before it. In each, the
+  EPUB differs only in the package (the card's item gains
+  `properties="cover-image"`, a `<meta name="cover">` names it, and the
+  picture still ships) and the first body file (the card's figure is
+  gone). In the one-picture script that figure was the Opening's only
+  content, so the Opening goes too: 16 sections become 15, the scene
+  anchors move back by one so its first scene is `sc-001` again, the
+  navigation loses the Opening's entry (122 links to 121), and the
+  stylesheet loses the figure block, since no page draws a figure. The
+  deck keeps 59 figures in the flow, so its navigation and stylesheet are
+  unchanged. Each MOBI differs only by one EXTH 201 record, value 0, in
+  record 0: every other record is identical, so the card is still on its
+  page. Both changed EPUBs pass epubcheck clean, conversion time is
+  unchanged, and with the option off all six books equal the d5bd60e
+  ones.
+- **Code:** `src/fountain/cover.ts` (`pickCover`), `src/epub/html.ts`
+  (`art.inFlow`, `coverImage`), `src/epub/build.ts` (the cover
+  declarations), `src/mobi/html.ts` (`mobiArt`'s `coverIndex`),
+  `src/mobi/writer.ts` (EXTH 201 and its check), `src/convert.ts`
+  (`renderBooks`), `src/options.ts`, `src/cli.ts`, `desktop/ui/tune.js`.

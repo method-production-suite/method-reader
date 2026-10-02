@@ -16,7 +16,7 @@ import {
 } from '../src/convert';
 import { mobiArt } from '../src/mobi/html';
 import { extractDocument } from '../src/parser/extract';
-import { maskPdbDates, mobiPictures } from './helpers/mobi-records';
+import { exth, exthRecords, maskPdbDates, mobiHtml, mobiPictures } from './helpers/mobi-records';
 // Namespaces, not named imports, because the spies below replace a binding
 // on the module itself: that is what the code under test calls through.
 import * as pictures from '../src/parser/images';
@@ -573,6 +573,30 @@ describe('the MOBI is handed the pictures the book is', () => {
     const zip = await JSZip.loadAsync(result.epub);
     const shipped = await Promise.all(order.map((name) => zip.file(`OEBPS/images/${name}`)!.async('uint8array')));
     expect(mobiPictures(result.mobi!)).toEqual(shipped);
+  }, 60000);
+
+  test('a PDF conversion’s MOBI names the EPUB’s cover, and keeps that card on its page', async () => {
+    const on = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
+    const off = await convertPdf(await bytes(`${PUBLIC}images.pdf`), {
+      mobi: true, format: { promoteCoverImage: false },
+    });
+    // The EPUB's cover is the title card, p001-01.png, and the MOBI's EXTH
+    // 201 names the record holding those very bytes.
+    const zip = await JSZip.loadAsync(on.epub);
+    const opf = await zip.file('OEBPS/package.opf')!.async('string');
+    expect(opf).toMatch(/<item [^>]*href="images\/p001-01\.png"[^>]*properties="cover-image"/);
+    const cover = exth(on.mobi!, 201);
+    expect([...(cover ?? [])]).toEqual([0, 0, 0, 0]);
+    expect(mobiPictures(on.mobi!)[0]).toEqual(await zip.file('OEBPS/images/p001-01.png')!.async('uint8array'));
+    // On its page too: the pictures and the markup are the ones the MOBI has
+    // with the cover switch off, which names no cover. The two files differ
+    // by that one 12-byte EXTH record and nothing a page shows.
+    expect(exth(off.mobi!, 201)).toBeUndefined();
+    expect(mobiHtml(on.mobi!)).toBe(mobiHtml(off.mobi!));
+    expect(mobiHtml(on.mobi!)).toContain('<p align="center"><img recindex="00001" alt="Illustration"/></p>');
+    expect(mobiPictures(on.mobi!)).toEqual(mobiPictures(off.mobi!));
+    expect(exthRecords(on.mobi!).filter((r) => r.type !== 201)).toEqual(exthRecords(off.mobi!));
+    expect(on.mobi!.length).toBe(off.mobi!.length + 12);
   }, 60000);
 
   test('with includeImages off, the MOBI has no picture records: it is the book from before pictures', async () => {

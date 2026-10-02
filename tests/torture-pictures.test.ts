@@ -1,6 +1,6 @@
 // The pictures torture.pdf carries, so a device pass reads them in the same
 // book as every other row (registry #19 for which are kept, #19a for how the
-// book shows them). Each one is there for a question a desktop render cannot
+// book shows them, #19b for the one that is its cover). Each one is there for a question a desktop render cannot
 // settle; tools/make-fixture.py states each one's geometry and its margin to
 // the threshold that governs it, and tools/torture-manifest.json says what the
 // device is asked about each.
@@ -14,6 +14,7 @@ import { extractDocument, type ExtractResult } from '../src/parser/extract';
 import { parseLines } from '../src/parser/index';
 import { convertPdf } from '../src/convert';
 import type { ScreenplayElement } from '../src/parser/types';
+import { exth, mobiHtml, mobiPictures } from './helpers/mobi-records';
 
 /** Fresh bytes every time: getDocument TRANSFERS the buffer. */
 const torture = () =>
@@ -170,5 +171,30 @@ describe('the book built from torture.pdf (#19a)', () => {
     expect(body).toContain(
       `INT. MAP ROOM - NIGHT</h2>\n${figure(PLATE, 'figure w100 figure-full')}`,
     );
+  });
+});
+
+describe('the .mobi built from torture.pdf (#19b)', () => {
+  // The Kindle file the engine builds when Calibre is absent, which the
+  // device pass sideloads: the title card is its cover AND its first page.
+  let mobi: Uint8Array;
+  let zip: JSZip;
+  beforeAll(async () => {
+    const result = await convertPdf(await torture(), { mobi: true });
+    mobi = result.mobi!;
+    zip = await JSZip.loadAsync(result.epub);
+  }, 60000);
+
+  test('names the title card as its cover, the record the EPUB’s cover is', async () => {
+    expect([...(exth(mobi, 201) ?? [])]).toEqual([0, 0, 0, 0]);
+    const shipped = await Promise.all([CARD, PANEL, PLATE, TALL]
+      .map((f) => zip.file(`OEBPS/images/${f}`)!.async('uint8array')));
+    expect(mobiPictures(mobi)).toEqual(shipped);
+  });
+
+  test('and still draws the card on a page of its own, straight after the title page', () => {
+    const html = mobiHtml(mobi);
+    expect(html).toContain('</center>\n<mbp:pagebreak/>\n<p align="center"><img recindex="00001" alt="Illustration"/></p>\n<mbp:pagebreak/>\n');
+    expect([...html.matchAll(/recindex="(\d+)"/g)].map((m) => m[1])).toEqual(['00001', '00002', '00003', '00004']);
   });
 });

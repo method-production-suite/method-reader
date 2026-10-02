@@ -79,7 +79,8 @@ The one exception is a full-page title card the script opens with: the EPUB
 makes it the book's cover instead of its first page, and turning the
 promoteCoverImage option off keeps it on its page. The includeImages option
 takes them all out of the book; the notes and the folder stay. The .mobi
-carries the same pictures as the EPUB and keeps the title card on its page.
+carries the same pictures as the EPUB and keeps the title card on its page,
+naming it as the cover as well.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub)

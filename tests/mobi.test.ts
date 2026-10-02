@@ -11,6 +11,7 @@ import { tokensToBody } from '../src/epub/html';
 import { convertPdf } from '../src/convert';
 import { calibreTool, runCalibre } from '../src/export/calibre';
 import { resolveFormatOptions } from '../src/options';
+import { exth, exthRecords } from './helpers/mobi-records';
 
 const PUBLIC = new URL('./fixtures/', import.meta.url).pathname;
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-mobi-'));
@@ -88,6 +89,91 @@ const masked = (b: Uint8Array) => {
 // inside a picture, so nothing here needs to decode.
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const png = (...tail: number[]) => new Uint8Array([...SIGNATURE, ...tail]);
+
+/**
+ * A real JPEG, small enough to spell out: mid grey (every sample 128), eight
+ * pixels tall and eight per block wide, so two block counts are two different
+ * pictures. Baseline, one grey component, every quantiser 1, and Huffman
+ * tables with one code each: a block of 128 has a DC difference of 0 and no
+ * AC coefficients, so each block is the two bits "0" (category 0) and "0"
+ * (end of block), padded with ones. The JFIF segment sits where calibre's
+ * format sniffer looks for it. Calibre decodes them in the round trip below,
+ * and so did macOS's ImageIO when they were made (2026-10-01); the writer
+ * never looks inside a picture.
+ */
+function greyJpeg(blocks: number): Uint8Array {
+  const segment = (marker: number, body: number[]) => [0xff, marker, (body.length + 2) >> 8, (body.length + 2) & 0xff, ...body];
+  const width = 8 * blocks;
+  const bits = '00'.repeat(blocks).padEnd(Math.ceil((2 * blocks) / 8) * 8, '1');
+  const scan = (bits.match(/.{8}/g) ?? []).map((b) => parseInt(b, 2));
+  const oneCodeOfLengthOne = [1, ...Array(15).fill(0), 0];
+  return new Uint8Array([
+    0xff, 0xd8, // SOI
+    ...segment(0xe0, [0x4a, 0x46, 0x49, 0x46, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]), // APP0 JFIF 1.1
+    ...segment(0xdb, [0, ...Array(64).fill(1)]), // DQT 0
+    ...segment(0xc0, [8, 0, 8, width >> 8, width & 0xff, 1, 1, 0x11, 0]), // SOF0
+    ...segment(0xc4, [0x00, ...oneCodeOfLengthOne]), // DHT, DC 0
+    ...segment(0xc4, [0x10, ...oneCodeOfLengthOne]), // DHT, AC 0
+    ...segment(0xda, [1, 1, 0, 0, 63, 0]), // SOS
+    ...scan,
+    0xff, 0xd9, // EOI
+  ]);
+}
+
+// Calibre's MOBI reader, run on our own files: an outside reader of the
+// container rather than this file's helpers. Only ever inside bun test,
+// where tests/isolate-calibre-config.ts has pointed Calibre at a scratch copy
+// of its settings, and process.env is what carries that to the spawn.
+const EBOOK_CONVERT = calibreTool('ebook-convert');
+const withCalibre = EBOOK_CONVERT ? test : test.skip;
+const NO_CALIBRE = EBOOK_CONVERT ? '' : ' (skipped: Calibre’s ebook-convert was not found)';
+
+/** A MOBI converted to EPUB by Calibre, opened for reading back. */
+async function throughCalibre(mobi: Uint8Array, name: string) {
+  const mobiPath = join(SCRATCH, `${name}.mobi`);
+  const epubPath = join(SCRATCH, `${name}-from-mobi.epub`);
+  writeFileSync(mobiPath, mobi);
+  // No generated cover: it would be a picture this book never had, and it
+  // would hide whether the book's own cover came through.
+  await runCalibre(EBOOK_CONVERT!, [mobiPath, epubPath, '--no-default-epub-cover'], process.env);
+
+  const zip = await JSZip.loadAsync(readFileSync(epubPath));
+  const container = await zip.file('META-INF/container.xml')!.async('string');
+  const opfPath = /full-path="([^"]+)"/.exec(container)![1];
+  const opf = await zip.file(opfPath)!.async('string');
+  const hrefs = new Map<string, string>();
+  for (const [item] of opf.matchAll(/<item\b[^>]*>/g)) {
+    const id = /\bid="([^"]+)"/.exec(item)?.[1];
+    const href = /\bhref="([^"]+)"/.exec(item)?.[1];
+    if (id && href) hrefs.set(id, posix.join(posix.dirname(opfPath), decodeURIComponent(href)));
+  }
+  const bytesOf = (path: string) => zip.file(path)!.async('uint8array');
+  return {
+    opf,
+    /** Every picture an `<img>` on a spine page shows, in reading order. */
+    async shown(): Promise<Uint8Array[]> {
+      const out: Uint8Array[] = [];
+      for (const [, idref] of opf.matchAll(/<itemref\b[^>]*\bidref="([^"]+)"/g)) {
+        const doc = hrefs.get(idref)!;
+        const xhtml = await zip.file(doc)!.async('string');
+        for (const [, src] of xhtml.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)) {
+          out.push(await bytesOf(posix.join(posix.dirname(doc), decodeURIComponent(src))));
+        }
+      }
+      return out;
+    },
+    coverMeta() {
+      const id = /<meta\b[^>]*\bname="cover"[^>]*\bcontent="([^"]+)"/.exec(opf)?.[1]
+        ?? /<meta\b[^>]*\bcontent="([^"]+)"[^>]*\bname="cover"/.exec(opf)?.[1];
+      return { id, href: id ? hrefs.get(id) : undefined };
+    },
+    /** The picture the package names as its cover, or undefined. */
+    async cover(): Promise<Uint8Array | undefined> {
+      const { href } = this.coverMeta();
+      return href && zip.file(href) ? bytesOf(href) : undefined;
+    },
+  };
+}
 
 // ── MOBI HTML mapping ────────────────────────────────────
 
@@ -486,6 +572,45 @@ describe('mobiArt', () => {
     expect(mobiArt(tokensOf(src), ON, have).order).toEqual(['p002-01.png', 'p001-01.png']);
     expect(mobiArt(tokensOf(src), OFF, have).order).toEqual([]);
   });
+
+  describe('the cover', () => {
+    const CARD = '[[img: p001-01.png w=100 full]]\n\nINT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nEnd.\n';
+
+    test('is the title card pickCover chose, named by its place in the order, which still holds it', () => {
+      // The card keeps its record because the MOBI keeps it on its page; the
+      // cover is a second use of that record, not a picture of its own.
+      const art = mobiArt(tokensOf(CARD), ON, HAVE);
+      expect(art.order).toEqual(['p001-01.png', 'p002-01.png']);
+      expect(art.coverIndex).toBe(0);
+    });
+
+    test('asks pickCover, so the MOBI and the EPUB of one script wear the same cover or none', () => {
+      // Every way a script can fail to have a cover, beside the one that has
+      // one: text, a heading or a smaller picture ahead of the card, a card
+      // the caller holds no bytes for, and each option off.
+      const sources = [
+        CARD,
+        `Opening line.\n\n${CARD}`,
+        `INT. HALL - DAY\n\n${CARD}`,
+        `[[img: p002-01.png w=42]]\n\n${CARD}`,
+        '[[img: p009-01.png w=100 full]]\n\nINT. LAB - DAY\n\nEnd.\n',
+      ];
+      const formats = [ON, OFF, resolveFormatOptions({ promoteCoverImage: false })];
+      let covers = 0;
+      for (const src of sources) {
+        for (const format of formats) {
+          const art = mobiArt(tokensOf(src), format, HAVE);
+          const epub = tokensToBody(tokensOf(src), { format, images: HAVE }).coverImage;
+          const mobi = art.coverIndex === undefined ? undefined : art.order[art.coverIndex];
+          expect(mobi, `${format.promoteCoverImage}/${format.includeImages}: ${src}`).toBe(epub);
+          if (mobi) covers++;
+        }
+      }
+      // The control: exactly one script with both options on has a cover,
+      // without which every case agreeing on "none" would pass.
+      expect(covers).toBe(1);
+    });
+  });
 });
 
 describe('MOBI figures', () => {
@@ -559,6 +684,25 @@ describe('MOBI figures', () => {
       expect(breaks(titled)).toBe(2);
       // With no title page the plate opens the file.
       expect(render(card, ON, HAVE, false)).toContain('<body>\n<p align="center"><img recindex="00001"');
+    });
+
+    test('a title card that is the cover stays on its page, where the EPUB leaves it out', () => {
+      // The EPUB's pages skip the card that became its cover. This book draws
+      // it: calibre's MOBI reader finds the cover only when it is a JPEG
+      // (registry #19b), so a card left out of the flow could vanish from the
+      // book entirely. The worst case kept is the card met twice.
+      const card = '[[img: p001-01.png w=100 full]]\n\nINT. LAB - DAY\n\nWork.\n';
+      const tokens = new Fountain().parse(card, true).tokens;
+      const cover = mobiArt(tokens, ON, HAVE);
+      expect(cover.coverIndex).toBe(0);
+      const html = render(card);
+      expect(html).toContain('</center>\n<mbp:pagebreak/>\n<p align="center"><img recindex="00001" alt="Illustration"/></p>\n<mbp:pagebreak/>\n<p><b>INT. LAB - DAY</b></p>');
+      // The cover changes nothing on the pages: the markup is the markup with
+      // the cover switch off.
+      expect(html).toBe(render(card, resolveFormatOptions({ promoteCoverImage: false })));
+      // And the EPUB of the same script does leave it out, which is the
+      // difference this test pins.
+      expect(tokensToBody(tokens, { format: ON, images: HAVE }).usedImages.size).toBe(0);
     });
 
     test('at the end of the book it has nothing to break away from, so there is no blank page after', () => {
@@ -705,6 +849,113 @@ describe('MOBI image records', () => {
   });
 });
 
+describe('the MOBI cover, EXTH 201', () => {
+  const PICTURES = [png(1, 2, 3), png(4, 5), png(6)];
+  const build = (coverIndex?: number, images: Uint8Array[] = PICTURES) =>
+    buildMobi({ title: 'Test Script', author: 'Jane Doe', html: sampleHtml(), images, coverIndex });
+  const u32of = (data: Uint8Array | undefined) => (data && data.length === 4 ? u32(data, 0) : undefined);
+
+  test('names the cover by its offset from the first image record, 0-based, in four bytes', () => {
+    for (const coverIndex of [0, 1, 2]) {
+      const mobi = build(coverIndex);
+      const data = exth(mobi, 201);
+      expect([...(data ?? [])]).toEqual([0, 0, 0, coverIndex]);
+      // The record it lands on is that picture, counted the way a reader
+      // counts: from the header's first image record.
+      expect(records(mobi)[header(mobi).firstImage + u32of(data)!]).toEqual(PICTURES[coverIndex]);
+    }
+  });
+
+  test('without a cover there is no EXTH 201, with pictures or without', () => {
+    expect(exth(build(), 201)).toBeUndefined();
+    expect(exth(build(undefined, []), 201)).toBeUndefined();
+  });
+
+  test('the EXTH block stays whole around it: its length, its count, its padding, the full name after it', () => {
+    const without = build();
+    const withCover = build(1);
+    const r0 = (b: Uint8Array) => recordOffsets(b)[0];
+    const exthAt = (b: Uint8Array) => r0(b) + 16 + u32(b, r0(b) + 20);
+    // The MOBI header itself does not move: same length, EXTH flag still set.
+    expect(u32(withCover, r0(withCover) + 20)).toBe(232);
+    expect(u32(withCover, r0(withCover) + 128) & 0x40).toBe(0x40);
+    expect(exthAt(withCover)).toBe(exthAt(without));
+    // One record more, twelve bytes more (an 8-byte head and a u32), and the
+    // walk ends exactly where the block's own length says (exthRecords
+    // throws otherwise).
+    expect(u32(withCover, exthAt(withCover) + 8)).toBe(u32(without, exthAt(without) + 8) + 1);
+    expect(u32(withCover, exthAt(withCover) + 4)).toBe(u32(without, exthAt(without) + 4) + 12);
+    // In type order, and every other record exactly as it was.
+    const types = (b: Uint8Array) => exthRecords(b).map((r) => r.type);
+    expect(types(without)).toEqual([100, 501, 503, 524]);
+    expect(types(withCover)).toEqual([100, 201, 501, 503, 524]);
+    expect(exthRecords(withCover).filter((r) => r.type !== 201)).toEqual(exthRecords(without));
+    // 84, the full name's offset, moves down by the same twelve bytes, still
+    // on a 4-byte boundary past the padded block, and still finds the title,
+    // whose length (88) does not change.
+    const nameAt = (b: Uint8Array) => u32(b, r0(b) + 84);
+    expect(nameAt(withCover)).toBe(nameAt(without) + 12);
+    expect((nameAt(withCover) - 248) % 4).toBe(0);
+    expect(nameAt(withCover) - 248).toBeGreaterThanOrEqual(u32(withCover, exthAt(withCover) + 4));
+    expect(u32(withCover, r0(withCover) + 88)).toBe(u32(without, r0(without) + 88));
+    expect(ascii(withCover, r0(withCover) + nameAt(withCover), 11)).toBe('Test Script');
+    // Record 0 grows by those twelve bytes and stays a multiple of four.
+    const rec0 = (b: Uint8Array) => records(b)[0];
+    expect(rec0(withCover).length).toBe(rec0(without).length + 12);
+    expect(rec0(withCover).length % 4).toBe(0);
+  });
+
+  test('every other record, and every header field that names one, is the book without a cover', () => {
+    const without = build();
+    const withCover = build(2);
+    expect(records(withCover).slice(1)).toEqual(records(without).slice(1));
+    expect(header(withCover)).toEqual(header(without));
+    // Record 0 is the book without a cover with the one record added: take
+    // those twelve bytes back out, restore the three fields that count them,
+    // and the two are the same bytes.
+    const r0 = records(withCover)[0];
+    const at = 248 + 12 + exthRecords(without).filter((r) => r.type === 100)[0].data.length + 8;
+    const back = new Uint8Array([...r0.slice(0, at), ...r0.slice(at + 12)]);
+    const put = (o: number, v: number) => back.set([v >>> 24, (v >>> 16) & 0xff, (v >>> 8) & 0xff, v & 0xff], o);
+    put(84, u32(r0, 84) - 12);
+    put(248 + 4, u32(r0, 248 + 4) - 12);
+    put(248 + 8, u32(r0, 248 + 8) - 1);
+    expect([...back]).toEqual([...records(without)[0]]);
+  });
+
+  test('a cover index the pictures cannot answer is a caller bug, and says so', () => {
+    // EXTH 201 counts from the first image record, so one past the last
+    // picture names FLIS, and a reader would take a trailer for the cover.
+    expect(() => build(3)).toThrow(/cover/);
+    expect(() => build(-1)).toThrow(/cover/);
+    expect(() => build(0.5)).toThrow(/cover/);
+    expect(() => build(0, [])).toThrow(/cover/);
+    // The control: the last picture builds.
+    expect(() => build(2)).not.toThrow();
+  });
+
+  withCalibre(`Calibre takes a JPEG cover from the record EXTH 201 names, byte for byte${NO_CALIBRE}`, async () => {
+    // Two JPEGs, both on the page. Calibre's reader, given no EXTH 201, makes
+    // the first image record the cover if it is a JPEG, so a cover of 0 would
+    // pass with the record unread; the cover here is the SECOND picture, and
+    // the book without the record is the control that shows the difference
+    // is 201's.
+    const pictures = [greyJpeg(1), greyJpeg(2)];
+    const html = '<html><head></head><body><p>Before.</p>\n'
+      + '<p align="center"><img recindex="00001" alt="Illustration"/></p>\n'
+      + '<p align="center"><img recindex="00002" alt="Illustration"/></p>\n<p>After.</p></body></html>';
+    const make = (coverIndex?: number) => buildMobi({ title: 'Cover Probe', html, images: pictures, coverIndex });
+
+    const named = await throughCalibre(make(1), 'jpeg-cover');
+    expect(await named.cover()).toEqual(pictures[1]);
+    expect(await named.shown()).toEqual(pictures);
+
+    const unnamed = await throughCalibre(make(), 'jpeg-no-cover');
+    expect(await unnamed.cover()).toEqual(pictures[0]);
+    expect(await unnamed.shown()).toEqual(pictures);
+  }, 180000);
+});
+
 describe('images.pdf in the MOBI', () => {
   // images.pdf's own .fountain and the pictures its conversion carried,
   // rendered and packed here directly, as tests/epub-images.test.ts does
@@ -725,7 +976,7 @@ describe('images.pdf in the MOBI', () => {
     const art = mobiArt(tokens, ON, new Set(pictures.keys()));
     const html = tokensToMobiHtml(tokens, meta, ON, art);
     const images = art.order.map((file) => pictures.get(file)!);
-    return { html, mobi: buildMobi({ ...meta, html, images }) };
+    return { html, art, mobi: buildMobi({ ...meta, html, images, coverIndex: art.coverIndex }) };
   };
   // The script's own order, read off the .fountain rather than asked of
   // mobiArt, so the checks below do not grade mobiArt against itself.
@@ -743,40 +994,18 @@ describe('images.pdf in the MOBI', () => {
     refs.forEach((n, i) => expect(recs[firstImage + n - 1]).toEqual(want[i]));
   });
 
-  // Calibre's MOBI reader, run on our own file: an outside reader of the
-  // container rather than this file's helpers. Only ever inside bun test,
-  // where tests/isolate-calibre-config.ts has pointed Calibre at a scratch
-  // copy of its settings, and process.env is what carries that to the spawn.
-  const EBOOK_CONVERT = calibreTool('ebook-convert');
-  const withCalibre = EBOOK_CONVERT ? test : test.skip;
-  const NO_CALIBRE = EBOOK_CONVERT ? '' : ' (skipped: Calibre’s ebook-convert was not found)';
-
   withCalibre(`Calibre reads every picture back, byte for byte, in order, each from the right <img>${NO_CALIBRE}`, async () => {
-    const mobiPath = join(SCRATCH, 'images.mobi');
-    const epubPath = join(SCRATCH, 'images-from-mobi.epub');
-    writeFileSync(mobiPath, book().mobi);
-    // No generated cover: it would be a picture this book never had.
-    await runCalibre(EBOOK_CONVERT!, [mobiPath, epubPath, '--no-default-epub-cover'], process.env);
-
-    const zip = await JSZip.loadAsync(readFileSync(epubPath));
-    const container = await zip.file('META-INF/container.xml')!.async('string');
-    const opfPath = /full-path="([^"]+)"/.exec(container)![1];
-    const opf = await zip.file(opfPath)!.async('string');
-    const hrefs = new Map<string, string>();
-    for (const [item] of opf.matchAll(/<item\b[^>]*>/g)) {
-      const id = /\bid="([^"]+)"/.exec(item)?.[1];
-      const href = /\bhref="([^"]+)"/.exec(item)?.[1];
-      if (id && href) hrefs.set(id, posix.join(posix.dirname(opfPath), decodeURIComponent(href)));
-    }
-    const shown: Uint8Array[] = [];
-    for (const [, idref] of opf.matchAll(/<itemref\b[^>]*\bidref="([^"]+)"/g)) {
-      const doc = hrefs.get(idref)!;
-      const xhtml = await zip.file(doc)!.async('string');
-      for (const [, src] of xhtml.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)) {
-        const file = posix.join(posix.dirname(doc), decodeURIComponent(src));
-        shown.push(await zip.file(file)!.async('uint8array'));
-      }
-    }
-    expect(shown).toEqual(inScriptOrder());
+    const { mobi, art } = book();
+    // The book renderBooks builds, with its title card named as the cover.
+    // The card is a PNG, and calibre's reader looks a cover up only under a
+    // .jpg name, so it takes no cover from this book at all: no cover meta,
+    // no cover item. Which is why the card stays on its page, and here it
+    // is, first in the flow.
+    expect(art.coverIndex).toBe(0);
+    expect([...(exth(mobi, 201) ?? [])]).toEqual([0, 0, 0, 0]);
+    const back = await throughCalibre(mobi, 'images');
+    expect(await back.shown()).toEqual(inScriptOrder());
+    expect(back.coverMeta().id).toBeUndefined();
+    expect(await back.cover()).toBeUndefined();
   }, 120000);
 });

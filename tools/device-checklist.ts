@@ -72,11 +72,13 @@ if (pictures.length > 0) {
   out.push('## The pictures');
   out.push('');
   out.push('torture.pdf draws its own pictures, so these are checks on the same');
-  out.push('book as everything above, except the last. The picture size an older');
+  out.push('book as everything above, except two. The picture size an older');
   out.push('Kindle accepts in a .mobi has four small books of its own, built with');
-  out.push('`bun tools/mobi-picture-probe.ts --out <folder>`. What each of');
-  out.push('torture.pdf\'s pictures is, and which sheet it is on, is in the #19');
-  out.push('and #19a entries above.');
+  out.push('`bun tools/mobi-picture-probe.ts --out <folder>`. And the default book');
+  out.push('makes its title card the cover (#19b), so the check on a full-page');
+  out.push('plate at the front reads a second build with the cover off, whose');
+  out.push('command that check gives. What each of torture.pdf\'s pictures is, and');
+  out.push('which sheet it is on, is in the #19, #19a and #19b entries above.');
   out.push('');
   out.push('Read them in the KFX or the AZW3, and in the .mobi Screepub builds');
   out.push('itself when Calibre is absent, which carries them too. The .mobi has');

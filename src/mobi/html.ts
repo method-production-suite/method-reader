@@ -20,10 +20,14 @@
 // And includeImages (#19a), through mobiArt, which asks the EPUB's own
 // question. A picture note's `w=` is the knob it declines, for the reason
 // the CSS ones are declined: a share of the column has no spelling here.
+// promoteCoverImage (#19b) reaches the file only through mobiArt's
+// coverIndex, which the writer turns into a header record: the pages here
+// are the same with it on or off.
 import type { Token } from 'fountain-js';
 import type { FormatOptions } from '../options';
 import { isMiniSlug } from '../fountain/slug';
 import { fmtSizeStep, rendersImage, stripNotes } from '../fountain/notes';
+import { pickCover } from '../fountain/cover';
 
 export interface MobiMeta {
   title: string;
@@ -45,6 +49,12 @@ export interface MobiMeta {
 export interface MobiArt {
   /** `order[i]` is the picture `recindex` i+1 names. */
   order: readonly string[];
+  /**
+   * Which of `order` is the book's cover (registry #19b), when `pickCover`
+   * chose one. The card stays in `order` and on its page: the cover names a
+   * record the flow already shows, it does not add one.
+   */
+  coverIndex?: number;
 }
 
 /**
@@ -56,6 +66,11 @@ export interface MobiArt {
  * supply bytes for, as it is for the EPUB. It walks the tokens the renderer
  * walks (the title page's are not the body), and only `note` tokens: a note
  * glued to a line of text is text, and is stripped as text.
+ *
+ * The cover is `pickCover`'s answer for the same tokens, format and `have`,
+ * the EPUB's own, so both books of a script wear the same cover or none.
+ * The card it picks is a picture this walk also lists, since the picker
+ * chooses only what `rendersImage` would draw and this renderer draws it.
  */
 export function mobiArt(
   tokens: Token[],
@@ -68,7 +83,8 @@ export function mobiArt(
     const img = rendersImage(t.text ?? '', format.includeImages, have);
     if (img && !order.includes(img.file)) order.push(img.file);
   }
-  return { order };
+  const cover = pickCover(tokens, format, have);
+  return cover ? { order, coverIndex: order.indexOf(cover.file) } : { order };
 }
 
 /**
@@ -251,6 +267,12 @@ export function tokensToMobiHtml(
         // A standalone `[[img: ...]]` is a picture carried out of the PDF
         // (registry #19). Every other note, and a picture note the predicate
         // turns down, renders nothing: notes are invisible by spec.
+        //
+        // A title card that is the book's cover is drawn here too, where the
+        // EPUB leaves it off its pages (#19b). Calibre's MOBI reader takes a
+        // cover only from a JPEG record, and every picture here is a PNG, so
+        // a card kept only as the cover could vanish from the book; kept on
+        // its page, the worst case is the card met twice.
         const img = rendersImage(raw, format.includeImages, inBook);
         if (!img) break;
         closeSpeech();

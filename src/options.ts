@@ -55,9 +55,11 @@ export interface FormatOptions {
   includeImages: boolean;
   /** make a designed title card the book's cover: a full-page picture that
    * is the first thing the script shows, ahead of its first scene heading,
-   * leaves the flow and is declared the cover, so a library shows artwork
-   * instead of a grey rectangle (src/fountain/cover.ts). Needs includeImages;
-   * a script without such a card renders identically on or off */
+   * leaves the EPUB's flow and is declared the cover, so a library shows
+   * artwork instead of a grey rectangle (src/fountain/cover.ts). The .mobi
+   * names the same picture as its cover and keeps it on its page (registry
+   * #19b). Needs includeImages; a script without such a card renders
+   * identically on or off */
   promoteCoverImage: boolean;
 }
 
