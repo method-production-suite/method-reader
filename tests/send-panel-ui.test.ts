@@ -102,6 +102,9 @@ describe('the cards', () => {
     expect(here).toEqual(['Kobo']);
     // Said to a screen reader too, not only drawn.
     expect(p.node.querySelector('.device-card-here')!.getAttribute('aria-label')).toBe('Kobo, plugged in');
+    // And said in words on the card, not only by its brass edge and dot.
+    expect(p.node.querySelector('.device-card-here')!.querySelector('.device-here')!.textContent).toBe('Plugged in');
+    expect(p.node.button('Kindle').querySelector('.device-here')).toBeNull();
     // It asked the engine once, read-only, which reader this is.
     expect(p.tauri.callsTo('app-settings').map((c) => c.args)).toEqual([['app-settings', '--json']]);
   });
@@ -153,6 +156,22 @@ describe('the cards', () => {
     expect(p.tauri.callsTo('app-settings')).toEqual([]);
   });
 
+  test('a Kindle plugged in while the cards are back is copied to once Kindle is chosen again (found on a real Kindle, 2026-10-02)', async () => {
+    // Kindle chosen with nothing plugged in: the web leads.
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    expect(p.brass()!.textContent).toBe('Send to Kindle web');
+    // Different device, the Kindle plugged in while the cards are up (its
+    // card is marked), then Kindle again: the list is asked again, and the
+    // copy leads, with the Kindle listed as here in Other ways too.
+    p.node.button('Different device').click();
+    await p.plug([KINDLE]);
+    expect(p.node.querySelectorAll('.device-card-here').length).toBe(1);
+    p.node.querySelector('.device-card[data-key="kindle"]')!.click();
+    await settle();
+    expect(p.brass()!.textContent).toStartWith('Copy to Kindle');
+    expect(p.node.visibleText).not.toContain('plug the Kindle in');
+  });
+
   test('My device isn’t here: the placeholder, which stores nothing', async () => {
     const p = await mountPanel();
     p.node.button('My device isn’t here').click();
@@ -172,8 +191,8 @@ describe('the cards', () => {
     kindleCard.focus();
     await p.plug([KINDLE]);
     expect(p.node.querySelectorAll('.device-card-here').length).toBe(1);
-    expect(p.page.doc.activeElement).toBe(p.node.button('Kindle'));
-    expect(p.node.button('Kindle')).toBe(kindleCard);
+    expect(p.page.doc.activeElement).toBe(p.node.querySelector('.device-card[data-key="kindle"]')!);
+    expect(p.node.querySelector('.device-card[data-key="kindle"]')!).toBe(kindleCard);
     // And unmarked when it goes.
     await p.plug([]);
     expect(p.node.querySelectorAll('.device-card-here').length).toBe(0);
@@ -247,6 +266,7 @@ describe('the calm screen', () => {
     expect(p.tauri.callsTo('routes').length).toBe(4);
     expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
     expect(p.node.querySelector('.device-dot')).not.toBeNull();
+    expect(p.node.querySelector('.calm .device-here')!.textContent).toBe('Plugged in');
     // Nothing changed since: nothing more is asked.
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(p.tauri.callsTo('routes').length).toBe(4);
@@ -1446,6 +1466,25 @@ describe('the route list, as the Send page used to be driven', () => {
     return within.querySelectorAll('.device-row')
       .find((r) => r.querySelector('.device-name')!.textContent === title)!;
   };
+
+  test('a fresh result: the keyboard the page parked while the list was out goes to the brass button when it lands (found live, 2026-10-02)', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], engine: held, realFocus: true });
+    // convert.js hands the keyboard to the page's plan after drawing the
+    // result: with no brass yet, the plan's first stop is Other ways.
+    p.ctx.restoreFocus();
+    expect(p.page.doc.activeElement).toBe(p.node.button('Other ways'));
+    await answerAll(p, listed([KINDLE]));
+    expect(p.brass()!.textContent).toStartWith('Copy to Kindle');
+    expect(p.page.doc.activeElement).toBe(p.brass());
+  });
+
+  test('a fresh result: a reader who moved the keyboard themselves before the list lands is left there', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], engine: held, realFocus: true });
+    p.ctx.restoreFocus();
+    p.node.button('Different device').focus();
+    await answerAll(p, listed([KINDLE]));
+    expect(p.page.doc.activeElement).toBe(p.node.button('Different device'));
+  });
 
   test('the quick answer is drawn at once, and the reMarkable row fills in when the full one lands', async () => {
     // The quick answer leaves out the reMarkable probe, which with no tablet

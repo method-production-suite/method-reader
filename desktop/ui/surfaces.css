@@ -355,7 +355,14 @@
   border-radius: 50%;
   background: var(--present);
 }
-.device-card .device-dot { position: absolute; right: var(--space-3); bottom: var(--space-3); }
+/* The dot with its words, "Plugged in": on a card, in its lower corner; on
+ * the calm screen, beside the brass button. */
+.device-here {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-structure); font-size: var(--text-note); color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+.device-card .device-here { position: absolute; right: var(--space-3); bottom: var(--space-3); }
 .device-card-slot > .asterisk-wrap > .asterisk {
   position: absolute; top: var(--space-1); right: var(--space-2);
 }

@@ -130,6 +130,7 @@ export const REMARKABLE_LOOK_MS = 10_000;
 let remarkableTimer = null;
 let remarkableClock = null;
 
+const PLUGGED_IN = 'Plugged in';
 const platform = () => navigator.userAgentData?.platform ?? navigator.platform;
 const devicesNow = () => ctx.devices?.current?.() ?? null;
 
@@ -140,7 +141,9 @@ export function mountPanel(node, context, { footer: under = [] } = {}) {
   mode = null;
   footer = under;
   waysOpen = false;
-  brassOwed = null;
+  // A fresh result owes the brass button the keyboard too: convert.js
+  // parks it on the page's first stop before the route list has drawn one.
+  brassOwed = { plan: true };
   lookForRemarkable();
   closeKfx();
   kfxNode = el('section', { class: 'kfx-setup', 'aria-label': KFX_HEADING });
@@ -364,10 +367,19 @@ function draw() {
   if (body === null || mode === null) return;
   const focused = host.contains(document.activeElement) ? document.activeElement : null;
   const key = focused?.dataset?.key ?? null;
-  // Still where the page's plan parked it after a card press: the brass
-  // button is owed the keyboard. Anywhere else, the reader moved it.
-  const owed = brassOwed !== null && document.activeElement === brassOwed.at;
-  if (!owed) brassOwed = null;
+  // Still where the page's plan parked it (after a card press, or on a fresh
+  // result): the brass button is owed the keyboard. Anywhere else, the
+  // reader moved it. A fresh result's debt waits while the keyboard is still
+  // outside the panel: the plan has not parked it yet.
+  let owed;
+  if (brassOwed?.plan) {
+    const stop = buttons().find((button) => canFocus(button)) ?? null;
+    owed = mode === 'calm' && focused !== null && focused === stop;
+    if (focused !== null && !owed) brassOwed = null;
+  } else {
+    owed = brassOwed !== null && document.activeElement === brassOwed.at;
+    if (!owed) brassOwed = null;
+  }
   clear(body);
   if (mode === 'cards') body.append(drawCards());
   else if (mode === 'missing') body.append(missingPanel());
@@ -496,11 +508,18 @@ function cardSlot(card) {
 /** A card's "plugged in": the brass edge, the dot, and the same said to a
  *  screen reader. Toggled in place, so a reader plugged in while the cards
  *  are up does not rebuild the button under the keyboard. */
+/** "Plugged in", said in words beside the green dot: the brass edge and
+ *  the dot alone did not read as plugged in (owner, on a real Kindle). */
+function pluggedIn() {
+  return el('span', { class: 'device-here', 'aria-hidden': 'true' },
+    el('span', { class: 'device-dot' }), PLUGGED_IN);
+}
+
 function markCard(button, here, name) {
   button.classList.toggle('device-card-here', here);
-  const dot = button.querySelector('.device-dot');
-  if (here && dot === null) button.append(el('span', { class: 'device-dot', 'aria-hidden': 'true' }));
-  if (!here && dot !== null) dot.remove();
+  const mark = button.querySelector('.device-here');
+  if (here && mark === null) button.append(pluggedIn());
+  if (!here && mark !== null) mark.remove();
   if (here) button.setAttribute('aria-label', `${name}, plugged in`);
   else button.removeAttribute('aria-label');
 }
@@ -518,6 +537,11 @@ function markCards(list) {
 async function chooseDevice(kind) {
   ctx.state.readerDevice = kind;
   mode = 'calm';
+  // A card always asks what is plugged in now, never a list from before the
+  // cards came back: that list once offered "plug it in" for a Kindle that
+  // was (found on a real Kindle, 2026-10-02).
+  askedFor = null;
+  drawn = null;
   draw();
   say({ line: '', bad: false });
   try {
@@ -551,6 +575,9 @@ function onDevices(list) {
   maybeBuildAhead();
   if (mode === 'cards') {
     markCards(list);
+    // The route list drawn before the cards came back predates this plug-in:
+    // the calm screen asks again when a card brings it back.
+    askedFor = null;
     return;
   }
   if (mode !== 'calm') return;
@@ -587,8 +614,7 @@ function drawCalm() {
         type: 'button', class: 'btn btn-brad', 'data-key': brass.route.id,
         disabled: sending || kfxInstalling(), onclick: () => choose(brass.route),
       }, brass.label),
-      brass !== null && R.isDeviceRoute(brass.route)
-        ? el('span', { class: 'device-dot', 'aria-hidden': 'true' }) : null,
+      brass !== null && R.isDeviceRoute(brass.route) ? pluggedIn() : null,
       offer?.unproven ? asterisk(kind) : null),
     buildNote,
     routesFault === null ? null : el('p', { class: 'fault-body' }, routesFault),
