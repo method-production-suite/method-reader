@@ -345,12 +345,16 @@ function draw() {
   if (body === null || mode === null) return;
   const focused = host.contains(document.activeElement) ? document.activeElement : null;
   const key = focused?.dataset?.key ?? null;
+  // Still where the page's plan parked it after a card press: the brass
+  // button is owed the keyboard. Anywhere else, the reader moved it.
+  const owed = brassOwed !== null && document.activeElement === brassOwed.at;
+  if (!owed) brassOwed = null;
   clear(body);
   if (mode === 'cards') body.append(drawCards());
   else if (mode === 'missing') body.append(missingPanel());
   else body.append(drawCalm());
-  if (focused !== null && !body.contains(focused)) giveBackFocus(key);
-  else payBrassOwed();
+  if (owed) payBrassOwed(focused, key);
+  else if (focused !== null && !body.contains(focused)) giveBackFocus(key);
   // The calm screen's first draw for this book asks for its route list: a
   // quick answer first, then the full one.
   if (mode === 'calm' && askedFor !== mountedBook) {
@@ -378,15 +382,21 @@ function giveBackFocus(key) {
   }
 }
 
-/** The brass button drawn at last after a card press: it takes the focus,
- *  but only from where the page's plan parked it. */
-function payBrassOwed() {
-  if (brassOwed === null || mode !== 'calm') { brassOwed = null; return; }
-  if (document.activeElement !== brassOwed.at) { brassOwed = null; return; }
-  const brass = body?.querySelector('.btn-brad') ?? null;
-  if (!canFocus(brass)) return;
-  brassOwed = null;
-  brass.focus();
+/** A redraw while the brass button is owed the keyboard (draw() has checked
+ *  the reader has not moved it). Drawn at last: it takes it. Not yet (the
+ *  quick list may still say nothing): the keyboard goes back to the control
+ *  the plan parked it on, redrawn, and the brass stays owed from there, so a
+ *  parked spot inside the panel (the asterisk, Other ways) does not swallow
+ *  the debt the way a same-key return otherwise would. */
+function payBrassOwed(focused, key) {
+  const brass = mode === 'calm' ? body.querySelector('.btn-brad') : null;
+  if (canFocus(brass)) {
+    brassOwed = null;
+    brass.focus();
+    return;
+  }
+  if (focused !== null && !body.contains(focused)) giveBackFocus(key);
+  brassOwed = mode === 'calm' ? { at: document.activeElement } : null;
 }
 
 /** Every button in the panel, so a send can take all of them out of reach. */

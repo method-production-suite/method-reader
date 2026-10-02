@@ -32,6 +32,9 @@ async function mountPanel(o: {
   readerDevice?: string | null; devices?: ConnectedDevice[] | null; check?: unknown;
   script?: Record<string, unknown>; engine?: (args: string[]) => unknown; platform?: string;
   state?: Record<string, unknown>;
+  /** restoreFocus moves the keyboard as main.js's does (the first live
+   *  control in the Convert pane), rather than only counting the ask. */
+  realFocus?: boolean;
 } = {}) {
   // One page at a time: a second mount in one test puts the first away, so
   // its globals go back in the right order.
@@ -63,7 +66,10 @@ async function mountPanel(o: {
         settings: { dialogueSideMarginPct: 27 }, ...o.script },
       devices: [], readerDevice: undefined, sendResult: null, ...o.state,
     },
-    restoreFocus: () => { restored += 1; },
+    restoreFocus: () => {
+      restored += 1;
+      if (o.realFocus) node.querySelectorAll('button').find((b) => !b.disabled)?.focus();
+    },
     goTo: () => {}, convertAgain: () => {},
     devices: {
       current: () => (plugged === null ? null : plugged.map(dev)),
@@ -112,7 +118,8 @@ describe('the cards', () => {
   });
 
   test('a card pressed from the keyboard hands it to the brass button, not the asterisk before it', async () => {
-    const p = await mountPanel({ engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : undefined) });
+    const p = await mountPanel({ realFocus: true,
+      engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : undefined) });
     const card = p.node.button('Kobo');
     card.focus();
     card.click();
@@ -1385,13 +1392,49 @@ describe('the route list, as the Send page used to be driven', () => {
   });
 
   test('with no brass button drawn yet, the page’s own plan takes the keyboard', async () => {
-    const p = await mountPanel({ engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : held(a)) });
+    const p = await mountPanel({ realFocus: true,
+      engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : held(a)) });
     const card = p.node.button('Kobo');
     card.focus();
     card.click();
     await settle();
     expect(p.brass()).toBeNull();
     expect(p.restored()).toBe(1);
+    // The plan's pick: the first control on the calm screen, its asterisk.
+    expect(p.page.doc.activeElement).toBe(p.node.querySelector('.calm .asterisk'));
+  });
+
+  for (const kind of ['Kobo', 'Kindle']) {
+    test(`a ${kind} card pressed from the keyboard: the brass button takes it from the plan once the list lands`, async () => {
+      const p = await mountPanel({ realFocus: true,
+        engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: kind.toLowerCase() } : held(a)) });
+      const card = p.node.button(kind);
+      card.focus();
+      card.click();
+      await settle();
+      expect(p.brass()).toBeNull();
+      const parked = p.page.doc.activeElement;
+      expect(parked !== null && p.node.contains(parked)).toBe(true);
+      // The quick list lands, then the full one: each redraw keeps it owed.
+      await answer(p, 'routes', listed([], { remarkableChecked: false }));
+      expect(p.page.doc.activeElement).toBe(p.brass());
+      await answer(p, 'routes', listed([]));
+      expect(p.page.doc.activeElement).toBe(p.brass());
+      expect(p.restored()).toBe(1);
+    });
+  }
+
+  test('a reader who moves the keyboard before the list lands is left where they went', async () => {
+    const p = await mountPanel({ realFocus: true,
+      engine: (a) => (a.includes('--set') ? { ok: true, readerDevice: 'kobo' } : held(a)) });
+    const card = p.node.button('Kobo');
+    card.focus();
+    card.click();
+    await settle();
+    p.node.button('Other ways').focus();
+    await answerAll(p, listed([]));
+    expect(p.brass()).not.toBeNull();
+    expect(p.page.doc.activeElement).toBe(p.node.button('Other ways'));
   });
 
   test('a list that was out when a route began lands without touching the panel; the ask after the route does', async () => {
