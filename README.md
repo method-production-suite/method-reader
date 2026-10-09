@@ -74,8 +74,11 @@ A newer Kindle that never shows up as a drive speaks a protocol your computer
 does not mount: see [Emailing scripts to your Kindle](docs/send-to-kindle.md).
 
 **Own a Kobo, a tolino or a reMarkable?** A five-minute report either way is
-the most useful thing you can send:
-[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
+the most useful thing you can send. On the result screen, that reader's
+asterisk opens a note ending in **It worked** and **It did not work**; press
+one, or
+[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose)
+to say more.
 
 <p align="center">
   <picture>
@@ -141,7 +144,8 @@ Screepub reaches the network only when you ask it to:
 - **Screepub's request service**, only when you press **Send** in **My device
   isn't here** or answer **It worked** or **It did not work** beside an
   asterisk. It carries the device's name (or which reader and your answer),
-  the app's version and your platform, and nothing else.
+  the app's version and your platform, and nothing else. The service keeps
+  counts only and never stores your address.
 - **Updates, only if you say yes.** The window asks once; with your yes, it
   checks GitHub at most once a day, and **Check for updates** checks once.
   An update downloads only when you choose to install it, and its signature

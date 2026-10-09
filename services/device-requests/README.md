@@ -17,6 +17,13 @@ Anything else is a 400, a body over 1 KB a 413, any other method or path a
 
 ## Deploy (once)
 
+Done on 2026-10-02: the database exists (its id is in `wrangler.toml`), its
+tables are made, and the Worker answers at
+`https://screepub-device-requests.samuelsandweiss.workers.dev`, the address
+the window posts to. The steps are kept for a fresh account. After a change
+to `src/worker.ts`, only step 4 is needed again; after a change to
+`schema.sql`, step 3 (every statement in it is safe to run twice).
+
 Run these from this folder (`services/device-requests/`). Sign in first with
 `bunx wrangler login`; no key ever needs to leave your machine.
 
@@ -26,8 +33,8 @@ Run these from this folder (`services/device-requests/`). Sign in first with
    bunx wrangler d1 create screepub-device-requests
    ```
 
-2. Paste the `database_id` it prints into `wrangler.toml`, in place of
-   `PASTE-DATABASE-ID-HERE`.
+2. Paste the `database_id` it prints into `wrangler.toml`, in place of the
+   one there.
 
 3. Make the tables:
 
