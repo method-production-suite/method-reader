@@ -36,7 +36,10 @@ export function mountHeadsUp(sheet, {
       onclick: () => {
         const device = offered;
         close();
-        if (device !== null) copyTo(device);
+        // A conversion started while the line was up (a PDF dropped on
+        // Convert does not change the page, so nothing rechecked): Convert
+        // would refuse the copy without a word, so none is asked for.
+        if (device !== null && !busy()) copyTo(device);
       },
     }, D.HEADS_UP_COPY),
     el('button', { type: 'button', class: 'btn-quiet', onclick: close }, D.HEADS_UP_LATER));

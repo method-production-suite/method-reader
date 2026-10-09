@@ -8853,7 +8853,7 @@ describe('the Kindle heads-up, mounted on its own', () => {
   afterEach(async () => { await page?.close(); page = null; });
   const kindle = { id: '/Volumes/Kindle', kind: 'kindle', name: 'Kindle', volume: '/Volumes/Kindle' };
 
-  async function mounted() {
+  async function mounted(busy: () => boolean = () => false) {
     page = fakePage();
     const { mountHeadsUp } = await import(join(UI, 'heads-up.js'));
     const sheet = page.doc.createElement('div');
@@ -8868,7 +8868,7 @@ describe('the Kindle heads-up, mounted on its own', () => {
       watcher: { subscribe: (fn: (list: unknown) => void) => { subs.push(fn); return () => {}; } },
       state,
       onResult: () => false,
-      busy: () => false,
+      busy,
       copyTo: (d: unknown) => copied.push(d),
       restoreFocus: () => {},
       timers: { setTimeout: (fn: () => void) => { later.push(fn); return later.length; }, clearTimeout: () => {} },
@@ -8886,6 +8886,20 @@ describe('the Kindle heads-up, mounted on its own', () => {
     expect(m.box.hidden).toBe(false);
     m.box.button('Copy it').click();
     expect(m.copied).toEqual([kindle]);
+    expect(m.box.hidden).toBe(true);
+  });
+
+  test('Copy pressed once a conversion has started copies nothing and takes the line down', async () => {
+    let converting = false;
+    const m = await mounted(() => converting);
+    m.tell([]);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+    // A PDF dropped on Convert while the line was up: the copy would be
+    // refused by a busy Convert without a word, so it is not made at all.
+    converting = true;
+    m.box.button('Copy it').click();
+    expect(m.copied).toEqual([]);
     expect(m.box.hidden).toBe(true);
   });
 
