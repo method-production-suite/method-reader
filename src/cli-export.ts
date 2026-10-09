@@ -200,8 +200,8 @@ async function resolveOut(artifactPath: string, out: string): Promise<string> {
   return out;
 }
 
-/** The script behind `--for mobi` and `--for fountain` is a file that is
- * there, or the export is 'unreadable'. One check, for both. */
+/** The script behind `--for mobi`, `fountain` and `fdx` is a file that is
+ * there, or the export is 'unreadable'. One check, for all three. */
 function checkScriptReadable(script: string): void {
   let isFile = false;
   try {
@@ -314,13 +314,16 @@ export async function exportCommand(
   if (format === 'fountain' && extname(options.fountain as string).toLowerCase() !== '.fountain') {
     throw new CliError('usage', `--for fountain takes a .fountain file, not ${options.fountain}`);
   }
-  // Both read the script, so a script that is not there is refused here,
-  // before --check answers and before any probe or build.
-  if (format === 'mobi' || format === 'fountain') checkScriptReadable(options.fountain as string);
+
   // An FDX is made from the .fountain and nothing else, so without one there
   // is nothing to build it from: said before any settings are read.
   if (wanted === 'fdx' && options.fountain === undefined) {
     throw new CliError('usage', "--for fdx is built from the script's .fountain: pass it with --fountain");
+  }
+  // All three read the script, so a script that is not there is refused
+  // here, before --check answers and before any probe or build.
+  if (format === 'mobi' || format === 'fountain' || format === 'fdx') {
+    checkScriptReadable(options.fountain as string);
   }
 
   // Parsed here, before the epub branch returns and before any toolchain

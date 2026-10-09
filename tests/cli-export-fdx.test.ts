@@ -110,6 +110,16 @@ describe('exportCommand --for fdx', () => {
     expect(r.message).toContain(missing);
   });
 
+  test('a missing .fountain is refused before Calibre is probed or settings are read', async () => {
+    let probed = 0;
+    const missing = join(dir, 'Gone.fountain');
+    const r = await codeOf(exportCommand({ epub, for: 'fdx', fountain: missing },
+      { ...deps(), calibreAvailable: () => { probed++; return false; } }));
+    expect(r.code).toBe('unreadable');
+    expect(r.message).toContain(missing);
+    expect(probed).toBe(0);
+  });
+
   test('a missing book is unreadable, the same as every other export', async () => {
     const r = await codeOf(exportCommand({ epub: join(dir, 'nope.epub'), for: 'fdx', fountain }, deps()));
     expect(r.code).toBe('unreadable');
