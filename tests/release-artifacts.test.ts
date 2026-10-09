@@ -1028,6 +1028,18 @@ describe('the app downloads are described where a reader meets them', () => {
     expect(install).toContain('docs/verification-ledger.md');
   });
 
+  test('the README tells an Intel Mac which version is its last, and where it is', () => {
+    // 0.8.0 (the identifier release) was the last universal image. The row
+    // above names no Intel, so this sentence is the only place a reader on
+    // one learns what to download. Its link is the tag's own page: the
+    // latest release no longer carries an Intel build.
+    const intel = install.slice(install.indexOf('Intel Mac'));
+    expect(install).toContain('Intel Mac');
+    expect(intel).toContain('0.8.0');
+    expect(intel).toContain('https://github.com/ssandweiss/screepub/releases/tag/v0.8.0');
+    expect(intel).toMatch(/keeps working/);
+  });
+
   test('the 0.6.0 notes carry the same three limits', () => {
     const lower = notes.toLowerCase();
     expect(/not signed|unsigned/.test(lower)).toBe(true);

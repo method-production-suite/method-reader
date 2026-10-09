@@ -208,6 +208,18 @@ describe('"Every download" links version-free names, each with a status', () => 
     expect(site).not.toContain('Screepub-Desktop-macOS-universal.dmg');
   });
 
+  test('an Intel Mac is told 0.8.0 is its last version', () => {
+    // The Mac row names no Intel, so this is where a reader on one learns
+    // what to do. No versioned link (see "no download link on the page
+    // carries a version"): the version is named in words, and the link is
+    // the release list.
+    const intel = downloads.slice(downloads.indexOf('Intel Mac'));
+    expect(downloads).toContain('Intel Mac');
+    expect(intel).toContain('0.8.0');
+    expect(intel).toMatch(/keeps working/);
+    expect(intel).toContain('href="https://github.com/ssandweiss/screepub/releases"');
+  });
+
   test('the sentence the status column replaced is gone', () => {
     // It said nobody had opened the window on anything but Linux, which
     // stopped being true at gate 1b on 2026-09-20.

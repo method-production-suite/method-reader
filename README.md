@@ -88,6 +88,11 @@ notarized by Apple, for Macs with Apple silicon, macOS 13 or
 later. It is the file the download button gives you, and it updates itself.
 The same app runs on Windows and Linux.
 
+**On an Intel Mac, Screepub 0.8.0 is the last version.** It keeps working,
+but it will not be offered updates. To install it, download
+`Screepub-macOS.dmg` from
+[the 0.8.0 release page](https://github.com/ssandweiss/screepub/releases/tag/v0.8.0).
+
 | Computer | File | Status |
 | --- | --- | --- |
 | Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple Silicon Mac |
