@@ -28,6 +28,7 @@ import {
 } from './export/formats';
 import { kfxMissing, kfxStatus as realKfxStatus, type KfxStatus } from './export/kfx';
 import { fountainToFdx } from './fdx/fdx';
+import { stripScreepubNotes } from './fountain/notes';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions } from './settings/app-defaults';
 import { loadScriptSettings } from './settings/sidecar';
@@ -214,6 +215,38 @@ function checkScriptReadable(script: string): void {
   }
 }
 
+/** --for fountain --out: the script as a writer gets it, with Screepub's own
+ * notes left behind (stripScreepubNotes). The script beside the book is the
+ * cache boundary and keeps them, so it is never written here: an --out that
+ * IS that script is already there when it carries no notes of ours, and is
+ * refused when it does, since saving there would cost the book its pictures
+ * and font shifts on the next rebuild. A script with nothing of ours in it
+ * is copied as bytes, so even an encoding we cannot read survives. */
+async function saveFountainCopy(script: string, out: string): Promise<string> {
+  let text: string;
+  try {
+    text = readFileSync(script, 'utf8');
+  } catch {
+    throw new CliError('unreadable', `cannot read the script to export: ${script}`);
+  }
+  const clean = stripScreepubNotes(text);
+  if (clean === text) return resolveOut(script, out);
+  if (resolve(out) === resolve(script)) {
+    throw new CliError(
+      'export-failed',
+      `could not save the copy to ${out}: that is the book's own script, which Screepub keeps; choose another place`,
+    );
+  }
+  try {
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileAtomicSync(out, clean);
+  } catch (err) {
+    const reason = errorMessage(err).split(atomicTempPathFor(out)).join(out);
+    throw new CliError('export-failed', `could not save the copy to ${out}: ${reason}`);
+  }
+  return out;
+}
+
 /** The FDX that sits beside a book when no --out names another place: same
  * folder, same stem, the way the Kindle files sit beside it. */
 export function fdxSibling(epub: string): string {
@@ -339,11 +372,14 @@ export async function exportCommand(
   const available = availableFormats(options.epub, calibreAvailable);
 
   if (format === 'fountain') {
-    // The script as it is: no toolchain, no build, always current. Its
-    // extension and readability were checked above.
+    // The script for a screenwriting app: no toolchain, no build, always
+    // current. Its extension and readability were checked above. Without
+    // --out the answer names the script beside the book, as it is.
     const script = options.fountain as string;
     const state = { calibreAvailable, kfxReady: false };
-    const path = options.out !== undefined ? await resolveOut(script, options.out) : script;
+    const path = options.out !== undefined
+      ? await saveFountainCopy(script, options.out)
+      : script;
     return {
       path,
       format,

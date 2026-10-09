@@ -1248,6 +1248,14 @@ engine needs to change.
   about the feature: chyrons, inserts and on-screen text are ordinary
   screenplay furniture, and none of these five happen to carry one in the
   body. Worth re-measuring when a script that does joins the set.
+- **A saved script leaves the notes behind (2026-10-09).** `export --for
+  fountain --out` (the window's Save a file > Fountain) writes the script
+  with Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes taken out
+  (`stripScreepubNotes` in `src/fountain/notes.ts`), every other line byte
+  for byte; a screenwriting app has no use for them. The cached `.fountain`
+  beside the book keeps every note, since it is the cache boundary, and an
+  `--out` naming that very file is refused when it carries one. A writer's
+  own notes are left alone.
 - **App option:** "Keep the PDF's font shifts" (reader rail, Text group).
 - **Device verdict 2026-08-06: RENDERS, and the family survives the
   publisher-font toggle in BOTH states.** Sideloaded KFX on the Kindle, the
@@ -1468,6 +1476,9 @@ engine needs to change.
   16.7 s and 3.7 s.
 - **Default:** always on. `includeImages` (#19a) gates rendering, not
   recognition, so the notes and the folder stay whatever it is set to.
+- **A saved script has no picture notes:** `export --for fountain --out`
+  takes them out of the copy and leaves the cached `.fountain` whole (#18
+  has the rule).
 - **Code:** `src/parser/images.ts` (`collectImagePlacements`, `toRgb`,
   `IMAGE_MAX_EDGE`, `IMAGE_BUDGET_MS`, `isGeneratedImageFile`),
   `src/parser/artwork.ts` (every threshold, `keepArtwork`, `MAX_IMAGES`,

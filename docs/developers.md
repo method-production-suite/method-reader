@@ -208,14 +208,15 @@ vendor indexes it; for a reMarkable it uploads over HTTP to the docked
 tablet, which accepts only PDF and EPUB. With several readers connected,
 `--device` is required.
 
-`export --for` takes six values:
+`export --for` takes seven values:
 
 - `epub`: the EPUB itself (the default).
 - `kindle`: the best Kindle file this computer makes, climbing KFX, then AZW3, then MOBI.
 - `kfx`: a KFX file, and only that.
 - `azw3`: an AZW3 file, and only that.
 - `mobi`: the engine's own MOBI, and only that; the EPUB is left as it is. It needs `--fountain`.
-- `fountain`: the script's `.fountain`, as it is. It needs `--fountain`, and that file must end in `.fountain`.
+- `fountain`: the script, for a screenwriting app. It needs `--fountain`, and that file must end in `.fountain`. With `--out`, the copy written there leaves out Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes and keeps every other line as it is; the `.fountain` beside the book keeps them, because rebuilds read them, and an `--out` naming that file is refused while it carries one. Without `--out`, the answer names the `.fountain` beside the book, notes and all.
+- `fdx` (beta): a Final Draft file rebuilt from the `.fountain` (see above).
 
 `kfx`, `azw3` and `mobi` refuse, with an error, when this computer lacks the
 tools to make that file; `mobi` and `fountain` refuse without `--fountain`.

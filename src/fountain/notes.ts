@@ -49,6 +49,57 @@ export function stripNotes(text: string): string {
     .trim();
 }
 
+/** A line that is nothing but one of Screepub's own notes: an fmt note glued
+ * above action, or a picture note standing as its own paragraph. The
+ * keywords are case-sensitive, like LEADING_FMT and parseImgNote: we write
+ * exactly `fmt:` and `img:`, and a note we did not write is the writer's. */
+const OWN_NOTE_LINE = /^\s*\[\[\s*(?:fmt|img):[^\]]*\]\]\s*$/;
+
+/** An fmt note leading a line of dialogue, with the one space after it. */
+const LEADING_FMT_PREFIX = /^(\s*)\[\[\s*fmt:[^\]]*\]\] ?/;
+
+/**
+ * The script for a screenwriting app: Screepub's own `[[fmt: ...]]` and
+ * `[[img: ...]]` notes taken out, every other line kept byte for byte.
+ *
+ * Only the shapes serialize.ts writes are touched: a note alone on its line,
+ * and an fmt note leading a dialogue line. A writer's own notes, and a note
+ * of ours folded somewhere we never put one, stay. Line endings are the
+ * text's own (a CRLF line keeps its `\r`). A note that was a paragraph of
+ * its own takes one blank line with it, so no doubled gap is left behind.
+ *
+ * For an EXPORTED copy only. The cached `.fountain` keeps every note: it is
+ * the cache boundary, and the notes are how a rebuild finds its pictures and
+ * font shifts.
+ */
+export function stripScreepubNotes(fountainText: string): string {
+  if (!fountainText.includes('[[')) return fountainText;
+  const lines = fountainText.split('\n');
+  const isBlank = (line: string) => /^\s*$/.test(line);
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    let own = OWN_NOTE_LINE.test(line);
+    let kept = line;
+    if (!own) {
+      const m = LEADING_FMT_PREFIX.exec(line);
+      if (m) {
+        kept = m[1] + line.slice(m[0].length);
+        // A dialogue line that was only the note would leave a blank line,
+        // which ends the speech: it goes whole instead.
+        own = isBlank(kept);
+      }
+    }
+    if (!own) {
+      out.push(kept);
+      continue;
+    }
+    const prevBlank = out.length === 0 || isBlank(out[out.length - 1]);
+    if (prevBlank && i + 1 < lines.length && isBlank(lines[i + 1])) i++;
+  }
+  return out.join('\n');
+}
+
 /**
  * A leading `[[fmt: ...]]` as a class suffix, e.g. " fmt-sans fmt-plus2",
  * ready to append inside an existing class attribute. Unknown words are

@@ -212,7 +212,8 @@ export never sends: it produces (or reuses) the right file, and
 \`screepub send\` moves it. Kindle climbs KFX → AZW3 → MOBI, taking the best
 rung this machine can reach. kfx, azw3 and mobi each make only that file,
 and refuse when this computer lacks its tools. fountain hands over the
-script itself.
+script itself; the copy --out writes leaves out Screepub's own [[fmt: ...]]
+and [[img: ...]] notes, while the .fountain beside the book keeps them.
 
 fdx (beta) is the script itself, as a Final Draft file you can keep
 editing (Fade In, WriterDuet, Highland and Celtx open it too). It is built

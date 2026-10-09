@@ -1070,6 +1070,69 @@ describe('export --for one named file type', () => {
     expect(readFileSync(out)).toEqual(readFileSync(fountain));
   });
 
+  // A script's .fountain carries Screepub's own notes (registry #18, #19):
+  // the cache needs them, a screenwriting app does not.
+  const NOTED = [
+    'INT. HUT - NIGHT',
+    '',
+    '[[fmt: sans +1]]',
+    'CHYRON: LIVE.',
+    '',
+    '@MARA',
+    '[[fmt: mono]] Read it back.',
+    '',
+    '[[img: p002-01.png w=71]]',
+    '',
+    "She looks up. [[a writer's own note]]",
+    '',
+  ].join('\n');
+
+  test('fountain with --out leaves Screepub\'s own notes behind, and the script beside the book keeps them', async () => {
+    writeFileSync(fountain, NOTED);
+    const out = join(dir, 'saved', 'Copy.fountain');
+    const result = await exportCommand(
+      { epub, for: 'fountain', fountain, out },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    expect(result.path).toBe(out);
+    expect(readFileSync(out, 'utf8')).toBe([
+      'INT. HUT - NIGHT',
+      '',
+      'CHYRON: LIVE.',
+      '',
+      '@MARA',
+      'Read it back.',
+      '',
+      "She looks up. [[a writer's own note]]",
+      '',
+    ].join('\n'));
+    // The cache boundary is untouched.
+    expect(readFileSync(fountain, 'utf8')).toBe(NOTED);
+    // Nothing left beside the copy but the copy.
+    expect(readdirSync(join(dir, 'saved'))).toEqual(['Copy.fountain']);
+  });
+
+  test('fountain --out onto the book\'s own script is refused when the script carries notes, and the script is left alone', async () => {
+    writeFileSync(fountain, NOTED);
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'fountain', fountain, out: fountain },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('export-failed');
+    expect(answer.message).toContain(fountain);
+    expect(readFileSync(fountain, 'utf8')).toBe(NOTED);
+  });
+
+  test('fountain --out onto the book\'s own script with no notes in it is already there', async () => {
+    const before = readFileSync(fountain);
+    const result = await exportCommand(
+      { epub, for: 'fountain', fountain, out: fountain },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    expect(result.path).toBe(fountain);
+    expect(readFileSync(fountain)).toEqual(before);
+  });
+
   test('fountain without --fountain is usage', async () => {
     const answer = await codeAndMessage(exportCommand(
       { epub, for: 'fountain' },

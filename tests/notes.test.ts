@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'bun:test';
 import {
   fmtClasses, fmtSizeStep, imageNoteFiles, isSafeImageFile, parseImgNote, rendersImage, stripNotes,
+  stripScreepubNotes,
 } from '../src/fountain/notes';
 
 describe('stripNotes', () => {
@@ -321,5 +322,72 @@ describe('imageNoteFiles', () => {
       '/* [[img: p005-01.png w=40]] */',
     ].join('\n\n');
     expect([...imageNoteFiles(text)]).toEqual([]);
+  });
+});
+
+describe('stripScreepubNotes', () => {
+  // The serializer's own shapes (src/fountain/serialize.ts): an fmt note
+  // glued above action, one leading a dialogue line, and a picture note as
+  // a paragraph of its own.
+  const cached = [
+    'Title: Field Notes',
+    'Author: Somebody',
+    '',
+    'INT. HUT - NIGHT',
+    '',
+    '[[fmt: sans +1]]',
+    'CHYRON: LIVE.',
+    '',
+    '@MARA',
+    '(quietly)',
+    '[[fmt: mono]] Read it back.',
+    'Slower.',
+    '',
+    '[[img: p002-01.png w=71]]',
+    '',
+    "She looks up. [[a writer's own note]]",
+    '',
+    '[[img: p003-01.png w=100 full]]',
+    '',
+  ].join('\n');
+
+  test('drops the fmt and img notes the serializer wrote and nothing else', () => {
+    expect(stripScreepubNotes(cached)).toBe([
+      'Title: Field Notes',
+      'Author: Somebody',
+      '',
+      'INT. HUT - NIGHT',
+      '',
+      'CHYRON: LIVE.',
+      '',
+      '@MARA',
+      '(quietly)',
+      'Read it back.',
+      'Slower.',
+      '',
+      "She looks up. [[a writer's own note]]",
+      '',
+    ].join('\n'));
+  });
+
+  test('every non-blank line that carried no note of ours comes back byte for byte, in order', () => {
+    const ours = /\[\[\s*(fmt|img):/;
+    const kept = stripScreepubNotes(cached).split('\n').filter((l) => l !== '');
+    const original = cached.split('\n').filter((l) => l !== '' && !ours.test(l));
+    expect(kept.filter((l) => l !== 'Read it back.')).toEqual(original);
+  });
+
+  test('text with no note of ours is returned identical', () => {
+    const plain = "INT. HUT - NIGHT\n\n[[a writer's note]]\n\n[[FMT: not ours]]\n\nShe waits.\n";
+    expect(stripScreepubNotes(plain)).toBe(plain);
+  });
+
+  test('a picture note opening the file leaves no blank line in front of the script', () => {
+    expect(stripScreepubNotes('[[img: p001-01.png w=80]]\n\nINT. HUT - NIGHT\n')).toBe('INT. HUT - NIGHT\n');
+  });
+
+  test('CRLF lines keep their own endings', () => {
+    expect(stripScreepubNotes('INT. HUT\r\n\r\n[[fmt: sans]]\r\nCHYRON.\r\n'))
+      .toBe('INT. HUT\r\n\r\nCHYRON.\r\n');
   });
 });
