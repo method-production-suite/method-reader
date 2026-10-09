@@ -24,6 +24,9 @@
 // real-toolchain export test (fixed in src/export/kfx.ts, pinned in
 // export-kfx.test.ts); the repo's own tools are pinned by
 // tool-temp-folders.test.ts, which gives each one a TMPDIR to be judged by.
+// Nor the engine's own pdf.js decoder folder, made once per process for
+// whichever test opens a document first: the third bunfig.toml preload,
+// tests/remove-pdfjs-decoders.ts, removes it, and pdfjs-wasm.test.ts pins that.
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

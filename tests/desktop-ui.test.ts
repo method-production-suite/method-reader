@@ -560,6 +560,9 @@ describe('the Convert surface', () => {
     // A late line from earlier in the run does not move the bar back.
     tauri.emit('engine-line', '{"progress":{"stage":"parse","percent":20}}');
     expect(readOut()).toBe('reading the pages (40%)');
+    tauri.emit('engine-line', '{"progress":{"stage":"pictures","percent":70}}');
+    expect(readOut()).toBe('reading the pictures (70%)');
+    expect(fill()).toBe('.fill { width: 70%; }');
     tauri.emit('engine-line', '{"progress":{"stage":"render","percent":85}}');
     expect(readOut()).toBe('building the book (85%)');
     expect(fill()).toBe('.fill { width: 85%; }');
@@ -1211,11 +1214,15 @@ describe('what the Convert surface decides', () => {
 
   test('every code the engine can refuse with gets a heading that names a cause', () => {
     const codes = ['scanned', 'not-screenplay', 'password', 'unreadable',
-      'unsupported-type', 'bad-options', 'usage', 'unwritable', 'internal'];
+      'unsupported-type', 'bad-options', 'usage', 'library', 'unwritable', 'internal'];
     const headings = new Set<string>();
     for (const code of codes) {
       const { heading } = convert.failureFor({ code, message: 'x' });
       expect(`${code}: ${heading}`).not.toBe(`${code}: `);
+      // Its OWN entry, not the fallback: failureFor answers an unknown code
+      // with the `internal` heading, so a code missing from the table would
+      // still pass the line above while telling the reader the engine broke.
+      expect(`${code} in HEADINGS: ${code in convert.HEADINGS}`).toBe(`${code} in HEADINGS: true`);
       // A heading that is the same for every code names nothing.
       headings.add(heading);
     }
@@ -1290,23 +1297,23 @@ describe('what the Convert surface decides', () => {
   });
 
   test('the bar follows the engine\u2019s own percent, which is already the whole job', () => {
-    // Measured against the engine, not assumed: a 3,601-page script emits
-    // parse 6..85 and then render 85, render 100, because src/convert.ts
-    // has already applied PARSE_SHARE. A window that re-weighted those
-    // numbers would stall at 72% for the entire tail of the parse and then
-    // leap to the end — which is exactly what the first draft of this
-    // surface did, and what a live run caught.
+    // The engine's percent is already shared out by stage in src/convert.ts:
+    // the pages 0..60, the pictures 60..85, the book 85..100. A window that
+    // re-weighted those numbers would stall partway for the entire tail of a
+    // stage and then leap to the end, which is exactly what the first draft
+    // of this surface did, and what a live run caught.
     let at = convert.PROGRESS_START;
     const seen: number[] = [];
     for (const line of [
       { stage: 'parse', percent: 6 }, { stage: 'parse', percent: 44 },
-      { stage: 'parse', percent: 85 }, { stage: 'render', percent: 85 },
-      { stage: 'render', percent: 100 },
+      { stage: 'parse', percent: 60 }, { stage: 'pictures', percent: 60 },
+      { stage: 'pictures', percent: 73 }, { stage: 'pictures', percent: 85 },
+      { stage: 'render', percent: 85 }, { stage: 'render', percent: 100 },
     ]) {
       at = convert.nextProgress(at, line);
       seen.push(at.percent);
     }
-    expect(seen).toEqual([6, 44, 85, 85, 100]);
+    expect(seen).toEqual([6, 44, 60, 60, 73, 85, 85, 100]);
     // Every step forward or level, never back.
     for (let i = 1; i < seen.length; i += 1) expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1]);
   });
@@ -1315,19 +1322,30 @@ describe('what the Convert surface decides', () => {
     expect(convert.PROGRESS_START.label).toBe('starting up');
     expect(convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 40 }).label)
       .toBe('reading the pages (40%)');
-    // Crossing into rendering is news even though the bar does not move: the
-    // engine hands over at 85 on both sides of the boundary.
-    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 85 });
-    expect(parsed.label).toBe('reading the pages (85%)');
-    const rendering = convert.nextProgress(parsed, { stage: 'render', percent: 85 });
+    // Crossing into the next stage is news even though the bar does not move:
+    // the engine hands over at the same percent on both sides of each
+    // boundary.
+    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 60 });
+    expect(parsed.label).toBe('reading the pages (60%)');
+    const pictures = convert.nextProgress(parsed, { stage: 'pictures', percent: 60 });
+    expect(pictures.label).toBe('reading the pictures (60%)');
+    expect(pictures.percent).toBe(60);
+    const decoded = convert.nextProgress(pictures, { stage: 'pictures', percent: 85 });
+    expect(decoded.label).toBe('reading the pictures (85%)');
+    const rendering = convert.nextProgress(decoded, { stage: 'render', percent: 85 });
     expect(rendering.label).toBe('building the book (85%)');
     expect(rendering.percent).toBe(85);
+    // A script with no pictures never names that stage: the pages hand
+    // straight over to the book.
+    expect(convert.nextProgress(parsed, { stage: 'render', percent: 85 }).label)
+      .toBe('building the book (85%)');
   });
 
   test('a line that is late, unknown or malformed leaves the bar alone', () => {
     const half = convert.nextProgress(convert.PROGRESS_START, { stage: 'render', percent: 50 });
     for (const junk of [
       { stage: 'parse', percent: 20 },      // a parse line arriving after render began
+      { stage: 'pictures', percent: 40 },   // a pictures line arriving after render began
       { stage: 'render', percent: 50 },     // the percent it is already showing
       { stage: 'polish', percent: 99 },     // a stage this window does not know
       { stage: 'render', percent: 'lots' }, // not a number
@@ -1337,16 +1355,26 @@ describe('what the Convert surface decides', () => {
     }
     // ...and a percent outside the contract is clamped, not drawn past the end.
     expect(convert.nextProgress(half, { stage: 'render', percent: 900 }).percent).toBe(100);
+    // A late line from an earlier stage at the very percent of the handover
+    // does not walk the read-out back either.
+    const parsed = convert.nextProgress(convert.PROGRESS_START, { stage: 'parse', percent: 60 });
+    const pictures = convert.nextProgress(parsed, { stage: 'pictures', percent: 60 });
+    expect(convert.nextProgress(pictures, { stage: 'parse', percent: 60 })).toBe(pictures);
+    const rendering = convert.nextProgress(pictures, { stage: 'render', percent: 85 });
+    expect(convert.nextProgress(rendering, { stage: 'pictures', percent: 85 })).toBe(rendering);
   });
 
-  test('the percents the engine really emits drive the bar from end to end', async () => {
-    // The other half of the pin above: the sequence is read off the engine
-    // itself rather than typed out here, so a change to PARSE_SHARE or to
-    // the throttle shows up as a failing test rather than as a stuck bar.
+  // The other half of the pin above: the sequence is read off the engine
+  // itself rather than typed out here, so a change to the shares in
+  // src/convert.ts shows up as a failing test rather than as a stuck bar. (A
+  // throttle that drops a stage's first line does not fail here, since later
+  // lines still name the stage; tests/cli.test.ts pins that.) Once without pictures and once with, because the two
+  // take different roads through the stages.
+  async function engineLabels(fixture: string) {
     const root = new URL('..', import.meta.url).pathname;
     const proc = Bun.spawn(
-      ['bun', join(root, 'src', 'cli.ts'), join(root, 'tests', 'fixtures', 'screenplay.pdf'),
-        '--json', '--progress', '-o', join(SCRATCH, 'convert-progress.epub')],
+      ['bun', join(root, 'src', 'cli.ts'), join(root, 'tests', 'fixtures', fixture),
+        '--json', '--progress', '--no-fountain', '-o', join(SCRATCH, `progress-${fixture}.epub`)],
       { stdout: 'pipe', stderr: 'pipe' },
     );
     const [stderr] = await Promise.all([new Response(proc.stderr).text(), proc.exited]);
@@ -1357,14 +1385,27 @@ describe('what the Convert surface decides', () => {
     let at = convert.PROGRESS_START;
     const seen = lines.map((line: { stage: string; percent: number }) => {
       at = convert.nextProgress(at, line);
-      return at.percent;
+      return at;
     });
-    for (let i = 1; i < seen.length; i += 1) expect(seen[i]).toBeGreaterThanOrEqual(seen[i - 1]);
+    const percents = seen.map((p: Progress) => p.percent);
+    for (let i = 1; i < percents.length; i += 1) expect(percents[i]).toBeGreaterThanOrEqual(percents[i - 1]);
     // It starts somewhere near the beginning and finishes AT the end: a bar
     // that stopped at 72% would satisfy monotonicity and still be wrong.
-    expect(seen[0]).toBeLessThan(50);
+    expect(percents[0]).toBeLessThan(50);
     expect(at.percent).toBe(100);
     expect(at.label).toBe('building the book (100%)');
+    // The stages the read-out named, in order, each once.
+    return seen.map((p: Progress) => p.label.replace(/ \(\d+%\)$/, ''))
+      .filter((label: string, i: number, all: string[]) => i === 0 || all[i - 1] !== label);
+  }
+
+  test('the percents the engine really emits drive the bar from end to end', async () => {
+    expect(await engineLabels('screenplay.pdf')).toEqual(['reading the pages', 'building the book']);
+  }, 60000);
+
+  test('a script with pictures names the pictures between the pages and the book', async () => {
+    expect(await engineLabels('images.pdf'))
+      .toEqual(['reading the pages', 'reading the pictures', 'building the book']);
   }, 60000);
 
   test('the counts are one line, singular included', () => {
@@ -3771,9 +3812,9 @@ describe('the Tune surface', () => {
   let tune: Record<string, any>;
   beforeAll(async () => { tune = await import(join(UI, 'tune.js')); });
 
-  test('the eighteen are the engine’s eighteen, in both directions', async () => {
-    // A surface with seventeen has silently dropped one and a reader would
-    // never know which; a nineteenth invented here would be sent to the
+  test('the twenty are the engine’s twenty, in both directions', async () => {
+    // A surface with nineteen has silently dropped one and a reader would
+    // never know which; a twenty-first invented here would be sent to the
     // engine and discarded by resolveFormatOptions without a word.
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
     expect([...tune.OPTION_KEYS].sort()).toEqual(Object.keys(DEFAULT_FORMAT_OPTIONS).sort());
@@ -3846,10 +3887,13 @@ describe('the Tune surface', () => {
     //
     // So the grouping is derived from the engine and checked against it,
     // three ways and exhaustively:
-    //   live      — read by the preview builder (src/epub/html.ts, css.ts)
+    //   live      — read by the preview builder (src/epub/html.ts, css.ts,
+    //               and src/fountain/cover.ts, which html.ts asks on every
+    //               render which picture leaves the flow for the cover)
     //   book      — read only where the BOOK is packaged (src/epub/build.ts)
     //   reconvert — read while the PDF becomes a script (fountain/serialize)
-    const preview = engine('src', 'epub', 'html.ts') + engine('src', 'epub', 'css.ts');
+    const preview = engine('src', 'epub', 'html.ts') + engine('src', 'epub', 'css.ts')
+      + engine('src', 'fountain', 'cover.ts');
     const packaging = engine('src', 'epub', 'build.ts');
     const serialize = engine('src', 'fountain', 'serialize.ts');
 
@@ -3879,7 +3923,7 @@ describe('the Tune surface', () => {
     // pass the loop above by accident.
     const count = (effect: string) =>
       tune.KNOBS.filter((k: any) => k.effect === effect).length;
-    expect([count('live'), count('book'), count('reconvert')]).toEqual([13, 1, 4]);
+    expect([count('live'), count('book'), count('reconvert')]).toEqual([15, 1, 4]);
   });
 
   test('the knobs that cannot move the preview say so, in the reader’s words', () => {
@@ -3901,6 +3945,40 @@ describe('the Tune surface', () => {
     expect(title.help).toContain('preview');
   });
 
+  test('the pictures switch sits with what the book carries, and says what it leaves alone', () => {
+    // Beside the title page and the scene numbers, because it answers the
+    // same question: what goes into the book besides the words. Unlike the
+    // title page it DOES move the preview (the figure is markup html.ts
+    // writes), and its help says so, and says the one thing a reader with a
+    // picture-free script needs to hear: nothing about their book changes.
+    const front = tune.GROUPS.find((g: any) => g.id === 'front');
+    expect(front.knobs.map((k: any) => k.key)).toContain('includeImages');
+    const pictures = tune.knobFor('includeImages');
+    expect([pictures.kind, pictures.effect]).toEqual(['toggle', 'live']);
+    expect(pictures.label).toBe('Pictures from the script');
+    expect(pictures.help).toContain('preview');
+    expect(pictures.help.toLowerCase()).toContain('no pictures');
+    expect(pictures.help).not.toContain('—');
+  });
+
+  test('the cover switch sits under the pictures switch, and says what moves', () => {
+    // Under the pictures, because it is about one of them. Live, because the
+    // preview is the book's own body and the card leaves that body when it
+    // becomes the cover: flipping this on a script with a title card adds
+    // or removes the card at the front of the preview. Its help says so, and
+    // says what a script without a card needs to hear.
+    const front = tune.GROUPS.find((g: any) => g.id === 'front');
+    const keys = front.knobs.map((k: any) => k.key);
+    expect(keys.indexOf('promoteCoverImage')).toBe(keys.indexOf('includeImages') + 1);
+    const cover = tune.knobFor('promoteCoverImage');
+    expect([cover.kind, cover.effect]).toEqual(['toggle', 'live']);
+    expect(cover.label).toBe('Title card as the cover');
+    expect(cover.help).toContain('cover');
+    expect(cover.help).toContain('preview');
+    expect(cover.help.toLowerCase()).toContain('same book either way');
+    expect(cover.help).not.toContain('—');
+  });
+
   test('a knob that is doing nothing says why, rather than vanishing', () => {
     // The cue indents mean nothing while cues are centered. Hiding them
     // takes the explanation away with the control, and the reader is left
@@ -3919,9 +3997,9 @@ describe('the Tune surface', () => {
       if (knob.needs !== undefined) continue;
       expect(tune.idleReason(knob, centered), `${knob.key} idles for no reason`).toBe(null);
     }
-    // Nothing is removed from the surface by a setting: eighteen controls
-    // are eighteen controls whatever the script is tuned to.
-    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(18);
+    // Nothing is removed from the surface by a setting: twenty controls
+    // are twenty controls whatever the script is tuned to.
+    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(20);
   });
 
   test('a control’s value becomes something the engine will keep, or nothing', () => {
@@ -3969,7 +4047,7 @@ describe('the Tune surface', () => {
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
     const whole = tune.settingsFrom({ settings: { ...DEFAULT_FORMAT_OPTIONS } });
     expect(whole).toEqual({ ...DEFAULT_FORMAT_OPTIONS });
-    // One key short: seventeen sliders and one at NaN.
+    // One key short: nineteen controls and one slider at NaN.
     const short: Record<string, unknown> = { ...DEFAULT_FORMAT_OPTIONS };
     delete short.cueIndentPct;
     expect(tune.settingsFrom({ settings: short })).toBe(null);
@@ -3985,7 +4063,7 @@ describe('the Tune surface', () => {
     expect(tune.settingsFrom({ settings: [] })).toBe(null);
     expect(tune.settingsFrom({})).toBe(null);
     expect(tune.settingsFrom(undefined)).toBe(null);
-    // A nineteenth knob from a newer engine survives the round trip rather
+    // A twenty-first knob from a newer engine survives the round trip rather
     // than being quietly dropped out of the script's settings.
     const future = tune.settingsFrom({
       settings: { ...DEFAULT_FORMAT_OPTIONS, sceneNumberSide: 'left' },
@@ -4065,6 +4143,22 @@ describe('the Tune surface', () => {
     expect(tune.statusFor('elsewhere').line).toBe('');
   });
 
+  test('a rebuild’s warnings are shown as the Convert page shows a conversion’s, and nothing else is', () => {
+    // The engine's sentence for a picture the rebuilt book lacks, in the
+    // parentheses the Convert page puts around a conversion's warnings.
+    const lost = '1 picture this script shows could not be found in its picture folder, so the book was made without it.';
+    expect(tune.warningLines({ ok: true, warnings: [lost] })).toEqual([`(${lost})`]);
+    expect(tune.warningLines({ ok: true, warnings: ['  One.  ', 'Two.'] })).toEqual(['(One.)', '(Two.)']);
+    // No warnings, or none the contract promises, is nothing to show: the
+    // caption is cleared, not filled with "undefined" or an empty pair.
+    expect(tune.warningLines({ ok: true, warnings: [] })).toEqual([]);
+    expect(tune.warningLines({ ok: true })).toEqual([]);
+    expect(tune.warningLines({ ok: true, warnings: 'one' })).toEqual([]);
+    expect(tune.warningLines({ ok: true, warnings: [null, 3, '   ', { line: 'x' }] })).toEqual([]);
+    expect(tune.warningLines(null)).toEqual([]);
+    expect(tune.warningLines(undefined)).toEqual([]);
+  });
+
   test('a read-out carries its unit, and never reads NaN', () => {
     const margin = tune.knobFor('dialogueSideMarginPct');
     expect(tune.displayValue(margin, 20)).toBe('20%');
@@ -4080,7 +4174,7 @@ describe('the Tune surface', () => {
     expect(tune.NOT_SET).toBe('not set');
   });
 
-  test('two settings objects are compared by the eighteen, not by identity', () => {
+  test('two settings objects are compared by the twenty, not by identity', () => {
     const a: Record<string, unknown> = { extra: 1 };
     for (const key of tune.OPTION_KEYS) a[key] = 1;
     a.fontFamily = 'serif';
@@ -4273,7 +4367,7 @@ describe('the Settings page, mounted', () => {
     expect(indent.disabled).toBe(true);
     expect(why().textContent).toBe(idleSentence);
     // Nothing is removed from the page by a setting.
-    expect(pane.querySelectorAll('.knob').length).toBe(18);
+    expect(pane.querySelectorAll('.knob').length).toBe(20);
   });
 
   test('a moved knob is saved through the engine once it settles, and the book rebuilt with the whole of the settings', async () => {
@@ -4303,6 +4397,48 @@ describe('the Settings page, mounted', () => {
     // Its own storage is the engine's sidecar, not the window's.
     expect(storage.dump()).toEqual({});
     expect(pane.textContent).not.toContain('null');
+  });
+
+  test('a rebuild that left pictures out says so under the status, until one that did not', async () => {
+    // Tune rewrites the library book on every knob move. A picture the
+    // script shows and its folder no longer holds is a figure gone from that
+    // book, and the engine's answer says so; the reader has to see it.
+    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
+    const { pane, knob, tauri, status } = await mountSettings();
+    const caption = () => pane.querySelector('.tune-warnings')!;
+    const lost = '1 picture this script shows could not be found in its picture folder, so the book was made without it.';
+    /** The save and the rebuild for a knob already moved to `value`. */
+    const finish = async (value: string, answer: Record<string, unknown>) => {
+      await SETTLE();
+      tauri.callsTo('settings').filter((c) => c.args.includes('--set')).at(-1)!
+        .answer({ ok: true, settings: { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: Number(value) } });
+      await settle();
+      tauri.pending().find((c) => c.args[1] === '--json' && c.args.includes('-o'))!
+        .answer({ ok: true, previewHtml: '', ...answer });
+      await settle();
+    };
+    const rebuild = async (value: string, answer: Record<string, unknown>) => {
+      knob('dialogueSideMarginPct').input(value);
+      await finish(value, answer);
+    };
+    expect(caption().hidden).toBe(true);
+    expect(caption().getAttribute('role')).toBe('status');
+
+    await rebuild('12', { warnings: [lost] });
+    expect(status()!.textContent).toContain('Saved');
+    expect(caption().hidden).toBe(false);
+    expect(caption().textContent).toBe(`(${lost})`);
+
+    // Still there while the next change is owed: the book on disk still
+    // lacks the picture until a rebuild says otherwise.
+    knob('dialogueSideMarginPct').input('13');
+    expect(caption().textContent).toBe(`(${lost})`);
+    await finish('13', { warnings: [] });
+    expect(caption().hidden).toBe(true);
+    expect(caption().textContent).toBe('');
+
+    await rebuild('14', { warnings: [lost] });
+    expect(caption().textContent).toBe(`(${lost})`);
   });
 
   test('a save that fails is still owed: the next save carries it again, and nothing claims "Saved"', async () => {
@@ -7624,8 +7760,8 @@ describe('a refused file is no longer a dead end', () => {
 
 });
 
-describe('eighteen settings stop arriving as one wall', () => {
-  // All eighteen were open at once, under five headings, which is a long
+describe('twenty settings stop arriving as one wall', () => {
+  // Every one was open at once, under five headings, which is a long
   // scroll of controls most of which nobody is looking for. Each group folds
   // now, and the first is open so the surface never opens as a list of five
   // shut boxes with nothing to read.
@@ -7639,11 +7775,11 @@ describe('eighteen settings stop arriving as one wall', () => {
   });
 
   test('every group is still reachable, none is dropped', () => {
-    // Folding is not hiding: all five headings remain, and all eighteen knobs
+    // Folding is not hiding: all five headings remain, and all twenty knobs
     // remain under them. A "compact" that quietly retired a setting would
     // leave it applying to every conversion with no way to find it.
     expect(tune.GROUPS.length).toBe(5);
-    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(18);
+    expect(tune.GROUPS.flatMap((g: any) => g.knobs).length).toBe(20);
   });
 });
 
@@ -7683,7 +7819,7 @@ describe('the settings explain themselves in the reader\'s words', () => {
     // finding nothing, which is the failure mode of every sweep like this.
     const tune: any = await import(join(UI, 'tune.js'));
     const all = tune.GROUPS.flatMap((g: any) => g.knobs.map((k: any) => k.label));
-    expect(all.length).toBe(18);
+    expect(all.length).toBe(20);
     expect(ENGINE_WORDS.some((w) => 'Applies on new-format Kindle (KFX)'.includes(w))).toBe(true);
   });
 });

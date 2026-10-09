@@ -514,6 +514,40 @@ describe('the window is granted no more than it needs', () => {
     expect(CONFIG.identifier).toBe('com.darkwell.screepub');
   });
 
+  test('the content security policy is the window’s own files, plus pictures written into the page', () => {
+    // Pinned whole, because a policy is loosened one clause at a time and
+    // every clause reads as harmless on its own.
+    //
+    // `default-src 'self'`: everything the window loads comes from its own
+    // bundled files. It is also what refuses every inline script and style,
+    // including a <style> inside the reader's srcdoc frame, and the window
+    // works around that with constructed stylesheets (read.js, convert.js)
+    // rather than by loosening it.
+    //
+    // `img-src 'self' data:`: the reader preview carries each picture inside
+    // its `<img>` as a data: URI, because the preview is one document handed
+    // to an iframe as text, with no folder for a path to point into. A srcdoc
+    // frame inherits this policy, so without `data:` every figure in the
+    // reader is a broken image. `'self'` is repeated because naming img-src
+    // REPLACES default-src for pictures rather than adding to it: without it,
+    // pictures would lose the window's own origin, which default-src gave
+    // them. The window ships no image file today, so that half is about not
+    // narrowing anything, not about a file that needs it.
+    //
+    // `connect-src`: the window's own origin and the device-request
+    // service, the one address it posts to (tests/device-requests-ui.test.ts
+    // pins it against the module that names it).
+    //
+    // Nothing else. No 'unsafe-inline', no blob:, and data: for pictures
+    // only: a data: script or stylesheet is as much a way in as an inline one.
+    // The whole security object, not just `csp`: a `devCsp`, `headers` or
+    // `assetProtocol` key beside it could loosen the window without touching
+    // the policy string.
+    expect(CONFIG.app.security).toEqual({
+      csp: "default-src 'self'; img-src 'self' data:; connect-src 'self' https://screepub-device-requests.samuelsandweiss.workers.dev",
+    });
+  });
+
   test('the frontend is static files, not a dev server', () => {
     // A `devUrl` or a `beforeDevCommand` would reintroduce the npm
     // toolchain this piece deliberately does without.
@@ -1110,7 +1144,7 @@ describe('what sidecar.rs says about a quit mid-call is true of the engine', () 
     return found;
   };
 
-  test('every engine write is temp-then-rename except the ones the comment names', () => {
+  test('every engine write is temp-then-rename except the ones the comment names, and the decoder copy into a private temp folder', () => {
     expect(engineWrites()).toEqual({
       // temp-then-rename: the writeFileAtomic helpers and their like
       'src/cli.ts': 2, // writeFileAtomic, and the --debug dump written in place
@@ -1120,6 +1154,12 @@ describe('what sidecar.rs says about a quit mid-call is true of the engine', () 
       // adopted sidecar
       'src/atomic-write.ts': 2,
       'src/replace-file.ts': 1,
+      // In place, and safe to be: pdf.js's image decoders, copied into a
+      // private folder the engine makes fresh in the system temp folder and
+      // removes at exit. Nothing outside that one process ever reads it, so
+      // even a kill mid-copy loses nothing of the user's, and the comment,
+      // which names what a person would miss, has nothing to add.
+      'src/parser/pdfjs-wasm.ts': 1,
     });
     const sidecar = rustSources.find((f) => basename(f.name) === 'sidecar.rs')!.text;
     const comment = sidecar.slice(sidecar.indexOf('pub async fn run('), sidecar.indexOf('let (mut rx'));

@@ -28,9 +28,10 @@ export interface JsonError {
     | 'kfx-install-failed'
     // Showing a file in the file manager (parity piece C).
     | 'reveal-failed'
-    // The route verb (parity piece B): a route that cannot fire here (its
-    // message is the row's fix), and one whose app, page or folder did not
-    // open (its message names which).
+    // The route verb (parity piece B): a route that cannot fire here, or
+    // cannot carry this book (Kindle email past Amazon's size limit); its
+    // message is the fix. And one whose app, page or folder did not open
+    // (its message names which).
     | 'route-unavailable'
     | 'route-failed'
     // A reader that would not eject (send from Convert): something has a file open, or the tool timed out.
@@ -62,6 +63,50 @@ export function mapConversionError(err: unknown): JsonError | null {
     return { code: 'unreadable', message: `cannot read the input file (${fsCode})` };
   }
   return null;
+}
+
+/**
+ * Map a failed write of the picture folder to `unwritable`, or null for a
+ * throw that is not the filesystem refusing (the caller's catch-all owns
+ * those: a bug of ours should still arrive as `internal` rather than be
+ * dressed up as the disk's fault).
+ *
+ * Named for the FOLDER the pictures were going to, never the path that threw:
+ * the atomic writer fails on its temp file, so the raw error reads
+ * `ENOENT: ... open '/lib/.p001-01.png.80708.tmp'`, which is an implementation
+ * detail in text a person reads, the leak `bad-options` has its own code to
+ * avoid.
+ *
+ * PARTIAL OUTPUT is stated rather than avoided. The book is written before
+ * its pictures, so a conversion that fails here has already put a complete
+ * EPUB on disk. Deleting it to make the failure tidy would be worse (a book
+ * the reader can open is not something to throw away because its pictures
+ * could not be saved), so the answer stays a failure and the message says
+ * what is there.
+ *
+ * And what is NOT there. The `.fountain` is written after its pictures, so on
+ * this path it is never the new one: a first conversion has none, and a
+ * re-conversion keeps the previous run's, which still names the previous
+ * pictures and no longer matches the EPUB beside it. The folder itself may
+ * hold some new pictures among the old. That is always true here, so the
+ * message always says the `.fountain` was not updated.
+ */
+export function unwritableError(
+  folder: string,
+  err: unknown,
+  alreadyWritten: readonly string[],
+): JsonError | null {
+  // The same test as every other output write (isWriteRefusal, below).
+  if (!isWriteRefusal(err)) return null;
+  const code = (err as NodeJS.ErrnoException).code;
+  const already =
+    alreadyWritten.length === 0
+      ? ''
+      : ` ${alreadyWritten.join(', ')} ${alreadyWritten.length === 1 ? 'was' : 'were'} already written.`;
+  return {
+    code: 'unwritable',
+    message: `cannot write the pictures to ${folder} (${code}).${already} The .fountain was not updated.`,
+  };
 }
 
 /** A failure that already knows its contract code. Thrown by the device

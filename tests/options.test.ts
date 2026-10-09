@@ -42,6 +42,8 @@ describe('resolveFormatOptions', () => {
     // what keeps them one.
     const canonical = await Bun.file(new URL('../format-defaults.json', import.meta.url)).json();
     expect(DEFAULT_FORMAT_OPTIONS).toEqual(canonical);
+    expect(canonical.includeImages).toBe(true);
+    expect(canonical.promoteCoverImage).toBe(true);
   });
 
   test('numeric knobs are clamped to sane ranges', () => {
@@ -84,6 +86,26 @@ describe('resolveFormatOptions', () => {
     // regression would flip this to false.
     expect(
       resolveFormatOptions({ preserveFontShifts: 0 } as Record<string, unknown>).preserveFontShifts,
+    ).toBe(true);
+  });
+
+  test('includeImages defaults to true and accepts a boolean', () => {
+    expect(resolveFormatOptions({}).includeImages).toBe(true);
+    expect(resolveFormatOptions({ includeImages: false }).includeImages).toBe(false);
+    // Falsy-but-invalid, per the two above: a `Boolean(p[key])` regression
+    // would turn every script's pictures off on a stray 0.
+    expect(
+      resolveFormatOptions({ includeImages: 0 } as Record<string, unknown>).includeImages,
+    ).toBe(true);
+  });
+
+  test('promoteCoverImage defaults to true and accepts a boolean', () => {
+    expect(resolveFormatOptions({}).promoteCoverImage).toBe(true);
+    expect(resolveFormatOptions({ promoteCoverImage: false }).promoteCoverImage).toBe(false);
+    // Falsy-but-invalid, as for its neighbours: a `Boolean(p[key])`
+    // regression would take every title card off its cover on a stray 0.
+    expect(
+      resolveFormatOptions({ promoteCoverImage: 0 } as Record<string, unknown>).promoteCoverImage,
     ).toBe(true);
   });
 

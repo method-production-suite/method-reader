@@ -68,10 +68,101 @@ export function extractTitleMeta(elements: ScreenplayElement[]): TitleMeta {
   return { title, author };
 }
 
+/**
+ * An image as a Fountain note (registry #19).
+ *
+ * Emitted unconditionally, for the same reason `fmtNote` is: the `.fountain`
+ * is the app's cache boundary, so it must be byte-stable under settings flips
+ * — whether the book shows a picture is a rendering decision, never a
+ * serialization one. Read back by `parseImgNote` in notes.ts, which is the
+ * only thing that parses this string.
+ *
+ * THE WIDTH MUST BE AN INTEGER, because `WIDTH_WORD` in notes.ts reads nothing
+ * else: a fractional `w=` does not match, the note parses with the default 100
+ * instead, and every picture in the book silently renders full-column. Today
+ * `columnWidthPct` ends in Math.round so the value already is one — which is
+ * the problem, because that makes this a property of a function one module
+ * away that nobody editing it would think to check. The round here is belt and
+ * braces against exactly that, and it is free.
+ */
+function imgNote(img: NonNullable<ScreenplayElement['img']>): string {
+  const w = Math.round(img.widthPct);
+  return `[[img: ${img.file} w=${w}${img.fullPage ? ' full' : ''}]]`;
+}
+
 /** True when this element belongs in the Fountain body. */
 function isBody(el: ScreenplayElement): boolean {
+  // Images are admitted even on a title page: a picture there is the designed
+  // title card, which is the one thing on that page worth keeping.
+  //
+  // Belt and braces, not load-bearing: `insertImages` mints every image with
+  // `isTitlePage: false` already. But it does that for `extractTitleMeta`'s
+  // sake — a flagged image would land in the book's TITLE — and NOT for this
+  // filter's, so the two are independent rather than one justifying the other.
+  // A hand-built stream, or a future pass that classifies images, meets this.
+  if (el.type === 'image') return el.isReadable;
   return !el.isTitlePage && el.isReadable && el.type !== 'page-number';
 }
+
+/**
+ * True when a page marker may be anchored to this element.
+ *
+ * A POSITIVE list, and that is the point. An exclusion list (anchor anything
+ * that is not dialogue, a parenthetical or a page number) admits every type
+ * added to ElementType by default, and with it the power to close an open
+ * speech, since the marker branch calls closeBlock itself; `image` is exactly
+ * such a type. Here a new type anchors nothing until someone says it does,
+ * and the switch is exhaustive with no `default`, so adding one to
+ * ElementType stops the typecheck until that decision is made.
+ *
+ * The rule it encodes: a marker is a navigation anchor onto a line of text a
+ * reader can land on. Headings, cues, action and transitions are that.
+ * Dialogue and parentheticals are not, because a page turning mid-speech must
+ * not break the speech in half. An image is not, because it is not a line of
+ * text — and because anchoring one would strand the note `case 'image'` is
+ * waiting to defer. `page-number` never reaches here at all: isBody drops it.
+ */
+function anchorsPageMarker(el: ScreenplayElement): boolean {
+  switch (el.type) {
+    case 'scene':
+    case 'character':
+    case 'action':
+    case 'transition':
+    case 'mini-slug':
+      return true;
+    case 'dialogue':
+    case 'parenthetical':
+    case 'image':
+    case 'page-number':
+      return false;
+  }
+}
+
+/**
+ * A PICTURE IS NOT EVIDENCE ABOUT THE ELEMENTS AROUND IT.
+ *
+ * Both passes below decide something about a cue by looking at its neighbour,
+ * and both are wrong if a plate can sit in between: an image says nothing
+ * about whether a cue has a speech under it, or about whether a speech
+ * continues across a page. So neighbour means "nearest element that is not an
+ * image", in both directions, and these two helpers are that rule written
+ * once. The seam is ordinary layout — a plate at the top of a sheet, with a
+ * cue or a continuation under it.
+ */
+// Both walk off their end onto `undefined` rather than testing a bound: at
+// i = -1 or i = length the index simply misses, which is the same answer the
+// caller needs anyway ("no neighbour"). Written the same way in both
+// directions so the pair reads as one rule rather than two.
+const prevNonImage = (els: ScreenplayElement[], from: number): ScreenplayElement | undefined => {
+  let i = from;
+  while (els[i]?.type === 'image') i--;
+  return els[i];
+};
+const nextNonImage = (els: ScreenplayElement[], from: number): ScreenplayElement | undefined => {
+  let i = from;
+  while (els[i]?.type === 'image') i++;
+  return els[i];
+};
 
 /**
  * Pre-passes over body elements:
@@ -87,7 +178,13 @@ function prepare(elements: ScreenplayElement[], rejoin: boolean): ScreenplayElem
 
   const merged: ScreenplayElement[] = [];
   for (const el of body) {
-    const prev = merged[merged.length - 1];
+    // Past the plate, or a picture at the top of a sheet silently switches
+    // rejoinSplitDialogue off: the repeated cue survives and the reader gets a
+    // duplicated "NAME (CONT'D)" with one speech in two blocks. The dropped
+    // cue leaves `dialogue | image | dialogue`, and the emitter's deferral
+    // closes the loop — the block is still open when the plate arrives, so the
+    // speech rejoins and the picture lands after it.
+    const prev = prevNonImage(merged, merged.length - 1);
     if (
       rejoin &&
       el.type === 'character' &&
@@ -102,7 +199,13 @@ function prepare(elements: ScreenplayElement[], rejoin: boolean): ScreenplayElem
   }
 
   return merged.map((el, i) => {
-    const next = merged[i + 1];
+    // Past the plate for the same reason, in the other direction: a picture
+    // between a cue and its speech would otherwise demote the cue, and the
+    // speech under it would lose its speaker and render as loose action
+    // paragraphs. Reachable rather than hypothetical — the dual-dialogue
+    // ordering exception in parser-pipeline.test.ts produces exactly that
+    // shape, and so does a plate under a cue at the foot of a page.
+    const next = nextNonImage(merged, i + 1);
     if (el.type === 'character' && !(next && (next.type === 'dialogue' || next.type === 'parenthetical'))) {
       return { ...el, type: 'action' as const };
     }
@@ -205,9 +308,21 @@ export function toFountain(
   // action gets (CONT'D); scene and transition boundaries reset it.
   let lastSpeaker: string | null = null;
   let block: string[] | null = null;
+  // Image notes that arrived while a dialogue block was open, waiting for it
+  // to close. See `case 'image'` for why they cannot be written in place.
+  //
+  // INVARIANT: empty whenever `block` is null. `case 'image'` only defers into
+  // an OPEN block and writes straight to `out` otherwise, and closeBlock — the
+  // one place that nulls `block` — drains this in the same breath. That is
+  // what makes the flush order below correct without a second check, and what
+  // stops a note escaping the scene it belongs to: every heading is pushed
+  // after a closeBlock, so the drain always beats it.
+  const deferredImages: string[] = [];
   const closeBlock = () => {
     if (block && block.length > 0) out.push(block.join('\n'));
     block = null;
+    out.push(...deferredImages);
+    deferredImages.length = 0;
   };
 
   for (const el of prepare(screenplay.elements, format.rejoinSplitDialogue)) {
@@ -215,13 +330,10 @@ export function toFountain(
     if (!text) continue;
 
     // Page markers land only at block boundaries — never inside a speech
-    // (a page turning mid-speech defers its marker to the next block).
-    if (
-      format.showPageMarkers &&
-      el.type !== 'dialogue' &&
-      el.type !== 'parenthetical' &&
-      el.pageNum > lastMarkedPage
-    ) {
+    // (a page turning mid-speech defers its marker to the next block), and
+    // never on a plate. See `anchorsPageMarker` for which types those are and
+    // why the list is written the way round it is.
+    if (format.showPageMarkers && anchorsPageMarker(el) && el.pageNum > lastMarkedPage) {
       const label = el.pageNum + pageOffset;
       if (label >= 1 && lastMarkedPage !== Number.NEGATIVE_INFINITY) {
         closeBlock();
@@ -288,10 +400,32 @@ export function toFountain(
         lastSpeaker = null;
         out.push(/^\./.test(text) ? `!${text}` : `.${text}`);
         break;
+      case 'image': {
+        // Its own block with blank lines either side, which is what makes
+        // fountain-js emit a standalone `note` token rather than folding it
+        // into a neighbouring paragraph the way the fmt notes are folded.
+        //
+        // Unless a dialogue block is open, and then it WAITS. A cue alone in
+        // its own paragraph is not a cue: fountain-js re-parses "@BUNNY\n\n"
+        // as action and prints the "@" as literal text, so breaking a speech
+        // here to keep a picture in place costs the speech AND shows a marker
+        // to the reader. `prepare`'s lookahead is the other half of the same
+        // decision: it stops the cue being demoted, this stops the block being
+        // split. The picture lands immediately after the speech it interrupted
+        // — a few lines lower than the PDF drew it, which is the whole cost.
+        if (!el.img) break;
+        const note = imgNote(el.img);
+        if (block) deferredImages.push(note);
+        else out.push(note);
+        break;
+      }
       default: {
-        // action — the only type left, and the only one here besides dialogue
-        // allowed to carry a styled variant or an fmt note (a future type
-        // falls back to plain and unmarked).
+        // action, and the only type left — every other member of ElementType
+        // has a case above except `page-number`, which never arrives because
+        // isBody drops it. It is also the only type here besides dialogue
+        // allowed to carry a styled variant or an fmt note; anything else that
+        // ever lands here falls back to plain and unmarked, which is what the
+        // fallback is for.
         closeBlock();
         const body = el.type === 'action'
           ? disarmBoneyard((el.styledText ?? el.text).trim())

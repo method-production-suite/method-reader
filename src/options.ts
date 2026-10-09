@@ -1,5 +1,5 @@
 // Formatting options — the single knob surface shared by the CLI
-// (--options file.json) and the Mac app's Settings panel. Registry with
+// (--options file.json) and the window's Settings page. Registry with
 // rationale for each: docs/formatting-options-log.md.
 
 export interface FormatOptions {
@@ -48,6 +48,19 @@ export interface FormatOptions {
    * #18). Off renders every block in the body face; the notes stay in the
    * .fountain either way, so flipping this needs no re-parse */
   preserveFontShifts: boolean;
+  /** render the pictures the PDF carried, as figures where their notes sit
+   * (registry #19). Off renders none; like the font shifts, the notes and
+   * the picture folder stay put either way, so flipping this needs no
+   * re-parse. A script with no pictures renders identically on or off */
+  includeImages: boolean;
+  /** make a designed title card the book's cover: a full-page picture that
+   * is the first thing the script shows, ahead of its first scene heading,
+   * leaves the EPUB's flow and is declared the cover, so a library shows
+   * artwork instead of a grey rectangle (src/fountain/cover.ts). The .mobi
+   * names the same picture as its cover and keeps it on its page (registry
+   * #19b). Needs includeImages; a script without such a card renders
+   * identically on or off */
+  promoteCoverImage: boolean;
 }
 
 export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
@@ -69,6 +82,8 @@ export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
   justifyText: false,
   printSplitMinimums: true,
   preserveFontShifts: true,
+  includeImages: true,
+  promoteCoverImage: true,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -114,5 +129,7 @@ export function resolveFormatOptions(
     justifyText: bool('justifyText'),
     printSplitMinimums: bool('printSplitMinimums'),
     preserveFontShifts: bool('preserveFontShifts'),
+    includeImages: bool('includeImages'),
+    promoteCoverImage: bool('promoteCoverImage'),
   };
 }

@@ -532,7 +532,12 @@ and the suite will say so if you forget.
   `strip` does not. This used to exit 0 and silently change nothing;
   `convertFountain` now returns a warning for the provable case (strip
   requested, `(CONT'D)` cues present), which reaches `--json`, the CLI's
-  human output, and the app. #8 gets no runtime warning because
+  human output, and the app. Since 2026-10-01 it is worded for a writer
+  ("This book still shows (CONT'D): it is written into the script the book
+  was made from. Removing it takes effect when you convert the script's
+  PDF."), because the window's Tune shows every engine warning under each
+  rebuild and the old sentence named the option key and the file format.
+  #8 gets no runtime warning because
   `serialize.ts` drops `(MORE)` unconditionally, so an unrejoined split is
   indistinguishable from an ordinary same-speaker continuation — a guessed
   warning would be worse than this note. The reader rail groups both under
@@ -1078,10 +1083,11 @@ and the suite will say so if you forget.
 
 ## Mac app notes
 
-**These eighteen options are the Tune surface of the Tauri window**
+**These twenty options are the Tune surface of the Tauri window**
 (`desktop/ui/tune.js`), the one Mac app since the identifier release. The
-older SwiftUI reader rail described below was their first interface; that
-app is retired, no longer published, and since piece F3 gone from this
+older SwiftUI reader rail described below was the first interface for
+eighteen of them (it never gained `includeImages` or `promoteCoverImage`);
+that app is retired, no longer published, and since piece F3 gone from this
 repository. The Tune surface keeps the same four
 groups (the page, dialogue, the text, what the book carries), plus the four
 `Read from the PDF` knobs. The window owns no formatting rule of its own: it
@@ -1266,3 +1272,564 @@ engine needs to change.
   `src/fountain/serialize.ts` (`fmtNote`), `src/fountain/notes.ts`,
   `src/epub/html.ts` + `src/epub/css.ts`, `src/mobi/html.ts`,
   `src/options.ts`, and the window's control in `desktop/ui/tune.js`.
+
+### 19. Pictures recognised, recorded as notes (always on, no option; 2026-10-01)
+- **What:** a PDF conversion finds the pictures a script paints (storyboard
+  panels, reference stills, a lookbook plate, a designed title card), keeps
+  the ones that are art, and records each kept one in the `.fountain` as an
+  invisible Fountain note, `[[img: p012-01.png w=71 full]]`, with its pixels
+  as a PNG in a `<stem>.images/` folder beside it.
+- **Recognition alone never changes the book.** Whether a note renders is
+  #19a's option; with it off, both renderers drop the note unread, exactly
+  as they did before pictures existed. One thing in the EPUB changes whatever
+  the option says, and on purpose: its `dc:identifier` is a hash of the
+  `.fountain` text (`renderBooks` in `src/convert.ts`; the text is the
+  identity), so a script whose `.fountain` gains notes gets a new identifier,
+  and a reader that indexes by it treats the re-converted book as a new one.
+  A script with no pictures keeps its identifier. Making a designed title
+  card the book's cover is an option of its own, `promoteCoverImage`,
+  described under #19b; it changes no `.fountain`, so it moves no
+  identifier. The design:
+  `docs/superpowers/specs/2026-10-01-images-in-the-book-design.md`.
+- **Where a picture comes from, and where it lands.** Extraction finds the
+  pictures on the operator list the text pass already fetched, and reads
+  their pixels only once both guards (#14, #15) have passed
+  (`extractText`'s `decodeImages`), while every page is still live: pdf.js
+  drops a page's pixels once the page is released, and this engine never
+  releases one. Pixels are flattened onto WHITE, since the
+  PNG is colour type 2 with no alpha and a transparent pixel would otherwise
+  take whatever colour was stored under it, frequently black; downscaled so
+  the longer edge is at most `IMAGE_MAX_EDGE = 1400` px; and encoded at parse
+  time. 1400 is a size cap, not a panel measurement: it refuses to carry a
+  4000 px lookbook scan at full size, and it is comfortably over the width any
+  figure is drawn at on the 6-inch class a script is usually read on (a
+  Paperwhite panel is 1236 across). It does not clear every panel Screepub
+  ships to: a portrait full-page plate filling a Paperwhite's width asks for
+  about 1648 px of height and is handed 1400, and the 10-inch class
+  (reMarkable, Supernote Manta, Kindle Scribe) is past 1400 on its short edge.
+  Each is a mild upscale of one plate on one device, where raising the cap
+  costs every book with a picture in it. Kept pictures join the element stream where they sat on the page:
+  page ascending, then top edge descending, a text line first on a tie
+  (`insertImages`, step 5.8 of `parseLines`). That step runs after
+  `mergeSplitSpeeches`, so a plate at the top of a page cannot split a speech
+  the page break split, and before the metadata passes, so scene indices count
+  it.
+- **The note:** `[[img: <file> w=<N>]]`, with ` full` before the closing
+  brackets when the picture covers at least `FULL_PAGE_AREA_FRAC = 0.70` of
+  its sheet. `<file>` is `pNNN-NN.png`, the page number and the picture's
+  order on that page, so a re-conversion reproduces byte for byte. `w=` is an
+  INTEGER percentage of the script's TEXT COLUMN, not of the page (6.0 of an
+  8.5 inch sheet, 70.6%), clamped to 5..100: the e-book has no print margins,
+  so measuring against the page would set every picture about 30% too
+  narrow. Always serialized, like #18's notes, because the `.fountain` is the
+  cache boundary and has to stay byte-stable under a later settings flip. One
+  reader, `parseImgNote` in `src/fountain/notes.ts` (the #5b/#18 rule: one
+  module, imported by everything that reads the note). It is case-sensitive on
+  `img:`, a width it cannot read means 100 (too large beats too small to see),
+  and the filename must pass the allowlist.
+- **The allowlist is a security boundary, not tidiness:**
+  `^[A-Za-z0-9._-]{1,64}\.png$`. A `.fountain` can be hand-edited or arrive
+  from someone else, and this string becomes a zip entry path and a filename
+  read off disk. So the class holds no separator, no `%`, nothing absolute,
+  and only a lowercase `.png`, and a name that fails is dropped, never
+  repaired. The end anchor is pinned by notes that only it refuses
+  (`a.png/../../x`, `a.png.exe`). The picture folder's reader applies the same
+  `isSafeImageFile` rather than a second check. Its PRUNE uses a narrower test
+  (`isGeneratedImageFile`, only names the engine writes), so a user's own
+  `board-01.png` in that folder is never deleted.
+- **The folder:** `<stem>.images/` beside the `.fountain` (in the script's
+  library folder under `--library`), written by the CLI through
+  `src/library-images.ts`, pictures first so the `.fountain` never names a
+  file that is not there. A run removes the generated pictures it did not
+  produce, and a run with no pictures clears the last one's folder and creates
+  none. `--no-fountain` writes neither. Reading the folder back refuses
+  symlinks, directories and FIFOs, any file over `MAX_IMAGE_FILE_BYTES`
+  (derived from `IMAGE_MAX_EDGE`, so it is what this engine's encoder could
+  have written), and anything that is not a PNG. The folder itself has to be
+  a folder of its own: a symlink (wherever it points) or a file at that path
+  is never followed, so writing refuses it as `unwritable`, the prune leaves
+  it alone, and reading it back reads nothing and says why. Only the folder
+  itself is ever created, never a missing parent. A folder that cannot be written is the
+  `unwritable` error, naming the folder and what was already written, and
+  saying the `.fountain` was not updated: on a re-conversion the previous one
+  stays, still naming the previous pictures. The `--json` answer gains `imagesPath` (where a folder was
+  written) and `imageCount` (how many pictures the conversion carried, which
+  `--no-fountain` reports too); both are omitted when there is nothing to say.
+- **What counts as a picture: six rules, in this order, and the first to fire
+  is the one reported** (`keepArtwork` in `src/parser/artwork.ts`; its
+  `droppedBy` histogram is the retune instrument, counted in PLACEMENTS):
+  1. **Pixels:** `MIN_PIXELS = 32` source pixels on each edge, as the paint
+     operator declared them. A 16x16 logo glyph is not worth carrying however
+     large the page draws it.
+  2. **Width:** `MIN_WIDTH_FRAC = 0.10` of page width, for a tall narrow strip
+     (a sidebar rule, a revision bar) that the area floor cannot see.
+  3. **Height:** `MIN_HEIGHT_FRAC = 0.03` of page height. It can barely fire
+     while the area floor is also 3%: a box under 3% of page height reaches 3%
+     of the area only by being wider than the page.
+  4. **Area:** `MIN_AREA_FRAC = 0.03` of the page (about 1.9 by 1.45 inches on
+     US Letter), the product of the two linear fractions. Aimed at decoration,
+     not at logos: a letterhead logo clears it, which is what rule 5 is for.
+     Do not raise it to catch one.
+  5. **Furniture:** the identical picture on `FURNITURE_PAGES = 3` or more
+     distinct sheets, OR on at least `FURNITURE_SHARE_MIN_PAGES = 2` sheets
+     that are also `FURNITURE_FRAC = 0.25` of the document. Sameness is a hash
+     of the ENCODED PNG, because one logo is often a different pdf.js object on
+     every sheet. The sibling of `suppressBoilerplate` (#9), set to catch
+     earlier: a false positive there hides a line of script, here it loses a
+     picture. `FURNITURE_SHARE_MIN_PAGES` is derived rather than chosen:
+     without it a lone picture in a four-sheet document is 25% "repeated".
+  6. **Background:** covering `BACKGROUND_AREA_FRAC = 0.90` of a page that
+     also carries `BACKGROUND_TEXT_LINES = 20` or more text lines (about a
+     third of a 55-line page). Neither half means anything alone: the text
+     count is what tells a watermark printed behind the script from a designed
+     title card of the same geometry.
+  Every comparison is written `!(value >= floor)`, so a NaN out of a
+  degenerate transform is refused rather than kept. Where that bites is not
+  symmetric: the pixel floor is the only check that reads the source pixels,
+  and the area floor alone backstops all three box floors, because a NaN in
+  either linear fraction poisons the area. None of these is a format option
+  (this design has no size or greyscale controls): they are documented
+  behaviour with a rationale, like #7 and #9.
+- **The cap:** `MAX_IMAGES = 60` per document, keeping a PREFIX in document
+  order rather than the largest. A size-ranked subset illustrates page 3 and
+  page 40 and nothing between, which reads as damage; a prefix reads as the
+  art stopping. Over the cap the user is told so ("Screepub found 126
+  pictures in this script. Only the first 60 were kept."). The only other
+  picture warnings are pictures that could not be read, and decoders that
+  could not be unpacked. The ordinary refusals above are never warned about,
+  since nearly every real script has some. Separately, `IMAGE_BUDGET_MS =
+  20000` bounds a document's whole image pass (resolve, convert, downscale,
+  encode), so a document of distinct full-page pictures cannot spend half a
+  minute on them. A document either guard refuses (#14, #15) never starts
+  that pass: both are decided on the text alone, and the pictures are decoded
+  only once both have passed (`extractText` in extract.ts).
+- **A picture cannot split a speech or cost a cue its speaker.** The
+  serializer's two neighbour tests look past pictures: cue demotion (a cue
+  with no speech under it becomes action) and the `(CONT'D)` rejoin (#8) both
+  read the nearest element that is not an image, so a plate between a cue and
+  its speech, or in a page seam between a speech's halves, changes neither. A
+  note that lands inside an open speech waits and is written right after the
+  speech closes, a few lines lower than the PDF drew it, because a cue alone
+  in its own paragraph is not a cue to fountain-js. And a picture never
+  anchors a page marker (#13a): it is not a line of text a reader can land on.
+  One imprecision is pinned rather than fixed: a picture printed inside a
+  dual-dialogue region follows the LEFT speech, because the right column's y
+  restarts at the top of the exchange (#10a). Both speeches survive, and
+  fountain-js still reads one exchange.
+- **JPEG 2000, JBIG2 and CCITT** are decoded by modules pdf.js loads from
+  OUTSIDE its bundle, through `wasmUrl`; without them every such picture is
+  lost silently. `src/parser/pdfjs-wasm.ts` embeds them and unpacks them into
+  a private temp folder, asked for per document. A machine where that folder
+  cannot be made still converts, and the warning says the cause is ours.
+  `tests/fixtures/jpx.pdf` is the guard, and `tools/smoke-cli.ts` converts it
+  with every compiled CLI it smokes and requires `imageCount` 1: the Linux
+  binary on every push (ci.yml), Linux and Windows at a tag (release.yml).
+- **Provenance of the numbers.** Every threshold was chosen by eye from the
+  August design on 2026-08-06, against no real script, then **audited against
+  the private corpus on 2026-08-12 (commit `1337863`), and none moved.** Seven
+  documents (five feature screenplays, a 110-page script-plus-lookbook, a
+  30-page pitch deck): 207 painted placements, 83 kept, 58 refused by these
+  rules, 66 lost to the cap, every kept picture looked at, and no false
+  positive or false negative in a document that passes the guards. The
+  margins it left: area, the smallest kept picture a reader wanted is 3.30% of
+  its page against a largest refusal of 2.54% (the smallest keep of any kind
+  is 3.02%, pitch-deck decoration, so a retune has about half a point to clear,
+  not 0.8); width, 13.1% kept against 9.6% refused; pixels, a smallest kept
+  edge of 110 px against the one refusal, an 84x17 blank strip. Rule 5
+  accounts for 19 of the 58 refusals and every one was right; rule 6 fired
+  once, on a sheet of exactly 20 lines, which is support and not proof. The
+  known blind spot is the hash: a producer that re-rasterizes its logo per
+  page defeats it, and the size floors caught that case instead.
+  `artwork.ts` keeps each of these beside its constant. `tests/fixtures/
+  images.pdf` keeps two pictures and refuses four, each by a different rule
+  (pixels, width, furniture, background), with each picture's margin to its
+  one governing threshold stated in `tools/make-fixture.py`. Height and area
+  refuse nothing in it: area is pinned only from the keep side, by pictures
+  that must clear it (imTiny by half a point), and both boundaries are pinned
+  by hand-built candidates in `tests/artwork.test.ts`. A fixture can show the
+  numbers are self-consistent, never that they are right.
+- **Measured on the corpus, 2026-10-01: the `.fountain` gains notes and
+  nothing else.** Every PDF in the local set converted with `origin/main` and
+  with this phase, `.fountain` against `.fountain`. The only added lines are
+  `[[img: ...]]` notes and the blank line after each; no line was removed or
+  changed anywhere. Per script, anonymised in sorted order: scripts 1, 3, 4
+  and 5 are byte-identical (no picture kept). Script 2 gains 1 note, a
+  full-page plate on its second sheet (1 PNG, 1.4 MB). Script 6 is refused as
+  not a screenplay (#15) on both sides; converted with `--force` to measure
+  it, it gains 60 notes, 13 of them full-page (126 pictures found, 60 kept,
+  the cap warning given; 60 PNGs, 15.8 MB). Script 7 is refused as scanned
+  (#14) on both sides and writes no `.fountain`. **What it costs is time.**
+  Scripts 1, 3, 4 and 5 convert within 0.01 s of before; script 2 goes from
+  0.30 s to 0.60 s; forced script 6 from 1.6 s to 16.8 s, the worst case. A
+  refusal costs what it cost before pictures existed, because the image pass
+  runs only after both guards have passed: script 6 is refused as not a
+  screenplay in 1.54 s (main 1.53 s), and script 7 as scanned in 0.09 s (main
+  0.09 s), best of two. Run ahead of the guards, the same pass makes those
+  16.7 s and 3.7 s.
+- **Default:** always on. `includeImages` (#19a) gates rendering, not
+  recognition, so the notes and the folder stay whatever it is set to.
+- **Code:** `src/parser/images.ts` (`collectImagePlacements`, `toRgb`,
+  `IMAGE_MAX_EDGE`, `IMAGE_BUDGET_MS`, `isGeneratedImageFile`),
+  `src/parser/artwork.ts` (every threshold, `keepArtwork`, `MAX_IMAGES`,
+  `columnWidthPct`, `isFullPage`), `src/parser/png.ts`,
+  `src/parser/pdfjs-wasm.ts`, `src/parser/extract.ts`, `src/parser/index.ts`
+  (`insertImages`), `src/fountain/serialize.ts` (`imgNote`, `prevNonImage`,
+  `nextNonImage`, `anchorsPageMarker`), `src/fountain/notes.ts`
+  (`parseImgNote`, `isSafeImageFile`), `src/library-images.ts`,
+  `src/convert.ts` (`imageWarnings`), `src/cli.ts`, `src/cli-errors.ts`.
+
+### 19a. Pictures in the book (option `includeImages`, default ON; 2026-10-01)
+- **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
+  EPUB, in the reader preview, and in the engine's own MOBI (its form there
+  is under **The MOBI** below), except a title card the EPUB makes its cover
+  (#19b). In the EPUB and the preview:
+  `<p class="figure wNN"><img src="../images/pNNN-NN.png" alt="Illustration"/></p>`,
+  with ` figure-full` added to the class for a plate that filled its page.
+  `alt` is never empty, because an empty one declares the picture
+  decorative. The Tune page's switch is "Pictures from the script", in
+  "What the book carries". On by default (owner, 2026-10-01): the filters
+  refused every bit of furniture the corpus audit found, and a reader who
+  does not want pictures turns them off once.
+- **One predicate decides.** `rendersImage(raw, includeImages, have)` in
+  `src/fountain/notes.ts`: the option is on, the note parses (the allowlist
+  is inside `parseImgNote`), and the picture is in the set the caller can
+  actually ship. The renderer and the section opener ask the same question,
+  so they cannot disagree: whether the note draws a figure IN THE FLOW,
+  which is rendersImage's yes for every note but the cover's
+  (`art.inFlow` in `src/epub/html.ts`). A note above the first heading (a
+  title card's) opens an "Opening" section only when it draws a figure
+  there; otherwise the body is byte-identical to the text-only one. By
+  default a full-page card at the very front is the cover (#19b) and draws
+  nothing in the flow, so a card-only front opens no Opening and its scene
+  ids are the same with pictures on or off. With `promoteCoverImage` off,
+  the card opens the Opening and the first scene is `sc-002`, so a reader
+  that keeps its place by section id lands one scene off when the cover
+  switch flips on such a script, or the pictures switch while the cover is
+  off (known, not fixed).
+- **Width, as a class.** The note's `w=` rounds to the nearest five,
+  clamped to 5..100, and `p.wNN img { width: NN%; }` sets it: a class, not an
+  inline style, because the reader preview's CSP refuses `style=`
+  attributes. Only the width is authored; `.figure img { height: auto; }`
+  lets the height follow. Height is unbounded and `max-height` is no remedy
+  (Kindle strips it): a plate taller than the page slices across pages on
+  Blink. No keep on `.figure`, measured inert on Blink 2026-08-11 (17 seam
+  offsets, identical pages).
+- **The full-page plate.** `p.figure-full { margin: 0; page-break-before:
+  always; page-break-after: always; }`, on the `<p>`, never a wrapper (#8b).
+  The margin is zero because a top margin survives a forced break: under
+  `.figure`'s margin a plate within about 1em of the page height stopped
+  fitting and Blink moved it on, leaving a blank page in front (measured
+  2026-10-01, images.pdf's title card at 6x8in). The break overrides the
+  scene heading's `break-after: avoid`, so a heading directly above a plate
+  ends its page alone; CSS 2.1 has no rule that holds the two together once
+  the plate outgrows the page. No column spelling, like the scene break.
+- **Only in a book that shows one.** The figure rules are added to the
+  stylesheet only when the body used a picture (`hasFigures`, derived from
+  `usedImages` at both call sites), so a picture-less book's sheet is
+  byte-identical to the one before this entry. `usedImages` is what the
+  pages draw, so a cover, on no page, adds no rules.
+- **Packaging.** Each picture the body used, and the cover (#19b), and
+  only those, ships as `OEBPS/images/NAME`, STORED rather than deflated
+  (PNG is already compressed, and Tune re-renders the book on every
+  move), with a manifest item `image/png`, never in the spine. Ids are
+  `img-` plus the name's stem reduced to `[A-Za-z0-9_-]`, bumped `-2`,
+  `-3` against every id the package already writes, since `a.b.png` and
+  `a-b.png` would otherwise collide.
+  `buildEpub` throws on a used name it was not given the bytes for, rather
+  than ship a book epubcheck rejects; every caller builds the names and the
+  bytes from one array, so it cannot fire.
+- **The cover** is #19b: by default a full-page title card at the very
+  front becomes the EPUB's cover instead of its first page, and the MOBI
+  names it as its cover while keeping it on its page.
+- **Where the pictures come from, per route.** A PDF conversion hands over
+  the pictures it just decoded. Every render from a `.fountain` (the CLI's
+  Fountain input, which is how Tune re-renders) reads `<stem>.images/` beside
+  it through `readImages`, only when the option is on, and adds the folder's
+  warnings; it never writes or prunes that folder. Those warnings count each
+  picture the notes ask for and the book lacks once, under its most specific
+  cause: the folder is a link or a file, a listed file would not be read, a
+  listed file was past the cap, or the folder does not list it at all (a
+  deleted file, an evicted iCloud copy, no folder). A file no note names is
+  not counted at all, unreadable or past the cap: the book lacks nothing for
+  it. The book is still
+  written, and Tune shows the answer's warnings under its status line until
+  a rebuild comes back without any. `convertFountain` keeps
+  only allowlisted names whose bytes are a PNG. The no-Calibre Kindle rebuild
+  (`freshKindleArtifact`'s MOBI rung) reads the folder the same way and hands
+  that one read to both books. When a picture the notes ask for cannot be
+  read, it leaves the library EPUB as it was, rather than rewrite it without
+  that picture, and writes the `.mobi` without it: the `.mobi` is the file
+  being handed over, so it carries the pictures that were read. Nothing says
+  so yet, because the export answer has stages and no warnings; that channel
+  is an open item. Written after the book, that `.mobi` is current by the
+  staleness rule, so later exports reuse it, still without the picture, until
+  the book itself is rebuilt.
+- **The preview.** The same `tokensToBody` call as the book, with each `src`
+  a `data:image/png;base64,...` URI, so what you proof is what ships, and
+  a title card that became the cover is left out of it as it is left out of
+  the book's pages. The
+  window's CSP is `default-src 'self'; img-src 'self' data:` and nothing
+  else is loosened (pinned in `tests/desktop-shell.test.ts`). Measured
+  2026-10-01 on the corpus's heaviest picture document (60 pictures,
+  16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
+  answer from 26 KB to 22.09 MB, so the preview is built on every render
+  rather than only on request.
+- **The MOBI.** The engine's own `.mobi`, the Kindle file built when
+  Calibre is absent, carries the same pictures as the EPUB. A picture in
+  MOBI 6 is a RECORD after the text, named from the markup by number:
+  `<p align="center"><img recindex="00001" alt="Illustration"/></p>`,
+  1-based and five digits, the form calibre 9.11.0 and kindlegen 2.9 both
+  wrote (measured 2026-08-11 with `calibre-debug --inspect-mobi`). A centred
+  `<p>`, because this dialect aligns by attribute. The markup and the records
+  are one numbering with two ends, and a disagreement between them shows the
+  WRONG picture rather than none, so the numbering exists once: `mobiArt` in
+  `src/mobi/html.ts`. It asks `rendersImage` of the same names the EPUB is
+  given, so both books of a script show the same pictures, and lists them in
+  the order the body first shows them, each once (a picture shown twice is
+  one record named twice). The renderer numbers its figures from that list,
+  and `renderBooks` hands `buildMobi` the bytes in the same order. A title
+  card that is the book's cover is one of those figures here, on its page,
+  and the header names its record as the cover (#19b).
+  **No width,** and that is a refusal rather than an omission: the note's
+  `w=` is a share of the text column, which this dialect cannot state. The
+  only width it attests is a pixel count, and not even the picture's own
+  (calibre wrote `width="672" height="504"` for a 240x180 plate), so the
+  device sizes the picture. **A full-page plate** gets `<mbp:pagebreak/>`
+  before and after it, this dialect's one break primitive. Like the EPUB's,
+  it is not gated by `scenePageBreaks`; neither break is taken at the start
+  or the end of the body, so neither end of the book gets a blank page; and
+  there are never two in a row, so a scene heading straight after a plate
+  takes the plate's break rather than adding its own. A figure declines a
+  pending page marker (#13a), as the EPUB's does. **The header** names the
+  pictures in three fields, each read back from the built bytes in
+  `tests/mobi.test.ts`, each following both reference writers: 108, the
+  first image record, as an ABSOLUTE record number (both wrote their first
+  picture's own index); 194, the last content record, which reaches the last
+  picture rather than stopping at the text (both extend it over their
+  pictures; this is the silent one, since a reader that stops at the text
+  finds the pictures and ignores them); and 80, the first non-text record,
+  by rule rather than arithmetic (both point it at an index record, and
+  kindlegen's sits past a one-byte pad record after its text; this writer
+  writes neither, so here it is the first picture). FLIS and FCIS move down
+  past the pictures. `buildMobi` throws on a `recindex` its records cannot
+  answer (00000, or past the last picture), since a reader would open FLIS
+  or a text record there and show it; every caller numbers the markup and
+  orders the bytes from `mobiArt`, so it cannot fire. Each picture is one
+  record holding its PNG exactly as it was handed over, and a book with no
+  pictures is the book this writer built before records existed, byte for
+  byte with the PDB dates (bytes 36 to 43) masked. That is pinned by hash
+  three times, each hash made by the code before records: a sample book in
+  `tests/mobi.test.ts`, and the `--mobi` output of `screenplay.pdf` and of
+  `images.pdf` with the option off in `tests/convert.test.ts`. The EPUBs of
+  both fixtures are byte-identical across that change too, with the clock
+  pinned (checked 2026-10-01). The file is assembled from typed
+  arrays: copied in a byte at a time, the corpus's heaviest picture document
+  (60 pictures) cost about 390 MB of transient memory (measured 2026-10-01).
+  Calibre's MOBI reader, run inside `bun test`, gives `images.pdf`'s two
+  pictures back byte-identical, in order, each from the right `<img>`.
+  **Size:** older Kindle firmware is reported to cap a single image record at
+  about 127 KB. That is unverified on device and a device-pass item. The
+  engine does not shrink a picture to fit it, and the corpus has pictures far
+  past it (a full-page plate of 1.4 MB).
+- **Measured on the corpus, 2026-10-01 (phase 1 tip against phase 2's):**
+  the `.fountain` is byte-identical for all six scripts that convert. The
+  four with no kept picture make an identical EPUB, entry for entry. The two
+  with pictures differ only by the images folder, one STORED PNG per picture
+  shown, the manifest items, the figure lines and the figure CSS block; the
+  one whose plate precedes its first heading also gains the Opening, which
+  renumbers its scene anchors by one and retitles its first body file.
+  With `includeImages` off every script's EPUB equals the phase 1 book.
+  Both picture books pass epubcheck clean, conversion time is unchanged,
+  and the 60-picture deck's Tune re-render answers 22 MB in 0.19 s on the
+  engine side.
+- **Measured on the corpus for the MOBI, 2026-10-01 (phase 2 tip against
+  phase 3's):** the `.fountain`, the picture folders and the EPUB are
+  identical for all six scripts that convert, and so is the MOBI of every
+  script without a picture; with `includeImages` off every MOBI equals the
+  phase 2 one. In the two picture scripts each image record is exactly the
+  picture the EPUB ships, in first-use order, every `recindex` opens the
+  record the EPUB shows at that spot, and the text is the old text plus
+  figure paragraphs and page breaks only. Conversion time is unchanged. What
+  it costs is size: the one-picture script's MOBI goes from 149 KB to
+  1.59 MB, the 60-picture deck's from 17 KB to 16.6 MB, and 23 of the 61
+  records are over 127 KiB (the largest 2.0 MB), which is why the probe
+  below matters. Two notes, neither from this phase: the deck carries 7
+  pictures byte-identical to another (deduplicated by name, not content,
+  2.76 MB), and the MOBI's unique id is hashed from the text's length, so
+  flipping `includeImages` gives a picture book a new one.
+- **On a device:** AZW3 and KFX get the pictures through Calibre from the
+  EPUB, and the engine's MOBI carries its own (above). None of it is
+  verified on device yet, and it is the subject of the torture.pdf pictures
+  section of `tools/device-checklist.ts`: KFX and RMSDK on the forced breaks,
+  the blank page, the heading above a plate, and how a tall plate slices;
+  and, for the `.mobi` sideloaded over USB, whether the pictures are there,
+  whether the plate's page breaks hold, and whether an older Kindle refuses a
+  picture over the single-record cap. That last has books of its own:
+  `bun tools/mobi-picture-probe.ts --out <folder>` writes
+  `screepub-picture-probe.mobi` (and the same book as an EPUB, to compare),
+  built by the engine's own renderer and writer, the same bytes every run. It
+  carries three PNGs of about 2 KB, about 200 KB and about 1.4 MB (the last a
+  full-page plate the size of the largest real one), each after a line of
+  action naming its size, and measures which of them an older Kindle shows
+  from a `.mobi`. Beside it the probe writes each picture alone in a `.mobi`
+  of its own (`screepub-picture-probe-2kb.mobi`, `-200kb.mobi`,
+  `-1400kb.mobi`, titled Picture Probe 2 KB and so on), so that if the
+  1.4 MB record makes the Kindle refuse a whole book, the smaller sizes still
+  answer; all four are copied and each is recorded. The 2 KB one tells "no
+  PNG at all" from "no PNG this large". The probe exists because both
+  writers this one follows point
+  that way. Calibre's MOBI output never writes a PNG: it makes every picture
+  a JPEG by default (for older MOBI viewers, its option's help says), and
+  with its keep-originals option turns a PNG into a GIF, because "the idiotic
+  Kindle cannot display some PNG" (its source comment). Amazon's kindlegen
+  offered `-image64K` and `-image128K` caps. Checked 2026-10-01
+  against calibre's source (`ebooks/mobi/utils.py`, `mobi_output.py`) and the
+  MobileRead wiki's KindleGen page. If any of the three fails on the device,
+  the `.mobi` goes back to text only.
+- **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
+  `src/epub/html.ts` (`place`, the figure, `art.inFlow`, `usedImages`,
+  `imageSrc`, `tokensToPreviewHtml`), `src/epub/css.ts` (the
+  figure block, `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`,
+  `imageIds`),
+  `src/mobi/html.ts` (`mobiArt`, the figure, `recindex`),
+  `src/mobi/writer.ts` (the image records, fields 80, 108 and 194),
+  `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,
+  `src/export/artifact.ts`, `desktop/ui/tune.js`,
+  `desktop/src-tauri/tauri.conf.json`.
+
+### 19b. The title card as the cover (option `promoteCoverImage`, default ON; 2026-10-01)
+- **What:** a designed title card becomes the book's cover, so a library
+  shows artwork rather than a grey rectangle. The EPUB (and the preview)
+  takes the card off its pages and declares it the cover; the engine's MOBI
+  names it as the cover and keeps it on its page. The Tune switch is
+  "Title card as the cover", under "Pictures from the script" (#19a), and
+  it is live: the preview is the EPUB's own pages, so flipping it adds or
+  removes the card at the front of the preview. On by default (owner,
+  2026-10-01). Off unless `includeImages` is on too.
+- **The rule.** `pickCover(tokens, format, have)` in
+  `src/fountain/cover.ts`, a module of the slug.ts and notes.ts kind, so
+  that the EPUB and the MOBI of one script wear the same cover or none.
+  Walking the body in order (the title page block is not body content),
+  the cover is the first picture note `rendersImage` would draw, if it is
+  full-page and nothing stands ahead of it but notes that draw nothing.
+  Anything else first means no cover: text, a heading of either kind, a
+  picture that is not full-page, and also a page marker, a synopsis, a
+  section or a forced page break, which draw nothing but open the Opening
+  (#19a) themselves, so a card behind one would sit in a section the cover
+  left empty. Our own writer puts none of those ahead of a card. Position,
+  never page number. A script with no scene heading at all can still have
+  a cover, since "before the first heading" is then the whole document.
+  Through `rendersImage` it can never pick a picture the book cannot ship.
+- **The EPUB.** The card's note leaves the flow (by note, not by filename:
+  the same plate shown again later is drawn there), and the body names the
+  picture in `coverImage`, beside `usedImages` rather than in it, since
+  `usedImages` is what the pages draw. `buildEpub` ships it with the
+  figures and declares it both ways: `properties="cover-image"` on its
+  manifest item, the EPUB 3 spelling, and `<meta name="cover"
+  content="ID"/>` in the metadata, the OPF 2 one. Shipping it is the
+  hazard: nothing on a page points at it, so a packager that shipped only
+  `usedImages` would drop its bytes, its manifest item and both
+  declarations, and the book would still validate and read. epubcheck does
+  not catch a bad declaration either: 5.4.0 passes a cover meta naming an
+  id no item has, so the packager declares only an item it is writing. It
+  passes images.pdf's and torture.pdf's books clean (all measured
+  2026-10-01). A book whose one picture is its cover draws no figure and
+  carries no figure rules. A card-only front opens no Opening, so its
+  first scene is `sc-001` with pictures on or off; with this option off
+  the card opens the Opening and the first scene is `sc-002` (the
+  renumbering #19a describes). With the option off every book is the one
+  before covers: checked 2026-10-01 against the engine at d5bd60e on all
+  five committed PDF fixtures that convert, every EPUB entry (the
+  `dcterms:modified` stamp aside), the `.fountain`, the preview and the
+  `.mobi` identical.
+- **The MOBI.** `mobiArt` carries `coverIndex`, the card's place in its
+  `order`, from `pickCover` asked of the same tokens, format and names, and
+  `buildMobi` writes it as **EXTH 201**: the cover as a RECORD offset from
+  the first image record (field 108), 0-based, a 4-byte value in a 12-byte
+  record. The two reference writers pin that shape by disagreeing on the
+  value: calibre 9.11.0 wrote 0 with its cover in its first image record,
+  and kindlegen 2.9 wrote 1 with a body picture first and the cover second,
+  neither an absolute record number (both read back with `calibre-debug
+  --inspect-mobi`, 2026-08-11). It counts records, not pictures, but here
+  every record from the first image record to FLIS is a picture, so the
+  two are one. No 202 thumbnail, which both of them also write: a
+  thumbnail is a smaller copy, this engine has nothing to shrink one with,
+  and pointing 202 at the full-size record would be a different claim. The
+  record sits in type order between 100 and 501, and only when there is a
+  cover. What moves with it, each read back from the built bytes in
+  `tests/mobi.test.ts`: the EXTH block's length (12 more) and count (one
+  more), and field 84, the full name's offset (12 more), which still lands
+  on the title on a 4-byte boundary; record 0 grows by 12 and every PDB
+  offset after it with it. What does not: the MOBI header's length (232)
+  and its EXTH flag (0x40 at 128), the padding, every other EXTH record,
+  every other record, and fields 80, 108, 194, 200 and 208. Taking the 12
+  bytes back out and restoring the three fields that count them gives the
+  book without a cover, byte for byte, and a book without a cover is the
+  book from before covers (the three masked hashes of #19a still pass).
+  `buildMobi` throws on a cover index the pictures cannot answer
+  (negative, fractional, or past the last picture, where a reader would
+  take FLIS for the cover); no caller can reach it. **The card stays on
+  its page:** this book's pages are the same with the option on or off,
+  where the EPUB's lose the card. That is measured rather than defensive.
+  Calibre's MOBI reader looks the cover record up under a `.jpg` name and
+  writes a PNG record out as `.png`, so it cannot take a PNG as the cover
+  (2026-08-11), and every picture this engine writes is a PNG. Inside
+  `bun test`, calibre 9.11.0 (2026-10-01): images.pdf's MOBI, with EXTH
+  201 naming its PNG card, converts to an EPUB with no cover meta and no
+  cover item, while the card comes back first in the flow, byte for byte,
+  beside the other plate; a MOBI of two small JPEGs with 201 = 1 converts
+  with the SECOND as its cover, byte for byte, and the same book without
+  201 takes the first (the reader's fallback when no record is named), so
+  the 1 is what was read. A card kept only as the cover could vanish from
+  the book; kept on its page, the worst case is the card met twice. Kindle
+  Previewer cannot settle it, since it refuses every third-party MOBI 6.
+- **AZW3 and KFX** are built by Calibre from the EPUB, so they carry the
+  EPUB's cover. Either declaration alone carried the card through calibre
+  9.11 to AZW3 and through Kindle Previewer 3 to KFX, and with neither the
+  KFX wore Previewer's generated grey placeholder (measured 2026-08-11).
+  The EPUB they are built from has the card on no page.
+- **On a device:** unverified, and the risk is the library grid. Amazon's
+  servers delete covers on USB-sent non-Amazon books, deliberately on
+  Colorsoft and newer (`docs/device-map.md` §2.1), so a sideloaded `.mobi`,
+  AZW3 or KFX may show a plain tile there however well its cover is
+  declared. That deletion is reported to reach only the library tile: the
+  cover still shows inside the book, and the `.mobi` also draws the card
+  on its first page. Kobo, tolino and Apple Books take the EPUB itself, so
+  they are handed both declarations. One more risk is the `.mobi`'s own:
+  EXTH 201 names a PNG record, which neither Calibre nor kindlegen ever
+  writes, so an older Kindle's thumbnailer could balk at it. The device
+  pass tells that apart from a picture failure by sideloading the same book
+  built with the cover off; if only the cover-off one works, the `.mobi`
+  drops its cover record, not its pictures. The rule cannot tell a title
+  card from any other full-page plate at the front (a map before FADE IN,
+  say): such a plate becomes the cover too, and the switch is the remedy.
+  The checks are the torture manifest's 19b row, printed by
+  `tools/device-checklist.ts`.
+- **Measured on the corpus, 2026-10-01 (images-carry tip d5bd60e against
+  this entry's tip):** six of the seven scripts convert (one, the
+  60-picture deck, is not a screenplay and converts only when forced; the
+  seventh is a scan and both refuse it). The `.fountain` is identical for
+  all six, and the four without pictures make an identical EPUB, entry for
+  entry with `dcterms:modified` masked, and an identical MOBI with the PDB
+  dates masked. Two gain a cover, and only those two: the one-picture
+  script, whose full-page plate precedes its first heading, and the deck,
+  which opens on a full-page picture with nothing before it. In each, the
+  EPUB differs only in the package (the card's item gains
+  `properties="cover-image"`, a `<meta name="cover">` names it, and the
+  picture still ships) and the first body file (the card's figure is
+  gone). In the one-picture script that figure was the Opening's only
+  content, so the Opening goes too: 16 sections become 15, the scene
+  anchors move back by one so its first scene is `sc-001` again, the
+  navigation loses the Opening's entry (122 links to 121), and the
+  stylesheet loses the figure block, since no page draws a figure. The
+  deck keeps 59 figures in the flow, so its navigation and stylesheet are
+  unchanged. Each MOBI differs only by one EXTH 201 record, value 0, in
+  record 0: every other record is identical, so the card is still on its
+  page. Both changed EPUBs pass epubcheck clean, conversion time is
+  unchanged, and with the option off all six books equal the d5bd60e
+  ones.
+- **Code:** `src/fountain/cover.ts` (`pickCover`), `src/epub/html.ts`
+  (`art.inFlow`, `coverImage`), `src/epub/build.ts` (the cover
+  declarations), `src/mobi/html.ts` (`mobiArt`'s `coverIndex`),
+  `src/mobi/writer.ts` (EXTH 201 and its check), `src/convert.ts`
+  (`renderBooks`), `src/options.ts`, `src/cli.ts`, `desktop/ui/tune.js`.

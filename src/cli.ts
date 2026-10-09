@@ -18,8 +18,21 @@ import {
   type ConvertStage,
 } from './convert';
 import {
-  mapConversionError, CliError, errorMessage, isWriteRefusal, plainReason, type JsonError,
+  mapConversionError, unwritableError, CliError, errorMessage, isWriteRefusal, plainReason, type JsonError,
 } from './cli-errors';
+// The picture folder beside a .fountain. Its policy (what may be read, what
+// may be written, what may be pruned) lives there, not here, because nothing
+// in cli.ts can be unit-tested: importing it runs main().
+import {
+  imageFolderWarnings,
+  imagesDirFor,
+  pruneImages,
+  readImages,
+  writeImages,
+  type ImagesRead,
+} from './library-images';
+// Which pictures a text's notes ask for, read the way the renderers read them.
+import { imageNoteFiles } from './fountain/notes';
 import { adoptSidecar, existingLibraryOutput, libraryOutput, libraryRoot } from './library';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions, keepsScriptSettings } from './settings/app-defaults';
@@ -64,6 +77,17 @@ Underneath those saved settings and any --options you pass, a conversion
 starts from the format defaults you chose in the app, if you chose any, and
 otherwise from Screepub's own.
 
+Pictures carried out of a PDF are written as PNGs in a <name>.images folder
+beside the .fountain, and the .fountain names each one in an [[img: ...]]
+note. The EPUB shows each picture where its note sits, and so does a later
+conversion of that .fountain, which reads the folder and never writes it.
+The one exception is a full-page title card the script opens with: the EPUB
+makes it the book's cover instead of its first page, and turning the
+promoteCoverImage option off keeps it on its page. The includeImages option
+takes them all out of the book; the notes and the folder stay. The .mobi
+carries the same pictures as the EPUB and keeps the title card on its page,
+naming it as the cover as well.
+
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
                          must already exist, and so must --fountain's,
@@ -77,7 +101,7 @@ Options:
   --fountain <file>      Fountain output path, PDF input only. Default: the
                          EPUB's path ending in .fountain, so <input>.fountain,
                          or out/x.fountain for -o out/x.epub
-  --no-fountain          skip writing the intermediate .fountain file
+  --no-fountain          skip the intermediate .fountain (and its picture folder)
   --title <text>         override detected title
   --author <text>        override detected author
   --force                convert even if it doesn't look like a screenplay
@@ -344,7 +368,8 @@ Keys:
   send-to-kindle         open Amazon's Send to Kindle app with the book, or
                          its web page and the book's folder
   email-to-kindle        open a Mail message with the book attached (on a
-                         Mac, with Apple Mail as the default mail app)
+                         Mac, with Apple Mail as the default mail app). A
+                         book over 50 MB is refused: Amazon drops it
   save-epub              save a copy of the EPUB at --out
   save-kindle            save a Kindle file (KFX, AZW3 or MOBI) at --out
   kindle-email-setup     open Amazon's settings page, where your Kindle's
@@ -1262,7 +1287,28 @@ async function main() {
     if (isPdf) {
       result = await convertPdf(new Uint8Array(await readFile(input)), opts);
     } else if (isFountain) {
-      result = await convertFountain(await readFile(input, 'utf8'), opts);
+      const text = await readFile(input, 'utf8');
+      // The pictures this text's notes name sit in the folder a PDF
+      // conversion wrote beside it, under the same stem, whichever of the two
+      // extensions the text now carries. Read only, never written or pruned:
+      // that folder belongs to the conversion that filled it, and this run
+      // has no pictures of its own to put there.
+      //
+      // Not read at all with the option off. Nothing would be shown, and a
+      // folder's warnings are about pictures missing from the book, which
+      // someone who turned pictures off is not missing.
+      //
+      // The read is told which pictures the notes ask for, because the
+      // window's Tune re-renders the library book this way on every knob
+      // move: a picture the folder no longer lists (deleted, or an iCloud
+      // copy evicted while offline) would otherwise leave that book a figure
+      // short with no warning at all. The book is still written; the warning
+      // is how the person learns what it lacks. The same loss is what makes
+      // export/artifact.ts keep the library book on the Kindle rebuild.
+      let pictures: ImagesRead | undefined;
+      if (formatForConvert.includeImages) pictures = await readImages(input, imageNoteFiles(text));
+      result = await convertFountain(text, { ...opts, images: pictures?.images });
+      if (pictures) result.warnings.push(...imageFolderWarnings(pictures));
     } else {
       fail({
         code: 'unsupported-type',
@@ -1324,8 +1370,39 @@ async function main() {
   }
 
   let fountainPath: string | undefined;
+  let imagesPath: string | undefined;
   if (isPdf && !values['no-fountain']) {
     fountainPath = values.fountain ?? `${stem}.fountain`;
+    // The picture folder goes with the .fountain, and only with it: beside
+    // whichever .fountain this run writes (the script's library folder under
+    // --library, beside the input, or wherever --fountain says), never beside
+    // the EPUB. Its files exist to answer the `[[img: ...]]` notes in that
+    // text, so suppress the text and the folder would be a pile of PNGs
+    // nothing points at; --no-fountain writes neither.
+    //
+    // Pictures FIRST, so the .fountain never appears naming files that are
+    // not there yet. Cheap ordering rather than a guarantee: nothing here is
+    // atomic across files.
+    const dir = imagesDirFor(fountainPath);
+    if (result.images.length > 0) {
+      try {
+        await writeImages(dir, result.images);
+      } catch (err) {
+        const refused = unwritableError(
+          dir, err, [epubPath, mobiPath].filter((p): p is string => p !== undefined),
+        );
+        if (refused) fail(refused);
+        throw err;
+      }
+      imagesPath = dir;
+    } else {
+      // A draft that has lost its art still has to clear the last
+      // conversion's, or the folder keeps pictures this .fountain no longer
+      // names. Nothing is created here: a script with no pictures gets no
+      // folder, and one emptied of ours is taken away with them. Unguarded
+      // because the prune never throws (every step is best-effort).
+      await pruneImages(dir, new Set());
+    }
     await writeOutput(fountainPath, result.fountainText, 'utf8');
   }
   let previewPath: string | undefined;
@@ -1434,6 +1511,18 @@ async function main() {
         epubPath,
         mobiPath,
         fountainPath,
+        // Two different facts, and both are omitted when they are nothing
+        // (JSON.stringify drops an undefined member, as it does for
+        // mobiPath). `imagesPath` is where a picture folder was written, so it
+        // is absent whenever none was. `imageCount` is how many pictures the
+        // CONVERSION carried out of the PDF, a fact about the conversion and
+        // not about anything on disk: under --no-fountain it is reported with
+        // no folder beside it at all. Nor is it how many the book shows,
+        // which depends on includeImages. A .fountain input reports neither:
+        // it writes no folder and carries nothing out of a PDF, even when its
+        // book shows the pictures it read.
+        imagesPath,
+        imageCount: result.images.length > 0 ? result.images.length : undefined,
         // The sidecar this conversion actually rendered with, so the window
         // (and anyone reading the answer later) can tell a book built from a
         // script's saved settings from one built at the defaults.
@@ -1462,7 +1551,7 @@ async function main() {
     );
   }
   for (const w of result.warnings) console.log(`  warning: ${w}`);
-  for (const f of [epubPath, mobiPath, fountainPath, previewPath, fdxPath, debugPath]) {
+  for (const f of [epubPath, mobiPath, fountainPath, imagesPath, previewPath, fdxPath, debugPath]) {
     if (f) console.log(`  wrote ${f}`);
   }
 }

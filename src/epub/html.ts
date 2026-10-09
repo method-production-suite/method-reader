@@ -4,9 +4,11 @@
 import type { Token } from 'fountain-js';
 import type { FormatOptions } from '../options';
 import { DEFAULT_FORMAT_OPTIONS } from '../options';
+import type { ImageRef } from '../parser/types';
 import { screenplayCss } from './css';
 import { isMiniSlug } from '../fountain/slug';
-import { fmtClasses, stripNotes } from '../fountain/notes';
+import { fmtClasses, rendersImage, stripNotes } from '../fountain/notes';
+import { pickCover } from '../fountain/cover';
 
 export interface BodyFile {
   /** filename-safe id, e.g. "body001" */
@@ -26,6 +28,28 @@ export interface BookBody {
   toc: TocEntry[];
   /** Page markers, in document order, for the EPUB3 page-list nav. */
   pageList: { label: string; href: string }[];
+  /**
+   * Picture filenames that actually reached a page, so the packager can zip
+   * and manifest exactly these. Both halves of "exactly" are load-bearing: a
+   * picture the folder holds but no page shows is dead weight inside the
+   * book, and a picture a page shows but the manifest omits is an invalid
+   * EPUB rather than a heavy one. Empty for every book without figures.
+   *
+   * The cover is not in here unless a page also draws it: it is on no page.
+   * That keeps this set the answer to "does any page draw a figure", which
+   * is what decides the stylesheet's figure rules, in the book and in the
+   * preview alike.
+   */
+  usedImages: Set<string>;
+  /**
+   * The picture `pickCover` made the book's cover, if any: on no page, and
+   * still in the book. The packager ships it beside `usedImages` and
+   * declares it. Leaving it out of what ships would drop its bytes, then its
+   * manifest item, then both declarations, and the book would still
+   * validate and still read, with a grey rectangle in the library where the
+   * card should be.
+   */
+  coverImage?: string;
 }
 
 /** Keep each body file comfortably under Kindle's per-flow size warnings. */
@@ -94,13 +118,38 @@ interface MarkerState {
 }
 
 /**
+ * The pictures a book may show, where their markup points, and the ones it
+ * did show.
+ *
+ * `inFlow` is the one question asked of a note, by the renderer and by the
+ * section opener alike: the figure it draws on a page, or nothing. That is
+ * rendersImage's answer (the option, the filename allowlist, and whether the
+ * caller can ship the file) for every note except the cover's, which is on no
+ * page. One predicate rather than two copies, so a section is never opened
+ * for a note that then draws nothing. `src` turns a filename into the `<img>`
+ * address, which is the one thing the book and the preview disagree about: a
+ * path inside the zip for one, a `data:` URI for the other, with the same
+ * markup around both.
+ */
+interface Art {
+  inFlow: (note: Token) => ImageRef | undefined;
+  src: (file: string) => string;
+  used: Set<string>;
+}
+
+/** Where a figure points inside the EPUB: OEBPS/images/, one up from the
+ * body files in OEBPS/text/. */
+const bookImageSrc = (file: string) => `../images/${file}`;
+
+/**
  * Render body tokens (no title-page tokens) as discrete blocks — one string
  * per paragraph, with a complete dialogue block as a single string.
  */
 function renderBlocks(
   tokens: Token[],
   format: FormatOptions,
-  markers: MarkerState = { pending: null, landed: [] },
+  markers: MarkerState,
+  art: Art,
 ): string[] {
   const blocks: string[] = [];
   let speech: Cell[] | null = null;
@@ -108,6 +157,13 @@ function renderBlocks(
   // construct Kindle's renderer honors (floats/inline-block are not
   // reliable under Enhanced Typesetting).
   let dual: { left: Cell[]; right: Cell[]; side: 'left' | 'right' } | null = null;
+  // A block, into whichever stream is open. `emit` is this plus the pending
+  // page marker; call this one directly only where a block must DECLINE a
+  // marker, which today is the figure alone.
+  const place = (s: string, kind: Cell['kind'] = 'other') => {
+    if (speech) speech.push({ kind, html: s });
+    else blocks.push(s);
+  };
   const emit = (s: string, kind: Cell['kind'] = 'other') => {
     // A pending page marker slips inside this block's opening tag — costing
     // no line of its own — and is consumed once it lands.
@@ -119,8 +175,7 @@ function renderBlocks(
         markers.pending = null;
       }
     }
-    if (speech) speech.push({ kind, html: s });
-    else blocks.push(s);
+    place(s, kind);
   };
   // A speech is a flat run of paragraphs: cue, any parentheticals, then the
   // dialogue. NO wrapper. What holds a cue to its speech is the CSS chain on
@@ -239,8 +294,55 @@ function renderBlocks(
         }
         break;
       }
+      case 'note': {
+        // A standalone `[[img: ...]]` is a picture carried out of the PDF
+        // (registry #19). Every other note, a picture note the predicate
+        // turns down, and the cover's note render nothing here: notes are
+        // invisible by spec, and the cover is on no page.
+        const img = art.inFlow(t);
+        if (!img) break;
+        // The width rides as a CLASS in steps of five, not an inline style:
+        // the reader preview is an iframe whose CSP refuses `style=`
+        // attributes, and twenty short CSS 2.1 rules serve the book and the
+        // preview from one markup path. The clamp repeats parseImgNote's on
+        // purpose: rounding a width already in 5..100 cannot leave it, but
+        // this line is what promises the class is one of the twenty the
+        // stylesheet defines, and that promise should not rest on a parser
+        // in another file staying as it is.
+        const step = Math.min(100, Math.max(5, Math.round(img.widthPct / 5) * 5));
+        const full = img.fullPage ? ' figure-full' : '';
+        // A <p>, not a <div>. The KFX converter honors a break on a paragraph
+        // and ignores one on a structural wrapper (#8b), and a full-page
+        // plate's breaks sit on this element. Whether a paragraph holding
+        // only a picture counts there is a device-check item, not a measured
+        // fact. Not <figure> either: there is no caption to group, and
+        // docs/device-map.md says nothing about HTML5 grouping elements in
+        // the CSS-2.1-era engines (RMSDK, KF8).
+        //
+        // One alt for every picture: nothing in a PNG lifted out of a PDF
+        // says what it depicts, so there is no honest description to write.
+        // It is not EMPTY, though: `alt=""` declares an image decorative and
+        // a screen reader then skips it silently, which for a storyboard
+        // panel or a title card is a lie about the book.
+        //
+        // The src is escaped although a book path cannot need it (the
+        // allowlist admits no `&`, `<` or `"`): the resolver is the caller's,
+        // and the preview's returns a data: URI this file never inspects.
+        //
+        // `place`, not `emit`: a figure declines a pending page marker,
+        // because an image is not a line of text a reader can land on. That
+        // is serialize.ts's `anchorsPageMarker` rule, held on this side of
+        // the .fountain too: our own writer never puts a marker in front of
+        // a plate, and a hand-written file that does gets the same answer.
+        place(
+          `<p class="figure w${step}${full}">`
+            + `<img src="${escapeXml(art.src(img.file))}" alt="Illustration"/></p>\n`,
+        );
+        art.used.add(img.file);
+        break;
+      }
       default:
-        // structural/no-render tokens: title page, page breaks, notes, etc.
+        // structural/no-render tokens: title page, page breaks, etc.
         break;
     }
   }
@@ -259,15 +361,39 @@ interface SceneSection {
 /**
  * Split body tokens into anchored scene sections, then pack sections into
  * as few files as the size budget allows. Content before the first scene
- * heading becomes an "Opening" section.
+ * heading becomes an "Opening" section; a title card that became the cover
+ * is not content on any page, so it opens nothing.
  */
 export function tokensToBody(
   tokens: Token[],
-  opts: { maxFileBytes?: number; format?: FormatOptions } = {},
+  opts: {
+    maxFileBytes?: number;
+    format?: FormatOptions;
+    /** Picture filenames the caller can ship. Empty by default, which renders
+     * no figures at all: the honest answer for a caller with no folder to
+     * draw them from, and the reason every caller that predates pictures
+     * renders exactly what it did. */
+    images?: ReadonlySet<string>;
+    /** Where a figure's `<img>` points; the book's own path by default. */
+    imageSrc?: (file: string) => string;
+  } = {},
 ): BookBody {
   const maxBytes = opts.maxFileBytes ?? DEFAULT_MAX_FILE_BYTES;
   const format = opts.format ?? DEFAULT_FORMAT_OPTIONS;
+  const have = opts.images ?? new Set<string>();
   const body = tokens.filter((t) => !t.is_title);
+  // The title card, when promoteCoverImage makes it the cover. pickCover is
+  // the one rule, in a module of its own so every renderer asks the same
+  // question, and it asks rendersImage of the same `have`, so the cover is
+  // always a picture this book can ship.
+  const cover = pickCover(body, format, have);
+  const art: Art = {
+    inFlow: (note) => (note === cover?.token
+      ? undefined
+      : rendersImage(note.text ?? '', format.includeImages, have)),
+    src: opts.imageSrc ?? bookImageSrc,
+    used: new Set(),
+  };
 
   const groups: { title: string; tokens: Token[] }[] = [];
   let current: { title: string; tokens: Token[] } | null = null;
@@ -277,6 +403,24 @@ export function tokensToBody(
       current = { title: t.text ?? 'Scene', tokens: [t] };
       groups.push(current);
     } else {
+      // A note that renders nothing may not be what opens the Opening: a
+      // group of nothing but such notes is an empty section, which is an
+      // "Opening" in the contents, a blank page under scenePageBreaks and
+      // every scene anchor one along. toFountain writes a title card's
+      // `[[img: ...]]` exactly there. Dropping one loses nothing, since there
+      // is no section yet for it to be invisible in.
+      //
+      // A note that DOES render in the flow, a title card whose picture the
+      // caller can ship, is content, and opens the Opening like any other.
+      // The cover's note is on no page, so it is dropped here like any note
+      // that renders nothing, and a card-only front gives no Opening. The
+      // question is `art.inFlow`, the same one renderBlocks asks, so a
+      // section is never opened for a note that then renders nothing.
+      //
+      // pickCover only chooses a card with nothing ahead of it but notes
+      // this line drops, so the cover's note always reaches this line with
+      // no section open, and never lands in a section it would leave empty.
+      if (!current && t.type === 'note' && !art.inFlow(t)) continue;
       if (!current) {
         current = { title: 'Opening', tokens: [] };
         groups.push(current);
@@ -291,7 +435,7 @@ export function tokensToBody(
   const sections: SceneSection[] = groups.map((g, i) => {
     const anchor = `sc-${String(i + 1).padStart(3, '0')}`;
     markers.landed = [];
-    const html = `<section class="scene" id="${anchor}">\n${renderBlocks(g.tokens, format, markers).join('')}</section>\n`;
+    const html = `<section class="scene" id="${anchor}">\n${renderBlocks(g.tokens, format, markers, art).join('')}</section>\n`;
     return { anchor, title: g.title, html, pageLabels: markers.landed };
   });
 
@@ -326,26 +470,54 @@ export function tokensToBody(
   }
   flush();
 
-  return { files, toc, pageList };
+  return { files, toc, pageList, usedImages: art.used, coverImage: cover?.file };
 }
 
 /**
  * The whole script as ONE self-contained HTML document — the same section
  * markup as the EPUB body, with the stylesheet inlined instead of linked.
  * This is the app's reader-preview surface: what you proof is what ships.
+ *
+ * `images` is the pictures the notes may show, by filename: the same ones the
+ * book is handed, so the preview shows exactly the figures the book does
+ * (rendersImage decides both). That includes leaving out a title card that
+ * became the cover: the cover is on none of the book's pages, and the
+ * preview is those pages. Self-contained covers the pictures too:
+ * the window hands this document to an iframe as text, so there is no
+ * container for a path to point into, and each picture rides inside its
+ * `<img>` as a data: URI instead. That src is the only thing about a figure
+ * the two disagree on. The window's CSP admits data: for pictures and for
+ * nothing else (tests/desktop-shell.test.ts pins it).
+ *
+ * Every picture is inlined at full size, on every render: the document grows
+ * by about four thirds of the bytes of the pictures it shows. On the heaviest
+ * picture document measured, sixty plates, the ENGINE's re-render stayed
+ * inside the budget the plan set for it (174 ms, 22 MB of JSON). The WINDOW's
+ * side of that answer is unmeasured: carrying, parsing and framing 22 MB has
+ * never been timed there, and the caps (60 pictures, 1400 px) allow several
+ * times that. Smaller preview copies are the fallback if it is slow, and
+ * choosing them is a design decision, not a fix.
  */
 export function tokensToPreviewHtml(
   tokens: Token[],
   format: Partial<FormatOptions> = {},
+  images: ReadonlyMap<string, Uint8Array> = new Map(),
 ): string {
   const resolved: FormatOptions = { ...DEFAULT_FORMAT_OPTIONS, ...format };
   const body = tokensToBody(tokens, {
     maxFileBytes: Number.MAX_SAFE_INTEGER,
     format: resolved,
+    images: new Set(images.keys()),
+    // Encoded only for a figure that is drawn, so a picture the notes never
+    // place, or one the option leaves out, costs nothing here.
+    imageSrc: (file) => `data:image/png;base64,${Buffer.from(images.get(file)!).toString('base64')}`,
   });
   const doc = body.files[0]?.xhtml ?? xhtmlDoc('Script', '');
+  // The figure rules follow the body, as they do in the book: present when
+  // this document shows a picture, absent (and the sheet unchanged) when not.
+  const css = screenplayCss(resolved, { hasFigures: body.usedImages.size > 0 });
   return doc.replace(
     /<link rel="stylesheet"[^>]*\/>/,
-    () => `<style>\n${screenplayCss(resolved)}</style>`,
+    () => `<style>\n${css}</style>`,
   );
 }

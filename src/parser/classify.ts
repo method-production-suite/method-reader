@@ -64,8 +64,9 @@ const AGE_LITTLE = /^(LITTLE|BABY)\s+(.+)$/;
 
 // Fallback counter used only when classifyBlock is called directly without an
 // explicit `nextId` (e.g. unit tests exercising classification in isolation).
-// Real parses (parse() in index.ts) thread their own closure-scoped counter
-// through `nextId` instead, so concurrent parse() calls never share state.
+// Real parses (`parseLines` in index.ts, the only entry point) thread their
+// own closure-scoped counter through `nextId` instead, so concurrent
+// parseLines calls never share state.
 let defaultElementCounter = 0;
 
 export function resetCounter(): void {
@@ -86,7 +87,12 @@ export function classifyBlock(
   const id = nextId();
   // fmt rides from block to element mechanically and is NEVER a classification
   // input: the parser stays format-option-free (registry #18).
-  const base: ScreenplayElement = { id, type: 'action', text, styledText: block.styledText, fmt: block.fmt, dualRight: block.dualRight, pageNum: block.pageNum, isTitlePage: false, isReadable: true };
+  // `y` rides across mechanically like `fmt`, and for the same reason it is
+  // never a classification input: it is where the block was, not what it is.
+  // `yPosition` is the block's FIRST line, which extraction orders topmost-
+  // first — so it is the BASELINE of the block's top line, not the block's top
+  // edge, and index.ts's merge is written knowing that.
+  const base: ScreenplayElement = { id, type: 'action', text, styledText: block.styledText, fmt: block.fmt, dualRight: block.dualRight, pageNum: block.pageNum, y: block.yPosition, isTitlePage: false, isReadable: true };
 
   // Get current character from previous element chain
   const currentCharacter = getActiveCharacter(prevElement);

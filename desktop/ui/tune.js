@@ -1,4 +1,4 @@
-// Tune: this script's own formatting. Eighteen knobs, saved beside the
+// Tune: this script's own formatting. Twenty knobs, saved beside the
 // script, and re-rendered into Read as they move.
 //
 // The window decides nothing about what a knob MEANS: the engine owns the
@@ -21,8 +21,15 @@ import { pageSwitchesFrom } from './page-show.js';
 // ---------------------------------------------------------------- decisions
 
 /** Why a knob can be on this surface and still not change the page behind
- *  it. Measured, not assumed — every one of the eighteen was flipped against
- *  a cached .fountain and the re-rendered document compared byte for byte:
+ *  it. Measured, not assumed: every one of the first eighteen was flipped
+ *  against a cached .fountain and the re-rendered document compared byte for
+ *  byte. The nineteenth, includeImages, is live by construction: html.ts
+ *  passes it to the one predicate that decides whether a figure is written
+ *  (a source test in tests/desktop-ui.test.ts checks html.ts names it). So
+ *  is the twentieth, promoteCoverImage: html.ts asks src/fountain/cover.ts
+ *  on every render which picture is the cover, and that picture leaves the
+ *  body the preview shows (the same source test reads cover.ts).
+ *  The three effects:
  *
  *  'live'      the preview changes the moment this moves.
  *  'book'      the BOOK changes and the preview cannot show it. The preview
@@ -37,7 +44,7 @@ import { pageSwitchesFrom } from './page-show.js';
  *  the honest move. */
 export const EFFECTS = ['live', 'book', 'reconvert'];
 
-/** The eighteen, grouped by what a reader is trying to change rather than by
+/** The twenty, grouped by what a reader is trying to change rather than by
  *  where the engine consumes them — with the one exception above, where
  *  where-it-is-consumed IS what a reader needs to know. `help` explains WHY,
  *  carried over from the Swift Mac app's reader rail (deleted at piece F3;
@@ -140,6 +147,27 @@ export const GROUPS = [
         key: 'showSceneNumbers', label: 'Scene numbers', kind: 'toggle',
         help: 'Only shows numbers the script already carried. Screepub never invents them: '
           + 'a numbered draft is a decision someone made, not a formatting choice.',
+      },
+      {
+        // Live, unlike the title page beside it: a figure is markup html.ts
+        // writes into the body, so the preview shows it. The engine keeps the
+        // pictures and their places either way, so switching back needs no
+        // new conversion.
+        key: 'includeImages', label: 'Pictures from the script', kind: 'toggle',
+        help: 'Shows the drawings and photos the PDF carried, in the book and in the '
+          + 'preview, where they sat in the script (a title card can become the cover '
+          + 'instead, below). A script with no pictures makes the same book either way.',
+      },
+      {
+        // Live as well: the preview is the book's own pages, and a card that
+        // becomes the cover leaves them, so this adds or removes the card at
+        // the front of the preview. What it is FOR, the picture a library
+        // shows, is outside the book's pages, so the help says that part.
+        key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle',
+        help: 'When a script opens with a full-page picture before its first scene, the '
+          + 'book uses it as its cover instead of its first page, so the preview leaves '
+          + 'it out. A Kindle book built without Calibre keeps it on its page too. Needs '
+          + 'Pictures from the script on. A script without one makes the same book either way.',
       },
     ],
   },
@@ -292,7 +320,7 @@ export function restorePending(owed, pending) {
 }
 
 /** The engine's settings answer, or null if it is not one. Checked key by
- *  key against the eighteen and against each knob's own kind: a surface that
+ *  key against the twenty and against each knob's own kind: a surface that
  *  trusted a malformed answer would draw an empty select or a slider at NaN
  *  and give a reader no idea why. Extra keys are carried through untouched —
  *  a future engine knob this window has never heard of must survive a round
@@ -393,6 +421,25 @@ export function statusFor(phase, message) {
   return { line: STATUS[phase] ?? '', bad: false };
 }
 
+/** What a successful rebuild's answer says the book on disk lacks, as the
+ *  lines shown under the status: the engine's own sentences, each in the
+ *  parentheses the Convert page puts around a conversion's warnings. The
+ *  rebuild rewrites the library book, so a picture the script shows and its
+ *  folder no longer holds is a figure gone from that book, and the engine's
+ *  answer is the only place that says so. "Saved. The book on disk matches
+ *  what you see." stays true beside it, since the preview is rendered from
+ *  the same answer and lacks the same figure.
+ *
+ *  Anything that is not a sentence is dropped rather than shown as "()" or
+ *  "(undefined)", and no warnings at all is an empty list, which is what
+ *  clears the lines a previous rebuild left. */
+export function warningLines(answer) {
+  if (!Array.isArray(answer?.warnings)) return [];
+  return answer.warnings
+    .filter((w) => typeof w === 'string' && w.trim() !== '')
+    .map((w) => `(${w.trim()})`);
+}
+
 /** There is no notice for a surface with no script open: main.js disables
  *  this tab whenever none is, exactly as it does for Read, so a reader can
  *  never be standing here with nothing converted. The one state that IS
@@ -410,7 +457,7 @@ export const LEDE = 'These settings belong to this script alone. They are kept w
   + 'match, so what you send is what you see.';
 
 /** "Start from" said nothing about what pressing one does. It does not nudge
- *  a setting or set a baseline to build on: it REPLACES all eighteen. The
+ *  a setting or set a baseline to build on: it REPLACES all twenty. The
  *  SwiftUI version said so on screen and this one did not. */
 export const PRESET_LABEL = 'Load a preset';
 export const PRESET_NOTE = 'Overwrites every setting below.';
@@ -437,7 +484,7 @@ export const READING = 'Reading this script’s settings…';
  *  `defaults` (Screepub's own, unconditionally, the same field settingsFrom
  *  already reads as "this script's shipped defaults"). Both are validated
  *  the identical way a script's own settings are, through settingsFrom
- *  itself: an app default that fails the eighteen-knob check is one this
+ *  itself: an app default that fails the twenty-knob check is one this
  *  window cannot safely claim anything about. */
 export function appDefaultsFrom(answer) {
   return settingsFrom({ settings: answer?.appDefaults });
@@ -677,6 +724,14 @@ let timer = null;
 let hold = null;
 let pending = {};
 let statusLine = null;
+/** The last successful rebuild's warnings (warningLines), and the caption
+ *  under the status line that shows them. Kept apart from the status line
+ *  because that line moves on to "Changed" the moment a knob does, while the
+ *  book on disk still lacks what the last rebuild said it lacks: these are
+ *  replaced only by the next rebuild that succeeds. Module state rather than
+ *  the node's own text so a full redraw shows them again. */
+let warnings = [];
+let warningsBox = null;
 let controls = new Map();
 /** Which script these knobs belong to; scriptChanged() moves it on. A save
  *  waiting its turn on its book checks it before it starts (settle()), and
@@ -718,6 +773,7 @@ export function scriptChanged() {
   keepRadios = null;
   keepNoteEl = null;
   pending = {};
+  warnings = [];
   clearTimeout(timer);
   timer = null;
   // What was owed belonged to the other script and has just been dropped,
@@ -769,6 +825,7 @@ function draw(status) {
   clear(pane);
   controls = new Map();
   statusLine = null;
+  warningsBox = null;
   if (ctx.state.script === null) return;
 
   const mode = emptyPaneMode(settings, status);
@@ -797,6 +854,7 @@ function draw(status) {
   }
 
   statusLine = el('p', { class: 'caption tune-status', role: 'status' }, '');
+  warningsBox = el('div', { class: 'tune-warnings', role: 'status' });
   pane.append(
     el('div', { class: 'tune-head' }, el('h2', { class: 'slug' }, 'This script’s settings'), sendButton()),
     el('p', { class: 'prose' }, LEDE),
@@ -805,12 +863,14 @@ function draw(status) {
         (presetsBox = drawPresets()),
         ...GROUPS.map(drawGroup),
         statusLine,
+        warningsBox,
         el('div', { class: 'tune-foot' }, drawDefaultsFoot(), drawKeepChoice(), drawPageSwitches()),
       ),
       drawPreview(),
     ),
   );
   say(status ?? statusFor(isPending(pending) ? 'pending' : 'idle'));
+  showWarnings();
   renderPreview(ctx.state.script?.previewHtml);
 }
 
@@ -1143,7 +1203,8 @@ async function writeSwitch(key, on, seq) {
 }
 
 /** Which groups arrive open. Only the first: five shut boxes is a surface
- *  with nothing on it, and eighteen open controls is the wall this replaced.
+ *  with nothing on it, and every control open at once is the wall this
+ *  replaced.
  *
  *  Exported so the rule is a fact rather than an inline literal, and so a
  *  later "remember what was open" can be added without hunting for where the
@@ -1155,7 +1216,7 @@ export function groupStartsOpen(index) {
 function drawGroup(group, index) {
   // <details> rather than a toggle of our own: the open state, the keyboard
   // and the announcement all come from the platform. Folding, never
-  // dropping — all five groups and all eighteen knobs are still here, because
+  // dropping — all five groups and all twenty knobs are still here, because
   // a setting that cannot be found still applies to every conversion.
   return el('details', { class: 'knob-group', open: groupStartsOpen(index) ? '' : null },
     el('summary', { class: 'subslug knob-group-title' }, group.title),
@@ -1414,6 +1475,8 @@ async function flush() {
     renderReader(script.previewHtml);
     renderPreview(script.previewHtml);
     say(statusFor(isPending(pending) ? 'pending' : 'saved'));
+    warnings = warningLines(answer);
+    showWarnings();
   } catch (err) {
     if (stale()) return;
     giveBack();
@@ -1425,4 +1488,14 @@ function say(status) {
   if (statusLine === null) return;
   text(statusLine, status.line);
   statusLine.classList.toggle('bad', status.bad);
+}
+
+/** Put `warnings` into the caption under the status line, in place, so the
+ *  live region a screen reader is already watching announces them. Hidden
+ *  when there are none, which takes the lines a previous rebuild left. */
+function showWarnings() {
+  if (warningsBox === null) return;
+  clear(warningsBox);
+  warningsBox.append(...warnings.map((line) => el('p', { class: 'caption' }, line)));
+  warningsBox.hidden = warnings.length === 0;
 }

@@ -11,9 +11,13 @@
 // Every open goes through an injectable Opener, so no test ever launches
 // Books, a browser, Mail or the file manager. Each performer returns the
 // sentence the window shows, or throws an Error naming what could not be
-// opened (cli-routes.ts turns that into `route-failed`).
+// opened (cli-routes.ts turns that into `route-failed`). A book a route
+// cannot carry is refused before anything opens, with a CliError that
+// already knows its code (`route-unavailable`), which cli-routes.ts passes
+// through as it is.
+import { statSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { errorMessage } from '../cli-errors';
+import { CliError, errorMessage } from '../cli-errors';
 
 /** Runs one argv and reports how it went. Never throws for a program that
  *  failed or was not there: that is an answer, carried as a non-zero code. */
@@ -99,10 +103,47 @@ export async function sendViaAmazon(
   return "Opened Amazon's Send to Kindle page, and the book's folder so you can drag it in.";
 }
 
+/** Amazon's limit for a book sent to a Kindle by email, in bytes, in the
+ *  decimal megabytes Amazon states it in (docs/device-map.md, T5). Amazon
+ *  drops mail over it without a word to the sender, which is the failure
+ *  this exists to prevent. Its Send to Kindle app and web page take up to
+ *  200 MB, which is where a larger book is sent instead.
+ *
+ *  An upper bound, not a guarantee: email encoding inflates an attachment by
+ *  about a third on its way, so a book a little under this can still be too
+ *  large by the time it reaches Amazon. Only what is over the stated limit is
+ *  refused, because that much is certain. */
+export const KINDLE_EMAIL_LIMIT = 50 * 1000 * 1000;
+
+/** A file's size in bytes. A seam beside Opener, so a test can stand in any
+ *  size without writing a file that large. */
+export type SizeOf = (path: string) => number;
+
+export const realSizeOf: SizeOf = (path) => statSync(path).size;
+
+/** The refusal for a book over KINDLE_EMAIL_LIMIT. The size is rounded UP to
+ *  a tenth of a megabyte, so a book one byte over never reads as the 50 MB
+ *  it is being refused for. */
+function tooLargeForEmail(bytes: number): string {
+  const mb = String(Math.ceil(bytes / 100_000) / 10);
+  return `This book is too large for Kindle email. It is ${mb} MB, and Amazon takes up to 50 MB by email ` +
+    'and drops anything larger without a word. Send it with the Send to Kindle app or web page instead, which take up to 200 MB.';
+}
+
 /** A new Mail message with the book attached. Only offered when Apple Mail
  *  is the default mail app (routes.ts): with any other, macOS hands over a
- *  mailto: link, which carries no attachment. */
-export async function emailToKindle(epub: string, open: Opener = realOpener): Promise<string> {
+ *  mailto: link, which carries no attachment.
+ *
+ *  A book over Amazon's email limit is refused before Mail opens. The check
+ *  is made here, when a book is being sent, because the route list is built
+ *  from facts about the machine and does not know which book it is for. */
+export async function emailToKindle(
+  epub: string,
+  open: Opener = realOpener,
+  sizeOf: SizeOf = realSizeOf,
+): Promise<string> {
+  const bytes = sizeOf(epub);
+  if (bytes > KINDLE_EMAIL_LIMIT) throw new CliError('route-unavailable', tooLargeForEmail(bytes));
   await openOrThrow(open, ['open', '-a', 'Mail', epub], 'Mail');
   return "Opened a Mail message with the book attached. Address it to your Kindle's email address.";
 }

@@ -19,6 +19,11 @@ interface Row {
   side?: string;
   how?: string;
   why?: string;
+  /** Questions about a covered entry that only a person holding the device
+   * can answer, one per line of the checklist. The picture entries carry
+   * them: their `how` says what the fixture draws, and these say what to
+   * look for on the page. */
+  deviceChecks?: string[];
 }
 
 const manifest: Row[] = JSON.parse(readFileSync('tools/torture-manifest.json', 'utf8'));
@@ -28,6 +33,9 @@ const device = manifest
   .sort((a, b) => (a.page ?? 0) - (b.page ?? 0) || a.entry.localeCompare(b.entry));
 
 const uncovered = manifest.filter((r) => !r.covered);
+
+const pictures = manifest.filter((r) => (r.deviceChecks ?? []).length > 0);
+const pictureChecks = pictures.reduce((n, r) => n + (r.deviceChecks ?? []).length, 0);
 
 const out: string[] = [];
 out.push('# Device pass: THE PROOF SHEET');
@@ -59,7 +67,42 @@ for (const row of uncovered) {
   out.push(`- **#${row.entry}, ${row.title}.** ${row.why}`);
 }
 out.push('');
-out.push(`${device.length} device-side entries, ${uncovered.length} declared gaps.`);
+
+if (pictures.length > 0) {
+  out.push('## The pictures');
+  out.push('');
+  out.push('torture.pdf draws its own pictures, so these are checks on the same');
+  out.push('book as everything above, except two. The picture size an older');
+  out.push('Kindle accepts in a .mobi has four small books of its own, built with');
+  out.push('`bun tools/mobi-picture-probe.ts --out <folder>`. And the default book');
+  out.push('makes its title card the cover (#19b), so the check on a full-page');
+  out.push('plate at the front reads a second build with the cover off, whose');
+  out.push('command that check gives. What each of torture.pdf\'s pictures is, and');
+  out.push('which sheet it is on, is in the #19, #19a and #19b entries above.');
+  out.push('');
+  out.push('Read them in the KFX or the AZW3, and in the .mobi Screepub builds');
+  out.push('itself when Calibre is absent, which carries them too. The .mobi has');
+  out.push('no way to give a picture a share of the text column, so the device');
+  out.push('sizes each one there: a width unlike the KFX\'s is not a finding in');
+  out.push('the .mobi.');
+  out.push('');
+  out.push('Dark mode has nothing to show here: none of these pictures has');
+  out.push('transparency, so each is a solid rectangle on a dark page as on a');
+  out.push('light one. How a reader composites a transparent picture onto a dark');
+  out.push('page needs a script that has one.');
+  out.push('');
+  for (const row of pictures) {
+    out.push(`### #${row.entry}, ${row.title}`);
+    out.push('');
+    for (const check of row.deviceChecks ?? []) {
+      out.push(`- [ ] ${check}`);
+      out.push('');
+    }
+  }
+}
+
+out.push(`${device.length} device-side entries, ${uncovered.length} declared gaps, `
+  + `${pictureChecks} picture checks.`);
 out.push('');
 out.push('Findings go in the named entry\'s `Device verdict:` slot in');
 out.push('`docs/formatting-options-log.md`, in your own words.');

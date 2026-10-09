@@ -17,15 +17,83 @@
 // It also reads preserveFontShifts (#18), but only the SIZE arm: <font
 // size> is a primitive this dialect has, while MOBI 6 face support is too
 // unreliable to spend markup on, so family stays EPUB territory.
+// And includeImages (#19a), through mobiArt, which asks the EPUB's own
+// question. A picture note's `w=` is the knob it declines, for the reason
+// the CSS ones are declined: a share of the column has no spelling here.
+// promoteCoverImage (#19b) reaches the file only through mobiArt's
+// coverIndex, which the writer turns into a header record: the pages here
+// are the same with it on or off.
 import type { Token } from 'fountain-js';
 import type { FormatOptions } from '../options';
 import { isMiniSlug } from '../fountain/slug';
-import { fmtSizeStep, stripNotes } from '../fountain/notes';
+import { fmtSizeStep, rendersImage, stripNotes } from '../fountain/notes';
+import { pickCover } from '../fountain/cover';
 
 export interface MobiMeta {
   title: string;
   author?: string;
 }
+
+/**
+ * The pictures one MOBI carries, in the order its image records hold them.
+ *
+ * A MOBI addresses a picture by RECORD, not by name: `recindex="00002"` is the
+ * second image record, and nothing in the file says which picture that was.
+ * The EPUB's markup names `../images/p002-01.png`, so its packager may be
+ * handed the pictures in any order; here the markup and the records are two
+ * ends of one numbering, and a disagreement between them does not lose a
+ * picture, it shows the WRONG one. So the numbering exists once, in this
+ * list: `tokensToMobiHtml` numbers its figures from it and the caller hands
+ * `buildMobi` the bytes in this same order.
+ */
+export interface MobiArt {
+  /** `order[i]` is the picture `recindex` i+1 names. */
+  order: readonly string[];
+  /**
+   * Which of `order` is the book's cover (registry #19b), when `pickCover`
+   * chose one. The card stays in `order` and on its page: the cover names a
+   * record the flow already shows, it does not add one.
+   */
+  coverIndex?: number;
+}
+
+/**
+ * Which pictures this token stream puts in a MOBI, in document order, each
+ * once: a picture shown twice is one record with two references.
+ *
+ * Decided by `rendersImage`, the EPUB's own predicate, so the EPUB and the
+ * MOBI of one script show the same pictures. `have` is what the caller can
+ * supply bytes for, as it is for the EPUB. It walks the tokens the renderer
+ * walks (the title page's are not the body), and only `note` tokens: a note
+ * glued to a line of text is text, and is stripped as text.
+ *
+ * The cover is `pickCover`'s answer for the same tokens, format and `have`,
+ * the EPUB's own, so both books of a script wear the same cover or none.
+ * The card it picks is a picture this walk also lists, since the picker
+ * chooses only what `rendersImage` would draw and this renderer draws it.
+ */
+export function mobiArt(
+  tokens: Token[],
+  format: FormatOptions,
+  have: ReadonlySet<string>,
+): MobiArt {
+  const order: string[] = [];
+  for (const t of tokens) {
+    if (t.is_title || t.type !== 'note') continue;
+    const img = rendersImage(t.text ?? '', format.includeImages, have);
+    if (img && !order.includes(img.file)) order.push(img.file);
+  }
+  const cover = pickCover(tokens, format, have);
+  return cover ? { order, coverIndex: order.indexOf(cover.file) } : { order };
+}
+
+/**
+ * The record number a figure's `recindex` names: 1-based from the header's
+ * first-image-record field, zero-padded to five digits. That is the form
+ * calibre 9.11.0 and kindlegen 2.9 both wrote in MOBI 6 files of the same
+ * book (measured 2026-08-11 with `calibre-debug --inspect-mobi`).
+ */
+const recindex = (i: number) => String(i + 1).padStart(5, '0');
 
 function esc(s: string): string {
   return s
@@ -48,6 +116,9 @@ export function tokensToMobiHtml(
   tokens: Token[],
   meta: MobiMeta,
   format: FormatOptions,
+  /** What `mobiArt` decided for these tokens and this format. No pictures by
+   * default: the honest answer for a caller with no records to address. */
+  art: MobiArt = { order: [] },
 ): string {
   const out: string[] = [];
   out.push('<html><head></head><body>');
@@ -59,9 +130,15 @@ export function tokensToMobiHtml(
   // page) while a scene that follows opening action does — matching the
   // EPUB, where section.scene's page-break-before separates exactly that.
   let sinceBreak = false;
+  // A break owed AFTER a full-page plate, paid only by the next block, so a
+  // plate that ends the book leaves no blank page behind it. Any break
+  // settles it, which is why a scene heading straight after a plate gets
+  // one break and not two.
+  let breakOwed = false;
   const breakPage = () => {
     out.push('<mbp:pagebreak/>');
     sinceBreak = false;
+    breakOwed = false;
   };
 
   // Title page (registry #11's MOBI arm — gated like the EPUB's, which
@@ -83,6 +160,15 @@ export function tokensToMobiHtml(
   // a float on, so the number reads as a small prefix at the head of the
   // block; <font size="-2"> is how this file expresses "small".
   let pendingMarker: string | null = null;
+  // A block, with no claim on the pending page marker, paying first any
+  // break a full-page plate left owing. `push` is this plus the marker; call
+  // this one directly only where a block must DECLINE a marker, which today
+  // is the figure alone (the EPUB's `place`/`emit`).
+  const place = (s: string) => {
+    if (breakOwed) breakPage();
+    out.push(s);
+    sinceBreak = true;
+  };
   const push = (s: string) => {
     if (pendingMarker) {
       const open = /^<(p|blockquote|center|table|div|h[1-6])\b[^>]*>/.exec(s);
@@ -91,9 +177,12 @@ export function tokensToMobiHtml(
         pendingMarker = null;
       }
     }
-    out.push(s);
-    sinceBreak = true;
+    place(s);
   };
+  // The pictures this book has records for. A note is a figure when
+  // rendersImage says yes against THIS set, so a picture with no record has
+  // no `recindex` to dangle.
+  const inBook = new Set(art.order);
   const closeSpeech = () => {
     if (speech) {
       push(`<blockquote>${speech.join('<br/>')}</blockquote>`);
@@ -172,6 +261,47 @@ export function tokensToMobiHtml(
         if (pg) {
           pendingMarker = `<span class="page-marker"><font size="-2">${esc(pg[1])}.</font></span>`;
         }
+        break;
+      }
+      case 'note': {
+        // A standalone `[[img: ...]]` is a picture carried out of the PDF
+        // (registry #19). Every other note, and a picture note the predicate
+        // turns down, renders nothing: notes are invisible by spec.
+        //
+        // A title card that is the book's cover is drawn here too, where the
+        // EPUB leaves it off its pages (#19b). Calibre's MOBI reader takes a
+        // cover only from a JPEG record, and every picture here is a PNG, so
+        // a card kept only as the cover could vanish from the book; kept on
+        // its page, the worst case is the card met twice.
+        const img = rendersImage(raw, format.includeImages, inBook);
+        if (!img) break;
+        closeSpeech();
+        // The EPUB's p.figure-full in this dialect's one break primitive: a
+        // break before the plate and one after, so it has a page to itself.
+        // Not gated by scenePageBreaks, as the EPUB's is not: the script
+        // itself gave this picture a page. Neither break is taken where there
+        // is nothing to break from (the start of the body) or away from (the
+        // end), which is what Blink does with the EPUB's (measured
+        // 2026-08-11), so neither end of the book gets a blank page.
+        if (img.fullPage && sinceBreak) breakPage();
+        // A centred <p>: this dialect aligns by attribute, as the transition
+        // does, and the EPUB's figure is a <p> too. `alt` for the EPUB's
+        // reason (an empty one calls the picture decoration), and kindlegen
+        // 2.9 wrote one in its own MOBI 6, so this dialect has it.
+        //
+        // No width, and that is a refusal rather than an omission. The note's
+        // `w=` is a share of the text column; the only width attested in this
+        // dialect is a pixel count, and not even the picture's own: calibre
+        // 9.11.0 wrote width="672" height="504" for a 240x180 plate (measured
+        // 2026-08-11). There is no share to write and no honest pixel count
+        // to compute, so the device sizes the picture.
+        //
+        // `place`, not `push`: a figure declines a pending page marker,
+        // because a picture is not a line of text a reader can land on. The
+        // EPUB holds the same rule, and serialize.ts's anchorsPageMarker
+        // holds it upstream of the .fountain.
+        place(`<p align="center"><img recindex="${recindex(art.order.indexOf(img.file))}" alt="Illustration"/></p>`);
+        if (img.fullPage) breakOwed = true;
         break;
       }
       default:

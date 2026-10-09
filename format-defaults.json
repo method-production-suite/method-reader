@@ -16,5 +16,7 @@
   "dualDialogue": "sideBySide",
   "justifyText": false,
   "printSplitMinimums": true,
-  "preserveFontShifts": true
+  "preserveFontShifts": true,
+  "includeImages": true,
+  "promoteCoverImage": true
 }

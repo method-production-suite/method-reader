@@ -28,7 +28,7 @@ describe('inline markup', () => {
     expect(r.spans).toEqual([]);
   });
 
-  // A typo buried in 14 sheets of content must fail at generation, not
+  // A typo buried in pages of content must fail at generation, not
   // produce a fixture that quietly tests nothing.
   test('an unclosed marker is an error, not silently dropped', () => {
     expect(() => parseMarkup('a {b}bold')).toThrow();

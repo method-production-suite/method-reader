@@ -40,7 +40,7 @@ import {
 } from '../src/cli-routes';
 import type { FreshKindleArtifactOptions } from '../src/export/artifact';
 import type { KfxStatus } from '../src/export/kfx';
-import { realOpener, sendViaAmazon, type Opener } from '../src/export/route-perform';
+import { emailToKindle, realOpener, sendViaAmazon, type Opener } from '../src/export/route-perform';
 import { routes, type RouteFacts } from '../src/export/routes';
 import { resolveCommand } from '../src/cli-devices';
 import type { ConnectedDevice } from '../src/device/types';
@@ -456,6 +456,79 @@ describe('route: email to Kindle', () => {
     expect(err.code).toBe('route-failed');
     expect(err.message).toBe('could not open Mail: Unable to find application named Mail');
     expect(existsSync(r.settingsPath)).toBe(false);
+  });
+});
+
+describe("route email-to-kindle: Amazon's 50 MB limit", () => {
+  // Amazon drops mail over its limit without a word to the sender, so a book
+  // that is over is refused before Mail opens. Sizes are stood in through the
+  // seam: no test here writes a 50 MB file.
+  const tooLarge = (mb: string) =>
+    `This book is too large for Kindle email. It is ${mb} MB, and Amazon takes up to 50 MB by email ` +
+    'and drops anything larger without a word. Send it with the Send to Kindle app or web page instead, which take up to 200 MB.';
+
+  test('a book over the limit is refused before Mail opens, naming Send to Kindle, and is NOT remembered', async () => {
+    const epub = book();
+    const r = rig();
+    const sizes: string[] = [];
+    const sizeOf = (path: string) => {
+      sizes.push(path);
+      return 63_400_000;
+    };
+    const err = await thrown(() => routeCommand({ key: 'email-to-kindle', epub }, { ...r.deps, sizeOf }));
+    expect(err.code).toBe('route-unavailable');
+    expect(err.message).toBe(tooLarge('63.4'));
+    expect(err.message).not.toContain(EM_DASH);
+    expect(sizes).toEqual([epub]);
+    expect(r.calls).toEqual([]);
+    expect(existsSync(r.settingsPath)).toBe(false);
+  });
+
+  test('exactly 50 MB, counted the way Amazon counts it, still goes', async () => {
+    const epub = book();
+    const r = rig();
+    const answer = await routeCommand({ key: 'email-to-kindle', epub }, { ...r.deps, sizeOf: () => 50_000_000 });
+    expect(r.calls).toEqual([['open', '-a', 'Mail', epub]]);
+    expect(answer.note).toBe(MAIL_NOTE);
+  });
+
+  test('one byte over reads as over, never as the 50 MB it is refused for', async () => {
+    const r = rig();
+    const err = await thrown(() =>
+      routeCommand({ key: 'email-to-kindle', epub: book() }, { ...r.deps, sizeOf: () => 50_000_001 }));
+    expect(err.message).toBe(tooLarge('50.1'));
+    expect(r.calls).toEqual([]);
+  });
+
+  test('a whole number of megabytes is written without a decimal', async () => {
+    const r = rig();
+    const err = await thrown(() =>
+      routeCommand({ key: 'email-to-kindle', epub: book() }, { ...r.deps, sizeOf: () => 120_000_000 }));
+    expect(err.message).toBe(tooLarge('120'));
+  });
+
+  test('the performer refuses on its own, so no caller can attach a book Amazon would drop', async () => {
+    const calls: string[][] = [];
+    const open: Opener = async (argv) => {
+      calls.push(argv);
+      return { code: 0, stderr: '' };
+    };
+    const err = await thrown(() => emailToKindle(book(), open, () => 75_000_000));
+    expect(err.code).toBe('route-unavailable');
+    expect(err.message).toBe(tooLarge('75'));
+    expect(calls).toEqual([]);
+  });
+
+  test('with nothing stood in, the size is the file on disk', async () => {
+    // book() writes a few bytes, far under the limit, so Mail opens.
+    const epub = book();
+    const calls: string[][] = [];
+    const open: Opener = async (argv) => {
+      calls.push(argv);
+      return { code: 0, stderr: '' };
+    };
+    expect(await emailToKindle(epub, open)).toBe(MAIL_NOTE);
+    expect(calls).toEqual([['open', '-a', 'Mail', epub]]);
   });
 });
 

@@ -93,6 +93,8 @@ const OVERRIDE_CASES: Array<{ field: keyof FormatOptions; json: string; expected
   { field: 'justifyText', json: '{"justifyText": true}', expected: { justifyText: true } },
   { field: 'printSplitMinimums', json: '{"printSplitMinimums": false}', expected: { printSplitMinimums: false } },
   { field: 'preserveFontShifts', json: '{"preserveFontShifts": false}', expected: { preserveFontShifts: false } },
+  { field: 'includeImages', json: '{"includeImages": false}', expected: { includeImages: false } },
+  { field: 'promoteCoverImage', json: '{"promoteCoverImage": false}', expected: { promoteCoverImage: false } },
 ];
 
 for (const c of OVERRIDE_CASES) {

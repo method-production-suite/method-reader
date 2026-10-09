@@ -1,6 +1,7 @@
-// Write-then-rename, synchronously: the one copy of the rule for the small
-// files the engine keeps beside a book (settings, sidecars, a library
-// folder's source.json, a rebuilt Kindle file). cli.ts's writeFileAtomic is
+// Write-then-rename, synchronously: the one copy of the rule for the files
+// the engine keeps beside a book (settings, sidecars, a library folder's
+// source.json, a rebuilt Kindle file, the pictures in a script's picture
+// folder, via library-images.ts). cli.ts's writeFileAtomic is
 // the async twin for conversion outputs, and replace-file.ts the variant for
 // a reader's USB copy, which also flushes to the device.
 import { copyFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';

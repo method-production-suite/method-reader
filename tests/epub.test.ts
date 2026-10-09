@@ -2,7 +2,7 @@ import { describe, test, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { Fountain } from 'fountain-js';
 import JSZip from 'jszip';
-import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
+import { tokensToBody, tokensToPreviewHtml, type BookBody } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { SCREENPLAY_CSS, screenplayCss } from '../src/epub/css';
 import { ruleFor, eachRule } from './css-rules';
@@ -115,6 +115,32 @@ describe('tokensToBody', () => {
     expect(body.files[0].xhtml).toContain('Some cold-open action.');
     expect(body.toc[0].title).toBe('Opening');
     expect(body.toc[1].title).toBe('INT. LAB - DAY');
+  });
+
+  test('a picture note before the first heading opens no section', () => {
+    // A standalone note renders nothing, so a group made only of notes is an
+    // EMPTY section: an "Opening" in the nav, a blank page wherever
+    // scenePageBreaks is on, and every scene anchor moved one along. The
+    // whole body is compared, files and toc and page list, with and without a
+    // title page, because "the book does not change" is the claim.
+    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const note = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+    for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+      const plain = bodyOf(head + script);
+      expect(bodyOf(head + note + script)).toEqual(plain);
+      expect(bodyOf(head + note + note + script)).toEqual(plain);
+    }
+    expect(bodyOf(note + script).toc.map((e) => e.title)).toEqual(['INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+  });
+
+  test('a note ahead of real opening content leaves that Opening as it was', () => {
+    // Skipping the note must not swallow the cold open that follows it.
+    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const open = 'A cold open.\n\nINT. LAB - DAY\n\nWork.\n';
+    const noted = bodyOf(`[[img: p001-01.png w=100 full]]\n\n${open}`);
+    expect(noted).toEqual(bodyOf(open));
+    expect(noted.toc[0].title).toBe('Opening');
   });
 
   test('script with no scene headings yields one section', () => {
@@ -500,6 +526,436 @@ describe('page markers in XHTML', () => {
   });
 });
 
+// ── figures (registry #19) ───────────────────────────────
+
+describe('figures', () => {
+  const ON = DEFAULT_FORMAT_OPTIONS;
+  const OFF = { ...DEFAULT_FORMAT_OPTIONS, includeImages: false };
+  // Pictures on and the card left in the flow: the book before covers.
+  const NO_COVER = { ...DEFAULT_FORMAT_OPTIONS, promoteCoverImage: false };
+  const HAVE = new Set(['p001-01.png', 'p002-01.png']);
+  const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
+  const bodyOf = (src: string, opts: Parameters<typeof tokensToBody>[1] = {}) =>
+    tokensToBody(tokensOf(src), opts);
+  const scene = (note: string) => `INT. LAB - DAY\n\nBefore.\n\n${note}\n\nAfter.\n`;
+
+  test('a picture note with its picture present becomes a figure where it sat', () => {
+    const body = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON, images: HAVE });
+    expect(body.files[0].xhtml).toMatch(
+      /<p class="action">Before\.<\/p>\s*<p class="figure w40"><img src="\.\.\/images\/p002-01\.png" alt="Illustration"\/><\/p>\s*<p class="action">After\.<\/p>/,
+    );
+    expect([...body.usedImages]).toEqual(['p002-01.png']);
+  });
+
+  test('a full-page picture says so in its class', () => {
+    const body = bodyOf(scene('[[img: p001-01.png w=100 full]]'), { format: ON, images: HAVE });
+    expect(body.files[0].xhtml).toContain(
+      '<p class="figure w100 figure-full"><img src="../images/p001-01.png" alt="Illustration"/></p>',
+    );
+  });
+
+  test('the width class is the note’s width to the nearest five, inside 5 to 100', () => {
+    // Twenty classes rather than an inline style: the preview is an iframe
+    // whose CSP refuses `style=` attributes, and one markup path serves both.
+    const classOf = (w: string) => {
+      const xhtml = bodyOf(scene(`[[img: p002-01.png w=${w}]]`), { format: ON, images: HAVE }).files[0].xhtml;
+      return /<p class="figure (w\d+)"/.exec(xhtml)?.[1];
+    };
+    expect(classOf('42')).toBe('w40');
+    expect(classOf('43')).toBe('w45');
+    expect(classOf('97')).toBe('w95');
+    expect(classOf('98')).toBe('w100');
+    expect(classOf('1')).toBe('w5');
+    expect(classOf('7')).toBe('w5');
+    expect(classOf('8')).toBe('w10');
+  });
+
+  test('the alt text is never empty, because an empty alt calls the picture decoration', () => {
+    const xhtml = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON, images: HAVE }).files[0].xhtml;
+    expect(xhtml).toContain('alt="Illustration"');
+    expect(xhtml).not.toContain('alt=""');
+  });
+
+  test('a picture the caller cannot ship renders nothing and is not reported as used', () => {
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n');
+    const missing = bodyOf(scene('[[img: p009-01.png w=42]]'), { format: ON, images: HAVE });
+    expect(missing).toEqual(plain);
+    expect(missing.usedImages.size).toBe(0);
+  });
+
+  test('pictures off renders nothing, even with every picture present', () => {
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n', { format: OFF });
+    const off = bodyOf(scene('[[img: p002-01.png w=42]]'), { format: OFF, images: HAVE });
+    expect(off).toEqual(plain);
+    expect(off.usedImages.size).toBe(0);
+  });
+
+  test('a caller that passes no pictures renders exactly what it did before', () => {
+    // Every existing caller passes none. The default is the empty set, so
+    // their books do not move by a byte with the option on.
+    const plain = bodyOf('INT. LAB - DAY\n\nBefore.\n\nAfter.\n');
+    expect(bodyOf(scene('[[img: p002-01.png w=42]]'))).toEqual(plain);
+    expect(bodyOf(scene('[[img: p002-01.png w=42]]'), { format: ON })).toEqual(plain);
+  });
+
+  test('usedImages names each picture once, however often it is shown', () => {
+    const src = 'INT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nMid.\n\n'
+      + '[[img: p002-01.png w=42]]\n\nINT. YARD - DAY\n\n[[img: p001-01.png w=60]]\n';
+    const body = bodyOf(src, { format: ON, images: HAVE });
+    expect([...body.usedImages].sort()).toEqual(['p001-01.png', 'p002-01.png']);
+    expect(body.files[0].xhtml.match(/<p class="figure/g)).toHaveLength(3);
+  });
+
+  test('the src comes from the caller’s resolver, escaped as an attribute', () => {
+    // The preview points the same markup at a data: URI. Whatever a resolver
+    // returns goes through escapeXml, so a quote cannot end the attribute.
+    const body = bodyOf(scene('[[img: p002-01.png w=42]]'), {
+      format: ON, images: HAVE, imageSrc: (file) => `x?f=${file}&a="b"`,
+    });
+    expect(body.files[0].xhtml).toContain(
+      '<img src="x?f=p002-01.png&amp;a=&quot;b&quot;" alt="Illustration"/>',
+    );
+  });
+
+  test('a figure declines a pending page marker, which lands on the next text instead', () => {
+    // serialize.ts's anchorsPageMarker rule, held on this side of the
+    // .fountain too: a picture is not a line of text a reader can land on.
+    const body = bodyOf(
+      'INT. LAB - DAY\n\nBefore.\n\n= pg 7\n\n[[img: p002-01.png w=42]]\n\nAfter.\n',
+      { format: ON, images: HAVE },
+    );
+    const xhtml = body.files[0].xhtml;
+    expect(xhtml).toMatch(/<p class="figure w40"><img [^>]*\/><\/p>/);
+    expect(xhtml).toMatch(
+      /<p class="action"><span[^>]*class="page-marker"[^>]*>7\.<\/span>After\.<\/p>/,
+    );
+    expect(body.pageList.map((p) => p.label)).toEqual(['7']);
+  });
+
+  describe('a picture note before the first heading', () => {
+    // toFountain writes a title card's note above the first scene heading.
+    // Whether it opens an "Opening" section is the predicate's answer, the
+    // same one that decides whether it renders: a section is opened for a
+    // figure in the flow, never for a note that will render nothing there.
+    // These are the book with the cover option off; the cover's own
+    // describe follows.
+    const card = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+
+    test('(a) pictures off: the body is the note-free body, byte for byte', () => {
+      for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+        const plain = bodyOf(head + script, { format: OFF, images: HAVE });
+        expect(bodyOf(head + card + script, { format: OFF, images: HAVE })).toEqual(plain);
+      }
+    });
+
+    test('(b) pictures on and present: an Opening holds the figure, and the scenes follow from sc-002', () => {
+      const body = bodyOf(card + script, { format: NO_COVER, images: HAVE });
+      expect(body.toc).toEqual([
+        { title: 'Opening', href: 'text/body001.xhtml#sc-001' },
+        { title: 'INT. LAB - DAY', href: 'text/body001.xhtml#sc-002' },
+        { title: 'EXT. YARD - NIGHT', href: 'text/body001.xhtml#sc-003' },
+      ]);
+      expect(body.files[0].xhtml).toMatch(
+        /<section class="scene" id="sc-001">\s*<p class="figure w100 figure-full"><img src="\.\.\/images\/p001-01\.png" alt="Illustration"\/><\/p>\s*<\/section>\s*<section class="scene" id="sc-002">\s*<h2 class="scene-heading">INT\. LAB - DAY<\/h2>/,
+      );
+      expect([...body.usedImages]).toEqual(['p001-01.png']);
+      expect(body.coverImage).toBeUndefined();
+    });
+
+    test('(c) pictures on but missing: identical to (a)', () => {
+      const plain = bodyOf(script, { format: OFF, images: HAVE });
+      for (const format of [ON, NO_COVER]) {
+        expect(bodyOf(card + script, { format, images: new Set(['p002-01.png']) })).toEqual(plain);
+        expect(bodyOf(card + script, { format })).toEqual(plain);
+      }
+    });
+
+    test('a note that renders and one that does not, in either order, open one Opening', () => {
+      const dead = '[[img: p009-01.png w=50]]\n\n';
+      for (const src of [dead + card + script, card + dead + script]) {
+        const body = bodyOf(src, { format: NO_COVER, images: HAVE });
+        expect(body.toc.map((e) => e.title)).toEqual(['Opening', 'INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+        expect(body.files[0].xhtml.match(/<p class="figure/g)).toHaveLength(1);
+      }
+    });
+  });
+
+  describe('the title card as the cover', () => {
+    // pickCover's choice (tests/cover.test.ts has the rule) leaves the flow:
+    // the book shows it as its cover instead, so the body is the body of the
+    // same script without the card, and says which picture is the cover for
+    // the packager to declare.
+    const card = '[[img: p001-01.png w=100 full]]\n\n';
+    const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
+    /** Everything about a body but which picture is its cover. */
+    const pages = ({ coverImage: _, ...rest }: BookBody) => rest;
+
+    test('the card is not drawn, opens no Opening, and the first scene is sc-001', () => {
+      for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
+        const body = bodyOf(head + card + script, { format: ON, images: HAVE });
+        expect(body.coverImage).toBe('p001-01.png');
+        expect(body.toc).toEqual([
+          { title: 'INT. LAB - DAY', href: 'text/body001.xhtml#sc-001' },
+          { title: 'EXT. YARD - NIGHT', href: 'text/body001.xhtml#sc-002' },
+        ]);
+        expect(body.files[0].xhtml).not.toContain('class="figure');
+        // The body of the script with no card at all, every file and entry:
+        // only the cover field tells them apart.
+        const plain = bodyOf(head + script, { format: ON, images: HAVE });
+        expect(pages(body)).toEqual(pages(plain));
+      }
+    });
+
+    test('usedImages stays what the pages draw, so the cover is not in it', () => {
+      // The packager ships the cover from coverImage. usedImages is what
+      // decides the stylesheet's figure rules, and a book whose one picture
+      // is its cover draws no figure on any page.
+      const body = bodyOf(card + script, { format: ON, images: HAVE });
+      expect(body.usedImages.size).toBe(0);
+    });
+
+    test('so a card-only front reads the same with pictures on or off', () => {
+      // With the cover on, switching pictures off takes away the cover and
+      // nothing else: no Opening comes or goes, so no scene changes its id.
+      const on = bodyOf(card + script, { format: ON, images: HAVE });
+      const off = bodyOf(card + script, { format: OFF, images: HAVE });
+      expect(pages(on)).toEqual(pages(off));
+    });
+
+    test('pictures after the card are drawn where they sit', () => {
+      const body = bodyOf(
+        `${card}INT. LAB - DAY\n\n[[img: p002-01.png w=42]]\n\nWork.\n`,
+        { format: ON, images: HAVE },
+      );
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.files[0].xhtml).toContain(
+        '<p class="figure w40"><img src="../images/p002-01.png" alt="Illustration"/></p>',
+      );
+      expect(body.files[0].xhtml).not.toContain('p001-01.png');
+      expect([...body.usedImages]).toEqual(['p002-01.png']);
+    });
+
+    test('the same plate shown again later is drawn there: only the card note leaves the flow', () => {
+      // Compared by note, not by filename. Our own writer names each picture
+      // once, but a hand-written script may show its card again in act three.
+      const body = bodyOf(`${card}${script}\n${card}`, { format: ON, images: HAVE });
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.files[0].xhtml.match(/<p class="figure w100 figure-full">/g)).toHaveLength(1);
+      expect(body.files[0].xhtml).toMatch(/Rest\.<\/p>\s*<p class="figure w100 figure-full">/);
+      expect([...body.usedImages]).toEqual(['p001-01.png']);
+    });
+
+    test('a note that renders nothing, in either place, does not stop the cover', () => {
+      const dead = '[[img: p009-01.png w=50]]\n\n';
+      for (const src of [dead + card + script, card + dead + script]) {
+        const body = bodyOf(src, { format: ON, images: HAVE });
+        expect(body.coverImage).toBe('p001-01.png');
+        expect(body.toc.map((e) => e.title)).toEqual(['INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+      }
+    });
+
+    test('a cold open after the card still opens the Opening, which holds only the cold open', () => {
+      const body = bodyOf(`${card}A cold open.\n\n${script}`, { format: ON, images: HAVE });
+      expect(body.coverImage).toBe('p001-01.png');
+      expect(body.toc.map((e) => e.title)).toEqual(['Opening', 'INT. LAB - DAY', 'EXT. YARD - NIGHT']);
+      expect(body.files[0].xhtml).toMatch(
+        /<section class="scene" id="sc-001">\s*<p class="action">A cold open\.<\/p>\s*<\/section>/,
+      );
+    });
+
+    test('with promoteCoverImage off, nothing is the cover and the card is the Opening', () => {
+      const body = bodyOf(card + script, { format: NO_COVER, images: HAVE });
+      expect(body.coverImage).toBeUndefined();
+      expect(body.toc[0].title).toBe('Opening');
+    });
+  });
+});
+
+// ── figure CSS (registry #19) ────────────────────────────
+
+describe('figure CSS', () => {
+  // A spread of option sets, so a figure block that leaned on one knob's
+  // value, or a seam that moved under one, shows up in some row.
+  const FORMATS = [
+    DEFAULT_FORMAT_OPTIONS,
+    resolveFormatOptions({ scenePageBreaks: true }),
+    resolveFormatOptions({ keepSpeechesWhole: true, keepSceneHeadingWithScene: false }),
+    resolveFormatOptions({ elementSpacingEm: 0.6, justifyText: true }),
+    resolveFormatOptions({ cueAlignment: 'indented', fontFamily: 'serif' }),
+    resolveFormatOptions({ printSplitMinimums: false, includeImages: false }),
+  ];
+  const WIDTHS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
+  const FIGURE_SELECTORS = [
+    '.figure', '.figure img', ...WIDTHS.map((n) => `p.w${n} img`), 'p.figure-full',
+  ];
+  const withFigures = (o = DEFAULT_FORMAT_OPTIONS) => screenplayCss(o, { hasFigures: true });
+  const TITLE_PAGE = '/* Title page */';
+
+  test('without figures the sheet is the one every caller already gets', () => {
+    for (const o of FORMATS) {
+      expect(screenplayCss(o, { hasFigures: false })).toBe(screenplayCss(o));
+    }
+    expect(screenplayCss(DEFAULT_FORMAT_OPTIONS)).toBe(SCREENPLAY_CSS);
+  });
+
+  test('without figures the sheet styles no figure and no image', () => {
+    for (const o of FORMATS) {
+      const css = screenplayCss(o);
+      for (const r of eachRule(css)) {
+        expect(r.selector, r.selector).not.toMatch(/\.figure|\bimg\b|\bp\.w\d/);
+      }
+      expect(css).not.toContain('.figure');
+    }
+  });
+
+  test('without figures the seam is exactly as it was: one blank line between p.centered and the title page', () => {
+    // The figure block is spliced in here, so this is where a stray newline
+    // from the splice would land in EVERY book, pictures or not. Pinned
+    // character for character, since the corpus promise is byte-identity.
+    expect(screenplayCss(DEFAULT_FORMAT_OPTIONS)).toContain(
+      `p.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n${TITLE_PAGE}\n`,
+    );
+    expect(screenplayCss(resolveFormatOptions({ elementSpacingEm: 0.6 }))).toContain(
+      `p.centered {\n  text-align: center;\n  margin: 0.6em 0;\n}\n\n${TITLE_PAGE}\n`,
+    );
+  });
+
+  test('with figures the sheet is that sheet plus one block, between p.centered and the title page', () => {
+    for (const o of FORMATS) {
+      const without = screenplayCss(o);
+      const withF = withFigures(o);
+      const at = without.indexOf(TITLE_PAGE);
+      expect(at).toBeGreaterThan(0);
+      // Everything before the seam and everything after it is untouched.
+      expect(withF.slice(0, at)).toBe(without.slice(0, at));
+      expect(withF.endsWith(without.slice(at))).toBe(true);
+      const block = withF.slice(at, withF.length - (without.length - at));
+      // The seam it opens sits right after p.centered.
+      expect(withF.slice(0, at)).toMatch(/p\.centered \{[^}]*\}\n\n$/);
+      // It holds the figure rules, in this order, and nothing else.
+      expect(eachRule(block).map((r) => r.selector)).toEqual(FIGURE_SELECTORS);
+      // And it ends with the same one blank line every rule here does.
+      expect(block.endsWith('}\n\n')).toBe(true);
+    }
+  });
+
+  test('the figure box: element spacing above and below, centred, in em', () => {
+    expect(ruleFor(withFigures(), '.figure')).toContain('margin: 1em 0;');
+    expect(ruleFor(withFigures(), '.figure')).toContain('text-align: center;');
+    const tight = withFigures(resolveFormatOptions({ elementSpacingEm: 0.6 }));
+    expect(ruleFor(tight, '.figure')).toContain('margin: 0.6em 0;');
+  });
+
+  test('the picture keeps its aspect: the height follows the width', () => {
+    const img = ruleFor(withFigures(), '.figure img');
+    expect(img).toContain('height: auto;');
+    expect(img).not.toContain('width');
+  });
+
+  test('twenty width rules, 5% to 100% of the column in steps of five', () => {
+    const css = withFigures();
+    for (const n of WIDTHS) {
+      expect(ruleFor(css, `p.w${n} img`)).toMatch(new RegExp(`\\{\\s*width: ${n}%;\\s*\\}$`));
+    }
+    expect(eachRule(css).filter((r) => /^p\.w\d+ img$/.test(r.selector))).toHaveLength(20);
+  });
+
+  test('a full-page plate ends the page before it and the page it is on', () => {
+    const full = ruleFor(withFigures(), 'p.figure-full');
+    expect(full).toContain('page-break-before: always;');
+    expect(full).toContain('page-break-after: always;');
+    expect(full).not.toContain('avoid');
+  });
+
+  test('a full-page plate has no vertical margin, which would push it past a blank page', () => {
+    // A top margin survives a forced break. Under .figure's margin a plate
+    // within about 1em of the page height stopped fitting and Blink moved it
+    // to the next page, leaving the page after the break blank (measured on
+    // images.pdf's title card at 6x8in). The plate's own rule cancels it;
+    // p.figure-full outranks .figure by specificity, so order cannot undo it.
+    expect(ruleFor(withFigures(), 'p.figure-full')).toMatch(/(^|[{;\s])margin: 0;/);
+  });
+
+  test('figures add no keep, no multicol spelling, and leave every existing pin as it was', () => {
+    // No keep on .figure: it holds one line box, so there is no break inside
+    // it to forbid, and a keep measured inert (the css.ts header has the
+    // numbers). The forced breaks are `always`, which the avoid inventory
+    // does not count, and like the scene break they have no column spelling.
+    for (const o of FORMATS) {
+      const without = screenplayCss(o);
+      const withF = withFigures(o);
+      const avoids = (css: string) =>
+        css.match(/^\s*(?:page-)?break-(?:after|before|inside):\s*avoid;/gm) ?? [];
+      expect(avoids(withF)).toEqual(avoids(without));
+      const carrying = (css: string, re: RegExp) =>
+        eachRule(css).filter((r) => re.test(r.body)).map((r) => r.selector);
+      expect(carrying(withF, /:\s*avoid;/)).toEqual(carrying(without, /:\s*avoid;/));
+      expect(carrying(withF, /-webkit-column-break/)).toEqual(carrying(without, /-webkit-column-break/));
+      expect(carrying(withF, /\b(?:widows|orphans):/)).toEqual(carrying(without, /\b(?:widows|orphans):/));
+      expect(carrying(withF, /:\s*always;/)).toEqual([
+        ...carrying(without, /:\s*always;/), 'p.figure-full',
+      ]);
+      expect(ruleFor(withF, '.figure')).not.toMatch(/break|keep/);
+    }
+  });
+
+  test('the figure sheet keeps the stylesheet invariants', () => {
+    // Horizontal in %, vertical in em, no max-width anywhere (not even in a
+    // comment: the sheet ships its comments), no line-height, CSS 2.1 value
+    // syntax, no fixed units, and no brace inside a comment, which would
+    // shift every rule boundary the tests read after it.
+    for (const o of FORMATS) {
+      const css = withFigures(o);
+      expect(css).not.toContain('max-width');
+      expect(css).not.toContain('max-height');
+      const block = eachRule(css)
+        .filter((r) => FIGURE_SELECTORS.includes(r.selector))
+        .map((r) => r.body).join('\n');
+      expect(block).not.toContain('line-height');
+      expect(block).not.toMatch(/\b(?:min|max|clamp|var|calc)\(/);
+      expect(block).not.toMatch(/\d(?:px|pt|cm|mm|in)\b/);
+      for (const c of css.match(/\/\*[\s\S]*?\*\//g) ?? []) expect(c).not.toMatch(/[{}]/);
+    }
+  });
+
+  test('every class the figure rules style is one the renderer emits, and every one it emits is styled', () => {
+    // The renderer rounds a note's width to a step of five inside 5..100 and
+    // writes it as a class; the sheet defines one rule per step. Two files,
+    // one set: proved by running the renderer over every width a note can
+    // carry, not by reading either file's source.
+    const have = new Set(['p001-01.png']);
+    const emitted = new Set<string>();
+    for (let w = -5; w <= 105; w++) {
+      for (const full of ['', ' full']) {
+        const xhtml = tokensToBody(
+          new Fountain().parse(`INT. A - DAY\n\n[[img: p001-01.png w=${w}${full}]]\n`, true).tokens,
+          { images: have },
+        ).files[0].xhtml;
+        const m = /<p class="([^"]*)"><img /.exec(xhtml);
+        expect(m, `w=${w}${full}`).not.toBeNull();
+        for (const cls of m![1].split(/\s+/)) emitted.add(cls);
+      }
+    }
+    const block = eachRule(withFigures())
+      .filter((r) => FIGURE_SELECTORS.includes(r.selector))
+      .map((r) => r.selector).join(' ');
+    const styled = new Set([...block.matchAll(/\.([a-z][a-z0-9-]*)/g)].map((m) => m[1]));
+    expect([...styled].sort()).toEqual([...emitted].sort());
+    expect(styled.size).toBe(22);
+  });
+
+  test('a preview that shows no figure carries no figure rules', () => {
+    // The preview derives the flag from the body it rendered, as the book
+    // does, so a script whose note has no picture to show styles none.
+    const html = tokensToPreviewHtml(
+      new Fountain().parse('INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nAfter.\n', true).tokens,
+    );
+    expect(html).not.toContain('.figure');
+    expect(html).toContain(screenplayCss(DEFAULT_FORMAT_OPTIONS));
+  });
+});
+
 // ── dual dialogue side-by-side ───────────────────────────
 
 describe('dual dialogue table rendering', () => {
@@ -673,6 +1129,16 @@ describe('tokensToPreviewHtml', () => {
     const html = tokensToPreviewHtml([]);
     expect(html).toContain('<style>');
   });
+
+  test('a picture note before the first heading adds no section to the preview', () => {
+    // The Read window builds its scene rail from every section.scene in this
+    // document, so an empty one would be an "Opening" the script never had.
+    const of = (src: string) => tokensToPreviewHtml(new Fountain().parse(src, true).tokens);
+    const script = 'Title: T\n\nINT. KITCHEN - DAY\n\nA kettle screams.\n';
+    const noted = of(script.replace('INT.', '[[img: p001-01.png w=100 full]]\n\nINT.'));
+    expect(noted).toBe(of(script));
+    expect(noted.match(/<section class="scene"/g)).toHaveLength(1);
+  });
 });
 
 // ── block font shifts (registry #18) ─────────────────────
@@ -717,6 +1183,25 @@ describe('font shifts', () => {
       expect(out).toContain('He leaves quickly.');
       expect(out).not.toContain('[[');
       expect(out).not.toContain('check this');
+    }
+  });
+
+  test('an image note renders nothing, in every shape it can arrive in', () => {
+    // The .fountain records pictures before any renderer draws one, so until
+    // one does, the note has to stay as invisible as any other. Three shapes:
+    // on its own (what toFountain writes), after the speech it was deferred
+    // past (likewise), and glued to a line by a hand edit, which folds it into
+    // that line's token for stripNotes to remove.
+    const sources = [
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n@WREN\nHer line.\n\n[[img: p001-01.png w=50]]\n\nSomeone waits.\n',
+      'INT. A - DAY\n\n[[img: p001-01.png w=50]]\nSomeone waits.\n',
+    ];
+    for (const src of sources) {
+      const out = render(src);
+      expect(out, src).toContain('Someone waits.');
+      expect(out, src).not.toContain('img:');
+      expect(out, src).not.toContain('p001-01.png');
     }
   });
 

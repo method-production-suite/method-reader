@@ -1,8 +1,22 @@
 import { afterAll, describe, test, expect } from 'bun:test';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { isWriteRefusal, mapConversionError } from '../src/cli-errors';
+import JSZip from 'jszip';
+import { isWriteRefusal, mapConversionError, unwritableError } from '../src/cli-errors';
+import { encodePng } from '../src/parser/png';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const FIXTURES = new URL('./fixtures/', import.meta.url).pathname;
@@ -11,10 +25,11 @@ const FIXTURE_PDF = `${FIXTURES}screenplay.pdf`;
 
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 
-async function runCli(args: string[]) {
+async function runCli(args: string[], env: Record<string, string> = {}) {
   const proc = Bun.spawn(['bun', `${ROOT}src/cli.ts`, ...args], {
     stdout: 'pipe',
     stderr: 'pipe',
+    env: { ...process.env, ...env },
   });
   const [stdout, stderr, exitCode] = await Promise.all([
     new Response(proc.stdout).text(),
@@ -166,11 +181,16 @@ describe('cli --json contract', () => {
   });
 
   test('the success payload keys match the committed contract sample', async () => {
-    // Every optional output is requested so every key is present. Until
-    // piece F3 the Swift app's own checks decoded this same sample as the
-    // consumer, so a key rename had to break one suite or the other; that
-    // half went with the app, and this is the producer's pin against the
-    // committed record of the keys.
+    // Every optional output the sample carries is requested, so each of its
+    // keys is present. Three keys are conditional and absent from the sample
+    // on purpose: imagesPath and imageCount appear only when the conversion
+    // carried pictures (screenplay.pdf has none; '--json reports the folder
+    // and the count' below pins both on images.pdf), and settingsPath only
+    // when the conversion used the script's saved settings (a
+    // <script>.screepub.json sidecar). Until piece F3 the Swift app's own
+    // checks decoded this same sample as the consumer; that half went with
+    // the app, and this is the producer's pin against the committed record
+    // of the keys.
     const out = `${SCRATCH}/contract.epub`;
     const { stdout } = await runCli([
       `${FIXTURES}screenplay.pdf`, '-o', out, '--json', '--mobi', '--debug',
@@ -351,6 +371,511 @@ describe('an output that cannot be written', () => {
   }, 60000);
 });
 
+// The CLI owns disk, so this is where "a conversion writes pictures" is a
+// fact rather than a plan. Every test gets its own directory: the whole
+// subject is what else ends up in the folder. The folder's own policy (what
+// may be read, what may be deleted) is tested directly in
+// library-images.test.ts; these are about the WIRING.
+describe('the picture folder beside the .fountain', () => {
+  let seq = 0;
+  const freshDir = () => {
+    const dir = join(SCRATCH, `images-${seq++}`);
+    mkdirSync(dir);
+    return dir;
+  };
+  const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  /** A REAL one-pixel picture, told from another by that pixel's colour. */
+  const png = (tag = 0) => encodePng(new Uint8Array([tag, 0, 0]), 1, 1);
+
+  test('a PDF with pictures writes them beside its .fountain', async () => {
+    const dir = freshDir();
+    const { exitCode } = await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    expect(exitCode).toBe(0);
+    expect(existsSync(join(dir, 'out.fountain'))).toBe(true);
+    // Exactly the folder's contents, so a leftover `.p001-01.png.<pid>.tmp`
+    // from the atomic writer would fail here rather than sit in the library.
+    expect(readdirSync(join(dir, 'out.images')).sort()).toEqual([
+      'p001-01.png',
+      'p002-01.png',
+    ]);
+    const first = readFileSync(join(dir, 'out.images', 'p001-01.png'));
+    expect([...first.subarray(0, 8)]).toEqual(PNG_MAGIC);
+    expect(first.length).toBeGreaterThan(100);
+  }, 60000);
+
+  test('every picture written is one the .fountain asks for', async () => {
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    const text = readFileSync(join(dir, 'out.fountain'), 'utf8');
+    for (const name of readdirSync(join(dir, 'out.images'))) {
+      expect(text).toContain(`[[img: ${name}`);
+    }
+  }, 60000);
+
+  test('--json reports the folder and the count', async () => {
+    const dir = freshDir();
+    const { stdout } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    const res = JSON.parse(stdout);
+    expect(res.ok).toBe(true);
+    expect(res.imagesPath).toBe(join(dir, 'out.images'));
+    expect(res.imageCount).toBe(2);
+    expect(res.warnings).toEqual([]);
+  }, 60000);
+
+  test('the human output names the folder it wrote', async () => {
+    const dir = freshDir();
+    const { stdout } = await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    expect(stdout).toContain(`wrote ${join(dir, 'out.images')}`);
+  }, 60000);
+
+  test('a script with no pictures gets no folder and no fields', async () => {
+    const dir = freshDir();
+    const { stdout } = await runCli([
+      `${FIXTURES}screenplay.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    const res = JSON.parse(stdout);
+    expect(res.imagesPath).toBeUndefined();
+    expect(res.imageCount).toBeUndefined();
+    expect(existsSync(join(dir, 'out.images'))).toBe(false);
+  }, 60000);
+
+  test('under --library the folder sits in the script\'s own library folder', async () => {
+    // One rule, beside the .fountain, and in the library the .fountain lives
+    // in the script's folder, so that is where its pictures go too.
+    const dir = freshDir();
+    const scripts = join(dir, 'scripts');
+    const root = join(dir, 'lib');
+    mkdirSync(scripts);
+    copyFileSync(`${FIXTURES}images.pdf`, join(scripts, 'Plates.pdf'));
+    const { stdout, exitCode } = await runCli(
+      [join(scripts, 'Plates.pdf'), '--library', '--json'], { SCREEPUB_LIBRARY: root },
+    );
+    expect(exitCode).toBe(0);
+    const res = JSON.parse(stdout);
+    expect(res.fountainPath).toBe(join(root, 'Plates', 'Plates.fountain'));
+    expect(res.imagesPath).toBe(join(root, 'Plates', 'Plates.images'));
+    expect(readdirSync(res.imagesPath).sort()).toEqual(['p001-01.png', 'p002-01.png']);
+    // And nothing beside the PDF: the library conversion writes into the
+    // library only.
+    expect(readdirSync(scripts)).toEqual(['Plates.pdf']);
+  }, 60000);
+
+  test('a re-conversion that lost its art clears the folder it left', async () => {
+    // The ordinary case of a writer cutting the pictures from a draft: the
+    // whole folder is stale, and leaving it would keep another draft's art in
+    // the library under this book's name, with no imagesPath in the JSON to
+    // hint at it.
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    expect(readdirSync(join(dir, 'out.images')).length).toBe(2);
+
+    const { stdout } = await runCli([
+      `${FIXTURES}screenplay.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    expect(JSON.parse(stdout).imageCount).toBeUndefined();
+    expect(existsSync(join(dir, 'out.images'))).toBe(false);
+  }, 60000);
+
+  test('a folder that cannot be written is unwritable, and says the book is there', async () => {
+    // Partial output is the contract: the EPUB was written before the folder
+    // failed, and a book the reader can open is not thrown away because its
+    // pictures could not be saved. So the answer is ok:false and the message
+    // says what is on disk. It names the folder the user would look for,
+    // never a temp file.
+    const dir = freshDir();
+    writeFileSync(join(dir, 'out.images'), 'a file, not a folder');
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain(join(dir, 'out.images'));
+    expect(err.message).toContain(`${join(dir, 'out.epub')} was already written`);
+    expect(err.message).not.toContain('.tmp');
+    expect(existsSync(join(dir, 'out.epub'))).toBe(true);
+    // Pictures before text: a failed folder stops the run before the
+    // .fountain is written, so a first conversion leaves none and a
+    // re-conversion leaves the OLD one, still naming the old pictures (the
+    // next test). Either way the message says it was not updated.
+    expect(existsSync(join(dir, 'out.fountain'))).toBe(false);
+    expect(err.message).toContain('The .fountain was not updated.');
+  }, 60000);
+
+  test('a failed RE-conversion keeps the old .fountain, naming the old pictures', async () => {
+    // The same failure one conversion later, which is the common one: the
+    // .fountain from the run before is still there, still names that run's
+    // pictures, and the new EPUB beside it does not match it. Nothing here
+    // deletes it (a .fountain the user can re-render is not ours to throw
+    // away), so the message has to say it was not updated.
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    // Marked, because the second run converts the SAME PDF: a .fountain
+    // rewritten ahead of its pictures would come out byte-identical to the
+    // old one, and an unmarked comparison would pass with the order broken.
+    writeFileSync(join(dir, 'out.fountain'), '\n[[marker: from the run before]]\n', { flag: 'a' });
+    const before = readFileSync(join(dir, 'out.fountain'), 'utf8');
+    expect(before).toContain('[[img: p001-01.png');
+    chmodSync(join(dir, 'out.images'), 0o555);
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    chmodSync(join(dir, 'out.images'), 0o755);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain('The .fountain was not updated.');
+    expect(readFileSync(join(dir, 'out.fountain'), 'utf8')).toBe(before);
+    expect(before).toContain('[[marker: from the run before]]');
+  }, 60000);
+
+  test('a picture folder that is a symlink is unwritable, and its target is untouched', async () => {
+    // Adopted, the link was written THROUGH and its target pruned: the
+    // target gained the new pictures and lost a p009-01.png of its own.
+    const dir = freshDir();
+    const elsewhere = freshDir();
+    writeFileSync(join(elsewhere, 'p009-01.png'), png(9));
+    symlinkSync(elsewhere, join(dir, 'out.images'));
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('unwritable');
+    expect(err.message).toContain(join(dir, 'out.images'));
+    expect(readdirSync(elsewhere)).toEqual(['p009-01.png']);
+    expect(existsSync(join(dir, 'out.fountain'))).toBe(false);
+  }, 60000);
+
+  test('a script with no pictures never prunes through a symlinked folder', async () => {
+    // The other door: with nothing to write the CLI only prunes, and the
+    // prune would delete the link target's p009-01.png as a stale picture.
+    const dir = freshDir();
+    const elsewhere = freshDir();
+    writeFileSync(join(elsewhere, 'p009-01.png'), png(9));
+    symlinkSync(elsewhere, join(dir, 'out.images'));
+    const { exitCode } = await runCli([`${FIXTURE_PDF}`, '-o', join(dir, 'out.epub')]);
+    expect(exitCode).toBe(0);
+    expect(readdirSync(elsewhere)).toEqual(['p009-01.png']);
+  }, 60000);
+
+  test('a folder whose parent is missing is refused before anything is written, and no parent is made', async () => {
+    // --fountain into a directory that does not exist. The picture folder
+    // goes beside the .fountain, so it would have no parent either; the
+    // CLI refuses the missing folder up front, as it does for every output
+    // (see 'an output folder that does not exist'), so neither the book nor
+    // a picture is written, and no parent is ever built for the caller.
+    const dir = freshDir();
+    const fountain = join(dir, 'missing', 'deeper', 'x.fountain');
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--fountain', fountain, '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    const err = JSON.parse(stdout).error;
+    expect(err.code).toBe('usage');
+    expect(err.message).toContain(join(dir, 'missing', 'deeper'));
+    expect(err.message).not.toContain('.tmp');
+    expect(readdirSync(dir)).toEqual([]);
+  }, 60000);
+
+  // The scanned guard throws inside convert.ts, before it returns anything,
+  // which is the only reason full-page PNGs do not land on someone's disk for
+  // a conversion that failed. (blank-pages.pdf carries no images of its own;
+  // what it pins is that the failing path writes NOTHING, folder included.)
+  test('a scanned PDF writes no folder at all', async () => {
+    const dir = freshDir();
+    const { stdout, exitCode } = await runCli([
+      `${FIXTURES}blank-pages.pdf`, '-o', join(dir, 'out.epub'), '--json',
+    ]);
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(stdout).error.code).toBe('scanned');
+    expect(readdirSync(dir)).toEqual([]);
+  }, 60000);
+
+  test('--no-fountain writes no folder either', async () => {
+    // The folder is the .fountain's other half: the notes are what name these
+    // files, so suppressing one suppresses both. The pictures are not lost
+    // with it: the book carries its own copy of every one it shows. What goes
+    // is only the copy a later render from the text would read, and there is
+    // no text to render from, which is what asking for no intermediates means.
+    const dir = freshDir();
+    const { stdout } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'), '--no-fountain', '--json',
+    ]);
+    const res = JSON.parse(stdout);
+    expect(res.imagesPath).toBeUndefined();
+    // Still reported as CARRIED: a fact about the conversion, not about any
+    // folder, and the conversion produced them.
+    expect(res.imageCount).toBe(2);
+    expect(readdirSync(dir)).toEqual(['out.epub']);
+    const zip = await JSZip.loadAsync(readFileSync(join(dir, 'out.epub')));
+    expect(Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir).sort())
+      .toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+  }, 60000);
+
+  test('--fountain elsewhere takes the folder with it', async () => {
+    // The notes live in the .fountain, so the pictures follow the .fountain
+    // and not the EPUB. Beside the EPUB they would be a folder nothing
+    // references, and a render from the text would find nothing.
+    const dir = freshDir();
+    const other = join(dir, 'text');
+    mkdirSync(other);
+    const { stdout } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'),
+      '--fountain', join(other, 'script.fountain'), '--json',
+    ]);
+    expect(JSON.parse(stdout).imagesPath).toBe(join(other, 'script.images'));
+    expect(existsSync(join(dir, 'out.images'))).toBe(false);
+    expect(readdirSync(join(other, 'script.images')).length).toBe(2);
+  }, 60000);
+
+  // THE data-loss test. Converting into a directory that already holds
+  // someone's own pictures must not delete them: the read side's allowlist
+  // accepts any name a note could carry, so `board-01.png` and `sunset.png`
+  // would both look like ours to a prune written against it. Only names
+  // `imageFileName` can produce may ever be removed.
+  test('pictures the user put in the folder are never deleted', async () => {
+    const dir = freshDir();
+    const folder = join(dir, 'lookbook.images');
+    mkdirSync(folder);
+    for (const name of ['board-01.png', 'sunset.png', 'A-01.png', 'p1.png', 'readme.md']) {
+      writeFileSync(join(folder, name), png());
+    }
+    await runCli([
+      `${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub'),
+      '--fountain', join(dir, 'lookbook.fountain'),
+    ]);
+    expect(readdirSync(folder).sort()).toEqual([
+      'A-01.png',
+      'board-01.png',
+      'p001-01.png',
+      'p002-01.png',
+      'p1.png',
+      'readme.md',
+      'sunset.png',
+    ]);
+  }, 60000);
+
+  test('a crashed run\'s temp file does not live in the folder forever', async () => {
+    // The atomic writer writes `.name.<pid>.tmp` then renames; a crash in
+    // between leaves one, and nothing else would ever remove it (it is not a
+    // `.png`, so a reader never even sees it).
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    writeFileSync(join(dir, 'out.images', '.p001-01.png.999.tmp'), png());
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    expect(readdirSync(join(dir, 'out.images')).sort()).toEqual([
+      'p001-01.png',
+      'p002-01.png',
+    ]);
+  }, 60000);
+
+  test('a second conversion clears the first run\'s stale pictures', async () => {
+    // Names are per page, so an edit that moves a picture leaves the old file
+    // behind, and whatever packages a book from this folder would package it.
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    writeFileSync(join(dir, 'out.images', 'p009-09.png'), png());
+    writeFileSync(join(dir, 'out.images', 'notes.txt'), 'mine');
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    // The prune is bounded to our own pictures: anything else is not ours.
+    expect(readdirSync(join(dir, 'out.images')).sort()).toEqual([
+      'notes.txt',
+      'p001-01.png',
+      'p002-01.png',
+    ]);
+  }, 60000);
+
+  test('a picture is written whole or not at all', async () => {
+    // Temp then rename, and the temp name (`.name.pid.tmp`) is not one a
+    // reader picks up, so a reader racing a conversion sees whole files or no
+    // file, never half of one.
+    const dir = freshDir();
+    await runCli([`${FIXTURES}images.pdf`, '-o', join(dir, 'out.epub')]);
+    for (const name of readdirSync(join(dir, 'out.images'))) {
+      expect(name.startsWith('.')).toBe(false);
+      expect(statSync(join(dir, 'out.images', name)).size).toBeGreaterThan(100);
+    }
+  }, 60000);
+});
+
+// The other direction: a `.fountain` handed back to the CLI (the window's
+// re-render does exactly this) finds its pictures in the same folder a PDF
+// conversion wrote. What the reader accepts is library-images.test.ts's
+// subject; these are about the wiring, and about the folder being READ here
+// and never written.
+describe('a .fountain input reads its picture folder', () => {
+  let seq = 0;
+  /** A script whose notes name two pictures, and the folder beside it. */
+  const script = () => {
+    const dir = join(SCRATCH, `fountain-images-${seq++}`);
+    mkdirSync(dir);
+    writeFileSync(
+      join(dir, 'x.fountain'),
+      'Title: T\n\nINT. LAB - DAY\n\nBefore.\n\n[[img: p001-01.png w=40]]\n\n'
+        + 'Between.\n\n[[img: p002-01.png w=60]]\n\nAfter.\n',
+    );
+    mkdirSync(join(dir, 'x.images'));
+    return dir;
+  };
+  const png = (tag = 0) => encodePng(new Uint8Array([tag, 0, 0]), 1, 1);
+  const convert = async (dir: string, ...extra: string[]) => {
+    const { stdout, exitCode } = await runCli([
+      join(dir, 'x.fountain'), '-o', join(dir, 'x.epub'), '--json', ...extra,
+    ]);
+    expect(exitCode).toBe(0);
+    const res = JSON.parse(stdout);
+    const zip = await JSZip.loadAsync(readFileSync(join(dir, 'x.epub')));
+    const body = await zip.file('OEBPS/text/body001.xhtml')!.async('string');
+    const images = Object.keys(zip.files).filter((n) => n.startsWith('OEBPS/images/') && !zip.files[n].dir).sort();
+    return { res, body, images };
+  };
+  const figure = (name: string, w: number) =>
+    `<p class="figure w${w}"><img src="../images/${name}" alt="Illustration"/></p>`;
+
+  test('the notes render the pictures beside them, and the book carries them', async () => {
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res, body, images } = await convert(dir);
+    expect(res.warnings).toEqual([]);
+    expect(body).toContain(figure('p001-01.png', 40));
+    expect(body).toContain(figure('p002-01.png', 60));
+    expect(images).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
+    // Nothing was written, so the answer names no folder and counts nothing:
+    // both fields are about what a PDF conversion carried out.
+    expect(res.imagesPath).toBeUndefined();
+    expect(res.imageCount).toBeUndefined();
+  }, 60000);
+
+  test('the window’s re-render answer shows the same pictures, each one inside its figure', async () => {
+    // Exactly the window's Tune call: the .fountain, --json, --preview-inline.
+    // The preview has no folder to point into, so each picture rides in its
+    // `<img>` as a data: URI, in the figure the book uses.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res } = await convert(dir, '--preview-inline');
+    const inlined = (tag: number, w: number) =>
+      `<p class="figure w${w}"><img src="data:image/png;base64,${Buffer.from(png(tag)).toString('base64')}" alt="Illustration"/></p>`;
+    expect(res.previewHtml).toContain(inlined(1, 40));
+    expect(res.previewHtml).toContain(inlined(2, 60));
+  }, 60000);
+
+  test('a picture the folder will not give up is a warning, and no figure', async () => {
+    // One file that is not a PNG under a PNG's name, and one symlink to a
+    // perfectly good picture: the reader refuses both, and each is a plate
+    // missing from the book that someone has to be told about.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    writeFileSync(join(dir, 'elsewhere.png'), png(2));
+    symlinkSync(join(dir, 'elsewhere.png'), join(dir, 'x.images', 'p002-01.png'));
+    const { res, body, images } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "2 pictures could not be read out of this script's picture folder, so they were left out.",
+    ]);
+    expect(body).not.toContain('class="figure');
+    expect(images).toEqual([]);
+  }, 60000);
+
+  test('with includeImages off, the folder is not read at all', async () => {
+    // A folder that warns whenever it is read, so silence is proof it was
+    // not: off means no figure, and no sentence about pictures the reader
+    // chose not to see.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    writeFileSync(join(dir, 'x.images', 'p002-01.png'), png(2));
+    const { res, body, images } = await convert(dir, '--options-json', '{"includeImages":false}');
+    expect(res.warnings).toEqual([]);
+    expect(body).not.toContain('class="figure');
+    expect(images).toEqual([]);
+    // The control: the same folder, read, does warn.
+    const on = await convert(dir);
+    expect(on.res.warnings).toEqual([
+      "1 picture could not be read out of this script's picture folder, so it was left out.",
+    ]);
+  }, 60000);
+
+  test('the folder is never written or pruned, and none is made', async () => {
+    // A PDF conversion owns the folder; a render from the text only reads
+    // it. A stale picture of our own naming and a crashed run's temp would
+    // both go under a PDF conversion's prune, and both stay here.
+    const dir = script();
+    const kept = ['.p003-01.png.999.tmp', 'p001-01.png', 'p002-01.png', 'p009-09.png'];
+    for (const name of kept) writeFileSync(join(dir, 'x.images', name), png());
+    await convert(dir);
+    expect(readdirSync(join(dir, 'x.images')).sort()).toEqual(kept);
+    const bare = script();
+    rmSync(join(bare, 'x.images'), { recursive: true });
+    const { body } = await convert(bare);
+    expect(body).not.toContain('class="figure');
+    expect(existsSync(join(bare, 'x.images'))).toBe(false);
+  }, 60000);
+
+  // The window's Tune re-renders the library book this way on every knob
+  // move, so a picture the script shows and the read cannot supply is a
+  // figure gone from the book on disk. The book is still written (Tune has
+  // to keep working), and the answer says what it lacks.
+  test('a picture the folder does not hold is a warning, and the book is still made', async () => {
+    // An iCloud copy evicted while offline is renamed `.p002-01.png.icloud`,
+    // so the folder no longer lists the picture under any name a note uses.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), png(1));
+    writeFileSync(join(dir, 'x.images', '.p002-01.png.icloud'), '');
+    const { res, body, images } = await convert(dir);
+    expect(res.ok).toBe(true);
+    expect(res.warnings).toEqual([
+      '1 picture this script shows could not be found in its picture folder, so the book was made without it.',
+    ]);
+    expect(body).toContain(figure('p001-01.png', 40));
+    expect(images).toEqual(['OEBPS/images/p001-01.png']);
+  }, 60000);
+
+  test('a folder that is not there loses every picture, said once', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    const { res, body } = await convert(dir);
+    expect(res.warnings).toEqual([
+      '2 pictures this script shows could not be found in its picture folder, so the book was made without them.',
+    ]);
+    expect(body).not.toContain('class="figure');
+  }, 60000);
+
+  test('each lost picture is said once, under what happened to it', async () => {
+    // p001 is listed and refused (not a PNG), p002 is not listed at all. The
+    // refused one is also absent from what the read hands over, and counting
+    // it again as not found would report three pictures lost out of two.
+    const dir = script();
+    writeFileSync(join(dir, 'x.images', 'p001-01.png'), 'not a picture');
+    const { res } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "1 picture could not be read out of this script's picture folder, so it was left out.",
+      '1 picture this script shows could not be found in its picture folder, so the book was made without it.',
+    ]);
+  }, 60000);
+
+  test('a folder that is a link is said once, as a link', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    mkdirSync(join(dir, 'elsewhere'));
+    writeFileSync(join(dir, 'elsewhere', 'p001-01.png'), png(1));
+    symlinkSync(join(dir, 'elsewhere'), join(dir, 'x.images'));
+    const { res } = await convert(dir);
+    expect(res.warnings).toEqual([
+      "This script's picture folder is not a folder of its own (it is a link or a file), so no pictures were read from it.",
+    ]);
+  }, 60000);
+
+  test('with includeImages off, a missing picture is not a loss and says nothing', async () => {
+    const dir = script();
+    rmSync(join(dir, 'x.images'), { recursive: true });
+    const { res } = await convert(dir, '--options-json', '{"includeImages":false}');
+    expect(res.warnings).toEqual([]);
+  }, 60000);
+});
+
 describe('conversion error mapping', () => {
   test('password detection is typed, not substring', () => {
     expect(mapConversionError({ name: 'PasswordException', message: 'No password given' })?.code)
@@ -383,6 +908,48 @@ describe('conversion error mapping', () => {
   });
 });
 
+describe('a picture folder that cannot be written', () => {
+  const refusal = (code: string) =>
+    Object.assign(new Error(`${code}: open '/lib/.p001-01.png.80708.tmp'`), { code });
+
+  test('is unwritable for every way a disk says no, naming the folder', () => {
+    for (const code of ['ENOENT', 'EACCES', 'EPERM', 'EEXIST', 'ENOSPC', 'EROFS', 'EISDIR', 'ENOTDIR']) {
+      const err = unwritableError('/lib/A.images', refusal(code), []);
+      expect(err?.code).toBe('unwritable');
+      expect(err?.message).toContain('/lib/A.images');
+      expect(err?.message).toContain(code);
+      // The temp path the error came from is an implementation detail.
+      expect(err?.message).not.toContain('.tmp');
+    }
+  });
+
+  test('says what was already written, in one sentence that agrees with itself', () => {
+    expect(unwritableError('/lib/A.images', refusal('ENOSPC'), ['/lib/A.epub'])?.message)
+      .toBe(
+        'cannot write the pictures to /lib/A.images (ENOSPC). /lib/A.epub was already written. ' +
+          'The .fountain was not updated.',
+      );
+    expect(unwritableError('/lib/A.images', refusal('ENOSPC'), ['/lib/A.epub', '/lib/A.mobi'])?.message)
+      .toContain('/lib/A.epub, /lib/A.mobi were already written.');
+  });
+
+  test('says the .fountain was not updated, which is always true here', () => {
+    // The folder is written before the .fountain, so on this path the
+    // .fountain is never the new one: a first conversion has none, and a
+    // re-conversion keeps the previous one, naming the previous pictures.
+    expect(unwritableError('/lib/A.images', refusal('EACCES'), [])?.message)
+      .toBe('cannot write the pictures to /lib/A.images (EACCES). The .fountain was not updated.');
+  });
+
+  test('anything that is not the disk refusing is left to the catch-all', () => {
+    // A bug of ours must still arrive as `internal`, not dressed up as the
+    // disk's fault.
+    expect(unwritableError('/lib/A.images', new TypeError('x is undefined'), [])).toBeNull();
+    expect(unwritableError('/lib/A.images', refusal('EMFILE'), [])).toBeNull();
+    expect(unwritableError('/lib/A.images', 'a string', [])).toBeNull();
+  });
+});
+
 // --json's contract is that stdout is EXACTLY one parseable object: the app
 // decodes it with JSONDecoder and a stray line would break every conversion.
 // Progress therefore rides on stderr, and this is the test that keeps it
@@ -406,7 +973,7 @@ describe('cli --progress', () => {
     const ticks = events.filter((e) => e.stage !== 'page');
     expect(ticks.length).toBeGreaterThan(0);
     for (const t of ticks) {
-      expect(['parse', 'render']).toContain(t.stage);
+      expect(['parse', 'pictures', 'render']).toContain(t.stage);
       expect(t.percent).toBeGreaterThanOrEqual(0);
       expect(t.percent).toBeLessThanOrEqual(100);
     }
@@ -432,6 +999,34 @@ describe('cli --progress', () => {
     // of M" until the book is done.
     const firstRender = ticks.findIndex((t) => t.stage === 'render');
     expect(ticks[firstRender].percent).toBeLessThan(100);
+  }, 60000);
+
+  test('names each stage as it begins, even where the percent does not move', async () => {
+    // The throttle drops a line that repeats the last percent, and a stage
+    // can begin at the very percent the one before it ended on: images.pdf's
+    // pages end at 60 and its pictures begin there, and its pictures end at
+    // 85 where building the book begins. Dropping those lines would leave
+    // the read-out naming the stage that already finished.
+    const { stderr, exitCode } = await runCli([
+      `${FIXTURES}images.pdf`, '-o', `${SCRATCH}/prog-pictures.epub`, '--no-fountain',
+      '--json', '--progress',
+    ]);
+    expect(exitCode).toBe(0);
+    // The first page's words ride the same stream as a 'page' line, which
+    // is not a tick; the parse ticks also say which page was reached.
+    const ticks: { stage: string; percent: number }[] = stderr.trim().split('\n').filter(Boolean)
+      .map((l) => JSON.parse(l).progress)
+      .filter((t) => t.stage !== 'page')
+      .map((t) => ({ stage: t.stage, percent: t.percent, ...(t.page !== undefined ? { page: t.page } : {}) }));
+    const firsts = ticks.filter((t, i) => i === 0 || ticks[i - 1].stage !== t.stage);
+    expect(firsts.slice(1)).toEqual([
+      { stage: 'pictures', percent: 60 },
+      { stage: 'render', percent: 85 },
+    ]);
+    expect(ticks.at(-1)).toEqual({ stage: 'render', percent: 100 });
+    // Still throttled within a stage: no two lines say the same thing.
+    const said = ticks.map((t) => JSON.stringify(t));
+    expect(new Set(said).size).toBe(said.length);
   }, 60000);
 
   test('is opt-in: no --progress means no stderr', async () => {

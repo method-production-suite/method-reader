@@ -127,7 +127,10 @@ the updater's config as `serde_json` values. No `.rs` file may name it;
 
 `desktop/ui/` is the app: 27 files and six bundled font files, no build
 step. `index.html` loads three stylesheets and one ES module, `main.js`. The
-window's content security policy is `default-src 'self'`. The tabs are
+window's content security policy is `default-src 'self'; img-src 'self'
+data:` plus one `connect-src` for the device-request service: the window's
+own files, pictures written into the page itself, that one address, and
+nothing else (`tests/desktop-shell.test.ts` pins it). The tabs are
 Convert, Read and Settings: sending happens on Convert's result, which
 Read and Settings return to with their Send button. The release notes open
 from the version stamp at the foot of the page. New windows open at 1280
@@ -174,7 +177,11 @@ answers in its own web storage.
 **The reader** is an `<iframe srcdoc>` with a constructed stylesheet. The CSP
 blocks every inline style, srcdoc frames inherit it, and constructed
 stylesheets are not blocked, so `read.js` lifts the engine's `<style>` out
-and adopts the same text. The sheet must be built in the frame's own realm;
+and adopts the same text. The pictures need nothing from `read.js`: the
+engine writes each one into its `<img>` as a `data:` URI, because the
+document arrives as text with no folder beside it, and `img-src` admits
+`data:` for exactly that. Without it, the inherited policy draws every
+figure as a broken image. The sheet must be built in the frame's own realm;
 the frame is `sandbox="allow-same-origin"` without scripts; `read.js`
 supplies the `@font-face` rules. A focused iframe paints no focus ring, so
 the frame is not a Tab stop: the stage around it is, and `read.js`'s

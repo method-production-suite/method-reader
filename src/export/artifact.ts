@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs';
 import { writeFileAtomicSync } from '../atomic-write';
 import { convertFountain } from '../convert';
+import { imageNoteFiles } from '../fountain/notes';
+import { readImages } from '../library-images';
 import type { FormatOptions } from '../options';
 import { azw3Sibling, toAzw3 } from './calibre';
 import { modifiedDate, needsRegeneration } from './freshness';
@@ -163,7 +165,46 @@ async function buildRung(
 
   onStage?.('rebuilding the Kindle file…');
   const fountainText = await Bun.file(fountainPath).text();
-  const result = await convertFountain(fountainText, { format, mobi: true });
+  // This rung renders the EPUB and the MOBI together from the .fountain, and
+  // the EPUB it renders replaces the library book. So both are built with
+  // the script's pictures, read from the folder beside the .fountain under
+  // the same rules as every other render from the text, and the MOBI shows
+  // the same ones the EPUB does (convert.ts hands both the one read). With
+  // the option off the folder is not read and both are rebuilt without
+  // pictures, which is what the setting asks for.
+  //
+  // With the option on, the library book is replaced only when the rebuild
+  // carries every picture the script's notes ask for. A folder damaged since
+  // the book was built (an iCloud placeholder, a deleted file, the folder
+  // moved or refused, the cap reached) would otherwise turn the book into a
+  // weaker copy of itself, silently, and every route that sends the EPUB
+  // (Kobo, Apple Books, Save EPUB) would send the weaker one. One rule covers
+  // all of those, because each of them leaves a name the notes ask for out of
+  // the folder's read. Kept, the book stays the one its last conversion
+  // built.
+  //
+  // The .mobi is written either way, and it is the file being handed over,
+  // so it cannot wait for a picture the folder will not give: it carries the
+  // pictures that were read, and a note whose picture was not read renders
+  // nothing, as it would with no folder at all. Written after the EPUB, it is
+  // newer than the book, so the staleness rule above reads it as current and
+  // the next export reuses it rather than rebuild against the same loss. The
+  // flip side is that mending the folder does not refresh it: the .mobi stays
+  // without that picture until the book itself is rebuilt.
+  //
+  // Nothing says a picture was left out, or passes on the folder's own
+  // warnings (imageFolderWarnings). This function answers with a path, and
+  // the export answer it feeds has stages but no warnings, so there is
+  // nowhere yet to say them. The loss is in the file being sent, so that
+  // channel is owed: it is an open item, not a choice.
+  let images: ReadonlyMap<string, Uint8Array> | undefined;
+  let keepLibraryBook = false;
+  if (format.includeImages) {
+    const read = (await readImages(fountainPath)).images;
+    images = read;
+    keepLibraryBook = [...imageNoteFiles(fountainText)].some((name) => !read.has(name));
+  }
+  const result = await convertFountain(fountainText, { format, mobi: true, images });
   if (!result.mobi) {
     throw new RegenerationFailedError('the engine reported success but produced no .mobi');
   }
@@ -175,7 +216,9 @@ async function buildRung(
   // EPUB's, which needsRegeneration would then trust as fresh forever. Same
   // discipline as cli.ts's writeFileAtomic, settings/sidecar.ts and
   // export/kfx.ts.
-  if (fromLadder) writeFileAtomicSync(epub, result.epub);
+  // A rung asked for by name leaves the book alone (freshArtifactOf), and
+  // the ladder's leaves it too when the rebuild would drop a picture.
+  if (fromLadder && !keepLibraryBook) writeFileAtomicSync(epub, result.epub);
   writeFileAtomicSync(mobi, result.mobi);
   return mobi;
 }

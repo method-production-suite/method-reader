@@ -17,6 +17,7 @@ import {
   realOpener,
   sendViaAmazon,
   type Opener,
+  type SizeOf,
 } from './export/route-perform';
 import { preselected, routes, type Route, type RouteFacts } from './export/routes';
 import { appSettingsPath, readAppSettings, writeAppSettings } from './settings/app';
@@ -103,6 +104,8 @@ export const ROUTE_KEYS = [...Object.keys(PERFORMED), ...SAVES, EMAIL_SETUP];
 export interface RouteDeps extends RoutesDeps {
   /** default: realOpener, which spawns the program */
   open?: Opener;
+  /** email-to-kindle's size check. default: the file's size on disk */
+  sizeOf?: SizeOf;
   /** Handed to exportCommand for the two saves. Its own appSettingsPath, if
    *  given, wins; otherwise `settingsPath` (above) covers it too, so one
    *  injected path keeps BOTH lastRoute and the format defaults out of the
@@ -250,8 +253,10 @@ export async function routeCommand(options: RouteOptions, deps: RouteDeps = {}):
   try {
     if (key === 'apple-books') note = await addToAppleBooks(epub, open);
     else if (key === 'send-to-kindle') note = await sendViaAmazon(epub, facts, open);
-    else note = await emailToKindle(epub, open);
+    else note = await emailToKindle(epub, open, deps.sizeOf);
   } catch (err) {
+    // A performer that refused the book already knows its code.
+    if (err instanceof CliError) throw err;
     throw new CliError('route-failed', errorMessage(err));
   }
   rememberRoute(key, deps.settingsPath);
