@@ -63,8 +63,8 @@ otherwise from Screepub's own.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
-                         must already exist, and so must --fountain's and
-                         --preview-html's
+                         must already exist, and so must --fountain's,
+                         --preview-html's and --fdx's
   --library              write into the library folder instead of beside the
                          input: <library>/<stem>/<stem>.epub. The library is
                          <Documents>/Screepub: ~/Documents on macOS and
@@ -1046,7 +1046,7 @@ async function main() {
       message: 'pass --library or -o, not both: -o already says where the output goes',
     });
   }
-  // The three paths a caller can name, held to one rule (checkOutputPath),
+  // The four paths a caller can name, held to one rule (checkOutputPath),
   // and checked before the conversion: finding a missing folder only at the
   // write cost a whole conversion and ended in node:fs's ENOENT and a stack
   // trace. The .mobi and --debug's .elements.json go beside the -o file, so
@@ -1057,6 +1057,7 @@ async function main() {
     if (values.output !== undefined) checkOutputPath('-o', values.output);
     if (values.fountain !== undefined) checkOutputPath('--fountain', values.fountain);
     if (values['preview-html']) checkOutputPath('--preview-html', values['preview-html']);
+    if (values.fdx) checkOutputPath('--fdx', values.fdx);
   }
   let format: Record<string, unknown> | undefined;
   if (values.options !== undefined && values['options-json'] !== undefined) {
@@ -1282,7 +1283,7 @@ async function main() {
   let fdxPath: string | undefined;
   if (values.fdx) {
     fdxPath = values.fdx;
-    await writeFileAtomic(fdxPath, fountainToFdx(result.fountainText), 'utf8');
+    await writeOutput(fdxPath, fountainToFdx(result.fountainText), 'utf8');
   }
   let debugPath: string | undefined;
   if (values.debug && result.screenplay) {

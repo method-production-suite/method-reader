@@ -187,11 +187,12 @@ describe('cli --json contract', () => {
 // not answer". Now it is refused before anything is read or written, in the
 // CLI's own one line, naming the folder. The folder is never made for the
 // caller: `-o Docuemnts/x.epub` must not grow a Docuemnts folder.
-/** The three output paths a caller can name, each with a file name it takes. */
+/** The output paths a caller can name, each with a file name it takes. */
 const OUTPUTS = [
   ['-o', 'x.epub'],
   ['--fountain', 'x.fountain'],
   ['--preview-html', 'x.html'],
+  ['--fdx', 'x.fdx'],
 ] as const;
 
 describe('an output folder that does not exist', () => {
