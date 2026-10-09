@@ -387,6 +387,18 @@ describe('what the show decides', () => {
     expect(S.readingLine(c, { stage: 'parse', percent: 90, page: 18, pages: 18 })).toBe(c);
   });
 
+  test('readingLine says the pictures are being read, between the pages and the book, and never goes back', () => {
+    const a = S.readingLine(null, { stage: 'parse', percent: 50, page: 18, pages: 18 });
+    const b = S.readingLine(a, { stage: 'pictures', percent: 70 });
+    expect(b).toEqual({ line: S.SHOW.pictures, page: 18, stage: 'pictures' });
+    // A late page line cannot walk it back to the pages.
+    expect(S.readingLine(b, { stage: 'parse', percent: 55, page: 18, pages: 18 })).toBe(b);
+    const c = S.readingLine(b, { stage: 'render', percent: 85 });
+    expect(c.line).toBe(S.SHOW.building);
+    // Nor a late pictures line back from the book.
+    expect(S.readingLine(c, { stage: 'pictures', percent: 84 })).toBe(c);
+  });
+
   test('alignBlocks pairs the typed page with the book’s blocks by their words, in order', () => {
     const book = ['TITLE', 'by Someone', 'EXT. RIDGE ROAD - DAY', 'Wind comes down.', 'DELACROIX (CONT’D)', 'Thirty-one.'];
     expect(S.alignBlocks(['EXT. RIDGE ROAD - DAY', 'Wind comes down.', 'DELACROIX', 'Thirty-one.'], book))

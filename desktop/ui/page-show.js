@@ -20,6 +20,7 @@ import { planShow, hasPage, frameAt, soundsDue, GLOW_MS } from './page-timing.js
 export const SHOW = {
   heading: 'Converting',
   starting: 'Starting up',
+  pictures: 'Reading the pictures',
   building: 'Building the book',
 };
 
@@ -43,7 +44,9 @@ export function pageSwitchesFrom(answer) {
 
 /** The slim line under the page, after one progress line: "Reading page N
  *  of M" while pages are read (or the share read, from an engine that does
- *  not name pages), then "Building the book". `at` is { line, page, stage }
+ *  not name pages), "Reading the pictures" while a script's pictures are
+ *  decoded (only a script that places one names that stage), then
+ *  "Building the book". `at` is { line, page, stage }
  *  from the last call (null at first); it never goes back a page or a
  *  stage, so a late line cannot walk it backwards. */
 export function readingLine(at, line) {
@@ -52,7 +55,11 @@ export function readingLine(at, line) {
   if (stage === 'render') {
     return { line: SHOW.building, page: was.page, stage: 'render' };
   }
-  if (stage !== 'parse' || was.stage === 'render') return was;
+  if (stage === 'pictures') {
+    if (was.stage === 'render') return was;
+    return { line: SHOW.pictures, page: was.page, stage: 'pictures' };
+  }
+  if (stage !== 'parse' || was.stage === 'render' || was.stage === 'pictures') return was;
   const page = Number(line.page);
   const pages = Number(line.pages);
   if (Number.isInteger(page) && Number.isInteger(pages) && page >= 1 && page <= pages) {
