@@ -77,16 +77,16 @@ Underneath those saved settings and any --options you pass, a conversion
 starts from the format defaults you chose in the app, if you chose any, and
 otherwise from Screepub's own.
 
-Pictures carried out of a PDF are written as PNGs in a <name>.images folder
-beside the .fountain, and the .fountain names each one in an [[img: ...]]
-note. The EPUB shows each picture where its note sits, and so does a later
-conversion of that .fountain, which reads the folder and never writes it.
-The one exception is a full-page title card the script opens with: the EPUB
-makes it the book's cover instead of its first page, and turning the
-promoteCoverImage option off keeps it on its page. The includeImages option
-takes them all out of the book; the notes and the folder stay. The .mobi
-carries the same pictures as the EPUB and keeps the title card on its page,
-naming it as the cover as well.
+Pictures (beta) carried out of a PDF are written as PNGs in a <name>.images
+folder beside the .fountain, and the .fountain names each one in an
+[[img: ...]] note. The EPUB shows each picture where its note sits, and so
+does a later conversion of that .fountain, which reads the folder and never
+writes it. The one exception is a full-page title card the script opens
+with: the EPUB makes it the book's cover instead of its first page, and
+turning the promoteCoverImage option off keeps it on its page. The
+includeImages option takes them all out of the book; the notes and the
+folder stay. The .mobi is text-only for now: no pictures and no cover until
+they have been tried on an older Kindle.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
@@ -109,8 +109,8 @@ Options:
   --preview-html <file>  also write the script as one self-contained HTML file
   --preview-inline       put that same HTML in the --json result (for the app)
   --fdx <file>           also write the script as a Final Draft file to keep
-                         editing (a reconstruction: revision marks and exact
-                         page breaks do not carry over)
+                         editing (beta). A reconstruction: revision marks
+                         and exact page breaks do not carry over
   --options <file.json>  formatting options (see docs/formatting-options-log.md)
   --options-json <json>  the same options as one JSON argument (for the app)
   --json                 machine-readable result on stdout (for the app)
@@ -133,6 +133,7 @@ Commands:
                                             where books land, and what new scripts start from
   screepub reveal <file> [--json]           show a file in the system's file manager
   screepub eject <volume> [--json]          safely remove a reader before unplugging it
+                                            (beta on Windows and Linux)
   screepub kfx-status [--json]              can this computer make KFX for a Kindle?
   screepub kfx-install [--json]             add the KFX plugin to Calibre (online)
   screepub routes <file.epub> [--quick] [--json]
@@ -204,7 +205,7 @@ const EXPORT_USAGE = `screepub export: the file you would put on a reader
 
 Usage:
   screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--fountain <f>] [--out <path>] [--json]
-  screepub export <file.epub> --for fdx --fountain <f> [--out <path>] [--json]
+  screepub export <file.epub> --for fdx --fountain <f> [--out <path>] [--json]   (beta)
   screepub export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
@@ -213,15 +214,15 @@ rung this machine can reach. kfx, azw3 and mobi each make only that file,
 and refuse when this computer lacks its tools. fountain hands over the
 script itself.
 
-fdx is the script itself, as a Final Draft file you can keep editing (Fade
-In, WriterDuet, Highland and Celtx open it too). It is built from the
-.fountain, so --fountain is required, and it is rebuilt on every call. It
-is a reconstruction from the PDF: revision colors and marks, and the exact
-page breaks, do not carry over.
+fdx (beta) is the script itself, as a Final Draft file you can keep
+editing (Fade In, WriterDuet, Highland and Celtx open it too). It is built
+from the .fountain, so --fountain is required, and it is rebuilt on every
+call. It is a reconstruction from the PDF: revision colors and marks, and
+the exact page breaks, do not carry over.
 
 Options:
   --for <type>           which file you want (default epub): epub, kindle,
-                         kfx, azw3, mobi, fountain or fdx
+                         kfx, azw3, mobi, fountain or fdx (beta)
   --fountain <file>      the script's .fountain: required by mobi, fountain
                          and fdx, and used to rebuild a MOBI for kindle
   --options-json <json>  this script's settings, so a rebuild keeps them
@@ -290,7 +291,8 @@ Usage:
 <volume> must be the full path of a reader that \`screepub devices\` lists
 right now, such as /Volumes/Kindle or E:\\. Any other disk is refused.
 On macOS this runs diskutil eject; on Linux, udisksctl unmount and then
-power-off; on Windows, the shell's own Eject.
+power-off; on Windows, the shell's own Eject (beta on Windows and Linux:
+it works in our tests, but has not been tried widely on real readers).
 
 Options:
   --json                 machine-readable result on stdout (for the app)

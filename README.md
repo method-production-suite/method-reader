@@ -29,8 +29,9 @@ size and still holds its shape.
 - **Drop a PDF, get a clean e-book.** Nothing to set up first.
 - **Send it to your reader, straight from the result.** Say once what you
   read on, and one button does the rest: plug in a Kindle and it copies over
-  in the right format, then offers to eject it. Every other way to send, and
-  every file type Screepub makes, is under Other ways.
+  in the right format, then offers to eject it (beta on Windows and Linux).
+  Every other way to send, and every file type Screepub makes, is under
+  Other ways.
 - **Look before you send.** A built-in reader shows the script as the device
   will, and the Settings page changes margins, spacing and page numbers live.
   "Use these for new scripts" makes your choices the starting point for every
@@ -39,9 +40,14 @@ size and still holds its shape.
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
 - **Get the script back to edit.** The same PDF also comes out as a script
-  you can keep writing in: Fountain, or Final Draft's FDX, which most
+  you can keep writing in: Fountain, or Final Draft's FDX (beta), which most
   screenwriting apps open. It is rebuilt from the page, so revision colors
   and the exact page breaks stay behind.
+- **Pictures from the script (beta).** Storyboard panels, photos and a
+  designed title card come across into the e-book where they sat, and a
+  title card that opens the script becomes the book's cover. Both are
+  switches on the Settings page. The Kindle file Screepub makes without
+  Calibre stays text only for now.
 - **Free and open source.** No account, no subscription, nothing uploaded.
 
 <p align="center">
@@ -82,7 +88,11 @@ the most useful thing you can send. On the result screen, that reader's
 asterisk opens a note ending in **It worked** and **It did not work**; press
 one, or
 [open an issue](https://github.com/ssandweiss/screepub/issues/new/choose)
-to say more.
+to say more. A reader that is not on the list goes in **My device isn't
+here** on the same screen (beta).
+
+**What beta means here.** A feature marked (beta) works in our tests, but
+has not been tried widely on real devices or apps yet: tell us how it goes.
 
 <p align="center">
   <picture>

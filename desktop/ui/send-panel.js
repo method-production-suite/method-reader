@@ -14,6 +14,7 @@ import { runEngine, argv, saveDialog } from './app.js';
 import { settingsFrom } from './tune.js';
 import { inTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
+import { betaBadge } from './beta.js';
 import { canFocus } from './focus.js';
 import { RELEASE } from './notes.js';
 import {
@@ -508,7 +509,8 @@ function cardSlot(card) {
   el('span', { class: 'device-card-name' }, card.name),
   card.sub === null ? null : el('span', { class: 'device-card-sub' }, card.sub));
   markCard(button, card.here, card.name);
-  return el('div', { class: 'device-card-slot' }, button, card.unproven ? asterisk(card.kind) : null);
+  return el('div', { class: 'device-card-slot' }, button, card.unproven ? asterisk(card.kind) : null,
+    card.kind === D.MISSING.kind ? betaBadge() : null);
 }
 
 /** A card's "plugged in": the brass edge, the dot, and the same said to a
@@ -618,6 +620,7 @@ function drawCalm() {
         type: 'button', class: 'btn btn-brad', 'data-key': 'eject',
         disabled: sending || kfxInstalling(), onclick: () => keepFocus('eject', ejectNow),
       }, D.ejectLabel(eject)),
+      eject !== null && D.ejectIsBeta(platform()) ? betaBadge() : null,
       brass === null ? null : el('button', {
         type: 'button', class: 'btn btn-brad', 'data-key': brass.route.id,
         disabled: sending || kfxInstalling(), onclick: () => choose(brass.route),
@@ -723,7 +726,7 @@ function saveRow(row) {
     : null;
   return el('div', { class: row.available ? 'save-row' : 'save-row route-unavailable', 'data-type': row.type },
     el('div', { class: 'device-what' },
-      el('p', { class: 'device-name' }, row.label),
+      el('p', { class: 'device-name' }, row.label, row.beta ? betaBadge() : null),
       el('p', { class: 'route-detail' }, row.who),
       row.fix === null ? null : el('p', { class: 'caption route-fix' }, row.fix),
       row.setup ? el('button', {
@@ -1196,7 +1199,8 @@ function missingPanel() {
         field,
         el('button', {
           type: 'button', class: 'btn btn-outline', 'data-key': 'device-request-send', onclick: sendDeviceRequest,
-        }, Q.SEND)),
+        }, Q.SEND),
+        betaBadge()),
       el('p', { class: 'caption request-note' }, Q.WHAT_IS_SENT),
       el('p', { class: 'caption request-status', role: 'status' }, '')),
     el('div', { class: 'calm-ways' },
@@ -1382,5 +1386,5 @@ function reportAnswers(kind) {
     draw(answer);
   };
   draw(null);
-  return el('span', { class: 'report' }, answers, said);
+  return el('span', { class: 'report' }, answers, betaBadge(), said);
 }

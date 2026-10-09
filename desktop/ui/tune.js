@@ -14,6 +14,7 @@
 import { runEngine, argv, holdEngine } from './app.js';
 import { inTurn, holders, beforeEveryTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
+import { betaBadge } from './beta.js';
 import { render as renderReader, splitPreview, dressFrame } from './read.js';
 import { SEND_BOOK } from './device.js';
 import { pageSwitchesFrom } from './page-show.js';
@@ -153,21 +154,22 @@ export const GROUPS = [
         // writes into the body, so the preview shows it. The engine keeps the
         // pictures and their places either way, so switching back needs no
         // new conversion.
-        key: 'includeImages', label: 'Pictures from the script', kind: 'toggle',
+        key: 'includeImages', label: 'Pictures from the script', kind: 'toggle', beta: true,
         help: 'Shows the drawings and photos the PDF carried, in the book and in the '
           + 'preview, where they sat in the script (a title card can become the cover '
-          + 'instead, below). A script with no pictures makes the same book either way.',
+          + 'instead, below). The Kindle file Screepub makes without Calibre leaves them '
+          + 'out for now. A script with no pictures makes the same book either way.',
       },
       {
         // Live as well: the preview is the book's own pages, and a card that
         // becomes the cover leaves them, so this adds or removes the card at
         // the front of the preview. What it is FOR, the picture a library
         // shows, is outside the book's pages, so the help says that part.
-        key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle',
+        key: 'promoteCoverImage', label: 'Title card as the cover', kind: 'toggle', beta: true,
         help: 'When a script opens with a full-page picture before its first scene, the '
           + 'book uses it as its cover instead of its first page, so the preview leaves '
-          + 'it out. A Kindle book built without Calibre keeps it on its page too. Needs '
-          + 'Pictures from the script on. A script without one makes the same book either way.',
+          + 'it out. Needs Pictures from the script on. A script without one makes the '
+          + 'same book either way.',
       },
     ],
   },
@@ -1235,7 +1237,8 @@ function drawKnob(knob) {
     : null;
 
   const row = el('div', { class: `knob knob-${knob.kind}` },
-    el('label', { for: id, class: 'knob-label' }, knob.label));
+    el('label', { for: id, class: 'knob-label' }, knob.label),
+    knob.beta ? betaBadge() : null);
   let input;
 
   if (knob.kind === 'range') {

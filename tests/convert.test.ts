@@ -14,7 +14,7 @@ import {
   ScannedPdfError,
   NotAScreenplayError,
 } from '../src/convert';
-import { mobiArt } from '../src/mobi/html';
+import { MOBI_CARRIES_PICTURES, mobiArt } from '../src/mobi/html';
 import { extractDocument } from '../src/parser/extract';
 import { exth, exthRecords, maskPdbDates, mobiHtml, mobiPictures } from './helpers/mobi-records';
 // Namespaces, not named imports, because the spies below replace a binding
@@ -565,7 +565,7 @@ describe('the MOBI is handed the pictures the book is', () => {
   const maskedSha = (b: Uint8Array) => createHash('sha256').update(maskPdbDates(b)).digest('hex');
 
   test('a PDF conversion’s MOBI carries the EPUB’s pictures, byte for byte, in mobiArt’s order', async () => {
-    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true, mobiPictures: true });
     const tokens = new Fountain().parse(result.fountainText, true).tokens;
     const { order } = mobiArt(tokens, ON, new Set(result.images.map((img) => img.name)));
     // The control, without which two empty lists would agree.
@@ -576,9 +576,9 @@ describe('the MOBI is handed the pictures the book is', () => {
   }, 60000);
 
   test('a PDF conversion’s MOBI names the EPUB’s cover, and keeps that card on its page', async () => {
-    const on = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
+    const on = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true, mobiPictures: true });
     const off = await convertPdf(await bytes(`${PUBLIC}images.pdf`), {
-      mobi: true, format: { promoteCoverImage: false },
+      mobi: true, mobiPictures: true, format: { promoteCoverImage: false },
     });
     // The EPUB's cover is the title card, p001-01.png, and the MOBI's EXTH
     // 201 names the record holding those very bytes.
@@ -597,6 +597,39 @@ describe('the MOBI is handed the pictures the book is', () => {
     expect(mobiPictures(on.mobi!)).toEqual(mobiPictures(off.mobi!));
     expect(exthRecords(on.mobi!).filter((r) => r.type !== 201)).toEqual(exthRecords(off.mobi!));
     expect(on.mobi!.length).toBe(off.mobi!.length + 12);
+  }, 60000);
+
+  // THE SAFETY GATE. The engine's MOBI is the oldest Kindles' file, and no
+  // device has yet opened one with picture records in it; a failure there
+  // could leave the book unopenable rather than merely plain. So until
+  // `bun tools/mobi-picture-probe.ts` passes on hardware, every route builds
+  // it text-only: no picture records, no EXTH 201 cover, the very book from
+  // before pictures. The EPUB (and so AZW3 and KFX, which Calibre builds
+  // from it) keeps its pictures and its cover. The probe opts in with
+  // `mobiPictures: true`, as the tests above do to keep the records' code
+  // proven for the day the gate opens.
+  test.if(!MOBI_CARRIES_PICTURES)('by default the MOBI is text-only: the book from before pictures, while the EPUB keeps them', async () => {
+    const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true });
+    expect(result.images).toHaveLength(2);
+    expect(mobiPictures(result.mobi!)).toEqual([]);
+    expect(exth(result.mobi!, 201)).toBeUndefined();
+    expect(mobiHtml(result.mobi!)).not.toContain('recindex');
+    expect(maskedSha(result.mobi!)).toBe(BEFORE_PICTURES.imagesOff);
+    const zip = await JSZip.loadAsync(result.epub);
+    const opf = await zip.file('OEBPS/package.opf')!.async('string');
+    expect(opf).toMatch(/properties="cover-image"/);
+    expect(zip.file('OEBPS/images/p002-01.png')).not.toBeNull();
+  }, 60000);
+
+  test.if(!MOBI_CARRIES_PICTURES)('and from a .fountain with its pictures handed over, the same', async () => {
+    const text = (await convertPdf(await bytes(`${PUBLIC}images.pdf`))).fountainText;
+    const pdf = await convertPdf(await bytes(`${PUBLIC}images.pdf`));
+    const images = new Map(pdf.images.map((img) => [img.name, img.bytes]));
+    const result = await convertFountain(text, { mobi: true, images });
+    expect(mobiPictures(result.mobi!)).toEqual([]);
+    expect(exth(result.mobi!, 201)).toBeUndefined();
+    const opened = await convertFountain(text, { mobi: true, images, mobiPictures: true });
+    expect(mobiPictures(opened.mobi!)).toHaveLength(2);
   }, 60000);
 
   test('with includeImages off, the MOBI has no picture records: it is the book from before pictures', async () => {
@@ -632,7 +665,7 @@ describe('the MOBI is handed the pictures the book is', () => {
     ]);
 
     test('the MOBI carries what the EPUB does, in the order the script first shows it', async () => {
-      const result = await convertFountain(SRC, { mobi: true, images: MAP });
+      const result = await convertFountain(SRC, { mobi: true, mobiPictures: true, images: MAP });
       // Script order, each once: the repeat names the first record again.
       expect(mobiPictures(result.mobi!)).toEqual([red, blue]);
       const zip = await JSZip.loadAsync(result.epub);

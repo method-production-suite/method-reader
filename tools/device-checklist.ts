@@ -80,11 +80,13 @@ if (pictures.length > 0) {
   out.push('command that check gives. What each of torture.pdf\'s pictures is, and');
   out.push('which sheet it is on, is in the #19, #19a and #19b entries above.');
   out.push('');
-  out.push('Read them in the KFX or the AZW3, and in the .mobi Screepub builds');
-  out.push('itself when Calibre is absent, which carries them too. The .mobi has');
-  out.push('no way to give a picture a share of the text column, so the device');
-  out.push('sizes each one there: a width unlike the KFX\'s is not a finding in');
-  out.push('the .mobi.');
+  out.push('Read them in the KFX or the AZW3. The .mobi Screepub builds itself');
+  out.push('when Calibre is absent is text-only for now (MOBI_CARRIES_PICTURES in');
+  out.push('src/mobi/html.ts), until the probe books above open with every');
+  out.push('picture on an older Kindle; its rows below say what to check either');
+  out.push('way. Once it carries them, it has no way to give a picture a share');
+  out.push('of the text column, so the device sizes each one there: a width');
+  out.push('unlike the KFX\'s is not a finding in the .mobi.');
   out.push('');
   out.push('Dark mode has nothing to show here: none of these pictures has');
   out.push('transparency, so each is a solid rectangle on a dark page as on a');

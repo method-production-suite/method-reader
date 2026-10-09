@@ -485,6 +485,27 @@
   color: var(--ink-soft);
 }
 
+/* The Beta badge (beta.js): new, works in our tests, not yet tried widely.
+ * The asterisk's quiet voice in words: the structure face in state-label
+ * caps at note size, muted ink, a hairline box, beside what it qualifies
+ * and never inside its button or label. Real text, so it is read out. */
+.beta-badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-1);
+  font-family: var(--font-structure);
+  font-weight: 400;
+  font-size: var(--text-note);
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  border: 1px solid var(--ink-muted);
+  border-radius: var(--radius-mark);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .smash {
   font-family: var(--font-structure); font-weight: 700; font-size: var(--text-ui);
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted);

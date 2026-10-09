@@ -186,7 +186,9 @@ async function buildRung(
   // The .mobi is written either way, and it is the file being handed over,
   // so it cannot wait for a picture the folder will not give: it carries the
   // pictures that were read, and a note whose picture was not read renders
-  // nothing, as it would with no folder at all. Written after the EPUB, it is
+  // nothing, as it would with no folder at all. (While the safety gate is
+  // shut, MOBI_CARRIES_PICTURES in src/mobi/html.ts, it carries none at all:
+  // the folder is still read, for the EPUB this rung may rewrite.) Written after the EPUB, it is
   // newer than the book, so the staleness rule above reads it as current and
   // the next export reuses it rather than rebuild against the same loss. The
   // flip side is that mending the folder does not refresh it: the .mobi stays

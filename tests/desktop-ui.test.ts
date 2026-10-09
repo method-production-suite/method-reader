@@ -4344,6 +4344,24 @@ describe('the Settings page, mounted', () => {
     expect(pane.querySelector('.tune-status')!.getAttribute('role')).toBe('status');
   });
 
+  test('the two picture switches, and only they, carry the Beta badge, beside the label and outside it', async () => {
+    const { tune, knob } = await mountSettings();
+    const marked = tune.KNOBS.filter((k: any) => knob(k.key).closest('.knob')!.querySelector('.beta-badge') !== null)
+      .map((k: any) => k.key);
+    expect(marked).toEqual(['includeImages', 'promoteCoverImage']);
+    for (const key of marked) {
+      const row = knob(key).closest('.knob')!;
+      const badge = row.querySelector('.beta-badge')!;
+      expect(badge.textContent).toBe('Beta');
+      expect(badge.getAttribute('aria-description')).toContain('not yet tried widely');
+      expect(row.querySelector('label')!.querySelector('.beta-badge')).toBeNull();
+    }
+    // The Kindle file built without Calibre is text-only for now
+    // (MOBI_CARRIES_PICTURES), and the help says so rather than promise it.
+    expect(tune.knobFor('promoteCoverImage').help).not.toContain('keeps it on its page');
+    expect(tune.knobFor('includeImages').help).toContain('without Calibre');
+  });
+
   test('a knob that depends on another one says why it is idle, and stops saying so the moment it is live', async () => {
     // Found live: the sentence was written at draw time and never corrected,
     // so a slider that had just become live kept "Only when character names

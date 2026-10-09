@@ -1119,10 +1119,11 @@ function openWays(p: Mounted) {
   p.node.button('Other ways').click();
   return p.node.querySelector('section.other-ways')!;
 }
-/** A line's words without its asterisks (each carries its own note). */
+/** A line's words without its asterisks (each carries its own note) or
+ *  its Beta badge (pinned on its own in 'the Beta badge'). */
 const words = (node: FakeNode): string => node.childNodes.map((k) => {
   if (k.nodeType === 3) return k.textContent;
-  return k.classList.contains('asterisk-wrap') ? '' : words(k);
+  return k.classList.contains('asterisk-wrap') || k.classList.contains('beta-badge') ? '' : words(k);
 }).join('');
 const saveRow = (p: Mounted, type: string) => p.node.querySelector(`.save-row[data-type="${type}"]`)!;
 const saveButton = (p: Mounted, type: string) => saveRow(p, type).querySelector('button')!;
@@ -1151,7 +1152,7 @@ describe('Other ways', () => {
     // The brass one is not listed again, and nothing in the list is brass.
     expect(sendTitles).not.toContain('Kindle');
     expect(groups[0].querySelectorAll('.btn-brad')).toEqual([]);
-    expect(groups[1].querySelectorAll('.save-row .device-name').map((n) => n.textContent))
+    expect(groups[1].querySelectorAll('.save-row .device-name').map(words))
       .toEqual(['EPUB', 'KFX', 'AZW3', 'MOBI', 'Fountain', 'FDX']);
     expect(saveRow(p, 'azw3').querySelector('.route-detail')!.textContent).toBe('Older Kindles over USB.');
     // Open across a redraw, and closed again by the same button.
@@ -2092,5 +2093,71 @@ describe('the route list, as the Send page used to be driven', () => {
     expect(row(p, 'reMarkable').querySelectorAll('.route-detail').map((n) => n.textContent))
       .toEqual(['the EPUB, over its USB connection']);
     expect(row(p, 'reMarkable').querySelector('.device-where')).toBeNull();
+  });
+});
+
+// The Beta badge (desktop/ui/beta.js): one quiet mark, in words, beside each
+// thing that works in our tests but has not been tried widely. Never inside a
+// button, so a button's name stays what it does.
+describe('the Beta badge', () => {
+  /** The badge that belongs to `node` itself: a direct child, so an
+   *  asterisk's note (whose report answers carry their own) is not it. */
+  const badgeIn = (node: FakeNode | null) =>
+    node?.childNodes.find((k) => k.nodeType === 1 && k.classList.contains('beta-badge')) ?? null;
+  const isBadge = (b: FakeNode | null) => {
+    expect(b).not.toBeNull();
+    expect(b!.textContent).toBe('Beta');
+    expect(b!.getAttribute('title')).toBe('New: works in our tests, not yet tried widely on real devices or apps.');
+    expect(b!.getAttribute('aria-description')).toBe(b!.getAttribute('title'));
+    expect(b!.tagName.toLowerCase()).toBe('span');
+  };
+
+  test('Save a file marks the FDX row, and only that row', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    const ways = openWays(p);
+    const marked = ways.querySelectorAll('.save-row').filter((r) => r.querySelector('.beta-badge') !== null).map((r) => r.dataset.type);
+    expect(marked).toEqual(['fdx']);
+    isBadge(badgeIn(saveRow(p, 'fdx').querySelector('.device-name')));
+    expect(saveButton(p, 'fdx').textContent).toBe('Save…');
+  });
+
+  test('“My device isn’t here” carries it beside its card and beside its Send', async () => {
+    const p = await mountPanel();
+    const slot = p.node.button('My device isn’t here').parentNode!;
+    isBadge(badgeIn(slot));
+    expect(badgeIn(p.node.button('My device isn’t here'))).toBeNull();
+    expect(badgeIn(p.node.button('Kobo').parentNode!)).toBeNull();
+    p.node.button('My device isn’t here').click();
+    await settle();
+    isBadge(badgeIn(p.node.querySelector('.device-missing .request-row')));
+  });
+
+  test('the asterisk’s It worked / It did not work carry it', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' } });
+    const note = p.node.querySelector('.calm .asterisk-note')!;
+    isBadge(badgeIn(note.querySelector('.report')));
+  });
+
+  async function ejecting(platform: string) {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO], platform,
+      engine: (a) => (a[0] === 'export' && !a.includes('--check') ? { ok: true, path: EPUB, label: 'EPUB' }
+        : a[0] === 'send' ? { ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' } : undefined) });
+    p.brass()!.click();
+    await settle();
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+    return p;
+  }
+
+  test('Eject is beta on Windows and on Linux, beside the button', async () => {
+    for (const platform of ['Win32', 'Linux x86_64']) {
+      const p = await ejecting(platform);
+      isBadge(badgeIn(p.node.querySelector('.calm-act')));
+      expect(badgeIn(p.brass())).toBeNull();
+    }
+  });
+
+  test('Eject on a Mac is not beta', async () => {
+    const p = await ejecting('MacIntel');
+    expect(badgeIn(p.node.querySelector('.calm-act'))).toBeNull();
   });
 });

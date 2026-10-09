@@ -193,7 +193,7 @@ export const SAVE_TYPES = [
   { type: 'azw3', label: 'AZW3', who: 'Older Kindles over USB.' },
   { type: 'mobi', label: 'MOBI', who: 'The oldest Kindles.' },
   { type: 'fountain', label: 'Fountain', who: 'The script as plain text, for screenwriting apps.' },
-  { type: 'fdx', label: 'FDX', who: 'The script for Final Draft and most screenwriting apps, to edit.' },
+  { type: 'fdx', label: 'FDX', who: 'The script for Final Draft and most screenwriting apps, to edit.', beta: true },
 ];
 export const NEEDS_TOOLS = 'This computer cannot make one yet.';
 export const SET_IT_UP = 'Set it up';
@@ -237,6 +237,12 @@ export function copiedState(title, device, sent) {
 }
 
 export const ejectLabel = (eject) => `Eject ${eject.name}`;
+
+/** Whether Eject wears the Beta badge here. On a Mac it runs diskutil and
+ *  has been used on real readers; on Windows and Linux it is built and
+ *  tested in code but not yet tried widely (and a platform the window
+ *  cannot name is not claimed to be a Mac). */
+export const ejectIsBeta = (platform) => platformOf(platform) !== 'mac';
 
 export function ejectOutcome(answer, eject) {
   if (answer?.ok === true) return { line: `Your ${eject.name} is ejected. You can unplug it now.`, bad: false, eject: null };

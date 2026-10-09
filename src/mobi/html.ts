@@ -58,6 +58,26 @@ export interface MobiArt {
 }
 
 /**
+ * THE SAFETY GATE on pictures in the engine's own MOBI (registry #19a, #19b).
+ *
+ * The .mobi is the file for the oldest Kindles, the ones with no Calibre
+ * route, and no device has yet opened one carrying picture records. Older
+ * firmware is reported to cap a record near 127 KB, and a failure there could
+ * leave the whole book unopenable rather than merely without its pictures.
+ * So until a device probe passes, every route builds the .mobi text-only: no
+ * image records, no EXTH 201 cover, the book from before pictures, byte for
+ * byte. The EPUB, and the AZW3 and KFX Calibre builds from it, keep both.
+ *
+ * The probe is `bun tools/mobi-picture-probe.ts --out <folder>`, read on an
+ * older Kindle with tools/device-checklist.ts's picture rows. When it passes,
+ * this is the one line to change: true, and every route's .mobi carries the
+ * EPUB's pictures and names its cover, as the code below already does.
+ * `ConvertOptions.mobiPictures` overrides it for one build (the probe itself,
+ * and the tests that keep the records proven while the gate is shut).
+ */
+export const MOBI_CARRIES_PICTURES = false;
+
+/**
  * Which pictures this token stream puts in a MOBI, in document order, each
  * once: a picture shown twice is one record with two references.
  *

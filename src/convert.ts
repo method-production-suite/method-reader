@@ -10,7 +10,7 @@ import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/seriali
 import { tokensToBody, tokensToPreviewHtml } from './epub/html';
 import { buildEpub, type BookImage, type BookMeta } from './epub/build';
 import { resolveFormatOptions, type FormatOptions } from './options';
-import { mobiArt, tokensToMobiHtml } from './mobi/html';
+import { MOBI_CARRIES_PICTURES, mobiArt, tokensToMobiHtml } from './mobi/html';
 import { buildMobi } from './mobi/writer';
 import { isSafeImageFile } from './fountain/notes';
 import { isPng } from './parser/png';
@@ -48,6 +48,12 @@ export interface ConvertOptions {
   force?: boolean;
   /** also build a MOBI 6 for dependency-free USB sideload */
   mobi?: boolean;
+  /**
+   * Whether that MOBI carries the pictures and the cover. Defaults to
+   * MOBI_CARRIES_PICTURES (src/mobi/html.ts), the safety gate that keeps it
+   * text-only until a device probe passes; only the probe and tests set it.
+   */
+  mobiPictures?: boolean;
   /** formatting knobs (partial; merged over defaults) */
   format?: Partial<FormatOptions>;
   /**
@@ -218,6 +224,7 @@ async function renderBooks(
   wantMobi: boolean,
   format: FormatOptions,
   images: readonly BookImage[],
+  mobiPictures: boolean = MOBI_CARRIES_PICTURES,
 ) {
   const { tokens } = new Fountain().parse(fountainText, true);
   // The book's identity is its CONTENT, not the moment of rendering. The
@@ -238,7 +245,10 @@ async function renderBooks(
   const previewHtml = tokensToPreviewHtml(tokens, format, byName);
   let mobi: Uint8Array | undefined;
   if (wantMobi) {
-    const art = mobiArt(tokens, format, new Set(byName.keys()));
+    // Behind the safety gate, the MOBI is told it can ship no picture at
+    // all, so mobiArt lists none and picks no cover: every note renders
+    // nothing, exactly as with includeImages off.
+    const art = mobiArt(tokens, format, mobiPictures ? new Set(byName.keys()) : new Set<string>());
     mobi = buildMobi({
       title: meta.title,
       author: meta.author,
@@ -312,7 +322,7 @@ export async function convertPdf(
   const meta = resolveMeta(extractTitleMeta(screenplay.elements), opts);
   const fountainText = toFountain(screenplay, { title: meta.title, author: meta.author }, format);
   opts.onProgress?.('render', RENDER_START);
-  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images);
+  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images, opts.mobiPictures);
   opts.onProgress?.('render', 1);
 
   return { epub, mobi, previewHtml, fountainText, screenplay, meta, warnings, spacingRepairs, images };
@@ -379,7 +389,7 @@ export async function convertFountain(
   const images: BookImage[] = [...(opts.images ?? [])]
     .filter(([name, bytes]) => isSafeImageFile(name) && isPng(bytes))
     .map(([name, bytes]) => ({ name, bytes }));
-  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images);
+  const { epub, mobi, previewHtml } = await renderBooks(fountainText, meta, opts.mobi ?? false, format, images, opts.mobiPictures);
 
   return {
     epub,

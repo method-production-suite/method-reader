@@ -228,6 +228,9 @@ export async function buildProbe(): Promise<{
   const build = (shown: readonly ProbePicture[], title?: string) =>
     atFixedClock(BUILT_AT, () => convertFountain(probeScript(shown, title), {
       mobi: true,
+      // Through the safety gate (MOBI_CARRIES_PICTURES in src/mobi/html.ts):
+      // this probe is the device test that decides whether it opens.
+      mobiPictures: true,
       images: new Map(shown.map((p) => [p.name, p.bytes])),
     }));
   const combined = await build(pictures);

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, test, expect, spyOn } from 'bun:test';
+import { MOBI_CARRIES_PICTURES } from '../src/mobi/html';
 import {
   mkdirSync, mkdtempSync, writeFileSync, readFileSync, readdirSync, existsSync, utimesSync, rmSync, statSync,
 } from 'node:fs';
@@ -111,8 +112,12 @@ test('the MOBI branch rebuilds from the .fountain and writes a .mobi', async () 
 // has to find that script's pictures the way every other render from the
 // text does (src/library-images.ts), or a Kindle export on a machine without
 // Calibre would strip them from the library book. The .mobi it hands over is
-// rendered from the same read, so it carries them too.
+// rendered from the same read, so it carries them too, once the safety gate
+// opens (MOBI_CARRIES_PICTURES, src/mobi/html.ts); until then it carries none.
 describe('the MOBI rebuild and the picture folder', () => {
+  /** What the handed-over .mobi carries of `pictures`: all of them once the
+   *  gate is open, none while it is shut. */
+  const inMobi = (pictures: Uint8Array[]) => (MOBI_CARRIES_PICTURES ? pictures : []);
   const spies: { mockRestore(): void }[] = [];
   afterEach(() => {
     for (const s of spies.splice(0)) s.mockRestore();
@@ -186,7 +191,7 @@ describe('the MOBI rebuild and the picture folder', () => {
     const out = await rebuild(fountain, epub, DEFAULT_FORMAT_OPTIONS, (s) => stages.push(s));
     expect(out).toBe(mobiSibling(epub));
     expect(readFileSync(out).length).toBeGreaterThan(0);
-    expect(mobiPictures(readFileSync(out))).toEqual(carried);
+    expect(mobiPictures(readFileSync(out))).toEqual(inMobi(carried));
     expect(readFileSync(epub)).toEqual(bytes);
     expect(statSync(epub).mtimeMs).toBe(date);
     expect(statSync(out).mtimeMs).toBeGreaterThan(date);
@@ -195,10 +200,10 @@ describe('the MOBI rebuild and the picture folder', () => {
     expect(stages).toEqual(['rebuilding the Kindle file…']);
   }
 
-  test('from an intact folder, the .mobi carries every picture, in the script’s order', async () => {
+  test('from an intact folder, the .mobi carries every picture the gate lets it, in the script’s order', async () => {
     const { fountain, epub, plates } = await libraryBook();
     const out = await rebuild(fountain, epub);
-    expect(mobiPictures(readFileSync(out))).toEqual([plates.get('p001-01.png')!, plates.get('p002-01.png')!]);
+    expect(mobiPictures(readFileSync(out))).toEqual(inMobi([plates.get('p001-01.png')!, plates.get('p002-01.png')!]));
     // And the library book it rewrote still carries both.
     expect(await figuresIn(epub)).toEqual(['OEBPS/images/p001-01.png', 'OEBPS/images/p002-01.png']);
   });

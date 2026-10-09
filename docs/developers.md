@@ -54,15 +54,18 @@ bun src/cli.ts <input.pdf | input.fountain> [options]
 ```
 
 `bun src/cli.ts --help` is the full reference, and each verb has its own
-`--help`. The options most people want:
+`--help`. Some features are marked (beta): they work in our tests, but have
+not been tried widely on real devices or apps yet, so tell us how they go.
+They are the FDX, pictures in books, eject on Windows and Linux, and the
+window's device requests and route reports. The options most people want:
 
 | Option | Effect |
 | --- | --- |
 | `-o, --output <file>` | EPUB path (default `<input>.epub`; companions follow it) |
 | `--library` | write into the library instead of beside the input (see below) |
-| `--mobi` | also write a MOBI 6 (dependency-free USB sideload) |
+| `--mobi` | also write a MOBI 6 (dependency-free USB sideload; text-only for now, see Pictures below) |
 | `--preview-html <file>` | also write the script as one self-contained HTML file |
-| `--fdx <file>` | also write the script as a Final Draft file (see [Final Draft (FDX)](#final-draft-fdx)) |
+| `--fdx <file>` | also write the script as a Final Draft file (beta; see [Final Draft (FDX)](#final-draft-fdx-beta)) |
 | `--fountain <file>` / `--no-fountain` | where the intermediate `.fountain` goes, or skip it |
 | `--options <file.json>` | formatting options (see the registry) |
 | `--title` / `--author` | override detected metadata |
@@ -71,10 +74,23 @@ bun src/cli.ts <input.pdf | input.fountain> [options]
 | `--progress` | NDJSON progress on **stderr** while converting: `{"progress":{"stage":...,"percent":N}}` ticks, plus one `{"progress":{"stage":"page","page":N,"paragraphs":[...]}}` line, sent once, for the first page that is not a title page, as plain paragraphs |
 | `--debug` | dump classified elements as JSON |
 
+### Pictures (beta)
+
+A PDF's pictures (storyboard panels, photos, a designed title card) are kept
+when they are art rather than page furniture, written as PNGs into a
+`<stem>.images` folder beside the `.fountain`, and named there by
+`[[img: ...]]` notes. The EPUB shows each one where it sat, and a title card
+that opens the script becomes the book's cover; the `includeImages` and
+`promoteCoverImage` options switch each off. AZW3 and KFX carry them, since
+Calibre builds those from the EPUB. The engine's own `.mobi` does not yet:
+it stays text-only until the pictures are tried on an older Kindle (registry
+#19a). The `--json` answer gains `imagesPath` and `imageCount` when there are
+pictures. The full rules are in the registry, entries #19, #19a and #19b.
+
 A verb is only a verb when no file of that name exists, so a script saved as
 `devices` still converts and `./devices` always means the file.
 
-### Final Draft (FDX)
+### Final Draft (FDX) (beta)
 
 Screepub can hand back the script itself, as a file to keep writing in,
 not only a book to read. `--fdx <file>` on a conversion writes one beside
@@ -96,7 +112,8 @@ import it. It carries scene headings (with their scene numbers), action,
 character cues with their extensions, parentheticals, dialogue, transitions,
 lyrics, centered text, dual dialogue, forced page breaks, bold, italic and
 underline, and a title page. Fountain notes (Screepub's own formatting
-notes among them), sections, synopses and boneyard are left out. A
+and picture notes among them), sections, synopses and boneyard are left out,
+so a picture carried out of the PDF never appears in the FDX. A
 secondary heading such as LATER becomes a Shot, so it is not counted as a
 scene. It names no fonts, margins or page layout, so the app that opens it
 uses its own screenplay template.
@@ -109,7 +126,7 @@ Draft refuses the file.
 
 ### Fountain input
 
-`.fountain` input is partly supported: 16 of the 18 formatting options apply,
+`.fountain` input is partly supported: 18 of the 20 formatting options apply,
 and one piece of syntax renders differently than another tool would render it.
 See [Fountain input](fountain-input.md).
 
@@ -204,7 +221,7 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
 `export` never sends. It makes or reuses the file, and `send` moves it.
 
-`eject <volume>` takes the full path of a reader that `devices` lists right
+`eject <volume>` (beta on Windows and Linux) takes the full path of a reader that `devices` lists right
 now, such as `/Volumes/Kindle` or `E:\`, and refuses any other disk. It runs
 `diskutil eject` on macOS, `udisksctl unmount` then `power-off` on Linux (only
 for a volume that is itself a mount point), and the shell's own Eject on

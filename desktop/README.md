@@ -125,7 +125,7 @@ the updater's config as `serde_json` values. No `.rs` file may name it;
 
 ## The interface
 
-`desktop/ui/` is the app: 27 files and six bundled font files, no build
+`desktop/ui/` is the app: 32 files and six bundled font files, no build
 step. `index.html` loads three stylesheets and one ES module, `main.js`. The
 window's content security policy is `default-src 'self'; img-src 'self'
 data:` plus one `connect-src` for the device-request service: the window's
@@ -143,6 +143,7 @@ by 800.
 | `frame.js` | the sheet, the punched holes, the brads, the tab bar |
 | `dom.js` | `el`, `clear`, `text`; no `innerHTML` anywhere |
 | `focus.js` | where the keyboard lands on each page |
+| `beta.js` | the one Beta badge: the FDX row, the picture switches, Eject on Windows and Linux, and the device-request and report buttons wear it |
 | `convert.js` `read.js` `tune.js` `notes-surface.js` | one page each (`tune.js` is the Settings page) |
 | `result-page.js` | the left half of Convert's result: the book's first page |
 | `page-show.js` | the page that writes itself while a script converts: the typed page in the result's box, the wave, the slim reading line |

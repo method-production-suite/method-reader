@@ -180,7 +180,10 @@ describe('the .mobi built from torture.pdf (#19b)', () => {
   let mobi: Uint8Array;
   let zip: JSZip;
   beforeAll(async () => {
-    const result = await convertPdf(await torture(), { mobi: true });
+    // Through the safety gate (MOBI_CARRIES_PICTURES, src/mobi/html.ts):
+    // the default .mobi is text-only until the device probe passes, and
+    // these pin the book it will be once it does.
+    const result = await convertPdf(await torture(), { mobi: true, mobiPictures: true });
     mobi = result.mobi!;
     zip = await JSZip.loadAsync(result.epub);
   }, 60000);

@@ -1574,6 +1574,20 @@ engine needs to change.
   16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
   answer from 26 KB to 22.09 MB, so the preview is built on every render
   rather than only on request.
+- **The MOBI is text-only for now (2026-10-09, the safety gate).** No
+  device has opened a `.mobi` with picture records yet, and on the oldest
+  Kindles, the ones this file is for, a failure could leave the book
+  unopenable rather than merely plain. So `MOBI_CARRIES_PICTURES` in
+  `src/mobi/html.ts` is false: every route's `.mobi` is built as if no
+  picture could be shipped (`mobiArt` is handed an empty set), so it has no
+  image record, no figure and no EXTH 201 cover, and is byte for byte the
+  book with `includeImages` off (pinned in `tests/convert.test.ts`). The EPUB
+  keeps its pictures and its cover, and so do the AZW3 and KFX Calibre builds
+  from it. The probe is `bun tools/mobi-picture-probe.ts --out <folder>`,
+  which builds through the gate (`ConvertOptions.mobiPictures`), read on an
+  older Kindle with the torture manifest's #19a rows; when every probe book
+  opens with every picture, the constant becomes true, one line, and what
+  follows is what every route's `.mobi` then does.
 - **The MOBI.** The engine's own `.mobi`, the Kindle file built when
   Calibre is absent, carries the same pictures as the EPUB. A picture in
   MOBI 6 is a RECORD after the text, named from the markup by number:
@@ -1700,8 +1714,9 @@ engine needs to change.
 ### 19b. The title card as the cover (option `promoteCoverImage`, default ON; 2026-10-01)
 - **What:** a designed title card becomes the book's cover, so a library
   shows artwork rather than a grey rectangle. The EPUB (and the preview)
-  takes the card off its pages and declares it the cover; the engine's MOBI
-  names it as the cover and keeps it on its page. The Tune switch is
+  takes the card off its pages and declares it the cover; the engine's MOBI,
+  once its pictures are switched on (#19a's safety gate), names it as the
+  cover and keeps it on its page. Until then the `.mobi` has no cover record. The Tune switch is
   "Title card as the cover", under "Pictures from the script" (#19a), and
   it is live: the preview is the EPUB's own pages, so flipping it adds or
   removes the card at the front of the preview. On by default (owner,
