@@ -1,5 +1,6 @@
-// Stage-2 mini-slug classification, shared by both renderers that walk
-// fountain-js tokens (EPUB and MOBI). This is the stage-2 counterpart to
+// Stage-2 mini-slug classification, shared by the renderers that walk
+// fountain-js tokens (EPUB and MOBI, and src/fdx/, where a mini-slug
+// becomes a Shot rather than a numbered Scene Heading). This is the stage-2 counterpart to
 // the parser's own PRIMARY_SLUG in ../parser/classify.ts: that copy
 // classifies from PDF geometry before the .fountain file exists, this one
 // classifies from fountain-js tokens after it. The two stay deliberately
