@@ -59,6 +59,7 @@ bun src/cli.ts <input.pdf | input.fountain> [options]
 | `--library` | write into the library instead of beside the input (see below) |
 | `--mobi` | also write a MOBI 6 (dependency-free USB sideload) |
 | `--preview-html <file>` | also write the script as one self-contained HTML file |
+| `--fdx <file>` | also write the script as a Final Draft file (see [Final Draft (FDX)](#final-draft-fdx)) |
 | `--fountain <file>` / `--no-fountain` | where the intermediate `.fountain` goes, or skip it |
 | `--options <file.json>` | formatting options (see the registry) |
 | `--title` / `--author` | override detected metadata |
@@ -69,6 +70,39 @@ bun src/cli.ts <input.pdf | input.fountain> [options]
 
 A verb is only a verb when no file of that name exists, so a script saved as
 `devices` still converts and `./devices` always means the file.
+
+### Final Draft (FDX)
+
+Screepub can hand back the script itself, as a file to keep writing in,
+not only a book to read. `--fdx <file>` on a conversion writes one beside
+the other outputs, and `export` makes one from a book that is already
+converted:
+
+```bash
+bun src/cli.ts script.pdf --fdx script.fdx
+bun src/cli.ts export <file.epub> --for fdx --fountain <file.fountain> [--out <path>] [--json]
+```
+
+`export --for fdx` needs the script's `.fountain`, because that is what the
+FDX is built from. Without `--out` it writes `<stem>.fdx` beside the book.
+It is rebuilt on every call, and `--check` says whether the one beside the
+book is newer than its `.fountain`.
+
+The file opens in Final Draft, and Fade In, WriterDuet, Highland and Celtx
+import it. It carries scene headings (with their scene numbers), action,
+character cues with their extensions, parentheticals, dialogue, transitions,
+lyrics, centered text, dual dialogue, forced page breaks, bold, italic and
+underline, and a title page. Fountain notes (Screepub's own formatting
+notes among them), sections, synopses and boneyard are left out. A
+secondary heading such as LATER becomes a Shot, so it is not counted as a
+scene. It names no fonts, margins or page layout, so the app that opens it
+uses its own screenplay template.
+
+It is a reconstruction from the PDF, so check it before you rely on it.
+Revision colors and marks do not carry over, and neither do the exact page
+breaks: the app lays the pages out again. The format version it declares is
+one constant, `FDX_VERSION` in `src/fdx/fdx.ts`, in case an older Final
+Draft refuses the file.
 
 ### Fountain input
 
@@ -138,7 +172,7 @@ overrides that folder everywhere.
 ```bash
 bun src/cli.ts devices [--quick] [--json]                # list connected e-readers
 bun src/cli.ts send <file> [--device <id>] [--json]      # send an existing file to one
-bun src/cli.ts export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain]  # the file you would put on a reader
+bun src/cli.ts export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx]  # the file you would put on a reader
 bun src/cli.ts routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
 bun src/cli.ts route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
 bun src/cli.ts eject <volume> [--json]                   # safely remove a reader before unplugging

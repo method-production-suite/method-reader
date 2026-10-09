@@ -26,6 +26,7 @@ import { resolveCommand, devicesCommand, sendCommand, VERBS, type Verb } from '.
 import { updateDecisionCommand, updateShouldCheckCommand } from './cli-update';
 import { settingsCommand } from './cli-settings';
 import { exportCommand } from './cli-export';
+import { fountainToFdx } from './fdx/fdx';
 import { appSettingsCommand } from './cli-app-settings';
 import { revealCommand } from './cli-reveal';
 import { ejectCommand } from './cli-eject';
@@ -63,8 +64,8 @@ otherwise from Screepub's own.
 
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
-                         must already exist, and so must --fountain's and
-                         --preview-html's
+                         must already exist, and so must --fountain's,
+                         --preview-html's and --fdx's
   --library              write into the library folder instead of beside the
                          input: <library>/<stem>/<stem>.epub. The library is
                          <Documents>/Screepub: ~/Documents on macOS and
@@ -81,6 +82,9 @@ Options:
   --mobi                 also write a .mobi (for USB sideload to Kindle)
   --preview-html <file>  also write the script as one self-contained HTML file
   --preview-inline       put that same HTML in the --json result (for the app)
+  --fdx <file>           also write the script as a Final Draft file to keep
+                         editing (a reconstruction: revision marks and exact
+                         page breaks do not carry over)
   --options <file.json>  formatting options (see docs/formatting-options-log.md)
   --options-json <json>  the same options as one JSON argument (for the app)
   --json                 machine-readable result on stdout (for the app)
@@ -96,8 +100,9 @@ Commands:
                                             send an existing file to one
   screepub settings <file.fountain> [--set <json>] [--json]
                                             read/write a script's own settings
-  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--json]
-                                            the file you would put on a reader
+  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx] [--json]
+                                            the file you would put on a reader,
+                                            or the script to keep editing
   screepub app-settings [--set <json>] [--json]
                                             where books land, and what new scripts start from
   screepub reveal <file> [--json]           show a file in the system's file manager
@@ -173,6 +178,7 @@ const EXPORT_USAGE = `screepub export: the file you would put on a reader
 
 Usage:
   screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--fountain <f>] [--out <path>] [--json]
+  screepub export <file.epub> --for fdx --fountain <f> [--out <path>] [--json]
   screepub export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
@@ -181,14 +187,21 @@ rung this machine can reach. kfx, azw3 and mobi each make only that file,
 and refuse when this computer lacks its tools. fountain hands over the
 script itself.
 
+fdx is the script itself, as a Final Draft file you can keep editing (Fade
+In, WriterDuet, Highland and Celtx open it too). It is built from the
+.fountain, so --fountain is required, and it is rebuilt on every call. It
+is a reconstruction from the PDF: revision colors and marks, and the exact
+page breaks, do not carry over.
+
 Options:
   --for <type>           which file you want (default epub): epub, kindle,
-                         kfx, azw3, mobi or fountain
-  --fountain <file>      the script's .fountain: required by mobi and
-                         fountain, and used to rebuild a MOBI for kindle
+                         kfx, azw3, mobi, fountain or fdx
+  --fountain <file>      the script's .fountain: required by mobi, fountain
+                         and fdx, and used to rebuild a MOBI for kindle
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
-                         extension must match the file produced)
+                         extension must match the file produced). An FDX
+                         is written only there, not beside the book
   --check                build nothing: say which file this computer makes,
                          whether the one beside the book is current, what
                          builds it (builtBy: calibre or screepub), and when
@@ -597,6 +610,7 @@ function parseCliArgs() {
       mobi: { type: 'boolean', default: false },
       'preview-html': { type: 'string' },
       'preview-inline': { type: 'boolean', default: false },
+      fdx: { type: 'string' },
       options: { type: 'string' },
       'options-json': { type: 'string' },
       json: { type: 'boolean', default: false },
@@ -1069,7 +1083,7 @@ async function main() {
       message: 'pass --library or -o, not both: -o already says where the output goes',
     });
   }
-  // The three paths a caller can name, held to one rule (checkOutputPath),
+  // The four paths a caller can name, held to one rule (checkOutputPath),
   // and checked before the conversion: finding a missing folder only at the
   // write cost a whole conversion and ended in node:fs's ENOENT and a stack
   // trace. The .mobi and --debug's .elements.json go beside the -o file, so
@@ -1080,6 +1094,7 @@ async function main() {
     if (values.output !== undefined) checkOutputPath('-o', values.output);
     if (values.fountain !== undefined) checkOutputPath('--fountain', values.fountain);
     if (values['preview-html']) checkOutputPath('--preview-html', values['preview-html']);
+    if (values.fdx) checkOutputPath('--fdx', values.fdx);
   }
   let format: Record<string, unknown> | undefined;
   if (values.options !== undefined && values['options-json'] !== undefined) {
@@ -1316,6 +1331,13 @@ async function main() {
     previewPath = values['preview-html'];
     await writeOutput(previewPath, result.previewHtml, 'utf8');
   }
+  // Built from the same Fountain text the books were, so a PDF's FDX is the
+  // FDX of the .fountain this run wrote, and a Fountain input's is its own.
+  let fdxPath: string | undefined;
+  if (values.fdx) {
+    fdxPath = values.fdx;
+    await writeOutput(fdxPath, fountainToFdx(result.fountainText), 'utf8');
+  }
   let debugPath: string | undefined;
   if (values.debug && result.screenplay) {
     debugPath = `${stem}.elements.json`;
@@ -1415,6 +1437,7 @@ async function main() {
         // script's saved settings from one built at the defaults.
         settingsPath,
         previewHtmlPath: previewPath,
+        fdxPath,
         debugPath,
         // Spread, not a plain key: the app asks for this and nothing else
         // does, and a megabyte of HTML on every conversion would be a tax
@@ -1437,7 +1460,7 @@ async function main() {
     );
   }
   for (const w of result.warnings) console.log(`  warning: ${w}`);
-  for (const f of [epubPath, mobiPath, fountainPath, previewPath, debugPath]) {
+  for (const f of [epubPath, mobiPath, fountainPath, previewPath, fdxPath, debugPath]) {
     if (f) console.log(`  wrote ${f}`);
   }
 }

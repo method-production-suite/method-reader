@@ -1,14 +1,17 @@
 // What a converted script can be saved as, labeled by PURPOSE: the file you
 // email is not the file you sideload. Amazon stopped accepting MOBI for Send
-// to Kindle in 2022, while Kindles never index a sideloaded EPUB.
+// to Kindle in 2022, while Kindles never index a sideloaded EPUB. And the
+// file you keep writing in is neither: 'fdx' is the script itself, for Final
+// Draft and the screenwriting apps that open its files.
 //
 // `kindle` is the ladder (the best rung this computer reaches). `kfx`,
 // `azw3` and `mobi` are its rungs asked for by name, each built only as
-// itself, and `fountain` is the script as plain text (spec decision 11).
-export type ExportFormat = 'epub' | 'kindle' | 'kfx' | 'azw3' | 'mobi' | 'fountain';
+// itself, `fountain` is the script as plain text (spec decision 11), and
+// `fdx` is the same script as a Final Draft document.
+export type ExportFormat = 'epub' | 'kindle' | 'kfx' | 'azw3' | 'mobi' | 'fountain' | 'fdx';
 
 /** Every value `export --for` takes, in the order its help lists them. */
-export const EXPORT_FORMATS: readonly ExportFormat[] = ['epub', 'kindle', 'kfx', 'azw3', 'mobi', 'fountain'];
+export const EXPORT_FORMATS: readonly ExportFormat[] = ['epub', 'kindle', 'kfx', 'azw3', 'mobi', 'fountain', 'fdx'];
 
 /** One rung of the Kindle ladder, named. */
 export type KindleRung = 'kfx' | 'azw3' | 'mobi';
@@ -38,6 +41,7 @@ export function formatLabel(format: ExportFormat, state: ToolchainState): string
   if (format === 'kfx') return 'KFX: for modern Kindles over USB, the best layout';
   if (format === 'azw3') return 'AZW3: for older Kindles over USB';
   if (format === 'mobi') return 'MOBI: for the oldest Kindles';
+  if (format === 'fdx') return 'FDX: the script to keep editing, in Final Draft and most screenwriting apps';
   const ext = fileExtension(format, state).toUpperCase();
   const hint = state.kfxReady ? ' (best quality)' : '';
   return `${ext}: for USB sideload to Kindle${hint}`;

@@ -297,7 +297,7 @@ describe('exportCommand', () => {
     expect(message).toContain(missing);
   });
 
-  test('an unknown --for is a usage error naming the two it accepts', async () => {
+  test('an unknown --for is a usage error naming the formats it accepts', async () => {
     let message = '';
     try {
       await exportCommand({ epub, for: 'pdf' });
@@ -1262,7 +1262,7 @@ describe('export --for one named file type', () => {
   test('an unknown value is usage, and the sentence lists all six', async () => {
     const answer = await codeAndMessage(exportCommand({ epub, for: 'nook' }, safe));
     expect(answer.code).toBe('usage');
-    expect(answer.message).toBe('--for takes epub, kindle, kfx, azw3, mobi or fountain, not "nook"');
+    expect(answer.message).toBe('--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not "nook"');
   });
 
   test('--out with the wrong extension is usage for every new value, before any work', async () => {

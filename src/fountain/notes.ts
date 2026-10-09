@@ -1,4 +1,5 @@
-// Fountain notes, shared by both renderers.
+// Fountain notes, shared by both renderers (and by the FDX writer in
+// src/fdx/, which strips them the same way: a note is never script text).
 //
 // The format says `[[...]]` is invisible in output. Before registry #18 we
 // never emitted one and never stripped one either, so a hand-written note

@@ -3,9 +3,10 @@
 // window needs a way to ask for the Kindle rung before it sends. The LADDER
 // is src/export/artifact.ts's — this file chooses nothing, it only carries
 // the answer out. Returns a value; cli.ts owns stdout.
-import { statSync } from 'node:fs';
+import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { copyFile, mkdir, rename, unlink } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path';
+import { tempPathFor as atomicTempPathFor, writeFileAtomicSync } from './atomic-write';
 import { CliError, errorMessage } from './cli-errors';
 import {
   availableFormats,
@@ -26,6 +27,7 @@ import {
   type KindleRung,
 } from './export/formats';
 import { kfxMissing, kfxStatus as realKfxStatus, type KfxStatus } from './export/kfx';
+import { fountainToFdx } from './fdx/fdx';
 import { resolveFormatOptions, type FormatOptions } from './options';
 import { appDefaultOptions } from './settings/app-defaults';
 import { loadScriptSettings } from './settings/sidecar';
@@ -38,7 +40,8 @@ export interface ExportResult {
   available: ExportFormat[];
   stages: string[];
   /** --check only: whether the file at `path` is current (the EPUB always
-   * is: it is the book itself). */
+   * is: it is the book itself; an FDX is when it is newer than its
+   * .fountain). */
   fresh?: boolean;
   /** --check, --for kindle, kfx, azw3 or mobi only: what builds the file
    * when it is not current. */
@@ -54,8 +57,9 @@ export interface ExportOptions {
   epub: string;
   /** One of EXPORT_FORMATS; 'epub' when absent. */
   for?: string;
-  /** The script's .fountain: required by `mobi` (the rebuild) and
-   * `fountain` (the file itself), and used by the ladder's MOBI rung. */
+  /** The script's .fountain: required by `mobi` (the rebuild), `fountain`
+   * (the file itself) and `fdx` (built from nothing else), and used by the
+   * ladder's MOBI rung. */
   fountain?: string;
   /** This script's settings, as --options-json carries them elsewhere. */
   optionsJson?: string;
@@ -210,13 +214,64 @@ function checkScriptReadable(script: string): void {
   }
 }
 
+/** The FDX that sits beside a book when no --out names another place: same
+ * folder, same stem, the way the Kindle files sit beside it. */
+export function fdxSibling(epub: string): string {
+  return `${epub.replace(/\.epub$/i, '')}.fdx`;
+}
+
+/** --for fdx: the editable screenplay, rebuilt from the .fountain on every
+ * call (it takes milliseconds, so there is no ladder and no reuse), and
+ * written atomically: the path only ever holds a whole file. */
+function exportFdx(
+  epub: string,
+  fountainPath: string,
+  out: string | undefined,
+  check: boolean,
+): Omit<ExportResult, 'available'> {
+  const state = { calibreAvailable: false, kfxReady: false };
+  const extension = fileExtension('fdx', state);
+  if (out !== undefined) checkOutExtension(out, extension);
+  const path = out ?? fdxSibling(epub);
+
+  let fountainText: string;
+  let fountainDate: number;
+  try {
+    fountainText = readFileSync(fountainPath, 'utf8');
+    fountainDate = statSync(fountainPath).mtimeMs;
+  } catch {
+    throw new CliError('unreadable', `cannot read the script's .fountain: ${fountainPath}`);
+  }
+  const base = { path, format: 'fdx' as const, extension, label: formatLabel('fdx', state), stages: [] };
+
+  if (check) {
+    let fresh = false;
+    try {
+      fresh = statSync(path).mtimeMs >= fountainDate;
+    } catch {
+      fresh = false;
+    }
+    return { ...base, fresh };
+  }
+
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileAtomicSync(path, fountainToFdx(fountainText));
+  } catch (err) {
+    // The hidden temp file is not a name anyone chose: say the one they did.
+    const reason = errorMessage(err).split(atomicTempPathFor(path)).join(path);
+    throw new CliError('export-failed', `could not save the FDX to ${path}: ${reason}`);
+  }
+  return base;
+}
+
 export async function exportCommand(
   options: ExportOptions,
   deps: ExportDeps = {},
 ): Promise<ExportResult> {
   const wanted = options.for ?? 'epub';
   if (!(EXPORT_FORMATS as readonly string[]).includes(wanted)) {
-    throw new CliError('usage', `--for takes epub, kindle, kfx, azw3, mobi or fountain, not "${wanted}"`);
+    throw new CliError('usage', `--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not "${wanted}"`);
   }
   const format = wanted as ExportFormat;
 
@@ -262,6 +317,11 @@ export async function exportCommand(
   // Both read the script, so a script that is not there is refused here,
   // before --check answers and before any probe or build.
   if (format === 'mobi' || format === 'fountain') checkScriptReadable(options.fountain as string);
+  // An FDX is made from the .fountain and nothing else, so without one there
+  // is nothing to build it from: said before any settings are read.
+  if (wanted === 'fdx' && options.fountain === undefined) {
+    throw new CliError('usage', "--for fdx is built from the script's .fountain: pass it with --fountain");
+  }
 
   // Parsed here, before the epub branch returns and before any toolchain
   // probe: --options-json is either well-formed argv or it is not, and that
@@ -294,6 +354,13 @@ export async function exportCommand(
 
   if (format === 'kfx' || format === 'azw3' || format === 'mobi') {
     return exportRung(format, options, deps, { calibreAvailable, available, formatOptions });
+  }
+
+  if (format === 'fdx') {
+    return {
+      ...exportFdx(options.epub, options.fountain!, options.out, options.check === true),
+      available,
+    };
   }
 
   if (format === 'epub') {
