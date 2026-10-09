@@ -297,7 +297,7 @@ describe('exportCommand', () => {
     expect(message).toContain(missing);
   });
 
-  test('an unknown --for is a usage error naming the two it accepts', async () => {
+  test('an unknown --for is a usage error naming the formats it accepts', async () => {
     let message = '';
     try {
       await exportCommand({ epub, for: 'pdf' });

@@ -95,8 +95,9 @@ Commands:
                                             send an existing file to one
   screepub settings <file.fountain> [--set <json>] [--json]
                                             read/write a script's own settings
-  screepub export <file.epub> [--for kindle|epub] [--json]
-                                            the file you would put on a reader
+  screepub export <file.epub> [--for kindle|epub|fdx] [--json]
+                                            the file you would put on a reader,
+                                            or the script to keep editing
   screepub app-settings [--set <json>] [--json]
                                             where books land, and what new scripts start from
   screepub reveal <file> [--json]           show a file in the system's file manager
@@ -171,18 +172,28 @@ const EXPORT_USAGE = `screepub export: the file you would put on a reader
 Usage:
   screepub export <file.epub> [--for kindle|epub] [--fountain <f>] [--out <path>] [--json]
   screepub export <file.epub> --for kindle --check [--json]
+  screepub export <file.epub> --for fdx --fountain <f> [--out <path>] [--json]
 
 export never sends: it produces (or reuses) the right file, and
 \`screepub send\` moves it. Kindle climbs KFX → AZW3 → MOBI, taking the best
 rung this machine can reach.
 
+fdx is the script itself, as a Final Draft file you can keep editing (Fade
+In, WriterDuet, Highland and Celtx open it too). It is built from the
+.fountain, so --fountain is required, and it is rebuilt on every call. It
+is a reconstruction from the PDF: revision colors and marks, and the exact
+page breaks, do not carry over.
+
 Options:
-  --for <kindle|epub>    which file you want (default epub)
+  --for <kindle|epub|fdx>
+                         which file you want (default epub)
   --fountain <file>      the script's .fountain, needed to rebuild a MOBI
+                         and to build an FDX
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
-                         extension must match the file produced)
-  --check                build nothing: say which file this computer makes,
+                         extension must match the file produced). An FDX
+                         is written only there, not beside the book
+  --check               build nothing: say which file this computer makes,
                          whether the one beside the book is current, what
                          builds it (builtBy: calibre or screepub), and when
                          the book was last written (bookDate, in ms)
