@@ -26,6 +26,7 @@ import { resolveCommand, devicesCommand, sendCommand, VERBS, type Verb } from '.
 import { updateDecisionCommand, updateShouldCheckCommand } from './cli-update';
 import { settingsCommand } from './cli-settings';
 import { exportCommand } from './cli-export';
+import { fountainToFdx } from './fdx/fdx';
 import { appSettingsCommand } from './cli-app-settings';
 import { revealCommand } from './cli-reveal';
 import { kfxInstallCommand, kfxStatusCommand, installLines, setupLines } from './cli-kfx';
@@ -80,6 +81,9 @@ Options:
   --mobi                 also write a .mobi (for USB sideload to Kindle)
   --preview-html <file>  also write the script as one self-contained HTML file
   --preview-inline       put that same HTML in the --json result (for the app)
+  --fdx <file>           also write the script as a Final Draft file to keep
+                         editing (a reconstruction: revision marks and exact
+                         page breaks do not carry over)
   --options <file.json>  formatting options (see docs/formatting-options-log.md)
   --options-json <json>  the same options as one JSON argument (for the app)
   --json                 machine-readable result on stdout (for the app)
@@ -585,6 +589,7 @@ function parseCliArgs() {
       mobi: { type: 'boolean', default: false },
       'preview-html': { type: 'string' },
       'preview-inline': { type: 'boolean', default: false },
+      fdx: { type: 'string' },
       options: { type: 'string' },
       'options-json': { type: 'string' },
       json: { type: 'boolean', default: false },
@@ -1272,6 +1277,13 @@ async function main() {
     previewPath = values['preview-html'];
     await writeOutput(previewPath, result.previewHtml, 'utf8');
   }
+  // Built from the same Fountain text the books were, so a PDF's FDX is the
+  // FDX of the .fountain this run wrote, and a Fountain input's is its own.
+  let fdxPath: string | undefined;
+  if (values.fdx) {
+    fdxPath = values.fdx;
+    await writeFileAtomic(fdxPath, fountainToFdx(result.fountainText), 'utf8');
+  }
   let debugPath: string | undefined;
   if (values.debug && result.screenplay) {
     debugPath = `${stem}.elements.json`;
@@ -1371,6 +1383,7 @@ async function main() {
         // script's saved settings from one built at the defaults.
         settingsPath,
         previewHtmlPath: previewPath,
+        fdxPath,
         debugPath,
         // Spread, not a plain key: the app asks for this and nothing else
         // does, and a megabyte of HTML on every conversion would be a tax
@@ -1393,7 +1406,7 @@ async function main() {
     );
   }
   for (const w of result.warnings) console.log(`  warning: ${w}`);
-  for (const f of [epubPath, mobiPath, fountainPath, previewPath, debugPath]) {
+  for (const f of [epubPath, mobiPath, fountainPath, previewPath, fdxPath, debugPath]) {
     if (f) console.log(`  wrote ${f}`);
   }
 }

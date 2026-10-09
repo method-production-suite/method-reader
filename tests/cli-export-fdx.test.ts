@@ -196,3 +196,46 @@ describe('screepub export --for fdx (through the CLI)', () => {
     expect(proc.stdout.toString()).toContain('fdx');
   });
 });
+
+// The conversion's own --fdx: the same FDX, written beside the other
+// outputs in the same run, the way --preview-html is.
+describe('screepub <script> --fdx <file>', () => {
+  test('a PDF conversion writes the FDX of the .fountain it wrote, and names it in --json', () => {
+    const pdf = join(new URL('..', import.meta.url).pathname, 'tests', 'fixtures', 'screenplay.pdf');
+    const fdx = join(dir, 'Converted.fdx');
+    const proc = Bun.spawnSync(
+      ['bun', 'src/cli.ts', pdf, '-o', join(dir, 'Converted.epub'), '--fdx', fdx, '--json'],
+      { env: process.env },
+    );
+    expect(proc.exitCode).toBe(0);
+    const answer = JSON.parse(proc.stdout.toString());
+    expect(answer.fdxPath).toBe(fdx);
+    expect(readFileSync(fdx, 'utf8')).toBe(fountainToFdx(readFileSync(answer.fountainPath, 'utf8')));
+  });
+
+  test('a Fountain conversion writes the FDX of that Fountain', () => {
+    const fdx = join(dir, 'FromFountain.fdx');
+    const proc = Bun.spawnSync(
+      ['bun', 'src/cli.ts', fountain, '-o', join(dir, 'Out.epub'), '--fdx', fdx],
+      { env: process.env },
+    );
+    expect(proc.exitCode).toBe(0);
+    expect(proc.stdout.toString()).toContain(`wrote ${fdx}`);
+    expect(readFileSync(fdx, 'utf8')).toBe(fountainToFdx(FOUNTAIN));
+  });
+
+  test('without --fdx no FDX is written and the answer has no fdxPath', () => {
+    const proc = Bun.spawnSync(
+      ['bun', 'src/cli.ts', fountain, '-o', join(dir, 'Out.epub'), '--json'],
+      { env: process.env },
+    );
+    const answer = JSON.parse(proc.stdout.toString());
+    expect('fdxPath' in answer).toBe(false);
+    expect(readdirSync(dir).filter((f) => f.endsWith('.fdx'))).toEqual([]);
+  });
+
+  test('--help names --fdx', () => {
+    const proc = Bun.spawnSync(['bun', 'src/cli.ts', '--help'], { env: process.env });
+    expect(proc.stdout.toString()).toContain('--fdx <file>');
+  });
+});
