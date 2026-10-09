@@ -14,21 +14,14 @@ this file is the operating manual.
   browser. Each opens with a `@dsCard` marker so the Design System pane
   indexes it without explicit registration.
 
-## The pinning rule
+## Where the seven core colors came from
 
 Seven tokens (`paper`, `ink`, `ink-muted`, `ink-on-brass`, `brass`, `alarm`,
-`hole`) are shared with the frozen Swift Mac app. `tokens.json` is the source
-(changed 2026-09-23, ahead of deleting the Swift app). While
-`app/Sources/ScreepubApp/Theme.swift` still exists,
-`tests/brand-tokens.test.ts` parses it and fails if it has drifted from
-`tokens.json`; once `app/` is deleted that check skips itself.
-
-**If that test fails, something edited the frozen app.** `app/` is frozen, so
-put the Swift file back rather than changing `tokens.json` to match it.
-
-Token names are kebab-case, Swift properties are camelCase. Where the two
-differ, the token carries an explicit `swift` field (`ink-on-brass` →
-`inkOnBrass`) rather than the test guessing at a conversion.
+`hole`) were first defined by the Swift Mac app's theme, and their `from`
+field says `swift-app`. That app was retired and deleted (piece F3), so
+`tokens.json` is the only source: change a value here and the copies that
+ship follow it, `tokens.css` and the window's `desktop/ui/style.css` and
+generated `desktop/ui/tokens.css`, each pinned to this file by a test.
 
 Two of those seven exist because a color that is right in one place is wrong
 in another:
@@ -40,10 +33,8 @@ in another:
   `var(--ink)` on a `var(--brass)` ground again.
 - `ink-muted` is secondary TEXT. `inkFaint` is `ink` at 55% alpha, which
   blends to `#7F7C74` on paper: 3.73:1, failing AA. The web split this off
-  first and the app has now adopted it, so `inkFaint` is for hairlines,
+  first and the Swift app adopted it, so `inkFaint` was for hairlines,
   strokes and fills only. If a reader has to read it, it is `ink-muted`.
-
-`ink-soft`, for long prose, remains web-only: the app has no running text.
 
 ## Adding a color
 

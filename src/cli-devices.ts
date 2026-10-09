@@ -170,8 +170,8 @@ export async function sendCommand(options: SendOptions): Promise<SendResult> {
     if (!remarkableAccepts(options.file)) {
       // The SAME sentence uploadToRemarkable would have thrown, because
       // `send-failed` passes library text through verbatim and a user must not
-      // read two wordings for one fact. Unified toward the library, which is
-      // held byte-identical to RemarkableDevice.swift — see the note there.
+      // read two wordings for one fact. Unified toward the library, whose
+      // wording came from the Swift app's — see the note there.
       const ext = extname(options.file).replace(/^\./, '').toLowerCase();
       throw new CliError('unsupported-file', `reMarkable accepts PDF and EPUB, not .${ext}.`);
     }

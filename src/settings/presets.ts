@@ -12,7 +12,7 @@ export const DEVICE_PRESETS: Record<DevicePresetId, { displayName: string; setti
    * defaults was impossible there; here a preset handed out by reference IS
    * DEFAULT_FORMAT_OPTIONS, and one stray mutation through it would corrupt
    * every conversion in the process — and desync the defaults that
-   * options.test.ts and kit-check both pin to format-defaults.json. */
+   * options.test.ts pins to format-defaults.json. */
   kindleEink: {
     displayName: 'Kindle e-ink (6")',
     settings: { ...DEFAULT_FORMAT_OPTIONS },

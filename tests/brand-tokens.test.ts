@@ -1,18 +1,17 @@
 import { describe, test, expect } from 'bun:test';
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { themeColors, parseThemeColors, cssValue, contrast, fromHex } from './theme-colors';
+import { contrast, fromHex } from './color-contrast';
 
 const tokens = await Bun.file(new URL('../brand/tokens.json', import.meta.url)).json();
 const colors = tokens.colors;
 
 // brand/tokens.json is the source of truth (F3 acceptance criterion 12,
-// docs/superpowers/specs/2026-09-14-retire-swiftui-design.md). Only the one
-// test below still reads Swift, and only to catch the FROZEN Theme.swift
-// drifting from the values it was pinned FROM; every other test in this file
-// reads tokens.json, tokens.css and the component previews, never Swift.
-const THEME_SWIFT = fileURLToPath(new URL('../app/Sources/ScreepubApp/Theme.swift', import.meta.url));
-const themeSwiftExists = existsSync(THEME_SWIFT);
+// docs/superpowers/specs/2026-09-14-retire-swiftui-design.md), and nothing
+// in this file reads Swift. Seven of its colours were first defined by the
+// Swift Mac app's theme; tokens.json says so in their `from` field. Until
+// 2026-09-23 this file pinned tokens.json TO that theme, then the other way
+// round, and at F3 the theme left the repository with the app, so the copies
+// pinned here are the ones that still ship: tokens.css below, and the
+// window's style.css and tokens.css in their own tests.
 
 // Every (label, foreground token, fg hex, bg hex, floor) row the contrast
 // test checks. The token name rides alongside the hex value specifically
@@ -54,35 +53,6 @@ const textBearing = Object.entries(colors)
   .map(([name]) => name);
 
 describe('brand tokens', () => {
-  // Runs the check backwards from how it used to (see the top-of-file
-  // comment): confirms the frozen Swift file has not drifted, rather than
-  // pinning tokens.json to it. Skips once that file is gone at F3, which is
-  // expected then, not a coverage gap.
-  test.skipIf(!themeSwiftExists)('the frozen Theme.swift still matches brand/tokens.json', async () => {
-    const theme = await themeColors();
-    const pinned = Object.entries(colors).filter(
-      ([, v]: [string, any]) => v.from === 'Theme.swift',
-    );
-
-    expect(pinned.length).toBe(7);
-
-    for (const [name, value] of pinned as [string, any][]) {
-      // Token names are kebab-case for CSS; Swift properties are camelCase.
-      // Where they differ the token carries an explicit `swift` field rather
-      // than this test guessing at a conversion.
-      const swiftName = value.swift ?? name;
-      expect(theme[swiftName], `Theme.swift has no color named ${swiftName}`).toBeDefined();
-      expect(
-        cssValue(theme[swiftName].light),
-        `brand/tokens.json is the source; the frozen Swift app has drifted (${name} light), which should never happen because app/ is frozen`,
-      ).toBe(value.light);
-      expect(
-        cssValue(theme[swiftName].dark),
-        `brand/tokens.json is the source; the frozen Swift app has drifted (${name} dark), which should never happen because app/ is frozen`,
-      ).toBe(value.dark);
-    }
-  });
-
   test('tokens.css declares every token in tokens.json, in both modes', async () => {
     const css = await Bun.file(new URL('../brand/tokens.css', import.meta.url)).text();
 
@@ -225,54 +195,28 @@ describe('brand tokens', () => {
   });
 });
 
-describe('parseThemeColors', () => {
-  test('a declaration with only one of light:/dark: is dropped, not fabricated', () => {
-    // Regression test for a real bug: the parser's fallback used to read
-    // the WHOLE chunk when a label's own regex missed, on the assumption
-    // that only fully-unlabeled declarations (Theme.brass) ever reach
-    // that branch. But an asymmetric declaration (exactly one of the two
-    // labels present) also reaches it, and the chunk still contains the
-    // OTHER label's literal sitting right there, so the fallback would
-    // silently adopt it instead of leaving the missing side unresolved.
-    //
-    // `alarm` below mirrors the exact repro: Theme.swift's real `alarm`
-    // with the word "dark:" deleted and its value left in place. Before
-    // the fix this produced alarm.dark === alarm.light === '#AF3220'
-    // instead of the real '#EA7A65', a wrong value with no signal
-    // anything was off. `ink` mirrors the same failure with "light:"
-    // deleted instead, to cover both branches of the fix. `paper` stays
-    // fully labeled as a control: normal declarations must still resolve.
-    const src = `
-      static let paper = dynamic(
-          light: NSColor(red: 0.969, green: 0.949, blue: 0.902, alpha: 1),
-          dark: NSColor(red: 0.118, green: 0.110, blue: 0.098, alpha: 1)
-      )
-      static let alarm = dynamic(
-          light: NSColor(red: 0.686, green: 0.196, blue: 0.125, alpha: 1),
-          NSColor(red: 0.918, green: 0.478, blue: 0.396, alpha: 1)
-      )
-      static let ink = dynamic(
-          NSColor(red: 0.114, green: 0.106, blue: 0.086, alpha: 1),
-          dark: NSColor(red: 0.910, green: 0.886, blue: 0.827, alpha: 1)
-      )
-    `;
-    const parsed = parseThemeColors(src);
-
-    expect(parsed.paper).toBeDefined();
-    expect(parsed.alarm).toBeUndefined();
-    expect(parsed.ink).toBeUndefined();
+describe('the contrast arithmetic the table above relies on', () => {
+  // The floors above are only as good as contrast(). A version that
+  // returned Infinity, or compared the wrong channel, would pass every one
+  // of them silently. These are WCAG 2.1's own reference points.
+  test('black on white is 21:1, either way round', () => {
+    expect(contrast(fromHex('#000000'), fromHex('#FFFFFF'))).toBeCloseTo(21, 5);
+    expect(contrast(fromHex('#FFFFFF'), fromHex('#000000'))).toBeCloseTo(21, 5);
   });
 
-  test('a declaration with neither label uses its one literal for both modes', () => {
-    // Theme.brass shape: no light:/dark: labels at all. This is the only
-    // case the whole-chunk fallback is meant for, and must keep working.
-    const src = `
-      static let brass = Color(red: 0.910, green: 0.639, blue: 0.239)
-    `;
-    const parsed = parseThemeColors(src);
+  test('a colour on itself is 1:1', () => {
+    expect(contrast(fromHex('#E8A33D'), fromHex('#E8A33D'))).toBe(1);
+  });
 
-    expect(parsed.brass).toBeDefined();
-    expect(parsed.brass.light).toEqual(parsed.brass.dark);
-    expect(parsed.brass.light).toEqual({ r: 232, g: 163, b: 61, a: 1 });
+  test('three-digit hex expands the way CSS expands it', () => {
+    expect(fromHex('#FA0')).toEqual(fromHex('#FFAA00'));
+  });
+
+  test('the measured case brand/README.md cites: ink-muted clears 4.5:1 where faint ink did not', () => {
+    // brand/README.md: ink at 55% alpha blends to #7F7C74 on paper and
+    // lands at 3.73:1, which is why ink-muted exists. Pinned so the
+    // arithmetic and the README cannot quietly disagree.
+    expect(contrast(fromHex('#7F7C74'), fromHex(colors.paper.light))).toBeCloseTo(3.73, 2);
+    expect(contrast(fromHex(colors['ink-muted'].light), fromHex(colors.paper.light))).toBeGreaterThanOrEqual(4.5);
   });
 });

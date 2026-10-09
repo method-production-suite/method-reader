@@ -84,7 +84,7 @@ test('toKfx refuses outright when Calibre is absent', async () => {
 
 // --- kfxSibling: exported per the controller ruling so a later task (the
 // export ladder) imports this derivation instead of repeating the regex.
-// Mirrors Export.swift's mobiSibling(for:) precedent.
+// Mirrors the Swift app's mobiSibling(for:) precedent.
 
 test('kfxSibling derives same directory, same stem, .kfx extension', () => {
   expect(kfxSibling('/tmp/book.epub')).toBe('/tmp/book.kfx');

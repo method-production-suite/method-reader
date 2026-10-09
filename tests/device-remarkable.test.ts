@@ -13,7 +13,7 @@ import {
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-device-remarkable-'));
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 
-/** Records the request sequence, mirroring kit-check's StubRemarkable. The
+/** Records the request sequence, mirroring the Swift app's StubRemarkable. The
  * real interface's /upload writes into the LAST-LISTED folder, so "upload to
  * root" is only true if root is listed immediately before the POST. */
 function stub() {
@@ -87,7 +87,7 @@ test('only PDF and EPUB are accepted', async () => {
   // The literal `not .azw3.`, not the bare extension: the filename itself ends
   // in .azw3, so a message that merely echoed the path would satisfy a looser
   // assertion without ever naming the rule. This text is held byte-identical
-  // to RemarkableDevice.swift's — see the note beside the throw.
+  // to the wording ported from the Swift app — see the note beside the throw.
   await expect(uploadToRemarkable(azw3, s.url)).rejects.toThrow('not .azw3.');
   expect(s.requests).toEqual([]);
 });

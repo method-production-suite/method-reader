@@ -7,9 +7,9 @@ more than this page does. `tests/site.test.ts` and
 `tests/release-artifacts.test.ts` hold the README and the site to it.
 
 The window is the Tauri app in `desktop/`: Screepub on every platform, and
-on a Mac the one app, `Screepub-macOS.dmg`. The older Mac app is the frozen
-Swift app. It is no longer published, and its own updater, where it is
-switched on, installs the window in its place.
+on a Mac the one app, `Screepub-macOS.dmg`. The older Mac app was the Swift
+app, deleted from the source at piece F3. It is no longer published, and
+its own updater, where it is switched on, installs the window in its place.
 
 **Verified on a real machine, by a person**
 
@@ -45,7 +45,8 @@ switched on, installs the window in its place.
 
 - `ci.yml`, on every push: the engine's test suite and typecheck on Linux,
   the command-line archives built for every target and the Linux one run,
-  and a Mac job that builds the older Mac app and runs its own checks.
+  and the compiled command line converting a fixture on a Mac, checked with
+  epubcheck.
 - `desktop.yml`, on every push: the window compiles on macOS, Windows and
   Linux, each platform's bundles are produced, and the engine inside each one
   runs and converts a fixture without installing anything. No runner has a
@@ -60,8 +61,8 @@ switched on, installs the window in its place.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0), and
-  the older Mac app's AZW3 and KEPUB checks still pass against Calibre's
-  newest version.
+  the engine's Calibre tests (AZW3, KEPUB, the KFX plugin listing) still
+  pass against Calibre's newest version.
 
 **Verified by nobody**
 

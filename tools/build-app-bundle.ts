@@ -25,7 +25,7 @@
 //
 // It never signs anything. On macOS, tauri-bundler signs and notarizes from
 // the APPLE_* environment variables the release workflow sets; there is no
-// codesign call in this file and app/release.sh is neither read nor touched.
+// codesign call in this file.
 // The updater archive's minisign signature is likewise tauri-cli's own,
 // from TAURI_SIGNING_PRIVATE_KEY: this file only checks the key is SET
 // before spending a build, and that what came out is a signature.

@@ -540,10 +540,10 @@ describe('the frontend owns the contract', () => {
   });
 });
 
-describe('nothing under app/ or src/ was drawn into this', () => {
-  test('no Rust file references the Swift app or the engine sources', () => {
+describe('nothing outside desktop/ was drawn into the Rust shell', () => {
+  test('no Rust file references the engine sources', () => {
     for (const { name, text } of rustSources) {
-      expect(`${name} reaches outside desktop/: ${/\.\.\/\.\.\/(app|src)\b/.test(text)}`).toBe(
+      expect(`${name} reaches outside desktop/: ${/\.\.\/\.\.\/src\b/.test(text)}`).toBe(
         `${name} reaches outside desktop/: false`,
       );
     }
@@ -557,9 +557,9 @@ describe('the desktop CSS copy of the brand tokens does not drift', () => {
   // 404s even in `cargo run`. style.css therefore inlines the seven core
   // colours literally, copied by hand from brand/tokens.json. A hand copy
   // is exactly the kind of value this repo already refuses to trust to a
-  // human (see tests/brand-tokens.test.ts pinning the web tokens to
-  // Theme.swift, and format-defaults.json pinned by two suites) — so pin
-  // this copy the same way, against the one JSON source of truth.
+  // human (see tests/brand-tokens.test.ts pinning tokens.css to
+  // tokens.json, and tests/options.test.ts pinning format-defaults.json) —
+  // so pin this copy the same way, against the one JSON source of truth.
   const CSS = readFileSync(join(REPO, 'desktop', 'ui', 'style.css'), 'utf8');
   const TOKENS = JSON.parse(readFileSync(join(REPO, 'brand', 'tokens.json'), 'utf8')).colors;
 
@@ -795,8 +795,8 @@ describe('what the Linux package tells a user about itself', () => {
   });
 
   test('the AGPL text and the third-party notices travel with the binary', () => {
-    // app/build-app.sh puts both inside Screepub.app for exactly this
-    // reason: the AGPL requires the licence to accompany the work, and the
+    // The Swift app's build script put both inside its bundle for exactly
+    // this reason: the AGPL requires the licence to accompany the work, and the
     // compiled engine embeds Apache-2.0 and MIT libraries. Paths are
     // relative to tauri.conf.json, hence ../../.
     expect(CONFIG.bundle.resources).toEqual({

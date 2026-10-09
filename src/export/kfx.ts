@@ -72,8 +72,9 @@ export async function pluginInstalled(
  * of falling back to AZW3. (INSTALL_SNIPPET below guards against the same
  * name for the same reason.) The renamed copies count because they convert:
  * the old Swift app installed one, "KFX Output (Fix Traditional Chinese)",
- * and a reader who has it keeps KFX. The Swift app itself still tests for
- * the substring (KFXToolchain.pluginMarker), companion and all.
+ * and a reader who has it keeps KFX. The Swift app itself tested for the
+ * substring (KFXToolchain.pluginMarker), companion and all, and installed
+ * copies still do; see it at any tag before F3, e.g. v0.7.4.
  *
  * The listing is a table, not a line per name: each plugin row is its type,
  * then its name, then its version, then whether it is disabled, padded into
@@ -142,7 +143,7 @@ export async function kfxStatus(): Promise<KfxStatus> {
 
 /** The sibling `.kfx` for a given EPUB — same directory, same stem. Exported
  * so callers (including a later export-ladder task) derive the path here
- * rather than repeating the regex; mirrors Export.swift's mobiSibling(for:)
+ * rather than repeating the regex; mirrors the Swift app's mobiSibling(for:)
  * precedent. */
 export function kfxSibling(epub: string): string {
   return `${epub.replace(/\.epub$/i, '')}.kfx`;

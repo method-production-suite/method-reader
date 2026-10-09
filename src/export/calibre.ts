@@ -238,15 +238,15 @@ export async function toAzw3(epub: string, deps: Azw3Deps = {}): Promise<string>
 
 /** Convert an EPUB to KEPUB for Kobo's own renderer (Calibre 7.1+ emits
  * KEPUB with sentence-level koboSpan markup when the output extension is
- * `.kepub`). Two-step, matching EbookConvert.swift exactly: ebook-convert
+ * `.kepub`). Two-step, matching the Swift app's converter exactly: ebook-convert
  * selects its OUTPUT FORMAT from the output file's extension, so converting
  * straight to `<stem>.kepub.epub` makes it see ".epub" and emit a plain
  * EPUB with no koboSpan markup at all — the one thing that makes this a
  * KEPUB. Convert to `<stem>.kepub` first, then rename to the double
  * extension the Kobo renderer selects on.
  *
- * DELIBERATE DIVERGENCE from EbookConvert.swift (2026-09-12): the Swift
- * passes the guards to toAzw3 but not here, and this port passes them to
+ * DELIBERATE DIVERGENCE from the Swift app's converter (2026-09-12): the
+ * Swift passed the guards to toAzw3 but not here, and this port passes them to
  * both. That difference was carried across faithfully at first, on the
  * rule that device behavior nobody can re-verify gets preserved rather
  * than "fixed" — but the rule does not apply, because the guards are not
@@ -258,9 +258,9 @@ export async function toAzw3(epub: string, deps: Azw3Deps = {}): Promise<string>
  * so KEPUB is affected for the same reason AZW3 was — device-verified
  * 2026-07-29 on the AZW3 path. The Swift omission reads as a plain bug.
  *
- * Consequence: TypeScript and Swift now disagree here until the Swift app
- * retires (cross-platform piece F). Nothing consumes this function yet,
- * so no user sees either behavior. Still unconfirmed on real hardware —
+ * Consequence: TypeScript and Swift disagreed here until the Swift app was
+ * deleted at piece F3. Nothing consumes this function yet, so no user sees
+ * the behavior. Still unconfirmed on real hardware —
  * no Kobo has ever been connected to this project — so this stays on the
  * device-checklist for the first Kobo pass. */
 export async function toKepub(epub: string): Promise<string> {

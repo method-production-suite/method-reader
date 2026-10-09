@@ -6,8 +6,8 @@
  * so it cannot @import brand/tokens.css: the packaged app only ships what
  * tauri.conf.json's frontendDist embeds, and a file outside desktop/ui/
  * would not be there to load. The seven values below are therefore inlined
- * literally, not invented — copied from brand/tokens.json, the same source
- * Theme.swift is pinned to, and re-checked on every run by
+ * literally, not invented — copied from brand/tokens.json, the one source
+ * of the colours, and re-checked on every run by
  * tests/desktop-shell.test.ts. Do NOT add an eighth here: a new token goes
  * into brand/tokens.json and reaches the window through tokens.css.
  *

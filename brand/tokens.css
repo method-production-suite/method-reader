@@ -1,5 +1,6 @@
-/* Screepub web identity. Values marked "pinned" mirror Theme.swift and are
-   enforced by tests/brand-tokens.test.ts. See brand/README.md before editing.
+/* Screepub web identity. Every color mirrors brand/tokens.json, the source,
+   and tests/brand-tokens.test.ts enforces that. See brand/README.md before
+   editing.
    var() and clamp() are correct here: this is the website, not the EPUB. */
 
 :root {
@@ -41,7 +42,7 @@
   --text-title: 30px;     /* page title, narrow viewports */
   --text-display: 44px;   /* page title */
 
-  /* Radius. Three steps, all of them values Theme.swift already uses.
+  /* Radius. Three steps, all of them values the Swift Mac app's theme used.
      shot-frame's stray 4px was the only disagreement and is now --well. */
   --radius-mark: 2px;     /* toggle boxes, rubber stamps */
   --radius: 3px;          /* buttons and controls */

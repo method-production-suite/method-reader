@@ -11,14 +11,20 @@
 //
 //   =anchor apple generic and certificate leaf[subject.OU] = "XSRB3D643J"
 //
-// is WEAKER than what UpdateInstall.swift actually pins: it drops both
-// Developer ID certificate-chain checks, and for the app it drops the
+// is WEAKER than what the Swift app's installer actually pins: it drops
+// both Developer ID certificate-chain checks, and for the app it drops the
 // bundle identifier. A DMG could satisfy the shorthand and be refused by
 // the real installer, which is the exact failure step 3 exists to catch.
-// So the strings live in one place, and the first test below is what keeps
-// that place honest against the Swift the frozen app will actually run.
+// So the strings live in one place, tools/verify-signing.ts, and the first
+// describe block below pins them.
+//
+// Until piece F3 that block read the Swift source out of this repository
+// and compared it clause by clause. F3 deleted the source; it did not
+// delete the installed apps, and every copy of the retired Swift app still
+// on someone's Mac demands exactly these strings of anything it installs.
+// So they are this repository's own definition now, pinned literally, with
+// the Swift they came from quoted beside them as history.
 import { describe, test, expect } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import {
   TEAM_ID,
   SWIFT_BUNDLE_ID,
@@ -41,26 +47,53 @@ import type { RunResult, Runner } from '../tools/smoke-cli';
 const ok = (stdout = '', stderr = ''): RunResult => ({ exitCode: 0, stdout, stderr });
 const bad = (stderr = 'not signed at all'): RunResult => ({ exitCode: 1, stdout: '', stderr });
 
-describe('the pinned requirements are the frozen app’s, not a paraphrase', () => {
-  const swift = readFileSync('app/Sources/ScreepubKit/UpdateInstall.swift', 'utf8');
+describe('the pinned requirements are the retired app’s, not a paraphrase', () => {
+  // What every installed copy of the Swift app runs, quoted from its
+  // UpdateInstaller, unchanged in every Swift release from v0.4.0 on (see
+  // it at any tag before F3, e.g. v0.7.4):
+  //
+  //   public static let teamID = "XSRB3D643J"
+  //   public static let bundleID = "com.darkwell.screepub"
+  //
+  //   public static let appRequirement: String =
+  //       "anchor apple generic and identifier \"\(bundleID)\""
+  //           + " and certificate 1[field.1.2.840.113635.100.6.2.6] exists"
+  //           + " and certificate leaf[field.1.2.840.113635.100.6.1.13] exists"
+  //           + " and certificate leaf[subject.OU] = \"\(teamID)\""
+  //
+  //   public static let dmgRequirement: String =
+  //       "anchor apple generic"
+  //           + " and certificate 1[field.1.2.840.113635.100.6.2.6] exists"
+  //           + " and certificate leaf[field.1.2.840.113635.100.6.1.13] exists"
+  //           + " and certificate leaf[subject.OU] = \"\(teamID)\""
+  //
+  // and it verifies with `codesign --verify --deep --strict
+  // --test-requirement "=\(requirement)"`. Those installs cannot be
+  // updated to want anything else, so these literals are a contract with
+  // apps in the wild: change one and the release gate starts checking a
+  // requirement nobody's installer asks for.
+  const APP_REQUIREMENT_AS_SHIPPED =
+    'anchor apple generic and identifier "com.darkwell.screepub"' +
+    ' and certificate 1[field.1.2.840.113635.100.6.2.6] exists' +
+    ' and certificate leaf[field.1.2.840.113635.100.6.1.13] exists' +
+    ' and certificate leaf[subject.OU] = "XSRB3D643J"';
+  const DMG_REQUIREMENT_AS_SHIPPED =
+    'anchor apple generic' +
+    ' and certificate 1[field.1.2.840.113635.100.6.2.6] exists' +
+    ' and certificate leaf[field.1.2.840.113635.100.6.1.13] exists' +
+    ' and certificate leaf[subject.OU] = "XSRB3D643J"';
 
-  test('the team ID and bundle ID match UpdateInstaller’s own constants', () => {
-    expect(swift).toContain(`public static let teamID = "${TEAM_ID}"`);
-    expect(swift).toContain(`public static let bundleID = "${SWIFT_BUNDLE_ID}"`);
+  test('the team ID and bundle ID are the installer’s own constants', () => {
+    expect(TEAM_ID).toBe('XSRB3D643J');
+    expect(SWIFT_BUNDLE_ID).toBe('com.darkwell.screepub');
   });
 
-  test('every clause of appRequirement appears in the Swift that builds it', () => {
-    // Reconstructed clause by clause rather than as one string: the Swift
-    // builds it with `+` across five lines and interpolates two constants,
-    // so no single literal to compare against exists over there.
-    const appReq = swift.slice(swift.indexOf('appRequirement'), swift.indexOf('dmgRequirement'));
-    expect(appReq).toContain('anchor apple generic and identifier');
-    expect(appReq).toContain('\\(bundleID)');
-    for (const clause of CHAIN_CLAUSES) {
-      // The Swift writes them without the leading " and ".
-      expect(appReq).toContain(clause.replace(/^ and /, ''));
-    }
-    expect(appReq).toContain('certificate leaf[subject.OU] = \\"\\(teamID)\\"');
+  test('appRequirement is, character for character, the one installed apps check', () => {
+    expect(appRequirement(SWIFT_BUNDLE_ID)).toBe(APP_REQUIREMENT_AS_SHIPPED);
+  });
+
+  test('the DMG requirement is, character for character, the one installed apps check', () => {
+    expect(DMG_REQUIREMENT).toBe(DMG_REQUIREMENT_AS_SHIPPED);
   });
 
   test('appRequirement is the DMG requirement plus exactly one identifier clause', () => {
@@ -80,8 +113,6 @@ describe('the pinned requirements are the frozen app’s, not a paraphrase', () 
     expect(DMG_REQUIREMENT).not.toContain('identifier');
     expect(DMG_REQUIREMENT).toContain(TEAM_ID);
     for (const clause of CHAIN_CLAUSES) expect(DMG_REQUIREMENT).toContain(clause.trim());
-    const dmgReq = swift.slice(swift.indexOf('dmgRequirement'));
-    expect(dmgReq.slice(0, 400)).not.toContain('identifier');
   });
 
   test('the plan’s shorthand is a STRICT subset, which is why it is not used', () => {
@@ -129,9 +160,9 @@ describe('the codesign invocations, asserted element by element', () => {
 
   test('spctl is asked the OPEN question, with the primary-signature context', () => {
     // -t open, not -t exec: the thing being assessed is a disk image a
-    // person double-clicks, not an executable. app/release.sh has used
-    // exactly this invocation on the Swift DMG since it was written, and
-    // its comment records why the context matters -- without it an
+    // person double-clicks, not an executable. The Swift app's release
+    // script used exactly this invocation on its DMG for as long as it
+    // shipped, and its comment recorded why the context matters -- without it an
     // unsigned-but-stapled image reports "no usable signature", which
     // reads as a red flag that is not real.
     expect(spctlAssessArgv('/tmp/x.dmg')).toEqual([

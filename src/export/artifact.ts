@@ -167,7 +167,7 @@ async function buildRung(
   if (!result.mobi) {
     throw new RegenerationFailedError('the engine reported success but produced no .mobi');
   }
-  // Swift's branch shelled out to cli.ts, and Export.swift leans on what that
+  // Swift's branch shelled out to cli.ts, and its export code leaned on what that
   // does: each output goes to a temp file that is renamed into place, so a
   // partial `.mobi` never appears at the final path in the FIRST PLACE. That
   // is load-bearing for the rung right above — a kill or disk-full mid-write

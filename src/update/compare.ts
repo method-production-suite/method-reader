@@ -1,6 +1,7 @@
 // Is this release newer than the build that is running?
 //
-// A port of `UpdateCheck.swift`'s version comparison, and the ENGINE half
+// A port (bf3ff32) of the Swift Mac app's UpdateCheck version comparison,
+// and the ENGINE half
 // of the updater. The Tauri plugin does transport: network, signature,
 // download, swap. This decides, because deciding is what the governing
 // ADR says belongs on this side of the line.
@@ -11,7 +12,8 @@
 // PRE-release, so it calls that build older than `0.6.0` and offers
 // `0.6.0` as an upgrade. It is not older; it is the tag plus one commit.
 // Accepting the offer installs a downgrade, and it would do so on every
-// developer machine, every time. UpdateCheck.swift's own comment:
+// developer machine, every time. The Swift's own comment (see it at tag
+// v0.7.4; the Swift app was deleted at piece F3):
 //
 //   treating it as a pre-release would install a downgrade on every
 //   post-tag dev build
@@ -20,8 +22,9 @@
 // to believe it. See docs/superpowers/specs/2026-09-21-updater-design.md.
 //
 // No network, no filesystem, no clock. Pure, so the whole of it is
-// ordinary `bun test` coverage, which is the point: this replaces 17 of
-// kit-check's checks that exist nowhere else.
+// ordinary `bun test` coverage, which is the point: this replaced 17 of
+// the Swift app's own checks that existed nowhere else
+// (docs/retired-coverage.md, `updater-version-compare`).
 
 /** Strip a leading `v` and any `+build` metadata, so `v0.6.0` and
  *  `0.6.0+ci.7` both compare as `0.6.0`. A pre-release suffix is KEPT,

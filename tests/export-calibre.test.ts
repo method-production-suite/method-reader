@@ -1,7 +1,7 @@
 import { afterAll, test, expect, test as bunTest } from 'bun:test';
-import { accessSync, constants, mkdtempSync, writeFileSync, readFileSync, chmodSync, existsSync, rmSync } from 'node:fs';
+import { accessSync, constants, mkdtempSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, delimiter } from 'node:path';
+import { basename, join, delimiter } from 'node:path';
 import { platform } from 'node:process';
 import JSZip from 'jszip';
 import {
@@ -19,6 +19,7 @@ import {
   CalibreMissingError,
 } from '../src/export/calibre';
 import { convertFountain } from '../src/convert';
+import { DEFAULT_FORMAT_OPTIONS } from '../src/options';
 
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-export-calibre-'));
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
@@ -88,8 +89,8 @@ test('calibreTool refuses a same-named file on PATH that is not executable', () 
   }
 });
 
-// Mirrors kit-check: environment-dependent checks self-skip rather than fail,
-// so CI stays green on bare runners.
+// As the Swift app's own checks did: environment-dependent checks self-skip
+// rather than fail, so CI stays green on bare runners.
 const withCalibre = calibreTool('ebook-convert') ? bunTest : bunTest.skip;
 // The inverse: these assert the missing-tool error path, which is only true
 // to test when Calibre is genuinely absent from this machine.
@@ -145,7 +146,7 @@ test('toKepub converts to .kepub then renames to .kepub.epub (fake ebook-convert
 
     // toKepub converts to the RAW .kepub path (the extension is what makes
     // ebook-convert emit KEPUB at all) and passes the same guard trio as
-    // toAzw3. EbookConvert.swift omits the guards here; this port applies
+    // toAzw3. The Swift app's converter omitted the guards here; this port applies
     // them deliberately, because remove-fake-margins is an input-side
     // heuristic that strips the dialogue column's side margins before the
     // output format is even chosen -- see the note on toKepub. A regression
@@ -251,17 +252,82 @@ withCalibre('toKepub names its output .kepub.epub AND emits koboSpan markup', as
   // The filename alone proves nothing: the BROKEN single-step form produces
   // a file with this same name -- a plain EPUB with no koboSpan markup at
   // all. koboSpan is the only assertion that discriminates the two, which is
-  // why kit-check asserted both halves (KitCheck/main.swift:349-350) and why
+  // why the Swift app's checks asserted both halves and why
   // the fake-tool test above cannot stand in for it: it self-skips on every
   // machine that actually has Calibre.
   const out = await toKepub(await minimalEpub());
   expect(out.endsWith('.kepub.epub')).toBe(true);
-  // kit-check used zipgrep; an EPUB is a deflated zip, so the marker is not
+  // The Swift check used zipgrep; an EPUB is a deflated zip, so the marker is not
   // in the raw bytes and the entries have to be inflated to see it.
   const zip = await JSZip.loadAsync(readFileSync(out));
   const entries = Object.values(zip.files).filter((f) => !f.dir);
   const texts = await Promise.all(entries.map((f) => f.async('string')));
   expect(texts.some((t) => t.includes('koboSpan'))).toBe(true);
+}, 120_000);
+
+// The dialogue column, read back out of a REAL AZW3. The trio test at the
+// top pins --disable-remove-fake-margins in the recipe; this checks what
+// the flag is for. Calibre's remove-fake-margins heuristic reads a
+// screenplay's dialogue column as publisher page margins and deletes them,
+// whatever the unit, so a Calibre release that stopped honouring the flag
+// would put every speech at full width on a Kindle while every recipe test
+// stayed green. Exploding the book with `calibre-debug -x` and reading the
+// .dialogue-block rule from the stylesheet its text links is the one check
+// that looks at the output.
+//
+// Ported at piece F3 from the Swift app's own checks ("AZW3 keeps
+// dialogue-block side margins"), which ran it weekly against brew's newest
+// Calibre until that job went with the app. The engine-calibre job in
+// weekly-toolchain.yml runs this file, so the weekly look survives.
+//
+// What it does NOT prove, measured 2026-10-01 on Calibre 9.11.0: that the
+// flag is still needed. With the flag deleted from the recipe this test
+// stayed green, and so did the Swift check's own hand-built book run the
+// same way: that Calibre left the 20% margins alone either way. So this is
+// an OUTCOME check (the column survives AZW3, whatever Calibre does), and
+// the flag stays on the strength of the device report that put it there
+// (docs/formatting-options-log.md §2, 2026-07-22), not on this test.
+const calibreDebug = calibreTool('calibre-debug');
+const withCalibreDebug = calibreTool('ebook-convert') && calibreDebug ? bunTest : bunTest.skip;
+
+function filesUnder(dir: string): string[] {
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => join(e.parentPath, e.name));
+}
+
+withCalibreDebug('an AZW3 keeps the dialogue column’s side margins (real Calibre, exploded)', async () => {
+  const dir = mkdtempSync(join(SCRATCH, 'azw3-geometry-'));
+  const epub = join(dir, 'book.epub');
+  // Two dozen speeches and one line of action, as the Swift check built
+  // it: the heuristic looks for side margins on MOST blocks, which is what
+  // a screenplay looks like.
+  const speech = 'JO\nEnough dialogue that the fake-margin heuristic sees a screenplay.\n\n';
+  const result = await convertFountain(`Title: Test\n\nINT. ROOM - DAY\n\nA hallway.\n\n${speech.repeat(24)}`);
+  writeFileSync(epub, result.epub);
+  const azw3 = await toAzw3(epub);
+  const exploded = join(dir, 'exploded');
+  await runCalibre(calibreDebug!, ['-x', azw3, exploded]);
+
+  const files = filesUnder(exploded);
+  const pages = files.filter((f) => /\.x?html?$/i.test(f) && readFileSync(f, 'utf8').includes('dialogue-block'));
+  expect(pages.length, `no exploded content file mentions dialogue-block: ${files.join(', ')}`).toBeGreaterThan(0);
+
+  // Only stylesheets the page actually links, as the device would apply
+  // them; a rule sitting in an unlinked file would prove nothing.
+  const page = readFileSync(pages[0]!, 'utf8');
+  const rules = files
+    .filter((f) => f.endsWith('.css') && page.includes(basename(f)))
+    .map((f) => readFileSync(f, 'utf8'))
+    .flatMap((css) => {
+      const at = css.indexOf('.dialogue-block');
+      if (at < 0) return [];
+      const after = css.slice(at);
+      return [after.slice(0, after.indexOf('}') + 1)];
+    });
+  expect(rules.length, 'no linked stylesheet carries a .dialogue-block rule').toBeGreaterThan(0);
+  const margin = `${DEFAULT_FORMAT_OPTIONS.dialogueSideMarginPct}%`;
+  expect(rules.join(' '), `the dialogue column lost its ${margin} side margins`).toContain(margin);
 }, 120_000);
 
 // A Calibre that never finishes (Kindle Previewer waiting on a first-run

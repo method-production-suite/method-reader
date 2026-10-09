@@ -8,8 +8,8 @@
 // upgrade. It is not older. It is the tag plus one commit. Offering the
 // tag installs a downgrade, every time, on every developer machine.
 //
-// UpdateCheck.swift found that the hard way and guards it. This is the
-// port of the guard, and it is why the plugin does transport while the
+// The Swift app's UpdateCheck found that the hard way and guarded it. This
+// is the port of the guard, and it is why the plugin does transport while the
 // engine keeps the decision. See
 // docs/superpowers/specs/2026-09-21-updater-design.md.
 import { describe, test, expect } from 'bun:test';
@@ -63,7 +63,7 @@ describe('isNewer: the ordinary cases', () => {
 
   test('0.10.0 beats 0.9.0, which STRING ordering gets backwards', () => {
     // The classic way a version check quietly stops offering updates
-    // after the tenth minor release. Named in UpdateCheck.swift's own
+    // after the tenth minor release. Named in the Swift UpdateCheck's own
     // comment as the reason it compares numerically per component.
     expect(isNewer('0.10.0', '0.9.0')).toBe(true);
     expect(isNewer('0.9.0', '0.10.0')).toBe(false);
@@ -151,10 +151,13 @@ describe('isNewer: the defence, which is the reason this file exists', () => {
   });
 });
 
-describe('isNewer: the cases kit-check pins, one for one', () => {
-  // Mirrored from app/Sources/KitCheck/main.swift:774-797 so the claim
-  // that those checks are REPLACED is checkable rather than asserted.
-  // Same inputs, same expectations, different language.
+describe('isNewer: the cases the Swift app pinned, one for one', () => {
+  // These began as a mirror of the Swift app's own version-compare
+  // checks, pair for pair, so the claim that those checks were REPLACED
+  // was checkable rather than asserted (docs/retired-coverage.md,
+  // `updater-version-compare`, cites the Swift lines; see them at tag
+  // v0.7.4). Piece F3 deleted the Swift; the pairs stay, as ordinary
+  // tests of src/update/compare.ts, with the same inputs and expectations.
   test('a dev build is offered the matching stable release', () => {
     // "-dev" is an ordinary pre-release, NOT describe output, so the
     // stable release does supersede it. This is the case that proves the
@@ -162,7 +165,7 @@ describe('isNewer: the cases kit-check pins, one for one', () => {
     expect(isNewer('0.3.0', '0.3.0-dev')).toBe(true);
   });
 
-  test('the remaining kit-check pairs', () => {
+  test('the remaining pairs the Swift app pinned', () => {
     expect(isNewer('v0.4.0', '0.3.0')).toBe(true);
     expect(isNewer('0.10.0', '0.9.0')).toBe(true);
     expect(isNewer('0.3.0', '0.3.0')).toBe(false);
@@ -181,7 +184,8 @@ describe('shouldCheck: opt-in and throttling, which are a privacy promise', () =
   // The README says the update check is "off by default" and makes "at
   // most one request a day". Those are not preferences, they are claims
   // on a public page, and these are the five checks that hold them.
-  // Mirrored from kit-check main.swift:800-812.
+  // Mirrored, pair for pair, from the Swift app's own throttle checks
+  // (tag v0.7.4); they outlived it at F3 unchanged.
   const now = 1_800_000_000_000; // ms, matching the Swift check's epoch
   const hours = (n: number) => n * 3600_000;
 

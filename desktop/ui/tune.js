@@ -40,8 +40,8 @@ export const EFFECTS = ['live', 'book', 'reconvert'];
 /** The eighteen, grouped by what a reader is trying to change rather than by
  *  where the engine consumes them — with the one exception above, where
  *  where-it-is-consumed IS what a reader needs to know. `help` explains WHY,
- *  carried over from the Mac app's rail (app/Sources/ScreepubApp/
- *  ReaderRail.swift) rather than reinvented, because that is where the
+ *  carried over from the Swift Mac app's reader rail (deleted at piece F3;
+ *  see it at tag v0.7.4) rather than reinvented, because that is where the
  *  explaining already happened. */
 export const GROUPS = [
   {

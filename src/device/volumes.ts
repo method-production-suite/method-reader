@@ -36,8 +36,9 @@ export function rootIsItselfAVolume(root: string, os: NodeJS.Platform = platform
 /** Every mounted volume path under the given roots (default: this platform's).
  * On Windows a root IS a volume; elsewhere a root CONTAINS volumes.
  *
- * DIVERGENCE from Device.swift, deliberately: it asks Foundation for mounted
- * volumes with `.skipHiddenVolumes` and there is no equivalent here. A plain
+ * DIVERGENCE from the Swift app's device scan, deliberately: it asked
+ * Foundation for mounted volumes with `.skipHiddenVolumes` and there is no
+ * equivalent here. A plain
  * directory listing of a mount parent has no notion of a "hidden volume" to
  * skip, and the classifier is signature-based — a hidden volume that has
  * neither `documents/` nor `.kobo` is dropped by classify() anyway. */

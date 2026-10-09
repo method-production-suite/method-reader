@@ -54,15 +54,6 @@ library and the architecture.
 `epubcheck` (`brew install epubcheck`) validates output and is worth running
 after any change to the EPUB or CSS builders.
 
-**The older Mac app** (`app/`) is retired and frozen: no new features, and
-it is no longer published (see [app/README-FROZEN.md](app/README-FROZEN.md)). Its own checks need
-Xcode Command Line Tools on a Mac:
-
-```bash
-app/build-app.sh                             # the frozen Mac app
-(cd app && swift run -c release kit-check)   # its behaviour checks
-```
-
 ## Fixtures
 
 `tests/fixtures/` holds small invented screenplays, committed and used by CI.
@@ -88,9 +79,9 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 - **Log formatting changes** in
   [`docs/formatting-options-log.md`](docs/formatting-options-log.md), the
   registry of every formatting option.
-- **Keep defaults in sync.** `src/options.ts`, the root
-  `format-defaults.json` and the frozen Mac app's `kit-check` pin the same
-  defaults; change them together.
+- **Keep defaults in sync.** `src/options.ts` and the root
+  `format-defaults.json` hold the same defaults, and `tests/options.test.ts`
+  fails if they differ; change them together.
 - **Keep the window logic-free.** Decisions belong in `src/`; the window only
   builds argument lists and draws the engine's answer.
 - Run `bun test` and `bunx tsc --noEmit` before you push.
@@ -98,8 +89,8 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 ## What CI runs
 
 - **Every push** (`ci.yml`): typecheck and `bun test` on Linux, the
-  command-line archives for every platform, and a Mac job that builds the
-  frozen Mac app and runs its checks.
+  command-line archives for every platform, and the compiled command line
+  converting a fixture on a Mac, checked with `epubcheck`.
 - **Every push** (`desktop.yml`): the window compiled and bundled on macOS,
   Windows and Linux, with the engine inside each bundle run against a fixture.
 - **Every `v*` tag** (`release.yml`): the release. It signs and notarizes the
@@ -108,7 +99,7 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 - **Weekly**: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0),
-  and the frozen Mac app's checks still pass against Calibre's newest version.
+  and the engine's Calibre tests still pass against Calibre's newest version.
 
 ## Licensing of contributions
 

@@ -784,7 +784,7 @@ the 0.7.3 pass.
 
 This is the checklist for **gate 1** of retiring the SwiftUI app: someone
 mounts the new Mac build, opens it, and converts a script. Until that
-happens, `app/` does not get deleted.
+happened, the Swift app was not deleted.
 
 Everything in the Tauri app has been exercised on Linux, where it builds,
 launches and converts. As of 2026-09-14 CI has also built it on macOS for the
@@ -845,8 +845,8 @@ looks. What is confirmed:
   clause rather than inventing one. **§3 is now answered too**: two real scripts were converted through the app
   on 2026-09-14, and the app's `.fountain` for one of them is byte-for-byte
   identical to a fresh CLI run over the same PDF.
-- **§5's updater question is settled from source.** `UpdateInstall.swift`
-  pins `identifier "com.darkwell.screepub"` exactly and the Tauri app is
+- **§5's updater question is settled from source.** The Swift app's
+  installer pins `identifier "com.darkwell.screepub"` exactly and the Tauri app is
   `com.darkwell.screepub.desktop`, so the refusal is structural, not
   probable. But it is a *late, repeating* refusal, and the hazard is dormant
   only because `release.yml` uploads the Swift DMG first. See
@@ -1040,7 +1040,7 @@ waiting on you. One question decides 59 of the 171 unported checks:
 **Does the app ever tell a user a newer version exists?**
 
 The new app has no updater. The old one does, and 59 assertions cover it. If
-the answer is yes, it gets ported before `app/` is deleted. If no, that is a
+the answer is yes, it gets ported before the Swift app is deleted. If no, that is a
 capability the Mac app has and the new one will not — worth deciding
 deliberately rather than by omission.
 

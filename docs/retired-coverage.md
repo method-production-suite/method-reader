@@ -1,5 +1,9 @@
 # Retired coverage: what `bun test` does not have
 
+> **A historical record since piece F3**, which deleted the Swift app this
+> file describes. Its paths and kit-check line numbers point into the tree
+> at any tag before F3 (v0.7.4, say), not into this one.
+
 This is the decision record for behaviour that only `app/` — the frozen
 SwiftUI Mac app — still asserts, and for the features behind that behaviour.
 

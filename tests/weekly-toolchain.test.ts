@@ -19,7 +19,8 @@ describe('weekly-toolchain.yml: the engine Calibre job', () => {
     expect(job!['runs-on']).toMatch(/^macos-/);
   });
 
-  // It has to survive the Swift job and its folder being deleted together.
+  // It survived the Swift job and its folder being deleted together (F3),
+  // and must stay independent of anything outside the repo root.
   test('runs from the repo root with bun only, nothing from the Swift app', () => {
     for (const step of job!.steps) {
       expect(step['working-directory'], JSON.stringify(step)).toBeUndefined();

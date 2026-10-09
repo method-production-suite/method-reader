@@ -21,14 +21,15 @@ node_modules/
 .next/
 dist/
 build/
+# SwiftPM's output folder. The Swift app it was for is gone (piece F3), but
+# Macs that built it still hold one (407 MB in the main checkout), and it
+# must never be swept or staged. Unanchored, so a nested package's counts.
+.build/
 npm-debug.log*
 # Root-anchored: private real scripts live in /fixtures, but the invented,
 # publishable ones in tests/fixtures/ are committed on purpose.
 /fixtures/
 /out/
-app/build/
-app/dist/
-app/.build/
 __pycache__/
 
 # Superpowers worktrees (scratch, never committed)

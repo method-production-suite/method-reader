@@ -4,9 +4,10 @@ Screenplay PDF → Fountain → reflowable EPUB3/MOBI, with a Tauri desktop
 window (`desktop/`, Mac, Windows and Linux) that converts and sends to
 e-readers (Kindle first; Kobo/tolino via USB volume signatures, reMarkable
 via its USB web interface: see `src/device/`). Engine is Bun/TypeScript;
-the window shells out to it as a compiled sidecar. The older SwiftUI Mac
-app is FROZEN, not deleted: it still builds and its checks still run in CI
-until piece F3 removes it (docs/superpowers/specs/2026-09-14-retire-swiftui-design.md).
+the window shells out to it as a compiled sidecar. The SwiftUI Mac app that
+came before the window was deleted at piece F3; plans under
+docs/superpowers/ that edit it are history, and docs/retired-coverage.md
+records what its checks covered.
 
 ## Commands
 
@@ -16,8 +17,6 @@ bunx tsc --noEmit           # typecheck
 bun src/cli.ts <pdf>        # convert (see --help; --json is the app contract)
 bun tools/build-sidecar.ts --host   # compile the engine for this machine (before cargo)
 (cd desktop/src-tauri && cargo run)   # the window; bundles via tools/build-app-bundle.ts
-app/build-app.sh            # FROZEN Swift app: sidecar + SwiftUI app
-(cd app && swift run -c release kit-check)   # FROZEN Swift app's behavior checks (CI, until F3)
 epubcheck <out.epub>        # validate output (brew-installed)
 bun tools/capture-screens.ts   # retake README + site pictures (needs Chrome; macOS)
 bun tools/review-screens.ts --out <page.html>   # which pictures changed, old beside new
@@ -56,8 +55,9 @@ bun tools/bump-version.ts <version>   # release bump: all 4 version files + desk
   version it declares is one constant, `FDX_VERSION`.
 - `src/options.ts` — FormatOptions, the single knob surface: CLI
   `--options file.json` ↔ the window's Settings page. Defaults are pinned to
-  root `format-defaults.json` by BOTH suites (options.test.ts,
-  kit-check) — change all three together or a suite fails.
+  root `format-defaults.json` by `tests/options.test.ts`: change options.ts
+  and format-defaults.json together or it fails. (The Swift app's checks
+  pinned the same file until F3; that pin went with the app.)
 - `src/convert.ts` — orchestration + scanned/non-screenplay guards.
 - `src/device/` + `src/export/` — device detection, USB copy, and every
   send route (Calibre and KFX builds, Books, Mail, Send to Kindle). The
@@ -65,9 +65,6 @@ bun tools/bump-version.ts <version>   # release bump: all 4 version files + desk
 - `desktop/` — the Tauri window. **No logic lives there**: the Rust shell
   spawns the engine sidecar and renders the JSON it prints, and the UI is
   static files with no bundler. See desktop/README.md and ADR 2026-09-12.
-- `app/` — the FROZEN SwiftPM app (NO Xcode project; CommandLineTools only,
-  so no XCTest/swift-testing, `kit-check` executable instead). Don't build
-  new features there.
 
 ## Non-negotiable invariants
 

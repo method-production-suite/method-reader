@@ -465,3 +465,117 @@ that need thought, from those notes:
 - `tests/app-references.test.ts` itself: criterion 11 says the inventory is
   EMPTY when F3 is done. The test then has nothing to pin and should go
   with the directory, or stay as a guard that `app/` never comes back.
+
+### F3 merge notes (2026-10-01, from the review of `f3-delete-app`)
+
+Built and held on `f3-delete-app`. When it merges (after N+1 has shipped
+and N+2 has proven the CLI move), two things outside the repository's
+tracked files need a person's hands. Neither may be done before F3 ships:
+releases N, N+1 and N+2 still have `app/`, and their preflight still
+builds it.
+
+**1. Delete the Swift app's leftover build output.** The main checkout and
+the `layout-pass` worktree each hold `app/.build/` (407 MB, SwiftPM),
+`app/build/` and `app/dist/`. F3's `.gitignore` keeps all three ignored
+(an unanchored `.build/` beside `build/` and `dist/`), so nothing fails and
+nothing gets staged, but the space stays taken. After merging, run in each
+of those two places:
+
+```bash
+rm -rf app
+```
+
+**2. Edit the `/release` skill** (`.claude/skills/release/SKILL.md` in the
+main checkout; gitignored, so no branch can change it). Its preflight runs
+the Swift build and kit-check, which fail once `app/` is gone. Four spots,
+quoted as they read on 2026-10-01, each with its replacement.
+
+(a) Step 1, the background preflight (lines 65 to 82). Replace
+
+````
+Immediately, before any git reading, start all five in the background
+(Bash with `run_in_background: true`, one call each):
+
+```bash
+bun test
+bunx tsc --noEmit
+(cd app && swift build -c release)
+(cd app && swift run -c release kit-check)
+bun tools/capture-screens.ts
+```
+
+Then move straight to step 2. **Do not block on these.** Nothing is
+written yet, so drafting first is free, and waiting would put minutes of
+dead air in front of the only screen the user cares about. You collect the
+capture at step 7 and the other four at step 9, before anything is
+committed.
+
+If one of the four finishes and fails while you are still drafting, note it
+````
+
+with
+
+````
+Immediately, before any git reading, start all three in the background
+(Bash with `run_in_background: true`, one call each):
+
+```bash
+bun test
+bunx tsc --noEmit
+bun tools/capture-screens.ts
+```
+
+Then move straight to step 2. **Do not block on these.** Nothing is
+written yet, so drafting first is free, and waiting would put minutes of
+dead air in front of the only screen the user cares about. You collect the
+capture at step 7 and the other two at step 9, before anything is
+committed.
+
+If one of the two finishes and fails while you are still drafting, note it
+````
+
+(b) Step 9, item 1 (line 363). Replace
+
+```
+1. **Collect the background preflight.** All four must pass. If any
+```
+
+with
+
+```
+1. **Collect the background preflight.** Both must pass. If either
+```
+
+(c) Step 9, item 3 (line 375). The Swift release script stopped reading
+`package.json` at the CLI move; `tools/build-cli.ts` and release.yml's
+`checks` job are what hold a tag to it now. Replace
+
+```
+   `package.json` (what the engine reports; `app/release.sh` reads it),
+```
+
+with
+
+```
+   `package.json` (what the engine reports; `tools/build-cli.ts` and the
+   `checks` job hold the tag to it),
+```
+
+(d) The "Preflight failed" example (lines 566 to 569). Replace
+
+```
+  bun test              passed
+  bunx tsc --noEmit     passed
+  swift build -c release  FAILED
+  kit-check             not run, the build it needs did not finish
+```
+
+with
+
+```
+  bun test              passed
+  bunx tsc --noEmit     FAILED
+```
+
+After the edit, `grep -n -i 'swift\|kit-check\|app/' .claude/skills/release/SKILL.md`
+should print nothing.

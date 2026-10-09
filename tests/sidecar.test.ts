@@ -73,7 +73,7 @@ test('partial sidecar overlays the present field and leaves the rest at fallback
 // equality. A sidecar value that merely equals the default would pass
 // whether or not the merge handled that field at all, because the merge
 // starts from a copy of the fallback. The override direction is what makes
-// this a real assertion. Ported verbatim from kit-check.
+// this a real assertion. Ported verbatim from the Swift app's own checks.
 const OVERRIDE_CASES: Array<{ field: keyof FormatOptions; json: string; expected: Partial<FormatOptions> }> = [
   { field: 'scenePageBreaks', json: '{"scenePageBreaks": true}', expected: { scenePageBreaks: true } },
   { field: 'dialogueSideMarginPct', json: '{"dialogueSideMarginPct": 9}', expected: { dialogueSideMarginPct: 9 } },

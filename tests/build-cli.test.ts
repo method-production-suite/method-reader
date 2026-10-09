@@ -175,7 +175,7 @@ describe('the target table', () => {
   test('is exactly the three non-macOS targets, and nothing darwin', () => {
     // Pinned as a whole, not sampled. An added 'darwin-arm64' row would
     // silently start producing an unsigned, unnotarized macOS artifact
-    // alongside the signed one app/release.sh builds.
+    // alongside the signed one MAC_TARGETS builds behind --mac.
     expect(TARGETS.map((t) => t.id)).toEqual(['linux-x64', 'linux-arm64', 'windows-x64']);
     expect(TARGETS.map((t) => t.bunTarget)).toEqual([
       'bun-linux-x64',

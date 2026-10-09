@@ -7512,7 +7512,8 @@ describe('a refused file is no longer a dead end', () => {
   // moment someone most wants to tell you what happened was the moment the
   // app gave them nowhere to say it.
   //
-  // Ported from app/Sources/ScreepubKit/Feedback.swift rather than reinvented.
+  // Ported in 4e74939 from the Swift Mac app's Feedback type (deleted at
+  // piece F3; see it at tag v0.7.4) rather than reinvented.
   let feedback: any;
   beforeAll(async () => { feedback = await import(join(UI, 'feedback.js')); });
 
@@ -7547,7 +7548,7 @@ describe('a refused file is no longer a dead end', () => {
   });
 
   test('a plus in the context survives the round trip', () => {
-    // Feedback.swift's hard-won detail, carried over: a query parser reads a
+    // The Swift version's hard-won detail, carried over: a query parser reads a
     // literal "+" as a space, so a context containing one arrives corrupted
     // unless it is percent-encoded. URLSearchParams gets this right where
     // hand-built query strings do not, which is why this is built with it.
