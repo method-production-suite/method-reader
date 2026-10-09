@@ -492,6 +492,46 @@ describe('the calm screen', () => {
     expect(p.tauri.callsTo('routes').length).toBe(3);
   });
 
+  test('a list that lands while a send runs is dropped, and asked for again once the send is over', async () => {
+    let hold = false;
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO],
+      engine: (a) => (hold && a[0] === 'routes' ? HOLD : undefined) });
+    expect(p.brass()!.textContent).toBe('Copy to KOBOeReader');
+    hold = true;
+    await p.plug([]);
+    const out = p.tauri.callsTo('routes').slice(-2);
+    expect(out.length).toBe(2);
+    // The send starts while both asks are out, then they land: dropped.
+    p.brass()!.click();
+    await settle();
+    for (const call of out) call.answer(listed([]));
+    await settle();
+    const before = p.tauri.callsTo('routes').length;
+    hold = false;
+    // The send fails, so nothing else would ask: the dropped list is owed.
+    builds(p)[0].answer({ ok: false, error: { code: 'export-failed', message: 'The book could not be read.' } });
+    await settle();
+    expect(p.tauri.callsTo('routes').length).toBe(before + 2);
+    expect(p.brass()!.textContent).toBe('Save the EPUB…');
+  });
+
+  test('settings read for one script land on that script, not on one opened while the read was out', async () => {
+    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
+    const tuned = { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: 27, fontFamily: 'serif' };
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO], script: { settings: null } });
+    const asked = p.ctx.state.script;
+    p.brass()!.click();
+    await settle();
+    const read = p.tauri.callsTo('settings');
+    expect(read.length).toBe(1);
+    const other = { ...asked, title: 'Another', fountainPath: '/s/Another.fountain', settings: null };
+    p.ctx.state.script = other;
+    read[0].answer({ ok: true, settings: tuned });
+    await settle();
+    expect(asked.settings).toEqual(tuned);
+    expect(other.settings).toBeNull();
+  });
+
   test('a refused export copies nothing and says the engine’s sentence', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO] });
     p.brass()!.click();

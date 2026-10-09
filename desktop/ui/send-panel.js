@@ -782,14 +782,22 @@ async function refresh({ quick = false } = {}) {
     answer = await runEngine(argv.routes(ctx.state.script.epubPath, { quick }));
   } catch (err) {
     // The same three reasons to drop an answer as below.
-    if (era !== myEra || sending || mine <= newest) return;
+    if (era !== myEra || sending || mine <= newest) {
+      if (era === myEra && sending) owed = true;
+      return;
+    }
     newest = mine;
     fault(err.message);
     return;
   }
   // A new book's panel, a send begun since, or a newer answer already
   // drawn: this one is out of date, and drawing it would undo something.
-  if (era !== myEra || sending || mine <= newest) return;
+  // One dropped because a send began while it was out is owed: asked for
+  // again once the send is over, or the list could stay out of date.
+  if (era !== myEra || sending || mine <= newest) {
+    if (era === myEra && sending) owed = true;
+    return;
+  }
   newest = mine;
   const shown = R.routesFrom(answer);
   if (shown === null) {
@@ -879,7 +887,7 @@ async function ensureSettings() {
   if (!R.needsSettings(script)) return;
   try {
     const answer = await runEngine(argv.settings(script.fountainPath));
-    ctx.state.script.settings = settingsFrom(answer);
+    script.settings = settingsFrom(answer);
   } catch {
     // Unreadable settings are not a reason to refuse a send: an EPUB route
     // does not consult them at all, and the Kindle rung that does will fall
