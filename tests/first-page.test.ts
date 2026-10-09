@@ -54,6 +54,37 @@ describe('pageParagraphs', () => {
     expect(pageParagraphs(lines)).toEqual(['EXT. FIELD STATION - DAY', 'The hut door opens before they reach it.']);
   });
 
+  test('a page of short speeches, where blank lines outnumber wrapped ones, still breaks a heading from its action', () => {
+    // Every block here is one or two lines, so the 24pt gap between blocks
+    // is the commonest gap on the page. The line gap is still 12pt.
+    const lines = [
+      line('INT. HUT - NIGHT', 720),
+      line('Rain on the roof. She waits.', 696),
+      line('Then she moves.', 672),
+      line('DELACROIX', 648, 44),
+      line('Now.', 636, 29),
+      line('MARGO', 612, 44),
+      line('Not yet.', 600, 29),
+      line('DELACROIX', 576, 44),
+      line('Now, or never, and I mean', 564, 29),
+      line('never.', 552, 29),
+    ];
+    expect(pageParagraphs(lines)).toEqual([
+      'INT. HUT - NIGHT', 'Rain on the roof. She waits.', 'Then she moves.',
+      'DELACROIX', 'Now.', 'MARGO', 'Not yet.', 'DELACROIX', 'Now, or never, and I mean never.',
+    ]);
+  });
+
+  test('a line that wraps at a hyphen joins without a space', () => {
+    const lines = [
+      line('A fourteen-', 720),
+      line('year-old girl.', 708),
+      line('She waits for the', 684),
+      line('rain.', 672),
+    ];
+    expect(pageParagraphs(lines)).toEqual(['A fourteen-year-old girl.', 'She waits for the rain.']);
+  });
+
   test('an empty page has no paragraphs', () => {
     expect(pageParagraphs([])).toEqual([]);
   });
