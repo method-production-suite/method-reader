@@ -76,7 +76,9 @@ describe('the badge', () => {
 
   test('is styled with the design tokens only', () => {
     const css = readFileSync(join(UI, 'surfaces.css'), 'utf8');
-    const start = css.indexOf('.beta-badge {');
+    // The badge's own rule, at the start of a line (a card's placement
+    // rule, `.device-card-slot > .beta-badge`, only positions it).
+    const start = css.indexOf('\n.beta-badge {');
     expect(start).toBeGreaterThan(0);
     const rule = css.slice(start, css.indexOf('}', start));
     expect(rule).not.toMatch(/#[0-9a-f]{3,8}\b|rgb|hsl/i);

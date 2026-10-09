@@ -390,6 +390,12 @@
 .device-card-slot > .asterisk-wrap > .asterisk {
   position: absolute; top: var(--space-1); right: var(--space-2);
 }
+/* A card's Beta badge sits in the lower corner, where a plugged-in reader's
+ * words go on other cards (My device isn't here is never plugged in), so it
+ * clears the card's name; beside the button, not in it. */
+.device-card-slot > .beta-badge {
+  position: absolute; bottom: var(--space-2); right: var(--space-2); margin-left: 0;
+}
 @media (prefers-reduced-motion: reduce) {
   .device-card { transition: none; }
 }
