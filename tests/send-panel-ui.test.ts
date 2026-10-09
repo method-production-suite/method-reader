@@ -1637,6 +1637,17 @@ describe('after a copy over USB', () => {
     expect(p.brass()!.disabled).toBe(false);
   });
 
+  test('a reader unplugged while its eject runs does not get its button back when the eject fails', async () => {
+    const p = await copied();
+    p.brass()!.click();
+    await settle();
+    await p.plug([]);
+    p.tauri.callsTo('eject')[0].answer({ ok: false, error: { code: 'eject-failed', message: 'could not eject /Volumes/KOBOeReader: it went away' } });
+    await settle();
+    expect(p.ctx.state.sendResult.eject).toBeNull();
+    expect(p.brass()?.textContent).not.toBe('Eject KOBOeReader');
+  });
+
   test('a reader that will not eject says why and keeps the button', async () => {
     const p = await copied();
     p.brass()!.click();

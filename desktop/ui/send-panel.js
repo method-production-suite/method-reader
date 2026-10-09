@@ -1140,6 +1140,14 @@ async function perform(route) {
  *  `sending` flag as every other flow, and on no book's turn: it touches no
  *  book. Done or unplugged, the button goes; refused, it stays, with the
  *  engine's sentence. */
+/** A failed eject keeps its button only for a reader still plugged in: one
+ *  unplugged while the eject ran has already had its button taken away
+ *  (onDevices), and the device poll only says what changes, so nothing
+ *  would take it away again. */
+function stillPlugged(status, eject) {
+  return D.ejectStillThere(eject, devicesNow()) ? status : { ...status, eject: null };
+}
+
 async function ejectNow() {
   const eject = ejectPending();
   if (eject === null || sending || kfxInstalling()) return;
@@ -1152,9 +1160,9 @@ async function ejectNow() {
     say({ line: `Ejecting ${eject.name}…`, bad: false });
     const answer = await runEngine(argv.eject(eject.volume));
     if (stale()) return;
-    say(D.ejectOutcome(answer, eject));
+    say(stillPlugged(D.ejectOutcome(answer, eject), eject));
   } catch (err) {
-    if (!stale()) say({ line: err.message, bad: true });
+    if (!stale()) say(stillPlugged({ line: err.message, bad: true }, eject));
   } finally {
     sending = false;
     for (const button of buttons()) button.disabled = false;
