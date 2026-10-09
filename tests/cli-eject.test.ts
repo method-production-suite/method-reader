@@ -138,6 +138,16 @@ describe('ejectCommand: the command per platform', () => {
     expect(calls.length).toBe(1);
   });
 
+  test('linux: a source that is not a /dev block device (a bind mount, a FUSE mount) is eject-failed, and udisksctl never runs', async () => {
+    for (const source of ['/dev/sdb1[/books]', 'gvfsd-fuse', 'sdb1']) {
+      const { run, calls } = recordingRun(() => ({ code: 0, stdout: `${source}\n`, stderr: '' }));
+      const err = await caught(ejectCommand(linuxKobo.volume!, { platform: 'linux', devices: async () => [linuxKobo], run }));
+      expect(codeOf(err)).toBe('eject-failed');
+      expect((err as Error).message).toContain('could not find the device behind it');
+      expect(calls.length).toBe(1);
+    }
+  });
+
   test('linux: a reader that is a plain folder, not a mount point, never reaches the disk it sits on', async () => {
     // A tolino is recognised by its folder name alone, so a listed volume can
     // be a folder on an ordinary disk. findmnt --mountpoint answers nothing

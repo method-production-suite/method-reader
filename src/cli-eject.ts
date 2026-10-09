@@ -100,7 +100,10 @@ export async function ejectCommand(volume: string, deps: EjectDeps = {}): Promis
     // findmnt exits 1 with nothing to say for a folder that is not a mount
     // point; that is the same "no device" as an empty answer.
     const device = firstLine(await step(findDeviceCommand(listed), true));
-    if (device === '') throw failed('could not find the device behind it');
+    // Only a block device under /dev is something udisksctl can unmount: a
+    // bind mount answers `/dev/sdb1[/books]` and a FUSE mount a name, and
+    // either would only reach the person as udisksctl's own error.
+    if (!/^\/dev\/[^\s[\]]+$/.test(device)) throw failed('could not find the device behind it');
     const [unmount, powerOff] = linuxEjectCommands(device);
     await step(unmount);
     // Unmounted is safe to unplug. Power-off is a courtesy (it spins the
