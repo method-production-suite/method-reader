@@ -197,7 +197,7 @@ Options:
   --out <path>           also copy the result to this absolute path (its
                          extension must match the file produced). An FDX
                          is written only there, not beside the book
-  --check               build nothing: say which file this computer makes,
+  --check                build nothing: say which file this computer makes,
                          whether the one beside the book is current, what
                          builds it (builtBy: calibre or screepub), and when
                          the book was last written (bookDate, in ms)
