@@ -10,17 +10,12 @@ see [Influencing this list](#influencing-this-list).
 
 ## Now
 
-- **Images in the book.** Filmmakers put pictures in scripts: storyboard
-  panels, a reference photo, a lookbook page, a designed title card.
-  Screepub reads the text around them and drops every one. The work is being
-  built on the current code in three parts, each useful on its own:
-  recognising that a page holds an image and where it sits, carrying it into
-  the e-book at a sensible size, and making a full-page image at the front the
-  book's cover, so a script with a designed title page shows up as artwork in
-  your library instead of a grey rectangle. Two limits: most e-ink screens
-  are greyscale, so a colour image reads as black and white on a Kindle, and
-  a script padded with full-page photographs makes a file too large to email
-  to a `@kindle.com` address.
+- **Pictures on the oldest Kindles.** Pictures from the script now reach
+  the e-book (beta), and a designed title card becomes its cover. The one
+  file that leaves them out is the Kindle file Screepub makes itself when
+  Calibre is missing, for the oldest Kindles: no one has opened one with
+  pictures in it on a real device yet, and a failure there could stop the
+  book opening at all. It gets them once a test book has been tried on one.
 - **A way to report problems without a GitHub account.** Asking for a device
   and saying whether a reader worked need none now: the window sends both.
   Telling us a script converted badly still means opening an issue, which
