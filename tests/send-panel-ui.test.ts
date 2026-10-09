@@ -220,6 +220,37 @@ describe('the asterisk', () => {
     expect(note.hidden).toBe(true);
   });
 
+  test('a note opened by hovering stays while the pointer crosses from the star to its answers', async () => {
+    const waiting = new Map<number, () => void>();
+    let next = 0;
+    const timers = {
+      setInterval: () => 0, clearInterval: () => {},
+      setTimeout: (fn: () => void) => { next += 1; waiting.set(next, fn); return next; },
+      clearTimeout: (id: number) => { waiting.delete(id); },
+    };
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, timers });
+    const star = p.node.querySelector('.calm .asterisk')!;
+    const note = p.node.querySelector('.calm .asterisk-note')!;
+    star.fire('mouseenter');
+    expect(note.hidden).toBe(false);
+    // Off the star, onto the note before the grace runs out: still open.
+    star.fire('mouseleave');
+    expect(note.hidden).toBe(false);
+    note.fire('mouseenter');
+    for (const fn of [...waiting.values()]) fn();
+    expect(note.hidden).toBe(false);
+    // Off the note and away: it closes once the grace runs out.
+    note.fire('mouseleave');
+    expect(note.hidden).toBe(false);
+    for (const fn of [...waiting.values()]) fn();
+    expect(note.hidden).toBe(true);
+    // A pinned note never closes on its own.
+    star.click();
+    star.fire('mouseleave');
+    for (const fn of [...waiting.values()]) fn();
+    expect(note.hidden).toBe(false);
+  });
+
   test('a Kindle on a Mac carries none', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kindle' } });
     expect(p.node.querySelector('.calm-act .asterisk')).toBeNull();

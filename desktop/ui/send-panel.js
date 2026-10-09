@@ -1314,19 +1314,38 @@ function asterisk(kind) {
     el('span', { class: 'asterisk-said' }, said),
     route === null ? null : reportAnswers(kind));
   let pinned = false;
+  // Hovering opens the note; leaving closes it only after a grace, so the
+  // pointer can cross the gap from the star to the note's answers. The
+  // listeners sit on the wrap, which holds both, so the note itself counts.
+  let closing = null;
+  const clock = () => ctx?.timers ?? globalThis;
+  const keepOpen = () => {
+    if (closing !== null) clock().clearTimeout(closing);
+    closing = null;
+  };
   const star = el('button', {
     type: 'button', class: 'asterisk', 'aria-expanded': 'false', 'data-key': `asterisk-${kind}`,
     'aria-label': `About ${D.nameOf(kind)}: never tried on real hardware`,
     onclick: () => {
+      keepOpen();
       pinned = !pinned;
       note.hidden = !pinned;
       star.setAttribute('aria-expanded', String(pinned));
     },
-    onmouseenter: () => { note.hidden = false; },
-    onmouseleave: () => { note.hidden = !pinned; },
   }, '*');
-  return el('span', { class: 'asterisk-wrap' }, star, note);
+  return el('span', {
+    class: 'asterisk-wrap',
+    onmouseenter: () => { keepOpen(); note.hidden = false; },
+    onmouseleave: () => {
+      keepOpen();
+      if (pinned) return;
+      closing = clock().setTimeout(() => { closing = null; note.hidden = !pinned; }, NOTE_GRACE_MS);
+    },
+  }, star, note);
 }
+
+/** How long a hovered asterisk note stays after the pointer leaves it. */
+const NOTE_GRACE_MS = 400;
 
 /** It worked / It did not work, and the line that answers a press: thanks,
  *  which takes the two away, or could not send, with Try again for the same
