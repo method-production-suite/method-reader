@@ -194,6 +194,35 @@ describe('what never reaches the FDX', () => {
     expect(fountainToFdx('Words [[note]] more.\n')).not.toContain('[[');
   });
 
+  test('a picture note never reaches it, standalone, full-page or glued to a line', () => {
+    // Pictures carried out of a PDF are recorded as [[img: ...]] notes
+    // (registry #19). An FDX is a script to edit, and a picture has no
+    // paragraph type there, so the note goes the way every note goes: the
+    // FDX shows neither the note nor the file it names.
+    const fountain = [
+      '[[img: p001-01.png w=100 full]]',
+      '',
+      'INT. ARCHIVE - DAY',
+      '',
+      'She holds up a panel.',
+      '',
+      '[[img: p002-01.png w=70]]',
+      '',
+      'MARGO',
+      'Look at this. [[img: p002-02.png w=40]]',
+      '',
+    ].join('\n');
+    const fdx = fountainToFdx(fountain);
+    expect(fdx).not.toContain('img:');
+    expect(fdx).not.toContain('.png');
+    expect(body(fountain).map((x) => [x.type, x.text])).toEqual([
+      ['Scene Heading', 'INT. ARCHIVE - DAY'],
+      ['Action', 'She holds up a panel.'],
+      ['Character', 'MARGO'],
+      ['Dialogue', 'Look at this.'],
+    ]);
+  });
+
   test('boneyard, sections and synopses (and Screepub’s page markers) are dropped', () => {
     const p = body([
       '# Act One',

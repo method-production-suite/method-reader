@@ -129,3 +129,19 @@ for (const name of ['field-station', 'screenplay', 'torture']) {
     });
   });
 }
+
+// The committed picture fixture: its .fountain names pictures in
+// [[img: ...]] notes, and its FDX names none of them.
+describe('images.pdf as FDX', () => {
+  test('the .fountain records its pictures, and the FDX carries no trace of them', async () => {
+    const bytes = new Uint8Array(readFileSync(join(ROOT, 'tests', 'fixtures', 'images.pdf')));
+    const { fountainText } = await convertPdf(bytes);
+    expect(fountainText).toContain('[[img: ');
+    const fdx = fountainToFdx(fountainText);
+    const root = parseXml(fdx);
+    expect(root.name).toBe('FinalDraft');
+    expect(fdx).not.toContain('img:');
+    expect(fdx).not.toContain('.png');
+    expect(fdx).not.toContain('Illustration');
+  });
+});
