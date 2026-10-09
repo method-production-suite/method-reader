@@ -45,6 +45,7 @@ const SAID = {
   notFound: 'Nothing here. Send a POST to /request.',
   tooLarge: 'That request is too large.',
   notJson: 'That request is not JSON.',
+  unreadable: 'That request did not arrive whole. Try again.',
   badForm: 'That request is not one this service takes.',
   badDevice: `The device name must be 1 to ${MAX_DEVICE} characters.`,
   tooMany: 'Too many requests from here this hour. Try again later.',
@@ -158,7 +159,15 @@ export async function handleRequest(request: Request, env: Env, now: Date = new 
 
   const declared = Number(request.headers.get('content-length') ?? '0');
   if (declared > MAX_BODY_BYTES) return refuse(413, SAID.tooLarge, origin);
-  const raw = await request.text();
+  // Read inside its own try: a body that cannot be read (the connection
+  // dropped) would otherwise get the runtime's bare 500, with no CORS
+  // header, and the window could not even read why.
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return refuse(400, SAID.unreadable, origin);
+  }
   if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) return refuse(413, SAID.tooLarge, origin);
   const type = request.headers.get('content-type') ?? '';
   if (!/^application\/json\b/i.test(type)) return refuse(400, SAID.notJson, origin);

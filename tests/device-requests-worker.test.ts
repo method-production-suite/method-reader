@@ -260,6 +260,21 @@ describe('CORS', () => {
   });
 });
 
+test('a body that cannot be read is a 400 the window can read, with its CORS header', async () => {
+  // The connection drops mid-body: without its own answer, the runtime's
+  // bare 500 has no CORS header, and the window would say "check that this
+  // computer is online" for what was the service's problem.
+  const broken = new ReadableStream({ start(c) { c.error(new Error('connection reset')); } });
+  const req = new Request(URL_, {
+    method: 'POST', body: broken,
+    headers: { 'content-type': 'application/json', origin: ORIGIN, 'cf-connecting-ip': IP },
+  });
+  const r = await send(req);
+  expect(r.status).toBe(400);
+  expect(r.body.ok).toBe(false);
+  expect(r.res.headers.get('access-control-allow-origin')).toBe(ORIGIN);
+});
+
 test('a database that fails says so in plain words, as a 500', async () => {
   env = { DB: { prepare: () => { throw new Error('D1 is down'); } } as unknown as D1Database };
   const r = await send(post(device('Boox')));
