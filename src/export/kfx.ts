@@ -161,13 +161,20 @@ export function kfxScratchPath(epub: string): string {
   return join(dirname(epub), `.${stem}.partial.kfx`);
 }
 
+/** What a KFX build still needs on this machine, named for a person:
+ * KfxToolchainNotReadyError's sentence and `export --for kfx`'s refusal
+ * both read it, so the two cannot list different things. */
+export function kfxMissing(status: { calibre: boolean; previewer: boolean; pluginInstalled: boolean }): string[] {
+  const missing: string[] = [];
+  if (!status.calibre) missing.push('Calibre');
+  if (!status.previewer) missing.push('Kindle Previewer');
+  if (status.calibre && !status.pluginInstalled) missing.push('the KFX plugin');
+  return missing;
+}
+
 export class KfxToolchainNotReadyError extends Error {
   constructor(status: { calibre: boolean; previewer: boolean; pluginInstalled: boolean }) {
-    const missing: string[] = [];
-    if (!status.calibre) missing.push('Calibre');
-    if (!status.previewer) missing.push('Kindle Previewer');
-    if (status.calibre && !status.pluginInstalled) missing.push('the KFX plugin');
-    super(`KFX conversion needs ${missing.join(' and ')}.`);
+    super(`KFX conversion needs ${kfxMissing(status).join(' and ')}.`);
     this.name = 'KfxToolchainNotReadyError';
   }
 }

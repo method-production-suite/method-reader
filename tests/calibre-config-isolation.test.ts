@@ -98,8 +98,8 @@ describe('the test-run guard: no test can reach the real Calibre settings folder
     // The preload treats this exact value as "nothing set", so a drift would
     // have it try to copy a folder under /dev/null and hand every test an
     // empty Calibre instead of a copy of the real one.
-    const preload = readFileSync(join(ROOT, 'tests', 'isolate-calibre-config.ts'), 'utf8');
-    const match = preload.match(/^const CALIBRE_CONFIG_GUARD = '([^']+)';$/m);
+    const preload = readFileSync(join(ROOT, 'tools', 'calibre-config.ts'), 'utf8');
+    const match = preload.match(/^export const CALIBRE_CONFIG_GUARD = '([^']+)';$/m);
     expect(match).not.toBeNull();
     expect(match![1]).toBe(envTestGuard());
   });

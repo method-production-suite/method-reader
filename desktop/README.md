@@ -121,11 +121,13 @@ the updater's config as `serde_json` values. No `.rs` file may name it;
 
 ## The interface
 
-`desktop/ui/` is the app: 22 files and six bundled font files, no build
+`desktop/ui/` is the app: 27 files and six bundled font files, no build
 step. `index.html` loads three stylesheets and one ES module, `main.js`. The
 window's content security policy is `default-src 'self'`. The tabs are
-Convert, Read, Settings and Send; the release notes open from the version
-stamp at the foot of the page. New windows open at 1280 by 800.
+Convert, Read and Settings: sending happens on Convert's result, which
+Read and Settings return to with their Send button. The release notes open
+from the version stamp at the foot of the page. New windows open at 1280
+by 800.
 
 | File | What it owns |
 | --- | --- |
@@ -134,8 +136,18 @@ stamp at the foot of the page. New windows open at 1280 by 800.
 | `frame.js` | the sheet, the punched holes, the brads, the tab bar |
 | `dom.js` | `el`, `clear`, `text`; no `innerHTML` anywhere |
 | `focus.js` | where the keyboard lands on each page |
-| `convert.js` `read.js` `tune.js` `send.js` `notes-surface.js` | one page each (`tune.js` is the Settings page) |
-| `kfx.js` | the Send page's KFX checklist |
+| `convert.js` `read.js` `tune.js` `notes-surface.js` | one page each (`tune.js` is the Settings page) |
+| `result-page.js` | the left half of Convert's result: the book's first page |
+| `page-show.js` | the page that writes itself while a script converts: the typed page in the result's box, the wave, the slim reading line |
+| `page-timing.js` | the show's clock: which character is typed when, which blocks have formed, when it ends, when a key sounds |
+| `typewriter.js` | the key and bell sounds, made with Web Audio |
+| `send-panel.js` | the right half of Convert's result: the device cards, the one brass button, Other ways, Eject, the Kindle file built ahead |
+| `device.js` | the panel's rules: which cards, which button is brass, which asterisk, which file rows, what Eject and the heads-up say |
+| `send-routes.js` | what sending decides without drawing: the engine's route list and Kindle file answers read, the status line's words, the Save box's defaults |
+| `requests.js` | the request service: "My device isn't here" and the asterisk's It worked / It did not work, posted to the Worker in `services/device-requests/`; the window's one `fetch`, and the one origin the CSP's `connect-src` adds |
+| `device-watch.js` | the two-second `devices --quick` poll, running whenever a script is open |
+| `heads-up.js` | "Kindle plugged in. Copy <Title>?" at the top of whatever page is showing |
+| `kfx.js` | the send panel's KFX checklist |
 | `book-queue.js` | one queue per book, so no engine call reads a book while another rewrites it |
 | `feedback.js` | the pre-filled bug report URL |
 | `update.js` `update-flow.js` | the update question, the once-a-day check, download, install and restart |

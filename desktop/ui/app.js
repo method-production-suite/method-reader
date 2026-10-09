@@ -43,7 +43,24 @@ export const argv = {
     [fountain, '--json', '--preview-inline', '-o', epubPath,
       '--options-json', optionsJson],
 
-  devices: () => ['devices', '--json'],
+  /** What is plugged in. `quick` leaves out the reMarkable probe: the window
+   *  polls this every two seconds while a book is open (device-watch.js), and
+   *  a docked reMarkable is learnt from the send panel's full `routes`. */
+  devices: ({ quick = false } = {}) =>
+    ['devices', '--json', quick ? '--quick' : null].filter((a) => a !== null),
+
+  /** Safely remove the reader at `volume`, a path `devices` listed. The
+   *  engine refuses any other disk (unknown-device). */
+  eject: (volume) => ['eject', volume, '--json'],
+
+  /** The reader the person said is theirs, app-wide (the send panel's
+   *  cards). Null forgets it. */
+  readerDevice: (kind) => ['app-settings', '--json', '--set', JSON.stringify({ readerDevice: kind })],
+
+  /** The Settings page's two switches for the page that writes itself
+   *  while a script converts, app-wide like the reader's device. */
+  animatePage: (on) => ['app-settings', '--json', '--set', JSON.stringify({ animatePage: on })],
+  typewriterSounds: (on) => ['app-settings', '--json', '--set', JSON.stringify({ typewriterSounds: on })],
 
   send: (file, deviceId = null) =>
     ['send', file, '--json', deviceId ? '--device' : null, deviceId]
@@ -52,15 +69,17 @@ export const argv = {
   settings: (fountain, set = null) =>
     ['settings', fountain, '--json', set ? '--set' : null, set].filter((a) => a !== null),
 
-  export: (epub, { forFormat, fountain = null, optionsJson = null }) =>
+  export: (epub, { forFormat, fountain = null, optionsJson = null, out = null }) =>
     ['export', epub, '--json', '--for', forFormat,
       fountain ? '--fountain' : null, fountain,
-      optionsJson ? '--options-json' : null, optionsJson].filter((a) => a !== null),
+      optionsJson ? '--options-json' : null, optionsJson,
+      out ? '--out' : null, out].filter((a) => a !== null),
 
   /** Which Kindle file `export --for kindle` would hand over on this
    *  computer (KFX, AZW3 or MOBI), whether the one beside the book is
-   *  current, and what builds it, with nothing built. The Send page asks it
-   *  when it opens, to name the file on the rows that hand one over. */
+   *  current, and what builds it, with nothing built. The send panel asks it
+   *  when the result shows, to name the file on the buttons that hand one
+   *  over. */
   kindleCheck: (epub) => ['export', epub, '--json', '--for', 'kindle', '--check'],
 
   /** Can this computer make KFX for a Kindle? Installs nothing. */
@@ -85,10 +104,11 @@ export const argv = {
   reveal: (path) => ['reveal', path, '--json'],
 
   /** Every route this script can be sent by, in the engine's order, read-only
-   *  (parity piece B). send.js polls this the way it used to poll `devices`.
-   *  `quick` leaves out the reMarkable probe, which waits out its whole
-   *  timeout when no tablet is docked, so the Send page's first rows need
-   *  not wait for it; the row says it is still checking. */
+   *  (parity piece B). The send panel asks it when its calm screen first
+   *  draws and again whenever what is plugged in changes. `quick` leaves out
+   *  the reMarkable probe, which waits out its whole timeout when no tablet
+   *  is docked, so the panel's brass button need not wait for it; the row
+   *  says it is still checking. */
   routes: (epub, { quick = false } = {}) =>
     ['routes', epub, '--json', quick ? '--quick' : null].filter((a) => a !== null),
 
@@ -105,8 +125,8 @@ export const argv = {
       optionsJson ? '--options-json' : null, optionsJson].filter((a) => a !== null),
 
   /** Open Amazon's Personal Document Settings page, where the Kindle's email
-   *  address and the approved-sender list live (the Send page's email row,
-   *  send.js's emailSetupHint). The ENGINE opens it by this key, as it opens
+   *  address and the approved-sender list live (the email row in the send
+   *  panel's Other ways, send-routes.js's emailSetupHint). The ENGINE opens it by this key, as it opens
    *  every other route's app or page, so the window names no URL. No book
    *  rides along: the page is about the reader's Amazon account. */
   emailSetup: () => ['route', 'kindle-email-setup', '--json'],
@@ -130,7 +150,7 @@ let idleWaiters = [];
 
 // Idle means no counted engine call has been RUNNING for this long, not
 // merely that the count last touched zero. A reviewer reproduced the bug a
-// single macrotask left open: send.js's sendTo() runs settings (via its own
+// single macrotask left open: send-panel.js's sendTo() runs settings (via its own
 // ensureSettings()), export and send as an AWAITED CHAIN, and tune.js's
 // flush() runs a save then a rebuild the same way; the next call in either
 // chain starts again within microtasks of the one before it finishing, so
@@ -159,21 +179,23 @@ let settleTimer = null;
 
 /** Whether a call is worth counting toward "the engine is busy".
  *
- *  `devices` is not: send.js polls it every 2 s while the Send tab is open,
- *  and each poll takes about 1.5 s on its own (the reMarkable probe
- *  timeout). It is never mid-job — killing a listing loses nothing — so
- *  counting it would flash "Restarting after this finishes…" on a tab that
- *  is just sitting there polling, and WITH a quiet period, could hold a
- *  restart off indefinitely for as long as that tab stayed open.
+ *  `devices` is not: device-watch.js polls `devices --quick` every 2 s
+ *  for as long as a book is open. It is never mid-job (killing a listing
+ *  loses nothing), so counting it would flash "Restarting after this
+ *  finishes…" on a window that is just sitting there polling, and WITH a
+ *  quiet period, could hold a restart off indefinitely for as long as a
+ *  book stayed open. `eject` IS counted: it is somebody's work on a drive.
  *
  *  `kfx-status` is not either, for the same reason: kfx.js's probe() runs
- *  it when the Send tab opens and again every time the window gets focus
- *  back, read-only and never mid-job. `kfx-install` is the one that
+ *  it when the KFX checklist opens and again every time the window gets
+ *  focus back, read-only and never mid-job. `kfx-install` is the one that
  *  actually writes (into Calibre) and stays counted.
  *
  *  `routes` is not either, for the same reason again: it REPLACES the
- *  `devices` poll (parity piece B), so it is the thing send.js now polls
- *  every 2 s, read-only, never mid-job. `route` is the one that actually
+ *  `devices` poll (parity piece B) on the send panel, which asks it when
+ *  its calm screen draws and when what is plugged in changes, read-only,
+ *  never mid-job. The `devices --quick` poll itself (device-watch.js,
+ *  every 2 s while a book is open) is not counted for the same reason. `route` is the one that actually
  *  does the work a route promises: it opens an app or writes a file, so
  *  it stays counted, the way `send` and `kfx-install` already are.
  *
@@ -183,10 +205,10 @@ let settleTimer = null;
  *  same split as kfx-status and kfx-install above.
  *
  *  `export --check` is not counted either: it reads two file dates and asks
- *  Calibre what is installed, builds nothing, and the Send page asks it on
- *  every visit and whenever the window gets the focus back. An `export`
- *  without it builds the Kindle file and stays counted, whether a press
- *  asked for it or the page started it in the background.
+ *  Calibre what is installed, builds nothing, and the send panel asks it
+ *  every time the result shows and whenever the window gets the focus back.
+ *  An `export` without it builds the Kindle file and stays counted, whether
+ *  a press asked for it or the panel started it in the background.
  *
  *  `reveal` is not counted either, but for a different reason: it writes
  *  nothing at all, and on some Linux desktops the xdg-open call behind it
@@ -260,7 +282,7 @@ function shellNow() {
  *  Every call is refused, not only the counted ones. Counting is about
  *  whether a restart should wait for a call, and the hazard here is the
  *  contract, which a read like `routes` or `kfx-status` carries just as a
- *  write does. The Send page shows the refusal where its routes would be,
+ *  write does. The send panel shows the refusal where its brass button would be,
  *  which is the right thing to tell a reader; the KFX probe draws nothing
  *  on a failure. */
 export function retireEngine() {

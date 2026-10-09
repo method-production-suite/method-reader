@@ -34,7 +34,7 @@
 // purpose, so an in-process kfxStatus(), toAzw3() or toKepub() reaches the
 // copy. A Bun.spawn with no env at all still gets the environment bun
 // started with. For that, root .env.test sets CALIBRE_CONFIG_DIRECTORY to
-// CALIBRE_CONFIG_GUARD below: a path under /dev/null, where Calibre can
+// CALIBRE_CONFIG_GUARD (tools/calibre-config.ts): a path under /dev/null, where Calibre can
 // neither read nor make a folder. A test that spawns Calibre bare therefore
 // fails with NotADirectoryError instead of quietly using the real folder
 // (measured on calibre 9.11, 2026-09-24). Keep the two values identical;
@@ -45,33 +45,16 @@
 // well, because process.on('exit') never fires under bun test 1.3.14 (same
 // check). A run cut short by --bail or Ctrl-C skips afterAll and leaves the
 // copy behind, the same as every other scratch folder in tests/.
+// The guard path, Calibre's rule and the copy itself live in
+// tools/calibre-config.ts, shared with the picture tool, which runs the
+// engine's Calibre probes too.
 import { afterAll } from 'bun:test';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-
-const CALIBRE_CONFIG_GUARD = '/dev/null/screepub-test-calibre-guard';
-
-/** The folder Calibre would use, by Calibre's own rule (see above). */
-function realCalibreConfig(env: NodeJS.ProcessEnv, os: NodeJS.Platform): string {
-  const set = (env.CALIBRE_CONFIG_DIRECTORY ?? '').trim();
-  if (set !== '' && set !== CALIBRE_CONFIG_GUARD) return resolve(set);
-  if (os === 'darwin') return join(homedir(), 'Library', 'Preferences', 'calibre');
-  if (os === 'win32') return join(env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), 'calibre');
-  return join((env.XDG_CONFIG_HOME ?? '').trim() || join(homedir(), '.config'), 'calibre');
-}
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { copyCalibreConfig, realCalibreConfig } from '../tools/calibre-config';
 
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-calibre-config-'));
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 
-const real = realCalibreConfig(process.env, process.platform);
-const copy = join(SCRATCH, 'calibre');
-if (existsSync(real)) {
-  const caches = join(real, 'caches');
-  // dereference: a symlink inside the real folder is copied as what it
-  // points at, so nothing in the copy can lead Calibre back into it.
-  cpSync(real, copy, { recursive: true, dereference: true, filter: (src) => src !== caches });
-} else {
-  mkdirSync(copy);
-}
-process.env.CALIBRE_CONFIG_DIRECTORY = copy;
+process.env.CALIBRE_CONFIG_DIRECTORY = copyCalibreConfig(realCalibreConfig(process.env, process.platform), SCRATCH);

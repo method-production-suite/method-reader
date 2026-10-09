@@ -16,11 +16,18 @@
 // scratch library and a scratch settings folder, through the capture gate.
 // It converts to EPUB only, so no Calibre is needed.
 //
+// The result screen (spec 2026-10-01, decision 2) is measured twice at each
+// size: with the device cards a first run shows, and with the calm screen a
+// press of the Kobo card leaves. Kobo, not Kindle: no Kindle file is built
+// ahead for a Kobo, so the run asks the engine for nothing the capture gate
+// does not already allow. The press writes `readerDevice` into the run's
+// scratch settings folder, never a real one.
+//
 // Skipped, saying why, where Chrome is not at the capture tool's path (Linux
 // CI); the CSS pins in desktop-layout.test.ts still run there.
 
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CHROME } from '../tools/capture/cdp';
@@ -56,19 +63,33 @@ const SIZES = [
 ] as const;
 
 const BRAD_CENTRE = 44; // --hole-center, from the window's left edge
-const CONVERT_COLUMN = 820;
+// Convert's 820 column is now only the drop well's (the result takes the
+// whole block). The well is not on screen here, so desktop-layout.test.ts's
+// CSS pin on #surface-convert holds it instead.
+const RESULT_PAGE = 400;   // the first page's column
+const RESULT_PANEL = 620;  // the panel's cap
 const INDEX_SLOT = 218;
 const SCRIPT_COLUMN = 706;
 const SETTINGS_COLUMN = 420;
 const GAP = 32; // --space-7 at a 16px root
 
+interface ResultBox {
+  result: Box; page: Box; side: Box; brass: Box | null; cards: Box[]; overflowX: boolean;
+  /** The first scene's top, measured inside the first page's frame from the
+   *  frame's own top edge; null while the frame has no scene drawn. */
+  sceneTop: number | null;
+}
+
 interface Measured {
   frame: { vw: number; sheet: Box; brads: number[]; firstTab: Box; foot: Box };
-  convert: Box;
-  read: { rail: Box; stage: Box; frame: Box; railShown: boolean };
+  cards: ResultBox;
+  calm: ResultBox;
+  read: { rail: Box; stage: Box; frame: Box; railShown: boolean; toggle: Box; send: Box };
   tune: {
     split: Box; knobs: Box; preview: Box; previewFrame: Box;
     position: string; stickyTop: number; rem: number; innerHeight: number;
+    /** The page's heading and its Send, and a quiet button to measure Send by. */
+    heading: Box; send: Box; sendClass: string;
     scrolledBy: number; knobsAfter: Box; previewAfter: Box; previewFrameAfter: Box;
   };
 }
@@ -81,6 +102,20 @@ const BOX = `const box = (el) => {
 };`;
 const q = (selector: string) => `document.querySelector(${JSON.stringify(selector)})`;
 const twoFrames = 'new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))';
+/** The result screen's boxes, as the page draws them right now. */
+const RESULT = `(() => { ${BOX}
+  const brass = ${q('#surface-convert .calm .btn-brad')};
+  return {
+    result: box(${q('#surface-convert .result')}), page: box(${q('#surface-convert .result-page')}),
+    side: box(${q('#surface-convert .result-side')}), brass: brass ? box(brass) : null,
+    cards: [...document.querySelectorAll('#surface-convert .device-card')].map(box),
+    overflowX: document.documentElement.scrollWidth > window.innerWidth,
+    sceneTop: (() => {
+      const scene = ${q('#surface-convert .result-page-frame')}?.contentDocument?.querySelector('section.scene');
+      return scene ? scene.getBoundingClientRect().top : null;
+    })(),
+  };
+})()`;
 
 /** Poll a page expression until it is truthy, or fail naming `what`. */
 async function until(page: LayoutPage, expression: string, what: string, ms = 30_000): Promise<void> {
@@ -114,6 +149,7 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
 
   beforeAll(async () => {
     library = realpathSync(mkdtempSync(join(SCRATCH, 'library-')));
+    mkdirSync(join(library, '.no-volumes'), { recursive: true });
     const runEngine = async (args: string[]): Promise<EngineResult> => {
       const proc = Bun.spawn([process.execPath, join(REPO, 'src', 'cli.ts'), ...args], {
         cwd: REPO,
@@ -121,7 +157,13 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
         // A scratch library, and a settings folder under it that is never
         // made, so the engine reads no settings at all (the capture tool's
         // own arrangement). process.env carries the Calibre guard on.
-        env: { ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.layout-app-settings') },
+        env: {
+          ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.layout-app-settings'),
+          // No real reader, ever: an empty mount parent, and a reMarkable
+          // address nothing listens on.
+          SCREEPUB_VOLUME_ROOTS: join(library, '.no-volumes'),
+          SCREEPUB_REMARKABLE_ENDPOINT: 'http://127.0.0.1:9',
+        },
       });
       running.add(proc);
       try {
@@ -195,7 +237,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           firstTab: box(${q('.tabs [role="tab"]')}), foot: box(${q('.rev-foot')}),
         };
       })()`);
-      const convert = await p.evaluate<Box>(`(() => { ${BOX} return box(${q('#surface-convert')}); })()`);
+      await until(p, `${q('#surface-convert .device-card')}`, 'the device cards');
+      const cards = await p.evaluate<ResultBox>(RESULT);
 
       await tab('read');
       await until(p, `${q('#surface-read .reader.index-open .scene-rail button')}`, 'the open scene index');
@@ -206,6 +249,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           rail: box(rail), stage: box(${q('#surface-read .script-stage')}),
           frame: box(${q('#surface-read .script-frame')}),
           railShown: getComputedStyle(rail).visibility === 'visible' && getComputedStyle(rail).opacity === '1',
+          toggle: box(${q('#surface-read .read-head .index-toggle')}),
+          send: box(${q('#surface-read .read-head .read-send')}),
         };
       })()`);
 
@@ -214,7 +259,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
       await p.evaluate('window.scrollTo(0, 0)');
       await p.evaluate(twoFrames);
       const before = await p.evaluate<Pick<Measured['tune'],
-        'split' | 'knobs' | 'preview' | 'previewFrame' | 'position' | 'stickyTop' | 'rem' | 'innerHeight'>>(`(() => { ${BOX}
+        'split' | 'knobs' | 'preview' | 'previewFrame' | 'position' | 'stickyTop' | 'rem' | 'innerHeight'
+        | 'heading' | 'send' | 'sendClass'>>(`(() => { ${BOX}
         const preview = ${q('#surface-tune .tune-preview')};
         const style = getComputedStyle(preview);
         return {
@@ -223,6 +269,8 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           position: style.position, stickyTop: parseFloat(style.top) || 0,
           rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
           innerHeight: window.innerHeight,
+          heading: box(${q('#surface-tune .tune-head .slug')}), send: box(${q('#surface-tune .tune-head .tune-send')}),
+          sendClass: ${q('#surface-tune .tune-head .tune-send')}.className,
         };
       })()`);
       // Far enough that an unpinned preview would have gone above its pinned
@@ -239,7 +287,19 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
       })()`);
       await p.evaluate('window.scrollTo(0, 0)');
 
-      measured.set(size.name, { frame, convert, read, tune: { ...before, ...after, scrolledBy } });
+      measured.set(size.name, { frame, cards, calm: cards, read, tune: { ...before, ...after, scrolledBy } });
+    }
+
+    // The calm screen: the Kobo card pressed once, then every size again.
+    await tab('convert');
+    await p.evaluate(`${q('#surface-convert .device-card[data-key="kobo"]')}.click()`);
+    await until(p, `${q('#surface-convert .calm .btn-brad')}`, 'the calm screen’s brass button');
+    for (const size of SIZES) {
+      await viewport(size.width, size.height);
+      await p.evaluate('window.scrollTo(0, 0)');
+      await p.evaluate(twoFrames);
+      const calm = await p.evaluate<ResultBox>(RESULT);
+      measured.set(size.name, { ...measured.get(size.name)!, calm });
     }
   }, 180_000);
 
@@ -259,6 +319,16 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
     const sheetCentre = sheetLeft + size.sheet.width / 2;
 
     describe(`at ${size.name}`, () => {
+      test('Settings: Send is a quiet word on the heading’s line, to its right, not a box under it', () => {
+        const { heading, send, sendClass } = get(size.name).tune;
+        const { toggle } = get(size.name).read;
+        expect(sendClass.split(' ')).toContain('btn-quiet');
+        near(send.top, heading.top, 'send top vs heading top', 2);
+        // No taller than Read's quiet Hide scenes.
+        expect(send.height).toBeLessThanOrEqual(toggle.height + PX);
+        expect(send.left - heading.right).toBeGreaterThanOrEqual(16);
+      });
+
       test('the viewport is the size asked for', () => {
         expect(get(size.name).frame.vw).toBe(size.width);
       });
@@ -284,13 +354,17 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
         near(foot.right, sheetRight, 'foot right');
       });
 
-      test('Convert keeps a column of at most 820, centred in the block', () => {
-        const convert = get(size.name).convert;
-        near(convert.width, Math.min(CONVERT_COLUMN, size.sheet.width), 'convert width');
-        near(convert.left + convert.width / 2, sheetCentre, 'convert centre');
-      });
-
       if (!size.folded) {
+        test('the result: a 400 page at the left of the pair, the panel 32 to its right, the pair centred in the block', () => {
+          for (const r of [get(size.name).cards, get(size.name).calm]) {
+            near(r.page.width, RESULT_PAGE, 'page width');
+            near(r.side.left, r.page.right + GAP, 'panel left');
+            expect(r.side.width).toBeLessThanOrEqual(RESULT_PANEL + PX);
+            near(r.page.top, r.side.top, 'page top vs panel top');
+            near(r.page.left - sheetLeft, sheetRight - r.side.right, 'room left of the pair vs right of it');
+          }
+        });
+
         test('Read: a 218 index slot at the block’s left, then the 706 script beside it', () => {
           const { rail, stage, frame, railShown } = get(size.name).read;
           expect(railShown).toBe(true);
@@ -300,6 +374,13 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           near(stage.width, SCRIPT_COLUMN, 'script width');
           near(frame.width, SCRIPT_COLUMN, 'script frame width');
           near(stage.top, rail.top, 'script top vs index top');
+        });
+
+        test('Read: Send is a quiet word in the head’s row, a step after Hide scenes, not a box beside it', () => {
+          const { toggle, send } = get(size.name).read;
+          near(send.top, toggle.top, 'send top vs hide scenes top', 2);
+          expect(send.height).toBeLessThanOrEqual(toggle.height + PX);
+          expect(send.left - toggle.right).toBeGreaterThanOrEqual(16);
         });
 
         test('Settings: a 420 column, the preview filling the rest of the block', () => {
@@ -328,6 +409,14 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           expect(t.previewFrameAfter.bottom).toBeGreaterThan(t.innerHeight - 6 * t.rem);
         });
       } else {
+        test('the result under the fold: the panel first, the page under it, both centred', () => {
+          for (const r of [get(size.name).cards, get(size.name).calm]) {
+            expect(r.side.bottom).toBeLessThanOrEqual(r.page.top + PX);
+            near(r.side.left + r.side.width / 2, sheetCentre, 'panel centre');
+            near(r.page.left + r.page.width / 2, sheetCentre, 'page centre');
+          }
+        });
+
         test('Read: under the fold the index stacks above the script, which takes the block', () => {
           const { rail, stage, railShown } = get(size.name).read;
           expect(railShown).toBe(true);
@@ -348,6 +437,31 @@ describe.skipIf(!HAVE_CHROME)(HAVE_CHROME ? TITLE : `${TITLE} (skipped: no Chrom
           near(t.previewAfter.top, t.preview.top - t.scrolledBy, 'preview top after scrolling');
         });
       }
+
+      test('nothing on the result runs off the side, and every card and the brass button sit inside the panel', () => {
+        for (const r of [get(size.name).cards, get(size.name).calm]) {
+          expect(r.overflowX).toBe(false);
+          for (const c of r.cards) {
+            expect(c.left).toBeGreaterThanOrEqual(r.side.left - PX);
+            expect(c.right).toBeLessThanOrEqual(r.side.right + PX);
+          }
+        }
+        // Six cards on the first run, none once one is chosen.
+        expect(get(size.name).cards.cards.length).toBe(6);
+        expect(get(size.name).calm.cards.length).toBe(0);
+        const brass = get(size.name).calm.brass;
+        expect(brass).not.toBeNull();
+        expect(brass!.left).toBeGreaterThanOrEqual(get(size.name).calm.side.left - PX);
+        expect(brass!.right).toBeLessThanOrEqual(get(size.name).calm.side.right + PX);
+      });
+
+      test('the first page opens on its first scene with room above it, not flush against the frame', () => {
+        for (const r of [get(size.name).cards, get(size.name).calm]) {
+          expect(r.sceneTop).not.toBeNull();
+          expect(r.sceneTop!).toBeGreaterThanOrEqual(12);
+          expect(r.sceneTop!).toBeLessThanOrEqual(48);
+        }
+      });
     });
   }
 

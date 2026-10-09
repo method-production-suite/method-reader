@@ -27,8 +27,10 @@ size and still holds its shape.
 ## What it does
 
 - **Drop a PDF, get a clean e-book.** Nothing to set up first.
-- **Send it to your reader.** Plug in a Kindle and it copies over in the right
-  format, or save a copy and email it.
+- **Send it to your reader, straight from the result.** Say once what you
+  read on, and one button does the rest: plug in a Kindle and it copies over
+  in the right format, then offers to eject it. Every other way to send, and
+  every file type Screepub makes, is under Other ways.
 - **Look before you send.** A built-in reader shows the script as the device
   will, and the Settings page changes margins, spacing and page numbers live.
   "Use these for new scripts" makes your choices the starting point for every
@@ -45,7 +47,7 @@ size and still holds its shape.
   </picture>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/screens/result-dark.png">
-    <img src="assets/screens/result-light.png" alt="The same window after converting Field Station, an invented script: its title, page and scene counts, and a Send to a reader button" width="46%">
+    <img src="assets/screens/result-light.png" alt="The same window after converting Field Station, an invented script: its title, its first page, and the question of what you read on" width="46%">
   </picture>
 </p>
 
@@ -66,13 +68,17 @@ emailed to your Kindle, or copied over USB as KFX, keeps a scene heading and a
 character name on the same page as the line that follows. AZW3 and MOBI can
 strand one at the foot of a page, and so can Apple Books. KFX needs three free
 tools on your computer (Calibre, Amazon's Kindle Previewer and the KFX Output
-plugin); the Send page lists what is missing and installs the plugin for you.
+plugin); Other ways, on the result screen, lists what is missing and installs
+the plugin for you.
 A newer Kindle that never shows up as a drive speaks a protocol your computer
 does not mount: see [Emailing scripts to your Kindle](docs/send-to-kindle.md).
 
 **Own a Kobo, a tolino or a reMarkable?** A five-minute report either way is
-the most useful thing you can send:
-[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
+the most useful thing you can send. On the result screen, that reader's
+asterisk opens a note ending in **It worked** and **It did not work**; press
+one, or
+[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose)
+to say more.
 
 <p align="center">
   <picture>
@@ -135,13 +141,20 @@ Screepub reaches the network only when you ask it to:
   Send to Kindle page and its Kindle settings page, and the Calibre and
   Kindle Previewer download pages.
 - **Installing the KFX plugin**: fetched from Calibre's own plugin index.
+- **Screepub's request service**, only when you press **Send** in **My device
+  isn't here** or answer **It worked** or **It did not work** beside an
+  asterisk. It carries the device's name (or which reader and your answer),
+  the app's version and your platform, and nothing else. The service stores
+  only counts and the day: never your address or anything made from it.
+  Cloudflare, which runs it, sees your address as any website's host does,
+  and uses it to allow five requests a minute.
 - **Updates, only if you say yes.** The window asks once; with your yes, it
   checks GitHub at most once a day, and **Check for updates** checks once.
   An update downloads only when you choose to install it, and its signature
   is checked before anything is replaced. Self-update is Mac only.
 - **The Windows installer** may fetch Microsoft's WebView2 runtime once.
 
-On a Mac the Send page can also hand a book to another app and stop there:
+On a Mac the result screen can also hand a book to another app and stop there:
 Amazon's Send to Kindle app, Apple Books (which syncs through iCloud if you
 use it), or a Mail message that goes nowhere until you send it.
 

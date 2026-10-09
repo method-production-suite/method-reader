@@ -19,6 +19,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, sep } from 'node:path';
+import { copyCalibreConfig, realCalibreConfig } from '../calibre-config';
 import { type Browser, settles } from './cdp';
 import { makeHandler, type EngineResult } from './server';
 import { type Shot, framedSize, outputsFor, writeIfChanged } from './shots';
@@ -48,12 +49,22 @@ export interface RunOptions {
   engine: string[];
   /** Where the pictures go: the repository, outside tests. */
   outDir: string;
-  /** Where the first-pass pictures are kept. Defaults to the OS temp folder. */
+  /** Where the first-pass pictures and the Calibre copy are kept. Defaults
+   *  to the OS temp folder. */
   tmp?: string;
+  /** The Calibre settings folder to COPY for the engine (never handed to it
+   *  itself). Defaults to the one Calibre would use: defaultCalibreConfig. */
+  calibreConfig?: string;
   log: (line: string) => void;
   /** Handed the run's cleanup before anything is created, so a signal
    *  handler can run it. Safe to call more than once. */
   onCleanup?: (cleanup: () => Promise<string[]>) => void;
+}
+
+/** The Calibre settings folder this machine's Calibre would use, by
+ *  Calibre's own rule (tools/calibre-config.ts). The run copies it. */
+export function defaultCalibreConfig(env: NodeJS.ProcessEnv, os: NodeJS.Platform): string {
+  return realCalibreConfig(env, os);
 }
 
 /** The subset of a Bun subprocess the cleanup needs. */
@@ -151,7 +162,9 @@ function emptyLibrary(library: string): void {
   }
 }
 
-function engineRunner(engine: string[], library: string, running: Set<Running>, closing: () => boolean) {
+function engineRunner(
+  engine: string[], library: string, calibre: string, running: Set<Running>, closing: () => boolean,
+) {
   return async (args: string[]): Promise<EngineResult> => {
     // Once cleanup has begun, no engine starts: cleanup stops the engines it
     // knows about, and one started after that would outlive it and make the
@@ -159,6 +172,15 @@ function engineRunner(engine: string[], library: string, running: Set<Running>, 
     // server turns into a 500.
     if (closing()) return { code: null, stdout: '', stderr: 'capture: cleaning up, so no new engine calls' };
     let proc;
+    // Made before every call, not once: emptyLibrary() clears the library
+    // between shots. A missing root lists nothing too (volumes.ts skips it),
+    // but an empty folder is the arrangement the tests pin.
+    const noVolumes = join(library, '.no-volumes');
+    try {
+      mkdirSync(noVolumes, { recursive: true });
+    } catch (e) {
+      return { code: null, stdout: '', stderr: `capture: could not make ${noVolumes}: ${messageOf(e)}` };
+    }
     try {
       proc = Bun.spawn([...engine, ...args], {
         stdin: 'ignore',
@@ -168,10 +190,24 @@ function engineRunner(engine: string[], library: string, running: Set<Running>, 
         // otherwise become the base under every conversion this run makes,
         // which means the pictures would drift with whatever the developer
         // running this tool last chose in their own app settings. A folder
-        // under the SCRATCH library that this run never creates or writes
-        // to reads back as no settings at all, the same guarantee the test
-        // suite's own SCREEPUB_CONFIG_DIR gives it.
-        env: { ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.capture-app-settings') },
+        // under the SCRATCH library, cleared with it before every shot,
+        // reads back as no settings at all, the same guarantee the test
+        // suite's own SCREEPUB_CONFIG_DIR gives it. The only write the gate
+        // lets into it is a card's reader device.
+        env: {
+          ...process.env, SCREEPUB_LIBRARY: library, SCREEPUB_CONFIG_DIR: join(library, '.capture-app-settings'),
+          // No real reader, ever: an empty mount parent, and a reMarkable
+          // address nothing listens on.
+          SCREEPUB_VOLUME_ROOTS: noVolumes,
+          SCREEPUB_REMARKABLE_ENDPOINT: 'http://127.0.0.1:9',
+          // The result screen's routes and Kindle-file check probe Calibre
+          // and the KFX plugin, and Calibre run against its real settings
+          // folder rewrites files there (gui.json, 0.7.3 QA). A scratch
+          // COPY made for this run: the plugin stays visible, so the
+          // pictures say what this machine would, and the real folder is
+          // never handed to anything.
+          CALIBRE_CONFIG_DIRECTORY: calibre,
+        },
       });
     } catch (e) {
       return { code: null, stdout: '', stderr: `capture: could not start the engine: ${messageOf(e)}` };
@@ -219,6 +255,7 @@ export async function runCapture(o: RunOptions): Promise<void> {
   const top = claimLibrary(o.library);
   const running = new Set<Running>();
   let passOne: string | null = null;
+  let calibreScratch: string | null = null;
   let server: ReturnType<typeof Bun.serve> | null = null;
   let browser: Browser | null = null;
 
@@ -247,6 +284,9 @@ export async function runCapture(o: RunOptions): Promise<void> {
     await step('remove the first-pass pictures', () => {
       if (passOne !== null) rmSync(passOne, { recursive: true, force: true });
     });
+    await step('remove the copy of Calibre\'s settings', () => {
+      if (calibreScratch !== null) rmSync(calibreScratch, { recursive: true, force: true });
+    });
     await step(`remove the folders it made above ${o.library}`, () => removeMadeParents(o.library, top));
     return errors;
   })());
@@ -255,6 +295,9 @@ export async function runCapture(o: RunOptions): Promise<void> {
   let failure: { error: unknown } | null = null;
   try {
     passOne = mkdtempSync(join(o.tmp ?? tmpdir(), 'screepub-capture-'));
+    calibreScratch = mkdtempSync(join(o.tmp ?? tmpdir(), 'screepub-capture-calibre-'));
+    const calibre = copyCalibreConfig(
+      o.calibreConfig ?? defaultCalibreConfig(process.env, process.platform), calibreScratch);
     const token = crypto.randomUUID();
     const refused: string[] = [];
     const failed: string[] = [];
@@ -276,7 +319,7 @@ export async function runCapture(o: RunOptions): Promise<void> {
     const host = `127.0.0.1:${server.port}`;
     handle = makeHandler({
       repoDir: o.repoDir, passOne, token, library: o.library, demoPdf: o.demoPdf, host,
-      runEngine: engineRunner(o.engine, o.library, running, () => closing), refused, failed, notFound,
+      runEngine: engineRunner(o.engine, o.library, calibre, running, () => closing), refused, failed, notFound,
     });
     const base = `http://${host}`;
     const serverFailure = () => (serverErrors.length === 0 ? null : `the page server failed: ${serverErrors.join('; ')}`);

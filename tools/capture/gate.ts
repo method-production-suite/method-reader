@@ -19,6 +19,12 @@
 // names; the rest of the refused cases are calls no argv builder makes at
 // all (a missing constant flag, an unknown verb). Either way the gate is
 // checked against the real contract, not a copy of it.
+//
+// Besides the conversion itself it allows the result screen's reads: the
+// devices poll, the demo book's routes and Kindle check, and the one write
+// a card makes (the reader's device, into the capture's scratch config).
+// Every one of them lists or reads; nothing that copies, sends, builds or
+// ejects gets through, and run.ts pins the device seams at empty places.
 
 import { isAbsolute, resolve, sep } from 'node:path';
 // @ts-expect-error -- plain JS module, no types
@@ -58,8 +64,25 @@ export function gateEngineCall(args: readonly string[], ctx: GateContext): GateA
   // The Convert page's library line (parity piece C) reads the app settings
   // every time the drop area draws. The READ only, whole: argv.appSettings()
   // with no --set writes nothing, and the capture points SCREEPUB_CONFIG_DIR
-  // at a scratch folder besides. Any --set is a write and stays refused.
+  // at a scratch folder besides. The one write allowed is the reader's
+  // device, below; any other --set is refused.
   if (same(args, argv.appSettings())) return ALLOW;
+
+  // The result screen's device poll and its one-off full listing. The
+  // capture points SCREEPUB_VOLUME_ROOTS at an empty scratch folder and the
+  // reMarkable at a closed local port (run.ts), so these list nothing real.
+  if (same(args, argv.devices()) || same(args, argv.devices({ quick: true }))) return ALLOW;
+
+  // A card chosen on the result screen: written into the capture's own
+  // scratch config folder, and only the reader's device, by name.
+  for (const kind of ['kindle', 'apple', 'kobo', 'tolino', 'remarkable']) {
+    if (same(args, argv.readerDevice(kind))) return ALLOW;
+  }
+
+  // Read-only questions about the demo book: its routes and its Kindle file.
+  if (first === 'routes' && inside(args[1], ctx.library)
+    && (same(args, argv.routes(args[1])) || same(args, argv.routes(args[1], { quick: true })))) return ALLOW;
+  if (first === 'export' && inside(args[1], ctx.library) && same(args, argv.kindleCheck(args[1]))) return ALLOW;
 
   if (
     first === 'settings' &&

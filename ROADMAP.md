@@ -21,11 +21,6 @@ see [Influencing this list](#influencing-this-list).
   are greyscale, so a colour image reads as black and white on a Kindle, and
   a script padded with full-page photographs makes a file too large to email
   to a `@kindle.com` address.
-- **Sending from the Convert page.** Sending a book is its own Send tab
-  today. Folding it into Convert puts "send it to my reader" right beside the
-  book you just made.
-- **Eject after a USB copy.** After copying a book to a reader, offer to
-  eject it, so it can be unplugged safely without a trip to the file manager.
 - **A way to report problems without a GitHub account.** Every feedback path
   assumes one today, which excludes most of the people Screepub is built for.
 - **Keeping `pdfjs-dist` current.** It parses untrusted PDFs, so it is the
@@ -41,7 +36,7 @@ page.
 
 **A library: seeing the books you have made.** The window writes every
 conversion into the library folder and offers no way to look at what is in
-there: its tabs are Convert, Read, Settings and Send. A library view would
+there: its tabs are Convert, Read and Settings. A library view would
 list your books, reopen one without converting its PDF again, and be the
 obvious home for each script's settings.
 

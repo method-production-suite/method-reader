@@ -6,12 +6,12 @@
 // `bun tools/capture-screens.ts`; /release does not call it yet.
 import { afterAll, describe, test, expect } from 'bun:test';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+import { join, resolve, sep } from 'node:path';
 import type { Browser } from '../tools/capture/cdp';
 import { gateEngineCall } from '../tools/capture/gate';
 import { captureIndex } from '../tools/capture/page';
-import { CaptureError, MARKER, claimLibrary, cleanupErrorsOf, runCapture, type RunOptions } from '../tools/capture/run';
+import { CaptureError, MARKER, claimLibrary, cleanupErrorsOf, defaultCalibreConfig, runCapture, type RunOptions } from '../tools/capture/run';
 import { makeHandler, type EngineResult } from '../tools/capture/server';
 import { FRAME_PAD, SHOTS, framedSize, outputsFor, writeIfChanged } from '../tools/capture/shots';
 // @ts-expect-error -- plain JS module, no types
@@ -60,15 +60,39 @@ describe('the engine gate', () => {
     }
   });
 
-  test('it refuses anything that reaches devices or writes outside the demo library, naming it', () => {
+  test('it refuses copies, sends, builds and ejects, naming each', () => {
     for (const args of [
-      argv.devices(),
       argv.send(inLib('field-station.epub')),
       argv.export(inLib('field-station.epub'), { forFormat: 'kindle' }),
+      argv.eject('/Volumes/Kindle'),
+      argv.route('send-to-kindle', inLib('field-station.epub')),
     ]) {
       const a = gateEngineCall(args, ctx);
       expect(a.allow).toBe(false);
       if (!a.allow) expect(a.reason).toContain(args[0]!);
+    }
+  });
+
+  test('it allows the result screen’s reads: devices, the routes and the Kindle check for the demo book', () => {
+    const E = inLib('field-station.epub');
+    for (const args of [
+      argv.devices(), argv.devices({ quick: true }),
+      argv.routes(E), argv.routes(E, { quick: true }), argv.kindleCheck(E),
+      ...['kindle', 'apple', 'kobo', 'tolino', 'remarkable'].map((k) => argv.readerDevice(k)),
+    ]) {
+      const a = gateEngineCall(args, ctx);
+      expect(`${args.join(' ')}: ${a.allow}`).toBe(`${args.join(' ')}: true`);
+    }
+  });
+
+  test('but not for a book outside the library, nor any other app-settings write', () => {
+    for (const args of [
+      argv.routes('/Users/someone/elsewhere.epub'), argv.kindleCheck(`${ctx.library}-evil/x.epub`),
+      argv.readerDevice('nook'), argv.appSettings('{"readerDevice":"kobo","libraryPath":"/x"}'),
+      argv.export(inLib('field-station.epub'), { forFormat: 'epub', out: inLib('copy.epub') }),
+    ]) {
+      const a = gateEngineCall(args, ctx);
+      expect(`${args.join(' ')}: ${a.allow}`).toBe(`${args.join(' ')}: false`);
     }
   });
 
@@ -122,7 +146,7 @@ describe('the engine gate', () => {
     ['update-decision', ['update-decision', '--offered', '1', '--current', '0']],
     ['update-should-check', ['update-should-check', '--json']],
     ['extra args on version', ['--version', '--json', '--debug']],
-    ['kfx-status: the Send page is never captured', argv.kfxStatus()],
+    ['kfx-status: the KFX checklist is never captured', argv.kfxStatus()],
     ['kfx-install: a capture must never install anything', argv.kfxInstall()],
   ];
 
@@ -354,10 +378,10 @@ describe('the capture server', () => {
       expect((await s.engine(argv.version(), {})).status).toBe(403);
       expect((await s.engine(argv.version(), { 'x-capture-token': 'guess' })).status).toBe(403);
       expect(s.calls).toEqual([]);
-      const r = await s.engine(argv.devices());
+      const r = await s.engine(argv.eject('/Volumes/Kindle'));
       expect(r.status).toBe(403);
-      expect(await r.text()).toContain('devices --json');
-      expect(s.refused).toEqual([expect.stringContaining('devices --json')]);
+      expect(await r.text()).toContain('eject /Volumes/Kindle --json');
+      expect(s.refused).toEqual([expect.stringContaining('eject /Volumes/Kindle --json')]);
       expect(s.calls).toEqual([]);
       expect((await s.engine('not json')).status).toBe(400);
       expect((await s.engine([1, 2])).status).toBe(400);
@@ -681,6 +705,56 @@ describe('a capture run cleans up after itself, whatever happens', () => {
       // creates or writes into itself, so a read there finds nothing.
       expect(seen.configDir).toBe(join(s.library, '.capture-app-settings'));
     } finally { s.done(); }
+  });
+
+  test('the engine gets a scratch COPY of Calibre\'s settings, never the real folder', async () => {
+    // The result screen asks the engine for its routes and its Kindle file,
+    // and both probe Calibre and the KFX plugin. Calibre run against the
+    // real settings folder rewrites files in it (gui.json, 0.7.3 QA), so
+    // every engine call gets a copy, made fresh for the run, inside the
+    // run's temp folder and gone with it. A copy keeps the plugin visible.
+    const s = scene();
+    const real = join(s.tmp, '..', 'real-calibre');
+    mkdirSync(join(real, 'plugins'), { recursive: true });
+    writeFileSync(join(real, 'plugins', 'KFX Output.zip'), 'plugin');
+    try {
+      const seen: { said?: string } = {};
+      const ENGINE = ['/bin/sh', '-c', 'printf "%s|" "$CALIBRE_CONFIG_DIRECTORY"; ls "$CALIBRE_CONFIG_DIRECTORY/plugins"'];
+      const boom = new Error('one engine call is enough for this test');
+      const browser: Browser = {
+        version: 'FakeChrome/1.0',
+        async capture({ url }) {
+          if (!url.includes('/capture/window.html')) return PNG;
+          const html = await (await fetch(url)).text();
+          const token = /"token":"([^"]+)"/.exec(html)![1]!;
+          const r = await fetch(new URL('/engine', url), {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-capture-token': token },
+            body: JSON.stringify({ args: argv.version() }),
+          });
+          seen.said = await r.text();
+          throw boom;
+        },
+        async close() {},
+      };
+      const shots = SHOTS.filter((x) => x.name === 'drop');
+      const err = await thrown(s.run({ shots, engine: ENGINE, calibreConfig: real, launch: async () => browser }));
+      expect(err).toBe(boom);
+      const [dir, listed] = (seen.said ?? '').split('|');
+      expect(dir).toBeTruthy();
+      expect(resolve(dir!)).not.toBe(resolve(real));
+      expect(resolve(dir!)).not.toBe(defaultCalibreConfig({}, process.platform));
+      expect(resolve(dir!).startsWith(resolve(s.tmp) + sep)).toBe(true);
+      expect(listed!.trim()).toBe('KFX Output.zip');
+      // Gone with the run, and the real folder untouched.
+      expect(readdirSync(s.tmp)).toEqual([]);
+      expect(readdirSync(join(real, 'plugins'))).toEqual(['KFX Output.zip']);
+    } finally { s.done(); }
+  });
+
+  test('untold, the folder copied is the one Calibre itself would use', () => {
+    expect(defaultCalibreConfig({}, 'darwin')).toBe(join(homedir(), 'Library', 'Preferences', 'calibre'));
+    expect(defaultCalibreConfig({ CALIBRE_CONFIG_DIRECTORY: '/x/cal' }, 'linux')).toBe('/x/cal');
   });
 
   test('a library the tool did not make is refused and left exactly as it was', async () => {

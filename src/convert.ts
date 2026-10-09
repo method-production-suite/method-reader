@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto';
 import { Fountain } from 'fountain-js';
 import { extractDocument } from './parser/extract';
+import { isFirstRealPage, pageParagraphs } from './parser/first-page';
 import { parseLines } from './parser/index';
 import type { ParsedScreenplay } from './parser/types';
 import { extractTitleMeta, toFountain, type TitleMeta } from './fountain/serialize';
@@ -47,9 +48,17 @@ export interface ConvertOptions {
   /**
    * Called as the conversion advances, so a caller can show determinate
    * progress instead of a spinner. `fraction` is 0..1 across the whole
-   * pipeline, not just the current stage.
+   * pipeline, not just the current stage. While pages are read, `reading`
+   * says which page has been reached and how many there are, for the
+   * window's "Reading page N of M" (spec decision 17).
    */
-  onProgress?: (stage: ConvertStage, fraction: number) => void;
+  onProgress?: (stage: ConvertStage, fraction: number, reading?: { page: number; pages: number }) => void;
+  /**
+   * Called at most once, as soon as the first page that is not a title page
+   * has been read, with that page's words as plain paragraphs (spec decision
+   * 17). A PDF only; never called if no page qualifies.
+   */
+  onFirstPage?: (page: number, paragraphs: string[]) => void;
 }
 
 /** The stages a caller can be told about, in the order they occur. */
@@ -113,9 +122,14 @@ export async function convertPdf(
 ): Promise<ConvertResult> {
   const warnings: string[] = [];
 
-  const { lines, pageCount, spacingRepairs } = await extractDocument(pdfBytes, undefined, (page, pages) =>
-    opts.onProgress?.('parse', (page / pages) * PARSE_SHARE),
-  );
+  let firstPageSent = false;
+  const { lines, pageCount, spacingRepairs } = await extractDocument(pdfBytes, undefined, (page, pages, pageLines, pageWidth) => {
+    if (opts.onFirstPage && !firstPageSent && pageLines && pageWidth && isFirstRealPage(pageLines, pageWidth)) {
+      firstPageSent = true;
+      opts.onFirstPage(page, pageParagraphs(pageLines));
+    }
+    opts.onProgress?.('parse', (page / pages) * PARSE_SHARE, { page, pages });
+  });
   if (lines.length < pageCount * MIN_LINES_PER_PAGE) {
     throw new ScannedPdfError(pageCount, lines.length);
   }

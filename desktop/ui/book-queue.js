@@ -3,7 +3,7 @@
 //
 // Three pages touch a script's library EPUB. The Settings page's save
 // rebuilds it in place (tune.js's reconvert), and converting the same PDF
-// again writes it afresh (convert.js): those WRITE it. The Send page builds
+// again writes it afresh (convert.js): those WRITE it. The send panel builds
 // the Kindle file from it, copies it, sends it and checks its date: those
 // only READ it, except the engine's own MOBI rung, which rewrites the EPUB in
 // place before it writes the .mobi beside it. Unordered, a send could start
@@ -27,7 +27,7 @@
 //
 // Two Kindle file exports of one book must not run at once either (both
 // would drive Kindle Previewer at the same scratch file), but that is a rule
-// about the Kindle FILE, not the book, and send.js keeps it on its own.
+// about the Kindle FILE, not the book, and send-panel.js keeps it on its own.
 //
 // Pure: no Tauri, no DOM, nothing but promises, so tests drive it directly.
 
@@ -44,17 +44,19 @@ export const TURNS = {
   save: WRITE,
   // convert.js: the same PDF converted again writes the EPUB afresh.
   convert: WRITE,
-  // send.js: a Kindle file on the engine's own MOBI rung, which rewrites the
+  // send-panel.js: a Kindle file on the engine's own MOBI rung, which rewrites the
   // EPUB in place before it writes the .mobi beside it (Save a Kindle file,
   // Copy to a Kindle, and the save of it, on a computer without Calibre, or
   // before the page knows which rung this computer takes).
   'kindle-mobi': WRITE,
-  // send.js: a Kindle file Calibre builds from the EPUB, beside it (KFX,
-  // AZW3): the build the page starts as it opens, Save a Kindle file, Copy
-  // to a Kindle, and the save of it.
+  // send-panel.js: a Kindle file built beside the EPUB without touching it:
+  // the ladder's KFX or AZW3 (Calibre), the build the result starts as it
+  // appears and Copy to a Kindle; and every Save of a KFX, an AZW3 or a MOBI
+  // (`export --for <type>`, whose MOBI rung, unlike the ladder's, leaves the
+  // EPUB alone).
   //
   // Which of these two a Kindle export takes is read off the page's last
-  // `export --check` (send.js's kindleTurn()), not the engine's run itself,
+  // `export --check` (send-routes.js's kindleTurn()), not the engine's run itself,
   // so it can be out of date. Only one change turns a `kindle` reader into
   // a writer: Calibre's ebook-convert disappearing between that check and
   // the press (the window checks again on every focus return). A broken
@@ -64,13 +66,14 @@ export const TURNS = {
   // same .fountain and the same options it was built from, overlapping only
   // readers: the worst case is a reader copying an equivalent EPUB.
   kindle: READ,
-  // send.js: a reader that takes the EPUB as it is (the export that finds
+  // send-panel.js: a reader that takes the EPUB as it is (the export that finds
   // it, and the copy to a Kobo, a tolino or a reMarkable), and the copy of
   // any file to any reader, a Kindle's included.
   send: READ,
-  // send.js: Save the EPUB.
+  // send-panel.js: a Save of the EPUB or the Fountain (`export --for epub`,
+  // `--for fountain`), which copies the file where the Save box said.
   copy: READ,
-  // send.js: `export --check`, the Kindle file's date against the book's.
+  // send-panel.js: `export --check`, the Kindle file's date against the book's.
   check: READ,
 };
 

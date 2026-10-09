@@ -51,6 +51,8 @@ function sources(): string[] {
   return [
     ...new Glob('desktop/ui/*.js').scanSync(ROOT),
     ...new Glob('src/**/*.ts').scanSync(ROOT),
+    // The device-request service: what it answers, the window shows.
+    ...new Glob('services/**/*.ts').scanSync(ROOT),
   ].sort();
 }
 
@@ -68,6 +70,7 @@ describe('no em dash in any text a person reads', () => {
     const out = transpiler.transformSync(`// a ${EM_DASH} b\nexport const x: string = 'c ${EM_DASH} d';\n`);
     expect(out.split('\n').filter((line) => line.includes(EM_DASH))).toEqual([`export const x = "c ${EM_DASH} d";`]);
     expect(sources().length).toBeGreaterThan(50);
+    expect(sources()).toContain('services/device-requests/src/worker.ts');
   });
 
   test('every em dash in window and engine code is data on the allow-list, and nothing else', () => {

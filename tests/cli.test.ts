@@ -397,7 +397,11 @@ describe('cli --progress', () => {
     const result = JSON.parse(stdout);
     expect(result.ok).toBe(true);
 
-    const ticks = stderr.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).progress);
+    // Every stderr line is a progress event. The one 'page' event carries the
+    // first real page's text (tests/first-page.test.ts); the rest are ticks.
+    const events = stderr.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l).progress);
+    expect(events.filter((e) => e.stage === 'page').length).toBe(1);
+    const ticks = events.filter((e) => e.stage !== 'page');
     expect(ticks.length).toBeGreaterThan(0);
     for (const t of ticks) {
       expect(['parse', 'render']).toContain(t.stage);
@@ -405,10 +409,27 @@ describe('cli --progress', () => {
       expect(t.percent).toBeLessThanOrEqual(100);
     }
 
+    // A reading tick names the page it has reached and how many there are,
+    // for the window's "Reading page N of M" (spec decision 17).
+    const reading = ticks.filter((t) => t.stage === 'parse');
+    expect(reading.length).toBeGreaterThan(0);
+    for (const t of reading) {
+      expect(Number.isInteger(t.page)).toBe(true);
+      expect(t.page).toBeGreaterThanOrEqual(1);
+      expect(t.page).toBeLessThanOrEqual(t.pages);
+    }
+    expect(reading.at(-1).page).toBe(reading.at(-1).pages);
+
     // A bar that goes backwards is worse than no bar.
     const percents = ticks.map((t: { percent: number }) => t.percent);
     expect([...percents].sort((a, b) => a - b)).toEqual(percents);
     expect(percents.at(-1)).toBe(100);
+
+    // The book starts being built while the bar still says 85: that first
+    // render tick must be said, or the window keeps saying "Reading page M
+    // of M" until the book is done.
+    const firstRender = ticks.findIndex((t) => t.stage === 'render');
+    expect(ticks[firstRender].percent).toBeLessThan(100);
   }, 60000);
 
   test('is opt-in: no --progress means no stderr', async () => {

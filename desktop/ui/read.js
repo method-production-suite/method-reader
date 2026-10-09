@@ -32,6 +32,7 @@
 // pure exported function above the line, tested directly. Below the line is
 // drawing, which holds no rule of its own and rides on the live run.
 import { el, clear } from './dom.js';
+import { SEND_BOOK } from './device.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -336,7 +337,6 @@ let measured = false;
 let ticking = false;
 let resizing = false;
 let watching = null;
-let darkQuery = null;
 
 export function mount(node, context) {
   pane = node;
@@ -436,7 +436,8 @@ function draw() {
     el('div', { class: 'read-head' },
       el('h2', { class: 'read-title' }, script.title),
       script.author ? el('p', { class: 'read-by' }, `by ${script.author}`) : null,
-      indexButton),
+      indexButton,
+      sendButton('btn-quiet')),
   );
 
   rail = el('nav', { class: 'scene-rail', 'aria-label': 'Scenes', onkeydown: onRailKey });
@@ -491,8 +492,18 @@ function drawNotice(notice) {
         type: 'button',
         class: 'btn btn-outline',
         onclick: () => ctx.convertAgain(),
-      }, notice.way)),
+      }, notice.way),
+      // The notice says the book itself can still be sent.
+      sendButton('btn btn-outline')),
   );
+}
+
+/** Back to the result, where the book is sent from (main.js's sendBook).
+ *  Quiet in the head, beside Hide scenes; a box beside Convert it again. */
+function sendButton(look) {
+  return el('button', {
+    type: 'button', class: `${look} read-send`, onclick: () => ctx.sendBook?.(),
+  }, SEND_BOOK);
 }
 
 /** The frame has a document. Give it the sheet, the rail and the place. */
@@ -507,15 +518,9 @@ function dress() {
   // sections in it, so an empty body is the one that is not ours.
   if (doc.body === null || doc.body.childElementCount === 0) return;
 
+  // The theme is the device layer, and it changes when the desktop does:
+  // dressFrame() re-dresses every frame it dressed when that happens.
   adopt();
-  // The theme is the device layer, and the device layer changes when the
-  // desktop does. Re-adopting is the whole of it.
-  if (darkQuery === null) {
-    darkQuery = matchMedia('(prefers-color-scheme: dark)');
-    darkQuery.addEventListener('change', () => {
-      if (frame?.contentDocument) adopt();
-    });
-  }
 
   measure();
   buildRail(doc);
@@ -595,7 +600,36 @@ export function dressFrame(frame, engineCss) {
   const sheet = new win.CSSStyleSheet();
   sheet.replaceSync(sheetText(engineCss, tokens));
   doc.adoptedStyleSheets = [sheet];
+  followTheme(frame, engineCss);
   return true;
+}
+
+/** Every frame dressed here, with the sheet it was dressed in, so a change
+ *  of the desktop's theme re-dresses all of them: Read's page, the result's
+ *  first page and the Settings preview alike. A frame no longer in the
+ *  window is dropped at the next change, or the next dressing, rather than
+ *  dressed. */
+const dressed = new Map();
+let themeQuery = null;
+
+/** How many frames are being followed: for tests, which check that a frame
+ *  that has left the window is let go. */
+export const dressedCount = () => dressed.size;
+
+function followTheme(frame, engineCss) {
+  // Let go of frames that have left the window now too, not only at a theme
+  // change: every new result draws a new frame, and a desktop that never
+  // changes theme would otherwise keep every one of them.
+  for (const each of [...dressed.keys()]) if (each.isConnected === false) dressed.delete(each);
+  dressed.set(frame, engineCss);
+  if (themeQuery !== null || typeof matchMedia !== 'function') return;
+  themeQuery = matchMedia('(prefers-color-scheme: dark)');
+  themeQuery.addEventListener('change', () => {
+    for (const [each, css] of [...dressed]) {
+      if (each.isConnected === false) dressed.delete(each);
+      else dressFrame(each, css);
+    }
+  });
 }
 
 function adopt() {

@@ -19,8 +19,10 @@ import { getDocument, OPS } from 'pdfjs-dist/build/pdf.mjs';
  */
 /// Called once per page as extraction advances. `pages` is the number of
 /// pages this run will actually visit (so it honors `maxPages`), which makes
-/// `page / pages` a usable fraction from the very first tick.
-export type PageProgress = (page: number, pages: number) => void;
+/// `page / pages` a usable fraction from the very first tick. `lines` is that
+/// page's grouped lines and `pageWidth` its width in points, so a caller can
+/// look at a page as soon as it is read (the first-page preview does).
+export type PageProgress = (page: number, pages: number, lines?: RawLine[], pageWidth?: number) => void;
 
 export async function extractDocument(
   pdfBytes: Uint8Array,
@@ -50,7 +52,7 @@ export async function extractDocument(
     allLines.push(...pageLines);
     // After the work, not before: a tick means "page N is done", so the
     // fraction never claims progress the parser has not actually made.
-    onProgress?.(pageNum, lastPage);
+    onProgress?.(pageNum, lastPage, pageLines, viewport.width);
   }
 
   // Dominant font is a DOCUMENT fact, so this runs once, after every page:

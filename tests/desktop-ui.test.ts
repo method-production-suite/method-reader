@@ -230,6 +230,12 @@ describe('the engine contract lives in exactly one file', () => {
       convertForced: argv.convert('/s/script.pdf', { force: true, optionsJson: '{"a":1}' }),
       reconvert: argv.reconvert('/s/script.fountain', '/s/script.epub', '{"a":1}'),
       devices: argv.devices(),
+      devicesQuick: argv.devices({ quick: true }),
+      eject: argv.eject('/Volumes/Kindle'),
+      exportOut: argv.export('/s/script.epub', { forFormat: 'kfx', fountain: '/s/script.fountain', optionsJson: '{"a":1}', out: '/s/out.kfx' }),
+      readerDevice: argv.readerDevice('kobo'),
+      animatePage: argv.animatePage(false),
+      typewriterSounds: argv.typewriterSounds(true),
       send: argv.send('/s/script.epub'),
       sendTo: argv.send('/s/script.epub', 'kindle-1'),
       settings: argv.settings('/s/script.fountain'),
@@ -255,8 +261,9 @@ describe('the engine contract lives in exactly one file', () => {
     };
     // Every builder the interface promises is exercised above.
     expect(Object.keys(argv).sort()).toEqual(
-      ['appSettings', 'convert', 'devices', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
-        'kindleCheck', 'reconvert', 'reveal', 'route', 'routes', 'send', 'settings', 'version'].sort(),
+      ['animatePage', 'appSettings', 'convert', 'devices', 'eject', 'emailSetup', 'export', 'kfxInstall', 'kfxStatus',
+        'kindleCheck', 'readerDevice', 'reconvert', 'reveal', 'route', 'routes', 'send', 'settings',
+        'typewriterSounds', 'version'].sort(),
     );
     for (const [name, args] of Object.entries(built)) {
       expect(`${name} has --json: ${args.includes('--json')}`).toBe(`${name} has --json: true`);
@@ -266,6 +273,27 @@ describe('the engine contract lives in exactly one file', () => {
         `${name} args: `,
       );
     }
+  });
+
+  test('the send panel’s new calls are spelled once, here', async () => {
+    const { argv } = await import(join(UI, 'app.js'));
+    expect(argv.devices()).toEqual(['devices', '--json']);
+    expect(argv.devices({ quick: true })).toEqual(['devices', '--json', '--quick']);
+    expect(argv.eject('/Volumes/Kindle')).toEqual(['eject', '/Volumes/Kindle', '--json']);
+    expect(argv.export('/s/b.epub', { forFormat: 'fountain', fountain: '/s/b.fountain', out: '/o/b.fountain' }))
+      .toEqual(['export', '/s/b.epub', '--json', '--for', 'fountain', '--fountain', '/s/b.fountain', '--out', '/o/b.fountain']);
+    // No --out unless asked: the build-ahead and the device send keep their shape.
+    expect(argv.export('/s/b.epub', { forFormat: 'kindle' })).not.toContain('--out');
+    expect(argv.readerDevice('kobo')).toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kobo"}']);
+    expect(argv.readerDevice(null)).toEqual(['app-settings', '--json', '--set', '{"readerDevice":null}']);
+  });
+
+  test('the page’s two switches are written the way the reader’s device is', async () => {
+    const { argv } = await import(join(UI, 'app.js'));
+    expect(argv.animatePage(false)).toEqual(['app-settings', '--json', '--set', '{"animatePage":false}']);
+    expect(argv.animatePage(true)).toEqual(['app-settings', '--json', '--set', '{"animatePage":true}']);
+    expect(argv.typewriterSounds(true)).toEqual(['app-settings', '--json', '--set', '{"typewriterSounds":true}']);
+    expect(argv.typewriterSounds(false)).toEqual(['app-settings', '--json', '--set', '{"typewriterSounds":false}']);
   });
 
   test('the Kindle file check is export for kindle with --check, and nothing else', async () => {
@@ -313,7 +341,7 @@ describe('the engine contract lives in exactly one file', () => {
   });
 
   test('the email setup builder is the one engine call behind "Open Amazon’s page", with no book on it', async () => {
-    // The Send page's email row offers Amazon's Personal Document Settings
+    // The send panel's email row offers Amazon's Personal Document Settings
     // page (where the approved-sender list lives). The ENGINE opens it, by a
     // key, so the window names no URL and needs no opener grant for it; the
     // page has nothing to do with this script, so no book path rides along.
@@ -410,6 +438,7 @@ describe('the Convert surface', () => {
     platform?: string;
     script?: Record<string, unknown> | null;
     ask?: { should: () => boolean; answer: (on: boolean) => void };
+    state?: Record<string, unknown>;
   } = {}) {
     page = fakePage({ respond: options.engine ?? (() => HOLD), platform: options.platform });
     copies += 1;
@@ -419,10 +448,11 @@ describe('the Convert surface', () => {
     const went: string[] = [];
     let restored = 0;
     const ctx = {
-      state: { script: options.script ?? null, reducedMotion: true },
+      state: { script: options.script ?? null, reducedMotion: true, ...options.state } as Record<string, any>,
       goTo: (id: string) => went.push(id),
       restoreFocus: () => { restored += 1; },
       scriptChanged: () => {},
+      convertAgain: () => {},
       updates: options.ask === undefined
         ? undefined
         : { shouldAsk: options.ask.should, answer: options.ask.answer },
@@ -540,13 +570,83 @@ describe('the Convert surface', () => {
     expect(tauri.listening('engine-line')).toBe(0);
   });
 
-  test('Show in Finder asks the engine to show this book, and says only what went wrong', async () => {
-    const { convert, pane, tauri } = await mountConvert({
-      engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+  test('the result is a page and a panel: "<Title> is ready", one line of counts, the panel, three quiet links', async () => {
+    const { convert, pane } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    expect(pane.dataset.state).toBe('done');
+    expect(pane.querySelector('.result .result-page')).not.toBeNull();
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Field Station is ready');
+    expect(pane.querySelector('.result .book-count')!.textContent).toBe('18 pages, 12 scenes');
+    expect(pane.querySelector('.result .send-panel')).not.toBeNull();
+    expect(pane.querySelectorAll('.result .asides button').map((b) => b.textContent)).toEqual(['Read it', 'Settings', 'Convert another']);
+    expect(pane.querySelectorAll('button').some((b) => b.textContent === 'Send to a reader')).toBe(false);
+    // The "(by author)" line went; the engine's warnings stay under the counts.
+    expect(pane.textContent).not.toContain('A. Writer');
+  });
+
+  test('the result’s page is the book’s own first page, in a frame nothing inside can run in', async () => {
+    const { convert, pane } = await mountConvert({
+      engine: (a) => (a[0].endsWith('.pdf')
+        ? { ...converted(a[0]), previewHtml: '<?xml version="1.0"?><html><head><style>p{}</style></head><body><section class="scene"><p>INT. FIELD STATION</p></section></body></html>' }
+        : HOLD),
     });
     await convert.convertPath('/s/Field Station.pdf');
+    const frame = pane.querySelector('.result-page iframe.result-page-frame')!;
+    expect(frame.getAttribute('sandbox')).toBe('allow-same-origin');
+    expect(frame.getAttribute('tabindex')).toBe('-1');
+    expect(pane.querySelector('.result-page')!.getAttribute('aria-hidden')).toBe('true');
+    // The stylesheet comes out (the CSP will not run it), the page goes in.
+    const doc = frame.getAttribute('srcdoc')!;
+    expect(doc).toStartWith('<!doctype html>');
+    expect(doc).toContain('INT. FIELD STATION');
+    expect(doc).not.toContain('<style>');
+  });
+
+  test('showResult draws the open book’s result again after Convert another, without converting', async () => {
+    const { convert, pane, tauri } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    pane.button('Convert another').click();
+    expect(pane.dataset.state).toBe('idle');
+    convert.showResult();
+    expect(pane.dataset.state).toBe('done');
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Field Station is ready');
+    expect(tauri.calls.filter((c) => c.args[0].endsWith('.pdf')).length).toBe(1);
+  });
+
+  test('showResult on the result already up redraws nothing, so a copy in progress keeps its buttons', async () => {
+    const { convert, pane } = await mountConvert({ engine: (a) => (a[0].endsWith('.pdf') ? converted(a[0]) : HOLD) });
+    await convert.convertPath('/s/Field Station.pdf');
+    const panel = pane.querySelector('.send-panel');
+    const another = pane.button('Convert another');
+    convert.showResult();
+    expect(pane.querySelector('.send-panel')).toBe(panel);
+    expect(pane.button('Convert another')).toBe(another);
+  });
+
+  test('showResult with no book open, or mid-conversion, leaves the page alone', async () => {
+    const { convert, pane } = await mountConvert();
+    convert.showResult();
+    expect(pane.dataset.state).toBe('idle');
+    const going = convert.convertPath('/s/Field Station.pdf');
+    await settle();
+    convert.showResult();
+    expect(pane.dataset.state).toBe('working');
+    page!.tauri.callsTo('/s/Field Station.pdf')[0].answer(refused('scanned', 'No text.'));
+    await going;
+  });
+
+  test('Show in Finder asks the engine to show this book, and says only what went wrong', async () => {
+    // It sits at the foot of Other ways' Save a file now, under the panel's
+    // calm screen (a reader who chose a Kobo before).
+    const { convert, pane, tauri } = await mountConvert({
+      engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+      state: { readerDevice: 'kobo' },
+    });
+    await convert.convertPath('/s/Field Station.pdf');
+    pane.button('Other ways').click();
     const show = pane.button(convert.revealLabel('MacIntel'));
-    const note = () => pane.querySelectorAll('p.caption').at(-1)!;
+    expect(show.closest('section.other-ways')).not.toBeNull();
+    const note = () => pane.querySelector('.path-note')!.nextSibling!;
 
     show.click();
     const reveal = tauri.callsTo('reveal');
@@ -570,12 +670,13 @@ describe('the Convert surface', () => {
   test('a reveal answer that arrives after the screen moved on lands nowhere', async () => {
     const { convert, pane, tauri } = await mountConvert({
       engine: (args) => (args[0].endsWith('.pdf') ? converted(args[0]) : HOLD),
+      state: { readerDevice: 'kobo' },
     });
     await convert.convertPath('/s/First.pdf');
     pane.button(convert.revealLabel('MacIntel')).click();
     // Another script converts while the first reveal is still out.
     await convert.convertPath('/s/Second.pdf');
-    expect(pane.querySelector('.book-title')!.textContent).toBe('Second');
+    expect(pane.querySelector('.result-title')!.textContent).toBe('Second is ready');
     tauri.callsTo('reveal')[0].answer(refused('internal', 'Could not show First.'));
     await settle();
     expect(pane.visibleText).not.toContain('Could not show First.');
@@ -784,78 +885,43 @@ describe('the Convert surface', () => {
 
 describe('converting a PDF again takes its turn on the book it rewrites', () => {
   // A conversion writes the script's library EPUB afresh, the same file the
-  // Settings page's save rebuilds and the Send page's send copies, so it
+  // Settings page's save rebuilds and the send panel copies, so it
   // takes its turn on that book (book-queue.js). The window never works out
   // a library path itself: it knows a PDF's book from the engine's answer
   // the last time it converted it, and a PDF it has not converted has no
   // book anything here can be holding, so that one converts at once.
   //
-  // A stub document just big enough for dom.js and convert.js's drawing;
-  // the engine is a queue of unanswered calls the test answers itself.
-  class Node {
-    kids: Node[] = [];
-    parent: Node | null = null;
-    attrs = new Map<string, string>();
-    dataset: Record<string, string> = {};
-    className = '';
-    hidden = false;
-    disabled = false;
-    text = '';
-    constructor(readonly tag: string) {}
-    append(...nodes: (Node | string)[]) {
-      for (const n of nodes) {
-        const node = typeof n === 'string' ? Object.assign(new Node('#text'), { text: n }) : n;
-        node.parent = this;
-        this.kids.push(node);
-      }
-    }
-    get firstChild() { return this.kids[0] ?? null; }
-    removeChild(node: Node) { this.kids.splice(this.kids.indexOf(node), 1); node.parent = null; return node; }
-    get textContent(): string { return this.tag === '#text' ? this.text : this.kids.map((k) => k.textContent).join(''); }
-    set textContent(value: string) { this.kids = []; this.append(value); }
-    setAttribute(name: string, value: string) { this.attrs.set(name, value); }
-    getAttribute(name: string) { return this.attrs.get(name) ?? null; }
-    addEventListener() {}
-    querySelector() { return null; }
-    get classList() { return { toggle: () => true, contains: () => false, add: () => {}, remove: () => {} }; }
+  // The real convert.js on the fake page (tests/helpers/fake-dom.ts), with
+  // every engine call held for the test to answer: the result it draws now
+  // mounts the send panel, which needs a page that behaves like one.
+  let page: FakePage | null = null;
+  afterEach(async () => { await page?.close(); page = null; });
+  async function mounted(tag: string) {
+    page = fakePage();
+    const convert = await import(`${join(UI, 'convert.js')}?${tag}`);
+    const pane = page.pane();
+    pane.id = 'surface-convert';
+    convert.mount(pane, {
+      state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {}, convertAgain: () => {},
+    });
+    return { convert, pane, tauri: page.tauri };
   }
-  const g = globalThis as unknown as Record<string, unknown>;
-  afterEach(() => { delete g.window; delete g.document; delete g.CSSStyleSheet; });
+  const pdfCalls = (tauri: FakePage['tauri'], pdf?: string) =>
+    tauri.pending().filter((c) => c.args[1] === '--json' && c.args[0].endsWith('.pdf') && (pdf === undefined || c.args[0] === pdf));
 
   test('a PDF converted before waits for whatever holds its book; one never converted does not', async () => {
-    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const asked: { args: string[]; resolve: (stdout: string) => void }[] = [];
-    g.document = {
-      createElement: (tag: string) => new Node(tag),
-      createElementNS: (_ns: string, tag: string) => new Node(tag),
-      createTextNode: (value: string) => Object.assign(new Node('#text'), { text: value }),
-      adoptedStyleSheets: [],
-    };
-    g.CSSStyleSheet = class { replaceSync() {} };
-    g.window = {
-      __TAURI__: {
-        core: { invoke: (_cmd: string, { args }: { args: string[] }) => new Promise<string>((resolve) => asked.push({ args, resolve })) },
-        event: { listen: async () => () => {} },
-      },
-    };
-    const convert = await import(`${join(UI, 'convert.js')}?turns`);
+    const { convert, tauri } = await mounted('turns');
     const { inTurn } = await import(join(UI, 'book-queue.js'));
-    const ctx = { state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {} };
-    convert.mount(new Node('section'), ctx);
-    const conversions = () => asked.filter((call) => call.args[1] === '--json' && call.args[0].endsWith('.pdf'));
     const answer = async (pdf: string, epubPath: string) => {
-      const call = conversions().find((c) => c.args[0] === pdf)!;
-      asked.splice(asked.indexOf(call), 1);
-      call.resolve(JSON.stringify({ ok: true, title: 'Field Station', epubPath, fountainPath: epubPath.replace(/epub$/, 'fountain'), previewHtml: '' }));
-      await tick();
-      await tick();
+      pdfCalls(tauri, pdf)[0].answer({ ok: true, title: 'Field Station', epubPath, fountainPath: epubPath.replace(/epub$/, 'fountain'), previewHtml: '' });
+      await settle();
     };
     const BOOK = '/lib/field-station/Field Station.epub';
 
     // The first conversion: no book known, asked at once.
     const first = convert.convertPath('/s/Field Station.pdf');
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
     await answer('/s/Field Station.pdf', BOOK);
     await first;
 
@@ -865,19 +931,19 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
 
     // Another PDF has no book this window has touched: at once.
     const other = convert.convertPath('/s/Other.pdf');
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Other.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Other.pdf']);
     await answer('/s/Other.pdf', '/lib/other/Other.epub');
     await other;
 
     // The same PDF again rewrites the book the send holds: it waits.
     const again = convert.convertPath('/s/Field Station.pdf');
-    await tick();
-    expect(conversions()).toEqual([]);
+    await settle();
+    expect(pdfCalls(tauri)).toEqual([]);
     free();
     await sending;
-    await tick();
-    expect(conversions().map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
+    await settle();
+    expect(pdfCalls(tauri).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf']);
     await answer('/s/Field Station.pdf', BOOK);
     await again;
   });
@@ -885,46 +951,19 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
   test('while it waits its turn the read-out says what for, then "starting up" once it starts', async () => {
     // A conversion that waited out a half-minute Kindle build used to sit on
     // "starting up" the whole time, which reads as a stuck engine.
-    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
-    const asked: { args: string[]; resolve: (stdout: string) => void }[] = [];
-    g.document = {
-      createElement: (tag: string) => new Node(tag),
-      createElementNS: (_ns: string, tag: string) => new Node(tag),
-      createTextNode: (value: string) => Object.assign(new Node('#text'), { text: value }),
-      adoptedStyleSheets: [],
-    };
-    g.CSSStyleSheet = class { replaceSync() {} };
-    g.window = {
-      __TAURI__: {
-        core: { invoke: (_cmd: string, { args }: { args: string[] }) => new Promise<string>((resolve) => asked.push({ args, resolve })) },
-        event: { listen: async () => () => {} },
-      },
-    };
-    const convert = await import(`${join(UI, 'convert.js')}?waiting`);
+    const { convert, pane, tauri } = await mounted('waiting');
     const { inTurn } = await import(join(UI, 'book-queue.js'));
-    const pane = new Node('section');
-    convert.mount(pane, { state: { script: null as unknown }, goTo: () => {}, restoreFocus: () => {}, scriptChanged: () => {} });
-    const readOut = (): string => {
-      const walk = (n: Node): Node | null => {
-        if (n.className === 'read-out') return n;
-        for (const k of n.kids) { const found = walk(k); if (found) return found; }
-        return null;
-      };
-      return walk(pane)?.textContent ?? '(none)';
-    };
-    const conversion = () => asked.find((c) => c.args[1] === '--json' && c.args[0] === '/s/Night Shift.pdf');
+    const readOut = (): string => pane.querySelector('.read-out')?.textContent ?? '(none)';
+    const conversion = () => pdfCalls(tauri, '/s/Night Shift.pdf')[0];
     const BOOK = '/lib/night-shift/Night Shift.epub';
     const answer = async () => {
-      const call = conversion()!;
-      asked.splice(asked.indexOf(call), 1);
-      call.resolve(JSON.stringify({ ok: true, title: 'Night Shift', epubPath: BOOK, fountainPath: BOOK.replace(/epub$/, 'fountain'), previewHtml: '' }));
-      await tick();
-      await tick();
+      conversion().answer({ ok: true, title: 'Night Shift', epubPath: BOOK, fountainPath: BOOK.replace(/epub$/, 'fountain'), previewHtml: '' });
+      await settle();
     };
 
     // Free book: straight to "starting up".
     const first = convert.convertPath('/s/Night Shift.pdf');
-    await tick();
+    await settle();
     expect(readOut()).toBe(convert.PROGRESS_START.label);
     await answer();
     await first;
@@ -933,18 +972,16 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
     let free: () => void = () => {};
     const building = inTurn(BOOK, 'kindle', () => new Promise<void>((resolve) => { free = resolve; }));
     const again = convert.convertPath('/s/Night Shift.pdf');
-    await tick();
+    await settle();
     expect(conversion()).toBeUndefined();
     expect(readOut()).toBe('Waiting for the Kindle file to finish building…');
     free();
     await building;
-    await tick();
+    await settle();
     expect(conversion()).toBeDefined();
     expect(readOut()).toBe(convert.PROGRESS_START.label);
     await answer();
     await again;
-    for (const call of asked.splice(0)) call.resolve(JSON.stringify({ ok: false }));
-    await tick();
   });
 
   test('waitingLabel names the turn a conversion waits for, the longest wait first', async () => {
@@ -958,7 +995,7 @@ describe('converting a PDF again takes its turn on the book it rewrites', () => 
 });
 
 describe('"Convert it again" converts the script again', () => {
-  // Read's blank notice, Settings' fault screen and Send's "no book" screen
+  // Read's blank notice, Settings' fault screen and the send panel's "no book" line
   // each offer "Convert it again". It used to call goTo('convert') and
   // nothing else, which lands on the result screen the reader just left,
   // with no way to convert anything. Now it converts the open script's own
@@ -1097,13 +1134,19 @@ describe('"Convert it again" converts the script again', () => {
     expect(again()).toBe(1);
   });
 
-  test('Send’s "no book to send" screen converts again', async () => {
-    const send = await import(`${join(UI, 'send.js')}?again`);
-    const { ctx, again } = context({ path: '/s/a.pdf', title: 'A', epubPath: null });
-    const pane = new Node('section');
-    send.mount(pane, ctx);
-    againButton(pane)!.click();
-    expect(again()).toBe(1);
+  test('the send panel’s "no book to send" line converts again', async () => {
+    // On the fake page: the panel needs a document that behaves like one.
+    const fake = fakePage();
+    try {
+      const panel = await import(`${join(UI, 'send-panel.js')}?again`);
+      const { ctx, again } = context({ path: '/s/a.pdf', title: 'A', epubPath: null });
+      const pane = fake.pane();
+      panel.mountPanel(pane, ctx);
+      pane.button('Convert it again').click();
+      expect(again()).toBe(1);
+    } finally {
+      await fake.close();
+    }
   });
 });
 
@@ -1129,7 +1172,8 @@ describe('what the Convert surface decides', () => {
     withoutCliRemedy: (message: unknown, flag: unknown) => string;
     stillOpenNote: (script: unknown) => string | null;
     fileName: (path: unknown) => string;
-    countLine: (answer: unknown) => string;
+    countsLine: (script: unknown) => string;
+    readyLine: (title: unknown) => string;
     scriptFrom: (path: string, answer: unknown) => Record<string, unknown>;
     droppedPath: (paths: unknown) => string | null;
     revealFailureMessage: (answer: unknown) => string | null;
@@ -1323,17 +1367,21 @@ describe('what the Convert surface decides', () => {
     expect(at.label).toBe('building the book (100%)');
   }, 60000);
 
-  test('the counts read as a sentence, singular included', () => {
-    expect(convert.countLine({ pages: 5, scenes: 5, characters: 3 }))
-      .toBe('5 pages. 5 scenes.\n3 speaking characters.');
-    expect(convert.countLine({ pages: 1, scenes: 1, characters: 1 }))
-      .toBe('1 page. 1 scene.\n1 speaking character.');
-    expect(convert.countLine({ pages: 2, scenes: 0, characters: 0 }))
-      .toBe('2 pages. 0 scenes.\n0 speaking characters.');
+  test('the counts are one line, singular included', () => {
+    expect(convert.countsLine({ pages: 19, scenes: 11 })).toBe('19 pages, 11 scenes');
+    expect(convert.countsLine({ pages: 1, scenes: 1 })).toBe('1 page, 1 scene');
+    expect(convert.countsLine({ pages: 1 })).toBe('1 page');
+    expect(convert.countsLine({ pages: 19, scenes: null })).toBe('19 pages');
     // The engine omits the counts entirely for a .fountain input; "undefined
     // pages" is worse than no line at all.
-    expect(convert.countLine({ title: 'x' })).toBe('');
-    expect(convert.countLine({ pages: 4 })).toBe('4 pages.');
+    expect(convert.countsLine({ title: 'x' })).toBe('');
+    expect(convert.countsLine(null)).toBe('');
+  });
+
+  test('the result’s heading says the book is ready', () => {
+    expect(convert.readyLine('Field Station')).toBe('Field Station is ready');
+    expect(convert.readyLine('  Field Station ')).toBe('Field Station is ready');
+    expect(convert.readyLine('')).toBe('The book is ready');
   });
 
   test('the script object tasks 9–11 read is complete whatever the engine sent', () => {
@@ -1675,10 +1723,11 @@ describe('where the keyboard stands when a dialog closes', () => {
     stopAfterDialog: (surface: string, queryAll: (s: string) => Iterable<unknown>) => unknown;
   };
   let focus: FocusModule;
-  // The four the bar switches between. Notes left the bar on 2026-09-20: it
+  // The three the bar switches between. Notes left the bar on 2026-09-20: it
   // is a <dialog> opened from the rev stamp now, so the platform owns its
-  // focus and there is no #tab-notes for a plan to point at.
-  const SURFACES = ['convert', 'read', 'tune', 'send'];
+  // focus and there is no #tab-notes for a plan to point at. Send left it on
+  // 2026-10-01: sending is the result screen's panel now.
+  const SURFACES = ['convert', 'read', 'tune'];
 
   beforeAll(async () => {
     focus = (await import(join(UI, 'focus.js'))) as FocusModule;
@@ -1785,7 +1834,7 @@ describe('where the keyboard stands when a dialog closes', () => {
 
     // And it really does use the surface it was given: the same page, asked
     // for a different surface, finds nothing.
-    expect(focus.stopAfterDialog('send', page({ [plan[0]]: convertButtons }))).toBeNull();
+    expect(focus.stopAfterDialog('tune', page({ [plan[0]]: convertButtons }))).toBeNull();
   });
 
   test('the reader’s Tab stop draws a ring, and nothing tries to ring the frame', () => {
@@ -2353,7 +2402,7 @@ describe('the window knows when the engine is working, and can restart', () => {
     // "idle" between two calls of the SAME job. Real invoke() calls answer
     // on their own timer, not a manually-resolved Promise, so this drives
     // app.runEngine for real through three awaited calls that each answer
-    // after setTimeout(10ms): the same shape send.js's sendTo() chain has
+    // after setTimeout(10ms): the same shape send-panel.js's sendTo() chain has
     // (settings via ensureSettings(), then export, then send), with
     // whenIdle() asked right after the chain starts, not after it finishes.
     const app = await import(join(UI, 'app.js'));
@@ -2387,7 +2436,7 @@ describe('the window knows when the engine is working, and can restart', () => {
   });
 
   test('a devices call is never counted: it does not make the engine busy or hold a restart', async () => {
-    // send.js polls `devices` every 2 s while the Send tab is open, and each
+    // device-watch.js polls `devices` every 2 s while a book is open, and each
     // poll takes about 1.5 s on its own (the reMarkable probe timeout).
     // Counting it would flash "Restarting after this finishes..." on that tab
     // on every poll and, with a quiet period, could hold a restart off for
@@ -2413,8 +2462,8 @@ describe('the window knows when the engine is working, and can restart', () => {
 
   test('a kfx-status call is never counted, like devices; a kfx-install call is', async () => {
     // Merged in from parity piece D: kfx.js's probe() runs kfx-status when
-    // the Send tab opens (kfxShown) and again on window focus (onFocus) —
-    // read-only, same shape as send.js's devices poll, and for the same
+    // the KFX checklist opens (kfxShown) and again on window focus (onFocus) —
+    // read-only, same shape as device-watch.js's devices poll, and for the same
     // reason it must not count: flashing "Restarting after this
     // finishes…" every time the reader tabs back to the window, and
     // holding a restart off for as long as Send stays open, is the exact
@@ -2496,7 +2545,7 @@ describe('the window knows when the engine is working, and can restart', () => {
 
   test('a Kindle file check is never counted; the build it can lead to is', async () => {
     // The check reads two file dates and asks Calibre what is installed; the
-    // Send page asks it on every visit and every time the window gets the
+    // send panel asks it every time the result shows and every time the window gets the
     // focus back, never mid-job. The export that builds the file is a job,
     // and a restart must wait for it, whether a press started it or the page
     // started it in the background.
@@ -2524,7 +2573,7 @@ describe('the window knows when the engine is working, and can restart', () => {
   });
 
   test('a routes call is never counted, like devices; a route call is', async () => {
-    // send.js's poll swaps from `devices` to `routes` (parity piece B), and
+    // The old Send page's poll swapped from `devices` to `routes` (parity piece B), and
     // the reason routes must not count is the same one devices was excluded
     // for: it is polled every 2 s while Send is open, never mid-job, and
     // counting it would flash "Restarting after this finishes…" on a tab
@@ -2547,6 +2596,33 @@ describe('the window knows when the engine is working, and can restart', () => {
       expect(app.engineBusy()).toBe(true);
       expect(Bun.peek.status(app.whenIdle())).toBe('pending');
       await route;
+      expect(app.engineBusy()).toBe(false);
+    } finally {
+      delete win.window;
+    }
+  });
+
+  test('an eject counts toward busy, the background devices poll does not', async () => {
+    // device-watch.js polls `devices --quick` every 2 s while a book is open,
+    // so it must not count, for the reason plain `devices` never did. An
+    // eject is somebody's work on a drive, so it counts like a send.
+    const app = await import(join(UI, 'app.js'));
+    await app.whenIdle(); // start from a genuinely idle baseline
+    win.window = {
+      __TAURI__: {
+        core: { invoke: () => new Promise((resolve) => setTimeout(() => resolve('{"ok":true}'), 10)) },
+      },
+    };
+    try {
+      const poll = app.runEngine(app.argv.devices({ quick: true }));
+      expect(app.engineBusy()).toBe(false);
+      expect(Bun.peek.status(app.whenIdle())).toBe('fulfilled');
+      await poll;
+
+      const eject = app.runEngine(app.argv.eject('/Volumes/Kindle'));
+      expect(app.engineBusy()).toBe(true);
+      expect(Bun.peek.status(app.whenIdle())).toBe('pending');
+      await eject;
       expect(app.engineBusy()).toBe(false);
     } finally {
       delete win.window;
@@ -3943,7 +4019,7 @@ describe('the Tune surface', () => {
     expect(tune.statusFor('waiting', 'send')).toEqual({ line: 'Waiting for the send to finish…', bad: false });
     expect(tune.statusFor('waiting', 'copy').line).toBe('Waiting for the copy to finish…');
     expect(tune.statusFor('waiting', 'convert').line).toBe('Waiting for the conversion to finish…');
-    // The Send page builds the Kindle file on its own when it opens; a save
+    // The send panel builds the Kindle file on its own when the result appears; a save
     // waiting on that says so rather than "in a moment".
     expect(tune.statusFor('waiting', 'kindle').line).toBe('Waiting for the Kindle file to finish building…');
     expect(tune.statusFor('waiting', 'kindle-mobi').line).toBe('Waiting for the Kindle file to finish building…');
@@ -3964,7 +4040,7 @@ describe('the Tune surface', () => {
   test('every turn this page can wait on has words, except the two that take a moment', async () => {
     // book-queue.js's table is the list of labels; a save that waits names
     // what it waits for, and "in a moment" is left for this page's own
-    // earlier save and the Send page's date check, which are both quick.
+    // earlier save and the send panel's date check, which are both quick.
     const { TURNS } = await import(join(UI, 'book-queue.js'));
     const unnamed = Object.keys(TURNS).filter((label) => tune.WAITING[label] === undefined).sort();
     expect(unnamed).toEqual(['check', 'save']);
@@ -4283,7 +4359,8 @@ describe('the Settings page, mounted', () => {
     // No rebuild of the first book, and the page shows the second script
     // waiting to be read, not the first one's knobs.
     expect(tauri.calls.filter((c) => c.args.includes('-o'))).toEqual([]);
-    expect(pane.textContent).toBe(tune.READING);
+    expect(pane.querySelector('.tune-head .caption')!.textContent).toBe(tune.READING);
+    expect(pane.querySelectorAll('.knob-group-title')).toEqual([]);
   });
 
   test('each way a settings read can fail shows the fault screen, and a later visit tries again', async () => {
@@ -4701,7 +4778,7 @@ describe('the Tune surface: app defaults for new scripts', () => {
   afterEach(async () => {
     // tune.js's queue (withBook) is one module's for the whole run, so a
     // save left waiting on an engine call nobody answers would hold up every
-    // later turn in it, the Send page's in send-routes-ui.test.ts included.
+    // later turn in it, the send panel's in send-panel-ui.test.ts included.
     // So whatever a test left unanswered is refused here, and a settle still
     // counting down (whose save would land in the next test's stub) is
     // cancelled by a script change, as it is in the window.
@@ -4815,9 +4892,9 @@ describe('the Tune surface: app defaults for new scripts', () => {
     expect(app.engineBusy()).toBe(false);
   });
 
-  // The Settings and Send pages both write the library EPUB: a moved knob's
+  // The Settings page and the send panel both write the library EPUB: a moved knob's
   // save rebuilds it in place (the reconvert, the argv with no verb of its
-  // own), and the Send page's export can rebuild it on its MOBI rung. withBook() is the one queue both take their turn in.
+  // own), and the send panel's export can rebuild it on its MOBI rung. withBook() is the one queue both take their turn in.
   // Placed before the tests below that leave a save unanswered, because the
   // queue is one module's for the whole file, as app.js's count is.
   test('the book waits its turn: a moved knob’s save goes first, at once, and a knob moved meanwhile waits', async () => {
@@ -4927,7 +5004,7 @@ describe('the Tune surface: app defaults for new scripts', () => {
     await tick();
   });
 
-  test('a save made while the Send page builds the Kindle file waits for the build, and says so', async () => {
+  test('a save made while the send panel builds the Kindle file waits for the build, and says so', async () => {
     // The build only READS the book, so Save the EPUB runs beside it; a save
     // here REWRITES the book, so it waits for the build to finish reading it,
     // and a KFX build is about half a minute, not "a moment".
@@ -5598,19 +5675,20 @@ describe('turns on a book: book-queue.js', () => {
   });
 });
 
-describe('the Send surface', () => {
-  const send = read('send.js');
-
+describe('sending, from the result’s panel', () => {
   test('the window holds none of the engine’s knowledge of what a reader looks like', () => {
     // A source rule, kept: a window that knew what a Kindle volume looks
     // like would be the duplication ADR 2026-09-12 forbids, and no mounted
-    // test can see knowledge that is merely present. What the page asks the
-    // engine instead (routes, not devices) is driven in send-routes-ui.test.ts,
-    // "it polls routes, not devices, for this script's book".
-    for (const knowledge of ['/Volumes', 'documents', 'system/version.txt', '.kobo']) {
-      expect(`send.js knows ${knowledge}: ${send.includes(knowledge)}`).toBe(
-        `send.js knows ${knowledge}: false`,
-      );
+    // test can see knowledge that is merely present. What the panel asks the
+    // engine instead (routes, and the devices poll) is driven in
+    // send-panel-ui.test.ts and device-watch.test.ts.
+    for (const file of ['send-panel.js', 'send-routes.js', 'device.js', 'device-watch.js']) {
+      const source = read(file);
+      for (const knowledge of ['/Volumes', 'documents', 'system/version.txt', '.kobo']) {
+        expect(`${file} knows ${knowledge}: ${source.includes(knowledge)}`).toBe(
+          `${file} knows ${knowledge}: false`,
+        );
+      }
     }
   });
 
@@ -5619,10 +5697,10 @@ describe('the Send surface', () => {
     // can rebuild it too (the MOBI rung); a send or a save copies it. Those
     // take their turn on the book; opening another program does not, or it
     // would hold the Settings page's saves for as long as that program took.
-    // The turns themselves are driven on the page in send-routes-ui.test.ts
+    // The turns themselves are driven on the panel in send-panel-ui.test.ts
     // ("only a save waits for the book", "a Settings save during a
-    // background build waits for it", and the rest of that block).
-    const sendUi = await import(join(UI, 'send.js'));
+    // background build waits for it", and the rest of that file).
+    const sendUi = await import(join(UI, 'send-routes.js'));
     expect(['device', 'save-epub', 'save-kindle', 'open', 'setup', null].map(sendUi.readsTheBook))
       .toEqual([true, true, true, false, false, false]);
   });
@@ -5634,7 +5712,7 @@ describe('the Send surface', () => {
     // (the engine's own answer for it is taken whole, never turned into the
     // failure line) and those rows offer no button that could only fail.
     const { routes, preselected } = await import('../src/export/routes');
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     for (const platform of ['darwin', 'win32', 'linux']) {
       const list = routes({ platform, booksApp: true, sendToKindleApp: false, appleMailDefault: true, devices: [] });
       const shown = sendUi.routesFrom({ ok: true, routes: list, chosen: preselected(list, undefined).id });
@@ -5643,218 +5721,19 @@ describe('the Send surface', () => {
       expect(readers.length).toBeGreaterThan(0);
       for (const r of readers) {
         expect(`${platform} ${r.key} available: ${r.available}`).toBe(`${platform} ${r.key} available: false`);
-        expect(sendUi.buttonClassFor(r, shown.chosen)).toBe(null);
       }
       expect(sendUi.connectedDevices(shown)).toEqual([]);
     }
   });
 });
 
-describe('the Send page’s device send, mounted', () => {
-  // send.js mounted on the fake page and pressed. The route list, the two
-  // saves, the apps and the keyboard are driven in send-routes-ui.test.ts;
-  // what is here is the device send's own flow (sendTo), which that file
-  // only exercises on the happy path, and the reach table's fold.
-  const FOUNTAIN = '/lib/send-page/Field Station.fountain';
-  const EPUB = '/lib/send-page/Field Station.epub';
-  const kobo = { kind: 'kobo' as const, name: 'KOBOeReader', volume: '/Volumes/KOBOeReader' };
-
-  let page: FakePage | null = null;
-  let surface: { hide(): void } | null = null;
-  let copies = 0;
-  afterEach(async () => {
-    surface?.hide();
-    surface = null;
-    await page?.close();
-    page = null;
-  });
-
-  async function mountSend(options: {
-    settings?: Record<string, unknown> | null;
-    engine?: (args: string[]) => unknown;
-    kfx?: unknown;
-    devices?: Array<typeof kobo>;
-  } = {}) {
-    const { routes, preselected } = await import('../src/export/routes');
-    const list = routes({
-      platform: 'darwin', booksApp: true, sendToKindleApp: false, appleMailDefault: true, devices: options.devices ?? [kobo],
-    });
-    const listed = { ok: true, routes: list, chosen: preselected(list, undefined).id };
-    page = fakePage({
-      respond: (args) => {
-        if (args[0] === 'routes') return listed;
-        if (args[0] === 'kfx-status') return options.kfx ?? { ok: false };
-        if (args[0] === 'export' && args.includes('--check')) return { ok: false };
-        return options.engine?.(args) ?? HOLD;
-      },
-    });
-    // The two-second poll, fired by hand rather than waited for.
-    const g = withGlobals();
-    let tickPoll: (() => void) | null = null;
-    g.set('setInterval', (fn: () => void) => { tickPoll = fn; return 1; });
-    g.set('clearInterval', () => { tickPoll = null; });
-    const closePage = page.close;
-    page.close = async () => { g.restore(); await closePage(); };
-
-    copies += 1;
-    const send = await import(`${join(UI, 'send.js')}?mounted-${copies}`);
-    surface = send;
-    const pane = page.pane();
-    pane.id = 'surface-send';
-    const ctx = {
-      state: {
-        script: {
-          title: 'Field Station', fountainPath: FOUNTAIN, epubPath: EPUB,
-          settings: options.settings === undefined ? { dialogueSideMarginPct: 27 } : options.settings,
-        },
-        devices: [] as unknown[],
-      },
-      goTo: () => {}, restoreFocus: () => {}, convertAgain: () => {},
-    };
-    send.mount(pane, ctx);
-    send.show();
-    await settle();
-    const status = () => pane.querySelector('.send-status')!;
-    return { send, pane, ctx, status, tauri: page.tauri, page, poll: () => tickPoll?.() };
-  }
-
-  test('a device send reads this script’s settings first, exports with them, then copies what was built', async () => {
-    const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
-    const tuned = { ...DEFAULT_FORMAT_OPTIONS, dialogueSideMarginPct: 27, fontFamily: 'serif' };
-    const { pane, status, tauri } = await mountSend({ settings: null });
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    // Not read yet, so read now: an export without them would rebuild the
-    // book with the engine's defaults.
-    const read = tauri.callsTo('settings');
-    expect(read.map((c) => c.args)).toEqual([['settings', FOUNTAIN, '--json']]);
-    expect(tauri.callsTo('export').filter((c) => !c.args.includes('--check'))).toEqual([]);
-    read[0].answer({ ok: true, settings: tuned });
-    await settle();
-    const build = tauri.callsTo('export').filter((c) => !c.args.includes('--check'));
-    expect(build.length).toBe(1);
-    expect(JSON.parse(build[0].args[build[0].args.indexOf('--options-json') + 1])).toEqual(tuned);
-    build[0].answer({ ok: true, path: EPUB, extension: 'epub', label: 'EPUB' });
-    await settle();
-    tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' });
-    await settle();
-    expect(tauri.callsTo('send').map((c) => c.args)).toEqual([['send', EPUB, '--json', '--device', '/Volumes/KOBOeReader']]);
-    expect(status().textContent).toContain('Sent to KOBOeReader');
-  });
-
-  test('a refused export is the whole answer: nothing is copied, and the engine’s sentence is the alarm', async () => {
-    const { pane, status, tauri } = await mountSend();
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    tauri.callsTo('export').find((c) => !c.args.includes('--check'))!
-      .answer({ ok: false, error: { code: 'export-failed', message: 'The book could not be read.' } });
-    await settle();
-    expect(tauri.callsTo('send')).toEqual([]);
-    expect(status().textContent).toBe('The book could not be read.');
-    expect(status().classList.contains('bad')).toBe(true);
-    expect(pane.button('Copy to KOBOeReader').disabled).toBe(false);
-  });
-
-  test('while a send runs every button is out of reach and the poll leaves the rows alone; a script opened meanwhile hears nothing of it', async () => {
-    const { send, pane, ctx, status, tauri, poll } = await mountSend();
-    const before = pane.buttons();
-    pane.button('Copy to KOBOeReader').click();
-    await settle();
-    expect(before.every((b) => b.disabled)).toBe(true);
-    // A poll that answers mid-send does not rebuild fresh, live buttons
-    // under it: the MOBI rung rewrites the book, so a second send is a race.
-    poll();
-    await settle();
-    expect(pane.buttons()).toEqual(before);
-    expect(pane.buttons().every((b) => b.disabled)).toBe(true);
-
-    ctx.state.script = { title: 'Second', fountainPath: '/lib/second/second.fountain', epubPath: '/lib/second/second.epub', settings: {} };
-    send.scriptChanged();
-    tauri.callsTo('export').find((c) => !c.args.includes('--check') && c.args[1] === EPUB)!
-      .answer({ ok: true, path: EPUB, extension: 'epub', label: 'EPUB' });
-    await settle();
-    expect(tauri.callsTo('send')).toEqual([]);
-    expect(status().textContent).toBe('');
-  });
-
-  test('the KFX installer runs only from its button, and an install and a route never overlap', async () => {
-    // It downloads third-party code and writes into the reader's Calibre, and
-    // a plugin swapped under a running KFX build is not worth finding out about.
-    const notReady = { ok: true, ...kfxSetup({ calibre: true, previewer: true, pluginInstalled: false, ready: false }, 'darwin') };
-    const { pane, tauri, page: p, poll } = await mountSend({ kfx: notReady, devices: [] });
-    // Named by kfx.js's own heading, so the two cannot disagree.
-    const { HEADING } = await import(join(UI, 'kfx.js'));
-    expect(pane.querySelector('section.kfx-setup')!.getAttribute('aria-label')).toBe(HEADING);
-    poll();
-    p.fireWindow('focus');
-    await settle();
-    expect(tauri.callsTo('kfx-install')).toEqual([]);
-    const install = () => pane.querySelectorAll('button').find((b) => b.dataset.step === 'plugin')!;
-    const routeButtons = () => pane.querySelector('.devices')!.buttons();
-
-    install().click();
-    await settle();
-    expect(tauri.callsTo('kfx-install').length).toBe(1);
-    // The busy hook takes every route out of reach while it runs.
-    expect(routeButtons().every((b) => b.disabled)).toBe(true);
-    pane.button('Add to Apple Books').click();
-    await settle();
-    expect(tauri.callsTo('route')).toEqual([]);
-    tauri.callsTo('kfx-install')[0].answer({ ok: false, error: { code: 'kfx-install-failed', message: 'No network.' } });
-    await settle();
-    expect(routeButtons().every((b) => !b.disabled)).toBe(true);
-
-    // And the other way round: a route running holds the installer off.
-    pane.button('Add to Apple Books').click();
-    await settle();
-    expect(tauri.callsTo('route').length).toBe(1);
-    install().click();
-    await settle();
-    expect(tauri.callsTo('kfx-install').length).toBe(1);
-    tauri.callsTo('route')[0].answer({ ok: true, note: 'Added.' });
-    await settle();
-  });
-
-  test('the KFX checklist is asked one probe at a time, on show and on focus, and not once the page is hidden', async () => {
-    const { send, tauri, page: p } = await mountSend({ kfx: HOLD });
-    const probes = () => tauri.callsTo('kfx-status');
-    expect(probes().length).toBe(1);
-    // The window gets the focus back twice while the first probe is out.
-    p.fireWindow('focus');
-    p.fireWindow('focus');
-    await settle();
-    expect(probes().length).toBe(1);
-    probes()[0].answer({ ok: false });
-    await settle();
-    p.fireWindow('focus');
-    await settle();
-    expect(probes().length).toBe(2);
-    probes()[1].answer({ ok: false });
-    await settle();
-    send.hide();
-    p.fireWindow('focus');
-    await settle();
-    expect(probes().length).toBe(2);
-  });
-
-  test('what Screepub can reach is folded away, shut, with the note on where the one route was proven', async () => {
-    const { send, pane } = await mountSend();
-    const fold = pane.querySelector('details.reach')!;
-    expect(fold.querySelector('summary')!.textContent).toBe(send.REACH_HEADING);
-    // <details> is open only when the attribute is there at all.
-    expect(fold.hasAttribute('open')).toBe(false);
-    expect(fold.open).toBe(false);
-    expect(fold.querySelector('.reader-note')!.textContent).toBe(send.provenNote('MacIntel'));
-  });
-});
-
-describe('the Send page’s rows are dressed by the stylesheet', () => {
+describe('the route rows in Other ways are dressed by the stylesheet', () => {
   // perform() and sendTo() used to be pinned here by the shape of their
   // source. Every one of those behaviours (one flag for every route, a check
   // after every await, the Save box before the write, the settings fetched
-  // first, the keyboard handed back, the repoll after a success, the poll's
-  // failure line) is driven on the mounted page in send-routes-ui.test.ts and
-  // in "the Send page's device send, mounted" above. What is left is CSS.
+  // first, the keyboard handed back, the repoll after a success, the list's
+  // failure line) is driven on the mounted panel in send-panel-ui.test.ts.
+  // What is left is CSS: Other ways still draws these classes.
   test('every class a route row adds is styled, and a dimmed row is dimmed by ink, not opacity', () => {
     // Kept as a CSS pin: whether a rule paints needs a browser. A dimmed row
     // dimmed by opacity would dim the email row's setup link with it.
@@ -5868,27 +5747,21 @@ describe('the Send page’s rows are dressed by the stylesheet', () => {
   });
 });
 
-describe('what the Send surface decides', () => {
+describe('what the send panel decides', () => {
   type Device = { id: string; kind: string; name: string; volume: string | null };
   type SendModule = {
     UNPROVEN: string;
     PROVEN: { kind: string; platform: string };
     KINDS: string[];
-    READERS: { kind: string; name: string; route: string }[];
     NO_MESSAGE: string;
     platformOf: (hint: unknown) => string;
-    readerStatus: (kind: string, platform: unknown) => { proven: boolean; text: string };
     undetectable: (platform: unknown) => string | null;
-    provenNote: (platform: unknown) => string;
-    caveatFor: (device: unknown, platform: unknown) => string | null;
     routesFrom: (answer: unknown) => { routes: Record<string, unknown>[]; chosen: string } | null;
-    buttonClassFor: (route: unknown, chosenId: unknown) => string | null;
     sameRoutes: (a: unknown, b: unknown) => boolean;
     forFormat: (device: unknown) => string;
     whereLine: (device: unknown) => string;
     blockedReason: (script: unknown) => string | null;
     optionsJsonFor: (script: unknown) => string | null;
-    sendLabel: (device: Device) => string;
     sentLine: (device: Device, answer: unknown) => string;
     artifactLine: (built: unknown) => string;
     statusFor: (phase: string, opts?: { device?: unknown; detail?: string })
@@ -5905,90 +5778,35 @@ describe('what the Send surface decides', () => {
   const kobo: Device = { id: '/m/KOBOe', kind: 'kobo', name: 'Kobo', volume: '/m/KOBOe' };
   const rm: Device = { id: 'remarkable', kind: 'remarkable', name: 'reMarkable', volume: null };
 
-  beforeAll(async () => { send = (await import(join(UI, 'send.js'))) as SendModule; });
+  // platformOf and undetectable as the device model hands them on: the
+  // device cards and their lines read them through device.js.
+  let device: Pick<SendModule, 'platformOf' | 'undetectable'>;
 
-  test('only the one combination anyone has actually plugged in reads as proven', () => {
-    // The limit is a KIND and a PLATFORM together. A surface that keyed off
-    // the kind alone — the obvious implementation — would put "Verified on
-    // hardware" beside a Kindle on this very Linux machine, where no device
-    // transfer has ever been run. That is the value this asserts a change
-    // FROM: kindle+linux and kindle+windows must be unproven.
-    expect(send.readerStatus('kindle', 'MacIntel').proven).toBe(true);
-    for (const platform of ['Linux aarch64', 'Win32', undefined]) {
-      expect(`kindle on ${platform}: ${send.readerStatus('kindle', platform).proven}`)
-        .toBe(`kindle on ${platform}: false`);
-    }
-    for (const kind of send.KINDS.filter((k) => k !== 'kindle')) {
-      expect(`${kind} on a Mac: ${send.readerStatus(kind, 'MacIntel').proven}`)
-        .toBe(`${kind} on a Mac: false`);
-    }
-    // And the two statuses are not the same words, or the column says nothing.
-    expect(send.readerStatus('kindle', 'MacIntel').text)
-      .not.toBe(send.readerStatus('kobo', 'MacIntel').text);
+  beforeAll(async () => {
+    send = (await import(join(UI, 'send-routes.js'))) as SendModule;
+    device = (await import(join(UI, 'device.js'))) as Pick<SendModule, 'platformOf' | 'undetectable'>;
   });
 
-  test('the unproven sentence names the reader and never appears on the proven one', () => {
-    expect(send.caveatFor(kindle, 'MacIntel')).toBe(null);
-    for (const [device, platform] of [
-      [kindle, 'Linux aarch64'], [kindle, 'Win32'],
-      [kobo, 'MacIntel'], [rm, 'MacIntel'],
-      [{ id: 'x', kind: 'pocketbook', name: 'PocketBook', volume: '/m/x' }, 'MacIntel'],
-    ] as [Device, string][]) {
-      const said = send.caveatFor(device, platform);
-      expect(`${device.kind}/${platform}: ${said === null}`)
-        .toBe(`${device.kind}/${platform}: false`);
-      expect(said).toContain(send.UNPROVEN);
-    }
-    // A vendor's own name, not "this device": a reader has to know which row
-    // the warning is about when three are connected.
-    expect(send.caveatFor(kobo, 'MacIntel')).toContain('Kobo');
-    expect(send.caveatFor(kobo, 'MacIntel')).not.toContain('Kindle');
-  });
-
-  test('the line under the standing list says where the one proven route was proven', () => {
-    // Four identical red statuses in a column read as a warning wall unless
-    // something says what they mean. It also carries the fact no status cell
-    // can: a Mac is where the Kindle was plugged in, so on Linux and Windows
-    // NOTHING has met hardware — including the Kindle whose row, keyed off
-    // kind alone, would otherwise look like the safe one.
-    const mac = send.provenNote('MacIntel');
-    expect(mac).toContain('Mac');
-    const linux = send.provenNote('Linux aarch64');
-    expect(linux).toContain(send.UNPROVEN);
-    expect(linux).toContain('Linux');
-    expect(send.provenNote('Win32')).toContain('Windows');
-    expect(send.provenNote('Win32')).not.toContain('Linux');
+  test('a platform this window cannot name is unknown, never some other one', () => {
     // navigator.platform is deprecated and navigator.userAgentData is absent
     // on WebKitGTK, so this window can genuinely not know. Under-claiming
-    // hardware support is right; naming the wrong operating system is not —
-    // "never tested from Linux" on a Mac is a false statement about the
-    // machine, which is the one thing this surface exists to avoid.
+    // hardware support is right; naming the wrong operating system is not.
     for (const unknown of [undefined, null, '', 'CrOS', {}]) {
-      const said = send.provenNote(unknown);
-      expect(`${String(unknown)} names Linux: ${said.includes('Linux')}`)
-        .toBe(`${String(unknown)} names Linux: false`);
-      expect(`${String(unknown)} names Windows: ${said.includes('Windows')}`)
-        .toBe(`${String(unknown)} names Windows: false`);
-      // It still says the thing that is true everywhere.
-      expect(said).toContain(send.UNPROVEN);
-      expect(send.platformOf(unknown)).toBe('unknown');
+      expect(device.platformOf(unknown)).toBe('unknown');
     }
-    expect(send.platformOf('Linux aarch64')).toBe('linux');
-    expect(send.platformOf('MacIntel')).toBe('mac');
-    expect(send.platformOf('Win32')).toBe('windows');
-    // The Mac line is a different sentence from the other two, or the note is
-    // saying the same thing everywhere and telling nobody anything.
-    expect(new Set([mac, linux, send.provenNote('Win32')]).size).toBe(3);
+    expect(device.platformOf('Linux aarch64')).toBe('linux');
+    expect(device.platformOf('MacIntel')).toBe('mac');
+    expect(device.platformOf('Win32')).toBe('windows');
   });
 
   test('a tolino on Windows is called undetectable, not merely absent', () => {
     // It is identified by the name of its volume and a Windows drive root
     // carries none. Left unsaid, a missing row reads as a bad cable.
-    const said = send.undetectable('Win32');
+    const said = device.undetectable('Win32');
     expect(said).toContain('tolino');
     expect(said).toContain('Windows');
     for (const platform of ['MacIntel', 'Linux aarch64', undefined]) {
-      expect(`${platform}: ${send.undetectable(platform)}`).toBe(`${platform}: null`);
+      expect(`${platform}: ${device.undetectable(platform)}`).toBe(`${platform}: null`);
     }
   });
 
@@ -6010,8 +5828,6 @@ describe('what the Send surface decides', () => {
     };
     const shown = send.routesFrom({ ok: true, routes: [pocketbook, save], chosen: 'save-epub' })!;
     expect(shown.routes.map((r) => r.id)).toEqual([pocketbook.id, 'save-epub']);
-    expect(send.buttonClassFor(shown.routes[0], shown.chosen)).toBe('btn btn-outline');
-    expect(send.caveatFor(shown.routes[0]!.device, 'MacIntel')).toContain(send.UNPROVEN);
     for (const device of [
       { ...pocketbook.device, id: '' },                  // no id to send to
       { ...pocketbook.device, name: '   ' },             // nothing for the row
@@ -6090,7 +5906,6 @@ describe('what the Send surface decides', () => {
   });
 
   test('"Sent" is claimed in the shape the engine reported, and never invents a path', () => {
-    expect(send.sendLabel(kindle)).toBe('Send to Kindle');
     const copied = send.sentLine(kindle, { ok: true, destination: '/m/Kindle/x.azw3' });
     expect(copied.startsWith('Sent to Kindle')).toBe(true);
     expect(copied).toContain('/m/Kindle/x.azw3');
@@ -6203,21 +6018,6 @@ describe('what the Send surface decides', () => {
     expect(send.artifactLine(null)).toBe('');
   });
 
-  test('the standing list covers every kind the engine can report', () => {
-    // With nothing plugged in this list IS the surface, so a kind missing
-    // from it is a reader with no way to find out whether Screepub reaches it.
-    expect(send.READERS.map((r) => r.kind).sort()).toEqual([...send.KINDS].sort());
-    for (const reader of send.READERS) {
-      expect(`${reader.kind} route: ${reader.route.length > 40}`)
-        .toBe(`${reader.kind} route: true`);
-    }
-    // The Kindle row says WHY it is not the EPUB, because that is the one
-    // surprising thing on the surface.
-    const kindleRow = send.READERS.find((r) => r.kind === 'kindle')!;
-    expect(kindleRow.route).toContain('EPUB');
-    expect(kindleRow.route).toContain('MOBI');
-  });
-
   test('every kind the engine can report is also in the standing list', async () => {
     const { DEVICE_DISPLAY_NAMES } = await import('../src/device/types');
     // The engine's own list, so a fifth vendor added to src/device/types.ts
@@ -6226,7 +6026,7 @@ describe('what the Send surface decides', () => {
   });
 });
 
-describe('the ladder the Send surface asks for, without a toolchain', () => {
+describe('the ladder the send panel asks for, without a toolchain', () => {
   // CI has no Calibre and no Kindle Previewer, and neither does most of this
   // project's audience. So the argv the window builds is fed through the same
   // injection seam src/cli-export.ts already provides, and the three rungs are
@@ -6261,7 +6061,7 @@ describe('the ladder the Send surface asks for, without a toolchain', () => {
 
   test('a Kindle’s argv reaches the Kindle rung with this script’s settings', async () => {
     const { argv } = await import(join(UI, 'app.js'));
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     const { exportCommand } = await import('../src/cli-export');
     const { DEFAULT_FORMAT_OPTIONS } = await import('../src/options');
 
@@ -6303,7 +6103,7 @@ describe('the ladder the Send surface asks for, without a toolchain', () => {
   });
 
   test('each rung of the ladder produces a different sentence on the surface', async () => {
-    const sendUi = await import(join(UI, 'send.js'));
+    const sendUi = await import(join(UI, 'send-routes.js'));
     const { exportCommand } = await import('../src/cli-export');
 
     const rung = async (calibre: boolean, kfx: boolean) => {
@@ -7812,7 +7612,7 @@ describe('a refused file is no longer a dead end', () => {
     // The Swift app said "SHOW IN FINDER" because it only ran on a Mac. This
     // one runs on three, and "Finder" on Windows names a thing that is not
     // there. An unknown platform gets the generic phrasing rather than a
-    // guess, on the same rule send.js's platformOf already follows:
+    // guess, on the same rule send-routes.js's platformOf already follows:
     // under-claiming beats naming the wrong system.
     const convert: any = await import(join(UI, 'convert.js'));
     expect(convert.revealLabel('MacIntel')).toBe('Show in Finder');
@@ -8010,7 +7810,6 @@ describe('the frame, mounted', () => {
     }
     frame.enable('read', true);
     frame.enable('tune', false);
-    frame.enable('send', true);
     frame.setSurface('convert');
     const selected = () => SURFACES.map((s: { id: string }) => s.id)
       .filter((id: string) => tab(id).getAttribute('aria-selected') === 'true');
@@ -8022,20 +7821,18 @@ describe('the frame, mounted', () => {
     expect(press('ArrowRight')).toBe(true);
     expect(selected()).toEqual(['read']);
     expect(page!.doc.activeElement).toBe(tab('read'));
-    // Settings is off the bar, so it is not a stop.
-    press('ArrowRight');
-    expect(selected()).toEqual(['send']);
+    // Settings is off the bar, so it is not a stop: past it, round to Convert.
     press('ArrowRight');
     expect(selected()).toEqual(['convert']);
     press('ArrowLeft');
-    expect(selected()).toEqual(['send']);
+    expect(selected()).toEqual(['read']);
     press('Home');
     expect(selected()).toEqual(['convert']);
     press('End');
-    expect(page!.doc.activeElement).toBe(tab('send'));
+    expect(page!.doc.activeElement).toBe(tab('read'));
     // One Tab stop on the bar: the selected tab. An absent one is no stop.
     expect(SURFACES.map((s: { id: string }) => [s.id, tab(s.id).tabIndex, tab(s.id).hidden])).toEqual([
-      ['convert', -1, false], ['read', -1, false], ['tune', -1, true], ['send', 0, false],
+      ['convert', -1, false], ['read', 0, false], ['tune', -1, true],
     ]);
     // Any other key is the page's.
     expect(press('a')).toBe(false);
@@ -8132,7 +7929,7 @@ describe('the foot of the page names the release', () => {
     // thing you glance at, not a place you go, and it is reached from the
     // version it describes.
     const { SURFACES } = await frameMod();
-    expect(SURFACES?.map((s) => s.id)).toEqual(['convert', 'read', 'tune', 'send']);
+    expect(SURFACES?.map((s) => s.id)).toEqual(['convert', 'read', 'tune']);
   });
 });
 
@@ -8333,7 +8130,7 @@ describe('the drop well states one guard, not two', () => {
   });
 });
 
-describe('the Send page’s KFX block: decisions', () => {
+describe('the KFX checklist: decisions', () => {
   type Setup = {
     ready: boolean; possible: boolean; summary: string;
     steps: { id: string; name: string; installed: boolean; fix: unknown }[];
@@ -8575,18 +8372,18 @@ describe('the Send page’s KFX block: decisions', () => {
   });
 });
 
-describe('the Send page’s KFX block: wiring', () => {
-  // The rest of this block's wiring (the installer only from its button, one
-  // probe at a time, the focus listener going with the page, its heading, a
-  // send and an install never overlapping) is driven in "the Send page's
-  // device send, mounted"; the races and the keyboard in the describe below.
+describe('the KFX checklist: wiring', () => {
+  // The rest of the checklist's wiring (the installer only from its button,
+  // one probe at a time, the focus listener going with the panel, a send and
+  // an install never overlapping) is driven in send-panel-ui.test.ts's Other
+  // ways; the races and the keyboard in the describe below.
   test('a redraw that throws cannot leave a send stuck on', () => {
     // Kept as a source pin until there is a seam: making kfxRedraw() throw
-    // from outside needs a hook into kfx.js's draw that the page does not
+    // from outside needs a hook into kfx.js's draw that the panel does not
     // offer, and a throw staged through the document would throw again from
     // the finally that is under test. Inside the try, so that finally, which
     // clears `sending`, covers it.
-    const send = read('send.js');
+    const send = read('send-panel.js');
     const from = send.indexOf('async function sendTo(');
     const sendTo = send.slice(from, send.indexOf('\n}', from));
     const redraw = sendTo.indexOf('kfxRedraw()');
@@ -8595,7 +8392,7 @@ describe('the Send page’s KFX block: wiring', () => {
   });
 });
 
-describe('the Send page’s KFX block: what a reader sees across redraws', () => {
+describe('the KFX checklist: what a reader sees across redraws', () => {
   // A stub document just big enough for dom.js and for what kfx.js asks of
   // a node. Its one piece of real behaviour is the one these tests are
   // about: activeElement falls back to the body when the focused node is
@@ -8915,7 +8712,7 @@ describe('the Send page’s KFX block: what a reader sees across redraws', () =>
   });
 
   test('a busy hook that throws cannot leave the install flag on', async () => {
-    // While kfxInstalling() is true, send.js refuses every send; stuck on,
+    // While kfxInstalling() is true, send-panel.js refuses every send; stuck on,
     // it would refuse them until the window restarted.
     const w = await world();
     await w.answer('kfx-status', status(true, true, false));
@@ -8944,7 +8741,7 @@ describe('the Send page’s KFX block: what a reader sees across redraws', () =>
     await w.answer('kfx-status', status(true, true, false));
     w.button('Install').click();
     devices = [{ id: '/m/KOBOe', kind: 'kobo', name: 'Kobo', volume: '/m/KOBOe' }];
-    w.kfx.kfxRedraw(); // send.js's device poll redraws the block the same way
+    w.kfx.kfxRedraw(); // send-panel.js's flows redraw the block the same way
     expect(w.host.hidden).toBe(false);
     expect(w.statusNode()!.textContent).toBe(w.kfx.INSTALLING);
     await w.answer('kfx-install', installed(true, true));
@@ -8953,7 +8750,7 @@ describe('the Send page’s KFX block: what a reader sees across redraws', () =>
   });
 
   test('a block no longer in the page asks the engine nothing', async () => {
-    // send.js's no-script and blocked states leave the last block's node
+    // send-panel.js's blocked state leaves the last block's node
     // detached; a show or a focus must not spend a kfx-status run on it.
     const w = await world();
     await w.answer('kfx-status', status(true, true, false));
@@ -8999,8 +8796,8 @@ describe('the Send page’s KFX block: what a reader sees across redraws', () =>
 
 describe('no screen prints a stray "null"', () => {
   // el() drops a null child; Node.append() prints it as the word "null", and
-  // so does the fake page's append (tests/helpers/fake-dom.ts). send.js's
-  // empty state shipped one under its list, and drawFailure printed one on
+  // so does the fake page's append (tests/helpers/fake-dom.ts). The old Send
+  // page's empty state shipped one under its list, and drawFailure printed one on
   // every refusal with no script open. This used to be a scan of every
   // .append( call's arguments; it is now the screens themselves, drawn in
   // the sparse states where an optional line is absent.
@@ -9034,10 +8831,12 @@ describe('no screen prints a stray "null"', () => {
     tune.mount(screens.tune, ctx({ title: 'Field Station', fountainPath: null, epubPath: null, settings: null }));
     await tune.show();
 
-    // Send: a script with no book on disk.
-    const send = await import(`${join(UI, 'send.js')}?null-scan`);
-    screens.send = page.pane();
-    send.mount(screens.send, ctx({ title: 'Field Station', epubPath: null, fountainPath: null, settings: null }));
+    // The result's send panel: a script with no book on disk.
+    const panel = await import(`${join(UI, 'send-panel.js')}?null-scan`);
+    screens.panel = page.pane();
+    panel.mountPanel(screens.panel, ctx({ title: 'Field Station', epubPath: null, fountainPath: null, settings: null }));
+    expect(screens.panel.querySelector('.fault-body')!.textContent).not.toBe('');
+    expect(screens.panel.buttons('Convert it again').length).toBe(1);
 
     for (const [name, pane] of Object.entries(screens)) {
       expect(`${name}: ${pane.textContent.length > 0}`).toBe(`${name}: true`);
@@ -9046,9 +8845,85 @@ describe('no screen prints a stray "null"', () => {
   });
 });
 
+describe('the Kindle heads-up, mounted on its own', () => {
+  // heads-up.js on the fake page with a stand-in watcher, for what the
+  // booted window cannot reach: the window never closes a script, so the
+  // reset main.js makes when none is open is driven here.
+  let page: FakePage | null = null;
+  afterEach(async () => { await page?.close(); page = null; });
+  const kindle = { id: '/Volumes/Kindle', kind: 'kindle', name: 'Kindle', volume: '/Volumes/Kindle' };
+
+  async function mounted(busy: () => boolean = () => false) {
+    page = fakePage();
+    const { mountHeadsUp } = await import(join(UI, 'heads-up.js'));
+    const sheet = page.doc.createElement('div');
+    const tabs = page.doc.createElement('nav');
+    sheet.append(tabs, page.doc.createElement('section'));
+    page.doc.body.append(sheet);
+    const subs: Array<(list: unknown) => void> = [];
+    const copied: unknown[] = [];
+    const later: Array<() => void> = [];
+    const state = { script: { title: 'Field Station' } as unknown };
+    const heads = mountHeadsUp(sheet, {
+      watcher: { subscribe: (fn: (list: unknown) => void) => { subs.push(fn); return () => {}; } },
+      state,
+      onResult: () => false,
+      busy,
+      copyTo: (d: unknown) => copied.push(d),
+      restoreFocus: () => {},
+      timers: { setTimeout: (fn: () => void) => { later.push(fn); return later.length; }, clearTimeout: () => {} },
+    });
+    const box = sheet.querySelector('.heads-up')!;
+    return { heads, box, sheet, tabs, state, copied, tell: (list: unknown) => { for (const fn of subs) fn(list); } };
+  }
+
+  test('it sits right under the tabs, hidden, until a Kindle is news', async () => {
+    const m = await mounted();
+    expect(m.sheet.childNodes.indexOf(m.box)).toBe(1);
+    expect(m.box.hidden).toBe(true);
+    m.tell([]);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+    m.box.button('Copy it').click();
+    expect(m.copied).toEqual([kindle]);
+    expect(m.box.hidden).toBe(true);
+  });
+
+  test('Copy pressed once a conversion has started copies nothing and takes the line down', async () => {
+    let converting = false;
+    const m = await mounted(() => converting);
+    m.tell([]);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+    // A PDF dropped on Convert while the line was up: the copy would be
+    // refused by a busy Convert without a word, so it is not made at all.
+    converting = true;
+    m.box.button('Copy it').click();
+    expect(m.copied).toEqual([]);
+    expect(m.box.hidden).toBe(true);
+  });
+
+  test('a list it cannot read changes nothing', async () => {
+    const m = await mounted();
+    m.tell([]);
+    m.tell(null);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(false);
+  });
+
+  test('reset, when no script is open, makes the next list a seed again', async () => {
+    const m = await mounted();
+    m.tell([]);
+    m.heads.reset();
+    expect(m.box.hidden).toBe(true);
+    m.tell([kindle]);
+    expect(m.box.hidden).toBe(true);
+  });
+});
+
 describe('the window, booted whole', () => {
   // main.js imported the way index.html loads it, on the fake page: the real
-  // frame, the four surfaces mounted in it, the window's own shortcut and the
+  // frame, the three surfaces mounted in it, the window's own shortcut and the
   // drop. What used to be read off main.js's text is driven here instead.
   // Each boot runs its own copy of the scripts (tests/helpers/boot-window.ts),
   // because main.js's handlers on app.js cannot be taken off again.
@@ -9065,10 +8940,13 @@ describe('the window, booted whole', () => {
     };
   };
   /** The engine: --version and the library probe answered, a PDF converted,
-   *  anything else (Settings' read, Send's poll) held. */
+   *  the send panel's Kindle file check refused (it takes a turn on the
+   *  book, and a conversion again waits for it), anything else (Settings'
+   *  read, the devices poll) held. */
   const engine = (args: string[]) => {
     if (args[0] === '--version') return { ok: true, version: '0.0.0' };
     if (args[0] === 'app-settings') return { ok: false, error: { code: 'internal', message: 'no' } };
+    if (args[0] === 'export' && args.includes('--check')) return { ok: false, error: { code: 'internal', message: 'no' } };
     if (args[0].endsWith('.pdf')) return blankBook(args[0]);
     return HOLD;
   };
@@ -9082,10 +8960,14 @@ describe('the window, booted whole', () => {
     expect(win.surface('convert').dataset.state).toBe('done');
   }
 
-  test('the four surfaces are mounted as the bar’s panels, and the release notes as a sheet off the stamp', async () => {
+  test('the three surfaces are mounted as the bar’s panels, and the release notes as a sheet off the stamp', async () => {
     w = await bootWindow(SCRATCH, { respond: engine });
     const { RELEASE } = await import(join(w.ui, 'notes.js'));
-    for (const id of ['convert', 'read', 'tune', 'send']) {
+    // Sending is the result's panel now: no Send tab, no Send pane.
+    expect(w.doc.getElementById('tab-send')).toBeNull();
+    expect(w.doc.getElementById('surface-send')).toBeNull();
+    expect(w.doc.querySelectorAll('[role="tab"]').map((t) => t.id)).toEqual(['tab-convert', 'tab-read', 'tab-tune']);
+    for (const id of ['convert', 'read', 'tune']) {
       const pane = w.surface(id);
       expect(pane.getAttribute('role')).toBe('tabpanel');
       expect(pane.getAttribute('aria-labelledby')).toBe(`tab-${id}`);
@@ -9105,12 +8987,71 @@ describe('the window, booted whole', () => {
     expect(sheet.open).toBe(false);
   });
 
-  test('Read, Settings and Send are off the bar until a script converts', async () => {
+  test('Read and Settings are off the bar until a script converts', async () => {
     w = await bootWindow(SCRATCH, { respond: engine });
-    const onBar = () => ['convert', 'read', 'tune', 'send'].filter((id) => !w!.tab(id).hidden);
+    const onBar = () => ['convert', 'read', 'tune'].filter((id) => !w!.tab(id).hidden);
     expect(onBar()).toEqual(['convert']);
     await open(w, '/s/Field Station.pdf');
-    expect(onBar()).toEqual(['convert', 'read', 'tune', 'send']);
+    expect(onBar()).toEqual(['convert', 'read', 'tune']);
+  });
+
+  test('a finished conversion hands the keyboard to the panel’s first card, not to Read it under it', async () => {
+    // Found live, 2026-10-01: the cards wait on the engine's answer about the
+    // stored reader, and the result had already parked the keyboard on the
+    // first control it had, Read it.
+    w = await bootWindow(SCRATCH, { respond: engine });
+    await open(w, '/s/Field Station.pdf');
+    await settle();
+    expect(w.doc.activeElement).toBe(w.surface('convert').button('Kindle'));
+  });
+
+  test('Read’s Send goes back to the result, drawn again if the well replaced it, with the keyboard on the panel', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine });
+    await open(w, '/s/Field Station.pdf');
+    w.surface('convert').button('Convert another').click();
+    expect(w.surface('convert').dataset.state).toBe('idle');
+    w.tab('read').click();
+    const send = w.surface('read').button('Send');
+    // Read shows its notice here (no script drawn): a box beside Convert it
+    // again. In the script's head it is quiet; see the read-head test.
+    expect(send.className).toContain('btn-outline');
+    send.click();
+    await settle();
+    expect(w.showing()).toBe('convert');
+    expect(w.surface('convert').dataset.state).toBe('done');
+    // The boot engine refuses app-settings: no reader stored, the cards.
+    expect(w.doc.activeElement).toBe(w.surface('convert').button('Kindle'));
+    expect(conversions(w).length).toBe(1);
+  });
+
+  test('Settings has the same Send, and on the result already up it only hands the keyboard over', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine });
+    await open(w, '/s/Field Station.pdf');
+    const panel = w.surface('convert').querySelector('.send-panel');
+    w.tab('tune').click();
+    w.surface('tune').button('Send').click();
+    await settle();
+    expect(w.showing()).toBe('convert');
+    // Nothing redrawn: the result was still up behind the tab.
+    expect(w.surface('convert').querySelector('.send-panel')).toBe(panel);
+    expect(w.doc.activeElement).toBe(w.surface('convert').button('Kindle'));
+    expect(conversions(w).length).toBe(1);
+  });
+
+  test('the devices poll runs once a book is open, and not before', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine });
+    expect(w.tauri.callsTo('devices')).toEqual([]);
+    expect(w.intervals()).toBe(0);
+    await open(w, '/s/Field Station.pdf');
+    expect(w.tauri.callsTo('devices').map((c) => c.args)).toEqual([['devices', '--json', '--quick']]);
+    expect(w.intervals()).toBe(1);
+    w.tauri.callsTo('devices')[0].answer({ ok: true, devices: [] });
+    await settle();
+    w.tickInterval();
+    expect(w.tauri.callsTo('devices').length).toBe(2);
+    // A second book does not start a second poll.
+    await open(w, '/s/Second.pdf');
+    expect(w.intervals()).toBe(1);
   });
 
   test('Ctrl or Cmd O asks for a file from any surface, and a cancel leaves the reader where they were', async () => {
@@ -9152,7 +9093,207 @@ describe('the window, booted whole', () => {
     w.doc.activeElement = null;
     w.tauri.dialogs.shift()!.resolve(null);
     await settle();
-    expect(w.doc.activeElement as unknown).toBe(w.surface('convert').button('Send to a reader'));
+    // The panel's first card: the boot engine refuses app-settings, so no
+    // reader is stored and the cards are asked.
+    expect(w.doc.activeElement as unknown).toBe(w.surface('convert').button('Kindle'));
+  });
+
+  const KINDLE_ON = { id: '/Volumes/Kindle', kind: 'kindle', name: 'Kindle', volume: '/Volumes/Kindle' };
+  /** Answer the newest devices poll with `devices`, then let it land. */
+  async function poll(win: BootedWindow, devices: unknown[]) {
+    win.tauri.callsTo('devices').at(-1)!.answer({ ok: true, devices });
+    await settle();
+  }
+  /** The next tick of the devices poll, answered. */
+  async function tickWith(win: BootedWindow, devices: unknown[]) {
+    win.tickInterval();
+    await poll(win, devices);
+  }
+  const headsUp = (win: BootedWindow) => win.doc.querySelector('.heads-up')!;
+
+  test('a Kindle plugged in while a book is open: one line at the top of the page, Copy or Not now', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []); // the first list only seeds
+    expect(headsUp(w).hidden).toBe(true);
+    await tickWith(w, [KINDLE_ON]);
+    const line = headsUp(w);
+    expect(line.hidden).toBe(false);
+    expect(line.querySelector('.heads-up-line')!.textContent).toBe('Kindle plugged in. Copy Field Station?');
+    expect(line.getAttribute('role')).toBe('status');
+    expect(line.buttons().map((b) => b.textContent)).toEqual(['Copy it', 'Not now']);
+    // At the top of the sheet, under the tabs, whatever page is showing.
+    const sheet = w.doc.querySelector('.sheet')!;
+    expect(sheet.childNodes.indexOf(line)).toBe(sheet.childNodes.indexOf(w.doc.querySelector('.tabs')!) + 1);
+    // Never sends without a press.
+    expect(w.tauri.callsTo('send')).toEqual([]);
+    expect(w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))).toEqual([]);
+  });
+
+  test('Copy goes to the result and copies to that Kindle', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('tune').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    expect(headsUp(w).hidden).toBe(true);
+    expect(w.showing()).toBe('convert');
+    expect(w.surface('convert').dataset.state).toBe('done');
+    // This script's settings are read first (the Settings page had not
+    // answered yet), then the Kindle file is made, then copied.
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    const exported = w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'));
+    expect(exported.map((c) => c.args.slice(0, 5))).toEqual([['export', '/lib/Field Station/Field Station.epub', '--json', '--for', 'kindle']]);
+    exported[0].answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    expect(w.tauri.callsTo('send').map((c) => c.args))
+      .toEqual([['send', '/lib/Field Station/Field Station.azw3', '--json', '--device', '/Volumes/Kindle']]);
+  });
+
+  test('Copy from the line with no reader chosen yet ends on Eject Kindle, and the panel remembers a Kindle', async () => {
+    // The panel was on the cards (the boot engine stores no reader), which
+    // draw no Eject: spec decision 12 says a USB copy ends with one.
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    expect(w.surface('convert').querySelector('.device-cards')).not.toBeNull();
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))[0]
+      .answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    w.tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/Kindle/documents/Field Station.azw3' });
+    await settle();
+    const convert = w.surface('convert');
+    expect(convert.querySelector('.device-cards')).toBeNull();
+    expect(convert.querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+    expect(convert.querySelector('.send-status')!.textContent).toBe('Field Station is on your Kindle. Eject it before you unplug.');
+    // Stored as a card press stores it, so the cards are not asked again.
+    expect(w.tauri.callsTo('app-settings').map((c) => c.args).at(-1))
+      .toEqual(['app-settings', '--json', '--set', '{"readerDevice":"kindle"}']);
+  });
+
+  test('the Eject reminder outlives converting another book, until the Kindle is unplugged (spec 13)', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    headsUp(w).button('Copy it').click();
+    await settle();
+    for (const call of w.tauri.callsTo('settings')) call.answer({ ok: false, error: { code: 'internal', message: 'no' } });
+    await settle();
+    w.tauri.callsTo('export').filter((c) => !c.args.includes('--check'))[0]
+      .answer({ ok: true, path: '/lib/Field Station/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
+    await settle();
+    w.tauri.callsTo('send')[0].answer({ ok: true, destination: '/Volumes/Kindle/documents/Field Station.azw3' });
+    await settle();
+    const ON_IT = 'Field Station is on your Kindle. Eject it before you unplug.';
+    expect(w.surface('convert').querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+
+    await open(w, '/s/Second.pdf');
+    const convert = w.surface('convert');
+    expect(convert.querySelector('h2')!.textContent).toContain('Second');
+    expect(convert.querySelector('.calm .btn-brad')!.textContent).toBe('Eject Kindle');
+    expect(convert.querySelector('.send-status')!.textContent).toBe(ON_IT);
+
+    // Unplugged without ejecting: the button goes.
+    await tickWith(w, []);
+    expect(convert.buttons('Eject Kindle')).toEqual([]);
+  });
+
+  test('Not now, or eight seconds, takes it away; the same Kindle does not bring it back until it is unplugged', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    const notNow = headsUp(w).button('Not now');
+    notNow.focus();
+    notNow.click();
+    expect(headsUp(w).hidden).toBe(true);
+    // The keyboard is not left on a button that has gone.
+    expect(w.doc.activeElement).not.toBe(notNow);
+    expect(w.surface('read').contains(w.doc.activeElement)).toBe(true);
+    // Still plugged in: not news.
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+    // Unplugged and plugged in again: news again, and it goes by itself.
+    await tickWith(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.runTimeouts();
+    expect(headsUp(w).hidden).toBe(true);
+    expect(w.tauri.callsTo('send')).toEqual([]);
+  });
+
+  test('not on the result screen, where the card and the brass already say it', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(w.showing()).toBe('convert');
+    expect(headsUp(w).hidden).toBe(true);
+    // And that plug-in is spent: moving to Read does not bring it up late.
+    w.tab('read').click();
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('the line goes away when the reader arrives on the result while it is up', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.tab('convert').click();
+    expect(w.showing()).toBe('convert');
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('and when another book converted from elsewhere lands its result under it', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, []);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(false);
+    w.tauri.emit('tauri://drag-drop', { paths: ['/s/Second.pdf'], position: { x: 1, y: 1 } });
+    await settle();
+    expect(w.surface('convert').dataset.state).toBe('done');
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('a Kindle already plugged in when the book opened is not news', async () => {
+    w = await bootWindow(SCRATCH, { respond: engine, timers: true });
+    await open(w, '/s/Field Station.pdf');
+    w.tab('read').click();
+    await poll(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
+  });
+
+  test('not while a conversion runs', async () => {
+    w = await bootWindow(SCRATCH, {
+      respond: (args) => (args[0] === '/s/Second.pdf' ? HOLD : engine(args)), timers: true,
+    });
+    await open(w, '/s/Field Station.pdf');
+    await poll(w, []);
+    w.tauri.emit('tauri://drag-drop', { paths: ['/s/Second.pdf'], position: { x: 1, y: 1 } });
+    await settle();
+    expect(w.surface('convert').dataset.state).toBe('working');
+    await tickWith(w, [KINDLE_ON]);
+    expect(headsUp(w).hidden).toBe(true);
   });
 
   test('a file dragged over the window marks the well, and a drop converts the first real path, from any surface', async () => {
@@ -9181,5 +9322,66 @@ describe('the window, booted whole', () => {
     await settle();
     expect(w.showing()).toBe('convert');
     expect(conversions(w).map((c) => c.args[0])).toEqual(['/s/Field Station.pdf', '/s/Field Station.pdf']);
+  });
+});
+
+describe('every dressed frame follows the desktop’s theme', () => {
+  // Found live, 2026-10-01: switching the desktop to dark redrew Read's page
+  // but left the result's first page and the Settings preview on light
+  // paper until they were drawn again. The listener lived in Read alone.
+  const g = globalThis as unknown as Record<string, unknown>;
+  const NAMES = ['document', 'matchMedia', 'getComputedStyle'];
+  const saved: Record<string, unknown> = {};
+  beforeEach(() => { for (const k of NAMES) saved[k] = g[k]; });
+  afterEach(() => { for (const k of NAMES) { if (saved[k] === undefined) delete g[k]; else g[k] = saved[k]; } });
+
+  test('a theme change re-dresses the result page and the preview too, and leaves a detached frame alone', async () => {
+    let paper = '#F4EFE4';
+    const changes: Array<() => void> = [];
+    g.document = { documentElement: {} };
+    g.getComputedStyle = () => ({ getPropertyValue: (name: string) => (name === '--paper' ? paper : '#222') });
+    g.matchMedia = () => ({ matches: false, addEventListener: (_: string, fn: () => void) => changes.push(fn) });
+    const frameOf = (connected: boolean) => {
+      const doc = { adoptedStyleSheets: [] as Array<{ text: string }> };
+      return {
+        isConnected: connected,
+        contentDocument: doc,
+        contentWindow: { CSSStyleSheet: class { text = ''; replaceSync(t: string) { this.text = t; } } },
+        sheet: () => doc.adoptedStyleSheets[0]?.text ?? '',
+      };
+    };
+    const { dressFrame } = await import(`${join(UI, 'read.js')}?theme-follow`);
+    const result = frameOf(true);
+    const preview = frameOf(true);
+    const gone = frameOf(true);
+    for (const f of [result, preview, gone]) expect(dressFrame(f, 'p { margin: 0 }')).toBe(true);
+    gone.isConnected = false;
+    expect(changes.length).toBe(1);
+
+    paper = '#1C1A17';
+    changes[0]();
+    expect(result.sheet()).toContain('background: #1C1A17');
+    expect(preview.sheet()).toContain('background: #1C1A17');
+    expect(result.sheet()).toContain('p { margin: 0 }');
+    expect(gone.sheet()).toContain('background: #F4EFE4');
+  });
+
+  test('a frame that left the window is let go at the next dressing, not kept until a theme change', async () => {
+    g.document = { documentElement: {} };
+    g.getComputedStyle = () => ({ getPropertyValue: () => '#222' });
+    g.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const frameOf = () => ({
+      isConnected: true,
+      contentDocument: { adoptedStyleSheets: [] },
+      contentWindow: { CSSStyleSheet: class { replaceSync() {} } },
+    });
+    const { dressFrame, dressedCount } = await import(`${join(UI, 'read.js')}?theme-prune`);
+    const results = Array.from({ length: 5 }, frameOf);
+    for (const f of results) {
+      dressFrame(f, '');
+      // Each new result replaces the last one's frame, as the result page does.
+      for (const other of results) if (other !== f) other.isConnected = false;
+    }
+    expect(dressedCount()).toBe(1);
   });
 });

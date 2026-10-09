@@ -31,6 +31,9 @@ export const VERBS = [
   // book leaves Screepub, and performing one of them).
   'routes',
   'route',
+  // 2026-10-01: eject joined for send from Convert (spec decision 12): it
+  // safely removes a reader the engine itself lists, and nothing else.
+  'eject',
 ] as const;
 export type Verb = (typeof VERBS)[number];
 
@@ -123,7 +126,7 @@ export interface SendOptions extends ListDevicesOptions {
   /** The id `devices` reports. Omitted: the single connected device. */
   deviceId?: string;
   /** Where a send that worked is remembered (the app settings file), so the
-   *  Send page chooses this reader first next time. default:
+   *  send panel chooses this reader first next time. default:
    *  appSettingsPath(), which SCREEPUB_CONFIG_DIR overrides. */
   settingsPath?: string;
 }
@@ -144,7 +147,7 @@ export interface SendResult {
  *
  * A send that WORKED is remembered as `device:<kind>` (never the volume: a
  * path goes stale the moment the reader is unplugged) or `remarkable`, the
- * Send page's first choice next time. A failed send remembers nothing, and a
+ * send panel's first choice next time. A failed send remembers nothing, and a
  * settings file that cannot be written never fails a send (rememberRoute). */
 export async function sendCommand(options: SendOptions): Promise<SendResult> {
   let isFile = false;

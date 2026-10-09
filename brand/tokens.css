@@ -8,6 +8,7 @@
   --ink: #1D1B16;
   --ink-soft: #4A453A;
   --ink-muted: #6D6960;
+  --present: #3E7D4A;
   --brass: #E8A33D;
   --ground: #23272F;
   --alarm: #AF3220;
@@ -90,6 +91,7 @@
     --ink: #E8E2D3;
     --ink-soft: #C4BDAC;
     --ink-muted: #8F887C;
+    --present: #6FBF7E;
     --ground: #141517;
     --alarm: #EA7A65;
     --hole: rgba(0,0,0,0.45);

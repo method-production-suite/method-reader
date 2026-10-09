@@ -21,8 +21,8 @@ then their scripts silently never arrive.
 Everything below is at Amazon → **Manage Your Content and Devices** →
 **Preferences** → **Personal Document Settings**
 ([direct link](https://www.amazon.com/hz/mycd/myx#/home/settings/pdoc)). In
-Screepub, the Send page's email row has **Open Amazon's page**, which opens
-that same page in your browser.
+Screepub, the email row under **Other ways** on the result screen has
+**Open Amazon's page**, which opens that same page in your browser.
 
 ## 1. Find your Kindle's own email address
 
@@ -49,16 +49,16 @@ Attach the EPUB to a normal email addressed to your `@kindle.com` address and
 send it. Subject and body don't matter. It lands on every Kindle on the
 account, usually within a minute or two.
 
-On a Mac whose default mail app is Apple Mail, the Send page's **Send to
-Kindle email** does the attaching: it opens a new Mail message with the
-book's EPUB already in it, and you add your `@kindle.com` address and send.
-Anywhere else, **Save the EPUB…** on the same page saves a copy you can
-attach from any mail app.
+On a Mac whose default mail app is Apple Mail, **Send to Kindle email**
+under **Other ways** on the result screen does the attaching: it opens a new
+Mail message with the book's EPUB already in it, and you add your
+`@kindle.com` address and send. Anywhere else, the EPUB row's **Save…** in
+the same list saves a copy you can attach from any mail app.
 
 > Send the **EPUB**, not the MOBI or AZW3: Amazon does not accept those by
-> email. The Send page's two saves are named for what each file is for:
-> **Save the EPUB…** is the one for email, and **Save a Kindle file…** is for
-> copying to a Kindle by hand over USB.
+> email. Each file under **Save a file** says who it is for: EPUB is the one
+> for email; KFX, AZW3 and MOBI are for copying to a Kindle by hand over
+> USB.
 
 ## What Amazon receives
 

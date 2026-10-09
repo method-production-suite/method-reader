@@ -1,0 +1,25 @@
+name = "screepub-device-requests"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "screepub-device-requests"
+# Created by `bunx wrangler d1 create screepub-device-requests`, 2026-10-02.
+# An identifier, not a secret: deploying still needs the owner's login.
+database_id = "343f8b66-876c-40e7-8cb4-9dcc6ba544b0"
+
+# The rate limit: Cloudflare's Workers rate-limit binding, which keeps its
+# counters at Cloudflare for the window and stores nothing in D1. Five
+# accepted requests per sender per 60 seconds, per Cloudflare location (the
+# window can only be 10 or 60 seconds). `limit` is LIMIT_PER_MINUTE in
+# src/worker.ts; a test holds them together. namespace_id is any positive
+# integer unique in the owner's Cloudflare account, made up here.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "2610"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60

@@ -28,11 +28,12 @@ import { settingsCommand } from './cli-settings';
 import { exportCommand } from './cli-export';
 import { appSettingsCommand } from './cli-app-settings';
 import { revealCommand } from './cli-reveal';
+import { ejectCommand } from './cli-eject';
 import { kfxInstallCommand, kfxStatusCommand, installLines, setupLines } from './cli-kfx';
 import { routeCommand, routesCommand, routesLines } from './cli-routes';
 import { kfxPossible } from './export/kfx-setup';
 import { routeFacts } from './export/route-facts';
-import type { ListDevicesOptions } from './device/list';
+import { listDevices, type ListDevicesOptions } from './device/list';
 
 const USAGE = `screepub: screenplay PDF → reflowable EPUB3 (via Fountain)
 
@@ -90,16 +91,17 @@ Options:
       --version          print the version and exit
 
 Commands:
-  screepub devices [--json]                 list connected e-readers
+  screepub devices [--quick] [--json]       list connected e-readers
   screepub send <file> [--device <id>] [--json]
                                             send an existing file to one
   screepub settings <file.fountain> [--set <json>] [--json]
                                             read/write a script's own settings
-  screepub export <file.epub> [--for kindle|epub] [--json]
+  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--json]
                                             the file you would put on a reader
   screepub app-settings [--set <json>] [--json]
                                             where books land, and what new scripts start from
   screepub reveal <file> [--json]           show a file in the system's file manager
+  screepub eject <volume> [--json]          safely remove a reader before unplugging it
   screepub kfx-status [--json]              can this computer make KFX for a Kindle?
   screepub kfx-install [--json]             add the KFX plugin to Calibre (online)
   screepub routes <file.epub> [--quick] [--json]
@@ -123,12 +125,13 @@ Each verb has its own --help.
 const DEVICES_USAGE = `screepub devices: list every connected e-reader
 
 Usage:
-  screepub devices [--json]
+  screepub devices [--quick] [--json]
 
 Lists USB-mounted Kindle, Kobo and tolino volumes, plus a docked reMarkable if
 its USB web interface answers. Nothing connected is an empty list, not an error.
 
 Options:
+  --quick                answer at once, without looking for a reMarkable
   --json                 machine-readable result on stdout (for the app)
   -h, --help             show this help
 `;
@@ -169,16 +172,20 @@ Options:
 const EXPORT_USAGE = `screepub export: the file you would put on a reader
 
 Usage:
-  screepub export <file.epub> [--for kindle|epub] [--fountain <f>] [--out <path>] [--json]
-  screepub export <file.epub> --for kindle --check [--json]
+  screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--fountain <f>] [--out <path>] [--json]
+  screepub export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
 \`screepub send\` moves it. Kindle climbs KFX → AZW3 → MOBI, taking the best
-rung this machine can reach.
+rung this machine can reach. kfx, azw3 and mobi each make only that file,
+and refuse when this computer lacks its tools. fountain hands over the
+script itself.
 
 Options:
-  --for <kindle|epub>    which file you want (default epub)
-  --fountain <file>      the script's .fountain, needed to rebuild a MOBI
+  --for <type>           which file you want (default epub): epub, kindle,
+                         kfx, azw3, mobi or fountain
+  --fountain <file>      the script's .fountain: required by mobi and
+                         fountain, and used to rebuild a MOBI for kindle
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
                          extension must match the file produced)
@@ -230,6 +237,21 @@ Usage:
 <file> must be a full path to a file that already exists. On macOS, Finder
 opens with the file itself selected. On Windows and Linux, the file's
 folder opens instead.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+`;
+
+const EJECT_USAGE = `screepub eject: safely remove a reader before unplugging it
+
+Usage:
+  screepub eject <volume> [--json]
+
+<volume> must be the full path of a reader that \`screepub devices\` lists
+right now, such as /Volumes/Kindle or E:\\. Any other disk is refused.
+On macOS this runs diskutil eject; on Linux, udisksctl unmount and then
+power-off; on Windows, the shell's own Eject.
 
 Options:
   --json                 machine-readable result on stdout (for the app)
@@ -375,6 +397,7 @@ function verbUsage(verb: Verb): string {
   if (verb === 'update-should-check') return UPDATE_SHOULD_CHECK_USAGE;
   if (verb === 'app-settings') return APP_SETTINGS_USAGE;
   if (verb === 'reveal') return REVEAL_USAGE;
+  if (verb === 'eject') return EJECT_USAGE;
   return SEND_USAGE;
 }
 
@@ -636,7 +659,7 @@ type VerbFlag = `--${Exclude<Extract<keyof VerbValues, string>, 'json' | 'help'>
  * type-check until it has a row; tests/cli-verb-flags.test.ts runs every verb
  * against every flag. */
 const VERB_FLAGS: Record<Verb, readonly VerbFlag[]> = {
-  devices: [],
+  devices: ['--quick'],
   send: ['--device'],
   settings: ['--set'],
   export: ['--for', '--fountain', '--options-json', '--out', '--check'],
@@ -650,6 +673,7 @@ const VERB_FLAGS: Record<Verb, readonly VerbFlag[]> = {
   // For some keys only: routeCommand refuses each for every key that cannot
   // act on it.
   route: ['--out', '--fountain', '--options-json'],
+  eject: [],
 };
 
 /** The order a call carrying SEVERAL foreign flags hears about them in, kept
@@ -707,7 +731,7 @@ async function runVerb(verb: Verb, args: string[]): Promise<void> {
       if (positionals.length > 0) {
         fail({ code: 'usage', message: `devices takes no arguments (got "${positionals[0]}")` });
       }
-      const { devices } = await devicesCommand(deviceSeams());
+      const { devices } = await devicesCommand({ ...deviceSeams(), skipRemarkable: values.quick });
       if (jsonMode) {
         console.log(JSON.stringify({ ok: true, devices }));
         return;
@@ -875,12 +899,27 @@ async function runVerb(verb: Verb, args: string[]): Promise<void> {
       return;
     }
 
+    if (verb === 'eject') {
+      if (positionals.length !== 1) {
+        fail({ code: 'usage', message: 'expected exactly one reader volume to eject (see --help)' });
+      }
+      const result = await ejectCommand(positionals[0], {
+        devices: () => listDevices({ ...deviceSeams(), skipRemarkable: true }),
+      });
+      if (jsonMode) {
+        console.log(JSON.stringify({ ok: true, ...result }));
+        return;
+      }
+      console.log(`Ejected ${result.ejected}. It is safe to unplug.`);
+      return;
+    }
+
     if (verb === 'routes') {
       if (positionals.length !== 1) {
         fail({ code: 'usage', message: 'expected exactly one .epub (see --help)' });
       }
       // --quick leaves the reMarkable probe out, and says so on its row:
-      // the Send page draws this at once, then asks again in full.
+      // the send panel draws this at once, then asks again in full.
       const answer = await routesCommand(positionals[0], {
         facts: () => routeFacts({}, { ...deviceSeams(), skipRemarkable: values.quick }),
       });
@@ -1174,16 +1213,32 @@ async function main() {
   // Ticks are throttled to whole percents so a 300-page script emits ~100
   // lines rather than one per page per stage.
   let lastPercent = -1;
+  let lastStage: ConvertStage | null = null;
   const onProgress = values.progress
-    ? (stage: ConvertStage, fraction: number) => {
+    ? (stage: ConvertStage, fraction: number, reading?: { page: number; pages: number }) => {
         const percent = Math.round(fraction * 100);
-        if (percent === lastPercent) return;
+        // The last page is always said, even on a percent already said, so
+        // "Reading page N of M" ends on M rather than a page short of it.
+        const last = reading !== undefined && reading.page === reading.pages;
+        // A new stage is always said too: the first render tick shares the
+        // last parse tick's percent, and the window learns the book is
+        // being built only from it.
+        if (percent === lastPercent && stage === lastStage && !last) return;
         lastPercent = percent;
-        process.stderr.write(`${JSON.stringify({ progress: { stage, percent } })}\n`);
+        lastStage = stage;
+        const line = reading === undefined ? { stage, percent } : { stage, percent, ...reading };
+        process.stderr.write(`${JSON.stringify({ progress: line })}\n`);
+      }
+    : undefined;
+  // The first real page, once, so the window can type it out while the rest
+  // converts (spec decision 17). Same stream and writer as the ticks above.
+  const onFirstPage = values.progress
+    ? (page: number, paragraphs: string[]) => {
+        process.stderr.write(`${JSON.stringify({ progress: { stage: 'page', page, paragraphs } })}\n`);
       }
     : undefined;
 
-  const opts = { title: values.title, author: values.author, force: values.force, mobi: values.mobi, format: formatForConvert, onProgress };
+  const opts = { title: values.title, author: values.author, force: values.force, mobi: values.mobi, format: formatForConvert, onProgress, onFirstPage };
 
   let result: ConvertResult;
   try {

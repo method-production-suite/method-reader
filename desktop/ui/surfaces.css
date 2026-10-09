@@ -11,37 +11,6 @@
   color: var(--ink);
   margin: 0 0 var(--space-3);
 }
-/* The reach table, folded. The summary wears the same clothes as a .subslug
- * so the page does not gain a new kind of heading just because this one can
- * be opened. The default marker is replaced with a brass one that points the
- * way it will move, which is the only part of a <details> worth restyling. */
-.reach { margin-top: var(--space-7); }
-.reach-summary {
-  font-family: var(--font-structure);
-  font-weight: 700;
-  font-size: var(--text-caption);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  cursor: pointer;
-  list-style: none;
-  transition: color var(--motion-state) var(--ease);
-}
-.reach-summary::-webkit-details-marker { display: none; }
-.reach-summary::before {
-  content: "\25B8";           /* a right-pointing triangle, rotated when open */
-  display: inline-block;
-  margin-right: var(--space-2);
-  color: var(--brass);
-  transition: transform var(--motion-state) var(--ease);
-}
-.reach[open] > .reach-summary::before { transform: rotate(90deg); }
-.reach-summary:hover { color: var(--ink); }
-.reach-summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) {
-  .reach-summary, .reach-summary::before { transition: none; }
-}
-
 .subslug {
   font-family: var(--font-structure);
   font-weight: 700;
@@ -259,38 +228,261 @@
   font-variant-numeric: tabular-nums; color: var(--ink-muted);
 }
 
-/* The result block sits down the page rather than up against the tabs. It
- * used to start immediately under them and stop a third of the way down,
- * leaving the bottom two thirds of the sheet empty — which reads as a page
- * that failed to finish loading rather than one that has finished its work.
- * Same treatment the drop well's wordmark gets, for the same reason: this is
- * the moment the conversion succeeded and it should feel like an arrival. */
-.announce {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: var(--space-9);
+/* The result, since 2026-10-01: the book's first page beside the send
+ * panel (spec 2026-10-01, decision 2). It takes the block, not Convert's 820
+ * column: a 400 page, the 32 gap, and a panel of up to 620, the pair
+ * centred. In a block under 880 (the same container line Read and Settings
+ * fold on) the panel goes first and the page under it, both centred. */
+#surface-convert[data-state="done"] { max-width: none; }
+.result {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 620px);
+  grid-template-areas: "page side";
+  justify-content: center;
+  align-items: start;
+  column-gap: var(--space-7);
+  margin-top: var(--space-8);
 }
 /* A short window has no whitespace to spend on ceremony. */
 @media (max-height: 620px) {
-  .announce { margin-top: var(--space-5); }
+  .result { margin-top: var(--space-5); }
 }
-.book-title {
-  font-family: var(--font-structure); font-weight: 700; font-size: var(--text-code);
-  letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink); margin: 0;
+/* The page as a sheet of paper: the reader's own frame, cut to a page. */
+.result-page {
+  grid-area: page;
+  aspect-ratio: 3 / 4;
+  box-sizing: border-box;
+  border: 1px solid var(--hole);
+  border-radius: var(--radius-well);
+  background: var(--paper);
+  overflow: hidden;
+}
+.result-page-frame { display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
+/* The page that writes itself (page-show.js): while a script converts, the
+ * result's own box, in its own place, with the typed page over where the
+ * result's page will be, and a slim line under it saying which page the
+ * engine is reading. The typed page lifts away (opacity) at the end. */
+#surface-convert[data-show] { max-width: none; }
+.result[data-showing] { grid-template-areas: "page side" "line side"; }
+.result-page.page-show { position: relative; }
+.page-show-frame {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: block; border: 0; pointer-events: none;
+  background: var(--paper);
+  transition: opacity 0.25s var(--ease);
+}
+.page-show-frame.page-show-gone { opacity: 0; }
+.page-show-line { grid-area: line; margin: var(--space-2) 0 0; text-align: center; }
+/* The page's words, whole from the first moment, for a screen reader: the
+ * typing is for eyes. Out of sight, not out of the page. */
+.page-show-words {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.result-side {
+  grid-area: side;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+@container (max-width: 879px) {
+  .result {
+    grid-template-columns: minmax(0, 620px);
+    grid-template-areas: "side" "page";
+    row-gap: var(--space-7);
+  }
+  .result-page { width: 400px; max-width: 100%; justify-self: center; }
+}
+@container (max-width: 879px) {
+  .result[data-showing] { grid-template-areas: "side" "page" "line"; }
+}
+.result-title {
+  font-family: var(--font-structure); font-weight: 700; font-size: var(--text-body);
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); margin: 0;
   overflow-wrap: anywhere;
 }
-.book-by { font-family: var(--font-structure); font-size: var(--text-label); color: var(--ink-muted); margin: 0; }
 .book-count {
   font-family: var(--font-structure); font-size: var(--text-ui); line-height: 1.55;
-  color: var(--ink); margin: var(--space-1) 0 0; white-space: pre-line;
+  color: var(--ink-muted); margin: 0; white-space: pre-line;
 }
-.send { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); margin-top: var(--space-8); }
-.asides { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-6); }
+/* The panel is a box like a Settings section: a hairline, the well's
+ * corners, the panel fill. Everything the reader does with the book is in
+ * it; the three quiet links under it leave the result. */
+.send-panel {
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--hole);
+  border-radius: var(--radius-well);
+  background: var(--panel);
+}
+.asides { display: flex; flex-wrap: wrap; gap: var(--space-6); margin-top: var(--space-3); }
 .path-note {
   font-family: var(--font-structure); font-size: var(--text-fine);
-  color: var(--ink-muted); word-break: break-all; margin: var(--space-7) 0 0;
+  color: var(--ink-muted); word-break: break-all; margin: var(--space-2) 0 0;
+}
+
+/* "What do you read on?": the cards. Outline cards on the paper, the name in
+ * the structure face as its maker spells it, never uppercased. */
+.panel-question {
+  font-family: var(--font-structure); font-weight: 700; font-size: var(--text-ui);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+  margin: 0 0 var(--space-4);
+}
+.device-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+/* Positioned, so a card's asterisk can sit in its corner and the asterisk's
+ * note can open under it without the asterisk being inside the button. */
+.device-card-slot { position: relative; min-width: 0; }
+.device-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6) var(--space-3) var(--space-4);
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--ink-muted);
+  border-radius: var(--radius-well);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color var(--motion-press) var(--ease), background var(--motion-press) var(--ease);
+}
+.device-card:hover { border-color: var(--ink); background: var(--hole); }
+.device-card:active { opacity: 0.75; }
+.device-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.device-card-name {
+  font-family: var(--font-structure); font-weight: 700; font-size: var(--text-ui);
+  letter-spacing: 0.05em; color: var(--ink); overflow-wrap: anywhere;
+}
+.device-card-sub {
+  font-family: var(--font-structure); font-size: var(--text-note); color: var(--ink-muted);
+}
+/* The reader the computer can see: the edge brass and a green dot (spec
+ * decision 5). The dot is the one use of --present. */
+.device-card-here { border-color: var(--brass); box-shadow: inset 3px 0 0 var(--brass); }
+.device-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--present);
+}
+/* The dot with its words, "Plugged in": on a card, in its lower corner; on
+ * the calm screen, beside the brass button. */
+.device-here {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-structure); font-size: var(--text-note); color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+.device-card .device-here { position: absolute; right: var(--space-3); bottom: var(--space-3); }
+.device-card-slot > .asterisk-wrap > .asterisk {
+  position: absolute; top: var(--space-1); right: var(--space-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .device-card { transition: none; }
+}
+
+/* The calm screen: one brass button, its lines, then Other ways and
+ * Different device. */
+.calm { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+.calm-act {
+  position: relative;
+  align-self: stretch;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+}
+.calm-line { margin: 0; }
+.calm-ways { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; margin-top: var(--space-2); }
+.calm .kindle-build { margin-top: 0; align-self: stretch; }
+.device-missing .prose { margin: 0 0 var(--space-4); }
+/* "My device isn't here": one field and its Send, the line on what goes,
+ * and the line that answers a press. */
+.request { margin: 0 0 var(--space-4); max-width: var(--measure); }
+.request-label {
+  display: block;
+  font-family: var(--font-structure); font-weight: 700; font-size: var(--text-note);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted);
+  margin: 0 0 var(--space-2);
+}
+.request-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.request-field {
+  flex: 1 1 20ch;
+  min-width: 0;
+  font-family: var(--font-structure);
+  font-size: var(--text-label);
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--ink-muted);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+}
+.request-field:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.request-note { margin: var(--space-2) 0 0; }
+.request-status { margin: var(--space-1) 0 0; min-height: 1.4em; }
+.request-status.bad, .report-status.bad { color: var(--alarm); }
+/* The asterisk's two answers, on their own line under its sentence. */
+.asterisk-note .report { display: block; margin-top: var(--space-2); }
+.report-answers { display: inline-flex; flex-wrap: wrap; gap: var(--space-4); margin-right: var(--space-3); }
+
+/* Other ways, open: two groups under a hairline, each a heading in the
+ * state-label caps and then its rows. */
+.other-ways {
+  align-self: stretch;
+  margin-top: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hole);
+}
+.ways-group + .ways-group { margin-top: var(--space-6); }
+.ways-heading {
+  font-family: var(--font-structure); font-weight: 400; font-size: var(--text-note);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted);
+  margin: 0;
+}
+.ways-group > .btn-quiet { margin-top: var(--space-4); }
+
+/* The asterisk: never tried on real hardware. A quiet mark in the
+ * structure face, beside the thing it qualifies and never inside its
+ * button. Its note opens under the row it belongs to, over what follows. */
+.asterisk-wrap { display: inline; }
+.asterisk {
+  background: none;
+  border: none;
+  padding: 0 var(--space-1);
+  font-family: var(--font-structure);
+  font-weight: 700;
+  font-size: var(--text-lede);
+  line-height: 1;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-radius: var(--radius-mark);
+}
+.asterisk:hover, .asterisk[aria-expanded="true"] { color: var(--ink); }
+.asterisk:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.asterisk-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 3;
+  max-width: var(--measure);
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: 1px solid var(--hole);
+  border-radius: var(--radius-well);
+  box-shadow: 0 2px 10px var(--hole);
+  color: var(--ink-soft);
 }
 
 .smash {
@@ -298,7 +490,7 @@
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted);
   text-align: right; margin: 0 0 var(--space-5);
 }
-/* Alarm is used here and on untested device rows, nowhere else. */
+/* Alarm is for a failure and a line that went wrong, never decoration. */
 .fault {
   font-family: var(--font-structure); font-weight: 700; font-size: var(--text-body);
   letter-spacing: 0.04em; text-transform: uppercase; color: var(--alarm);
@@ -359,6 +551,8 @@
   font-family: var(--font-structure); font-size: var(--text-note);
   color: var(--ink-muted); margin: 2px 0 0;
 }
+/* Send sits in the head's row of quiet words, a step after Hide scenes. */
+.read-head .read-send { margin-left: var(--space-5); }
 
 /* Two columns: a slot for the scene index, then the script. The script keeps
  * the width its frame had at the old 1000px page cap (706px), so its lines
@@ -606,8 +800,10 @@
  * fieldset's own border and padding go, so it reads as part of the foot
  * rather than a box inside it; the legend wears the state-label caps the
  * preset row already uses for "Load a preset". Each option is the radio and
- * its label on one line, with its explanation under the label. */
-.keep-choice {
+ * its label on one line, with its explanation under the label. "While a
+ * script converts", the page's two switches, wears the same: checkboxes
+ * where the keep choice has radios. */
+.keep-choice, .page-switches {
   margin: var(--space-6) 0 0;
   padding: 0;
   border: none;
@@ -634,8 +830,8 @@
 .keep-radio:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .keep-note { margin: var(--space-2) 0 0; }
 
-/* Each group folds. Same disclosure vocabulary as the reach table on Send,
- * so the window has one way of saying "there is more here" rather than two. */
+/* Each group folds, with the one disclosure mark the window uses: a brass
+ * triangle that turns as the group opens. */
 /* Each group is a box since the layout pass (2026-09-29): the owner found
  * the sections ran together. A hairline, the well's corners and a fill a
  * shade off the paper. The foot (which defaults new scripts start from, and
@@ -718,31 +914,35 @@
 /* The one line that makes a claim about a file on disk. It sits at the foot
  * of the form, where the reader's eye lands after the last knob. */
 .tune-status { min-height: 1.4em; margin-top: 0; }
+
+/* The page's heading and, on its line to the right, Send: a quiet word as
+ * on Read's head, not a box between the heading and the lede. */
+.tune-head { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--space-5); }
 .tune-status.bad { color: var(--alarm); }
 
-/* Send — brand/components/device-table.html, as rows rather than a table: a
- * device is a thing with an action, not a record. The standing list of what
- * Screepub can reach keeps the table's three columns (name, status, route)
- * because that IS the comparison a reader is making; a connected device
- * drops the status column and gains a button. */
+/* The rows in Other ways (and in the KFX checklist): brand/components/
+ * device-table.html, as rows rather than a table: a way is a thing with an
+ * action, not a record. Positioned, so an asterisk's note opens under its
+ * row. */
 .devices { margin: var(--space-6) 0 0; }
-.device-row, .reader-row {
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--hole);
-}
-.device-row {
+.device-row, .save-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--hole);
 }
-.device-what { flex: 1 1 22ch; }
+.device-what { flex: 1 1 22ch; min-width: 0; }
 /* Not uppercased, unlike every other structural label on the page: "tolino"
  * and "reMarkable" are spelled the way their makers spell them, and
  * src/device/types.ts is careful about it. A text-transform here would
- * quietly overrule that. */
+ * quietly overrule that. Inline-block, so an asterisk can follow it on its
+ * line. */
 .device-name {
+  display: inline-block;
   font-family: var(--font-structure);
   font-weight: 700;
   font-size: var(--text-ui);
@@ -756,17 +956,6 @@
   color: var(--ink-muted);
   margin: var(--space-1) 0 0;
   word-break: break-all;
-}
-/* Alarm is for what is not known to work — here and on a failure — and never
- * for decoration. */
-.device-caveat {
-  font-family: var(--font-structure);
-  font-size: var(--text-fine);
-  letter-spacing: 0.04em;
-  line-height: 1.55;
-  color: var(--alarm);
-  margin: var(--space-1) 0 0;
-  max-width: var(--measure);
 }
 
 /* Every way the book can leave is a row (parity piece B). The detail is the
@@ -783,15 +972,21 @@
  * page's own muted ink. Never by opacity: that would dim the email row's
  * setup link with it, and the link works whether or not the row can. */
 .route-unavailable .device-name { color: var(--ink-muted); }
+/* The readers that only need plugging in or docking, folded into one muted
+ * line in place of a dimmed row each. Positioned like a row, so an
+ * asterisk's note opens under the line. */
+.ways-folded {
+  position: relative;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--hole);
+  font-family: var(--font-structure);
+  font-size: var(--text-note);
+  color: var(--ink-muted);
+  max-width: var(--measure);
+}
 .route-hint { margin: var(--space-2) 0 0; max-width: var(--measure); }
 
-/* The standing list of what Screepub can reach, folded under the routes. */
-.reader-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0 var(--space-4);
-  align-items: baseline;
-}
+/* The KFX checklist's status for each step, right of its row. */
 .reader-status {
   font-family: var(--font-structure);
   font-size: var(--text-fine);
@@ -801,19 +996,12 @@
   text-align: right;
   margin: 0;
 }
-.reader-untested { color: var(--alarm); }
-.reader-note { margin-top: var(--space-5); }
-.reader-route {
-  grid-column: 1 / -1;
-  font-size: var(--text-caption);
-  line-height: 1.65;
-  color: var(--ink-soft);
-  max-width: var(--measure);
-  margin: var(--space-1) 0 0;
-}
 
 /* The one line that claims a file reached a device. */
-.send-status { min-height: 1.4em; margin-top: var(--space-5); }
+.send-status { min-height: 1.4em; margin-top: var(--space-4); }
+/* In the panel's box, a line with nothing to say takes no room: the box
+ * would otherwise keep an empty strip at its foot. */
+.send-panel > .send-status:empty { min-height: 0; margin-top: 0; }
 .send-status.bad { color: var(--alarm); }
 .send-artifact {
   font-family: var(--font-structure);
@@ -850,8 +1038,39 @@
   }
 }
 
-/* The KFX checklist, under the send status: its own section, set apart. */
-.kfx-setup { margin-top: var(--space-6); }
+/* The KFX checklist, opened by Set it up under Save a file: set apart. */
+.kfx-setup { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--hole); }
+
+/* "Kindle plugged in. Copy <Title>?" (spec decision 16): a line at the top
+ * of whatever page is showing, in a box like a Settings section. It slides
+ * in; with reduced motion it simply appears. */
+.heads-up {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hole);
+  border-radius: var(--radius-well);
+  background: var(--panel);
+  animation: heads-up-in var(--motion-state) var(--ease);
+}
+.heads-up-line {
+  flex: 1 1 18ch;
+  min-width: 0;
+  font-family: var(--font-structure);
+  font-size: var(--text-ui);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+@keyframes heads-up-in {
+  from { transform: translateY(-50%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heads-up { animation: none; }
+}
 
 /* Notes — running prose, so Literata and a real measure. */
 .notes-section { margin: var(--space-6) 0 0; }

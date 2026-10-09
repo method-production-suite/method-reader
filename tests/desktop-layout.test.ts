@@ -89,6 +89,25 @@ describe('the two-column surfaces fold on the block, not the window', () => {
     expect(narrow).toContain('.tune-split { grid-template-columns: 1fr; }');
     expect(narrow).toContain('.reader { grid-template-columns: minmax(0, 1fr); }');
   });
+
+  test('Convert’s result folds on the same line: the panel first, the page under it', () => {
+    // The measured test sees both sides of the line; this pins where it is.
+    expect(containerBlocks(surfaces, NARROW)).toContain('grid-template-areas: "side" "page";');
+  });
+});
+
+describe('Convert keeps its 820 column for the drop well, and the result takes the block', () => {
+  // The measured test draws the result, never the idle well, so the well's
+  // column is held here.
+  const surfaces = windowCss('surfaces.css');
+
+  test('the well (and every state but the result) keeps a column of at most 820', () => {
+    expect(ruleBlock(surfaces, '#surface-convert')).toContain('max-width: 820px');
+  });
+
+  test('the result lets go of it', () => {
+    expect(ruleBlock(surfaces, '#surface-convert[data-state="done"]')).toContain('max-width: none');
+  });
 });
 
 describe('the page fills the window (frame B)', () => {
@@ -201,7 +220,7 @@ describe('each Settings section is a box', () => {
 
   test('the foot is one element, so it can be one box', () => {
     const tune = readFileSync(join(UI, 'tune.js'), 'utf8');
-    expect(tune).toMatch(/el\('div', \{ class: 'tune-foot' \},\s*drawDefaultsFoot\(\),\s*drawKeepChoice\(\)\)/);
+    expect(tune).toMatch(/el\('div', \{ class: 'tune-foot' \},\s*drawDefaultsFoot\(\),\s*drawKeepChoice\(\),\s*drawPageSwitches\(\)\)/);
   });
 
   test('in a narrow block the boxes stay a measure wide, not the whole column', () => {
@@ -231,7 +250,7 @@ describe('a long unbroken line wraps inside its box', () => {
 
   test('every box that prints a path, a title or an engine sentence may break anywhere', () => {
     for (const [sheet, selector] of [
-      [surfaces, '.caption'], [surfaces, '.well-ask'], [surfaces, '.book-title'],
+      [surfaces, '.caption'], [surfaces, '.well-ask'], [surfaces, '.result-title'],
       [surfaces, '.fault-body'], [surfaces, '.read-title'], [style, '.engine-fault'],
     ] as const) {
       expect(`${selector}: ${ruleBlock(sheet, selector).includes('overflow-wrap: anywhere')}`)

@@ -9,6 +9,7 @@
   --panel: #FBF8F0;
   --hole: rgba(29,27,22,0.10);
   --ink-soft: #4A453A;
+  --present: #3E7D4A;
   --brass-specular: #FDF1CE;
   --brass-highlight: #F6D486;
   --brass-shadow: #BE7C1E;
@@ -58,5 +59,6 @@
     --panel: #22201C;
     --hole: rgba(0,0,0,0.45);
     --ink-soft: #C4BDAC;
+    --present: #6FBF7E;
   }
 }

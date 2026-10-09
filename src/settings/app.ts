@@ -15,8 +15,15 @@ import { writeFileAtomicSync } from '../atomic-write';
 
 type Env = Record<string, string | undefined>;
 
+/** The readers the window can remember as "this is mine". */
+export const READER_DEVICES = ['kindle', 'apple', 'kobo', 'tolino', 'remarkable'] as const;
+export type ReaderDevice = (typeof READER_DEVICES)[number];
+
 export interface AppSettings {
   lastRoute?: string;
+  readerDevice?: ReaderDevice;
+  animatePage?: boolean;
+  typewriterSounds?: boolean;
   [other: string]: unknown;
 }
 

@@ -440,7 +440,7 @@ describe('exportCommand: app-wide defaults underneath --options-json', () => {
     expect(seen.format?.dialogueSideMarginPct).toBe(5);
   });
 
-  // What the window actually sends (desktop/ui/send.js's optionsJsonFor):
+  // What the window actually sends (desktop/ui/send-routes.js's optionsJsonFor):
   // a FULL FormatOptions object read back from `screepub settings`, so an
   // app default the ladder would otherwise supply is already baked in and
   // this changes nothing observable for it. Proven here rather than
@@ -480,7 +480,7 @@ describe('exportCommand: app-wide defaults underneath --options-json', () => {
   });
 });
 
-// Review fix: send.js's own comment (ensureSettings, around line 552) says
+// Review fix: send-panel.js's own comment (ensureSettings) says
 // "the Kindle rung that does will fall back to this script's defaults", but
 // until now the export command never read the script's sidecar at all, only
 // the app-wide ones. When export is told which script it is (--fountain),
@@ -1007,5 +1007,281 @@ describe('screepub export --out (through the CLI)', () => {
     const answer = JSON.parse(proc.stdout.toString());
     expect(answer.ok).toBe(true);
     expect(answer.usage).toContain('--out');
+  });
+});
+
+// --- Any file type on request (spec decision 11) ---------------------------
+//
+// Each explicit value builds only itself, never the ladder. Every test
+// injects the toolchain answers AND the two Calibre builders, so no test
+// here can reach a real Calibre even if the code under test is wrong: the
+// seams that must not be used throw if they are asked at all.
+describe('export --for one named file type', () => {
+  const kfxNeverAsked = async (): Promise<KfxStatus> => {
+    throw new Error('kfxStatus must not be asked for this value');
+  };
+  const ladderNeverRun = async (): Promise<string> => {
+    throw new Error('the Kindle ladder must not run for this value');
+  };
+  const neverBuild = {
+    kfx: async (): Promise<string> => {
+      throw new Error('the KFX builder must not run here');
+    },
+    azw3: async (): Promise<string> => {
+      throw new Error('the AZW3 builder must not run here');
+    },
+  };
+  const safe = { freshKindleArtifact: ladderNeverRun, rungBuilders: neverBuild };
+  async function codeAndMessage(run: Promise<unknown>): Promise<{ code?: string; message?: string }> {
+    try {
+      await run;
+    } catch (err) {
+      const e = err as { code?: string; message?: string };
+      return { code: e.code, message: e.message };
+    }
+    return {};
+  }
+  function freshSibling(ext: string): string {
+    const path = join(dir, `Script.${ext}`);
+    writeFileSync(path, `fake-${ext}-bytes`);
+    const later = new Date(statSync(epub).mtimeMs + 60_000);
+    utimesSync(path, later, later);
+    return path;
+  }
+
+  test('fountain returns the script itself and needs no toolchain', async () => {
+    const result = await exportCommand(
+      { epub, for: 'fountain', fountain },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    expect(result.path).toBe(fountain);
+    expect(result.format).toBe('fountain');
+    expect(result.extension).toBe('fountain');
+    expect(result.stages).toEqual([]);
+  });
+
+  test('fountain with --out writes a byte-for-byte copy there', async () => {
+    const out = join(dir, 'saved', 'Copy.fountain');
+    const result = await exportCommand(
+      { epub, for: 'fountain', fountain, out },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    expect(result.path).toBe(out);
+    expect(readFileSync(out)).toEqual(readFileSync(fountain));
+  });
+
+  test('fountain without --fountain is usage', async () => {
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'fountain' },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('usage');
+  });
+
+  test('fountain --check says the script is current, and builds nothing', async () => {
+    const result = await exportCommand(
+      { epub, for: 'fountain', fountain, check: true },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    expect(result).toMatchObject({ path: fountain, extension: 'fountain', fresh: true });
+  });
+
+  test('mobi rebuilds the engine MOBI beside the EPUB, never through Calibre', async () => {
+    const result = await exportCommand(
+      { epub, for: 'mobi', fountain },
+      { calibreAvailable: () => true, kfxStatus: kfxNeverAsked, ...safe },
+    );
+    const mobi = join(dir, 'Script.mobi');
+    expect(result.path).toBe(mobi);
+    expect(result.format).toBe('mobi');
+    expect(result.extension).toBe('mobi');
+    // A real MOBI: the PalmDB header's type and creator.
+    expect(readFileSync(mobi).toString('latin1', 60, 68)).toBe('BOOKMOBI');
+    expect(existsSync(join(dir, 'Script.azw3'))).toBe(false);
+    expect(existsSync(join(dir, 'Script.kfx'))).toBe(false);
+  });
+
+  test('mobi without --fountain is usage', async () => {
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'mobi' },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('usage');
+  });
+
+  test('mobi --check reports the MOBI rung even on a machine that has KFX ready', async () => {
+    const result = await exportCommand(
+      { epub, for: 'mobi', fountain, check: true },
+      { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
+    );
+    expect(result).toMatchObject({
+      path: join(dir, 'Script.mobi'),
+      extension: 'mobi',
+      fresh: false,
+      builtBy: 'screepub',
+    });
+  });
+
+  test('fountain refuses a --fountain file that is not a .fountain, as usage, and writes nothing', async () => {
+    const notScript = join(dir, 'Script.txt');
+    writeFileSync(notScript, 'Title: Test\n');
+    const out = join(dir, 'saved', 'Copy.fountain');
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'fountain', fountain: notScript, out },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('usage');
+    expect(answer.message).toContain('.fountain');
+    expect(existsSync(out)).toBe(false);
+  });
+
+  test('mobi with a --fountain that cannot be read is unreadable, before --check and before any probe', async () => {
+    const gone = join(dir, 'Gone.fountain');
+    const calibreNeverAsked = () => {
+      throw new Error('Calibre must not be probed for a script that cannot be read');
+    };
+    for (const check of [false, true]) {
+      const before = readdirSync(dir).sort();
+      const answer = await codeAndMessage(exportCommand(
+        { epub, for: 'mobi', fountain: gone, ...(check ? { check: true } : {}) },
+        { calibreAvailable: calibreNeverAsked, kfxStatus: kfxNeverAsked, ...safe },
+      ));
+      expect(`check=${check}: ${answer.code}`).toBe(`check=${check}: unreadable`);
+      expect(answer.message).toBe(`cannot read the script to export: ${gone}`);
+      expect(readdirSync(dir).sort()).toEqual(before);
+    }
+  });
+
+  test('kfx with the toolchain not ready is export-failed, names what is missing, and writes nothing', async () => {
+    const before = readdirSync(dir).sort();
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'kfx', fountain },
+      { calibreAvailable: () => true, kfxStatus: async () => calibreOnlyStatus, ...safe },
+    ));
+    expect(answer.code).toBe('export-failed');
+    expect(answer.message).toContain('this computer cannot make a KFX file yet');
+    expect(answer.message).toContain('Kindle Previewer');
+    expect(answer.message).toContain('the KFX plugin');
+    expect(readdirSync(dir).sort()).toEqual(before);
+  });
+
+  test('kfx never falls back to AZW3, even with Calibre present', async () => {
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'kfx', fountain },
+      { calibreAvailable: () => true, kfxStatus: async () => noToolchainStatus, ...safe },
+    ));
+    expect(answer.code).toBe('export-failed');
+    expect(answer.message).toContain('Calibre');
+    expect(existsSync(join(dir, 'Script.azw3'))).toBe(false);
+  });
+
+  test('kfx with the toolchain ready builds through the KFX builder only', async () => {
+    const built: string[] = [];
+    const fakeKfx = join(dir, 'Script.kfx');
+    const result = await exportCommand(
+      { epub, for: 'kfx', fountain },
+      {
+        calibreAvailable: () => true,
+        kfxStatus: async () => kfxReadyStatus,
+        freshKindleArtifact: ladderNeverRun,
+        rungBuilders: {
+          ...neverBuild,
+          kfx: async (book, onStage) => {
+            built.push(book);
+            onStage?.('converting to KFX');
+            return fakeKfx;
+          },
+        },
+      },
+    );
+    expect(built).toEqual([epub]);
+    expect(result).toMatchObject({ path: fakeKfx, format: 'kfx', extension: 'kfx', stages: ['converting to KFX'] });
+  });
+
+  test('azw3 builds through the AZW3 builder even when KFX is ready', async () => {
+    const built: string[] = [];
+    const fakeAzw3 = join(dir, 'Script.azw3');
+    const result = await exportCommand(
+      { epub, for: 'azw3', fountain },
+      {
+        calibreAvailable: () => true,
+        kfxStatus: async () => kfxReadyStatus,
+        freshKindleArtifact: ladderNeverRun,
+        rungBuilders: {
+          ...neverBuild,
+          azw3: async (book) => {
+            built.push(book);
+            return fakeAzw3;
+          },
+        },
+      },
+    );
+    expect(built).toEqual([epub]);
+    expect(result).toMatchObject({ path: fakeAzw3, format: 'azw3', extension: 'azw3' });
+  });
+
+  test('azw3 without Calibre is export-failed', async () => {
+    const answer = await codeAndMessage(exportCommand(
+      { epub, for: 'azw3', fountain },
+      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
+    ));
+    expect(answer.code).toBe('export-failed');
+    expect(answer.message).toBe('this computer cannot make an AZW3 file without Calibre');
+  });
+
+  test('azw3 --check with a fresh sibling reports it fresh and built by Calibre, even with KFX ready', async () => {
+    const azw3 = freshSibling('azw3');
+    const result = await exportCommand(
+      { epub, for: 'azw3', check: true },
+      { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
+    );
+    expect(result).toMatchObject({ path: azw3, format: 'azw3', extension: 'azw3', fresh: true, builtBy: 'calibre' });
+    expect(result.bookDate).toBe(statSync(epub).mtimeMs);
+  });
+
+  test('azw3 reuses a fresh sibling without building', async () => {
+    const azw3 = freshSibling('azw3');
+    const result = await exportCommand(
+      { epub, for: 'azw3' },
+      { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
+    );
+    expect(result.path).toBe(azw3);
+    expect(readFileSync(azw3, 'utf8')).toBe('fake-azw3-bytes');
+  });
+
+  test('kfx --check with a fresh sibling reports it, never the AZW3 beside it', async () => {
+    freshSibling('azw3');
+    const kfx = freshSibling('kfx');
+    const result = await exportCommand(
+      { epub, for: 'kfx', check: true },
+      { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
+    );
+    expect(result).toMatchObject({ path: kfx, extension: 'kfx', fresh: true, builtBy: 'calibre' });
+  });
+
+  test('an unknown value is usage, and the sentence lists all six', async () => {
+    const answer = await codeAndMessage(exportCommand({ epub, for: 'nook' }, safe));
+    expect(answer.code).toBe('usage');
+    expect(answer.message).toBe('--for takes epub, kindle, kfx, azw3, mobi or fountain, not "nook"');
+  });
+
+  test('--out with the wrong extension is usage for every new value, before any work', async () => {
+    for (const value of ['kfx', 'azw3', 'mobi', 'fountain']) {
+      const answer = await codeAndMessage(exportCommand(
+        { epub, for: value, fountain, out: join(dir, 'Wrong.epub') },
+        { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
+      ));
+      expect(`${value}: ${answer.code} ${answer.message}`).toBe(
+        `${value}: usage that is ${value === 'azw3' ? 'an' : 'a'} ${value.toUpperCase()} file: choose a name ending in .${value}`,
+      );
+    }
+    expect(existsSync(join(dir, 'Wrong.epub'))).toBe(false);
+    expect(existsSync(join(dir, 'Script.mobi'))).toBe(false);
+  });
+
+  test('export --help lists the six values', () => {
+    const proc = Bun.spawnSync(['bun', 'src/cli.ts', 'export', '--help', '--json']);
+    const answer = JSON.parse(proc.stdout.toString());
+    expect(answer.usage).toContain('epub|kindle|kfx|azw3|mobi|fountain');
   });
 });

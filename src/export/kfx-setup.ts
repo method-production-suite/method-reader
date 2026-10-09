@@ -4,7 +4,7 @@
 // Calibre) and formats.ts owns the LADDER (KFX, else AZW3, else MOBI). This
 // file turns the probe into a three-step checklist with one fix per missing
 // step and one sentence saying what a Kindle gets today. The CLI's
-// `kfx-status` prints it and the window's Send page draws it, so the two
+// `kfx-status` prints it and the window's send panel draws it, so the two
 // tell the same story from one place. Pure: no probe, no spawn, no network.
 import { fileExtension } from './formats';
 import type { KfxStatus } from './kfx';

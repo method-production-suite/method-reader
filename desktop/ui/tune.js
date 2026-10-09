@@ -15,6 +15,8 @@ import { runEngine, argv, holdEngine } from './app.js';
 import { inTurn, holders, beforeEveryTurn } from './book-queue.js';
 import { el, clear, text } from './dom.js';
 import { render as renderReader, splitPreview, dressFrame } from './read.js';
+import { SEND_BOOK } from './device.js';
+import { pageSwitchesFrom } from './page-show.js';
 
 // ---------------------------------------------------------------- decisions
 
@@ -362,8 +364,8 @@ export const STATUS = {
  *  half-minute KFX build has the book. A save REWRITES the book, so it waits
  *  for every turn running on it, and readers run side by side: the order
  *  here is which one it names when several are, the longest wait first. The
- *  Send page starts a Kindle file build as it opens, so that is the usual
- *  one. */
+ *  send panel starts a Kindle file build as the result appears, so that is
+ *  the usual one. */
 export const WAITING = {
   kindle: 'Waiting for the Kindle file to finish building…',
   'kindle-mobi': 'Waiting for the Kindle file to finish building…',
@@ -571,6 +573,40 @@ export function keepWriteOutcome(mine, current, seq, latest, answer) {
   return { stale: false, applied: false, stored: null, message: said === '' ? NO_MESSAGE : said };
 }
 
+/** The two app-wide switches for the page that writes itself while a
+ *  script converts (spec 2026-10-01, decision 21), under the foot. `key` is
+ *  the app settings key each one writes, through app.js's builder of the
+ *  same name. */
+export const PAGE_SWITCHES = {
+  legend: 'While a script converts',
+  options: [
+    {
+      key: 'animatePage', id: 'page-switch-animate', label: 'Animate the page',
+      line: 'The first page types itself out while the book is made.',
+    },
+    {
+      key: 'typewriterSounds', id: 'page-switch-sounds', label: 'Typewriter sounds',
+      line: 'Key clicks while the page types. Only when the page is animated.',
+    },
+  ],
+  reduced: 'This computer is set to reduce motion, so the page does not animate.',
+};
+
+/** What a switch shows, from the window's state: the engine's own defaults
+ *  (animated, quiet) until the engine has said otherwise. */
+export function switchShown(state, key) {
+  return key === 'animatePage' ? state?.animatePage !== false : state?.typewriterSounds === true;
+}
+
+/** What one switch write becomes once app-settings --set has answered: the
+ *  two switches the engine now holds, or the sentence it refused with. */
+export function switchWriteOutcome(answer) {
+  const stored = answer?.ok === true ? pageSwitchesFrom(answer) : null;
+  if (stored !== null) return { ok: true, stored };
+  const said = typeof answer?.error?.message === 'string' ? answer.error.message.trim() : '';
+  return { ok: false, message: said === '' ? NO_MESSAGE : said };
+}
+
 // ------------------------------------------------------------------ drawing
 
 let ctx = null;
@@ -617,6 +653,15 @@ let keepRadios = null;
 let keepNoteEl = null;
 let keepSeq = 0;
 let keepRunning = Promise.resolve();
+// "While a script converts": two checkboxes, app-wide, drawn from
+// ctx.state (convert.js's library probe fills it from the same app-settings
+// answer) and written the way the keep choice is, queued and numbered.
+let switchBoxes = null;
+let switchNoteEl = null;
+let switchNote = '';
+let switchSeq = 0;
+let switchRunning = Promise.resolve();
+let switchesAsked = false;
 let previewFrame = null;
 let previewCss = '';
 let loaded = false;
@@ -732,7 +777,7 @@ function draw(status) {
     // has not been asked yet. mount() and scriptChanged() both draw before
     // show() ever calls load(). A reader opening Settings on an ordinary
     // script used to see the fault screen for exactly this long, every time.
-    pane.append(el('p', { class: 'caption' }, READING));
+    pane.append(el('div', { class: 'tune-head' }, el('p', { class: 'caption' }, READING), sendButton()));
     return;
   }
   if (mode === 'fault') {
@@ -740,7 +785,7 @@ function draw(status) {
     // pane, which renders one as the word "null". `status` is always a bad
     // one here: that is what emptyPaneMode used to decide this branch.
     pane.append(el('div', { class: 'fault-body-block' },
-      el('h2', { class: 'slug' }, FAULT.slug),
+      el('div', { class: 'tune-head' }, el('h2', { class: 'slug' }, FAULT.slug), sendButton()),
       el('p', { class: 'prose' }, FAULT.line),
       el('p', { class: 'caption bad' }, status.line),
       el('div', { class: 'read-ways' },
@@ -753,20 +798,29 @@ function draw(status) {
 
   statusLine = el('p', { class: 'caption tune-status', role: 'status' }, '');
   pane.append(
-    el('h2', { class: 'slug' }, 'This script’s settings'),
+    el('div', { class: 'tune-head' }, el('h2', { class: 'slug' }, 'This script’s settings'), sendButton()),
     el('p', { class: 'prose' }, LEDE),
     el('div', { class: 'tune-split' },
       el('div', { class: 'tune-knobs' },
         (presetsBox = drawPresets()),
         ...GROUPS.map(drawGroup),
         statusLine,
-        el('div', { class: 'tune-foot' }, drawDefaultsFoot(), drawKeepChoice()),
+        el('div', { class: 'tune-foot' }, drawDefaultsFoot(), drawKeepChoice(), drawPageSwitches()),
       ),
       drawPreview(),
     ),
   );
   say(status ?? statusFor(isPending(pending) ? 'pending' : 'idle'));
   renderPreview(ctx.state.script?.previewHtml);
+}
+
+/** Back to the result, where the book is sent from (main.js's sendBook).
+ *  On every state of this page with a script open: the book may be fine
+ *  even when its settings are out of reach. */
+function sendButton() {
+  return el('button', {
+    type: 'button', class: 'btn-quiet tune-send', onclick: () => ctx.sendBook?.(),
+  }, SEND_BOOK);
 }
 
 /** The script, beside the knobs that change it.
@@ -1008,6 +1062,84 @@ async function writeKeep(keep, mine, seq) {
   keepShown = keepSettings;
   keepNote = outcome.message;
   applyKeepChoiceState();
+}
+
+/** "While a script converts": the two switches, as native checkboxes, each
+ *  labelled and described like the keep choice's radios. */
+function drawPageSwitches() {
+  switchBoxes = new Map();
+  const options = PAGE_SWITCHES.options.map((option) => {
+    const lineId = `${option.id}-line`;
+    const input = el('input', {
+      type: 'checkbox', id: option.id, class: 'keep-radio',
+      'aria-describedby': lineId,
+      onchange: () => flipSwitch(option.key, input.checked),
+    });
+    switchBoxes.set(option.key, input);
+    return el('div', { class: 'keep-option' },
+      input,
+      el('label', { for: option.id, class: 'keep-label' }, option.label),
+      el('p', { class: 'caption keep-line', id: lineId }, option.line));
+  });
+  switchNoteEl = el('p', { class: 'caption keep-note', role: 'status' });
+  applySwitchState();
+  // Not known yet (the well's probe has not answered, or could not): ask
+  // once, and show the engine's defaults meanwhile.
+  if (pageSwitchesFrom(ctx.state) === null && !switchesAsked) {
+    switchesAsked = true;
+    runEngine(argv.appSettings()).then((answer) => {
+      const stored = pageSwitchesFrom(answer);
+      if (stored === null || switchSeq !== 0) return;
+      Object.assign(ctx.state, stored);
+      applySwitchState();
+    }, () => {});
+  }
+  return el('fieldset', { class: 'page-switches' },
+    el('legend', { class: 'state-label keep-legend' }, PAGE_SWITCHES.legend),
+    ...options,
+    ctx.state.reducedMotion === true ? el('p', { class: 'caption keep-line page-switches-reduced' }, PAGE_SWITCHES.reduced) : null,
+    switchNoteEl);
+}
+
+/** The one place that writes the switches' state onto their nodes. The
+ *  sounds have nothing to play on without the animation, so that box rests
+ *  while the page is still. */
+function applySwitchState() {
+  if (switchBoxes === null) return;
+  for (const [key, input] of switchBoxes) input.checked = switchShown(ctx.state, key);
+  switchBoxes.get('typewriterSounds').disabled = !switchShown(ctx.state, 'animatePage');
+  text(switchNoteEl, switchNote);
+  switchNoteEl.hidden = switchNote === '';
+}
+
+/** A switch was flipped: shown at once, then written behind any write
+ *  still out. Only the newest write paints what the engine said. */
+function flipSwitch(key, on) {
+  ctx.state[key] = on;
+  switchNote = '';
+  applySwitchState();
+  const seq = ++switchSeq;
+  switchRunning = switchRunning.catch(() => {}).then(() => writeSwitch(key, on, seq));
+}
+
+async function writeSwitch(key, on, seq) {
+  let outcome;
+  try {
+    outcome = switchWriteOutcome(await runEngine(argv[key](on)));
+  } catch (err) {
+    outcome = { ok: false, message: err.message };
+  }
+  // A newer flip is on its way: it says what the reader wants, and it
+  // paints its own answer.
+  if (seq !== switchSeq) return;
+  if (outcome.ok) {
+    Object.assign(ctx.state, outcome.stored);
+    switchNote = '';
+  } else {
+    ctx.state[key] = !on;
+    switchNote = outcome.message;
+  }
+  applySwitchState();
 }
 
 /** Which groups arrive open. Only the first: five shut boxes is a surface

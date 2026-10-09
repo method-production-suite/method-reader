@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'"
+      "csp": "default-src 'self'; connect-src 'self' https://screepub-device-requests.samuelsandweiss.workers.dev"
     }
   },
   "bundle": {

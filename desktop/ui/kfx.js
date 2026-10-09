@@ -1,4 +1,5 @@
-// The Send page's "Best Kindle quality" block: can this computer make KFX,
+// The KFX checklist ("Best Kindle quality") that Set it up opens in the send
+// panel's Other ways: can this computer make KFX,
 // and if not, the one thing to press for each missing piece.
 //
 // The checklist is the ENGINE's (src/export/kfx-setup.ts, via
@@ -8,7 +9,7 @@
 // what is about the window: when the block is worth showing, what a button
 // says while it works, and what to say after.
 //
-// Two halves, like send.js: pure exported decisions above the line, tested
+// Two halves, like convert.js: pure exported decisions above the line, tested
 // directly by tests/desktop-ui.test.ts, and drawing below it.
 import { runEngine, argv, openUrl } from './app.js';
 import { el, clear, text } from './dom.js';
@@ -90,7 +91,7 @@ export function showSetup(setup, devices, justInstalled, installing = false) {
 }
 
 /** What stands to the right of one step. `busy` is true while a send, a
- *  Kindle file build (send.js starts one as the page opens) or an install is
+ *  Kindle file build (send-panel.js starts one as the result appears) or an install is
  *  running: the plugin must not be swapped under a running KFX conversion.
  *  Opening a web page is harmless at any time. */
 export function controlFor(step, busy) {
@@ -151,7 +152,7 @@ export function afterInstall(answer, previous) {
 
 // ------------------------------------------------------------------ drawing
 
-/** The node the block lives in, and what send.js lends it. */
+/** The node the block lives in, and what send-panel.js lends it. */
 let host = null;
 /** { isSending(), devices(), onBusy(busy), restoreFocus() } */
 let hooks = null;
@@ -162,21 +163,21 @@ let hooks = null;
  *  says nothing about one that arrives with its words already in it. */
 let parts = null;
 /** The last checklist the engine gave. About the MACHINE, not the script,
- *  so it survives send.js redrawing the page for a new script. */
+ *  so it survives send-panel.js redrawing the panel for a new script. */
 let setup = null;
 let justInstalled = false;
 let installingNow = false;
 let probing = false;
 /** Installs begun so far. A probe already out when one began carries an
  *  answer older than the install's own, so it checks this on its way back
- *  and drops what it got if the count moved. Same shape as send.js's
+ *  and drops what it got if the count moved. Same shape as send-panel.js's
  *  `era`. */
 let installs = 0;
 let status = { line: '', bad: false };
-/** Whether the Send page is on screen, between kfxShown() and kfxHidden(). */
+/** Whether the checklist is on screen, between kfxShown() and kfxHidden(). */
 let shown = false;
 
-/** Draw into `node` from now on. Called from send.js's draw(), which
+/** Draw into `node` from now on. Called from send-panel.js's openKfx(), which
  *  rebuilds the page whenever the script changes, so each call brings a
  *  fresh node and the block's frame is built into it here, once. */
 export function mountKfx(node, options) {
@@ -197,7 +198,7 @@ export function mountKfx(node, options) {
   if (shown && setup === null) probe();
 }
 
-/** The Send page came into view: ask the engine, and ask again whenever the
+/** The checklist came into view: ask the engine, and ask again whenever the
  *  window gets the focus back (the reader went to install Calibre and came
  *  back). An install still running keeps its line, since leaving the page
  *  did not stop it. */
@@ -216,7 +217,7 @@ export function kfxHidden() {
   window.removeEventListener('focus', onFocus);
 }
 
-/** send.js's device list changed; the block may now matter, or not. */
+/** The device list changed; the block may now matter, or not. */
 export function kfxDevicesChanged() {
   draw();
 }
@@ -226,7 +227,7 @@ export function kfxRedraw() {
   draw();
 }
 
-/** True while an install runs, so send.js can refuse to start a send. */
+/** True while an install runs, so send-panel.js can refuse to start a send. */
 export function kfxInstalling() {
   return installingNow;
 }
@@ -237,7 +238,7 @@ function onFocus() {
 
 async function probe() {
   if (probing || installingNow) return;
-  // send.js's no-script and blocked states never mount the block (the last
+  // send-panel.js's blocked state never mounts the block (the last
   // host, if any, is detached), and an answer there would be drawn nowhere.
   // show() draws before kfxShown(), so on the page with readers the host is
   // in place by the time this runs.
@@ -291,7 +292,7 @@ function draw() {
 /** The keyboard, back where it was: the same step's control when it can
  *  still take the focus (the Get button a reader pressed before going off to
  *  a download page, found again after the re-probe on their return).
- *  Otherwise focus.js's plan, through send.js, picks the page's first stop,
+ *  Otherwise focus.js's plan, through send-panel.js, picks the page's first stop,
  *  as it does after every other redraw in this window; the Install button,
  *  for one, is disabled the moment it is pressed. */
 function giveBackFocus(step) {
@@ -337,7 +338,7 @@ async function install() {
   let outcome;
   // Everything after the flag goes inside the try, the busy hook and the
   // first draw included: only the finally clears installingNow, and a flag
-  // left standing would make send.js refuse every send until a restart.
+  // left standing would make send-panel.js refuse every send until a restart.
   try {
     hooks?.onBusy?.(true);
     status = { line: INSTALLING, bad: false };

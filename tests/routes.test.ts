@@ -531,7 +531,7 @@ describe('three kinds of unavailable, on the right rows', () => {
   });
 
   test('a reMarkable not looked for yet (routes --quick) says so, rather than telling you to dock it', () => {
-    // The quick answer skips the probe so the Send page can draw at once; a
+    // The quick answer skips the probe so the send panel can draw at once; a
     // tablet that IS docked must not be told to dock while the full answer
     // is still on its way. Still dimmed, still connect: nothing to press yet.
     const row = find(routes(facts({ remarkableChecked: false })), 'remarkable');
