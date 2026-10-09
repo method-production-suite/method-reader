@@ -169,7 +169,7 @@ class Screepub < Formula
   homepage "https://github.com/$REPO"
   # Written whole by tools/bump-tap.sh in the screepub repository at every
   # release: edit it there, not here. Apple silicon only since the release
-  # after the identifier release; Intel Macs are no longer supported.
+  # after 0.9.0; Intel Macs are no longer supported.
   url "https://github.com/$REPO/releases/download/v$VERSION/screepub-cli-macos-arm64.tar.gz"
   sha256 "$ARM_SHA"
   license "AGPL-3.0-or-later"

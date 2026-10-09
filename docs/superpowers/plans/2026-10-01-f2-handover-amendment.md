@@ -285,6 +285,14 @@ CLI is built, not how it is signed.
 
 ## Intel Macs: dropped at N+2, after the identifier release
 
+**Update, 2026-10-09: the drop slipped one release.** F2 shipped as 0.8.0,
+and 0.9.0 (send from Convert, FDX, eject) shipped from a main that did not
+yet hold `cli-move`, so it was universal too. 0.9.0 is therefore the last
+version an Intel Mac runs, and the release that carries `cli-move` is the
+first Apple-silicon-only one. The README and the site name 0.9.0; the
+N+2 release note below should name 0.9.0 where it says `<F2 version>`
+(0.9.0 carries the window's identity too, so the advice holds).
+
 **The decision.** The owner, in his own chat, 2026-10-01: "Ditch old
 Intel completely." Asked when, he answered precisely: after the identifier
 release, not in it.

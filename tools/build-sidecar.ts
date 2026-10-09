@@ -9,8 +9,8 @@
 // checksum and nothing that reaches a user. Release artifacts, the signed
 // macOS CLI included, are tools/build-cli.ts's job.
 //
-// The Mac engine is Apple silicon only. Until the release after the
-// identifier release this file also lipo'd an x86_64 and an arm64 engine
+// The Mac engine is Apple silicon only. Until the release after
+// 0.9.0 this file also lipo'd an x86_64 and an arm64 engine
 // into one universal sidecar, because the frozen Swift updater installs
 // the first .dmg on a release with no architecture check and the window
 // had to open on Intel too. Intel Macs are not supported after that

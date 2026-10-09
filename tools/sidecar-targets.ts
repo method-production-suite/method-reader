@@ -123,7 +123,7 @@ export function hostBunTarget(platform: string, arch: string): BunTarget {
   if (platform === 'darwin') {
     throw new Error(
       `build-sidecar: no sidecar target for ${platform}/${arch}. The Mac window is built for ` +
-        'Apple silicon only; Intel Macs are not supported after the identifier release ' +
+        'Apple silicon only; Intel Macs are not supported after 0.9.0 ' +
         '(docs/superpowers/plans/2026-10-01-f2-handover-amendment.md). To build the Apple ' +
         'silicon engine from here anyway, name it: --target bun-darwin-arm64.',
     );

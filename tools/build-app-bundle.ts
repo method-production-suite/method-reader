@@ -9,10 +9,10 @@
 //       # key without one) in the environment.
 //
 // A Mac bundle is Apple silicon ONLY, built with --target
-// aarch64-apple-darwin wherever it runs. The identifier release was the
-// last universal image (the frozen Swift updater installs the first .dmg on
-// a release with no architecture check, so that release had to open on
-// Intel too); from the release after it Intel Macs are not supported
+// aarch64-apple-darwin wherever it runs. 0.9.0 was the last universal
+// image (the frozen Swift updater installs the first .dmg on a release with
+// no architecture check, so the identifier release and 0.9.0 had to open on
+// Intel too); from the release after 0.9.0 Intel Macs are not supported
 // (owner, 2026-10-01; plan
 // docs/superpowers/plans/2026-10-01-f2-handover-amendment.md). An x64 or
 // universal Mac bundle is refused rather than built, because it would be
@@ -449,7 +449,7 @@ export function parseBundleArgs(
   const arch = values.arch ?? hostArch;
   if (arch === 'universal') {
     throw new Error(
-      'build-app-bundle: "universal" is not an architecture any more. The identifier release ' +
+      'build-app-bundle: "universal" is not an architecture any more. 0.9.0 ' +
         'was the last universal Mac image; a Mac bundle is Apple silicon only (--arch arm64). ' +
         'See docs/superpowers/plans/2026-10-01-f2-handover-amendment.md.',
     );
@@ -484,7 +484,7 @@ export function assertAppleSiliconMac(os: BundleOs, arch: BundleArch, target: st
     throw new Error(
       `build-app-bundle: a Mac bundle is built for Apple silicon only (--arch ${MAC_ARCH}, ` +
         `target ${MAC_TARGET}), and this asked for arch ${arch}, target ${target ?? '<the host>'}. ` +
-        'Intel Macs are not supported after the identifier release ' +
+        'Intel Macs are not supported after 0.9.0 ' +
         '(docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and an Intel or universal ' +
         'image would be published under the one Mac name, Screepub-macOS.dmg. An Intel Mac can ' +
         'still cross-build the Apple silicon bundle: rustup target add aarch64-apple-darwin, ' +

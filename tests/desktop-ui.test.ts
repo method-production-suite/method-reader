@@ -6292,7 +6292,7 @@ describe('the update check asks once, stamps first, and never guesses', () => {
   });
 
   test('an Intel Mac the manifest no longer lists is told why, in plain words', async () => {
-    // From the release after the identifier release, latest.json lists
+    // From the release after 0.9.0, latest.json lists
     // darwin-aarch64 only (Intel Macs are not supported; plan
     // 2026-10-01-f2-handover-amendment.md). An Intel Mac running this
     // universal build asks for darwin-x86_64, and tauri-plugin-updater

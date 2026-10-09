@@ -100,7 +100,7 @@ const runnerOs = (label: string): string =>
 
 describe("release.yml's sidecar step, executed as bash", () => {
   test('the Mac leg builds the Apple silicon engine by name, never for the host', () => {
-    // One slice since the release after the identifier release, and named
+    // One slice since the release after 0.9.0, and named
     // from the pinned table rather than asked of the runner: an Intel
     // runner building "for the host" would put an x86_64 engine inside the
     // one Mac image. build-app-bundle.ts names the matching cargo triple.
@@ -123,7 +123,7 @@ describe("release.yml's sidecar step, executed as bash", () => {
 
   test('a shape this step does not build fails loudly instead of defaulting', () => {
     // The universal Mac row and its lipo are gone (Intel Macs are not
-    // supported after the identifier release), and so is any Intel Mac
+    // supported after 0.9.0), and so is any Intel Mac
     // shape. What replaced them must not be a silent `else --host`: a leg
     // that quietly built for the runner is how a foreign engine gets
     // inside a download with nothing failing until a window opens.

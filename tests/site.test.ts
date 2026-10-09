@@ -180,15 +180,15 @@ describe('"Every download" links version-free names, each with a status', () => 
     // If one of these ledger lines goes, someone has done the thing: move
     // that file's row on the site up to match, then update this test.
     expect(nobody).toContain('Installing the `.deb`, the `.rpm` or the `.exe`');
-    expect(nobody).toContain("The Intel SLICE of the identifier release's universal `.dmg`");
+    expect(nobody).toContain("The Intel SLICE of 0.9.0's universal `.dmg`");
     for (const [file, os] of bundles) {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
     }
     // Installed by hand, and updated from a release, on an Apple silicon
     // Mac. That is the evidence behind "verified by a person"; if the ledger
-    // ever loses it, the claim goes too. The Intel half has never run, and
-    // the row says so rather than implying it.
+    // ever loses it, the claim goes too. Intel Macs are not
+    // offered the app, so the row has nothing to say about them.
     const person = ledger.slice(
       ledger.indexOf('**Verified on a real machine, by a person**'),
       ledger.indexOf('**Verified only by CI'),
@@ -201,9 +201,23 @@ describe('"Every download" links version-free names, each with a status', () => 
     const mac = row(MAC_DMG);
     expect(mac).toContain(VERIFIED);
     expect(mac).toContain('Apple silicon');
-    expect(mac).toContain('Intel');
+    // Apple silicon only from the release after 0.9.0: the row
+    // no longer mentions Intel at all.
+    expect(mac).not.toContain('Intel');
     // The pre-identifier-release name 404s now; no page may link it.
     expect(site).not.toContain('Screepub-Desktop-macOS-universal.dmg');
+  });
+
+  test('an Intel Mac is told 0.9.0 is its last version', () => {
+    // The Mac row names no Intel, so this is where a reader on one learns
+    // what to do. No versioned link (see "no download link on the page
+    // carries a version"): the version is named in words, and the link is
+    // the release list.
+    const intel = downloads.slice(downloads.indexOf('Intel Mac'));
+    expect(downloads).toContain('Intel Mac');
+    expect(intel).toContain('0.9.0');
+    expect(intel).toMatch(/keeps working/);
+    expect(intel).toContain('href="https://github.com/ssandweiss/screepub/releases"');
   });
 
   test('the sentence the status column replaced is gone', () => {

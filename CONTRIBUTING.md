@@ -107,7 +107,7 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   uploading, and publishes the window's update manifest.
 - **Weekly**: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
-  (deprecated, and disabled from the release after the identifier release),
+  (deprecated, and disabled from the release after 0.9.0),
   and the frozen Mac app's checks still pass against Calibre's newest version.
 
 ## Licensing of contributions

@@ -85,7 +85,7 @@ describe('the addresses', () => {
 
 describe('collecting what arrived', () => {
   test('the signed archive becomes one artifact for Apple silicon, with its signature verbatim', () => {
-    // darwin-aarch64 alone since the release after the identifier release:
+    // darwin-aarch64 alone since the release after 0.9.0:
     // the Mac build is Apple silicon only, so the archive no longer answers
     // for darwin-x86_64 (plan 2026-10-01-f2-handover-amendment.md).
     const dir = arrivals('ok');

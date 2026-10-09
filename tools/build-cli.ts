@@ -100,8 +100,7 @@ export function detectBinaryFormat(head: Uint8Array): BinaryFormat {
   //
   // Both arches are REQUIRED to answer 'macho-universal'; a one-slice fat
   // file is a thin binary wearing a universal wrapper. Nothing is BUILT
-  // universal any more (Intel Macs are not supported after the identifier
-  // release), and no row names this format or 'macho-x86-64'. They stay
+  // universal any more (Intel Macs are not supported after 0.9.0), and no row names this format or 'macho-x86-64'. They stay
   // in the detector so a binary that came out wrong is refused naming
   // what it really is, rather than "unknown".
   const beMagic = u32be(0);

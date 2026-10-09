@@ -156,7 +156,7 @@ what confirms notarization + the sidecar entitlements are correct.
 
 ## The Homebrew tap: flipped to per-arch, DONE 2026-08-07 at v0.5.2
 
-**Superseded in shape** at the release after the identifier release, when
+**Superseded in shape** at the release after 0.9.0, when
 Intel Macs were dropped: the formula serves one tarball,
 `screepub-cli-macos-arm64.tar.gz`, says `depends_on arch: :arm64`, and is
 written whole by `tools/bump-tap.sh`. The per-arch record below is kept
@@ -243,7 +243,7 @@ See `homebrew-tap/Formula/screepub.rb` for the working form.
 ### Bumping the tap by hand
 
 One SHA is needed, for the one command-line tarball: Apple silicon only
-since the release after the identifier release, so the formula has one
+since the release after 0.9.0, so the formula has one
 url and says `depends_on arch: :arm64`. The cask is retired (deprecated
 at the identifier release, disabled from the release after it) and is
 never bumped again. The release's "Tap bump crib sheet" step writes the
@@ -255,7 +255,7 @@ gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz
 
 Then run `tools/bump-tap.sh X.Y.Z homebrew-tap`, which writes
 `homebrew-tap/Formula/screepub.rb` whole from that digest and disables the
-cask. By hand: the FIRST bump after the identifier release starts from
+cask. By hand: the FIRST bump after 0.9.0 starts from
 its two-arch tap, so besides the url and the SHA, replace the formula's
 whole if/else on the CPU with the one url and sha256, add
 `depends_on arch: :arm64` on the line before `depends_on :macos`, and in

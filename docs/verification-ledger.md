@@ -30,7 +30,7 @@ switched on, installs the window in its place.
   Kindle over USB, and installing the KFX plugin into a scratch Calibre. The
   0.7.4 candidate passed the items that pass rechecked. Each Mac that ran
   these is Apple silicon, the only kind the Mac download is built for since
-  Intel Macs were dropped after the identifier release.
+  Intel Macs were dropped after 0.9.0.
 - **A Kindle**, firmware 5.19.2, over USB (KFX, AZW3 and MOBI) and by email.
 - **Apple Books** on a Mac: the book arrives in the library.
 - **The window on Linux, ARM.** `Screepub_0.6.0_arm64.deb` and
@@ -55,11 +55,11 @@ switched on, installs the window in its place.
   Every bundle is opened and its engine run before anything is uploaded, and
   the update manifest (`latest.json`, Mac only) is read back from GitHub
   after it is published. The Mac `.dmg` is built for Apple silicon only, the
-  runner's own kind, so all of it runs; of the identifier release's universal
-  `.dmg`, the last, only the ARM half ran.
+  runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
+  last, only the ARM half ran.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
-  (deprecated, and disabled from the release after the identifier release), and
+  (deprecated, and disabled from the release after 0.9.0), and
   the older Mac app's AZW3 and KEPUB checks still pass against Calibre's
   newest version.
 
@@ -69,8 +69,8 @@ switched on, installs the window in its place.
 - The window on Windows: no runner has a display and no person has opened it.
 - The Windows installer itself, run by a person, and the SmartScreen screen
   the README describes.
-- The Intel SLICE of the identifier release's universal `.dmg`, the last Mac
-  download to carry one. It was built, checked as a container, signed and
+- The Intel SLICE of 0.9.0's universal `.dmg`, the last Mac download to
+  carry one. It was built, checked as a container, signed and
   published, and never ran. Every Mac download after it is Apple silicon
   only.
 - The window's launcher entry, opened from a Linux desktop menu.

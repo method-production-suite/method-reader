@@ -15,8 +15,7 @@ const WORKFLOWS = '.github/workflows';
 const read = (p: string) => readFileSync(p, 'utf8');
 
 /** The Mac command-line tarball: what the release job uploads, and what
- *  the Homebrew formula serves. ONE since the release after the identifier
- *  release: Apple silicon only (owner, 2026-10-01; plan
+ *  the Homebrew formula serves. ONE since the release after 0.9.0: Apple silicon only (owner, 2026-10-01; plan
  *  2026-10-01-f2-handover-amendment.md). */
 const MACOS_CLI_ASSETS = ['screepub-cli-macos-arm64.tar.gz'];
 /** The Intel tarball every release through the identifier release carried.
@@ -240,8 +239,7 @@ describe('release.yml ships the cross-platform artifacts', () => {
   });
 
   test('nothing in the release workflow builds, hashes or uploads an Intel Mac CLI', () => {
-    // Every Intel artifact goes at the release after the identifier
-    // release. Read off the whole file, comments included: no line may
+    // Every Intel artifact goes at the release after 0.9.0. Read off the whole file, comments included: no line may
     // name the x64 tarball, so a hash, an upload or a crib-sheet line for
     // it cannot come back unnoticed.
     expect(read(join(WORKFLOWS, 'release.yml'))).not.toContain(RETIRED_MACOS_CLI);
@@ -394,8 +392,8 @@ describe('release.yml ships the cross-platform artifacts', () => {
   test('the macOS leg builds ONE Apple silicon DMG, and nothing Intel or universal', () => {
     // One Mac row since 2026-09-20, and one ARCH since the release after
     // the identifier release (owner, 2026-10-01: "Ditch old Intel
-    // completely"; plan 2026-10-01-f2-handover-amendment.md). The
-    // identifier release was the last universal image, because the frozen
+    // completely"; plan 2026-10-01-f2-handover-amendment.md). 0.9.0
+    // was the last universal image, because the frozen
     // Swift updater installs the first .dmg on a release with no
     // architecture check and had to be carried across on Intel too.
     const rows = rel.jobs['app-bundles']!.strategy?.matrix?.include ?? [];
@@ -859,7 +857,7 @@ describe('the two limits are stated where a reader meets them', () => {
   test('the developer page offers no Intel Mac download, and says Homebrew is Apple silicon only', () => {
     // Reads docs/developers.md alone: the README is another session's, and
     // still says Intel until its own branch lands. Intel Macs are not
-    // supported after the identifier release (plan
+    // supported after 0.9.0 (plan
     // 2026-10-01-f2-handover-amendment.md), so the page must not offer the
     // Intel tarball the release no longer carries.
     const install = sectionOf(developers, '## Install the command-line converter');
@@ -1010,22 +1008,35 @@ describe('the app downloads are described where a reader meets them', () => {
     );
     const nobody = ledger.slice(ledger.indexOf('**Verified by nobody**'));
     expect(nobody).toContain('Installing the `.deb`, the `.rpm` or the `.exe`');
-    // History since Intel was dropped: the identifier release's universal
-    // image was the last with an Intel slice, and it never ran.
-    expect(nobody).toContain("The Intel SLICE of the identifier release's universal `.dmg`");
+    // History since Intel was dropped: 0.9.0's universal image was the last
+    // with an Intel slice, and it never ran.
+    expect(nobody).toContain("The Intel SLICE of 0.9.0's universal `.dmg`");
     for (const [file, os] of published) {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
     }
-    // The Mac window: installed by a person on Apple silicon, never on Intel.
+    // The Mac window: installed by a person on Apple silicon; the row names no Intel.
     expect(person).toContain('/Applications');
     expect(person).toContain('Apple silicon');
     const mac = row(MAC_DMG);
     expect(mac).toContain(VERIFIED);
     expect(mac).toContain('Apple silicon');
-    expect(mac).toContain('Intel');
+    expect(mac).not.toContain('Intel');
     // And the README sends a reader to the ledger itself.
     expect(install).toContain('docs/verification-ledger.md');
+  });
+
+  test('the README tells an Intel Mac which version is its last, and where it is', () => {
+    // 0.9.0 was the last universal image (the identifier release, 0.8.0, and
+    // the release after it both carried Intel). The row
+    // above names no Intel, so this sentence is the only place a reader on
+    // one learns what to download. Its link is the tag's own page: the
+    // latest release no longer carries an Intel build.
+    const intel = install.slice(install.indexOf('Intel Mac'));
+    expect(install).toContain('Intel Mac');
+    expect(intel).toContain('0.9.0');
+    expect(intel).toContain('https://github.com/ssandweiss/screepub/releases/tag/v0.9.0');
+    expect(intel).toMatch(/keeps working/);
   });
 
   test('the 0.6.0 notes carry the same three limits', () => {
@@ -1125,8 +1136,7 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     expect(person).toContain('/Applications');
     expect(person).toContain('0.7.2 to 0.7.3');
     // Every Mac a person used is Apple silicon, which is now the only kind
-    // the Mac download is built for (Intel dropped after the identifier
-    // release), so the list no longer speaks of "the ARM half".
+    // the Mac download is built for (Intel dropped after 0.9.0), so the list no longer speaks of "the ARM half".
     const flat = person.replace(/\s+/g, ' ');
     expect(flat).toContain('Each Mac that ran these is Apple silicon, the only kind the Mac download is built for');
     expect(flat).not.toMatch(/ARM half/);
@@ -1136,8 +1146,8 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     expect(nobody).not.toMatch(/`\.dmg` or `\.exe` has been\s+installed/);
     expect(nobody).toContain('.exe');
     expect(nobody).not.toContain('x86_64-apple-darwin');
-    // The Intel slice never ran, and is now history: the identifier
-    // release's universal image was the last to carry one.
+    // The Intel slice never ran, and is now history: 0.9.0's universal
+    // image was the last to carry one.
     const intel = nobody.slice(nobody.indexOf('- The Intel SLICE'));
     const bullet = intel.slice(0, intel.indexOf('\n- ')).replace(/\s+/g, ' ');
     expect(bullet).toContain('the last Mac download to carry one');
@@ -1149,7 +1159,7 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
   test('the CI list says what release.yml does, and that the Mac image runs whole', () => {
     // release.yml has built, signed and notarized the Mac window on every tag
     // since 0.7.0; the ledger must not still say it never ran. The image is
-    // Apple silicon only after the identifier release, the runner's own
+    // Apple silicon only after 0.9.0, the runner's own
     // kind, so all of it runs and the smoke step prints no slice notice.
     expect(ci).toContain('release.yml');
     expect(ci).toMatch(/notariz/);
@@ -1175,7 +1185,7 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
 });
 
 describe('the developer docs describe the Apple silicon build', () => {
-  // Intel Macs are not supported after the identifier release, so the
+  // Intel Macs are not supported after 0.9.0, so the
   // universal build (two engines lipo'd, a universal cargo target) is gone.
   // A developer doc still describing it hands a contributor commands that
   // fail. README.md and site/ are not read here: another session owns them.
@@ -1212,7 +1222,7 @@ describe('the developer docs describe the Apple silicon build', () => {
   test('CONTRIBUTING.md and the ledger describe the weekly cask check the same way', () => {
     // check-tap.sh wants deprecate! while a release carries the Intel
     // tarball and disable! after; both pages say so in the same words.
-    const words = 'retired (deprecated, and disabled from the release after the identifier release)';
+    const words = 'retired (deprecated, and disabled from the release after 0.9.0)';
     for (const file of ['CONTRIBUTING.md', 'docs/verification-ledger.md']) {
       const flat = read(file).replace(/\s+/g, ' ');
       expect(`${file}: ${flat.includes(words)}`).toBe(`${file}: true`);

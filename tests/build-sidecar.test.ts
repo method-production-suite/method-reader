@@ -228,7 +228,7 @@ describe('nothing large can be committed', () => {
 
 // ── the Mac sidecar is Apple silicon only ────────────────────────────
 //
-// Until the release after the identifier release the Mac window was
+// Until the release after 0.9.0 the Mac window was
 // universal, because the frozen Swift updater installs the first .dmg on a
 // release with no architecture check, and F2 had to carry Intel installs
 // across. From then on Intel Macs are not supported (owner, 2026-10-01;

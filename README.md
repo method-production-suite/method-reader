@@ -94,13 +94,18 @@ to say more.
 ## Install
 
 **On a Mac, download `Screepub-macOS.dmg`**: the Mac app, signed and
-notarized by Apple, one file for Apple silicon and Intel, for macOS 13 or
+notarized by Apple, for Macs with Apple silicon, macOS 13 or
 later. It is the file the download button gives you, and it updates itself.
 The same app runs on Windows and Linux.
 
+**On an Intel Mac, Screepub 0.9.0 is the last version.** It keeps working,
+but it will not be offered updates. To install it, download
+`Screepub-macOS.dmg` from
+[the 0.9.0 release page](https://github.com/ssandweiss/screepub/releases/tag/v0.9.0).
+
 | Computer | File | Status |
 | --- | --- | --- |
-| Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple silicon Mac. Never run on an Intel Mac |
+| Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple silicon Mac |
 | Windows, 64-bit | `Screepub-windows-x64-setup.exe` | Built and checked automatically. Never installed by a person yet |
 | Linux: Debian, Ubuntu | `Screepub-linux-amd64.deb` | Built and checked automatically. Never installed by a person yet |
 | Linux: Fedora, openSUSE | `Screepub-linux-x86_64.rpm` | Built and checked automatically. Never installed by a person yet |
@@ -124,7 +129,7 @@ not update itself: download each new version by hand.
 
 There is also a command-line converter for macOS, Linux and Windows:
 [for developers](docs/developers.md#install-the-command-line-converter). On a
-Mac, Homebrew installs it too: `brew install --formula ssandweiss/tap/screepub`.
+Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandweiss/tap/screepub`.
 
 ## Your script stays on your machine
 

@@ -121,8 +121,8 @@ describe('judging a manifest against a release', () => {
   });
 
   test('darwin-x86_64 is no longer REQUIRED, and a universal-era manifest still passes', () => {
-    // The Mac build is Apple silicon only from the release after the
-    // identifier release, so its manifest has no darwin-x86_64 and must not
+    // The Mac build is Apple silicon only from the release after
+    // 0.9.0, so its manifest has no darwin-x86_64 and must not
     // be called broken. The identifier release and older stay green: this
     // runs weekly against whatever release is newest, and until the next
     // one ships that is the identifier release, whose UNIVERSAL archive

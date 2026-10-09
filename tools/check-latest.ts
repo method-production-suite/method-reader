@@ -64,7 +64,7 @@ export type Verdict =
 export const INTEL_CLI_ASSET = 'screepub-cli-macos-x64.tar.gz';
 
 /** Every platform the macOS build must answer for: darwin-aarch64 alone
- *  since the release after the identifier release (Apple silicon only).
+ *  since the release after 0.9.0 (Apple silicon only).
  *  Derived from the same table that names the artifacts, so a new row
  *  there widens this automatically.
  *

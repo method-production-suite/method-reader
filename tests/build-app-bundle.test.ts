@@ -972,9 +972,10 @@ describe('a whole run, against a fake cargo', () => {
 
 // ── a Mac bundle is Apple silicon only ───────────────────────────────
 //
-// The identifier release (F2) was the last universal Mac image: the frozen
-// Swift updater installs the first .dmg on a release with no architecture
-// check, so F2 had to open on Intel too. From the release after it, Intel
+// 0.9.0 was the last universal Mac image: the frozen Swift updater
+// installs the first .dmg on a release with no architecture check, so the
+// identifier release (F2, 0.8.0) and 0.9.0 had to open on Intel too. From
+// the release after 0.9.0, Intel
 // Macs are not supported (owner, 2026-10-01; plan
 // 2026-10-01-f2-handover-amendment.md). These pins fail if an Intel or a
 // universal Mac bundle can be asked for again.
