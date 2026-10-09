@@ -70,8 +70,9 @@ export const TURNS = {
   // it, and the copy to a Kobo, a tolino or a reMarkable), and the copy of
   // any file to any reader, a Kindle's included.
   send: READ,
-  // send-panel.js: a Save of the EPUB or the Fountain (`export --for epub`,
-  // `--for fountain`), which copies the file where the Save box said.
+  // send-panel.js: a Save of the EPUB, the Fountain or the FDX (`export
+  // --for epub`, `--for fountain`, `--for fdx`), which copies the file, or
+  // for the FDX writes it from the .fountain, where the Save box said.
   copy: READ,
   // send-panel.js: `export --check`, the Kindle file's date against the book's.
   check: READ,

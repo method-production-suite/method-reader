@@ -1121,7 +1121,7 @@ describe('Other ways', () => {
     expect(sendTitles).not.toContain('Kindle');
     expect(groups[0].querySelectorAll('.btn-brad')).toEqual([]);
     expect(groups[1].querySelectorAll('.save-row .device-name').map((n) => n.textContent))
-      .toEqual(['EPUB', 'KFX', 'AZW3', 'MOBI', 'Fountain']);
+      .toEqual(['EPUB', 'KFX', 'AZW3', 'MOBI', 'Fountain', 'FDX']);
     expect(saveRow(p, 'azw3').querySelector('.route-detail')!.textContent).toBe('Older Kindles over USB.');
     // Open across a redraw, and closed again by the same button.
     await p.plug([KINDLE, KOBO]);
@@ -1208,6 +1208,24 @@ describe('Other ways', () => {
     expect(p.status().textContent).toBe('Saved Field Station.kfx.');
   });
 
+  test('Save FDX: the Save box named for the book, then export --for fdx --out from the .fountain, as a copy with no build line', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kindle' } });
+    openWays(p);
+    expect(saveRow(p, 'fdx').querySelector('.route-detail')!.textContent)
+      .toBe('The script for Final Draft and most screenwriting apps, to edit.');
+    saveButton(p, 'fdx').click();
+    await settle();
+    const options = await chooseSave(p, '/Users/ann/Desktop/Field Station.fdx');
+    expect(options).toEqual({ defaultPath: 'Field Station.fdx', filters: [{ name: 'FDX', extensions: ['fdx'] }] });
+    expect(p.status().textContent).toBe('Saving…');
+    expect(buildLine(p)).toBe(null);
+    expect(await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.fdx', format: 'fdx', extension: 'fdx', label: 'FDX' }))
+      .toEqual(['export', EPUB, '--json', '--for', 'fdx', '--fountain', FOUNTAIN, '--options-json', '{"dialogueSideMarginPct":27}',
+        '--out', '/Users/ann/Desktop/Field Station.fdx']);
+    expect(p.status().textContent).toBe('Saved Field Station.fdx.');
+    expect(p.status().classList.contains('bad')).toBe(false);
+  });
+
   test('a cancelled Save box asks the engine nothing and says nothing', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' } });
     openWays(p);
@@ -1256,10 +1274,10 @@ describe('Other ways', () => {
     await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.azw3', extension: 'azw3', label: 'AZW3' });
   });
 
-  test('MOBI and Fountain are greyed for a book made without a .fountain', async () => {
+  test('MOBI, Fountain and FDX are greyed for a book made without a .fountain', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' }, script: { fountainPath: null } });
     openWays(p);
-    for (const type of ['mobi', 'fountain']) {
+    for (const type of ['mobi', 'fountain', 'fdx']) {
       expect(saveRow(p, type).className).toContain('route-unavailable');
       expect(saveRow(p, type).querySelector('button')).toBeNull();
       expect(saveRow(p, type).querySelector('.route-fix')!.textContent)

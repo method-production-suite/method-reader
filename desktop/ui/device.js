@@ -193,10 +193,14 @@ export const SAVE_TYPES = [
   { type: 'azw3', label: 'AZW3', who: 'Older Kindles over USB.' },
   { type: 'mobi', label: 'MOBI', who: 'The oldest Kindles.' },
   { type: 'fountain', label: 'Fountain', who: 'The script as plain text, for screenwriting apps.' },
+  { type: 'fdx', label: 'FDX', who: 'The script for Final Draft and most screenwriting apps, to edit.' },
 ];
 export const NEEDS_TOOLS = 'This computer cannot make one yet.';
 export const SET_IT_UP = 'Set it up';
 export const NO_FOUNTAIN = 'This book was made without a .fountain, so there is none to work from.';
+/** The types the engine makes from the script's .fountain: the MOBI rebuild,
+ *  the script itself, and the FDX built from it. */
+const NEEDS_FOUNTAIN = new Set(['mobi', 'fountain', 'fdx']);
 
 /** The Save a file rows. `kindle` is the check's answer: the ladder's top
  *  rung says whether KFX is reachable, `builtBy` whether Calibre is there.
@@ -204,7 +208,7 @@ export const NO_FOUNTAIN = 'This book was made without a .fountain, so there is 
 export function saveRows(script, kindle) {
   const fountain = isText(script?.fountainPath);
   return SAVE_TYPES.map((t) => {
-    if ((t.type === 'mobi' || t.type === 'fountain') && !fountain) {
+    if (NEEDS_FOUNTAIN.has(t.type) && !fountain) {
       return { ...t, available: false, fix: NO_FOUNTAIN, setup: false };
     }
     if (t.type === 'kfx' && kindle && kindle.extension !== 'kfx') return { ...t, available: false, fix: NEEDS_TOOLS, setup: true };
@@ -215,7 +219,8 @@ export function saveRows(script, kindle) {
 
 /** book-queue.js's turn for a save of `type`, and whether it also waits in
  *  the Kindle line (send-panel.js's inKindleLine). `export --for mobi` builds
- *  the MOBI without touching the book, so it only reads it. */
+ *  the MOBI without touching the book, so it only reads it; an FDX is
+ *  written from the .fountain straight to the chosen path, so it is a copy. */
 export function saveTurn(type) {
   return type === 'kfx' || type === 'azw3' || type === 'mobi' ? 'kindle' : 'copy';
 }

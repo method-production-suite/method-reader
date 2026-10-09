@@ -185,9 +185,10 @@ describe('Other ways', () => {
     expect(folded(still).map((f: any) => f.names)).toEqual([['Kindle', 'Kobo', 'tolino']]);
   });
 
-  test('Save a file: five types, each with who it is for', () => {
+  test('Save a file: six types, each with who it is for', () => {
     const rows = d.saveRows({ fountainPath: '/l/a.fountain' }, kfx);
-    expect(rows.map((x: any) => x.type)).toEqual(['epub', 'kfx', 'azw3', 'mobi', 'fountain']);
+    expect(rows.map((x: any) => x.type)).toEqual(['epub', 'kfx', 'azw3', 'mobi', 'fountain', 'fdx']);
+    expect(rows.find((x: any) => x.type === 'fdx')).toMatchObject({ label: 'FDX' });
     expect(rows.every((x: any) => x.available && x.who.length > 0)).toBe(true);
   });
   test('KFX greys out with "set it up" when the ladder stops short of it; AZW3 when there is no Calibre', () => {
@@ -198,13 +199,14 @@ describe('Other ways', () => {
     // Not known yet: the engine refuses in its own words if it must.
     expect(d.saveRows({ fountainPath: '/l/a.fountain' }, null).every((x: any) => x.available)).toBe(true);
   });
-  test('MOBI and Fountain need the .fountain', () => {
+  test('MOBI, Fountain and FDX need the .fountain', () => {
     const rows = d.saveRows({ fountainPath: null }, kfx);
-    expect(rows.filter((x: any) => !x.available).map((x: any) => x.type)).toEqual(['mobi', 'fountain']);
+    expect(rows.filter((x: any) => !x.available).map((x: any) => x.type)).toEqual(['mobi', 'fountain', 'fdx']);
+    expect(rows.find((x: any) => x.type === 'fdx')).toMatchObject({ fix: d.NO_FOUNTAIN, setup: false });
   });
   test('the Kindle-file types take the Kindle line; the rest only copy', () => {
-    expect(['epub', 'kfx', 'azw3', 'mobi', 'fountain'].map(d.saveTurn))
-      .toEqual(['copy', 'kindle', 'kindle', 'kindle', 'copy']);
+    expect(['epub', 'kfx', 'azw3', 'mobi', 'fountain', 'fdx'].map(d.saveTurn))
+      .toEqual(['copy', 'kindle', 'kindle', 'kindle', 'copy', 'copy']);
   });
 });
 

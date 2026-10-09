@@ -1252,7 +1252,7 @@ function requestFetch() {
  *  it there (`export --for <type> --out`). The window never writes a file.
  *  A Kindle file waits in the Kindle line behind any build of this book, and
  *  puts the build line up unless the check said that very file is current;
- *  EPUB and Fountain only copy. Under the same `sending` flag and `era`
+ *  EPUB, Fountain and FDX only copy. Under the same `sending` flag and `era`
  *  discipline as sendTo() and perform(). */
 async function saveFile(type) {
   if (sending || kfxInstalling()) return;
