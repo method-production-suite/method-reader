@@ -185,7 +185,7 @@ describe('"Every download" links version-free names, each with a status', () => 
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
     }
-    // Installed by hand, and updated from a release, on an Apple Silicon
+    // Installed by hand, and updated from a release, on an Apple silicon
     // Mac. That is the evidence behind "verified by a person"; if the ledger
     // ever loses it, the claim goes too. The Intel half has never run, and
     // the row says so rather than implying it.
@@ -195,12 +195,12 @@ describe('"Every download" links version-free names, each with a status', () => 
     );
     expect(person).toContain('dragged to `/Applications`');
     expect(person).toContain('0.7.2 to 0.7.3');
-    expect(person).toMatch(/Each Mac that ran\s+these is Apple Silicon/);
+    expect(person).toMatch(/Each Mac that ran\s+these is Apple silicon/);
     // The page sends a reader to the ledger itself.
     expect(downloads).toContain('docs/verification-ledger.md');
     const mac = row(MAC_DMG);
     expect(mac).toContain(VERIFIED);
-    expect(mac).toContain('Apple Silicon');
+    expect(mac).toContain('Apple silicon');
     expect(mac).toContain('Intel');
     // The pre-identifier-release name 404s now; no page may link it.
     expect(site).not.toContain('Screepub-Desktop-macOS-universal.dmg');

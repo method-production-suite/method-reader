@@ -28,7 +28,7 @@ switched on, installs the window in its place.
   Settings, the Send page's routes, Apple Books, Send to Kindle on the web, a
   Kindle over USB, and installing the KFX plugin into a scratch Calibre. The
   0.7.4 candidate passed the items that pass rechecked. Each Mac that ran
-  these is Apple Silicon, so it is the ARM half of the universal download that
+  these is Apple silicon, so it is the ARM half of the universal download that
   has run.
 - **A Kindle**, firmware 5.19.2, over USB (KFX, AZW3 and MOBI) and by email.
 - **Apple Books** on a Mac: the book arrives in the library.

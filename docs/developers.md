@@ -18,7 +18,7 @@ unpack it, and run it.
 
 | Machine | File |
 | --- | --- |
-| Mac, Apple Silicon | `screepub-cli-macos-arm64.tar.gz` |
+| Mac, Apple silicon | `screepub-cli-macos-arm64.tar.gz` |
 | Mac, Intel | `screepub-cli-macos-x64.tar.gz` |
 | Linux, Intel or AMD | `screepub-cli-linux-x64.tar.gz` |
 | Linux, ARM (Asahi, Raspberry Pi, ARM servers) | `screepub-cli-linux-arm64.tar.gz` |

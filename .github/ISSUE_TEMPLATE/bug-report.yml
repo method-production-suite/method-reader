@@ -33,7 +33,7 @@ body:
     attributes:
       label: Screepub and system versions
       description: The app shows its version at the foot of the page; the command line with `screepub --version`.
-      placeholder: Screepub 0.7.4, macOS 15.6, Apple Silicon
+      placeholder: Screepub 0.7.4, macOS 15.6, Apple silicon
     validations:
       required: true
   - type: input

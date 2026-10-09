@@ -38,6 +38,10 @@ size and still holds its shape.
 - **Built for real scripts.** Dual dialogue, revision marks, watermarks,
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
+- **Get the script back to edit.** The same PDF also comes out as a script
+  you can keep writing in: Fountain, or Final Draft's FDX, which most
+  screenwriting apps open. It is rebuilt from the page, so revision colors
+  and the exact page breaks stay behind.
 - **Free and open source.** No account, no subscription, nothing uploaded.
 
 <p align="center">
@@ -90,13 +94,13 @@ to say more.
 ## Install
 
 **On a Mac, download `Screepub-macOS.dmg`**: the Mac app, signed and
-notarized by Apple, one file for Apple Silicon and Intel, for macOS 13 or
+notarized by Apple, one file for Apple silicon and Intel, for macOS 13 or
 later. It is the file the download button gives you, and it updates itself.
 The same app runs on Windows and Linux.
 
 | Computer | File | Status |
 | --- | --- | --- |
-| Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple Silicon Mac. Never run on an Intel Mac |
+| Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple silicon Mac. Never run on an Intel Mac |
 | Windows, 64-bit | `Screepub-windows-x64-setup.exe` | Built and checked automatically. Never installed by a person yet |
 | Linux: Debian, Ubuntu | `Screepub-linux-amd64.deb` | Built and checked automatically. Never installed by a person yet |
 | Linux: Fedora, openSUSE | `Screepub-linux-x86_64.rpm` | Built and checked automatically. Never installed by a person yet |

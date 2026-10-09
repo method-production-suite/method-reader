@@ -21,8 +21,10 @@ see [Influencing this list](#influencing-this-list).
   are greyscale, so a colour image reads as black and white on a Kindle, and
   a script padded with full-page photographs makes a file too large to email
   to a `@kindle.com` address.
-- **A way to report problems without a GitHub account.** Every feedback path
-  assumes one today, which excludes most of the people Screepub is built for.
+- **A way to report problems without a GitHub account.** Asking for a device
+  and saying whether a reader worked need none now: the window sends both.
+  Telling us a script converted badly still means opening an issue, which
+  excludes most of the people Screepub is built for.
 - **Keeping `pdfjs-dist` current.** It parses untrusted PDFs, so it is the
   dependency that matters most.
 

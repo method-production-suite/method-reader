@@ -941,12 +941,12 @@ describe('the app downloads are described where a reader meets them', () => {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
     }
-    // The Mac window: installed by a person on Apple Silicon, never on Intel.
+    // The Mac window: installed by a person on Apple silicon, never on Intel.
     expect(person).toContain('/Applications');
-    expect(person).toContain('Apple Silicon');
+    expect(person).toContain('Apple silicon');
     const mac = row(MAC_DMG);
     expect(mac).toContain(VERIFIED);
-    expect(mac).toContain('Apple Silicon');
+    expect(mac).toContain('Apple silicon');
     expect(mac).toContain('Intel');
     // And the README sends a reader to the ledger itself.
     expect(install).toContain('docs/verification-ledger.md');

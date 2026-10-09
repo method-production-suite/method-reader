@@ -147,7 +147,7 @@ jobs:
         working-directory: app
   release:
     needs: checks
-    runs-on: macos-15   # Apple Silicon; Swift 6 toolchain
+    runs-on: macos-15   # Apple silicon; Swift 6 toolchain
     permissions:
       contents: write   # create the GitHub Release + upload assets
     steps:
