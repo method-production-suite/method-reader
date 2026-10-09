@@ -6,12 +6,12 @@
 // `bun tools/capture-screens.ts`; /release does not call it yet.
 import { afterAll, describe, test, expect } from 'bun:test';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { homedir, tmpdir } from 'node:os';
+import { join, resolve, sep } from 'node:path';
 import type { Browser } from '../tools/capture/cdp';
 import { gateEngineCall } from '../tools/capture/gate';
 import { captureIndex } from '../tools/capture/page';
-import { CaptureError, MARKER, claimLibrary, cleanupErrorsOf, runCapture, type RunOptions } from '../tools/capture/run';
+import { CaptureError, MARKER, claimLibrary, cleanupErrorsOf, defaultCalibreConfig, runCapture, type RunOptions } from '../tools/capture/run';
 import { makeHandler, type EngineResult } from '../tools/capture/server';
 import { FRAME_PAD, SHOTS, framedSize, outputsFor, writeIfChanged } from '../tools/capture/shots';
 // @ts-expect-error -- plain JS module, no types
@@ -705,6 +705,56 @@ describe('a capture run cleans up after itself, whatever happens', () => {
       // creates or writes into itself, so a read there finds nothing.
       expect(seen.configDir).toBe(join(s.library, '.capture-app-settings'));
     } finally { s.done(); }
+  });
+
+  test('the engine gets a scratch COPY of Calibre\'s settings, never the real folder', async () => {
+    // The result screen asks the engine for its routes and its Kindle file,
+    // and both probe Calibre and the KFX plugin. Calibre run against the
+    // real settings folder rewrites files in it (gui.json, 0.7.3 QA), so
+    // every engine call gets a copy, made fresh for the run, inside the
+    // run's temp folder and gone with it. A copy keeps the plugin visible.
+    const s = scene();
+    const real = join(s.tmp, '..', 'real-calibre');
+    mkdirSync(join(real, 'plugins'), { recursive: true });
+    writeFileSync(join(real, 'plugins', 'KFX Output.zip'), 'plugin');
+    try {
+      const seen: { said?: string } = {};
+      const ENGINE = ['/bin/sh', '-c', 'printf "%s|" "$CALIBRE_CONFIG_DIRECTORY"; ls "$CALIBRE_CONFIG_DIRECTORY/plugins"'];
+      const boom = new Error('one engine call is enough for this test');
+      const browser: Browser = {
+        version: 'FakeChrome/1.0',
+        async capture({ url }) {
+          if (!url.includes('/capture/window.html')) return PNG;
+          const html = await (await fetch(url)).text();
+          const token = /"token":"([^"]+)"/.exec(html)![1]!;
+          const r = await fetch(new URL('/engine', url), {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-capture-token': token },
+            body: JSON.stringify({ args: argv.version() }),
+          });
+          seen.said = await r.text();
+          throw boom;
+        },
+        async close() {},
+      };
+      const shots = SHOTS.filter((x) => x.name === 'drop');
+      const err = await thrown(s.run({ shots, engine: ENGINE, calibreConfig: real, launch: async () => browser }));
+      expect(err).toBe(boom);
+      const [dir, listed] = (seen.said ?? '').split('|');
+      expect(dir).toBeTruthy();
+      expect(resolve(dir!)).not.toBe(resolve(real));
+      expect(resolve(dir!)).not.toBe(defaultCalibreConfig({}, process.platform));
+      expect(resolve(dir!).startsWith(resolve(s.tmp) + sep)).toBe(true);
+      expect(listed!.trim()).toBe('KFX Output.zip');
+      // Gone with the run, and the real folder untouched.
+      expect(readdirSync(s.tmp)).toEqual([]);
+      expect(readdirSync(join(real, 'plugins'))).toEqual(['KFX Output.zip']);
+    } finally { s.done(); }
+  });
+
+  test('untold, the folder copied is the one Calibre itself would use', () => {
+    expect(defaultCalibreConfig({}, 'darwin')).toBe(join(homedir(), 'Library', 'Preferences', 'calibre'));
+    expect(defaultCalibreConfig({ CALIBRE_CONFIG_DIRECTORY: '/x/cal' }, 'linux')).toBe('/x/cal');
   });
 
   test('a library the tool did not make is refused and left exactly as it was', async () => {
