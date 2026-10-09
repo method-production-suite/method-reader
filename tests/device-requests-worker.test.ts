@@ -9,10 +9,12 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import worker, {
-  ALLOWED_ORIGINS, handleRequest, LIMIT_PER_HOUR, MAX_BODY_BYTES, normaliseName, type D1Database, type Env,
+  ALLOWED_ORIGINS, handleRequest, LIMIT_PER_MINUTE, MAX_BODY_BYTES, normaliseName, type D1Database, type Env,
+  type RateLimit,
 } from '../services/device-requests/src/worker';
 
-const SCHEMA = readFileSync(join(import.meta.dir, '..', 'services', 'device-requests', 'schema.sql'), 'utf8');
+const SERVICE = join(import.meta.dir, '..', 'services', 'device-requests');
+const SCHEMA = readFileSync(join(SERVICE, 'schema.sql'), 'utf8');
 const URL_ = 'https://screepub-device-requests.example.workers.dev/request';
 const IP = '203.0.113.77';
 const ORIGIN = 'tauri://localhost';
@@ -31,12 +33,31 @@ function fakeD1(db: Database): D1Database {
   return { prepare: (sql: string) => statement(sql, []) };
 }
 
+/** Cloudflare's rate-limit binding: LIMIT_PER_MINUTE calls per key, then
+ *  refused. Its counters live at Cloudflare, never in D1; `keys` records
+ *  what it was asked about, so a test can see what the key was. */
+function fakeLimiter(): RateLimit & { keys: string[] } {
+  const counts = new Map<string, number>();
+  const keys: string[] = [];
+  return {
+    keys,
+    limit: async ({ key }) => {
+      keys.push(key);
+      const n = (counts.get(key) ?? 0) + 1;
+      counts.set(key, n);
+      return { success: n <= LIMIT_PER_MINUTE };
+    },
+  };
+}
+
 let db: Database;
+let limiter: ReturnType<typeof fakeLimiter>;
 let env: Env;
 beforeEach(() => {
   db = new Database(':memory:');
   db.exec(SCHEMA);
-  env = { DB: fakeD1(db) };
+  limiter = fakeLimiter();
+  env = { DB: fakeD1(db), RATE_LIMITER: limiter };
 });
 
 const device = (name: string, extra: Record<string, unknown> = {}) =>
@@ -72,15 +93,16 @@ describe('a device request', () => {
     expect(row.count).toBe(1);
   });
 
-  test('the same device asked again adds to its count, keeping the latest spelling and both dates', async () => {
+  test('the same device asked again adds to its count, keeping the latest spelling and both days', async () => {
     await send(post(device('PocketBook Era')), new Date('2026-10-02T10:00:00Z'));
     await send(post(device('  pocketbook    ERA ', { platform: 'linux' }), { ip: '198.51.100.1' }), new Date('2026-10-03T11:00:00Z'));
     const all = rows('device_requests');
     expect(all.length).toBe(1);
     expect(all[0].count).toBe(2);
     expect(all[0].spelling).toBe('pocketbook    ERA');
-    expect(all[0].first_seen).toBe('2026-10-02T10:00:00.000Z');
-    expect(all[0].last_seen).toBe('2026-10-03T11:00:00.000Z');
+    // The day only: a time to the millisecond could pick one request out.
+    expect(all[0].first_seen).toBe('2026-10-02');
+    expect(all[0].last_seen).toBe('2026-10-03');
     // A different device is its own row.
     await send(post(device('Boox Note')), new Date('2026-10-03T11:00:00Z'));
     expect(rows('device_requests').length).toBe(2);
@@ -183,49 +205,86 @@ describe('refused', () => {
 });
 
 describe('the rate limit', () => {
-  const at = new Date('2026-10-02T10:15:00Z');
-  test(`${LIMIT_PER_HOUR} accepted an hour per sender, then 429, while another sender still gets through`, async () => {
-    for (let i = 0; i < LIMIT_PER_HOUR; i++) expect((await send(post(device(`Boox ${i}`)), at)).status).toBe(200);
-    const over = await send(post(device('Boox again')), at);
+  test(`${LIMIT_PER_MINUTE} accepted a minute per sender, then 429, while another sender still gets through`, async () => {
+    for (let i = 0; i < LIMIT_PER_MINUTE; i++) expect((await send(post(device(`Boox ${i}`)))).status).toBe(200);
+    const over = await send(post(device('Boox again')));
     expect(over.status).toBe(429);
     expect(over.body.ok).toBe(false);
-    expect(rows('device_requests').length).toBe(LIMIT_PER_HOUR);
-    expect((await send(post(device('Boox other'), { ip: '198.51.100.2' }), at)).status).toBe(200);
+    expect(rows('device_requests').length).toBe(LIMIT_PER_MINUTE);
+    expect((await send(post(device('Boox other'), { ip: '198.51.100.2' }))).status).toBe(200);
   });
 
-  test('a refused request does not use up the hour', async () => {
-    for (let i = 0; i < 10; i++) await send(post(device('')), at);
-    expect((await send(post(device('Boox')), at)).status).toBe(200);
+  test('a refused request does not use up a place: the limiter is asked only about a good form', async () => {
+    for (let i = 0; i < 10; i++) await send(post(device('')));
+    expect(limiter.keys).toEqual([]);
+    expect((await send(post(device('Boox')))).status).toBe(200);
   });
 
-  test('the next hour starts fresh, and old hours are pruned', async () => {
-    for (let i = 0; i < LIMIT_PER_HOUR; i++) await send(post(device(`Boox ${i}`)), at);
-    expect((await send(post(device('Boox')), at)).status).toBe(429);
-    const later = new Date('2026-10-02T12:01:00Z');
-    expect((await send(post(device('Boox')), later)).status).toBe(200);
-    const buckets = rows('rate_limits').map((r) => r.hour);
-    expect(buckets).toEqual([Math.floor(later.getTime() / 3_600_000)]);
-  });
-
-  test('no IP is stored anywhere, only a hash of it with the day', async () => {
-    await send(post(device('Boox')), at);
-    await send(post(report()), at);
-    const everything = JSON.stringify([rows('device_requests'), rows('route_reports'), rows('rate_limits')]);
+  test('the limiter is Cloudflare\'s binding, keyed on the connecting address, and nothing of it reaches D1', async () => {
+    await send(post(device('Boox')));
+    await send(post(report()));
+    expect(limiter.keys).toEqual([IP, IP]);
+    const tables = (db.query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[])
+      .map((t) => t.name);
+    expect(tables).toEqual(['device_requests', 'route_reports']);
+    const everything = JSON.stringify([rows('device_requests'), rows('route_reports')]);
     expect(everything).not.toContain(IP);
-    const [bucket] = rows('rate_limits');
-    expect(String(bucket.sender)).toMatch(/^[0-9a-f]{64}$/);
-    // Another day, the same sender hashes differently.
-    await send(post(device('Boox')), new Date('2026-10-03T10:15:00Z'));
-    const senders = new Set(rows('rate_limits').map((r) => r.sender));
-    expect(senders.size).toBe(1); // the old day's bucket was pruned
-    expect([...senders][0]).not.toBe(bucket.sender);
+  });
+
+  test('a limiter that fails is a 500 in plain words, and nothing is counted', async () => {
+    env = { DB: fakeD1(db), RATE_LIMITER: { limit: async () => { throw new Error('limiter down'); } } };
+    const r = await send(post(device('Boox')));
+    expect(r.status).toBe(500);
+    expect(r.body.error).not.toContain('limiter');
+    expect(rows('device_requests')).toEqual([]);
   });
 
   test('the tables hold nothing beyond their counts', () => {
     const columns = (table: string) => (db.query(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((c) => c.name);
     expect(columns('device_requests')).toEqual(['name_key', 'spelling', 'count', 'first_seen', 'last_seen']);
     expect(columns('route_reports')).toEqual(['route', 'platform', 'worked', 'did_not_work', 'first_seen', 'last_seen']);
-    expect(columns('rate_limits')).toEqual(['sender', 'hour', 'count']);
+  });
+
+  test('wrangler.toml binds RATE_LIMITER at the limit the Worker says, per 60 seconds', () => {
+    const toml = readFileSync(join(SERVICE, 'wrangler.toml'), 'utf8');
+    const block = /\[\[ratelimits\]\]([\s\S]*?)(?=\n\[\[|$)/.exec(toml)?.[1] ?? '';
+    expect(block).toMatch(/^name = "RATE_LIMITER"$/m);
+    expect(block).toMatch(/^namespace_id = "[1-9][0-9]*"$/m);
+    expect(block).toMatch(new RegExp(`^\\s*limit = ${LIMIT_PER_MINUTE}$`, 'm'));
+    expect(block).toMatch(/^\s*period = 60$/m);
+  });
+});
+
+describe('the migration for the live database', () => {
+  // What the first deploy made (2026-10-02): the counts, with times to the
+  // millisecond, and the hourly table of hashed senders.
+  const OLD = `
+    CREATE TABLE device_requests (name_key TEXT PRIMARY KEY, spelling TEXT NOT NULL, count INTEGER NOT NULL,
+      first_seen TEXT NOT NULL, last_seen TEXT NOT NULL);
+    CREATE TABLE route_reports (route TEXT NOT NULL, platform TEXT NOT NULL, worked INTEGER NOT NULL DEFAULT 0,
+      did_not_work INTEGER NOT NULL DEFAULT 0, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, PRIMARY KEY (route, platform));
+    CREATE TABLE rate_limits (sender TEXT NOT NULL, hour INTEGER NOT NULL, count INTEGER NOT NULL, PRIMARY KEY (sender, hour));
+    CREATE INDEX rate_limits_hour ON rate_limits (hour);
+    INSERT INTO device_requests VALUES ('boox', 'Boox', 3, '2026-10-02T10:00:00.000Z', '2026-10-04T23:59:59.999Z');
+    INSERT INTO route_reports VALUES ('kobo', 'mac', 1, 0, '2026-10-03T08:00:00.000Z', '2026-10-03T08:00:00.000Z');
+    INSERT INTO rate_limits VALUES ('${'a'.repeat(64)}', 489000, 1);`;
+  const MIGRATION = readFileSync(join(SERVICE, 'migrations', '0001-no-senders-day-dates.sql'), 'utf8');
+
+  test('drops the senders table and its index, rounds every date to its day, and keeps the counts', () => {
+    const old = new Database(':memory:');
+    old.exec(OLD);
+    old.exec(MIGRATION);
+    const names = (old.query("SELECT name FROM sqlite_master WHERE name LIKE 'rate_limits%'").all());
+    expect(names).toEqual([]);
+    expect(old.query('SELECT * FROM device_requests').all()).toEqual([
+      { name_key: 'boox', spelling: 'Boox', count: 3, first_seen: '2026-10-02', last_seen: '2026-10-04' }]);
+    expect(old.query('SELECT * FROM route_reports').all()).toEqual([
+      { route: 'kobo', platform: 'mac', worked: 1, did_not_work: 0, first_seen: '2026-10-03', last_seen: '2026-10-03' }]);
+    // Safe to run twice, and on a database made from today's schema.sql.
+    old.exec(MIGRATION);
+    const fresh = new Database(':memory:');
+    fresh.exec(SCHEMA);
+    fresh.exec(MIGRATION);
   });
 });
 
@@ -276,7 +335,7 @@ test('a body that cannot be read is a 400 the window can read, with its CORS hea
 });
 
 test('a database that fails says so in plain words, as a 500', async () => {
-  env = { DB: { prepare: () => { throw new Error('D1 is down'); } } as unknown as D1Database };
+  env = { DB: { prepare: () => { throw new Error('D1 is down'); } } as unknown as D1Database, RATE_LIMITER: limiter };
   const r = await send(post(device('Boox')));
   expect(r.status).toBe(500);
   expect(r.body.ok).toBe(false);

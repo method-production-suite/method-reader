@@ -71,8 +71,8 @@ describe('sending', () => {
   });
 
   test('too many: could not send, and says when to try', async () => {
-    const said = await Q.postRequest({}, fakeFetch(() => json(429, { ok: false, error: 'Too many requests from here this hour. Try again later.' })).fetch);
-    expect(said).toEqual({ ok: false, line: 'Could not send: too many requests from this computer this hour. Try again later.' });
+    const said = await Q.postRequest({}, fakeFetch(() => json(429, { ok: false, error: 'Too many requests from here just now. Try again in a minute.' })).fetch);
+    expect(said).toEqual({ ok: false, line: 'Could not send: too many requests from this computer just now. Try again in a minute.' });
   });
 
   test('any other refusal says the service’s own words after could not send', async () => {

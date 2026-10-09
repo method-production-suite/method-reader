@@ -335,13 +335,13 @@ describe('My device isn’t here', () => {
   });
 
   test('too many, or any refusal: the text stays and it says why', async () => {
-    const service = requestService(() => refusal(429, 'Too many requests from here this hour. Try again later.'));
+    const service = requestService(() => refusal(429, 'Too many requests from here just now. Try again in a minute.'));
     const m = await openMissing({ fetch: service.fetch });
     m.field().input('Boox Note');
     m.send().click();
     await settle();
     expect(m.field().value).toBe('Boox Note');
-    expect(m.said().textContent).toBe('Could not send: too many requests from this computer this hour. Try again later.');
+    expect(m.said().textContent).toBe('Could not send: too many requests from this computer just now. Try again in a minute.');
     expect(m.send().textContent).toBe('Try again');
   });
 

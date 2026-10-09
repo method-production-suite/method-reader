@@ -144,8 +144,10 @@ Screepub reaches the network only when you ask it to:
 - **Screepub's request service**, only when you press **Send** in **My device
   isn't here** or answer **It worked** or **It did not work** beside an
   asterisk. It carries the device's name (or which reader and your answer),
-  the app's version and your platform, and nothing else. The service keeps
-  counts only and never stores your address.
+  the app's version and your platform, and nothing else. The service stores
+  only counts and the day: never your address or anything made from it.
+  Cloudflare, which runs it, sees your address as any website's host does,
+  and uses it to allow five requests a minute.
 - **Updates, only if you say yes.** The window asks once; with your yes, it
   checks GitHub at most once a day, and **Check for updates** checks once.
   An update downloads only when you choose to install it, and its signature

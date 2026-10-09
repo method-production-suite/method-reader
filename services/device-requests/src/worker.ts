@@ -6,8 +6,10 @@
 //   { kind: "report", route, worked, version, platform }   "It worked" or not
 // and this counts them. It stores no IP address, no user agent and nothing
 // else: a device request adds to its device's count, a report to its
-// route's. The rate limit keys on a SHA-256 of the connecting address and a
-// salt that changes every day, never the address itself.
+// route's, each with the day it was first and last seen (a day, never a
+// time). The rate limit is Cloudflare's rate-limit binding, whose counters
+// live at Cloudflare for a minute and are never written to D1, so nothing
+// derived from an address is ever stored here.
 //
 // Dependency-free on purpose: the few D1 types it uses are declared here
 // rather than pulling in @cloudflare/workers-types. Tested by
@@ -23,23 +25,30 @@ export interface D1PreparedStatement {
 export interface D1Database {
   prepare(sql: string): D1PreparedStatement;
 }
+/** Cloudflare's Workers rate-limit binding (`[[ratelimits]]` in
+ *  wrangler.toml): `limit()` takes one of the key's places in the current
+ *  window, or answers success false when there are none left. */
+export interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
 export interface Env {
   DB: D1Database;
+  RATE_LIMITER: RateLimit;
 }
 
 export const PATH = '/request';
 export const MAX_BODY_BYTES = 1024;
 export const MAX_DEVICE = 80;
 export const MAX_VERSION = 20;
-export const LIMIT_PER_HOUR = 5;
+/** Accepted requests per sender per minute, per Cloudflare location. The
+ *  binding's window is 10 or 60 seconds, nothing longer. Kept equal to
+ *  `limit` in wrangler.toml (a test holds them together). */
+export const LIMIT_PER_MINUTE = 5;
 export const PLATFORMS = ['mac', 'windows', 'linux'] as const;
 export const ROUTES = ['kobo', 'tolino', 'remarkable', 'kindle-windows', 'kindle-linux'] as const;
 /** The Tauri window's own origins: macOS and Linux, then Windows (http and
  *  https, as Tauri's useHttpsScheme decides). */
 export const ALLOWED_ORIGINS = ['tauri://localhost', 'http://tauri.localhost', 'https://tauri.localhost'];
-/** Not a secret: it only makes the daily hash this service's own. */
-const SALT = 'screepub-device-requests';
-const HOUR_MS = 3_600_000;
 
 const SAID = {
   notFound: 'Nothing here. Send a POST to /request.',
@@ -48,7 +57,7 @@ const SAID = {
   unreadable: 'That request did not arrive whole. Try again.',
   badForm: 'That request is not one this service takes.',
   badDevice: `The device name must be 1 to ${MAX_DEVICE} characters.`,
-  tooMany: 'Too many requests from here this hour. Try again later.',
+  tooMany: 'Too many requests from here just now. Try again in a minute.',
   broken: 'Something went wrong on our side. Try again later.',
 } as const;
 
@@ -101,31 +110,14 @@ export function parseForm(body: unknown): DeviceRequest | Report | string {
   return SAID.badForm;
 }
 
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** Who is asking, as a hash that changes every day. The address is used
- *  here and nowhere else. */
-export function senderKey(ip: string, now: Date): Promise<string> {
-  return sha256Hex(`${SALT}|${now.toISOString().slice(0, 10)}|${ip}`);
-}
-
-/** Takes one of this hour's places for `sender`, or false when they are
- *  gone. A new hour's first request deletes every older hour. */
-async function takePlace(db: D1Database, sender: string, hour: number): Promise<boolean> {
-  const row = await db.prepare(
-    'INSERT INTO rate_limits (sender, hour, count) VALUES (?, ?, 1) '
-    + 'ON CONFLICT (sender, hour) DO UPDATE SET count = count + 1 WHERE count < ? RETURNING count',
-  ).bind(sender, hour, LIMIT_PER_HOUR).first<{ count: number }>();
-  if (row === null) return false;
-  if (row.count === 1) await db.prepare('DELETE FROM rate_limits WHERE hour < ?').bind(hour).run();
-  return true;
+/** The day, never the time: a time to the millisecond, beside a count that
+ *  moved by one, would pick out a single request. */
+export function dayOf(now: Date): string {
+  return now.toISOString().slice(0, 10);
 }
 
 async function store(db: D1Database, form: DeviceRequest | Report, now: Date): Promise<void> {
-  const at = now.toISOString();
+  const at = dayOf(now);
   if (form.kind === 'device') {
     await db.prepare(
       'INSERT INTO device_requests (name_key, spelling, count, first_seen, last_seen) VALUES (?, ?, 1, ?, ?) '
@@ -181,10 +173,12 @@ export async function handleRequest(request: Request, env: Env, now: Date = new 
   if (typeof form === 'string') return refuse(400, form, origin);
 
   try {
-    const sender = await senderKey(request.headers.get('cf-connecting-ip') ?? 'unknown', now);
-    if (!(await takePlace(env.DB, sender, Math.floor(now.getTime() / HOUR_MS)))) {
-      return refuse(429, SAID.tooMany, origin);
-    }
+    // Keyed on the connecting address, which Cloudflare already has; the
+    // binding keeps its count for the window and stores nothing here. It
+    // cannot give a place back, so a write that fails below still used one:
+    // with a one-minute window, that costs a sender at most a minute.
+    const { success } = await env.RATE_LIMITER.limit({ key: request.headers.get('cf-connecting-ip') ?? 'unknown' });
+    if (!success) return refuse(429, SAID.tooMany, origin);
     await store(env.DB, form, now);
     return answer(200, { ok: true }, origin);
   } catch {

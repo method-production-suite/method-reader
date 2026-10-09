@@ -28,7 +28,7 @@ export const WORKED = 'It worked';
 export const DID_NOT_WORK = 'It did not work';
 
 const OFFLINE = 'Could not send. Check that this computer is online, then try again.';
-const TOO_MANY = 'Could not send: too many requests from this computer this hour. Try again later.';
+const TOO_MANY = 'Could not send: too many requests from this computer just now. Try again in a minute.';
 const GARBLED = 'Could not send. The request service did not answer properly. Try again later.';
 
 /** "My device isn't here": the name as typed (trimmed). */
