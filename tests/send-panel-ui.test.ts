@@ -1602,6 +1602,24 @@ describe('after a copy over USB', () => {
     expect(openWays(p).button('Copy to KOBOeReader').className).toBe('btn btn-outline');
   });
 
+  test('a copy that lands after another book’s result came up still leaves Eject and its line', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, devices: [KOBO],
+      engine: (a) => (a[0] === 'export' && !a.includes('--check') ? { ok: true, path: EPUB, label: 'EPUB' } : undefined) });
+    p.brass()!.click();
+    await settle();
+    const send = p.tauri.callsTo('send');
+    expect(send.length).toBe(1);
+    // Another script converted while the copy ran.
+    p.ctx.state.script = { ...p.ctx.state.script, title: 'Other', epubPath: '/lib/other/Other.epub' };
+    p.panel.mountPanel(p.node, p.ctx);
+    await settle();
+    send[0].answer({ ok: true, destination: '/Volumes/KOBOeReader/Field Station.epub' });
+    await settle();
+    expect(p.ctx.state.sendResult.eject.volume).toBe('/Volumes/KOBOeReader');
+    expect(p.brass()!.textContent).toBe('Eject KOBOeReader');
+    expect(p.status().textContent).toBe(ON_IT);
+  });
+
   test('Eject asks the engine for that volume only; done, the button goes and the line says so', async () => {
     const p = await copied();
     p.brass()!.click();

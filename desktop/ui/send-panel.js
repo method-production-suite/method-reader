@@ -985,6 +985,8 @@ async function sendTo(device) {
   const stale = () => era !== mine;
   /** The copy happened; the engine now remembers this reader's kind. */
   let worked = false;
+  /** It happened after another book's result came up: Eject is kept. */
+  let lateEject = false;
   for (const button of buttons()) button.disabled = true;
   artifactNote.hidden = true;
   try {
@@ -1026,7 +1028,24 @@ async function sendTo(device) {
 
     say(R.statusFor('copying', { device }));
     const sent = await onBook(script.epubPath, 'send', argv.send(built.path, device.id));
-    if (stale()) return;
+    if (stale()) {
+      // Another book's result came up while this copy ran. Its line is not
+      // that book's to say, but the reader now holds this one and still
+      // has to be ejected: the button and its line come along, as they do
+      // for a copy that finished first (mountPanel).
+      if (R.outcomeFor(built, sent, device)[0] === 'sent') {
+        const copied = D.copiedState(script.title, device, sent);
+        if (copied.eject !== null) {
+          const eject = { ...copied.eject, line: copied.line };
+          const now = ctx.state.sendResult;
+          ctx.state.sendResult = now?.book === mountedBook && now.line !== ''
+            ? { ...now, eject }
+            : { book: mountedBook, line: copied.line, bad: false, eject };
+          lateEject = true;
+        }
+      }
+      return;
+    }
 
     const [phase, detail] = R.outcomeFor(built, sent, device);
     if (phase !== 'sent') {
@@ -1067,6 +1086,10 @@ async function sendTo(device) {
     sending = false;
     for (const button of buttons()) button.disabled = false;
     kfxRedraw();
+    if (lateEject && ctx.state.sendResult !== null) {
+      show(ctx.state.sendResult);
+      if (mode === 'calm') draw();
+    }
     afterFlow(worked, stale());
   }
 }
