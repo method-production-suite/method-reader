@@ -12,7 +12,7 @@ name: release
 on:
   push:
     tags: ['v*']
-  # Re-run entry point: a transient notarization or Rosetta failure used
+  # Re-run entry point: a transient notarization failure used
   # to mean deleting and re-pushing the tag. Dispatch runs against the
   # chosen ref; the version comes from the tag that ref carries.
   workflow_dispatch:
@@ -73,8 +73,8 @@ jobs:
             exit 1
           fi
 
-          # package.json must agree with the tag. app/release.sh checks this
-          # too, but only after certs are on disk, minutes in.
+          # package.json must agree with the tag. tools/build-cli.ts checks
+          # this too, but only after certs are on disk, minutes in.
           PKG="$(git cat-file blob "$GITHUB_SHA:package.json" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")"
           [ "$PKG" = "$VERSION" ] || {
             echo "::error file=package.json::package.json says $PKG but the tag says $VERSION"; exit 1; }
@@ -147,7 +147,7 @@ jobs:
         working-directory: app
   release:
     needs: checks
-    runs-on: macos-15   # Apple silicon; Swift 6 toolchain
+    runs-on: macos-15   # codesign and notarytool need a Mac
     permissions:
       contents: write   # create the GitHub Release + upload assets
     steps:
@@ -156,9 +156,6 @@ jobs:
         with:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
-
-      - name: Ensure Rosetta (x86_64 Swift slice builds under it)
-        run: sudo softwareupdate --install-rosetta --agree-to-license
 
       - name: Import Developer ID certificate
         env:
@@ -214,14 +211,25 @@ jobs:
           echo "$AC_KEY_B64" | base64 --decode > "$RUNNER_TEMP/ac_api_key.p8"
           echo "AC_API_KEY_PATH=$RUNNER_TEMP/ac_api_key.p8" >> "$GITHUB_ENV"
 
-      - name: Build, sign, notarize, package
+      - name: Build, sign and notarize the macOS command-line tool
         env:
           VERSION: ${{ github.ref_name }}   # 'v0.2.0'; stripped below
           AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
-          export VERSION="${VERSION#v}"
-          app/release.sh
+          set -euo pipefail
+          # The formula's tarball. This used to be the Swift app's
+          # release script; since the CLI move it is tools/build-cli.ts,
+          # which compiles it, signs it (hardened runtime, the CLI's
+          # entitlements), checks what the signature says, notarizes it,
+          # and only THEN packages it, so the tarball holds the signed
+          # bytes. It refuses a tag package.json does not name, and a
+          # missing notary key before compiling anything. Apple silicon
+          # only: the Intel tarball went with Intel Macs, after the
+          # identifier release (plan 2026-10-01-f2-handover-amendment.md).
+          # AC_API_KEY_PATH comes from the step above, via GITHUB_ENV.
+          bun tools/build-cli.ts --version "${VERSION#v}" --out "$RUNNER_TEMP/cli-mac" \
+            --mac --sign "$SIGN_IDENTITY" --notarize
 
       - name: Publish GitHub Release
         env:
@@ -266,12 +274,11 @@ jobs:
             # Since the identifier release the Mac app is the window's
             # image, uploaded by app-upload; this job publishes none. Its
             # checksum is in SHA256SUMS-app beside it.
-            printf '%s\n\n' "**Mac:** download \`Screepub-macOS.dmg\` (notarized, universal, macOS 13 or later), open it, drag Screepub to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
+            printf '%s\n\n' "**Mac:** download \`Screepub-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Screepub to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
             printf '%s\n' "Command-line tool for macOS, SHA-256:"
             printf '\n```\n'
-            shasum -a 256 \
-              app/dist/screepub-cli-macos-arm64.tar.gz \
-              app/dist/screepub-cli-macos-x64.tar.gz | sed 's|app/dist/||'
+            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 \
+                screepub-cli-macos-arm64.tar.gz )
             printf '```\n'
           } >> "$NOTES"
 
@@ -291,21 +298,23 @@ jobs:
             gh release edit "$TAG" --title "Screepub $VERSION" --notes-file "$NOTES"
           fi
 
-          # NOT app/dist/Screepub-macOS.dmg: that is the Swift app, still
-          # built by app/release.sh (which also builds these two tarballs)
-          # until the CLI move, and never published again. The window's
-          # image of the same name comes from app-upload, and the frozen
-          # Swift updater must find exactly one .dmg.
+          # The one tarball, and never an image: the window's
+          # Screepub-macOS.dmg comes from app-upload, and the frozen Swift
+          # updater must find exactly one .dmg.
           gh release upload "$TAG" \
-            app/dist/screepub-cli-macos-arm64.tar.gz \
-            app/dist/screepub-cli-macos-x64.tar.gz \
+            "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" \
             --clobber
 
       # The fallback for when the `tap` job below cannot run (no TAP_TOKEN)
-      # or fails: the two SHAs, somewhere a person can copy from, so the
-      # bump is paste-and-commit rather than download-and-hash. The CASK
-      # was retired at the identifier release and is never bumped again;
-      # tools/bump-tap.sh adds its deprecation notice once.
+      # or fails: the SHA, somewhere a person can copy from, so the bump is
+      # paste-and-commit rather than download-and-hash. The CASK was
+      # retired at the identifier release (deprecated) and is never bumped
+      # again; from the release after it, tools/bump-tap.sh turns that
+      # deprecate! into disable!. The formula is Apple silicon only from
+      # that release too, which changed its SHAPE (one url,
+      # `depends_on arch: :arm64`), so the sheet says to run bump-tap.sh,
+      # which writes both, and says what a hand bump of the first such
+      # release must change besides the url.
       - name: Tap bump crib sheet
         env:
           VERSION: ${{ github.ref_name }}
@@ -315,13 +324,12 @@ jobs:
           # Plain command substitution and no arrays: this job runs on
           # macos-15, whose bash is 3.2, and a bash-3.2 array trap has
           # already killed one release here after notarization.
-          ARM="$(shasum -a 256 app/dist/screepub-cli-macos-arm64.tar.gz | cut -d' ' -f1)"
-          X64="$(shasum -a 256 app/dist/screepub-cli-macos-x64.tar.gz | cut -d' ' -f1)"
+          ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf '`Formula/screepub.rb` (the tag is literal in BOTH urls)\n\n```ruby\n'
-            printf '    url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n    sha256 "%s"\n' "$V" "$ARM"
-            printf '    url ".../download/v%s/screepub-cli-macos-x64.tar.gz"\n    sha256 "%s"\n' "$V" "$X64"
+            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`) and disables the retired cask.\n\n' "$V"
+            printf 'By hand: if the formula still holds the identifier release'"'"'s if/else on the CPU, replace the whole if/else with the one url and sha256 below, and add `depends_on arch: :arm64` on the line before `depends_on :macos`. In `Casks/screepub.rb`, change `deprecate!` to `disable!`, keeping its date (already past, as Homebrew needs). The tag is literal in the url:\n\n```ruby\n'
+            printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -456,9 +464,10 @@ jobs:
 
   # Bun cross-compiles every target from one machine, so the Linux and
   # Windows artifacts cost one free Ubuntu runner rather than a per-OS build
-  # matrix. The macOS artifacts are NOT built here: app/release.sh signs and
-  # notarizes them on the macOS runner above, notarization needs Apple's
-  # toolchain, and tools/bump-tap.sh hardcodes their filenames.
+  # matrix. The macOS artifact is NOT built here: the release job above
+  # builds, signs and notarizes it with `build-cli.ts --mac` on its macOS
+  # runner (notarization needs Apple's toolchain), and tools/bump-tap.sh
+  # hardcodes its filename.
   #
   # The matrix and every verification live in tools/build-cli.ts, which is
   # unit-tested and hand-runnable. This job is a thin caller on purpose:
@@ -593,38 +602,32 @@ jobs:
             cli/SHA256SUMS \
             --clobber
 
-  # The installable app bundles: a .deb and an .rpm, two signed and
-  # notarized per-arch DMGs, and one unsigned NSIS installer. Every decision
-  # lives in tools/build-app-bundle.ts, which is unit-tested and
-  # hand-runnable; this job is a thin caller, for the same reason cross-cli
-  # is one -- workflow YAML can only be run by cutting a release.
+  # The installable app bundles: a .deb and an .rpm, ONE signed and
+  # notarized DMG, and one unsigned NSIS installer. Every decision lives in
+  # tools/build-app-bundle.ts, which is unit-tested and hand-runnable; this
+  # job is a thin caller, for the same reason cross-cli is one -- workflow
+  # YAML can only be run by cutting a release.
   #
-  # ONE universal macOS DMG, not a per-arch pair. Changed 2026-09-20; this
-  # comment used to say the opposite and explain why, and the reason has
-  # been removed rather than overruled. externalBin still resolves
-  # {name}-{target_triple} verbatim, and `build-sidecar.ts --universal` now
-  # produces exactly that file: it compiles both darwin slices, lipos them
-  # into the name cargo asks for under --target universal-apple-darwin, and
-  # REFUSES the result if it came out thin.
-  #
-  # Why it is worth a workflow change: the frozen Swift updater takes the
-  # FIRST .dmg asset on a release and has no architecture logic. Two DMGs
-  # is an ambiguity it cannot resolve, and per-arch bundles would hand
-  # roughly half of all Mac users an app that cannot open. One artifact is
-  # what makes the handover in docs/adr/2026-09-20-swift-app-migrates-itself.md
-  # possible at all.
+  # ONE macOS DMG, for Apple silicon only. One image since 2026-09-20,
+  # because the frozen Swift updater takes the FIRST .dmg asset on a
+  # release and has no architecture logic, so two images are an ambiguity
+  # it cannot resolve. That image was universal (a lipo of two engines)
+  # through the identifier release, so the Swift updater could carry Intel
+  # installs across too. From the release after it, Intel Macs are not
+  # supported (owner, 2026-10-01; plan
+  # docs/superpowers/plans/2026-10-01-f2-handover-amendment.md): one slice,
+  # one engine, no lipo, and nothing Intel built anywhere in this file.
   #
   # No AppImage. linuxdeploy runs its own patchelf over the Bun-compiled
   # engine, moves the dynamic section past the 102 MB appended payload, and
   # the extracted engine segfaults. Measured; see the design doc.
   #
-  # `arch` is the only axis now, and every step below reads it. The cargo
-  # triple is NOT restated here: `--arch universal` derives
-  # universal-apple-darwin inside tools/build-app-bundle.ts, which is also
-  # where the rule lives that a universal arch must not carry a per-arch
-  # target. Naming the triple in YAML as well would be a second place for
-  # it to drift, and the drift would be silent -- a thin bundle wearing a
-  # universal name.
+  # The steps below tell the Mac leg apart by runner.os (RUNNER_OS in
+  # bash), never by the arch: arm64 stops meaning "the Mac" the day an
+  # arm64 Linux row is added. The cargo triple is NOT restated here:
+  # tools/build-app-bundle.ts derives aarch64-apple-darwin for every Mac
+  # build and refuses any other Mac arch or triple, so the YAML has no way
+  # to name an Intel one.
   app-bundles:
     needs: checks
     strategy:
@@ -634,7 +637,7 @@ jobs:
           - os: ubuntu-latest
             arch: x64
           - os: macos-15
-            arch: universal
+            arch: arm64
           - os: windows-latest
             arch: x64
     runs-on: ${{ matrix.os }}
@@ -656,44 +659,35 @@ jobs:
       # which is the same decision cross-cli's own comment records.
       - name: Install the Tauri CLI
         run: cargo install tauri-cli --version 2.11.4 --locked
-      # The universal build is TWO real cargo builds fused by lipo, so both
-      # darwin targets must be installed. Naming both rather than only the
-      # one the runner lacks costs nothing -- rustup is a no-op on a target
-      # it already has -- and keeps this correct whichever architecture
-      # GitHub's macos-15 image is on the day it runs.
+      # No rustup step: the Mac bundle is built for aarch64-apple-darwin,
+      # which is macos-15's own target. (The universal build needed
+      # x86_64-apple-darwin added beside it; that build is gone.)
       #
-      # `universal-apple-darwin` is tauri's name for the FUSED output and
-      # is not a rustup target. Asking rustup for it by name fails.
-      - name: Add the Rust targets for the universal macOS build
-        if: matrix.arch == 'universal'
-        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
-      # Two shapes, because the matrix has two. There is no per-arch
-      # --target branch any more: the two macOS rows became one universal
-      # row, and a branch no row reaches is a branch no run proves. The
-      # unknown case is an ERROR rather than a silent fall-through to
-      # --host, because a leg that meant to cross-compile and quietly built
-      # for the runner is how a foreign engine gets inside a download with
-      # nothing failing until someone opens the window.
+      # Two shapes, because the matrix has two. The Mac leg names its engine
+      # rather than asking the runner, so an Intel runner could not slip an
+      # x86_64 engine into the one Mac image; the Linux and Windows legs
+      # build for the runner they are on. The unknown case is an ERROR
+      # rather than a silent fall-through to --host, because a leg that
+      # quietly built for the runner is how a foreign engine gets inside a
+      # download with nothing failing until someone opens the window.
       - name: Build the engine sidecar
         shell: bash
         env:
           ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail
-          case "$ARCH" in
-            universal) bun tools/build-sidecar.ts --universal ;;
-            x64)       bun tools/build-sidecar.ts --host ;;
+          case "$RUNNER_OS/$ARCH" in
+            macOS/arm64)           bun tools/build-sidecar.ts --target bun-darwin-arm64 ;;
+            Linux/x64|Windows/x64) bun tools/build-sidecar.ts --host ;;
             *)
-              echo "::error::matrix arch '$ARCH' is not a shape this step builds. Use 'universal' (macOS) or 'x64' (build for the runner)."
+              echo "::error::$RUNNER_OS/$ARCH is not a shape this step builds. Use macOS/arm64 (Apple silicon only) or x64 on Linux or Windows (built for the runner)."
               exit 1
               ;;
           esac
       # Signing and notarization are tauri-bundler's own, read from the
       # secrets docs/release-secrets.md already documents under different
       # names. macos/sign.rs builds its own keychain and imports the
-      # certificate itself, so this job runs no `security` command;
-      # app/release.sh is neither read nor modified, and the DMG users
-      # already download keeps being produced by that path, untouched.
+      # certificate itself, so this job runs no `security` command.
       - name: Write the App Store Connect API key
         if: runner.os == 'macOS'
         env:
@@ -738,24 +732,23 @@ jobs:
           # The TAG, never package.json: a version mismatch must fail the
           # build rather than ship a bundle that misreports itself.
           ARGS=(--version "${TAG#v}" --out bundles)
-          if [ "$ARCH" = universal ]; then
+          if [ "$RUNNER_OS" = macOS ]; then
             # --arch and never --target: build-app-bundle.ts derives
-            # universal-apple-darwin from the arch, precisely so the two
-            # cannot disagree. A universal arch carrying a per-arch target
-            # would produce a thin bundle wearing a universal name.
+            # aarch64-apple-darwin for every Mac build, and refuses any arch
+            # but arm64, so the matrix cannot ask for an Intel image.
             #
             # --updater: ALSO the updater archive and its signature, through
             # the release-only overlay the tool passes for it. The tool
             # refuses to start without TAURI_SIGNING_PRIVATE_KEY, so a
             # release missing the secret fails in seconds, not after the
-            # full universal build. There is no degrade path on purpose:
-            # ADR 2026-09-21 makes the updater the precondition for v0.6.1,
+            # full build. There is no degrade path on purpose: ADR
+            # 2026-09-21 makes the updater the precondition for v0.6.1,
             # and a release that cannot sign one is the thing it forbids.
             #
             # No config overlay: the transition one that renamed this build
             # "Screepub Desktop" was deleted at the identifier release, when
             # the window became the Mac app (same identifier, same name).
-            ARGS+=(--arch universal --updater)
+            ARGS+=(--arch "$ARCH" --updater)
           fi
           bun tools/build-app-bundle.ts ${ARGS[@]+"${ARGS[@]}"}
       # tauri-bundler notarizes the .app and NEVER the image. app.rs
@@ -782,7 +775,7 @@ jobs:
       # and that is harmless: app-upload rebuilds the checksums from what
       # actually arrives.
       - name: Notarize and staple the disk image
-        if: matrix.arch == 'universal'
+        if: runner.os == 'macOS'
         shell: bash
         env:
           APPLE_API_KEY: ${{ secrets.AC_API_KEY_ID }}
@@ -811,16 +804,15 @@ jobs:
           echo "$N image(s) notarized and stapled."
       # Cross-compiling is not cross-testing, and bundling is not running.
       # Every bundle is opened and its engine executed here, on the machine
-      # that built it. Nothing skips the loop any more: the x86_64 DMG used
-      # to exit 0 having run nothing, and the universal DMG that replaced
-      # it carries a slice this runner CAN execute. What a green tick still
-      # must not imply is that BOTH slices were exercised, so the notice
-      # survives, now describing half an artifact rather than a whole one.
+      # that built it. Nothing skips the loop: the x86_64 DMG of the old
+      # per-arch pair used to exit 0 having run nothing. The Apple silicon
+      # DMG is the runner's own arch, so all of it is exercised; the notice
+      # the universal image needed about its unexecuted Intel slice is gone
+      # with that slice.
       - name: Run the engine out of each bundle
         shell: bash
         env:
           TAG: ${{ github.ref_name }}
-          ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail
           N=0
@@ -837,11 +829,6 @@ jobs:
             exit 1
           fi
           echo "$N bundle(s) smoke-tested on this runner."
-          # Read off the runner rather than hardcoded, so the sentence stays
-          # true if GitHub's macos image changes architecture.
-          if [ "$ARCH" = universal ]; then
-            echo "::notice::The macOS DMG is universal. The smoke test above ran its $(uname -m) slice out of the mounted image; the OTHER slice ships built, verified, signed and notarized with its engine executed nowhere."
-          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: app-bundles-${{ matrix.os }}-${{ matrix.arch }}
@@ -897,7 +884,7 @@ jobs:
           rm -f SHA256SUMS-app
           sha256sum *.deb *.rpm *.dmg *.exe > SHA256SUMS-app
           # Exactly what the three legs produce between them: one .deb, one
-          # .rpm, ONE universal .dmg and one .exe. fail-fast is false, so a
+          # .rpm, ONE .dmg and one .exe. fail-fast is false, so a
           # leg that died would otherwise publish a shorter checksums file
           # that verified perfectly against itself.
           #

@@ -29,7 +29,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { REPO_DIR } from './build-cli';
-import { UPDATER_KINDS, type PlatformKey } from './build-app-bundle';
+import { MAC_ARCH, UPDATER_KINDS, type PlatformKey } from './build-app-bundle';
 import { MANIFEST_NAME, RELEASE_REPO, manifestEndpoint } from './build-update-manifest';
 import { parsePublicKeyBox, parseSignatureBox } from './update-signature';
 
@@ -56,11 +56,24 @@ export type Verdict =
   | { ok: true; version: string; platforms: string[] }
   | { ok: false; problems: string[] };
 
-/** Every platform a universal macOS build must answer for. Derived from
- *  the same table that names the artifacts, so a new row there widens
- *  this automatically. */
+/** The Intel command-line tarball. The identifier release is the last to
+ *  carry it, and the last whose window archive is universal: the two were
+ *  dropped together (plan 2026-10-01-f2-handover-amendment.md). The asset
+ *  list names nothing else that tells the two eras apart, since the window
+ *  archive keeps its name. */
+export const INTEL_CLI_ASSET = 'screepub-cli-macos-x64.tar.gz';
+
+/** Every platform the macOS build must answer for: darwin-aarch64 alone
+ *  since the release after the identifier release (Apple silicon only).
+ *  Derived from the same table that names the artifacts, so a new row
+ *  there widens this automatically.
+ *
+ *  REQUIRED, not exhaustive: this runs weekly against whatever release is
+ *  newest, and until the Apple-silicon-only release ships that is the
+ *  identifier release, whose universal archive answers for both keys. A
+ *  darwin-x86_64 row is judged per release in judgeManifest. */
 export function requiredPlatforms(): PlatformKey[] {
-  return UPDATER_KINDS.filter((k) => k.os === 'macos').flatMap((k) => k.platformKeys('universal'));
+  return UPDATER_KINDS.filter((k) => k.os === 'macos').flatMap((k) => k.platformKeys(MAC_ARCH));
 }
 
 interface ManifestShape {
@@ -104,7 +117,7 @@ export function judgeManifest(
   }
   for (const required of requiredPlatforms()) {
     if (!keys.includes(required)) {
-      problems.push(`${MANIFEST_NAME} has no entry for ${required}, which the universal macOS build must serve`);
+      problems.push(`${MANIFEST_NAME} has no entry for ${required}, which the macOS build must serve`);
     }
   }
 
@@ -113,6 +126,32 @@ export function judgeManifest(
     trusted = parsePublicKeyBox(pubkey).keyId;
   } catch (err) {
     problems.push(`the app's configured public key cannot be read: ${(err as Error).message}`);
+  }
+
+  // After Intel was dropped the one window archive is Apple silicon only.
+  // An Intel row pointing at it would hand an Intel copy a build it cannot
+  // run. Both Intel keys: tauri-plugin-updater 2.12.0's get_urls tries
+  // `<os>-<arch>-app` before `<os>-<arch>`, so darwin-x86_64-app is the one
+  // an Intel copy of the .app finds first. Before (a release still carrying
+  // the Intel tarball), the archive is universal and one url answers every
+  // key, rightly.
+  const intelEra = release.assets.some((a) => a.name === INTEL_CLI_ASSET);
+  if (!intelEra) {
+    const armUrls = new Set(
+      ['darwin-aarch64', 'darwin-aarch64-app']
+        .map((k) => platforms[k]?.url)
+        .filter((u): u is string => typeof u === 'string'),
+    );
+    for (const key of ['darwin-x86_64-app', 'darwin-x86_64']) {
+      const u = platforms[key]?.url;
+      if (typeof u === 'string' && armUrls.has(u)) {
+        problems.push(
+          `${key} points at ${u}, the same archive as darwin-aarch64, and release ` +
+            `${release.tagName} is Apple silicon only (it carries no ${INTEL_CLI_ASSET}): an Intel ` +
+            'copy would install a build it cannot run',
+        );
+      }
+    }
   }
 
   const assetsByUrl = new Map(release.assets.map((a) => [a.url, a]));

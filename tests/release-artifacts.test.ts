@@ -1,9 +1,11 @@
 import { describe, test, expect } from 'bun:test';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { TARGETS } from '../tools/build-cli';
+import { TARGETS, MAC_TARGETS } from '../tools/build-cli';
+import { parseSidecarArgs } from '../tools/build-sidecar';
 import {
   BUNDLE_KINDS,
+  MAC_TARGET,
   kindsForOs,
   type BundleArch,
   type BundleOs,
@@ -12,23 +14,25 @@ import {
 const WORKFLOWS = '.github/workflows';
 const read = (p: string) => readFileSync(p, 'utf8');
 
-/** The Mac command-line tarballs: what the release job uploads, and what
- *  the Homebrew formula serves. */
-const MACOS_CLI_ASSETS = [
-  'screepub-cli-macos-arm64.tar.gz',
-  'screepub-cli-macos-x64.tar.gz',
-];
+/** The Mac command-line tarball: what the release job uploads, and what
+ *  the Homebrew formula serves. ONE since the release after the identifier
+ *  release: Apple silicon only (owner, 2026-10-01; plan
+ *  2026-10-01-f2-handover-amendment.md). */
+const MACOS_CLI_ASSETS = ['screepub-cli-macos-arm64.tar.gz'];
+/** The Intel tarball every release through the identifier release carried.
+ *  Nothing may build, upload, hash or serve it again. */
+const RETIRED_MACOS_CLI = 'screepub-cli-macos-x64.tar.gz';
 /** Every Mac download by name. The image was the Swift app's until the
  *  identifier release and is the window's since (owner, 2026-10-01); the
  *  name did not change, on purpose. */
 const MACOS_ASSETS = ['Screepub-macOS.dmg', ...MACOS_CLI_ASSETS];
 
-describe('the macOS release path is untouched by the cross-platform builder', () => {
+describe('the macOS CLI is built apart from the cross set', () => {
   test('the cross builder emits no macOS artifact, by name or by target', () => {
-    // app/release.sh signs and NOTARIZES the macOS binaries, which needs
-    // Apple's toolchain on a Mac. A cross-compiled Mach-O could not be
-    // notarized, so an added darwin row here would quietly replace a
-    // Gatekeeper-clean download with a warning screen.
+    // The macOS binaries are signed and NOTARIZED on a Mac by the release
+    // job (`build-cli.ts --mac`). A cross-compiled, unsigned Mach-O from the
+    // Ubuntu job would quietly replace a Gatekeeper-clean download with a
+    // warning screen, so the cross table carries no darwin row.
     for (const t of TARGETS) {
       expect(t.bunTarget).not.toContain('darwin');
       expect(t.format.startsWith('macho')).toBe(false);
@@ -40,24 +44,30 @@ describe('the macOS release path is untouched by the cross-platform builder', ()
     }
   });
 
-  test('app/release.sh still produces the two tarballs and the DMG', () => {
-    const sh = read('app/release.sh');
-    expect(sh).toContain('screepub-cli-macos-$ARCH.tar.gz');
-    expect(sh).toContain('Screepub-macOS.dmg');
-    expect(sh).toContain('notarytool submit');
+  test('the Mac table builds exactly the formula\'s one tarball', () => {
+    // Since the CLI move these come from build-cli.ts's MAC_TARGETS, not
+    // the Swift app's release script; the name is the one the tap reads.
+    expect(MAC_TARGETS.map((t) => t.archiveName)).toEqual(MACOS_CLI_ASSETS);
+    expect(MAC_TARGETS.map((t) => t.archiveName)).not.toContain(RETIRED_MACOS_CLI);
   });
 
-  test('tools/bump-tap.sh bumps the formula\'s two tarballs and only deprecates the cask', () => {
+  test('tools/bump-tap.sh serves the Apple silicon tarball only and only disables the cask', () => {
     // The Homebrew tap serves the macOS CLI. It must not learn about the
     // Linux or Windows artifacts: brew has no business installing either,
     // and tap-freshness.yml would go red on a formula it cannot audit.
-    // The CASK was retired at the identifier release: never bumped again,
-    // so the script reads no image digest and rewrites no cask version.
+    // The CASK was retired at the identifier release (deprecated) and is
+    // disabled from the release after it: never bumped again, so the
+    // script reads no image digest and rewrites no cask version.
+    // What it does to both files is EXECUTED in tests/tap-scripts.test.ts.
     const sh = read('tools/bump-tap.sh');
     for (const name of MACOS_CLI_ASSETS) expect(sh).toContain(name);
+    expect(sh).toContain('depends_on arch: :arm64');
+    // Named only by the refusal to bump a release that still carries it.
+    expect(sh.split(RETIRED_MACOS_CLI).length - 1).toBeLessThanOrEqual(1);
+    expect(sh).not.toContain('Hardware::CPU');
     expect(sh).not.toContain('Screepub-macOS.dmg');
     expect(sh).not.toMatch(/s\|\^  version/);
-    expect(sh).toContain('deprecate! date:');
+    expect(sh).toContain('disable! date:');
     expect(sh.toLowerCase()).not.toContain('linux');
     expect(sh.toLowerCase()).not.toContain('windows');
     for (const t of TARGETS) expect(sh).not.toContain(t.archiveName);
@@ -102,8 +112,9 @@ const uploadedBy = (job: Job): string[] => {
   const code = runText(job).split('\n').filter((l) => !/^\s*#/.test(l)).join('\n').replace(/\\\n/g, ' ');
   const files: string[] = [];
   for (const m of code.matchAll(/gh release upload\s+([^\n]+)/g)) {
-    for (const tok of m[1]!.split(/\s+/)) {
-      if (!tok || tok.startsWith('-') || tok.startsWith('"$')) continue;
+    for (const raw of m[1]!.split(/\s+/)) {
+      const tok = raw.replace(/^"(.*)"$/, '$1');
+      if (!tok || tok.startsWith('-') || tok === '$TAG') continue;
       files.push(tok.replace(/^.*\//, ''));
     }
   }
@@ -213,18 +224,44 @@ describe('release.yml ships the cross-platform artifacts', () => {
     }
   });
 
-  test('the macOS release job uploads exactly the two CLI tarballs, and no image', () => {
+  test('the macOS release job uploads exactly the one CLI tarball, and no image', () => {
     // Read off the `gh release upload` commands themselves: a name in a
     // comment is not an upload. (The first version of this check grepped the
     // whole step and passed on a comment that NAMES the Swift image.)
     const text = runText(rel.jobs['release']!);
-    expect(text).toContain('app/release.sh');
+    expect(text).toContain('bun tools/build-cli.ts --version');
+    expect(text).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
     expect(uploadedBy(rel.jobs['release']!).sort()).toEqual([...MACOS_CLI_ASSETS].sort());
     // The frozen Swift updater takes the first .dmg on a release; the
     // window's image (from app-upload) must be the only one.
     expect(uploadedBy(rel.jobs['release']!).some((f) => f.endsWith('.dmg'))).toBe(false);
     // And it has NOT quietly become responsible for the new ones.
     for (const t of TARGETS) expect(text).not.toContain(t.archiveName);
+  });
+
+  test('nothing in the release workflow builds, hashes or uploads an Intel Mac CLI', () => {
+    // Every Intel artifact goes at the release after the identifier
+    // release. Read off the whole file, comments included: no line may
+    // name the x64 tarball, so a hash, an upload or a crib-sheet line for
+    // it cannot come back unnoticed.
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toContain(RETIRED_MACOS_CLI);
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toMatch(/\bX64=|\$X64\b/);
+    expect(read(join(WORKFLOWS, 'release.yml'))).not.toMatch(/formula's two tarballs/);
+  });
+
+  test('the crib sheet says what the first hand bump must change, not only the url', () => {
+    // The tap a person bumps by hand first holds the identifier release's
+    // two-arch formula and deprecated cask. Pasting a url and a SHA into it
+    // leaves the if/else on the CPU in place and the cask installable.
+    const crib = (rel.jobs['release']!.steps ?? []).find((s) => s.name === 'Tap bump crib sheet')!.run!;
+    expect(crib).toContain('tools/bump-tap.sh');
+    expect(crib).toContain('depends_on arch: :arm64');
+    expect(crib).toMatch(/if\/else on the CPU/);
+    expect(crib).toContain('disable!');
+    // Keeping the deprecation's own, past, date: Homebrew compares it with
+    // the user's LOCAL day, and "today" can still be tomorrow somewhere.
+    expect(crib).toContain('keeping its date');
+    expect(crib).not.toMatch(/today/);
   });
 
   test('the checks job fails a tag whose three version files disagree', () => {
@@ -247,7 +284,7 @@ describe('release.yml ships the cross-platform artifacts', () => {
     // is structural rather than a matter of step order.
     expect(needs('release')).toEqual(['checks']);
     const release = runText(rel.jobs['release']!);
-    expect(release).toContain('app/release.sh');
+    expect(release).toContain('--sign "$SIGN_IDENTITY" --notarize');
     // And the version check is NOT duplicated into the signing job.
     expect(release).not.toContain('desktop/src-tauri/tauri.conf.json');
   });
@@ -354,69 +391,76 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(String(upload!.with?.['if-no-files-found'])).toBe('error');
   });
 
-  test('the macOS leg builds ONE universal DMG, never a per-arch pair', () => {
-    // INVERTED 2026-09-20, deliberately: this test used to assert the
-    // opposite, and the reason it did has been removed. A universal bundle
-    // needs a third, lipo'd sidecar, and `build-sidecar.ts --universal` now
-    // makes one -- compiling both darwin slices and fusing them under the
-    // name externalBin resolves for universal-apple-darwin.
-    //
-    // It matters far beyond packaging tidiness. The frozen Swift updater
-    // takes the FIRST .dmg asset on a release and has no architecture
-    // logic, so a per-arch pair is what made an automatic migration off
-    // the Swift app impossible: roughly half of all users would have been
-    // handed an app that cannot open. One artifact makes "the first .dmg"
-    // unambiguous. See docs/adr/2026-09-20-swift-app-migrates-itself.md.
+  test('the macOS leg builds ONE Apple silicon DMG, and nothing Intel or universal', () => {
+    // One Mac row since 2026-09-20, and one ARCH since the release after
+    // the identifier release (owner, 2026-10-01: "Ditch old Intel
+    // completely"; plan 2026-10-01-f2-handover-amendment.md). The
+    // identifier release was the last universal image, because the frozen
+    // Swift updater installs the first .dmg on a release with no
+    // architecture check and had to be carried across on Intel too.
     const rows = rel.jobs['app-bundles']!.strategy?.matrix?.include ?? [];
     const macs = rows.filter((r) => r.os === 'macos-15');
     expect(macs.length).toBe(1);
-    expect(macs[0]!.arch).toBe('universal');
-    // The per-arch SIDECAR names must be gone from the file, not merely
-    // unused by this row: a leftover row or step naming one is how a
-    // second .dmg finds its way back onto the release page. The two
-    // darwin TRIPLES do still appear, in exactly one place -- `rustup
-    // target add`, which installs both because the lipo needs two real
-    // cargo builds. Anywhere else is a per-arch build coming back.
-    const yml = read(join(WORKFLOWS, 'release.yml'));
-    expect(yml).not.toContain('bun-darwin-arm64');
-    expect(yml).not.toContain('bun-darwin-x64');
-    const triples = (yml.match(/(?:aarch64|x86_64)-apple-darwin/g) ?? []).length;
-    expect(triples).toBe(2);
-    expect(yml).toContain('rustup target add x86_64-apple-darwin aarch64-apple-darwin');
+    expect(macs[0]!.arch).toBe('arm64');
+    // Read off the text that EXECUTES, comments out: a comment recording
+    // that the lipo is gone is not the lipo coming back. Anything below in
+    // a command line is an Intel or universal Mac build returning.
+    const commands = read(join(WORKFLOWS, 'release.yml'))
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('#'))
+      .join('\n');
+    for (const gone of ['bun-darwin-x64', 'x86_64-apple-darwin', 'universal-apple-darwin', '--universal', 'lipo']) {
+      expect(`${gone}: ${commands.includes(gone)}`).toBe(`${gone}: false`);
+    }
+    expect(commands).not.toMatch(/arch: universal|--arch universal|ARCH" = universal/);
+    // The one darwin engine target, once: the Mac leg's sidecar build.
+    expect(commands.split('bun-darwin-arm64').length - 1).toBe(1);
   });
 
   test('the cargo triple is named in the tool, not restated in the YAML', () => {
-    // universal-apple-darwin is derived from `--arch universal` inside
-    // tools/build-app-bundle.ts, which is also where the rule lives that a
-    // universal arch must not carry a per-arch target. Restating the
-    // triple here would be a second place for it to drift, and the drift
-    // would be silent: a thin bundle wearing a universal name.
-    // Scoped to the text that EXECUTES: comments explaining where the
-    // triple went are the opposite of restating it, so they come out
-    // first. What must not survive is the triple reaching a command line.
+    // aarch64-apple-darwin is derived for every Mac build inside
+    // tools/build-app-bundle.ts, which is also where an Intel or universal
+    // Mac triple is refused. Restating it here would be a second place for
+    // it to drift. Scoped to the text that EXECUTES: comments explaining
+    // where the triple went are the opposite of restating it.
     const commands = runText(rel.jobs['app-bundles']!)
       .split('\n')
       .filter((l) => !l.trim().startsWith('#'))
       .join('\n');
-    expect(commands).not.toContain('universal-apple-darwin');
-    expect(commands).not.toContain('--target');
-    expect(commands).toContain('--arch universal');
+    expect(commands).not.toContain('apple-darwin');
+    expect(commands).toContain('--arch "$ARCH" --updater');
+    // build-app-bundle.ts is never handed a --target; the sidecar step's
+    // --target is build-sidecar's bun target, not a cargo triple.
+    const build = (rel.jobs['app-bundles']!.steps ?? []).find((s) => /build-app-bundle\.ts/.test(s.run ?? ''))!;
+    expect(build.run!.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n')).not.toContain('--target');
   });
 
-  test('the universal leg installs BOTH darwin rust targets before it builds', () => {
-    // The lipo needs two real cargo builds. The runner's own architecture
-    // is installed already and the other is not -- and naming only one
-    // means the build fails on whichever architecture GitHub's macos-15
-    // image is not. Naming both costs nothing and survives that changing.
-    const steps = rel.jobs['app-bundles']!.steps ?? [];
-    const rustup = steps.findIndex((s) => /rustup target add/.test(s.run ?? ''));
-    const sidecar = steps.findIndex((s) => /build-sidecar\.ts/.test(s.run ?? ''));
-    expect(rustup).toBeGreaterThanOrEqual(0);
-    expect(rustup).toBeLessThan(sidecar);
-    expect(steps[rustup]!.run).toContain('x86_64-apple-darwin');
-    // universal-apple-darwin is tauri's name for the fused output, not a
-    // rustup target. Asking rustup for it by name fails the step.
-    expect(steps[rustup]!.run).not.toContain('rustup target add universal-apple-darwin');
+  test('the install line the release job writes says Apple silicon, not universal', () => {
+    // The notes trailer is the one place a release page itself says what
+    // the Mac download runs on.
+    const text = runText(rel.jobs['release']!);
+    const mac = text.split('\n').find((l) => l.includes('**Mac:**'))!;
+    expect(mac).toContain('Screepub-macOS.dmg');
+    expect(mac).toContain('Apple silicon');
+    expect(mac).toContain('macOS 13 or later');
+    expect(mac).not.toMatch(/universal|Intel/i);
+  });
+
+  test('no rustup step adds a second darwin target', () => {
+    // The universal build needed x86_64-apple-darwin installed beside the
+    // runner's own aarch64 one. The Apple silicon build on an Apple silicon
+    // runner needs nothing added, so the step is gone, not left installing
+    // an Intel target nothing uses.
+    expect(runText(rel.jobs['app-bundles']!)).not.toMatch(/rustup target add/);
+  });
+
+  test('the Mac-only steps are keyed on the runner OS, not on the arch', () => {
+    // While the Mac row was the only universal one, `arch == universal`
+    // meant "the Mac leg". With arm64 that stops being true the day an
+    // arm64 Linux row is added, so the notarization step asks which OS.
+    const notarize = (rel.jobs['app-bundles']!.steps ?? []).find((s) => s.name === 'Notarize and staple the disk image')!;
+    expect(String((notarize as { if?: string }).if)).toBe("runner.os == 'macOS'");
+    expect(JSON.stringify(rel.jobs['app-bundles'])).not.toContain('matrix.arch ==');
   });
 
   test('no leg passes a config overlay that renames the product', () => {
@@ -486,8 +530,8 @@ describe('release.yml ships the cross-platform artifacts', () => {
   test('the macOS leg asks for the updater archive and carries the signing key, macOS only', () => {
     const yml = read(join(WORKFLOWS, 'release.yml'));
     const text = runText(rel.jobs['app-bundles']!);
-    // --updater inside the universal branch, beside the transition overlay.
-    expect(text).toMatch(/if \[ "\$ARCH" = universal \][\s\S]*--updater/);
+    // --updater inside the macOS branch.
+    expect(text).toMatch(/if \[ "\$RUNNER_OS" = macOS \][\s\S]*--updater/);
     // The two secrets reach tauri-cli under its OWN variable names, and
     // only on macOS, in exactly the shape the APPLE_* ones already use.
     expect(yml).toMatch(/TAURI_SIGNING_PRIVATE_KEY: \$\{\{ runner\.os == 'macOS' && secrets\.TAURI_SIGNING_PRIVATE_KEY \|\| '' \}\}/);
@@ -571,16 +615,15 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(rel.jobs['app-upload']!.permissions?.contents).toBe('write');
   });
 
-  test('the universal DMG is smoked, and says which slice went untested', () => {
-    // There is no longer a bundle that skips the smoke entirely: the
-    // universal DMG has a slice the runner can execute, so it is opened
-    // and its engine run like every other. What a green tick still must
-    // not imply is that BOTH slices were exercised, so the notice stays --
-    // now describing half an artifact rather than a whole one.
+  test('the Mac DMG is smoked whole, so no notice about an untested slice', () => {
+    // The universal image carried an Intel slice no runner executed, and
+    // the step said so in a notice. The Apple silicon image is the
+    // runner's own arch, opened and run in full like every other bundle.
     const smoke = (rel.jobs['app-bundles']!.steps ?? []).find((s) =>
       /smoke-bundle\.ts/.test(s.run ?? ''),
     )!.run!;
-    expect(smoke).toMatch(/::notice::/);
+    expect(smoke).not.toMatch(/::notice::/);
+    expect(smoke).not.toMatch(/slice/i);
     // No early exit: the old step RETURNED before the loop on the x86_64
     // leg. Nothing may skip the loop now. Matched as a command on its own
     // line, since the step's own comments talk about exiting 0.
@@ -626,11 +669,25 @@ describe('release.yml ships the cross-platform artifacts', () => {
     expect(text).not.toMatch(/SHA256SUMS(?!-app)/);
   });
 
-  test('the Swift release path builds the CLI and publishes none of the Swift app', () => {
+  test('the release job builds the macOS CLI itself, signed and notarized, and no Swift app', () => {
+    // Since the CLI move the Swift release script is not run at all: the
+    // tarballs come from build-cli.ts --mac, which signs before packaging
+    // and refuses to start without the notary key.
     const release = runText(rel.jobs['release']!);
-    expect(release).toContain('app/release.sh');
-    for (const name of MACOS_CLI_ASSETS) expect(release).toContain(`app/dist/${name}`);
+    expect(release).not.toContain('app/release.sh');
+    expect(release).not.toContain('app/dist/');
+    expect(release).not.toMatch(/rosetta/i);
+    expect(release).toMatch(/bun tools\/build-cli\.ts --version "\$\{VERSION#v\}" --out "\$RUNNER_TEMP\/cli-mac"/);
+    expect(release).toContain('--mac --sign "$SIGN_IDENTITY" --notarize');
     expect(uploadedBy(rel.jobs['release']!)).not.toContain('Screepub-macOS.dmg');
+    // The notes' checksums, the upload and the crib sheet all read the
+    // build's --out folder: a path drifting in one of the three would kill
+    // the release after both notarizations (review, 2026-10-01).
+    const out = '$RUNNER_TEMP/cli-mac';
+    for (const name of MACOS_CLI_ASSETS) {
+      expect(release.split(`${out}/${name}`).length - 1).toBeGreaterThanOrEqual(2); // upload + crib
+    }
+    expect(release).toContain(`cd "${out}" && shasum -a 256`); // the notes
     // The new jobs must not touch the Swift build, the CLI or the tap.
     for (const jobName of ['app-bundles', 'app-upload']) {
       const text = runText(rel.jobs[jobName]!);
@@ -799,6 +856,19 @@ describe('the two limits are stated where a reader meets them', () => {
     expect(developers).toContain('\n## Install the command-line converter\n');
   });
 
+  test('the developer page offers no Intel Mac download, and says Homebrew is Apple silicon only', () => {
+    // Reads docs/developers.md alone: the README is another session's, and
+    // still says Intel until its own branch lands. Intel Macs are not
+    // supported after the identifier release (plan
+    // 2026-10-01-f2-handover-amendment.md), so the page must not offer the
+    // Intel tarball the release no longer carries.
+    const install = sectionOf(developers, '## Install the command-line converter');
+    expect(install).not.toContain(RETIRED_MACOS_CLI);
+    expect(install).not.toMatch(/\| Mac, Intel \|/);
+    expect(install.replace(/\s+/g, ' ')).toContain('On a Mac with Apple silicon, Homebrew installs');
+    expect(install).toContain('The Mac archive is signed and notarized');
+  });
+
   test('the README says device support off macOS is unproven, and names the tolino case', () => {
     const lower = readme.toLowerCase();
     expect(lower).toContain('tolino');
@@ -850,6 +920,10 @@ describe('the app downloads are described where a reader meets them', () => {
       if (!published.has(name)) unpublished.add(name);
     }
   }
+  // Names no row can build any more: the per-arch Mac images of the
+  // universal era. The Mac image carries no arch now (Apple silicon only),
+  // so the loop above cannot produce these, and no page may offer them.
+  for (const gone of ['Screepub-macOS-arm64.dmg', 'Screepub-macOS-x64.dmg']) unpublished.add(gone);
 
   const NUMBER_WORD = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
   const install = sectionOf(readme, '## Install');
@@ -936,7 +1010,9 @@ describe('the app downloads are described where a reader meets them', () => {
     );
     const nobody = ledger.slice(ledger.indexOf('**Verified by nobody**'));
     expect(nobody).toContain('Installing the `.deb`, the `.rpm` or the `.exe`');
-    expect(nobody).toContain('The Intel SLICE of the universal macOS `.dmg`');
+    // History since Intel was dropped: the identifier release's universal
+    // image was the last with an Intel slice, and it never ran.
+    expect(nobody).toContain("The Intel SLICE of the identifier release's universal `.dmg`");
     for (const [file, os] of published) {
       if (os === 'macos') continue;
       expect(row(file)).toContain(NOT_YET);
@@ -1047,24 +1123,40 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     expect(person).not.toContain('amd64');
     // The Mac window: installed by hand, and updated from a release.
     expect(person).toContain('/Applications');
-    expect(/universal/i.test(person)).toBe(true);
     expect(person).toContain('0.7.2 to 0.7.3');
+    // Every Mac a person used is Apple silicon, which is now the only kind
+    // the Mac download is built for (Intel dropped after the identifier
+    // release), so the list no longer speaks of "the ARM half".
+    const flat = person.replace(/\s+/g, ' ');
+    expect(flat).toContain('Each Mac that ran these is Apple silicon, the only kind the Mac download is built for');
+    expect(flat).not.toMatch(/ARM half/);
   });
 
   test('the "nobody" list keeps what nobody has done, and only that', () => {
     expect(nobody).not.toMatch(/`\.dmg` or `\.exe` has been\s+installed/);
     expect(nobody).toContain('.exe');
-    expect(/slice/i.test(nobody)).toBe(true);
     expect(nobody).not.toContain('x86_64-apple-darwin');
+    // The Intel slice never ran, and is now history: the identifier
+    // release's universal image was the last to carry one.
+    const intel = nobody.slice(nobody.indexOf('- The Intel SLICE'));
+    const bullet = intel.slice(0, intel.indexOf('\n- ')).replace(/\s+/g, ' ');
+    expect(bullet).toContain('the last Mac download to carry one');
+    expect(bullet).toContain('never ran');
+    expect(bullet).toContain('Apple silicon only');
+    expect(bullet).not.toMatch(/has never executed/);
   });
 
-  test('the CI list says what release.yml does, and that only the ARM half runs', () => {
+  test('the CI list says what release.yml does, and that the Mac image runs whole', () => {
     // release.yml has built, signed and notarized the Mac window on every tag
-    // since 0.7.0; the ledger must not still say it never ran.
+    // since 0.7.0; the ledger must not still say it never ran. The image is
+    // Apple silicon only after the identifier release, the runner's own
+    // kind, so all of it runs and the smoke step prints no slice notice.
     expect(ci).toContain('release.yml');
     expect(ci).toMatch(/notariz/);
     expect(ci).not.toMatch(/never run|never been run|has not run|never executed/);
-    expect(ci).toMatch(/ARM half/);
+    const flat = ci.replace(/\s+/g, ' ');
+    expect(flat).toContain('The Mac `.dmg` is built for Apple silicon only');
+    expect(flat).not.toMatch(/prints a notice/);
   });
 
   test('every relative link in the ledger resolves', () => {
@@ -1079,5 +1171,82 @@ describe('docs/verification-ledger.md is the one ledger of who verified what', (
     const desktop = read('desktop/README.md');
     expect(desktop).toContain('docs/verification-ledger.md');
     expect(desktop).not.toContain('Verified by nobody');
+  });
+});
+
+describe('the developer docs describe the Apple silicon build', () => {
+  // Intel Macs are not supported after the identifier release, so the
+  // universal build (two engines lipo'd, a universal cargo target) is gone.
+  // A developer doc still describing it hands a contributor commands that
+  // fail. README.md and site/ are not read here: another session owns them.
+  const desktop = read('desktop/README.md');
+
+  test('desktop/README.md documents only commands the tools accept', () => {
+    // Every build-sidecar line in the doc is parsed by the real parser, as
+    // an Apple silicon Mac would run it, and every cargo target it names is
+    // the one build-app-bundle.ts builds a Mac bundle for.
+    const sidecarLines = [...desktop.matchAll(/^\s*bun tools\/build-sidecar\.ts ([^#\n]*)/gm)].map((m) =>
+      m[1]!.trim().split(/\s+/),
+    );
+    expect(sidecarLines.length).toBeGreaterThanOrEqual(2);
+    for (const args of sidecarLines) {
+      expect(() => parseSidecarArgs(args, 'darwin', 'arm64')).not.toThrow();
+    }
+    expect(desktop).toContain('bun tools/build-sidecar.ts --target bun-darwin-arm64');
+    // An Intel Mac can still BUILD the Apple silicon bundle, but has no
+    // aarch64 standard library until it is added.
+    expect(desktop).toContain('rustup target add aarch64-apple-darwin');
+    const cargoTargets = [...desktop.matchAll(/cargo tauri build --target (\S+)/g)].map((m) => m[1]);
+    expect(cargoTargets).toEqual([MAC_TARGET]);
+    for (const gone of ['--universal', 'universal-apple-darwin', 'x86_64-apple-darwin', 'lipo']) {
+      expect(`${gone}: ${desktop.includes(gone)}`).toBe(`${gone}: false`);
+    }
+    expect(desktop).not.toMatch(/one universal `\.dmg`/);
+  });
+
+  test('CONTRIBUTING.md and the device map no longer speak of a universal Mac build', () => {
+    expect(read('CONTRIBUTING.md')).not.toMatch(/universal Mac\s+build/);
+    expect(read('docs/device-map.md')).not.toMatch(/universal Mac\s+build/);
+  });
+
+  test('CONTRIBUTING.md and the ledger describe the weekly cask check the same way', () => {
+    // check-tap.sh wants deprecate! while a release carries the Intel
+    // tarball and disable! after; both pages say so in the same words.
+    const words = 'retired (deprecated, and disabled from the release after the identifier release)';
+    for (const file of ['CONTRIBUTING.md', 'docs/verification-ledger.md']) {
+      const flat = read(file).replace(/\s+/g, ' ');
+      expect(`${file}: ${flat.includes(words)}`).toBe(`${file}: true`);
+      expect(flat).not.toContain('cask still says it is deprecated');
+    }
+  });
+
+  test('CONTRIBUTING.md says an Intel Mac cannot run the window, where it says to build it', () => {
+    // `build-sidecar.ts --host` refuses an Intel Mac now, so the two-line
+    // quick start would fail there with no word of why.
+    const contributing = read('CONTRIBUTING.md');
+    const at = contributing.indexOf('bun tools/build-sidecar.ts --host');
+    expect(at).toBeGreaterThan(-1);
+    const after = contributing.slice(at, at + 800).replace(/\s+/g, ' ');
+    expect(after).toContain('An Intel Mac cannot run the window');
+  });
+
+  test('the release runbook counts one Mac CLI tarball and one SHA', () => {
+    // The sections recording the 2026-08 per-arch flip are dated history
+    // and keep their two-arch blocks; what is checked here is the live
+    // instructions: the re-run, the by-hand bump and the bumper.
+    const runbook = read('docs/release-secrets.md').replace(/\s+/g, ' ');
+    expect(runbook).not.toContain('Two SHAs are needed');
+    expect(runbook).not.toContain('two urls, two SHAs');
+    expect(runbook).not.toContain("rewrites the formula's two urls and two SHAs");
+    expect(runbook).not.toContain('after the full universal build');
+    expect(runbook).not.toMatch(/`screepub-cli-macos-x64\.tar\.gz` from the `release` job/);
+    expect(runbook).toContain('One SHA is needed');
+    expect(runbook).toContain('depends_on arch: :arm64');
+    // The first bump by hand starts from the identifier release's tap: a
+    // two-arch formula and a deprecated cask.
+    expect(runbook).toMatch(/if\/else on the CPU/);
+    expect(runbook).toContain('disable!');
+    expect(runbook).toContain('keeping its date');
+    expect(runbook).not.toContain("that day's date");
   });
 });

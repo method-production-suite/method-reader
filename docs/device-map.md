@@ -506,8 +506,8 @@ helper binary on `mtp-rs`, shipped as a second sidecar beside the engine
 and called from `src/device/` the way `src/export/` calls Calibre. Roughly
 two verbs: list MTP devices as JSON (vendor, product, serial, model, or
 who holds exclusive access), and put a file at a device path. One more
-signed binary in the bundle and no dylibs; the universal Mac build would
-lipo two slices, as the engine does.
+signed binary in the bundle and no dylibs, built for Apple silicon only, as
+the engine is.
 
 **Kindle behavior to copy, from GPL-3 tools** (behavior reference;
 Screepub's AGPL-3.0-or-later can use GPL-3 code, but a clean reading is

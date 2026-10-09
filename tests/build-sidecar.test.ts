@@ -10,8 +10,6 @@ import {
   compileSidecarArgv,
   buildSidecar,
   verifySidecar,
-  lipoArgv,
-  lipoUniversalSidecar,
 } from '../tools/build-sidecar';
 import { SIDECAR_TARGETS, sidecarTargetFor, sidecarFileName } from '../tools/sidecar-targets';
 import type { Spawn } from '../tools/build-cli';
@@ -228,111 +226,40 @@ describe('nothing large can be committed', () => {
   });
 });
 
-// ── the universal macOS sidecar ──────────────────────────────────────
+// ── the Mac sidecar is Apple silicon only ────────────────────────────
 //
-// The frozen Swift updater has no architecture logic: it takes the first
-// .dmg asset it finds, because it was written when there was exactly one
-// universal DMG to find (ADR 2026-09-14). Per-arch bundles are therefore
-// not only a Homebrew cask inconvenience, they are what makes an automatic
-// migration impossible. This is the other half of fixing that: bun compiles
-// one arch at a time, so the universal sidecar is a lipo of two builds
-// rather than a target bun knows about.
-describe('the universal macOS sidecar', () => {
-  /** A fat Mach-O header with both slices, enough for readBinaryFormat. */
-  function fatBytes(cputypes = [0x01000007, 0x0100000c]): Uint8Array {
-    const b = new Uint8Array(256);
-    const v = new DataView(b.buffer);
-    v.setUint32(0, 0xcafebabe, false);
-    v.setUint32(4, cputypes.length, false);
-    cputypes.forEach((cpu, i) => v.setUint32(8 + i * 20, cpu, false));
-    return b;
-  }
-  /** A thin arm64 Mach-O: what a lipo that silently did nothing leaves. */
-  function thinArm64(): Uint8Array {
-    const b = new Uint8Array(256);
-    const v = new DataView(b.buffer);
-    v.setUint32(0, 0xfeedfacf, true);
-    v.setUint32(4, 0x0100000c, true);
-    return b;
-  }
-
-  test('--universal asks for exactly the two darwin slices, and says so', () => {
-    const parsed = parseSidecarArgs(['--universal'], 'darwin', 'arm64');
-    expect(parsed.targets).toEqual(['bun-darwin-x64', 'bun-darwin-arm64']);
-    expect(parsed.universal).toBe(true);
-    // NOT the host shortcut: --host would give one slice and a universal
-    // bundle built from it is thin, which is the failure this guards.
-    expect(parsed.hostTriple).toBeUndefined();
+// Until the release after the identifier release the Mac window was
+// universal, because the frozen Swift updater installs the first .dmg on a
+// release with no architecture check, and F2 had to carry Intel installs
+// across. From then on Intel Macs are not supported (owner, 2026-10-01;
+// plan 2026-10-01-f2-handover-amendment.md), so the lipo of two darwin
+// slices is gone rather than left unreached, and the Intel slice cannot be
+// built by any selector this tool takes.
+describe('the Mac sidecar is Apple silicon only', () => {
+  test('--universal is no longer a flag at all', () => {
+    expect(() => parseSidecarArgs(['--universal'], 'darwin', 'arm64')).toThrow(/universal/);
   });
 
-  test('without --universal nothing claims to be universal', () => {
-    expect(parseSidecarArgs(['--host'], 'darwin', 'arm64').universal).toBeFalsy();
-    expect(
-      parseSidecarArgs(['--target', 'bun-darwin-arm64'], 'darwin', 'arm64').universal,
-    ).toBeFalsy();
-  });
-
-  test('the lipo invocation names both slices and the universal output', () => {
-    const argv = lipoArgv('/out');
-    expect(argv).toEqual([
-      'lipo',
-      '-create',
-      '-output',
-      '/out/screepub-engine-universal-apple-darwin',
-      '/out/screepub-engine-x86_64-apple-darwin',
-      '/out/screepub-engine-aarch64-apple-darwin',
-    ]);
-  });
-
-  test('a lipo that exits non-zero fails loudly, carrying its stderr', () => {
-    const dir = mkdtempSync(join(SCRATCH, 'lipo-'));
-    try {
-      expect(() =>
-        lipoUniversalSidecar(dir, () => ({ exitCode: 1, stdout: '', stderr: 'lipo: no such file' })),
-      ).toThrow(/lipo: no such file/);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
+  test('the lipo machinery is gone, not merely unused', async () => {
+    const mod = (await import('../tools/build-sidecar')) as Record<string, unknown>;
+    for (const name of ['lipoArgv', 'lipoUniversalSidecar', 'universalSidecarPath', 'UNIVERSAL_TRIPLE']) {
+      expect(`${name}: ${name in mod}`).toBe(`${name}: false`);
     }
   });
 
-  test('a lipo that exits 0 having produced a THIN binary is refused', () => {
-    // The failure this check exists for. Shipping it would hand every Intel
-    // user an arm64 app inside something labelled universal, and the old
-    // updater would install it without complaint.
-    const dir = mkdtempSync(join(SCRATCH, 'lipo-'));
-    try {
-      expect(() =>
-        lipoUniversalSidecar(dir, () => {
-          writeFileSync(join(dir, 'screepub-engine-universal-apple-darwin'), thinArm64());
-          return { exitCode: 0, stdout: '', stderr: '' };
-        }),
-      ).toThrow(/macho-universal|universal/);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
+  test('no selector reaches an Intel Mac engine', () => {
+    expect(parseSidecarArgs(['--all']).targets).not.toContain('bun-darwin-x64');
+    expect(() => parseSidecarArgs(['--target', 'bun-darwin-x64'])).toThrow(/unknown bun target/i);
+    // An Intel Mac is not a host this builds for: the window it would feed
+    // is one no release ships and nothing tests.
+    expect(() => parseSidecarArgs(['--host'], 'darwin', 'x64')).toThrow(/no sidecar target/i);
   });
 
-  test('a real fat binary is accepted and its path returned', () => {
-    const dir = mkdtempSync(join(SCRATCH, 'lipo-'));
-    try {
-      const out = lipoUniversalSidecar(dir, () => {
-        writeFileSync(join(dir, 'screepub-engine-universal-apple-darwin'), fatBytes());
-        return { exitCode: 0, stdout: '', stderr: '' };
-      });
-      expect(out).toBe(join(dir, 'screepub-engine-universal-apple-darwin'));
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  test('lipo exiting 0 while writing nothing is refused, not returned', () => {
-    const dir = mkdtempSync(join(SCRATCH, 'lipo-'));
-    try {
-      expect(() =>
-        lipoUniversalSidecar(dir, () => ({ exitCode: 0, stdout: '', stderr: '' })),
-      ).toThrow(/wrote nothing|not found|no such/i);
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
+  test('the Apple silicon engine is still named for the triple cargo builds', () => {
+    // build-app-bundle.ts builds the Mac bundle with --target
+    // aarch64-apple-darwin, and Tauri resolves the sidecar by that suffix.
+    expect(sidecarFileName(sidecarTargetFor('bun-darwin-arm64'))).toBe(
+      'screepub-engine-aarch64-apple-darwin',
+    );
   });
 });

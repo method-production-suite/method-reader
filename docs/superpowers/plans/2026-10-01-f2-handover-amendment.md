@@ -173,7 +173,7 @@ only provable at a tag.
 | --- | --- | --- |
 | N (next) | the housekeeping batch (other session) | already in flight |
 | N+1 | **F2: identity only** | the handover plan's own rule: "Do not bundle other changes into" it |
-| N+2 | **the macOS CLI build moves out of `app/release.sh`**; the Swift job leaves `release.yml` | changes how the formula's binaries are signed, provable only at a tag, and `app/` is still there to fall back on |
+| N+2 | **the macOS CLI build moves out of `app/release.sh`**; the Swift job leaves `release.yml`; **Intel Macs are dropped** (see below) | changes how the formula's binaries are signed, provable only at a tag, and `app/` is still there to fall back on |
 | N+3 | **F3: `git rm -r app/`** and the reference sweep to empty | the last step, one release after F2 at the earliest |
 
 N+2 and N+3 can merge into one release if the owner prefers fewer, at the
@@ -266,7 +266,8 @@ other session's files. Three things the steps above did not know:
 The two macOS CLI tarballs need a builder that does not live in `app/`. The
 shape that fits the repo: extend `tools/build-cli.ts` with `macos-arm64` and
 `macos-x64` targets for packaging and verification (it already detects
-Mach-O), and do the signing and notarization in a `release.yml` step on the
+Mach-O; since the Intel decision below, `macos-arm64` alone), and do the
+signing and notarization in a `release.yml` step on the
 macOS runner, the way `app/release.sh` does now (codesign with hardened
 runtime and timestamp, `notarytool` on a zip, no staple for a bare
 Mach-O). The `release` job then imports the certificate, builds the CLI,
@@ -281,6 +282,126 @@ shipped engine (`Screepub Desktop.app/Contents/MacOS/screepub-engine`) is
 signed with the hardened runtime and NO entitlements, and converts fine, so
 they may not be needed. Keep them anyway: the move should change where the
 CLI is built, not how it is signed.
+
+## Intel Macs: dropped at N+2, after the identifier release
+
+**The decision.** The owner, in his own chat, 2026-10-01: "Ditch old
+Intel completely." Asked when, he answered precisely: after the identifier
+release, not in it.
+
+**Why not in F2.** The frozen Swift updater has no architecture check.
+`UpdateCheck.swift`'s `select()` takes the newest release that is neither
+a draft nor a prerelease and the first `.dmg` on it; `UpdateInstall.swift`
+checks only that image's code signature against the pinned requirement and
+swaps the `.app` inside into the running app's path. An Apple-silicon-only
+F2 image would replace a working Intel install with an app macOS refuses
+to open. So F2 (`worktree-f2-identifier`) stays universal: it is the last
+bridge, for Swift installs on Intel that update while F2 is the newest
+release. F2 carries one Intel change of its own, the window's plain-words
+update message (below), because F2 is the last build an Intel Mac runs.
+
+**Release order: a REQUIREMENT, not a preference.** Merge F2 to main and
+TAG it before `cli-move` is merged. `cli-move` sits on F2, so a main that
+already contains it has no F2 left to tag: an "F2" tagged from there would
+ship the Apple-silicon-only image, a `latest.json` with no darwin-x86_64,
+an arm64-only formula and a DISABLED cask at F2 itself, and the bridge
+above would never exist. So: merge F2, tag F2, let it go public, and only
+then merge `cli-move` for N+2.
+
+**What N+2 does** (branch `cli-move`, built 2026-10-01, not pushed):
+
+- The Mac image, still `Screepub-macOS.dmg`, is Apple silicon only.
+  `tools/build-app-bundle.ts` names `MAC_ARCH` (arm64) and `MAC_TARGET`
+  (aarch64-apple-darwin) once and refuses any other Mac arch or triple;
+  `release.yml`'s Mac row is `arch: arm64`; the lipo, `--universal` and
+  the x86_64 sidecar row are deleted. `minimumSystemVersion` stays 13.0.
+- `latest.json` lists `darwin-aarch64` only. `tools/check-latest.ts`
+  requires that key and judges `darwin-x86_64` per release: on a release
+  that still carries the Intel command-line tarball (F2, whose archive is
+  universal) it may point at the same archive, so the weekly check stays
+  green against F2's; on a later release that is a problem, because an
+  Intel copy would install an Apple silicon build.
+- The macOS command-line tarball is `screepub-cli-macos-arm64.tar.gz`
+  only. `tools/bump-tap.sh` writes the formula whole: one url, one
+  sha256, `depends_on arch: :arm64` (Homebrew's ArchRequirement, fatal),
+  passing `brew style` from the published 0.7.4 formula and cask.
+  `tools/check-tap.sh` judges each release by whether it carries the
+  Intel tarball, so F2's two-arch tap stays green until N+2 is tagged.
+  `bump-tap.sh` refuses a release that still carries it, so a hand bump
+  of F2 from a later main cannot drop Intel brew users a release early.
+- The cask, deprecated at F2, is DISABLED from N+2 (`bump-tap.sh` turns
+  `deprecate!` into `disable!`; `check-tap.sh` expects deprecate! while a
+  release carries the Intel tarball and disable! after). Deprecated, it
+  still installs the last Swift release, whose updater would offer N+2 to
+  an Intel Mac that installs the cask after N+2 ships, and time does not
+  help that one. Disabled, `brew install --cask screepub` stops with
+  "has been disabled because it is now downloaded from the releases page
+  and updates itself!". The `disable!` keeps the `deprecate!` line's own
+  date (or, with neither, 2026-10-01): Homebrew compares it with the
+  user's LOCAL day and only deprecates while it is in the future, so a
+  "today in UTC" left the cask installable in the Americas after a
+  US-evening tag. `check-tap.sh` also fails a cask that keeps a
+  `deprecate!` beside its `disable!`: Homebrew asks deprecated? first, so
+  such a cask still installs. Checked against Homebrew's `cask/dsl.rb` and
+  `deprecate_disable.rb`; `brew style` passes on the written cask, from
+  both the published cask and a deprecated one.
+
+**What an Intel Mac meets after N+2.**
+
+- **The window** (a universal build, F2 or earlier, running its x86_64
+  slice): its updater looks for `darwin-x86_64`, finds none, and `check()`
+  rejects with TargetsNotFound. The launch check is silent on errors, as
+  it always was. From F2 on, the manual "Check for updates" button does
+  not show the plugin's text; it says "New versions of Screepub run only
+  on Macs with Apple silicon, so this copy will not be offered updates.
+  The version you have keeps working." (`desktop/ui/update.js`,
+  `INTEL_MAC_RETIRED`, recognised from the plugin's own text, never from
+  `navigator.platform`, which says MacIntel on every Mac). It ships IN F2,
+  commit "F2: an Intel copy's update check says why, in plain words",
+  because F2 is the last build an Intel Mac runs: carried by N+2 it would
+  never be seen there. "This copy", because an Apple silicon Mac running
+  F2 under Rosetta gets the same answer. A version remembered from an
+  earlier check is forgotten, so from the NEXT launch the label stops
+  offering an install that cannot happen (this launch's label stays:
+  `update-flow.js`'s `checkAnswered` ignores errors). That only matters if
+  a release ships between F2 and N+2: with N+2 straight after F2, an F2
+  window on Intel never found anything newer to remember. A window older
+  than F2 shows the plugin's raw text.
+- **Homebrew**: `brew install` and `brew upgrade` stop with "The arm64
+  architecture is required for this software." and leave the installed
+  copy alone. Every `brew upgrade` repeats it until the person runs
+  `brew uninstall screepub`.
+- **A Swift install on Intel that has not crossed by the time N+2 is
+  public is not covered by the bridge.** Its updater offers the newest
+  release, so once N+2 is newest it offers N+2's Apple-silicon-only
+  image; installed, that Mac is left with an app that does not open
+  (books untouched; F2's image, downloaded by hand from F2's release
+  page, still runs there). The window's own updater has no such hole,
+  because it asks for its own platform key.
+- **What that Swift user sees is the N+2 release notes.** The Swift app's
+  release notes sheet (`ReleaseNotesSheet.swift`) shows every newer
+  version's notes above INSTALL AND RELAUNCH and NOT NOW, so the notes
+  below are the lever, not time alone: they tell an Intel reader not to
+  install and where to go instead. The "keeps working; will not be
+  offered updates" wording would be false for this reader, who IS offered
+  N+2. Caveat, read in the Swift source: two of its three install paths
+  do not put the notes on screen. The footer popover ("REV. X IS READY",
+  `ContentView.swift`) offers INSTALL AND RELAUNCH beside VIEW RELEASE
+  NOTES, and the menu's Check for Updates alert (`ScreepubApp.swift`)
+  offers Install and Relaunch, View Release and Later. The notes reach
+  whoever opens them before installing.
+
+**Release note for N+2**, plain words, for `docs/releases/<N+2>.md`.
+`<F2 version>` is a placeholder: whoever cuts N+2 writes F2's version
+number there (and may link its release page).
+
+> Intel Macs are no longer supported. On an Intel Mac, choose Not Now:
+> this version will not open there. To move from the old Mac app to the
+> new one, download Screepub <F2 version> from its release page instead.
+
+The README, the site and the user docs still describe a universal Mac
+download and an Intel command-line tarball; the other session owns that
+wording and lands it with N+2.
 
 ## F3 (release N+3): the deletion
 

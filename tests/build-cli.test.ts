@@ -923,20 +923,33 @@ describe('the tool runs from a command line', () => {
 // ---------------------------------------------------------------------------
 
 describe('the macOS target table', () => {
-  test('is exactly two per-arch rows, in the formula\'s own names', () => {
-    expect(MAC_TARGETS.map((t) => t.id)).toEqual(['macos-arm64', 'macos-x64']);
-    expect(MAC_TARGETS.map((t) => t.bunTarget)).toEqual(['bun-darwin-arm64', 'bun-darwin-x64']);
-    expect(MAC_TARGETS.map((t) => t.format)).toEqual(['macho-arm64', 'macho-x86-64']);
-    expect(MAC_TARGETS.map((t) => t.packaging)).toEqual(['tar.gz', 'tar.gz']);
-    expect(MAC_TARGETS.map((t) => t.binaryName)).toEqual(['screepub', 'screepub']);
-    expect(MAC_TARGETS.map((t) => t.archiveName)).toEqual([
-      'screepub-cli-macos-arm64.tar.gz',
-      'screepub-cli-macos-x64.tar.gz',
-    ]);
-    // The names are not ours to choose: the tap's bump script hardcodes
-    // them, and a rename here would leave the formula pointing at nothing.
+  test('is exactly one row, Apple silicon, in the formula\'s own name', () => {
+    // Two rows (arm64 and x64) through the identifier release; one from the
+    // release after it, when Intel Macs stopped being supported (owner,
+    // 2026-10-01; plan 2026-10-01-f2-handover-amendment.md). Pinned whole,
+    // so an Intel row coming back fails here.
+    expect(MAC_TARGETS.map((t) => t.id)).toEqual(['macos-arm64']);
+    expect(MAC_TARGETS.map((t) => t.bunTarget)).toEqual(['bun-darwin-arm64']);
+    expect(MAC_TARGETS.map((t) => t.format)).toEqual(['macho-arm64']);
+    expect(MAC_TARGETS.map((t) => t.packaging)).toEqual(['tar.gz']);
+    expect(MAC_TARGETS.map((t) => t.binaryName)).toEqual(['screepub']);
+    expect(MAC_TARGETS.map((t) => t.archiveName)).toEqual(['screepub-cli-macos-arm64.tar.gz']);
+    // The name is not ours to choose: the tap's bump script hardcodes it,
+    // and a rename here would leave the formula pointing at nothing.
     const bump = readFileSync('tools/bump-tap.sh', 'utf8');
     for (const t of MAC_TARGETS) expect(bump).toContain(t.archiveName);
+  });
+
+  test('an Intel binary is named for what it is, and refused by the Mac row', () => {
+    // The detector still knows an x86-64 or fat Mach-O, so a binary that
+    // came out Intel (a mistyped --target exits 0) fails verification
+    // naming its real format rather than "unknown".
+    const ARM = MAC_TARGETS[0]!;
+    const intel = new Uint8Array(64);
+    new DataView(intel.buffer).setUint32(0, 0xfeedfacf, true);
+    new DataView(intel.buffer).setUint32(4, 0x01000007, true);
+    expect(detectBinaryFormat(intel)).toBe('macho-x86-64');
+    expect(detectBinaryFormat(intel)).not.toBe(ARM.format);
   });
 
   test('shares no id, directory or archive with the cross targets', () => {
@@ -950,7 +963,9 @@ describe('the macOS target table', () => {
 
   test('macTargetIdForHost names the Mac this is, and nothing else', () => {
     expect(macTargetIdForHost('darwin', 'arm64')).toBe('macos-arm64');
-    expect(macTargetIdForHost('darwin', 'x64')).toBe('macos-x64');
+    // An Intel Mac is not a host of the Mac table any more: nothing it
+    // could build ships.
+    expect(macTargetIdForHost('darwin', 'x64')).toBeUndefined();
     expect(macTargetIdForHost('linux', 'arm64')).toBeUndefined();
     expect(macTargetIdForHost('win32', 'x64')).toBeUndefined();
     // The cross mapping is untouched: a Mac is still no host of THAT table.
@@ -962,9 +977,9 @@ describe('parseBuildArgs with --mac', () => {
   const BASE = ['--version', '0.6.0', '--out', '/tmp/x'];
   const ID = 'Developer ID Application: Darkwell Entertainment LLC (XSRB3D643J)';
 
-  test('--mac --sign builds both Mac targets, signed, not notarized', () => {
+  test('--mac --sign builds the one Mac target, signed, not notarized', () => {
     const args = parseBuildArgs([...BASE, '--mac', '--sign', ID]);
-    expect(args.only).toEqual(['macos-arm64', 'macos-x64']);
+    expect(args.only).toEqual(['macos-arm64']);
     expect(args.mac).toEqual({ sign: ID, notarize: false });
   });
 
@@ -996,13 +1011,19 @@ describe('parseBuildArgs with --mac', () => {
   });
 
   test('--only stays inside its own table, in both directions', () => {
-    expect(parseBuildArgs([...BASE, '--mac', '--unsigned', '--only', 'macos-x64']).only)
-      .toEqual(['macos-x64']);
+    expect(parseBuildArgs([...BASE, '--mac', '--unsigned', '--only', 'macos-arm64']).only)
+      .toEqual(['macos-arm64']);
     // A Mac id without --mac is the cross job being handed a Mac target:
     // refused, and the message says what would make it legal.
     expect(() => parseBuildArgs([...BASE, '--only', 'macos-arm64'])).toThrow(/--mac/);
     expect(() => parseBuildArgs([...BASE, '--mac', '--unsigned', '--only', 'linux-x64']))
-      .toThrow(/macos-arm64, macos-x64/);
+      .toThrow(/known targets are macos-arm64$/);
+  });
+
+  test('the Intel Mac target is gone, with or without --mac', () => {
+    expect(() => parseBuildArgs([...BASE, '--mac', '--unsigned', '--only', 'macos-x64']))
+      .toThrow(/unknown target "macos-x64"/);
+    expect(() => parseBuildArgs([...BASE, '--only', 'macos-x64'])).toThrow(/macos-x64/);
   });
 });
 
@@ -1041,9 +1062,14 @@ describe('signing a Mac binary', () => {
   }
 
   test('signArgv is the exact codesign invocation the shipped CLI was signed with', () => {
+    // --identifier because the Swift app's release script signed a file
+    // named screepub-cli-<arch>, and codesign takes the identifier from the
+    // file name. This one signs a file named `screepub`, so without it the
+    // binary's designated requirement would change (review, 2026-10-01).
     expect(signArgv(ARM, '/tmp/out', ID)).toEqual([
       'codesign', '--force', '--options', 'runtime', '--timestamp',
       '--entitlements', MAC_ENTITLEMENTS,
+      '--identifier', 'screepub-cli-arm64',
       '--sign', ID,
       '/tmp/out/macos-arm64/screepub',
     ]);
@@ -1094,7 +1120,7 @@ describe('signing a Mac binary', () => {
 });
 
 describe('notarizing a Mac binary', () => {
-  const X64 = MAC_TARGETS.find((t) => t.id === 'macos-x64')!;
+  const ARM = MAC_TARGETS.find((t) => t.id === 'macos-arm64')!;
   const CREDS = { keyPath: '/k/ac.p8', keyId: 'KEYID', issuer: 'ISSUER' };
 
   test('notaryCredentials reads the three variables the release job sets', () => {
@@ -1125,17 +1151,44 @@ describe('notarizing a Mac binary', () => {
         seen.push(argv);
         // Stand in for ditto: make the zip it would have made.
         if (argv[0] === 'ditto') writeFileSync(argv[argv.length - 1]!, 'zip');
-        return { exitCode: 0, stderr: '' };
+        return { exitCode: 0, stderr: '', stdout: argv[0] === 'xcrun' ? '{"id":"2efe2717-52ef-43a5-96dc-0797e4ca1041","message":"Processing complete","status":"Accepted"}' : '' };
       };
-      mkdirSync(buildDir(X64, dir), { recursive: true });
-      notarizeTarget(X64, dir, CREDS, spawn);
-      const zip = join(dir, 'macos-x64', 'screepub-notarize.zip');
+      mkdirSync(buildDir(ARM, dir), { recursive: true });
+      notarizeTarget(ARM, dir, CREDS, spawn);
+      const zip = join(dir, 'macos-arm64', 'screepub-notarize.zip');
+      // --output-format json, the way tauri-macos-sign 2.3.4 asks it (the
+      // code that notarizes the window every release): the verdict is read
+      // from the answer, not inferred from the exit code.
       expect(seen).toEqual([
-        ['ditto', '-c', '-k', binaryPath(X64, dir), zip],
+        ['ditto', '-c', '-k', binaryPath(ARM, dir), zip],
         ['xcrun', 'notarytool', 'submit', zip, '--key', '/k/ac.p8', '--key-id', 'KEYID',
-          '--issuer', 'ISSUER', '--wait'],
+          '--issuer', 'ISSUER', '--output-format', 'json', '--wait'],
       ]);
       expect(existsSync(zip)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('an exit of 0 with a status other than Accepted is a failure, with the id to look up', () => {
+    const dir = mkdtempSync(join(SCRATCH, 'notary-'));
+    try {
+      const answer = (stdout: string) => (argv: string[]) => {
+        if (argv[0] === 'ditto') {
+          writeFileSync(argv[argv.length - 1]!, 'zip');
+          return { exitCode: 0, stderr: '', stdout: '' };
+        }
+        return { exitCode: 0, stderr: '', stdout };
+      };
+      mkdirSync(buildDir(ARM, dir), { recursive: true });
+      const invalid = answer('{"id":"abc-123","message":"Processing complete","status":"Invalid"}');
+      expect(() => notarizeTarget(ARM, dir, CREDS, invalid)).toThrow(/Invalid/);
+      expect(() => notarizeTarget(ARM, dir, CREDS, invalid)).toThrow(/abc-123/);
+      expect(() => notarizeTarget(ARM, dir, CREDS, invalid)).toThrow(/notarytool log/);
+      // An answer that is not the JSON asked for is not a pass either.
+      expect(() => notarizeTarget(ARM, dir, CREDS, answer('Processing complete'))).toThrow(/macos-arm64/);
+      expect(() => notarizeTarget(ARM, dir, CREDS, answer(''))).toThrow(/macos-arm64/);
+      expect(existsSync(join(dir, 'macos-arm64', 'screepub-notarize.zip'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -1151,10 +1204,10 @@ describe('notarizing a Mac binary', () => {
         }
         return { exitCode: 1, stderr: 'status: Invalid\n' };
       };
-      mkdirSync(buildDir(X64, dir), { recursive: true });
-      expect(() => notarizeTarget(X64, dir, CREDS, spawn)).toThrow(/macos-x64/);
-      expect(() => notarizeTarget(X64, dir, CREDS, spawn)).toThrow(/Invalid/);
-      expect(existsSync(join(dir, 'macos-x64', 'screepub-notarize.zip'))).toBe(false);
+      mkdirSync(buildDir(ARM, dir), { recursive: true });
+      expect(() => notarizeTarget(ARM, dir, CREDS, spawn)).toThrow(/macos-arm64/);
+      expect(() => notarizeTarget(ARM, dir, CREDS, spawn)).toThrow(/Invalid/);
+      expect(existsSync(join(dir, 'macos-arm64', 'screepub-notarize.zip'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

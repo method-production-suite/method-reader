@@ -14,6 +14,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   BUNDLE_KINDS,
+  MAC_ARCH,
+  MAC_TARGET,
   SIGNATURE_EXT,
   UPDATER_KINDS,
   UPDATER_OVERLAY,
@@ -28,6 +30,7 @@ import {
   parseBundleArgs,
   updaterKindsForOs,
   verifyBundleFile,
+  type BundleArch,
   type BundleKind,
   type UpdaterKind,
 } from '../tools/build-app-bundle';
@@ -118,21 +121,16 @@ describe('the bundle matrix', () => {
     expect(kind('rpm').releasedName('0.6.0', 'x64')).toBe('Screepub-linux-x86_64.rpm');
     expect(kind('rpm').releasedName('0.6.0', 'arm64')).toBe('Screepub-linux-aarch64.rpm');
     expect(kind('nsis').releasedName('0.6.0', 'x64')).toBe('Screepub-windows-x64-setup.exe');
-    // The one a release ships, under the Swift app's old name ON PURPOSE
-    // (owner, 2026-10-01; plan 2026-10-01-f2-handover-amendment.md): every
-    // site button, README link and outside link already points at
-    // releases/latest/download/Screepub-macOS.dmg, so from the identifier
-    // release on they all serve the window with no edit. It is universal
-    // because the frozen Swift updater takes the first .dmg on a release and
-    // has no architecture logic (ADR 2026-09-14).
-    expect(kind('dmg').releasedName('0.6.0', 'universal')).toBe('Screepub-macOS.dmg');
-    // Per-arch images are local builds only, and carry the arch so a thin
-    // image can never be mistaken for the one the updater may install.
-    expect(kind('dmg').releasedName('0.6.0', 'arm64')).toBe('Screepub-macOS-arm64.dmg');
-    expect(kind('dmg').releasedName('0.6.0', 'x64')).toBe('Screepub-macOS-x64.dmg');
-    for (const arch of ['x64', 'arm64'] as const) {
-      expect(kind('dmg').releasedName('0.6.0', arch)).not.toBe('Screepub-macOS.dmg');
-    }
+    // The one Mac image, under the Swift app's old name ON PURPOSE (owner,
+    // 2026-10-01; plan 2026-10-01-f2-handover-amendment.md): every site
+    // button, README link and outside link already points at
+    // releases/latest/download/Screepub-macOS.dmg. Universal through the
+    // identifier release, Apple silicon only after it, and never with the
+    // arch in the name: one Mac arch is built, as one Windows arch is, and
+    // the parser refuses the other (see "a Mac bundle is Apple silicon
+    // only" below), so no x64 image can be named at all.
+    expect(kind('dmg').releasedName('0.6.0', 'arm64')).toBe('Screepub-macOS.dmg');
+    expect(MAC_ARCH).toBe('arm64');
   });
 
   test('no published name changes when the version does', () => {
@@ -140,8 +138,7 @@ describe('the bundle matrix', () => {
     // implied by five literals: a prerelease and a far-future release get
     // exactly the names 0.6.0 gets, and no name carries a version at all.
     for (const k of BUNDLE_KINDS) {
-      for (const arch of ['x64', 'arm64', 'universal'] as const) {
-        if (arch === 'universal' && k.id !== 'dmg') continue;
+      for (const arch of ['x64', 'arm64'] as const) {
         const name = k.releasedName('0.6.0', arch);
         expect(k.releasedName('9.12.3-rc1', arch)).toBe(name);
         expect(name).not.toMatch(/\d+\.\d+\.\d+/);
@@ -163,9 +160,16 @@ describe('the bundle matrix', () => {
     // The defect this forbids is a releasedName that ignores its arch
     // argument: an arm64 .deb published under the amd64 name installs and
     // then refuses to run.
-    for (const id of ['deb', 'rpm', 'dmg'] as const) {
+    for (const id of ['deb', 'rpm'] as const) {
       const k = kind(id);
       expect(k.releasedName('0.6.0', 'x64')).not.toBe(k.releasedName('0.6.0', 'arm64'));
+    }
+    // The two that ship ONE arch carry none in the name. That is safe only
+    // because each of those OSes builds one arch: the Windows leg is x86-64,
+    // and a Mac bundle for anything but Apple silicon is refused.
+    for (const id of ['dmg', 'nsis'] as const) {
+      const k = kind(id);
+      expect(k.releasedName('0.6.0', 'x64')).toBe(k.releasedName('0.6.0', 'arm64'));
     }
   });
 
@@ -173,9 +177,9 @@ describe('the bundle matrix', () => {
     const names = BUNDLE_KINDS.flatMap((k) =>
       (['x64', 'arm64'] as const).map((a) => k.releasedName('0.6.0', a)),
     );
-    // nsis ignores the arch (only x86-64 ships), so it contributes one name
-    // twice; everything else must be distinct.
-    expect(new Set(names).size).toBe(names.length - 1);
+    // nsis and dmg ignore the arch (one arch ships for each), so each
+    // contributes one name twice; everything else must be distinct.
+    expect(new Set(names).size).toBe(names.length - 2);
   });
 });
 
@@ -194,7 +198,7 @@ describe('the cargo tauri invocation', () => {
 
   test('a target triple and a config overlay are passed through when given', () => {
     expect(
-      buildArgv('macos', { target: 'x86_64-apple-darwin', config: 'tauri.transition.conf.json' }),
+      buildArgv('macos', { target: 'aarch64-apple-darwin', config: 'tauri.transition.conf.json' }),
     ).toEqual([
       'cargo',
       'tauri',
@@ -202,7 +206,7 @@ describe('the cargo tauri invocation', () => {
       '--bundles',
       'app,dmg',
       '--target',
-      'x86_64-apple-darwin',
+      'aarch64-apple-darwin',
       '--config',
       'tauri.transition.conf.json',
     ]);
@@ -470,7 +474,12 @@ describe('the argument parser', () => {
     expect(parseBundleArgs(['--version', '0.6.0', '--out', OUT], 'darwin', 'arm64')).toMatchObject({
       os: 'macos',
       arch: 'arm64',
+      // Named, never left to the host: see "a Mac bundle is Apple silicon only".
+      target: 'aarch64-apple-darwin',
     });
+    // Linux and Windows build for the runner they are on, untargeted.
+    expect(parseBundleArgs(['--version', '0.6.0', '--out', OUT], 'linux', 'x64').target).toBeUndefined();
+    expect(parseBundleArgs(['--version', '0.6.0', '--out', OUT], 'win32', 'x64').target).toBeUndefined();
   });
 
   test('it strips a leading v so a tag can be passed straight through', () => {
@@ -729,8 +738,8 @@ describe('a whole run, against a fake cargo', () => {
     version: '0.6.0',
     outDir: out,
     os: 'macos' as const,
-    arch: 'universal' as const,
-    target: 'universal-apple-darwin',
+    arch: 'arm64' as const,
+    target: 'aarch64-apple-darwin',
     config: 'tauri.transition.conf.json',
     updater,
   });
@@ -745,9 +754,9 @@ describe('a whole run, against a fake cargo', () => {
     // Order is the whole point of it being a second file: the transition
     // overlay renames the product and this one turns the archive on, and
     // the CLI merges them in the order given. Both reach cargo.
-    expect(buildArgv('macos', { target: 'universal-apple-darwin', config: 'tauri.transition.conf.json', updater: true })).toEqual([
+    expect(buildArgv('macos', { target: 'aarch64-apple-darwin', config: 'tauri.transition.conf.json', updater: true })).toEqual([
       'cargo', 'tauri', 'build', '--bundles', 'app,dmg',
-      '--target', 'universal-apple-darwin',
+      '--target', 'aarch64-apple-darwin',
       '--config', 'tauri.transition.conf.json',
       '--config', UPDATER_OVERLAY,
     ]);
@@ -784,25 +793,26 @@ describe('a whole run, against a fake cargo', () => {
     expect(k.floorBytes).toBe(kind('dmg').floorBytes);
   });
 
-  test('the published name follows the image\'s, and the platform keys follow from the arch', () => {
+  test('the published name follows the image\'s, and it serves Apple silicon only', () => {
     const k = appTar();
-    // Same rule as the image: the universal one is plain, a per-arch one
-    // carries its arch.
-    expect(k.releasedName('0.6.0', 'universal')).toBe('Screepub-macOS.app.tar.gz');
-    expect(k.releasedName('0.6.0', 'arm64')).toBe('Screepub-macOS-arm64.app.tar.gz');
-    expect(k.releasedName('0.6.0', 'x64')).toBe('Screepub-macOS-x64.app.tar.gz');
-    // A universal archive serves BOTH darwin platforms: the plugin asks for
-    // darwin-<arch of the running binary>, and a fat binary runs as either.
-    expect(k.platformKeys('universal')).toEqual(['darwin-x86_64', 'darwin-aarch64']);
-    expect(k.platformKeys('arm64')).toEqual(['darwin-aarch64']);
-    expect(k.platformKeys('x64')).toEqual(['darwin-x86_64']);
+    // Same rule as the image: plain, because one Mac arch is built.
+    expect(k.releasedName('0.6.0', MAC_ARCH)).toBe('Screepub-macOS.app.tar.gz');
+    // The plugin asks for darwin-<arch of the RUNNING binary>. Through the
+    // identifier release the archive was universal and answered for both
+    // darwin keys; from the release after it, darwin-aarch64 alone. An
+    // Intel Mac running an earlier universal build then finds no key for
+    // itself and check() rejects (desktop/ui/update.js says so in plain
+    // words). darwin-x86_64 coming back here means an Intel build came back.
+    expect(k.platformKeys(MAC_ARCH)).toEqual(['darwin-aarch64']);
   });
 
   test('the published name can be read back to its arch, which is how the manifest builder finds it', () => {
     const k = appTar();
-    for (const arch of ['universal', 'arm64', 'x64'] as const) {
-      expect(k.archOf(k.releasedName('0.6.0', arch))).toBe(arch);
-    }
+    expect(k.archOf(k.releasedName('0.6.0', MAC_ARCH))).toBe('arm64');
+    expect(k.archOf('Screepub-macOS.app.tar.gz')).toBe('arm64');
+    // The per-arch names of the universal era are not this kind any more.
+    expect(k.archOf('Screepub-macOS-x64.app.tar.gz')).toBeUndefined();
+    expect(k.archOf('Screepub-macOS-arm64.app.tar.gz')).toBeUndefined();
     expect(k.archOf('Screepub-macOS.dmg')).toBeUndefined();
     expect(k.archOf('Screepub-macOS.app.tar.gz.sig')).toBeUndefined();
     expect(k.archOf('Screepub-macOS-riscv.app.tar.gz')).toBeUndefined();
@@ -918,54 +928,101 @@ describe('a whole run, against a fake cargo', () => {
         version: '0.6.0',
         outDir: join(OUT, 'run-macos'),
         os: 'macos',
-        arch: 'x64',
-        target: 'x86_64-apple-darwin',
+        arch: 'arm64',
+        target: 'aarch64-apple-darwin',
         config: 'tauri.transition.conf.json',
       },
       spawn,
       repo,
     );
     expect(calls[0]).toContain('--target');
-    expect(calls[0]).toContain('x86_64-apple-darwin');
+    expect(calls[0]).toContain('aarch64-apple-darwin');
     expect(calls[0]).toContain('--config');
     expect(calls[0]).toContain('tauri.transition.conf.json');
     // And it looked under the triple: nothing was written to the untargeted
     // directory, so finding an artifact at all proves the path.
-    expect(made.map((p) => p.replace(/^.*[/\\]/, ''))).toEqual(['Screepub-macOS-x64.dmg']);
+    expect(made.map((p) => p.replace(/^.*[/\\]/, ''))).toEqual(['Screepub-macOS.dmg']);
+  });
+
+  test('an Intel Mac run is refused BEFORE cargo, however the args were made', async () => {
+    // The parser refuses it too; this is the same rule for a caller that
+    // builds BundleArgs by hand. An x64 image would be published under the
+    // one Mac name.
+    const repo = agreeingRepo('0.6.0');
+    const cases: [BundleArch, string | undefined][] = [
+      ['x64', 'x86_64-apple-darwin'],
+      ['x64', undefined],
+      ['arm64', 'x86_64-apple-darwin'],
+      ['arm64', 'universal-apple-darwin'],
+      ['arm64', undefined],
+    ];
+    for (const [arch, target] of cases) {
+      const { calls, spawn } = fakeCargo(kindsForOs('macos'), repo.desktopDir);
+      await expect(
+        buildBundles(
+          { version: '0.6.0', outDir: join(OUT, `run-intel-${arch}-${target}`), os: 'macos', arch, target },
+          spawn,
+          repo,
+        ),
+      ).rejects.toThrow(/Apple silicon/);
+      expect(calls.length).toBe(0);
+    }
   });
 });
 
-// ── universal is a macOS-only architecture ───────────────────────────
-describe('the universal architecture', () => {
-  test('--arch universal on macOS implies the universal cargo target', () => {
-    // Otherwise the two can drift: a universal ARCH with a per-arch TARGET
-    // produces a thin bundle wearing a universal name, which is the exact
-    // failure the fat check in build-sidecar exists to catch one layer down.
+// ── a Mac bundle is Apple silicon only ───────────────────────────────
+//
+// The identifier release (F2) was the last universal Mac image: the frozen
+// Swift updater installs the first .dmg on a release with no architecture
+// check, so F2 had to open on Intel too. From the release after it, Intel
+// Macs are not supported (owner, 2026-10-01; plan
+// 2026-10-01-f2-handover-amendment.md). These pins fail if an Intel or a
+// universal Mac bundle can be asked for again.
+describe('a Mac bundle is Apple silicon only', () => {
+  test('the arch and the cargo triple are named once, here', () => {
+    expect(MAC_ARCH).toBe('arm64');
+    expect(MAC_TARGET).toBe('aarch64-apple-darwin');
+  });
+
+  test('a Mac build always names the triple, so the runner cannot choose it', () => {
+    // An Intel runner building "for the host" would make an x64 image and
+    // publish it under the one Mac name. With the triple named, cargo
+    // builds Apple silicon wherever it runs.
     const args = parseBundleArgs(['--version', '0.6.0', '--out', '/o'], 'darwin', 'arm64');
     expect(args.arch).toBe('arm64');
-    const uni = parseBundleArgs(
-      ['--version', '0.6.0', '--out', '/o', '--arch', 'universal'], 'darwin', 'arm64',
-    );
-    expect(uni.arch).toBe('universal');
-    expect(uni.target).toBe('universal-apple-darwin');
+    expect(args.target).toBe('aarch64-apple-darwin');
+    expect(
+      parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'arm64'], 'darwin', 'arm64').target,
+    ).toBe('aarch64-apple-darwin');
   });
 
-  test('an explicit --target still wins over the implied one', () => {
-    const a = parseBundleArgs(
-      ['--version', '0.6.0', '--out', '/o', '--arch', 'universal', '--target', 'x86_64-apple-darwin'],
-      'darwin', 'arm64',
+  test('an Intel Mac is refused, whether it is the host or asked for', () => {
+    expect(() => parseBundleArgs(['--version', '0.6.0', '--out', '/o'], 'darwin', 'x64')).toThrow(
+      /Apple silicon/,
     );
-    expect(a.target).toBe('x86_64-apple-darwin');
+    expect(() =>
+      parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'x64'], 'darwin', 'arm64'),
+    ).toThrow(/Apple silicon/);
+    // Cross-building FOR Apple silicon from an Intel Mac is still a Mac
+    // build of the one arch, and is allowed.
+    expect(
+      parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'arm64'], 'darwin', 'x64').target,
+    ).toBe('aarch64-apple-darwin');
   });
 
-  test('universal is refused off macOS, by name', () => {
-    // There is no universal .deb or .rpm. Allowing it would have the Linux
-    // rows render `Screepub_0.6.0_universal.deb`, which is not a thing.
-    expect(() =>
-      parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'universal'], 'linux', 'x64'),
-    ).toThrow(/universal/i);
-    expect(() =>
-      parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'universal'], 'win32', 'x64'),
-    ).toThrow(/universal/i);
+  test('a Mac --target other than the Apple silicon triple is refused', () => {
+    for (const target of ['x86_64-apple-darwin', 'universal-apple-darwin']) {
+      expect(() =>
+        parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--target', target], 'darwin', 'arm64'),
+      ).toThrow(/Apple silicon/);
+    }
+  });
+
+  test('universal is not an architecture any more, on any OS', () => {
+    for (const [platform, host] of [['darwin', 'arm64'], ['linux', 'x64'], ['win32', 'x64']] as const) {
+      expect(() =>
+        parseBundleArgs(['--version', '0.6.0', '--out', '/o', '--arch', 'universal'], platform, host),
+      ).toThrow(/universal/);
+    }
   });
 });

@@ -5,8 +5,8 @@
 // release tool nobody can run locally is a release tool nobody can debug.
 //
 // Two tables, never mixed. TARGETS is the cross-compiled Linux and Windows
-// set the cross job builds on Ubuntu. MAC_TARGETS is the two per-arch macOS
-// tarballs the Homebrew formula serves, and it is reachable ONLY with --mac,
+// set the cross job builds on Ubuntu. MAC_TARGETS is the Apple silicon
+// tarball the Homebrew formula serves, and it is reachable ONLY with --mac,
 // which also demands --sign <identity> or an explicit --unsigned: an unsigned
 // Mach-O is a Gatekeeper warning for everyone who downloads it, so the cross
 // job (which never passes --mac) still cannot produce one by accident. The
@@ -98,12 +98,12 @@ export function detectBinaryFormat(head: Uint8Array): BinaryFormat {
   // carries 20-byte fat_arch records; FAT_MAGIC_64 carries 32-byte
   // fat_arch_64, whose offset and size fields are 64-bit.
   //
-  // Both arches are REQUIRED to answer 'macho-universal'. A one-slice fat
-  // file is a thin binary wearing a universal wrapper, and the whole reason
-  // this format exists here is that the frozen Swift updater has no
-  // architecture logic (ADR 2026-09-14): shipping it a fat DMG that is
-  // secretly arm64-only would strand exactly the Intel users it is meant to
-  // reach, and it would do it silently.
+  // Both arches are REQUIRED to answer 'macho-universal'; a one-slice fat
+  // file is a thin binary wearing a universal wrapper. Nothing is BUILT
+  // universal any more (Intel Macs are not supported after the identifier
+  // release), and no row names this format or 'macho-x86-64'. They stay
+  // in the detector so a binary that came out wrong is refused naming
+  // what it really is, rather than "unknown".
   const beMagic = u32be(0);
   if (beMagic === 0xcafebabe || beMagic === 0xcafebabf) {
     const stride = beMagic === 0xcafebabf ? 32 : 20;
@@ -138,7 +138,7 @@ export function readBinaryFormat(path: string): BinaryFormat {
   }
 }
 
-export type MacTargetId = 'macos-arm64' | 'macos-x64';
+export type MacTargetId = 'macos-arm64';
 export type TargetId = 'linux-x64' | 'linux-arm64' | 'windows-x64' | MacTargetId;
 
 export interface Target {
@@ -149,8 +149,9 @@ export interface Target {
   format: BinaryFormat;
   packaging: 'tar.gz' | 'zip';
   /** The name the binary has INSIDE the archive, so `tar -xzf` and
-   *  `Expand-Archive` both drop a runnable `screepub` in the cwd — the same
-   *  arrangement as the macOS tarballs app/release.sh produces. */
+   *  `Expand-Archive` both drop a runnable `screepub` in the cwd, which is
+   *  also what the Homebrew formula's `bin.install` expects of the macOS
+   *  tarballs. */
   binaryName: string;
   archiveName: string;
 }
@@ -186,10 +187,13 @@ export const TARGETS: readonly Target[] = [
   },
 ];
 
-/** The Homebrew formula's two downloads. Per-arch, not universal: bun embeds
- *  its whole runtime in every slice, so a lipo'd CLI is two ~65 MB binaries
- *  of which any machine runs half, and brew can pick the arch where a
- *  browser cannot. The archive names are tools/bump-tap.sh's, unchanged. */
+/** The Homebrew formula's one download: Apple silicon. Through the
+ *  identifier release there was an x64 row beside it; from the release
+ *  after it Intel Macs are not supported (owner, 2026-10-01; plan
+ *  docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and the
+ *  formula says `depends_on arch: :arm64`. Still a table, so the cross
+ *  set's machinery serves it unchanged. The archive name is
+ *  tools/bump-tap.sh's, unchanged. */
 export const MAC_TARGETS: readonly Target[] = [
   {
     id: 'macos-arm64',
@@ -198,14 +202,6 @@ export const MAC_TARGETS: readonly Target[] = [
     packaging: 'tar.gz',
     binaryName: 'screepub',
     archiveName: 'screepub-cli-macos-arm64.tar.gz',
-  },
-  {
-    id: 'macos-x64',
-    bunTarget: 'bun-darwin-x64',
-    format: 'macho-x86-64',
-    packaging: 'tar.gz',
-    binaryName: 'screepub',
-    archiveName: 'screepub-cli-macos-x64.tar.gz',
   },
 ];
 
@@ -238,8 +234,9 @@ export function archivePath(target: Target, outDir: string): string {
 
 /** Which target, if any, this machine can actually execute. Pure, so the
  *  mapping is tested rather than only observed on whatever host ran the
- *  suite. macOS answers `undefined` on purpose: this tool builds no macOS
- *  artifact, so a Mac has no host target here. */
+ *  suite. macOS answers `undefined` on purpose: the CROSS table has no
+ *  macOS row, so a Mac has no host target in it. The Mac table has its own
+ *  mapping, macTargetIdForHost. */
 export function targetIdForHost(platform: string, arch: string): TargetId | undefined {
   if (platform === 'linux' && arch === 'x64') return 'linux-x64';
   if (platform === 'linux' && arch === 'arm64') return 'linux-arm64';
@@ -253,10 +250,10 @@ export function hostTarget(): Target | undefined {
 }
 
 /** The Mac table's own host mapping, kept apart from targetIdForHost so that
- *  one still answers "nothing" on a Mac: the cross set has no Mac host. */
+ *  one still answers "nothing" on a Mac: the cross set has no Mac host. An
+ *  Intel Mac answers nothing here too: nothing it could build ships. */
 export function macTargetIdForHost(platform: string, arch: string): MacTargetId | undefined {
   if (platform === 'darwin' && arch === 'arm64') return 'macos-arm64';
-  if (platform === 'darwin' && arch === 'x64') return 'macos-x64';
   return undefined;
 }
 
@@ -357,9 +354,9 @@ export function parseBuildArgs(argv: string[]): BuildArgs {
 
 /** `screepub --version` reports package.json's version, inlined at compile
  *  time; the --version flag changes nothing about the binary. So the flag's
- *  job is to be CHECKED. app/release.sh applies the same guard on the macOS
- *  side, and for the same reason: a binary that disagrees with its tag lies
- *  about itself in every bug report it ever appears in. */
+ *  job is to be CHECKED, on the cross and the --mac builds alike: a binary
+ *  that disagrees with its tag lies about itself in every bug report it
+ *  ever appears in. */
 export function assertPackageVersion(version: string, repoDir: string = REPO_DIR): void {
   const pkg = JSON.parse(readFileSync(join(repoDir, 'package.json'), 'utf8')) as {
     version?: string;
@@ -376,6 +373,8 @@ export function assertPackageVersion(version: string, repoDir: string = REPO_DIR
 export interface SpawnResult {
   exitCode: number;
   stderr: string;
+  /** Only the callers that read an answer (notarytool) look at this. */
+  stdout?: string;
 }
 export type Spawn = (argv: string[], cwd: string) => SpawnResult;
 
@@ -384,7 +383,7 @@ const realSpawn: Spawn = (argv, cwd) => {
   // answered as a failed run so the caller's message names the target.
   try {
     const proc = Bun.spawnSync(argv, { cwd, stdout: 'pipe', stderr: 'pipe' });
-    return { exitCode: proc.exitCode ?? 1, stderr: proc.stderr.toString() };
+    return { exitCode: proc.exitCode ?? 1, stderr: proc.stderr.toString(), stdout: proc.stdout.toString() };
   } catch (err) {
     return { exitCode: 127, stderr: `${argv[0]}: ${(err as Error).message}` };
   }
@@ -440,6 +439,11 @@ export function signArgv(
   return [
     'codesign', '--force', '--options', 'runtime', '--timestamp',
     '--entitlements', entitlements,
+    // The identifier the shipped CLI has always had. The Swift app's
+    // release script signed a file named screepub-cli-<arch>, and codesign
+    // takes the identifier from the file name; this signs one named
+    // `screepub`, so it says so, or the designated requirement changes.
+    '--identifier', `screepub-cli-${target.id.replace(/^macos-/, '')}`,
     '--sign', identity,
     binaryPath(target, outDir),
   ];
@@ -514,16 +518,37 @@ export function notarizeTarget(
 ): void {
   const zip = join(buildDir(target, outDir), 'screepub-notarize.zip');
   try {
-    for (const [argv, what] of [
-      [['ditto', '-c', '-k', binaryPath(target, outDir), zip], 'ditto'],
-      [['xcrun', 'notarytool', 'submit', zip, '--key', creds.keyPath, '--key-id', creds.keyId,
-        '--issuer', creds.issuer, '--wait'], 'notarytool submit'],
-    ] as const) {
-      const { exitCode, stderr } = spawn([...argv], repoDir);
+    const run = (argv: string[], what: string): string => {
+      const { exitCode, stderr, stdout } = spawn(argv, repoDir);
       if (exitCode !== 0) {
         throw new Error(`build-cli: ${target.id}: ${what} failed (exit ${exitCode})\n${stderr.trim()}`);
       }
+      return stdout ?? '';
+    };
+    run(['ditto', '-c', '-k', binaryPath(target, outDir), zip], 'ditto');
+    // The verdict is READ, not inferred from the exit code: --output-format
+    // json and status "Accepted", exactly as tauri-macos-sign 2.3.4 does
+    // for the window every release (its NotarytoolSubmitOutput: id, status,
+    // message). Anything else, including an answer that is not that JSON,
+    // fails here with the id needed for `xcrun notarytool log`.
+    const answer = run(
+      ['xcrun', 'notarytool', 'submit', zip, '--key', creds.keyPath, '--key-id', creds.keyId,
+        '--issuer', creds.issuer, '--output-format', 'json', '--wait'],
+      'notarytool submit',
+    );
+    let verdict: { id?: string; status?: string; message?: string };
+    try {
+      verdict = JSON.parse(answer);
+    } catch {
+      throw new Error(`build-cli: ${target.id}: notarytool's answer was not JSON:\n${answer.trim() || '<empty>'}`);
     }
+    if (verdict.status !== 'Accepted') {
+      throw new Error(
+        `build-cli: ${target.id}: notarization ${verdict.status ?? 'returned no status'} ` +
+          `(${verdict.message ?? 'no message'}); see \`xcrun notarytool log ${verdict.id ?? '<no id>'}\``,
+      );
+    }
+    console.log(`   ${target.id}: notarized, ${verdict.id}`);
   } finally {
     rmSync(zip, { force: true });
   }
@@ -782,7 +807,7 @@ export async function buildAll(args: BuildArgs, floors: Floors = RELEASE_FLOORS)
   if (stray.length) {
     throw new Error(`build-cli: ${stray.join(', ')} build only with --mac`);
   }
-  // Before any compile: a missing notary key found after two 60 MB builds is
+  // Before any compile: a missing notary key found after a 60 MB build is
   // a release that died late for a reason it could have named first.
   const creds = args.mac?.notarize ? notaryCredentials() : undefined;
   mkdirSync(args.outDir, { recursive: true });

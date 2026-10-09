@@ -20,16 +20,17 @@ switched on, installs the window in its place.
   from 0.7.2 to 0.7.3 through its own updater: a bundle that `release.yml`
   built, signed and notarized, downloaded, checked and installed by the
   window itself.
-- **The window on a Mac, by hand.** A universal `.dmg` built on the owner's
-  Mac was mounted, dragged to `/Applications`, opened past Gatekeeper and
-  used to convert two real feature scripts; its `.fountain` matched a fresh
-  command-line run byte for byte. The 0.7.3 candidate then passed a full
+- **The window on a Mac, by hand.** A `.dmg` built on the owner's Mac
+  (universal then) was mounted, dragged to `/Applications`, opened past
+  Gatekeeper and used to convert two real feature scripts; its `.fountain`
+  matched a fresh command-line run byte for byte. The 0.7.3 candidate then
+  passed a full
   hands-on pass ([mac-qa.md](mac-qa.md)): converting, the library folder,
   Settings, the Send page's routes, Apple Books, Send to Kindle on the web, a
   Kindle over USB, and installing the KFX plugin into a scratch Calibre. The
   0.7.4 candidate passed the items that pass rechecked. Each Mac that ran
-  these is Apple silicon, so it is the ARM half of the universal download that
-  has run.
+  these is Apple silicon, the only kind the Mac download is built for since
+  Intel Macs were dropped after the identifier release.
 - **A Kindle**, firmware 5.19.2, over USB (KFX, AZW3 and MOBI) and by email.
 - **Apple Books** on a Mac: the book arrives in the library.
 - **The window on Linux, ARM.** `Screepub_0.6.0_arm64.deb` and
@@ -53,10 +54,12 @@ switched on, installs the window in its place.
   has built and signed the Mac window, and since 0.7.0 it has notarized it.
   Every bundle is opened and its engine run before anything is uploaded, and
   the update manifest (`latest.json`, Mac only) is read back from GitHub
-  after it is published. For the universal `.dmg`, only the ARM half runs:
-  the job prints a notice saying so.
+  after it is published. The Mac `.dmg` is built for Apple silicon only, the
+  runner's own kind, so all of it runs; of the identifier release's universal
+  `.dmg`, the last, only the ARM half ran.
 - Weekly: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is deprecated, and
+  newest release, the retired Homebrew cask still says it is retired
+  (deprecated, and disabled from the release after the identifier release), and
   the older Mac app's AZW3 and KEPUB checks still pass against Calibre's
   newest version.
 
@@ -66,8 +69,10 @@ switched on, installs the window in its place.
 - The window on Windows: no runner has a display and no person has opened it.
 - The Windows installer itself, run by a person, and the SmartScreen screen
   the README describes.
-- The Intel SLICE of the universal macOS `.dmg`. It is built, checked as a
-  container, signed and published, and has never executed.
+- The Intel SLICE of the identifier release's universal `.dmg`, the last Mac
+  download to carry one. It was built, checked as a container, signed and
+  published, and never ran. Every Mac download after it is Apple silicon
+  only.
 - The window's launcher entry, opened from a Linux desktop menu.
 - Dragging a file onto the window on Linux or Windows. On a Mac it is
   verified: the 0.7.3 pass converted a script dropped on the window.

@@ -16,6 +16,9 @@ import { FAKE_KEY_ID, fakePublicKeyBox, fakeSignatureBox } from './signature-box
 
 const REPO = 'ssandweiss/screepub';
 const TAR = 'Screepub-macOS.app.tar.gz';
+/** The Intel command-line tarball: carried by the identifier release and
+ *  every release before it, by none after. */
+const INTEL_CLI = 'screepub-cli-macos-x64.tar.gz';
 const url = (v: string, name: string) => `https://github.com/${REPO}/releases/download/v${v}/${name}`;
 const SIG = fakeSignatureBox('Screepub.app.tar.gz');
 const PUBKEY = fakePublicKeyBox();
@@ -31,7 +34,6 @@ const manifest = (v: string, over: Partial<Record<string, { url: string; signatu
     notes: 'x',
     pub_date: '2026-09-21T18:00:00.000Z',
     platforms: {
-      'darwin-x86_64': { url: url(v, TAR), signature: SIG },
       'darwin-aarch64': { url: url(v, TAR), signature: SIG },
       ...over,
     },
@@ -40,7 +42,7 @@ const manifest = (v: string, over: Partial<Record<string, { url: string; signatu
 describe('judging a manifest against a release', () => {
   test('a manifest that names the newest release, its assets and their signatures is fine', () => {
     const v = judgeManifest(manifest('0.6.1'), release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
-    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64', 'darwin-x86_64'] });
+    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64'] });
   });
 
   test('a manifest a version behind is the tap failure, and says both versions', () => {
@@ -92,7 +94,6 @@ describe('judging a manifest against a release', () => {
     const otherKey = Buffer.from('1112131415161718', 'hex');
     const foreign = fakeSignatureBox('Screepub.app.tar.gz', otherKey);
     const v = judgeManifest(manifest('0.6.1', {
-      'darwin-x86_64': { url: url('0.6.1', TAR), signature: foreign },
       'darwin-aarch64': { url: url('0.6.1', TAR), signature: foreign },
     }), release('0.6.1'), { [`${TAR}.sig`]: foreign }, PUBKEY);
     expect(v.ok).toBe(false);
@@ -109,14 +110,71 @@ describe('judging a manifest against a release', () => {
     if (!v.ok) expect(v.problems.join('\n')).toMatch(/public key/i);
   });
 
-  test('a manifest missing either darwin key is a problem: the universal build serves both', () => {
-    const only = JSON.stringify({
+  test('a manifest missing darwin-aarch64 is a problem: the Mac build serves it', () => {
+    const intelOnly = JSON.stringify({
       version: '0.6.1',
-      platforms: { 'darwin-aarch64': { url: url('0.6.1', TAR), signature: SIG } },
+      platforms: { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } },
     });
-    const v = judgeManifest(only, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    const v = judgeManifest(intelOnly, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
     expect(v.ok).toBe(false);
-    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-x86_64');
+    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-aarch64');
+  });
+
+  test('darwin-x86_64 is no longer REQUIRED, and a universal-era manifest still passes', () => {
+    // The Mac build is Apple silicon only from the release after the
+    // identifier release, so its manifest has no darwin-x86_64 and must not
+    // be called broken. The identifier release and older stay green: this
+    // runs weekly against whatever release is newest, and until the next
+    // one ships that is the identifier release, whose UNIVERSAL archive
+    // answers for both keys. A release from that era is the one that still
+    // carries the Intel command-line tarball; the two went together.
+    expect(judgeManifest(manifest('0.6.1'), release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY).ok).toBe(true);
+    const universal = manifest('0.6.1', { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } });
+    const universalEra = release('0.6.1', [TAR, `${TAR}.sig`, 'latest.json', 'Screepub-macOS.dmg', INTEL_CLI]);
+    expect(judgeManifest(universal, universalEra, { [`${TAR}.sig`]: SIG }, PUBKEY)).toEqual({
+      ok: true,
+      version: '0.6.1',
+      platforms: ['darwin-aarch64', 'darwin-x86_64'],
+    });
+  });
+
+  test('after Intel was dropped, darwin-x86_64 on the Apple silicon archive is a problem', () => {
+    // A release with no Intel command-line tarball has an Apple-silicon-only
+    // window archive. Offered to an Intel copy under darwin-x86_64, it would
+    // install a build that cannot run there, and the old window would stop
+    // opening on that Mac.
+    const intelToArm = manifest('0.6.1', { 'darwin-x86_64': { url: url('0.6.1', TAR), signature: SIG } });
+    const v = judgeManifest(intelToArm, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(v.ok).toBe(false);
+    if (!v.ok) {
+      const text = v.problems.join('\n');
+      expect(text).toContain('darwin-x86_64');
+      expect(text).toContain(url('0.6.1', TAR));
+      expect(text).toMatch(/Apple silicon/);
+    }
+  });
+
+  test('the same holds for darwin-x86_64-app, which the plugin tries first', () => {
+    // tauri-plugin-updater 2.12.0's get_urls looks up `<os>-<arch>-<installer>`
+    // before `<os>-<arch>`, so an Intel copy of the .app finds this key first.
+    const appKey = manifest('0.6.1', { 'darwin-x86_64-app': { url: url('0.6.1', TAR), signature: SIG } });
+    const v = judgeManifest(appKey, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(v.ok).toBe(false);
+    if (!v.ok) expect(v.problems.join('\n')).toContain('darwin-x86_64-app points at');
+    // And the arch-specific aarch64 key is an Apple silicon archive too.
+    const viaAppArm = JSON.stringify({
+      version: '0.6.1',
+      platforms: {
+        'darwin-aarch64': { url: url('0.6.1', TAR), signature: SIG },
+        'darwin-aarch64-app': { url: url('0.6.1', TAR), signature: SIG },
+        'darwin-x86_64-app': { url: url('0.6.1', TAR), signature: SIG },
+      },
+    });
+    const w = judgeManifest(viaAppArm, release('0.6.1'), { [`${TAR}.sig`]: SIG }, PUBKEY);
+    expect(w.ok).toBe(false);
+    // In the universal era both keys may share the archive, -app or not.
+    const universalEra = release('0.6.1', [TAR, `${TAR}.sig`, 'latest.json', 'Screepub-macOS.dmg', INTEL_CLI]);
+    expect(judgeManifest(appKey, universalEra, { [`${TAR}.sig`]: SIG }, PUBKEY).ok).toBe(true);
   });
 
   test('every problem is reported, not just the first', () => {
@@ -160,7 +218,7 @@ describe('checking the live endpoint, with the network stubbed', () => {
       [url('0.6.1', `${TAR}.sig`)]: SIG,
     });
     const v = await checkLatest(fetcher, { repo: REPO, pubkey: PUBKEY });
-    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64', 'darwin-x86_64'] });
+    expect(v).toEqual({ ok: true, version: '0.6.1', platforms: ['darwin-aarch64'] });
     // The manifest comes from the redirecting endpoint, not from a
     // versioned url this tool constructed: what is checked is what the
     // app fetches.

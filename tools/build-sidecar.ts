@@ -1,13 +1,22 @@
 // Compile the Screepub engine and put it where the Tauri shell looks for it.
 //
 //   bun tools/build-sidecar.ts --host           # this machine, ~30s
-//   bun tools/build-sidecar.ts --universal      # both darwin slices, lipo'd
+//   bun tools/build-sidecar.ts --target bun-darwin-arm64   # the Mac release leg
 //   bun tools/build-sidecar.ts --target bun-windows-x64
 //   bun tools/build-sidecar.ts --all            # every target (~100 MB each)
 //
 // This is a build input, not a release artifact: it produces no archive, no
-// checksum and nothing that reaches a user. Release artifacts are
-// tools/build-cli.ts's job, and the signed macOS CLI is app/release.sh's.
+// checksum and nothing that reaches a user. Release artifacts, the signed
+// macOS CLI included, are tools/build-cli.ts's job.
+//
+// The Mac engine is Apple silicon only. Until the release after the
+// identifier release this file also lipo'd an x86_64 and an arm64 engine
+// into one universal sidecar, because the frozen Swift updater installs
+// the first .dmg on a release with no architecture check and the window
+// had to open on Intel too. Intel Macs are not supported after that
+// release (owner, 2026-10-01; plan
+// docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), so the lipo
+// is gone rather than left unreached.
 //
 // The binary's NAME is the whole point. Tauri resolves a bundled external
 // binary by name with the Rust target triple as a suffix — a rule verified
@@ -46,7 +55,6 @@ import {
   SIDECAR_TARGETS,
   sidecarTargetFor,
   sidecarFileName,
-  SIDECAR_BASENAME,
   hostBunTarget,
   hostSidecarTarget,
   rustcHostTriple,
@@ -79,11 +87,6 @@ export interface SidecarArgs {
    *  assumption. --target and --all leave this undefined and keep the
    *  pinned table exactly. */
   hostTriple?: HostTriple;
-  /** Set only by --universal: build both darwin slices, then lipo them into
-   *  the one file `cargo tauri build --target universal-apple-darwin` looks
-   *  for. Not a BunTarget, because bun has no universal target — it is a
-   *  post-processing step over two real builds. */
-  universal?: boolean;
 }
 
 export function parseSidecarArgs(
@@ -96,7 +99,6 @@ export function parseSidecarArgs(
     args: argv,
     options: {
       host: { type: 'boolean', default: false },
-      universal: { type: 'boolean', default: false },
       all: { type: 'boolean', default: false },
       target: { type: 'string', multiple: true },
       out: { type: 'string' },
@@ -112,17 +114,7 @@ export function parseSidecarArgs(
 
   let targets: BunTarget[];
   let viaHost = false;
-  if (values.universal) {
-    // Deliberately NOT --host plus a lipo: --host gives one slice, and a
-    // universal bundle fused from one slice is a thin binary wearing a
-    // universal name. Both, always, named by the pinned table.
-    if (platform !== 'darwin') {
-      throw new Error(
-        `build-sidecar: --universal needs lipo, which is macOS-only, and this machine is ${platform}.`,
-      );
-    }
-    targets = ['bun-darwin-x64', 'bun-darwin-arm64'];
-  } else if (values.all) {
+  if (values.all) {
     targets = SIDECAR_TARGETS.map((t) => t.bunTarget);
   } else if (named.length) {
     // sidecarTargetFor throws, by name, on anything unknown.
@@ -145,7 +137,6 @@ export function parseSidecarArgs(
       : resolve(values.out)
     : BINARIES_DIR;
 
-  if (values.universal) return { targets, outDir, universal: true };
   return viaHost ? { targets, outDir, hostTriple } : { targets, outDir };
 }
 
@@ -224,82 +215,13 @@ export function verifySidecar(
   }
 }
 
-
-// ── the universal macOS sidecar ──────────────────────────────────────
-//
-// bun compiles one architecture at a time, so there is no bun target that
-// produces a universal binary and no SIDECAR_TARGETS row for one: it is a
-// lipo of two real builds, not a build. That is why this lives here as a
-// post-processing step rather than as a seventh row in the table.
-//
-// Why it is worth having at all: the frozen Swift updater takes the FIRST
-// .dmg asset on a release and has no architecture logic, because it was
-// written when there was exactly one universal DMG to take. Per-arch Mac
-// bundles are therefore not merely awkward for the Homebrew cask, they are
-// what makes an automatic migration off the Swift app impossible. See
-// docs/adr/2026-09-14-swift-app-update-path.md.
-
-/** Not a rustc target triple bun knows; the name Tauri gives the slot when
- *  built with `--target universal-apple-darwin`. */
-export const UNIVERSAL_TRIPLE = 'universal-apple-darwin';
-
-export function universalSidecarPath(outDir: string): string {
-  return join(outDir, `${SIDECAR_BASENAME}-${UNIVERSAL_TRIPLE}`);
-}
-
-/** The two thin sidecars lipo reads, in the order it reads them. Exported
- *  as data so the invocation is asserted element by element rather than by
- *  running it, which only a Mac can do. */
-export function lipoArgv(outDir: string): string[] {
-  const thin = ['x86_64-apple-darwin', 'aarch64-apple-darwin'].map((triple) =>
-    join(outDir, `${SIDECAR_BASENAME}-${triple}`),
-  );
-  return ['lipo', '-create', '-output', universalSidecarPath(outDir), ...thin];
-}
-
-/** Fuse the two darwin sidecars. Both must already exist.
- *
- *  Checks what was PRODUCED, for the same reason verifySidecar does: lipo
- *  can exit 0 and leave a THIN binary (hand it one input and it copies it),
- *  and a thin binary inside something labelled universal is the exact
- *  failure this whole path exists to prevent — every Intel user gets an
- *  arm64 app, the old updater installs it without complaint, and the only
- *  symptom is an app that will not open on someone else's computer. */
-export function lipoUniversalSidecar(
-  outDir: string,
-  spawn: Spawn = realSpawn,
-  repoDir: string = REPO_DIR,
-): string {
-  mkdirSync(outDir, { recursive: true });
-  const { exitCode, stderr } = spawn(lipoArgv(outDir), repoDir);
-  if (exitCode !== 0) {
-    throw new Error(`build-sidecar: lipo failed (exit ${exitCode})\n${stderr.trim()}`);
-  }
-  const path = universalSidecarPath(outDir);
-  if (!existsSync(path)) {
-    throw new Error(
-      `build-sidecar: lipo exited 0 but wrote nothing at ${path}. ` +
-        `Tauri looks for exactly ${SIDECAR_BASENAME}-${UNIVERSAL_TRIPLE}.`,
-    );
-  }
-  const format = readBinaryFormat(path);
-  if (format !== 'macho-universal') {
-    throw new Error(
-      `build-sidecar: ${path} is ${format}, not macho-universal. A thin binary ` +
-        'inside a universal bundle ships an app that cannot run on half of all Macs, ' +
-        'and the frozen Swift updater has no architecture check to catch it.',
-    );
-  }
-  return path;
-}
-
 // LAST in the file on purpose: this runs at import time, so every const and
-// function it reaches must already be initialised. It used to sit above the
-// universal section and died with "Cannot access 'UNIVERSAL_TRIPLE' before
-// initialization" the first time --universal ran.
+// function it reaches must already be initialised. (A section that once sat
+// below it died with "Cannot access ... before initialization" the first
+// time it ran.)
 if (import.meta.main) {
   try {
-    const { targets, outDir, hostTriple, universal } = parseSidecarArgs(process.argv.slice(2));
+    const { targets, outDir, hostTriple } = parseSidecarArgs(process.argv.slice(2));
     for (const bunTarget of targets) {
       // --host: resolve against THIS machine's rustc — which can swap in
       // a musl bunTarget the pre-parsed `targets` array above never knew
@@ -313,10 +235,6 @@ if (import.meta.main) {
       buildSidecar(target, outDir);
       verifySidecar(target, outDir);
       console.log(`  ok: ${sidecarPath(target, outDir)}`);
-    }
-    if (universal) {
-      console.log(`fusing → ${SIDECAR_BASENAME}-${UNIVERSAL_TRIPLE}`);
-      console.log(`  ok: ${lipoUniversalSidecar(outDir)}`);
     }
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));

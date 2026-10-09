@@ -103,6 +103,8 @@ describe('a real cross-compile', () => {
       expect(readBinaryFormat(bin)).toBe(MAC_HOST!.format);
       const described = Bun.spawnSync(['codesign', '-dv', bin], { stderr: 'pipe' }).stderr.toString();
       expect(described).toMatch(/flags=0x[0-9a-f]+\([^)]*runtime[^)]*\)/);
+      // The identifier the shipped CLI has always carried, not the file name.
+      expect(described).toContain(`Identifier=screepub-cli-${MAC_HOST!.id.replace('macos-', '')}`);
       const ents = Bun.spawnSync(['codesign', '-d', '--entitlements', '-', '--xml', bin], { stdout: 'pipe' })
         .stdout.toString();
       expect(ents).toContain('com.apple.security.cs.allow-jit');

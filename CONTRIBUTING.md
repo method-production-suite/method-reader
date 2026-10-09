@@ -41,8 +41,13 @@ bun tools/build-sidecar.ts --host    # build the engine the window runs
 cd desktop/src-tauri && cargo run    # open the window
 ```
 
-[desktop/README.md](desktop/README.md) covers bundles, the universal Mac
-build and how the window talks to the engine.
+An Intel Mac cannot run the window any more: it is built for Macs with
+Apple silicon only, and `--host` refuses an Intel Mac with that reason.
+The engine still runs there from source (`bun src/cli.ts`); cross-building
+the Apple silicon bundle from one is in desktop/README.md.
+
+[desktop/README.md](desktop/README.md) covers bundles, the Apple silicon
+Mac build and how the window talks to the engine.
 [docs/developers.md](docs/developers.md) covers the command line, the
 library and the architecture.
 
@@ -101,8 +106,9 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   Mac downloads, builds every bundle and archive, checks each one before
   uploading, and publishes the window's update manifest.
 - **Weekly**: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is deprecated, and
-  the frozen Mac app's checks still pass against Calibre's newest version.
+  newest release, the retired Homebrew cask still says it is retired
+  (deprecated, and disabled from the release after the identifier release),
+  and the frozen Mac app's checks still pass against Calibre's newest version.
 
 ## Licensing of contributions
 

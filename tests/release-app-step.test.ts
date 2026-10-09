@@ -2,8 +2,8 @@
 // TEXTUALLY present, needed by the right jobs, and in the right order. That
 // is necessary but not sufficient: `toContain('smoke-bundle.ts')` would
 // also pass if the loop globbed a directory nothing writes to, if the
-// universal leg quietly built a thin sidecar, or if the checksums step
-// accepted five bundles where four were built.
+// Mac leg quietly built an engine for whatever runner it landed on, or if
+// the checksums step accepted five bundles where four were built.
 //
 // A workflow cannot be run by `bun test` -- it needs a GitHub runner -- but
 // these four `run:` blocks are just bash, so this file pulls the ACTUAL
@@ -94,47 +94,52 @@ const runStep = (script: string, dir: string, env: Record<string, string>) =>
     encoding: 'utf8',
   });
 
+/** What GitHub sets RUNNER_OS to on each runner label the matrix uses. */
+const runnerOs = (label: string): string =>
+  label.startsWith('macos') ? 'macOS' : label.startsWith('windows') ? 'Windows' : 'Linux';
+
 describe("release.yml's sidecar step, executed as bash", () => {
-  test('the universal leg lipos both darwin slices rather than building one', () => {
-    // --universal, never --host plus a lipo: build-sidecar.ts compiles
-    // bun-darwin-x64 AND bun-darwin-arm64 and fuses them, then refuses the
-    // result if it is secretly thin. A single slice wearing a universal
-    // name is the failure the whole handover rests on not happening --
-    // the frozen Swift updater has no architecture check to catch it.
-    const { dir, lines } = stubDir('sidecar-universal', ['bun']);
-    const r = runStep(SIDECAR_STEP, dir, { ARCH: 'universal' });
+  test('the Mac leg builds the Apple silicon engine by name, never for the host', () => {
+    // One slice since the release after the identifier release, and named
+    // from the pinned table rather than asked of the runner: an Intel
+    // runner building "for the host" would put an x86_64 engine inside the
+    // one Mac image. build-app-bundle.ts names the matching cargo triple.
+    const { dir, lines } = stubDir('sidecar-mac', ['bun']);
+    const r = runStep(SIDECAR_STEP, dir, { RUNNER_OS: 'macOS', ARCH: 'arm64' });
     expect(r.status).toBe(0);
-    expect(lines('bun')).toEqual(['tools/build-sidecar.ts\t--universal']);
+    expect(lines('bun')).toEqual(['tools/build-sidecar.ts\t--target\tbun-darwin-arm64']);
   });
 
-  test('a non-universal leg builds for the runner it is on', () => {
+  test('the Linux and Windows legs build for the runner they are on', () => {
     // --host, never a guessed triple: the Linux and Windows legs bundle for
     // themselves, and build-sidecar.ts asks the runner's own rustc.
-    const { dir, lines } = stubDir('sidecar-host', ['bun']);
-    const r = runStep(SIDECAR_STEP, dir, { ARCH: 'x64' });
-    expect(r.status).toBe(0);
-    expect(lines('bun')).toEqual(['tools/build-sidecar.ts\t--host']);
+    for (const os of ['Linux', 'Windows']) {
+      const { dir, lines } = stubDir(`sidecar-host-${os}`, ['bun']);
+      const r = runStep(SIDECAR_STEP, dir, { RUNNER_OS: os, ARCH: 'x64' });
+      expect(r.status).toBe(0);
+      expect(lines('bun')).toEqual(['tools/build-sidecar.ts\t--host']);
+    }
   });
 
-  test('an arch this step has no shape for fails loudly instead of defaulting', () => {
-    // The step used to carry a --target branch for the two per-arch macOS
-    // rows. Those rows are gone, so the branch is gone, and what replaced
-    // it must not be a silent `else --host`: a leg meaning to cross-compile
-    // that quietly built for the runner is how an arm64 engine ends up
-    // inside an Intel download with nothing failing until a window opens.
-    const { dir, lines } = stubDir('sidecar-bogus', ['bun']);
-    const r = runStep(SIDECAR_STEP, dir, { ARCH: 'arm64' });
-    expect(r.status).not.toBe(0);
-    expect(r.stdout + r.stderr).toContain('arm64');
-    expect(lines('bun')).toEqual([]);
+  test('a shape this step does not build fails loudly instead of defaulting', () => {
+    // The universal Mac row and its lipo are gone (Intel Macs are not
+    // supported after the identifier release), and so is any Intel Mac
+    // shape. What replaced them must not be a silent `else --host`: a leg
+    // that quietly built for the runner is how a foreign engine gets
+    // inside a download with nothing failing until a window opens.
+    for (const [os, arch] of [['macOS', 'universal'], ['macOS', 'x64'], ['Linux', 'arm64']]) {
+      const { dir, lines } = stubDir(`sidecar-bogus-${os}-${arch}`, ['bun']);
+      const r = runStep(SIDECAR_STEP, dir, { RUNNER_OS: os!, ARCH: arch! });
+      expect(r.status).not.toBe(0);
+      expect(r.stdout + r.stderr).toContain(`${os}/${arch}`);
+      expect(lines('bun')).toEqual([]);
+    }
   });
 
-  test('every matrix row names an arch this step actually handles', () => {
+  test('every matrix row names a shape this step actually handles', () => {
     // The pin the old sidecar<->triple cross-check used to provide. The
-    // triple itself is no longer in the YAML at all: --universal names both
-    // slices from tools/sidecar-targets.ts's pinned table and --arch
-    // universal derives the cargo target in tools/build-app-bundle.ts, so
-    // the triple lives in one place instead of three.
+    // cargo triple is not in the YAML at all: build-app-bundle.ts derives
+    // aarch64-apple-darwin for every Mac build, so it lives in one place.
     const rows =
       ((Bun.YAML.parse(readFileSync(YML, 'utf8')) as unknown as {
         jobs: Record<string, { strategy?: { matrix?: { include?: Record<string, string>[] } } }>;
@@ -142,7 +147,9 @@ describe("release.yml's sidecar step, executed as bash", () => {
     expect(rows.length).toBe(3);
     for (const row of rows) {
       const { dir } = stubDir(`sidecar-row-${row.os}`, ['bun']);
-      expect(runStep(SIDECAR_STEP, dir, { ARCH: String(row.arch) }).status).toBe(0);
+      expect(
+        runStep(SIDECAR_STEP, dir, { RUNNER_OS: runnerOs(String(row.os)), ARCH: String(row.arch) }).status,
+      ).toBe(0);
     }
   });
 });
@@ -150,7 +157,7 @@ describe("release.yml's sidecar step, executed as bash", () => {
 describe("release.yml's bundle step, executed as bash", () => {
   test('the Linux and Windows legs pass no arch and no overlay', () => {
     const { dir, lines } = stubDir('build-host', ['bun']);
-    const r = runStep(BUILD_STEP, dir, { TAG: 'v0.6.0', ARCH: 'x64' });
+    const r = runStep(BUILD_STEP, dir, { TAG: 'v0.6.0', RUNNER_OS: 'Linux', ARCH: 'x64' });
     expect(r.status).toBe(0);
     expect(lines('bun')).toEqual([
       'tools/build-app-bundle.ts\t--version\t0.6.0\t--out\tbundles',
@@ -161,29 +168,28 @@ describe("release.yml's bundle step, executed as bash", () => {
     expect(lines('bun')[0]).not.toContain('--updater');
   });
 
-  test('the macOS leg asks for a universal bundle, the updater, and no overlay', () => {
-    // --arch universal and no --target. build-app-bundle.ts derives
-    // universal-apple-darwin from the arch precisely so the two cannot
-    // disagree: a universal arch with a per-arch target would produce a
-    // thin bundle wearing a universal name.
+  test('the macOS leg asks for an Apple silicon bundle, the updater, and no overlay', () => {
+    // --arch arm64 and no --target. build-app-bundle.ts derives
+    // aarch64-apple-darwin for every Mac build and refuses any other Mac
+    // arch or triple, so the YAML cannot name an Intel one.
     const { dir, lines } = stubDir('build-mac', ['bun']);
-    const r = runStep(BUILD_STEP, dir, { TAG: 'v0.6.0', ARCH: 'universal' });
+    const r = runStep(BUILD_STEP, dir, { TAG: 'v0.6.0', RUNNER_OS: 'macOS', ARCH: 'arm64' });
     expect(r.status).toBe(0);
     // --updater too: the macOS leg is the one that produces the updater
     // archive and its signature, and the tool refuses to start without
     // TAURI_SIGNING_PRIVATE_KEY, so a release without the secret fails in
-    // seconds rather than after a full universal build.
+    // seconds rather than after a full build.
     // No --config: the transition overlay was deleted at the identifier
     // release, when the window became the Mac app under the same name.
     expect(lines('bun')).toEqual([
-      'tools/build-app-bundle.ts\t--version\t0.6.0\t--out\tbundles\t--arch\tuniversal\t--updater',
+      'tools/build-app-bundle.ts\t--version\t0.6.0\t--out\tbundles\t--arch\tarm64\t--updater',
     ]);
     expect(lines('bun')[0]).not.toContain('--target');
   });
 
   test('the version is the TAG with its v stripped, prerelease suffix and all', () => {
     const { dir, lines } = stubDir('build-pre', ['bun']);
-    expect(runStep(BUILD_STEP, dir, { TAG: 'v0.6.0-rc1', ARCH: 'x64' }).status).toBe(0);
+    expect(runStep(BUILD_STEP, dir, { TAG: 'v0.6.0-rc1', RUNNER_OS: 'Linux', ARCH: 'x64' }).status).toBe(0);
     expect(lines('bun')[0]).toContain('0.6.0-rc1');
     expect(lines('bun')[0]).not.toContain('v0.6.0');
   });
@@ -298,13 +304,11 @@ describe("release.yml's smoke step, executed as bash", () => {
     expect(lines('bun')).toEqual([]);
   });
 
-  test('the universal DMG IS smoked, unlike the per-arch pair it replaced', () => {
-    // The x86_64 leg used to exit 0 having run nothing, because its engine
-    // was an Intel binary the arm64 runner could not execute. A universal
-    // DMG has a slice this runner CAN execute, so the bundle that ships is
-    // now one the release has actually opened and run.
-    const { dir, lines } = withBundles('universal', ['Screepub-macOS.dmg']);
-    const r = runStep(SMOKE_STEP, dir, { TAG: 'v0.6.0', ARCH: 'universal' });
+  test('the Mac DMG is smoked like every other bundle', () => {
+    // The Apple silicon image is one slice, the runner's own, so the bundle
+    // that ships is one the release has opened and run in full.
+    const { dir, lines } = withBundles('mac', ['Screepub-macOS.dmg']);
+    const r = runStep(SMOKE_STEP, dir, { TAG: 'v0.6.0', RUNNER_OS: 'macOS', ARCH: 'arm64' });
     expect(r.status).toBe(0);
     expect(lines('bun')).toEqual([
       'tools/smoke-bundle.ts\t--bundle\tbundles/Screepub-macOS.dmg' +
@@ -313,28 +317,20 @@ describe("release.yml's smoke step, executed as bash", () => {
     expect(r.stdout).toContain('1 bundle(s)');
   });
 
-  test('the universal leg still says which slice went untested', () => {
-    // Half of that DMG is an architecture the runner cannot execute, and a
-    // green tick must not imply otherwise. The notice names the slice that
-    // RAN, read off the runner, so it stays true whichever architecture
-    // GitHub's macos image is.
-    const { dir } = withBundles('universal-notice', ['Screepub-macOS.dmg']);
-    const r = runStep(SMOKE_STEP, dir, { TAG: 'v0.6.0', ARCH: 'universal' });
-    expect(r.status).toBe(0);
-    expect(r.stdout).toContain('::notice::');
-    expect(r.stdout).toMatch(/executed nowhere|NOT executed|not executed/);
-    // And it names the real machine rather than a hardcoded guess.
-    const machine = spawnSync('uname', ['-m'], { encoding: 'utf8' }).stdout.trim();
-    expect(r.stdout).toContain(machine);
-  });
-
-  test('a non-universal leg prints no slice notice', () => {
-    // A notice about an untested Intel slice on the Linux leg would be
-    // noise that teaches readers to ignore notices.
-    const { dir } = withBundles('linux-notice', ['Screepub_0.6.0_amd64.deb']);
-    const r = runStep(SMOKE_STEP, dir, { TAG: 'v0.6.0', ARCH: 'x64' });
-    expect(r.status).toBe(0);
-    expect(r.stdout).not.toContain('::notice::');
+  test('no leg prints an untested-slice notice, the Mac one included', () => {
+    // The universal image used to carry an Intel slice no runner executed,
+    // and the step said so. With Intel dropped there is no such slice, and
+    // a notice about one would be noise that teaches readers to ignore
+    // notices.
+    for (const [os, arch, file] of [
+      ['macOS', 'arm64', 'Screepub-macOS.dmg'],
+      ['Linux', 'x64', 'Screepub_0.6.0_amd64.deb'],
+    ]) {
+      const { dir } = withBundles(`notice-${os}`, [file!]);
+      const r = runStep(SMOKE_STEP, dir, { TAG: 'v0.6.0', RUNNER_OS: os!, ARCH: arch! });
+      expect(r.status).toBe(0);
+      expect(r.stdout).not.toContain('::notice::');
+    }
   });
 
   test('a failing smoke-bundle stops the step rather than being swallowed by the loop', () => {
