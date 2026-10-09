@@ -424,6 +424,12 @@ describe('cli --progress', () => {
     const percents = ticks.map((t: { percent: number }) => t.percent);
     expect([...percents].sort((a, b) => a - b)).toEqual(percents);
     expect(percents.at(-1)).toBe(100);
+
+    // The book starts being built while the bar still says 85: that first
+    // render tick must be said, or the window keeps saying "Reading page M
+    // of M" until the book is done.
+    const firstRender = ticks.findIndex((t) => t.stage === 'render');
+    expect(ticks[firstRender].percent).toBeLessThan(100);
   }, 60000);
 
   test('is opt-in: no --progress means no stderr', async () => {

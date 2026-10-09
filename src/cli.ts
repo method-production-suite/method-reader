@@ -1213,14 +1213,19 @@ async function main() {
   // Ticks are throttled to whole percents so a 300-page script emits ~100
   // lines rather than one per page per stage.
   let lastPercent = -1;
+  let lastStage: ConvertStage | null = null;
   const onProgress = values.progress
     ? (stage: ConvertStage, fraction: number, reading?: { page: number; pages: number }) => {
         const percent = Math.round(fraction * 100);
         // The last page is always said, even on a percent already said, so
         // "Reading page N of M" ends on M rather than a page short of it.
         const last = reading !== undefined && reading.page === reading.pages;
-        if (percent === lastPercent && !last) return;
+        // A new stage is always said too: the first render tick shares the
+        // last parse tick's percent, and the window learns the book is
+        // being built only from it.
+        if (percent === lastPercent && stage === lastStage && !last) return;
         lastPercent = percent;
+        lastStage = stage;
         const line = reading === undefined ? { stage, percent } : { stage, percent, ...reading };
         process.stderr.write(`${JSON.stringify({ progress: line })}\n`);
       }
