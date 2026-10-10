@@ -33,6 +33,7 @@ import { idKey, kf8Markup, type ResourceRef } from './chunk';
 import { readEpub, splitFragment, type EpubBook, type EpubTocEntry } from './epub';
 import { chunkIndex, guideIndex, ncxIndex, skelIndex, utf8Text, type GuideEntry, type NcxEntry } from './index';
 import { palmdocCompress } from './palmdoc';
+import { AZW3_REVISION_EXTH, AZW3_WRITER_REVISION } from './revision';
 import { encodeTrailingData, trailingByteSequences } from './tbs';
 
 const RECORD_SIZE = 4096;
@@ -276,6 +277,9 @@ export function buildAzw3FromBook(book: EpubBook): Uint8Array {
   exth.push(exthNumber(125, resourceBytes.length));
   if (resourceBytes.length > 0) exth.push(exthNumber(131, 0));
   exth.push(exthRecord(528, enc.encode('true')));
+  // Which writer made this file (revision.ts): the staleness rule rebuilds
+  // an .azw3 from an older one. No reader acts on the record.
+  exth.push(exthNumber(AZW3_REVISION_EXTH, AZW3_WRITER_REVISION));
   const exthBody = concatBytes(exth.map((r) => r.toUint8Array()));
   const exthPad = 4 - (exthBody.length % 4); // always at least one byte
   const exthBlock = new ByteWriter()

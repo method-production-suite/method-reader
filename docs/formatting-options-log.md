@@ -1926,6 +1926,16 @@ engine needs to change.
   thumbnail beside it is missing here. And one deliberate departure in
   the chunker: a text run too long for one fragment is never cut inside
   an entity, where Calibre's `chunk_up_text` would cut "&amp;" in two.
+- **The writer revision (2026-10-10):** every AZW3 we write carries
+  `AZW3_WRITER_REVISION` (`src/azw3/revision.ts`) as EXTH 0x5350, a
+  number no Kindle, Calibre or KindleUnpack reads (Amazon's and Calibre's
+  run 1-4, 100-209, 300, 401-453 and 501-544, and both readers skip a
+  number they do not know). The staleness rule counts an `.azw3` as
+  current only when it is newer than its EPUB AND carries this revision or
+  a later one, so a fixed writer reaches the files already beside the
+  books, and a Calibre-made `.azw3` (no revision) is rebuilt as ours on
+  its next export rather than reused under the Beta badge. Bump the
+  constant whenever the output changes in a way a device could notice.
 - **A second reader (2026-10-10):** KindleUnpack, which shares no code
   with this writer or with Calibre, unpacks every committed fixture's AZW3
   and the five real scripts in the corpus that convert, and gives back

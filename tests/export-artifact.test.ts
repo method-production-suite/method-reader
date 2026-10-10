@@ -27,6 +27,7 @@ import {
 import { kfxSibling, KfxToolchainNotReadyError } from '../src/export/kfx';
 import { CalibreMissingError, CalibreFailedError } from '../src/export/calibre';
 import { readKf8 } from './helpers/kf8-reader';
+import { stampedAzw3 } from './helpers/stamped-azw3';
 
 const SCRATCH = mkdtempSync(join(tmpdir(), 'screepub-export-artifact-'));
 afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
@@ -373,7 +374,7 @@ test('a fresh .azw3 is reused, not rebuilt', async () => {
   const epub = join(dir, 'Script.epub');
   writeFileSync(epub, 'epub');
   const azw3 = azw3Sibling(epub);
-  writeFileSync(azw3, 'existing-azw3');
+  writeFileSync(azw3, stampedAzw3());
   const now = new Date();
   utimesSync(epub, new Date(now.getTime() - 10_000), new Date(now.getTime() - 10_000));
   utimesSync(azw3, now, now);
@@ -390,7 +391,7 @@ test('a fresh .azw3 is reused, not rebuilt', async () => {
   // A build would have failed on this placeholder EPUB, and announced
   // itself first.
   expect(out).toBe(azw3);
-  expect(readFileSync(azw3, 'utf8')).toBe('existing-azw3');
+  expect(new Uint8Array(readFileSync(azw3))).toEqual(stampedAzw3());
   expect(stages).toEqual([]);
 });
 
@@ -439,7 +440,8 @@ function withSibling(ext: string | null, fresh: boolean): string {
   utimesSync(epub, epubAt, epubAt);
   if (ext !== null) {
     const sibling = join(dir, `Script.${ext}`);
-    writeFileSync(sibling, ext);
+    // An .azw3 is current only when this writer revision made it.
+    writeFileSync(sibling, ext === 'azw3' ? stampedAzw3() : ext);
     const at = new Date(fresh ? now : now - 10_000);
     utimesSync(sibling, at, at);
   }
@@ -496,7 +498,7 @@ test('a fresh plan is what the ladder hands back, untouched', async () => {
     epub, fountainPath: null, format: DEFAULT_FORMAT_OPTIONS, calibreAvailable: true, kfxReady: false,
   });
   expect(out).toBe(plan.path);
-  expect(readFileSync(out, 'utf8')).toBe('azw3');
+  expect(new Uint8Array(readFileSync(out))).toEqual(stampedAzw3());
 });
 
 test('an explicit MOBI rung writes the .mobi and leaves the EPUB, and every sibling built from it, alone', async () => {
@@ -508,7 +510,7 @@ test('an explicit MOBI rung writes the .mobi and leaves the EPUB, and every sibl
   const epub = join(dir, 'Script.epub');
   writeFileSync(epub, 'the book as it is');
   const azw3 = azw3Sibling(epub);
-  writeFileSync(azw3, 'azw3');
+  writeFileSync(azw3, stampedAzw3());
   const past = new Date(Date.now() - 60_000);
   utimesSync(epub, past, past);
   const later = new Date(Date.now() - 30_000);

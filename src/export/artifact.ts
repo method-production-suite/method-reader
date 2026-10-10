@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { writeFileAtomicSync } from '../atomic-write';
+import { AZW3_WRITER_REVISION, azw3RevisionOfFile } from '../azw3/revision';
 import { buildAzw3 } from '../azw3/writer';
 import { convertFountain } from '../convert';
 import { readImages } from '../library-images';
@@ -65,7 +66,12 @@ export interface KindleArtifactPlan {
 export function rungPlan(rung: KindleRung, epub: string): KindleArtifactPlan {
   const path = rung === 'kfx' ? kfxSibling(epub) : rung === 'azw3' ? azw3Sibling(epub) : mobiSibling(epub);
   const builtBy = rung === 'kfx' ? 'calibre' : 'screepub';
-  return { path, fresh: !needsRegeneration(path, epub), builtBy, bookDate: modifiedDate(epub) };
+  // The AZW3 must also come from this writer revision or a later one
+  // (azw3/revision.ts): an .azw3 with none (Calibre's, or ours from before
+  // the stamp) or an older one is rebuilt, so a fixed writer reaches it.
+  const current = !needsRegeneration(path, epub)
+    && (rung !== 'azw3' || (azw3RevisionOfFile(path) ?? 0) >= AZW3_WRITER_REVISION);
+  return { path, fresh: current, builtBy, bookDate: modifiedDate(epub) };
 }
 
 /** The rung freshKindleArtifact takes on this machine, and whether it would

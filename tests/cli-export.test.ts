@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, test, expect, beforeEach, afterEach } from 'bun:test';
+import { stampedAzw3 } from './helpers/stamped-azw3';
 import {
   chmodSync,
   cpSync,
@@ -219,7 +220,7 @@ describe('exportCommand', () => {
   // emits would fail this.
   test('a fresh .azw3 beside the EPUB is reused with no invented stages', async () => {
     const azw3Path = join(dir, 'Script.azw3');
-    writeFileSync(azw3Path, 'already-built');
+    writeFileSync(azw3Path, stampedAzw3());
     const now = new Date();
     utimesSync(epub, new Date(now.getTime() - 10_000), new Date(now.getTime() - 10_000));
     utimesSync(azw3Path, now, now);
@@ -230,7 +231,7 @@ describe('exportCommand', () => {
     );
     expect(result.extension).toBe('azw3');
     expect(result.path).toBe(azw3Path);
-    expect(readFileSync(result.path, 'utf8')).toBe('already-built');
+    expect(new Uint8Array(readFileSync(result.path))).toEqual(stampedAzw3());
     expect(result.stages).toEqual([]);
   });
 
@@ -605,7 +606,7 @@ describe('exportCommand --check: which Kindle file, and whether it is built, wit
 
   test('Calibre alone, with an .azw3 newer than the book: azw3, fresh, and Screepub builds it', async () => {
     older(epub);
-    writeFileSync(join(dir, 'Script.azw3'), 'azw3');
+    writeFileSync(join(dir, 'Script.azw3'), stampedAzw3());
     const result = await exportCommand(
       { epub, for: 'kindle', check: true },
       { calibreAvailable: () => true, kfxStatus: async () => calibreOnlyStatus, freshKindleArtifact: never },
@@ -1048,7 +1049,9 @@ describe('export --for one named file type', () => {
   }
   function freshSibling(ext: string): string {
     const path = join(dir, `Script.${ext}`);
-    writeFileSync(path, `fake-${ext}-bytes`);
+    // An .azw3 is current only when this writer revision made it
+    // (azw3/revision.ts), so its stand-in carries the stamp.
+    writeFileSync(path, ext === 'azw3' ? stampedAzw3() : `fake-${ext}-bytes`);
     const later = new Date(statSync(epub).mtimeMs + 60_000);
     utimesSync(path, later, later);
     return path;
@@ -1320,7 +1323,7 @@ describe('export --for one named file type', () => {
       { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
     );
     expect(result.path).toBe(azw3);
-    expect(readFileSync(azw3, 'utf8')).toBe('fake-azw3-bytes');
+    expect(new Uint8Array(readFileSync(azw3))).toEqual(stampedAzw3());
   });
 
   test('kfx --check with a fresh sibling reports it, never the AZW3 beside it', async () => {
