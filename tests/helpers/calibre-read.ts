@@ -19,7 +19,12 @@ export function runCalibreTool(tool: string, args: string[], cwd: string): { cod
   return { code: p.exitCode ?? -1, out: `${p.stdout.toString()}\n${p.stderr.toString()}` };
 }
 
-const norm = (s: string) => s.replace(/[\s­]+/g, ' ').trim();
+// Whitespace and soft hyphens folded, and the non-breaking hyphen (U+2011)
+// read as a plain one: Calibre's conversion back to EPUB writes it as "-"
+// (measured on a real script, 2026-10-10, whose AZW3 carried all 332 of
+// them; the structural reader in tests/azw3.test.ts proves our AZW3's text
+// is the EPUB's exactly, so this folds only Calibre's side).
+const norm = (s: string) => s.replace(/\u2011/g, '-').replace(/[\s\u00ad]+/g, ' ').trim();
 
 /** What a reader of an EPUB sees: title, authors, language, the TOC's
  * labels, the text of every block in order, and the pictures. */
@@ -44,7 +49,7 @@ export async function viewOfOurEpub(bytes: Uint8Array): Promise<BookView> {
     title: book.title,
     authors: book.authors,
     language: book.language,
-    toc: book.toc.map((t) => t.title),
+    toc: book.toc.map((t) => norm(t.title)),
     blocks: bodies.flatMap((b) => blocksOf(b)),
     text: norm(bodies.map((b) => textContent(b)).join(' ')),
     images: book.images.map((i) => i.bytes),
