@@ -122,7 +122,9 @@ export interface RouteOptions {
   epub?: string;
   /** The two saves only: an absolute path, as a save dialog hands back. */
   out?: string;
-  /** save-kindle only: what a MOBI rebuild needs. */
+  /** save-kindle only, and optional: the Kindle file is made from the EPUB.
+   * Passed on to the export, where it settles which script's settings are
+   * read. */
   fountain?: string;
   optionsJson?: string;
 }

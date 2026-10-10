@@ -214,6 +214,7 @@ const OUTPUTS = [
   ['--fountain', 'x.fountain'],
   ['--preview-html', 'x.html'],
   ['--fdx', 'x.fdx'],
+  ['--azw3', 'x.azw3'],
 ] as const;
 
 describe('an output folder that does not exist', () => {

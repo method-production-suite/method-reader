@@ -31,7 +31,7 @@
 // process and any spawn that passes process.env as its env, and nothing
 // else. The engine's own Calibre spawns (src/export/calibre.ts's
 // runCalibre, and kfx.ts's plugin listing and installer) pass it on
-// purpose, so an in-process kfxStatus(), toAzw3() or toKepub() reaches the
+// purpose, so an in-process kfxStatus(), toKfx() or toKepub() reaches the
 // copy. A Bun.spawn with no env at all still gets the environment bun
 // started with. For that, root .env.test sets CALIBRE_CONFIG_DIRECTORY to
 // CALIBRE_CONFIG_GUARD (tools/calibre-config.ts): a path under /dev/null, where Calibre can

@@ -1,9 +1,10 @@
-// EPUB → AZW3/KEPUB via Calibre's ebook-convert. Kindles do NOT index
-// sideloaded EPUBs — a USB copy must be AZW3 (Calibre's "Send to Device"
-// does exactly this conversion first; Send-to-Kindle email/web converts
-// server-side).
-import { accessSync, constants, existsSync, renameSync, rmSync } from 'node:fs';
-import { basename, delimiter, dirname, join } from 'node:path';
+// Finding and running Calibre's command-line tools, for the conversions
+// that still need Calibre: KFX (export/kfx.ts, with Kindle Previewer behind
+// it) and KEPUB. The AZW3 is Screepub's own now (src/azw3/), so no Kindle
+// file but the KFX starts Calibre. Kindles do NOT index sideloaded EPUBs,
+// which is why a USB copy is a KFX or an AZW3.
+import { accessSync, constants, existsSync, renameSync } from 'node:fs';
+import { basename, delimiter, join } from 'node:path';
 import { platform } from 'node:process';
 
 /** Calibre would otherwise undo two Screepub decisions during the convert: it
@@ -185,57 +186,6 @@ export async function runCalibre(
   if (code !== 0) throw new CalibreFailedError(stderr.trim() || `exit ${code}`);
 }
 
-/** The sibling `.azw3` for a given EPUB: same directory, same stem. The one
- * derivation, shared by toAzw3 and the ladder's reuse check (artifact.ts). */
-export function azw3Sibling(epub: string): string {
-  return `${epub.replace(/\.epub$/i, '')}.azw3`;
-}
-
-/** Hidden same-directory scratch the AZW3 conversion writes into, the same
- * shape as kfx.ts's kfxScratchPath and for the same three reasons: same
- * folder so promoting it is a rename, the `.azw3` extension because
- * ebook-convert picks its output format from it, and the leading dot so
- * nothing mistakes an unfinished file for a book. */
-export function azw3ScratchPath(epub: string): string {
-  const stem = basename(epub).replace(/\.epub$/i, '');
-  return join(dirname(epub), `.${stem}.partial.azw3`);
-}
-
-/** Injectable seam, present only so toAzw3 is testable on a machine whose
- * real Calibre sits at a fixed path ahead of PATH (see kfx.ts's KfxDeps). */
-export interface Azw3Deps {
-  tool?: () => string | null;
-  /** How long the conversion may run; CONVERSION_TIMEOUT_MS unless a test
-   * needs to see a timeout in milliseconds. */
-  timeoutMs?: number;
-}
-
-/** Convert an EPUB to AZW3 next to it (~1s). Always converts: whether an
- * existing .azw3 is fresh enough to reuse is the ladder's call
- * (artifact.ts), by the same rule as the KFX and MOBI rungs. Because it
- * reuses, a half-written file must never sit at the final path (it would be
- * newer than its EPUB and trusted as fresh forever), so the conversion
- * writes to a scratch file and renames it into place, as toKfx does. */
-export async function toAzw3(epub: string, deps: Azw3Deps = {}): Promise<string> {
-  const tool = (deps.tool ?? (() => calibreTool('ebook-convert')))();
-  if (!tool) throw new CalibreMissingError();
-  const azw3 = azw3Sibling(epub);
-  const scratch = azw3ScratchPath(epub);
-  try {
-    await runCalibre(tool, [epub, scratch, ...CALIBRE_FORMAT_GUARDS], process.env, deps.timeoutMs);
-    if (!existsSync(scratch)) {
-      throw new CalibreFailedError('ebook-convert exited cleanly but produced no .azw3');
-    }
-    // No delete first, as in toKfx: the rename replaces an older .azw3 in
-    // one step, and a failed one leaves it where it was.
-    renameSync(scratch, azw3);
-  } catch (error) {
-    rmSync(scratch, { force: true });
-    throw error;
-  }
-  return azw3;
-}
-
 /** Convert an EPUB to KEPUB for Kobo's own renderer (Calibre 7.1+ emits
  * KEPUB with sentence-level koboSpan markup when the output extension is
  * `.kepub`). Two-step, matching the Swift app's converter exactly: ebook-convert
@@ -246,8 +196,8 @@ export async function toAzw3(epub: string, deps: Azw3Deps = {}): Promise<string>
  * extension the Kobo renderer selects on.
  *
  * DELIBERATE DIVERGENCE from the Swift app's converter (2026-09-12): the
- * Swift passed the guards to toAzw3 but not here, and this port passes them to
- * both. That difference was carried across faithfully at first, on the
+ * Swift passed the guards to its AZW3 conversion but not here, and this port
+ * passed them to both (the AZW3 is Screepub's own now, and KFX takes them). That difference was carried across faithfully at first, on the
  * rule that device behavior nobody can re-verify gets preserved rather
  * than "fixed" — but the rule does not apply, because the guards are not
  * device behavior. `--disable-remove-fake-margins` governs how Calibre

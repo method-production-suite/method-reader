@@ -1,7 +1,7 @@
 // What to tell a person about the KFX rung, and what they can do about it.
 //
 // kfx.ts PROBES (is Calibre there, is Previewer there, is the plugin in
-// Calibre) and formats.ts owns the LADDER (KFX, else AZW3, else MOBI). This
+// Calibre) and formats.ts owns the LADDER (KFX, else Screepub's own AZW3). This
 // file turns the probe into a three-step checklist with one fix per missing
 // step and one sentence saying what a Kindle gets today. The CLI's
 // `kfx-status` prints it and the window's send panel draws it, so the two
@@ -114,15 +114,16 @@ export function kfxSetup(status: KfxStatus, platform: string): KfxSetup {
     },
   ];
   // The ladder's own answer for "not KFX", so this sentence cannot disagree
-  // with what the export actually builds.
-  const today = fileExtension('kindle', { calibreAvailable: status.calibre, kfxReady: false }).toUpperCase();
+  // with what the export actually builds: the AZW3 Screepub writes itself
+  // (beta), whether or not Calibre is installed.
+  const today = `${fileExtension('kindle', { calibreAvailable: status.calibre, kfxReady: false }).toUpperCase()} (beta)`;
   let summary: string;
   if (status.ready) {
     summary = 'Kindles get KFX, the best quality Screepub can make.';
   } else if (!possible) {
-    summary = `Amazon does not make Kindle Previewer for ${systemName(platform)}, so Kindles get ${today}.`;
+    summary = `Amazon does not make Kindle Previewer for ${systemName(platform)}, so Kindles get ${today}, which Screepub makes itself.`;
   } else {
-    summary = `Kindles get ${today} for now. KFX looks better, and needs the three free tools below.`;
+    summary = `Kindles get ${today} for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.`;
   }
   return { ready: status.ready, possible, summary, steps };
 }

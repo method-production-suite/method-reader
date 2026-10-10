@@ -261,7 +261,7 @@ describe('human output', () => {
       platform: 'darwin',
     });
     expect(setupLines(setup)).toEqual([
-      'Kindles get AZW3 for now. KFX looks better, and needs the three free tools below.',
+      'Kindles get AZW3 (beta) for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.',
       '  Calibre           installed',
       '  Kindle Previewer  not installed: https://kdp.amazon.com/en_US/help/topic/G202131170',
       '  KFX plugin        not installed: run screepub kfx-install',

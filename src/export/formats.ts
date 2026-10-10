@@ -21,13 +21,15 @@ export interface ToolchainState {
   kfxReady: boolean;
 }
 
-/** The rung the ladder takes on this machine, best first: KFX (Enhanced
- * Typesetting: keeps hold, device-verified 2026-07-29) when the full
- * toolchain is present; AZW3 with Calibre alone; the engine's own MOBI with
- * nothing. Registry §8b has the verdict behind the order. */
+/** The rung the ladder takes on this machine: KFX (Enhanced Typesetting:
+ * keeps hold, device-verified 2026-07-29) when the full toolchain is
+ * present, and otherwise the AZW3 Screepub writes itself (src/azw3/, beta),
+ * on every machine, Calibre or not. Registry §8b has the verdict behind the
+ * order. The engine's MOBI is never the ladder's answer: it is the file for
+ * the oldest Kindles, which a person asks for by name. `calibreAvailable`
+ * is no longer consulted: Calibre matters only to KFX now. */
 export function ladderRung(state: ToolchainState): KindleRung {
-  if (state.kfxReady) return 'kfx';
-  return state.calibreAvailable ? 'azw3' : 'mobi';
+  return state.kfxReady ? 'kfx' : 'azw3';
 }
 
 export function fileExtension(format: ExportFormat, state: ToolchainState): string {
@@ -39,10 +41,11 @@ export function formatLabel(format: ExportFormat, state: ToolchainState): string
   if (format === 'epub') return 'EPUB: for emailing to Kindle, and most e-readers';
   if (format === 'fountain') return 'Fountain: the script as plain text, for screenwriting apps';
   if (format === 'kfx') return 'KFX: for modern Kindles over USB, the best layout';
-  if (format === 'azw3') return 'AZW3: for older Kindles over USB';
+  if (format === 'azw3') return 'AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed';
   if (format === 'mobi') return 'MOBI: for the oldest Kindles';
   if (format === 'fdx') return 'FDX: the script to keep editing, in Final Draft and most screenwriting apps';
   const ext = fileExtension(format, state).toUpperCase();
   const hint = state.kfxReady ? ' (best quality)' : '';
-  return `${ext}: for USB sideload to Kindle${hint}`;
+  const beta = ext === 'AZW3' ? ' (beta)' : '';
+  return `${ext}${beta}: for USB sideload to Kindle${hint}`;
 }

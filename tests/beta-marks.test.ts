@@ -5,9 +5,10 @@
 // decision behind it are pinned here.
 //
 // Beta, here: it works in our tests, but has not been tried widely on real
-// devices or apps yet. Four things carry it: FDX export, pictures in books
-// (the title card as the cover among them), eject on Windows and Linux, and
-// the device-request and route-report buttons.
+// devices or apps yet. Five things carry it: FDX export, pictures in books
+// (the title card as the cover among them), eject on Windows and Linux, the
+// device-request and route-report buttons, and the AZW3 Screepub writes
+// itself.
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,6 +35,13 @@ describe('the CLI help says beta beside each beta feature', () => {
     expect(helpEntry(help('--help'), '--fdx <file>')).toContain('(beta)');
   });
 
+  test('--azw3 on a conversion, and the AZW3 in export', () => {
+    expect(helpEntry(help('--help'), '--azw3 <file>')).toContain('(beta)');
+    const text = help('export', '--help');
+    expect(flat(text)).toContain('an AZW3 (beta) that Screepub writes itself');
+    expect(helpEntry(text, '--for <type>')).toContain('azw3 (beta)');
+  });
+
   test('pictures in books, in the conversion help', () => {
     const text = flat(help('--help'));
     expect(text).toContain('Pictures (beta) carried out of a PDF');
@@ -54,10 +62,11 @@ describe('the CLI help says beta beside each beta feature', () => {
 
   test('beta is said exactly where it belongs, and nowhere else', () => {
     const count = (t: string) => (t.match(/beta/gi) ?? []).length;
-    // Pictures, --fdx and eject in the conversion help.
-    expect(count(help('--help'))).toBe(3);
-    // The fdx usage line, its paragraph and the --for list.
-    expect(count(help('export', '--help'))).toBe(3);
+    // Pictures, --fdx, --azw3 and eject in the conversion help.
+    expect(count(help('--help'))).toBe(4);
+    // The fdx usage line, its paragraph, the AZW3 in the kindle paragraph,
+    // and azw3 and fdx in the --for list.
+    expect(count(help('export', '--help'))).toBe(5);
     expect(count(help('eject', '--help'))).toBe(1);
   });
 });

@@ -128,7 +128,7 @@ describe('the test-run guard: no test can reach the real Calibre settings folder
   }, 30_000);
 
   test('the engine hands Calibre the scratch copy, not the environment bun started with', async () => {
-    // runCalibre is how toAzw3, toKepub and toKfx start ebook-convert. A
+    // runCalibre is how toKepub and toKfx start ebook-convert. A
     // stand-in tool writes down the folder it was given.
     if (platform === 'win32') return;
     const dir = mkdtempSync(join(SCRATCH, 'fake-calibre-'));

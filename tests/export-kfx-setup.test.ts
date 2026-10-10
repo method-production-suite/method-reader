@@ -124,19 +124,14 @@ describe('kfxSetup', () => {
     expect(step(kfxSetup(s, 'darwin'), 'plugin').installed).toBe(false);
   });
 
-  test('the summary names the rung a Kindle gets today, from the ladder', () => {
-    expect(kfxSetup(status(true, false, false), 'darwin').summary).toBe(
-      'Kindles get AZW3 for now. KFX looks better, and needs the three free tools below.',
-    );
-    expect(kfxSetup(status(false, false, false), 'win32').summary).toBe(
-      'Kindles get MOBI for now. KFX looks better, and needs the three free tools below.',
-    );
-    expect(kfxSetup(status(true, false, false), 'linux').summary).toBe(
-      'Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3.',
-    );
-    expect(kfxSetup(status(false, false, false), 'linux').summary).toBe(
-      'Amazon does not make Kindle Previewer for Linux, so Kindles get MOBI.',
-    );
+  test('the summary names the rung a Kindle gets today, from the ladder: our AZW3, Calibre or not', () => {
+    const today = 'Kindles get AZW3 (beta) for now, which Screepub makes itself. '
+      + 'KFX looks better, and needs the three free tools below.';
+    expect(kfxSetup(status(true, false, false), 'darwin').summary).toBe(today);
+    expect(kfxSetup(status(false, false, false), 'win32').summary).toBe(today);
+    const linux = 'Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3 (beta), which Screepub makes itself.';
+    expect(kfxSetup(status(true, false, false), 'linux').summary).toBe(linux);
+    expect(kfxSetup(status(false, false, false), 'linux').summary).toBe(linux);
   });
 
   test('possible is exactly the two platforms Amazon makes Previewer for', () => {

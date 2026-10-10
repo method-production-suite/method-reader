@@ -6,11 +6,8 @@ import { platform } from 'node:process';
 import JSZip from 'jszip';
 import {
   CALIBRE_FORMAT_GUARDS,
-  azw3ScratchPath,
-  azw3Sibling,
   calibreTool,
   isCalibreAvailable,
-  toAzw3,
   toKepub,
   runCalibre,
   CONVERSION_TIMEOUT_MS,
@@ -96,10 +93,6 @@ const withCalibre = calibreTool('ebook-convert') ? bunTest : bunTest.skip;
 // to test when Calibre is genuinely absent from this machine.
 const withoutCalibre = calibreTool('ebook-convert') ? bunTest.skip : bunTest;
 
-withoutCalibre('toAzw3 throws CalibreMissingError, specifically, when Calibre is absent', async () => {
-  await expect(toAzw3('/tmp/screepub-does-not-exist.epub')).rejects.toThrow(CalibreMissingError);
-});
-
 withoutCalibre('toKepub throws CalibreMissingError, specifically, when Calibre is absent', async () => {
   await expect(toKepub('/tmp/screepub-does-not-exist.epub')).rejects.toThrow(CalibreMissingError);
 });
@@ -146,7 +139,7 @@ test('toKepub converts to .kepub then renames to .kepub.epub (fake ebook-convert
 
     // toKepub converts to the RAW .kepub path (the extension is what makes
     // ebook-convert emit KEPUB at all) and passes the same guard trio as
-    // toAzw3. The Swift app's converter omitted the guards here; this port applies
+    // toKfx. The Swift app's converter omitted the guards here; this port applies
     // them deliberately, because remove-fake-margins is an input-side
     // heuristic that strips the dialogue column's side margins before the
     // output format is even chosen -- see the note on toKepub. A regression
@@ -158,82 +151,6 @@ test('toKepub converts to .kepub then renames to .kepub.epub (fake ebook-convert
   }
 });
 
-// --- toAzw3 driven for real against a fake ebook-convert, through the same
-// tool seam toKfx has (a machine with Calibre installed resolves the real
-// one from a fixed path before PATH, so PATH-shadowing cannot reach it).
-// The AZW3 rung now reuses a fresh .azw3 (artifact.ts), so a half-written
-// one must never sit at the final path: it would be newer than its EPUB and
-// trusted as fresh forever. Same scratch-then-rename discipline as toKfx.
-
-function fakeAzw3Tool(exitCode: number): { tool: string; argvLog: string; epub: string } {
-  const toolDir = mkdtempSync(join(SCRATCH, 'azw3-fake-'));
-  const tool = join(toolDir, 'ebook-convert');
-  const argvLog = join(toolDir, 'argv.log');
-  // Logs argv one entry per line, writes something to the output path it
-  // was told to (a partial file, when it then fails), and exits as told.
-  writeFileSync(
-    tool,
-    `#!/bin/sh\nfor a in "$@"; do echo "$a"; done > "${argvLog}"\necho converted > "$2"\nexit ${exitCode}\n`,
-  );
-  chmodSync(tool, 0o755);
-  const epub = join(mkdtempSync(join(SCRATCH, 'azw3-work-')), 'book.epub');
-  writeFileSync(epub, 'fake epub bytes');
-  return { tool, argvLog, epub };
-}
-
-test('azw3Sibling: same directory, same stem, .azw3, whatever the case of .epub', () => {
-  expect(azw3Sibling(join('/tmp', 'lib', 'Script.epub'))).toBe(join('/tmp', 'lib', 'Script.azw3'));
-  expect(azw3Sibling(join('/tmp', 'lib', 'Script.EPUB'))).toBe(join('/tmp', 'lib', 'Script.azw3'));
-});
-
-test('the AZW3 scratch path is hidden, same-directory, and keeps the .azw3 extension', () => {
-  // ebook-convert picks its output format from the extension, so the
-  // scratch must end in .azw3; the leading dot keeps it out of sight.
-  expect(azw3ScratchPath(join('/tmp', 'dir', 'Book.EPUB'))).toBe(join('/tmp', 'dir', '.Book.partial.azw3'));
-});
-
-test('toAzw3 converts into the scratch path, then renames it onto azw3Sibling', async () => {
-  if (platform === 'win32') return; // the fake tool is a /bin/sh script
-  const { tool, argvLog, epub } = fakeAzw3Tool(0);
-  writeFileSync(azw3Sibling(epub), 'an older conversion');
-
-  const out = await toAzw3(epub, { tool: () => tool });
-
-  expect(out).toBe(azw3Sibling(epub));
-  const argv = readFileSync(argvLog, 'utf8').split('\n').filter(Boolean);
-  expect(argv).toEqual([epub, azw3ScratchPath(epub), ...CALIBRE_FORMAT_GUARDS]);
-  expect(existsSync(azw3ScratchPath(epub))).toBe(false); // renamed away
-  expect(readFileSync(out, 'utf8')).toBe('converted\n'); // replaced the older one
-});
-
-test('a failed conversion leaves no scratch behind and never touches the .azw3 already there', async () => {
-  if (platform === 'win32') return;
-  const { tool, epub } = fakeAzw3Tool(1);
-  writeFileSync(azw3Sibling(epub), 'an older conversion');
-
-  await expect(toAzw3(epub, { tool: () => tool })).rejects.toThrow(CalibreFailedError);
-
-  expect(existsSync(azw3ScratchPath(epub))).toBe(false);
-  expect(readFileSync(azw3Sibling(epub), 'utf8')).toBe('an older conversion');
-});
-
-test('a tool that exits cleanly but writes nothing is a failure, not a missing file returned', async () => {
-  if (platform === 'win32') return;
-  const toolDir = mkdtempSync(join(SCRATCH, 'azw3-silent-'));
-  const tool = join(toolDir, 'ebook-convert');
-  writeFileSync(tool, '#!/bin/sh\nexit 0\n');
-  chmodSync(tool, 0o755);
-  const epub = join(mkdtempSync(join(SCRATCH, 'azw3-work-')), 'book.epub');
-  writeFileSync(epub, 'fake epub bytes');
-
-  await expect(toAzw3(epub, { tool: () => tool })).rejects.toThrow('produced no .azw3');
-  expect(existsSync(azw3Sibling(epub))).toBe(false);
-});
-
-test('toAzw3 with no tool at all is CalibreMissingError', async () => {
-  await expect(toAzw3(join(SCRATCH, 'never.epub'), { tool: () => null })).rejects.toThrow(CalibreMissingError);
-});
-
 async function minimalEpub(): Promise<string> {
   const dir = mkdtempSync(join(SCRATCH, 'test-'));
   const epub = join(dir, 'book.epub');
@@ -241,12 +158,6 @@ async function minimalEpub(): Promise<string> {
   writeFileSync(epub, result.epub);
   return epub;
 }
-
-withCalibre('toAzw3 produces an .azw3 beside the EPUB', async () => {
-  const out = await toAzw3(await minimalEpub());
-  expect(out.endsWith('.azw3')).toBe(true);
-  expect(readFileSync(out).length).toBeGreaterThan(0);
-}, 120_000);
 
 withCalibre('toKepub names its output .kepub.epub AND emits koboSpan markup', async () => {
   // The filename alone proves nothing: the BROKEN single-step form produces
@@ -280,6 +191,12 @@ withCalibre('toKepub names its output .kepub.epub AND emits koboSpan markup', as
 // Calibre until that job went with the app. The engine-calibre job in
 // weekly-toolchain.yml runs this file, so the weekly look survives.
 //
+// Screepub writes its own AZW3 now (src/azw3/), so no Kindle file is made
+// this way any more; the check stays because the guards act on how Calibre
+// READS the EPUB, before the output format is chosen, and that reading is
+// the first half of every KFX build (toKfx passes the same trio). An AZW3 is
+// simply the quickest output to explode and look at.
+//
 // What it does NOT prove, measured 2026-10-01 on Calibre 9.11.0: that the
 // flag is still needed. With the flag deleted from the recipe this test
 // stayed green, and so did the Swift check's own hand-built book run the
@@ -296,7 +213,7 @@ function filesUnder(dir: string): string[] {
     .map((e) => join(e.parentPath, e.name));
 }
 
-withCalibreDebug('an AZW3 keeps the dialogue column’s side margins (real Calibre, exploded)', async () => {
+withCalibreDebug('Calibre’s reading of our EPUB keeps the dialogue column’s side margins (real Calibre, an AZW3 exploded)', async () => {
   const dir = mkdtempSync(join(SCRATCH, 'azw3-geometry-'));
   const epub = join(dir, 'book.epub');
   // Two dozen speeches and one line of action, as the Swift check built
@@ -305,7 +222,8 @@ withCalibreDebug('an AZW3 keeps the dialogue column’s side margins (real Calib
   const speech = 'JO\nEnough dialogue that the fake-margin heuristic sees a screenplay.\n\n';
   const result = await convertFountain(`Title: Test\n\nINT. ROOM - DAY\n\nA hallway.\n\n${speech.repeat(24)}`);
   writeFileSync(epub, result.epub);
-  const azw3 = await toAzw3(epub);
+  const azw3 = join(dir, 'book.azw3');
+  await runCalibre(calibreTool('ebook-convert')!, [epub, azw3, ...CALIBRE_FORMAT_GUARDS]);
   const exploded = join(dir, 'exploded');
   await runCalibre(calibreDebug!, ['-x', azw3, exploded]);
 
@@ -399,16 +317,3 @@ test('a Calibre run that outlives its timeout is stopped, children and all, with
   for (let waited = 0; alive(pid) && waited < 2_000; waited += 25) await Bun.sleep(25);
   expect(alive(pid)).toBe(false);
 }, 15_000);
-
-test('toAzw3 that times out leaves no scratch behind and keeps the .azw3 already there', async () => {
-  if (platform === 'win32') return;
-  const { tool } = hangingTool();
-  const epub = join(mkdtempSync(join(SCRATCH, 'azw3-hang-')), 'book.epub');
-  writeFileSync(epub, 'fake epub bytes');
-  writeFileSync(azw3Sibling(epub), 'an older conversion');
-
-  await expect(toAzw3(epub, { tool: () => tool, timeoutMs: 300 })).rejects.toThrow(CalibreTimedOutError);
-
-  expect(existsSync(azw3ScratchPath(epub))).toBe(false);
-  expect(readFileSync(azw3Sibling(epub), 'utf8')).toBe('an older conversion');
-});

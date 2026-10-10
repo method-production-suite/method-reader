@@ -42,6 +42,7 @@ import { updateDecisionCommand, updateShouldCheckCommand } from './cli-update';
 import { settingsCommand } from './cli-settings';
 import { exportCommand } from './cli-export';
 import { fountainToFdx } from './fdx/fdx';
+import { buildAzw3 } from './azw3/writer';
 import { appSettingsCommand } from './cli-app-settings';
 import { revealCommand } from './cli-reveal';
 import { ejectCommand } from './cli-eject';
@@ -91,7 +92,7 @@ they have been tried on an older Kindle.
 Options:
   -o, --output <file>    EPUB output path (default: <input>.epub). Its folder
                          must already exist, and so must --fountain's,
-                         --preview-html's and --fdx's
+                         --preview-html's, --fdx's and --azw3's
   --library              write into the library folder instead of beside the
                          input: <library>/<stem>/<stem>.epub. The library is
                          <Documents>/Screepub: ~/Documents on macOS and
@@ -105,7 +106,9 @@ Options:
   --title <text>         override detected title
   --author <text>        override detected author
   --force                convert even if it doesn't look like a screenplay
-  --mobi                 also write a .mobi (for USB sideload to Kindle)
+  --mobi                 also write a .mobi (for the oldest Kindles over USB)
+  --azw3 <file>          also write an AZW3 for Kindles over USB (beta),
+                         made by Screepub from the EPUB, nothing else needed
   --preview-html <file>  also write the script as one self-contained HTML file
   --preview-inline       put that same HTML in the --json result (for the app)
   --fdx <file>           also write the script as a Final Draft file to keep
@@ -209,10 +212,12 @@ Usage:
   screepub export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
-\`screepub send\` moves it. Kindle climbs KFX → AZW3 → MOBI, taking the best
-rung this machine can reach. kfx, azw3 and mobi each make only that file,
-and refuse when this computer lacks its tools. fountain hands over the
-script itself; the copy --out writes leaves out Screepub's own [[fmt: ...]]
+\`screepub send\` moves it. kindle is a KFX where Calibre, its KFX Output
+plugin and Kindle Previewer are all installed, and otherwise an AZW3
+(beta) that Screepub writes itself, with nothing else needed. kfx, azw3
+and mobi each make only that file: kfx refuses when this computer lacks
+its tools, and mobi, for the oldest Kindles, is rebuilt from the
+.fountain. fountain hands over the script itself; the copy --out writes leaves out Screepub's own [[fmt: ...]]
 and [[img: ...]] notes, while the .fountain beside the book keeps them.
 
 fdx (beta) is the script itself, as a Final Draft file you can keep
@@ -223,9 +228,9 @@ the exact page breaks, do not carry over.
 
 Options:
   --for <type>           which file you want (default epub): epub, kindle,
-                         kfx, azw3, mobi, fountain or fdx (beta)
+                         kfx, azw3 (beta), mobi, fountain or fdx (beta)
   --fountain <file>      the script's .fountain: required by mobi, fountain
-                         and fdx, and used to rebuild a MOBI for kindle
+                         and fdx
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
                          extension must match the file produced). An FDX
@@ -374,7 +379,8 @@ Keys:
                          Mac, with Apple Mail as the default mail app). A
                          book over 50 MB is refused: Amazon drops it
   save-epub              save a copy of the EPUB at --out
-  save-kindle            save a Kindle file (KFX, AZW3 or MOBI) at --out
+  save-kindle            save a Kindle file (KFX, or an AZW3 that is beta)
+                         at --out
   kindle-email-setup     open Amazon's settings page, where your Kindle's
                          email address and the approved senders are. Takes
                          no book, and is not remembered
@@ -382,8 +388,8 @@ Keys:
 Options:
   --out <path>           where a save writes the copy: an absolute path whose
                          extension matches the file (the two saves only)
-  --fountain <file>      the script's .fountain, needed to rebuild a MOBI
-                         (save-kindle only)
+  --fountain <file>      the script's .fountain (save-kindle only; the
+                         Kindle file is made from the EPUB, so it is optional)
   --options-json <json>  this script's settings, so a rebuild keeps them
                          (save-kindle only)
   --json                 machine-readable result on stdout (for the app)
@@ -641,6 +647,7 @@ function parseCliArgs() {
       'preview-html': { type: 'string' },
       'preview-inline': { type: 'boolean', default: false },
       fdx: { type: 'string' },
+      azw3: { type: 'string' },
       options: { type: 'string' },
       'options-json': { type: 'string' },
       json: { type: 'boolean', default: false },
@@ -1125,6 +1132,7 @@ async function main() {
     if (values.fountain !== undefined) checkOutputPath('--fountain', values.fountain);
     if (values['preview-html']) checkOutputPath('--preview-html', values['preview-html']);
     if (values.fdx) checkOutputPath('--fdx', values.fdx);
+    if (values.azw3) checkOutputPath('--azw3', values.azw3);
   }
   let format: Record<string, unknown> | undefined;
   if (values.options !== undefined && values['options-json'] !== undefined) {
@@ -1371,6 +1379,13 @@ async function main() {
     mobiPath = `${stem}.mobi`;
     await writeOutput(mobiPath, result.mobi);
   }
+  // Screepub's own AZW3 (src/azw3/, beta), made from the EPUB this run just
+  // wrote: the same bytes every route sends, so the two cannot disagree.
+  let azw3Path: string | undefined;
+  if (values.azw3) {
+    azw3Path = values.azw3;
+    await writeOutput(azw3Path, await buildAzw3(result.epub));
+  }
 
   let fountainPath: string | undefined;
   let imagesPath: string | undefined;
@@ -1392,7 +1407,7 @@ async function main() {
         await writeImages(dir, result.images);
       } catch (err) {
         const refused = unwritableError(
-          dir, err, [epubPath, mobiPath].filter((p): p is string => p !== undefined),
+          dir, err, [epubPath, mobiPath, azw3Path].filter((p): p is string => p !== undefined),
         );
         if (refused) fail(refused);
         throw err;
@@ -1513,6 +1528,7 @@ async function main() {
         spacingRepairs: result.spacingRepairs,
         epubPath,
         mobiPath,
+        azw3Path,
         fountainPath,
         // Two different facts, and both are omitted when they are nothing
         // (JSON.stringify drops an undefined member, as it does for
@@ -1554,7 +1570,7 @@ async function main() {
     );
   }
   for (const w of result.warnings) console.log(`  warning: ${w}`);
-  for (const f of [epubPath, mobiPath, fountainPath, imagesPath, previewPath, fdxPath, debugPath]) {
+  for (const f of [epubPath, mobiPath, azw3Path, fountainPath, imagesPath, previewPath, fdxPath, debugPath]) {
     if (f) console.log(`  wrote ${f}`);
   }
 }

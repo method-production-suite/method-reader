@@ -8312,7 +8312,7 @@ describe('the KFX checklist: decisions', () => {
   const notReady: Setup = {
     ready: false,
     possible: true,
-    summary: 'Kindles get AZW3 for now. KFX looks better, and needs the three free tools below.',
+    summary: 'Kindles get AZW3 (beta) for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.',
     steps: [
       { id: 'calibre', name: 'Calibre', installed: true, fix: null },
       {

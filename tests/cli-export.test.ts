@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exportCommand } from '../src/cli-export';
 import { availableFormats, type FreshKindleArtifactOptions } from '../src/export/artifact';
-import { isCalibreAvailable } from '../src/export/calibre';
+import { readKf8 } from './helpers/kf8-reader';
 import { kfxStatus, type KfxStatus } from '../src/export/kfx';
 import { DEFAULT_FORMAT_OPTIONS, type FormatOptions } from '../src/options';
 
@@ -98,15 +98,13 @@ describe('exportCommand', () => {
     expect(result.stages).toEqual([]);
   });
 
-  // The wrapper must not invent or hardcode its own idea of what this
-  // machine can produce — it has to be exactly what availableFormats says,
-  // computed with the SAME real calibreAvailable this process sees. A
-  // wrapper that always answered ['epub', 'kindle'] (or always just
-  // ['epub']) regardless of the machine would fail this on whichever
-  // environment disagrees with its hardcoded answer.
-  test('available is exactly availableFormats for this machine, not a hardcoded list', async () => {
+  // The wrapper must not invent its own idea of what can be produced: it is
+  // exactly what availableFormats says. Since Screepub writes the AZW3
+  // itself that is the same on every machine: the EPUB and a Kindle file.
+  test('available is exactly availableFormats: the EPUB and a Kindle file, everywhere', async () => {
     const result = await exportCommand({ epub, for: 'epub' });
-    expect(result.available).toEqual(availableFormats(epub, isCalibreAvailable()));
+    expect(result.available).toEqual(availableFormats());
+    expect(result.available).toEqual(['epub', 'kindle']);
   });
 
   // --- Kindle rung selection, driven deterministically through the seam ---
@@ -159,7 +157,7 @@ describe('exportCommand', () => {
         kfxStatus: async () => calibreOnlyStatus,
         freshKindleArtifact: async (opts) => {
           seen.opts = opts;
-          opts.onStage?.('converting to AZW3 for Kindle…');
+          opts.onStage?.('building the AZW3 for Kindle…');
           return fakeAzw3;
         },
       },
@@ -172,73 +170,66 @@ describe('exportCommand', () => {
     expect(result.stages.join(' ')).toContain('AZW3');
   });
 
-  test('kindle rung: neither Calibre nor KFX rebuilds a real MOBI from the .fountain', async () => {
-    // The bottom rung needs no external toolchain at all — convertFountain
-    // is the engine's own pure-TS code, not Calibre — so this runs through
-    // the REAL ladder (no freshKindleArtifact fake) with only the PROBE
-    // results forced via the seam, proving the wrapper's own detection
-    // actually drives rung selection, not just its plumbing.
+  test('kindle rung: neither Calibre nor KFX builds our own AZW3 from the EPUB', async () => {
+    // The ladder's other rung needs no external toolchain at all: it is the
+    // engine's own writer (src/azw3/), so this runs through the REAL ladder
+    // (no freshKindleArtifact fake) with only the PROBE results forced via
+    // the seam, proving the wrapper's own detection drives rung selection.
     const result = await exportCommand(
       { epub, for: 'kindle', fountain, optionsJson: '{"showSceneNumbers":true}' },
       { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus },
     );
-    expect(result.extension).toBe('mobi');
-    expect(result.path).toBe(join(dir, 'Script.mobi'));
-    expect(existsSync(result.path)).toBe(true);
-    expect(result.stages.join(' ')).toContain('rebuilding');
+    expect(result.extension).toBe('azw3');
+    expect(result.label).toContain('(beta)');
+    expect(result.path).toBe(join(dir, 'Script.azw3'));
+    expect(readKf8(new Uint8Array(readFileSync(result.path))).header.version).toBe(8);
+    expect(result.stages).toEqual(['building the AZW3 for Kindle…']);
   });
 
-  test('kindle rung: neither Calibre nor an existing .mobi refuses deterministically', async () => {
-    let message = '';
-    try {
-      await exportCommand(
-        { epub, for: 'kindle' }, // no fountain: the bottom rung cannot rebuild
-        { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus },
-      );
-    } catch (err) {
-      message = (err as Error).message;
-    }
-    expect(message).toMatch(/\.fountain/);
+  test('kindle rung: the AZW3 needs no .fountain, since it is made from the EPUB', async () => {
+    const result = await exportCommand(
+      { epub, for: 'kindle' },
+      { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus },
+    );
+    expect(result.extension).toBe('azw3');
+    expect(existsSync(result.path)).toBe(true);
   });
 
   // Names the exact defect this piece is guarding against: a wrapper (or a
   // ladder call site) that reuses whatever sits beside the EPUB without
-  // checking the staleness rule. Forced onto the MOBI rung via the seam, so
-  // this asserts on every machine rather than self-skipping wherever real
-  // Calibre happens to be installed.
-  test('a stale .mobi beside the EPUB is rebuilt, not returned as-is', async () => {
-    const mobiPath = join(dir, 'Script.mobi');
-    writeFileSync(mobiPath, 'stale-placeholder');
+  // checking the staleness rule.
+  test('a stale .azw3 beside the EPUB is rebuilt, not returned as-is', async () => {
+    const azw3Path = join(dir, 'Script.azw3');
+    writeFileSync(azw3Path, 'stale-placeholder');
     const past = new Date(Date.now() - 60_000);
-    utimesSync(mobiPath, past, past); // older than the epub -> stale
+    utimesSync(azw3Path, past, past); // older than the epub -> stale
 
     const result = await exportCommand(
       { epub, for: 'kindle', fountain },
       { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus },
     );
-    expect(result.extension).toBe('mobi');
-    expect(result.path).toBe(mobiPath);
+    expect(result.extension).toBe('azw3');
+    expect(result.path).toBe(azw3Path);
     expect(readFileSync(result.path, 'utf8')).not.toBe('stale-placeholder');
-    expect(result.stages.join(' ')).toContain('rebuilding');
+    expect(result.stages.join(' ')).toContain('AZW3');
   });
 
-  // The inverse: a FRESH .mobi must be reused with NO stages at all — a
+  // The inverse: a FRESH .azw3 must be reused with NO stages at all: a
   // wrapper that fabricates a "reusing…" stage the ladder itself never
-  // emits (freshKindleArtifact returns the cached path with no onStage
-  // call) would fail this. Also forced deterministic via the seam.
-  test('a fresh .mobi beside the EPUB is reused with no invented stages', async () => {
-    const mobiPath = join(dir, 'Script.mobi');
-    writeFileSync(mobiPath, 'already-built');
+  // emits would fail this.
+  test('a fresh .azw3 beside the EPUB is reused with no invented stages', async () => {
+    const azw3Path = join(dir, 'Script.azw3');
+    writeFileSync(azw3Path, 'already-built');
     const now = new Date();
     utimesSync(epub, new Date(now.getTime() - 10_000), new Date(now.getTime() - 10_000));
-    utimesSync(mobiPath, now, now);
+    utimesSync(azw3Path, now, now);
 
     const result = await exportCommand(
       { epub, for: 'kindle', fountain },
       { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus },
     );
-    expect(result.extension).toBe('mobi');
-    expect(result.path).toBe(mobiPath);
+    expect(result.extension).toBe('azw3');
+    expect(result.path).toBe(azw3Path);
     expect(readFileSync(result.path, 'utf8')).toBe('already-built');
     expect(result.stages).toEqual([]);
   });
@@ -598,23 +589,23 @@ describe('exportCommand --check: which Kindle file, and whether it is built, wit
     expect(existsSync(join(dir, 'Script.kfx'))).toBe(false);
   });
 
-  test('Calibre alone, with an .azw3 newer than the book: azw3, fresh', async () => {
+  test('Calibre alone, with an .azw3 newer than the book: azw3, fresh, and Screepub builds it', async () => {
     older(epub);
     writeFileSync(join(dir, 'Script.azw3'), 'azw3');
     const result = await exportCommand(
       { epub, for: 'kindle', check: true },
       { calibreAvailable: () => true, kfxStatus: async () => calibreOnlyStatus, freshKindleArtifact: never },
     );
-    expect(result).toMatchObject({ extension: 'azw3', fresh: true, builtBy: 'calibre' });
+    expect(result).toMatchObject({ extension: 'azw3', fresh: true, builtBy: 'screepub' });
   });
 
-  test('no toolchain: the engine’s own mobi, which Screepub builds itself', async () => {
+  test('no toolchain: our own AZW3, which Screepub builds itself, and nothing is built', async () => {
     const result = await exportCommand(
       { epub, for: 'kindle', check: true, fountain },
       { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus, freshKindleArtifact: never },
     );
-    expect(result).toMatchObject({ extension: 'mobi', fresh: false, builtBy: 'screepub' });
-    expect(existsSync(join(dir, 'Script.mobi'))).toBe(false);
+    expect(result).toMatchObject({ extension: 'azw3', fresh: false, builtBy: 'screepub' });
+    expect(existsSync(join(dir, 'Script.azw3'))).toBe(false);
   });
 
   test('an .azw3 older than the book is not fresh', async () => {
@@ -1283,22 +1274,28 @@ describe('export --for one named file type', () => {
     expect(result).toMatchObject({ path: fakeAzw3, format: 'azw3', extension: 'azw3' });
   });
 
-  test('azw3 without Calibre is export-failed', async () => {
-    const answer = await codeAndMessage(exportCommand(
-      { epub, for: 'azw3', fountain },
-      { calibreAvailable: () => false, kfxStatus: kfxNeverAsked, ...safe },
-    ));
-    expect(answer.code).toBe('export-failed');
-    expect(answer.message).toBe('this computer cannot make an AZW3 file without Calibre');
+  test('azw3 without Calibre is built all the same: the engine writes it', async () => {
+    const built: string[] = [];
+    const result = await exportCommand(
+      { epub, for: 'azw3' },
+      {
+        calibreAvailable: () => false,
+        kfxStatus: kfxNeverAsked,
+        ...safe,
+        rungBuilders: { ...safe.rungBuilders, azw3: async (book) => (built.push(book), join(dir, 'Script.azw3')) },
+      },
+    );
+    expect(built).toEqual([epub]);
+    expect(result).toMatchObject({ format: 'azw3', extension: 'azw3' });
   });
 
-  test('azw3 --check with a fresh sibling reports it fresh and built by Calibre, even with KFX ready', async () => {
+  test('azw3 --check with a fresh sibling reports it fresh and built by Screepub, even with KFX ready', async () => {
     const azw3 = freshSibling('azw3');
     const result = await exportCommand(
       { epub, for: 'azw3', check: true },
       { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, ...safe },
     );
-    expect(result).toMatchObject({ path: azw3, format: 'azw3', extension: 'azw3', fresh: true, builtBy: 'calibre' });
+    expect(result).toMatchObject({ path: azw3, format: 'azw3', extension: 'azw3', fresh: true, builtBy: 'screepub' });
     expect(result.bookDate).toBe(statSync(epub).mtimeMs);
   });
 

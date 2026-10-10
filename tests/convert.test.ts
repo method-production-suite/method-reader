@@ -604,7 +604,7 @@ describe('the MOBI is handed the pictures the book is', () => {
   // could leave the book unopenable rather than merely plain. So until
   // `bun tools/mobi-picture-probe.ts` passes on hardware, every route builds
   // it text-only: no picture records, no EXTH 201 cover, the very book from
-  // before pictures. The EPUB (and so AZW3 and KFX, which Calibre builds
+  // before pictures. The EPUB (and so the AZW3 and KFX made
   // from it) keeps its pictures and its cover. The probe opts in with
   // `mobiPictures: true`, as the tests above do to keep the records' code
   // proven for the day the gate opens.

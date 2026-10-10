@@ -66,7 +66,7 @@ export interface MobiArt {
  * leave the whole book unopenable rather than merely without its pictures.
  * So until a device probe passes, every route builds the .mobi text-only: no
  * image records, no EXTH 201 cover, the book from before pictures, byte for
- * byte. The EPUB, and the AZW3 and KFX Calibre builds from it, keep both.
+ * byte. The EPUB, and the AZW3 and KFX made from it, keep both.
  *
  * The probe is `bun tools/mobi-picture-probe.ts --out <folder>`, read on an
  * older Kindle with tools/device-checklist.ts's picture rows. When it passes,

@@ -59,8 +59,8 @@ export interface ExportOptions {
   /** One of EXPORT_FORMATS; 'epub' when absent. */
   for?: string;
   /** The script's .fountain: required by `mobi` (the rebuild), `fountain`
-   * (the file itself) and `fdx` (built from nothing else), and used by the
-   * ladder's MOBI rung. */
+   * (the file itself) and `fdx` (built from nothing else). The ladder no
+   * longer needs it: its rungs build from the EPUB. */
   fountain?: string;
   /** This script's settings, as --options-json carries them elsewhere. */
   optionsJson?: string;
@@ -94,9 +94,10 @@ export interface ExportDeps {
   calibreAvailable?: CalibreProbe;
   kfxStatus?: KfxProbe;
   freshKindleArtifact?: KindleLadder;
-  /** What builds the KFX and AZW3 rungs (the real toKfx and toAzw3 when
-   * absent). The explicit rungs and the default ladder both build through
-   * these, so a test can drive every branch with no Calibre reachable. */
+  /** What builds the KFX and AZW3 rungs (the real toKfx and the engine's
+   * own AZW3 writer when absent). The explicit rungs and the default ladder
+   * both build through these, so a test can drive every branch with no
+   * Calibre reachable. */
   rungBuilders?: RungBuilders;
   /** Where to read the app-wide format defaults from. Defaults to the
    * production app settings file (`appSettingsPath()`); a test points this
@@ -369,7 +370,7 @@ export async function exportCommand(
   const formatOptions = readFormat(options.optionsJson, formatBase);
 
   const calibreAvailable = (deps.calibreAvailable ?? isCalibreAvailable)();
-  const available = availableFormats(options.epub, calibreAvailable);
+  const available = availableFormats();
 
   if (format === 'fountain') {
     // The script for a screenwriting app: no toolchain, no build, always
@@ -464,10 +465,10 @@ export async function exportCommand(
   }
 
   const extension = fileExtension(format, state);
-  // Only now does the wrapper know which rung was actually taken. KFX,
-  // AZW3 and MOBI are three different right answers to the same --out, and
-  // asking any earlier would mean guessing at a toolchain probe the ladder
-  // itself already ran a moment ago.
+  // Only now does the wrapper know which rung was actually taken. KFX and
+  // AZW3 are two different right answers to the same --out, and asking any
+  // earlier would mean guessing at a toolchain probe the ladder itself
+  // already ran a moment ago.
   if (options.out !== undefined) {
     checkOutExtension(options.out, extension);
     path = await resolveOut(path, options.out);
@@ -496,8 +497,8 @@ async function exportRung(
   known: { calibreAvailable: boolean; available: ExportFormat[]; formatOptions: FormatOptions },
 ): Promise<ExportResult> {
   const { calibreAvailable, available, formatOptions } = known;
-  // Only KFX needs Kindle Previewer's status (the ~1s probe); AZW3 needs
-  // Calibre alone and MOBI is the engine's own work.
+  // Only KFX needs Kindle Previewer's status (the ~1s probe); the AZW3 and
+  // the MOBI are the engine's own work and need nothing installed.
   let kfxReady = false;
   if (rung === 'kfx') {
     const kfx = await (deps.kfxStatus ?? realKfxStatus)();
@@ -507,9 +508,6 @@ async function exportRung(
       throw new CliError('export-failed', `this computer cannot make a KFX file yet: ${why}`);
     }
     kfxReady = true;
-  }
-  if (rung === 'azw3' && !calibreAvailable) {
-    throw new CliError('export-failed', 'this computer cannot make an AZW3 file without Calibre');
   }
   const state = { calibreAvailable, kfxReady };
   const extension = fileExtension(rung, state);
