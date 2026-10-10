@@ -49,6 +49,13 @@ bun tools/mobi-picture-probe.ts --out <folder>   # the .mobi picture-size probe 
   renders token text has to strip them; two regexes would drift.
 - `src/epub/` + `src/mobi/` — fountain-js tokens → EPUB3 (jszip) / MOBI 6
   (hand-built PalmDB container for dependency-free USB sideload).
+- `src/azw3/` — the EPUB's own bytes → AZW3 (KF8), with no Calibre: a
+  TypeScript port of Calibre's KF8 writer (writer8/, credited in each file
+  and THIRD-PARTY-NOTICES.md), reusing src/mobi/palmdb.ts's container.
+  BETA until a Kindle has opened one (registry #20). It reads the EPUB
+  back out of its zip rather than rendering tokens, so the AZW3 can never
+  disagree with the book; tests/helpers/kf8-reader.ts reads it back
+  structurally, and tests/azw3-calibre.test.ts through Calibre's reader.
 - `src/fdx/` — fountain-js tokens → Final Draft (.fdx), the third renderer
   of the same tokens, for turning a PDF back into an editable script. Like
   the others it strips notes via notes.ts and asks slug.ts, so a mini-slug
@@ -60,9 +67,9 @@ bun tools/mobi-picture-probe.ts --out <folder>   # the .mobi picture-size probe 
   and format-defaults.json together or it fails. (The Swift app's checks
   pinned the same file until F3; that pin went with the app.)
 - `src/convert.ts` — orchestration + scanned/non-screenplay guards.
-- `src/device/` + `src/export/` — device detection, USB copy, and every
-  send route (Calibre and KFX builds, Books, Mail, Send to Kindle). The
-  engine owns ALL of it.
+- `src/device/` + `src/export/` — device detection, USB copy, the Kindle
+  ladder, and every send route (Calibre's KFX build, our AZW3, Books,
+  Mail, Send to Kindle). The engine owns ALL of it.
 - `desktop/` — the Tauri window. **No logic lives there**: the Rust shell
   spawns the engine sidecar and renders the JSON it prints, and the UI is
   static files with no bundler. See desktop/README.md and ADR 2026-09-12.
@@ -89,14 +96,17 @@ bun tools/mobi-picture-probe.ts --out <folder>   # the .mobi picture-size probe 
   that degrade harmlessly are fine (`opacity` on the page marker is the
   precedent). See docs/screenplay-format-reference.md before touching
   css.ts, and docs/device-map.md §6 for what each renderer honors.
-- **Kindles never index sideloaded EPUBs.** USB = AZW3 via Calibre's
-  ebook-convert (with flags that stop Calibre re-breaking scenes and
-  stripping div margins — see src/export/calibre.ts) or the engine's MOBI.
+- **Kindles never index sideloaded EPUBs.** USB = AZW3 or KFX.
   **2026-07-29: sideloaded KFX renders with Enhanced Typesetting** — keeps
   hold, and it indexes — so KFX (Calibre + jhowell's KFX Output plugin +
-  Kindle Previewer) beats AZW3 whenever that toolchain is present. The
+  Kindle Previewer, through ebook-convert with the flags that stop Calibre
+  re-breaking scenes and stripping div margins — see
+  src/export/calibre.ts) beats AZW3 whenever that toolchain is present. The
   renderer follows the FORMAT, not the delivery route; registry §8b has
-  the full verdict. AZW3/MOBI stay as fallbacks.
+  the full verdict. **2026-10-10: everywhere else the AZW3 is Screepub's
+  own** (src/azw3/, beta, registry #20), even where Calibre is installed;
+  Calibre is for KFX only. The engine's MOBI is the file for the oldest
+  Kindles, asked for by name, never the ladder's answer.
 - **pdf.js:** getDocument TRANSFERS the buffer (never reuse bytes); modern
   build + DOMMatrix shim (legacy build breaks under bun test); fonts only
   resolve after getOperatorList (style detection needs it); the worker is

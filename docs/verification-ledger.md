@@ -61,8 +61,9 @@ its own updater, where it is switched on, installs the window in its place.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0), and
-  the engine's Calibre tests (AZW3, KEPUB, the KFX plugin listing) still
-  pass against Calibre's newest version.
+  the engine's Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
+  own reader opening Screepub's AZW3) still pass against Calibre's newest
+  version.
 
 **Verified by nobody**
 

@@ -1814,6 +1814,10 @@ engine needs to change.
   9.11 to AZW3 and through Kindle Previewer 3 to KFX, and with neither the
   KFX wore Previewer's generated grey placeholder (measured 2026-08-11).
   The EPUB they are built from has the card on no page.
+  **Since 2026-10-10 the AZW3 is Screepub's own (#20)**, made from the same
+  EPUB: it names the card as EXTH 201, a PNG resource record, and Calibre's
+  KF8 reader takes that record as the book's cover, byte for byte (inside
+  `bun test`, 2026-10-10). KFX is still Calibre's.
 - **On a device:** unverified, and the risk is the library grid. Amazon's
   servers delete covers on USB-sent non-Amazon books, deliberately on
   Colorsoft and newer (`docs/device-map.md` §2.1), so a sideloaded `.mobi`,
@@ -1859,3 +1863,93 @@ engine needs to change.
   declarations), `src/mobi/html.ts` (`mobiArt`'s `coverIndex`),
   `src/mobi/writer.ts` (EXTH 201 and its check), `src/convert.ts`
   (`renderBooks`), `src/options.ts`, `src/cli.ts`, `desktop/ui/tune.js`.
+
+## Kindle files
+
+### 20. Screepub's own AZW3 (always on where KFX is not; beta; 2026-10-10)
+- **What:** the Kindle file over USB, wherever the KFX toolchain is not
+  ready, is an AZW3 (KF8) the engine writes itself from the EPUB, with no
+  Calibre. The ladder is KFX when Calibre, the KFX Output plugin and Kindle
+  Previewer are all present (unchanged, optional), and otherwise this AZW3,
+  ALWAYS, even where Calibre is installed (owner, 2026-10-10: ours is fast
+  and the same on every computer; Calibre is for KFX only). The engine's
+  MOBI is no longer a ladder rung: it is the file for the oldest Kindles,
+  asked for by name (`--for mobi`, Save a file). Released as **beta** before
+  any device check, by the owner's choice: the Save a file row and Copy to
+  Kindle carry the Beta badge, the CLI help says "(beta)", the export answer
+  says `"beta": true`.
+- **Why:** the Kindle build was the slowest step in the app, because it
+  started Calibre. Measured inside `bun test` on 2026-10-10 (Calibre 9.11.0,
+  the recipe the ladder used, `ebook-convert` with the format guards):
+  field-station 11 ms against 371 ms, images.pdf 2 ms against 350 ms, the
+  largest real script 40 ms against 848 ms. Those Calibre times are warm;
+  a first start is slower.
+- **How:** `src/azw3/`, a TypeScript port of Calibre 9.11.0's KF8 writer
+  (`src/calibre/ebooks/mobi/writer8/`: main.py, skeleton.py, index.py,
+  exth.py, mobi.py, tbs.py, and the helpers in mobi/utils.py and the
+  PalmDOC compressor), credited in each file and in THIRD-PARTY-NOTICES.md.
+  The input is the EPUB file itself (`epub.ts` reads it back out of its
+  zip), so the AZW3 can never disagree with the book every other route
+  sends. Each spine document is cut into a skeleton and fragments of at
+  most 8192 bytes (`chunk.ts`); every text element gets an `aid`; pictures
+  become `kindle:embed` references and the stylesheet a `kindle:flow`; the
+  text is PalmDOC-compressed into 4096-byte records with their UTF-8
+  overlap and trailing byte sequences; the skeleton, fragment, guide and
+  NCX indices, FDST, the pictures as resource records, FLIS, FCIS and EOF
+  follow, behind a version 8 record 0 (`writer.ts`). The PalmDB container
+  and EXTH record shape are the MOBI's (`src/mobi/palmdb.ts`). KF8 only:
+  no joint MOBI 6 + KF8 file.
+- **What carries over from the EPUB:** every word, in order; the title
+  page (its own skeleton); the scene sections and their ids; the
+  stylesheet, verbatim, keeps and margins included (#2, #5a, #8b); the
+  scene TOC as the NCX; the landmarks' bodymatter as the guide's start
+  entry (`text`) and EXTH 116, so the book opens past the title page where
+  Begin Reading lands; title, author, language and the identifier (as EXTH
+  113) with EXTH 501 EBOK; every picture, byte for byte, as a resource
+  record, and the cover (#19b) as EXTH 201 with 203 set to 0.
+- **Where it departs from Calibre's AZW3 of the same EPUB, on purpose:**
+  no generated inline "Table of Contents" page (Calibre adds one as a
+  third file; the NCX is the Kindle's Go To list either way); the
+  stylesheet goes in as the EPUB has it, where Calibre flattens and
+  rewrites it; pictures stay PNG, where Calibre re-encodes them to JPEG,
+  and there is no EXTH 202 thumbnail record (the engine has nothing to
+  shrink a picture with, as #19b says of the MOBI); the guide carries the
+  start entry where Calibre's carries its inline TOC; EXTH 204 says the
+  Linux kindlegen build on every system, so the file is the same
+  everywhere, and 112 (Calibre's own source id) is not written. `epub:type`
+  loses its prefix (`type="titlepage"`), as in Calibre's.
+- **Verified without a device (2026-10-10):** a structural reader in
+  `tests/helpers/kf8-reader.ts`, stricter than Calibre's (it throws where
+  Calibre warns), walks the PDB, record 0, EXTH, every INDX, FDST, the
+  trailing bytes and the decompressed text, and rebuilds each file from
+  its skeleton and fragments: every committed fixture's AZW3 carries the
+  EPUB's text exactly, each TOC entry lands on its scene's section, and it
+  opens Calibre's own AZW3s too. Calibre's own reader, inside `bun test`
+  under the config isolation: `ebook-convert` back to EPUB returns the
+  title, author, language, TOC, the text of every block in order, every
+  picture byte for byte and the cover, for field-station, images, torture
+  and screenplay, with none of its KF8 warnings, and `calibre-debug
+  --inspect-mobi` counts the same index entries. The corpus (root
+  `/fixtures/`, counts only): seven PDFs, two refused by the guards, five
+  built, five read whole by both readers. Calibre's conversion writes the
+  non-breaking hyphen as a plain one; our AZW3 carries it (332 in one
+  script), so the comparison folds that on Calibre's side only. Beside
+  Calibre's AZW3 of the same book: the same TOC entries, one skeleton
+  fewer (its inline TOC), 2 flows to its 4, and record counts within three.
+- **Device verdict:** pending. Nothing about this file has been seen on a
+  Kindle. What only a device can answer: that it appears in the library
+  and indexes; that the cover shows in the library and inside the book
+  (a PNG EXTH 201, which kindlegen never writes); that PNG pictures show;
+  that Go To lists every scene and jumps to it, and that the book opens on
+  the first scene; how the KF8 renderer lays out our stylesheet (the
+  dialogue column, dual dialogue tables). The keeps are already answered
+  for the format: the KF8 renderer ignores them (#8b, `docs/device-map.md`
+  §6), so cues can strand in this AZW3 as they did in Calibre's. The
+  checks are the torture manifest's #20 row, printed by
+  `tools/device-checklist.ts`.
+- **Code:** `src/azw3/` (`xml.ts`, `epub.ts`, `chunk.ts`, `index.ts`,
+  `tbs.ts`, `palmdoc.ts`, `writer.ts`), `src/mobi/palmdb.ts`,
+  `src/export/formats.ts` (the ladder, `isBetaFile`),
+  `src/export/artifact.ts` (`writeAzw3`), `src/cli-export.ts`, `src/cli.ts`
+  (`--azw3`), `desktop/ui/device.js`, `desktop/ui/send-routes.js`,
+  `desktop/ui/send-panel.js`.

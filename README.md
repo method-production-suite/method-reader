@@ -46,8 +46,8 @@ size and still holds its shape.
 - **Pictures from the script (beta).** Storyboard panels, photos and a
   designed title card come across into the e-book where they sat, and a
   title card that opens the script becomes the book's cover. Both are
-  switches on the Settings page. The Kindle file Screepub makes without
-  Calibre stays text only for now.
+  switches on the Settings page. The MOBI, the file for the oldest Kindles,
+  stays text only for now.
 - **Free and open source.** No account, no subscription, nothing uploaded.
 
 <p align="center">
@@ -65,7 +65,7 @@ size and still holds its shape.
 
 | Device | How it's sent | Status |
 | --- | --- | --- |
-| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise AZW3 or MOBI | Verified on hardware, firmware 5.19.2 |
+| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Screepub makes itself (beta); MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Screepub's own AZW3 not yet tried on a Kindle |
 | Any Kindle, by email | EPUB to your `@kindle.com` address | Verified |
 | Newer Kindles that don't appear as a drive | Email, or Amazon's Send to Kindle app or web page | Use email delivery |
 | iPhone, iPad, Mac (Apple Books) | Added to Books on a Mac, then synced through iCloud | Verified |
@@ -73,13 +73,19 @@ size and still holds its shape.
 | tolino | EPUB into the device's `Books` folder | Built and tested in code, never on a real device |
 | reMarkable | The EPUB over its USB web interface | Built and tested in code, never on a real device |
 
+**What each Kindle file needs.** Copying to a Kindle over USB needs nothing
+installed: Screepub writes the AZW3 itself (beta: Calibre's own reader opens
+every one in our tests, and it has not yet been tried on a Kindle). KFX is
+optional, and looks better: it needs three free tools on your computer
+(Calibre, Amazon's Kindle Previewer and the KFX Output plugin), and Other
+ways, on the result screen, lists what is missing and installs the plugin for
+you. Emailing the EPUB to your Kindle, or sending it with Amazon's Send to
+Kindle, needs no tools at all and already gets Amazon's own best layout.
+
 **How well a Kindle keeps a scene together depends on the file.** A script
 emailed to your Kindle, or copied over USB as KFX, keeps a scene heading and a
 character name on the same page as the line that follows. AZW3 and MOBI can
-strand one at the foot of a page, and so can Apple Books. KFX needs three free
-tools on your computer (Calibre, Amazon's Kindle Previewer and the KFX Output
-plugin); Other ways, on the result screen, lists what is missing and installs
-the plugin for you.
+strand one at the foot of a page, and so can Apple Books.
 A newer Kindle that never shows up as a drive speaks a protocol your computer
 does not mount: see [Emailing scripts to your Kindle](docs/send-to-kindle.md).
 

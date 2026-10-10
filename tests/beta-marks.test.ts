@@ -106,7 +106,7 @@ describe('the badge', () => {
   });
 });
 
-describe('README and site say what beta means, and mark the four', () => {
+describe('README and site say what beta means, and mark the five', () => {
   const MEANING = /works in our tests, but has not been tried widely on real devices or apps yet/;
   for (const [name, file] of [['README', 'README.md'], ['site', 'site/index.html']] as const) {
     test(name, () => {
@@ -117,6 +117,7 @@ describe('README and site say what beta means, and mark the four', () => {
       expect(text).toMatch(/[Pp]ictures[^.]{0,160}\(beta\)/);
       expect(text).toMatch(/[Ee]ject[^.]{0,160}\(beta on Windows and Linux\)/);
       expect(text).toMatch(/isn.t here[^.]{0,200}\(beta\)/);
+      expect(text).toMatch(/AZW3[^.]{0,120}\(beta/);
     });
   }
 });

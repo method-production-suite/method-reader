@@ -10,12 +10,18 @@ see [Influencing this list](#influencing-this-list).
 
 ## Now
 
+- **Screepub's own AZW3 on a real Kindle.** Over USB, a Kindle now gets an
+  AZW3 that Screepub writes itself (beta), with nothing else installed, so
+  the Kindle file takes milliseconds instead of a Calibre conversion. It
+  opens whole in Calibre's own reader every time in our tests, but it has
+  not yet been on a Kindle. The first device pass decides whether it stays
+  beta: the checks are printed by `bun tools/device-checklist.ts`.
 - **Pictures on the oldest Kindles.** Pictures from the script now reach
   the e-book (beta), and a designed title card becomes its cover. The one
-  file that leaves them out is the Kindle file Screepub makes itself when
-  Calibre is missing, for the oldest Kindles: no one has opened one with
-  pictures in it on a real device yet, and a failure there could stop the
-  book opening at all. It gets them once a test book has been tried on one.
+  file that leaves them out is the MOBI, the file for the oldest Kindles:
+  no one has opened one with pictures in it on a real device yet, and a
+  failure there could stop the book opening at all. It gets them once a
+  test book has been tried on one.
 - **Copying to new Kindles over USB.** Every Kindle sold since late 2024
   connects the way a phone does (MTP) instead of showing up as a drive, so
   Screepub cannot see one, and its owners are sent to email. Email cannot

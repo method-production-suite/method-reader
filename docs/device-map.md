@@ -322,6 +322,9 @@ app's code; the engine's `src/device/` and `src/export/` carry all of it now):
 
 - **Kindle MSC** via volume signature; AZW3 (ebook-convert), KFX (when the
   Calibre+plugin+Previewer toolchain exists), engine MOBI as fallback.
+  **Since 2026-10-10** the AZW3 is Screepub's own (`src/azw3/`, a port of
+  Calibre's KF8 writer, beta) and is made on every machine with no Calibre;
+  Calibre is needed for KFX alone, and the MOBI is asked for by name.
 - **Kobo** via `KOBOeReader` volume, EPUB with KEPUB choice on the send
   block; **tolino** via `Books/` folder copy; **reMarkable** via the USB web
   interface; **Apple Books** handoff; **Send-to-Kindle** export affordances
@@ -419,6 +422,13 @@ states the Kindle column in prose; the Screepub-side counterpart is the
 registry's break entries (#5, #5a, #8b, #8c, #16, #17). "(tested)" means
 measured on device — jhowell's reporting or our own passes; everything
 else is a citation or, where marked, an inference.
+
+The KF8/AZW3 column is about the FORMAT and its renderer, so it holds for
+Screepub's own AZW3 (`src/azw3/`, 2026-10-10) exactly as it did for
+Calibre's: the stylesheet travels into the AZW3 verbatim, keeps included,
+and the KF8 renderer then ignores the keeps it always ignored (registry
+#8b). What the writer cannot change is what this column says; which file
+the ladder hands over is formats.ts's question.
 
 Two things the cells are too narrow to carry. **Apple Books honors only
 the OLD column spelling**, and drops both spellings when they share one

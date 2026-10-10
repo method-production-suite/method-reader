@@ -90,6 +90,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
+## calibre 9.11.0, ported in part: GPL-3.0
+
+Screepub's AZW3 (KF8) writer, `src/azw3/`, is a TypeScript port of parts of
+calibre's KF8 writer: `src/calibre/ebooks/mobi/writer8/` (main.py,
+skeleton.py, index.py, exth.py, mobi.py, header.py, tbs.py), the helpers it
+uses from `src/calibre/ebooks/mobi/utils.py`, writer2/resources.py's
+resource records, and the PalmDOC compressor in
+`src/calibre/ebooks/compression/palmdoc.c`. The test suite's KF8 reader
+(`tests/helpers/kf8-reader.ts`) and PalmDOC decoder port parts of calibre's
+reader (`src/calibre/ebooks/mobi/reader/`). Copyright Kovid Goyal and the
+calibre contributors. <https://github.com/kovidgoyal/calibre>
+
+calibre is licensed under the GNU General Public License, version 3. The
+ported code is distributed as part of Screepub under the GNU Affero General
+Public License, version 3 or later (full text in [`LICENSE`](LICENSE));
+section 13 of each licence permits combining code under the two in one
+work. Each ported file names what it ports at its head.
+
 ---
 
 ## The window's Rust crates
@@ -151,8 +169,9 @@ are unmodified upstream builds. Full licence text:
 
 [Calibre](https://calibre-ebook.com) (GPL-3.0) and Amazon's Kindle
 Previewer are optional and used only if you installed them yourself:
-Screepub runs your copy of `ebook-convert` to produce AZW3, and, with the KFX
-plugin, KFX. No Calibre or Amazon code is distributed with Screepub.
+Screepub runs your copy of `ebook-convert`, with the KFX plugin, to produce
+KFX. The AZW3 is Screepub's own (see the calibre port above), so no Calibre
+program and no Amazon code is distributed with Screepub.
 
 The **KFX Output plugin for Calibre** (GPL-3.0, copyright John Howell) is not
 distributed either. `screepub kfx-install`, or the Install button on the Send

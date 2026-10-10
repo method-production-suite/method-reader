@@ -63,7 +63,8 @@ window's device requests and route reports. The options most people want:
 | --- | --- |
 | `-o, --output <file>` | EPUB path (default `<input>.epub`; companions follow it) |
 | `--library` | write into the library instead of beside the input (see below) |
-| `--mobi` | also write a MOBI 6 (dependency-free USB sideload; text-only for now, see Pictures below) |
+| `--mobi` | also write a MOBI 6, for the oldest Kindles (text-only for now, see Pictures below) |
+| `--azw3 <file>` | also write an AZW3 for Kindles over USB, made by Screepub from the EPUB with nothing else installed (beta) |
 | `--preview-html <file>` | also write the script as one self-contained HTML file |
 | `--fdx <file>` | also write the script as a Final Draft file (beta; see [Final Draft (FDX)](#final-draft-fdx-beta)) |
 | `--fountain <file>` / `--no-fountain` | where the intermediate `.fountain` goes, or skip it |
@@ -82,7 +83,7 @@ when they are art rather than page furniture, written as PNGs into a
 `[[img: ...]]` notes. The EPUB shows each one where it sat, and a title card
 that opens the script becomes the book's cover; the `includeImages` and
 `promoteCoverImage` options switch each off. AZW3 and KFX carry them, since
-Calibre builds those from the EPUB. The engine's own `.mobi` does not yet:
+both are made from the EPUB. The engine's own `.mobi` does not yet:
 it stays text-only until the pictures are tried on an older Kindle (registry
 #19a). The `--json` answer gains `imagesPath` and `imageCount` when there are
 pictures. The full rules are in the registry, entries #19, #19a and #19b.
@@ -211,15 +212,16 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 `export --for` takes seven values:
 
 - `epub`: the EPUB itself (the default).
-- `kindle`: the best Kindle file this computer makes, climbing KFX, then AZW3, then MOBI.
+- `kindle`: the Kindle file this computer makes: KFX where its tools are installed, and otherwise the AZW3 Screepub writes itself (beta).
 - `kfx`: a KFX file, and only that.
-- `azw3`: an AZW3 file, and only that.
-- `mobi`: the engine's own MOBI, and only that; the EPUB is left as it is. It needs `--fountain`.
+- `azw3` (beta): Screepub's own AZW3, made from the EPUB with nothing else installed.
+- `mobi`: the engine's own MOBI, for the oldest Kindles, and only that; the EPUB is left as it is. It needs `--fountain`.
 - `fountain`: the script, for a screenwriting app. It needs `--fountain`, and that file must end in `.fountain`. With `--out`, the copy written there leaves out Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes and keeps every other line as it is; the `.fountain` beside the book keeps them, because rebuilds read them, and an `--out` naming that file is refused while it carries one. Without `--out`, the answer names the `.fountain` beside the book, notes and all.
 - `fdx` (beta): a Final Draft file rebuilt from the `.fountain` (see above).
 
-`kfx`, `azw3` and `mobi` refuse, with an error, when this computer lacks the
-tools to make that file; `mobi` and `fountain` refuse without `--fountain`.
+`kfx` refuses, with an error, when this computer lacks the tools to make it;
+`mobi` and `fountain` refuse without `--fountain`. The `--json` answer says
+`"beta": true` for a file Screepub still calls beta (the AZW3 and the FDX).
 `export` never sends. It makes or reuses the file, and `send` moves it.
 
 `eject <volume>` (beta on Windows and Linux) takes the full path of a reader that `devices` lists right
@@ -246,7 +248,9 @@ A Kindle gets its best rendering from KFX, which needs Calibre, Amazon's
 Kindle Previewer and the KFX Output plugin inside Calibre. `kfx-status` says
 which are installed; `kfx-install` installs the plugin from Calibre's own
 plugin index. Amazon makes no Kindle Previewer for Linux. Without all three,
-a Kindle gets AZW3 (with Calibre) or the engine's MOBI.
+a Kindle gets the AZW3 Screepub writes itself (beta), which needs nothing
+installed. KFX is optional; email and Send to Kindle need no tools at all and
+get Amazon's own conversion.
 
 Only the Kindle has been run on a real device, and only from a Mac. Kobo,
 tolino and reMarkable are tested against injected mounts and a stub tablet;
@@ -263,8 +267,9 @@ src/
               styled text; slug.ts and notes.ts are shared by both renderers)
   epub/       fountain-js tokens to EPUB3 (jszip, options-driven CSS)
   mobi/       tokens to MOBI 6 (hand-built PalmDB container)
+  azw3/       the EPUB to AZW3 (KF8), ported from Calibre's KF8 writer (beta)
   device/     USB volumes and the reMarkable web interface
-  export/     Calibre, KFX, and the send routes
+  export/     the Kindle ladder, Calibre for KFX, and the send routes
   settings/   per-script settings and the app settings file
   options.ts  FormatOptions, the single knob surface
   convert.ts  orchestration and the scanned and not-a-screenplay guards

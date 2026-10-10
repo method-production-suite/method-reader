@@ -34,8 +34,13 @@ const device = manifest
 
 const uncovered = manifest.filter((r) => !r.covered);
 
-const pictures = manifest.filter((r) => (r.deviceChecks ?? []).length > 0);
+const checked = manifest.filter((r) => (r.deviceChecks ?? []).length > 0);
+// The picture entries (#19, #19a, #19b) and Screepub's own AZW3 (#20) each
+// get a section of their own: different questions about the same book.
+const pictures = checked.filter((r) => r.entry.startsWith('19'));
+const azw3 = checked.filter((r) => r.entry === '20');
 const pictureChecks = pictures.reduce((n, r) => n + (r.deviceChecks ?? []).length, 0);
+const azw3Checks = azw3.reduce((n, r) => n + (r.deviceChecks ?? []).length, 0);
 
 const out: string[] = [];
 out.push('# Device pass: THE PROOF SHEET');
@@ -80,8 +85,8 @@ if (pictures.length > 0) {
   out.push('command that check gives. What each of torture.pdf\'s pictures is, and');
   out.push('which sheet it is on, is in the #19, #19a and #19b entries above.');
   out.push('');
-  out.push('Read them in the KFX or the AZW3. The .mobi Screepub builds itself');
-  out.push('when Calibre is absent is text-only for now (MOBI_CARRIES_PICTURES in');
+  out.push('Read them in the KFX or the AZW3. The .mobi, the file for the oldest');
+  out.push('Kindles, is text-only for now (MOBI_CARRIES_PICTURES in');
   out.push('src/mobi/html.ts), until the probe books above open with every');
   out.push('picture on an older Kindle; its rows below say what to check either');
   out.push('way. Once it carries them, it has no way to give a picture a share');
@@ -103,8 +108,25 @@ if (pictures.length > 0) {
   }
 }
 
+if (azw3.length > 0) {
+  out.push("## Screepub's own AZW3 (beta)");
+  out.push('');
+  out.push('The same book as an AZW3 that Screepub writes itself, with no');
+  out.push('Calibre: what a Kindle gets over USB wherever KFX is not set up. It');
+  out.push('has passed Calibre\'s own reader in the tests and has never been on a');
+  out.push('Kindle, so these come first on a device pass. The command that builds');
+  out.push('it is in the #20 entry above.');
+  out.push('');
+  for (const row of azw3) {
+    for (const check of row.deviceChecks ?? []) {
+      out.push(`- [ ] ${check}`);
+      out.push('');
+    }
+  }
+}
+
 out.push(`${device.length} device-side entries, ${uncovered.length} declared gaps, `
-  + `${pictureChecks} picture checks.`);
+  + `${pictureChecks} picture checks, ${azw3Checks} AZW3 checks.`);
 out.push('');
 out.push('Findings go in the named entry\'s `Device verdict:` slot in');
 out.push('`docs/formatting-options-log.md`, in your own words.');

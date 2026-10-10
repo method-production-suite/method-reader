@@ -68,8 +68,11 @@ jobs:
         run: |
           ./build/screepub-engine --version
           ./build/screepub-engine tests/fixtures/screenplay.pdf \
-            -o "$RUNNER_TEMP/smoke.epub" --mobi --json | tee "$RUNNER_TEMP/smoke.json"
+            -o "$RUNNER_TEMP/smoke.epub" --mobi --azw3 "$RUNNER_TEMP/smoke.azw3" --json | tee "$RUNNER_TEMP/smoke.json"
           grep -q '"ok":true' "$RUNNER_TEMP/smoke.json"
+          # Screepub's own AZW3, from the compiled binary: a KF8 book.
+          grep -q '"azw3Path"' "$RUNNER_TEMP/smoke.json"
+          test "$(head -c 68 "$RUNNER_TEMP/smoke.azw3" | tail -c 8)" = BOOKMOBI
       # The three fixtures whose books carry figures (registry #19a): images.pdf
       # keeps two pictures, jpx.pdf one JPEG 2000 picture the compiled binary
       # must decode with the decoder it unpacks at run time, and torture.pdf

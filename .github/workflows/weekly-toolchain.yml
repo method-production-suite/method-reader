@@ -1,5 +1,6 @@
-# The engine's Calibre-dependent tests (AZW3 keeps the dialogue column's
-# margins; KEPUB carries koboSpan markup; the KFX plugin listing) are gated
+# The engine's Calibre-dependent tests (Calibre's reading of our EPUB keeps
+# the dialogue column's margins; KEPUB carries koboSpan markup; the KFX
+# plugin listing; Calibre's own reader opens Screepub's AZW3) are gated
 # on an installed Calibre, which no ci.yml runner has. Weekly is the right
 # cadence: they guard against CALIBRE behavior changes, which arrive on
 # brew's schedule, not this repo's. Until piece F3 this file also ran the
@@ -16,7 +17,8 @@ jobs:
   # The ENGINE's Calibre tests, against whatever Calibre brew serves this
   # week. ci.yml's runners have no Calibre, so there every test that needs
   # a real ebook-convert or calibre-customize skips, and a Calibre release
-  # that breaks AZW3, KEPUB, the plugin listing or the config isolation
+  # whose reader rejects our AZW3, or that breaks KEPUB, the plugin listing
+  # or the config isolation
   # would otherwise surface only on the maintainer's Mac. Here it goes red
   # within a week.
   #
@@ -62,3 +64,5 @@ jobs:
           tests/cli-export.test.ts
           tests/cli-kfx.test.ts
           tests/calibre-config-isolation.test.ts
+          tests/azw3-calibre.test.ts
+          tests/azw3-compare.test.ts

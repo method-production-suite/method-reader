@@ -5,8 +5,10 @@ It is one of two routes that keep a script's shape: Amazon converts what you
 send with its modern typesetting, so a scene heading or a character name stays
 on the same page as the line after it. The other is copying a KFX file over
 USB, which needs Calibre, Kindle Previewer and the KFX plugin on your
-computer. AZW3 and MOBI, the USB fallbacks, can strand a heading or a name at
-the foot of a page.
+computer. Without those, a Kindle over USB gets an AZW3 that Screepub makes
+itself (beta), with nothing else installed; it, and the MOBI for the oldest
+Kindles, can strand a heading or a name at the foot of a page. Email needs no
+tools at all.
 
 Email is also the route for newer Kindles that never appear as a drive when
 plugged in, so there is nothing to copy onto.
