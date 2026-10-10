@@ -86,6 +86,18 @@ describe('KF8 markup and the chunker', () => {
     expect(files[0]).toContain('<span class="AmznBigTextBlock">');
   });
 
+  test('big text is never cut inside an entity: "&amp;" across the 8192-byte line stays whole', () => {
+    // An escaped "&amp;" that straddles the cut would, cut at the byte count
+    // alone, leave "&a" at the end of one piece and "mp;" at the start of
+    // the next, in its own span: no longer XML. checkMarkup reads each
+    // rebuilt file back and compares its text, which is the proof.
+    for (const at of [8188, 8189, 8190, 8191]) {
+      const body = `<p class="action">${'a'.repeat(at)}&amp;${'b'.repeat(200)}</p>\n`;
+      const { files } = checkMarkup(bookOf([body]), [serializeDoc(bookOf([body]).spine[0].doc)]);
+      expect(files[0]).toContain('<span class="AmznBigTextBlock">&amp;b');
+    }
+  });
+
   test('several files: aids are numbered per file, positions run on across them', () => {
     const bodies = ['<p id="a">One</p>\n', '<p id="b">Two</p>\n<p>Three</p>\n'];
     const sources = bodies.map((b) => serializeDoc(bookOf([b]).spine[0].doc));

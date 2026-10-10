@@ -159,6 +159,18 @@ class Chunker {
       }
       let end = CHUNK_SIZE;
       while (end > 0 && (raw[end] & 0xc0) === 0x80) end--;
+      // Nor inside an entity: the text is escaped before it is cut, and an
+      // "&amp;" split into "&a" and "mp;" leaves both pieces broken XML.
+      // Calibre's chunk_up_text cuts at the byte count alone; this is the
+      // one place the port does not follow it. Our escapes are at most five
+      // bytes, so an "&" in the last four with no ";" after it is one cut.
+      for (let k = end - 1; k >= Math.max(0, end - 4); k--) {
+        if (raw[k] === 0x3b) break; // ';'
+        if (raw[k] === 0x26) { // '&'
+          end = k;
+          break;
+        }
+      }
       const piece = raw.slice(0, end);
       raw = raw.slice(end);
       return piece;

@@ -22,7 +22,8 @@
 // no generated inline Table of Contents page; pictures pass through as they
 // are (Calibre re-encodes them to JPEG); no thumbnail record; the
 // stylesheet passes through as the EPUB has it (Calibre rewrites it); the
-// landmarks' bodymatter becomes the guide's start-reading entry.
+// landmarks' bodymatter becomes the guide's start-reading entry; a text run
+// too long for one fragment is never cut inside an entity (chunk.ts).
 
 import { ByteWriter, concatBytes, exthNumber, exthRecord, hash32, palmDatabase } from '../mobi/palmdb';
 import { idKey, kf8Markup, type ResourceRef } from './chunk';
