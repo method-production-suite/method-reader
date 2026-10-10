@@ -23,6 +23,7 @@ import {
   EXPORT_FORMATS,
   fileExtension,
   formatLabel,
+  isBetaFile,
   type ExportFormat,
   type KindleRung,
 } from './export/formats';
@@ -51,6 +52,9 @@ export interface ExportResult {
    * written (ms), which tells the window one version of the book from the
    * next. */
   bookDate?: number | null;
+  /** Present, and true, when the file is one Screepub still calls beta
+   * (formats.ts's isBetaFile): the AZW3 it writes itself, and the FDX. */
+  beta?: true;
 }
 
 export interface ExportOptions {
@@ -302,6 +306,14 @@ function exportFdx(
 export async function exportCommand(
   options: ExportOptions,
   deps: ExportDeps = {},
+): Promise<ExportResult> {
+  const result = await exportFile(options, deps);
+  return isBetaFile(result.extension) ? { ...result, beta: true } : result;
+}
+
+async function exportFile(
+  options: ExportOptions,
+  deps: ExportDeps,
 ): Promise<ExportResult> {
   const wanted = options.for ?? 'epub';
   if (!(EXPORT_FORMATS as readonly string[]).includes(wanted)) {

@@ -1,8 +1,10 @@
 // The Beta badge: one quiet mark beside a thing that works in our tests but
-// has not been tried widely on real devices or apps. Four things carry it:
-// the FDX row in Save a file, the two picture switches in Tune, Eject on
-// Windows and Linux, and the device-request and route-report buttons. It is
-// built here and nowhere else, so every one of them says the same words.
+// has not been tried widely on real devices or apps. Five things carry it:
+// the FDX row in Save a file, the AZW3 Screepub writes itself (its Save a
+// file row, and Copy to Kindle wherever that hands over the AZW3), the two
+// picture switches in Tune, Eject on Windows and Linux, and the
+// device-request and route-report buttons. It is built here and nowhere
+// else, so every one of them says the same words.
 //
 // Real text, not a colour: "Beta" is read out as part of the line it sits
 // on, and the title and aria-description say what it means. Always BESIDE

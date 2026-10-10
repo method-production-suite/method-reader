@@ -76,7 +76,7 @@ export const argv = {
       out ? '--out' : null, out].filter((a) => a !== null),
 
   /** Which Kindle file `export --for kindle` would hand over on this
-   *  computer (KFX, AZW3 or MOBI), whether the one beside the book is
+   *  computer (KFX or AZW3), whether the one beside the book is
    *  current, and what builds it, with nothing built. The send panel asks it
    *  when the result shows, to name the file on the buttons that hand one
    *  over. */

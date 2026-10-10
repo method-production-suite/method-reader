@@ -44,27 +44,12 @@ export const TURNS = {
   save: WRITE,
   // convert.js: the same PDF converted again writes the EPUB afresh.
   convert: WRITE,
-  // send-panel.js: a Kindle file on the engine's own MOBI rung, which rewrites the
-  // EPUB in place before it writes the .mobi beside it (Save a Kindle file,
-  // Copy to a Kindle, and the save of it, on a computer without Calibre, or
-  // before the page knows which rung this computer takes).
-  'kindle-mobi': WRITE,
-  // send-panel.js: a Kindle file built beside the EPUB without touching it:
-  // the ladder's KFX or AZW3 (Calibre), the build the result starts as it
-  // appears and Copy to a Kindle; and every Save of a KFX, an AZW3 or a MOBI
-  // (`export --for <type>`, whose MOBI rung, unlike the ladder's, leaves the
-  // EPUB alone).
-  //
-  // Which of these two a Kindle export takes is read off the page's last
-  // `export --check` (send-routes.js's kindleTurn()), not the engine's run itself,
-  // so it can be out of date. Only one change turns a `kindle` reader into
-  // a writer: Calibre's ebook-convert disappearing between that check and
-  // the press (the window checks again on every focus return). A broken
-  // KFX plugin or a missing Kindle Previewer only drops the ladder to AZW3,
-  // which is still Calibre and still a reader. And were it ever to reach
-  // the MOBI rung, that rung writes the EPUB write-then-rename, from the
-  // same .fountain and the same options it was built from, overlapping only
-  // readers: the worst case is a reader copying an equivalent EPUB.
+  // send-panel.js: a Kindle file, built beside the EPUB without touching it:
+  // the ladder's KFX (Calibre) or Screepub's own AZW3, the build the result
+  // starts as it appears and Copy to a Kindle; and every Save of a KFX, an
+  // AZW3 or a MOBI (`export --for <type>`). No Kindle file rewrites the
+  // EPUB any more (the ladder's MOBI rung once did, on a computer without
+  // Calibre, and took the book alone as a writer), so every one is a reader.
   kindle: READ,
   // send-panel.js: a reader that takes the EPUB as it is (the export that finds
   // it, and the copy to a Kobo, a tolino or a reMarkable), and the copy of

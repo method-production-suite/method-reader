@@ -398,7 +398,6 @@ export const STATUS = {
  *  the usual one. */
 export const WAITING = {
   kindle: 'Waiting for the Kindle file to finish building…',
-  'kindle-mobi': 'Waiting for the Kindle file to finish building…',
   convert: 'Waiting for the conversion to finish…',
   send: 'Waiting for the send to finish…',
   copy: 'Waiting for the copy to finish…',

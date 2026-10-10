@@ -589,6 +589,20 @@ describe('exportCommand --check: which Kindle file, and whether it is built, wit
     expect(existsSync(join(dir, 'Script.kfx'))).toBe(false);
   });
 
+  test('an AZW3 answer says it is beta, so the window can mark the file; a KFX answer does not', async () => {
+    const azw3 = await exportCommand(
+      { epub, for: 'kindle', check: true },
+      { calibreAvailable: () => false, kfxStatus: async () => noToolchainStatus, freshKindleArtifact: never },
+    );
+    expect(azw3.beta).toBe(true);
+    const kfx = await exportCommand(
+      { epub, for: 'kindle', check: true },
+      { calibreAvailable: () => true, kfxStatus: async () => kfxReadyStatus, freshKindleArtifact: never },
+    );
+    expect('beta' in kfx).toBe(false);
+    expect('beta' in await exportCommand({ epub, for: 'epub', check: true })).toBe(false);
+  });
+
   test('Calibre alone, with an .azw3 newer than the book: azw3, fresh, and Screepub builds it', async () => {
     older(epub);
     writeFileSync(join(dir, 'Script.azw3'), 'azw3');

@@ -49,3 +49,11 @@ export function formatLabel(format: ExportFormat, state: ToolchainState): string
   const beta = ext === 'AZW3' ? ' (beta)' : '';
   return `${ext}${beta}: for USB sideload to Kindle${hint}`;
 }
+
+/** Whether a file Screepub makes is still beta: it works in our tests and
+ * in Calibre's reader, but has not been tried widely on real devices or
+ * apps. The AZW3 Screepub writes itself, and the FDX. The window marks a
+ * file the export says this of with its Beta badge. */
+export function isBetaFile(extension: string): boolean {
+  return extension === 'azw3' || extension === 'fdx';
+}

@@ -191,17 +191,6 @@ export function preparingPhase(device, file = null) {
   return forFormat(device) === 'kindle' && mayBuild(file) ? 'building' : 'preparing';
 }
 
-/** The turn a Kindle file export takes on its book (book-queue.js's TURNS
- *  says what each does to it). Calibre builds KFX and AZW3 from the EPUB and
- *  writes them beside it: 'kindle', a reader, which runs beside a save of the
- *  EPUB or a copy to a Kobo. The engine's own MOBI rung rewrites the EPUB in
- *  place before it writes the .mobi: 'kindle-mobi', a writer, which runs
- *  alone. With no check to go by (`file` null) the page cannot rule the MOBI
- *  rung out, so it takes the book alone too. */
-export function kindleTurn(file) {
-  return file?.builtBy === 'calibre' ? 'kindle' : 'kindle-mobi';
-}
-
 /** Whether a press's `export --for kindle` may have to build the file, and
  *  so shows the build line and bar while it runs: always, unless the
  *  engine's check said the file beside the book is current, when the export
@@ -215,9 +204,8 @@ export function mayBuild(file) {
  *  Every condition, in one place:
  *  - the engine's check (kindleCheckFrom()) says the file is out of date:
  *    not current, and not merely unknown;
- *  - Calibre is what builds it (KFX, AZW3): a machine with no Calibre never
- *    has it started, and the engine's own MOBI rewrites the library EPUB in
- *    place in a moment, so building it ahead buys nothing;
+ *  - Calibre is what builds it (KFX): the AZW3 Screepub writes itself takes
+ *    a moment, so building it ahead buys nothing;
  *  - a Kindle is in play (`forKindle`, wantsKindleFile()): a Kobo or a
  *    reMarkable session must not start Kindle Previewer for nobody;
  *  - once per version of the book and kind of file: never again for the
@@ -246,8 +234,8 @@ export function attemptKey(file) {
 /** The line over the moving bar while the Kindle file builds, by the file
  *  being built. Kindle Previewer's cold start is most of a KFX build: 23 s
  *  for the 18-page demo, measured, and the owner saw 30 to 40 on a longer
- *  script. Calibre's AZW3 and the engine's MOBI took under a second there.
- *  With no check to go by, it says only what it is doing. */
+ *  script. Screepub's own AZW3 takes milliseconds there, and the MOBI under
+ *  a second. With no check to go by, it says only what it is doing. */
 export function buildLine(extension) {
   if (extension === 'kfx') return 'Building the Kindle file. This takes about half a minute.';
   if (isText(extension)) return 'Building the Kindle file. This takes a moment.';
@@ -335,7 +323,7 @@ export function isDeviceRoute(route) {
 }
 
 /** Whether a row's button hands over the Kindle file, whose type depends on
- *  this computer (KFX, AZW3 or MOBI): Save a Kindle file, and a Kindle that
+ *  this computer (KFX or AZW3): Save a Kindle file, and a Kindle that
  *  is plugged in. A dimmed Kindle row carries no device and has nothing to
  *  press. */
 export function handsOverKindleFile(route) {
@@ -345,11 +333,12 @@ export function handsOverKindleFile(route) {
 }
 
 /** What `export --for kindle --check` says about this script's Kindle file
- *  before anything is built: `{ extension, fresh, builtBy }`, or null when
- *  the answer is not one (a refusal included), which names nothing on the
- *  rows. `fresh` is the engine's staleness rule, `builtBy` what makes the
- *  file when it is not: 'calibre' for KFX and AZW3, 'screepub' for the
- *  engine's own MOBI; `bookDate` when the EPUB was last written. */
+ *  before anything is built: `{ extension, fresh, builtBy, bookDate, beta }`,
+ *  or null when the answer is not one (a refusal included), which names
+ *  nothing on the rows. `fresh` is the engine's staleness rule, `builtBy`
+ *  what makes the file when it is not: 'calibre' for KFX, 'screepub' for
+ *  the AZW3 Screepub writes itself; `bookDate` when the EPUB was last
+ *  written; `beta` whether the engine calls that file beta. */
 export function kindleCheckFrom(answer) {
   if (answer?.ok !== true) return null;
   const extension = typeof answer.extension === 'string' ? bareExtension(answer.extension.trim()) : '';
@@ -360,7 +349,14 @@ export function kindleCheckFrom(answer) {
   // about. Not known is not a reason to drop the rest of the answer; it only
   // means the page will not build ahead on it (buildsAhead()).
   const bookDate = Number.isFinite(answer.bookDate) ? answer.bookDate : null;
-  return { extension, fresh: answer.fresh, builtBy: answer.builtBy, bookDate };
+  return { extension, fresh: answer.fresh, builtBy: answer.builtBy, bookDate, beta: answer.beta === true };
+}
+
+/** Whether a row hands over a Kindle file the engine calls beta (our own
+ *  AZW3), so its Beta badge goes beside it. The engine decides what is beta;
+ *  this only reads the check's answer. */
+export function kindleFileIsBeta(route, file) {
+  return file?.beta === true && handsOverKindleFile(route);
 }
 
 /** Used only when a path has no name in it at all, so the dialog never
@@ -521,7 +517,7 @@ export const NO_EXTENSION = 'The engine built the Kindle file without saying wha
 /** What "Save a Kindle file" learns from `export --for kindle`, as a pair
  *  like outcomeFor()'s: the extension and the engine's label, to name the
  *  Save box's file and filter, or the failure line. The export decides the
- *  rung (KFX, AZW3 or MOBI); this only reads which one it reached. An
+ *  rung (KFX or AZW3); this only reads which one it reached. An
  *  extension that is not a bare word opens no dialog at all. */
 export function kindleFileFrom(built) {
   if (built?.ok !== true) return ['failed', { detail: failureMessage(built) }];

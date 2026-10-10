@@ -190,7 +190,7 @@ export function foldUnplugged(rows) {
 export const SAVE_TYPES = [
   { type: 'epub', label: 'EPUB', who: 'Most readers, Apple Books, and email.' },
   { type: 'kfx', label: 'KFX', who: 'Modern Kindles over USB, with the best layout.' },
-  { type: 'azw3', label: 'AZW3', who: 'Older Kindles over USB.' },
+  { type: 'azw3', label: 'AZW3', who: 'Kindles over USB, made by Screepub with nothing else installed.', beta: true },
   { type: 'mobi', label: 'MOBI', who: 'The oldest Kindles.' },
   { type: 'fountain', label: 'Fountain', who: 'The script as plain text, for screenwriting apps.' },
   { type: 'fdx', label: 'FDX', who: 'The script for Final Draft and most screenwriting apps, to edit.', beta: true },
@@ -203,8 +203,9 @@ export const NO_FOUNTAIN = 'This book was made without a .fountain, so there is 
 const NEEDS_FOUNTAIN = new Set(['mobi', 'fountain', 'fdx']);
 
 /** The Save a file rows. `kindle` is the check's answer: the ladder's top
- *  rung says whether KFX is reachable, `builtBy` whether Calibre is there.
- *  Not known yet leaves every row live: the engine refuses in its own words. */
+ *  rung says whether KFX is reachable. Every other type the engine makes
+ *  itself, the AZW3 included, so only the KFX row can need setting up. Not
+ *  known yet leaves every row live: the engine refuses in its own words. */
 export function saveRows(script, kindle) {
   const fountain = isText(script?.fountainPath);
   return SAVE_TYPES.map((t) => {
@@ -212,7 +213,6 @@ export function saveRows(script, kindle) {
       return { ...t, available: false, fix: NO_FOUNTAIN, setup: false };
     }
     if (t.type === 'kfx' && kindle && kindle.extension !== 'kfx') return { ...t, available: false, fix: NEEDS_TOOLS, setup: true };
-    if (t.type === 'azw3' && kindle?.builtBy === 'screepub') return { ...t, available: false, fix: NEEDS_TOOLS, setup: true };
     return { ...t, available: true, fix: null, setup: false };
   });
 }

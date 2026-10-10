@@ -4100,7 +4100,6 @@ describe('the Tune surface', () => {
     // The send panel builds the Kindle file on its own when the result appears; a save
     // waiting on that says so rather than "in a moment".
     expect(tune.statusFor('waiting', 'kindle').line).toBe('Waiting for the Kindle file to finish building…');
-    expect(tune.statusFor('waiting', 'kindle-mobi').line).toBe('Waiting for the Kindle file to finish building…');
     // Readers run side by side, so a save can wait on several at once
     // (book-queue.js's holders()): it names the one that takes longest.
     expect(tune.statusFor('waiting', ['copy', 'kindle']).line).toBe('Waiting for the Kindle file to finish building…');
@@ -5698,7 +5697,6 @@ describe('turns on a book: book-queue.js', () => {
     expect(q.TURNS).toEqual({
       save: 'write',
       convert: 'write',
-      'kindle-mobi': 'write',
       kindle: 'read',
       send: 'read',
       copy: 'read',
@@ -6256,7 +6254,7 @@ describe('the ladder the send panel asks for, without a toolchain', () => {
     expect(sendUi.artifactLine(result)).toContain('AZW3');
   });
 
-  test('each rung of the ladder produces a different sentence on the surface', async () => {
+  test('each rung of the ladder produces a different sentence on the surface: KFX, or our own AZW3', async () => {
     const sendUi = await import(join(UI, 'send-routes.js'));
     const { exportCommand } = await import('../src/cli-export');
 
@@ -6273,14 +6271,15 @@ describe('the ladder the send panel asks for, without a toolchain', () => {
     };
 
     const best = await rung(true, true);
-    const middle = await rung(true, false);
-    const worst = await rung(false, false);
+    const withCalibre = await rung(true, false);
+    const without = await rung(false, false);
     expect(best).toContain('KFX');
-    expect(middle).toContain('AZW3');
-    expect(worst).toContain('MOBI');
-    // Three rungs, three sentences: a surface that printed one constant
-    // would pass every "contains" check above on its own.
-    expect(new Set([best, middle, worst]).size).toBe(3);
+    // Calibre or not, the other rung is the AZW3 Screepub writes itself.
+    expect(withCalibre).toContain('AZW3');
+    expect(without).toBe(withCalibre);
+    // Two rungs, two sentences: a surface that printed one constant would
+    // pass every "contains" check above on its own.
+    expect(new Set([best, withCalibre]).size).toBe(2);
 
     // And the non-Kindle route does not walk the ladder at all: it hands over
     // the EPUB the library already holds.

@@ -704,7 +704,8 @@ function buildLine(p: Mounted) {
 const checked = (extension: string, fresh: boolean, bookDate = 1000) => ({
   ok: true, path: `/lib/field-station/Field Station.${extension}`, format: 'kindle', extension,
   label: extension.toUpperCase(), available: ['epub', 'kindle'], stages: [], fresh,
-  builtBy: extension === 'mobi' ? 'screepub' : 'calibre', bookDate,
+  builtBy: extension === 'kfx' ? 'calibre' : 'screepub', bookDate,
+  ...(extension === 'azw3' ? { beta: true } : {}),
 });
 const HALF_A_MINUTE = 'Building the Kindle file. This takes about half a minute.';
 const kindleBuild = ['export', EPUB, '--json', '--for', 'kindle', '--fountain', FOUNTAIN,
@@ -1154,7 +1155,7 @@ describe('Other ways', () => {
     expect(groups[0].querySelectorAll('.btn-brad')).toEqual([]);
     expect(groups[1].querySelectorAll('.save-row .device-name').map(words))
       .toEqual(['EPUB', 'KFX', 'AZW3', 'MOBI', 'Fountain', 'FDX']);
-    expect(saveRow(p, 'azw3').querySelector('.route-detail')!.textContent).toBe('Older Kindles over USB.');
+    expect(saveRow(p, 'azw3').querySelector('.route-detail')!.textContent).toBe('Kindles over USB, made by Screepub with nothing else installed.');
     // Open across a redraw, and closed again by the same button.
     await p.plug([KINDLE, KOBO]);
     expect(p.node.querySelector('section.other-ways')!.hidden).toBe(false);
@@ -1325,7 +1326,7 @@ describe('Other ways', () => {
     expect(row.querySelector('.route-fix')!.textContent).toBe('This computer cannot make one yet.');
     expect(row.buttons().map((b) => b.textContent)).toEqual(['Set it up']);
     expect(row.button('Set it up').className).toBe('btn-quiet');
-    // AZW3 stays live: Calibre is there.
+    // AZW3 stays live: Screepub writes it.
     expect(saveButton(p, 'azw3').textContent).toBe('Save…');
     // Not on the page, and the machine not asked, until it is wanted.
     expect(p.node.querySelector('section.kfx-setup')).toBeNull();
@@ -1347,10 +1348,11 @@ describe('Other ways', () => {
     expect(p.tauri.callsTo('kfx-status').length).toBe(1);
   });
 
-  test('with no Calibre, AZW3 is greyed too, with the same Set it up', async () => {
-    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('mobi', true) });
+  test('with no Calibre, only KFX needs setting up: the AZW3 and the MOBI are Screepub\'s own', async () => {
+    const p = await mountPanel({ state: { readerDevice: 'kobo' }, check: checked('azw3', true) });
     openWays(p);
-    for (const type of ['kfx', 'azw3']) expect(saveRow(p, type).button('Set it up')).toBeDefined();
+    expect(saveRow(p, 'kfx').button('Set it up')).toBeDefined();
+    expect(saveButton(p, 'azw3').textContent).toBe('Save…');
     expect(saveButton(p, 'mobi').textContent).toBe('Save…');
   });
 
@@ -1416,12 +1418,19 @@ describe('Other ways', () => {
 
   test('the KFX plugin cannot be installed under a running Kindle build (re-homed)', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: checked('azw3', false), engine: kfxProbe(notReady) });
-    expect(building(p)).toBe(1);
+    // Our own AZW3 takes a moment, so nothing is built ahead of a press.
+    expect(building(p)).toBe(0);
     openWays(p);
     saveRow(p, 'kfx').button('Set it up').click();
     await settle();
+    expect(installButton(p).disabled).toBe(false);
+    // A save of the AZW3 is a Kindle build, and holds the install off.
+    saveButton(p, 'azw3').click();
+    await settle();
+    await chooseSave(p, '/Users/ann/Desktop/Field Station.azw3');
+    expect(building(p)).toBe(1);
     expect(installButton(p).disabled).toBe(true);
-    await answer(p, 'export', { ok: true, path: '/lib/field-station/Field Station.azw3', extension: 'azw3' });
+    await answer(p, 'export', { ok: true, path: '/Users/ann/Desktop/Field Station.azw3', extension: 'azw3' });
     expect(installButton(p).disabled).toBe(false);
   });
 
@@ -1442,13 +1451,11 @@ describe('Other ways', () => {
     expect(p.node.querySelector('section.kfx-setup')!.hidden).toBe(false);
   });
 
-  test('an AZW3 built ahead, then the KFX plugin installed: exactly one KFX build ahead', async () => {
+  test('no AZW3 is built ahead; once the KFX plugin is installed, exactly one KFX build ahead', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kindle' }, check: HOLD,
       engine: (a) => (a[0] === 'kfx-status' ? notReady : a[0] === 'kfx-install' ? installed : undefined) });
     await answerCheck(p, checked('azw3', false));
-    expect(building(p)).toBe(1);
-    await answer(p, 'export', { ok: true, path: '/lib/field-station/Field Station.azw3', extension: 'azw3' });
-    await answerCheck(p, checked('azw3', true));
+    // Screepub writes the AZW3 in a moment, so it waits for a press.
     expect(building(p)).toBe(0);
     openWays(p);
     saveRow(p, 'kfx').button('Set it up').click();
@@ -2112,13 +2119,25 @@ describe('the Beta badge', () => {
     expect(b!.tagName.toLowerCase()).toBe('span');
   };
 
-  test('Save a file marks the FDX row, and only that row', async () => {
+  test('Save a file marks the AZW3 and FDX rows, and only those', async () => {
     const p = await mountPanel({ state: { readerDevice: 'kobo' } });
     const ways = openWays(p);
     const marked = ways.querySelectorAll('.save-row').filter((r) => r.querySelector('.beta-badge') !== null).map((r) => r.dataset.type);
-    expect(marked).toEqual(['fdx']);
-    isBadge(badgeIn(saveRow(p, 'fdx').querySelector('.device-name')));
-    expect(saveButton(p, 'fdx').textContent).toBe('Save…');
+    expect(marked).toEqual(['azw3', 'fdx']);
+    for (const type of ['azw3', 'fdx']) {
+      isBadge(badgeIn(saveRow(p, type).querySelector('.device-name')));
+      expect(saveButton(p, type).textContent).toBe('Save…');
+    }
+  });
+
+  test('Copy to Kindle carries it beside the button when it hands over our AZW3, and not for a KFX', async () => {
+    const azw3 = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: checked('azw3', false) });
+    const brass = azw3.node.querySelector('.calm-act .btn-brad')!;
+    expect(brass.textContent).toContain('(.azw3)');
+    expect(badgeIn(brass)).toBeNull();
+    isBadge(badgeIn(brass.parentNode!));
+    const kfx = await mountPanel({ state: { readerDevice: 'kindle' }, devices: [KINDLE], check: checked('kfx', false) });
+    expect(badgeIn(kfx.node.querySelector('.calm-act')!)).toBeNull();
   });
 
   test('“My device isn’t here” carries it beside its card and beside its Send', async () => {

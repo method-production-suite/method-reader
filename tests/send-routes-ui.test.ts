@@ -40,7 +40,7 @@ type RoutesModule = {
     { title: string; detail: string; where: string | null };
   kindleFileFrom: (built: unknown) => [string, Record<string, unknown>];
   kindleCheckFrom: (answer: unknown) =>
-    { extension: string; fresh: boolean; builtBy: string; bookDate: number | null } | null;
+    { extension: string; fresh: boolean; builtBy: string; bookDate: number | null; beta: boolean } | null;
   handsOverKindleFile: (route: unknown) => boolean;
   buildsAhead: (file: unknown, opts?: {
     building?: boolean; busy?: boolean; triedFor?: string | null; forKindle?: boolean;
@@ -48,7 +48,7 @@ type RoutesModule = {
   mayBuild: (file: unknown) => boolean;
   buildLine: (extension: unknown) => string;
   preparingPhase: (device: unknown, file?: unknown) => string;
-  kindleTurn: (file: unknown) => string;
+  kindleFileIsBeta: (route: unknown, file: unknown) => boolean;
   routesFailure: (answer: unknown) => string;
   whereLine: (device: unknown) => string;
   routesFrom: (answer: unknown) => { routes: Route[]; chosen: string } | null;
@@ -740,7 +740,7 @@ describe('routeLines: what a row says', () => {
 
 describe('buttonLabel names the Kindle file on the buttons that hand one over', () => {
   // Which file a Kindle gets depends on this computer (KFX with the whole
-  // toolchain, AZW3 with Calibre alone, the engine's MOBI with neither), and
+  // toolchain, Screepub's own AZW3 everywhere else), and
   // the engine says which before anything is built (`export --check`). It
   // goes on the BUTTON, which is what hands the file over: a reader's name
   // stays the name it mounts as.
@@ -763,6 +763,14 @@ describe('buttonLabel names the Kindle file on the buttons that hand one over', 
       ['Save a Kindle file…', 'Save a Kindle file (.kfx)…'],
     ]);
     expect(labelled({ ...kfx, extension: 'azw3' })).toContain('Save a Kindle file (.azw3)…');
+  });
+
+  test('the rows that hand over a beta Kindle file (our AZW3) are the ones that get the Beta badge', () => {
+    const azw3 = { extension: 'azw3', fresh: false, builtBy: 'screepub', bookDate: 1, beta: true };
+    const marked = rows().filter((r) => send.kindleFileIsBeta(r, azw3)).map((r) => r.id);
+    expect(marked).toEqual(['device:kindle#/Volumes/Kindle', 'device:kindle#/Volumes/KINDLE2', 'save-kindle']);
+    expect(rows().filter((r) => send.kindleFileIsBeta(r, kfx))).toEqual([]);
+    expect(rows().filter((r) => send.kindleFileIsBeta(r, null))).toEqual([]);
   });
 
   test('the rows keep their titles: a reader is named as it mounts', () => {
@@ -848,22 +856,10 @@ describe('building the Kindle file before anyone presses anything', () => {
     expect(send.preparingPhase(kobo, file('kfx', false))).toBe('preparing');
   });
 
-  test('a Kindle file Calibre builds only reads the book; the engine’s MOBI rewrites it, and so does not knowing which', () => {
-    // book-queue.js's table says which label reads and which writes; this is
-    // which label a Kindle file export takes. Calibre (KFX, AZW3) converts
-    // from the EPUB and writes beside it. The engine's MOBI rung rewrites
-    // the EPUB in place first, and with no check to go by the page cannot
-    // rule that out, so it takes the book alone.
-    expect(send.kindleTurn(file('kfx', false))).toBe('kindle');
-    expect(send.kindleTurn(file('azw3', true))).toBe('kindle');
-    expect(send.kindleTurn(file('mobi', false, 'screepub'))).toBe('kindle-mobi');
-    expect(send.kindleTurn(null)).toBe('kindle-mobi');
-  });
-
   test('the line says how long, by the file being built', () => {
     // Kindle Previewer's cold start is most of a KFX build: 23 s for the
-    // 18-page demo, measured. Calibre's AZW3 and the engine's MOBI take well
-    // under a second.
+    // 18-page demo, measured. Screepub's own AZW3 takes milliseconds, and
+    // the MOBI well under a second.
     expect(send.buildLine('kfx')).toBe('Building the Kindle file. This takes about half a minute.');
     expect(send.buildLine('azw3')).toBe('Building the Kindle file. This takes a moment.');
     expect(send.buildLine('mobi')).toBe('Building the Kindle file. This takes a moment.');
@@ -876,9 +872,10 @@ describe('kindleCheckFrom: what the engine says about the Kindle file before it 
     expect(send.kindleCheckFrom({
       ok: true, path: '/lib/s.kfx', format: 'kindle', extension: 'kfx', label: 'KFX',
       available: ['epub', 'kindle'], stages: [], fresh: false, builtBy: 'calibre', bookDate: 1727000000000.5,
-    })).toEqual({ extension: 'kfx', fresh: false, builtBy: 'calibre', bookDate: 1727000000000.5 });
-    expect(send.kindleCheckFrom({ ok: true, extension: 'mobi', fresh: true, builtBy: 'screepub', bookDate: 5 }))
-      .toEqual({ extension: 'mobi', fresh: true, builtBy: 'screepub', bookDate: 5 });
+    })).toEqual({ extension: 'kfx', fresh: false, builtBy: 'calibre', bookDate: 1727000000000.5, beta: false });
+    // The engine says our own AZW3 is beta, and the page keeps that.
+    expect(send.kindleCheckFrom({ ok: true, extension: 'azw3', fresh: true, builtBy: 'screepub', bookDate: 5, beta: true }))
+      .toEqual({ extension: 'azw3', fresh: true, builtBy: 'screepub', bookDate: 5, beta: true });
   });
 
   test('a book date that is not a number is not known: the rest of the answer still names the file', () => {

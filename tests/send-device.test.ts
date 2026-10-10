@@ -191,11 +191,10 @@ describe('Other ways', () => {
     expect(rows.find((x: any) => x.type === 'fdx')).toMatchObject({ label: 'FDX' });
     expect(rows.every((x: any) => x.available && x.who.length > 0)).toBe(true);
   });
-  test('KFX greys out with "set it up" when the ladder stops short of it; AZW3 when there is no Calibre', () => {
-    const azw3 = d.saveRows({ fountainPath: '/l/a.fountain' }, { ...kfx, extension: 'azw3' });
+  test('KFX greys out with "set it up" when the ladder stops short of it; the AZW3 never does, Screepub writes it', () => {
+    const azw3 = d.saveRows({ fountainPath: '/l/a.fountain' }, { ...kfx, extension: 'azw3', builtBy: 'screepub' });
     expect(azw3.find((x: any) => x.type === 'kfx')).toMatchObject({ available: false, setup: true });
-    const none = d.saveRows({ fountainPath: '/l/a.fountain' }, { ...kfx, extension: 'mobi', builtBy: 'screepub' });
-    expect(none.find((x: any) => x.type === 'azw3')).toMatchObject({ available: false, setup: true });
+    expect(azw3.find((x: any) => x.type === 'azw3')).toMatchObject({ available: true, setup: false, beta: true });
     // Not known yet: the engine refuses in its own words if it must.
     expect(d.saveRows({ fountainPath: '/l/a.fountain' }, null).every((x: any) => x.available)).toBe(true);
   });

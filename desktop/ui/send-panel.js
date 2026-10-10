@@ -625,6 +625,7 @@ function drawCalm() {
         type: 'button', class: 'btn btn-brad', 'data-key': brass.route.id,
         disabled: sending || kfxInstalling(), onclick: () => choose(brass.route),
       }, brass.label),
+      brass !== null && R.kindleFileIsBeta(brass.route, kindle) ? betaBadge() : null,
       brass !== null && R.isDeviceRoute(brass.route) ? pluggedIn() : null,
       offer?.unproven ? asterisk(kind) : null),
     buildNote,
@@ -686,7 +687,7 @@ function routeRow(route) {
   }, R.buttonLabel(route, kindle)) : null;
   return el('div', { class: route.available ? 'device-row' : 'device-row route-unavailable' },
     el('div', { class: 'device-what' },
-      el('p', { class: 'device-name' }, lines.title),
+      el('p', { class: 'device-name' }, lines.title, R.kindleFileIsBeta(route, kindle) ? betaBadge() : null),
       kind === null ? null : asterisk(kind),
       el('p', { class: 'route-detail' }, lines.detail),
       lines.where === null ? null : el('p', { class: 'device-where' }, lines.where),
@@ -931,13 +932,13 @@ function inKindleLine(book, work) {
 }
 
 /** A Kindle file export of `book` (or the save of one, which exports again):
- *  in the Kindle line, then on its turn on the book as kindleTurn() says. A
- *  press during a build therefore waits for that build, then finds the file
- *  it made current (the engine's freshness rule) rather than building
+ *  in the Kindle line, then on its 'kindle' turn on the book, a reader:
+ *  every Kindle file is built beside the EPUB without touching it. A press
+ *  during a build therefore waits for that build, then finds the file it
+ *  made current (the engine's freshness rule) rather than building
  *  another. */
 function onKindleFile(book, args) {
-  const label = R.kindleTurn(kindle);
-  return inKindleLine(book, () => onBook(book, label, args));
+  return inKindleLine(book, () => onBook(book, 'kindle', args));
 }
 
 /** Count `run`, an export that may build this book's Kindle file, as a build
