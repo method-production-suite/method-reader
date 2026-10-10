@@ -1911,13 +1911,27 @@ engine needs to change.
   no generated inline "Table of Contents" page (Calibre adds one as a
   third file; the NCX is the Kindle's Go To list either way); the
   stylesheet goes in as the EPUB has it, where Calibre flattens and
-  rewrites it; pictures stay PNG, where Calibre re-encodes them to JPEG,
-  and there is no EXTH 202 thumbnail record (the engine has nothing to
+  rewrites it; there is no EXTH 202 thumbnail record (the engine has nothing to
   shrink a picture with, as #19b says of the MOBI); the guide carries the
   start entry where Calibre's carries its inline TOC; EXTH 204 says the
   Linux kindlegen build on every system, so the file is the same
   everywhere, and 112 (Calibre's own source id) is not written. `epub:type`
-  loses its prefix (`type="titlepage"`), as in Calibre's.
+  loses its prefix (`type="titlepage"`), as in Calibre's. Not a
+  departure: the pictures stay PNG in both. Calibre's AZW3 output runs
+  its resources with image processing off and re-encodes only JPEGs, and
+  the images fixture's AZW3 from ebook-convert carries the cover and the
+  body picture as the same PNGs, byte for byte in size, with its JPEG
+  thumbnail between them (read back under `bun test`, 2026-10-10). So a
+  PNG in a sideloaded AZW3 is what Calibre has always sent; only the 202
+  thumbnail beside it is missing here. And one deliberate departure in
+  the chunker: a text run too long for one fragment is never cut inside
+  an entity, where Calibre's `chunk_up_text` would cut "&amp;" in two.
+- **A second reader (2026-10-10):** KindleUnpack, which shares no code
+  with this writer or with Calibre, unpacks every committed fixture's AZW3
+  and the five real scripts in the corpus that convert, and gives back
+  their titles, TOCs, every block of text, every picture and the cover;
+  the five ASINs are distinct. `tests/azw3-kindleunpack.test.ts` runs it
+  where `SCREEPUB_KINDLEUNPACK` names a KindleUnpack folder.
 - **Verified without a device (2026-10-10):** a structural reader in
   `tests/helpers/kf8-reader.ts`, stricter than Calibre's (it throws where
   Calibre warns), walks the PDB, record 0, EXTH, every INDX, FDST, the

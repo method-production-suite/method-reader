@@ -19,8 +19,11 @@
 //   FDST, FLIS, FCIS, EOF
 //
 // Where this departs from Calibre, on purpose (each in the registry entry):
-// no generated inline Table of Contents page; pictures pass through as they
-// are (Calibre re-encodes them to JPEG); no thumbnail record; the
+// no generated inline Table of Contents page; no thumbnail record (Calibre
+// adds a JPEG copy of the cover after it, as EXTH 202). Pictures pass
+// through as they are, as Calibre's AZW3 output passes them (its Resources
+// with process_images off; it re-encodes only JPEGs, which we have none
+// of). The
 // stylesheet passes through as the EPUB has it (Calibre rewrites it); the
 // landmarks' bodymatter becomes the guide's start-reading entry; a text run
 // too long for one fragment is never cut inside an entity (chunk.ts).
