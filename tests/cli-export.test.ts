@@ -668,7 +668,8 @@ describe('exportCommand --check: which Kindle file, and whether it is built, wit
     expect(answer.ok).toBe(true);
     expect(['kfx', 'azw3', 'mobi']).toContain(answer.extension);
     expect(typeof answer.fresh).toBe('boolean');
-    expect(answer.builtBy).toBe(answer.extension === 'mobi' ? 'screepub' : 'calibre');
+    // Only KFX still comes from Calibre: the AZW3 is Screepub's own (registry #20).
+    expect(answer.builtBy).toBe(answer.extension === 'kfx' ? 'calibre' : 'screepub');
     expect(answer.bookDate).toBe(statSync(epub).mtimeMs);
     expect(readdirSync(dir).sort()).toEqual(before);
   });
