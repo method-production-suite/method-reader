@@ -16,6 +16,14 @@ see [Influencing this list](#influencing-this-list).
   Calibre is missing, for the oldest Kindles: no one has opened one with
   pictures in it on a real device yet, and a failure there could stop the
   book opening at all. It gets them once a test book has been tried on one.
+- **Copying to new Kindles over USB.** Every Kindle sold since late 2024
+  connects the way a phone does (MTP) instead of showing up as a drive, so
+  Screepub cannot see one, and its owners are sent to email. Email cannot
+  carry the Kindle file with the best layout, so a new Kindle never gets
+  it today. The plan is a small helper that talks to the Kindle directly,
+  on Mac, Windows and Linux. On a Mac it has to pause the system's photo
+  import service for the length of the copy. A new Kindle is on order for
+  testing.
 - **A way to report problems without a GitHub account.** Asking for a device
   and saying whether a reader worked need none now: the window sends both.
   Telling us a script converted badly still means opening an issue, which
