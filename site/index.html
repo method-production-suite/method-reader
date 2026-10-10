@@ -139,11 +139,13 @@ h1 .answer{color:var(--ink-muted);display:block}
 
 /* ---------- the reader act ---------- */
 .act{position:relative}
-.act.two{height:360vh}
+.act.two{height:250vh}
 .stick{position:sticky;top:0;height:100vh;overflow:hidden}
 
 .phase{position:absolute;top:8vh;left:var(--binding);right:var(--gut);z-index:6;
-  pointer-events:none;transition:opacity .28s ease-out}
+  pointer-events:none}
+/* Opacity is set from scroll position in layout(), so the words move on the
+   same clock as the devices. .out stays for the reduced-motion page. */
 .phase.out{opacity:0}
 .phase.col{top:50%;transform:translateY(-50%);width:min(340px,28vw);right:auto}
 .slug{font-family:var(--fs);font-weight:700;letter-spacing:.06em;
@@ -301,7 +303,7 @@ footer .right{margin-left:auto}
 @media (max-height:560px){.rail i.b1,.rail i.b3{display:none}}
 @media (max-width:900px){
   :root{--binding:16%;--gut:7%}
-  .act.two{height:380vh}
+  .act.two{height:270vh}
   .nav{display:none}
   .phase.col{width:auto;right:var(--gut)}
   .shots{grid-template-columns:1fr;gap:0}
@@ -624,6 +626,11 @@ var $=function(i){return document.getElementById(i)};
 var clamp=function(v,a,b){return v<a?a:(v>b?b:v)};
 var lerp=function(a,b,t){return a+(b-a)*t};
 function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+/* Scroll-driven moves use the gentler curve. A cubic in-out stops dead at
+   both ends, so a steady scroll felt like it met resistance at the start and
+   end of every move. */
+function soft(t){return t*t*(3-2*t)}
+function span(t,a,b){return soft(clamp((t-a)/(b-a),0,1))}
 
 /* Kept inside a range a person would actually read at. The top of the old
    ramp turned the slugline into a banner and left four words on screen. */
@@ -752,18 +759,24 @@ function layout(t){
   var W=stage.offsetWidth||innerWidth, H=innerHeight;
 
   /* A arrives immediately, centre frame and large, and holds there. Then it
-     shrinks left to let B in, they hold level, A leaves, B takes over. */
-  var aIn   =ease(clamp(t/0.09,0,1));
-  var shrink=ease(clamp((t-0.26)/0.16,0,1));
-  var bIn   =ease(clamp((t-0.29)/0.13,0,1));
-  var aOut  =ease(clamp((t-0.56)/0.12,0,1));
-  var ze    =ease(clamp((t-0.56)/0.14,0,1));
+     shrinks left to let B in, they hold level, A leaves, B takes over.
+     The holds are short on purpose: each is just long enough to read its
+     heading. The old timing spent about 60% of the pinned scroll on holds,
+     the last one most of a screen, which read as the page sticking. */
+  var aIn   =span(t,0,0.12);
+  var shrink=span(t,0.22,0.44);
+  var bIn   =span(t,0.25,0.44);
+  var aOut  =span(t,0.58,0.74);
+  var ze    =span(t,0.58,0.80);
 
-  p1.classList.toggle('out',t>=0.26);
-  p2.classList.toggle('out',t<0.26||t>=0.66);
+  p1.style.opacity=(1-span(t,0.18,0.25)).toFixed(3);
+  p2.style.opacity=(span(t,0.24,0.31)*(1-span(t,0.58,0.65))).toFixed(3);
+  p3.style.opacity=span(t,0.66,0.74).toFixed(3);
+  p1.classList.toggle('out',t>=0.25);
+  p2.classList.toggle('out',t<0.24||t>=0.65);
   p3.classList.toggle('out',t<0.66);
-  panel.classList.toggle('on',t>=0.70);
-  pager.classList.toggle('on',t>=0.70);
+  panel.classList.toggle('on',t>=0.74);
+  pager.classList.toggle('on',t>=0.74);
   live=(t>=0.66&&t<=1);
 
   var hs=heroSize(H), ps=pairSize(H), zs=zoomSize(W,H);
@@ -830,13 +843,31 @@ function onScroll(){
     heroLift.style.transform='translateY('+(-e*80).toFixed(1)+'px)';
     topbar.classList.toggle('on',scrollY>hero.offsetHeight*0.62);
   }
-  if(act2)layout(prog(act2));
+  if(act2)glideTo(prog(act2));
+}
+/* The composition glides behind the scroll instead of jumping to it: each
+   frame it closes part of the gap, a 90 ms time constant, so a wheel's
+   notches become one motion. Native scrolling is untouched; only the
+   drawing trails it. */
+var shown=null, target=0, gliding=false, lastFrame=0;
+function glideTo(t){
+  target=t;
+  if(shown===null){shown=t;layout(t);return}
+  if(!gliding){gliding=true;lastFrame=performance.now();requestAnimationFrame(glide)}
+}
+function glide(now){
+  var dt=Math.min(now-lastFrame,64); lastFrame=now;
+  shown+=(target-shown)*(1-Math.exp(-dt/90));
+  if(Math.abs(target-shown)<0.0004)shown=target;
+  layout(shown);
+  if(shown!==target)requestAnimationFrame(glide); else gliding=false;
 }
 var tick=false;
 addEventListener('scroll',function(){
   if(!tick){tick=true;requestAnimationFrame(function(){onScroll();tick=false})}
 },{passive:true});
-addEventListener('resize',onScroll);
+/* A resize snaps: gliding the devices across a new layout looks like a fault. */
+addEventListener('resize',function(){shown=null;onScroll()});
 if(reduce){paintPdf(300,390);paintReader(2,2,2)} else {onScroll()}
 })();
 </script>
