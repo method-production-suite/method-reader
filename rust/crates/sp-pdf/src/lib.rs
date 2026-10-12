@@ -14,6 +14,7 @@
 
 pub mod bidi;
 pub mod cmap;
+pub mod facts;
 pub mod filters;
 pub mod fonts;
 pub mod images;
@@ -35,6 +36,7 @@ use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
 
+pub use facts::{read, read_document};
 pub use images::PdfImage;
 pub use oplist::PageOp;
 pub use text::TextItem;
