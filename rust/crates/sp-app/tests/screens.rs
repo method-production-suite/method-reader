@@ -134,7 +134,7 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
             .is_none(),
         "a Kindle on a Mac is proven"
     );
-    for link in ["Read it", "Settings", "Convert another"] {
+    for link in ["Open in Read", "Settings", "Convert another"] {
         h.get_by_role_and_label(Role::Button, link);
     }
 }
