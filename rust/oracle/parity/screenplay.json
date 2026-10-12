@@ -3049,7 +3049,8 @@
       "keepScriptSettings": true,
       "readerDevice": null,
       "animatePage": true,
-      "typewriterSounds": false
+      "typewriterSounds": false,
+      "panelIntent": "read"
     },
     "stderr": "",
     "outputs": {
@@ -3124,7 +3125,8 @@
       "keepScriptSettings": false,
       "readerDevice": "kobo",
       "animatePage": false,
-      "typewriterSounds": false
+      "typewriterSounds": false,
+      "panelIntent": "read"
     },
     "stderr": "",
     "outputs": {
@@ -3197,7 +3199,8 @@
       "keepScriptSettings": true,
       "readerDevice": null,
       "animatePage": true,
-      "typewriterSounds": false
+      "typewriterSounds": false,
+      "panelIntent": "read"
     },
     "stderr": "",
     "outputs": {
@@ -3270,7 +3273,8 @@
       "keepScriptSettings": true,
       "readerDevice": null,
       "animatePage": true,
-      "typewriterSounds": false
+      "typewriterSounds": false,
+      "panelIntent": "read"
     },
     "stderr": "",
     "outputs": {
@@ -3301,7 +3305,7 @@
       "ok": false,
       "error": {
         "code": "usage",
-        "message": "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \"colour\""
+        "message": "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage, typewriterSounds and panelIntent, not \"colour\""
       }
     },
     "stderr": "",

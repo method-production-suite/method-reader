@@ -23,6 +23,10 @@ use crate::nodepath::{host, posix, win32};
 /// The readers the window can remember as "this is mine".
 pub const READER_DEVICES: [&str; 5] = ["kindle", "apple", "kobo", "tolino", "remarkable"];
 
+/// What the window's send panel leads with: reading the book, or getting
+/// the script back to edit. Not in the TypeScript: a Rust window feature.
+pub const PANEL_INTENTS: [&str; 2] = ["read", "edit"];
+
 /// The settings file's contents: any JSON object.
 pub type AppSettings = Map<String, Value>;
 
