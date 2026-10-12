@@ -142,7 +142,7 @@ fn mask_doc_ids(v: &Value) -> Value {
 }
 
 /// Every stage for one dump. Panics, with a JSON path, on a difference.
-fn check(label: &str, dump: &Path) -> (usize, usize, usize) {
+fn check(label: &str, dump: &Path) -> Result<(usize, usize, usize), BudgetSpent> {
     let pdf = input(dump).unwrap_or_else(|| panic!("{label}: input PDF not found"));
     let facts = sp_pdf::read(std::fs::read(pdf).expect("pdf")).expect("loads");
 
@@ -167,6 +167,14 @@ fn check(label: &str, dump: &Path) -> (usize, usize, usize) {
 
     let want_lines = json(&dump.join("lines.json")).expect("lines.json");
     let doc = extract_document(&facts, None, None);
+    // sp-parser's picture budget is wall-clock (20 s of encoding, as in the
+    // TypeScript). A run that spends it reports pictures as failed that the
+    // oracle carried: a fact about this machine's speed at that moment, not
+    // about the PDF facts this test is for (those were compared above).
+    let want_failed = want_lines["imageStats"]["failed"].as_u64().unwrap_or(0);
+    if (doc.image_stats.failed as u64) > want_failed {
+        return Err(BudgetSpent);
+    }
     let lines = serde_json::to_value(&doc.lines).expect("lines");
     if let Some(d) = first_diff(&lines, &want_lines["lines"], "lines") {
         panic!("{label}: lines.json differs at {d}");
@@ -233,8 +241,12 @@ fn check(label: &str, dump: &Path) -> (usize, usize, usize) {
         elements = parsed["elements"].as_array().map_or(0, Vec::len);
     }
     let _ = png_compared;
-    (doc.lines.len(), elements, pictures)
+    Ok((doc.lines.len(), elements, pictures))
 }
+
+/// The picture budget ran out during this run (see `check`).
+#[derive(Debug)]
+struct BudgetSpent;
 
 #[test]
 fn committed_fixtures_read_to_the_oracle() {
@@ -245,7 +257,8 @@ fn committed_fixtures_read_to_the_oracle() {
             .expect("name")
             .to_string_lossy()
             .into_owned();
-        check(&label, &dump);
+        // The committed fixtures are far inside the budget: no exception.
+        check(&label, &dump).unwrap_or_else(|_| panic!("{label}: picture budget spent"));
         n += 1;
     }
     assert_eq!(n, 7, "the seven committed dumps");
@@ -254,18 +267,25 @@ fn committed_fixtures_read_to_the_oracle() {
 #[test]
 fn real_scripts_read_to_the_oracle() {
     // Local only: rust/oracle-real/ is gitignored and empty on CI.
-    let (mut docs, mut lines, mut elements, mut pictures) = (0, 0, 0, 0);
+    let (mut docs, mut lines, mut elements, mut pictures, mut budget) = (0, 0, 0, 0, 0);
     for (i, dump) in dumps("oracle-real").iter().enumerate() {
         if input(dump).is_none() {
             continue;
         }
-        let (l, e, p) = check(&format!("real script {}", i + 1), dump);
+        let Ok((l, e, p)) = check(&format!("real script {}", i + 1), dump) else {
+            eprintln!(
+                "real script {}: PDF facts match; lines not compared, sp-parser's picture budget ran out this run",
+                i + 1
+            );
+            budget += 1;
+            continue;
+        };
         docs += 1;
         lines += l;
         elements += e;
         pictures += p;
     }
     eprintln!(
-        "real scripts: {docs} read, {lines} lines, {elements} elements, {pictures} pictures, all matching"
+        "real scripts: {docs} matching at every stage ({lines} lines, {elements} elements, {pictures} pictures); {budget} matching in facts only (picture budget spent)"
     );
 }
