@@ -98,7 +98,10 @@ impl Io {
 
     /// One line on stdout.
     pub fn say(&mut self, text: &str) {
-        self.sink.lock().unwrap_or_else(|e| e.into_inner()).out(text);
+        self.sink
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .out(text);
     }
 
     /// One line on stderr.

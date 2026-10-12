@@ -5311,6 +5311,7 @@ dependencies = [
  "parley",
  "rfd",
  "serde_json",
+ "sp-cli",
  "sp-update",
  "tempfile",
  "unicode-general-category",

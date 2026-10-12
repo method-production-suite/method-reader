@@ -43,6 +43,8 @@ data-url = "0.3"
 cpal = "0.18"
 # The updater transport and the consent carried from the Tauri window.
 sp-update = { path = "../sp-update" }
+# The engine, in-process: the same run() the screepub binary is.
+sp-cli = { path = "../sp-cli" }
 
 [dev-dependencies]
 egui_kittest = "0.36.2"
