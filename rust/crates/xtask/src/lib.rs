@@ -145,7 +145,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "build-app-bundle",
-        help: "build the app bundles for this platform (Tauri window, or --app native)",
+        help: "build the window's app bundles for this platform",
         main: packaging::build_app_bundle_main,
     },
     Command {

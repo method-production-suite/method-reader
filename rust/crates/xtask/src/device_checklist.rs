@@ -180,7 +180,7 @@ pub fn render(manifest: &[Row]) -> String {
             "torture.pdf draws its own pictures, so these are checks on the same",
             "book as everything above, except two. The picture size an older",
             "Kindle accepts in a .mobi has four small books of its own, built with",
-            "`bun tools/mobi-picture-probe.ts --out <folder>`. And the default book",
+            "`cargo xtask mobi-picture-probe --out <folder>`. And the default book",
             "makes its title card the cover (#19b), so the check on a full-page",
             "plate at the front reads a second build with the cover off, whose",
             "command that check gives. What each of torture.pdf's pictures is, and",

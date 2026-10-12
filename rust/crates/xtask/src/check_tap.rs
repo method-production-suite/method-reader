@@ -220,7 +220,7 @@ pub fn check_tap(
 
     if fail {
         out.push(format!(
-            "::notice::Bump https://github.com/{tap}: tools/bump-tap.sh does it (and disables the retired cask), and the release run's summary carries the SHA. See docs/release-secrets.md."
+            "::notice::Bump https://github.com/{tap}: `cargo xtask bump-tap` does it (and disables the retired cask), and the release run's summary carries the SHA. See docs/release-secrets.md."
         ));
         return (out, err, 1);
     }

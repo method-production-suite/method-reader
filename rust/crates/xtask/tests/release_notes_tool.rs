@@ -277,6 +277,41 @@ fn a_site_change_alongside_a_src_change_is_still_reader_visible() {
     assert!(is_user_visible(&["site/index.html", "src/options.ts"]));
 }
 
+// Since the Rust cutover the app is rust/.
+
+#[test]
+fn a_change_to_a_crate_s_source_or_the_workspace_is_reader_visible() {
+    for path in [
+        "rust/crates/sp-epub/src/css.rs",
+        "rust/crates/sp-app/src/app/convert.rs",
+        "rust/crates/sp-app/fonts/literata-400-latin.woff2",
+        "rust/crates/sp-release/src/nsis.rs",
+        "rust/Cargo.toml",
+        "rust/Cargo.lock",
+    ] {
+        assert!(is_user_visible(&[path]), "{path}");
+    }
+}
+
+#[test]
+fn the_rust_tooling_tests_and_ledgers_are_not_reader_visible() {
+    assert!(!is_user_visible(&[
+        "rust/crates/xtask/src/release_notes.rs",
+        "rust/crates/sp-epub/tests/oracle.rs",
+        "rust/crates/sp-mobi/tests/data/mobi-sources.json",
+        "rust/crates/sp-app/examples/capture.rs",
+        "rust/oracle/torture/book.epub",
+        "rust/handover-proof/src/main.rs",
+        "rust/PARITY.md",
+        "rust/README.md",
+    ]));
+    // A crate's tests beside its source: the source still counts.
+    assert!(is_user_visible(&[
+        "rust/crates/sp-epub/tests/oracle.rs",
+        "rust/crates/sp-epub/src/lib.rs",
+    ]));
+}
+
 // ── the command ──────────────────────────────────────────────────────────
 
 #[test]

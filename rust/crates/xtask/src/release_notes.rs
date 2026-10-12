@@ -256,17 +256,54 @@ pub fn changed_registry_entries(before: &str, after: &str) -> Vec<(String, Strin
         .collect()
 }
 
-/// Directories that never ship to a reader.
-const NON_SHIPPING_PREFIXES: &[&str] =
-    &["docs/", "tests/", ".github/", "tools/", "site/", "brand/"];
+/// Directories that never ship to a reader. Since the Rust cutover the app
+/// is rust/: of that, the project's own tooling (xtask), the TypeScript
+/// engine's frozen answers (oracle/, oracle-real/), the Tauri handover
+/// rehearsal (handover-proof/) and the port's ledger and notes (PARITY.md,
+/// README.md) never ship either.
+const NON_SHIPPING_PREFIXES: &[&str] = &[
+    "docs/",
+    "tests/",
+    ".github/",
+    "tools/",
+    "site/",
+    "brand/",
+    "rust/crates/xtask/",
+    "rust/oracle/",
+    "rust/oracle-real/",
+    "rust/handover-proof/",
+    "rust/PARITY.md",
+    "rust/README.md",
+];
+
+/// The folders inside a crate that never ship: its tests (and their data),
+/// examples and benchmarks.
+const NON_SHIPPING_IN_A_CRATE: &[&str] = &["tests/", "examples/", "benches/"];
+
+fn ships(path: &str) -> bool {
+    if NON_SHIPPING_PREFIXES
+        .iter()
+        .any(|pre| path.starts_with(pre))
+    {
+        return false;
+    }
+    // rust/crates/<crate>/tests/... and the like.
+    if let Some(rest) = path.strip_prefix("rust/crates/")
+        && let Some((_, inside)) = rest.split_once('/')
+        && NON_SHIPPING_IN_A_CRATE
+            .iter()
+            .any(|dir| inside.starts_with(dir))
+    {
+        return false;
+    }
+    true
+}
 
 /// Whether ANY changed path ships to a reader. A denylist on purpose: a gap
 /// costs a wasted drafting pass, where an allowlist gap would silently skip
 /// a real reader-visible change.
 pub fn is_user_visible(changed_paths: &[&str]) -> bool {
-    changed_paths
-        .iter()
-        .any(|p| !NON_SHIPPING_PREFIXES.iter().any(|pre| p.starts_with(pre)))
+    changed_paths.iter().any(|p| ships(p))
 }
 
 fn verdict_json(v: &Verdict) -> Value {
