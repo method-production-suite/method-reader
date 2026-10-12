@@ -9,10 +9,9 @@ use super::App;
 use super::bookview::{BOOK_EM, View, mix, sheet};
 use super::widgets;
 use crate::model::layout;
+use crate::model::motion::{GLOW, PAGE_LIFT};
 use crate::model::page_show::{FADE_MS, HEADING, Reading, align_blocks, reading_line};
-use crate::model::page_timing::{
-    Frame, GLOW_MS, Heard, Plan, form_at, frame_at, plan_show, sounds_due,
-};
+use crate::model::page_timing::{Frame, Heard, Plan, form_at, frame_at, plan_show, sounds_due};
 use crate::model::read::PAGE_MARGIN_INLINE_PCT;
 use crate::theme::{self, Tokens, size};
 
@@ -149,13 +148,23 @@ impl Show {
         self.running()
     }
 
-    /// The typed page's opacity: whole while it runs, lifting over 250 ms.
+    /// The typed page's opacity: whole while it runs, lifting over 250 ms,
+    /// eased out (surfaces.css `.page-show-frame`).
     pub fn page_opacity(&self) -> f32 {
         match (self.over, self.fade_from) {
             (false, _) => 1.0,
-            (true, Some(from)) => (1.0 - ((self.now - from) / FADE_MS) as f32).clamp(0.0, 1.0),
+            (true, Some(from)) => 1.0 - PAGE_LIFT.progress(self.now - from),
             (true, None) => 0.0,
         }
+    }
+
+    /// How brightly block `i` glows: 1 the moment it forms, out to 0 over
+    /// 600 ms eased out (page-show.js `page-show-glow`); 0 before it forms.
+    pub fn glow(&self, i: usize) -> f32 {
+        let t_ms = self.now - self.start;
+        form_at(&self.plan, self.book_at, i)
+            .filter(|&at| at <= t_ms && i < self.frame().formed)
+            .map_or(0.0, |at| 1.0 - GLOW.progress(t_ms - at))
     }
 
     /// Which of the book's blocks each typed paragraph became (None: it
@@ -283,14 +292,9 @@ pub fn paint_typed(
     let inline = rect.width() * PAGE_MARGIN_INLINE_PCT / 100.0;
     let width = rect.width() - 2.0 * inline;
     let mut y = rect.top() + 1.5 * BOOK_EM;
-    let t_ms = show.now - show.start;
     for (i, block) in show.plan.blocks.iter().enumerate() {
         let formed = i < frame.formed;
-        let glow = form_at(&show.plan, show.book_at, i)
-            .map(|at| ((t_ms - at) / GLOW_MS).clamp(0.0, 1.0) as f32)
-            .filter(|_| formed)
-            .map(|k| 1.0 - k)
-            .unwrap_or(0.0);
+        let glow = show.glow(i);
         let ink = mix(t.ink, t.brass, glow).gamma_multiply(opacity);
         let source = show
             .sources
@@ -383,6 +387,29 @@ mod tests {
         assert_eq!(show.slim_line(), "Starting up");
         show.progress(&json!({"stage": "parse", "page": 4, "pages": 18}));
         assert_eq!(show.slim_line(), "Reading page 4 of 18");
+    }
+
+    #[test]
+    fn the_glow_and_the_lift_ease_out_as_the_old_window_s_did() {
+        let mut show = Show::begin(&paragraphs(), "a.pdf".into(), 0.0, false);
+        show.adopt(Some(&book()), 0.0);
+        // Typing ends at 4000 ms; the last block forms two steps after.
+        let at = form_at(&show.plan, show.book_at, 0).expect("formed");
+        show.tick(at);
+        assert_eq!(show.glow(0), 1.0, "full the moment it forms");
+        show.tick(at + 300.0);
+        let half = show.glow(0);
+        // ease-out at half time is 0.6846 of the way: 0.3154 left, not 0.5.
+        assert!((half - 0.3154).abs() < 1e-3, "{half}");
+        show.tick(at + 600.0);
+        assert_eq!(show.glow(0), 0.0);
+        assert_eq!(show.glow(2), 0.0, "not formed yet");
+        let end = show.plan.blocks.len() - 1;
+        let over = form_at(&show.plan, show.book_at, end).unwrap() + GLOW.ms;
+        show.tick(over);
+        show.tick(over + 125.0);
+        let lift = show.page_opacity();
+        assert!((lift - (1.0 - 0.6846)).abs() < 1e-3, "{lift}");
     }
 
     #[test]

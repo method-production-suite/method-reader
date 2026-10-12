@@ -8,6 +8,7 @@ use super::widgets::{self, Look};
 use super::{App, convert};
 use crate::model::device::SEND_BOOK;
 use crate::model::layout;
+use crate::model::motion::{self, Timing};
 use crate::model::read::{
     self as m, Mark, Place, RailKey, ReadKey, ReaderState, Scroll, index_toggle, rail_count,
     rail_entries, rail_step, reader_place, reader_state, scroll_step, scroll_target,
@@ -21,8 +22,11 @@ pub struct State {
     pub marks: Vec<Mark>,
     pub rail_stop: usize,
     pub marked: Option<String>,
-    /// A scroll the next frame owes (a place to restore, a scene pressed).
+    /// A scroll the next frame owes (a place to restore, a key pressed).
     pub scroll_to: Option<f32>,
+    /// A scene pressed in the index, gliding there (R9): from, to, when it
+    /// began, and how (WebKit's smooth scroll).
+    pub glide: Option<(f32, f32, f64, Timing)>,
     pub restore: bool,
     pub frame_height: f32,
     pub content_height: f32,
@@ -38,6 +42,7 @@ impl Default for State {
             rail_stop: 0,
             marked: None,
             scroll_to: None,
+            glide: None,
             restore: false,
             frame_height: 0.0,
             content_height: 0.0,
@@ -182,17 +187,31 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         .clone();
     let entries = rail_entries(&scenes);
     let mut rail_bottom = top.y;
-    if app.read.index_open {
+    let open = app.read.index_open;
+    // Beside the script, opening and shutting slides the index 0.8rem and
+    // fades it over 0.2 s, in its own slot, so the script never moves
+    // (surfaces.css .scene-rail); stacked above it, it is there or absent.
+    let shown = if geometry.stacked {
+        if open { 1.0 } else { 0.0 }
+    } else {
+        app.ease(
+            Id::new("scene-rail-shown"),
+            if open { 1.0 } else { 0.0 },
+            motion::INDEX_SLIDE,
+        )
+    };
+    if shown > 0.0 {
         let rail_rect = if geometry.stacked {
             Rect::from_min_size(top, Vec2::new(block.width, 104.0))
         } else {
             Rect::from_min_size(
-                top + Vec2::new(geometry.index.left, 0.0),
+                top + Vec2::new(geometry.index.left - (1.0 - shown) * layout::SPACE[3], 0.0),
                 Vec2::new(geometry.index.width, frame_height(top.y)),
             )
         };
         let r = ui.scope_builder(egui::UiBuilder::new().max_rect(rail_rect), |ui| {
-            draw_rail(app, ui, &entries, geometry.stacked)
+            ui.multiply_opacity(shown);
+            draw_rail(app, ui, &entries, geometry.stacked, open)
         });
         // Stacked, the script starts a gap below the index; beside it, the
         // index ends with the frame and adds no gap under the page.
@@ -244,6 +263,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         });
         if let Some(key) = key {
             let max = (app.read.content_height - height).max(0.0);
+            app.read.glide = None;
             app.read.scroll_to = Some(match scroll_step(key, height) {
                 Scroll::By(d) => (app.read.offset + d).clamp(0.0, max),
                 Scroll::Top => 0.0,
@@ -251,6 +271,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
             });
         }
     }
+    let now = app.now();
     let view = app.views.get(Shown::Read, &html, book_width, &t, dark);
     let marks = view.marks();
     let content = view.book.height;
@@ -265,8 +286,20 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         .id_salt("script-frame")
         .max_height(height)
         .auto_shrink([false, false]);
+    let mut gliding_at = None;
+    let mut gliding = false;
     if let Some(to) = app.read.scroll_to.take() {
+        app.read.glide = None;
         area = area.vertical_scroll_offset(to);
+    } else if let Some((from, to, start, timing)) = app.read.glide {
+        let elapsed = now - start;
+        let y = from + (to - from) * timing.progress(elapsed);
+        area = area.vertical_scroll_offset(y);
+        gliding_at = Some(y);
+        gliding = timing.running(elapsed);
+        if !gliding {
+            app.read.glide = None;
+        }
     }
     let out = ui.scope_builder(
         egui::UiBuilder::new().max_rect(script_rect.shrink(1.0)),
@@ -285,6 +318,12 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         },
     );
     app.read.offset = out.inner.state.offset.y;
+    // The reader scrolled during a glide: theirs wins, as in a browser.
+    if gliding_at.is_some_and(|y| (y - app.read.offset).abs() > 0.5) {
+        app.read.glide = None;
+    } else if gliding {
+        app.moving();
+    }
     mark_current(app);
     let bottom = script_rect.bottom().max(rail_bottom);
     ui.allocate_rect(
@@ -293,11 +332,21 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
     );
 }
 
-/// An entry in the scene index pressed: its scene to the top (R9).
+/// An entry in the scene index pressed: its scene to the top (R9),
+/// smoothly as WebKit scrolls one into view, at once with Reduce Motion.
 pub fn go_to_scene(app: &mut App, id: &str) {
-    if let Some(mark) = app.read.marks.iter().find(|m| m.id == id) {
-        app.read.scroll_to = Some(mark.top);
+    let Some(top) = app.read.marks.iter().find(|m| m.id == id).map(|m| m.top) else {
+        return;
+    };
+    let max = (app.read.content_height - app.read.frame_height).max(0.0);
+    let to = top.min(max);
+    let from = app.read.offset;
+    if app.reduced_motion() || (to - from).abs() < 0.5 {
+        app.read.glide = None;
+        app.read.scroll_to = Some(to);
+        return;
     }
+    app.read.glide = Some((from, to, app.now(), motion::scroll_timing(to - from)));
 }
 
 /// Mark the scene being read; the index's stop follows it unless the
@@ -315,7 +364,8 @@ fn mark_current(app: &mut App) {
     }
 }
 
-fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool) {
+/// `open` is false while it fades away: still drawn, out of the Tab order.
+fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool, open: bool) {
     let t = app.tokens();
     let nav = ui.scope(|ui| {
         if entries.is_empty() {
@@ -388,7 +438,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     ui.painter()
                         .galley(rect.min + Vec2::new(6.4, 3.0), galley, ink);
                     widgets::focus_ring(ui, &t, &r, 1.0);
-                    if stop {
+                    if stop && open {
                         app.stop(r.id, true);
                     }
                     if r.clicked() {

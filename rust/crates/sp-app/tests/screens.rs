@@ -449,6 +449,10 @@ fn read_shows_the_script_with_its_scene_index() {
     toggle.click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Show scenes");
+    // It fades for 0.2 s first, still there (surfaces.css: visibility
+    // follows the transition), then it is gone.
+    w.fakes.clock.advance(200.0);
+    steps(&mut h);
     assert!(h.query_by_role(Role::Navigation).is_none());
 }
 

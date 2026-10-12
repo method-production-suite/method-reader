@@ -16,6 +16,7 @@ use crate::model::device::{
 };
 use crate::model::frame::{Surface, TabKey, rev_label, tab_presence, tab_step};
 use crate::model::layout;
+use crate::model::motion;
 use crate::model::notes::{RELEASE, visible_sections};
 use crate::model::send_routes::Device;
 use crate::model::update::{
@@ -552,16 +553,26 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             if !presence.shown {
                 continue;
             }
-            // Arriving: fade and rise over 0.2 s, staggered by position.
+            // Arriving: fade and rise over 0.2 s, eased out, staggered by
+            // position (style.css tab-arrive).
             let arrival = app.arriving.get(&s).map(|at| {
                 let delay = if index >= 2 {
-                    70.0 * (index - 1) as f64
+                    motion::TAB_STAGGER_MS * (index - 1) as f64
                 } else {
                     0.0
                 };
-                ((now - at - delay) / 200.0).clamp(0.0, 1.0) as f32
+                let timing = motion::TAB_ARRIVE.delayed(delay);
+                (timing.progress(now - at), timing.running(now - at))
             });
-            let k = if reduced { 1.0 } else { arrival.unwrap_or(1.0) };
+            let k = match arrival {
+                Some((k, running)) if !reduced => {
+                    if running {
+                        app.moving();
+                    }
+                    k
+                }
+                _ => 1.0,
+            };
             let font = theme::structure_bold(size::NOTE);
             let words = widgets::caps(s.label());
             let galley = ui.painter().layout_no_wrap(words, font, t.ink);
@@ -584,12 +595,19 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
                 n.set_selected(selected);
                 n.clear_toggled();
             });
-            let ink = if selected || response.hovered() {
-                t.ink
-            } else {
-                t.ink_muted
-            };
-            let offset = Vec2::new(0.0, (1.0 - k) * -5.0);
+            // The colour follows hover and selection over 0.2 s
+            // (`.tab { transition: color }`); the underline does not move.
+            let lit = app.ease(
+                response.id.with("ink"),
+                if selected || response.hovered() {
+                    1.0
+                } else {
+                    0.0
+                },
+                motion::STATE,
+            );
+            let ink = super::bookview::mix(t.ink_muted, t.ink, lit);
+            let offset = Vec2::new(0.0, (1.0 - k) * -motion::TAB_RISE);
             ui.painter()
                 .galley(rect.min + offset, galley, ink.gamma_multiply(k));
             if selected {
@@ -711,9 +729,29 @@ fn update_button(ui: &mut Ui, t: &Tokens, words: &str, actionable: bool) -> egui
 }
 
 fn heads_up(app: &mut App, ui: &mut Ui) {
+    let motion_id = Id::new("heads-up-in");
     let Some(device) = app.heads_up.offered.clone() else {
+        app.forget_motion(motion_id);
         return;
     };
+    // heads-up-in: it takes its place in the page at once, and slides down
+    // half its own height into it as it fades in.
+    let k = app.ease_from(motion_id, 0.0, 1.0, motion::HEADS_UP_IN);
+    let height_id = Id::new("heads-up-height");
+    let height = ui
+        .memory(|m| m.data.get_temp::<f32>(height_id))
+        .unwrap_or(0.0);
+    let top = ui.cursor().min;
+    let width = ui.available_width();
+    let mut slid = ui.new_child(
+        egui::UiBuilder::new()
+            .max_rect(Rect::from_min_size(
+                top + Vec2::new(0.0, -(1.0 - k) * height * 0.5),
+                Vec2::new(width, f32::INFINITY),
+            ))
+            .layout(*ui.layout()),
+    );
+    slid.multiply_opacity(k);
     let t = app.tokens();
     let title = app
         .script
@@ -722,7 +760,7 @@ fn heads_up(app: &mut App, ui: &mut Ui) {
         .unwrap_or_default();
     widgets::panel_frame(&t)
         .inner_margin(egui::Margin::symmetric(16, 12))
-        .show(ui, |ui| {
+        .show(&mut slid, |ui| {
             ui.horizontal_wrapped(|ui| {
                 widgets::live(
                     ui,
@@ -748,26 +786,42 @@ fn heads_up(app: &mut App, ui: &mut Ui) {
                 }
             });
         });
+    let drawn = slid.min_rect().height();
+    ui.memory_mut(|m| m.data.insert_temp(height_id, drawn));
+    ui.advance_cursor_after_rect(Rect::from_min_size(top, Vec2::new(width, drawn)));
     ui.add_space(layout::SPACE[4]);
 }
 
 // -------------------------------------------------------------- the notes
 
 fn notes_sheet(app: &mut App, ui: &mut Ui) {
+    let motion_id = Id::new("sheet-rise");
     if !app.notes_open {
+        app.forget_motion(motion_id);
         return;
     }
     let t = app.tokens();
     let ctx = ui.ctx().clone();
+    // sheet-rise: the sheet comes up 16px as it fades in; the dimming
+    // behind it is there at once.
+    let k = app.ease_from(motion_id, 0.0, 1.0, motion::SHEET_RISE);
+    let area = egui::Modal::default_area(Id::new("release-notes"))
+        .fade_in(false)
+        .anchor(
+            egui::Align2::CENTER_CENTER,
+            Vec2::new(0.0, (1.0 - k) * motion::SHEET_RISE_PX),
+        );
     let modal = egui::Modal::new(Id::new("release-notes"))
+        .area(area)
         .frame(
             egui::Frame::NONE
-                .fill(t.paper)
+                .fill(t.paper.gamma_multiply(k))
                 .corner_radius(CornerRadius::same(theme::RADIUS_WELL as u8))
                 .inner_margin(egui::Margin::symmetric(32, 19)),
         )
         .backdrop_color(Color32::from_black_alpha(107))
         .show(&ctx, |ui| {
+            ui.multiply_opacity(k);
             let width = (44.0 * 16.0f32).min(ctx.content_rect().width() * 0.88);
             ui.set_width(width);
             ui.ctx().accesskit_node_builder(ui.id(), |n| {

@@ -11,6 +11,7 @@ use super::{App, Purpose as AppPurpose, convert, read};
 use crate::engine::{Reply, Request};
 use crate::model::busy::Hold;
 use crate::model::layout;
+use crate::model::motion;
 use crate::model::page_show::page_switches_from;
 use crate::model::tune::{
     self as m, DefaultsOutcome, Kind, Knob, PaneMode, Phase, Preset, Settings, Status, can_explain,
@@ -678,19 +679,44 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
             let open = app.tune.open.get(gi).copied().unwrap_or(false);
             let title = widgets::caps(group.title);
             let font = theme::structure_bold(size::CAPTION);
-            let galley =
-                ui.painter()
-                    .layout_no_wrap(format!("\u{25B8} {title}"), font, t.ink_muted);
-            let (rect, r) = ui.allocate_exact_size(galley.size(), Sense::click());
+            // The brass triangle, then the title a space-2 after it.
+            let triangle = ui
+                .painter()
+                .layout_no_wrap("\u{25B8}".into(), font.clone(), t.brass);
+            let words = ui.painter().layout_no_wrap(title, font, t.ink_muted);
+            let gap = layout::SPACE[2];
+            let size = Vec2::new(
+                triangle.size().x + gap + words.size().x,
+                triangle.size().y.max(words.size().y),
+            );
+            let (rect, r) = ui.allocate_exact_size(size, Sense::click());
             r.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::CollapsingHeader, true, group.title)
             });
             ui.ctx()
                 .accesskit_node_builder(r.id, |n| n.set_expanded(open));
-            ui.painter().galley(
-                rect.min,
-                galley,
-                if r.hovered() { t.ink } else { t.ink_muted },
+            // It turns a quarter as the group opens, and the title's ink
+            // follows the pointer, both over 0.2 s (surfaces.css
+            // .knob-group-title).
+            let turn = app.ease(
+                r.id.with("turn"),
+                if open { 1.0 } else { 0.0 },
+                motion::GROUP_TURN,
+            );
+            let lit = app.ease(
+                r.id.with("ink"),
+                if r.hovered() { 1.0 } else { 0.0 },
+                motion::STATE,
+            );
+            let half = triangle.size() / 2.0;
+            let angle = turn * std::f32::consts::FRAC_PI_2;
+            let at = rect.min + half - egui::emath::Rot2::from_angle(angle) * half;
+            ui.painter()
+                .add(egui::epaint::TextShape::new(at, triangle.clone(), t.brass).with_angle(angle));
+            ui.painter().galley_with_override_text_color(
+                rect.min + Vec2::new(triangle.size().x + gap, 0.0),
+                words,
+                super::bookview::mix(t.ink_muted, t.ink, lit),
             );
             widgets::focus_ring(ui, &t, &r, 3.0);
             app.stop(r.id, true);

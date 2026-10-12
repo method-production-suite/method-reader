@@ -140,7 +140,12 @@ pub fn convert_path(app: &mut App, path: &str, force: bool) {
 /// The conversion's turn has come: the read-out stops naming the wait.
 pub fn started(app: &mut App) {
     app.convert.waiting = None;
+    // A fresh bar for a fresh conversion, as drawProgress built one.
+    app.forget_motion(Id::new(FILL));
 }
+
+/// The progress bar's fill, easing to each new figure (surfaces.css .fill).
+const FILL: &str = "progress-fill";
 
 /// One progress line from the engine.
 pub fn progress(app: &mut App, purpose: &Purpose, line: &Value) {
@@ -598,7 +603,12 @@ fn draw_working(app: &mut App, ui: &mut Ui) {
     );
     ui.add_space(layout::SPACE[6]);
     ui.vertical_centered(|ui| {
-        widgets::track(ui, &t, f32::from(app.convert.progress.percent) / 100.0);
+        let fill = app.ease(
+            Id::new(FILL),
+            f32::from(app.convert.progress.percent) / 100.0,
+            crate::model::motion::PROGRESS_FILL,
+        );
+        widgets::track(ui, &t, fill);
         ui.add_space(layout::SPACE[2]);
         let words = app
             .convert
