@@ -258,7 +258,9 @@ jobs:
               "$SP" deb --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out "$W"
               "$SP" rpm --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out "$W"
               dpkg-deb --info "$W/Screepub-linux-amd64.deb"
-              sudo dpkg -i "$W/Screepub-linux-amd64.deb" || sudo apt-get install -f -y
+              # apt, not dpkg -i: it installs what Depends names first, so
+              # a name the archive does not know fails here, by name.
+              sudo apt-get install -y --no-install-recommends "$W/Screepub-linux-amd64.deb"
               test -x /usr/bin/screepub-desktop
               grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
               sudo dpkg -r screepub
@@ -267,10 +269,13 @@ jobs:
               # What each package declares it needs at run time: the
               # libraries the binary links (measured: dpkg-shlibdeps for the
               # .deb, the binary's NEEDED list for the .rpm) and the ones the
-              # window opens itself (sp-release's LOADED_AT_RUN_TIME).
+              # window opens itself (sp-release's LOADED_AT_RUN_TIME). Each
+              # is a whole package name, as an entry or an alternative: ALSA
+              # is measured here as libasound2t64, and older systems only
+              # know libasound2, so both must be offered.
               dpkg-deb --field "$W/Screepub-linux-amd64.deb" Depends | tee "$W/depends.txt"
-              for p in libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
-                grep -qw -- "$p" "$W/depends.txt"
+              for p in libasound2t64 libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
+                grep -qE -- "(^|[,|] *)$p( |,|\$)" "$W/depends.txt"
               done
               rpm -qp --requires "$W/Screepub-linux-x86_64.rpm" | tee "$W/requires.txt"
               for s in $(objdump -p rust/target/release/screepub-window | awk '/NEEDED/ {print $2}') \

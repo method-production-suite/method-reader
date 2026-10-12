@@ -442,12 +442,16 @@ jobs:
                 ;;
               *.deb)
                 dpkg-deb --info "$B" | grep -q "Version: $VERSION"
-                # Measured libraries and the ones the window opens itself.
+                # Measured libraries and the ones the window opens itself,
+                # each a whole package name (an entry or an alternative):
+                # ALSA is measured as libasound2t64, and older systems only
+                # know libasound2, so both must be offered.
                 DEP="$(dpkg-deb --field "$B" Depends)"
-                for p in libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
-                  grep -qw -- "$p" <<<"$DEP"
+                for p in libasound2t64 libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
+                  grep -qE -- "(^|[,|] *)$p( |,|\$)" <<<"$DEP"
                 done
-                sudo dpkg -i "$B" || sudo apt-get install -f -y
+                # apt, not dpkg -i: it installs what Depends names first.
+                sudo apt-get install -y --no-install-recommends "$(realpath "$B")"
                 test -x /usr/bin/screepub-desktop
                 grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
                 sudo dpkg -r screepub

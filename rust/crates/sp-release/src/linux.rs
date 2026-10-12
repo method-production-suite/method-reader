@@ -137,12 +137,17 @@ pub const LOADED_AT_RUN_TIME: &[(&str, &str)] = &[
 
 /// The .deb's `Depends:`: the line measured on the binary (dpkg-shlibdeps,
 /// in CI), then each run-time library's package it does not already name.
+///
+/// A measured package with the 64-bit time name (`libasound2t64`, from
+/// Debian's t64 transition, which Ubuntu 24.04 and Debian 13 made) also
+/// accepts its old name (`libasound2`), the only one Debian 12 and
+/// Ubuntu 22.04 know, with the same version bound.
 pub fn deb_depends(measured: &str) -> String {
     let mut parts: Vec<String> = measured
         .split(',')
         .map(str::trim)
         .filter(|p| !p.is_empty())
-        .map(str::to_string)
+        .map(with_pre_t64_names)
         .collect();
     let named = |parts: &[String], pkg: &str| {
         parts.iter().any(|p| {
@@ -156,6 +161,28 @@ pub fn deb_depends(measured: &str) -> String {
         }
     }
     parts.join(", ")
+}
+
+/// One `Depends:` entry (`a (>= 1) | b`), each `...t64` alternative
+/// followed by its old name, unless the entry already offers that name.
+fn with_pre_t64_names(entry: &str) -> String {
+    let alts: Vec<&str> = entry.split('|').map(str::trim).collect();
+    let names: Vec<&str> = alts
+        .iter()
+        .filter_map(|a| a.split_whitespace().next())
+        .collect();
+    let mut out: Vec<String> = Vec::new();
+    for alt in &alts {
+        out.push((*alt).to_string());
+        let name = alt.split_whitespace().next().unwrap_or("");
+        if let Some(old) = name.strip_suffix("t64")
+            && !old.is_empty()
+            && !names.contains(&old)
+        {
+            out.push(format!("{old}{}", &alt[name.len()..]));
+        }
+    }
+    out.join(" | ")
 }
 
 /// The DT_NEEDED sonames of a 64-bit little-endian ELF file, in order:
@@ -473,6 +500,27 @@ mod tests {
         let c = control("0.12.0", "amd64", 9, &deb_depends(measured));
         assert!(c.contains("\nDepends: libasound2 (>= 1.0.16), "), "{c}");
         assert!(c.contains(", libegl1\n"), "{c}");
+    }
+
+    #[test]
+    fn a_t64_package_measured_on_a_new_system_also_accepts_its_old_name() {
+        // dpkg-shlibdeps on Ubuntu 24.04 names ALSA by its 64-bit time
+        // name; Debian 12 and Ubuntu 22.04 only know libasound2.
+        let measured =
+            "libasound2t64 (>= 1.1.0), libc6 (>= 2.39), libglib2.0-0t64 (>= 2.75.3) | libfoo1";
+        let d = deb_depends(measured);
+        assert!(
+            d.starts_with(
+                "libasound2t64 (>= 1.1.0) | libasound2 (>= 1.1.0), libc6 (>= 2.39), \
+                 libglib2.0-0t64 (>= 2.75.3) | libglib2.0-0 (>= 2.75.3) | libfoo1, "
+            ),
+            "{d}"
+        );
+        // Already offering the old name: nothing is added twice.
+        let both = "libasound2t64 (>= 1.1.0) | libasound2 (>= 1.1.0)";
+        assert!(deb_depends(both).starts_with(&format!("{both}, ")));
+        // An old system's line is left as it was.
+        assert!(deb_depends("libasound2 (>= 1.0.16)").starts_with("libasound2 (>= 1.0.16), "));
     }
 
     /// A minimal 64-bit little-endian ELF with a dynamic section naming
