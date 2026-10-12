@@ -17,6 +17,7 @@
 #![allow(dead_code)]
 
 pub mod books;
+pub mod kfx_stubs;
 pub mod png;
 
 use std::path::{Path, PathBuf};
