@@ -1,8 +1,8 @@
 //! Port of tests/export-calibre.test.ts: finding and running Calibre's
 //! tools. Every spawn here is a stand-in script, never Calibre itself. The
-//! two checks that run REAL Calibre on a real EPUB (toKepub's koboSpan,
-//! and the dialogue column surviving an exploded AZW3) need the engine's
-//! own EPUB, so they move with the conversion to wave 3; PARITY.md says so.
+//! two checks that run REAL Calibre on the engine's own EPUB (toKepub's
+//! koboSpan, and the dialogue column surviving an exploded AZW3) are
+//! export_calibre_real.rs.
 
 #![cfg_attr(not(unix), allow(dead_code, unused_imports))]
 
