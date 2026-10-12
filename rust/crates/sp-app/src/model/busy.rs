@@ -95,13 +95,19 @@ impl Busy {
     /// a refused call is no work and is not counted. Returns whether it is
     /// counted, which the caller hands back to `ended`.
     pub fn starting(&mut self, call: Call) -> Result<bool, &'static str> {
-        if self.retired() {
+        if self.retired {
             return Err(UPDATED_MESSAGE);
         }
         let counted = counts_toward_busy(call);
+        // The gate checks retirement and counts the call under ONE lock:
+        // asking `retired()` and then taking a hold left a gap in which the
+        // update's thread could retire the gate, find it quiet and restart,
+        // with this call starting after all (a hold is taken even when
+        // retired).
+        let ticket = self.gate.enter(counted).map_err(|_| UPDATED_MESSAGE)?;
         if counted {
             self.in_flight += 1;
-            self.calls.push(self.gate.hold());
+            self.calls.push(ticket);
         }
         Ok(counted)
     }
