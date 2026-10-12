@@ -320,7 +320,13 @@ pub fn main(args: &[String]) -> u8 {
             return 1;
         }
     };
-    match facts(&cwd, since_tag) {
+    // The top of the repository the command runs in: `cargo xtask` runs
+    // from rust/ (its alias lives in rust/.cargo/config.toml), and the
+    // registry path is the repository's, not rust/'s.
+    let top = git(&cwd, &["rev-parse", "--show-toplevel"])
+        .map(|t| std::path::PathBuf::from(t.trim()))
+        .unwrap_or(cwd);
+    match facts(&top, since_tag) {
         Ok(v) => {
             println!(
                 "{}",

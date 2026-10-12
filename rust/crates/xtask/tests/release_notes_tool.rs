@@ -315,6 +315,15 @@ fn the_command_prints_the_facts_as_json_for_the_range() {
         ]
     );
 
+    // From a subfolder (cargo xtask runs from rust/), the same facts.
+    let below = xtask(
+        &["release-notes", "v0.2.0"],
+        &[],
+        Some(&s.join("src")),
+        None,
+    );
+    assert_eq!(text(&below.stdout), text(&out.stdout));
+
     let usage = xtask(&["release-notes"], &[], Some(s.path()), None);
     assert_eq!(usage.status.code(), Some(2));
 }
