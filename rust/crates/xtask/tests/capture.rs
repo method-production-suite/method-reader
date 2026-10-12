@@ -10,13 +10,16 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+#[cfg(unix)]
 use std::time::Duration;
 
 use xtask::capture::backend::{
     Browser, CaptureOptions, EguiWindow, PassOne, WindowBackend, window_args,
 };
 use xtask::capture::http::{Request, Response};
-use xtask::capture::picture::{decode, encode_rgba, size};
+#[cfg(unix)]
+use xtask::capture::picture::encode_rgba;
+use xtask::capture::picture::{decode, size};
 use xtask::capture::run::{MARKER, RunError, RunOptions, claim_library, engine_env, run_capture};
 use xtask::capture::server::{Handler, HandlerOptions, Records, snapshot};
 use xtask::capture::shots::{

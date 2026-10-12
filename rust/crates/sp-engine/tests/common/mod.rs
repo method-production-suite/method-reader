@@ -29,7 +29,6 @@ pub mod palmdoc_decode;
 pub mod png;
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::OnceLock;
 
 use sp_engine::env::Env;
@@ -241,7 +240,7 @@ pub fn env_of(pairs: &[(&str, &str)]) -> Env {
 pub fn is_root() -> bool {
     #[cfg(unix)]
     {
-        Command::new("id")
+        std::process::Command::new("id")
             .arg("-u")
             .output()
             .is_ok_and(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")

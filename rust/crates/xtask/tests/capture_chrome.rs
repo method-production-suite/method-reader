@@ -18,7 +18,9 @@ use std::time::{Duration, Instant};
 use base64::Engine as _;
 use serde_json::{Value, json};
 use tungstenite::Message;
-use xtask::capture::backend::{Browser, CaptureOptions, PassOne, WindowBackend};
+use xtask::capture::backend::{Browser, CaptureOptions};
+#[cfg(unix)]
+use xtask::capture::backend::{PassOne, WindowBackend};
 use xtask::capture::cdp::{self, CHROME, PROFILE_PREFIX, launch};
 use xtask::capture::http::Response;
 use xtask::capture::run::{RunOptions, run_capture};
@@ -318,8 +320,10 @@ fn a_failure_the_caller_reports_ends_the_wait_at_once_and_a_timeout_names_what_t
 }
 
 /// A window that draws a picture at once, so the run reaches pass two.
+#[cfg(unix)]
 struct DrawnWindow;
 
+#[cfg(unix)]
 impl WindowBackend for DrawnWindow {
     fn pass_one(&mut self, _p: PassOne<'_>) -> Result<Vec<u8>, String> {
         Ok(PNG.to_vec())

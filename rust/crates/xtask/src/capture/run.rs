@@ -134,7 +134,7 @@ pub fn alive(pid: u32) -> bool {
     }
     #[cfg(not(unix))]
     {
-        Command::new("tasklist")
+        std::process::Command::new("tasklist")
             .args(["/FI", &format!("PID eq {pid}"), "/NH", "/FO", "CSV"])
             .output()
             .map(|o| String::from_utf8_lossy(&o.stdout).contains(&format!("\"{pid}\"")))

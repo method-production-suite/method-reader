@@ -4,6 +4,7 @@
 
 mod repo_common;
 
+#[cfg(unix)]
 use repo_common::Scratch;
 use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
