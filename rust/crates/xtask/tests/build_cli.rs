@@ -18,8 +18,8 @@ use xtask::cli_build::binfmt::{BinaryFormat as F, detect_binary_format, read_bin
 use xtask::cli_build::build::{
     BuildArgs, BuildEnv, Floors, MacSigning, NotaryCredentials, RELEASE_FLOORS,
     assert_crate_version, build_all, cargo_output_path, compile_argv, compile_target,
-    mac_entitlements, notarize_target, notary_credentials, package_target, parse_build_args,
-    parse_checksums, sign_argv, sign_target, verify_artifact, write_checksums,
+    notarize_target, notary_credentials, package_target, parse_build_args, parse_checksums,
+    sign_argv, sign_target, verify_artifact, write_checksums,
 };
 use xtask::cli_build::targets::{
     MAC_TARGETS, TARGETS, Target, archive_path, binary_path, build_dir, find_target, host_target,
@@ -81,7 +81,6 @@ fn test_env<'a>(
     BuildEnv {
         workspace: workspace.to_path_buf(),
         cargo_target_dir: cargo_target_dir.to_path_buf(),
-        entitlements: mac_entitlements(),
         spawn,
         env,
         floors,
@@ -1168,17 +1167,12 @@ fn the_mac_table_is_exactly_one_row_apple_silicon_in_the_formulas_own_name() {
         )
     );
     assert_eq!(m.packaging, xtask::cli_build::targets::Packaging::TarGz);
-    // The name is the tap's: its bump script hardcodes it. That script is
-    // tools/bump-tap.sh until cutover and the bump_tap module after it.
-    let root = paths::repo_root();
-    let homes = [
-        root.join("tools/bump-tap.sh"),
-        root.join("rust/crates/xtask/src/bump_tap.rs"),
-    ];
-    let found = homes
-        .iter()
-        .filter_map(|p| std::fs::read_to_string(p).ok())
-        .any(|text| text.contains(m.archive_name));
+    // The name is the tap's: its bump script (the bump_tap module, which
+    // was tools/bump-tap.sh) hardcodes it.
+    let found =
+        std::fs::read_to_string(paths::repo_root().join("rust/crates/xtask/src/bump_tap.rs"))
+            .expect("the bump_tap module")
+            .contains(m.archive_name);
     assert!(
         found,
         "the tap's bump script does not name {}",
@@ -1325,23 +1319,19 @@ fn the_intel_mac_target_is_gone_with_or_without_mac() {
 }
 
 #[test]
-fn the_entitlements_are_exactly_the_three_the_shipped_cli_has_always_carried() {
-    let text = std::fs::read_to_string(mac_entitlements()).unwrap();
-    let re = regex::Regex::new(r"<key>([^<]+)</key>\s*<true/>").unwrap();
-    let mut keys: Vec<&str> = re
-        .captures_iter(&text)
-        .map(|c| c.get(1).unwrap().as_str())
-        .collect();
-    keys.sort();
-    assert_eq!(
-        keys,
-        [
-            "com.apple.security.cs.allow-jit",
-            "com.apple.security.cs.allow-unsigned-executable-memory",
-            "com.apple.security.cs.disable-library-validation"
-        ]
+fn the_rust_cli_is_signed_with_no_entitlements_and_the_bun_era_file_is_gone() {
+    // Was: the entitlements are exactly the three the shipped CLI has
+    // always carried (allow-jit, allow-unsigned-executable-memory,
+    // disable-library-validation). bun's JIT needed them; a Rust binary
+    // needs none, so the hardened runtime is no longer relaxed at all.
+    let argv = sign_argv(arm(), Path::new("/tmp/out"), ID);
+    assert!(!argv.iter().any(|a| a.contains("entitlements")), "{argv:?}");
+    assert!(
+        !paths::repo_root()
+            .join("tools/macos/screepub-cli.entitlements")
+            .exists(),
+        "the bun-era entitlements file is back; nothing signs with it"
     );
-    assert!(!text.contains("<false/>"));
 }
 
 // ── signing ─────────────────────────────────────────────────────────────
@@ -1379,7 +1369,6 @@ fn sign(identity: &str, spawn: &dyn Fn(&[String], &Path) -> RunResult) -> Result
         arm(),
         Path::new("/tmp/out"),
         identity,
-        &mac_entitlements(),
         spawn,
         Path::new("/repo"),
     )
@@ -1387,17 +1376,14 @@ fn sign(identity: &str, spawn: &dyn Fn(&[String], &Path) -> RunResult) -> Result
 
 #[test]
 fn sign_argv_is_the_exact_codesign_invocation_the_shipped_cli_was_signed_with() {
-    let ent = mac_entitlements();
     assert_eq!(
-        sign_argv(arm(), Path::new("/tmp/out"), ID, &ent),
+        sign_argv(arm(), Path::new("/tmp/out"), ID),
         strings(&[
             "codesign",
             "--force",
             "--options",
             "runtime",
             "--timestamp",
-            "--entitlements",
-            &ent.display().to_string(),
             "--identifier",
             "screepub-cli-arm64",
             "--sign",
@@ -1423,10 +1409,7 @@ fn signs_then_verifies_then_reads_back_the_flags_in_that_order() {
         .display()
         .to_string();
     assert_eq!(seen.len(), 3);
-    assert_eq!(
-        seen[0],
-        sign_argv(arm(), Path::new("/tmp/out"), ID, &mac_entitlements())
-    );
+    assert_eq!(seen[0], sign_argv(arm(), Path::new("/tmp/out"), ID));
     assert_eq!(
         seen[1],
         strings(&["codesign", "--verify", "--strict", "--verbose=2", &bin])
@@ -1492,7 +1475,6 @@ fn refuses_to_sign_anything_that_is_not_a_mac_target() {
         t("linux-x64"),
         Path::new("/tmp/out"),
         ID,
-        &mac_entitlements(),
         &spawn,
         Path::new("/repo"),
     )

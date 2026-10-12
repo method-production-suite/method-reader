@@ -249,7 +249,12 @@ fn the_command_writes_the_windows_notes_and_nothing_else() {
     dir.write("docs/releases/9.9.9.md", md);
     std::fs::create_dir_all(dir.join("rust/crates/sp-app/src/model")).expect("folders");
     let repo_arg = dir.path().to_string_lossy().into_owned();
-    let out = xtask(&["build-desktop-notes", "--repo", &repo_arg], &[], None, None);
+    let out = xtask(
+        &["build-desktop-notes", "--repo", &repo_arg],
+        &[],
+        None,
+        None,
+    );
     assert_eq!(out.status.code(), Some(0), "{}", text(&out.stderr));
     assert_eq!(
         text(&out.stdout).trim(),

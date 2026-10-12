@@ -123,8 +123,7 @@ fn a_cargo_table_version_is_its_own_not_a_dependencys() {
     // stays put.
     let workspace_first = "[workspace.package]\nversion = \"0.0.1\"\n\n[package]\nname = \"x\"\nversion = \"1.0.0\"\n";
     assert_eq!(
-        set_cargo_table_version(workspace_first, "package", "9.8.7", "x/Cargo.toml")
-            .expect("bump"),
+        set_cargo_table_version(workspace_first, "package", "9.8.7", "x/Cargo.toml").expect("bump"),
         workspace_first.replace("\"1.0.0\"", "\"9.8.7\"")
     );
     let package_first = "[package]\nname = \"x\"\nversion = \"1.0.0\"\n\n[workspace.package]\nversion = \"0.0.1\"\n";
@@ -145,22 +144,22 @@ fn a_cargo_lock_without_exactly_one_entry_for_a_crate_is_refused() {
             .contains("sp-app")
     );
     assert!(
-        set_cargo_lock_entry(&format!("{entry}\n{entry}"), "sp-app", "9.8.7", "rust/Cargo.lock")
-            .unwrap_err()
-            .contains("sp-app")
+        set_cargo_lock_entry(
+            &format!("{entry}\n{entry}"),
+            "sp-app",
+            "9.8.7",
+            "rust/Cargo.lock"
+        )
+        .unwrap_err()
+        .contains("sp-app")
     );
 }
 
 #[test]
 fn rust_cargo_toml_the_workspace_package_version_and_no_other_line() {
     let before = real("rust/Cargo.toml");
-    let after = set_cargo_table_version(
-        &before,
-        "workspace.package",
-        "9.8.7",
-        "rust/Cargo.toml",
-    )
-    .expect("bump");
+    let after = set_cargo_table_version(&before, "workspace.package", "9.8.7", "rust/Cargo.toml")
+        .expect("bump");
     assert_eq!(changed_lines(&before, &after), vec!["version = \"9.8.7\""]);
 }
 

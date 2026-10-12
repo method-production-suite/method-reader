@@ -262,8 +262,6 @@ pub struct BuildEnv<'a> {
     pub workspace: PathBuf,
     /// Where cargo writes (`$CARGO_TARGET_DIR`, else `<workspace>/target`).
     pub cargo_target_dir: PathBuf,
-    /// tools/macos/screepub-cli.entitlements.
-    pub entitlements: PathBuf,
     pub spawn: Spawn<'a>,
     pub env: &'a dyn Fn(&str) -> Option<String>,
     pub floors: Floors,
@@ -271,15 +269,6 @@ pub struct BuildEnv<'a> {
 
 fn real_env(name: &str) -> Option<String> {
     std::env::var(name).ok()
-}
-
-/// tools/macos/screepub-cli.entitlements, the entitlements the shipped CLI
-/// has always been signed with.
-pub fn mac_entitlements() -> PathBuf {
-    paths::repo_root()
-        .join("tools")
-        .join("macos")
-        .join("screepub-cli.entitlements")
 }
 
 impl BuildEnv<'static> {
@@ -294,7 +283,6 @@ impl BuildEnv<'static> {
         Self {
             workspace,
             cargo_target_dir,
-            entitlements: mac_entitlements(),
             spawn: &real_spawn,
             env: &real_env,
             floors: RELEASE_FLOORS,
@@ -341,20 +329,20 @@ pub fn compile_target(target: &Target, out_dir: &Path, env: &BuildEnv) -> Result
 /// The exact codesign call the shipped CLI is signed with: hardened runtime
 /// and a secure timestamp, both of which notarization requires. `identity`
 /// may be `-` for ad-hoc; `--timestamp` is accepted and ignored there.
-pub fn sign_argv(
-    target: &Target,
-    out_dir: &Path,
-    identity: &str,
-    entitlements: &Path,
-) -> Vec<String> {
+///
+/// No entitlements: the bun-compiled CLI carried allow-jit,
+/// allow-unsigned-executable-memory and disable-library-validation from
+/// tools/macos/screepub-cli.entitlements because bun's JIT needed them. A
+/// Rust binary needs none of the three, so the file went at the Rust
+/// cutover and the hardened runtime is now unrelaxed (rust/PARITY.md,
+/// Decisions).
+pub fn sign_argv(target: &Target, out_dir: &Path, identity: &str) -> Vec<String> {
     vec![
         "codesign".into(),
         "--force".into(),
         "--options".into(),
         "runtime".into(),
         "--timestamp".into(),
-        "--entitlements".into(),
-        entitlements.display().to_string(),
         // The identifier the shipped CLI has always had: the Swift app's
         // release script signed a file named screepub-cli-<arch>, and
         // codesign takes the identifier from the file name, so signing one
@@ -391,7 +379,6 @@ pub fn sign_target(
     target: &Target,
     out_dir: &Path,
     identity: &str,
-    entitlements: &Path,
     spawn: Spawn,
     cwd: &Path,
 ) -> Result<(), String> {
@@ -414,10 +401,7 @@ pub fn sign_target(
         }
         Ok(r.stderr)
     };
-    run(
-        sign_argv(target, out_dir, identity, entitlements),
-        "codesign",
-    )?;
+    run(sign_argv(target, out_dir, identity), "codesign")?;
     run(
         vec![
             "codesign".into(),
@@ -818,14 +802,7 @@ pub fn build_all(args: &BuildArgs, env: &BuildEnv) -> Result<Vec<PathBuf>, Strin
             // Signed BEFORE packaging, so the tarball holds the signed bytes.
             match &mac.sign {
                 Some(identity) => {
-                    sign_target(
-                        target,
-                        &args.out_dir,
-                        identity,
-                        &env.entitlements,
-                        env.spawn,
-                        &env.workspace,
-                    )?;
+                    sign_target(target, &args.out_dir, identity, env.spawn, &env.workspace)?;
                     if let Some(creds) = &creds {
                         notarize_target(target, &args.out_dir, creds, env.spawn, &env.workspace)?;
                     }
