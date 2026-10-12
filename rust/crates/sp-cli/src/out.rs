@@ -2,6 +2,7 @@
 //! person reads beside it, and the one place an early exit is printed.
 
 use std::io::Write;
+use std::sync::{Arc, Mutex};
 
 use serde_json::{Map, Value};
 use sp_engine::jsjson;
@@ -39,30 +40,74 @@ impl Stop {
 
 pub type Run = Result<(), Stop>;
 
-pub struct Io {
-    pub json: bool,
+/// Where the two streams go: the process's own stdout and stderr for the
+/// binary, anything else for a caller in the same process (the window),
+/// which hears each line as it is written, exactly as a parent reading the
+/// pipes would.
+pub trait Sink: Send {
+    /// One whole line for stdout.
+    fn out(&mut self, line: &str);
+    /// One whole line for stderr.
+    fn err(&mut self, line: &str);
 }
 
-impl Io {
-    pub fn new(json: bool) -> Io {
-        Io { json }
-    }
+/// The process's own streams, each line flushed before anything else
+/// happens (`sayLine`: a piped answer must never be cut short).
+pub struct Std;
 
-    /// One line on stdout, written whole and flushed before anything else
-    /// happens (`sayLine`: a piped answer must never be cut short).
-    pub fn say(&mut self, text: &str) {
+impl Sink for Std {
+    fn out(&mut self, line: &str) {
         let mut out = std::io::stdout().lock();
-        let _ = out.write_all(text.as_bytes());
+        let _ = out.write_all(line.as_bytes());
         let _ = out.write_all(b"\n");
         let _ = out.flush();
     }
 
-    /// One line on stderr.
-    pub fn err(&mut self, text: &str) {
+    fn err(&mut self, line: &str) {
         let mut e = std::io::stderr().lock();
-        let _ = e.write_all(text.as_bytes());
+        let _ = e.write_all(line.as_bytes());
         let _ = e.write_all(b"\n");
         let _ = e.flush();
+    }
+}
+
+type Shared = Arc<Mutex<Box<dyn Sink>>>;
+
+/// A handle that writes stderr lines, for the conversion's callbacks.
+#[derive(Clone)]
+pub struct ErrLine(Shared);
+
+impl ErrLine {
+    pub fn line(&self, text: &str) {
+        self.0.lock().unwrap_or_else(|e| e.into_inner()).err(text);
+    }
+}
+
+pub struct Io {
+    pub json: bool,
+    sink: Shared,
+}
+
+impl Io {
+    pub fn with_sink(json: bool, sink: Box<dyn Sink>) -> Io {
+        Io {
+            json,
+            sink: Arc::new(Mutex::new(sink)),
+        }
+    }
+
+    /// One line on stdout.
+    pub fn say(&mut self, text: &str) {
+        self.sink.lock().unwrap_or_else(|e| e.into_inner()).out(text);
+    }
+
+    /// One line on stderr.
+    pub fn err(&mut self, text: &str) {
+        self.err_line().line(text);
+    }
+
+    pub fn err_line(&self) -> ErrLine {
+        ErrLine(self.sink.clone())
     }
 
     /// `JSON.stringify({ ok: true, ...answer })` on stdout.

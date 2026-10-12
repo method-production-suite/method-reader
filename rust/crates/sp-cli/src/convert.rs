@@ -155,14 +155,6 @@ fn num(x: f64) -> Value {
     serde_json::Number::from_f64(x).map_or(Value::Null, Value::Number)
 }
 
-fn eprint_line(text: &str) {
-    use std::io::Write;
-    let mut e = std::io::stderr().lock();
-    let _ = e.write_all(text.as_bytes());
-    let _ = e.write_all(b"\n");
-    let _ = e.flush();
-}
-
 /// Where a conversion error goes: the two refusals and the PDF's own
 /// failures by their codes, anything else through the catch-all.
 fn conversion_failed(err: ConvertError) -> Stop {
@@ -191,6 +183,8 @@ fn read_failed(err: &EngineError) -> Stop {
 }
 
 pub fn run(io: &mut Io, argv: &[String]) -> Run {
+    let errs = io.err_line();
+    let eprint_line = |text: &str| errs.line(text);
     let parsed = args::parse(argv, SPECS).map_err(Stop::usage)?;
     io.json = parsed.flag("json");
     let json = io.json;
@@ -474,6 +468,8 @@ fn finish(
     result: ConvertResult,
     f: Finish,
 ) -> Run {
+    let errs = io.err_line();
+    let eprint_line = |text: &str| errs.line(text);
     let mut input_stem = host::join(&[
         host::dirname(input),
         host::basename_ext(input, &host::extname(input)),
