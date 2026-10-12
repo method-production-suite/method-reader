@@ -433,6 +433,9 @@ impl App {
             // The window's spacing is the stylesheet's rem scale (6.4, 12.8,
             // 19.2 points), which lands between pixels as a browser's does;
             // egui's debug-build "Unaligned" overlay would paint over it.
+            // `Style::debug` exists only in a debug build of egui, so a
+            // release build (the one that ships) has no overlay to turn off.
+            #[cfg(debug_assertions)]
             ui.ctx().all_styles_mut(|s| s.debug.show_unaligned = false);
             // The faces are bound from the next frame on; draw nothing
             // that names them until then.

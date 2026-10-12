@@ -6,7 +6,7 @@
 #[cfg(not(feature = "rehearsal"))]
 #[test]
 fn a_build_without_the_rehearsal_feature_bakes_the_release_values() {
-    assert!(!sp_update::REHEARSAL);
+    const { assert!(!sp_update::REHEARSAL) };
     assert_eq!(sp_update::baked_endpoint(), sp_update::ENDPOINT);
     assert_eq!(sp_update::baked_pubkey(), sp_update::PUBKEY);
     assert!(!sp_update::baked_insecure());

@@ -30,8 +30,9 @@ and order of operations are unchanged; only what the Rust cutover changed:
   130/143 for an interrupted run.
 - The tests named in step 9.4 are now Rust test files (xtask's
   desktop_notes.rs and release_notes_copy.rs, sp-app's notes check). The
-  Bun suite's site picture check (tests/site.test.ts) has no Rust port yet
-  (rust/PARITY.md marks it todo), so it is no longer named.
+  Bun suite's site picture check (tests/site.test.ts) is now
+  rust/crates/xtask/tests/site.rs, merged at the final cutover integration;
+  step 9.4 may name it.
 - The release-notes facts tool also counts changes under site/ and brand/
   as not reader-visible, and src/options.ts is now
   rust/crates/sp-model/src/options.rs.

@@ -1,5 +1,68 @@
 # Plan: Screepub in pure Rust
 
+## Status (2026-10-12): done on branch `rust/final`, waiting on the owner
+
+**Done.** All of Screepub is the Cargo workspace in `rust/`: the engine
+crates, the `screepub` CLI, the egui window (AccessKit for screen readers),
+the updater, the release tools, the device-request Worker and the
+developer tools (`cargo xtask`). The TypeScript engine, Bun, package.json,
+the Tauri window and desktop/ui are deleted. `rust/final` is the cutover
+(`rust/cutover`) with every branch the port left open merged into it: the
+whole-port review's fixes (`rust-port`), the xtask, capture, docs, notices,
+release-skill and repo-checks branches. The one JavaScript runtime call
+left is `cargo xtask rehearse-handover prepare`, which builds the old
+v0.11.1 window from its tag so the handover can be rehearsed.
+
+**Verified, on the owner's Mac (Apple silicon), 2026-10-12:**
+
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+  warnings` and `cargo test --workspace`: clean, 3,576 tests in 218 test
+  binaries, none failed.
+- `cargo xtask parity`: the release CLI against the TypeScript's frozen
+  answers, clean: 7 committed fixtures in 494 runs and 7 real scripts in
+  root fixtures/ in 189 runs (rust/oracle-real, counts only), all identical.
+- A release build of the window: it did not compile until the
+  integration (egui's `Style::debug` exists only in debug builds), which
+  CI's bundle job would have hit; fixed, and `cargo clippy --release -p
+  sp-app` is clean too.
+- Every row of rust/PARITY.md is done or retired, but two that say why:
+  cli-mtp-send's route rows (the MTP route is off until hardware day) and
+  W12 (no sidecar exists to be missing).
+- The release-built window's headless `--smoke` converts
+  tests/fixtures/field-station.pdf with scratch settings and library.
+- `cargo deny check`: advisories, licenses and sources clean against
+  rust/deny.toml.
+
+**Not verified here, because only CI or the owner can:**
+
+- The first CI run of rust.yml and release.yml on this branch: the Linux
+  apt lines (libasound2-dev, libfontconfig1-dev), the .deb and .rpm
+  dependency read-backs, the new deny job, and Windows and Linux test runs.
+- A signed, notarized release, and the updater handover on a real 0.11.x
+  install.
+
+**Owner actions left:**
+
+1. Review `rust/final`, push it, and watch the first rust.yml run; if every
+   Linux job passes, `libgtk-3-dev` can come off the apt lines (nothing on
+   Linux links GTK; PARITY.md, Decisions).
+2. Copy docs/superpowers/plans/2026-10-11-release-skill-after-rust.md over
+   .claude/skills/release/SKILL.md (a worktree cannot edit the shared
+   skill), deleting its header comment.
+3. Run `cargo xtask rehearse-handover prepare`, `prove`, `run` and `verify`
+   on the Mac (needs bun 1.3.14 and the Tauri CLI 2.11.4 for the tagged
+   window) to watch a 0.11.1 window update itself into the Rust app.
+4. Merge to main and cut the release with /release (the version bump,
+   notes, pictures and the tag); the tag's release.yml signs, notarizes and
+   publishes, and the Homebrew tap is bumped with `cargo xtask bump-tap`.
+5. Device passes: the AZW3 and FDX on a Kindle (registry #20), the
+   AppImage, .deb, .rpm and Windows installer run by a person, so the
+   README's and site's status column can move up.
+6. Decide the open owner questions in PARITY.md's Decisions: rustls on
+   ring or the pure-Rust provider; the follow-ups O3 (an uncapped inflate in
+   hayro-syntax) and O4 (one slow JPEG 2000 picture can outrun the picture
+   budget); deploying the device-request Worker.
+
 Owner's ask (2026-10-11): a version of Screepub that is 100% Rust, no other
 code, converted completely, giving the same results on the control scripts,
 with 1:1 feature parity. Maximize parallel work.
