@@ -213,12 +213,30 @@ pub fn run_check(
     now: f64,
     check: impl FnOnce() -> Result<Option<Found>, String>,
 ) -> CheckOutcome {
-    let state = read_state(storage);
-    if !manual && !should_check(state.opted_in, state.last_checked, now) {
+    if !begin_check(manual, storage, now) {
         return CheckOutcome::Skipped;
     }
+    finish_check(storage, check())
+}
+
+/// [`run_check`]'s first half, on the window's thread: whether to ask at
+/// all, and if so the stamp, written before the request goes out.
+pub fn begin_check(manual: bool, storage: &mut dyn Storage, now: f64) -> bool {
+    let state = read_state(storage);
+    if !manual && !should_check(state.opted_in, state.last_checked, now) {
+        return false;
+    }
     storage.set_item(STAMP, &now.to_string());
-    let found = match check() {
+    true
+}
+
+/// [`run_check`]'s second half: what the answer means, remembered. The
+/// request itself runs between the two, off the window's thread.
+pub fn finish_check(
+    storage: &mut dyn Storage,
+    answer: Result<Option<Found>, String>,
+) -> CheckOutcome {
+    let found = match answer {
         Ok(found) => found,
         Err(message) => {
             if is_intel_mac_retired(&message) {
