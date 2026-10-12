@@ -19,7 +19,7 @@
 //! A backup that cannot be deleted afterwards is reported, not failed: the
 //! new bundle is in place (inventory row U7).
 
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 use std::path::{Component, Path, PathBuf};
 
 use flate2::read::GzDecoder;
@@ -444,12 +444,17 @@ fn private_temp_dir() -> Result<PathBuf, InstallError> {
             NEXT.fetch_add(1, Ordering::Relaxed)
         );
         let dir = base.join(name);
-        let mut builder = std::fs::DirBuilder::new();
+        // Private to this user on unix; Windows has no mode bits, and a
+        // folder under the user's own temp folder is already theirs.
         #[cfg(unix)]
-        {
+        let builder = {
             use std::os::unix::fs::DirBuilderExt;
-            builder.mode(0o700);
-        }
+            let mut b = std::fs::DirBuilder::new();
+            b.mode(0o700);
+            b
+        };
+        #[cfg(not(unix))]
+        let builder = std::fs::DirBuilder::new();
         // create, not create_all: an existing folder is never reused.
         match builder.create(&dir) {
             Ok(()) => return Ok(dir),
@@ -523,6 +528,7 @@ pub fn admin_swap(bundle: &Path, new: &Path) -> Result<(), InstallError> {
 /// one, written beside the running file and renamed over it.
 #[cfg(unix)]
 pub fn install_appimage(bytes: &[u8], appimage: &Path) -> Result<Installed, InstallError> {
+    use std::io::Read;
     use std::os::unix::fs::PermissionsExt;
     let image = if bytes.starts_with(&[0x1f, 0x8b]) {
         let mut archive = tar::Archive::new(GzDecoder::new(Cursor::new(bytes)));
