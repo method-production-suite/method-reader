@@ -364,8 +364,8 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | P9 | A click anywhere or any key ends it: before the book exists the whole page shows typed, and it ends the moment the book arrives | ui/page-show.js onPress | done |
 | P10 | A refusal or another file cancels it | ui/page-show.js cancel | built |
 | P11 | Key sounds at most one per 55 ms while typing; a carriage-return bell when a block finishes, at most one per 700 ms | ui/page-timing.js soundsDue | done |
-| P12 | Key: 35 ms of white noise through a band-pass at 1800 to 3400 Hz (random each key), Q 1.4, gain 0.3, exponential fade; bell: 2093 Hz sine, gain 0.08, 0.5 s fade; made, not recorded | ui/typewriter.js | model |
-| P13 | Sounds only when "Typewriter sounds" is on; a machine with no audio is quiet; closed when the show ends | ui/convert.js startShow, ui/typewriter.js | todo |
+| P12 | Key: 35 ms of white noise through a band-pass at 1800 to 3400 Hz (random each key), Q 1.4, gain 0.3, exponential fade; bell: 2093 Hz sine, gain 0.08, 0.5 s fade; made, not recorded | ui/typewriter.js | done |
+| P13 | Sounds only when "Typewriter sounds" is on; a machine with no audio is quiet; closed when the show ends (typewriter.js has close() but nothing calls it, so in practice the output stays open for the window's life, as sp-app's does) | ui/convert.js startShow, ui/typewriter.js | done |
 
 ### R. Read
 

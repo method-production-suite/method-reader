@@ -40,6 +40,7 @@ blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b
 anyrender_vello_cpu = "0.18"
 parley = "0.12"
 data-url = "0.3"
+cpal = "0.18"
 
 [dev-dependencies]
 egui_kittest = "0.36.2"

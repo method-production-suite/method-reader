@@ -186,7 +186,14 @@ pub fn input(app: &mut App, ui: &mut Ui) {
         convert::drop_paths(app, &dropped);
     }
     if let Some(show) = app.show.as_mut() {
+        let heard = (show.keys, show.dings);
         show.tick(now);
+        if show.keys > heard.0 {
+            app.host.speaker.play(super::host::Sound::Key);
+        }
+        if show.dings > heard.1 {
+            app.host.speaker.play(super::host::Sound::Ding);
+        }
         if !show.running() && show.book_arrived() {
             app.show = None;
         }

@@ -26,7 +26,10 @@ pub fn edit_events(action: EditAction, clipboard: Option<String>) -> Vec<egui::E
         physical_key: Some(key),
         pressed: true,
         repeat: false,
-        modifiers: egui::Modifiers { shift, ..egui::Modifiers::COMMAND },
+        modifiers: egui::Modifiers {
+            shift,
+            ..egui::Modifiers::COMMAND
+        },
     };
     match action {
         EditAction::Undo => vec![key(egui::Key::Z, false)],
@@ -84,7 +87,15 @@ mod mac {
             let all = item("Select All", cmd, Code::KeyA);
             let edit_menu = Submenu::new("Edit", true);
             edit_menu
-                .append_items(&[&undo, &redo, &PredefinedMenuItem::separator(), &cut, &copy, &paste, &all])
+                .append_items(&[
+                    &undo,
+                    &redo,
+                    &PredefinedMenuItem::separator(),
+                    &cut,
+                    &copy,
+                    &paste,
+                    &all,
+                ])
                 .ok()?;
             let window = Submenu::new("Window", true);
             window
@@ -133,9 +144,17 @@ mod tests {
     fn each_edit_item_becomes_what_its_shortcut_would_have_been() {
         assert_eq!(edit_events(EditAction::Copy, None), vec![egui::Event::Copy]);
         assert_eq!(edit_events(EditAction::Cut, None), vec![egui::Event::Cut]);
-        assert_eq!(edit_events(EditAction::Paste, Some("Boox".into())), vec![egui::Event::Paste("Boox".into())]);
-        assert!(edit_events(EditAction::Paste, None).is_empty(), "nothing on the clipboard pastes nothing");
-        let egui::Event::Key { key, modifiers, .. } = edit_events(EditAction::Redo, None)[0].clone() else {
+        assert_eq!(
+            edit_events(EditAction::Paste, Some("Boox".into())),
+            vec![egui::Event::Paste("Boox".into())]
+        );
+        assert!(
+            edit_events(EditAction::Paste, None).is_empty(),
+            "nothing on the clipboard pastes nothing"
+        );
+        let egui::Event::Key { key, modifiers, .. } =
+            edit_events(EditAction::Redo, None)[0].clone()
+        else {
             panic!("a keystroke")
         };
         assert_eq!(key, egui::Key::Z);

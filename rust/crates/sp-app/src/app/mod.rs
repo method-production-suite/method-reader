@@ -10,12 +10,13 @@
 pub mod book;
 pub mod bookview;
 pub mod convert;
-pub mod menu;
 pub mod frame;
 pub mod host;
+pub mod menu;
 pub mod panel;
 pub mod read;
 pub mod show;
+pub mod sound;
 pub mod tune;
 pub mod widgets;
 

@@ -142,7 +142,12 @@ Owner-visible: a git dependency on an unreleased engine, and the shim.
 1. **The page marker** is drawn by the shim above, not by the float rule
    (until Blitz places floats). **Italic** has no synthetic slant.
 2. **Linux** links libfontconfig (C) unless fontique's system fonts are
-   switched off; ALSA likewise for sound (cpal).
+   switched off, and the typewriter's sound links ALSA's libasound (C):
+   cpal 0.18 reaches Core Audio on a Mac and WASAPI on Windows through
+   the OS's own APIs with no C library of ours, but its Linux backend is
+   the `alsa` crate over `alsa-sys`. A Linux machine without libasound
+   cannot start the window at all, where the webview's Web Audio needed
+   nothing; Linux packages list it as a dependency (every desktop has it).
 3. **An answer that is not JSON** (E21) cannot happen with direct calls;
    the trait's `Err(String)` is shown in its place.
 4. **No sidecar** (W12): the "could not find the engine" sentence has no

@@ -397,6 +397,33 @@ fn p2_p4_the_show_says_converting_and_carries_the_whole_page_for_a_screen_reader
     h.get_by_role_and_label(Role::Status, "Starting up");
 }
 
+fn typed_with_sounds(sounds: bool) -> Vec<sp_app::app::host::Sound> {
+    let w = world();
+    let mut a = default_answer(&Request::AppSettings);
+    a["typewriterSounds"] = json!(sounds);
+    w.engine.always("app-settings", Reply::ok(a));
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    assert!(h.state().show.is_some());
+    for _ in 0..30 {
+        w.fakes.clock.advance(200.0);
+        steps(&mut h);
+    }
+    assert!(h.state().show.is_none(), "the show ran to its end");
+    w.fakes.speaker.played.lock().unwrap().clone()
+}
+
+#[test]
+fn p13_the_typewriter_is_heard_only_when_its_sounds_are_on() {
+    use sp_app::app::host::Sound;
+    let heard = typed_with_sounds(true);
+    let keys = heard.iter().filter(|s| **s == Sound::Key).count();
+    let bells = heard.iter().filter(|s| **s == Sound::Ding).count();
+    assert!(keys > 10, "keys while typing: {keys}");
+    assert!(bells >= 1, "a bell when a block finishes");
+    assert!(typed_with_sounds(false).is_empty(), "off is quiet");
+}
+
 #[test]
 fn p10_a_refusal_ends_the_show() {
     let w = world();
