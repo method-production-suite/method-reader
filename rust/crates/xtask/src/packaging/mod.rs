@@ -12,6 +12,7 @@
 //! - [`signature`] and [`manifest`] hold the updater's signature and latest.json.
 //! - [`compare`] holds desktop/ui/update-compare.js.
 
+pub mod archive;
 pub mod compare;
 pub mod kinds;
 pub mod manifest;
@@ -25,9 +26,8 @@ pub fn build_app_bundle_main(_args: &[String]) -> u8 {
 }
 
 /// `cargo xtask bundle-archive`: its exit code.
-pub fn bundle_archive_main(_args: &[String]) -> u8 {
-    eprintln!("xtask: bundle-archive is not ported yet");
-    2
+pub fn bundle_archive_main(args: &[String]) -> u8 {
+    archive::main(args)
 }
 
 /// `cargo xtask smoke-bundle`: its exit code.
