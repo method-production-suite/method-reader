@@ -373,7 +373,7 @@ pub fn repair_phantom_spaces(items: &mut [TextItem], ops: Option<&[Op]>) -> u32 
     if cells.len() < 3 {
         return 0;
     }
-    cells.sort_by(|a, b| js::cmp_num(*a, *b));
+    js::sort_by(&mut cells, |a, b| js::cmp_num(*a, *b));
     let cell = cells[cells.len() / 2];
     if !(cell > 0.0) {
         return 0;
@@ -431,7 +431,7 @@ pub fn group_items_into_lines(items: &[TextItem], page_width: f64, page_num: u32
     // a point above its cue name) while real line spacing is ~12pt.
     const Y_TOLERANCE: f64 = 2.0;
     let mut sorted: Vec<&TextItem> = items.iter().collect();
-    sorted.sort_by(|a, b| js::cmp_num(b.t(5), a.t(5)));
+    js::sort_by(&mut sorted, |a, b| js::cmp_num(b.t(5), a.t(5)));
     let mut clusters: Vec<(f64, Vec<&TextItem>)> = Vec::new();
     for item in sorted {
         match clusters.last_mut() {
@@ -459,7 +459,7 @@ pub fn group_items_into_lines(items: &[TextItem], page_width: f64, page_num: u32
         if line_items.is_empty() {
             continue;
         }
-        line_items.sort_by(|a, b| js::cmp_num(a.t(4), b.t(4)));
+        js::sort_by(&mut line_items, |a, b| js::cmp_num(a.t(4), b.t(4)));
         lines.push(LineItems {
             y: js::round(y),
             items: line_items,
