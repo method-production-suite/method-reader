@@ -33,7 +33,7 @@ move too.
 | tests/azw3-tbs.test.ts | 4 | sp-azw3 | done | sp-azw3/tests/parts.rs |
 | tests/azw3-xml.test.ts | 6 | sp-azw3 | done | sp-azw3/tests/parts.rs; the round trip reads the oracle's EPUBs instead of a convertFountain |
 | tests/azw3.test.ts | 9 | sp-azw3 | done | sp-azw3/tests/azw3.rs |
-| tests/beta-marks.test.ts | 10 | sp-cli | todo | the CLI help, README and site say "beta" the same way |
+| tests/beta-marks.test.ts | 10 | sp-cli + sp-app | partial | CLI help: sp-cli/tests/beta_marks.rs (6); the 3 badge tests are sp-app's; the 2 README/site checks read documents, not code, and move to the xtask with no-em-dash and site |
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
@@ -48,9 +48,9 @@ move too.
 | tests/capture-chrome.test.ts | 5 | xtask | todo |  |
 | tests/capture.test.ts | 46 | xtask | todo | README and site pictures; drives desktop/ui/app.js today |
 | tests/check-latest.test.ts | 17 | xtask | todo |  |
-| tests/cli-app-defaults.test.ts | 8 | sp-cli | todo |  |
-| tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
-| tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
+| tests/cli-app-defaults.test.ts | 8 | sp-cli | done | sp-cli/tests/cli_app_defaults.rs (8), through the CLI; the app-defaults reads themselves are sp-engine/tests/settings_app_defaults.rs |
+| tests/cli-app-settings.test.ts | 56 | sp-cli | done | sp-cli/tests/cli_app_settings.rs (56): the handler in process with an injected path, platform and env (43), the verb through the CLI with HOME in the scratch folder (13) |
+| tests/cli-azw3.test.ts | 4 | sp-cli | done | sp-cli/tests/cli_azw3.rs (4), read back with sp-azw3's tests/common/kf8_reader.rs |
 | tests/cli-device-commands.test.ts | 35 | sp-cli | todo |  |
 | tests/cli-devices.test.ts | 32 | sp-cli | partial | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; left for sp-cli: verb dispatch (resolveCommand, VERBS) and the settings file a send remembers into (sp-device takes `remember` as a callback) |
 | tests/cli-eject.test.ts | 24 | sp-cli | partial | the handler and the real runner are in sp-device/tests/eject.rs; left for sp-cli: the spawned-CLI refusals and --help |
@@ -59,12 +59,12 @@ move too.
 | tests/cli-kfx.test.ts | 24 | sp-cli | todo |  |
 | tests/cli-reveal.test.ts | 21 | sp-cli | partial | the handler and the real opener are in sp-device/tests/reveal.rs; left for sp-cli: the spawned-CLI refusals and --help |
 | tests/cli-routes.test.ts | 82 | sp-cli | todo |  |
-| tests/cli-settings.test.ts | 26 | sp-cli | todo |  |
+| tests/cli-settings.test.ts | 26 | sp-cli | done | sp-cli/tests/cli_settings.rs (26): the handler in process (19), the verb through the CLI (7); "no appSettingsPath given" runs through the CLI, because the Rust handler takes the path as a required field and the CLI resolves it |
 | tests/cli-update.test.ts | 17 | sp-cli | todo |  |
-| tests/cli-verb-flags.test.ts | 7 | sp-cli | todo |  |
-| tests/cli.test.ts | 78 | sp-cli | todo |  |
+| tests/cli-verb-flags.test.ts | 7 | sp-cli | done | sp-cli/tests/verb_flags.rs (7; the per-verb loop is one matrix test), the table checked against verbs.rs's VERBS and VERB_SPECS; cargo xtask parity runs every verb against every foreign flag against the TypeScript |
+| tests/cli.test.ts | 78 | sp-cli | done | sp-cli/tests/cli.rs (93: the five-output-flag loop runs once per flag); the error-mapping and unwritable tests run on sp_engine::errors; retired: "--debug lets pdf.js warnings through" (no pdf.js, nothing warns; PARITY Decisions). The password test checks that a path containing "password" stays `unreadable`; the typed half holds by construction (ConvertError::Password), with no encrypted fixture |
 | tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
-| tests/conversion-settings.test.ts | 18 | sp-engine | todo | conversion through the CLI (`--library`, the pin): wave 3 with convert.ts and cli.ts; the functions it leans on (library_output, adopt_sidecar, keeps_script_settings, the sidecar) are ported and tested |
+| tests/conversion-settings.test.ts | 18 | sp-cli | partial | sp-cli/tests/conversion_settings.rs (17), through the CLI; not ported: "a sidecar write that fails does not fail the conversion" (the TypeScript patches fs.writeFileSync with a bun --preload; the Rust binary has no out-of-process fault seam and no filesystem trick fails only that one write): owner decision on a test-only fault switch |
 | tests/convert.test.ts | 58 | sp-engine | todo | wave 3 (convert.ts); export's MOBI rung calls it through `Renderers::render_mobi` |
 | tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | done | sp-epub/tests/css_rules.rs (11) |
@@ -99,7 +99,7 @@ move too.
 | tests/fdx-integration.test.ts | 6 | sp-fdx | done | sp-fdx/tests/fdx_integration.rs; reads the oracle's tokens.json and script.fountain where the TypeScript converts the PDF on the spot, until sp-parser and sp-fountain land |
 | tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
 | tests/field-station.test.ts | 2 | sp-engine | partial | parser half in sp-parser/tests/field_station.rs (scenes, pages, cast, the site's scene walked over elements); the convertPdf title and the .fountain walk stay with sp-engine/sp-fountain |
-| tests/first-page.test.ts | 10 | sp-parser | partial | sp-parser/tests/first_page.rs (10); the progress test's stderr events, exit codes and --json halves move to sp-cli |
+| tests/first-page.test.ts | 10 | sp-parser + sp-cli | done | sp-parser/tests/first_page.rs (10); the --progress CLI test (stderr page events, exit codes, --json): sp-cli/tests/first_page.rs (1) |
 | tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
 | tests/images-fixture.test.ts | 24 | sp-parser | partial | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; three pixel checks run on the dump's facts until sp-pdf supplies decoded pixels |
 | tests/images.test.ts | 68 | sp-parser | done | sp-parser/tests/images.rs (57); retired: the 10 resolveImageData store-race and timeout tests and the lying-buffer test (pixels arrive resolved, a slice cannot misstate its length) |
@@ -108,7 +108,7 @@ move too.
 | tests/jpx-fixture.test.ts | 11 | sp-pdf | todo | JPEG2000 picture decodes pixel for pixel |
 | tests/kfx-snippet-stubs.ts | 0 | sp-engine | done | sp-engine/tests/common/kfx_stubs.rs |
 | tests/library-images.test.ts | 55 | sp-engine | done | sp-engine/tests/library_images.rs (55); the PNG encoder it uses is a stored-deflate stand-in (tests/common/png.rs) until sp-parser's lands, which is the worst case the size bound must hold for |
-| tests/library.test.ts | 45 | sp-engine | partial | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the `--library` CLI block (6) is the conversion's: wave 3 |
+| tests/library.test.ts | 45 | sp-engine + sp-cli | done | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the --library CLI block: sp-cli/tests/cli_library.rs (6) |
 | tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
 | tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
