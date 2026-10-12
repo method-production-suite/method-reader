@@ -1,24 +1,27 @@
-//! The capture tool without Chrome (was tests/capture.test.ts): the pure
-//! parts (the gate, the page, the shot list), the page server driven with
-//! plain requests, and whole runs with a fake browser and a stand-in
-//! engine, down to what each one leaves behind. The Chrome driver is tested
-//! against a fake Chrome in capture_chrome.rs. Real Chrome runs only when
-//! someone runs `cargo xtask capture-screens`.
+//! The capture tool without Chrome (was tests/capture.test.ts): the shot
+//! list, the page server driven with plain requests, the window backend
+//! (the orders it gives sp-app's capture program, the picture it reads
+//! back, a program that fails, hangs or is interrupted), and whole runs
+//! with a fake browser and a fake window, down to what each one leaves
+//! behind. The Chrome driver is tested against a fake Chrome in
+//! capture_chrome.rs. Real Chrome runs only when someone runs
+//! `cargo xtask capture-screens`; the real window program runs here once,
+//! for the drop well, where cargo has built it.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
-use serde_json::{Value, json};
-use xtask::capture::backend::{Browser, CaptureOptions, DesktopUi};
-use xtask::capture::gate::{GateAnswer, GateContext, gate_engine_call};
-use xtask::capture::http::{Request, Response};
-use xtask::capture::page::{CaptureConfig, capture_index, config_json};
-use xtask::capture::run::{MARKER, RunError, RunOptions, claim_library, run_capture};
-use xtask::capture::server::{EngineResult, Handler, HandlerOptions, Records, snapshot};
-use xtask::capture::shots::{
-    FRAME_PAD, Kind, SHOTS, Written, all_outputs, framed_size, write_if_changed,
+use xtask::capture::backend::{
+    Browser, CaptureOptions, EguiWindow, PassOne, WindowBackend, window_args,
 };
-use xtask::capture::window_argv as argv;
+use xtask::capture::http::{Request, Response};
+use xtask::capture::picture::{decode, encode_rgba, size};
+use xtask::capture::run::{MARKER, RunError, RunOptions, claim_library, engine_env, run_capture};
+use xtask::capture::server::{Handler, HandlerOptions, Records, snapshot};
+use xtask::capture::shots::{
+    FRAME_PAD, Kind, SHOTS, Shot, Theme, Written, all_outputs, framed_size, write_if_changed,
+};
 use xtask::paths::repo_root;
 
 /// A fresh scratch folder for one test, removed when it is dropped.
@@ -58,394 +61,16 @@ fn s(p: &Path) -> String {
     p.to_string_lossy().into_owned()
 }
 
-fn strings(v: &[&str]) -> Vec<String> {
-    v.iter().map(|x| (*x).to_string()).collect()
+fn read(rel: &str) -> String {
+    std::fs::read_to_string(repo_root().join(rel)).unwrap()
 }
 
-struct Ctx {
-    demo: PathBuf,
-    library: PathBuf,
+fn shot(name: &str) -> &'static Shot {
+    SHOTS.iter().find(|x| x.name == name).unwrap()
 }
 
-impl Ctx {
-    fn new() -> Ctx {
-        Ctx {
-            demo: abs("repo/tests/fixtures/field-station.pdf"),
-            library: abs("Users/Shared/Documents/Screepub"),
-        }
-    }
-    fn gate(&self) -> GateContext<'_> {
-        GateContext {
-            demo_pdf: &self.demo,
-            library: &self.library,
-        }
-    }
-    fn in_lib(&self, p: &str) -> String {
-        s(&self.library.join("field-station").join(p))
-    }
-    fn ask(&self, args: &[String]) -> GateAnswer {
-        gate_engine_call(args, &self.gate())
-    }
-}
-
-// ---------------------------------------------------------------- the gate
-
-#[test]
-fn gate_allows_exactly_what_the_window_asks_for_on_the_way_to_the_pictures() {
-    let c = Ctx::new();
-    let d = s(&c.demo);
-    assert_eq!(c.ask(&argv::version()), GateAnswer::Allow);
-    assert_eq!(c.ask(&argv::convert(&d, false, None)), GateAnswer::Allow);
-    assert_eq!(
-        c.ask(&argv::settings(&c.in_lib("field-station.fountain"), None)),
-        GateAnswer::Allow
-    );
-    assert_eq!(
-        c.ask(&argv::reconvert(
-            &c.in_lib("field-station.fountain"),
-            &c.in_lib("field-station.epub"),
-            "{}"
-        )),
-        GateAnswer::Allow
-    );
-    // The Convert page's library line reads the app settings every time the
-    // drop area draws. A read: it writes nothing.
-    assert_eq!(c.ask(&argv::app_settings(None)), GateAnswer::Allow);
-}
-
-#[test]
-fn gate_allows_the_app_settings_read_only() {
-    let c = Ctx::new();
-    let mut with_set = argv::app_settings(None);
-    with_set.extend(strings(&["--set", "{}"]));
-    let mut with_debug = argv::app_settings(None);
-    with_debug.push("--debug".into());
-    for args in [
-        argv::app_settings(Some(r#"{"libraryPath":"/Users/me/Books"}"#)),
-        argv::app_settings(Some(r#"{"keepScriptSettings":false}"#)),
-        argv::app_settings(Some(r#"{"formatDefaults":null}"#)),
-        with_set,
-        with_debug,
-        strings(&["app-settings"]),
-    ] {
-        assert!(!c.ask(&args).allowed(), "{}", args.join(" "));
-    }
-}
-
-#[test]
-fn gate_refuses_copies_sends_builds_and_ejects_naming_each() {
-    let c = Ctx::new();
-    let e = c.in_lib("field-station.epub");
-    for args in [
-        argv::send(&e, None),
-        argv::export(&e, "kindle", None, None, None),
-        argv::eject("/Volumes/Kindle"),
-        argv::route("send-to-kindle", &e, None, None, None),
-    ] {
-        match c.ask(&args) {
-            GateAnswer::Allow => panic!("allowed {}", args.join(" ")),
-            GateAnswer::Refuse(reason) => assert!(reason.contains(&args[0])),
-        }
-    }
-}
-
-#[test]
-fn gate_allows_the_result_screens_reads() {
-    let c = Ctx::new();
-    let e = c.in_lib("field-station.epub");
-    let mut all = vec![
-        argv::devices(false),
-        argv::devices(true),
-        argv::routes(&e, false),
-        argv::routes(&e, true),
-        argv::kindle_check(&e),
-    ];
-    all.extend(
-        ["kindle", "apple", "kobo", "tolino", "remarkable"]
-            .iter()
-            .map(|k| argv::reader_device(k)),
-    );
-    for args in all {
-        assert!(c.ask(&args).allowed(), "{}", args.join(" "));
-    }
-}
-
-#[test]
-fn gate_refuses_a_book_outside_the_library_and_any_other_app_settings_write() {
-    let c = Ctx::new();
-    let evil = format!("{}-evil", s(&c.library));
-    for args in [
-        argv::routes(&s(&abs("Users/someone/elsewhere.epub")), false),
-        argv::kindle_check(&s(&Path::new(&evil).join("x.epub"))),
-        argv::reader_device("nook"),
-        argv::app_settings(Some(r#"{"readerDevice":"kobo","libraryPath":"/x"}"#)),
-        argv::export(
-            &c.in_lib("field-station.epub"),
-            "epub",
-            None,
-            None,
-            Some(&c.in_lib("copy.epub")),
-        ),
-    ] {
-        assert!(!c.ask(&args).allowed(), "{}", args.join(" "));
-    }
-}
-
-#[test]
-fn gate_refuses_a_conversion_of_any_file_but_the_demo_script() {
-    let c = Ctx::new();
-    match c.ask(&argv::convert(
-        &s(&abs("Users/someone/real-script.pdf")),
-        false,
-        None,
-    )) {
-        GateAnswer::Allow => panic!("allowed"),
-        GateAnswer::Refuse(r) => assert!(r.contains("real-script.pdf")),
-    }
-}
-
-#[test]
-fn gate_refuses_a_rerender_that_would_write_outside_the_library() {
-    let c = Ctx::new();
-    let a = c.ask(&argv::reconvert(
-        &c.in_lib("field-station.fountain"),
-        &s(&abs("tmp/elsewhere.epub")),
-        "{}",
-    ));
-    assert!(!a.allowed());
-    // A path that merely STARTS with the library's name is not inside it.
-    let evil = format!("{}-evil", s(&c.library));
-    let b = c.ask(&argv::settings(
-        &s(&Path::new(&evil).join("x.fountain")),
-        None,
-    ));
-    assert!(!b.allowed());
-}
-
-#[test]
-fn gate_refuses_an_empty_call_rather_than_allow_by_default() {
-    assert!(!Ctx::new().ask(&[]).allowed());
-}
-
-#[test]
-fn gate_refuses_any_call_whose_whole_shape_the_window_would_not_produce() {
-    // Each is CLOSE to a real call but not one the window's own argv
-    // builders can produce. A gate that only checks the first argument, or
-    // only checks that -o lands in the library, allows every one of these.
-    let c = Ctx::new();
-    let d = s(&c.demo);
-    let f = c.in_lib("field-station.fountain");
-    let e = c.in_lib("field-station.epub");
-    let plus = |mut a: Vec<String>, more: &[&str]| {
-        a.extend(strings(more));
-        a
-    };
-    let up = format!(
-        "{}/../../../Users/me/x.fountain",
-        s(&c.library).replace('\\', "/")
-    );
-    let refusals: Vec<(&str, Vec<String>)> = vec![
-        (
-            "a flag smuggled onto a convert after --library",
-            plus(
-                argv::convert(&d, false, None),
-                &["--fountain", "/Users/me/real.fountain"],
-            ),
-        ),
-        (
-            "a second flag smuggled onto a convert after --library",
-            plus(
-                argv::convert(&d, false, None),
-                &["--preview-html", "/anywhere.html"],
-            ),
-        ),
-        (
-            "--output instead of -o",
-            plus(argv::convert(&d, false, None), &["--output", "/x.epub"]),
-        ),
-        (
-            "--output= form",
-            plus(argv::convert(&d, false, None), &["--output=/x.epub"]),
-        ),
-        (
-            "-o glued to its value",
-            plus(argv::convert(&d, false, None), &["-o/x.epub"]),
-        ),
-        (
-            "a repeated -o",
-            vec![
-                f.clone(),
-                "--json".into(),
-                "--preview-inline".into(),
-                "-o".into(),
-                e.clone(),
-                "-o".into(),
-                "/x.epub".into(),
-                "--options-json".into(),
-                "{}".into(),
-            ],
-        ),
-        // Missing --progress/--preview-inline/--library, on purpose.
-        (
-            "a convert without --library, which would write into tests/fixtures",
-            vec![d.clone(), "--json".into()],
-        ),
-        (
-            "an unknown flag after --library",
-            plus(argv::convert(&d, false, None), &["--options", "/any/file"]),
-        ),
-        (
-            "a flag smuggled onto a reconvert after --options-json",
-            plus(argv::reconvert(&f, &e, "{}"), &["--output=/x.epub"]),
-        ),
-        ("a .. escape out of the library", argv::settings(&up, None)),
-        (
-            "a relative demo path",
-            argv::convert("tests/fixtures/field-station.pdf", false, None),
-        ),
-        (
-            "a relative settings path",
-            argv::settings("field-station/x.fountain", None),
-        ),
-        (
-            "flag-first",
-            vec!["--json".into(), "settings".into(), f.clone()],
-        ),
-        (
-            "update-decision",
-            strings(&["update-decision", "--offered", "1", "--current", "0"]),
-        ),
-        (
-            "update-should-check",
-            strings(&["update-should-check", "--json"]),
-        ),
-        (
-            "extra args on version",
-            strings(&["--version", "--json", "--debug"]),
-        ),
-        (
-            "kfx-status: the KFX checklist is never captured",
-            argv::kfx_status(),
-        ),
-        (
-            "kfx-install: a capture must never install anything",
-            argv::kfx_install(),
-        ),
-    ];
-    for (label, args) in refusals {
-        assert!(!c.ask(&args).allowed(), "{label}");
-    }
-}
-
-#[test]
-fn gate_allows_every_shape_the_window_really_sends_on_the_way_to_a_picture() {
-    let c = Ctx::new();
-    let d = s(&c.demo);
-    let f = c.in_lib("field-station.fountain");
-    for args in [
-        argv::convert(&d, true, None),
-        argv::convert(&d, false, Some(r#"{"a":1}"#)),
-        argv::convert(&d, true, Some("{}")),
-        argv::settings(&f, Some(r#"{"a":1}"#)),
-    ] {
-        assert_eq!(c.ask(&args), GateAnswer::Allow, "{}", args.join(" "));
-    }
-}
-
-/// New with the port: the gate's builders are a copy of app.js's, so this
-/// holds the copy to the original (window_argv.rs explains).
-#[test]
-fn the_gates_builders_are_still_the_ones_app_js_spells() {
-    let app = std::fs::read_to_string(repo_root().join("desktop/ui/app.js")).unwrap();
-    assert!(app.contains("export const FORCE_FLAG = '--force';"));
-    for (name, copied) in argv::SOURCES {
-        let now = argv::source_in(&app, name)
-            .unwrap_or_else(|| panic!("app.js has no argv.{name} any more"));
-        assert_eq!(
-            &now, copied,
-            "argv.{name} changed in desktop/ui/app.js; update capture/window_argv.rs to match"
-        );
-    }
-}
-
-// ---------------------------------------------------------------- the page
-
-fn real_index() -> String {
-    std::fs::read_to_string(repo_root().join("desktop/ui/index.html")).unwrap()
-}
-
-const CFG: CaptureConfig<'static> = CaptureConfig {
-    shot: "result",
-    demo_pdf: "/Users/Shared/demo.pdf",
-    token: "t",
-};
-
-#[test]
-fn page_is_the_windows_own_index_with_the_capture_scripts_before_main() {
-    let real = real_index();
-    let out = capture_index(&real, &CFG).unwrap();
-    // Every stylesheet the window loads, still loaded.
-    for part in real.split(r#"<link rel="stylesheet" href=""#).skip(1) {
-        let href = part.split('"').next().unwrap();
-        assert!(out.contains(&format!("href=\"{href}\"")), "{href}");
-    }
-    let bridge = out.find("/tools/capture/bridge.js").unwrap();
-    let main = out.find(r#"src="main.js""#).unwrap();
-    let steps = out.find("/tools/capture/steps.js").unwrap();
-    assert!(bridge > 0 && bridge < main && steps > main);
-    assert!(out.contains(r#"<base href="/desktop/ui/">"#));
-    assert!(out.contains(r#"{"shot":"result","demoPdf":"/Users/Shared/demo.pdf","token":"t"}"#));
-    assert!(out.contains(&config_json(&CFG)));
-}
-
-#[test]
-fn page_fails_loudly_for_a_window_page_it_does_not_recognise() {
-    let err = capture_index("<html><body>nothing</body></html>", &CFG).unwrap_err();
-    assert!(err.contains("main.js"));
-    let twice = real_index().replace(
-        "</body>",
-        r#"<script type="module" src="main.js"></script></body>"#,
-    );
-    assert!(
-        capture_index(&twice, &CFG)
-            .unwrap_err()
-            .contains("exactly once")
-    );
-}
-
-#[test]
-fn page_value_cannot_close_the_script_early_or_be_read_as_a_pattern() {
-    let evil = CaptureConfig {
-        shot: "</script><script>alert(1)</script>",
-        demo_pdf: "/Users/a$&b/demo.pdf",
-        token: "t",
-    };
-    let out = capture_index(&real_index(), &evil).unwrap();
-    assert!(out.contains("/Users/a$&b/demo.pdf"));
-    assert!(!out.contains("</script><script>alert"));
-}
-
-#[test]
-fn page_head_with_attributes_is_not_recognised_and_fails_loudly() {
-    let html = r#"<html><head lang="en"></head><body><script type="module" src="main.js"></script></body></html>"#;
-    assert!(capture_index(html, &CFG).unwrap_err().contains("no <head>"));
-}
-
-#[test]
-fn no_file_in_desktop_ui_knows_the_capture_tool_exists() {
-    let ui = repo_root().join("desktop/ui");
-    for e in std::fs::read_dir(&ui).unwrap() {
-        let p = e.unwrap().path();
-        let ext = p.extension().and_then(|x| x.to_str()).unwrap_or("");
-        if !matches!(ext, "js" | "html" | "css") {
-            continue;
-        }
-        let text = std::fs::read_to_string(&p).unwrap();
-        let knows = ["__CAPTURE__", "__captureState", "tools/capture"]
-            .iter()
-            .any(|w| text.contains(w));
-        assert!(!knows, "{}", p.display());
-    }
+fn demo() -> PathBuf {
+    repo_root().join("tests/fixtures/field-station.pdf")
 }
 
 // ---------------------------------------------------------------- shots
@@ -467,13 +92,12 @@ fn shots_are_the_four_readme_pictures_with_light_and_dark_for_the_window() {
 
 #[test]
 fn window_shots_are_the_windows_own_size() {
-    let conf: Value = serde_json::from_str(
-        &std::fs::read_to_string(repo_root().join("desktop/src-tauri/tauri.conf.json")).unwrap(),
-    )
-    .unwrap();
-    let w = &conf["app"]["windows"][0];
+    // The size the window opens at (sp-app's viewport, which carried
+    // tauri.conf.json's over).
+    let app = read("rust/crates/sp-app/src/app/mod.rs");
     for s in SHOTS.iter().filter(|s| s.kind == Kind::Window) {
-        assert_eq!(json!([s.width, s.height]), json!([w["width"], w["height"]]));
+        let want = format!(".with_inner_size([{}.0, {}.0])", s.width, s.height);
+        assert!(app.contains(&want), "sp-app no longer opens at {want}");
     }
 }
 
@@ -515,12 +139,16 @@ fn a_file_is_written_only_when_its_bytes_differ() {
 
 #[test]
 fn the_capture_command_and_chrome_driver_are_wired() {
-    // Was "they import without running, so tsc covers them": the compiler
-    // covers that now; what is left is the command row and the path.
     assert!(xtask::COMMANDS.iter().any(|c| c.name == "capture-screens"));
     assert_eq!(
         xtask::capture::cdp::CHROME,
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    );
+    assert_eq!(
+        xtask::capture::release_dir().join("examples/capture"),
+        xtask::paths::workspace_root()
+            .join(std::env::var("CARGO_TARGET_DIR").unwrap_or_else(|_| "target".into()))
+            .join("release/examples/capture")
     );
 }
 
@@ -531,16 +159,14 @@ const HOST: &str = "127.0.0.1:4321";
 struct ServerScene {
     _dir: Scratch,
     handler: Handler,
-    calls: Arc<Mutex<Vec<Vec<String>>>>,
-    answer: Arc<Mutex<EngineResult>>,
     records: Records,
 }
 
 impl ServerScene {
     /// A throwaway repository with the files a careless static server would
     /// hand out: the gitignored REAL screenplays, git's own files, the
-    /// package manifest, and a sibling folder whose name starts with the
-    /// repo's.
+    /// package manifest, a sibling folder whose name starts with the
+    /// repo's, and the old HTML window.
     fn new() -> ServerScene {
         let dir = Scratch::new("server");
         let repo = dir.path().join("Screepub");
@@ -549,10 +175,15 @@ impl ServerScene {
             std::fs::create_dir_all(p.parent().unwrap()).unwrap();
             std::fs::write(p, body).unwrap();
         };
-        put("desktop/ui/index.html", &real_index());
-        put("desktop/ui/main.js", "// main");
+        put(
+            "desktop/ui/index.html",
+            "<!doctype html><title>old window</title>",
+        );
         put("site/index.html", "<!doctype html><title>site</title>");
-        put("tools/capture/steps.js", "// steps");
+        put(
+            "tools/capture/frame.html",
+            "<!doctype html><title>frame</title>",
+        );
         put("fixtures/real-script.pdf", "A REAL SCREENPLAY");
         put(".git/HEAD", "ref: refs/heads/main");
         put("package.json", "{}");
@@ -561,32 +192,17 @@ impl ServerScene {
         let pass_one = dir.path().join("pass-one");
         std::fs::create_dir_all(&pass_one).unwrap();
         std::fs::write(pass_one.join("drop-light.png"), "PNG").unwrap();
-        let calls: Arc<Mutex<Vec<Vec<String>>>> = Arc::default();
-        let answer = Arc::new(Mutex::new(EngineResult {
-            code: Some(0),
-            stdout: "{\"ok\":true}\n".into(),
-            stderr: String::new(),
-        }));
+        std::fs::write(pass_one.join("drop-light.rgba"), "RAW").unwrap();
         let records = Records::default();
-        let (c2, a2) = (Arc::clone(&calls), Arc::clone(&answer));
         let handler = Handler::new(HandlerOptions {
-            demo_pdf: repo.join("tests/fixtures/field-station.pdf"),
             repo_dir: repo,
             pass_one,
-            token: "secret".into(),
-            library: abs("Users/Shared/Documents/Screepub"),
             host: HOST.into(),
-            run_engine: Arc::new(move |args: &[String]| {
-                c2.lock().unwrap().push(args.to_vec());
-                a2.lock().unwrap().clone()
-            }),
             records: records.clone(),
         });
         ServerScene {
             _dir: dir,
             handler,
-            calls,
-            answer,
             records,
         }
     }
@@ -598,45 +214,20 @@ impl ServerScene {
         }
         self.handler.handle(&r).unwrap()
     }
-
-    fn engine_raw(&self, body: &str, headers: &[(&str, &str)]) -> Response {
-        let mut r = Request::get(HOST, "/engine").with_header("content-type", "application/json");
-        r.method = "POST".into();
-        r.body = body.as_bytes().to_vec();
-        for (n, v) in headers {
-            r = r.with_header(n, v);
-        }
-        self.handler.handle(&r).unwrap()
-    }
-
-    fn engine(&self, args: &[String]) -> Response {
-        self.engine_raw(
-            &json!({ "args": args }).to_string(),
-            &[("x-capture-token", "secret")],
-        )
-    }
-
-    fn calls(&self) -> Vec<Vec<String>> {
-        self.calls.lock().unwrap().clone()
-    }
 }
 
 #[test]
-fn server_serves_the_window_the_site_and_the_capture_scripts() {
+fn server_serves_the_site_and_the_capture_pages() {
     let s = ServerScene::new();
-    for (path, kind) in [
-        ("/desktop/ui/main.js", "text/javascript"),
-        ("/site/index.html", "text/html"),
-        ("/tools/capture/steps.js", "text/javascript"),
-    ] {
+    for path in ["/site/index.html", "/tools/capture/frame.html"] {
         let r = s.get(path, &[]);
         assert_eq!(r.status, 200, "{path}");
-        assert!(r.content_type.contains(kind), "{path}");
+        assert!(r.content_type.contains("text/html"), "{path}");
     }
 }
 
 #[test]
-fn server_serves_nothing_outside_the_window_the_site_and_the_capture_scripts() {
+fn server_serves_nothing_outside_the_site_and_the_capture_pages() {
     let s = ServerScene::new();
     // Every one of these exists on disk, so a 404 is the rule, not luck.
     for path in [
@@ -648,8 +239,10 @@ fn server_serves_nothing_outside_the_window_the_site_and_the_capture_scripts() {
         "/site/%2e%2e/package.json",
         "/site/",
         "/site",
-        "/desktop/ui",
-        // New with the port: a backslash is a separator on Windows.
+        // The old HTML window is not served: the window is drawn by sp-app.
+        "/desktop/ui/index.html",
+        "/capture/window.html?shot=drop",
+        // A backslash is a separator on Windows.
         "/site/..%5c..%5cpackage.json",
     ] {
         assert_eq!(s.get(path, &[]).status, 404, "{path}");
@@ -660,6 +253,15 @@ fn server_serves_nothing_outside_the_window_the_site_and_the_capture_scripts() {
     let nf = snapshot(&s.records.not_found);
     assert!(nf.contains(&"/.git/HEAD".to_string()));
     assert!(nf.contains(&"/..%2fScreepub-old%2fx".to_string()));
+}
+
+#[test]
+fn server_has_no_door_for_engine_calls_any_more() {
+    let s = ServerScene::new();
+    let mut r = Request::get(HOST, "/engine").with_header("content-type", "application/json");
+    r.method = "POST".into();
+    r.body = br#"{"args":["--version","--json"]}"#.to_vec();
+    assert_eq!(s.handler.handle(&r).unwrap().status, 404);
 }
 
 #[test]
@@ -675,108 +277,14 @@ fn server_refuses_any_other_host_so_a_rebound_name_cannot_reach_it() {
             .status,
         403
     );
-    let r = s.engine_raw(
-        &json!({ "args": argv::version() }).to_string(),
-        &[("host", "evil.example:4321"), ("x-capture-token", "secret")],
-    );
-    assert_eq!(r.status, 403);
-    assert!(s.calls().is_empty());
-}
-
-#[test]
-fn server_engine_needs_the_run_token_and_refuses_what_the_gate_refuses() {
-    let s = ServerScene::new();
-    let body = json!({ "args": argv::version() }).to_string();
-    assert_eq!(s.engine_raw(&body, &[]).status, 403);
-    assert_eq!(
-        s.engine_raw(&body, &[("x-capture-token", "guess")]).status,
-        403
-    );
-    assert!(s.calls().is_empty());
-    let r = s.engine(&argv::eject("/Volumes/Kindle"));
-    assert_eq!(r.status, 403);
-    assert!(r.text().contains("eject /Volumes/Kindle --json"));
-    let refused = snapshot(&s.records.refused);
-    assert_eq!(refused.len(), 1);
-    assert!(refused[0].contains("eject /Volumes/Kindle --json"));
-    assert!(s.calls().is_empty());
-    assert_eq!(
-        s.engine_raw("not json", &[("x-capture-token", "secret")])
-            .status,
-        400
-    );
-    assert_eq!(
-        s.engine_raw(r#"{"args":[1,2]}"#, &[("x-capture-token", "secret")])
-            .status,
-        400
-    );
-    assert_eq!(
-        s.get("/engine", &[("x-capture-token", "secret")]).status,
-        405
-    );
-}
-
-#[test]
-fn server_runs_an_allowed_call_with_exactly_its_arguments() {
-    let s = ServerScene::new();
-    let r = s.engine(&argv::version());
-    assert_eq!(r.status, 200);
-    assert_eq!(r.text(), r#"{"ok":true}"#);
-    assert_eq!(s.calls(), vec![argv::version()]);
-    assert!(snapshot(&s.records.failed).is_empty());
-}
-
-#[test]
-fn server_answers_500_for_an_engine_that_prints_nothing_as_sidecar_rs_does() {
-    let s = ServerScene::new();
-    *s.answer.lock().unwrap() = EngineResult {
-        code: Some(1),
-        stdout: String::new(),
-        stderr: "TypeError: boom\n".into(),
-    };
-    let r = s.engine(&argv::version());
-    assert_eq!(r.status, 500);
-    assert!(r.text().contains("TypeError: boom"));
-    let failed = snapshot(&s.records.failed);
-    assert_eq!(failed.len(), 1);
-    assert!(failed[0].contains("TypeError: boom"));
-}
-
-#[test]
-fn server_passes_through_a_nonzero_exit_with_an_answer_and_records_it() {
-    // sidecar.rs: an engine error exits 1 and prints a perfectly good error
-    // object, which the window draws as its refusal. The run still fails.
-    let s = ServerScene::new();
-    *s.answer.lock().unwrap() = EngineResult {
-        code: Some(1),
-        stdout: r#"{"ok":false,"error":{"code":"scanned"}}"#.into(),
-        stderr: "no text\n".into(),
-    };
-    let r = s.engine(&argv::version());
-    assert_eq!(r.status, 200);
-    assert!(r.text().contains("\"scanned\""));
-    let failed = snapshot(&s.records.failed);
-    assert_eq!(failed.len(), 1);
-    assert!(failed[0].contains("exited with 1"));
-}
-
-#[test]
-fn server_serves_the_window_page_only_for_a_window_shot_with_the_token() {
-    let s = ServerScene::new();
-    assert_eq!(s.get("/capture/window.html?shot=hero", &[]).status, 400);
-    assert_eq!(s.get("/capture/window.html?shot=nope", &[]).status, 400);
-    assert_eq!(s.get("/capture/window.html", &[]).status, 400);
-    let r = s.get("/capture/window.html?shot=result", &[]);
-    assert_eq!(r.status, 200);
-    let html = r.text();
-    assert!(html.contains(r#""token":"secret""#));
-    assert!(html.contains("/tools/capture/bridge.js"));
 }
 
 #[test]
 fn server_serves_pass_one_pictures_by_bare_name_only() {
     let s = ServerScene::new();
     assert_eq!(s.get("/pass-one/drop-light.png", &[]).status, 200);
+    // The window's raw pixels are never served, only the PNG made of them.
+    assert_eq!(s.get("/pass-one/drop-light.rgba", &[]).status, 404);
     assert_eq!(
         s.get("/pass-one/..%2f..%2fScreepub%2fpackage.json", &[])
             .status,
@@ -784,6 +292,285 @@ fn server_serves_pass_one_pictures_by_bare_name_only() {
     );
     assert_eq!(s.get("/pass-one/missing-light.png", &[]).status, 404);
     assert!(snapshot(&s.records.not_found).contains(&"/pass-one/missing-light.png".to_string()));
+}
+
+// ---------------------------------------------------------------- the window
+
+#[test]
+fn the_window_program_is_told_one_shot_in_one_theme_at_the_shots_size() {
+    let args = window_args(
+        shot("result"),
+        Theme::Dark,
+        &abs("repo/tests/fixtures/field-station.pdf"),
+        &abs("tmp/pass/result-dark.rgba"),
+    );
+    assert_eq!(
+        args,
+        [
+            "--shot",
+            "result",
+            "--theme",
+            "dark",
+            "--width",
+            "1280",
+            "--height",
+            "800",
+            "--demo",
+            &s(&abs("repo/tests/fixtures/field-station.pdf")),
+            "--out",
+            &s(&abs("tmp/pass/result-dark.rgba")),
+        ]
+    );
+}
+
+#[test]
+fn every_window_shot_is_one_the_window_program_knows_and_no_other() {
+    // sp-app/src/capture.rs names its shots in Shot::word.
+    let capture = read("rust/crates/sp-app/src/capture.rs");
+    let start = capture.find("pub fn word(self)").unwrap();
+    let block = &capture[start..start + capture[start..].find("\n    }").unwrap()];
+    let mut known: Vec<&str> = block
+        .split('"')
+        .enumerate()
+        .filter(|(i, _)| i % 2 == 1)
+        .map(|(_, w)| w)
+        .collect();
+    known.sort();
+    let mut want: Vec<&str> = SHOTS
+        .iter()
+        .filter(|x| x.kind == Kind::Window)
+        .map(|x| x.name)
+        .collect();
+    want.sort();
+    assert_eq!(known, want);
+}
+
+fn no_failure() -> Option<String> {
+    None
+}
+
+/// A stand-in window program: a shell script, with the picture's orders
+/// as its arguments ("$@").
+#[cfg(unix)]
+fn sh_window(script: &str) -> EguiWindow {
+    EguiWindow {
+        program: vec![
+            "/bin/sh".into(),
+            "-c".into(),
+            script.into(),
+            "window".into(),
+        ],
+        timeout: Duration::from_secs(20),
+    }
+}
+
+/// What a script finds after --out in its orders.
+#[cfg(unix)]
+const OUT: &str =
+    "out=; prev=; for a in \"$@\"; do [ \"$prev\" = --out ] && out=\"$a\"; prev=\"$a\"; done; ";
+
+#[cfg(unix)]
+fn draw(
+    w: &mut EguiWindow,
+    dir: &Path,
+    name: &str,
+    failure: &dyn Fn() -> Option<String>,
+) -> Result<Vec<u8>, String> {
+    w.pass_one(PassOne {
+        shot: shot(name),
+        theme: Theme::Light,
+        demo_pdf: &demo(),
+        env: &[],
+        scratch: dir,
+        failure,
+    })
+}
+
+#[cfg(unix)]
+#[test]
+fn the_window_programs_pixels_become_the_same_png_bytes_every_time() {
+    let dir = Scratch::new("window-png");
+    // 2560 by 1600 pixels of one grey, written as raw RGBA.
+    let script = format!(
+        "{OUT}head -c {} /dev/zero | tr '\\0' '\\200' > \"$out\"",
+        2560 * 1600 * 4
+    );
+    let mut w = sh_window(&script);
+    let a = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
+    let b = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
+    assert_eq!(a, b, "same pixels, same bytes");
+    assert_eq!(size(&a).unwrap(), (2560, 1600));
+    let rgba = decode(&a).unwrap();
+    assert!(rgba.pixels.iter().all(|&p| p == 128));
+    assert_eq!(a, encode_rgba(2560, 1600, &rgba.pixels).unwrap());
+    // The raw file does not outlive its picture.
+    assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
+}
+
+#[cfg(unix)]
+#[test]
+fn a_picture_of_the_wrong_size_fails_rather_than_being_framed() {
+    let dir = Scratch::new("window-size");
+    let mut w = sh_window(&format!(
+        "{OUT}head -c {} /dev/zero > \"$out\"",
+        1280 * 800 * 4
+    ));
+    let e = draw(&mut w, dir.path(), "drop", &no_failure).unwrap_err();
+    assert!(e.contains("2560 by 1600"), "{e}");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_window_program_that_fails_fails_the_picture_saying_what_it_said() {
+    let dir = Scratch::new("window-fail");
+    let mut w =
+        sh_window("echo 'capture: the window made engine calls the capture refuses' >&2; exit 1");
+    let e = draw(&mut w, dir.path(), "result", &no_failure).unwrap_err();
+    assert!(e.contains("the result window (light) exited with 1"), "{e}");
+    assert!(e.contains("engine calls the capture refuses"), "{e}");
+    let mut silent = sh_window("exit 0");
+    let e = draw(&mut silent, dir.path(), "drop", &no_failure).unwrap_err();
+    assert!(e.contains("wrote no picture"), "{e}");
+    let mut missing = EguiWindow::new(&dir.path().join("no-such-program"));
+    let e = draw(&mut missing, dir.path(), "drop", &no_failure).unwrap_err();
+    assert!(e.contains("could not start"), "{e}");
+}
+
+#[cfg(unix)]
+fn pgrep(pattern: &str) -> String {
+    let out = std::process::Command::new("pgrep")
+        .args(["-f", pattern])
+        .output()
+        .unwrap();
+    String::from_utf8_lossy(&out.stdout).trim().to_string()
+}
+
+#[cfg(unix)]
+fn rand6() -> u32 {
+    let t = xtask::capture::random_token();
+    u32::from_str_radix(&t[..5], 16).unwrap() % 1_000_000
+}
+
+/// A window program that runs until it is stopped, named by a duration no
+/// other run of this suite uses, so nothing else is found or killed.
+#[cfg(unix)]
+fn hung_window() -> (EguiWindow, String) {
+    let seconds = format!("29.{}{:06}", std::process::id(), rand6());
+    let pattern = format!("sleep {}", seconds.replace('.', "\\."));
+    (sh_window(&format!("exec sleep {seconds}")), pattern)
+}
+
+#[cfg(unix)]
+#[test]
+fn a_window_program_that_hangs_is_stopped_at_the_time_limit() {
+    let dir = Scratch::new("window-hang");
+    let (mut w, pattern) = hung_window();
+    w.timeout = Duration::from_millis(400);
+    let e = draw(&mut w, dir.path(), "read", &no_failure).unwrap_err();
+    assert!(e.contains("timed out"), "{e}");
+    assert!(pgrep(&pattern).is_empty(), "left running");
+}
+
+#[cfg(unix)]
+#[test]
+fn an_interrupt_stops_the_window_program_at_once() {
+    let dir = Scratch::new("window-interrupt");
+    let (mut w, pattern) = hung_window();
+    let start = std::time::Instant::now();
+    let asked = Mutex::new(0);
+    let failure = || {
+        let mut n = asked.lock().unwrap();
+        *n += 1;
+        (*n > 5).then(|| "interrupted by SIGINT".to_string())
+    };
+    let e = draw(&mut w, dir.path(), "result", &failure).unwrap_err();
+    assert!(e.contains("interrupted by SIGINT"), "{e}");
+    assert!(start.elapsed() < Duration::from_secs(10));
+    assert!(pgrep(&pattern).is_empty(), "left running");
+}
+
+/// The real window program, as `cargo test` built it alongside sp-app's
+/// tests (target/debug/examples/capture), if it did.
+fn built_window_program() -> Option<PathBuf> {
+    let ws = xtask::paths::workspace_root();
+    let target = std::env::var_os("CARGO_TARGET_DIR")
+        .filter(|t| !t.is_empty())
+        .map_or_else(|| ws.join("target"), |t| ws.join(t));
+    let exe = if cfg!(windows) {
+        "capture.exe"
+    } else {
+        "capture"
+    };
+    let p = target.join("debug/examples").join(exe);
+    p.is_file().then_some(p)
+}
+
+#[test]
+fn the_real_window_program_refuses_to_run_without_a_scratch_library() {
+    let Some(program) = built_window_program() else {
+        eprintln!(
+            "skipped: sp-app's capture example is not built (cargo test -p sp-app builds it)"
+        );
+        return;
+    };
+    let dir = Scratch::new("window-real-env");
+    let out = dir.path().join("drop-light.rgba");
+    let ran = std::process::Command::new(&program)
+        .args(window_args(shot("drop"), Theme::Light, &demo(), &out))
+        .env_remove("SCREEPUB_LIBRARY")
+        .env_remove("SCREEPUB_CONFIG_DIR")
+        .output()
+        .unwrap();
+    assert_eq!(ran.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&ran.stderr).contains("scratch folder"));
+    assert!(!out.exists());
+}
+
+#[test]
+fn the_real_window_draws_the_drop_well_at_twice_its_size_where_wgpu_works() {
+    let Some(program) = built_window_program() else {
+        eprintln!(
+            "skipped: sp-app's capture example is not built (cargo test -p sp-app builds it)"
+        );
+        return;
+    };
+    let dir = Scratch::new("window-real");
+    let library = dir.path().join("Screepub");
+    std::fs::create_dir_all(library.join(".no-volumes")).unwrap();
+    let calibre = dir.path().join("calibre-copy");
+    std::fs::create_dir_all(&calibre).unwrap();
+    let env = engine_env(&library, &calibre);
+    let mut w = EguiWindow::new(&program);
+    let png = match w.pass_one(PassOne {
+        shot: shot("drop"),
+        theme: Theme::Dark,
+        demo_pdf: &demo(),
+        env: &env,
+        scratch: dir.path(),
+        failure: &no_failure,
+    }) {
+        Ok(p) => p,
+        Err(e) if e.contains("wgpu") => {
+            eprintln!("skipped: wgpu could not draw here: {e}");
+            return;
+        }
+        Err(e) => panic!("{e}"),
+    };
+    assert_eq!(size(&png).unwrap(), (2560, 1600));
+    let rgba = decode(&png).unwrap();
+    assert!(
+        rgba.pixels.chunks_exact(4).any(|p| p != &rgba.pixels[..4]),
+        "a blank picture"
+    );
+    // The drop well converts nothing: the library holds only what the run
+    // made for it, and the settings the window read live under it.
+    let mut left: Vec<String> = std::fs::read_dir(&library)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .filter(|n| n != ".capture-app-settings")
+        .collect();
+    left.sort();
+    assert_eq!(left, [".no-volumes"]);
 }
 
 // ---------------------------------------------------------------- runs
@@ -818,6 +605,21 @@ fn fake(capture: CaptureFn) -> FakeBrowser {
         close: Box::new(|| Ok(())),
         events: Arc::default(),
     }
+}
+
+type DrawFn = Box<dyn FnMut(&PassOne<'_>) -> Result<Vec<u8>, String>>;
+
+/// A window that draws whatever the test says.
+struct FakeWindow(DrawFn);
+
+impl WindowBackend for FakeWindow {
+    fn pass_one(&mut self, p: PassOne<'_>) -> Result<Vec<u8>, String> {
+        (self.0)(&p)
+    }
+}
+
+fn png_window() -> Box<FakeWindow> {
+    Box::new(FakeWindow(Box::new(|_| Ok(PNG.to_vec()))))
 }
 
 /// Every path is under a scratch folder. The tests never touch /Users/Shared.
@@ -858,8 +660,7 @@ impl RunScene {
             repo_dir: root,
             library: self.library.clone(),
             launch: Box::new(move || browser.map(|b| Box::new(b) as Box<dyn Browser>)),
-            window: Box::new(DesktopUi),
-            engine: vec!["false".into()],
+            window: png_window(),
             out_dir: self.out.clone(),
             tmp: Some(self.tmp.clone()),
             calibre_config: Some(self.dir.path().join("no-calibre-here")),
@@ -886,6 +687,10 @@ fn failed(r: Result<(), RunError>) -> RunError {
     r.expect_err("expected the run to fail")
 }
 
+fn drop_only(o: &mut RunOptions) {
+    o.shots = SHOTS.iter().filter(|s| s.name == "drop").copied().collect();
+}
+
 #[test]
 fn run_chrome_failing_to_start_leaves_nothing_behind_and_its_error_is_the_one_returned() {
     let s = RunScene::new(false);
@@ -909,17 +714,17 @@ fn run_a_documents_folder_that_was_there_before_is_still_there_after() {
 #[test]
 fn run_that_fails_part_way_writes_no_picture_closes_chrome_and_returns_the_capture_error() {
     let s = RunScene::new(false);
-    let mut n = 0;
-    let b = fake(Box::new(move |_| {
-        n += 1;
-        if n == 6 {
+    let b = fake(Box::new(|_| Ok(PNG.to_vec())));
+    let events = Arc::clone(&b.events);
+    let mut o = s.options(Ok(b));
+    o.window = Box::new(FakeWindow(Box::new(|p| {
+        if p.shot.name == "read" {
             Err("capture failed at the read shot".into())
         } else {
             Ok(PNG.to_vec())
         }
-    }));
-    let events = Arc::clone(&b.events);
-    let e = failed(run_capture(s.options(Ok(b))));
+    })));
+    let e = failed(run_capture(o));
     assert_eq!(e.message, "capture failed at the read shot");
     assert_eq!(*events.lock().unwrap(), ["closed"]);
     assert!(!s.out.exists());
@@ -946,22 +751,35 @@ fn run_a_cleanup_failure_is_reported_after_the_original_error_never_instead() {
 fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() {
     let s = RunScene::new(false);
     let seen: Arc<Mutex<Vec<Vec<String>>>> = Arc::default();
+    let framed: Arc<Mutex<Vec<String>>> = Arc::default();
     let (seen2, lib) = (Arc::clone(&seen), s.library.clone());
+    let framed2 = Arc::clone(&framed);
     let b = fake(Box::new(move |url| {
-        if url.contains("/capture/window.html") {
-            seen2.lock().unwrap().push(entries(&lib));
-            // What a conversion leaves behind, which the next shot must not see.
-            std::fs::create_dir_all(lib.join("field-station")).unwrap();
-            std::fs::write(lib.join("field-station/field-station.epub"), "book").unwrap();
-        }
+        framed2.lock().unwrap().push(url.to_string());
         Ok(PNG.to_vec())
     }));
-    run_capture(s.options(Ok(b))).unwrap();
+    let mut o = s.options(Ok(b));
+    o.window = Box::new(FakeWindow(Box::new(move |p| {
+        seen2.lock().unwrap().push(entries(&lib));
+        // What a conversion leaves behind, which the next shot must not see.
+        std::fs::create_dir_all(lib.join("field-station")).unwrap();
+        std::fs::write(lib.join("field-station/field-station.epub"), "book").unwrap();
+        assert_eq!(p.demo_pdf, demo());
+        Ok(PNG.to_vec())
+    })));
+    run_capture(o).unwrap();
     let seen = seen.lock().unwrap();
     assert_eq!(seen.len(), 6);
     for e in seen.iter() {
-        assert_eq!(e, &[MARKER]);
+        assert_eq!(e, &[".no-volumes", MARKER]);
     }
+    // Chrome drew the hero and framed each of the window's six pictures.
+    let framed = framed.lock().unwrap();
+    assert_eq!(framed.len(), 7);
+    assert!(framed[0].ends_with("/tools/capture/hero.html"));
+    assert!(
+        framed[1].contains("/tools/capture/frame.html?img=/pass-one/drop-light.png&w=1280&h=800")
+    );
     let all = all_outputs(SHOTS);
     for out in &all {
         assert_eq!(std::fs::read(s.out.join(out)).unwrap(), PNG);
@@ -975,6 +793,79 @@ fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() 
     assert_eq!(rest, want);
     assert!(!s.library.exists());
     assert!(!s.documents.exists());
+}
+
+#[test]
+fn run_gives_the_window_the_scratch_environment_and_never_the_real_settings() {
+    let s = RunScene::new(false);
+    let real = s.dir.path().join("real-calibre");
+    std::fs::create_dir_all(real.join("plugins")).unwrap();
+    std::fs::write(real.join("plugins/KFX Output.zip"), "plugin").unwrap();
+    let got: Arc<Mutex<Vec<(String, PathBuf)>>> = Arc::default();
+    let listed: Arc<Mutex<Vec<String>>> = Arc::default();
+    let (g2, l2) = (Arc::clone(&got), Arc::clone(&listed));
+    let mut o = s.options(Ok(fake(Box::new(|_| Ok(PNG.to_vec())))));
+    drop_only(&mut o);
+    o.calibre_config = Some(real.clone());
+    o.window = Box::new(FakeWindow(Box::new(move |p| {
+        for (k, v) in p.env {
+            g2.lock().unwrap().push(((*k).to_string(), v.clone()));
+            if *k == "CALIBRE_CONFIG_DIRECTORY" {
+                *l2.lock().unwrap() = entries(&v.join("plugins"));
+            }
+        }
+        Ok(PNG.to_vec())
+    })));
+    run_capture(o).unwrap();
+    let got = got.lock().unwrap().clone();
+    let var = |k: &str| got.iter().find(|(n, _)| n == k).unwrap().1.clone();
+    assert_eq!(var("SCREEPUB_LIBRARY"), s.library);
+    // Under the run's own scratch library, cleared before every shot.
+    assert_eq!(
+        var("SCREEPUB_CONFIG_DIR"),
+        s.library.join(".capture-app-settings")
+    );
+    assert_eq!(var("SCREEPUB_VOLUME_ROOTS"), s.library.join(".no-volumes"));
+    assert_eq!(
+        var("SCREEPUB_REMARKABLE_ENDPOINT"),
+        PathBuf::from("http://127.0.0.1:9")
+    );
+    // A scratch COPY of Calibre's settings, never the real folder.
+    let calibre = var("CALIBRE_CONFIG_DIRECTORY");
+    assert_ne!(calibre, real);
+    assert_ne!(calibre, xtask::capture::run::default_calibre_config());
+    assert!(calibre.starts_with(&s.tmp));
+    assert_eq!(*listed.lock().unwrap(), ["KFX Output.zip"]);
+    // Gone with the run, and the real folder untouched.
+    assert!(s.tmp_entries().is_empty());
+    assert_eq!(entries(&real.join("plugins")), ["KFX Output.zip"]);
+}
+
+#[cfg(unix)]
+#[test]
+fn run_a_window_program_still_running_when_the_run_is_interrupted_is_stopped() {
+    let s = RunScene::new(false);
+    let (mut w, pattern) = hung_window();
+    w.timeout = Duration::from_secs(30);
+    let signal = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let mut o = s.options(Ok(fake(Box::new(|_| Ok(PNG.to_vec())))));
+    drop_only(&mut o);
+    o.window = Box::new(w);
+    o.interrupt = Some(Arc::clone(&signal));
+    let p2 = pattern.clone();
+    std::thread::spawn(move || {
+        while pgrep(&p2).is_empty() {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        signal.store(2, std::sync::atomic::Ordering::SeqCst);
+    });
+    let e = failed(run_capture(o));
+    assert_eq!(e.interrupted, Some(2));
+    assert!(e.message.contains("interrupted by SIGINT"), "{}", e.message);
+    assert!(pgrep(&pattern).is_empty(), "left running");
+    assert!(!s.out.exists());
+    assert!(!s.library.exists());
+    assert!(s.tmp_entries().is_empty());
 }
 
 /// A pid that belonged to a process a moment ago and to nothing now.
@@ -1040,162 +931,6 @@ fn run_refuses_a_marker_that_does_not_say_whose_it_is() {
     assert_eq!(entries(&s.library), [MARKER]);
 }
 
-/// The window's boot: read the token off the window page, post an engine call.
-#[cfg(unix)]
-fn post_version(url: &str) -> Result<(u16, String), String> {
-    let (_, html) =
-        xtask::capture::http::fetch("GET", url, &[], &[], std::time::Duration::from_secs(10))?;
-    let html = String::from_utf8_lossy(&html).into_owned();
-    let token = html
-        .split("\"token\":\"")
-        .nth(1)
-        .and_then(|t| t.split('"').next())
-        .ok_or("no token on the window page")?
-        .to_string();
-    let base = &url[..url.find("/capture/").unwrap()];
-    let body = json!({ "args": argv::version() }).to_string();
-    let (status, said) = xtask::capture::http::fetch(
-        "POST",
-        &format!("{base}/engine"),
-        &[
-            ("content-type", "application/json"),
-            ("x-capture-token", &token),
-        ],
-        body.as_bytes(),
-        std::time::Duration::from_secs(40),
-    )?;
-    Ok((status, String::from_utf8_lossy(&said).into_owned()))
-}
-
-#[cfg(unix)]
-fn drop_only(o: &mut RunOptions) {
-    o.shots = SHOTS.iter().filter(|s| s.name == "drop").copied().collect();
-}
-
-#[cfg(unix)]
-fn pgrep(pattern: &str) -> String {
-    let out = std::process::Command::new("pgrep")
-        .args(["-f", pattern])
-        .output()
-        .unwrap();
-    String::from_utf8_lossy(&out.stdout).trim().to_string()
-}
-
-#[cfg(unix)]
-#[test]
-fn run_cleanup_refuses_an_engine_call_made_while_it_runs_instead_of_waiting() {
-    let s = RunScene::new(false);
-    // A stand-in engine that runs until it is stopped, named by a duration
-    // no other run of this suite uses, so nothing else is found or killed.
-    let seconds = format!("29.{}{:06}", std::process::id(), rand6());
-    let pattern = format!("sleep {}$", seconds.replace('.', "\\."));
-    let url_seen: Arc<Mutex<Option<String>>> = Arc::default();
-    let during: Arc<Mutex<Option<(u16, String)>>> = Arc::default();
-    let (u2, p2) = (Arc::clone(&url_seen), pattern.clone());
-    let mut b = fake(Box::new(move |url| {
-        if !url.contains("/capture/window.html") {
-            return Ok(PNG.to_vec());
-        }
-        *u2.lock().unwrap() = Some(url.to_string());
-        let url = url.to_string();
-        std::thread::spawn(move || post_version(&url));
-        while pgrep(&p2).is_empty() {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        Err("capture failed".into())
-    }));
-    // Chrome closes AFTER the engines are stopped, so a page still alive at
-    // this point can post a new call. It must be refused, not run.
-    let (u3, d3) = (Arc::clone(&url_seen), Arc::clone(&during));
-    b.close = Box::new(move || {
-        let url = u3.lock().unwrap().clone().unwrap();
-        *d3.lock().unwrap() = Some(post_version(&url)?);
-        Ok(())
-    });
-    let mut o = s.options(Ok(b));
-    drop_only(&mut o);
-    o.engine = vec![
-        "/bin/sh".into(),
-        "-c".into(),
-        format!("exec sleep {seconds}"),
-    ];
-    let e = failed(run_capture(o));
-    assert_eq!(e.message, "capture failed");
-    let (status, body) = during.lock().unwrap().clone().unwrap();
-    assert_eq!(status, 500);
-    assert!(body.contains("cleaning up"), "{body}");
-    assert!(pgrep(&pattern).is_empty());
-    assert!(!s.library.exists());
-}
-
-#[cfg(unix)]
-fn rand6() -> u32 {
-    let t = xtask::capture::random_token();
-    u32::from_str_radix(&t[..5], 16).unwrap() % 1_000_000
-}
-
-/// One engine call is enough: runs `script` as the engine and answers what
-/// the window's call got back.
-#[cfg(unix)]
-fn one_engine_call(s: &RunScene, script: &str, calibre: Option<PathBuf>) -> String {
-    let said: Arc<Mutex<String>> = Arc::default();
-    let s2 = Arc::clone(&said);
-    let b = fake(Box::new(move |url| {
-        if !url.contains("/capture/window.html") {
-            return Ok(PNG.to_vec());
-        }
-        *s2.lock().unwrap() = post_version(url)?.1;
-        Err("one engine call is enough for this test".into())
-    }));
-    let mut o = s.options(Ok(b));
-    drop_only(&mut o);
-    o.engine = vec!["/bin/sh".into(), "-c".into(), script.into()];
-    if calibre.is_some() {
-        o.calibre_config = calibre;
-    }
-    let e = failed(run_capture(o));
-    assert_eq!(e.message, "one engine call is enough for this test");
-    said.lock().unwrap().clone()
-}
-
-#[cfg(unix)]
-#[test]
-fn run_gives_the_engine_its_own_screepub_config_dir_never_the_real_settings() {
-    let s = RunScene::new(false);
-    let said = one_engine_call(&s, "printf %s \"$SCREEPUB_CONFIG_DIR\"", None);
-    // Under the run's own scratch library, a folder the run never writes into.
-    assert_eq!(
-        said,
-        s.library.join(".capture-app-settings").to_string_lossy()
-    );
-}
-
-#[cfg(unix)]
-#[test]
-fn run_gives_the_engine_a_scratch_copy_of_calibres_settings_never_the_real_folder() {
-    let s = RunScene::new(false);
-    let real = s.dir.path().join("real-calibre");
-    std::fs::create_dir_all(real.join("plugins")).unwrap();
-    std::fs::write(real.join("plugins/KFX Output.zip"), "plugin").unwrap();
-    let said = one_engine_call(
-        &s,
-        "printf \"%s|\" \"$CALIBRE_CONFIG_DIRECTORY\"; ls \"$CALIBRE_CONFIG_DIRECTORY/plugins\"",
-        Some(real.clone()),
-    );
-    let (dir, listed) = said.split_once('|').unwrap();
-    assert!(!dir.is_empty());
-    assert_ne!(Path::new(dir), real);
-    assert_ne!(
-        Path::new(dir),
-        xtask::capture::run::default_calibre_config()
-    );
-    assert!(Path::new(dir).starts_with(&s.tmp));
-    assert_eq!(listed.trim(), "KFX Output.zip");
-    // Gone with the run, and the real folder untouched.
-    assert!(s.tmp_entries().is_empty());
-    assert_eq!(entries(&real.join("plugins")), ["KFX Output.zip"]);
-}
-
 #[test]
 fn untold_the_folder_copied_is_the_one_calibre_itself_would_use() {
     use xtask::calibre_config::{Host, real_calibre_config};
@@ -1245,10 +980,6 @@ fn run_refuses_a_library_the_tool_did_not_make_and_leaves_it_exactly_as_it_was()
 
 // ---------------------------------------------------------------- agreement
 
-fn read(rel: &str) -> String {
-    std::fs::read_to_string(repo_root().join(rel)).unwrap()
-}
-
 #[test]
 fn the_frame_page_pads_the_window_by_exactly_what_pass_two_is_sized_for() {
     let html = read("tools/capture/frame.html");
@@ -1274,49 +1005,23 @@ fn the_frame_page_pads_the_window_by_exactly_what_pass_two_is_sized_for() {
             FRAME_PAD.left
         )
     );
-    let drop = SHOTS.iter().find(|x| x.name == "drop").unwrap();
+    let drop = shot("drop");
     assert_eq!(framed_size(drop), (1280 + 56 + 56, 800 + 44 + 68));
 }
 
 #[test]
-fn the_step_runner_has_a_step_for_every_window_shot_and_nothing_else() {
-    let steps = read("tools/capture/steps.js");
-    let start = steps.find("const SHOTS = {").unwrap();
-    let block = &steps[start..];
-    let block = &block[..block.find("\n};").unwrap()];
-    let mut names: Vec<&str> = block
-        .lines()
-        .filter_map(|l| l.strip_prefix("  async "))
-        .filter_map(|l| l.split_once("()").map(|(n, _)| n))
-        .collect();
-    names.sort();
-    let mut want: Vec<&str> = SHOTS
-        .iter()
-        .filter(|x| x.kind == Kind::Window)
-        .map(|x| x.name)
-        .collect();
-    want.sort();
-    assert_eq!(names, want);
-}
-
-#[test]
-fn the_window_still_draws_the_library_slot_the_step_runner_hides() {
-    let convert = read("desktop/ui/convert.js");
-    let a = convert.find("function buildLibrarySlot").unwrap();
-    let b = convert.find("async function probeLibrary").unwrap();
-    assert_eq!(
-        convert[a..b]
-            .matches("class: 'well-ask well-library'")
-            .count(),
-        2
+fn the_window_still_has_the_stamp_and_the_library_slot_the_picture_mode_hides() {
+    // A stamp or a library line drawn outside picture_mode's reach would be
+    // in every picture; sp-app's tests check the hiding, this that the two
+    // places it hides still exist where the pictures are drawn.
+    let frame = read("rust/crates/sp-app/src/app/frame.rs");
+    let at = frame.find("if app.picture_mode {").unwrap();
+    assert!(frame[at..at + 400].contains("stamp_space"));
+    let convert = read("rust/crates/sp-app/src/app/convert.rs");
+    let hide = convert.find("if app.picture_mode {").unwrap();
+    let line = convert.find("m::library_line(&library)").unwrap();
+    assert!(
+        hide < line,
+        "the library line is drawn before picture mode hides it"
     );
-    let steps = read("tools/capture/steps.js");
-    assert!(steps.contains(".well-library"));
-    assert!(steps.contains(".well-library { display: none !important; }"));
-}
-
-#[test]
-fn the_window_still_draws_the_version_stamp_the_step_runner_hides() {
-    assert!(read("desktop/ui/frame.js").contains("class: 'rev-stamp'"));
-    assert!(read("tools/capture/steps.js").contains(".rev-stamp"));
 }

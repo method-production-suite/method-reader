@@ -1,34 +1,33 @@
 //! One capture run, from claiming the demo library to putting it back (was
 //! tools/capture/run.ts).
 //!
-//! Everything a run creates, it removes: any engine still running, Chrome,
-//! the page server, the demo library, the first-pass pictures, the copy of
-//! Calibre's settings, and the folders above the library that it had to
-//! make (and only those, and only if they are empty). Cleanup runs whether
+//! Everything a run creates, it removes: Chrome, the page server, the demo
+//! library, the first-pass pictures, the copy of Calibre's settings, and
+//! the folders above the library that it had to make (and only those, and
+//! only if they are empty). The window program that draws pass one is
+//! stopped by its backend before the backend returns, whatever happened. Cleanup runs whether
 //! the run succeeds, fails or is interrupted, each step on its own so one
 //! failure cannot skip the rest, and a cleanup failure is reported after
 //! the error that ended the run, never instead of it.
 //!
-//! Nothing is written to the repository until every picture has been taken,
-//! no engine call was refused or failed, and the page server hit no error,
+//! Nothing is written to the repository until every picture has been taken
+//! (the window refused no engine call of its own) and the page server hit
+//! no error,
 //! so a run that dies half-way leaves the committed pictures exactly as
 //! they were. The library's marker names the run's pid, so two runs at once
 //! cannot delete each other's library.
 
-use std::collections::HashMap;
-use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use serde_json::{Value, json};
 
 use super::backend::{Browser, CaptureOptions, PassOne, WindowBackend};
-use super::cdp::{make_temp_dir, stop};
+use super::cdp::make_temp_dir;
 use super::http::{Response, Server};
-use super::server::{EngineResult, Handler, HandlerOptions, Records, RunEngine, snapshot};
+use super::server::{Handler, HandlerOptions, Records, snapshot};
 use super::shots::{Kind, Shot, framed_size, outputs_for, write_if_changed};
 use crate::calibre_config::{copy_calibre_config, this_host_real_config};
 
@@ -76,10 +75,8 @@ pub struct RunOptions {
     /// The demo library. The result screen prints paths inside it.
     pub library: PathBuf,
     pub launch: Launch,
-    /// What draws pass one of a window shot: [`super::backend::DesktopUi`].
+    /// What draws pass one of a window shot: [`super::backend::EguiWindow`].
     pub window: Box<dyn WindowBackend>,
-    /// The engine's command line, before the window's own arguments.
-    pub engine: Vec<String>,
     /// Where the pictures go: the repository, outside tests.
     pub out_dir: PathBuf,
     /// Where the first-pass pictures and the Calibre copy are kept.
@@ -251,22 +248,21 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// The environment every engine call gets, on top of this process's.
+/// The environment the window's engine runs with, on top of this
+/// process's.
 ///
 /// - SCREEPUB_LIBRARY: the scratch library.
 /// - SCREEPUB_CONFIG_DIR: a folder under the scratch library, cleared with
 ///   it before every shot, which reads back as no settings at all, so the
 ///   pictures never drift with whatever the developer last chose in their
-///   own app settings. The only write the gate lets into it is a card's
-///   reader device.
+///   own app settings. The window's guard lets nothing write into it.
 /// - SCREEPUB_VOLUME_ROOTS, SCREEPUB_REMARKABLE_ENDPOINT: no real reader,
 ///   ever: an empty mount parent, and a reMarkable address nothing listens on.
-/// - CALIBRE_CONFIG_DIRECTORY: the result screen's routes and Kindle-file
-///   check probe Calibre and the KFX plugin, and Calibre run against its
-///   real settings folder rewrites files there (gui.json, 0.7.3 QA). A
-///   scratch COPY made for this run: the plugin stays visible, so the
-///   pictures say what this machine would, and the real folder is never
-///   handed to anything.
+/// - CALIBRE_CONFIG_DIRECTORY: Calibre run against its real settings
+///   folder rewrites files there (gui.json, 0.7.3 QA). The window's guard
+///   keeps every question that would start Calibre out, and this is the
+///   second line behind it: a scratch COPY made for this run, so the real
+///   folder is never handed to anything.
 pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
         ("SCREEPUB_LIBRARY", library.to_path_buf()),
@@ -280,165 +276,11 @@ pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)
     ]
 }
 
-/// The engines running now, by a number of the run's own.
-#[derive(Clone, Default)]
-struct Running {
-    children: Arc<Mutex<HashMap<u64, Child>>>,
-    next: Arc<AtomicU64>,
-}
-
-impl Running {
-    fn is_empty(&self) -> bool {
-        self.children.lock().map(|c| c.is_empty()).unwrap_or(true)
-    }
-
-    /// Wait for the engine calls in flight to finish. A call can outlive the
-    /// page that made it (the version check at boot, say), and the library
-    /// must not be emptied under it.
-    fn settle(&self, within: Duration) -> Result<(), RunError> {
-        let start = Instant::now();
-        while !self.is_empty() {
-            if start.elapsed() > within {
-                return Err(RunError::expected(format!(
-                    "capture: an engine call was still running after {} s",
-                    within.as_secs()
-                )));
-            }
-            std::thread::sleep(Duration::from_millis(20));
-        }
-        Ok(())
-    }
-
-    /// Stop every engine still running and wait for it to exit: an engine
-    /// mid-conversion would otherwise make the library again after it is gone.
-    fn stop_all(&self) {
-        let all: Vec<Child> = match self.children.lock() {
-            Ok(mut c) => c.drain().map(|(_, ch)| ch).collect(),
-            Err(_) => Vec::new(),
-        };
-        let threads: Vec<_> = all
-            .into_iter()
-            .map(|mut ch| std::thread::spawn(move || stop(&mut ch)))
-            .collect();
-        for t in threads {
-            let _ = t.join();
-        }
-    }
-}
-
-fn engine_runner(
-    engine: Vec<String>,
-    library: PathBuf,
-    calibre: PathBuf,
-    running: Running,
-    closing: Arc<AtomicBool>,
-) -> RunEngine {
-    let refuse = |stderr: String| EngineResult {
-        code: None,
-        stdout: String::new(),
-        stderr,
-    };
-    Arc::new(move |args: &[String]| {
-        // Once cleanup has begun, no engine starts: cleanup stops the engines
-        // it knows about, and one started after that would outlive it and
-        // make the library again. Answered like an engine that could not
-        // start, which the server turns into a 500.
-        if closing.load(Ordering::SeqCst) {
-            return refuse("capture: cleaning up, so no new engine calls".into());
-        }
-        // Made before every call, not once: the library is emptied between
-        // shots. A missing root lists nothing too, but an empty folder is
-        // the arrangement the tests pin.
-        let no_volumes = library.join(".no-volumes");
-        if let Err(e) = std::fs::create_dir_all(&no_volumes) {
-            return refuse(format!(
-                "capture: could not make {}: {e}",
-                no_volumes.display()
-            ));
-        }
-        let Some((program, rest)) = engine.split_first() else {
-            return refuse("capture: no engine to run".into());
-        };
-        let mut cmd = Command::new(program);
-        cmd.args(rest)
-            .args(args)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        for (k, v) in engine_env(&library, &calibre) {
-            cmd.env(k, v);
-        }
-        // Spawned under the lock, so cleanup either sees this engine or has
-        // already said no more engines.
-        let (id, out, err) = {
-            let Ok(mut children) = running.children.lock() else {
-                return refuse("capture: the engine list is poisoned".into());
-            };
-            if closing.load(Ordering::SeqCst) {
-                return refuse("capture: cleaning up, so no new engine calls".into());
-            }
-            let mut child = match cmd.spawn() {
-                Ok(c) => c,
-                Err(e) => return refuse(format!("capture: could not start the engine: {e}")),
-            };
-            let out = child.stdout.take();
-            let err = child.stderr.take();
-            let id = running.next.fetch_add(1, Ordering::SeqCst);
-            children.insert(id, child);
-            (id, out, err)
-        };
-        // Both streams at once. A pipe nobody reads fills up, and an engine
-        // blocked writing to it never exits.
-        let drain = |pipe: Option<Box<dyn Read + Send>>| {
-            std::thread::spawn(move || {
-                let mut s = Vec::new();
-                if let Some(mut p) = pipe {
-                    let _ = p.read_to_end(&mut s);
-                }
-                String::from_utf8_lossy(&s).into_owned()
-            })
-        };
-        let out = drain(out.map(|p| Box::new(p) as Box<dyn Read + Send>));
-        let err = drain(err.map(|p| Box::new(p) as Box<dyn Read + Send>));
-        let code = loop {
-            let status = match running.children.lock() {
-                Ok(mut c) => match c.get_mut(&id) {
-                    // Taken by cleanup, which stops it: killed.
-                    None => break None,
-                    Some(ch) => match ch.try_wait() {
-                        Ok(Some(st)) => {
-                            c.remove(&id);
-                            Some(st)
-                        }
-                        Ok(None) => None,
-                        Err(_) => {
-                            c.remove(&id);
-                            break None;
-                        }
-                    },
-                },
-                Err(_) => break None,
-            };
-            if let Some(st) = status {
-                break st.code();
-            }
-            std::thread::sleep(Duration::from_millis(10));
-        };
-        EngineResult {
-            code,
-            stdout: out.join().unwrap_or_default(),
-            stderr: err.join().unwrap_or_default(),
-        }
-    })
-}
-
 /// The run's cleanup: every step on its own, in this order, because nothing
 /// may write into the library after it is removed.
 struct Cleanup<'a> {
     o: &'a RunOptions,
     top: PathBuf,
-    closing: Arc<AtomicBool>,
-    running: Running,
     browser: Option<Box<dyn Browser>>,
     server: Option<Server>,
     pass_one: Option<PathBuf>,
@@ -447,15 +289,12 @@ struct Cleanup<'a> {
 
 impl Cleanup<'_> {
     fn run(&mut self) -> Vec<String> {
-        // First: no engine may start from here on.
-        self.closing.store(true, Ordering::SeqCst);
         let mut errors = Vec::new();
         let mut step = |what: &str, r: Result<(), String>| {
             if let Err(e) = r {
                 errors.push(format!("capture: cleanup could not {what}: {e}"));
             }
         };
-        self.running.stop_all();
         step(
             "close Chrome",
             self.browser.as_mut().map_or(Ok(()), |b| b.close()),
@@ -501,19 +340,24 @@ fn signal_name(sig: usize) -> &'static str {
     if sig == 2 { "SIGINT" } else { "SIGTERM" }
 }
 
+/// The window that stands in once the run has taken the real one.
+struct Taken;
+
+impl WindowBackend for Taken {
+    fn pass_one(&mut self, _p: PassOne<'_>) -> Result<Vec<u8>, String> {
+        Err("capture: the window was already taken".into())
+    }
+}
+
 /// Takes every picture, then writes them all, or none.
 pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
     let launch = std::mem::replace(&mut o.launch, Box::new(|| Err("already launched".into())));
-    let mut window = std::mem::replace(&mut o.window, Box::new(super::backend::DesktopUi));
+    let mut window = std::mem::replace(&mut o.window, Box::new(Taken));
     let mut log = std::mem::replace(&mut o.log, Box::new(|_| {}));
     let top = claim_library(&o.library, std::process::id())?;
-    let closing = Arc::new(AtomicBool::new(false));
-    let running = Running::default();
     let mut c = Cleanup {
         o: &o,
         top,
-        closing: Arc::clone(&closing),
-        running: running.clone(),
         browser: None,
         server: None,
         pass_one: None,
@@ -542,7 +386,7 @@ pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
                 e.cleanup = errors;
                 return Err(e);
             }
-            // Only now: every picture taken, nothing refused, nothing failed.
+            // Only now: every picture taken, nothing failed.
             // (Written even if cleanup then failed; that is said after.)
             for (out, png) in &pictures {
                 let written = write_if_changed(&o.out_dir.join(out), png)
@@ -586,7 +430,6 @@ fn take(
         .unwrap_or_else(default_calibre_config);
     let calibre = copy_calibre_config(&real, &scratch).map_err(io("copy Calibre's settings"))?;
 
-    let token = super::random_token();
     let records = Records::default();
     let server_errors: Arc<Mutex<Vec<String>>> = Arc::default();
     let handler: Arc<OnceLock<Handler>> = Arc::default();
@@ -612,19 +455,10 @@ fn take(
     let _ = handler.set(Handler::new(HandlerOptions {
         repo_dir: o.repo_dir.clone(),
         pass_one: pass_one.clone(),
-        token,
-        library: o.library.clone(),
-        demo_pdf: o.demo_pdf.clone(),
         host: host.clone(),
-        run_engine: engine_runner(
-            o.engine.clone(),
-            o.library.clone(),
-            calibre,
-            c.running.clone(),
-            Arc::clone(&c.closing),
-        ),
         records: records.clone(),
     }));
+    let env = engine_env(&o.library, &calibre);
     let base = format!("http://{host}");
     let interrupt = o.interrupt.clone();
     let failure = || {
@@ -672,17 +506,19 @@ fn take(
                 }
                 Kind::Window => {
                     // Every window shot starts from the same empty library,
-                    // whatever shot ran before it.
-                    c.running.settle(Duration::from_secs(60))?;
+                    // whatever shot ran before it, with an empty folder for
+                    // the volumes it looks for readers in.
                     empty_library(&o.library).map_err(io("empty the library"))?;
+                    std::fs::create_dir_all(o.library.join(".no-volumes"))
+                        .map_err(io("make the empty volumes folder"))?;
                     let one = window
                         .pass_one(PassOne {
                             shot,
                             theme,
-                            base: &base,
-                            browser: browser.as_mut(),
+                            demo_pdf: &o.demo_pdf,
+                            env: &env,
+                            scratch: &pass_one,
                             failure: &failure,
-                            explain: &explain,
                         })
                         .map_err(RunError::other)?;
                     let name = format!("{}-{}.png", shot.name, theme.word());
@@ -710,7 +546,6 @@ fn take(
         }
     }
 
-    c.running.settle(Duration::from_secs(60))?;
     if let Some(f) = failure().filter(|f| f.starts_with("interrupted")) {
         return Err(RunError::expected(format!("capture: {f}")));
     }
@@ -719,20 +554,6 @@ fn take(
         return Err(RunError::expected(format!(
             "capture: the page server failed:\n  {}",
             errs.join("\n  ")
-        )));
-    }
-    let refused = snapshot(&records.refused);
-    if !refused.is_empty() {
-        return Err(RunError::expected(format!(
-            "capture: the window made engine calls the gate refused:\n  {}",
-            refused.join("\n  ")
-        )));
-    }
-    let failed = snapshot(&records.failed);
-    if !failed.is_empty() {
-        return Err(RunError::expected(format!(
-            "capture: engine calls failed:\n  {}",
-            failed.join("\n  ")
         )));
     }
     Ok(())

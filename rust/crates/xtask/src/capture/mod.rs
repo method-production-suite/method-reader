@@ -14,15 +14,20 @@
 //! - `cargo xtask make-og` renders site/og-card.html to site/og.png at
 //!   1200 by 630, the size every social unfurler expects.
 //!
-//! The pieces: [`shots`] (the list and where each goes), [`page`] (the
-//! window's index.html with the capture scripts in), [`gate`] and
-//! [`window_argv`] (which engine calls the window may make), [`server`] and
-//! [`http`] (the page server, on threads of its own), [`cdp`] (Chrome),
-//! [`backend`] (what draws the pictures, and how an egui window plugs in at
-//! cutover), [`run`] (one whole run and its cleanup), [`review`] and
-//! [`picture`]. tools/capture/bridge.js and steps.js run INSIDE the page
-//! and frame.html and hero.html are page templates: they stay as they are,
-//! served from tools/capture/.
+//! Each window picture is taken twice over. Pass one is the bare window:
+//! the real window (rust/crates/sp-app), drawn offscreen by egui through
+//! wgpu by sp-app's capture program (examples/capture.rs), which this
+//! command builds first and runs once per picture with the run's own
+//! scratch library and settings. Pass two is that picture in its frame
+//! and shadow, drawn by Chrome from tools/capture/frame.html; Chrome also
+//! draws the site's hero from tools/capture/hero.html. [`backend`] says
+//! what the window program does and does not do.
+//!
+//! The pieces: [`shots`] (the list and where each goes), [`backend`] (the
+//! window program and Chrome, behind two traits), [`server`] and [`http`]
+//! (the page server Chrome reads the frame, the hero and pass one from, on
+//! threads of its own), [`cdp`] (Chrome), [`run`] (one whole run and its
+//! cleanup), [`review`] and [`picture`].
 //!
 //! capture-screens needs Chrome at [`cdp::CHROME`], and macOS: the demo
 //! library is /Users/Shared/Documents/Screepub, because the result screen
@@ -31,24 +36,21 @@
 //! an unmarked one is already there, and removes it when done, along with
 //! any folder above it that it had to create ([`run`] has the details).
 //!
-//! Exit codes: 0 done. 1 failed: if a picture could not be taken, or an
-//! engine call was refused or failed, or the page server hit an error,
-//! nothing was written; if only the cleanup afterwards failed, the pictures
+//! Exit codes: 0 done. 1 failed: if the window program would not build, a
+//! picture could not be taken (the window refused an engine call of its
+//! own, say), or the page server hit an error, nothing was written; if only the cleanup afterwards failed, the pictures
 //! WERE written and the message says what could not be cleaned up. 2 no
 //! Chrome, so nothing was retaken (a release warns about that rather than
 //! stopping). 130 or 143 interrupted, after cleaning up; nothing written.
 
 pub mod backend;
 pub mod cdp;
-pub mod gate;
 pub mod http;
-pub mod page;
 pub mod picture;
 pub mod review;
 pub mod run;
 pub mod server;
 pub mod shots;
-pub mod window_argv;
 
 use std::collections::HashMap;
 use std::hash::{BuildHasher, Hasher};
@@ -57,11 +59,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::time::Duration;
 
-use backend::{Browser, CaptureOptions, DesktopUi, Wait};
+use backend::{Browser, CaptureOptions, EguiWindow, Wait};
 use run::{RunOptions, run_capture};
 use shots::{SHOTS, Theme};
 
-use crate::paths::{bun, repo_root};
+use crate::paths::{repo_root, workspace_root};
 
 const LIBRARY: &str = "/Users/Shared/Documents/Screepub";
 
@@ -157,6 +159,13 @@ pub fn capture_main(args: &[String]) -> u8 {
         let _ = signal_hook::flag::register_usize(sig, Arc::clone(&signal), sig as usize);
     }
 
+    let window = match build_window() {
+        Ok(w) => w,
+        Err(e) => {
+            eprintln!("capture: {e}");
+            return 1;
+        }
+    };
     let repo = repo_root();
     let result = run_capture(RunOptions {
         shots,
@@ -166,14 +175,7 @@ pub fn capture_main(args: &[String]) -> u8 {
             .join("field-station.pdf"),
         library: PathBuf::from(LIBRARY),
         launch: Box::new(move || cdp::launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)),
-        window: Box::new(DesktopUi),
-        engine: vec![
-            bun().to_string_lossy().into_owned(),
-            repo.join("src")
-                .join("cli.ts")
-                .to_string_lossy()
-                .into_owned(),
-        ],
+        window: Box::new(EguiWindow::new(&window)),
         out_dir: repo.clone(),
         repo_dir: repo,
         tmp: None,
@@ -202,6 +204,45 @@ pub fn capture_main(args: &[String]) -> u8 {
             }
         }
     }
+}
+
+/// Where cargo puts this workspace's release builds: CARGO_TARGET_DIR when
+/// it is set (relative to the workspace, as cargo reads it), rust/target
+/// otherwise.
+pub fn release_dir() -> PathBuf {
+    let ws = workspace_root();
+    let target = std::env::var_os("CARGO_TARGET_DIR")
+        .filter(|t| !t.is_empty())
+        .map_or_else(|| ws.join("target"), |t| ws.join(t));
+    target.join("release")
+}
+
+/// Builds sp-app's capture program in the release profile, the one the
+/// shipped window is built in, and answers where it is.
+pub fn build_window() -> Result<PathBuf, String> {
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let status = std::process::Command::new(cargo)
+        .args([
+            "build",
+            "--quiet",
+            "--release",
+            "--package",
+            "sp-app",
+            "--example",
+            "capture",
+        ])
+        .current_dir(workspace_root())
+        .status()
+        .map_err(|e| format!("could not build the window program: {e}"))?;
+    if !status.success() {
+        return Err("the window program (sp-app's capture example) did not build".into());
+    }
+    let exe = if cfg!(windows) {
+        "capture.exe"
+    } else {
+        "capture"
+    };
+    Ok(release_dir().join("examples").join(exe))
 }
 
 /// `cargo xtask review-screens`: its exit code.
