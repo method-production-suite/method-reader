@@ -1356,6 +1356,71 @@ fn d26_a_card_pressed_from_the_keyboard_hands_it_to_the_brass() {
 }
 
 #[test]
+fn u9_the_label_and_the_notes_tell_one_story() {
+    use sp_app::app::host::FakeUpdater;
+    use sp_app::model::update::Found;
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.state_mut().host.updater = Box::new(FakeUpdater {
+        ready: true,
+        found: Ok(Some(Found {
+            version: "0.12.0".into(),
+            current_version: "0.11.1".into(),
+            body: Some("Faster pages.".into()),
+        })),
+    });
+    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Check for updates")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Update to 0.12.0");
+    assert!(has(&h, "Faster pages."), "the notes show the same offer");
+    // Then a check that finds nothing newer takes both down.
+    h.state_mut().host.updater = Box::new(FakeUpdater {
+        ready: true,
+        found: Ok(None),
+    });
+    h.get_by_role_and_label(Role::Button, "Check for updates")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(
+        h.query_by_role_and_label(Role::Button, "Update to 0.12.0")
+            .is_none()
+    );
+}
+
+#[test]
+fn n12_a_label_that_goes_while_focused_hands_the_keyboard_on() {
+    use sp_app::model::update::CheckOutcome;
+    use sp_app::model::update_flow::Offer;
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.state_mut().update.flow.offer_found(Offer {
+        version: "0.12.0".into(),
+        body: String::new(),
+        live: true,
+    });
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Update to 0.12.0")
+        .focus();
+    steps(&mut h);
+    assert_eq!(focused_label(&h).as_deref(), Some("Update to 0.12.0"));
+    h.state_mut()
+        .update
+        .flow
+        .check_answered(&CheckOutcome::Current {
+            reason: "0.11.1".into(),
+        });
+    steps(&mut h);
+    let now = focused_label(&h);
+    assert!(
+        now.is_some() && now.as_deref() != Some("Update to 0.12.0"),
+        "the page's first stop: {now:?}"
+    );
+}
+
+#[test]
 fn r16_the_book_is_dressed_again_when_the_os_theme_changes() {
     use sp_app::app::bookview::Place;
     let w = world();

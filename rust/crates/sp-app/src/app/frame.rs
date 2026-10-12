@@ -22,6 +22,7 @@ use crate::model::update::{
     self as u, CheckOutcome, Drawn, Phase, label_actionable, notes_view, read_state,
     remember_answer, remembered_offer, run_check, update_label, updates_possible,
 };
+use crate::model::update_flow::Flow;
 use crate::theme::{self, Tokens, size};
 
 pub fn tab_id(s: Surface) -> Id {
@@ -32,9 +33,14 @@ pub fn tab_id(s: Surface) -> Id {
 
 #[derive(Default)]
 pub struct UpdateState {
-    pub phase: Option<Phase>,
+    /// The one moment, which the label and the notes both read
+    /// (update-flow.js).
+    pub flow: Flow,
     pub drawn: Drawn,
     pub notes_line: Option<String>,
+    heard: u64,
+    /// The label had the keyboard when it was last drawn.
+    pub label_focused: bool,
 }
 
 impl UpdateState {
@@ -42,20 +48,23 @@ impl UpdateState {
         host.updater.ready() && updates_possible(host.platform)
     }
 
-    /// At launch: what an earlier check found, then today's check.
+    pub fn phase(&self) -> Option<&Phase> {
+        self.flow.phase()
+    }
+
+    /// At launch, once: what an earlier check found, then today's check.
     pub fn boot(&mut self, host: &mut super::Host) {
         if !self.usable(host) {
             return;
         }
-        match remembered_offer(host.storage.as_ref(), RELEASE.version) {
-            Some(version) => self.set(Some(Phase::Offer {
-                version,
-                body: String::new(),
-                retrying: false,
-            })),
-            None => u::forget_found(host.storage.as_mut()),
+        let remembered = remembered_offer(host.storage.as_ref(), RELEASE.version);
+        if remembered.is_none() {
+            u::forget_found(host.storage.as_mut());
         }
-        self.check(host, false);
+        if self.flow.boot(remembered) {
+            self.heard();
+            self.check(host, false);
+        }
     }
 
     pub fn answer(&mut self, host: &mut super::Host, on: bool) {
@@ -69,23 +78,24 @@ impl UpdateState {
         let now = (host.clock)();
         let updater = &host.updater;
         let outcome = run_check(manual, host.storage.as_mut(), now, || updater.check());
-        match &outcome {
-            CheckOutcome::Offer { version, body } => {
-                self.set(Some(Phase::Offer {
-                    version: version.clone(),
-                    body: body.clone(),
-                    retrying: false,
-                }));
-            }
-            CheckOutcome::Current { .. } => self.set(None),
-            CheckOutcome::Error { message } if manual => self.notes_line = Some(message.clone()),
-            _ => {}
+        self.flow.check_answered(&outcome);
+        self.heard();
+        if let CheckOutcome::Error { message } = &outcome
+            && manual
+        {
+            self.notes_line = Some(message.clone());
         }
         outcome
     }
 
-    fn set(&mut self, phase: Option<Phase>) {
-        if let Some(p) = &phase {
+    /// The notes hear every emit of the flow, repeats included: what they
+    /// drew is kept, and a line waiting on a change ("Looking…") goes.
+    fn heard(&mut self) {
+        if self.flow.heard == self.heard {
+            return;
+        }
+        self.heard = self.flow.heard;
+        if let Some(p) = self.flow.phase() {
             self.drawn.drew_offer = true;
             if let Some(v) = p.version() {
                 self.drawn.version = Some(v.to_string());
@@ -94,7 +104,6 @@ impl UpdateState {
                 self.drawn.body = body.clone();
             }
         }
-        self.phase = phase;
         self.notes_line = None;
     }
 }
@@ -281,13 +290,18 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         if stamp.clicked() {
             app.notes_open = true;
         }
-        if let Some(words) = update_label(app.update.phase.as_ref()) {
-            let actionable = label_actionable(app.update.phase.as_ref());
+        if let Some(words) = update_label(app.update.phase()) {
+            let actionable = label_actionable(app.update.phase());
             let label = update_button(ui, &t, &words, actionable);
+            app.update.label_focused = label.has_focus();
             if label.clicked() && actionable {
                 // The transport is wave 3's: a click names what it would do.
                 app.update.notes_line = Some(words);
             }
+        } else if std::mem::take(&mut app.update.label_focused) {
+            // The label went while the keyboard stood on it: the page's
+            // first stop takes it (main.js).
+            app.restore_focus = true;
         }
     });
     ui.add_space(layout::SPACE[5]);
@@ -575,11 +589,7 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
         app.update.answer(&mut app.host, on);
         app.update.notes_line = Some(if on { u::AUTO_ON } else { u::AUTO_OFF }.into());
     }
-    let view = notes_view(
-        app.update.phase.as_ref(),
-        &app.update.drawn,
-        RELEASE.version,
-    );
+    let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
     let check = widgets::button(ui, t, Look::Small, u::CHECK_BUTTON, !view.check_disabled);
     if check.clicked() {
         app.update.drawn.drew_offer = true;
@@ -588,11 +598,7 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
             app.update.notes_line = Some(message);
         }
     }
-    let view = notes_view(
-        app.update.phase.as_ref(),
-        &app.update.drawn,
-        RELEASE.version,
-    );
+    let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
     let said = app
         .update
         .notes_line

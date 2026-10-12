@@ -271,7 +271,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | N9 | Rev stamp "rev 0.11.1" at the foot of the sheet, right; the version is the RELEASE notes' version, not the engine's | ui/frame.js revLabel | done |
 | N10 | The stamp is a button that opens the release notes sheet | ui/frame.js, ui/main.js | done |
 | N11 | Update label beside the stamp: hidden until the update flow has words; brass rule under it; inert moments carry aria-disabled and no pointer | ui/frame.js setUpdateLabel | model |
-| N12 | If the update label hides while focused, the keyboard goes to the page's first stop | ui/main.js | todo |
+| N12 | If the update label hides while focused, the keyboard goes to the page's first stop | ui/main.js | done |
 | N13 | Release notes as a modal sheet: Esc closes, focus trapped inside, the background inert, focus restored on close; "Close" button; dimmed backdrop; rises 16px over 0.2 s (none with Reduce Motion); width min(44rem, 88vw), max height 82vh, scrolls | ui/main.js, ui/style.css .sheet-over | done |
 | N14 | Cmd-O (Mac) / Ctrl-O opens the file picker from any surface without changing surface; cancelling leaves the reader where they were | ui/main.js | done |
 | N15 | A file dropped anywhere on the window converts on Convert; a file dragged over the window turns the well's border and icon brass | ui/main.js, ui/convert.js, ui/surfaces.css .well-targeted | done |
@@ -490,7 +490,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | U6 | The label: "Update to 0.8.0", "Downloading 0.8.0…" / "… 40%", "Installing…", "Restarting after this finishes…", "Restart now", "Restarting…", "Update failed. Try again", "Update installed. Quit and reopen Screepub to use 0.8.0."; clickable only on offer (not a retry's), failed and stalled | ui/update.js updateLabel, labelActionable | model |
 | U7 | Download, verify (minisign), swap the bundle, then retire the engine, wait for 500 ms of quiet (capped at 120 s, then "Restart now"), restart into the new bundle; a refused restart is "installed", not a failure; a failed cleanup after a good install is not a failure | ui/update.js installAndRestart, ui/app.js updateInstall | wave 3 (its rules are ported: model/update.rs) |
 | U8 | The endpoint: latest.json on the GitHub releases; the public key | tauri/tauri.conf.json | wave 3 |
-| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | todo |
+| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | done (model/update_flow.rs; the run inside it is the wave 3 transport) |
 | U10 | Version comparison is the engine's (`src/update/compare.ts`: v prefix, build metadata, describe suffixes, prereleases) | ui/update-compare.js | done |
 
 ### O. Release notes sheet
