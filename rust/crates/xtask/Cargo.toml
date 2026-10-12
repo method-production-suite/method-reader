@@ -23,6 +23,13 @@ sp-model.workspace = true
 sp-fountain.workspace = true
 sp-mobi.workspace = true
 sp-epub = { path = "../sp-epub" }
+# The release tools' GitHub reads (bump-tap, check-tap, check-latest). TLS
+# through rustls with RustCrypto's pure-Rust provider, so no C (no ring,
+# no aws-lc) is compiled in; roots from webpki-roots.
+ureq = { version = "3", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots"] }
+rustls-rustcrypto = "0.0.2-alpha"
+# The contents API and the minisign boxes are base64.
+base64 = "0.22"
 
 [dev-dependencies]
 zip.workspace = true
