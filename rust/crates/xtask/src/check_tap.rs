@@ -230,8 +230,30 @@ pub fn check_tap(
     (out, err, 0)
 }
 
+/// `cargo xtask check-tap --help`.
+pub const USAGE: &str = "\
+usage: cargo xtask check-tap [version]
+
+Does the Homebrew tap serve the latest release (or <version>), with the
+release's own checksums, and is the old cask still retired? Exits 0 when
+it does, 1 with what is wrong. SCREEPUB_REPO and SCREEPUB_TAP name the two
+repositories.
+";
+
 /// `cargo xtask check-tap`: its exit code.
 pub fn main(args: &[String]) -> u8 {
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        print!("{USAGE}");
+        return 0;
+    }
+    if let Some(flag) = args.iter().find(|a| a.starts_with('-')) {
+        eprint!("check-tap: unknown option {flag}\n\n{USAGE}");
+        return 2;
+    }
+    if args.len() > 1 {
+        eprint!("check-tap: one version at most\n\n{USAGE}");
+        return 2;
+    }
     let bases = Bases::from_env();
     let mut fetcher = http::real_fetcher(&bases);
     let (out, err, code) = check_tap(

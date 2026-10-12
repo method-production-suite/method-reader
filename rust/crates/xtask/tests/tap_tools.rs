@@ -411,6 +411,9 @@ fn a_wrong_apple_silicon_digest_is_an_error() {
     );
     assert_ne!(r.status.code(), Some(0));
     assert!(text(&r.stdout).contains(ARM));
+    // The way out it names is the command that exists, not the deleted script.
+    assert!(text(&r.stdout).contains("`cargo xtask bump-tap` does it"));
+    assert!(!text(&r.stdout).contains("tools/bump-tap.sh"));
 }
 
 #[test]
