@@ -1,57 +1,54 @@
-//! Does the PUBLISHED latest.json describe the newest release?
-//! tools/check-latest.ts in Rust, same judgement, same words: run by
-//! release.yml's latest-check job (per release) and tap-freshness.yml
-//! (weekly), reading the manifest from the exact address the apps read,
-//! GitHub's redirect included.
+//! Does the PUBLISHED latest.json describe the newest release? Was
+//! tools/check-latest.ts, same judgement, same words. Run by release.yml's
+//! latest-check job (per release) and tap-freshness.yml (weekly) through
+//! `sp-release check-latest`, and by `cargo xtask check-latest`, both on
+//! this one implementation. The manifest is read from the exact address
+//! the apps read, GitHub's redirect included, never from a checkout or a
+//! versioned url: the Homebrew tap served 0.3.0 for five releases because
+//! nothing compared the published file to the newest release.
 //!
-//! `--deep` goes one step further than the TypeScript did: it downloads
-//! each archive the manifest names and verifies it the way the Rust app
-//! will (signed version required), which also proves every Tauri window's
+//! The verdict is good when the manifest names the newest release, points
+//! every platform at an asset that release carries, pastes the exact
+//! contents of each asset's .sig, and is signed by the key the app trusts.
+//! Every problem is reported, not only the first.
+//!
+//! `deep` goes one step further than the TypeScript did: it downloads each
+//! archive the manifest names and verifies it the way the Rust app will
+//! (signed version required), which also proves every Tauri window's
 //! looser check passes.
 
 use std::collections::BTreeMap;
 
 use serde_json::Value;
 
-use crate::names::{MANIFEST, SIGNATURE_EXT, UPDATER_KINDS};
+use crate::boxes::{SignatureBox, parse_public_key_box, parse_signature_box};
+use crate::names::{MANIFEST as MANIFEST_NAME, SIGNATURE_EXT, UPDATER_KINDS};
 
-/// The Intel command-line tarball: carried by 0.9.0 and earlier only.
+/// The Intel command-line tarball. The identifier release is the last to
+/// carry it, and the last whose window archive is universal: the two were
+/// dropped together (plan 2026-10-01-f2-handover-amendment.md).
 pub const INTEL_CLI_ASSET: &str = "screepub-cli-macos-x64.tar.gz";
 
-#[derive(Clone, Debug)]
+/// Where GitHub answers API calls and serves release downloads.
+pub const GITHUB_API: &str = "https://api.github.com";
+pub const GITHUB_WEB: &str = "https://github.com";
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Asset {
     pub name: String,
+    /// The `browser_download_url`: the exact string the manifest must carry.
     pub url: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Release {
     pub tag_name: String,
     pub assets: Vec<Asset>,
 }
 
-/// The key id a minisign signature or public key box names, as hex.
-fn box_key_id(b64_box: &str, sig: bool) -> Result<String, String> {
-    let text = sp_update::verify::base64_to_string(b64_box.trim()).map_err(|e| e.to_string())?;
-    let line = text
-        .lines()
-        .nth(1)
-        .ok_or("missing the second line of the box")?;
-    use base64::Engine;
-    let raw = base64::engine::general_purpose::STANDARD
-        .decode(line.trim())
-        .map_err(|e| e.to_string())?;
-    let want = if sig { 74 } else { 42 };
-    if raw.len() != want {
-        return Err(format!("the box holds {} bytes, not {want}", raw.len()));
-    }
-    Ok(raw[2..10]
-        .iter()
-        .rev()
-        .map(|b| format!("{b:02X}"))
-        .collect())
-}
-
+/// Every platform the macOS build must answer for (REQUIRED, not
+/// exhaustive): the keys of [`UPDATER_KINDS`], darwin-aarch64 alone since
+/// the release after 0.9.0 (Apple silicon only).
 pub fn required_platforms() -> Vec<&'static str> {
     UPDATER_KINDS
         .iter()
@@ -59,7 +56,19 @@ pub fn required_platforms() -> Vec<&'static str> {
         .collect()
 }
 
-/// `judgeManifest`: every problem, not only the first.
+/// Where the app looks: GitHub's redirect to the newest non-prerelease,
+/// non-draft release's asset.
+pub fn manifest_endpoint(web: &str, repo: &str) -> String {
+    format!("{web}/{repo}/releases/latest/download/{MANIFEST_NAME}")
+}
+
+fn str_of<'a>(v: Option<&'a serde_json::Value>, key: &str) -> Option<&'a str> {
+    v?.get(key)?.as_str()
+}
+
+/// The judgement, pure (`judgeManifest`). `sig_texts` is the contents of each `.sig` asset
+/// the release carries, keyed by asset name; `pubkey` is what the app is
+/// configured to trust.
 pub fn judge_manifest(
     manifest_text: &str,
     release: &Release,
@@ -67,38 +76,64 @@ pub fn judge_manifest(
     pubkey: &str,
 ) -> Result<(String, Vec<String>), Vec<String>> {
     let mut problems = Vec::new();
-    let version = release.tag_name.trim_start_matches('v').to_string();
-    let manifest: Value = match serde_json::from_str(manifest_text) {
+    let version = release
+        .tag_name
+        .strip_prefix('v')
+        .unwrap_or(&release.tag_name)
+        .to_string();
+
+    let manifest: serde_json::Value = match serde_json::from_str(manifest_text) {
         Ok(v) => v,
         Err(_) => {
             let head: String = manifest_text.chars().take(60).collect();
-            return Err(vec![format!("{MANIFEST} is not JSON (begins {head:?})")]);
+            return Err(vec![format!(
+                "{MANIFEST_NAME} is not JSON (begins {})",
+                serde_json::to_string(&head).expect("string")
+            )]);
         }
     };
-    if !manifest.is_object() {
-        return Err(vec![format!("{MANIFEST} is not a JSON object")]);
+    if !(manifest.is_object() || manifest.is_array()) {
+        return Err(vec![format!("{MANIFEST_NAME} is not a JSON object")]);
     }
-    if manifest["version"].as_str() != Some(version.as_str()) {
+
+    let said = manifest.get("version");
+    if said.and_then(|v| v.as_str()) != Some(version.as_str()) {
+        let shown = said.map_or_else(|| "undefined".to_string(), |v| v.to_string());
         problems.push(format!(
-            "{MANIFEST} says version {} but the newest release is {version}",
-            manifest["version"]
+            "{MANIFEST_NAME} says version {shown} but the newest release is {version}"
         ));
     }
-    let empty = serde_json::Map::new();
-    let platforms = manifest["platforms"].as_object().unwrap_or(&empty);
+
+    // Platforms, sorted by key (an array's keys are its indices, as
+    // Object.keys gives them).
+    let mut platforms: BTreeMap<String, serde_json::Value> = BTreeMap::new();
+    match manifest.get("platforms") {
+        Some(serde_json::Value::Object(o)) => {
+            for (k, v) in o {
+                platforms.insert(k.clone(), v.clone());
+            }
+        }
+        Some(serde_json::Value::Array(a)) => {
+            for (i, v) in a.iter().enumerate() {
+                platforms.insert(i.to_string(), v.clone());
+            }
+        }
+        _ => {}
+    }
     let keys: Vec<String> = platforms.keys().cloned().collect();
     if keys.is_empty() {
-        problems.push(format!("{MANIFEST} lists no platforms at all"));
+        problems.push(format!("{MANIFEST_NAME} lists no platforms at all"));
     }
     for required in required_platforms() {
         if !keys.iter().any(|k| k == required) {
             problems.push(format!(
-                "{MANIFEST} has no entry for {required}, which the macOS build must serve"
+                "{MANIFEST_NAME} has no entry for {required}, which the macOS build must serve"
             ));
         }
     }
-    let trusted = match box_key_id(pubkey, false) {
-        Ok(id) => Some(id),
+
+    let trusted = match parse_public_key_box(pubkey) {
+        Ok(k) => Some(k.key_id),
         Err(e) => {
             problems.push(format!(
                 "the app's configured public key cannot be read: {e}"
@@ -106,28 +141,37 @@ pub fn judge_manifest(
             None
         }
     };
+
+    // After Intel was dropped the one window archive is Apple silicon
+    // only: an Intel row pointing at it would hand an Intel copy a build
+    // it cannot run. Both Intel keys, because the updater plugin tries
+    // `<os>-<arch>-app` before `<os>-<arch>`.
     let intel_era = release.assets.iter().any(|a| a.name == INTEL_CLI_ASSET);
     if !intel_era {
-        let arm: Vec<&str> = ["darwin-aarch64", "darwin-aarch64-app"]
+        let arm_urls: Vec<&str> = ["darwin-aarch64", "darwin-aarch64-app"]
             .iter()
-            .filter_map(|k| platforms.get(*k).and_then(|p| p["url"].as_str()))
+            .filter_map(|k| str_of(platforms.get(*k), "url"))
             .collect();
         for key in ["darwin-x86_64-app", "darwin-x86_64"] {
-            if let Some(u) = platforms.get(key).and_then(|p| p["url"].as_str())
-                && arm.contains(&u)
+            if let Some(u) = str_of(platforms.get(key), "url")
+                && arm_urls.contains(&u)
             {
                 problems.push(format!(
-                    "{key} points at {u}, the same archive as darwin-aarch64, and release {} is Apple silicon only (it carries no {INTEL_CLI_ASSET}): an Intel copy would install a build it cannot run",
+                    "{key} points at {u}, the same archive as darwin-aarch64, and release {} is \
+                     Apple silicon only (it carries no {INTEL_CLI_ASSET}): an Intel copy would \
+                     install a build it cannot run",
                     release.tag_name
                 ));
             }
         }
     }
+
     for key in &keys {
-        let entry = &platforms[key];
-        let url = entry["url"].as_str().unwrap_or("");
-        let signature = entry["signature"].as_str().unwrap_or("");
-        let Some(asset) = release.assets.iter().find(|a| a.url == url) else {
+        let entry = platforms.get(key);
+        let url = str_of(entry, "url").unwrap_or("");
+        let signature = str_of(entry, "signature").unwrap_or("");
+        // The LAST asset with a url wins, as a Map built from the list does.
+        let Some(asset) = release.assets.iter().rev().find(|a| a.url == url) else {
             problems.push(format!(
                 "{key} points at {}, which is not an asset of release {}",
                 if url.is_empty() { "<no url>" } else { url },
@@ -135,24 +179,25 @@ pub fn judge_manifest(
             ));
             continue;
         };
-        let sig_name = format!("{}{SIGNATURE_EXT}", asset.name);
+        let sig_name = format!("{}.sig", asset.name);
         match sig_texts.get(&sig_name) {
             None => problems.push(format!(
                 "release {} carries no {sig_name} beside {}",
                 release.tag_name, asset.name
             )),
             Some(published) if published != signature => problems.push(format!(
-                "{key}: the signature in {MANIFEST} is not the contents of {sig_name}"
+                "{key}: the signature in {MANIFEST_NAME} is not the contents of {sig_name}"
             )),
-            _ => {}
+            Some(_) => {}
         }
-        match box_key_id(signature, true) {
-            Ok(id) => {
+        match parse_signature_box(signature) {
+            Ok(SignatureBox { key_id, .. }) => {
                 if let Some(t) = &trusted
-                    && &id != t
+                    && &key_id != t
                 {
                     problems.push(format!(
-                        "{key}: signed by key {id}, but the app trusts key {t}. tauri-cli only warns about this; every install would fail."
+                        "{key}: signed by key {key_id}, but the app trusts key {t}. tauri-cli only \
+                         warns about this; every install would fail."
                     ));
                 }
             }
@@ -161,12 +206,17 @@ pub fn judge_manifest(
             )),
         }
     }
+
     if problems.is_empty() {
         Ok((version, keys))
     } else {
         Err(problems)
     }
 }
+
+/// One GET: the status and the body. Tests and `cargo xtask` pass their
+/// own; [`check_latest`] passes the real one.
+pub type Fetch<'a> = dyn FnMut(&str) -> Result<(u16, Vec<u8>), String> + 'a;
 
 fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
@@ -177,72 +227,86 @@ fn agent() -> ureq::Agent {
         .into()
 }
 
-fn fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
+/// A real GET. API calls carry GitHub's Accept header and the token when
+/// there is one (GH_TOKEN, else GITHUB_TOKEN), for rate limits.
+pub fn fetch(url: &str) -> Result<(u16, Vec<u8>), String> {
     let mut req = agent().get(url);
-    if url.starts_with("https://api.github.com/") {
-        req = req.header("Accept", "application/vnd.github+json");
-        if let Ok(t) = std::env::var("GH_TOKEN")
-            && !t.is_empty()
-        {
+    if url.starts_with(GITHUB_API) {
+        req = req
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28");
+        let token = std::env::var("GH_TOKEN")
+            .ok()
+            .filter(|t| !t.is_empty())
+            .or_else(|| std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()));
+        if let Some(t) = token {
             req = req.header("Authorization", &format!("Bearer {t}"));
         }
     }
-    let mut res = req.call().map_err(|e| format!("{url}: {e}"))?;
+    let mut res = req.call().map_err(|e| e.to_string())?;
     let status = res.status().as_u16();
     let body = res
         .body_mut()
         .with_config()
         .limit(1 << 30)
         .read_to_vec()
-        .map_err(|e| format!("{url}: {e}"))?;
+        .map_err(|e| e.to_string())?;
     Ok((status, body))
 }
 
-/// Fetch the release, the manifest and every signature, then judge.
-pub fn check_latest(
+/// Fetch the release, the manifest and every signature through `fetch`,
+/// against the given API and web bases, then judge; with `deep`, also
+/// download and verify every archive the manifest names.
+pub fn check_with(
+    fetch: &mut Fetch<'_>,
+    api_base: &str,
+    web_base: &str,
     repo: &str,
     pubkey: &str,
     version: Option<&str>,
     deep: bool,
 ) -> Result<(String, Vec<String>), Vec<String>> {
-    let api = match version {
+    let api_url = match version {
         Some(v) => format!(
-            "https://api.github.com/repos/{repo}/releases/tags/v{}",
-            v.trim_start_matches('v')
+            "{api_base}/repos/{repo}/releases/tags/v{}",
+            v.strip_prefix('v').unwrap_or(v)
         ),
-        None => format!("https://api.github.com/repos/{repo}/releases/latest"),
+        None => format!("{api_base}/repos/{repo}/releases/latest"),
     };
-    let (status, body) = fetch(&api).map_err(|e| vec![e])?;
-    let text = String::from_utf8_lossy(&body);
-    let parsed: Value = serde_json::from_str(&text)
-        .map_err(|_| vec![format!("{api} did not answer JSON (HTTP {status})")])?;
-    let (Some(tag), Some(assets)) = (parsed["tag_name"].as_str(), parsed["assets"].as_array())
-    else {
+    let unreachable = |url: &str, e: String| vec![format!("{url} could not be fetched: {e}")];
+    let (status, body) = fetch(&api_url).map_err(|e| unreachable(&api_url, e))?;
+    let text = String::from_utf8_lossy(&body).into_owned();
+    let Ok(parsed) = serde_json::from_str::<Value>(&text) else {
+        return Err(vec![format!(
+            "{api_url} did not answer JSON (HTTP {status})"
+        )]);
+    };
+    let tag = parsed.get("tag_name").and_then(|t| t.as_str());
+    let assets = parsed.get("assets").and_then(|a| a.as_array());
+    let (Some(tag), Some(assets), 200) = (tag, assets, status) else {
         let head: String = text.chars().take(120).collect();
         return Err(vec![format!(
-            "{api} did not describe a release (HTTP {status}: {head})"
+            "{api_url} did not describe a release (HTTP {status}: {head})"
         )]);
     };
-    if status != 200 {
-        return Err(vec![format!(
-            "{api} did not describe a release (HTTP {status})"
-        )]);
-    }
     let release = Release {
         tag_name: tag.to_string(),
         assets: assets
             .iter()
             .map(|a| Asset {
-                name: a["name"].as_str().unwrap_or("").to_string(),
-                url: a["browser_download_url"].as_str().unwrap_or("").to_string(),
+                name: str_of(Some(a), "name").unwrap_or_default().to_string(),
+                url: str_of(Some(a), "browser_download_url")
+                    .unwrap_or_default()
+                    .to_string(),
             })
             .collect(),
     };
-    let endpoint = format!("https://github.com/{repo}/releases/latest/download/{MANIFEST}");
-    let (mstatus, mbody) = fetch(&endpoint).map_err(|e| vec![e])?;
+
+    let endpoint = manifest_endpoint(web_base, repo);
+    let (mstatus, mbody) = fetch(&endpoint).map_err(|e| unreachable(&endpoint, e))?;
     if mstatus != 200 {
         return Err(vec![format!(
-            "{endpoint} answered HTTP {mstatus}: release {} publishes no {MANIFEST}, so the app's update check fails on every machine that makes it.",
+            "{endpoint} answered HTTP {mstatus}: release {} publishes no {MANIFEST_NAME}, so the app's update check fails on every machine that makes it.",
             release.tag_name
         )]);
     }
@@ -285,6 +349,18 @@ pub fn check_latest(
         }
     }
     Ok(verdict)
+}
+
+/// [`check_with`] against GitHub itself, with the real [`fetch`].
+pub fn check_latest(
+    repo: &str,
+    pubkey: &str,
+    version: Option<&str>,
+    deep: bool,
+) -> Result<(String, Vec<String>), Vec<String>> {
+    check_with(
+        &mut fetch, GITHUB_API, GITHUB_WEB, repo, pubkey, version, deep,
+    )
 }
 
 #[cfg(test)]
@@ -337,7 +413,7 @@ mod tests {
             "{problems:?}"
         );
         // The shipped key reads.
-        assert!(box_key_id(sp_update::PUBKEY, false).is_ok());
+        assert!(parse_public_key_box(sp_update::PUBKEY).is_ok());
     }
 
     #[test]

@@ -18,14 +18,14 @@ semver = "1"
 # The same verifier tauri-plugin-updater 2.12.0 links (0.2.5 in
 # desktop/src-tauri/Cargo.lock): pure Rust, no C.
 minisign-verify = "0.2.5"
-base64 = "0.23"
+base64.workspace = true
 # HTTPS with rustls and the webpki roots, as sp-app already builds it. The
 # TLS protocol is pure Rust; the crypto provider is ring (see the release
 # design, part c).
 ureq = "3"
 # The .app.tar.gz the Tauri bundler writes and the plugin unpacks.
 flate2.workspace = true
-tar = "0.4"
+tar.workspace = true
 # CFBundleExecutable and CFBundleIdentifier, read from the bundle's own
 # Info.plist (XML or binary), as tauri's restart does.
 plist = "1"
@@ -33,5 +33,5 @@ plist = "1"
 [dev-dependencies]
 # Signs test updates exactly as tauri-cli 2.11.4 does (its signer is this
 # crate); never linked into the app.
-minisign = "0.7.3"
+minisign.workspace = true
 tempfile = "3"

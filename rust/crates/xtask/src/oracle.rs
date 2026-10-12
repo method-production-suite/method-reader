@@ -7,6 +7,10 @@ use std::process::Command;
 use crate::paths;
 
 pub fn run(args: &[String]) -> Result<bool, String> {
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        println!("usage: cargo xtask oracle [--committed-only] [--real <dir>]");
+        return Ok(true);
+    }
     let mut pass: Vec<&str> = Vec::new();
     let mut it = args.iter();
     while let Some(a) = it.next() {

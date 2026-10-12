@@ -19,18 +19,17 @@ serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 flate2.workspace = true
-tar = "0.4"
+tar.workspace = true
 # The Windows command-line zip, written with the workspace's pure-Rust zip.
 zip.workspace = true
 # The Tauri updater key format: tauri-cli 2.11.4 signs with this crate, so
 # a signature made here is the one every Tauri window already accepts.
-minisign = "0.7.3"
-minisign-verify = "0.2.5"
-base64 = "0.23"
+minisign.workspace = true
+base64.workspace = true
 # The .rpm, pure Rust: gzip payload, no signature support compiled in
 # (the Tauri .rpm was never signed either).
 rpm = { version = "0.30", default-features = false, features = ["payload", "gzip-compression"] }
-sp-update = { path = "../sp-update" }
+sp-update.workspace = true
 # GitHub's API for `check-latest`, over the same TLS stack as sp-update.
 ureq = "3"
 
