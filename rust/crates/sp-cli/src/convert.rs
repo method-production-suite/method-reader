@@ -439,6 +439,18 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
     )
 }
 
+/// `saveScriptSettings` for the pin. A debug build (the one the tests run)
+/// fails it on demand, with SCREEPUB_TEST_FAIL_PIN set, standing for the
+/// TypeScript test's preload that blocks only the sidecar's temp file: no
+/// filesystem trick fails that one write and not the book's. A release
+/// build has no such switch.
+fn save_pin(settings: &FormatOptions, stem: &str) -> Result<(), EngineError> {
+    if cfg!(debug_assertions) && std::env::var_os("SCREEPUB_TEST_FAIL_PIN").is_some() {
+        return Err(EngineError::plain("EACCES: permission denied (test)"));
+    }
+    save_script_settings(settings, stem)
+}
+
 struct Finish<'a> {
     library: bool,
     lib_root: Option<String>,
@@ -569,7 +581,7 @@ fn finish(
     if f.keep_settings && is_pdf {
         let pin = sidecar_path(&input_stem);
         if !std::path::Path::new(&pin).exists()
-            && let Err(e) = save_script_settings(&f.app_defaults, &input_stem)
+            && let Err(e) = save_pin(&f.app_defaults, &input_stem)
         {
             eprint_line(&format!(
                 "screepub: could not save this script's settings to {pin}: {}",

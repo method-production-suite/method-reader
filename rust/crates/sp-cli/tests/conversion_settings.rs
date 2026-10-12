@@ -497,3 +497,29 @@ fn off_a_sidecar_beside_the_pdf_is_still_adopted_because_that_one_is_tuning_not_
         json!({ "cueIndentPct": 41 })
     );
 }
+
+#[test]
+fn a_sidecar_write_that_fails_does_not_fail_the_conversion_and_says_so_once_on_stderr() {
+    // The debug binary's SCREEPUB_TEST_FAIL_PIN fails only the pin's save,
+    // as the TypeScript's preload blocked only the sidecar's temp file.
+    let mut sb = Sandbox::new();
+    let pdf = script(&sb, "CannotPin.pdf");
+    sb.set("SCREEPUB_TEST_FAIL_PIN", "1");
+    let ran = sb.run(&[&pdf, "--library", "--json"]);
+    assert_eq!(ran.code, 0, "{}\n{}", ran.stdout, ran.stderr);
+    let answer = ran.json();
+    assert_eq!(answer["ok"], true);
+    // The book is written and correct...
+    assert!(Path::new(answer["epubPath"].as_str().unwrap()).exists());
+    // ...the save that could not happen leaves no sidecar...
+    assert!(!Path::new(&lib(&sb, "CannotPin/CannotPin.screepub.json")).exists());
+    // ...and is said exactly once, not swallowed and not a stack trace.
+    let lines: Vec<&str> = ran
+        .stderr
+        .trim()
+        .lines()
+        .filter(|l| !l.is_empty())
+        .collect();
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(lines[0].contains("could not save"), "{lines:?}");
+}
