@@ -153,7 +153,6 @@ fn the_0_6_0_notes_carry_their_limits_and_name_what_0_6_0_published() {
 // ---- the app downloads, described where a reader meets them ------------
 
 #[test]
-#[ignore = "release.yml now uploads five installers, Screepub-linux-x86_64.AppImage among them, and SHA256SUMS-app covers five; the README's install table has four rows and says 'covers these four files'. The owner words the AppImage row when the first release carrying it ships"]
 fn the_readme_install_table_has_a_row_for_every_file_the_release_uploads() {
     for f in released() {
         row(f);
@@ -165,8 +164,8 @@ fn the_readme_install_table_has_a_row_for_every_file_the_release_uploads() {
 
 #[test]
 fn every_file_the_readme_offers_is_one_the_release_uploads_with_its_count_stated() {
-    // The half of the test above that holds today: each row the table has
-    // names a file the release uploads, and the sentence counts the rows.
+    // The other half of the test above: each row the table has names a
+    // file the release uploads, and the sentence counts the rows.
     let offered: Vec<&str> = released()
         .into_iter()
         .filter(|f| !rows(f).is_empty())
@@ -232,6 +231,12 @@ fn the_readme_install_statuses_agree_with_the_verification_ledger() {
     ] {
         assert!(row(f).contains(NOT_YET), "{f}");
     }
+    // The AppImage is run, not installed; the ledger lists that as nobody's.
+    assert!(nobody.contains("The Linux AppImage, new with the Rust window, run by a person"));
+    assert!(
+        row(names::LINUX_APPIMAGE_X86_64)
+            .contains("Built and checked automatically. Never run by a person yet")
+    );
     assert!(person.contains("/Applications"));
     assert!(person.contains("Apple silicon"));
     let mac = row(names::MAC_DMG);

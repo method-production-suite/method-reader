@@ -125,9 +125,10 @@ but it will not be offered updates. To install it, download
 | Windows, 64-bit | `Screepub-windows-x64-setup.exe` | Built and checked automatically. Never installed by a person yet |
 | Linux: Debian, Ubuntu | `Screepub-linux-amd64.deb` | Built and checked automatically. Never installed by a person yet |
 | Linux: Fedora, openSUSE | `Screepub-linux-x86_64.rpm` | Built and checked automatically. Never installed by a person yet |
+| Linux: any other, 64-bit | `Screepub-linux-x86_64.AppImage` | Built and checked automatically. Never run by a person yet |
 
 Every file is on the [latest release](https://github.com/ssandweiss/screepub/releases/latest).
-`SHA256SUMS-app` there covers these four files, and `SHA256SUMS`
+`SHA256SUMS-app` there covers these five files, and `SHA256SUMS`
 covers the command-line downloads. Reports from Windows and Linux are welcome:
 [open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
 Who has checked what, in full: [the verification ledger](docs/verification-ledger.md).

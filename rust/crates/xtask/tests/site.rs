@@ -178,7 +178,6 @@ fn row(file: &str) -> String {
 }
 
 #[test]
-#[ignore = "release.yml now uploads Screepub-linux-x86_64.AppImage (five installers) and the site's download table has no row for it; the owner words the row when the first release carrying it ships"]
 fn every_file_the_release_uploads_is_a_link_to_the_latest_release_by_its_own_name() {
     for file in released() {
         row(file);
@@ -187,8 +186,8 @@ fn every_file_the_release_uploads_is_a_link_to_the_latest_release_by_its_own_nam
 
 #[test]
 fn every_file_the_page_offers_is_one_the_release_uploads_with_one_row_each() {
-    // The half of the test above that holds today: the four rows there are
-    // link the release's own names, once each.
+    // The other half of the test above: every row links one of the
+    // release's own names, once each, and no other file.
     let offered: Vec<&str> = released()
         .into_iter()
         .filter(|f| !rows_for(f).is_empty())
@@ -199,7 +198,8 @@ fn every_file_the_page_offers_is_one_the_release_uploads_with_one_row_each() {
             names::MAC_DMG,
             names::WINDOWS_SETUP,
             names::LINUX_DEB_AMD64,
-            names::LINUX_RPM_X86_64
+            names::LINUX_RPM_X86_64,
+            names::LINUX_APPIMAGE_X86_64
         ]
     );
     for f in offered {
@@ -210,7 +210,7 @@ fn every_file_the_page_offers_is_one_the_release_uploads_with_one_row_each() {
         .find_iter(&section("downloads"))
         .filter(|m| m.as_str().contains(LATEST))
         .count();
-    assert_eq!(all, 4, "a row linking a file the release does not name");
+    assert_eq!(all, 5, "a row linking a file the release does not name");
 }
 
 #[test]
@@ -246,6 +246,12 @@ fn every_offered_file_has_a_status_and_the_statuses_follow_the_ledger() {
     ] {
         assert!(row(f).contains(NOT_YET), "{f}");
     }
+    // The AppImage is run, not installed; the ledger lists that as nobody's.
+    assert!(nobody.contains("The Linux AppImage, new with the Rust window, run by a person"));
+    assert!(
+        row(names::LINUX_APPIMAGE_X86_64)
+            .contains("Built and checked automatically. Never run by a person yet")
+    );
     let person = &ledger[ledger
         .find("**Verified on a real machine, by a person**")
         .unwrap()..ledger.find("**Verified only by CI").unwrap()];
