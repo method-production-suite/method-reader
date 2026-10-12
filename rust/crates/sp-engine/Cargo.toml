@@ -16,7 +16,13 @@ serde_json.workspace = true
 sp-model.workspace = true
 sp-fountain.workspace = true
 sp-fdx.workspace = true
+sp-parser.workspace = true
+sp-epub.workspace = true
+sp-mobi.workspace = true
+sp-azw3.workspace = true
+sp-device.workspace = true
 sha2 = "0.10"
+regex.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 # Safe wrappers for the two process-group calls a Calibre timeout needs

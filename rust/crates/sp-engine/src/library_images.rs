@@ -4,12 +4,10 @@
 //! caller, so a re-render and the export path's Kindle rebuild find the
 //! same pictures under the same rules.
 //!
-//! Four predicates and limits it shares with sp-parser are carried here for
-//! now, in [`shared`], because sp-parser is being ported in parallel:
-//! `isGeneratedImageFile`, `IMAGE_MAX_EDGE`, `isPng` and `MAX_IMAGES`. When
-//! it lands, `shared` re-exports its own and these copies go: two copies of
-//! a check drift exactly like two copies of a parser. `isSafeImageFile`,
-//! the security allowlist, is already sp-fountain's own.
+//! The predicates and limits it shares with the parser are sp-parser's own
+//! (`isGeneratedImageFile`, `IMAGE_MAX_EDGE`, `isPng`, `MAX_IMAGES`), and
+//! `isSafeImageFile`, the security allowlist, is sp-fountain's: two copies
+//! of a check drift exactly like two copies of a parser.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -17,45 +15,10 @@ use crate::errors::{EngineError, FsError};
 use crate::fsx;
 use crate::nodepath::host;
 
-/// The predicates and limits owned by sp-fountain and sp-parser.
-pub mod shared {
-    /// `IMAGE_MAX_EDGE` (src/parser/images.ts).
-    pub const IMAGE_MAX_EDGE: u64 = 1400;
-    /// `MAX_IMAGES` (src/parser/artwork.ts).
-    pub const MAX_IMAGES: usize = 60;
-
-    /// `isSafeImageFile`: sp-fountain's, the one allowlist.
-    pub use sp_fountain::notes::is_safe_image_file;
-
-    /// `isGeneratedImageFile` (src/parser/images.ts):
-    /// `/^p\d{3,}-\d{2,}\.png$/`.
-    pub fn is_generated_image_file(name: &str) -> bool {
-        let Some(rest) = name.strip_prefix('p').and_then(|r| r.strip_suffix(".png")) else {
-            return false;
-        };
-        let Some((page, index)) = rest.split_once('-') else {
-            return false;
-        };
-        page.len() >= 3
-            && page.bytes().all(|b| b.is_ascii_digit())
-            && index.len() >= 2
-            && index.bytes().all(|b| b.is_ascii_digit())
-    }
-
-    /// `isPng` (src/parser/png.ts): the signature, an IHDR first, and a
-    /// non-zero frame, within the 29 bytes epubcheck reads.
-    pub fn is_png(bytes: &[u8]) -> bool {
-        const SIGNATURE: [u8; 8] = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-        if bytes.len() < 29 || bytes[..8] != SIGNATURE || &bytes[12..16] != b"IHDR" {
-            return false;
-        }
-        let width = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]);
-        let height = u32::from_be_bytes([bytes[20], bytes[21], bytes[22], bytes[23]]);
-        width > 0 && height > 0
-    }
-}
-
-use shared::{IMAGE_MAX_EDGE, MAX_IMAGES, is_generated_image_file, is_png, is_safe_image_file};
+use sp_fountain::notes::is_safe_image_file;
+use sp_parser::artwork::MAX_IMAGES;
+use sp_parser::images::{IMAGE_MAX_EDGE, is_generated_image_file};
+use sp_parser::png::is_png;
 
 /// `imagesDirFor(fountainPath)`: same directory, same stem, `.images`.
 pub fn images_dir_for(fountain_path: &str) -> String {
@@ -73,7 +36,8 @@ pub const MAX_IMAGE_FILE_BYTES: u64 = max_image_file_bytes();
 const fn max_image_file_bytes() -> u64 {
     // Math.ceil((edge * 3 + 1) * edge * 1.05), in integers: * 105 / 100,
     // rounded up.
-    let raw = (IMAGE_MAX_EDGE * 3 + 1) * IMAGE_MAX_EDGE * 105;
+    let edge = IMAGE_MAX_EDGE as u64;
+    let raw = (edge * 3 + 1) * edge * 105;
     raw.div_ceil(100)
 }
 

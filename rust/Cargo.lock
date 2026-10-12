@@ -3560,13 +3560,19 @@ dependencies = [
 name = "sp-engine"
 version = "0.11.1"
 dependencies = [
+ "regex",
  "rustix 1.1.5",
  "serde",
  "serde_json",
  "sha2",
+ "sp-azw3",
+ "sp-device",
+ "sp-epub",
  "sp-fdx",
  "sp-fountain",
+ "sp-mobi",
  "sp-model",
+ "sp-parser",
  "tempfile",
 ]
 

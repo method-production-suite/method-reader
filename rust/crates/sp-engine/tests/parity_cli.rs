@@ -36,7 +36,7 @@ use sp_engine::commands::routes::{RouteDeps, RouteOptions, route_command, routes
 use sp_engine::commands::settings::{SettingsOptions, settings_command};
 use sp_engine::env::Env;
 use sp_engine::errors::{EngineError, ErrorCode, JsonError};
-use sp_engine::export::renderers::Unported;
+use sp_engine::export::renderers::Books;
 use sp_engine::export::route_facts::{RouteProbes, route_facts};
 use sp_engine::jsjson;
 use sp_engine::settings::app::app_settings_path;
@@ -612,7 +612,7 @@ fn export_case(label: &str, calibre: bool, flags: &[&str]) {
                 env: Some(env.clone()),
                 ..Default::default()
             };
-            line(export_command(&o, &deps, &Unported))
+            line(export_command(&o, &deps, &Books))
         },
     );
 }
@@ -746,7 +746,10 @@ fn this_machines_facts(env: &Env) -> sp_engine::export::routes::RouteFacts {
             env: Some(env.clone()),
             ..Default::default()
         },
-        true,
+        &sp_device::ListDevicesOptions {
+            skip_remarkable: true,
+            ..Default::default()
+        },
     )
 }
 
@@ -831,7 +834,7 @@ fn route_case(label: &str, flags: &[&str]) {
                 }),
                 ..Default::default()
             };
-            line(route_command(&o, deps, &Unported))
+            line(route_command(&o, deps, &Books))
         },
     );
 }

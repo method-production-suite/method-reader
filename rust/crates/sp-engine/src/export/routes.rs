@@ -8,7 +8,7 @@
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::device_types::{ConnectedDevice, DeviceKind, device_id};
+use sp_device::types::{ConnectedDevice, DeviceKind, device_id};
 
 /// `Unavailable`: why a listed row cannot fire right now.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
