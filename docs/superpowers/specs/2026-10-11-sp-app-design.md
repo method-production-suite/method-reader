@@ -82,23 +82,67 @@ the verification list for wave 3.
   with the fake engine and asserts what it shows by the AccessKit tree
   (role and name), which tests the screen reader's view at the same time.
 
+## The book preview: Blitz (spike, 2026-10-11)
+
+The window's preview promise is "reflows the way it will on your reader",
+so it has to be the engine's OWN XHTML and css.ts, not a second renderer.
+The first pass drew structured blocks; the coordinator asked for a spike of
+Blitz, Dioxus's HTML/CSS engine, and it is the answer.
+
+**Pure Rust.** blitz-dom, blitz-html and blitz-paint (Stylo for CSS, Taffy
+for layout, Parley for text, vello_cpu through anyrender to paint pixels):
+`cargo tree` for macOS and Windows has no `-sys` crate, no `cc`, no Skia
+(`tiny-skia-path` is a Rust port of Skia's path code, not Skia). On Linux,
+Parley's font discovery (fontique) links the system's libfontconfig through
+`yeslogic-fontconfig-sys`; the window registers its own six faces, so the
+system-fonts feature can be turned off there (to do when wiring). Stylo is
+MPL-2.0, which is compatible with the AGPL. The network crate
+(`blitz-net`, reqwest with native-tls) is NOT used: a 20-line provider in
+the window answers `data:` URLs (the engine's pictures) and refuses
+everything else, so the preview fetches nothing.
+
+**What was rendered.** The committed oracle previews
+(`rust/oracle/{field-station,torture,images}/book.preview.html`, the
+engine's own output) at 706 wide, with read.js's device layer (ink, paper,
+1.6em/7% margins) and the bundled fonts registered:
+
+| css.ts feature | Result |
+|---|---|
+| Percentage margins, the dialogue column, centred cues | right: cues centred, dialogue in its 20% column |
+| em spacing between elements | right |
+| Dual dialogue side by side (`table.dual-dialogue`) | right: two columns, each cue over its speech |
+| Font shifts (`fmt-sans`, sizes), bold, underline | right |
+| Italic | no synthetic oblique: the window bundles no Courier Prime italic, and Blitz does not slant the regular face (browsers do) |
+| Figures (`data:` PNG) | right, with the data-only provider |
+| Courier Prime from the bundled faces | right (rendered differently with and without them) |
+| Light and dark | right (the device layer's colours) |
+| Page markers (`span.page-marker { float: right }`) | **broken**: Blitz 0.3.0-beta.2 (crates.io) hangs forever in Parley's line breaker on any float inside inline text; Blitz main (git 45496d9) no longer hangs but draws the float at the start of the line, over the heading's first letter |
+| Speed | the 18-page demo: layout 10 ms, painting the whole 12,000px page 17 ms on the CPU |
+
+**Decision.** Use Blitz for Read, the Settings preview, the result's first
+page and the page show's formed blocks, pinned to Blitz main (git rev
+45496d9) until a crates.io release carries the float fixes, with ONE
+window-only shim in the device layer, beside read.js's colours and margins:
+
+    h2.scene-heading, p { position: relative; }
+    span.page-marker { float: none; position: absolute; right: 0; top: 0; }
+
+It draws the marker where a browser draws the float (the line's top, at
+the right edge, small and dimmed), in the window only; the EPUB keeps
+css.ts untouched. It comes out when Blitz positions inline floats. Text is
+exposed to the screen reader by the window: one AccessKit node per
+heading and paragraph, named by its words, at its laid-out rect (Blitz's
+own accessibility tree is not bridged). Read pages the book by painting
+only the visible slice of the laid-out document.
+
+Owner-visible: a git dependency on an unreleased engine, and the shim.
+
 ## What cannot reach 1:1, precisely
 
-1. **The book preview is not the EPUB's own CSS** (inventory R18, C17, S20,
-   P8). The window renders the engine's XHTML and `css.ts` stylesheet in a
-   browser engine, so the window and the book share one renderer. egui has
-   no HTML/CSS engine. sp-app draws the preview from structured blocks
-   (scene heading, action, cue, parenthetical, dialogue, transition, page
-   marker, figure, dual dialogue) applying the same FormatOptions. The
-   formatting decisions stay the engine's, but the RENDERING is a second
-   implementation of css.ts, and it will not be pixel-identical to a
-   reading device or to today's preview. The alternative that keeps one
-   renderer is embedding Blitz (Dioxus's pure-Rust HTML/CSS engine:
-   Stylo, Parley, Vello) into an egui texture; it is pre-1.0, would bring
-   its own accessibility tree to bridge, and is not proposed here. Owner
-   decision needed.
-2. **The formed blocks in the page show** (P8) use that same native
-   renderer, so "the book's own block" is the native rendering of it.
+1. **The page marker** is drawn by the shim above, not by the float rule
+   (until Blitz places floats). **Italic** has no synthetic slant.
+2. **Linux** links libfontconfig (C) unless fontique's system fonts are
+   switched off; ALSA likewise for sound (cpal).
 3. **An answer that is not JSON** (E21) cannot happen with direct calls;
    the trait's `Err(String)` is shown in its place.
 4. **No sidecar** (W12): the "could not find the engine" sentence has no
