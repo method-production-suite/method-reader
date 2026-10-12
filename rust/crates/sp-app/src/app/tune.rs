@@ -1,5 +1,5 @@
 //! Settings: this script's own formatting, saved beside it and rebuilt
-//! into the book as the knobs move (`desktop/ui/tune.js`, below its line).
+//! into the book as the knobs move (was `desktop/ui/tune.js`, below its line).
 
 use std::collections::VecDeque;
 

@@ -1,5 +1,5 @@
 //! What is plugged in, asked every two seconds while a book is open:
-//! `desktop/ui/device-watch.js`, as a state machine the runtime ticks.
+//! a state machine the runtime ticks (was `desktop/ui/device-watch.js`).
 
 use serde_json::Value;
 

@@ -1,6 +1,6 @@
 //! The window: one `App`, three surfaces, the release notes sheet, the
 //! heads-up, and the plumbing every engine call goes through
-//! (`desktop/ui/main.js` and `app.js`).
+//! (was `desktop/ui/main.js` and `app.js`).
 //!
 //! Every engine call goes through [`App::call`] (counted toward busy, as
 //! app.js counted it) or [`App::on_book`] (which also takes its turn on the

@@ -1,5 +1,5 @@
 //! Read: the converted script, keeping its shape, with its scene index
-//! (`desktop/ui/read.js`, below its line).
+//! (was `desktop/ui/read.js`, below its line).
 
 use egui::{Id, Key, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType, accesskit};
 

@@ -1,4 +1,5 @@
-//! The clock of "the page writes itself": `desktop/ui/page-timing.js`.
+//! The clock of "the page writes itself"
+//! (was `desktop/ui/page-timing.js`).
 //! Every function takes the time as milliseconds since the typing began.
 
 /// How long the typing takes, whatever the script.

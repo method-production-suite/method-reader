@@ -1,6 +1,6 @@
 //! Whether there is a newer Screepub, and what to say about it:
-//! `desktop/ui/update.js`, `update-flow.js` and the Updates block's rules
-//! from `notes-surface.js`. The transport (download, signature, swap,
+//! was `desktop/ui/update.js`, `update-flow.js` and the Updates block's
+//! rules from `notes-surface.js`. The transport (download, signature, swap,
 //! restart) is wave 3's; everything decided here is injected-and-tested,
 //! as it was in JavaScript.
 

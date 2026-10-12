@@ -1,4 +1,4 @@
-//! The tab bar and the stamp: `desktop/ui/frame.js`'s decisions.
+//! The tab bar and the stamp (was `desktop/ui/frame.js`).
 
 /// The surfaces the bar switches between. Notes is not one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

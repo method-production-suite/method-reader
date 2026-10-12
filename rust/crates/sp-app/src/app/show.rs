@@ -1,4 +1,4 @@
-//! The page writes itself (`desktop/ui/page-show.js`, below its line).
+//! The page writes itself (was `desktop/ui/page-show.js`, below its line).
 //! Its clock is page-timing's; its words are page-show's.
 
 use egui::text::{LayoutJob, TextFormat};

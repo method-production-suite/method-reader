@@ -3,7 +3,7 @@
 //! `RELEASE` is generated from docs/releases/<version>.md by
 //! `cargo xtask build-desktop-notes` (which `cargo xtask bump-version`
 //! runs) into notes_release.rs beside this file, the way
-//! tools/build-desktop-notes.ts writes `desktop/ui/notes.js` for the Tauri
+//! tools/build-desktop-notes.ts wrote `desktop/ui/notes.js` for the Tauri
 //! window. The test below holds it to the release notes on disk.
 
 pub struct Item {

@@ -1,5 +1,5 @@
 //! The send panel: the right half of Convert's result
-//! (`desktop/ui/send-panel.js` and `kfx.js`, below their lines). The cards,
+//! (was `desktop/ui/send-panel.js` and `kfx.js`, below their lines). The cards,
 //! the calm screen with its one brass button, Other ways, My device isn't
 //! here, the asterisk and its reports, Eject, the Kindle file built ahead,
 //! and the KFX checklist. Every rule is device.js's, send-routes.js's or

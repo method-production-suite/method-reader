@@ -1,4 +1,5 @@
-//! What sending decides, with no drawing in it: `desktop/ui/send-routes.js`.
+//! What sending decides, with no drawing in it (was
+//! `desktop/ui/send-routes.js`).
 
 use serde_json::{Map, Value};
 

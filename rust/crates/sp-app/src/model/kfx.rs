@@ -1,5 +1,5 @@
-//! The KFX checklist ("Best Kindle quality"): `desktop/ui/kfx.js`'s
-//! decisions.
+//! The KFX checklist ("Best Kindle quality"): what was
+//! `desktop/ui/kfx.js` decided.
 
 use serde_json::Value;
 

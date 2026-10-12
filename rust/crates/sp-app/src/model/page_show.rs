@@ -1,4 +1,5 @@
-//! What the page show decides: `desktop/ui/page-show.js`, above its line.
+//! What the page show decides (was
+//! `desktop/ui/page-show.js`, above its line).
 
 use serde_json::Value;
 use unicode_general_category::{GeneralCategory as G, get_general_category};

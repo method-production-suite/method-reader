@@ -1,7 +1,7 @@
 //! The page on the desk: the paper, the binding's brads and punched hole,
 //! the tab bar, the stamp and the update label, the release notes sheet,
 //! the Kindle heads-up, the drag strip, and the window's keyboard and drops
-//! (`desktop/ui/frame.js`, `main.js`, `heads-up.js`, `notes-surface.js`).
+//! (was `desktop/ui/frame.js`, `main.js`, `heads-up.js`, `notes-surface.js`).
 
 use egui::epaint::{Mesh, Vertex};
 use egui::{

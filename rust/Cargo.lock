@@ -5388,6 +5388,7 @@ dependencies = [
  "parley",
  "rfd",
  "serde_json",
+ "sha2",
  "sp-cli",
  "sp-device",
  "sp-update",

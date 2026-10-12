@@ -1,5 +1,5 @@
 //! The device-request service, from the window's side:
-//! `desktop/ui/requests.js`. The window's one network address.
+//! was `desktop/ui/requests.js`. The window's one network address.
 
 use serde_json::{Value, json};
 

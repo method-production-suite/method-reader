@@ -1,5 +1,5 @@
 //! Where the keyboard stands when something takes the focus away:
-//! `desktop/ui/focus.js`. In egui a control is a widget id; the screen
+//! was `desktop/ui/focus.js`. In egui a control is a widget id; the screen
 //! records each focusable control as it draws it, in order, and this
 //! decides which one the keyboard goes back to.
 

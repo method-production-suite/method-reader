@@ -1,4 +1,4 @@
-//! Turns on a book: `desktop/ui/book-queue.js`. One queue per library EPUB;
+//! Turns on a book (was `desktop/ui/book-queue.js`). One queue per library EPUB;
 //! readers run side by side, a writer runs alone, arrival order is kept,
 //! and a failure never stops the queue.
 //!

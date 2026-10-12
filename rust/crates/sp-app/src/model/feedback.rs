@@ -1,4 +1,4 @@
-//! A pre-filled bug report: `desktop/ui/feedback.js`.
+//! A pre-filled bug report (was `desktop/ui/feedback.js`).
 
 pub const NEW_ISSUE_BASE: &str = "https://github.com/ssandweiss/screepub/issues/new";
 /// About the longest body a report carries.

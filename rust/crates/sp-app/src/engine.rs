@@ -1,6 +1,6 @@
 //! The window's one door to the engine.
 //!
-//! `desktop/ui/app.js` built an argv for every call and parsed the JSON the
+//! What was `desktop/ui/app.js` built an argv for every call and parsed the JSON the
 //! engine printed. Here each argv builder is a [`Request`], and `sp-engine`
 //! answers it directly: one trait, one method, answers in the CLI's
 //! `--json` shape so the window's validators (src/model) stay exactly as

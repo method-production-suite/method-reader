@@ -1,5 +1,5 @@
 //! Convert: the drop well, the bar, the result and the refusal
-//! (`desktop/ui/convert.js`, below its line). Every rule is the model's.
+//! (was `desktop/ui/convert.js`, below its line). Every rule is the model's.
 
 use std::collections::HashMap;
 
