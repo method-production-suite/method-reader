@@ -83,8 +83,9 @@ JSON
 
   # 3. The Rust app as 0.12.0, baked with the rehearsal key and endpoint.
   mkdir -p "$W/rust-src"
-  git -C "$REPO_DIR" archive HEAD rust LICENSE THIRD-PARTY-NOTICES.md desktop/src-tauri/icons \
-    | tar -x -C "$W/rust-src"
+  # The whole commit: the crates read files outside rust/ at build time
+  # (format-defaults.json, the release notes, the icons).
+  git -C "$REPO_DIR" archive HEAD | tar -x -C "$W/rust-src"
   sed -i '' -E '/^\[workspace\.package\]/,/^\[/ s/^version = "[^"]*"/version = "'"$NEW"'"/' \
     "$W/rust-src/rust/Cargo.toml"
   (cd "$W/rust-src/rust" \
