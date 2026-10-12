@@ -1,7 +1,7 @@
 //! The page on the desk: the paper, the binding's brads and punched hole,
 //! the tab bar, the stamp and the update label, the release notes sheet,
 //! the Kindle heads-up, the drag strip, and the window's keyboard and drops
-//! (`desktop/ui/frame.js`, `main.js`, `heads-up.js`, `notes-surface.js`).
+//! (was `desktop/ui/frame.js`, `main.js`, `heads-up.js`, `notes-surface.js`).
 
 use egui::epaint::{Mesh, Vertex};
 use egui::{
@@ -294,6 +294,8 @@ pub fn input(app: &mut App, ui: &mut Ui) {
         (open, dropped, !i.raw.hovered_files.is_empty(), pressed)
     });
     app.drag_hover = hovering;
+    // Keyboard or pointer, for the focus rings drawn below.
+    widgets::note_ring_input(&ctx);
     // Back from another app (perhaps from installing Kindle Previewer).
     let focused = ctx.input(|i| i.focused);
     if focused && !app.window_focused {
@@ -340,8 +342,10 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                     let top = ui.cursor().min;
                     // The drag strip: as tall as the sheet's top padding, part of
                     // the page, so it scrolls away and never covers a control.
+                    // DRAG alone, not Sense::drag(), which is focusable: the
+                    // first Tab vanished into it.
                     let strip = Rect::from_min_size(top, Vec2::new(window.x, layout::SPACE[7]));
-                    let drag = ui.interact(strip, Id::new("drag-strip"), Sense::drag());
+                    let drag = ui.interact(strip, Id::new("drag-strip"), Sense::DRAG);
                     if drag.drag_started() {
                         ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
                     }
@@ -382,9 +386,14 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         n.set_label(app.surface.label());
         n.push_labelled_by(tab_id(app.surface).accesskit_id());
     });
+    // Where a surface that fits the window (Read) must end for the foot
+    // below it to sit whole inside the window: the page's top, plus the
+    // window, less the foot.
+    let page_top = sheet_top - layout::SPACE[7];
+    let surface_end = page_top + window.y - foot_height(app, ui, block);
     match app.surface {
         Surface::Convert => convert::draw(app, ui, block, window),
-        Surface::Read => read::draw(app, ui, block, window),
+        Surface::Read => read::draw(app, ui, block, window, surface_end),
         Surface::Tune => tune::draw(app, ui, block, window),
     }
     // The foot: the update label beside the rev stamp, the dead-engine line
@@ -431,7 +440,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
         // The gaps between tabs move the window, as the strip does:
         // registered first, so every tab sits above it.
         let gaps = Rect::from_min_size(ui.cursor().min, Vec2::new(ui.available_width(), 20.0));
-        let gap = ui.interact(gaps, Id::new("tab-gaps"), Sense::drag());
+        let gap = ui.interact(gaps, Id::new("tab-gaps"), Sense::DRAG);
         if gap.drag_started() {
             ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
         }
@@ -522,6 +531,26 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
         n.set_bounds(widgets::bounds(bar.response.rect));
         n.set_label("Screepub");
     });
+}
+
+/// How tall the foot `sheet` draws below a surface is: the gap above it,
+/// the dead-engine line if there is one, the stamp's row (as tall as the
+/// update label, its taller member) and the margin under it, with the
+/// spacing egui puts after each.
+fn foot_height(app: &App, ui: &Ui, block: layout::Span) -> f32 {
+    let gap = ui.spacing().item_spacing.y;
+    let font = theme::structure(size::FINE);
+    let row = ui.fonts_mut(|f| f.row_height(&font)) + layout::SPACE[1];
+    let fault = app.engine_fault.as_ref().map_or(0.0, |fault| {
+        let galley = ui.painter().layout(
+            fault.clone(),
+            theme::structure(size::NOTE),
+            Color32::PLACEHOLDER,
+            block.width.min(66.0 * 8.0),
+        );
+        galley.size().y + gap
+    });
+    layout::SPACE[10] + fault + row + gap + layout::SPACE[5]
 }
 
 /// The rev stamp: a printer's mark at the foot of the page, and a button.

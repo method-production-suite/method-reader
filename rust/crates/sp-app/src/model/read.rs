@@ -1,4 +1,4 @@
-//! What the Read surface decides: `desktop/ui/read.js`, above its line.
+//! What the Read surface decides (was `desktop/ui/read.js`, above its line).
 
 /// What the surface has to show.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

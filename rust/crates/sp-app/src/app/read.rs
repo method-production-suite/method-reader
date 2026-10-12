@@ -1,5 +1,5 @@
 //! Read: the converted script, keeping its shape, with its scene index
-//! (`desktop/ui/read.js`, below its line).
+//! (was `desktop/ui/read.js`, below its line).
 
 use egui::{Id, Key, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType, accesskit};
 
@@ -82,7 +82,9 @@ fn send(app: &mut App) {
     }
 }
 
-pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
+/// `end` is where the surface must stop (a screen y) for the page's foot,
+/// the rev stamp, to sit whole inside the window: Read fits the window.
+pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end: f32) {
     let t = app.tokens();
     match reader_state(app.script.as_ref()) {
         ReaderState::Closed => {}
@@ -104,11 +106,11 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
                 }
             });
         }
-        ReaderState::Ready => draw_ready(app, ui, block, window),
+        ReaderState::Ready => draw_ready(app, ui, block, window, end),
     }
 }
 
-fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
+fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end: f32) {
     let t = app.tokens();
     let Some(script) = app.script.clone() else {
         return;
@@ -160,8 +162,10 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         left: 0.0,
         width: block.width,
     });
-    let height = layout::script_height(window.x, window.y);
     let top = ui.cursor().min;
+    // The frame's height for a frame whose top is at `y`: the window's
+    // share, giving way so the foot stays inside the window.
+    let frame_height = |y: f32| layout::script_frame(window.x, window.y, end - y);
     // The book, laid out at the script column's width: its scenes feed the
     // index, its slices are what is read.
     let book_width = if geometry.stacked {
@@ -184,15 +188,23 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         } else {
             Rect::from_min_size(
                 top + Vec2::new(geometry.index.left, 0.0),
-                Vec2::new(geometry.index.width, height),
+                Vec2::new(geometry.index.width, frame_height(top.y)),
             )
         };
         let r = ui.scope_builder(egui::UiBuilder::new().max_rect(rail_rect), |ui| {
             draw_rail(app, ui, &entries, geometry.stacked)
         });
-        rail_bottom = r.response.rect.bottom() + layout::SPACE[4];
+        // Stacked, the script starts a gap below the index; beside it, the
+        // index ends with the frame and adds no gap under the page.
+        rail_bottom = r.response.rect.bottom()
+            + if geometry.stacked {
+                layout::SPACE[4]
+            } else {
+                0.0
+            };
     }
     let script_top = if geometry.stacked { rail_bottom } else { top.y };
+    let height = frame_height(script_top);
     let script_rect = Rect::from_min_size(
         Pos2::new(top.x + geometry.script.left, script_top),
         Vec2::new(geometry.script.width, height),
@@ -207,13 +219,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     app.stop(stage.id, true);
     sheet(ui, &t, script_rect);
     widgets::own_arrows(ui, stage.id);
-    if stage.has_focus() {
+    if widgets::ring_shown(ui, &stage) {
         ui.painter().rect_stroke(
             script_rect.expand(2.0),
             theme::RADIUS_WELL,
             egui::Stroke::new(2.0, t.ink),
             egui::StrokeKind::Outside,
         );
+    }
+    if stage.has_focus() {
         let key = ui.input(|i| {
             [
                 (Key::ArrowDown, ReadKey::Down),

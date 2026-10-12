@@ -231,6 +231,21 @@ pub fn script_height(window_w: f32, window_h: f32) -> f32 {
     (window_h * share).max(300.0)
 }
 
+/// The fewest points the script's frame shrinks to so the page's foot
+/// stays in the window (a few lines of the script).
+pub const SCRIPT_FLOOR: f32 = 96.0;
+
+/// The script's frame as drawn: [`script_height`], but no taller than
+/// `room`, the points between the frame's top and where the foot must
+/// start for the rev stamp to sit whole inside the window. Read fits the
+/// window rather than scrolling the page, so the frame gives way first,
+/// down to [`SCRIPT_FLOOR`].
+pub fn script_frame(window_w: f32, window_h: f32, room: f32) -> f32 {
+    script_height(window_w, window_h)
+        .min(room)
+        .max(SCRIPT_FLOOR)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -321,5 +336,16 @@ mod tests {
         assert_eq!(script_height(1280.0, 800.0), 544.0);
         assert_eq!(script_height(600.0, 800.0), 464.0);
         assert_eq!(script_height(1280.0, 480.0), 300.0);
+    }
+
+    #[test]
+    fn the_script_frame_gives_way_to_the_foot() {
+        // Room to spare: the share of the window.
+        assert_eq!(script_frame(1280.0, 800.0, 900.0), 544.0);
+        // Less room: the room, below the share and below its 300 floor.
+        assert_eq!(script_frame(1280.0, 800.0, 420.0), 420.0);
+        assert_eq!(script_frame(640.0, 480.0, 200.0), 200.0);
+        // Never under the frame's own floor.
+        assert_eq!(script_frame(640.0, 480.0, 10.0), SCRIPT_FLOOR);
     }
 }

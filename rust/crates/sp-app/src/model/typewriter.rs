@@ -1,6 +1,6 @@
 //! The typewriter's sounds, made rather than recorded:
-//! `desktop/ui/typewriter.js`'s Web Audio graph, as samples. A key is 35 ms
-//! of white noise through a band-pass (1800 to 3400 Hz, different each
+//! the Web Audio graph of what was `desktop/ui/typewriter.js`, as samples.
+//! A key is 35 ms of white noise through a band-pass (1800 to 3400 Hz, different each
 //! time, Q 1.4) under an exponential fade from 0.3; the bell is a 2093 Hz
 //! sine fading from 0.08 over half a second.
 

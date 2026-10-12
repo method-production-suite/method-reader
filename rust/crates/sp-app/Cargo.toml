@@ -49,6 +49,8 @@ sp-cli = { path = "../sp-cli" }
 [dev-dependencies]
 egui_kittest = { version = "0.36.2", features = ["wgpu"] }
 tempfile = "3"
+# The bundled fonts are pinned by their SHA-256 (src/fonts.rs).
+sha2.workspace = true
 # The engine's own words about camera import, for the MTP window rules.
 sp-device = { path = "../sp-device" }
 # PNGs of the real window, for examples/capture.rs.

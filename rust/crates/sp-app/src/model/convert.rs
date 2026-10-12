@@ -1,4 +1,5 @@
-//! What the Convert surface decides: `desktop/ui/convert.js`, above its line.
+//! What the Convert surface decides (was
+//! `desktop/ui/convert.js`, above its line).
 //! Every function here is pure and is tested below the way
 //! tests/desktop-ui.test.ts tested the JavaScript.
 

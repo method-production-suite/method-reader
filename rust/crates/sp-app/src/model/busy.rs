@@ -1,6 +1,6 @@
-//! Whether the engine is somebody's work right now: `desktop/ui/app.js`'s
-//! count of counted calls and holds, the quiet period an update's restart
-//! waits for, and the refusal once an update has installed.
+//! Whether the engine is somebody's work right now: what was
+//! `desktop/ui/app.js`'s count of counted calls and holds, the quiet period
+//! an update's restart waits for, and the refusal once an update has installed.
 //!
 //! The count lives on the window's thread; an update's run waits for quiet
 //! on its own thread. So every counted call and every hold is mirrored into

@@ -206,9 +206,24 @@ Owner-visible: a git dependency on an unreleased engine, and the shim.
    trait and is shown as a refusal with code `internal`, as before.
 5. **Reduce Motion on Linux** is read from GNOME's setting only (mundy's
    `_gnome_only`); KDE and others read as "motion allowed".
-6. **Focus rings and hover are egui's model**: keyboard focus is shown with
-   the same 2px ink ring, but egui shows it on any focus, not only
-   keyboard-initiated focus (`:focus-visible`); sp-app hides rings after a
-   pointer press to approximate it.
+6. **Hover is egui's model.** Focus rings are no longer a gap
+   (2026-10-12): egui keeps one focus for every cause, so sp-app keeps
+   `:focus-visible`'s rule beside it. Each frame, before drawing, the
+   window reads its input (`widgets::note_ring_input`, deciding with
+   model/focus.rs `rings_after`): a key pressed without Command, Control
+   or Alt (Tab, the arrows, Space, Enter, typing) turns rings on; a
+   pointer press or a touch turns them off; a frame with neither (a focus
+   the window moves itself with restore_focus, after a dialog, on a
+   surface change, a redraw, or a screen reader's focus request) keeps
+   the last mode. Before any input there are no rings. Every ring (the
+   2px ink ring of `widgets::focus_ring`, and the reader's stage) is drawn
+   only when the control has egui's focus AND the mode is on. Only the
+   paint is gated: egui's focus, and AccessKit's (which follows it), are
+   untouched, so the screen reader and the keys behave as before. Two
+   drag-only areas (the strip over the sheet's top and the gaps between
+   tabs) used `Sense::drag()`, which egui makes focusable, so the first
+   Tab used to vanish into the strip; they sense drags only now. Text
+   fields keep egui's own focused stroke on a click, as a browser's
+   inputs match `:focus-visible` on a click too.
 
 Everything else in the inventory has a direct egui equivalent.

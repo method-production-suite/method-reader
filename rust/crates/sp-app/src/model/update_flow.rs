@@ -1,5 +1,5 @@
 //! The window's one update: which moment it is in, and the single run that
-//! downloads, installs and restarts (`desktop/ui/update-flow.js`).
+//! downloads, installs and restarts (was `desktop/ui/update-flow.js`).
 //!
 //! The label beside the stamp and the release notes both read this one
 //! phase, so they cannot tell two stories about the same update. The run

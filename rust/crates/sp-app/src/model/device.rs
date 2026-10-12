@@ -1,4 +1,5 @@
-//! The reader's device and what each one offers: `desktop/ui/device.js`.
+//! The reader's device and what each one offers (was
+//! `desktop/ui/device.js`).
 
 use serde_json::Value;
 

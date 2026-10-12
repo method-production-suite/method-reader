@@ -1,4 +1,4 @@
-//! What the Settings page decides: `desktop/ui/tune.js`, above its line.
+//! What the Settings page decides (was `desktop/ui/tune.js`, above its line).
 
 use serde_json::{Map, Value};
 
