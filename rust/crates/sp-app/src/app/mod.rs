@@ -430,6 +430,7 @@ impl App {
         frame::input(self, ui);
         self.stops.clear();
         frame::draw(self, ui);
+        panel::give_back_focus(self, ui.ctx());
         if self.restore_focus {
             self.restore_focus = false;
             let pane = Stop {
@@ -453,6 +454,7 @@ impl App {
                 ui.memory_mut(|m| m.request_focus(id));
             }
         }
+        panel::pay_brass(self, ui.ctx());
         if !self.quiet()
             || self.show.as_ref().is_some_and(show::Show::running)
             || self.watcher.running()

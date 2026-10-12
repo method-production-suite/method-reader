@@ -19,6 +19,7 @@ use crate::model::device::{
     eject_still_there, fold_unplugged, kindle_session, offer_for, save_rows, save_turn,
     send_it_rows,
 };
+use crate::model::focus::{Keyed, Owed, Pay, give_back, pay_owed};
 use crate::model::json::ok;
 use crate::model::kfx::{
     self as k, Checklist, Control, after_install, control_for, setup_from, show_setup,
@@ -121,6 +122,14 @@ pub struct State {
     pub kfx: Kfx,
     net_tx: Sender<Net>,
     net_rx: Receiver<Net>,
+    /// The panel's buttons as drawn this frame, by key, and the brass.
+    keyed: Vec<Keyed<Id>>,
+    brass: Option<Keyed<Id>>,
+    /// A flow started from the keyboard on this key, in this era: the
+    /// keyboard goes back there when the buttons live again.
+    give_back: Option<(String, u64)>,
+    /// The brass button is owed the keyboard.
+    pub brass_owed: Option<Owed<Id>>,
 }
 
 impl Default for State {
@@ -157,6 +166,10 @@ impl Default for State {
             reports: HashMap::new(),
             remarkable_next: None,
             kfx: Kfx::default(),
+            keyed: Vec::new(),
+            brass: None,
+            give_back: None,
+            brass_owed: None,
             net_tx,
             net_rx,
         }
@@ -231,6 +244,8 @@ pub fn mount(app: &mut App) {
     let s = &mut app.panel;
     s.mounts += 1;
     s.mode = None;
+    s.brass_owed = Some(Owed::Plan);
+    s.give_back = None;
     s.ways_open = false;
     s.kfx_open = false;
     if b != s.mounted_book {
@@ -1167,8 +1182,103 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
 
 // ---------------------------------------------------------------- drawing
 
+/// A panel button under its key's own id, recorded for the keyboard's
+/// return. `flow`: pressed from the keyboard, it starts a flow that kills
+/// every button, and the keyboard comes back here after (keepFocus).
+#[allow(clippy::too_many_arguments)]
+fn keyed(
+    app: &mut App,
+    ui: &mut Ui,
+    look: Look,
+    words: &str,
+    enabled: bool,
+    key: &str,
+    flow: bool,
+) -> egui::Response {
+    let t = app.tokens();
+    let n = app.panel.keyed.iter().filter(|k| k.key == key).count();
+    let id = Id::new(("send-panel", key, n));
+    let held = ui.memory(|m| m.has_focus(id));
+    let b = widgets::button_id(ui, &t, look, words, enabled, id);
+    let entry = Keyed {
+        key: key.to_string(),
+        id,
+        enabled,
+    };
+    if look == Look::Brass {
+        app.panel.brass.get_or_insert(entry.clone());
+    }
+    app.panel.keyed.push(entry);
+    app.stop(id, enabled);
+    if flow && held && b.clicked() {
+        app.panel.give_back = Some((key.to_string(), app.panel.era));
+    }
+    b
+}
+
+/// After drawing, before the page's plan: a flow that has finished gives
+/// the keyboard back to the button that started it (send-panel.js
+/// keepFocus and giveBackFocus).
+pub fn give_back_focus(app: &mut App, ctx: &egui::Context) {
+    let Some((key, era)) = app.panel.give_back.clone() else {
+        return;
+    };
+    if era != app.panel.era || !showing(app) {
+        app.panel.give_back = None;
+        return;
+    }
+    if !enabled(app) {
+        return;
+    }
+    app.panel.give_back = None;
+    match give_back(&key, &app.panel.keyed, app.panel.brass.as_ref()) {
+        Some(id) => {
+            ctx.memory_mut(|m| m.request_focus(id));
+            app.restore_focus = false;
+        }
+        None => {
+            app.restore_focus = true;
+            if app.panel.mode == Some(Mode::Calm) {
+                app.panel.brass_owed = Some(Owed::Parked);
+            }
+        }
+    }
+}
+
+/// After the page's plan: the brass button takes the keyboard it is owed,
+/// unless the reader moved it on (send-panel.js brassOwed).
+pub fn pay_brass(app: &mut App, ctx: &egui::Context) {
+    let Some(owed) = app.panel.brass_owed else {
+        return;
+    };
+    if !showing(app) {
+        return;
+    }
+    let focused = ctx.memory(|m| m.focused());
+    let in_panel = focused.is_some_and(|f| app.panel.keyed.iter().any(|k| k.id == f));
+    let first = app.panel.keyed.iter().find(|k| k.enabled).map(|k| k.id);
+    let brass = app.panel.brass.as_ref().filter(|b| b.enabled).map(|b| b.id);
+    let calm = app.panel.mode == Some(Mode::Calm);
+    app.panel.brass_owed = match pay_owed(owed, calm, focused, in_panel, first, brass) {
+        Pay::Focus(id) => {
+            ctx.memory_mut(|m| m.request_focus(id));
+            None
+        }
+        Pay::Keep(o) => Some(o),
+        Pay::Drop => None,
+    };
+}
+
+fn showing(app: &App) -> bool {
+    app.panel.showing
+        && app.surface == crate::model::frame::Surface::Convert
+        && app.convert.view == convert::View::Done
+}
+
 pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
+    app.panel.keyed.clear();
+    app.panel.brass = None;
     if let Some(blocked) = app.panel.blocked {
         widgets::heading(
             ui,
@@ -1305,7 +1415,15 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
                 }
                 widgets::focus_ring(ui, &t, &resp, 2.0);
                 app.stop(resp.id, true);
+                app.panel.keyed.push(Keyed {
+                    key: card.kind.to_string(),
+                    id: resp.id,
+                    enabled: true,
+                });
                 if resp.clicked() {
+                    if resp.has_focus() && card.kind != d::MISSING.kind {
+                        app.panel.brass_owed = Some(Owed::Parked);
+                    }
                     if card.kind == d::MISSING.kind {
                         app.panel.mode = Some(Mode::Missing);
                         if !app.panel.request.busy {
@@ -1370,8 +1488,7 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = layout::SPACE[3];
         if let Some(e) = &eject {
-            let b = widgets::button(ui, &t, Look::Brass, &eject_label(e), live);
-            app.stop(b.id, live);
+            let b = keyed(app, ui, Look::Brass, &eject_label(e), live, "eject", true);
             if b.clicked() {
                 eject_now(app);
             }
@@ -1380,8 +1497,7 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             }
         }
         if let Some(act) = &brass {
-            let b = widgets::button(ui, &t, Look::Brass, &act.label, live);
-            app.stop(b.id, live);
+            let b = keyed(app, ui, Look::Brass, &act.label, live, &act.route.id, true);
             if b.clicked() {
                 choose_route(app, &act.route.clone());
             }
@@ -1437,18 +1553,24 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
     ui.add_space(layout::SPACE[2]);
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = layout::SPACE[4];
-        let ways = widgets::button(ui, &t, Look::Outline, d::OTHER_WAYS, true);
+        let ways = keyed(
+            app,
+            ui,
+            Look::Outline,
+            d::OTHER_WAYS,
+            true,
+            "other-ways",
+            false,
+        );
         ui.ctx()
             .accesskit_node_builder(ways.id, |n| n.set_expanded(app.panel.ways_open));
-        app.stop(ways.id, true);
         if ways.clicked() {
             app.panel.ways_open = !app.panel.ways_open;
             if !app.panel.ways_open {
                 app.panel.kfx_open = false;
             }
         }
-        let different = widgets::button(ui, &t, Look::Quiet, d::DIFFERENT, true);
-        app.stop(different.id, true);
+        let different = keyed(app, ui, Look::Quiet, d::DIFFERENT, true, "different", false);
         if different.clicked() {
             app.panel.mode = Some(Mode::Cards);
         }
@@ -1542,8 +1664,8 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
                     widgets::caption(ui, &t, fix, false);
                 }
                 if row.setup {
-                    let b = widgets::button(ui, &t, Look::Quiet, d::SET_IT_UP, true);
-                    app.stop(b.id, true);
+                    let key = format!("setup-{}", row.kind);
+                    let b = keyed(app, ui, Look::Quiet, d::SET_IT_UP, true, &key, false);
                     if b.clicked() {
                         open_kfx(app);
                     }
@@ -1551,11 +1673,11 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
             });
             if row.available {
                 let live = enabled(app);
-                let save = widgets::button(ui, &t, Look::Outline, "Save…", live);
+                let key = format!("save-file-{}", row.kind);
+                let save = keyed(app, ui, Look::Outline, "Save…", live, &key, true);
                 ui.ctx().accesskit_node_builder(save.id, |n| {
                     n.set_label(format!("Save {}…", row.label))
                 });
-                app.stop(save.id, live);
                 if save.clicked() {
                     save_file(app, row.kind);
                 }
@@ -1599,8 +1721,15 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
                 ui.horizontal_wrapped(|ui| {
                     widgets::caption(ui, &t, hint, false);
                     let live = enabled(app);
-                    let b = widgets::button(ui, &t, Look::Quiet, r::SETUP_BUTTON, live);
-                    app.stop(b.id, live);
+                    let b = keyed(
+                        app,
+                        ui,
+                        Look::Quiet,
+                        r::SETUP_BUTTON,
+                        live,
+                        r::EMAIL_SETUP,
+                        true,
+                    );
                     if b.clicked() {
                         perform(
                             app,
@@ -1614,14 +1743,8 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
         });
         if route.available {
             let live = enabled(app);
-            let b = widgets::button(
-                ui,
-                &t,
-                Look::Outline,
-                &button_label(route, app.panel.kindle.as_ref()),
-                live,
-            );
-            app.stop(b.id, live);
+            let words = button_label(route, app.panel.kindle.as_ref());
+            let b = keyed(app, ui, Look::Outline, &words, live, &route.id, true);
             if b.clicked() {
                 choose_route(app, route);
             }
@@ -1659,8 +1782,15 @@ fn draw_missing(app: &mut App, ui: &mut Ui) {
             q::SEND
         };
         let can = !busy && !app.panel.request.draft.trim().is_empty();
-        let send = widgets::button(ui, &t, Look::Outline, words, can);
-        app.stop(send.id, can);
+        let send = keyed(
+            app,
+            ui,
+            Look::Outline,
+            words,
+            can,
+            "device-request-send",
+            false,
+        );
         if send.clicked() {
             send_device_request(app);
         }
@@ -1677,10 +1807,16 @@ fn draw_missing(app: &mut App, ui: &mut Ui) {
     );
     ui.add_space(layout::SPACE[2]);
     ui.horizontal(|ui| {
-        let save = widgets::button(ui, &t, Look::Quiet, "Save the EPUB…", true);
-        let back = widgets::button(ui, &t, Look::Quiet, "Back", true);
-        app.stop(save.id, true);
-        app.stop(back.id, true);
+        let save = keyed(
+            app,
+            ui,
+            Look::Quiet,
+            "Save the EPUB…",
+            true,
+            "save-epub",
+            true,
+        );
+        let back = keyed(app, ui, Look::Quiet, "Back", true, "missing-back", false);
         if save.clicked() {
             save_file(app, "epub");
         }

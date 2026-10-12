@@ -1297,6 +1297,64 @@ fn b4_the_badge_is_worn_where_the_inventory_says_and_nowhere_else() {
     assert!(!wears_beta(&h, plain));
 }
 
+fn focused_label(h: &H) -> Option<String> {
+    h.query_all(egui_kittest::kittest::By::new().predicate(|n| n.is_focused()))
+        .next()
+        .and_then(|n| n.accesskit_node().label())
+}
+
+#[test]
+fn d26_a_save_from_the_keyboard_gives_it_back_to_its_own_button() {
+    let w = world();
+    calm_as(&w, "kobo");
+    let mut h = harness_sized(&w, Platform::Mac, [1280.0, 3000.0]);
+    convert(&w, &mut h);
+    open_other_ways(&mut h);
+    w.fakes.answer_dialog(Some("/books/field-station.epub"));
+    h.get_by_role_and_label(Role::Button, "Save EPUB…").focus();
+    steps(&mut h);
+    h.key_press(Key::Enter);
+    steps(&mut h);
+    steps(&mut h);
+    assert!(
+        w.fakes
+            .dialogs
+            .asked
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|a| a.starts_with("save")),
+        "the Save box came up"
+    );
+    assert_eq!(focused_label(&h).as_deref(), Some("Save EPUB…"));
+}
+
+#[test]
+fn d26_a_fresh_result_owes_the_brass_the_keyboard() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in_a_kindle(&w);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    steps(&mut h);
+    assert_eq!(focused_label(&h).as_deref(), Some("Copy to Kindle (.azw3)"));
+}
+
+#[test]
+fn d26_a_card_pressed_from_the_keyboard_hands_it_to_the_brass() {
+    let w = world();
+    plug_in_a_kindle(&w);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Kindle, plugged in")
+        .focus();
+    steps(&mut h);
+    h.key_press(Key::Enter);
+    steps(&mut h);
+    steps(&mut h);
+    assert_eq!(focused_label(&h).as_deref(), Some("Copy to Kindle (.azw3)"));
+}
+
 #[test]
 fn r16_the_book_is_dressed_again_when_the_os_theme_changes() {
     use sp_app::app::bookview::Place;

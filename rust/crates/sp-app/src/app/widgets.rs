@@ -25,6 +25,30 @@ pub enum Look {
 /// A button as `.btn-brad`, `.btn-outline`, `.btn-quiet` drew it. Its
 /// accessible name is its own words as written; the caps are paint.
 pub fn button(ui: &mut Ui, t: &Tokens, look: Look, words: &str, enabled: bool) -> Response {
+    draw_button(ui, t, look, words, enabled, None)
+}
+
+/// The same button under an id of the caller's, so it is the same widget
+/// across redraws that move it (the send panel's keyed buttons).
+pub fn button_id(
+    ui: &mut Ui,
+    t: &Tokens,
+    look: Look,
+    words: &str,
+    enabled: bool,
+    id: Id,
+) -> Response {
+    draw_button(ui, t, look, words, enabled, Some(id))
+}
+
+fn draw_button(
+    ui: &mut Ui,
+    t: &Tokens,
+    look: Look,
+    words: &str,
+    enabled: bool,
+    id: Option<Id>,
+) -> Response {
     let (font, pad) = match look {
         Look::Brass | Look::Outline => (theme::structure_bold(size::UI), Vec2::new(30.0, 10.0)),
         Look::Small => (theme::structure_bold(size::LABEL), Vec2::new(18.0, 6.0)),
@@ -44,7 +68,13 @@ pub fn button(ui: &mut Ui, t: &Tokens, look: Look, words: &str, enabled: bool) -
     } else {
         Sense::hover()
     };
-    let (rect, response) = ui.allocate_exact_size(desired, sense);
+    let (rect, response) = match id {
+        None => ui.allocate_exact_size(desired, sense),
+        Some(id) => {
+            let rect = ui.allocate_space(desired).1;
+            (rect, ui.interact(rect, id, sense))
+        }
+    };
     response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, words));
     if ui.is_rect_visible(rect) {
         let hovered = enabled && response.hovered();
