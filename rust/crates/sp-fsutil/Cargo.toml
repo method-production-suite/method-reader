@@ -1,0 +1,23 @@
+[package]
+name = "sp-fsutil"
+description = "Screepub's file rules: write-then-rename, the flushed replace a reader's copy goes through, Node's path functions and Node's error words"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+sha2 = "0.10"
+
+# errno numbers differ between macOS and Linux; libc names them. Constants
+# only: nothing here calls into C.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+serde_json.workspace = true
+tempfile = "3"
