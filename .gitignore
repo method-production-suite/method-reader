@@ -39,3 +39,7 @@ rust/target/
 
 # Oracle dumps of the real scripts in root fixtures/: never committed.
 rust/oracle-real/
+
+# Left over in checkouts from before the Rust port (bun install); nothing
+# here uses it any more, but an old copy must never be read or committed.
+node_modules/
