@@ -17,3 +17,5 @@ unsafe_code = "forbid"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sp-model = { path = "crates/sp-model" }
+# Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
+zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
