@@ -71,13 +71,13 @@ move too.
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
 | tests/cue-text.test.ts | 4 | sp-parser | done | sp-parser/tests/cue_text.rs (the 17 table rows as 17 tests) |
 | tests/desktop-bundle-step.test.ts | 7 | xtask | retired | ran desktop.yml's two bash steps (the per-OS `cargo tauri build --bundles` list and the smoke step reading package.json): desktop.yml, tauri-bundler, package.json and smoke-bundle.ts are gone. rust.yml's bundles job calls sp-release, whose writers are tested in sp-release; release.yml's bundle steps are executed in xtask/tests/release_steps.rs |
-| tests/desktop-layout-measured.test.ts | 16 | sp-app | partial | geometry in m/layout.rs; drawn rects measured in behaviors.rs (C3, L rows); see "Window test files" |
-| tests/desktop-layout.test.ts | 26 | sp-app | partial | see "Window test files" |
+| tests/desktop-layout-measured.test.ts | 16 | sp-app | done | the geometry at 900, 1280 and 1800 in m/layout.rs; the drawn rects measured in behaviors.rs (C3 and the L rows, 10 tests) |
+| tests/desktop-layout.test.ts | 26 | sp-app | done | the geometry in m/layout.rs (9); retired: the pins that read desktop/ui's CSS as text, whose subject went with desktop/ui |
 | tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes sp-app's notes_release.rs (notes.js and the notes-surface.js check went with the Tauri window); the window's half is sp-app's (Window test files) |
-| tests/desktop-shell.test.ts | 67 | sp-app | partial | Tauri pins retire with Tauri; see "Window test files" |
+| tests/desktop-shell.test.ts | 67 | sp-app | done | src/app/host.rs (the opener allow-list, the one network address) and main.rs (window size and floor); the updater and bundle pins moved to sp-update and sp-release (rows W6 to W9). Retired with Tauri: the sidecar name, capabilities/default.json and tauri.conf.json pins |
 | tests/desktop-tokens.test.ts | 9 | sp-app | done | xtask/tests/brand_tokens.rs (5): sp-app's theme.rs held to brand/tokens.json and brand/tokens.css, the six bundled fonts (rust/crates/sp-app/fonts) byte-identical to site/fonts, THIRD-PARTY-NOTICES naming that folder; and theme.rs, fonts.rs. The six checks of the generated desktop/ui/tokens.css retired with it and with `build-desktop-tokens` at the cutover |
-| tests/desktop-ui.test.ts | 425 | sp-app | partial | see "Window test files" |
-| tests/desktop-update-install.test.ts | 20 | sp-app | partial | m/update_flow.rs; the run waits on the wave 3 transport |
+| tests/desktop-ui.test.ts | 425 | sp-app | done | see "Window test files": every decision block in the model, the drawn blocks as screens tests; retired: the tests that read desktop/ui's own source (CSP, no innerHTML, one file talks to Tauri) |
+| tests/desktop-update-install.test.ts | 20 | sp-app | done | m/update_flow.rs (9) and tests/update_run.rs (6): the one run, over sp-update's real flow with fake side effects; the swap itself is sp-update's (tests/hostile_archive.rs, tests/startup_sweep.rs) |
 | tests/device-classify.test.ts | 13 | sp-device | done | sp-device/tests/device_classify.rs |
 | tests/device-kindle.test.ts | 8 | sp-device | done | sp-device/tests/device_kindle.rs |
 | tests/device-list.test.ts | 6 | sp-device | done | sp-device/tests/device_list.rs (with mtp-kindle's three listing checks) |
@@ -132,9 +132,9 @@ move too.
 | tests/review-screens.test.ts | 12 | xtask | done | xtask/tests/review_screens.rs (12), in scratch repos |
 | tests/route-facts.test.ts | 32 | sp-engine | done | sp-engine/tests/route_facts.rs (29); the 3 checks of the DEFAULT device probe (listDevices with its options) wait for the sp-device branch: route_facts takes the device list from its caller |
 | tests/routes.test.ts | 82 | sp-engine | done | sp-engine/tests/routes.rs (49; the TypeScript's generated per-case tests folded into loops) |
-| tests/send-device.test.ts | 34 | sp-engine | todo | the sp-device branch |
-| tests/send-panel-ui.test.ts | 125 | sp-app | partial | see "Window test files" |
-| tests/send-routes-ui.test.ts | 71 | sp-app | partial | see "Window test files" |
+| tests/send-device.test.ts | 34 | sp-app | done | sp-app/src/model/device.rs (11 tests, the 34 blocks grouped by card, route row and save row), drawn in screens.rs and behaviors.rs's D rows; see "Window test files". It tested desktop/ui/device.js and send-routes.js, the window's, so its owner is sp-app, not sp-engine |
+| tests/send-panel-ui.test.ts | 125 | sp-app | done | see "Window test files"; the build-ahead timing blocks are model tests of the decision they timed (send_routes.rs `building_ahead_needs_every_condition`, `the_build_line_names_the_wait`), with no DOM timer to drive |
+| tests/send-routes-ui.test.ts | 71 | sp-app | done | m/send_routes.rs; the round trip through the engine's real route catalog is tests/route_catalog.rs, over the CLI's frozen `routes --json` answers that parity holds the Rust CLI to |
 | tests/serialize.test.ts | 64 | sp-fountain | done | sp-fountain/tests/serialize.rs (64); "a parsed mini-slug reaches the EPUB" keeps its token half here, its `<p class="mini-slug">` half is sp-epub's (sp-epub/tests/epub.rs, done) |
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | done | sp-engine/tests/settings_app_defaults.rs |
 | tests/sidecar-targets.test.ts | 26 | xtask | retired | no sidecar in the Rust app (Decisions); the surviving target table is pinned by xtask/tests/cli_targets.rs |
@@ -170,7 +170,7 @@ users until hardware day (see Decisions). These files exist only on branch
 | native/mtp-helper (cargo tests) | 47 | sp-mtp | done | moved to rust/crates/sp-mtp unchanged but for the crate name; 40 unit tests and tests/virtual_device.rs (7, mtp-rs's in-memory device) |
 | tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
 | tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
-| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes; the two end-to-end runs are in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli) |
+| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs, and the two end-to-end runs in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli). Left: the route list (3), because sp-engine's routes do not list an MTP Kindle yet. MTP is off until hardware day (Decisions), and those three are written when the route is switched on |
 | tests/mtp-window-rules.test.ts | 7 | sp-app | done | tests/mtp_window_rules.rs (and send-panel-ui's "a Kindle over MTP"); MTP stays off in the engine |
 
 ### Test helpers: tests/helpers/
@@ -191,21 +191,22 @@ users until hardware day (see Decisions). These files exist only on branch
 ## Stage parity: the oracle
 
 Each crate also proves its stage against `rust/oracle/<fixture>/` (committed)
-and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
+and `rust/oracle-real/` (local only). Both were frozen at the cutover: there
+is no TypeScript left to regenerate them (rust/README.md).
 
 | Stage | Oracle file | Owner | status |
 |---|---|---|---|
-| pdf.js facts | pages.json | sp-pdf | todo |
-| lines and pictures | lines.json | sp-parser (extract) | todo |
-| parsed elements | elements.json | sp-parser | todo; the model reads and writes it back unchanged (sp-model/tests/oracle.rs) |
-| .fountain | script.fountain | sp-fountain | todo |
+| pdf.js facts | pages.json | sp-pdf | done: sp-pdf/tests/facts.rs (`committed_fixtures_read_to_the_oracle`, `real_scripts_read_to_the_oracle`): the PDF read to the dump's pages.json exactly, every picture's pixels to its `pixels/` file |
+| lines and pictures | lines.json | sp-parser (extract) | done: sp-parser/tests/oracle.rs (`committed_fixtures_match_the_oracle_at_both_stages`, and the real scripts'), the same lines, page count, repairs, picture placements and statistics |
+| parsed elements | elements.json | sp-parser | done: sp-parser/tests/oracle.rs, lines.json to elements.json and both stages chained; the model reads and writes it back unchanged (sp-model/tests/oracle.rs) |
+| .fountain | script.fountain | sp-fountain | done: sp-fountain/tests/oracle.rs (`committed_fountain_is_byte_identical`, `real_fountain_is_byte_identical_when_present`) |
 | tokens | tokens.json | sp-fountain (tokenizer) | done: equal on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs); plus 44 hand cases recorded from fountain-js (tests/tokenizer.rs) and an ignored differential fuzz test against fountain-js under bun (tests/tokenizer_fuzz.rs) |
-| EPUB | book.epub | sp-epub | todo |
-| preview | book.preview.html | sp-epub | todo |
-| MOBI | book.mobi | sp-mobi | todo |
-| AZW3 | book.azw3 | sp-azw3 | todo |
-| FDX | book.fdx | sp-fdx | todo |
-| pictures | images/ | sp-parser | todo |
+| EPUB | book.epub | sp-epub | done: sp-epub/tests/oracle.rs (`every_committed_fixture_builds_the_oracle_book_byte_for_byte`, and the real scripts'), entry by entry, pictures by decoded pixels |
+| preview | book.preview.html | sp-epub | done: sp-epub/tests/oracle.rs, built beside the EPUB and compared byte for byte |
+| MOBI | book.mobi | sp-mobi | done: sp-mobi/tests/oracle.rs, byte for byte, committed and real |
+| AZW3 | book.azw3 | sp-azw3 | done: sp-azw3/tests/oracle.rs, from the oracle's book.epub, byte for byte, committed and real |
+| FDX | book.fdx | sp-fdx | done: sp-fdx/tests/oracle.rs, from tokens.json, byte for byte, committed and real |
+| pictures | images/ | sp-parser | done: sp-parser/tests/oracle.rs, by decoded pixels where the dump carries its `pixels/` folder; and the parity rows compare every picture folder the CLI writes (Decisions) |
 | --json answer | convert.json | sp-cli | done: `cargo xtask parity` runs both CLIs on every committed fixture and real script and compares the answer as values (the convert rows), with every book and the picture folder |
 
 ## Window feature inventory
@@ -235,10 +236,10 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | W3 | No title bar of its own on macOS (titleBarStyle Overlay, hidden title): the paper runs under the traffic lights | tauri/tauri.conf.json | done |
 | W4 | Drag strip: a transparent band the height of the sheet's top padding (space-7) at the top of the PAGE, scrolling away with it, moves the window; never covers a control | ui/frame.js, ui/style.css .drag-strip | done |
 | W5 | The gaps in the tab bar also move the window; a tab click is still a tab | ui/frame.js (data-tauri-drag-region on the tablist) | done |
-| W6 | Identifier `com.darkwell.screepub`, product name Screepub, version 0.11.1 | tauri/tauri.conf.json | wave 3 |
-| W7 | macOS minimum 13.0; Apple-silicon-only Mac build | tauri/tauri.conf.json, desktop/README.md | wave 3 |
-| W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | wave 3 |
-| W9 | Linux launcher entry Categories=Office; no PDF file association; no path read from the command line | desktop/README.md | wave 3 |
+| W6 | Identifier `com.darkwell.screepub`, product name Screepub, version 0.11.1 | tauri/tauri.conf.json | done (sp_update::IDENTIFIER; sp-release mac.rs writes it into Info.plist, its test reads it back; the version is the workspace's, checked by `sp-release version-check` in release.yml) |
+| W7 | macOS minimum 13.0; Apple-silicon-only Mac build | tauri/tauri.conf.json, desktop/README.md | done (sp-release mac.rs: LSMinimumSystemVersion 13.0, its test; build-app-bundle refuses an Intel bundle, xtask/tests/build_app_bundle.rs) |
+| W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | done (sp-release mac.rs and linux.rs lay them out; rust.yml and release.yml pass both as --resource; sp-release/tests/pipeline.rs and xtask/tests/native_bundle.rs find them in the bundles) |
+| W9 | Linux launcher entry Categories=Office; no PDF file association; no path read from the command line | desktop/README.md | done (sp-release linux.rs `desktop_entry`: Categories=Office, no MimeType, Exec with no %f; its test `the_launcher_says_office`) |
 | W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | done (muda: app, Edit and Window menus; Edit items passed on to egui, menu.rs test) |
 | W11 | Boot check: the engine is asked `--version --json`; a failure puts the engine's sentence on its own alarm-coloured line above the stamp (the stamp stays) | ui/main.js, ui/frame.js engineFailed | done |
 | W12 | Engine missing or unstartable: "could not find/start the Screepub engine (sidecar ...)" with the build hint | tauri/src/sidecar.rs | gap: no sidecar in Rust (direct calls); the line is shown for an engine call that cannot start at all |
@@ -539,7 +540,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | A5 | Decorative furniture hidden from assistive technology: the rail, the well's mark, the result's page, the typed page, the preview, the build bar | all | done |
 | A6 | Nothing is announced twice: a live line is rewritten only when its words change | ui/send-panel.js showBuild, ui/kfx.js say | done |
 
-**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-11 (wave 3): 233 done, 4 wave 3 (W6 to W9, the bundle: the xtask's), 1 gap (W12: no sidecar to be missing).
+**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-12 (the final cutover integration): 237 done, 1 gap (W12: no sidecar to be missing; the row says what stands in).
 
 ## Window test files
 
@@ -552,21 +553,21 @@ for it):
 
 | TS test file (tests) | Rust tests | Status |
 |---|---|---|
-| desktop-ui.test.ts (425) | m/convert.rs, m/read.rs, m/tune.rs, m/kfx.rs, m/book_queue.rs, m/busy.rs, m/focus.rs, m/frame.rs, m/update.rs, m/feedback.rs, engine.rs (argv contract), screens (Convert, Read, Settings, notes, heads-up, focus after a dialog, stray null) | partial: every decision block ported; mounted-DOM blocks ported as screens tests where the behavior is drawn; source-reading tests about desktop/ui itself (CSP, no innerHTML, one file talks to Tauri) have no Rust subject |
-| send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), behaviors (D rows, keep-focus-by-key D26), m/device.rs, m/focus.rs | partial: build-ahead timing blocks ported as model tests only |
-| send-routes-ui.test.ts (71) | m/send_routes.rs | partial: the round trip against the engine's real route catalog waits on sp-engine |
+| desktop-ui.test.ts (425) | m/convert.rs, m/read.rs, m/tune.rs, m/kfx.rs, m/book_queue.rs, m/busy.rs, m/focus.rs, m/frame.rs, m/update.rs, m/feedback.rs, engine.rs (argv contract), screens (Convert, Read, Settings, notes, heads-up, focus after a dialog, stray null) | done: every decision block ported; mounted-DOM blocks ported as screens tests where the behavior is drawn; retired: the source-reading tests about desktop/ui itself (CSP, no innerHTML, one file talks to Tauri), which have no Rust subject |
+| send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), behaviors (D rows, keep-focus-by-key D26), m/device.rs, m/focus.rs | done: the build-ahead timing blocks are model tests of the decision they timed |
+| send-routes-ui.test.ts (71) | m/send_routes.rs, tests/route_catalog.rs | done: the round trip through the engine's real route catalog reads the CLI's frozen `routes --json` answers |
 | send-device.test.ts (34) | m/device.rs | ported |
 | page-show.test.ts (22) | m/page_show.rs, src/app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
 | page-timing.test.ts (16) | m/page_timing.rs | ported |
 | device-watch.test.ts (9) | m/device_watch.rs | ported |
 | device-requests-ui.test.ts (11) | m/requests.rs, screens (My device isn't here) | ported |
-| desktop-update-install.test.ts (20) | m/update.rs, m/update_flow.rs (the one run's state machine), m/busy.rs (retire, holds, quiet), behaviors (U9, N12) | partial: the install and restart run itself waits on the wave 3 transport |
+| desktop-update-install.test.ts (20) | m/update.rs, m/update_flow.rs (the one run's state machine), m/busy.rs (retire, holds, quiet), behaviors (U9, N12), tests/update_run.rs | done: the run over sp-update's real flow with fake side effects |
 | desktop-notes.test.ts (14) | m/notes.rs, screens (the stamp opens the notes) | ported (the generator becomes an xtask) |
-| desktop-layout.test.ts (26) | m/layout.rs | partial: geometry ported; CSS-text pins have no Rust subject |
-| desktop-layout-measured.test.ts (16) | m/layout.rs (900, 1280, 1800) | ported as geometry; a pass measuring drawn rects is still to write |
+| desktop-layout.test.ts (26) | m/layout.rs | done: geometry ported; retired: the CSS-text pins, which have no Rust subject |
+| desktop-layout-measured.test.ts (16) | m/layout.rs (900, 1280, 1800), behaviors (C3, the L rows) | done: the geometry, and the drawn rects measured |
 | desktop-tokens.test.ts (9) | theme.rs (values pinned to tokens.css and style.css), fonts.rs (the six faces, byte for byte) | ported |
-| desktop-shell.test.ts (67) | src/app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
-| beta-marks.test.ts (10) | m/tune.rs, m/device.rs (which rows wear it), screens (badges drawn) | partial: CLI help, README and site checks are not the window's |
+| desktop-shell.test.ts (67) | src/app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | done: the updater and bundle pins moved to sp-update and sp-release; retired with Tauri: the sidecar name, capabilities and tauri.conf pins |
+| beta-marks.test.ts (10) | m/tune.rs, m/device.rs (which rows wear it), screens (badges drawn) | done for the window's 3; the CLI help, README and site checks are sp-cli's and xtask's (the behavior-tests table) |
 | update-compare-module.test.ts (9) | m/update_compare.rs | ported (moves to sp-engine) |
 | no-em-dash.test.ts (3) | tests/no_em_dash.rs (sp-app's sources, comments stripped, allow-list kept honest) | ported for the window; the engine crates' half is xtask/tests/no_em_dash.rs |
 | app-references, capture*, build-*, bump-version, cli-*, release-*, smoke-bundle | not window behavior | owned by the xtask, CLI and packaging waves |
@@ -1064,3 +1065,60 @@ names the check it affects.
   the real dpkg-deb and rpm reading the packages where installed. One
   base64 (0.23, which plist, rpm and ureq already bring) and one tar in
   the workspace table.
+- **The final cutover integration (2026-10-12, branch rust/final).** The
+  whole-port review's fixes, the xtask, capture, docs, notices, skill and
+  repo-checks branches merged onto the cutover, then the review's open
+  items:
+  - **Deliberate output changes go through `cargo xtask parity --accept
+    <row>...`.** It refuses unless rows are named, shows each row's diff
+    against its frozen answer, and rewrites only those rows of
+    rust/oracle/parity/ (never rust/oracle-real/). The first use: the help
+    line for `--debug` no longer promises pdf.js's warnings (four rows on
+    screenplay; sp-cli's tests/usage.rs lists it in `CHANGED_ON_PURPOSE`).
+  - **O1, the Linux build's headers.** alsa-sys and yeslogic-fontconfig-sys
+    ask pkg-config on Linux; every apt line now installs libasound2-dev and
+    libfontconfig1-dev by name (release.yml lacked the first).
+    xtask/tests/linux_build_deps.rs fails on an unclassified `-sys` crate.
+    libgtk-3-dev stays on the lines for now although nothing on Linux links
+    GTK (muda, its only user, is macOS-only): dropping it is safe by the
+    tree but untested on a runner, so it waits for a CI run to prove it.
+  - **O2, the packages' run-time dependencies.** The .deb's measured
+    `Depends:` gains the libraries the window opens itself
+    (`sp_release::linux::LOADED_AT_RUN_TIME`: xkbcommon and its X11 half,
+    Wayland's client and EGL, Xlib, Xlib-xcb, Xcursor, XInput2, libEGL),
+    and the .rpm declares `Requires:` for the first time: the binary's own
+    DT_NEEDED list read out of the ELF, plus the same libraries by soname.
+    GTK3 is not declared: nothing on Linux loads it (the file dialog asks
+    the XDG portal). rust.yml's bundle job and release.yml's check read both
+    lists back.
+  - **O5, an interrupted swap.** `sp_update::install::sweep_at_startup`
+    puts back a bundle a crash left hidden as `.Screepub.app.old-<pid>`, and
+    clears stale backups (older than ten minutes) once the bundle is there.
+  - **O9, the trusted comment's `file:` field: parity kept, not checked.**
+    tauri-plugin-updater 2.12.0 reads only `version:`; sp-update does the
+    same, and says why (verify.rs).
+  - **O10, the rehearsal's compile-time values.** Only sp-update's
+    `rehearsal` feature reads SCREEPUB_UPDATE_*; without it build.rs refuses
+    them and the code ignores them, and release.yml refuses them before
+    cargo starts.
+  - **cargo deny** runs on every push against rust/deny.toml, with the three
+    advisories known at the cutover listed with their reasons.
+  - **egui's default fonts stay.** The window's Sans face and every glyph
+    its own six faces lack come from them (sp-app/src/fonts.rs); the
+    notices already carry them.
+  - **The AppImage has its row** in the README's install table and the
+    site's download table; the two checks that waited for them run again.
+- **Known follow-ups, not blocking (2026-10-12).**
+  - **O3, a Flate bomb.** A small FlateDecode stream that inflates to a
+    huge one is inflated whole by hayro-syntax before sp-pdf sees it. The
+    picture cap (MAX_PIXELS, 2^26) stops a picture from being DECODED at a
+    hostile size, but the inflate itself has no cap, and a content stream
+    is not a picture. A capped inflate needs a hook in hayro-syntax's
+    filter chain (or a fork of it), which is not a small wrapper, so it is
+    left for a hayro-syntax release or a deliberate fork.
+  - **O4, a slow JPEG 2000 picture.** hayro-jpeg2000 decodes a picture in
+    one call; the picture budget is wall-clock but is checked between
+    pictures, so one large lossless JPX can run past it before the next
+    check. Capping it needs the decoder to report progress or take a
+    deadline. Until then the budget bounds the number of such pictures, not
+    the time one of them takes.

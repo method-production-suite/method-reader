@@ -575,6 +575,9 @@ mod tests {
     fn the_launcher_says_office() {
         assert!(desktop_entry().contains("\nCategories=Office;\n"));
         assert!(desktop_entry().contains("\nExec=screepub-desktop\n"));
+        // Row W9: no file association, and no path handed in by the launcher.
+        assert!(!desktop_entry().contains("MimeType"));
+        assert!(!desktop_entry().contains('%'));
     }
 
     #[test]
