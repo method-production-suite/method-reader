@@ -569,6 +569,57 @@ the window's parity spec. Where each one's behaviors live in `sp-app`
 | no-em-dash.test.ts (3) | none yet | todo: a Rust source scan of user-facing strings |
 | app-references, capture*, build-*, bump-version, cli-*, release-*, smoke-bundle | not window behavior | owned by the xtask, CLI and packaging waves |
 
+## Tools
+
+Every file in tools/ (inventoried 2026-10-11, 45 files), where it is used,
+and the `cargo xtask` command it becomes (rust/crates/xtask/src/lib.rs lists
+them all; `cargo xtask --help` prints them). "Used by" names the callers
+that run it; the docs that only mention a tool are history and are not
+listed, except the current ones (CLAUDE.md, CONTRIBUTING.md,
+docs/developers.md, docs/mac-qa.md, docs/release-secrets.md). SKILL is the
+/release skill (.claude/skills/release/SKILL.md, local to the owner's
+machine and not versioned); its commands change to `cargo xtask ...` at
+cutover.
+
+| Tool | Kind | Used by | xtask command | status |
+|---|---|---|---|---|
+| tools/make-fixture.py | Python | CLAUDE.md, CONTRIBUTING.md, tests/fixture-stability, torture-layout, torture-markup (and named by many fixture tests) | `make-fixture` | todo |
+| tools/torture-content.py | Python | make-fixture.py (torture.pdf's text) | data of `make-fixture` | todo |
+| tools/field-station-content.py | Python | make-fixture.py (field-station.pdf's text) | data of `make-fixture` | todo |
+| tools/torture-manifest.json | data | tests/torture-coverage, torture-pictures; device-checklist.ts; CLAUDE.md | stays data, read by `device-checklist` | todo |
+| tools/device-checklist.ts | TS | CLAUDE.md (by hand before a device pass) | `device-checklist` | todo |
+| tools/mobi-picture-probe.ts | TS | CLAUDE.md (by hand); tests/mobi-picture-probe | `mobi-picture-probe` (books from sp-mobi::probe) | todo |
+| tools/calibre-config.ts | TS | bunfig.toml preload via tests/isolate-calibre-config.ts, src/export/calibre.ts, tools/capture/run.ts | module `calibre_config` (the engine's half belongs to sp-engine) | todo |
+| tools/capture-screens.ts | TS | CLAUDE.md, SKILL, docs/mac-qa.md | `capture-screens` | todo |
+| tools/review-screens.ts | TS | CLAUDE.md, SKILL | `review-screens` | todo |
+| tools/capture/cdp.ts | TS | capture-screens, tests/helpers/layout-chrome.ts | `capture` module (CDP over tungstenite) | todo |
+| tools/capture/run.ts, server.ts, page.ts, shots.ts, gate.ts, review.ts | TS | capture-screens, review-screens | `capture` module | todo |
+| tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | drives desktop/ui today; the egui window is driven natively at cutover | todo |
+| tools/capture/frame.html, hero.html | HTML | capture-screens (picture frames) | stay HTML, like site/ | todo |
+| tools/make-og.sh | shell | site/og-card.html (by hand) | `make-og` | todo |
+| tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | todo |
+| tools/release-notes.ts | TS | SKILL (the draft's facts) | `release-notes` | todo |
+| tools/build-desktop-notes.ts | TS | desktop.yml, bump-version.ts, SKILL | `build-desktop-notes` (also writes sp-app's notes) | todo |
+| tools/build-desktop-tokens.ts | TS | desktop.yml | `build-desktop-tokens` | todo |
+| tools/build-update-compare.ts | TS | desktop.yml | `build-update-compare` | todo |
+| tools/hooks/require-release-notes.sh | shell | the owner's PreToolUse hook (.claude/settings.local.json), SKILL | `require-release-notes` | todo |
+| tools/bump-tap.sh | shell | release.yml (`tap`), SKILL | `bump-tap` | todo |
+| tools/check-tap.sh | shell | release.yml, tap-freshness.yml | `check-tap` | todo |
+| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | todo |
+| tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | todo |
+| tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | stays data, read by `build-cli` | todo |
+| tools/smoke-cli.ts | TS | ci.yml, release.yml, desktop.yml, CLAUDE.md | `smoke-cli` | todo |
+| tools/verify-signing.ts | TS | docs/mac-qa.md (by hand) | `verify-signing` | todo |
+| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | todo |
+| tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | todo |
+| tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | todo |
+| tools/dmg.ts | TS | smoke-bundle.ts, verify-signing.ts | part of `packaging` | todo |
+| tools/update-signature.ts | TS | release.yml | `update-signature` | todo |
+| tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | todo |
+| tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | `build-sidecar` answers "retired" | retired |
+| tools/sidecar-targets.ts | TS | build-sidecar.ts, desktop/src-tauri/src/sidecar.rs | none | retired |
+| tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine's answers; deleted at cutover with it | stays until cutover |
+
 ## Decisions
 
 - **EPUB deflate streams (sp-epub, 2026-10-11).** The zip writer

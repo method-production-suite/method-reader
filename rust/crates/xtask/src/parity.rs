@@ -29,6 +29,21 @@ use crate::table::{COMMANDS, CommandRow, Invocation};
 /// Matches tools/oracle/freeze-clock.ts and dump.ts: 2026-01-01T00:00:00Z.
 const DEFAULT_EPOCH: u64 = 1_767_225_600;
 
+/// `cargo xtask parity --help`.
+pub const USAGE: &str = "\
+usage: cargo xtask parity [options]
+
+  --committed-only      skip the real scripts in root fixtures/
+  --fixture <stem>...   only these committed fixtures (e.g. torture)
+  --command <name>...   only these rows of the command table
+  --rust-cli <path>     the Rust binary (default: build crates/sp-cli,
+                        or $SCREEPUB_RUST_CLI)
+  --against-ts          compare the TypeScript CLI with itself, which
+                        checks the harness and the frozen clock
+  --epoch <seconds>     SOURCE_DATE_EPOCH for both sides
+  --keep                keep the scratch folders and print where
+";
+
 struct Options {
     committed_only: bool,
     fixtures: Vec<String>,
@@ -234,6 +249,10 @@ fn diff_runs(row: &CommandRow, ts: &Run, rs: &Run) -> Vec<(String, String)> {
 }
 
 pub fn run(args: &[String]) -> Result<bool, String> {
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        print!("{USAGE}");
+        return Ok(true);
+    }
     let opts = parse(args)?;
     let ts = Side::typescript();
     let other = if opts.against_ts {
