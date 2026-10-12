@@ -37,17 +37,17 @@ move too.
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
-| tests/build-app-bundle.test.ts | 72 | xtask + sp-release | done | xtask/tests/build_app_bundle.rs (74); the native window's new half in xtask/tests/native_bundle.rs (18); and sp-release (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs) and tests/pipeline.rs: the names, layouts and update archive; the Tauri-bundler checks (overlay, discovered artifact, magic) retire with tauri-bundler; the container checks moved into release.yml's per-bundle check step |
+| tests/build-app-bundle.test.ts | 72 | sp-release + xtask | done | one implementation, sp-release's (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs; sp-release/tests/pipeline.rs and compat.rs); `cargo xtask build-app-bundle` keeps the Tauri path until cutover and drives sp-release for `--app native`: xtask/tests/build_app_bundle.rs (74) and native_bundle.rs (18) run against it. The Tauri-bundler checks (overlay, discovered artifact, magic) retire with tauri-bundler |
 | tests/build-cli-e2e.test.ts | 4 | xtask | done | xtask/tests/build_cli_e2e.rs (2): opt-in (SCREEPUB_REAL_CLI_BUILD=1, the Mac half also SCREEPUB_REAL_CODESIGN=1), host target and Mac only, since each target builds on its own runner |
 | tests/build-cli.test.ts | 83 | xtask | done | xtask/tests/build_cli.rs (89) |
 | tests/build-sidecar.test.ts | 28 | xtask | retired | the Rust app links the engine, so there is no sidecar (Decisions); what survives (the Rust triples, now the CLI's release targets) is xtask/tests/cli_targets.rs (6); `build-sidecar` answers "retired" |
-| tests/build-update-manifest.test.ts | 20 | xtask + sp-release | done | xtask/tests/build_update_manifest.rs (21); and sp-release/src/manifest.rs (shape pinned byte for byte, every refusal) and tests/pipeline.rs |
+| tests/build-update-manifest.test.ts | 20 | sp-release | done | sp-release/src/manifest.rs (shape pinned byte for byte, every refusal); xtask/tests/build_update_manifest.rs (21) runs the same checks through `cargo xtask build-update-manifest`, a thin caller |
 | tests/bump-version.test.ts | 15 | xtask | done | xtask/tests/bump_version.rs (20), on scratch repos shaped before and after cutover |
-| tests/bundle-archive.test.ts | 27 | xtask + sp-release | done | xtask/tests/bundle_archive.rs (28), on the same frozen archive bytes; and sp-release/src/archive.rs (reproducible tar.gz, cli tarball and zip); the Bun-engine archive checks retire with the sidecar |
+| tests/bundle-archive.test.ts | 27 | xtask | done | xtask/tests/bundle_archive.rs (28): the READER of .deb and .rpm, on the same frozen archive bytes; the writers are sp-release's (archive.rs, linux.rs) |
 | tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
 | tests/capture-chrome.test.ts | 5 | xtask | done | xtask/tests/capture_chrome.rs (7), against a fake Chrome; the last needs a real Chrome and skips without it |
 | tests/capture.test.ts | 46 | xtask | done | xtask/tests/capture.rs (47) and capture_picture.rs (6); still drives desktop/ui/app.js, through a copy of its argument builders checked against app.js (Decisions) |
-| tests/check-latest.test.ts | 17 | xtask + sp-release | done | xtask/tests/check_latest.rs (18), against a fake GitHub on 127.0.0.1; and sp-release/src/check_latest.rs (judge_manifest: version, platforms, key id, foreign key); the Intel-era and per-asset signature cases are ported in code, 2 of 17 checks written as tests so far |
+| tests/check-latest.test.ts | 17 | sp-release | done | sp-release/src/check_latest.rs, the one judgement (taken from xtask's port, the faithful one); xtask/tests/check_latest.rs (18) runs every case through `cargo xtask check-latest`'s thin wrapper, against a fake GitHub on 127.0.0.1 |
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | todo |  |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
 | tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
@@ -139,7 +139,7 @@ move too.
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | done | sp-engine/tests/settings_app_defaults.rs |
 | tests/sidecar-targets.test.ts | 26 | xtask | retired | no sidecar in the Rust app (Decisions); the surviving target table is pinned by xtask/tests/cli_targets.rs |
 | tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
-| tests/signature-box.ts | 0 | sp-app + sp-update | done | xtask/tests/packaging_common/mod.rs (fake_signature_box, fake_public_key_box, and tauri-cli's published test key for real signatures); and test helper: sp-update/tests/common/mod.rs (TestKey signs as tauri-cli does) and sp-release/src/sign.rs |
+| tests/signature-box.ts | 0 | sp-update + xtask | done | test helper: sp-update/tests/common/mod.rs (TestKey signs as tauri-cli does), xtask/tests/packaging_common/mod.rs (fake boxes and tauri-cli's published test key) |
 | tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
 | tests/smoke-bundle.test.ts | 35 | xtask | done | xtask/tests/smoke_bundle.rs (38); the native window's bundles get the binary-and-version check only until sp-app has a headless mode (Decisions) |
 | tests/smoke-cli.test.ts | 21 | xtask | done | xtask/tests/smoke_cli.rs (21) |
@@ -153,7 +153,7 @@ move too.
 | tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
 | tests/update-compare-module.test.ts | 9 | sp-app | done | xtask/tests/update_compare.rs (13): `build-update-compare`, and sp-app's comparator held to the engine's recorded answers on every platform; the live half runs through bun and skips without it; and m/update_compare.rs; one Rust copy serves both |
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
-| tests/update-signature.test.ts | 14 | xtask + sp-release | done | xtask/tests/update_signature.rs (17), plus signing the archive the way tauri-cli did; and sp-release/src/sign.rs (keygen, key text or file, password, the plugin's and the Rust app's checks) and sp-update/src/verify.rs (key id of the shipped key, signed-version rules from the plugin's own tests) |
+| tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (17) runs the readers and the signer through `cargo xtask update-signature`'s module |
 | tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
 | tests/workflow-shell.test.ts | 3 | xtask | todo |  |
@@ -607,17 +607,17 @@ cutover.
 | tools/hooks/require-release-notes.sh | shell | the owner's PreToolUse hook (.claude/settings.local.json), SKILL | `require-release-notes` | done: xtask/tests/release_hook.rs (24) |
 | tools/bump-tap.sh | shell | release.yml (`tap`), SKILL | `bump-tap` | done: xtask/tests/tap_tools.rs |
 | tools/check-tap.sh | shell | release.yml, tap-freshness.yml | `check-tap` | done: xtask/tests/tap_tools.rs |
-| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | done: xtask/tests/check_latest.rs (18) |
-| tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | done: xtask/tests/build_cli.rs (89), build_cli_e2e.rs (2, opt-in) |
+| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | done: thin over sp-release/src/check_latest.rs (`sp-release check-latest` in release.yml and tap-freshness.yml); xtask/tests/check_latest.rs (18) |
+| tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | done: xtask/tests/build_cli.rs (89), build_cli_e2e.rs (2, opt-in); its archives are written by sp-release's `cli_tarball`/`cli_zip`, as release.yml's `sp-release cli-archive` |
 | tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | stays data, read by `build-cli` | done: stays data; three bun-era keys go at cutover (Decisions) |
 | tools/smoke-cli.ts | TS | ci.yml, release.yml, desktop.yml, CLAUDE.md | `smoke-cli` | done: xtask/tests/smoke_cli.rs (21) |
 | tools/verify-signing.ts | TS | docs/mac-qa.md (by hand) | `verify-signing` | done: xtask/tests/verify_signing.rs (34) |
-| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | done: xtask/tests/build_app_bundle.rs (74), native_bundle.rs (18) |
-| tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | done: xtask/tests/bundle_archive.rs (28) |
+| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | done: the files are sp-release's (mac, linux, nsis, archive, sign); the xtask command orders the steps (xtask/tests/build_app_bundle.rs, native_bundle.rs); release.yml calls sp-release directly |
+| tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | done: xtask/tests/bundle_archive.rs (28); reading only |
 | tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | partial: xtask/tests/smoke_bundle.rs (38); left: running the native window headless (Decisions) |
 | tools/dmg.ts | TS | smoke-bundle.ts, verify-signing.ts | module `dmg`, shared by `smoke-bundle` and `verify-signing` | done: src/dmg.rs, the one copy smoke-bundle and verify-signing share |
-| tools/update-signature.ts | TS | release.yml | `update-signature` | done: xtask/tests/update_signature.rs (17) |
-| tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | done: xtask/tests/build_update_manifest.rs (21) |
+| tools/update-signature.ts | TS | release.yml | `update-signature` | done: thin over sp-release (boxes.rs, sign.rs) and sp-update (verify.rs); xtask/tests/update_signature.rs (17), sp-release/tests/compat.rs |
+| tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | done: thin over sp-release/src/manifest.rs (`sp-release manifest` in release.yml); xtask/tests/build_update_manifest.rs (21) |
 | tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | `build-sidecar` answers "retired" | retired |
 | tools/sidecar-targets.ts | TS | build-sidecar.ts, desktop/src-tauri/src/sidecar.rs | none | retired |
 | tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine asked to show its work (dump.ts also writes each picture's raw pixels to `pixels/`); deleted at cutover with it | stays until cutover |
@@ -864,44 +864,84 @@ names the check it affects.
   macos-15 (arm64), windows-latest, ubuntu-latest (x64) and
   ubuntu-24.04-arm (linux-arm64), with no cross-compiling. That is also why
   build_cli_e2e.rs builds only the host target.
-- **OPEN for the owner: the TLS provider for xtask's GitHub reads.**
-  bump-tap, check-tap and check-latest use ureq over rustls with
-  rustls-rustcrypto 0.0.2-alpha, a pure-Rust provider (xtask built alone
-  compiles no C; a whole-workspace build still compiles ring for sp-app and
-  sp-device). That alpha depends on rustls-webpki 0.102.8, which
-  RUSTSEC-2026-0104 covers (advisory-db, 2026-04-22; CVE-2026-93599,
-  GHSA-82j2-j2ch-gfr8; denial of service). What it says: parsing a
-  certificate revocation list with `BorrowedCertRevocationList::from_der`
-  or `OwnedCertRevocationList::from_der` can panic on a valid but empty
-  BIT STRING in the onlySomeReasons element of an IssuingDistributionPoint
+- **The TLS provider: one stack, ring (2026-10-11; the owner may still
+  choose otherwise for the whole port).** The xtask branches first gave
+  bump-tap, check-tap and check-latest ureq over rustls with
+  rustls-rustcrypto 0.0.2-alpha, a pure-Rust provider. That alpha depends
+  on rustls-webpki 0.102.8, which RUSTSEC-2026-0104 covers (advisory-db,
+  2026-04-22; CVE-2026-93599, GHSA-82j2-j2ch-gfr8; denial of service). What
+  the advisory says: parsing a certificate revocation list with
+  `BorrowedCertRevocationList::from_der` or
+  `OwnedCertRevocationList::from_der` can panic on a valid but empty BIT
+  STRING in the onlySomeReasons element of an IssuingDistributionPoint
   extension, before the CRL's signature is checked; applications that do
   not use CRLs are not affected. Patched: >= 0.103.13 and < 0.104.0-alpha.1,
-  or >= 0.104.0-alpha.7. There is no 0.102.x fix, so 0.102.8 is in range.
-  xtask configures no CRLs, so by the advisory's own terms it is not
-  affected, but `cargo audit` will flag the lockfile. The alternative is
-  rustls's ring provider, which sp-app already uses (through ureq, on
-  rustls-webpki 0.103.15, which is patched).
+  or >= 0.104.0-alpha.7; there is no 0.102.x fix, so 0.102.8 is in range.
+  xtask configured no CRLs, so by the advisory's own terms it was not
+  affected, but `cargo audit` would flag the lockfile. Once xtask's release
+  commands became callers of sp-release, xtask linked sp-update's ureq and
+  ring anyway, so rustls-rustcrypto was dropped: the whole port now speaks
+  HTTPS through ureq's rustls on ring, rustls-webpki 0.103.15 (patched),
+  and the lock holds no 0.102.x. Ring carries C and assembly; the release
+  design already leaves "the unaudited pure-Rust provider instead" to the
+  owner, and that choice would now cover sp-app, sp-update, sp-release and
+  xtask together.
 - **The capture gate's argument builders (2026-10-11).** The capture runs
   the engine the way the window does, so xtask/src/capture/window_argv.rs
   holds a copy of the window's argv builders. Until cutover
   xtask/tests/capture.rs checks the copy against desktop/ui/app.js; after
   it, against sp-app's own builders.
-- **Windows upgrade over 0.11 (build-app-bundle, open).** The native NSIS
-  installer writes the same uninstall registry key and install folder as
-  the Tauri one, so it should upgrade 0.11 in place. That is unverified on
-  a real Windows system.
-- **Linux package dependencies (build-app-bundle, open).** The native
-  window's .deb and .rpm declare no dependencies, though egui loads X11 or
-  Wayland and xkbcommon at run time. Add them (Depends: and Requires:)
-  before cutover.
+- **Windows upgrade over 0.11 (sp-release nsis, open).** The NSIS script
+  sp-release writes installs per user into the Tauri installer's folder
+  (`%LOCALAPPDATA%\Screepub`) under its uninstall key, with the same
+  executable name, and deletes the old engine sidecar, so it should
+  upgrade 0.11 in place. That is unverified on a real Windows system.
+- **Linux package dependencies (open, half done).** egui loads X11 or
+  Wayland and xkbcommon at run time. The .deb release.yml publishes gets
+  its Depends: measured on the built binary (dpkg-shlibdeps, passed to
+  `sp-release deb --depends`), but the .rpm declares no Requires: and a
+  laptop `cargo xtask build-app-bundle --app native` writes neither. Add
+  the rpm's Requires: (sp-release linux.rs) before cutover.
 - **sp-app needs a headless mode for smoke-bundle (open).** The Tauri
   bundle's smoke runs its engine sidecar (`--version --json` and a
   conversion). The native window has neither, so smoke-bundle checks only
   that its binary is present, executable and declares the right version.
   sp-app needs `--version --json` and `--smoke <pdf>` for the full check.
 - **Before cutover: the icons and the updater key (build-app-bundle).**
-  The native bundles look for icons in rust/crates/sp-app/icons first and
-  fall back to desktop/src-tauri/icons, and read the updater public key
-  from tauri.conf.json. The icons move to rust/crates/sp-app/icons, and the
+  `cargo xtask build-app-bundle --app native` looks for icons in
+  rust/crates/sp-app/icons first and falls back to desktop/src-tauri/icons,
+  and reads the updater public key from tauri.conf.json (release.yml hands
+  sp-release its icons by path, and the app's own key is sp_update::PUBKEY). The icons move to rust/crates/sp-app/icons, and the
   public key needs a home of its own outside tauri.conf.json, before
   desktop/ goes.
+- **One implementation per release job (2026-10-11, the xtask
+  integration).** The xtask tool branches and rust/release each ported the
+  release tools. sp-release, the library release.yml runs, is now the one
+  implementation of every file a release publishes: the `.app` layout
+  (mac.rs), the update archive and the CLI archives (archive.rs, with
+  Contents/MacOS forced to 0755 as xtask's writer did), the minisign
+  signer (sign.rs, minisign pinned =0.7.3 in the workspace), latest.json
+  (manifest.rs), the .deb, the .rpm and the AppDir (linux.rs, now mapping a
+  prerelease's `-` to `~` as xtask's did), the NSIS script (nsis.rs), and
+  check-latest's judgement (check_latest.rs). Where xtask's port was the
+  more faithful, it moved INTO sp-release: the strict minisign box readers
+  (boxes.rs) and the check-latest judgement (JSON-quoted values, a
+  platforms array, the last matching asset winning), now with an
+  injectable fetcher. The xtask commands keep their names and flags for
+  the /release skill and are thin callers: `update-signature`,
+  `build-update-manifest`, `check-latest`, `build-cli`'s packing, and
+  `build-app-bundle --app native` (which still orders codesign, notarytool,
+  stapler, hdiutil and makensis on a laptop). What stays xtask's alone:
+  the Tauri path of build-app-bundle until cutover, bundle-archive and
+  smoke-bundle (readers), the one DMG helper (src/dmg.rs), verify-signing,
+  and the tap tools. The native window's executable is `screepub-desktop`
+  everywhere (xtask's branch had called it Screepub, screepub-window and
+  Screepub.exe); xtask's tests were moved onto sp-release's names. Tests:
+  xtask's stronger suites (check-latest 18, manifest 21, update-signature
+  17, native bundle 18) now exercise sp-release through the wrappers, and
+  the checks nothing in sp-release had are sp-release/tests/compat.rs:
+  tauri-cli's published key opened by the pinned minisign, the update
+  archive unpacked as tauri-plugin-updater and sp-update unpack it, and
+  the real dpkg-deb and rpm reading the packages where installed. One
+  base64 (0.23, which plist, rpm and ureq already bring) and one tar in
+  the workspace table.
