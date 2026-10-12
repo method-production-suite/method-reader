@@ -46,7 +46,8 @@ and two SHAs on one page both look official.
    `docs/releases/0.4.2.md` is a 21-word stub with no bullets and no
    voice. Stubs are not voice examples: skip them, and if that leaves
    fewer than two real files, use the one real file alone.
-2. **The range facts:** `bun tools/release-notes.ts v<previous>` prints
+2. **The range facts:** `cargo xtask release-notes v<previous>` (from
+   `rust/`) prints
    JSON with `commits` (subjects as data, each flagged `ownerAuthored`),
    `verdictsOpenedInRange` and `verdictsResolvedInRange` (each entry's
    number, title and `Device support:` line), `registryChanges` (the
@@ -64,8 +65,9 @@ and two SHAs on one page both look official.
    `registryChanges` is a shortlist to judge, not a list to transcribe:
    for 0.5.0 it named 11 entries and 6 became bullets. Read the entries
    for FACTS. See the contamination warning in section 5.
-4. **`desktop/ui/tune.js`** if a bullet announces a new switch. That file
-   holds the exact label the reader will see on the window's Settings page.
+4. **`rust/crates/sp-app/src/model/tune.rs`** if a bullet announces a new
+   switch. That file holds the exact label the reader will see on the
+   window's Settings page.
 
 ## 1. Caps, with 0.5.0's actuals as calibration
 
@@ -208,7 +210,7 @@ what was it doing before, what does it do now, what do I do about it.
    should touch.
 7. **Name the control exactly as the Settings page labels it, once**, in the
    sentence that tells the reader they can change it. Get the string from
-   `desktop/ui/tune.js`, not from the registry, which describes options in
+   `rust/crates/sp-app/src/model/tune.rs`, not from the registry, which describes options in
    its own words. This applies when a bullet announces a new switch or
    invites the reader to go change something. A fix bullet that merely
    describes what an existing setting does may use plain English.
@@ -528,7 +530,7 @@ registry. The device coverage that genuinely matters here is a caveat, and
 
 Two, and only two:
 
-1. `verdictsOpenedInRange` from `bun tools/release-notes.ts v<previous>`:
+1. `verdictsOpenedInRange` from `cargo xtask release-notes v<previous>`:
    registry entries whose device verdict became pending during THIS range,
    each carrying its `Device support:` line, which is the sentence you
    actually write the caveat from. Worked example: pair 9.
@@ -586,7 +588,7 @@ it did, the caveat is retired and may be worth a line in the new notes. If
 it did not, the caveat stands and does NOT get repeated.
 
 A marker costs 4 words against the 350-word cap, in `wc -w` and in
-`tests/release-notes.test.ts` alike, because neither tool knows what an
+`rust/crates/xtask/tests/release_notes_copy.rs` alike, because neither tool knows what an
 HTML comment is. Keep markers to this exact shape, and subtract 4 words
 per marker when you want the count of the prose a reader will actually
 see.
