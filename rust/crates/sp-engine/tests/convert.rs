@@ -43,8 +43,25 @@ fn public(name: &str) -> PathBuf {
 }
 
 /// Root fixtures/: real scripts, gitignored. Counts only.
+/// Root fixtures/ (real scripts, gitignored): this checkout's, else the
+/// main checkout's when this is a worktree (found from the shared .git).
 fn private(name: &str) -> PathBuf {
-    common::repo_root().join("fixtures").join(name)
+    let here = common::repo_root().join("fixtures");
+    if here.is_dir() {
+        return here.join(name);
+    }
+    let main = std::process::Command::new("git")
+        .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+        .current_dir(common::repo_root())
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| {
+            PathBuf::from(String::from_utf8_lossy(&o.stdout).trim())
+                .parent()
+                .map(|p| p.join("fixtures"))
+        });
+    main.unwrap_or(here).join(name)
 }
 
 fn bytes(name: &str) -> Vec<u8> {
@@ -1014,10 +1031,10 @@ fn both_edited_documents_still_carry_the_pictures_they_did_not_pay_for() {
 #[test]
 fn a_document_over_the_cap_says_how_many_it_has_and_how_many_it_kept() {
     let path = private("pitchdeck.pdf");
-    // The picture budget (IMAGE_BUDGET_MS, 20 s) is wall-clock time, and an
-    // unoptimized build spends it before the 60th picture (33 kept, measured
-    // 2026-10-11): run this one with `cargo test --release`.
-    if !path.exists() || cfg!(debug_assertions) {
+    // The picture budget (IMAGE_BUDGET_MS, 20 s) is wall-clock time; the
+    // workspace builds the pixel crates optimized even in test builds
+    // (rust/Cargo.toml), without which a debug run kept only 33.
+    if !path.exists() {
         return;
     }
     let result = convert_pdf(
