@@ -3557,6 +3557,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-engine"
+version = "0.11.1"
+dependencies = [
+ "rustix 1.1.5",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sp-fdx",
+ "sp-fountain",
+ "sp-model",
+ "tempfile",
+]
+
+[[package]]
 name = "sp-epub"
 version = "0.11.1"
 dependencies = [
