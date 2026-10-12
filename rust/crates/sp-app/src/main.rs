@@ -46,6 +46,24 @@ fn main() -> ExitCode {
         return ExitCode::from(sp_app::headless::run(what));
     }
     sp_cli::recover_camera_import();
+    // An update swap that died between its renames left the bundle hidden
+    // beside its own name, or left a backup behind: put it back, or clear
+    // it (sp_update::install::sweep_at_startup; nothing outside a bundle).
+    if let Ok(exe) = std::env::current_exe() {
+        let swept = sp_update::install::sweep_at_startup(&exe);
+        if let Some(back) = &swept.restored {
+            eprintln!(
+                "screepub-window: put {} back after an interrupted update",
+                back.display()
+            );
+        }
+        for gone in &swept.removed {
+            eprintln!(
+                "screepub-window: removed {}, left by an earlier update",
+                gone.display()
+            );
+        }
+    }
     let engine = Arc::new(DirectEngine::new());
     let in_flight = engine.in_flight();
     let options = eframe::NativeOptions {

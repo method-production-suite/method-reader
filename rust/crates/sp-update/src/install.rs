@@ -240,6 +240,113 @@ fn sibling(bundle: &Path, tag: &str) -> PathBuf {
     bundle.with_file_name(format!(".{name}.{tag}-{}", std::process::id()))
 }
 
+/// A hidden sibling's name taken apart: `.Screepub.app.old-123` is
+/// `("Screepub.app", "old", 123)`, and `.update-` the same.
+fn parse_sibling(file_name: &str) -> Option<(&str, &str, u32)> {
+    let rest = file_name.strip_prefix('.')?;
+    let (head, pid) = rest.rsplit_once('-')?;
+    let pid: u32 = pid.parse().ok()?;
+    let (name, tag) = head.rsplit_once('.')?;
+    (matches!(tag, "old" | "update") && name.ends_with(".app") && name.len() > 4)
+        .then_some((name, tag, pid))
+}
+
+/// What the startup sweep did.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Swept {
+    /// The bundle put back from its hidden backup.
+    pub restored: Option<PathBuf>,
+    /// Leftovers removed.
+    pub removed: Vec<PathBuf>,
+}
+
+/// A leftover younger than this may belong to a swap still running in
+/// another copy of the app, so it is left alone (a swap takes seconds).
+const LEFTOVER_AGE: std::time::Duration = std::time::Duration::from_secs(600);
+
+/// The leftovers of an interrupted swap beside `dir/name`
+/// (`.<name>.old-<pid>` and `.<name>.update-<pid>`, from any process but
+/// `own_pid`). A swap that died between its two renames leaves no bundle
+/// at all, only the hidden backup: then the newest backup that still holds
+/// a runnable bundle is moved back. Once the bundle is there, leftovers
+/// older than ten minutes are removed. With no bundle and no usable backup
+/// nothing is touched.
+pub fn sweep_beside(dir: &Path, name: &str, own_pid: u32) -> Swept {
+    let mut swept = Swept::default();
+    let bundle = dir.join(name);
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return swept;
+    };
+    let mut leftovers: Vec<(PathBuf, bool, std::time::SystemTime)> = entries
+        .filter_map(Result::ok)
+        .filter_map(|e| {
+            let file = e.file_name();
+            let (n, tag, pid) = parse_sibling(file.to_str()?)?;
+            // A real folder only: never follow a link out of the folder.
+            let meta = std::fs::symlink_metadata(e.path()).ok()?;
+            (n == name && pid != own_pid && meta.is_dir()).then(|| {
+                (
+                    e.path(),
+                    tag == "old",
+                    meta.modified().unwrap_or(std::time::UNIX_EPOCH),
+                )
+            })
+        })
+        .collect();
+    // Newest first.
+    leftovers.sort_by_key(|l| std::cmp::Reverse(l.2));
+    if std::fs::symlink_metadata(&bundle).is_err() {
+        let back = leftovers.iter().position(|(p, old, _)| {
+            *old && bundle_executable(p).is_ok() && std::fs::rename(p, &bundle).is_ok()
+        });
+        match back {
+            Some(i) => {
+                leftovers.remove(i);
+                touch(&bundle);
+                swept.restored = Some(bundle.clone());
+            }
+            None => return swept,
+        }
+    }
+    let now = std::time::SystemTime::now();
+    for (path, _, modified) in leftovers {
+        let age = now.duration_since(modified).unwrap_or_default();
+        if age >= LEFTOVER_AGE && std::fs::remove_dir_all(&path).is_ok() {
+            swept.removed.push(path);
+        }
+    }
+    swept
+}
+
+/// The sweep the window runs as it starts: from its own executable, the
+/// bundle it runs in, and the name that bundle should have. Started from a
+/// hidden backup (Launch Services follows a moved bundle, so the Dock can
+/// open `.Screepub.app.old-<pid>` when `Screepub.app` is gone), the backup
+/// is the one put back. Outside a bundle (a development build, Windows,
+/// Linux) nothing is done.
+pub fn sweep_at_startup(exe: &Path) -> Swept {
+    let bundle = (|| {
+        let macos = exe.parent()?;
+        let contents = macos.parent()?;
+        (macos.file_name()? == "MacOS" && contents.file_name()? == "Contents")
+            .then(|| contents.parent())?
+    })();
+    let Some(bundle) = bundle else {
+        return Swept::default();
+    };
+    let (Some(dir), Some(file)) = (bundle.parent(), bundle.file_name().and_then(|f| f.to_str()))
+    else {
+        return Swept::default();
+    };
+    let name = match parse_sibling(file) {
+        Some((name, "old", _)) => name,
+        Some(_) => return Swept::default(),
+        None if file.ends_with(".app") => file,
+        None => return Swept::default(),
+    };
+    sweep_beside(dir, name, std::process::id())
+}
+
 fn permission(e: &std::io::Error) -> bool {
     e.kind() == std::io::ErrorKind::PermissionDenied
 }
