@@ -325,10 +325,12 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             let words = widgets::caps(s.label());
             let galley = ui.painter().layout_no_wrap(words, font, t.ink);
             let size = galley.size() + Vec2::new(0.0, layout::SPACE[1] + 2.0);
+            // A tab claims drags too: egui hands a press's drag to whatever
+            // below senses one, and the gaps under every tab do.
             let sense = if presence.tab_stop {
-                Sense::click()
+                Sense::click_and_drag()
             } else {
-                Sense::CLICK
+                Sense::CLICK | Sense::DRAG
             };
             let rect = ui.allocate_space(size).1;
             let response = ui.interact(rect, tab_id(s), sense);
@@ -693,17 +695,24 @@ fn ellipse(
     };
     let rings = 14;
     let segments = 48;
+    // The fan starts at the gradient's focal point, so its first stop (a
+    // specular point) is a vertex and every ray runs the stops in order.
+    let (u0, v0) = match grad {
+        Some(g) => ((g.fx * 2.0 - 1.0) * rx, (g.fy * 2.0 - 1.0) * ry),
+        None => (0.0, 0.0),
+    };
     let mut mesh = Mesh::default();
     mesh.vertices.push(Vertex {
-        pos: map(at(0.0, 0.0)),
+        pos: map(at(u0, v0)),
         uv: egui::epaint::WHITE_UV,
-        color: color_at(0.0, 0.0),
+        color: color_at(u0, v0),
     });
     for ring in 1..=rings {
         let k = ring as f32 / rings as f32;
         for s in 0..segments {
             let a = s as f32 / segments as f32 * std::f32::consts::TAU;
-            let (u, v) = (a.cos() * rx * k, a.sin() * ry * k);
+            let (eu, ev) = (a.cos() * rx, a.sin() * ry);
+            let (u, v) = (u0 + (eu - u0) * k, v0 + (ev - v0) * k);
             mesh.vertices.push(Vertex {
                 pos: map(at(u, v)),
                 uv: egui::epaint::WHITE_UV,

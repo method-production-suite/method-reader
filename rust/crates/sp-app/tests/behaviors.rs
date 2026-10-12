@@ -1053,3 +1053,300 @@ fn a6_live_lines_are_polite_statuses() {
     );
     let _ = (App::answer_or, Modifiers::NONE);
 }
+
+// ------------------------------------------------- what the window paints
+
+/// Every shape the last frame painted, groups opened.
+fn painted(h: &H) -> Vec<egui::Shape> {
+    fn open(shape: &egui::Shape, out: &mut Vec<egui::Shape>) {
+        match shape {
+            egui::Shape::Vec(list) => list.iter().for_each(|s| open(s, out)),
+            other => out.push(other.clone()),
+        }
+    }
+    let mut out = vec![];
+    for clipped in &h.output().shapes {
+        open(&clipped.shape, &mut out);
+    }
+    out
+}
+
+/// Whether pressing the pointer at `at` asks the OS to move the window.
+fn moves_the_window(h: &mut H, at: egui::Pos2) -> bool {
+    h.hover_at(at);
+    h.step();
+    h.drag_at(at);
+    h.step();
+    let moved = h
+        .output()
+        .viewport_output
+        .values()
+        .any(|v| v.commands.contains(&egui::ViewportCommand::StartDrag));
+    h.drop_at(at);
+    steps(h);
+    moved
+}
+
+#[test]
+fn w4_w5_the_strip_and_the_tab_bars_gaps_move_the_window_and_a_tab_is_still_a_tab() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    assert!(
+        moves_the_window(&mut h, egui::pos2(640.0, 10.0)),
+        "the strip"
+    );
+    let read = h.get_by_role_and_label(Role::Tab, "Read").rect();
+    let settings = h.get_by_role_and_label(Role::Tab, "Settings").rect();
+    let between = egui::pos2((read.right() + settings.left()) / 2.0, read.center().y);
+    assert!(moves_the_window(&mut h, between), "a gap between tabs");
+    assert!(
+        !moves_the_window(&mut h, read.center()),
+        "a tab is not a gap"
+    );
+    assert_eq!(h.state().surface, Surface::Read, "and the press chose it");
+}
+
+#[test]
+fn n8_the_open_tab_has_a_brass_rule_under_it() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    let t = h.state().tokens();
+    let tab = h.get_by_role_and_label(Role::Tab, "Convert").rect();
+    let rules: Vec<_> = painted(&h)
+        .into_iter()
+        .filter_map(|s| match s {
+            egui::Shape::LineSegment { points, stroke }
+                if stroke.width == 1.5 && stroke.color == t.brass =>
+            {
+                Some(points)
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(rules.len(), 1, "one rule, under the open tab only");
+    let [a, b] = rules[0];
+    assert!((a.x - tab.left()).abs() < 1.0 && (b.x - tab.right()).abs() < 1.0);
+    assert!((a.y - tab.bottom()).abs() < 1.5, "under it: {a:?} {tab:?}");
+}
+
+#[test]
+fn c19_the_send_panel_is_a_hairline_box_with_the_wells_corners_and_the_panel_fill() {
+    let w = world();
+    calm_as(&w, "kobo");
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    let t = h.state().tokens();
+    let ways = h
+        .get_by_role_and_label(Role::Button, "Other ways")
+        .rect()
+        .center();
+    let boxed = painted(&h).into_iter().any(|s| match s {
+        egui::Shape::Rect(r) => {
+            r.fill == t.panel
+                && r.corner_radius == egui::CornerRadius::same(5)
+                && r.stroke == egui::Stroke::new(1.0, t.hole)
+                && r.rect.contains(ways)
+        }
+        _ => false,
+    });
+    assert!(boxed);
+}
+
+#[test]
+fn w16_w17_the_rail_is_two_brass_brads_and_a_punched_hole() {
+    let w = world();
+    let h = harness(&w, Platform::Mac);
+    let t = h.state().tokens();
+    let shapes = painted(&h);
+    let colours_in = |rect: egui::Rect| {
+        let mut seen = std::collections::HashSet::new();
+        for s in &shapes {
+            if let egui::Shape::Mesh(mesh) = s {
+                for v in &mesh.vertices {
+                    if rect.contains(v.pos) {
+                        seen.insert(v.color);
+                    }
+                }
+            }
+        }
+        seen
+    };
+    let rail = sp_app::model::layout::rail(1280.0, 800.0);
+    assert_eq!(rail.iter().filter(|f| f.punch).count(), 1);
+    for f in rail {
+        let rect = egui::Rect::from_center_size(egui::pos2(f.x, f.y), egui::Vec2::splat(f.size));
+        let seen = colours_in(rect);
+        if f.punch {
+            assert!(
+                seen.contains(&t.paper) && seen.contains(&t.ground),
+                "lip and desk"
+            );
+        } else {
+            // The specular point and the edge ring exactly; the face's
+            // middle stops fall between vertices, so near enough.
+            assert!(seen.contains(&t.brass_specular) && seen.contains(&t.brass_edge));
+            let near = |a: egui::Color32, b: egui::Color32| {
+                (0..3).all(|i| (a.to_array()[i] as i32 - b.to_array()[i] as i32).abs() <= 16)
+            };
+            for stop in [t.brass_highlight, t.brass, t.brass_shadow] {
+                assert!(
+                    seen.iter().any(|c| near(*c, stop)),
+                    "the brass face passes {stop:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn w24_a_long_path_wraps_inside_its_box() {
+    let w = world();
+    let mut a = default_answer(&Request::AppSettings);
+    let long = format!(
+        "/{}/Books",
+        "a-very-long-folder-name-without-any-spaces".repeat(8)
+    );
+    a["library"]["path"] = json!(long);
+    w.engine.always("app-settings", Reply::ok(a));
+    let h = harness_sized(&w, Platform::Mac, [900.0, 2000.0]);
+    let mut seen = 0;
+    for node in h.query_all_by_label_contains("a-very-long-folder-name") {
+        seen += 1;
+        assert!(
+            node.rect().right() <= 900.0,
+            "inside the window: {:?}",
+            node.rect()
+        );
+    }
+    assert!(seen > 0, "the path is printed somewhere");
+}
+
+#[test]
+fn o5_the_switch_is_read_again_each_time_the_sheet_opens() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    let open = |h: &mut H| {
+        h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+        steps(h);
+    };
+    let on = |h: &H| {
+        h.get_by_role_and_label(Role::CheckBox, sp_app::model::update::AUTO_LABEL)
+            .accesskit_node()
+            .data()
+            .toggled()
+            == Some(egui::accesskit::Toggled::True)
+    };
+    open(&mut h);
+    assert!(!on(&h));
+    h.key_press(Key::Escape);
+    steps(&mut h);
+    sp_app::model::update::remember_answer(h.state_mut().host.storage.as_mut(), true);
+    open(&mut h);
+    assert!(on(&h), "what was stored meanwhile");
+}
+
+/// A Beta badge on the same line as `rect`, just after it.
+fn wears_beta(h: &H, rect: egui::Rect) -> bool {
+    h.query_all_by_label("Beta").any(|b| {
+        let r = b.rect();
+        let y = r.center().y;
+        y >= rect.top() - 2.0
+            && y <= rect.bottom() + 2.0
+            && r.left() >= rect.right() - 1.0
+            && r.left() - rect.right() < 40.0
+    })
+}
+
+fn row(h: &H, words: &str) -> egui::Rect {
+    h.query_all_by_value(words)
+        .chain(h.query_all_by_label(words))
+        .next()
+        .unwrap_or_else(|| panic!("{words}"))
+        .rect()
+}
+
+#[test]
+fn b4_the_badge_is_worn_where_the_inventory_says_and_nowhere_else() {
+    let w = world();
+    calm_as(&w, "kobo");
+    let mut h = harness_sized(&w, Platform::Mac, [1280.0, 4000.0]);
+    convert(&w, &mut h);
+    open_other_ways(&mut h);
+    for (save, beta) in [
+        ("EPUB", false),
+        ("AZW3", true),
+        ("MOBI", false),
+        ("Fountain", false),
+        ("FDX", true),
+    ] {
+        assert_eq!(wears_beta(&h, row(&h, save)), beta, "{save}");
+    }
+    settings(&mut h);
+    h.get_by_role_and_label(Role::Button, "What the book carries")
+        .click_accesskit();
+    steps(&mut h);
+    for knob in ["Pictures from the script", "Title card as the cover"] {
+        let rect = h.get_by_role_and_label(Role::Label, knob).rect();
+        assert!(wears_beta(&h, rect), "{knob}");
+    }
+    let plain = h
+        .get_by_role_and_label(Role::Label, "Start each scene on a new page")
+        .rect();
+    assert!(!wears_beta(&h, plain));
+}
+
+#[test]
+fn r16_the_book_is_dressed_again_when_the_os_theme_changes() {
+    use sp_app::app::bookview::Place;
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Tab, "Read").click();
+    steps(&mut h);
+    let dressed = |h: &H| h.state().views.peek(Place::Read).map(|v| v.dark());
+    assert_eq!(dressed(&h), Some(false));
+    h.input_mut().system_theme = Some(egui::Theme::Dark);
+    steps(&mut h);
+    assert_eq!(dressed(&h), Some(true), "re-dressed without a reload");
+}
+
+#[test]
+fn a4_a_focused_control_wears_a_2px_ink_ring_outside_it() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    let change = h.get_by_role_and_label(Role::Button, "Change…");
+    let rect = change.rect();
+    change.focus();
+    steps(&mut h);
+    let t = h.state().tokens();
+    let ring = painted(&h).into_iter().find_map(|s| match s {
+        egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.ink) => Some(r.rect),
+        _ => None,
+    });
+    let ring = ring.expect("a ring");
+    let gap = rect.left() - ring.left();
+    assert!((2.0..=3.0).contains(&gap), "offset {gap}");
+    assert!(ring.contains_rect(rect));
+}
+
+#[test]
+fn b4_our_own_azw3_and_eject_off_a_mac_wear_it_too() {
+    for (platform, eject_beta) in [(Platform::Mac, false), (Platform::Linux, true)] {
+        let w = world();
+        calm_as(&w, "kindle");
+        plug_in_a_kindle(&w);
+        let mut h = harness(&w, platform);
+        convert(&w, &mut h);
+        let copy = h
+            .get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+            .rect();
+        assert!(wears_beta(&h, copy), "our own AZW3");
+        h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+            .click_accesskit();
+        steps(&mut h);
+        let eject = h.get_by_role_and_label(Role::Button, "Eject Kindle").rect();
+        assert_eq!(wears_beta(&h, eject), eject_beta, "{platform:?}");
+    }
+}

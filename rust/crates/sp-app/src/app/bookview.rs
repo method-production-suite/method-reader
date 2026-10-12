@@ -107,6 +107,11 @@ impl Views {
 }
 
 impl View {
+    /// Whether this view is dressed for the dark theme.
+    pub fn dark(&self) -> bool {
+        self.key.dark
+    }
+
     pub fn marks(&self) -> Vec<Mark> {
         self.book.marks()
     }
