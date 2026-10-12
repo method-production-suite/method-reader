@@ -240,3 +240,22 @@ fn eio() -> io::Error {
 fn eio() -> io::Error {
     io::Error::from_raw_os_error(1117) // ERROR_IO_DEVICE, libuv's EIO
 }
+
+#[cfg(unix)]
+#[test]
+fn a_partial_planted_as_a_link_is_never_written_through() {
+    // A volume formatted HFS+ or ext4 can hold a link where the partial
+    // goes; fs::copy opened it with truncate and wrote the book into
+    // whatever it pointed at, outside the reader.
+    let (_s, dir) = temp();
+    let victim = dir.join("victim.txt");
+    fs::write(&victim, "keep me").unwrap();
+    let src = dir.join("book.epub");
+    fs::write(&src, "the book").unwrap();
+    let dest = dir.join("out").join("book.epub");
+    fs::create_dir_all(dest.parent().unwrap()).unwrap();
+    std::os::unix::fs::symlink(&victim, partial_path_for(&dest)).unwrap();
+    replace_file(&src, &dest).unwrap();
+    assert_eq!(read(&victim), "keep me");
+    assert_eq!(read(&dest), "the book");
+}
