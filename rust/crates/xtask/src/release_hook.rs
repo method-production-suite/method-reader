@@ -248,9 +248,9 @@ pub fn decide(stdin: Option<&str>, cwd: &Path) -> Decision {
                 continue;
             }
             let norm = normalize_segment(seg);
-            if GIT_TAG.is_match(&norm) || GH_RELEASE.is_match(&norm) {
-                touching.push(norm);
-            } else if GIT_PUSH.is_match(&norm) && names_tags(&norm, VERSION_TOKEN.is_match(&norm)) {
+            let pushes_tags =
+                GIT_PUSH.is_match(&norm) && names_tags(&norm, VERSION_TOKEN.is_match(&norm));
+            if GIT_TAG.is_match(&norm) || GH_RELEASE.is_match(&norm) || pushes_tags {
                 touching.push(norm);
             }
         }

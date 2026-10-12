@@ -133,6 +133,14 @@ pub fn xtask(
     child.wait_with_output().expect("xtask finishes")
 }
 
+/// A repository file as committed: a Windows checkout with core.autocrlf
+/// rewrites LF to CRLF, and the tests compare against what git holds.
+pub fn read_lf(path: &Path) -> Option<String> {
+    std::fs::read_to_string(path)
+        .ok()
+        .map(|t| t.replace("\r\n", "\n"))
+}
+
 pub fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
 }

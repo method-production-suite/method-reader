@@ -37,7 +37,7 @@ fn root() -> std::path::PathBuf {
 }
 
 fn real(path: &str) -> String {
-    std::fs::read_to_string(root().join(path)).unwrap_or_else(|e| panic!("{path}: {e}"))
+    common::read_lf(&root().join(path)).unwrap_or_else(|| panic!("{path} is missing"))
 }
 
 fn current() -> String {
@@ -58,7 +58,9 @@ enum Shape {
 
 fn copy(from: &Path, to: &Path) {
     std::fs::create_dir_all(to.parent().expect("parent")).expect("folders");
-    std::fs::copy(from, to).unwrap_or_else(|e| panic!("{}: {e}", from.display()));
+    // As committed (LF), whatever the checkout did to line endings.
+    let text = common::read_lf(from).unwrap_or_else(|| panic!("{} is missing", from.display()));
+    std::fs::write(to, text).expect("copy");
 }
 
 /// A scratch repo holding copies of the real version files, plus notes.

@@ -5,6 +5,8 @@
 //! Rust window's notes_release.rs) are exactly what the generator makes of
 //! docs/releases/<version>.md, for the version the repository is at.
 
+mod common;
+
 use std::path::PathBuf;
 
 use xtask::desktop_notes::{
@@ -21,12 +23,13 @@ fn version() -> String {
 }
 
 fn markdown() -> String {
-    std::fs::read_to_string(repo().join(format!("docs/releases/{}.md", version())))
+    common::read_lf(&repo().join(format!("docs/releases/{}.md", version())))
         .expect("the current release's notes")
 }
 
+/// A generated file as committed (LF, whatever the checkout did).
 fn committed(file: &str) -> Option<String> {
-    std::fs::read_to_string(repo().join(file)).ok()
+    common::read_lf(&repo().join(file))
 }
 
 #[test]
