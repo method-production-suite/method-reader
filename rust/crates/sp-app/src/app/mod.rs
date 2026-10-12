@@ -422,6 +422,10 @@ impl App {
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
+            // The window's spacing is the stylesheet's rem scale (6.4, 12.8,
+            // 19.2 points), which lands between pixels as a browser's does;
+            // egui's debug-build "Unaligned" overlay would paint over it.
+            ui.ctx().all_styles_mut(|s| s.debug.show_unaligned = false);
             // The faces are bound from the next frame on; draw nothing
             // that names them until then.
             ui.ctx().request_repaint();

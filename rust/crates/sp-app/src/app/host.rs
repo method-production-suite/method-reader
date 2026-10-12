@@ -226,8 +226,14 @@ impl FileStorage {
         storage
     }
 
-    /// Where the window keeps it: the platform's per-user config folder.
+    /// Where the window keeps it: the platform's per-user config folder,
+    /// or SCREEPUB_CONFIG_DIR when that is set (the engine's own override
+    /// for its settings, which tests and scratch runs point elsewhere, so
+    /// the window's storage goes with them).
     pub fn default_path() -> Option<std::path::PathBuf> {
+        if let Some(dir) = config_override() {
+            return Some(dir.join("window-storage.json"));
+        }
         let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
         let home = std::path::PathBuf::from(home);
         let base = if cfg!(target_os = "macos") {
@@ -255,8 +261,16 @@ pub fn running_identifier() -> String {
 }
 
 /// The Tauri window's WebKit data for this identifier, on a Mac.
+/// SCREEPUB_CONFIG_DIR, when set to something.
+fn config_override() -> Option<std::path::PathBuf> {
+    std::env::var_os("SCREEPUB_CONFIG_DIR")
+        .filter(|d| !d.is_empty())
+        .map(Into::into)
+}
+
 fn tauri_website_data() -> Option<std::path::PathBuf> {
-    if !cfg!(target_os = "macos") {
+    // A scratch run reads nothing of the real Tauri window's.
+    if !cfg!(target_os = "macos") || config_override().is_some() {
         return None;
     }
     let home = std::env::var_os("HOME")?;
