@@ -507,12 +507,20 @@ fn check_step(sc: &Scratch, files: &[&str]) -> Output {
     )
 }
 
+/// The Requires an .rpm sp-release built declares (what the check reads).
+const RPM_REQUIRES: &str = "libasound.so.2()(64bit)\nlibfontconfig.so.1()(64bit)\nlibc.so.6()(64bit)\nlibxkbcommon.so.0()(64bit)\nlibxkbcommon-x11.so.0()(64bit)\nlibwayland-client.so.0()(64bit)\nlibwayland-egl.so.1()(64bit)\nlibX11.so.6()(64bit)\nlibX11-xcb.so.1()(64bit)\nlibXcursor.so.1()(64bit)\nlibXi.so.6()(64bit)\nlibEGL.so.1()(64bit)";
+
 fn rpm_stub(sc: &Scratch, version: &str) {
+    rpm_stub_requiring(sc, version, RPM_REQUIRES);
+}
+
+fn rpm_stub_requiring(sc: &Scratch, version: &str, requires: &str) {
     tool(
         sc,
         "bin/rpm",
         &format!(
-            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/screepub-desktop ;; esac"
+            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/screepub-desktop ;; -qp) printf '%s\\n' '{}' ;; esac",
+            requires.replace('\n', "' '")
         ),
     );
 }
@@ -536,8 +544,20 @@ fn check_step_opens_each_bundle_and_counts_what_it_checked() {
     assert!(out.status.success(), "{}", said(&out));
     assert!(said(&out).contains("1 bundle(s) checked"));
     let calls = log(&sc);
-    assert_eq!(calls.len(), 2, "{calls:#?}");
+    assert_eq!(calls.len(), 3, "{calls:#?}");
     assert!(calls[0].starts_with("rpm\t-qip\tbundles/Screepub-linux-x86_64.rpm"));
+    assert!(calls[1].starts_with("rpm\t-qp\t--requires\tbundles/Screepub-linux-x86_64.rpm"));
+}
+
+#[test]
+fn check_step_fails_an_rpm_that_does_not_require_a_library_the_window_opens() {
+    for gone in ["libxkbcommon.so.0()(64bit)", "libasound.so.2()(64bit)"] {
+        let sc = Scratch::new("check-requires");
+        let requires: Vec<&str> = RPM_REQUIRES.lines().filter(|l| *l != gone).collect();
+        rpm_stub_requiring(&sc, "0.12.0", &requires.join("\n"));
+        let out = check_step(&sc, &[names::LINUX_RPM_X86_64]);
+        assert!(!out.status.success(), "{gone}: {}", said(&out));
+    }
 }
 
 #[test]

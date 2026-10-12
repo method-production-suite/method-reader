@@ -282,7 +282,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev rpm libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
+          sudo apt-get install -y dpkg-dev rpm libasound2-dev libfontconfig1-dev libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
       - name: Build the window and the release tools
         working-directory: rust
         run: |
@@ -432,6 +432,11 @@ jobs:
                 ;;
               *.deb)
                 dpkg-deb --info "$B" | grep -q "Version: $VERSION"
+                # Measured libraries and the ones the window opens itself.
+                DEP="$(dpkg-deb --field "$B" Depends)"
+                for p in libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
+                  grep -qw -- "$p" <<<"$DEP"
+                done
                 sudo dpkg -i "$B" || sudo apt-get install -f -y
                 test -x /usr/bin/screepub-desktop
                 grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
@@ -439,6 +444,10 @@ jobs:
                 ;;
               *.rpm)
                 rpm -qip "$B" | grep -q "Version *: $VERSION"
+                REQ="$(rpm -qp --requires "$B")"
+                for s in libasound.so.2 libfontconfig.so.1 libxkbcommon.so.0 libxkbcommon-x11.so.0 libwayland-client.so.0 libX11.so.6 libEGL.so.1; do
+                  grep -qxF -- "$s()(64bit)" <<<"$REQ"
+                done
                 rpm -qlp "$B" | grep -qx /usr/bin/screepub-desktop
                 ;;
               *.AppImage)

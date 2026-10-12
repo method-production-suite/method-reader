@@ -47,7 +47,7 @@ them with apt; the list is in `.github/workflows/rust.yml` (the "Linux tools
 and headers" step), and today it is:
 
 ```bash
-sudo apt-get install -y sqlite3 libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev libasound2-dev
+sudo apt-get install -y sqlite3 libasound2-dev libfontconfig1-dev libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
 ```
 
 (`sqlite3` is for the device-request service's tests, not the window.)

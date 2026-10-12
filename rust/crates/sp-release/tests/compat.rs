@@ -188,6 +188,20 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
             .output()
             .unwrap();
         assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/screepub-desktop"));
+        // dpkg itself reads the Depends: every run-time library's package.
+        let o = Command::new("dpkg-deb")
+            .args(["--field"])
+            .arg(&deb)
+            .arg("Depends")
+            .output()
+            .unwrap();
+        let depends = String::from_utf8_lossy(&o.stdout);
+        for (_, pkg) in linux::LOADED_AT_RUN_TIME {
+            assert!(
+                depends.split(',').any(|d| d.trim() == *pkg),
+                "{pkg}: {depends}"
+            );
+        }
     } else {
         eprintln!("skipped the dpkg-deb half: not installed");
     }
@@ -203,6 +217,22 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
         assert!(String::from_utf8_lossy(&o.stdout).contains("screepub 0.12.0~rc1 x86_64"));
         let o = Command::new("rpm").arg("-qpl").arg(&rpm).output().unwrap();
         assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/screepub-desktop"));
+        // rpm itself reads the Requires: the run-time libraries, by soname.
+        let o = Command::new("rpm")
+            .arg("-qp")
+            .arg("--requires")
+            .arg(&rpm)
+            .output()
+            .unwrap();
+        let requires = String::from_utf8_lossy(&o.stdout);
+        for (soname, _) in linux::LOADED_AT_RUN_TIME {
+            assert!(
+                requires
+                    .lines()
+                    .any(|l| l.trim() == format!("{soname}()(64bit)")),
+                "{soname}: {requires}"
+            );
+        }
     } else {
         eprintln!("skipped the rpm half: not installed");
     }

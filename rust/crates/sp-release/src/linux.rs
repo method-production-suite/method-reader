@@ -33,7 +33,9 @@ pub struct LinuxApp<'a> {
     pub icons: &'a [(String, PathBuf)],
     pub resources: &'a [PathBuf],
     /// The Debian `Depends:` line, measured on the built binary in CI
-    /// (`dpkg-shlibdeps`), never guessed here.
+    /// (`dpkg-shlibdeps`), never guessed here. The .deb adds the libraries
+    /// the window opens at run time ([`LOADED_AT_RUN_TIME`]); the .rpm
+    /// reads the binary's own DT_NEEDED list instead ([`rpm_requires`]).
     pub depends: &'a str,
 }
 
@@ -105,6 +107,140 @@ fn tree(files: &[(String, Vec<u8>, bool)]) -> Vec<Entry> {
     entries
 }
 
+/// The libraries the window OPENS at run time (dlopen) rather than links,
+/// as (soname, Debian package). `dpkg-shlibdeps` and rpm's own dependency
+/// finder only read the binary's DT_NEEDED list, which holds ALSA,
+/// fontconfig and the C runtime; these never appear there, so they are
+/// declared here, from the crates that open them:
+///
+/// - xkbcommon-dl: libxkbcommon (Wayland and X11) and libxkbcommon-x11;
+/// - wayland-sys (built with `dlopen`): libwayland-client, and
+///   libwayland-egl for wgpu's GL path on Wayland;
+/// - winit's X11 backend through x11-dl: Xlib, Xlib-xcb, Xcursor, XInput2;
+/// - wgpu's GL path through khronos-egl: libEGL (Vulkan, tried first, is
+///   optional: without it wgpu falls back to EGL).
+///
+/// GTK is not among them: the file dialog (rfd) asks the XDG desktop
+/// portal over D-Bus, and the only GTK user in the lock file (muda) is
+/// built for macOS alone.
+pub const LOADED_AT_RUN_TIME: &[(&str, &str)] = &[
+    ("libxkbcommon.so.0", "libxkbcommon0"),
+    ("libxkbcommon-x11.so.0", "libxkbcommon-x11-0"),
+    ("libwayland-client.so.0", "libwayland-client0"),
+    ("libwayland-egl.so.1", "libwayland-egl1"),
+    ("libX11.so.6", "libx11-6"),
+    ("libX11-xcb.so.1", "libx11-xcb1"),
+    ("libXcursor.so.1", "libxcursor1"),
+    ("libXi.so.6", "libxi6"),
+    ("libEGL.so.1", "libegl1"),
+];
+
+/// The .deb's `Depends:`: the line measured on the binary (dpkg-shlibdeps,
+/// in CI), then each run-time library's package it does not already name.
+pub fn deb_depends(measured: &str) -> String {
+    let mut parts: Vec<String> = measured
+        .split(',')
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+        .map(str::to_string)
+        .collect();
+    let named = |parts: &[String], pkg: &str| {
+        parts.iter().any(|p| {
+            p.split('|')
+                .any(|alt| alt.split_whitespace().next() == Some(pkg))
+        })
+    };
+    for (_, pkg) in LOADED_AT_RUN_TIME {
+        if !named(&parts, pkg) {
+            parts.push((*pkg).to_string());
+        }
+    }
+    parts.join(", ")
+}
+
+/// The DT_NEEDED sonames of a 64-bit little-endian ELF file, in order:
+/// what the dynamic linker loads before `main`. Anything else (another
+/// format, a 32-bit or damaged file) has none.
+pub fn elf_needed(elf: &[u8]) -> Vec<String> {
+    let u16_at = |o: usize| -> Option<u64> {
+        Some(u64::from(u16::from_le_bytes(
+            elf.get(o..o + 2)?.try_into().ok()?,
+        )))
+    };
+    let u32_at = |o: usize| -> Option<u64> {
+        Some(u64::from(u32::from_le_bytes(
+            elf.get(o..o + 4)?.try_into().ok()?,
+        )))
+    };
+    let u64_at =
+        |o: usize| -> Option<u64> { Some(u64::from_le_bytes(elf.get(o..o + 8)?.try_into().ok()?)) };
+    let needed = || -> Option<Vec<String>> {
+        // ELFCLASS64, little-endian.
+        if elf.get(..6)? != b"\x7fELF\x02\x01" {
+            return None;
+        }
+        let shoff = usize::try_from(u64_at(0x28)?).ok()?;
+        let shentsize = usize::try_from(u16_at(0x3a)?).ok()?;
+        let shnum = usize::try_from(u16_at(0x3c)?).ok()?;
+        let section = |i: usize| -> Option<(u64, usize, usize, usize)> {
+            let h = shoff.checked_add(i.checked_mul(shentsize)?)?;
+            Some((
+                u32_at(h + 4)?,                           // sh_type
+                usize::try_from(u64_at(h + 0x18)?).ok()?, // sh_offset
+                usize::try_from(u64_at(h + 0x20)?).ok()?, // sh_size
+                usize::try_from(u32_at(h + 0x28)?).ok()?, // sh_link
+            ))
+        };
+        const SHT_DYNAMIC: u64 = 6;
+        const DT_NEEDED: u64 = 1;
+        let (_, dyn_off, dyn_size, strtab) = (0..shnum)
+            .filter_map(section)
+            .find(|s| s.0 == SHT_DYNAMIC)?;
+        let (_, str_off, str_size, _) = section(strtab)?;
+        let strings = elf.get(str_off..str_off.checked_add(str_size)?)?;
+        let mut out = Vec::new();
+        for entry in (dyn_off..dyn_off.checked_add(dyn_size)?).step_by(16) {
+            let (tag, val) = (u64_at(entry)?, u64_at(entry + 8)?);
+            if tag == 0 {
+                break;
+            }
+            if tag == DT_NEEDED {
+                let from = usize::try_from(val).ok()?;
+                let rest = strings.get(from..)?;
+                let end = rest.iter().position(|b| *b == 0)?;
+                out.push(String::from_utf8_lossy(&rest[..end]).into_owned());
+            }
+        }
+        Some(out)
+    };
+    needed().unwrap_or_default()
+}
+
+/// The .rpm's `Requires:`, as rpm's own dependency finder would write them
+/// for a 64-bit binary (`libfoo.so.1()(64bit)`, which every rpm system's
+/// library package provides): the binary's DT_NEEDED list, measured on the
+/// binary itself, then the run-time libraries.
+pub fn rpm_requires(window: &[u8], arch: &str) -> Vec<String> {
+    let suffix = if matches!(arch, "x86_64" | "aarch64") {
+        "()(64bit)"
+    } else {
+        ""
+    };
+    let mut out: Vec<String> = Vec::new();
+    let sonames = elf_needed(window);
+    for soname in sonames
+        .iter()
+        .map(String::as_str)
+        .chain(LOADED_AT_RUN_TIME.iter().map(|(s, _)| *s))
+    {
+        let req = format!("{soname}{suffix}");
+        if !out.contains(&req) {
+            out.push(req);
+        }
+    }
+    out
+}
+
 /// The control file.
 pub fn control(version: &str, arch: &str, installed_kib: u64, depends: &str) -> String {
     let mut c = format!(
@@ -140,7 +276,12 @@ fn ar_member(out: &mut Vec<u8>, name: &str, data: &[u8], mtime: u64) {
 pub fn build_deb(app: &LinuxApp, arch: &str, mtime: u64) -> std::io::Result<Vec<u8>> {
     let files = payload(app)?;
     let installed: u64 = files.iter().map(|(_, d, _)| d.len() as u64).sum();
-    let control_text = control(app.version, arch, installed.div_ceil(1024), app.depends);
+    let control_text = control(
+        app.version,
+        arch,
+        installed.div_ceil(1024),
+        &deb_depends(app.depends),
+    );
     let control_tar = gzip(&tar(
         &[
             Entry::dir("."),
@@ -156,7 +297,8 @@ pub fn build_deb(app: &LinuxApp, arch: &str, mtime: u64) -> std::io::Result<Vec<
     Ok(out)
 }
 
-/// The .rpm, gzip payload, unsigned like the Tauri one.
+/// The .rpm, gzip payload, unsigned like the Tauri one, with its
+/// `Requires:` ([`rpm_requires`]).
 pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, String> {
     let config = rpm::BuildConfig::default()
         .compression(rpm::CompressionType::Gzip)
@@ -174,6 +316,10 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
         .description(LONG_DESCRIPTION)
         .url(format!("https://github.com/{REPO}"))
         .vendor(PUBLISHER);
+    let window = std::fs::read(app.window).map_err(|e| e.to_string())?;
+    for req in rpm_requires(&window, arch) {
+        b.requires(rpm::Dependency::any(req));
+    }
     for (path, data, exe) in payload(app).map_err(|e| e.to_string())? {
         let mode = if exe { 0o755 } else { 0o644 };
         b.with_file_contents(data, rpm::FileOptions::new(path).permissions(mode))
@@ -297,6 +443,132 @@ mod tests {
         assert_eq!(package_version("0.12.0-rc1"), "0.12.0~rc1");
         assert_eq!(package_version("0.12.0"), "0.12.0");
         assert!(control("0.12.0-rc1", "amd64", 1, "").contains("\nVersion: 0.12.0~rc1\n"));
+    }
+
+    #[test]
+    fn the_deb_depends_on_what_was_measured_and_every_run_time_library_once() {
+        let measured = "libasound2 (>= 1.0.16), libc6 (>= 2.34), libfontconfig1 (>= 2.12.6), libxkbcommon0 (>= 0.5.0)";
+        let d = deb_depends(measured);
+        assert!(d.starts_with(measured), "{d}");
+        for (_, pkg) in LOADED_AT_RUN_TIME {
+            let n = d
+                .split(',')
+                .filter(|p| p.split_whitespace().next() == Some(*pkg))
+                .count();
+            assert_eq!(n, 1, "{pkg}: {d}");
+        }
+        assert!(
+            d.contains("libxkbcommon0 (>= 0.5.0)"),
+            "the measured version stays"
+        );
+        // Nothing measured (a laptop build): the run-time libraries alone.
+        assert_eq!(
+            deb_depends(""),
+            LOADED_AT_RUN_TIME
+                .iter()
+                .map(|(_, p)| *p)
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        let c = control("0.12.0", "amd64", 9, &deb_depends(measured));
+        assert!(c.contains("\nDepends: libasound2 (>= 1.0.16), "), "{c}");
+        assert!(c.contains(", libegl1\n"), "{c}");
+    }
+
+    /// A minimal 64-bit little-endian ELF with a dynamic section naming
+    /// `needed`.
+    fn elf(needed: &[&str]) -> Vec<u8> {
+        let mut strtab = vec![0u8];
+        let mut offsets = Vec::new();
+        for n in needed {
+            offsets.push(strtab.len() as u64);
+            strtab.extend_from_slice(n.as_bytes());
+            strtab.push(0);
+        }
+        let str_off = 64usize;
+        let dyn_off = (str_off + strtab.len()).next_multiple_of(8);
+        let mut dynamic = Vec::new();
+        dynamic.extend_from_slice(&5u64.to_le_bytes()); // DT_STRTAB, not NEEDED
+        dynamic.extend_from_slice(&0u64.to_le_bytes());
+        for o in &offsets {
+            dynamic.extend_from_slice(&1u64.to_le_bytes());
+            dynamic.extend_from_slice(&o.to_le_bytes());
+        }
+        dynamic.extend_from_slice(&[0u8; 16]);
+        let sh_off = dyn_off + dynamic.len();
+        let mut out = vec![0u8; sh_off + 3 * 64];
+        out[..6].copy_from_slice(b"\x7fELF\x02\x01");
+        out[0x28..0x30].copy_from_slice(&(sh_off as u64).to_le_bytes());
+        out[0x3a..0x3c].copy_from_slice(&64u16.to_le_bytes());
+        out[0x3c..0x3e].copy_from_slice(&3u16.to_le_bytes());
+        out[str_off..str_off + strtab.len()].copy_from_slice(&strtab);
+        out[dyn_off..dyn_off + dynamic.len()].copy_from_slice(&dynamic);
+        let mut header = |i: usize, kind: u32, off: usize, size: usize, link: u32| {
+            let h = sh_off + i * 64;
+            out[h + 4..h + 8].copy_from_slice(&kind.to_le_bytes());
+            out[h + 0x18..h + 0x20].copy_from_slice(&(off as u64).to_le_bytes());
+            out[h + 0x20..h + 0x28].copy_from_slice(&(size as u64).to_le_bytes());
+            out[h + 0x28..h + 0x2c].copy_from_slice(&link.to_le_bytes());
+        };
+        header(1, 3, str_off, strtab.len(), 0);
+        header(2, 6, dyn_off, dynamic.len(), 1);
+        out
+    }
+
+    #[test]
+    fn the_needed_list_is_read_out_of_the_elf() {
+        let bin = elf(&["libasound.so.2", "libfontconfig.so.1", "libc.so.6"]);
+        assert_eq!(
+            elf_needed(&bin),
+            ["libasound.so.2", "libfontconfig.so.1", "libc.so.6"]
+        );
+        assert!(elf_needed(b"\x7fELF fake").is_empty());
+        assert!(
+            elf_needed(&bin[..100]).is_empty(),
+            "a cut-short file has none"
+        );
+        assert!(elf_needed(b"").is_empty());
+    }
+
+    #[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+    #[test]
+    fn this_test_binary_needs_the_c_library() {
+        let me = std::fs::read(std::env::current_exe().unwrap()).unwrap();
+        assert!(elf_needed(&me).iter().any(|n| n == "libc.so.6"));
+    }
+
+    #[test]
+    fn the_rpm_requires_what_the_binary_links_and_what_it_opens() {
+        let bin = elf(&["libasound.so.2", "libc.so.6", "libasound.so.2"]);
+        let r = rpm_requires(&bin, "x86_64");
+        assert_eq!(r[..2], ["libasound.so.2()(64bit)", "libc.so.6()(64bit)"]);
+        assert_eq!(r.len(), 2 + LOADED_AT_RUN_TIME.len(), "once each: {r:?}");
+        assert!(r.contains(&"libxkbcommon.so.0()(64bit)".to_string()));
+        assert!(!r.iter().any(|x| x.contains("gtk")));
+
+        let dir = tempfile::tempdir().unwrap();
+        let (_, icons, res) = app(dir.path());
+        let window = dir.path().join("screepub-window");
+        std::fs::write(&window, &bin).unwrap();
+        let a = LinuxApp {
+            version: "0.12.0",
+            window: &window,
+            icons: &icons,
+            resources: &res,
+            depends: "",
+        };
+        let bytes = build_rpm(&a, "x86_64", 7).unwrap();
+        let pkg = rpm::Package::parse(&mut std::io::Cursor::new(bytes)).unwrap();
+        let names: Vec<String> = pkg
+            .metadata
+            .get_requires()
+            .unwrap()
+            .into_iter()
+            .map(|d| d.name)
+            .collect();
+        for want in &r {
+            assert!(names.contains(want), "{want}: {names:?}");
+        }
     }
 
     #[test]
