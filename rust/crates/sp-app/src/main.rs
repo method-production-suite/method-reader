@@ -37,6 +37,10 @@ fn main() -> eframe::Result {
             let host = Host::native(reduce_motion_flag());
             let mut app = App::new(Arc::new(FakeEngine::new()), Mode::Threads, host);
             app.set_repaint(cc.egui_ctx.clone());
+            #[cfg(target_os = "macos")]
+            {
+                app.menus = sp_app::app::menu::Menus::install();
+            }
             Ok(Box::new(Window(app)))
         }),
     )

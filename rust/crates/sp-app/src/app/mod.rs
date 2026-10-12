@@ -10,6 +10,7 @@
 pub mod book;
 pub mod bookview;
 pub mod convert;
+pub mod menu;
 pub mod frame;
 pub mod host;
 pub mod panel;
@@ -93,6 +94,9 @@ pub struct App {
     pub drag_hover: bool,
     pub dark: bool,
     fonts_set: bool,
+    /// The Mac menu bar (menu.rs), when this window installed one.
+    #[cfg(target_os = "macos")]
+    pub menus: Option<menu::Menus>,
     /// Whether the window had the focus last frame (a return is news).
     pub window_focused: bool,
 
@@ -136,6 +140,8 @@ impl App {
             drag_hover: false,
             dark: false,
             fonts_set: false,
+            #[cfg(target_os = "macos")]
+            menus: None,
             window_focused: true,
             convert: convert::State::default(),
             show: None,
@@ -404,6 +410,10 @@ impl App {
 
     /// One frame: answers in, timers, input, drawing, the keyboard back.
     pub fn frame(&mut self, ui: &mut Ui) {
+        #[cfg(target_os = "macos")]
+        if let Some(menus) = &self.menus {
+            menus.pump(ui.ctx());
+        }
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
