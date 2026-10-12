@@ -390,9 +390,11 @@ fn draw(
 #[test]
 fn the_window_programs_pixels_become_the_same_png_bytes_every_time() {
     let dir = Scratch::new("window-png");
-    // 2560 by 1600 pixels of one grey, written as raw RGBA.
+    // 2560 by 1600 pixels of one grey, written as raw RGBA. tr runs in
+    // the C locale: under a UTF-8 one (a CI runner's) it writes byte 128
+    // as the two-byte character U+0080 and the picture comes out double.
     let script = format!(
-        "{OUT}head -c {} /dev/zero | tr '\\0' '\\200' > \"$out\"",
+        "{OUT}head -c {} /dev/zero | LC_ALL=C tr '\\0' '\\200' > \"$out\"",
         2560 * 1600 * 4
     );
     let mut w = sh_window(&script);
