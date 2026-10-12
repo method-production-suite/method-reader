@@ -13,3 +13,14 @@ workspace = true
 [dependencies]
 serde_json.workspace = true
 zip.workspace = true
+sha2.workspace = true
+flate2.workspace = true
+# The updater's signature format, read strictly (update-signature).
+base64 = "0.22"
+# The updater archive's signature, made and checked the way tauri-cli 2.11.4
+# does: the same crate at the same pinned version (later 0.7.x releases
+# could not open a key encrypted with an empty password). Pure Rust.
+minisign = "=0.7.3"
+# The .app.tar.gz and the .deb's tars, written the way tauri-bundler wrote
+# them (tar::Builder, symlinks kept). Pure Rust; xattr support left off.
+tar = { version = "0.4", default-features = false }
