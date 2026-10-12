@@ -206,6 +206,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     });
     app.stop(stage.id, true);
     sheet(ui, &t, script_rect);
+    widgets::own_arrows(ui, stage.id);
     if stage.has_focus() {
         ui.painter().rect_stroke(
             script_rect.expand(2.0),
@@ -374,6 +375,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     {
                         app.read.scroll_to = Some(mark.top);
                     }
+                    widgets::own_arrows(ui, r.id);
                     if r.has_focus() {
                         let key = ui.input(|i| {
                             [
@@ -400,6 +402,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
     });
     ui.ctx().accesskit_node_builder(nav.response.id, |n| {
         n.set_role(accesskit::Role::Navigation);
+        n.set_bounds(widgets::bounds(nav.response.rect));
         n.set_label("Scenes");
     });
 }

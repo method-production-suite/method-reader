@@ -199,7 +199,6 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     let window = ui.ctx().content_rect().size();
     let block = layout::block(window.x);
-    let (left_margin, _) = layout::margins(window.x);
     egui::CentralPanel::default()
         .frame(egui::Frame::NONE.fill(t.paper))
         .show(ui, |ui| {
@@ -217,7 +216,8 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                     ui.add_space(layout::SPACE[7]);
                     let min_height = (window.y - layout::SPACE[7]).max(0.0);
                     ui.horizontal(|ui| {
-                        ui.add_space((block.left - left_margin).max(0.0) + left_margin);
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.add_space(block.left);
                         ui.vertical(|ui| {
                             ui.set_width(block.width);
                             ui.set_min_height(min_height);
@@ -353,15 +353,16 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             if response.clicked() {
                 app.go_to(s);
             }
+            widgets::own_arrows(ui, response.id);
             if response.has_focus() {
-                let key = ui.input(|i| {
-                    if i.key_pressed(Key::ArrowRight) {
+                let key = ui.input_mut(|i| {
+                    if i.consume_key(egui::Modifiers::NONE, Key::ArrowRight) {
                         Some(TabKey::Right)
-                    } else if i.key_pressed(Key::ArrowLeft) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::ArrowLeft) {
                         Some(TabKey::Left)
-                    } else if i.key_pressed(Key::Home) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::Home) {
                         Some(TabKey::Home)
-                    } else if i.key_pressed(Key::End) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::End) {
                         Some(TabKey::End)
                     } else {
                         None
@@ -379,6 +380,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(bar.response.id, |n| {
         n.set_role(accesskit::Role::TabList);
+        n.set_bounds(widgets::bounds(bar.response.rect));
         n.set_label("Screepub");
     });
 }

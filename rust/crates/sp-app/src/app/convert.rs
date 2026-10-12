@@ -385,6 +385,7 @@ fn column(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
     let width = ui.available_width().min(layout::CONVERT_COLUMN);
     let pad = (ui.available_width() - width) / 2.0;
     ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
         ui.add_space(pad);
         ui.vertical(|ui| {
             ui.set_width(width);

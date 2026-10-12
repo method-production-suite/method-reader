@@ -215,6 +215,22 @@ pub fn described_by(ui: &Ui, control: Id, description: Id) {
         .accesskit_node_builder(control, |n| n.push_described_by(description.accesskit_id()));
 }
 
+/// The arrow keys belong to this control while it has the focus (a tab
+/// bar, a list, the script's stage), not to egui's own focus moving.
+pub fn own_arrows(ui: &Ui, id: Id) {
+    ui.memory_mut(|m| {
+        m.set_focus_lock_filter(
+            id,
+            egui::EventFilter {
+                tab: false,
+                horizontal_arrows: true,
+                vertical_arrows: true,
+                escape: false,
+            },
+        );
+    });
+}
+
 /// A hairline box with the well's corners and the panel fill.
 pub fn panel_frame(t: &Tokens) -> egui::Frame {
     egui::Frame::NONE
@@ -233,4 +249,15 @@ pub fn track(ui: &mut Ui, t: &Tokens, fraction: f32) -> egui::Rect {
     fill.set_width(rect.width() * fraction.clamp(0.0, 1.0));
     ui.painter().rect_filled(fill, 0.0, t.brass);
     rect
+}
+
+/// A rect as AccessKit takes it, for groups and regions egui itself does not
+/// give bounds to.
+pub fn bounds(r: egui::Rect) -> accesskit::Rect {
+    accesskit::Rect {
+        x0: r.min.x.into(),
+        y0: r.min.y.into(),
+        x1: r.max.x.into(),
+        y1: r.max.y.into(),
+    }
 }

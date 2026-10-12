@@ -460,6 +460,20 @@ impl App {
     }
 }
 
+/// The window as tauri.conf.json described it: "Screepub", 1280 by 800,
+/// a 640 by 480 floor, and on a Mac no title bar of its own (the paper runs
+/// under the traffic lights).
+pub fn viewport() -> egui::ViewportBuilder {
+    egui::ViewportBuilder::default()
+        .with_title("Screepub")
+        .with_inner_size([1280.0, 800.0])
+        .with_min_inner_size([640.0, 480.0])
+        .with_resizable(true)
+        .with_fullsize_content_view(true)
+        .with_title_shown(false)
+        .with_titlebar_shown(false)
+}
+
 /// eframe's window: the App, drawn once a frame.
 pub struct Window(pub App);
 

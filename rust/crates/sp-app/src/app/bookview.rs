@@ -37,7 +37,8 @@ struct Key {
 pub struct View {
     key: Key,
     pub book: Book,
-    slice: Option<(TextureHandle, i32, u32)>,
+    slice: Option<(i32, u32)>,
+    tiles: Vec<(TextureHandle, u32, u32)>,
     blocks: HashMap<usize, TextureHandle>,
 }
 
@@ -88,6 +89,7 @@ impl Views {
                     key,
                     book,
                     slice: None,
+                    tiles: Vec::new(),
                     blocks: HashMap::new(),
                 },
             );
@@ -109,29 +111,33 @@ impl View {
         self.book.marks()
     }
 
-    /// Paint the book's slice that starts `top` points down into `rect`.
+    /// Paint the book's slice that starts `top` points down into `rect`, in
+    /// tiles no taller than the GPU's largest texture.
     pub fn paint_slice(&mut self, ui: &Ui, id: &str, rect: Rect, top: f32) {
         let h = rect.height().max(1.0).round() as u32;
         let at = top.round() as i32;
-        let fresh = !matches!(&self.slice, Some((_, t, hh)) if *t == at && *hh == h);
+        let max_side = ui.ctx().input(|i| i.max_texture_side).max(256) as f32;
+        let tile = ((max_side / self.book.scale).floor() as u32).max(64);
+        let fresh = !matches!(&self.slice, Some((t, hh)) if *t == at && *hh == h);
         if fresh {
-            let image = self
-                .book
-                .paint_scaled(at as f32, h, ui.ctx().pixels_per_point());
-            let tex = match self.slice.take() {
-                Some((mut tex, _, _)) => {
-                    tex.set(image, TextureOptions::LINEAR);
-                    tex
-                }
-                None => ui.ctx().load_texture(id, image, TextureOptions::LINEAR),
-            };
-            self.slice = Some((tex, at, h));
+            self.tiles.clear();
+            let mut done = 0;
+            while done < h {
+                let part = tile.min(h - done);
+                let image = self.book.paint(at as f32 + done as f32, part);
+                let tex =
+                    ui.ctx()
+                        .load_texture(format!("{id}-{done}"), image, TextureOptions::LINEAR);
+                self.tiles.push((tex, done, part));
+                done += part;
+            }
+            self.slice = Some((at, h));
         }
-        if let Some((tex, _, _)) = &self.slice {
-            let size = Vec2::new(self.book.width as f32, h as f32);
+        for (tex, offset, part) in &self.tiles {
+            let size = Vec2::new(self.book.width as f32, *part as f32);
             ui.painter().with_clip_rect(rect).image(
                 tex.id(),
-                Rect::from_min_size(rect.min, size),
+                Rect::from_min_size(rect.min + Vec2::new(0.0, *offset as f32), size),
                 Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
                 egui::Color32::WHITE,
             );
@@ -153,9 +159,7 @@ impl View {
         };
         let h = block.rect.height().max(1.0).round() as u32;
         let tex = self.blocks.entry(index).or_insert_with(|| {
-            let image = self
-                .book
-                .paint_scaled(block.rect.top(), h, ui.ctx().pixels_per_point());
+            let image = self.book.paint(block.rect.top(), h);
             ui.ctx()
                 .load_texture(format!("book-block-{index}"), image, TextureOptions::LINEAR)
         });
@@ -172,14 +176,10 @@ impl View {
     /// The book's words, block by block, for the screen reader: one node per
     /// heading and paragraph at its place, `origin` being the book's top-left
     /// on screen.
-    pub fn speak(&self, ui: &Ui, salt: &str, origin: egui::Pos2, clip: Rect) {
+    pub fn speak(&self, ui: &Ui, salt: &str, origin: egui::Pos2, _visible: Rect) {
         for (i, block) in self.book.blocks.iter().enumerate() {
             let r = block.rect.translate(origin.to_vec2());
-            let node = ui.interact(
-                r.intersect(clip.expand(4000.0)),
-                Id::new((salt, "book-block", i)),
-                Sense::hover(),
-            );
+            let node = ui.interact(r, Id::new((salt, "book-block", i)), Sense::hover());
             node.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, &block.words));
         }
     }

@@ -755,9 +755,10 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
             |ui| match &knob.kind {
                 Kind::Toggle => {
                     let mut on = value.as_ref().and_then(Value::as_bool).unwrap_or(false);
-                    let r = ui
-                        .add_enabled(!idle, egui::Checkbox::without_text(&mut on))
-                        .labelled_by(label.id);
+                    let r = ui.add_enabled(!idle, egui::Checkbox::without_text(&mut on));
+                    ui.ctx()
+                        .accesskit_node_builder(r.id, |n| n.set_label(knob.label));
+                    let _ = label.id;
                     control_id = Some(r.id);
                     if r.changed() {
                         moved = Some(Value::Bool(on));
@@ -785,7 +786,9 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
                                 }
                             })
                     });
-                    let r = combo.inner.response.labelled_by(label.id);
+                    let r = combo.inner.response;
+                    ui.ctx()
+                        .accesskit_node_builder(r.id, |n| n.set_label(knob.label));
                     control_id = Some(r.id);
                 }
                 Kind::Range { .. } => {
@@ -904,6 +907,7 @@ fn draw_keep_choice(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(group.response.id, |n| {
         n.set_role(accesskit::Role::RadioGroup);
+        n.set_bounds(widgets::bounds(group.response.rect));
         n.set_label(m::KEEP_LEGEND);
     });
 }
@@ -960,6 +964,7 @@ fn draw_page_switches(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(group.response.id, |n| {
         n.set_role(accesskit::Role::Group);
+        n.set_bounds(widgets::bounds(group.response.rect));
         n.set_label(m::SWITCHES_LEGEND);
     });
 }

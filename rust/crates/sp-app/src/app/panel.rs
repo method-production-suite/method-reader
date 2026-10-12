@@ -1873,6 +1873,7 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(block.response.id, |n| {
         n.set_role(accesskit::Role::Region);
+        n.set_bounds(widgets::bounds(block.response.rect));
         n.set_label(k::HEADING);
     });
 }
