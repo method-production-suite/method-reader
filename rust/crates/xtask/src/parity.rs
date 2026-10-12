@@ -1,21 +1,30 @@
-//! `cargo xtask parity`: the TypeScript CLI and the Rust CLI, side by side.
+//! `cargo xtask parity`: the Rust CLI against the TypeScript CLI's frozen
+//! answers.
 //!
 //! For every input (the committed fixtures, then the real scripts) and every
-//! row of [`commands`] that takes it, each side gets a scratch folder of its
-//! own holding a copy of the input (and its picture folder, for a
-//! .fountain), an empty settings folder and an empty library, and the same
-//! environment: `SOURCE_DATE_EPOCH` for every clock that reaches a book,
-//! `TZ=UTC` for a zip's local-time dates, and a guard path for Calibre so
-//! nothing could reach the real one (a row that lets Calibre run gets a
-//! scratch COPY of its settings instead). The TypeScript side runs with
-//! tools/oracle/freeze-clock.ts preloaded, which is how it honors
-//! `SOURCE_DATE_EPOCH`; the Rust CLI honors it itself.
+//! row of [`commands`] that takes it, the Rust CLI gets a scratch folder
+//! holding a copy of the input (and its picture folder, for a .fountain),
+//! an empty settings folder, an empty library and a home folder of its own
+//! (so no answer names a real home), and the environment the
+//! TypeScript had when its answer was frozen: `SOURCE_DATE_EPOCH` for every
+//! clock that reaches a book, `TZ=UTC` for a zip's local-time dates, and a
+//! guard path for Calibre so nothing could reach the real one (a row that
+//! lets Calibre run gets a scratch COPY of its settings instead).
 //!
-//! Compared: the exit code, stdout (the `--json` answer as values, or a
-//! person's text, with each run's scratch folder and every time
-//! normalized), stderr where the row asks, and each file the row lists.
-//! Committed fixtures report what differs; real scripts report counts only,
-//! because a difference quotes the script.
+//! The TypeScript side is frozen data: rust/oracle/parity/<fixture>.json for
+//! the committed fixtures, rust/oracle-real/parity/<script>.json (never
+//! committed) for the real scripts. Each holds, per row, the exit code,
+//! stdout (the `--json` answer as values, or a person's text, with the
+//! scratch folder and every time normalized), stderr, and a summary of each
+//! file the row lists ([`compare::summary`]: a digest of exactly what the
+//! comparison looks at). Committed fixtures report what differs; real
+//! scripts report counts only, because a difference quotes the script.
+//!
+//! A few rows depend on what is installed (Calibre and its plugin for the
+//! KFX rows; Books, Send to Kindle and the mail handler for the route
+//! rows). Each answer file records the machine it was frozen on, and those
+//! rows are compared only on a machine that reads the same; elsewhere they
+//! are counted as skipped.
 
 use std::collections::BTreeMap;
 use std::ffi::OsString;
@@ -42,9 +51,8 @@ usage: cargo xtask parity [options]
   --command <name>...   only these rows of the command table
   --rust-cli <path>     the Rust binary (default: build crates/sp-cli,
                         or $SCREEPUB_RUST_CLI)
-  --against-ts          compare the TypeScript CLI with itself, which
-                        checks the harness and the frozen clock
-  --epoch <seconds>     SOURCE_DATE_EPOCH for both sides
+  --record              ask the TypeScript CLI (bun src/cli.ts) and freeze
+                        its answers instead of comparing
   --keep                keep the scratch folders and print where
 ";
 
@@ -53,8 +61,7 @@ struct Options {
     fixtures: Vec<String>,
     commands: Vec<String>,
     rust_cli: Option<PathBuf>,
-    against_ts: bool,
-    epoch: u64,
+    record: bool,
     keep: bool,
 }
 
@@ -65,8 +72,7 @@ impl Options {
             fixtures: Vec::new(),
             commands: Vec::new(),
             rust_cli: None,
-            against_ts: false,
-            epoch: DEFAULT_EPOCH,
+            record: false,
             keep: false,
         }
     }
@@ -82,12 +88,7 @@ fn parse(args: &[String], rows: &[CommandRow]) -> Result<Options, String> {
             "--fixture" => o.fixtures.push(value("--fixture")?),
             "--command" => o.commands.push(value("--command")?),
             "--rust-cli" => o.rust_cli = Some(PathBuf::from(value("--rust-cli")?)),
-            "--against-ts" => o.against_ts = true,
-            "--epoch" => {
-                o.epoch = value("--epoch")?
-                    .parse()
-                    .map_err(|_| "--epoch takes whole seconds".to_string())?;
-            }
+            "--record" => o.record = true,
             "--keep" => o.keep = true,
             other => return Err(format!("parity: unknown option {other}")),
         }
@@ -271,7 +272,7 @@ fn run_side(
     work: &Path,
     epoch: u64,
 ) -> Result<Run, String> {
-    for d in ["in", "out", "config", "library"] {
+    for d in ["in", "out", "config", "library", "home"] {
         std::fs::create_dir_all(work.join(d)).map_err(|e| format!("scratch folder: {e}"))?;
     }
     let copy = copy_input(input, &work.join("in"))?;
@@ -301,6 +302,9 @@ fn run_side(
             .env("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD)
             .env("SOURCE_DATE_EPOCH", epoch.to_string())
             .env("TZ", "UTC")
+            // A home of its own: a frozen answer names no one's home folder.
+            .env("HOME", work.join("home"))
+            .env("USERPROFILE", work.join("home"))
             .env_remove("SCREEPUB_VOLUME_ROOTS")
             .env_remove("SCREEPUB_REMARKABLE_ENDPOINT");
         for (k, v) in &extra {
@@ -326,30 +330,116 @@ fn run_side(
     })
 }
 
-/// What differs between the two runs, as (what, detail) pairs.
-fn diff_runs(row: &CommandRow, ts: &Run, rs: &Run) -> Vec<(String, String)> {
+/// What the TypeScript answered for one row, as frozen.
+fn frozen_of(row: &CommandRow, run: &Run) -> Value {
+    let mut outputs = serde_json::Map::new();
+    for o in &row.outputs {
+        outputs.insert(
+            o.file.clone(),
+            compare::summary(&run.work.join(&o.file), o.compare, &run.work),
+        );
+    }
+    serde_json::json!({
+        "exit": run.exit,
+        "stdout": run.answer,
+        // Only where the row compares it: pdf.js's warnings name temp paths.
+        "stderr": if row.stderr { Value::String(run.stderr.clone()) } else { Value::Null },
+        "outputs": outputs,
+    })
+}
+
+/// What differs between the frozen answer and the Rust run, as (what,
+/// detail) pairs.
+fn diff_frozen(row: &CommandRow, ts: &Value, rs: &Run) -> Vec<(String, String)> {
     let mut out = Vec::new();
-    if ts.exit != rs.exit {
+    let exit = ts["exit"].as_i64().map(|c| c as i32);
+    if exit != rs.exit {
         out.push((
             "exit code".into(),
-            format!("{:?} against {:?}", ts.exit, rs.exit),
+            format!("{exit:?} against {:?}", rs.exit),
         ));
     }
-    if let Some(d) = compare::json(&ts.answer, &rs.answer) {
+    if let Some(d) = compare::json(&ts["stdout"], &rs.answer) {
         out.push(("stdout".into(), d));
     }
     if row.stderr
-        && let Some(d) = compare::text(ts.stderr.as_bytes(), rs.stderr.as_bytes())
+        && let Some(d) = compare::text(
+            ts["stderr"].as_str().unwrap_or_default().as_bytes(),
+            rs.stderr.as_bytes(),
+        )
     {
         out.push(("stderr".into(), d));
     }
     for o in &row.outputs {
-        let (a, b) = (ts.work.join(&o.file), rs.work.join(&o.file));
-        if let Some(d) = compare::files_in(&a, &b, o.compare, (&ts.work, &rs.work)) {
+        let want = ts["outputs"].get(&o.file).cloned().unwrap_or(Value::Null);
+        let got = compare::summary(&rs.work.join(&o.file), o.compare, &rs.work);
+        let d = match (&want, &got) {
+            (Value::Null, Value::Null) => None,
+            (_, Value::Null) => Some("written only by TypeScript".to_owned()),
+            (Value::Null, _) => Some("written only by Rust".to_owned()),
+            _ => compare::json(&want, &got),
+        };
+        if let Some(d) = d {
             out.push((o.file.clone(), d));
         }
     }
     out
+}
+
+/// Rows whose answers depend on what this machine has installed.
+fn machine_bound(row: &CommandRow) -> bool {
+    row.name.starts_with("route")
+        || row
+            .env
+            .iter()
+            .any(|(_, v)| matches!(v, EnvValue::CalibreCopy))
+}
+
+/// Where an input's frozen answers live.
+fn frozen_file(input: &Path, committed: bool) -> PathBuf {
+    let base = if committed {
+        paths::workspace_root().join("oracle/parity")
+    } else {
+        paths::workspace_root().join("oracle-real/parity")
+    };
+    base.join(format!("{}.json", paths::stem(input)))
+}
+
+fn read_frozen(input: &Path, committed: bool) -> Result<serde_json::Map<String, Value>, String> {
+    let file = frozen_file(input, committed);
+    let text = std::fs::read_to_string(&file).map_err(|e| {
+        format!(
+            "no frozen answers for {} ({e})",
+            if committed {
+                file.display().to_string()
+            } else {
+                "a real script".to_owned()
+            }
+        )
+    })?;
+    match serde_json::from_str(&text) {
+        Ok(Value::Object(m)) => Ok(m),
+        _ => Err("a frozen answer file is not a JSON object".into()),
+    }
+}
+
+fn write_frozen(
+    input: &Path,
+    committed: bool,
+    rows: serde_json::Map<String, Value>,
+) -> Result<(), String> {
+    let file = frozen_file(input, committed);
+    std::fs::create_dir_all(file.parent().expect("a folder")).map_err(|e| e.to_string())?;
+    // A partial --command record adds to what is there.
+    let mut all = read_frozen(input, committed).unwrap_or_default();
+    all.insert("$machine".into(), crate::machine::facts(None));
+    all.insert("$epoch".into(), Value::from(DEFAULT_EPOCH));
+    for (k, v) in rows {
+        all.insert(k, v);
+    }
+    let mut text = serde_json::to_string_pretty(&Value::Object(all)).map_err(|e| e.to_string())?;
+    text.push('\n');
+    std::fs::write(&file, text).map_err(|e| e.to_string())
 }
 
 pub fn run(args: &[String]) -> Result<bool, String> {
@@ -359,22 +449,12 @@ pub fn run(args: &[String]) -> Result<bool, String> {
     }
     let all = commands();
     let opts = parse(args, &all)?;
-    let ts = Side::typescript();
-    let other = if opts.against_ts {
-        Side {
-            label: "ts2",
-            ..Side::typescript()
-        }
+    let side = if opts.record {
+        Side::typescript()
     } else {
         match rust_cli(opts.rust_cli.clone())? {
             Some(p) => Side::rust(p),
-            None => {
-                println!(
-                    "no Rust CLI yet: crates/sp-cli does not exist. Pass --rust-cli <path>, \
-                     or --against-ts to check the harness against the TypeScript CLI alone."
-                );
-                return Ok(true);
-            }
+            None => return Err("no Rust CLI: crates/sp-cli does not build".into()),
         }
     };
     let rows: Vec<&CommandRow> = all.iter().filter(|r| selected(&opts, r)).collect();
@@ -391,23 +471,69 @@ pub fn run(args: &[String]) -> Result<bool, String> {
     };
 
     let scratch = std::env::temp_dir().join(format!("screepub-parity-{}", std::process::id()));
+    let machine = crate::machine::facts(None);
+    if !cfg!(target_os = "macos") {
+        println!(
+            "parity: the frozen answers are a Mac's; another system may differ where the CLI does"
+        );
+    }
     let mut clean = true;
     let mut case = 0usize;
-    let mut run_case = |input: &Path, row: &CommandRow| -> Result<Vec<(String, String)>, String> {
+    let mut run_case = |input: &Path, row: &CommandRow| -> Result<Run, String> {
         case += 1;
         let base = scratch.join(format!("{case:04}"));
-        let a = run_side(&ts, row, input, &base.join(ts.label), opts.epoch)?;
-        let b = run_side(&other, row, input, &base.join(other.label), opts.epoch)?;
-        Ok(diff_runs(row, &a, &b))
+        run_side(&side, row, input, &base.join(side.label), DEFAULT_EPOCH)
     };
 
-    println!("parity: TypeScript against {}", other.program.display());
-    let (mut runs, mut same) = (0usize, 0usize);
+    if opts.record {
+        println!("parity: freezing the TypeScript CLI's answers");
+        for (inputs, committed) in [(&committed, true), (&real, false)] {
+            let mut n = 0usize;
+            for input in inputs.iter() {
+                let mut frozen = serde_json::Map::new();
+                for row in rows.iter().filter(|r| r.inputs.accepts(input, committed)) {
+                    let run = run_case(input, row)?;
+                    frozen.insert(row.name.clone(), frozen_of(row, &run));
+                    n += 1;
+                }
+                write_frozen(input, committed, frozen)?;
+            }
+            let what = if committed {
+                "committed fixtures"
+            } else {
+                "real scripts"
+            };
+            println!("  {what}: {} inputs, {n} runs frozen", inputs.len());
+        }
+        if !opts.keep {
+            let _ = std::fs::remove_dir_all(&scratch);
+        }
+        return Ok(true);
+    }
+
+    println!(
+        "parity: {} against the frozen TypeScript answers",
+        side.program.display()
+    );
+    let (mut runs, mut same, mut skipped) = (0usize, 0usize, 0usize);
     for input in &committed {
+        let frozen = read_frozen(input, true)?;
+        let name = paths::stem(input);
+        let here = frozen.get("$machine") == Some(&machine);
         for row in rows.iter().filter(|r| r.inputs.accepts(input, true)) {
-            let diffs = run_case(input, row)?;
-            let name = paths::stem(input);
+            if machine_bound(row) && !here {
+                skipped += 1;
+                println!("  skip  {name} {} (frozen on another machine)", row.name);
+                continue;
+            }
             runs += 1;
+            let Some(want) = frozen.get(&row.name) else {
+                clean = false;
+                println!("  DIFF  {name} {}\n          no frozen answer", row.name);
+                continue;
+            };
+            let got = run_case(input, row)?;
+            let diffs = diff_frozen(row, want, &got);
             if diffs.is_empty() {
                 same += 1;
                 println!("  ok    {name} {}", row.name);
@@ -421,18 +547,35 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         }
     }
     println!(
-        "  committed fixtures: {} inputs, {runs} runs, {same} identical, {} differ",
+        "  committed fixtures: {} inputs, {runs} runs, {same} identical, {} differ, {skipped} skipped",
         committed.len(),
         runs - same
     );
 
     if !real.is_empty() {
-        let (mut cases, mut same) = (0usize, 0usize);
+        let (mut cases, mut same, mut skipped, mut missing) = (0usize, 0usize, 0usize, 0usize);
         let mut by_output: BTreeMap<String, usize> = BTreeMap::new();
         for input in &real {
+            let Ok(frozen) = read_frozen(input, false) else {
+                missing += 1;
+                continue;
+            };
+            let here = frozen.get("$machine") == Some(&machine);
             for row in rows.iter().filter(|r| r.inputs.accepts(input, false)) {
+                if machine_bound(row) && !here {
+                    skipped += 1;
+                    continue;
+                }
                 cases += 1;
-                let diffs = run_case(input, row)?;
+                let Some(want) = frozen.get(&row.name) else {
+                    clean = false;
+                    *by_output
+                        .entry(format!("{} no frozen answer", row.name))
+                        .or_default() += 1;
+                    continue;
+                };
+                let got = run_case(input, row)?;
+                let diffs = diff_frozen(row, want, &got);
                 if diffs.is_empty() {
                     same += 1;
                 } else {
@@ -444,10 +587,15 @@ pub fn run(args: &[String]) -> Result<bool, String> {
             }
         }
         println!(
-            "  real scripts: {} inputs, {cases} runs, {same} identical, {} differ",
-            real.len(),
+            "  real scripts: {} inputs, {cases} runs, {same} identical, {} differ, {skipped} skipped",
+            real.len() - missing,
             cases - same
         );
+        if missing > 0 {
+            println!(
+                "          {missing} real scripts have no frozen answers in rust/oracle-real/parity"
+            );
+        }
         for (what, n) in by_output {
             println!("          {what}: {n}");
         }

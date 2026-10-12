@@ -1,0 +1,3134 @@
+{
+  "$machine": {
+    "os": "darwin",
+    "calibre": true,
+    "kfxPlugin": true,
+    "previewer": true,
+    "books": true,
+    "sendToKindle": false,
+    "mailHandler": "efa0c2bcce3dc31a"
+  },
+  "parity_app_settings / a corrupt file": {
+    "argv": [
+      "app-settings",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":false,\"keepScriptSettings\":true,\"readerDevice\":null,\"animatePage\":true,\"typewriterSounds\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{ nope"
+      }
+    ]
+  },
+  "parity_app_settings / an array": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "[1]",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"--set must be a JSON object\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / an unknown key after a good one": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"animatePage\":true,\"zzz\":1}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \\\"zzz\\\"\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / bad formatDefaults": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"formatDefaults\":[1]}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"formatDefaults must be an object or null\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / bad keep": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"keepScriptSettings\":\"false\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"keepScriptSettings must be true, false or null\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / bad library with a good format, nothing written": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"formatDefaults\":{\"justifyText\":true},\"libraryPath\":\"rel\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"the library folder must be a full path\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / bad reader": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"readerDevice\":\"nook\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"readerDevice must be one of kindle, apple, kobo, tolino, remarkable or null\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / bad switch": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"typewriterSounds\":1}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"typewriterSounds must be true, false or null\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / empty object": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / every reset": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"keepScriptSettings\":null,\"readerDevice\":null,\"animatePage\":null,\"typewriterSounds\":null}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":null,\"animatePage\":true,\"typewriterSounds\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"formatDefaults\": {\n    \"cueIndentPct\": 99,\n    \"fontFamily\": \"serif\"\n  }\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / every switch": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"keepScriptSettings\":false,\"readerDevice\":\"remarkable\",\"animatePage\":true,\"typewriterSounds\":false}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":false,\"readerDevice\":\"remarkable\",\"animatePage\":true,\"typewriterSounds\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"formatDefaults\": {\n    \"cueIndentPct\": 99,\n    \"fontFamily\": \"serif\"\n  },\n  \"readerDevice\": \"remarkable\",\n  \"animatePage\": true,\n  \"typewriterSounds\": false,\n  \"keepScriptSettings\": false\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / formatDefaults": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"formatDefaults\":{\"cueIndentPct\":12.5,\"justifyText\":true,\"dialogueSideMarginPct\":-4}}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":0,\"cueIndentPct\":12.5,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":true,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"formatDefaults\": {\n    \"scenePageBreaks\": false,\n    \"dialogueSideMarginPct\": 0,\n    \"cueIndentPct\": 12.5,\n    \"parentheticalIndentPct\": 17,\n    \"elementSpacingEm\": 1,\n    \"keepSceneHeadingWithScene\": true,\n    \"keepSpeechesWhole\": false,\n    \"fontFamily\": \"courier\",\n    \"rejoinSplitDialogue\": true,\n    \"contdMode\": \"auto\",\n    \"cueAlignment\": \"centered\",\n    \"includeTitlePage\": true,\n    \"showSceneNumbers\": false,\n    \"showPageMarkers\": true,\n    \"dualDialogue\": \"sideBySide\",\n    \"justifyText\": true,\n    \"printSplitMinimums\": true,\n    \"preserveFontShifts\": true,\n    \"includeImages\": true,\n    \"promoteCoverImage\": true\n  },\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / formatDefaults reset": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"formatDefaults\":null}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":false,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / integer key first": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"animatePage\":true,\"7\":1}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \\\"7\\\"\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / lastRoute": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"lastRoute\":\"apple-books\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \\\"lastRoute\\\"\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / library is a file": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":\"$ROOT/afile\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"cannot use $ROOT/afile as the library: that is a file, not a folder\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / library not a string": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":7}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"libraryPath must be a full path or null\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / library under a file": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":\"$ROOT/afile/books\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"cannot use $ROOT/afile/books as the library: part of that path is not a folder\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / libraryPath": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":\"$ROOT/books/\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/books\",\"chosen\":\"$ROOT/books\",\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "books/",
+        "text": ""
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"formatDefaults\": {\n    \"cueIndentPct\": 99,\n    \"fontFamily\": \"serif\"\n  },\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true,\n  \"libraryPath\": \"$ROOT/books\"\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / libraryPath reset": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":null}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\n    \"2\": [\n      1e+21\n    ],\n    \"b\": 1\n  },\n  \"formatDefaults\": {\n    \"cueIndentPct\": 99,\n    \"fontFamily\": \"serif\"\n  },\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}\n"
+      }
+    ]
+  },
+  "parity_app_settings / not JSON": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{nope",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"--set is not valid JSON\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / plain read, a stored file": {
+    "argv": [
+      "app-settings",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"serif\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":true,\"keepScriptSettings\":true,\"readerDevice\":\"kobo\",\"animatePage\":false,\"typewriterSounds\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings / plain read, no file": {
+    "argv": [
+      "app-settings",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/home/Documents/Screepub\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":false},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":false,\"keepScriptSettings\":true,\"readerDevice\":null,\"animatePage\":true,\"typewriterSounds\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": []
+  },
+  "parity_app_settings / relative library": {
+    "argv": [
+      "app-settings",
+      "--set",
+      "{\"libraryPath\":\"books\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"the library folder must be a full path\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "afile",
+        "text": "a file"
+      },
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\",\n  \"future\": {\"b\": 1.0, \"2\": [1e21]},\n  \"formatDefaults\": {\"cueIndentPct\": 99, \"fontFamily\": \"serif\"},\n  \"readerDevice\": \"kobo\",\n  \"animatePage\": false,\n  \"typewriterSounds\": true\n}"
+      }
+    ]
+  },
+  "parity_app_settings_with_the_library_override / the library override": {
+    "argv": [
+      "app-settings",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"file\":\"$ROOT/cfg/settings.json\",\"library\":{\"path\":\"$ROOT/envlib\",\"chosen\":null,\"platformDefault\":\"$ROOT/home/Documents/Screepub\",\"fromEnv\":true},\"home\":\"$ROOT/home\",\"formatDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"shippedDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"customized\":false,\"keepScriptSettings\":true,\"readerDevice\":null,\"animatePage\":true,\"typewriterSounds\":false}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_export / --check with --out": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--check",
+      "--out",
+      "$ROOT/out/x.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--check builds and writes nothing, so it takes no --out\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / a script that is not there": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fdx",
+      "--fountain",
+      "$ROOT/lib/Ghost.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the script to export: $ROOT/lib/Ghost.fountain\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / azw3 --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "azw3",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.azw3\",\"format\":\"azw3\",\"extension\":\"azw3\",\"label\":\"AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568,\"beta\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / bad options-json": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--options-json",
+      "{",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-options\",\"message\":\"--options-json is not valid JSON\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / epub": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.epub\",\"format\":\"epub\",\"extension\":\"epub\",\"label\":\"EPUB: for emailing to Kindle, and most e-readers\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / epub --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "epub",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.epub\",\"format\":\"epub\",\"extension\":\"epub\",\"label\":\"EPUB: for emailing to Kindle, and most e-readers\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / epub --out": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/Copy.EPUB",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/out/Copy.EPUB\",\"format\":\"epub\",\"extension\":\"epub\",\"label\":\"EPUB: for emailing to Kindle, and most e-readers\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/Copy.EPUB",
+        "text": "PK\u0003\u0004 a stand-in book"
+      }
+    ]
+  },
+  "parity_export / epub --out a new folder": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/new/deeper/c.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/out/new/deeper/c.epub\",\"format\":\"epub\",\"extension\":\"epub\",\"label\":\"EPUB: for emailing to Kindle, and most e-readers\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/new/",
+        "text": ""
+      },
+      {
+        "path": "out/new/deeper/",
+        "text": ""
+      },
+      {
+        "path": "out/new/deeper/c.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      }
+    ]
+  },
+  "parity_export / epub --out onto itself": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.epub\",\"format\":\"epub\",\"extension\":\"epub\",\"label\":\"EPUB: for emailing to Kindle, and most e-readers\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fdx": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fdx",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.fdx\",\"format\":\"fdx\",\"extension\":\"fdx\",\"label\":\"FDX: the script to keep editing, in Final Draft and most screenwriting apps\",\"stages\":[],\"available\":[\"epub\",\"kindle\"],\"beta\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fdx",
+        "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. STATION - NIGHT</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>The lamp hums.</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>MARA</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>(quietly)</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>It is late.</Text></Paragraph>\n    <Paragraph Type=\"Transition\"><Text>CUT TO:</Text></Paragraph>\n    <Paragraph Type=\"Scene Heading\"><Text>EXT. FIELD - DAY</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Wind.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Field Notes</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>A. Writer</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fdx --check, not built": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fdx",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.fdx\",\"format\":\"fdx\",\"extension\":\"fdx\",\"label\":\"FDX: the script to keep editing, in Final Draft and most screenwriting apps\",\"stages\":[],\"fresh\":false,\"available\":[\"epub\",\"kindle\"],\"beta\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fdx --out": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fdx",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--out",
+      "$ROOT/out/Edit.fdx",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/out/Edit.fdx\",\"format\":\"fdx\",\"extension\":\"fdx\",\"label\":\"FDX: the script to keep editing, in Final Draft and most screenwriting apps\",\"stages\":[],\"available\":[\"epub\",\"kindle\"],\"beta\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/Edit.fdx",
+        "text": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. STATION - NIGHT</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>The lamp hums.</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>MARA</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>(quietly)</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>It is late.</Text></Paragraph>\n    <Paragraph Type=\"Transition\"><Text>CUT TO:</Text></Paragraph>\n    <Paragraph Type=\"Scene Heading\"><Text>EXT. FIELD - DAY</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Wind.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Field Notes</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>A. Writer</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+      }
+    ]
+  },
+  "parity_export / fdx without a script": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fdx",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--for fdx is built from the script's .fountain: pass it with --fountain\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fountain": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.fountain\",\"format\":\"fountain\",\"extension\":\"fountain\",\"label\":\"Fountain: the script as plain text, for screenwriting apps\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fountain --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.fountain\",\"format\":\"fountain\",\"extension\":\"fountain\",\"label\":\"Fountain: the script as plain text, for screenwriting apps\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fountain --out onto the book's own script": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--out",
+      "$ROOT/lib/Book.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"export-failed\",\"message\":\"could not save the copy to $ROOT/lib/Book.fountain: that is the book's own script, which Screepub keeps; choose another place\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fountain --out strips our notes": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--out",
+      "$ROOT/out/clean.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/out/clean.fountain\",\"format\":\"fountain\",\"extension\":\"fountain\",\"label\":\"Fountain: the script as plain text, for screenwriting apps\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/clean.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\nThe lamp hums.\n\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      }
+    ]
+  },
+  "parity_export / fountain --out with nothing of ours copies": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Plain.fountain",
+      "--out",
+      "$ROOT/out/plain.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/out/plain.fountain\",\"format\":\"fountain\",\"extension\":\"fountain\",\"label\":\"Fountain: the script as plain text, for screenwriting apps\",\"available\":[\"epub\",\"kindle\"],\"stages\":[]}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      }
+    ]
+  },
+  "parity_export / fountain that is not one": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--fountain",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--for fountain takes a .fountain file, not $ROOT/lib/Book.epub\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / fountain without a script": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--for fountain needs the script's .fountain: pass it with --fountain\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / mobi --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "mobi",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.mobi\",\"format\":\"mobi\",\"extension\":\"mobi\",\"label\":\"MOBI: for the oldest Kindles\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / mobi without a script": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "mobi",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--for mobi needs the script's .fountain: pass it with --fountain\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / no book": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Ghost.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the book to export: $ROOT/lib/Ghost.epub\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / options-json an array": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--options-json",
+      "[]",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-options\",\"message\":\"--options-json must be a JSON object\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / relative --out": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "x.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"the path given with --out must be absolute\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / unknown --for": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "pdf",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not \\\"pdf\\\"\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / wrong extension": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "azw3",
+      "--out",
+      "$ROOT/out/x.kfx",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"that is an AZW3 file: choose a name ending in .azw3\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export / wrong extension, a vowel": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/x.mobi",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"that is an EPUB file: choose a name ending in .epub\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export_kindle_check / kfx --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "kfx",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.kfx\",\"format\":\"kfx\",\"extension\":\"kfx\",\"label\":\"KFX: for modern Kindles over USB, the best layout\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"calibre\",\"bookDate\":1767225600123.4568}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_export_kindle_check / kindle --check": {
+    "argv": [
+      "export",
+      "$ROOT/lib/Book.epub",
+      "--for",
+      "kindle",
+      "--check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"path\":\"$ROOT/lib/Book.kfx\",\"format\":\"kindle\",\"extension\":\"kfx\",\"label\":\"KFX: for USB sideload to Kindle (best quality)\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"calibre\",\"bookDate\":1767225600123.4568}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_kfx_status / kfx-status": {
+    "argv": [
+      "kfx-status",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"ready\":true,\"possible\":true,\"summary\":\"Kindles get KFX, the best quality Screepub can make.\",\"steps\":[{\"id\":\"calibre\",\"name\":\"Calibre\",\"installed\":true,\"fix\":null},{\"id\":\"previewer\",\"name\":\"Kindle Previewer\",\"installed\":true,\"fix\":null},{\"id\":\"plugin\",\"name\":\"KFX plugin\",\"installed\":true,\"fix\":null}]}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_route / a book that is not there": {
+    "argv": [
+      "route",
+      "apple-books",
+      "$ROOT/lib/Ghost.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the book: $ROOT/lib/Ghost.epub\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / a device key": {
+    "argv": [
+      "route",
+      "device:kindle",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"send to a reader with screepub send; route performs the others\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / a performer with --out": {
+    "argv": [
+      "route",
+      "send-to-kindle",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/x.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"route send-to-kindle takes no --out (only save-epub and save-kindle write a file)\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / an unknown key": {
+    "argv": [
+      "route",
+      "nope",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"no route is called \\\"nope\\\": route takes apple-books, send-to-kindle, email-to-kindle, save-epub, save-kindle, kindle-email-setup\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / no book": {
+    "argv": [
+      "route",
+      "apple-books",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"route apple-books needs the book: screepub route apple-books <file.epub>\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / remarkable": {
+    "argv": [
+      "route",
+      "remarkable",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"send to a reader with screepub send; route performs the others\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save without --out": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"route save-epub needs --out: the absolute path to save the copy to\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-epub": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/Saved.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"key\":\"save-epub\",\"path\":\"$ROOT/out/Saved.epub\",\"note\":\"Saved to $ROOT/out/Saved.epub.\"}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\"\n}\n"
+      },
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      },
+      {
+        "path": "out/Saved.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      }
+    ]
+  },
+  "parity_route / save-epub onto itself": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"key\":\"save-epub\",\"path\":\"$ROOT/lib/Book.epub\",\"note\":\"Saved to $ROOT/lib/Book.epub.\"}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\n  \"lastRoute\": \"save-epub\"\n}\n"
+      },
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-epub relative --out": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "x.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"the path given with --out must be absolute\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-epub with --fountain": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/x.epub",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"route save-epub takes no --fountain (only save-kindle builds a file)\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-epub with --options-json": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/x.epub",
+      "--options-json",
+      "{}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"route save-epub takes no --options-json (only save-kindle builds a file)\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-epub wrong extension": {
+    "argv": [
+      "route",
+      "save-epub",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "$ROOT/out/x.azw3",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"that is an EPUB file: choose a name ending in .epub\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / save-kindle relative --out": {
+    "argv": [
+      "route",
+      "save-kindle",
+      "$ROOT/lib/Book.epub",
+      "--out",
+      "x.azw3",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"the path given with --out must be absolute\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / setup with --fountain": {
+    "argv": [
+      "route",
+      "kindle-email-setup",
+      "--fountain",
+      "$ROOT/lib/Book.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"kindle-email-setup takes no --fountain (only save-kindle builds a file)\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / setup with --out": {
+    "argv": [
+      "route",
+      "kindle-email-setup",
+      "--out",
+      "$ROOT/out/x.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"kindle-email-setup takes no --out (only save-epub and save-kindle write a file)\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_route / setup with a book": {
+    "argv": [
+      "route",
+      "kindle-email-setup",
+      "$ROOT/lib/Book.epub",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"kindle-email-setup takes no book: it opens Amazon's settings page\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/Book.epub",
+        "text": "PK\u0003\u0004 a stand-in book"
+      },
+      {
+        "path": "lib/Book.fountain",
+        "text": "Title: Field Notes\nAuthor: A. Writer\n\nINT. STATION - NIGHT\n\n[[img: p001-01.png w=40]]\n\nThe lamp hums.\n\n[[fmt: f=sans]]\nMARA\n(quietly)\nIt is late.\n\nCUT TO:\n\nEXT. FIELD - DAY\n\nWind.\n"
+      },
+      {
+        "path": "lib/Book.screepub.json",
+        "text": "{\"cueIndentPct\": 21}"
+      },
+      {
+        "path": "lib/Plain.fountain",
+        "text": "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n"
+      },
+      {
+        "path": "out/",
+        "text": ""
+      }
+    ]
+  },
+  "parity_routes_quick / lastRoute None": {
+    "argv": [
+      "routes",
+      "$ROOT/lib/Book.epub",
+      "--quick",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"routes\":[{\"id\":\"apple-books\",\"key\":\"apple-books\",\"title\":\"Apple Books\",\"detail\":\"syncs to your iPhone and iPad\",\"button\":\"Add to Apple Books\",\"available\":true},{\"id\":\"send-to-kindle\",\"key\":\"send-to-kindle\",\"title\":\"Send to Kindle web\",\"detail\":\"via Amazon, the best-looking Kindle result\",\"button\":\"Send to Kindle web\",\"available\":true},{\"id\":\"save-epub\",\"key\":\"save-epub\",\"title\":\"Save the EPUB\",\"detail\":\"for email, Apple Books and most e-readers\",\"button\":\"Save the EPUB…\",\"available\":true},{\"id\":\"save-kindle\",\"key\":\"save-kindle\",\"title\":\"Save a Kindle file\",\"detail\":\"for copying to a Kindle by hand\",\"button\":\"Save a Kindle file…\",\"available\":true},{\"id\":\"device:kindle\",\"key\":\"device:kindle\",\"title\":\"Kindle\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kindle\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:kobo\",\"key\":\"device:kobo\",\"title\":\"Kobo\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kobo\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:tolino\",\"key\":\"device:tolino\",\"title\":\"tolino\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to tolino\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"remarkable\",\"key\":\"remarkable\",\"title\":\"reMarkable\",\"detail\":\"checking whether one is docked…\",\"button\":\"Upload to reMarkable\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"email-to-kindle\",\"key\":\"email-to-kindle\",\"title\":\"Send to Kindle email\",\"detail\":\"needs Apple Mail as the default mail app, the one mail app the attachment survives\",\"button\":\"Send to Kindle email\",\"available\":false,\"unavailable\":\"setup\"}],\"chosen\":\"apple-books\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_routes_quick / lastRoute Some(\"7\")": {
+    "argv": [
+      "routes",
+      "$ROOT/lib/Book.epub",
+      "--quick",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"routes\":[{\"id\":\"apple-books\",\"key\":\"apple-books\",\"title\":\"Apple Books\",\"detail\":\"syncs to your iPhone and iPad\",\"button\":\"Add to Apple Books\",\"available\":true},{\"id\":\"send-to-kindle\",\"key\":\"send-to-kindle\",\"title\":\"Send to Kindle web\",\"detail\":\"via Amazon, the best-looking Kindle result\",\"button\":\"Send to Kindle web\",\"available\":true},{\"id\":\"save-epub\",\"key\":\"save-epub\",\"title\":\"Save the EPUB\",\"detail\":\"for email, Apple Books and most e-readers\",\"button\":\"Save the EPUB…\",\"available\":true},{\"id\":\"save-kindle\",\"key\":\"save-kindle\",\"title\":\"Save a Kindle file\",\"detail\":\"for copying to a Kindle by hand\",\"button\":\"Save a Kindle file…\",\"available\":true},{\"id\":\"device:kindle\",\"key\":\"device:kindle\",\"title\":\"Kindle\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kindle\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:kobo\",\"key\":\"device:kobo\",\"title\":\"Kobo\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kobo\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:tolino\",\"key\":\"device:tolino\",\"title\":\"tolino\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to tolino\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"remarkable\",\"key\":\"remarkable\",\"title\":\"reMarkable\",\"detail\":\"checking whether one is docked…\",\"button\":\"Upload to reMarkable\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"email-to-kindle\",\"key\":\"email-to-kindle\",\"title\":\"Send to Kindle email\",\"detail\":\"needs Apple Mail as the default mail app, the one mail app the attachment survives\",\"button\":\"Send to Kindle email\",\"available\":false,\"unavailable\":\"setup\"}],\"chosen\":\"apple-books\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_routes_quick / lastRoute Some(\"\\\"apple-books\\\"\")": {
+    "argv": [
+      "routes",
+      "$ROOT/lib/Book.epub",
+      "--quick",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"routes\":[{\"id\":\"apple-books\",\"key\":\"apple-books\",\"title\":\"Apple Books\",\"detail\":\"syncs to your iPhone and iPad\",\"button\":\"Add to Apple Books\",\"available\":true},{\"id\":\"send-to-kindle\",\"key\":\"send-to-kindle\",\"title\":\"Send to Kindle web\",\"detail\":\"via Amazon, the best-looking Kindle result\",\"button\":\"Send to Kindle web\",\"available\":true},{\"id\":\"save-epub\",\"key\":\"save-epub\",\"title\":\"Save the EPUB\",\"detail\":\"for email, Apple Books and most e-readers\",\"button\":\"Save the EPUB…\",\"available\":true},{\"id\":\"save-kindle\",\"key\":\"save-kindle\",\"title\":\"Save a Kindle file\",\"detail\":\"for copying to a Kindle by hand\",\"button\":\"Save a Kindle file…\",\"available\":true},{\"id\":\"device:kindle\",\"key\":\"device:kindle\",\"title\":\"Kindle\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kindle\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:kobo\",\"key\":\"device:kobo\",\"title\":\"Kobo\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kobo\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:tolino\",\"key\":\"device:tolino\",\"title\":\"tolino\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to tolino\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"remarkable\",\"key\":\"remarkable\",\"title\":\"reMarkable\",\"detail\":\"checking whether one is docked…\",\"button\":\"Upload to reMarkable\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"email-to-kindle\",\"key\":\"email-to-kindle\",\"title\":\"Send to Kindle email\",\"detail\":\"needs Apple Mail as the default mail app, the one mail app the attachment survives\",\"button\":\"Send to Kindle email\",\"available\":false,\"unavailable\":\"setup\"}],\"chosen\":\"apple-books\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_routes_quick / lastRoute Some(\"\\\"device:kobo\\\"\")": {
+    "argv": [
+      "routes",
+      "$ROOT/lib/Book.epub",
+      "--quick",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"routes\":[{\"id\":\"apple-books\",\"key\":\"apple-books\",\"title\":\"Apple Books\",\"detail\":\"syncs to your iPhone and iPad\",\"button\":\"Add to Apple Books\",\"available\":true},{\"id\":\"send-to-kindle\",\"key\":\"send-to-kindle\",\"title\":\"Send to Kindle web\",\"detail\":\"via Amazon, the best-looking Kindle result\",\"button\":\"Send to Kindle web\",\"available\":true},{\"id\":\"save-epub\",\"key\":\"save-epub\",\"title\":\"Save the EPUB\",\"detail\":\"for email, Apple Books and most e-readers\",\"button\":\"Save the EPUB…\",\"available\":true},{\"id\":\"save-kindle\",\"key\":\"save-kindle\",\"title\":\"Save a Kindle file\",\"detail\":\"for copying to a Kindle by hand\",\"button\":\"Save a Kindle file…\",\"available\":true},{\"id\":\"device:kindle\",\"key\":\"device:kindle\",\"title\":\"Kindle\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kindle\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:kobo\",\"key\":\"device:kobo\",\"title\":\"Kobo\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kobo\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:tolino\",\"key\":\"device:tolino\",\"title\":\"tolino\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to tolino\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"remarkable\",\"key\":\"remarkable\",\"title\":\"reMarkable\",\"detail\":\"checking whether one is docked…\",\"button\":\"Upload to reMarkable\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"email-to-kindle\",\"key\":\"email-to-kindle\",\"title\":\"Send to Kindle email\",\"detail\":\"needs Apple Mail as the default mail app, the one mail app the attachment survives\",\"button\":\"Send to Kindle email\",\"available\":false,\"unavailable\":\"setup\"}],\"chosen\":\"device:kobo\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_routes_quick / lastRoute Some(\"\\\"save-kindle\\\"\")": {
+    "argv": [
+      "routes",
+      "$ROOT/lib/Book.epub",
+      "--quick",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"routes\":[{\"id\":\"apple-books\",\"key\":\"apple-books\",\"title\":\"Apple Books\",\"detail\":\"syncs to your iPhone and iPad\",\"button\":\"Add to Apple Books\",\"available\":true},{\"id\":\"send-to-kindle\",\"key\":\"send-to-kindle\",\"title\":\"Send to Kindle web\",\"detail\":\"via Amazon, the best-looking Kindle result\",\"button\":\"Send to Kindle web\",\"available\":true},{\"id\":\"save-epub\",\"key\":\"save-epub\",\"title\":\"Save the EPUB\",\"detail\":\"for email, Apple Books and most e-readers\",\"button\":\"Save the EPUB…\",\"available\":true},{\"id\":\"save-kindle\",\"key\":\"save-kindle\",\"title\":\"Save a Kindle file\",\"detail\":\"for copying to a Kindle by hand\",\"button\":\"Save a Kindle file…\",\"available\":true},{\"id\":\"device:kindle\",\"key\":\"device:kindle\",\"title\":\"Kindle\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kindle\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:kobo\",\"key\":\"device:kobo\",\"title\":\"Kobo\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to Kobo\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"device:tolino\",\"key\":\"device:tolino\",\"title\":\"tolino\",\"detail\":\"plug in over USB to send\",\"button\":\"Copy to tolino\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"remarkable\",\"key\":\"remarkable\",\"title\":\"reMarkable\",\"detail\":\"checking whether one is docked…\",\"button\":\"Upload to reMarkable\",\"available\":false,\"unavailable\":\"connect\"},{\"id\":\"email-to-kindle\",\"key\":\"email-to-kindle\",\"title\":\"Send to Kindle email\",\"detail\":\"needs Apple Mail as the default mail app, the one mail app the attachment survives\",\"button\":\"Send to Kindle email\",\"available\":false,\"unavailable\":\"setup\"}],\"chosen\":\"save-kindle\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_settings / a script that is not there": {
+    "argv": [
+      "settings",
+      "$ROOT/ghost.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the script: $ROOT/ghost.fountain\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": []
+  },
+  "parity_settings / read a sidecar": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":40,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":null,\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      },
+      {
+        "path": "lib/My.Script.screepub.json",
+        "text": "{\"cueIndentPct\": 40, \"x\": 1}"
+      }
+    ]
+  },
+  "parity_settings / read over app defaults (a preset)": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":\"phone\",\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\"formatDefaults\":{\"dualDialogue\":\"sequential\",\"dialogueSideMarginPct\":10},\"keepScriptSettings\":false}"
+      },
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      }
+    ]
+  },
+  "parity_settings / read, nothing stored": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":\"kindleEink\",\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      }
+    ]
+  },
+  "parity_settings / set an array": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "[]",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"--set must be a JSON object\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      }
+    ]
+  },
+  "parity_settings / set clamps": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "{\"cueIndentPct\":1000,\"elementSpacingEm\":0}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":60,\"parentheticalIndentPct\":17,\"elementSpacingEm\":0.4,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":null,\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      },
+      {
+        "path": "lib/My.Script.screepub.json",
+        "text": "{\n  \"contdMode\": \"auto\",\n  \"cueAlignment\": \"centered\",\n  \"cueIndentPct\": 60,\n  \"dialogueSideMarginPct\": 20,\n  \"dualDialogue\": \"sideBySide\",\n  \"elementSpacingEm\": 0.4,\n  \"fontFamily\": \"courier\",\n  \"includeImages\": true,\n  \"includeTitlePage\": true,\n  \"justifyText\": false,\n  \"keepSceneHeadingWithScene\": true,\n  \"keepSpeechesWhole\": false,\n  \"parentheticalIndentPct\": 17,\n  \"preserveFontShifts\": true,\n  \"printSplitMinimums\": true,\n  \"promoteCoverImage\": true,\n  \"rejoinSplitDialogue\": true,\n  \"scenePageBreaks\": false,\n  \"showPageMarkers\": true,\n  \"showSceneNumbers\": false\n}\n"
+      }
+    ]
+  },
+  "parity_settings / set not JSON": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "{",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"bad-settings\",\"message\":\"--set is not valid JSON\"}}\n",
+    "stderr": "",
+    "code": 1,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      }
+    ]
+  },
+  "parity_settings / set nothing": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "{}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":\"kindleEink\",\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      },
+      {
+        "path": "lib/My.Script.screepub.json",
+        "text": "{\n  \"contdMode\": \"auto\",\n  \"cueAlignment\": \"centered\",\n  \"cueIndentPct\": 33,\n  \"dialogueSideMarginPct\": 20,\n  \"dualDialogue\": \"sideBySide\",\n  \"elementSpacingEm\": 1,\n  \"fontFamily\": \"courier\",\n  \"includeImages\": true,\n  \"includeTitlePage\": true,\n  \"justifyText\": false,\n  \"keepSceneHeadingWithScene\": true,\n  \"keepSpeechesWhole\": false,\n  \"parentheticalIndentPct\": 17,\n  \"preserveFontShifts\": true,\n  \"printSplitMinimums\": true,\n  \"promoteCoverImage\": true,\n  \"rejoinSplitDialogue\": true,\n  \"scenePageBreaks\": false,\n  \"showPageMarkers\": true,\n  \"showSceneNumbers\": false\n}\n"
+      }
+    ]
+  },
+  "parity_settings / set one knob": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "{\"elementSpacingEm\":1.25,\"fontFamily\":\"sans\"}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":40,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1.25,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"sans\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":null,\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":true}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      },
+      {
+        "path": "lib/My.Script.screepub.json",
+        "text": "{\n  \"contdMode\": \"auto\",\n  \"cueAlignment\": \"centered\",\n  \"cueIndentPct\": 40,\n  \"dialogueSideMarginPct\": 20,\n  \"dualDialogue\": \"sideBySide\",\n  \"elementSpacingEm\": 1.25,\n  \"fontFamily\": \"sans\",\n  \"includeImages\": true,\n  \"includeTitlePage\": true,\n  \"justifyText\": false,\n  \"keepSceneHeadingWithScene\": true,\n  \"keepSpeechesWhole\": false,\n  \"parentheticalIndentPct\": 17,\n  \"preserveFontShifts\": true,\n  \"printSplitMinimums\": true,\n  \"promoteCoverImage\": true,\n  \"rejoinSplitDialogue\": true,\n  \"scenePageBreaks\": false,\n  \"showPageMarkers\": true,\n  \"showSceneNumbers\": false\n}\n"
+      }
+    ]
+  },
+  "parity_settings / set over app defaults": {
+    "argv": [
+      "settings",
+      "$ROOT/lib/My.Script.fountain",
+      "--set",
+      "{\"justifyText\":true}",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":true,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"defaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"appDefaults\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true},\"preset\":null,\"presets\":[{\"id\":\"kindleEink\",\"displayName\":\"Kindle e-ink (6\\\")\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":20,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sideBySide\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}},{\"id\":\"phone\",\"displayName\":\"Phone / narrow screen\",\"settings\":{\"scenePageBreaks\":false,\"dialogueSideMarginPct\":10,\"cueIndentPct\":33,\"parentheticalIndentPct\":17,\"elementSpacingEm\":1,\"keepSceneHeadingWithScene\":true,\"keepSpeechesWhole\":false,\"fontFamily\":\"courier\",\"rejoinSplitDialogue\":true,\"contdMode\":\"auto\",\"cueAlignment\":\"centered\",\"includeTitlePage\":true,\"showSceneNumbers\":false,\"showPageMarkers\":true,\"dualDialogue\":\"sequential\",\"justifyText\":false,\"printSplitMinimums\":true,\"preserveFontShifts\":true,\"includeImages\":true,\"promoteCoverImage\":true}}],\"sidecar\":\"$ROOT/lib/My.Script.screepub.json\",\"keepScriptSettings\":false}\n",
+    "stderr": "",
+    "code": 0,
+    "files": [
+      {
+        "path": "cfg/",
+        "text": ""
+      },
+      {
+        "path": "cfg/settings.json",
+        "text": "{\"formatDefaults\":{\"dualDialogue\":\"sequential\",\"dialogueSideMarginPct\":10},\"keepScriptSettings\":false}"
+      },
+      {
+        "path": "lib/",
+        "text": ""
+      },
+      {
+        "path": "lib/My.Script.fountain",
+        "text": "Title: T\n\nINT. ROOM - DAY\n"
+      },
+      {
+        "path": "lib/My.Script.screepub.json",
+        "text": "{\n  \"contdMode\": \"auto\",\n  \"cueAlignment\": \"centered\",\n  \"cueIndentPct\": 33,\n  \"dialogueSideMarginPct\": 10,\n  \"dualDialogue\": \"sequential\",\n  \"elementSpacingEm\": 1,\n  \"fontFamily\": \"courier\",\n  \"includeImages\": true,\n  \"includeTitlePage\": true,\n  \"justifyText\": true,\n  \"keepSceneHeadingWithScene\": true,\n  \"keepSpeechesWhole\": false,\n  \"parentheticalIndentPct\": 17,\n  \"preserveFontShifts\": true,\n  \"printSplitMinimums\": true,\n  \"promoteCoverImage\": true,\n  \"rejoinSplitDialogue\": true,\n  \"scenePageBreaks\": false,\n  \"showPageMarkers\": true,\n  \"showSceneNumbers\": false\n}\n"
+      }
+    ]
+  },
+  "parity_update_decision /   V1.2.3  vs 1.2.3-x\"y": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "  V1.2.3 ",
+      "--current",
+      "1.2.3-x\"y",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"  V1.2.3 \"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.10.0 vs 0.9.0": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.10.0",
+      "--current",
+      "0.9.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"0.10.0\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.11.1 vs 0.11.1-3-gabcdef1": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.11.1",
+      "--current",
+      "0.11.1-3-gabcdef1",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.11.1 is not newer than the running 0.11.1-3-gabcdef1\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.11.1 vs 0.11.1-dirty": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.11.1",
+      "--current",
+      "0.11.1-dirty",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.11.1 is not newer than the running 0.11.1-dirty\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.12.0 vs 0.11.1": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.12.0",
+      "--current",
+      "0.11.1",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"0.12.0\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.3.0-dev vs 0.3.0": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.3.0-dev",
+      "--current",
+      "0.3.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.3.0-dev is not newer than the running 0.3.0\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0 vs ": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0",
+      "--current",
+      "",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"could not read the versions: offered \\\"0.6.0\\\", running \\\"\\\"\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0-a-1 vs 0.6.0-a1": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0-a-1",
+      "--current",
+      "0.6.0-a1",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.6.0-a-1 is not newer than the running 0.6.0-a1\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0-a_ vs 0.6.0-a.": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0-a_",
+      "--current",
+      "0.6.0-a.",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.6.0-a_ is not newer than the running 0.6.0-a.\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0-beta vs 0.6.0-Beta": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0-beta",
+      "--current",
+      "0.6.0-Beta",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"0.6.0-beta is not newer than the running 0.6.0-Beta\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0-beta.10 vs 0.6.0-beta.9": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0-beta.10",
+      "--current",
+      "0.6.0-beta.9",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"0.6.0-beta.10\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 0.6.0-rc.1 vs 0.6.0-beta.2": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "0.6.0-rc.1",
+      "--current",
+      "0.6.0-beta.2",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"0.6.0-rc.1\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 1 vs 1.0.0": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "1",
+      "--current",
+      "1.0.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"1 is not newer than the running 1.0.0\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / 1.0.1 vs 1": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "1.0.1",
+      "--current",
+      "1",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"1.0.1\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / not-a-version vs 0.6.0": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "not-a-version",
+      "--current",
+      "0.6.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":false,\"reason\":\"could not read the versions: offered \\\"not-a-version\\\", running \\\"0.6.0\\\"\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_decision / update-decision --current 1.0.0 --json": {
+    "argv": [
+      "update-decision",
+      "--current",
+      "1.0.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-decision needs --offered <version> (the release that was found)\"}}\n",
+    "stderr": "",
+    "code": 1
+  },
+  "parity_update_decision / update-decision --offered 1.0.0 --json": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "1.0.0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-decision needs --current <version> (the build that is running)\"}}\n",
+    "stderr": "",
+    "code": 1
+  },
+  "parity_update_decision / v0.12.0+ci.4 vs 0.11.1-3-gabcdef1-dirty": {
+    "argv": [
+      "update-decision",
+      "--offered",
+      "v0.12.0+ci.4",
+      "--current",
+      "0.11.1-3-gabcdef1-dirty",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"offer\":true,\"version\":\"v0.12.0+ci.4\"}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / false None": {
+    "argv": [
+      "update-should-check",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":false}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / false Some(\"abc\")": {
+    "argv": [
+      "update-should-check",
+      "--last-checked",
+      "abc",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-should-check: --last-checked must be epoch milliseconds (got \\\"abc\\\")\"}}\n",
+    "stderr": "",
+    "code": 1
+  },
+  "parity_update_should_check / true None": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":true}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\" 12 \")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      " 12 ",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":true}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\"\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":true}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\"0\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "0",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":true}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\"0x10\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "0x10",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":true}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\"1e400\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "1e400",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-should-check: --last-checked must be epoch milliseconds (got \\\"1e400\\\")\"}}\n",
+    "stderr": "",
+    "code": 1
+  },
+  "parity_update_should_check / true Some(\"99999999999999\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "99999999999999",
+      "--json"
+    ],
+    "stdout": "{\"ok\":true,\"check\":false}\n",
+    "stderr": "",
+    "code": 0
+  },
+  "parity_update_should_check / true Some(\"Infinity\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "Infinity",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-should-check: --last-checked must be epoch milliseconds (got \\\"Infinity\\\")\"}}\n",
+    "stderr": "",
+    "code": 1
+  },
+  "parity_update_should_check / true Some(\"abc\")": {
+    "argv": [
+      "update-should-check",
+      "--opted-in",
+      "--last-checked",
+      "abc",
+      "--json"
+    ],
+    "stdout": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"update-should-check: --last-checked must be epoch milliseconds (got \\\"abc\\\")\"}}\n",
+    "stderr": "",
+    "code": 1
+  }
+}

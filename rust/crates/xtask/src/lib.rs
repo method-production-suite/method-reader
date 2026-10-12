@@ -7,6 +7,8 @@
 //! rust/PARITY.md's "Tools" table says which tool became which command.
 
 pub mod compare;
+#[path = "../../sp-engine/tests/common/machine.rs"]
+pub mod machine;
 pub mod oracle;
 pub mod parity;
 pub mod paths;
@@ -26,6 +28,7 @@ pub mod dmg;
 pub mod fixture;
 pub mod mobi_probe;
 pub mod packaging;
+pub mod rehearse;
 pub mod release_hook;
 pub mod release_notes;
 pub mod scratch;
@@ -67,7 +70,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "parity",
-        help: "run the TypeScript and Rust CLIs over every fixture and diff them (see --help)",
+        help: "run the Rust CLI over every fixture against the TypeScript's frozen answers (see --help)",
         main: parity_main,
     },
     Command {
@@ -179,6 +182,11 @@ pub const COMMANDS: &[Command] = &[
         name: "build-update-manifest",
         help: "write the updater's latest.json from a release's files",
         main: packaging::build_update_manifest_main,
+    },
+    Command {
+        name: "rehearse-handover",
+        help: "a local Tauri 0.11.1 window updating itself into this checkout's app",
+        main: rehearse::main,
     },
     Command {
         name: "build-update-compare",

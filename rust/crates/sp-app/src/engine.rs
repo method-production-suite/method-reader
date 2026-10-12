@@ -110,6 +110,12 @@ impl Request {
             parts.iter().flatten().map(|s| s.to_string()).collect()
         }
         let flag = |on: bool, f: &'static str| on.then_some(f);
+        // app.js's `value ? flag : null, value`, then its null filter: the
+        // flag only for a non-empty value, the value whenever it is there,
+        // so an empty string rides along without its flag.
+        fn truthy(value: &Option<String>, f: &'static str) -> Option<&'static str> {
+            value.as_deref().filter(|s| !s.is_empty()).map(|_| f)
+        }
         match self {
             Self::Version => v(&[Some("--version"), Some("--json")]),
             Self::Convert {
@@ -123,7 +129,7 @@ impl Request {
                 Some("--preview-inline"),
                 Some("--library"),
                 flag(*force, "--force"),
-                options.as_ref().map(|_| "--options-json"),
+                truthy(options, "--options-json"),
                 options.as_deref(),
             ]),
             Self::Reconvert {
@@ -147,14 +153,14 @@ impl Request {
                 Some("send"),
                 Some(file),
                 Some("--json"),
-                device.as_ref().map(|_| "--device"),
+                truthy(device, "--device"),
                 device.as_deref(),
             ]),
             Self::Settings { fountain, set } => v(&[
                 Some("settings"),
                 Some(fountain),
                 Some("--json"),
-                set.as_ref().map(|_| "--set"),
+                truthy(set, "--set"),
                 set.as_deref(),
             ]),
             Self::Export {
@@ -169,11 +175,11 @@ impl Request {
                 Some("--json"),
                 Some("--for"),
                 Some(for_format),
-                fountain.as_ref().map(|_| "--fountain"),
+                truthy(fountain, "--fountain"),
                 fountain.as_deref(),
-                options.as_ref().map(|_| "--options-json"),
+                truthy(options, "--options-json"),
                 options.as_deref(),
-                out.as_ref().map(|_| "--out"),
+                truthy(out, "--out"),
                 out.as_deref(),
             ]),
             Self::KindleCheck { epub } => v(&[
@@ -190,7 +196,7 @@ impl Request {
             Self::SetAppSettings { json } => v(&[
                 Some("app-settings"),
                 Some("--json"),
-                Some("--set"),
+                (!json.is_empty()).then_some("--set"),
                 Some(json),
             ]),
             Self::Reveal { path } => v(&[Some("reveal"), Some(path), Some("--json")]),
@@ -211,11 +217,11 @@ impl Request {
                 Some(key),
                 Some(epub),
                 Some("--json"),
-                out.as_ref().map(|_| "--out"),
+                truthy(out, "--out"),
                 out.as_deref(),
-                fountain.as_ref().map(|_| "--fountain"),
+                truthy(fountain, "--fountain"),
                 fountain.as_deref(),
-                options.as_ref().map(|_| "--options-json"),
+                truthy(options, "--options-json"),
                 options.as_deref(),
             ]),
             Self::EmailSetup => v(&[Some("route"), Some("kindle-email-setup"), Some("--json")]),

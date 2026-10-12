@@ -1,23 +1,26 @@
-//! Parity against the TypeScript: `bun src/cli.ts <verb> ... --json` and
-//! this crate's handler for the same verb, on the same files, must print
-//! the same line byte for byte (the Rust answer wrapped in the CLI's
-//! envelope and written by `jsjson`, as `JSON.stringify` writes it), and
-//! leave the same files behind.
+//! Parity against the TypeScript: what `src/cli.ts <verb> ... --json`
+//! printed and this crate's handler for the same verb, on the same files,
+//! must be the same line byte for byte (the Rust answer wrapped in the
+//! CLI's envelope and written by `jsjson`, as `JSON.stringify` writes it),
+//! and leave the same files behind.
 //!
-//! Each case runs the TypeScript first in a scratch folder (its own fake
-//! HOME, its own SCREEPUB_CONFIG_DIR), then empties the folder, sets it up
-//! again identically, and runs the Rust there, so every path in both
-//! answers is the same string and nothing needs normalizing.
+//! The TypeScript's side is frozen data (tests/data/parity-cli.json,
+//! common::frozen): each case was run once under bun, in a scratch folder
+//! of its own (its own fake HOME, its own SCREEPUB_CONFIG_DIR), and its
+//! line and files were recorded with that folder spelled `$ROOT`. Here the
+//! case is set up again in a new scratch folder, the Rust handler runs
+//! there, and both are compared with `$ROOT` read as that folder.
 //!
-//! Skipped, saying so, where bun or the repo's node_modules is missing (CI's
-//! rust job). Real scripts and devices are never involved; nothing here
-//! opens an app or a browser (no `route` performer runs: only its refusals
-//! and `save-epub`).
+//! The answers are a Mac's, so this runs on macOS only. Real scripts and
+//! devices are never involved; nothing here opens an app or a browser (no
+//! `route` performer runs: only its refusals and `save-epub`).
 //!
 //! CALIBRE SPAWNS: the `kfx-status` case and the `export --for kindle|kfx
-//! --check` cases run calibre-customize --list-plugins on BOTH sides, with
-//! CALIBRE_CONFIG_DIRECTORY on the scratch copy (common::calibre_env).
-//! Every other case hands both sides the Calibre guard path.
+//! --check` cases run calibre-customize --list-plugins on the Rust side,
+//! with CALIBRE_CONFIG_DIRECTORY on the scratch copy (common::calibre_env),
+//! and are compared only on a machine with the Calibre the answers were
+//! frozen with (common::machine). Every other case hands the engine the
+//! Calibre guard path.
 
 #![cfg_attr(not(unix), allow(dead_code, unused_imports))]
 
@@ -25,7 +28,8 @@ mod common;
 
 use std::path::Path;
 
-use common::{CALIBRE_GUARD, Scratch, calibre_config_copy, ts_cli};
+use common::frozen::{self, Frozen};
+use common::{CALIBRE_GUARD, Scratch, calibre_config_copy};
 use serde_json::json;
 use sp_engine::commands::app_settings::{
     AppSettingsDeps, AppSettingsOptions, app_settings_command,
@@ -121,6 +125,28 @@ fn reset(dir: &Path) {
     std::fs::create_dir_all(dir).unwrap();
 }
 
+/// The TypeScript's answer for this case: frozen (common::frozen), or, while
+/// recording, asked of `bun src/cli.ts` and frozen. The key is the test's
+/// name and the case's label; `dir` is the case's scratch folder when the
+/// files it leaves are compared.
+fn ts(label: &str, root: &str, argv: &[&str], env: &Env, dir: Option<&Path>) -> Frozen {
+    let test = std::thread::current()
+        .name()
+        .unwrap_or("unnamed")
+        .rsplit("::")
+        .next()
+        .unwrap_or("unnamed")
+        .to_owned();
+    let key = format!("{test} / {label}");
+    if common::recording() {
+        let run = common::ts_cli(argv, env);
+        let files = dir.map(snapshot);
+        common::record(&key, frozen::encode(argv, &run, files.as_deref(), root));
+        return Frozen { run, files };
+    }
+    frozen::answer(&key, root, argv)
+}
+
 /// One parity case: the same setup, the TypeScript's line, the Rust line,
 /// and the files each left.
 fn case(
@@ -138,8 +164,8 @@ fn case(
     let args = ts_args(&root);
     let mut argv: Vec<&str> = args.iter().map(String::as_str).collect();
     argv.push("--json");
-    let ts = ts_cli(&argv, &env);
-    let ts_files = snapshot(&s.path);
+    let Frozen { run: ts, files } = ts(label, &root, &argv, &env, Some(&s.path));
+    let ts_files = files.expect("a case keeps its files");
 
     reset(&s.path);
     setup(&root);
@@ -212,7 +238,7 @@ fn app_settings_case(label: &str, setup: &dyn Fn(&str), set: Option<&dyn Fn(&str
 
 #[test]
 fn parity_app_settings() {
-    require_bun!();
+    require_frozen!();
     let none = |_: &str| {};
     let stored = |root: &str| {
         write(
@@ -326,13 +352,20 @@ fn parity_app_settings() {
 
 #[test]
 fn parity_app_settings_with_the_library_override() {
-    require_bun!();
+    require_frozen!();
     // SCREEPUB_LIBRARY is set in the env both sides get, through a case of
     // its own: the env is built per case, so wrap it.
     let s = Scratch::new("parity");
     let root = s.str();
     let env = env_for(&root, false).with("SCREEPUB_LIBRARY", &format!("{root}/envlib/"));
-    let ts = ts_cli(&["app-settings", "--json"], &env);
+    let ts = ts(
+        "the library override",
+        &root,
+        &["app-settings", "--json"],
+        &env,
+        None,
+    )
+    .run;
     let rust = line(app_settings_command(
         &AppSettingsOptions::default(),
         &AppSettingsDeps {
@@ -347,7 +380,7 @@ fn parity_app_settings_with_the_library_override() {
 
 #[test]
 fn parity_settings() {
-    require_bun!();
+    require_frozen!();
     let script = |root: &str| format!("{root}/lib/My.Script.fountain");
     let base = |root: &str| write(&script(root), "Title: T\n\nINT. ROOM - DAY\n");
     let with_defaults = |root: &str| {
@@ -428,7 +461,7 @@ fn parity_settings() {
 
 #[test]
 fn parity_update_decision() {
-    require_bun!();
+    require_frozen!();
     let pairs = [
         ("0.12.0", "0.11.1"),
         ("0.11.1", "0.11.1-3-gabcdef1"),
@@ -450,7 +483,9 @@ fn parity_update_decision() {
     for (offered, current) in pairs {
         let s = Scratch::new("parity");
         let env = env_for(&s.str(), false);
-        let ts = ts_cli(
+        let ts = ts(
+            &format!("{offered} vs {current}"),
+            &s.str(),
             &[
                 "update-decision",
                 "--offered",
@@ -460,7 +495,9 @@ fn parity_update_decision() {
                 "--json",
             ],
             &env,
-        );
+            None,
+        )
+        .run;
         let rust = usage_line(update_decision_command(Some(offered), Some(current)));
         assert_eq!(rust, ts.stdout.trim_end(), "{offered} vs {current}");
     }
@@ -479,7 +516,14 @@ fn parity_update_decision() {
         let s = Scratch::new("parity");
         let mut argv = flags.clone();
         argv.push("--json");
-        let ts = ts_cli(&argv, &env_for(&s.str(), false));
+        let ts = ts(
+            &argv.join(" "),
+            &s.str(),
+            &argv,
+            &env_for(&s.str(), false),
+            None,
+        )
+        .run;
         let rust = usage_line(update_decision_command(offered, current));
         assert_eq!(rust, ts.stdout.trim_end());
     }
@@ -487,7 +531,7 @@ fn parity_update_decision() {
 
 #[test]
 fn parity_update_should_check() {
-    require_bun!();
+    require_frozen!();
     // `now` is the clock on each side; every case here answers the same
     // whatever the clock reads, within a day of today.
     let now = std::time::SystemTime::now()
@@ -518,7 +562,14 @@ fn parity_update_should_check() {
             argv.push(l);
         }
         argv.push("--json");
-        let ts = ts_cli(&argv, &env_for(&s.str(), false));
+        let ts = ts(
+            &format!("{opted} {last:?}"),
+            &s.str(),
+            &argv,
+            &env_for(&s.str(), false),
+            None,
+        )
+        .run;
         let rust = usage_line(update_should_check_command(opted, last, now));
         assert_eq!(rust, ts.stdout.trim_end(), "{opted} {last:?}");
     }
@@ -530,10 +581,20 @@ fn parity_update_should_check() {
 /// scratch copy.
 #[test]
 fn parity_kfx_status() {
-    require_bun!();
+    require_frozen!();
+    if !common::recording() && !frozen::same_machine(None) {
+        return;
+    }
     let s = Scratch::new("parity");
     let env = env_for(&s.str(), true);
-    let ts = ts_cli(&["kfx-status", "--json"], &env);
+    let ts = ts(
+        "kfx-status",
+        &s.str(),
+        &["kfx-status", "--json"],
+        &env,
+        None,
+    )
+    .run;
     let rust = jsjson::stringify(&sp_engine::ok_envelope(&kfx_status_command(
         &KfxCommandDeps {
             env: Some(env.clone()),
@@ -619,7 +680,7 @@ fn export_case(label: &str, calibre: bool, flags: &[&str]) {
 
 #[test]
 fn parity_export() {
-    require_bun!();
+    require_frozen!();
     let b = "$ROOT/lib/Book.epub";
     let f = "$ROOT/lib/Book.fountain";
     let cases: Vec<(&str, Vec<&str>)> = vec![
@@ -724,7 +785,10 @@ fn parity_export() {
 /// case, on the scratch copy. --check builds nothing.
 #[test]
 fn parity_export_kindle_check() {
-    require_bun!();
+    require_frozen!();
+    if !common::recording() && !frozen::same_machine(None) {
+        return;
+    }
     export_case(
         "kindle --check",
         true,
@@ -755,7 +819,10 @@ fn this_machines_facts(env: &Env) -> sp_engine::export::routes::RouteFacts {
 
 #[test]
 fn parity_routes_quick() {
-    require_bun!();
+    require_frozen!();
+    if !common::recording() && !frozen::same_machine(None) {
+        return;
+    }
     for last in [
         None,
         Some("\"save-kindle\""),
@@ -774,7 +841,14 @@ fn parity_routes_quick() {
             );
         }
         let epub = format!("{root}/lib/Book.epub");
-        let ts = ts_cli(&["routes", &epub, "--quick", "--json"], &env);
+        let ts = ts(
+            &format!("lastRoute {last:?}"),
+            &root,
+            &["routes", &epub, "--quick", "--json"],
+            &env,
+            None,
+        )
+        .run;
         let answer = ts.json();
         // The TypeScript scans this machine's mounted readers; the Rust
         // device scan is the sp-device branch's. With a reader plugged in
@@ -841,7 +915,7 @@ fn route_case(label: &str, flags: &[&str]) {
 
 #[test]
 fn parity_route() {
-    require_bun!();
+    require_frozen!();
     let b = "$ROOT/lib/Book.epub";
     let cases: Vec<(&str, Vec<&str>)> = vec![
         (

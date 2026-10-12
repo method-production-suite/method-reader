@@ -1,0 +1,117 @@
+{
+  "devices / --quick never asks the tablet": {
+    "argv": [
+      "devices",
+      "--quick",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[{\"id\":\"$BASE/mounts-a/KOBOeReader\",\"kind\":\"kobo\",\"name\":\"KOBOeReader\",\"volume\":\"$BASE/mounts-a/KOBOeReader\"},{\"id\":\"$BASE/mounts-a/Kindle\",\"kind\":\"kindle\",\"name\":\"Kindle\",\"volume\":\"$BASE/mounts-a/Kindle\"},{\"id\":\"$BASE/mounts-a/tolino vision\",\"kind\":\"tolino\",\"name\":\"tolino vision\",\"volume\":\"$BASE/mounts-a/tolino vision\"},{\"id\":\"$BASE/mounts-a/NO NAME\",\"kind\":\"kindle\",\"name\":\"NO NAME\",\"volume\":\"$BASE/mounts-a/NO NAME\"},{\"id\":\"$BASE/mounts-b/Sams Kindle\",\"kind\":\"kindle\",\"name\":\"Sams Kindle\",\"volume\":\"$BASE/mounts-b/Sams Kindle\"}]}"
+  },
+  "devices / a root that is not there": {
+    "argv": [
+      "devices",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[]}"
+  },
+  "devices / a tablet alone": {
+    "argv": [
+      "devices",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[{\"id\":\"remarkable\",\"kind\":\"remarkable\",\"name\":\"reMarkable\",\"volume\":null}]}"
+  },
+  "devices / every vendor and a tablet": {
+    "argv": [
+      "devices",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[{\"id\":\"$BASE/mounts-a/KOBOeReader\",\"kind\":\"kobo\",\"name\":\"KOBOeReader\",\"volume\":\"$BASE/mounts-a/KOBOeReader\"},{\"id\":\"$BASE/mounts-a/Kindle\",\"kind\":\"kindle\",\"name\":\"Kindle\",\"volume\":\"$BASE/mounts-a/Kindle\"},{\"id\":\"$BASE/mounts-a/tolino vision\",\"kind\":\"tolino\",\"name\":\"tolino vision\",\"volume\":\"$BASE/mounts-a/tolino vision\"},{\"id\":\"$BASE/mounts-a/NO NAME\",\"kind\":\"kindle\",\"name\":\"NO NAME\",\"volume\":\"$BASE/mounts-a/NO NAME\"},{\"id\":\"$BASE/mounts-b/Sams Kindle\",\"kind\":\"kindle\",\"name\":\"Sams Kindle\",\"volume\":\"$BASE/mounts-b/Sams Kindle\"},{\"id\":\"remarkable\",\"kind\":\"remarkable\",\"name\":\"reMarkable\",\"volume\":null}]}"
+  },
+  "devices / every vendor, no tablet": {
+    "argv": [
+      "devices",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[{\"id\":\"$BASE/mounts-a/KOBOeReader\",\"kind\":\"kobo\",\"name\":\"KOBOeReader\",\"volume\":\"$BASE/mounts-a/KOBOeReader\"},{\"id\":\"$BASE/mounts-a/Kindle\",\"kind\":\"kindle\",\"name\":\"Kindle\",\"volume\":\"$BASE/mounts-a/Kindle\"},{\"id\":\"$BASE/mounts-a/tolino vision\",\"kind\":\"tolino\",\"name\":\"tolino vision\",\"volume\":\"$BASE/mounts-a/tolino vision\"},{\"id\":\"$BASE/mounts-a/NO NAME\",\"kind\":\"kindle\",\"name\":\"NO NAME\",\"volume\":\"$BASE/mounts-a/NO NAME\"},{\"id\":\"$BASE/mounts-b/Sams Kindle\",\"kind\":\"kindle\",\"name\":\"Sams Kindle\",\"volume\":\"$BASE/mounts-b/Sams Kindle\"}]}"
+  },
+  "devices / nothing plugged in": {
+    "argv": [
+      "devices",
+      "--json"
+    ],
+    "answer": "{\"ok\":true,\"devices\":[]}"
+  },
+  "eject / $BASE/mounts-a/Kindle/documents": {
+    "argv": [
+      "eject",
+      "$BASE/mounts-a/Kindle/documents",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"unknown-device\",\"message\":\"not a reader Screepub can see: $BASE/mounts-a/Kindle/documents\"}}"
+  },
+  "eject / $BASE/mounts-a/USB STICK": {
+    "argv": [
+      "eject",
+      "$BASE/mounts-a/USB STICK",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"unknown-device\",\"message\":\"not a reader Screepub can see: $BASE/mounts-a/USB STICK\"}}"
+  },
+  "eject / $BASE/nowhere": {
+    "argv": [
+      "eject",
+      "$BASE/nowhere",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"unknown-device\",\"message\":\"not a reader Screepub can see: $BASE/nowhere\"}}"
+  },
+  "eject / Kindle": {
+    "argv": [
+      "eject",
+      "Kindle",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"eject needs a full path to a reader's volume, not \\\"Kindle\\\"\"}}"
+  },
+  "eject / Volumes/Kindle": {
+    "argv": [
+      "eject",
+      "Volumes/Kindle",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"eject needs a full path to a reader's volume, not \\\"Volumes/Kindle\\\"\"}}"
+  },
+  "reveal / $BASE/gone.epub": {
+    "argv": [
+      "reveal",
+      "$BASE/gone.epub",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the file to reveal: $BASE/gone.epub\"}}"
+  },
+  "reveal / $BASE/mounts-a": {
+    "argv": [
+      "reveal",
+      "$BASE/mounts-a",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"unreadable\",\"message\":\"cannot read the file to reveal: $BASE/mounts-a\"}}"
+  },
+  "reveal / Script.epub": {
+    "argv": [
+      "reveal",
+      "Script.epub",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"reveal needs a full path, not \\\"Script.epub\\\"\"}}"
+  },
+  "reveal / relative/Script.epub": {
+    "argv": [
+      "reveal",
+      "relative/Script.epub",
+      "--json"
+    ],
+    "answer": "{\"ok\":false,\"error\":{\"code\":\"usage\",\"message\":\"reveal needs a full path, not \\\"relative/Script.epub\\\"\"}}"
+  }
+}

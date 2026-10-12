@@ -534,6 +534,157 @@ pub fn palm_db(a: &[u8], b: &[u8]) -> Option<String> {
     None
 }
 
+// ---- summaries: what the frozen answers keep of a file ----
+//
+// The TypeScript's books are not kept whole: 494 runs of books and their
+// picture folders would weigh hundreds of megabytes. A summary keeps, for
+// every unit the comparisons above look at, a digest of exactly what they
+// compare: a zip's entry names in order, each entry's compression method
+// and content (a PNG by its pixels), a PalmDB's header and each record (a
+// PNG record by its pixels), a folder's names and each file by its rule,
+// a text with each run's scratch folder spelled `$WORK`, JSON as a value
+// with its keys sorted. Two files whose summaries are equal are files the
+// comparisons above call the same.
+
+/// 16 hex digits of the SHA-256 of `b`.
+pub fn digest(b: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(b)
+        .iter()
+        .take(8)
+        .map(|x| format!("{x:02x}"))
+        .collect()
+}
+
+/// A picture by its pixels, anything else by its bytes.
+fn content_digest(b: &[u8]) -> String {
+    match png_content(b) {
+        Some(px) => format!("px:{}", digest(&px)),
+        None => digest(b),
+    }
+}
+
+/// `v` as JSON text with every object's keys sorted.
+pub fn canonical(v: &Value) -> String {
+    match v {
+        Value::Object(o) => {
+            let mut keys: Vec<&String> = o.keys().collect();
+            keys.sort();
+            let fields: Vec<String> = keys
+                .iter()
+                .map(|k| format!("{}:{}", Value::String((*k).clone()), canonical(&o[*k])))
+                .collect();
+            format!("{{{}}}", fields.join(","))
+        }
+        Value::Array(a) => format!(
+            "[{}]",
+            a.iter().map(canonical).collect::<Vec<_>>().join(",")
+        ),
+        other => other.to_string(),
+    }
+}
+
+fn spelled_work(b: &[u8], work: &Path) -> Vec<u8> {
+    let mut t = String::from_utf8_lossy(b).into_owned();
+    for r in path_spellings(work) {
+        if !r.is_empty() {
+            t = t.replace(r.as_str(), "$WORK");
+        }
+    }
+    t.into_bytes()
+}
+
+/// What [`files_in`] compares of the output at `path`, as a value: `null`
+/// for nothing there. `work` is the run's scratch folder.
+pub fn summary(path: &Path, how: Compare, work: &Path) -> Value {
+    use serde_json::json;
+    if !path.exists() {
+        return Value::Null;
+    }
+    if path.is_dir() {
+        return match how {
+            Compare::Tree => {
+                let mut files = serde_json::Map::new();
+                for rel in tree_files(path) {
+                    let how = match rel.extension().and_then(|e| e.to_str()).unwrap_or("") {
+                        "epub" => Compare::ZipEntries,
+                        "mobi" | "azw3" => Compare::PalmDb,
+                        "json" => Compare::Json,
+                        "html" => Compare::Html,
+                        "png" => Compare::Folder,
+                        _ => Compare::Text,
+                    };
+                    let key = rel.to_string_lossy().replace('\\', "/");
+                    files.insert(key, summary(&path.join(&rel), how, work));
+                }
+                json!({ "tree": files })
+            }
+            _ => {
+                let mut names: Vec<String> = std::fs::read_dir(path)
+                    .map(|r| {
+                        r.filter_map(Result::ok)
+                            .map(|e| e.file_name().to_string_lossy().into_owned())
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                names.sort();
+                let mut files = serde_json::Map::new();
+                for name in names {
+                    let b = std::fs::read(path.join(&name)).unwrap_or_default();
+                    files.insert(name, Value::String(content_digest(&b)));
+                }
+                json!({ "folder": files })
+            }
+        };
+    }
+    let Ok(b) = std::fs::read(path) else {
+        return json!({ "unreadable": true });
+    };
+    match how {
+        Compare::Text => json!({ "text": digest(&spelled_work(&b, work)) }),
+        Compare::Json => {
+            let b = spelled_work(&b, work);
+            match serde_json::from_slice::<Value>(&b) {
+                Ok(v) => json!({ "json": digest(canonical(&v).as_bytes()) }),
+                Err(_) => json!({ "text": digest(&b) }),
+            }
+        }
+        Compare::Html => {
+            let t = String::from_utf8_lossy(&spelled_work(&b, work)).into_owned();
+            json!({ "html": digest(pictures_by_content(&t).as_bytes()) })
+        }
+        // A lone file under a folder rule: a picture by its pixels.
+        Compare::Folder | Compare::Tree => json!({ "file": content_digest(&b) }),
+        Compare::ZipEntries => match read_zip(&b) {
+            Ok(entries) => {
+                let list: Vec<Value> = entries
+                    .iter()
+                    .map(|e| {
+                        let d = if e.name.ends_with(".png") {
+                            content_digest(&e.data)
+                        } else {
+                            digest(&e.data)
+                        };
+                        json!({ "name": e.name, "stored": e.stored, "content": d })
+                    })
+                    .collect();
+                json!({ "zip": list })
+            }
+            Err(_) => json!({ "bytes": digest(&b) }),
+        },
+        Compare::PalmDb => match palm_records(&b) {
+            Some(records) => {
+                let list: Vec<Value> = records
+                    .iter()
+                    .map(|r| Value::String(content_digest(r)))
+                    .collect();
+                json!({ "header": digest(&b[..76.min(b.len())]), "records": list })
+            }
+            None => json!({ "bytes": digest(&b) }),
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

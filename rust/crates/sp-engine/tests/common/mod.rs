@@ -18,9 +18,11 @@
 
 pub mod books;
 pub mod epub;
+pub mod frozen;
 #[path = "../../../sp-azw3/tests/common/kf8_reader.rs"]
 pub mod kf8_reader;
 pub mod kfx_stubs;
+pub mod machine;
 pub mod mobi_records;
 #[path = "../../../sp-azw3/tests/common/palmdoc_decode.rs"]
 pub mod palmdoc_decode;
@@ -251,6 +253,35 @@ macro_rules! require_bun {
             return;
         }
     };
+}
+
+/// Whether this run records the TypeScript's answers instead of comparing
+/// against the frozen ones (SCREEPUB_RECORD_FROZEN=1, with bun and
+/// node_modules present). Recording rewrites tests/data/parity-cli.json.
+pub fn recording() -> bool {
+    std::env::var_os("SCREEPUB_RECORD_FROZEN").is_some()
+}
+
+/// Add one recorded answer to tests/data/parity-cli.json, with the facts of
+/// the machine it was recorded on.
+pub fn record(key: &str, value: serde_json::Value) {
+    use std::sync::Mutex;
+    static LOCK: Mutex<()> = Mutex::new(());
+    let _held = LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let file = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/parity-cli.json");
+    let mut all: std::collections::BTreeMap<String, serde_json::Value> =
+        std::fs::read_to_string(&file)
+            .ok()
+            .and_then(|t| serde_json::from_str(&t).ok())
+            .unwrap_or_default();
+    all.insert("$machine".into(), machine::facts(None));
+    all.insert(key.to_owned(), value);
+    std::fs::create_dir_all(file.parent().unwrap()).expect("mkdir");
+    let mut text = serde_json::to_string_pretty(&all).expect("json");
+    text.push('\n');
+    std::fs::write(&file, text).expect("write the frozen answers");
 }
 
 /// Write a file, making its folder.

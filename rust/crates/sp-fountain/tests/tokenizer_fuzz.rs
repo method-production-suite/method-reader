@@ -1,14 +1,20 @@
-//! Differential fuzzing: random Fountain-shaped text through fountain-js and
-//! through the port. fountain-js is reset to a first parse before each one,
-//! because the port does not carry its state between parses (PARITY.md).
+//! Differential fuzzing: random Fountain-shaped text through the port,
+//! against fountain-js 1.2.4's answers for the same text.
 //!
-//! `#[ignore]`d: it needs bun and node_modules (tests/support/mod.rs).
-//! `FUZZ_CASES` and `FUZZ_SEED` widen or move the run.
-
-mod support;
+//! fountain-js answered once, under bun, for the first [`CASES`] scripts
+//! [`SEED`] draws, each parse reset to a first parse because the port does
+//! not carry its state between parses (PARITY.md). Its answers are frozen
+//! in tests/data/tokenizer-fuzz.json as one SHA-256 per script, taken over
+//! the answer's JSON with its keys sorted, so the file stays small and a
+//! script whose tokens differ in any way is named by its number and text.
 
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use sp_fountain::tokenizer::tokenize;
+
+/// The run fountain-js answered: its seed and how many scripts.
+const SEED: u64 = 0x5EED_F00D;
+const CASES: usize = 4000;
 
 struct Rng(u64);
 
@@ -124,50 +130,106 @@ fn ours(s: &str) -> Value {
     }
 }
 
-#[test]
-#[ignore = "needs bun and node_modules"]
-fn random_scripts_tokenize_as_fountain_js_does() {
-    let cases: usize = std::env::var("FUZZ_CASES")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(4000);
-    let seed: u64 = std::env::var("FUZZ_SEED")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(0x5EED_F00D);
-    let mut rng = Rng(seed);
-    let inputs: Vec<String> = (0..cases).map(|_| random_script(&mut rng)).collect();
-    let want = support::fountain_js(&inputs);
-    let mut bad = Vec::new();
-    for (i, s) in inputs.iter().enumerate() {
-        let got = ours(s);
-        if got != want[i] {
-            bad.push(format!(
-                "case {i}: {s:?}\n  fountain-js: {}\n  port:        {got}",
-                want[i]
-            ));
+/// `v` as JSON with every object's keys sorted: the same text for the same
+/// answer, whatever order a serializer kept.
+fn canonical(v: &Value) -> String {
+    match v {
+        Value::Object(o) => {
+            let mut keys: Vec<&String> = o.keys().collect();
+            keys.sort();
+            let fields: Vec<String> = keys
+                .iter()
+                .map(|k| format!("{}:{}", Value::String((*k).clone()), canonical(&o[*k])))
+                .collect();
+            format!("{{{}}}", fields.join(","))
         }
+        Value::Array(a) => format!(
+            "[{}]",
+            a.iter().map(canonical).collect::<Vec<_>>().join(",")
+        ),
+        other => other.to_string(),
     }
-    // The run has to reach the shapes that matter, or agreeing proves little.
-    let all = serde_json::to_string(&want).unwrap();
-    for shape in [
-        "\"error\"",
-        "\"dual\":\"left\"",
-        "\"dual\":\"right\"",
-        "\"is_title\"",
-        "\"spaces\"",
-        "\"lyrics\"",
-        "\"centered\"",
-        "\"scene_number\"",
-        "\"page_break\"",
-        "\"depth\"",
-    ] {
+}
+
+fn digest(v: &Value) -> String {
+    Sha256::digest(canonical(v).as_bytes())
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
+fn inputs() -> Vec<String> {
+    let mut rng = Rng(SEED);
+    (0..CASES).map(|_| random_script(&mut rng)).collect()
+}
+
+/// The shapes the run has to reach, or agreeing proves little.
+const SHAPES: &[&str] = &[
+    "\"error\"",
+    "\"dual\":\"left\"",
+    "\"dual\":\"right\"",
+    "\"is_title\"",
+    "\"spaces\"",
+    "\"lyrics\"",
+    "\"centered\"",
+    "\"scene_number\"",
+    "\"page_break\"",
+    "\"depth\"",
+];
+
+#[test]
+fn random_scripts_tokenize_as_fountain_js_did() {
+    let frozen: Value =
+        serde_json::from_str(include_str!("data/tokenizer-fuzz.json")).expect("JSON");
+    assert_eq!(frozen["seed"].as_u64(), Some(SEED));
+    let want: Vec<&str> = frozen["digests"]
+        .as_array()
+        .expect("digests")
+        .iter()
+        .map(|d| d.as_str().expect("a digest"))
+        .collect();
+    assert_eq!(want.len(), CASES);
+    let inputs = inputs();
+    let answers: Vec<Value> = inputs.iter().map(|s| ours(s)).collect();
+    let all = canonical(&Value::Array(answers.clone()));
+    for shape in SHAPES {
         assert!(all.contains(shape), "no case produced {shape}");
     }
+    let bad: Vec<String> = answers
+        .iter()
+        .enumerate()
+        .filter(|(i, a)| digest(a) != want[*i])
+        .map(|(i, a)| format!("case {i}: {:?}\n  port: {}", inputs[i], canonical(a)))
+        .collect();
     assert!(
         bad.is_empty(),
-        "{} of {cases} differ; first:\n{}",
+        "{} of {CASES} differ from fountain-js; first:\n{}",
         bad.len(),
         bad.iter().take(5).cloned().collect::<Vec<_>>().join("\n")
     );
 }
+
+/// Records fountain-js's answers (SCREEPUB_RECORD_FROZEN=1, bun and
+/// node_modules present).
+#[test]
+fn record_fountain_js() {
+    if std::env::var_os("SCREEPUB_RECORD_FROZEN").is_none() {
+        return;
+    }
+    let inputs = inputs();
+    let want = support::fountain_js(&inputs);
+    let digests: Vec<String> = want.iter().map(digest).collect();
+    let mut text =
+        serde_json::to_string_pretty(&json!({ "seed": SEED, "digests": digests })).unwrap();
+    text.push('\n');
+    std::fs::write(
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/data/tokenizer-fuzz.json"
+        ),
+        text,
+    )
+    .unwrap();
+}
+
+mod support;

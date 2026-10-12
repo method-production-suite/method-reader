@@ -1,17 +1,21 @@
 //! The TypeScript CLI against this crate, answer for answer: `devices`,
 //! `eject` and `reveal` under --json, on fake volume roots
 //! (SCREEPUB_VOLUME_ROOTS) and a stand-in tablet
-//! (SCREEPUB_REMARKABLE_ENDPOINT), the overrides the TypeScript honors.
-//! The Rust side's envelope is built here the way sp-cli will build it:
+//! (SCREEPUB_REMARKABLE_ENDPOINT), the overrides the TypeScript honored.
+//! The Rust side's envelope is built here the way sp-cli builds it:
 //! `{"ok":true,...answer}` or `{"ok":false,"error":{code,message}}`.
 //!
-//! eject and reveal are asked ONLY what they refuse: a valid volume would
-//! make the TypeScript run diskutil, and a valid file would open Finder.
-//! Every eject here names a volume the fake roots do not list, or a relative
-//! one, and every reveal a relative path, a missing file or a folder.
+//! The TypeScript's answers are frozen data (tests/data/parity.json): each
+//! was asked of `src/cli.ts` once under bun, on the owner's Mac, with the
+//! scratch folder spelled `$BASE` and the stand-in tablets' addresses
+//! `$SILENT` and `$ANSWERING`, so each replays against this run's folder
+//! and stand-ins. They are a Mac's answers, so this runs on macOS only.
 //!
-//! Skipped (with a note) when bun is not installed, as on a CI runner
-//! without it; `cargo xtask parity` is the harness that always has it.
+//! eject and reveal were asked ONLY what they refuse: a valid volume would
+//! have made the TypeScript run diskutil, and a valid file would have opened
+//! Finder. Every eject here names a volume the fake roots do not list, or a
+//! relative one, and every reveal a relative path, a missing file or a
+//! folder.
 
 mod common;
 use common::{Stub, s, scratch};
@@ -22,9 +26,10 @@ use sp_device::list::ListDevicesOptions;
 use sp_device::process::{Opener, OpenerOutput, RunOutput, Runner};
 use sp_device::volumes::mounted_devices;
 use sp_device::{CliError, Platform, commands::devices_command, reveal::reveal_command};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 fn repo_root() -> PathBuf {
@@ -34,17 +39,82 @@ fn repo_root() -> PathBuf {
         .join("..")
 }
 
-fn bun_here() -> bool {
-    Command::new("bun")
-        .arg("--version")
-        .output()
-        .is_ok_and(|o| o.status.success())
-        && repo_root().join("src").join("cli.ts").exists()
+/// Whether the frozen answers apply here: they are a Mac's.
+fn frozen_here() -> bool {
+    if cfg!(target_os = "macos") {
+        return true;
+    }
+    eprintln!("parity: the TypeScript answers were frozen on macOS; skipped");
+    false
+}
+
+fn recording() -> bool {
+    std::env::var_os("SCREEPUB_RECORD_FROZEN").is_some()
+}
+
+const FROZEN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/parity.json");
+
+fn frozen_store() -> &'static BTreeMap<String, Value> {
+    static STORE: OnceLock<BTreeMap<String, Value>> = OnceLock::new();
+    STORE.get_or_init(|| {
+        serde_json::from_str(include_str!("data/parity.json")).expect("tests/data/parity.json")
+    })
+}
+
+/// `text` with each real value spelled as its placeholder.
+fn encode(text: &str, subs: &[(&str, &str)]) -> String {
+    subs.iter()
+        .fold(text.to_owned(), |t, (real, mark)| t.replace(real, mark))
+}
+
+/// `text` with each placeholder read as this run's value.
+fn decode(text: &str, subs: &[(&str, &str)]) -> String {
+    subs.iter()
+        .fold(text.to_owned(), |t, (real, mark)| t.replace(mark, real))
+}
+
+/// The TypeScript's answer for `key`: frozen, or, while recording, asked of
+/// `bun src/cli.ts` and frozen. `subs` pairs this run's values with the
+/// placeholders the frozen answers use.
+fn ts(
+    key: &str,
+    args: &[&str],
+    roots: &str,
+    endpoint: &str,
+    config: &Path,
+    subs: &[(&str, &str)],
+) -> String {
+    let asked: Vec<String> = args.iter().map(|a| encode(a, subs)).collect();
+    if recording() {
+        let text = ts_live(args, roots, endpoint, config);
+        static LOCK: Mutex<()> = Mutex::new(());
+        let _held = LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut all: BTreeMap<String, Value> = std::fs::read_to_string(FROZEN)
+            .ok()
+            .and_then(|t| serde_json::from_str(&t).ok())
+            .unwrap_or_default();
+        all.insert(
+            key.to_owned(),
+            serde_json::json!({ "argv": asked, "answer": encode(&text, subs) }),
+        );
+        let mut out = serde_json::to_string_pretty(&all).unwrap();
+        out.push('\n');
+        std::fs::write(FROZEN, out).unwrap();
+        return text;
+    }
+    let v = frozen_store()
+        .get(key)
+        .unwrap_or_else(|| panic!("no frozen TypeScript answer for {key:?}"));
+    let want: Vec<String> = serde_json::from_value(v["argv"].clone()).unwrap();
+    assert_eq!(asked, want, "{key}: the case changed since it was frozen");
+    decode(v["answer"].as_str().unwrap(), subs)
 }
 
 /// One run of `bun src/cli.ts <args>` with the overrides, its stdout's one
 /// JSON object as text.
-fn ts(args: &[&str], roots: &str, endpoint: &str, config: &Path) -> String {
+fn ts_live(args: &[&str], roots: &str, endpoint: &str, config: &Path) -> String {
     let out = Command::new("bun")
         .arg(repo_root().join("src").join("cli.ts"))
         .args(args)
@@ -151,8 +221,7 @@ fn rust_devices(roots: &[String], endpoint: &str, quick: bool) -> String {
 
 #[test]
 fn devices_answers_as_the_typescript_does() {
-    if !bun_here() {
-        eprintln!("parity: bun is not installed here; skipped");
+    if !frozen_here() {
         return;
     }
     let f = fixture();
@@ -205,7 +274,20 @@ fn devices_answers_as_the_typescript_does() {
         } else {
             delimited(&roots)
         };
-        let want = ts(&args, &roots_arg, endpoint, &f.config);
+        let base = s(&f.base);
+        let subs = [
+            (base.as_str(), "$BASE"),
+            (silent.url.as_str(), "$SILENT"),
+            (answering.url.as_str(), "$ANSWERING"),
+        ];
+        let want = ts(
+            &format!("devices / {what}"),
+            &args,
+            &roots_arg,
+            endpoint,
+            &f.config,
+            &subs,
+        );
         let got = rust_devices(&roots, endpoint, args.contains(&"--quick"));
         assert_eq!(got, want, "{what}");
     }
@@ -213,8 +295,7 @@ fn devices_answers_as_the_typescript_does() {
 
 #[test]
 fn eject_refuses_as_the_typescript_does() {
-    if !bun_here() {
-        eprintln!("parity: bun is not installed here; skipped");
+    if !frozen_here() {
         return;
     }
     let f = fixture();
@@ -233,11 +314,15 @@ fn eject_refuses_as_the_typescript_does() {
         elsewhere.as_str(),
         gone.as_str(),
     ] {
+        let base = s(&f.base);
+        let subs = [(base.as_str(), "$BASE")];
         let want = ts(
+            &format!("eject / {}", encode(volume, &subs)),
             &["eject", volume, "--json"],
             &all,
             "http://127.0.0.1:1",
             &f.config,
+            &subs,
         );
         let got = match eject_command(
             volume,
@@ -257,8 +342,7 @@ fn eject_refuses_as_the_typescript_does() {
 
 #[test]
 fn reveal_refuses_as_the_typescript_does() {
-    if !bun_here() {
-        eprintln!("parity: bun is not installed here; skipped");
+    if !frozen_here() {
         return;
     }
     let f = fixture();
@@ -270,11 +354,15 @@ fn reveal_refuses_as_the_typescript_does() {
         missing.as_str(),
         folder.as_str(),
     ] {
+        let base = s(&f.base);
+        let subs = [(base.as_str(), "$BASE")];
         let want = ts(
+            &format!("reveal / {}", encode(path, &subs)),
             &["reveal", path, "--json"],
             "",
             "http://127.0.0.1:1",
             &f.config,
+            &subs,
         );
         let got = match reveal_command(path, Platform::host(), &Never) {
             Ok(answer) => ok(&answer),

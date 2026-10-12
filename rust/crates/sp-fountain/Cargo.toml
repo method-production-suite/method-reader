@@ -20,3 +20,5 @@ unicode-general-category = "1"
 serde_json.workspace = true
 # What the parser makes from ordinary lines, serialized (tests/parser_pipeline.rs).
 sp-parser.workspace = true
+# The frozen fuzz answers are kept as SHA-256 digests (tests/tokenizer_fuzz.rs).
+sha2.workspace = true

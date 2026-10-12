@@ -1,0 +1,533 @@
+[
+  {
+    "name": "version",
+    "args": [],
+    "argv": [
+      "--version",
+      "--json"
+    ]
+  },
+  {
+    "name": "convert",
+    "args": [
+      "/d.pdf"
+    ],
+    "argv": [
+      "/d.pdf",
+      "--json",
+      "--progress",
+      "--preview-inline",
+      "--library"
+    ]
+  },
+  {
+    "name": "convert",
+    "args": [
+      "/d.pdf",
+      {
+        "force": true,
+        "optionsJson": "{\"a\":1}"
+      }
+    ],
+    "argv": [
+      "/d.pdf",
+      "--json",
+      "--progress",
+      "--preview-inline",
+      "--library",
+      "--force",
+      "--options-json",
+      "{\"a\":1}"
+    ]
+  },
+  {
+    "name": "convert",
+    "args": [
+      "/d.pdf",
+      {
+        "force": true
+      }
+    ],
+    "argv": [
+      "/d.pdf",
+      "--json",
+      "--progress",
+      "--preview-inline",
+      "--library",
+      "--force"
+    ]
+  },
+  {
+    "name": "convert",
+    "args": [
+      "/d.pdf",
+      {
+        "optionsJson": "{}"
+      }
+    ],
+    "argv": [
+      "/d.pdf",
+      "--json",
+      "--progress",
+      "--preview-inline",
+      "--library",
+      "--options-json",
+      "{}"
+    ]
+  },
+  {
+    "name": "convert",
+    "args": [
+      "/d.pdf",
+      {
+        "optionsJson": ""
+      }
+    ],
+    "argv": [
+      "/d.pdf",
+      "--json",
+      "--progress",
+      "--preview-inline",
+      "--library",
+      ""
+    ]
+  },
+  {
+    "name": "reconvert",
+    "args": [
+      "/f.fountain",
+      "/e.epub",
+      "{}"
+    ],
+    "argv": [
+      "/f.fountain",
+      "--json",
+      "--preview-inline",
+      "-o",
+      "/e.epub",
+      "--options-json",
+      "{}"
+    ]
+  },
+  {
+    "name": "devices",
+    "args": [],
+    "argv": [
+      "devices",
+      "--json"
+    ]
+  },
+  {
+    "name": "devices",
+    "args": [
+      {
+        "quick": true
+      }
+    ],
+    "argv": [
+      "devices",
+      "--json",
+      "--quick"
+    ]
+  },
+  {
+    "name": "eject",
+    "args": [
+      "/Volumes/K"
+    ],
+    "argv": [
+      "eject",
+      "/Volumes/K",
+      "--json"
+    ]
+  },
+  {
+    "name": "readerDevice",
+    "args": [
+      "kobo"
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"readerDevice\":\"kobo\"}"
+    ]
+  },
+  {
+    "name": "readerDevice",
+    "args": [
+      null
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"readerDevice\":null}"
+    ]
+  },
+  {
+    "name": "animatePage",
+    "args": [
+      true
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"animatePage\":true}"
+    ]
+  },
+  {
+    "name": "animatePage",
+    "args": [
+      false
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"animatePage\":false}"
+    ]
+  },
+  {
+    "name": "typewriterSounds",
+    "args": [
+      true
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"typewriterSounds\":true}"
+    ]
+  },
+  {
+    "name": "typewriterSounds",
+    "args": [
+      false
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"typewriterSounds\":false}"
+    ]
+  },
+  {
+    "name": "send",
+    "args": [
+      "/e.epub"
+    ],
+    "argv": [
+      "send",
+      "/e.epub",
+      "--json"
+    ]
+  },
+  {
+    "name": "send",
+    "args": [
+      "/e.epub",
+      "dev"
+    ],
+    "argv": [
+      "send",
+      "/e.epub",
+      "--json",
+      "--device",
+      "dev"
+    ]
+  },
+  {
+    "name": "send",
+    "args": [
+      "/e.epub",
+      ""
+    ],
+    "argv": [
+      "send",
+      "/e.epub",
+      "--json",
+      ""
+    ]
+  },
+  {
+    "name": "settings",
+    "args": [
+      "/f.fountain"
+    ],
+    "argv": [
+      "settings",
+      "/f.fountain",
+      "--json"
+    ]
+  },
+  {
+    "name": "settings",
+    "args": [
+      "/f.fountain",
+      "{\"x\":2}"
+    ],
+    "argv": [
+      "settings",
+      "/f.fountain",
+      "--json",
+      "--set",
+      "{\"x\":2}"
+    ]
+  },
+  {
+    "name": "settings",
+    "args": [
+      "/f.fountain",
+      ""
+    ],
+    "argv": [
+      "settings",
+      "/f.fountain",
+      "--json",
+      ""
+    ]
+  },
+  {
+    "name": "export",
+    "args": [
+      "/e.epub",
+      {
+        "forFormat": "kindle"
+      }
+    ],
+    "argv": [
+      "export",
+      "/e.epub",
+      "--json",
+      "--for",
+      "kindle"
+    ]
+  },
+  {
+    "name": "export",
+    "args": [
+      "/e.epub",
+      {
+        "forFormat": "epub",
+        "fountain": "/f",
+        "optionsJson": "{}",
+        "out": "/o"
+      }
+    ],
+    "argv": [
+      "export",
+      "/e.epub",
+      "--json",
+      "--for",
+      "epub",
+      "--fountain",
+      "/f",
+      "--options-json",
+      "{}",
+      "--out",
+      "/o"
+    ]
+  },
+  {
+    "name": "export",
+    "args": [
+      "/e.epub",
+      {
+        "forFormat": "fdx",
+        "fountain": "/f"
+      }
+    ],
+    "argv": [
+      "export",
+      "/e.epub",
+      "--json",
+      "--for",
+      "fdx",
+      "--fountain",
+      "/f"
+    ]
+  },
+  {
+    "name": "export",
+    "args": [
+      "/e.epub",
+      {
+        "forFormat": "kfx",
+        "out": "/o.kfx"
+      }
+    ],
+    "argv": [
+      "export",
+      "/e.epub",
+      "--json",
+      "--for",
+      "kfx",
+      "--out",
+      "/o.kfx"
+    ]
+  },
+  {
+    "name": "kindleCheck",
+    "args": [
+      "/e.epub"
+    ],
+    "argv": [
+      "export",
+      "/e.epub",
+      "--json",
+      "--for",
+      "kindle",
+      "--check"
+    ]
+  },
+  {
+    "name": "kfxStatus",
+    "args": [],
+    "argv": [
+      "kfx-status",
+      "--json"
+    ]
+  },
+  {
+    "name": "kfxInstall",
+    "args": [],
+    "argv": [
+      "kfx-install",
+      "--json"
+    ]
+  },
+  {
+    "name": "appSettings",
+    "args": [],
+    "argv": [
+      "app-settings",
+      "--json"
+    ]
+  },
+  {
+    "name": "appSettings",
+    "args": [
+      "{\"y\":3}"
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      "--set",
+      "{\"y\":3}"
+    ]
+  },
+  {
+    "name": "appSettings",
+    "args": [
+      ""
+    ],
+    "argv": [
+      "app-settings",
+      "--json",
+      ""
+    ]
+  },
+  {
+    "name": "reveal",
+    "args": [
+      "/l/Book.epub"
+    ],
+    "argv": [
+      "reveal",
+      "/l/Book.epub",
+      "--json"
+    ]
+  },
+  {
+    "name": "routes",
+    "args": [
+      "/e.epub"
+    ],
+    "argv": [
+      "routes",
+      "/e.epub",
+      "--json"
+    ]
+  },
+  {
+    "name": "routes",
+    "args": [
+      "/e.epub",
+      {
+        "quick": true
+      }
+    ],
+    "argv": [
+      "routes",
+      "/e.epub",
+      "--json",
+      "--quick"
+    ]
+  },
+  {
+    "name": "route",
+    "args": [
+      "save-epub",
+      "/e.epub",
+      {
+        "out": "/o",
+        "fountain": "/f",
+        "optionsJson": "{}"
+      }
+    ],
+    "argv": [
+      "route",
+      "save-epub",
+      "/e.epub",
+      "--json",
+      "--out",
+      "/o",
+      "--fountain",
+      "/f",
+      "--options-json",
+      "{}"
+    ]
+  },
+  {
+    "name": "route",
+    "args": [
+      "apple-books",
+      "/e.epub"
+    ],
+    "argv": [
+      "route",
+      "apple-books",
+      "/e.epub",
+      "--json"
+    ]
+  },
+  {
+    "name": "route",
+    "args": [
+      "save-kindle",
+      "/e.epub",
+      {
+        "out": "/o.azw3"
+      }
+    ],
+    "argv": [
+      "route",
+      "save-kindle",
+      "/e.epub",
+      "--json",
+      "--out",
+      "/o.azw3"
+    ]
+  },
+  {
+    "name": "emailSetup",
+    "args": [],
+    "argv": [
+      "route",
+      "kindle-email-setup",
+      "--json"
+    ]
+  }
+]
