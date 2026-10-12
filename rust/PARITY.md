@@ -1108,6 +1108,30 @@ names the check it affects.
     notices already carry them.
   - **The AppImage has its row** in the README's install table and the
     site's download table; the two checks that waited for them run again.
+- **The window's motion, measured (2026-10-12).** The owner found the
+  egui window's animations chunkier than the Tauri window's. Measured with
+  the frame recorder (SCREEPUB_FRAME_LOG, src/framelog.rs) through
+  examples/motion_bench.rs, against the old window's own CSS and JS (git
+  a366d08) run in headless Chrome. What was wrong: (1) several rows marked
+  done did not move at all: the heads-up (H5), the release notes' rise
+  (N13), the index's slide (R11), Settings' turning triangle (S6, which
+  was not brass either), the progress fill (C11), the tab ink, and the
+  glide to a pressed scene (R9, which jumped); (2) the tab arrival (N7),
+  the glow and the typed page's lift (P7) and the Kindle build bar (D31)
+  ran linear where the CSS said ease-out or ease-in-out; (3) laying the
+  book out took Blitz 20 to 74 ms in the window's own thread, an 87 ms
+  frame as the book arrived mid page show and 28 to 31 ms the first time
+  Read or Settings opened; (4) with a script open the window drew every
+  frame forever (26% of a core at rest). All four are fixed
+  (sp-app's model/motion.rs, and the book thread in bookview.rs). Every timing is pinned
+  to the old CSS in model/motion.rs's tests, and the scene glide is
+  WebKit's own smooth scroll (ScrollAnimationSmooth.cpp: 1000 points a
+  second, at most 200 ms, ease-in-out), since the Tauri window was a
+  WKWebView. The window now draws only while something moves, on the
+  display's refresh (120 Hz on a ProMotion Mac), wakes for its timers,
+  and asks for nothing at rest. Not changed: the glow is a brass tint of
+  the text where the old one was a brass text-shadow halo (no blur in the
+  painter); the timings are the CSS's.
 - **Known follow-ups, not blocking (2026-10-12).**
   - **O3, a Flate bomb.** A small FlateDecode stream that inflates to a
     huge one is inflated whole by hayro-syntax before sp-pdf sees it. The

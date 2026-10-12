@@ -15,7 +15,13 @@
 //! touched. Calls go through the capture's Guard, so only the demo PDF is
 //! converted and nothing copies, sends or starts Calibre. The window must
 //! stay visible and in front while it runs (about 40 seconds): macOS stops
-//! drawing a window that is hidden.
+//! drawing a window that is hidden, and the bench then waits forever.
+//!
+//! Knobs, for comparisons: BENCH_REST_SECS (convert, open Read, then rest
+//! and print the CPU used), BENCH_FRAMES_IN_FLIGHT (eframe's frame
+//! latency), BENCH_WARM (draw every frame throughout, as the window did
+//! before it slept). The frames' cadence varies from run to run with what
+//! else the computer is doing: compare several runs, not one.
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -305,7 +311,10 @@ impl eframe::App for Bench {
         // The bench's own clock: it looks for its next move every 100 ms.
         // A wheel step asks for every frame, as a trackpad's stream of
         // events does.
-        if STEPS[self.step].0 == Step::WheelRead || STEPS[self.step].0 == Step::WheelTune {
+        // BENCH_WARM=1 draws every frame throughout, as the window did
+        // before it learnt to sleep: the screen never idles between steps.
+        let warm = std::env::var_os("BENCH_WARM").is_some();
+        if warm || STEPS[self.step].0 == Step::WheelRead || STEPS[self.step].0 == Step::WheelTune {
             ctx.request_repaint_after(sp_app::model::motion::NEXT_FRAME);
         } else {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
