@@ -7,6 +7,7 @@
 //! book, book-queue.js). Answers come back as events at the top of the next
 //! frame and are handed to the surface that asked, by [`Purpose`].
 
+pub mod book;
 pub mod convert;
 pub mod frame;
 pub mod host;
