@@ -382,3 +382,21 @@ fn usage_errors_exit_1() {
             .contains("<screenplay|prose|blank|images|jpx|torture|demo> <out.pdf>")
     );
 }
+
+#[test]
+fn pages_that_overflow_are_refused_not_reflowed() {
+    // A field-station page that does not fit would move every page number
+    // after it; an images sheet that does not fit draws off the sheet.
+    let rows: Vec<(&str, &str)> = (0..30).map(|_| ("action", "It's long.")).collect();
+    let err = fixture::flow_page(&rows).unwrap_err();
+    assert_eq!(
+        err,
+        "field-station page overflows: 59 lines, the limit is 55. \
+         It starts: ('action', \"It's long.\")"
+    );
+    let items: Vec<fixture::SheetItem> = (0..30)
+        .map(|_| fixture::SheetItem::El("action", "Long."))
+        .collect();
+    let err = fixture::image_rows(&items, 7).unwrap_err();
+    assert!(err.starts_with("images sheet 7 needs 60 lines and a page holds 55."));
+}
