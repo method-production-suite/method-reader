@@ -338,6 +338,33 @@ fn a_write_through_the_guarded_path_fails_loudly() {
     assert!(read_app_settings(&guarded).is_empty());
 }
 
+// ---- one process, many threads ----
+
+#[test]
+fn saves_from_many_threads_at_once_all_land_and_none_is_lost() {
+    // The window runs every engine call as a thread of one process, so the
+    // pid no longer kept two saves' temp files apart (one promoted a file
+    // the other was still writing), and two read-merge-writes could each
+    // drop the other's key.
+    let s = Scratch::new("app-settings-threads");
+    let path = s.join("settings.json");
+    std::thread::scope(|scope| {
+        for t in 0..8 {
+            let path = &path;
+            scope.spawn(move || {
+                for i in 0..25 {
+                    let key = format!("k{t}-{i}");
+                    write_app_settings(&set(&[(key.as_str(), json!(i))]), path)
+                        .expect("every save succeeds");
+                }
+            });
+        }
+    });
+    let read = read_app_settings(&path);
+    assert_eq!(read.len(), 8 * 25, "every key survives");
+    assert_eq!(names(&s.str()), vec!["settings.json"]);
+}
+
 // ---- module boundaries ----
 
 #[test]

@@ -106,6 +106,12 @@ pub type Patch = Vec<(String, Option<Value>)>;
 /// REPLACES it with the patch alone (the owner's choice, 2026-10-01): a
 /// damaged file heals on the next save instead of blocking every save.
 pub fn write_app_settings(patch: &Patch, path: &str) -> Result<AppSettings, EngineError> {
+    // One save at a time in this process: the window runs engine calls as
+    // threads of one process, and two read-merge-writes at once would each
+    // drop the other's change. (Poisoning carries no broken state here: the
+    // file is only ever replaced whole.)
+    static SAVING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _one_at_a_time = SAVING.lock().unwrap_or_else(|p| p.into_inner());
     let mut merged = read_app_settings(path);
     for (key, value) in patch {
         match value {

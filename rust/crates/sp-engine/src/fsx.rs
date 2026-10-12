@@ -8,6 +8,7 @@
 
 use std::fs;
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::UNIX_EPOCH;
 
 use crate::errors::{EngineError, FsError};
@@ -157,23 +158,63 @@ pub fn size(path: &str) -> Result<u64, EngineError> {
         .map_err(|e| fs_err(&e, "stat", path, None))
 }
 
-/// `tempPathFor(path)`: the hidden temp sibling a write to `path` goes
-/// through: same folder, a leading dot, and the pid.
+/// The writes this process has started, so no two share a temp file.
+static NEXT_TEMP: AtomicU64 = AtomicU64::new(0);
+
+/// `tempPathFor(path)`: a fresh hidden temp sibling for a write to `path`:
+/// same folder, a leading dot, the pid AND a per-process count
+/// (`.<name>.<pid>-<n>.tmp`). The TypeScript's pid alone was enough when
+/// every call was its own process; the window runs every call as a thread
+/// of one, where two saves of one file shared a temp file.
 pub fn temp_path_for(path: &str) -> String {
+    let n = NEXT_TEMP.fetch_add(1, Ordering::Relaxed);
     host::join(&[
         host::dirname(path),
-        format!(".{}.{}.tmp", host::basename(path), std::process::id()),
+        format!(".{}.{}-{n}.tmp", host::basename(path), std::process::id()),
     ])
 }
 
-/// `promoteAtomic`: `fill(tmp)`, then rename over `path`. A failure takes
-/// the temp file with it and reports the original error.
+/// `message` with any temp sibling of `path` ([`temp_path_for`], or the
+/// TypeScript's pid-only form) spelled as `path`, so a failure names the
+/// file the person asked for, never the hidden temp file.
+pub fn hide_temp(message: &str, path: &str) -> String {
+    let marker = "\u{0}";
+    let shape = host::join(&[
+        host::dirname(path),
+        format!(".{}.{marker}.tmp", host::basename(path)),
+    ]);
+    let Some((before, after)) = shape.split_once(marker) else {
+        return message.to_owned();
+    };
+    let pattern = format!(
+        "{}[0-9]+(?:-[0-9]+)?{}",
+        regex::escape(before),
+        regex::escape(after)
+    );
+    match regex::Regex::new(&pattern) {
+        Ok(re) => re.replace_all(message, regex::NoExpand(path)).into_owned(),
+        Err(_) => message.to_owned(),
+    }
+}
+
+/// `promoteAtomic`: `fill(tmp)`, then rename over `path`. The temp file
+/// reaches the disk before the rename, so a power cut cannot promote an
+/// empty file. A failure takes the temp file with it and reports the
+/// original error.
 fn promote_atomic(
     path: &str,
     fill: impl FnOnce(&str) -> Result<(), EngineError>,
 ) -> Result<(), EngineError> {
     let tmp = temp_path_for(path);
-    let result = fill(&tmp).and_then(|()| rename(&tmp, path));
+    let result = fill(&tmp)
+        .and_then(|()| {
+            fs::OpenOptions::new()
+                .write(true)
+                .open(&tmp)
+                .and_then(|f| f.sync_all())
+                .map_err(|e| fs_err(&e, "fsync", &tmp, None))
+        })
+        .and_then(|()| rename(&tmp, path));
     if result.is_err() {
         rm_force(&tmp);
     }

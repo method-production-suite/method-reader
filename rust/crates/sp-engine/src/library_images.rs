@@ -41,7 +41,7 @@ const fn max_image_file_bytes() -> u64 {
     raw.div_ceil(100)
 }
 
-/// `isImageTemp(name)`: a leftover `.p001-01.png.99.tmp` from an
+/// `isImageTemp(name)`: a leftover `.p001-01.png.99.tmp` (or `.99-3.tmp`) from an
 /// interrupted write.
 pub fn is_image_temp(name: &str) -> bool {
     let Some(rest) = name.strip_prefix('.').and_then(|r| r.strip_suffix(".tmp")) else {
@@ -52,10 +52,13 @@ pub fn is_image_temp(name: &str) -> bool {
         return false;
     };
     let (inner, pid) = (&rest[..dot], &rest[dot + 1..]);
-    !inner.is_empty()
-        && !pid.is_empty()
-        && pid.bytes().all(|b| b.is_ascii_digit())
-        && is_generated_image_file(inner)
+    // `<pid>` (the TypeScript's) or `<pid>-<n>` (fsx::temp_path_for's).
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    let stamp_ok = match pid.split_once('-') {
+        Some((p, n)) => digits(p) && digits(n),
+        None => digits(pid),
+    };
+    !inner.is_empty() && stamp_ok && is_generated_image_file(inner)
 }
 
 /// `ImagesRead`.

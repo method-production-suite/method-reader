@@ -92,7 +92,7 @@ fn write_failed(path: &str, err: &EngineError) -> Stop {
     if !is_write_refusal(err) {
         return Stop::Internal(format!("Error: {}", err.message()));
     }
-    let reason = plain_reason(err).replace(&fsx::temp_path_for(path), path);
+    let reason = fsx::hide_temp(&plain_reason(err), path);
     Stop::fail("unwritable", format!("could not write {path}: {reason}"))
 }
 
