@@ -19,6 +19,7 @@ pub mod kinds;
 pub mod manifest;
 pub mod native;
 pub mod signature;
+pub mod smoke;
 pub mod util;
 
 /// `cargo xtask build-app-bundle`: its exit code.
@@ -32,9 +33,8 @@ pub fn bundle_archive_main(args: &[String]) -> u8 {
 }
 
 /// `cargo xtask smoke-bundle`: its exit code.
-pub fn smoke_bundle_main(_args: &[String]) -> u8 {
-    eprintln!("xtask: smoke-bundle is not ported yet");
-    2
+pub fn smoke_bundle_main(args: &[String]) -> u8 {
+    smoke::main(args)
 }
 
 /// `cargo xtask update-signature`: its exit code.

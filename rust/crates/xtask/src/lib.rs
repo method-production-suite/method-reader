@@ -156,12 +156,12 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "build-app-bundle",
-        help: "build the app bundle for this platform",
+        help: "build the app bundles for this platform (Tauri window, or --app native)",
         main: packaging::build_app_bundle_main,
     },
     Command {
         name: "bundle-archive",
-        help: "pack a built app bundle into its download archive",
+        help: "list the files inside a built .deb or .rpm",
         main: packaging::bundle_archive_main,
     },
     Command {
@@ -171,7 +171,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "update-signature",
-        help: "check an updater signature against the public key",
+        help: "the tag-time gate: does the app's config trust a real updater key",
         main: packaging::update_signature_main,
     },
     Command {
