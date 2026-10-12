@@ -1,0 +1,32 @@
+# Line endings. Every text file is checked out exactly as it is committed,
+# with LF, on every system. A Windows runner (or a Windows clone) has
+# core.autocrlf on, and the tests read sources, docs, workflows, the
+# release notes and the frozen answers byte for byte, so a checkout that
+# turned LF into CRLF failed them with nothing wrong in the code. Every
+# file in the repository was LF when this was added, so nothing committed
+# changes.
+* text=auto eol=lf
+
+# Binary by type: never converted, whatever git's guess. A PDF in
+# particular reads as text to git's heuristic and was being rewritten.
+*.pdf binary
+*.png binary
+*.ico binary
+*.icns binary
+*.woff2 binary
+*.epub binary
+*.mobi binary
+*.azw3 binary
+*.kfx binary
+*.zip binary
+*.gz binary
+*.bin binary
+*.sqlite3 binary
+*.localstorage binary
+
+# Data compared byte for byte, text or not: the committed fixtures (which
+# tests/fixture-stability regenerates and compares), the frozen answers
+# beside each crate's tests, and the oracle (which has its own file too).
+tests/fixtures/** -text
+rust/crates/*/tests/data/** -text
+rust/oracle/** -text
