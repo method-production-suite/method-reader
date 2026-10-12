@@ -15,7 +15,9 @@ workspace = true
 fancy-regex = "0.16"
 # zlib-rs at level 9 deflates make-fixture's pictures byte for byte as zlib 1.2.12 does.
 flate2.workspace = true
+regex.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 zip.workspace = true
 sp-model.workspace = true
 sp-fountain.workspace = true
@@ -23,5 +25,4 @@ sp-mobi.workspace = true
 sp-epub = { path = "../sp-epub" }
 
 [dev-dependencies]
-sha2.workspace = true
 zip.workspace = true
