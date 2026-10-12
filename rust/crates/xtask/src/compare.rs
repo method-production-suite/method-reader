@@ -5,7 +5,7 @@
 
 use std::collections::BTreeSet;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
@@ -42,7 +42,7 @@ fn normalize(v: &Value, roots: &[String], key: Option<&str>) -> Value {
     match v {
         Value::String(s) if looks_like_iso_time(s) => Value::String("$TIME".into()),
         Value::String(s) => {
-            let mut s = s.clone();
+            let mut s = pictures_by_content(s);
             for r in roots {
                 if !r.is_empty() {
                     s = s.replace(r.as_str(), "$WORK");
@@ -114,6 +114,38 @@ fn first_json_difference(a: &Value, b: &Value, at: &str) -> Option<String> {
     }
 }
 
+/// Two output files (or folders) by `how`, each side's scratch folder
+/// (`works`) spelled `$WORK` in any text or JSON before comparing. Missing
+/// on both sides is the same.
+pub fn files_in(ts: &Path, rs: &Path, how: Compare, works: (&Path, &Path)) -> Option<String> {
+    let text_like = matches!(how, Compare::Text | Compare::Json | Compare::Html);
+    if text_like && ts.is_file() && rs.is_file() {
+        let (Ok(a), Ok(b)) = (std::fs::read(ts), std::fs::read(rs)) else {
+            return Some("could not be read".into());
+        };
+        let fix = |b: &[u8], work: &Path| {
+            let roots = path_spellings(work);
+            let mut t = String::from_utf8_lossy(b).into_owned();
+            for r in &roots {
+                if !r.is_empty() {
+                    t = t.replace(r.as_str(), "$WORK");
+                }
+            }
+            t.into_bytes()
+        };
+        let (a, b) = (fix(&a, works.0), fix(&b, works.1));
+        return match how {
+            Compare::Json => json_text(&a, &b),
+            Compare::Html => html(&a, &b),
+            _ => text(&a, &b),
+        };
+    }
+    if how == Compare::Tree && ts.is_dir() && rs.is_dir() {
+        return trees_in(ts, rs, works);
+    }
+    files(ts, rs, how)
+}
+
 /// Two output files (or folders) by `how`. Missing on both sides is the same.
 pub fn files(ts: &Path, rs: &Path, how: Compare) -> Option<String> {
     match (ts.exists(), rs.exists()) {
@@ -125,14 +157,16 @@ pub fn files(ts: &Path, rs: &Path, how: Compare) -> Option<String> {
     if how == Compare::Folder {
         return folders(ts, rs);
     }
+    if how == Compare::Tree {
+        return trees(ts, rs);
+    }
     let (Ok(a), Ok(b)) = (std::fs::read(ts), std::fs::read(rs)) else {
         return Some("could not be read".into());
     };
     match how {
-        Compare::Bytes => bytes(&a, &b),
         Compare::Text => text(&a, &b),
         Compare::ZipEntries => zip_entries(&a, &b),
-        Compare::Folder => unreachable!("handled above"),
+        Compare::Folder | Compare::Tree => unreachable!("handled above"),
         Compare::Json => json_text(&a, &b),
         Compare::Html => html(&a, &b),
         Compare::PalmDb => palm_db(&a, &b),
@@ -270,6 +304,56 @@ pub fn folders(a: &Path, b: &Path) -> Option<String> {
             bytes(&x, &y)
         };
         d.map(|d| format!("{name}: {d}"))
+    })
+}
+
+/// Every file under `dir`, as paths relative to it, sorted.
+fn tree_files(dir: &Path) -> Vec<PathBuf> {
+    fn walk(base: &Path, dir: &Path, out: &mut Vec<PathBuf>) {
+        let Ok(read) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for e in read.flatten() {
+            let p = e.path();
+            if p.is_dir() {
+                walk(base, &p, out);
+            } else if let Ok(rel) = p.strip_prefix(base) {
+                out.push(rel.to_path_buf());
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(dir, dir, &mut out);
+    out.sort();
+    out
+}
+
+/// Two folder trees: the same relative paths, each file by its extension.
+pub fn trees(a: &Path, b: &Path) -> Option<String> {
+    trees_in(a, b, (a, b))
+}
+
+fn trees_in(a: &Path, b: &Path, works: (&Path, &Path)) -> Option<String> {
+    let (la, lb) = (tree_files(a), tree_files(b));
+    if la != lb {
+        return Some(format!("files {la:?} against {lb:?}"));
+    }
+    la.iter().find_map(|rel| {
+        let p = a.join(rel);
+        let q = b.join(rel);
+        let name = rel.to_string_lossy();
+        let how = match rel.extension().and_then(|e| e.to_str()).unwrap_or("") {
+            "epub" => Compare::ZipEntries,
+            "mobi" | "azw3" => Compare::PalmDb,
+            "json" => Compare::Json,
+            "html" => Compare::Html,
+            "png" => {
+                return png(&std::fs::read(&p).ok()?, &std::fs::read(&q).ok()?)
+                    .map(|d| format!("{name}: {d}"));
+            }
+            _ => Compare::Text,
+        };
+        files_in(&p, &q, how, works).map(|d| format!("{name}: {d}"))
     })
 }
 
