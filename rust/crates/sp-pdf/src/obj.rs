@@ -297,11 +297,108 @@ fn convert_dict(d: &hayro_syntax::object::Dict<'_>, depth: usize, id: Option<Ref
     if depth >= MAX_DEPTH {
         return out;
     }
-    for (k, v) in d.entries() {
-        out.entries.push((
-            Rc::from(latin1(k.as_ref()).as_str()),
-            convert_maybe(&v, depth + 1),
-        ));
+    // Not `entries()`: it unwraps a re-read that a damaged file can fail,
+    // and it sorts by name, where pdf.js keeps the file's order.
+    let mut keys: Vec<Vec<u8>> = d.keys().map(|k| k.as_ref().to_vec()).collect();
+    let order = key_order(d.data());
+    keys.sort_by_key(|k| {
+        (
+            order.iter().position(|o| o == k).unwrap_or(usize::MAX),
+            k.clone(),
+        )
+    });
+    for k in keys {
+        if let Some(v) = d.get_raw::<Object<'_>>(&k) {
+            out.entries
+                .push((Rc::from(latin1(&k).as_str()), convert_maybe(&v, depth + 1)));
+        }
+    }
+    out
+}
+
+/// The order a dictionary's keys appear in its bytes, first occurrence
+/// first. Values are skipped one object at a time (a reference is three
+/// tokens), so a name used as a value is never taken for a key.
+fn key_order(data: &[u8]) -> Vec<Vec<u8>> {
+    use crate::lexer::{Lexer, Tok};
+    let mut toks: Vec<Obj> = Vec::new();
+    let mut lexer = Lexer::new(data, false);
+    // Collect only as far as the dictionary's own closing ">>": the data
+    // hayro hands over can run on past it.
+    let mut depth = 0i32;
+    while toks.len() < 100_000 {
+        let before = lexer.stream.pos;
+        match lexer.get_obj() {
+            Ok(Tok::Obj(o)) => {
+                let (open, close) = match &o {
+                    Obj::Cmd(x) => (&**x == "<<" || &**x == "[", &**x == ">>" || &**x == "]"),
+                    _ => (false, false),
+                };
+                if toks.is_empty() && !open {
+                    depth = 1;
+                }
+                if open {
+                    depth += 1;
+                } else if close {
+                    depth -= 1;
+                }
+                toks.push(o);
+                if depth <= 0 {
+                    break;
+                }
+            }
+            Ok(Tok::Eof) => break,
+            Err(_) if lexer.stream.pos > before => continue,
+            Err(_) => break,
+        }
+    }
+    let is_cmd = |o: &Obj, c: &str| matches!(o, Obj::Cmd(x) if &**x == c);
+    let mut i = 0;
+    if toks.first().is_some_and(|t| is_cmd(t, "<<")) {
+        i = 1;
+    }
+    // Skips one value starting at `i`, returning the index after it.
+    fn skip_value(toks: &[Obj], mut i: usize) -> usize {
+        let is_cmd = |o: &Obj, c: &str| matches!(o, Obj::Cmd(x) if &**x == c);
+        let Some(t) = toks.get(i) else { return i };
+        if is_cmd(t, "<<") || is_cmd(t, "[") {
+            let mut depth = 0i32;
+            while let Some(t) = toks.get(i) {
+                if is_cmd(t, "<<") || is_cmd(t, "[") {
+                    depth += 1;
+                } else if is_cmd(t, ">>") || is_cmd(t, "]") {
+                    depth -= 1;
+                    if depth == 0 {
+                        return i + 1;
+                    }
+                }
+                i += 1;
+            }
+            return i;
+        }
+        if matches!(t, Obj::Num(_))
+            && matches!(toks.get(i + 1), Some(Obj::Num(_)))
+            && toks.get(i + 2).is_some_and(|t| is_cmd(t, "R"))
+        {
+            return i + 3;
+        }
+        i + 1
+    }
+    let mut out: Vec<Vec<u8>> = Vec::new();
+    while let Some(t) = toks.get(i) {
+        if is_cmd(t, ">>") {
+            break;
+        }
+        match t {
+            Obj::Name(n) => {
+                let k: Vec<u8> = n.chars().map(|c| c as u32 as u8).collect();
+                if !out.contains(&k) {
+                    out.push(k);
+                }
+                i = skip_value(&toks, i + 1);
+            }
+            _ => i += 1,
+        }
     }
     out
 }
