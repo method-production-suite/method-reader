@@ -251,6 +251,29 @@ pub fn is_root() -> bool {
     }
 }
 
+/// An executable script at `path`, written by a child `sh` so this test
+/// process never holds it open for writing. Linux refuses to run a file
+/// that any process has open for writing (ETXTBSY), and a test thread
+/// that forks while another thread writes its script carries that handle
+/// into its child until the child execs: a script run at once then fails
+/// to start, now and then, on a busy CI runner.
+#[cfg(unix)]
+pub fn executable(path: &str, contents: impl AsRef<str>) {
+    use std::io::Write;
+    let mut child = std::process::Command::new("/bin/sh")
+        .args(["-c", "cat > \"$1\" && chmod 755 \"$1\"", "sh", path])
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .expect("sh");
+    child
+        .stdin
+        .take()
+        .expect("piped")
+        .write_all(contents.as_ref().as_bytes())
+        .expect("a script");
+    assert!(child.wait().expect("sh").success(), "wrote {path}");
+}
+
 /// `chmod(path, mode)`.
 #[cfg(unix)]
 pub fn chmod(path: &str, mode: u32) {

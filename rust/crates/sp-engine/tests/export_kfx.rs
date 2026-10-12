@@ -125,12 +125,10 @@ fn ready_deps(tool: String) -> KfxDeps<'static> {
 fn fake_ebook_convert(s: &Scratch) -> (String, String) {
     let tool = s.join("ebook-convert");
     let log = s.join("argv.log");
-    std::fs::write(
+    common::executable(
         &tool,
         format!("#!/bin/sh\nfor a in \"$@\"; do echo \"$a\"; done > \"{log}\"\ntouch \"$2\"\n"),
-    )
-    .unwrap();
-    common::chmod(&tool, 0o755);
+    );
     (tool, log)
 }
 
@@ -202,14 +200,12 @@ fn leaky(s: &Scratch, exit: i32) -> (String, String, String) {
     } else {
         format!("echo 'Kindle Previewer failed' >&2; exit {exit}")
     };
-    std::fs::write(
+    common::executable(
         &tool,
         format!(
             "#!/bin/sh\ndir=\"${{TMPDIR:-/tmp}}\"\nprintf '%s' \"$dir\" > \"{seen}\"\nmkdir -p \"$dir/{leftover}/conv_out\"\necho '\"Type\",\"Description\"' > \"$dir/{leftover}/conversionLog.csv\"\n{last}\n"
         ),
-    )
-    .unwrap();
-    common::chmod(&tool, 0o755);
+    );
     let epub = s.join("book.epub");
     std::fs::write(&epub, "fake epub bytes").unwrap();
     (tool, epub, seen)
@@ -446,8 +442,7 @@ fn the_header_is_found_wherever_it_is() {
 #[cfg(unix)]
 fn fake_customize(s: &Scratch, listing: &str) -> String {
     let fake = s.join("calibre-customize");
-    std::fs::write(&fake, format!("#!/bin/sh\ncat <<'EOF'\n{listing}\nEOF\n")).unwrap();
-    common::chmod(&fake, 0o755);
+    common::executable(&fake, format!("#!/bin/sh\ncat <<'EOF'\n{listing}\nEOF\n"));
     fake
 }
 
@@ -776,8 +771,7 @@ fn snippet_a_failed_calibre_import_still_ends_in_a_result_line() {
 #[cfg(unix)]
 fn sleeper(s: &Scratch) -> String {
     let tool = s.join("calibre-tool");
-    std::fs::write(&tool, "#!/bin/sh\nsleep 5\n").unwrap();
-    common::chmod(&tool, 0o755);
+    common::executable(&tool, "#!/bin/sh\nsleep 5\n");
     tool
 }
 

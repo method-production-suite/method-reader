@@ -60,8 +60,7 @@ mod path_scan {
     fn a_tool_on_path_is_discovered() {
         let s = Scratch::new("export-calibre");
         let fake = s.join("screepub-fake-calibre-tool");
-        std::fs::write(&fake, "#!/bin/sh\nexit 0\n").unwrap();
-        common::chmod(&fake, 0o755);
+        common::executable(&fake, "#!/bin/sh\nexit 0\n");
         assert_eq!(
             calibre_tool("screepub-fake-calibre-tool", &on_path(&s.str())),
             Some(fake)
@@ -88,12 +87,10 @@ mod path_scan {
         let tools = Scratch::new("calibre-fake");
         let fake = tools.join("ebook-convert");
         let log = tools.join("argv.log");
-        std::fs::write(
+        common::executable(
             &fake,
             format!("#!/bin/sh\nfor a in \"$@\"; do echo \"$a\"; done > \"{log}\"\ntouch \"$2\"\n"),
-        )
-        .unwrap();
-        common::chmod(&fake, 0o755);
+        );
         let work = Scratch::new("calibre-work");
         let epub = work.join("book.epub");
         std::fs::write(&epub, "fake epub bytes").unwrap();
@@ -144,12 +141,10 @@ fn a_run_that_outlives_its_timeout_is_stopped_children_and_all() {
     let s = Scratch::new("hang");
     let tool = s.join("ebook-convert");
     let child_pid = s.join("child.pid");
-    std::fs::write(
+    common::executable(
         &tool,
         format!("#!/bin/sh\nsleep 30 &\necho $! > \"{child_pid}\"\nwait\n"),
-    )
-    .unwrap();
-    common::chmod(&tool, 0o755);
+    );
     let started = std::time::Instant::now();
     // Long enough that the script has started its child before the stop.
     let err = run_calibre(&tool, &[], &guarded_env(), 1500).unwrap_err();
@@ -176,11 +171,9 @@ fn a_run_that_outlives_its_timeout_is_stopped_children_and_all() {
 fn a_failing_tool_reports_its_stderr_or_its_exit_code() {
     let s = Scratch::new("fail");
     let loud = s.join("loud");
-    std::fs::write(&loud, "#!/bin/sh\necho '  it broke  ' >&2\nexit 3\n").unwrap();
-    common::chmod(&loud, 0o755);
+    common::executable(&loud, "#!/bin/sh\necho '  it broke  ' >&2\nexit 3\n");
     let quiet = s.join("quiet");
-    std::fs::write(&quiet, "#!/bin/sh\nexit 4\n").unwrap();
-    common::chmod(&quiet, 0o755);
+    common::executable(&quiet, "#!/bin/sh\nexit 4\n");
     assert_eq!(
         run_calibre(&loud, &[], &guarded_env(), 10_000)
             .unwrap_err()
@@ -203,12 +196,10 @@ fn the_tool_gets_exactly_the_environment_it_was_handed() {
     let s = Scratch::new("env");
     let tool = s.join("ebook-convert");
     let seen = s.join("seen.txt");
-    std::fs::write(
+    common::executable(
         &tool,
         "#!/bin/sh\nprintf '%s|%s' \"$CALIBRE_CONFIG_DIRECTORY\" \"$CARGO\" > \"$1\"\n",
-    )
-    .unwrap();
-    common::chmod(&tool, 0o755);
+    );
     let env = guarded_env().with("CALIBRE_CONFIG_DIRECTORY", "/scratch/copy");
     run_calibre(&tool, std::slice::from_ref(&seen), &env, 10_000).unwrap();
     assert_eq!(common::read(&seen), "/scratch/copy|");
