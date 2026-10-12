@@ -219,3 +219,74 @@ pub fn zip_texts(path: &Path, suffix: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+/// A REAL one-pixel PNG, told from another by that pixel's red channel
+/// (the TypeScript tests' `encodePng(new Uint8Array([tag, 0, 0]), 1, 1)`).
+pub fn png(tag: u8) -> Vec<u8> {
+    sp_parser::png::encode_png(&[tag, 0, 0], 1, 1).expect("a one-pixel PNG")
+}
+
+/// Standard base64 with padding (Node's `Buffer.toString('base64')`).
+pub fn base64(bytes: &[u8]) -> String {
+    const A: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for chunk in bytes.chunks(3) {
+        let b = [
+            chunk[0],
+            *chunk.get(1).unwrap_or(&0),
+            *chunk.get(2).unwrap_or(&0),
+        ];
+        let n = (u32::from(b[0]) << 16) | (u32::from(b[1]) << 8) | u32::from(b[2]);
+        for i in 0..4 {
+            if i <= chunk.len() {
+                out.push(A[((n >> (18 - 6 * i)) & 63) as usize] as char);
+            } else {
+                out.push('=');
+            }
+        }
+    }
+    out
+}
+
+/// Every `--progress` line on stderr, as its `progress` object.
+pub fn progress_events(stderr: &str) -> Vec<Value> {
+    stderr
+        .trim()
+        .lines()
+        .filter(|l| !l.is_empty())
+        .map(|l| {
+            let v: Value = serde_json::from_str(l)
+                .unwrap_or_else(|e| panic!("a stderr line is not JSON ({e}): {l:?}"));
+            v["progress"].clone()
+        })
+        .collect()
+}
+
+/// A folder's entry names, sorted.
+pub fn list_dir(path: &Path) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(path)
+        .unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
+        .map(|e| {
+            e.expect("an entry")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
+    names.sort();
+    names
+}
+
+/// Set a path's Unix permission bits.
+#[cfg(unix)]
+pub fn chmod(path: &Path, mode: u32) {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).expect("chmod");
+}
+
+/// The keys of a JSON object, sorted.
+pub fn keys(v: &Value) -> Vec<String> {
+    let mut k: Vec<String> = v.as_object().expect("an object").keys().cloned().collect();
+    k.sort();
+    k
+}
