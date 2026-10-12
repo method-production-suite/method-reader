@@ -130,9 +130,59 @@ fn draw_button(
     response
 }
 
-/// The 2px ink ring a focused control wears.
+/// Where the window keeps whether rings show (egui's per-window memory).
+fn rings_id() -> Id {
+    Id::new("sp-app focus rings shown")
+}
+
+/// Read this frame's input for the focus ring's mode (model/focus.rs
+/// `rings_after`). Called once a frame, before anything is drawn.
+pub fn note_ring_input(ctx: &egui::Context) {
+    use crate::model::focus::{Input, RINGS_AT_START, rings_after};
+    let inputs: Vec<Input> = ctx.input(|i| {
+        i.events
+            .iter()
+            .filter_map(|e| match e {
+                egui::Event::Key {
+                    pressed: true,
+                    modifiers,
+                    ..
+                } if !(modifiers.command
+                    || modifiers.ctrl
+                    || modifiers.alt
+                    || modifiers.mac_cmd) =>
+                {
+                    Some(Input::Keyboard)
+                }
+                egui::Event::PointerButton { pressed: true, .. }
+                | egui::Event::Touch {
+                    phase: egui::TouchPhase::Start,
+                    ..
+                } => Some(Input::Pointer),
+                _ => None,
+            })
+            .collect()
+    });
+    ctx.data_mut(|d| {
+        let before = d.get_temp(rings_id()).unwrap_or(RINGS_AT_START);
+        d.insert_temp(rings_id(), rings_after(before, inputs));
+    });
+}
+
+/// Whether this focused control wears its ring now: focused, and the
+/// keyboard is what was last used (CSS `:focus-visible`). The focus
+/// itself, and the screen reader's, are egui's either way.
+pub fn ring_shown(ui: &Ui, response: &Response) -> bool {
+    response.has_focus()
+        && ui
+            .ctx()
+            .data(|d| d.get_temp(rings_id()))
+            .unwrap_or(crate::model::focus::RINGS_AT_START)
+}
+
+/// The 2px ink ring a focused control wears, after keyboard use only.
 pub fn focus_ring(ui: &Ui, t: &Tokens, response: &Response, offset: f32) {
-    if response.has_focus() {
+    if ring_shown(ui, response) {
         ui.painter().rect_stroke(
             response.rect.expand(offset),
             CornerRadius::same(theme::RADIUS as u8),

@@ -294,6 +294,8 @@ pub fn input(app: &mut App, ui: &mut Ui) {
         (open, dropped, !i.raw.hovered_files.is_empty(), pressed)
     });
     app.drag_hover = hovering;
+    // Keyboard or pointer, for the focus rings drawn below.
+    widgets::note_ring_input(&ctx);
     // Back from another app (perhaps from installing Kindle Previewer).
     let focused = ctx.input(|i| i.focused);
     if focused && !app.window_focused {
@@ -340,8 +342,10 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                     let top = ui.cursor().min;
                     // The drag strip: as tall as the sheet's top padding, part of
                     // the page, so it scrolls away and never covers a control.
+                    // DRAG alone, not Sense::drag(), which is focusable: the
+                    // first Tab vanished into it.
                     let strip = Rect::from_min_size(top, Vec2::new(window.x, layout::SPACE[7]));
-                    let drag = ui.interact(strip, Id::new("drag-strip"), Sense::drag());
+                    let drag = ui.interact(strip, Id::new("drag-strip"), Sense::DRAG);
                     if drag.drag_started() {
                         ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
                     }
@@ -436,7 +440,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
         // The gaps between tabs move the window, as the strip does:
         // registered first, so every tab sits above it.
         let gaps = Rect::from_min_size(ui.cursor().min, Vec2::new(ui.available_width(), 20.0));
-        let gap = ui.interact(gaps, Id::new("tab-gaps"), Sense::drag());
+        let gap = ui.interact(gaps, Id::new("tab-gaps"), Sense::DRAG);
         if gap.drag_started() {
             ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
         }

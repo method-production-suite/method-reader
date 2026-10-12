@@ -1517,10 +1517,101 @@ fn r16_the_book_is_dressed_again_when_the_os_theme_changes() {
     assert_eq!(dressed(&h), Some(true), "re-dressed without a reload");
 }
 
+/// The 2px ink rings painted this frame.
+fn rings(h: &H) -> Vec<egui::Rect> {
+    let t = h.state().tokens();
+    painted(h)
+        .into_iter()
+        .filter_map(|s| match s {
+            egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.ink) => Some(r.rect),
+            _ => None,
+        })
+        .collect()
+}
+
+fn focused(h: &H) -> Option<egui::Id> {
+    h.ctx.memory(|m| m.focused())
+}
+
+// A4: rings are :focus-visible's, keyboard only. A focus the window moves
+// by itself (restore_focus, after a dialog, a surface change) wears no ring
+// until a key has been pressed; Tab shows it; a pointer press hides it
+// again until the next key.
+#[test]
+fn a4_a_focus_the_window_moves_by_itself_wears_no_ring() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    // Cmd-O is a shortcut, not keyboard navigation; a fresh window had
+    // no other input. Going to Read moves the focus programmatically.
+    h.state_mut().go_to(Surface::Read);
+    steps(&mut h);
+    assert!(focused(&h).is_some(), "the window placed the focus");
+    assert!(rings(&h).is_empty(), "no ring: {:?}", rings(&h));
+}
+
+#[test]
+fn a4_tab_shows_the_ring_a_click_hides_it_and_the_next_tab_shows_it_again() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.key_press(Key::Tab);
+    steps(&mut h);
+    // The first Tab lands on the first tab, not on the invisible drag strip
+    // or the gaps between tabs (they sense drags and take no focus).
+    assert_eq!(
+        focused(&h),
+        Some(sp_app::app::frame::tab_id(Surface::Convert))
+    );
+    assert_eq!(rings(&h).len(), 1, "Tab shows the ring");
+    // A pointer press on a control: focused or not, no ring.
+    h.get_by_role_and_label(Role::Tab, "Convert").click();
+    steps(&mut h);
+    assert!(
+        rings(&h).is_empty(),
+        "no ring after a click: {:?}",
+        rings(&h)
+    );
+    // A programmatic move after the click keeps the pointer's "no ring".
+    h.state_mut().restore_focus = true;
+    steps(&mut h);
+    assert!(focused(&h).is_some());
+    assert!(rings(&h).is_empty(), "no ring after restore_focus");
+    h.key_press(Key::Tab);
+    steps(&mut h);
+    assert_eq!(rings(&h).len(), 1, "the next Tab shows it again");
+    // And a programmatic move after a key keeps the keyboard's ring.
+    h.state_mut().restore_focus = true;
+    steps(&mut h);
+    assert_eq!(rings(&h).len(), 1, "the ring follows the keyboard's mode");
+}
+
+#[test]
+fn a4_the_screen_reader_still_follows_the_focus_without_a_ring() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.state_mut().restore_focus = true;
+    steps(&mut h);
+    let id = focused(&h).expect("the window placed the focus");
+    assert!(rings(&h).is_empty());
+    let in_tree: Vec<_> = h
+        .query_all(egui_kittest::kittest::By::new().predicate(|n| n.is_focused()))
+        // The consumer's id is the node's own id in its upper 64 bits.
+        .map(|n| (u128::from(n.accesskit_node().id()) >> 64) as u64)
+        .collect();
+    assert_eq!(
+        in_tree,
+        vec![id.accesskit_id().0],
+        "AccessKit's focus is egui's"
+    );
+}
+
 #[test]
 fn a4_a_focused_control_wears_a_2px_ink_ring_outside_it() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
+    // The keyboard is in use (rings are keyboard only).
+    h.key_press(Key::Tab);
+    steps(&mut h);
     let change = h.get_by_role_and_label(Role::Button, "Change…");
     let rect = change.rect();
     change.focus();

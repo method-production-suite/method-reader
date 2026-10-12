@@ -268,7 +268,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | N6 | A tab that goes away while selected sends the window to Convert | ui/frame.js enable | done |
 | N7 | Tabs arriving: fade and rise 5px over 0.2 s, staggered 70 ms by position; only on the way in; none with Reduce Motion | ui/style.css tab-arrive | done |
 | N8 | Tab look: Courier bold 11px caps, letter-spaced, muted; the open one ink with a 1.5px brass rule under it; hover ink | ui/style.css .tab | done |
-| N9 | Rev stamp "rev 0.11.1" at the foot of the sheet, right; the version is the RELEASE notes' version, not the engine's | ui/frame.js revLabel | done |
+| N9 | Rev stamp "rev 0.11.1" at the foot of the sheet, right; the version is the RELEASE notes' version, not the engine's | ui/frame.js revLabel | done (whole inside the window on Read at every layout size, Read's frame giving way to the foot; at a scrolling page's end on Convert and Settings: behaviors n9_*) |
 | N10 | The stamp is a button that opens the release notes sheet | ui/frame.js, ui/main.js | done |
 | N11 | Update label beside the stamp: hidden until the update flow has words; brass rule under it; inert moments carry aria-disabled and no pointer | ui/frame.js setUpdateLabel | done (tests/model_rows.rs) |
 | N12 | If the update label hides while focused, the keyboard goes to the page's first stop | ui/main.js | done |
@@ -535,7 +535,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | A1 | Every control is a native control with its own words as its name (no icon-only control except the asterisk, which has its own label) | all | done |
 | A2 | Live regions (polite status): the conversion read-out, the show's slim line, Settings' status and warnings, the defaults note, the keep note, the switch note, the send status, the build line, the request line, the report line, the KFX status, the heads-up, the notes' update line | all | done |
 | A3 | Descriptions: each knob's sentence, each radio's and switch's line, the Beta badge's note | ui/tune.js, ui/beta.js | done |
-| A4 | Focus rings: 2px ink outline offset 2 to 3 px on every control, the panes and the reader's stage, keyboard only | ui/style.css, ui/surfaces.css | done |
+| A4 | Focus rings: 2px ink outline offset 2 to 3 px on every control, the panes and the reader's stage, keyboard only | ui/style.css, ui/surfaces.css | done (2026-10-12: `:focus-visible`'s rule, model/focus.rs rings_after: a key without Command/Control/Alt turns rings on, a pointer press off, a focus the window moves itself keeps the last mode, none before any input; egui's and AccessKit's focus untouched; behaviors a4_*) |
 | A5 | Decorative furniture hidden from assistive technology: the rail, the well's mark, the result's page, the typed page, the preview, the build bar | all | done |
 | A6 | Nothing is announced twice: a live line is rewritten only when its words change | ui/send-panel.js showBuild, ui/kfx.js say | done |
 

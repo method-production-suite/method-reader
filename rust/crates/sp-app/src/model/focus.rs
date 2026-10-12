@@ -125,9 +125,48 @@ pub fn pay_owed<Id: Copy + PartialEq>(
     }
 }
 
+/// What a piece of input says about the focus ring, as `:focus-visible`
+/// reads it: a key pressed without Command, Control or Alt (Tab, the
+/// arrows, Space, Enter, typing) is the keyboard; a pointer press or a
+/// touch is the pointer.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Input {
+    Keyboard,
+    Pointer,
+}
+
+/// Before any input, no ring (a window that places the focus itself on
+/// opening shows none).
+pub const RINGS_AT_START: bool = false;
+
+/// Whether focus rings show after this frame's input: the most recent
+/// keyboard or pointer input decides, and a frame with neither (a focus
+/// the window moves by itself, a redraw, a screen reader's focus) keeps
+/// what the last real input set.
+pub fn rings_after(before: bool, inputs: impl IntoIterator<Item = Input>) -> bool {
+    inputs
+        .into_iter()
+        .fold(before, |_, input| input == Input::Keyboard)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rings_follow_the_last_real_input() {
+        use Input::*;
+        const { assert!(!RINGS_AT_START) };
+        // Nothing yet, or a frame with no input: as before.
+        assert!(!rings_after(RINGS_AT_START, []));
+        assert!(rings_after(true, []));
+        assert!(!rings_after(false, []));
+        // The last of the frame's inputs wins.
+        assert!(rings_after(false, [Keyboard]));
+        assert!(!rings_after(true, [Pointer]));
+        assert!(rings_after(false, [Pointer, Keyboard]));
+        assert!(!rings_after(true, [Keyboard, Pointer]));
+    }
 
     fn stop(id: u32, enabled: bool, shown: bool) -> Stop<u32> {
         Stop { id, enabled, shown }

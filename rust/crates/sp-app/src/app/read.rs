@@ -219,13 +219,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
     app.stop(stage.id, true);
     sheet(ui, &t, script_rect);
     widgets::own_arrows(ui, stage.id);
-    if stage.has_focus() {
+    if widgets::ring_shown(ui, &stage) {
         ui.painter().rect_stroke(
             script_rect.expand(2.0),
             theme::RADIUS_WELL,
             egui::Stroke::new(2.0, t.ink),
             egui::StrokeKind::Outside,
         );
+    }
+    if stage.has_focus() {
         let key = ui.input(|i| {
             [
                 (Key::ArrowDown, ReadKey::Down),
