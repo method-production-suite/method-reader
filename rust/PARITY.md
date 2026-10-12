@@ -209,13 +209,16 @@ mapped to the sp-app screen that reproduces it.
 Differences the port keeps on purpose, and questions for the owner. Each
 names the check it affects.
 
-- **PNG bytes.** src/parser/png.ts deflates IDAT with node:zlib at level 9,
-  and the picture files (and the EPUB, which stores them) are compared byte
-  for byte. A Rust deflater has to reproduce zlib's exact stream for that to
-  hold. Open: either match it (a zlib-compatible deflater) or decide that
-  pictures compare by decoded pixels.
-- **The engine sidecar.** The Rust app links sp-engine directly, so
-  build-sidecar.test.ts and sidecar-targets.test.ts have little left to
-  guard. Open: retire them, or keep the CLI build checks they also hold.
-- **services/device-requests.** A Cloudflare Worker, not app code. Open:
-  whether it stays JavaScript (and its test with it).
+- **PNG bytes (decided 2026-10-11).** Pictures compare by DECODED PIXELS
+  (dimensions, colour type and every pixel), not by compressed bytes. The
+  Rust side uses its own deflater; reproducing node:zlib's exact stream buys
+  nothing a reader can see. Everything else in the EPUB still compares entry
+  by entry, and every other file byte for byte.
+- **The engine sidecar (decided 2026-10-11).** Retired: the Rust app links
+  sp-engine directly. The CLI build checks those files also hold move to
+  the release-pipeline crate (the `screepub` CLI is still built and
+  smoke-tested per platform).
+- **services/device-requests (decided 2026-10-11).** Ported to Rust
+  (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
+  asked for no code but Rust. It stays deployed as is until the Rust worker
+  answers the same two forms identically.
