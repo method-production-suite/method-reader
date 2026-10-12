@@ -318,11 +318,11 @@ marked in §5.
 ## 5. Gap analysis: Screepub today vs the map
 
 Support when this gap analysis was written (verified then against the Swift
-app's code; the engine's `src/device/` and `src/export/` carry all of it now):
+app's code; the engine's `rust/crates/sp-device/` and `rust/crates/sp-engine/src/export/` carry all of it now):
 
 - **Kindle MSC** via volume signature; AZW3 (ebook-convert), KFX (when the
   Calibre+plugin+Previewer toolchain exists), engine MOBI as fallback.
-  **Since 2026-10-10** the AZW3 is Screepub's own (`src/azw3/`, a port of
+  **Since 2026-10-10** the AZW3 is Screepub's own (`rust/crates/sp-azw3/`, a port of
   Calibre's KF8 writer, beta) and is made on every machine with no Calibre;
   Calibre is needed for KFX alone, and the MOBI is asked for by name.
 - **Kobo** via `KOBOeReader` volume, EPUB with KEPUB choice on the send
@@ -338,11 +338,11 @@ What the map says we are missing, tiered by leverage:
    (upload otherwise lands in the tablet's last-browsed folder). Plus
    interface-level detection (`10.11.99.0/29` on any interface = cable
    present, so "web interface off" becomes a distinct message) and a 100 MB
-   guard. File: `src/device/remarkable.ts`.
+   guard. File: `rust/crates/sp-device/src/remarkable.rs`.
 2. **Apple Books justification/fonts — DONE 2026-07-30:** emit
    `<meta property="ibooks:specified-fonts">true</meta>` in the EPUB OPF.
    One engine line; without it Books force-justifies ragged-right screenplay
-   text the moment a user has Justify on. Shipped in `src/epub/build.ts`
+   text the moment a user has Justify on. Shipped in `rust/crates/sp-epub/src/build.rs`
    (with the `ibooks:` prefix declared on `<package>` so epubcheck stays
    quiet); registry #6b.
 3. **PocketBook:** volume signature (root `system/` + `Books/`), copy EPUB3
@@ -424,7 +424,7 @@ measured on device — jhowell's reporting or our own passes; everything
 else is a citation or, where marked, an inference.
 
 The KF8/AZW3 column is about the FORMAT and its renderer, so it holds for
-Screepub's own AZW3 (`src/azw3/`, 2026-10-10) exactly as it did for
+Screepub's own AZW3 (`rust/crates/sp-azw3/`, 2026-10-10) exactly as it did for
 Calibre's: the stylesheet travels into the AZW3 verbatim, keeps included,
 and the KF8 renderer then ignores the keeps it always ignored (registry
 #8b). What the writer cannot change is what this column says; which file
@@ -463,6 +463,12 @@ comes from jhowell's device-test reporting rather than any Amazon artifact
 ---
 
 ## 7. MTP Kindles from the Tauri window (researched 2026-09-30)
+
+**Since then (2026-10-12):** this was built as `rust/crates/sp-mtp` (the
+`screepub-mtp` helper) and the MTP route in `rust/crates/sp-device`, beta
+and switched off until it has run on a real Kindle. The window is native
+Rust now with the engine linked in, so there is no sidecar; the plan below
+is kept as written.
 
 Research only. Nothing below has been built or run here, and nobody on the
 project has a 2024-or-newer Kindle to run it on.

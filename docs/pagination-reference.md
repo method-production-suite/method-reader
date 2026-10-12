@@ -210,7 +210,7 @@ Tests and fixtures:
 8. No fixture exercises: `CONTINUED:` sluglines, an unmarked mid-block
    page split (Celtx-style), or an action paragraph split across pages.
    All current `(MORE)`/`(CONT'D)` tests are synthetic element arrays;
-   `tools/make-fixture.py` could generate the three missing shapes.
+   `cargo xtask make-fixture` could generate the three missing shapes.
 
 Doc hygiene: `screenplay-format-reference.md` §4's second open item
 predates the `keepSceneHeadingWithScene` toggle (shipped, default on)
