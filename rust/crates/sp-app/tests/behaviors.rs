@@ -16,6 +16,7 @@ use sp_app::app::{App, convert, panel, show::Show};
 use sp_app::engine::{Reply, Request, default_answer};
 use sp_app::model::convert::Platform;
 use sp_app::model::frame::Surface;
+use sp_app::model::motion::Wake;
 
 fn calm_as(w: &World, kind: &str) {
     let mut a = default_answer(&Request::AppSettings);
@@ -145,6 +146,60 @@ fn n7_tabs_arrive_once_when_a_script_opens() {
         at,
         "not replayed for a second script"
     );
+}
+
+// ----------------------------------------------------------- frames at rest
+
+/// The clock past every animation, a step at a time, as frames would go.
+fn let_everything_settle(w: &World, h: &mut H) {
+    for _ in 0..80 {
+        w.fakes.clock.advance(100.0);
+        h.run_steps(1);
+    }
+    steps(h);
+}
+
+#[test]
+fn a_window_with_nothing_moving_and_nothing_due_asks_for_no_frame() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    let_everything_settle(&w, &mut h);
+    assert_eq!(h.state().wake, Wake::Idle, "the drop well at rest");
+}
+
+#[test]
+fn a_script_at_rest_wakes_only_for_the_devices_poll() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    for surface in ["Read", "Settings", "Convert"] {
+        h.get_by_role_and_label(Role::Tab, surface).click();
+        let_everything_settle(&w, &mut h);
+        match h.state().wake {
+            Wake::In(ms) => assert!(
+                ms > 0.0 && ms <= 2000.0,
+                "{surface}: the next poll, {ms} ms away"
+            ),
+            other => panic!("{surface}: at rest it asked for {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn an_animation_asks_for_the_very_next_frame_until_it_ends() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Tab, "Read").click();
+    let_everything_settle(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Hide scenes").click();
+    h.run_steps(1);
+    w.fakes.clock.advance(50.0);
+    h.run_steps(1);
+    assert_eq!(h.state().wake, Wake::Next, "the index sliding away");
+    w.fakes.clock.advance(200.0);
+    h.run_steps(2);
+    assert_ne!(h.state().wake, Wake::Next, "and still once it has gone");
 }
 
 // ------------------------------------------------------------------- drops
@@ -551,22 +606,39 @@ fn r9_r10_pressing_a_scene_scrolls_to_it_and_marks_it() {
     h.get_by_role_and_label(Role::Button, "EXT. RIDGE – NIGHT")
         .click();
     steps(&mut h);
-    let marks = h.state().read.marks.clone();
-    let ridge = marks
-        .iter()
-        .find(|m| m.id.ends_with("6") || m.id.ends_with("06"))
-        .cloned();
-    assert!(
-        h.state().read.offset > 1000.0,
-        "scrolled down the script: {}",
-        h.state().read.offset
-    );
+    // It glides there as WebKit's smooth scroll did: 200 ms at most,
+    // ease-in-out, so half way through the time it is half way there.
+    let start = h.state().read.offset;
+    w.fakes.clock.advance(100.0);
+    steps(&mut h);
+    let mid = h.state().read.offset;
+    w.fakes.clock.advance(150.0);
+    steps(&mut h);
+    let end = h.state().read.offset;
+    assert!(end > 1000.0, "scrolled down the script: {end}");
+    let half = (mid - start) / (end - start);
+    assert!((half - 0.5).abs() < 0.05, "half way at half time: {half}");
     let current = h.get_by(|n| n.data().aria_current().is_some());
     assert_eq!(
         current.accesskit_node().label().as_deref(),
         Some("EXT. RIDGE – NIGHT")
     );
-    let _ = ridge;
+}
+
+#[test]
+fn r9_with_reduce_motion_a_scene_is_there_at_once() {
+    let w = world();
+    w.fakes
+        .reduced_motion
+        .store(true, std::sync::atomic::Ordering::Relaxed);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Tab, "Read").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "EXT. RIDGE – NIGHT")
+        .click();
+    steps(&mut h);
+    assert!(h.state().read.offset > 1000.0, "no clock needed");
 }
 
 #[test]

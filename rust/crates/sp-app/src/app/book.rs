@@ -29,6 +29,12 @@ fn faces() -> &'static Vec<Vec<u8>> {
     })
 }
 
+/// Decode the faces ahead of the first book, on a thread of the caller's:
+/// done when the first book arrives, it costs that frame nothing.
+pub fn warm_fonts() {
+    let _ = faces();
+}
+
 /// Pictures the engine wrote into the page as data: URIs, decoded at once;
 /// every other address is refused, so the preview fetches nothing.
 struct DataOnly;

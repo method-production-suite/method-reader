@@ -89,6 +89,12 @@ impl Watcher {
         Some(self.era)
     }
 
+    /// When the next ask falls due, for the window to wake then: None while
+    /// it is stopped or an ask is still out (its answer wakes the window).
+    pub fn next_due(&self) -> Option<f64> {
+        (self.running && self.out_for != Some(self.era)).then_some(self.next_at)
+    }
+
     /// An answer arrived. Returns the new list when it changed (what the
     /// listeners hear), None otherwise.
     pub fn answered(&mut self, era: u64, answer: Option<&Value>) -> Option<Vec<Device>> {
@@ -152,6 +158,20 @@ mod tests {
             None,
             "unchanged says nothing"
         );
+    }
+
+    #[test]
+    fn the_window_is_woken_for_the_next_ask_and_only_then() {
+        let mut w = Watcher::default();
+        assert_eq!(w.next_due(), None, "not running: nothing to wake for");
+        w.start(100.0);
+        assert_eq!(w.next_due(), Some(100.0));
+        let era = w.due(100.0).unwrap();
+        assert_eq!(w.next_due(), None, "the answer wakes the window");
+        w.answered(era, Some(&listing(json!([]))));
+        assert_eq!(w.next_due(), Some(2100.0));
+        w.stop();
+        assert_eq!(w.next_due(), None);
     }
 
     #[test]

@@ -367,6 +367,11 @@ fn remarkable_wanted(app: &App) -> bool {
         && app.reader_device == Some(Some("remarkable"))
 }
 
+/// When the reMarkable look next falls due, for the window to wake then.
+pub fn next_due(app: &App) -> Option<f64> {
+    app.panel.remarkable_next
+}
+
 pub fn tick(app: &mut App, now: f64) {
     if remarkable_wanted(app) {
         match app.panel.remarkable_next {
@@ -836,9 +841,13 @@ fn send_device_request(app: &mut App) {
     let form = device_form(&req.draft, RELEASE.version, app.host.platform);
     let poster = app.host.poster.clone();
     let tx = app.panel.net_tx.clone();
+    let wake = app.repaint.clone();
     std::thread::spawn(move || {
         let answer = answer_from(poster.post(q::REQUEST_URL, &form));
         let _ = tx.send(Net::Device(answer));
+        if let Some(ctx) = wake {
+            ctx.request_repaint();
+        }
     });
 }
 
@@ -852,10 +861,14 @@ fn send_report(app: &mut App, kind: &str, worked: bool) {
     let form = report_form(kind, worked, RELEASE.version, app.host.platform);
     let poster = app.host.poster.clone();
     let tx = app.panel.net_tx.clone();
+    let wake = app.repaint.clone();
     let kind = kind.to_string();
     std::thread::spawn(move || {
         let answer = answer_from(poster.post(q::REQUEST_URL, &form));
         let _ = tx.send(Net::Report(kind, answer));
+        if let Some(ctx) = wake {
+            ctx.request_repaint();
+        }
     });
 }
 
@@ -1537,19 +1550,23 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
         let now = app.now();
         let painter = ui.painter().with_clip_rect(rect);
         if app.reduced_motion() {
-            let k = (((now / 1600.0) % 2.0) - 1.0).abs() as f32;
-            painter.rect_filled(rect, 0.0, t.brass.gamma_multiply(0.35 + 0.65 * k));
+            // build-breathe: the whole track, there and back, eased.
+            let k = crate::model::motion::breathe_at(now);
+            painter.rect_filled(rect, 0.0, t.brass.gamma_multiply(k));
         } else {
-            let phase = ((now % 1400.0) / 1400.0) as f32;
-            let w = rect.width() * 0.3;
-            let x = rect.left() - w + phase * (rect.width() + w);
+            // build-sweep: a 30% bar across and off, eased in and out.
+            let (left, width) = crate::model::motion::sweep_at(now);
+            let x = rect.left() + left * rect.width();
             painter.rect_filled(
-                Rect::from_min_size(egui::pos2(x, rect.top()), Vec2::new(w, rect.height())),
+                Rect::from_min_size(
+                    egui::pos2(x, rect.top()),
+                    Vec2::new(width * rect.width(), rect.height()),
+                ),
                 0.0,
                 t.brass,
             );
         }
-        ui.ctx().request_repaint();
+        app.moving();
     }
     if let Some(fault) = app.panel.routes_fault.clone() {
         widgets::text(ui, &fault, theme::structure(size::UI), t.ink);

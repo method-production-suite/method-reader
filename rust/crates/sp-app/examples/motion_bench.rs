@@ -276,8 +276,10 @@ fn main() -> eframe::Result {
     need("SCREEPUB_VOLUME_ROOTS");
     need("CALIBRE_CONFIG_DIRECTORY");
     let library = need("SCREEPUB_LIBRARY");
+    // On the main display (on a MacBook, its own ProMotion screen), so the
+    // cadence measured is that screen's and not an external monitor's.
     let options = eframe::NativeOptions {
-        viewport: sp_app::app::viewport(),
+        viewport: sp_app::app::viewport().with_position([40.0, 40.0]),
         ..Default::default()
     };
     eframe::run_native(

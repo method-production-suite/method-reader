@@ -121,8 +121,16 @@ pub struct App {
     pub views: bookview::Views,
     /// SCREEPUB_FRAME_LOG's recorder (framelog.rs), when it is set.
     pub frame_log: Option<crate::framelog::FrameLog>,
-    /// What the last frame asked of the next one, for the recorder.
-    pub wants: &'static str,
+    /// What this frame has learnt about the next: something moving, or a
+    /// timer due (model/motion.rs). Gathered while the frame draws.
+    pub wakes: crate::model::motion::Wakes,
+    /// What the last frame asked of the next one.
+    pub wake: crate::model::motion::Wake,
+    /// Wakes the window from another thread (a request's answer).
+    pub repaint: Option<egui::Context>,
+    /// Every property easing toward a value (model/motion.rs Transition),
+    /// by the id of what it moves.
+    transitions: HashMap<Id, crate::model::motion::Transition>,
 }
 
 impl App {
@@ -168,11 +176,19 @@ impl App {
             update: frame::UpdateState::default(),
             views: bookview::Views::default(),
             frame_log: crate::framelog::FrameLog::from_env(),
-            wants: "idle",
+            wakes: crate::model::motion::Wakes::default(),
+            wake: crate::model::motion::Wake::Idle,
+            repaint: None,
+            transitions: HashMap::new(),
         };
         // The one line that proves the engine is there.
         app.call(Request::Version, Purpose::Version);
         app.update.inline_checks = mode == Mode::Inline;
+        if mode == Mode::Threads {
+            // The book's faces decoded while the window starts, not in the
+            // frame the first book arrives (mid page show).
+            std::thread::spawn(book::warm_fonts);
+        }
         app.update.boot(&mut app.host);
         convert::draw_well(&mut app);
         app
@@ -180,6 +196,7 @@ impl App {
 
     /// Wake egui when a worker answers.
     pub fn set_repaint(&mut self, ctx: egui::Context) {
+        self.repaint = Some(ctx.clone());
         self.update.repaint = Some(ctx.clone());
         self.rt.set_repaint(ctx);
     }
@@ -283,10 +300,17 @@ impl App {
 
     /// Everything that has arrived since the last frame.
     pub fn pump(&mut self) {
-        for (purpose, message) in std::mem::take(&mut self.refused) {
+        let refused = std::mem::take(&mut self.refused);
+        let events = self.rt.poll();
+        if !refused.is_empty() || !events.is_empty() {
+            // News redraws more than one place: one more frame lets every
+            // part of the window catch up, as egui's own requests do.
+            self.wakes.moving();
+        }
+        for (purpose, message) in refused {
             self.deliver(purpose, Reply::failed(message));
         }
-        for event in self.rt.poll() {
+        for event in events {
             match event {
                 Event::Progress { job, line } => {
                     if let Some(Job {
@@ -360,6 +384,62 @@ impl App {
         tune::tick(self, now);
         frame::heads_up_tick(self, now);
         panel::tick(self, now);
+    }
+
+    /// The timers above, as they stand once the frame has drawn (a knob
+    /// moved this frame has started its settle): the window wakes for
+    /// whichever falls due first, and sleeps between them.
+    fn note_timers(&mut self) {
+        let due = [
+            self.watcher.next_due(),
+            self.tune.deadline,
+            self.heads_up.until,
+            panel::next_due(self),
+        ];
+        for at in due.into_iter().flatten() {
+            self.wakes.at(at);
+        }
+    }
+
+    /// Something on screen is mid-animation this frame: draw the next.
+    pub fn moving(&mut self) {
+        self.wakes.moving();
+    }
+
+    /// A property following `to` the way a CSS transition follows it: a new
+    /// value eases in from wherever it is, along `timing`; at once under
+    /// Reduce Motion. The first time `id` is asked it is already there.
+    pub fn ease(&mut self, id: Id, to: f32, timing: crate::model::motion::Timing) -> f32 {
+        self.ease_from(id, to, to, timing)
+    }
+
+    /// The same, for something that enters: the first time `id` is asked
+    /// it starts at `from` and eases to `to` (a CSS animation on insert).
+    /// [`App::forget_motion`] lets it enter again.
+    pub fn ease_from(
+        &mut self,
+        id: Id,
+        from: f32,
+        to: f32,
+        timing: crate::model::motion::Timing,
+    ) -> f32 {
+        let now = self.now();
+        let instant = self.reduced_motion();
+        let t = self
+            .transitions
+            .entry(id)
+            .or_insert_with(|| crate::model::motion::Transition::at(from, timing));
+        t.set(to, now, instant);
+        let (value, running) = (t.value(now), t.running(now));
+        if running {
+            self.wakes.moving();
+        }
+        value
+    }
+
+    /// `id` has left the screen: the next time it is drawn it enters anew.
+    pub fn forget_motion(&mut self, id: Id) {
+        self.transitions.remove(&id);
     }
 
     /// The script on screen changed, or went away (main.js scriptChanged).
@@ -448,6 +528,7 @@ impl App {
             ui.ctx().request_repaint();
             return;
         }
+        self.wakes = crate::model::motion::Wakes::default();
         self.dark = ui.ctx().system_theme() == Some(egui::Theme::Dark);
         self.views.scale = ui.ctx().pixels_per_point();
         self.pump();
@@ -496,14 +577,27 @@ impl App {
             });
         }
         panel::pay_brass(self, ui.ctx());
-        self.wants = "idle";
-        if !self.quiet()
-            || self.show.as_ref().is_some_and(show::Show::running)
-            || self.watcher.running()
-        {
-            self.wants = "after:16";
-            ui.ctx()
-                .request_repaint_after(std::time::Duration::from_millis(16));
+        if self.show.as_ref().is_some_and(show::Show::running) {
+            self.moving();
+        }
+        // A frame that heard from the keyboard or the pointer gets one more,
+        // so what changed late in it (a press, a focus moved) is drawn; and
+        // a call refused while drawing is answered on the next.
+        let input = ui.ctx().input(|i| !i.events.is_empty() || i.any_touches());
+        if input || !self.refused.is_empty() {
+            self.moving();
+        }
+        self.note_timers();
+        // The next frame: on the display's refresh while anything moves,
+        // when a timer falls due, or not until something happens. An
+        // engine answer wakes the window itself (runtime.rs).
+        self.wake = self.wakes.wake(self.now());
+        match self.wake {
+            crate::model::motion::Wake::Next => ui.ctx().request_repaint(),
+            crate::model::motion::Wake::In(ms) => ui
+                .ctx()
+                .request_repaint_after(std::time::Duration::from_secs_f64(ms / 1000.0)),
+            crate::model::motion::Wake::Idle => {}
         }
     }
 
@@ -537,9 +631,9 @@ impl eframe::App for Window {
     fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
         let began = std::time::Instant::now();
         self.0.frame(ui);
-        let wants = self.0.wants;
+        let wants = self.0.wake.word();
         if let Some(log) = self.0.frame_log.as_mut() {
-            log.record(began, began.elapsed(), frame.info().cpu_usage, wants);
+            log.record(began, began.elapsed(), frame.info().cpu_usage, &wants);
         }
     }
 }
