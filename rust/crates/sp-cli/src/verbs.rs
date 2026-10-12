@@ -181,6 +181,16 @@ fn settings_file() -> String {
     app_settings_path(host_platform(), &Env::process())
 }
 
+/// macOS's camera-import pause for a copy to an MTP Kindle (sp-device),
+/// its marker in the folder the app settings file is in.
+pub fn camera_import() -> sp_device::camera_import::CameraImportDeps {
+    let settings = settings_file();
+    let folder = std::path::Path::new(&settings)
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
+    sp_device::camera_import::CameraImportDeps::host(folder)
+}
+
 fn no_arguments(verb: &str, positionals: &[String]) -> Run {
     match positionals.first() {
         Some(p) => Err(Stop::usage(format!(
@@ -492,6 +502,7 @@ fn send(io: &mut Io, pos: &[String], parsed: &Parsed) -> Run {
     let mut options = sp_device::commands::SendOptions::new(pos[0].clone(), &remember);
     options.device_id = parsed.string("device").map(str::to_owned);
     options.list = device_seams(false);
+    options.camera_import = Some(camera_import());
     let sent = sp_device::commands::send_command(&options).map_err(device)?;
     if io.json {
         // `destination` is OMITTED for a reMarkable, which has no path;

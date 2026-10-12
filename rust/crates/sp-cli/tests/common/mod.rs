@@ -289,4 +289,138 @@ pub fn keys(v: &Value) -> Vec<String> {
     let mut k: Vec<String> = v.as_object().expect("an object").keys().cloned().collect();
     k.sort();
     k
+/// A stand-in for the reMarkable's USB web interface on 127.0.0.1: it
+/// records `METHOD /path` for every request and answers `get` to a GET and
+/// `post` to a POST, each with the body `[]`. `None` takes the request and
+/// never answers (the connection is held open while the test runs).
+pub struct Tablet {
+    pub url: String,
+    requests: std::sync::Arc<std::sync::Mutex<Vec<String>>>,
+}
+
+impl Tablet {
+    pub fn start(get: Option<u16>, post: Option<u16>) -> Tablet {
+        use std::io::{BufRead, BufReader, Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a local port");
+        let url = format!(
+            "http://127.0.0.1:{}",
+            listener.local_addr().expect("an address").port()
+        );
+        let requests = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let seen = std::sync::Arc::clone(&requests);
+        std::thread::spawn(move || {
+            let mut held = Vec::new();
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { continue };
+                let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+                let Ok(clone) = stream.try_clone() else {
+                    continue;
+                };
+                let mut reader = BufReader::new(clone);
+                let mut line = String::new();
+                if reader.read_line(&mut line).is_err() {
+                    continue;
+                }
+                let mut parts = line.split_whitespace();
+                let method = parts.next().unwrap_or("").to_owned();
+                let path = parts.next().unwrap_or("").to_owned();
+                let mut length = 0usize;
+                let mut chunked = false;
+                loop {
+                    let mut h = String::new();
+                    if reader.read_line(&mut h).unwrap_or(0) == 0 || h == "\r\n" {
+                        break;
+                    }
+                    let lower = h.to_ascii_lowercase();
+                    if let Some(v) = lower.strip_prefix("content-length:") {
+                        length = v.trim().parse().unwrap_or(0);
+                    }
+                    if lower.starts_with("transfer-encoding:") && lower.contains("chunked") {
+                        chunked = true;
+                    }
+                }
+                if chunked {
+                    let mut tail = Vec::new();
+                    let mut buf = [0u8; 4096];
+                    while !tail.ends_with(b"0\r\n\r\n") {
+                        match reader.read(&mut buf) {
+                            Ok(0) | Err(_) => break,
+                            Ok(n) => tail.extend_from_slice(&buf[..n]),
+                        }
+                    }
+                } else {
+                    let mut body = vec![0u8; length];
+                    let _ = reader.read_exact(&mut body);
+                }
+                seen.lock()
+                    .expect("the log")
+                    .push(format!("{method} {path}"));
+                let status = if method == "POST" { post } else { get };
+                match status {
+                    Some(code) => {
+                        let _ = write!(
+                            stream,
+                            "HTTP/1.1 {code} X\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]"
+                        );
+                    }
+                    None => held.push(stream),
+                }
+            }
+        });
+        Tablet { url, requests }
+    }
+
+    /// Every request so far, as `METHOD /path`.
+    pub fn requests(&self) -> Vec<String> {
+        self.requests.lock().expect("the log").clone()
+    }
+}
+
+/// A folder of stand-in programs put first on the sandbox's PATH: each one
+/// named appends `<name> <args>` to `tools.log` in the scratch folder and
+/// exits 1, printing nothing else. So nothing a run asks `open`, `xdg-open`
+/// or `defaults` for can open anything on this machine.
+pub fn fake_tools(sb: &mut Sandbox, names: &[&str]) {
+    let bin = sb.mkdir("fake-bin");
+    let log = sb.path("tools.log");
+    for name in names {
+        let path = bin.join(name);
+        script(
+            &path,
+            &format!("echo \"{name} $*\" >> '{}'\nexit 1", log.display()),
+        );
+    }
+    let path = std::env::var("PATH").unwrap_or_default();
+    let joined = format!("{}:{path}", bin.display());
+    sb.set("PATH", joined);
+}
+
+/// What the stand-ins logged, one line per call.
+pub fn tools_log(sb: &Sandbox) -> Vec<String> {
+    std::fs::read_to_string(sb.path("tools.log"))
+        .unwrap_or_default()
+        .lines()
+        .filter(|l| !l.is_empty())
+        .map(str::to_owned)
+        .collect()
+}
+
+/// A `#!/bin/sh` script with `body`, executable.
+pub fn script(path: &Path, body: &str) -> PathBuf {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).expect("mkdir");
+    }
+    std::fs::write(path, format!("#!/bin/sh\n{body}\n")).expect("a script");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+    }
+    path.to_path_buf()
+}
+
+/// A readable book: a few bytes at `rel` in the scratch folder. Nothing
+/// reads it as an EPUB.
+pub fn book_at(sb: &Sandbox, rel: &str) -> String {
+    sb.write(rel, "book-bytes").to_string_lossy().into_owned()
 }
