@@ -610,12 +610,11 @@ fn system_tar_gz(dir: &Scratch) -> Option<(PathBuf, Vec<u8>)> {
     }
     let archive = dir.join("a.tar.gz");
     // COPYFILE_DISABLE: macOS's bsdtar would add a hidden ._name member.
+    // Relative names from the scratch folder: Windows' tar reads a drive
+    // letter in -f as a remote host.
     let status = std::process::Command::new(tar)
-        .arg("-czf")
-        .arg(&archive)
-        .arg("-C")
-        .arg(&stage)
-        .args(["screepub", "NOTES"])
+        .args(["-czf", "a.tar.gz", "-C", "stage", "screepub", "NOTES"])
+        .current_dir(dir.path())
         .env("COPYFILE_DISABLE", "1")
         .status()
         .unwrap();
@@ -749,13 +748,12 @@ fn a_system_tar_unpacks_the_archive_to_one_runnable_screepub() {
     let payload = elf_payload(3000, 0x3e);
     let dir = stage(target, &payload);
     let archive = package_target(target, dir.path()).unwrap();
+    assert_eq!(archive, dir.join(target.archive_name));
     let unpack = dir.join("unpack");
     std::fs::create_dir_all(&unpack).unwrap();
     let status = std::process::Command::new(tar)
-        .arg("-xzf")
-        .arg(&archive)
-        .arg("-C")
-        .arg(&unpack)
+        .args(["-xzf", target.archive_name, "-C", "unpack"])
+        .current_dir(dir.path())
         .status()
         .unwrap();
     assert!(status.success());
