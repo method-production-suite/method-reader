@@ -20,7 +20,7 @@ move too.
 |---|---:|---|---|---|
 | tests/app-references.test.ts | 14 | xtask | todo | the retired Swift app stays retired |
 | tests/app-settings.test.ts | 31 | sp-engine | todo |  |
-| tests/artwork.test.ts | 44 | sp-parser | todo |  |
+| tests/artwork.test.ts | 44 | sp-parser | done | sp-parser/tests/artwork.rs (43); retired: the Bun.build bundle check that artwork.ts never reaches pdf.js (sp-parser has no PDF dependency at all) |
 | tests/azw3-calibre.test.ts | 0 | sp-azw3 | todo | reads the AZW3 back through Calibre: isolate CALIBRE_CONFIG_DIRECTORY |
 | tests/azw3-chunk.test.ts | 8 | sp-azw3 | todo |  |
 | tests/azw3-compare.test.ts | 0 | sp-azw3 | todo | compares with Calibre's AZW3: isolate CALIBRE_CONFIG_DIRECTORY |
@@ -34,7 +34,7 @@ move too.
 | tests/azw3-xml.test.ts | 6 | sp-azw3 | todo |  |
 | tests/azw3.test.ts | 9 | sp-azw3 | todo |  |
 | tests/beta-marks.test.ts | 10 | sp-cli | todo | the CLI help, README and site say "beta" the same way |
-| tests/boilerplate.test.ts | 16 | sp-parser | todo |  |
+| tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
 | tests/build-app-bundle.test.ts | 72 | xtask | todo |  |
@@ -69,7 +69,7 @@ move too.
 | tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | todo |  |
 | tests/css-rules.ts | 0 | sp-epub | todo | test helper (selector-exact rule extractor) |
-| tests/cue-text.test.ts | 4 | sp-parser | todo |  |
+| tests/cue-text.test.ts | 4 | sp-parser | done | sp-parser/tests/cue_text.rs (the 17 table rows as 17 tests) |
 | tests/desktop-bundle-step.test.ts | 7 | xtask | todo | CI workflow steps |
 | tests/desktop-layout-measured.test.ts | 16 | sp-app | todo | measured in headless Chrome today; a native toolkit measures its own layout |
 | tests/desktop-layout.test.ts | 26 | sp-app | todo |  |
@@ -95,14 +95,14 @@ move too.
 | tests/export-freshness.test.ts | 5 | sp-engine | todo |  |
 | tests/export-kfx-setup.test.ts | 13 | sp-engine | todo |  |
 | tests/export-kfx.test.ts | 54 | sp-engine | todo | isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/extract.test.ts | 103 | sp-parser | todo | reads pdf.js items: run against oracle pages.json until sp-pdf lands |
+| tests/extract.test.ts | 83 | sp-parser | done | sp-parser/tests/extract.rs (83; the file has 83 tests, not 103); fixture PDFs read through the oracle's pages.json until sp-pdf lands. The real-script repair-count test checks nothing until the script it was written for is dumped (every current real dump repairs 0) |
 | tests/fdx-integration.test.ts | 6 | sp-fdx | done | sp-fdx/tests/fdx_integration.rs; reads the oracle's tokens.json and script.fountain where the TypeScript converts the PDF on the spot, until sp-parser and sp-fountain land |
 | tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
-| tests/field-station.test.ts | 2 | sp-engine | todo |  |
-| tests/first-page.test.ts | 10 | sp-parser | todo |  |
+| tests/field-station.test.ts | 2 | sp-engine | partial | parser half in sp-parser/tests/field_station.rs (scenes, pages, cast, the site's scene walked over elements); the convertPdf title and the .fountain walk stay with sp-engine/sp-fountain |
+| tests/first-page.test.ts | 10 | sp-parser | partial | sp-parser/tests/first_page.rs (10); the progress test's stderr events, exit codes and --json halves move to sp-cli |
 | tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
-| tests/images-fixture.test.ts | 24 | sp-parser | todo |  |
-| tests/images.test.ts | 68 | sp-parser | todo |  |
+| tests/images-fixture.test.ts | 24 | sp-parser | partial | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; three pixel checks run on the dump's facts until sp-pdf supplies decoded pixels |
+| tests/images.test.ts | 68 | sp-parser | done | sp-parser/tests/images.rs (57); retired: the 10 resolveImageData store-race and timeout tests and the lying-buffer test (pixels arrive resolved, a slice cannot misstate its length) |
 | tests/isolate-app-settings.ts | 0 | sp-engine | todo | test preload: no test reaches the real settings file |
 | tests/isolate-calibre-config.ts | 0 | sp-engine | todo | test preload: Calibre only ever sees a scratch copy |
 | tests/jpx-fixture.test.ts | 11 | sp-pdf | todo | JPEG2000 picture decodes pixel for pixel |
@@ -116,10 +116,10 @@ move too.
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS blocks go to sp-epub, convertFountain to sp-engine |
 | tests/page-show.test.ts | 22 | sp-app | todo |  |
 | tests/page-timing.test.ts | 16 | sp-app | todo |  |
-| tests/parser-pipeline.test.ts | 47 | sp-parser | todo |  |
-| tests/parser.test.ts | 137 | sp-parser | todo |  |
+| tests/parser-pipeline.test.ts | 47 | sp-parser | partial | sp-parser/tests/parser_pipeline.rs (45); 2 tests and the toFountain halves of 3 move to sp-fountain |
+| tests/parser.test.ts | 137 | sp-parser | done | sp-parser/tests/parser.rs (137) |
 | tests/pdfjs-wasm.test.ts | 11 | sp-pdf | todo | pdf.js unpacks its JPEG2000/JBIG2 decoders to a temp folder; the Rust decoders are compiled in, so most of this retires: keep the "JPEG2000 decodes" half |
-| tests/png.test.ts | 24 | sp-parser | todo | src/parser/png.ts; IDAT is zlib level 9, see the note below |
+| tests/png.test.ts | 24 | sp-parser | done | sp-parser/tests/png.rs (24); IDAT is miniz_oxide level 9, compared by decoded pixels (Decisions) |
 | tests/presets.test.ts | 7 | sp-model | done | sp-model/tests/presets.rs; the aliasing test has no Rust form (presets are returned by value) |
 | tests/release-app-step.test.ts | 23 | xtask | todo |  |
 | tests/release-artifacts.test.ts | 82 | xtask | todo |  |
@@ -149,8 +149,8 @@ move too.
 | tests/torture-coverage.test.ts | 6 | xtask | todo | tools/torture-manifest.json |
 | tests/torture-layout.test.ts | 4 | xtask | todo | make-fixture.py --emit-layout |
 | tests/torture-markup.test.ts | 10 | xtask | todo |  |
-| tests/torture-pictures.test.ts | 14 | sp-parser | todo |  |
-| tests/torture.test.ts | 23 | sp-parser | todo |  |
+| tests/torture-pictures.test.ts | 14 | sp-parser | partial | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks move to sp-engine with sp-epub/sp-mobi |
+| tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
 | tests/update-compare-module.test.ts | 9 | sp-app | todo | the window's copy of update/compare; one Rust copy serves both |
 | tests/update-compare.test.ts | 34 | sp-engine | todo |  |
 | tests/update-signature.test.ts | 14 | xtask | todo |  |
@@ -198,13 +198,13 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | pdf.js facts | pages.json | sp-pdf | todo |
 | lines and pictures | lines.json | sp-parser (extract) | todo |
 | parsed elements | elements.json | sp-parser | todo; the model reads and writes it back unchanged (sp-model/tests/oracle.rs) |
-| .fountain | script.fountain | sp-fountain | done: byte for byte on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs) |
+| .fountain | script.fountain | sp-fountain | todo |
 | tokens | tokens.json | sp-fountain (tokenizer) | done: equal on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs); plus 44 hand cases recorded from fountain-js (tests/tokenizer.rs) and an ignored differential fuzz test against fountain-js under bun (tests/tokenizer_fuzz.rs) |
 | EPUB | book.epub | sp-epub | todo |
 | preview | book.preview.html | sp-epub | todo |
 | MOBI | book.mobi | sp-mobi | todo |
 | AZW3 | book.azw3 | sp-azw3 | todo |
-| FDX | book.fdx | sp-fdx | done: sp-fdx/tests/oracle.rs, byte for byte, 5 of 5 committed and every real script dumped (5 of 5 on 2026-10-11) |
+| FDX | book.fdx | sp-fdx | todo |
 | pictures | images/ | sp-parser | todo |
 | --json answer | convert.json | sp-cli | todo |
 
@@ -313,3 +313,33 @@ names the check it affects.
   call and sp-fsutil reports `EINVAL: invalid argument`. Both fail the send
   and leave the reader's old copy; `send` refuses a folder as `unreadable`
   before it gets that far, so no person reads either.
+- **sp-parser's input (2026-10-11).** The parser reads `sp_parser::facts::DocumentFacts`,
+  which IS the oracle's `pages.json` shape (sp-parser/tests/oracle.rs proves every
+  dump reads in and writes back unchanged). sp-pdf produces it: per page the
+  viewport size, pdf.js's text items untouched, each font id's resolved name
+  (`None` if unresolved), the operators listed in `facts::Op` (constructPath's
+  paint by operator NAME, showText as joined glyph unicode), and per painted
+  image object its width, height, ImageKind (1/2/3) and decoded pixels in
+  `ImageFact::data` (the bytes pdf.js would hand over, before any conversion).
+  When `data` is absent but `dataSha256` is set (an oracle dump), a picture is
+  judged on its facts and carries no PNG; its furniture identity is its kind,
+  size and pixel hash, which is exactly when two PNGs would be identical.
+- **Pixels for the oracle (question for the owner).** pages.json hashes each
+  picture's pixels instead of carrying them, so the standing parity test cannot
+  compare PNGs. Proposal: tools/oracle/dump.ts also writes
+  `pixels/<dataSha256>.bin` (raw pdf.js bytes; about 1 MB for the committed
+  fixtures). sp-parser/tests/oracle.rs already reads that layout from
+  `SP_PARSER_PIXELS=<folder>`; run that way on 2026-10-11 (pixels dumped by a
+  one-off script), every committed and real picture decoded pixel for pixel
+  and every picture statistic matched.
+- **JSON floats.** sp-parser turns on serde_json's `float_roundtrip`: the
+  default parser read 107.99999999999999 as 108, one ULP off pdf.js's double.
+  Any crate comparing oracle numbers exactly needs the same (Cargo feature
+  unification already gives it to the workspace).
+- **JavaScript semantics.** sp-parser/src/js.rs holds what the TypeScript relied
+  on silently: UTF-16 lengths for every length threshold, ECMAScript `\s` and
+  `trim`, `Math.round` (half toward +infinity), and `/i` folding that never maps
+  the long s or Kelvin sign onto ASCII. The two backreference regexes are code.
+- **Timeouts.** resolveImageData's per-image wait and store race have no Rust
+  counterpart (pixels arrive resolved); the 20 s document budget still charges
+  conversion and encoding. `imageStats.decodersUnavailable` is never set.
