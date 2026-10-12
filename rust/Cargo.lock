@@ -3532,6 +3532,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-azw3"
+version = "0.11.1"
+dependencies = [
+ "regex",
+ "serde_json",
+ "sha2",
+ "sp-fountain",
+ "sp-mobi",
+ "unicode-normalization",
+ "zip",
+]
+
+[[package]]
 name = "sp-device"
 version = "0.11.1"
 dependencies = [
@@ -3584,6 +3597,20 @@ dependencies = [
  "serde_json",
  "sha2",
  "tempfile",
+]
+
+[[package]]
+name = "sp-mobi"
+version = "0.11.1"
+dependencies = [
+ "miniz_oxide 0.8.9",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sp-fountain",
+ "sp-model",
+ "zip",
 ]
 
 [[package]]

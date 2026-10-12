@@ -20,10 +20,17 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 sp-model = { path = "crates/sp-model" }
 sp-fountain = { path = "crates/sp-fountain" }
+sp-mobi = { path = "crates/sp-mobi" }
+# JavaScript-compatible regular expressions where the TypeScript used them.
+regex = "1"
+# String.prototype.normalize('NFC') for the KF8 index strings.
+unicode-normalization = "0.1"
+# Pure-Rust deflate, for the PNGs the MOBI picture probe draws.
+miniz_oxide = "0.8"
+# SHA-256 for the tests that pin a book by its digest.
+sha2 = "0.10"
 # Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
 zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not
 # byte-identical to pako's; the parity check compares inflated entries.
 flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
-sha2 = "0.10"
-regex = "1"

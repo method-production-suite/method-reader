@@ -21,18 +21,18 @@ move too.
 | tests/app-references.test.ts | 14 | xtask | todo | the retired Swift app stays retired |
 | tests/app-settings.test.ts | 31 | sp-engine | todo |  |
 | tests/artwork.test.ts | 44 | sp-parser | done | sp-parser/tests/artwork.rs (43); retired: the Bun.build bundle check that artwork.ts never reaches pdf.js (sp-parser has no PDF dependency at all) |
-| tests/azw3-calibre.test.ts | 0 | sp-azw3 | todo | reads the AZW3 back through Calibre: isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/azw3-chunk.test.ts | 8 | sp-azw3 | todo |  |
-| tests/azw3-compare.test.ts | 0 | sp-azw3 | todo | compares with Calibre's AZW3: isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/azw3-corpus.test.ts | 0 | sp-azw3 | todo |  |
-| tests/azw3-epub.test.ts | 3 | sp-azw3 | todo |  |
-| tests/azw3-index.test.ts | 7 | sp-azw3 | todo |  |
-| tests/azw3-kindleunpack.test.ts | 0 | sp-azw3 | todo |  |
-| tests/azw3-palmdoc.test.ts | 5 | sp-azw3 | todo |  |
-| tests/azw3-revision.test.ts | 8 | sp-azw3 | todo |  |
-| tests/azw3-tbs.test.ts | 4 | sp-azw3 | todo |  |
-| tests/azw3-xml.test.ts | 6 | sp-azw3 | todo |  |
-| tests/azw3.test.ts | 9 | sp-azw3 | todo |  |
+| tests/azw3-calibre.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (calibres_reader_opens_our_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
+| tests/azw3-chunk.test.ts | 8 | sp-azw3 | done | sp-azw3/tests/chunk.rs |
+| tests/azw3-compare.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (ours_beside_calibres_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
+| tests/azw3-corpus.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs, over rust/oracle-real's EPUBs; counts only |
+| tests/azw3-epub.test.ts | 3 | sp-azw3 | done | sp-azw3/tests/parts.rs, on the oracle's EPUBs |
+| tests/azw3-index.test.ts | 7 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-kindleunpack.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs; runs where SCREEPUB_KINDLEUNPACK names KindleUnpack |
+| tests/azw3-palmdoc.test.ts | 5 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-revision.test.ts | 8 | sp-azw3 + sp-engine | partial | the stamp and its reader: sp-azw3/tests/azw3.rs; the five staleness-rule tests (rungPlan, freshKindleArtifact) go to sp-engine |
+| tests/azw3-tbs.test.ts | 4 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-xml.test.ts | 6 | sp-azw3 | done | sp-azw3/tests/parts.rs; the round trip reads the oracle's EPUBs instead of a convertFountain |
+| tests/azw3.test.ts | 9 | sp-azw3 | done | sp-azw3/tests/azw3.rs |
 | tests/beta-marks.test.ts | 10 | sp-cli | todo | the CLI help, README and site say "beta" the same way |
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
@@ -109,8 +109,8 @@ move too.
 | tests/kfx-snippet-stubs.ts | 0 | sp-engine | todo | test helper: runs the KFX plugin install snippet under python3 |
 | tests/library-images.test.ts | 55 | sp-engine | todo |  |
 | tests/library.test.ts | 45 | sp-engine | todo |  |
-| tests/mobi-picture-probe.test.ts | 7 | xtask | todo |  |
-| tests/mobi.test.ts | 65 | sp-mobi | todo |  |
+| tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
+| tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain to sp-engine |
@@ -178,15 +178,15 @@ users until hardware day (see Decisions). These files exist only on branch
 | TypeScript | Rust owner | status | notes |
 |---|---|---|---|
 | tests/helpers/boot-window.ts | sp-app | todo | boots desktop/ui in a fake DOM |
-| tests/helpers/calibre-read.ts | sp-azw3 | todo | reads a book back through Calibre (isolated) |
+| tests/helpers/calibre-read.ts | sp-azw3 | done | sp-azw3/tests/common/calibre_read.rs, through sp-mobi/tests/common/calibre.rs's Sandbox (the Rust form of tests/isolate-calibre-config.ts for these two crates) |
 | tests/helpers/fake-dom.ts | sp-app | todo |  |
 | tests/helpers/fixture-epubs.ts | sp-epub | retired | the fixtures' EPUBs are rust/oracle/<fixture>/book.epub, which sp-epub/tests/oracle.rs proves the Rust renderer reproduces; the AZW3 tests read those |
-| tests/helpers/kf8-reader.ts | sp-azw3 | todo | structural KF8 reader |
+| tests/helpers/kf8-reader.ts | sp-azw3 | done | sp-azw3/tests/common/kf8_reader.rs |
 | tests/helpers/layout-chrome.ts | sp-app | todo |  |
 | tests/helpers/mini-xml.ts | sp-epub | retired | sp-fdx reads its XML back with roxmltree (dev-dependency) instead |
-| tests/helpers/mobi-records.ts | sp-mobi | todo |  |
-| tests/helpers/palmdoc-decode.ts | sp-mobi | todo |  |
-| tests/helpers/stamped-azw3.ts | sp-azw3 | todo |  |
+| tests/helpers/mobi-records.ts | sp-mobi | done | sp-mobi/tests/common/mod.rs |
+| tests/helpers/palmdoc-decode.ts | sp-azw3 | done | sp-azw3/tests/common/palmdoc_decode.rs (only the AZW3 is compressed) |
+| tests/helpers/stamped-azw3.ts | sp-azw3 | partial | sp-azw3/tests/azw3.rs's stamped_azw3; sp-engine's staleness tests need it too |
 
 ## Stage parity: the oracle
 
@@ -200,8 +200,8 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | parsed elements | elements.json | sp-parser | todo; the model reads and writes it back unchanged (sp-model/tests/oracle.rs) |
 | .fountain | script.fountain | sp-fountain | todo |
 | tokens | tokens.json | sp-fountain (tokenizer) | done: equal on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs); plus 44 hand cases recorded from fountain-js (tests/tokenizer.rs) and an ignored differential fuzz test against fountain-js under bun (tests/tokenizer_fuzz.rs) |
-| EPUB | book.epub | sp-epub | done: every entry (name, order, method, contents) and every zip header field but compressed sizes and offsets, on all 5 converting fixtures and every converting real script (sp-epub/tests/oracle.rs); and every entry under 20 option sets against the TypeScript renderer's hashes (sp-epub/tests/options_matrix.rs, made by sp-epub/tests/data/options-golden.ts) |
-| preview | book.preview.html | sp-epub | done: byte for byte on the same inputs and option sets |
+| EPUB | book.epub | sp-epub | todo |
+| preview | book.preview.html | sp-epub | todo |
 | MOBI | book.mobi | sp-mobi | todo |
 | AZW3 | book.azw3 | sp-azw3 | todo |
 | FDX | book.fdx | sp-fdx | todo |
@@ -629,6 +629,11 @@ names the check it affects.
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
   answers the same two forms identically.
+- **The Kindle books' clock (2026-10-11).** `MobiInput::time` and the AZW3's
+  `build_azw3_at` take the build time explicitly; `None` (and `build_azw3`)
+  read `SOURCE_DATE_EPOCH`, else the system clock (sp-mobi's `clock`). The
+  TypeScript read `Date.now()`. A MOBI cover index is a `usize`, so the
+  TypeScript's checks against -1 and 0.5 are refused by the type instead.
 - **fountain-js carries state between parses (found 2026-10-11, open, for
   sp-fountain and the owner).** `Lexer.lastLineWasDualDialogue` is static
   and never reset. When a script's FIRST speech is the right half of a dual
