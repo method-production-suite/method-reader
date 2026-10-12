@@ -1,5 +1,7 @@
-//! Every help text, word for word as src/cli.ts prints it. Generated from
-//! the TypeScript and checked against it by tests/usage.rs while both exist.
+//! Every help text, word for word as src/cli.ts printed it but for the
+//! lines changed on purpose since (tests/usage.rs, `CHANGED_ON_PURPOSE`).
+//! Generated from the TypeScript; tests/usage.rs holds it to the texts
+//! read out of src/cli.ts the day it was deleted.
 
 pub const USAGE: &str = r#"screepub: screenplay PDF → reflowable EPUB3 (via Fountain)
 
@@ -67,8 +69,8 @@ Options:
   --options-json <json>  the same options as one JSON argument (for the app)
   --json                 machine-readable result on stdout (for the app)
   --progress             emit NDJSON progress to STDERR while converting
-  --debug                also dump classified elements, and let pdf.js's
-                         internal warnings through to stderr
+  --debug                also write the classified elements beside the book,
+                         as <book>.elements.json
   -h, --help             show this help
       --version          print the version and exit
 

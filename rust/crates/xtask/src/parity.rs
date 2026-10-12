@@ -697,14 +697,34 @@ fn indent(text: &str) -> String {
 pub fn value_diff(before: &Value, after: &Value) -> String {
     let mut out = String::new();
     for key in ["exit", "stdout", "stderr", "outputs"] {
-        let (b, a) = (&before[key], &after[key]);
-        if b == a {
-            continue;
-        }
-        out.push_str(&format!("{key}:\n"));
-        out.push_str(&line_diff(&as_lines(b), &as_lines(a)));
+        field_diff(key, &before[key], &after[key], &mut out);
     }
     out
+}
+
+/// One field's diff, under its JSON path. Objects are followed key by key,
+/// so a long text inside a `--json` answer (a help text's `usage`) is
+/// diffed as its own lines, not as one escaped string.
+fn field_diff(path: &str, b: &Value, a: &Value, out: &mut String) {
+    if b == a {
+        return;
+    }
+    if let (Value::Object(x), Value::Object(y)) = (b, a) {
+        let mut keys: Vec<&String> = x.keys().collect();
+        keys.extend(y.keys().filter(|k| !x.contains_key(*k)));
+        for k in keys {
+            let none = Value::Null;
+            field_diff(
+                &format!("{path}.{k}"),
+                x.get(k).unwrap_or(&none),
+                y.get(k).unwrap_or(&none),
+                out,
+            );
+        }
+        return;
+    }
+    out.push_str(&format!("{path}:\n"));
+    out.push_str(&line_diff(&as_lines(b), &as_lines(a)));
 }
 
 /// A text field as its own lines; anything else as two-space JSON.

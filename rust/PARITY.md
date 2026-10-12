@@ -908,6 +908,13 @@ names the check it affects.
 - **No pdf.js warnings (sp-cli, 2026-10-11).** `--debug` let pdf.js's own
   warnings through to stderr; there is no pdf.js in Rust, so `--debug` writes
   only the elements dump. cli.test.ts's "--debug lets them through" retires.
+  At the final cutover integration (2026-10-12) the help text stopped
+  promising them: `--debug` now reads "also write the classified elements
+  beside the book, as <book>.elements.json". The four parity rows that print
+  that text (help, help-short, help-json, refuse-no-input, on screenplay)
+  were moved with `cargo xtask parity --accept`, and sp-cli's
+  tests/usage.rs lists the line in `CHANGED_ON_PURPOSE` beside the
+  TypeScript's own words.
 - **The pages.json test path was never shipped (sp-cli, 2026-10-11).** sp-pdf
   landed before sp-cli needed it, so PDF input is always sp-pdf's.
 - **One copy of Node's path functions (folded 2026-10-12, the cutover).**

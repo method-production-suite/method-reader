@@ -164,3 +164,14 @@ fn the_line_diff_marks_what_went_and_what_came() {
     let far = xtask::parity::line_diff("1\nx\n3\n4\n5\n6\n7\n8\ny", "1\nX\n3\n4\n5\n6\n7\n8\nY");
     assert!(far.contains("  ...\n"), "{far}");
 }
+
+#[test]
+fn a_text_inside_a_json_answer_is_diffed_as_its_own_lines() {
+    let d = xtask::parity::value_diff(
+        &serde_json::json!({"exit": 0, "stdout": {"ok": true, "usage": "a\nb\nc"}}),
+        &serde_json::json!({"exit": 1, "stdout": {"ok": true, "usage": "a\nB\nc"}}),
+    );
+    assert!(d.contains("exit:\n- 0\n+ 1\n"), "{d}");
+    assert!(d.contains("stdout.usage:\n  a\n- b\n+ B\n  c\n"), "{d}");
+    assert!(!d.contains("stdout.ok"), "{d}");
+}

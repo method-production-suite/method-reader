@@ -1,5 +1,6 @@
-//! The help texts are src/cli.ts's, word for word: every verb's `--help`
-//! prints the text between that constant's backticks. src/usage.rs was
+//! The help texts are src/cli.ts's, word for word but for the lines in
+//! [`CHANGED_ON_PURPOSE`]: every verb's `--help` prints the text between
+//! that constant's backticks. src/usage.rs was
 //! generated from it; the texts themselves were read out of src/cli.ts the
 //! day it was deleted (tests/data/typescript-usage.json, one per USAGE
 //! constant, unescaped as the template literal unescapes them).
@@ -41,9 +42,35 @@ fn verb_of(name: &str) -> Option<&'static str> {
     })
 }
 
+/// The help lines changed on purpose since the TypeScript, as (the
+/// TypeScript's line, the line now), each with its reason. The parity
+/// table's help rows were moved with `cargo xtask parity --accept`.
+const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[(
+    "USAGE",
+    "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
+    "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
+    // There is no pdf.js in the Rust reader, so --debug has no warnings to
+    // let through (PARITY.md, Decisions: "No pdf.js warnings").
+)];
+
 #[test]
 fn every_help_text_is_the_typescripts_word_for_word() {
     let usages = typescript_usages();
+    for (name, was, _) in CHANGED_ON_PURPOSE {
+        let (_, text) = usages.iter().find(|(n, _)| n == name).expect(name);
+        assert!(text.contains(was), "{name}: the TypeScript said {was:?}");
+    }
+    let usages: Vec<(String, String)> = usages
+        .into_iter()
+        .map(|(name, mut text)| {
+            for (n, was, now) in CHANGED_ON_PURPOSE {
+                if *n == name {
+                    text = text.replace(was, now);
+                }
+            }
+            (name, text)
+        })
+        .collect();
     assert_eq!(usages.len(), 14, "the conversion's and 13 verbs'");
     let sb = Sandbox::new();
     for (name, text) in usages {
