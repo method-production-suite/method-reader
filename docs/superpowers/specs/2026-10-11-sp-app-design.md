@@ -102,8 +102,8 @@ the verification list for wave 3.
 3. **An answer that is not JSON** (E21) cannot happen with direct calls;
    the trait's `Err(String)` is shown in its place.
 4. **No sidecar** (W12): the "could not find the engine" sentence has no
-   cause left; an engine that cannot start at all is a panic caught at the
-   call boundary and shown as a refusal with code `internal`.
+   cause left; a call that cannot run at all answers `Err` through the
+   trait and is shown as a refusal with code `internal`, as before.
 5. **Reduce Motion on Linux** is read from GNOME's setting only (mundy's
    `_gnome_only`); KDE and others read as "motion allowed".
 6. **Focus rings and hover are egui's model**: keyboard focus is shown with
