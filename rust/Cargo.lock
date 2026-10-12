@@ -290,6 +290,8 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sp-fdx",
+ "sp-fountain",
  "sp-model",
  "tempfile",
 ]

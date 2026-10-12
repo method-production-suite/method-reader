@@ -4,12 +4,12 @@
 //! caller, so a re-render and the export path's Kindle rebuild find the
 //! same pictures under the same rules.
 //!
-//! Five predicates and two numbers it shares with other crates are carried
-//! here for now, in [`shared`], because those crates are being ported in
-//! parallel: `isSafeImageFile` (sp-fountain's notes), `isGeneratedImageFile`,
-//! `IMAGE_MAX_EDGE`, `isPng` and `MAX_IMAGES` (sp-parser). When they land,
-//! `shared` re-exports theirs and these copies go: two copies of a security
-//! check drift exactly like two copies of a parser.
+//! Four predicates and limits it shares with sp-parser are carried here for
+//! now, in [`shared`], because sp-parser is being ported in parallel:
+//! `isGeneratedImageFile`, `IMAGE_MAX_EDGE`, `isPng` and `MAX_IMAGES`. When
+//! it lands, `shared` re-exports its own and these copies go: two copies of
+//! a check drift exactly like two copies of a parser. `isSafeImageFile`,
+//! the security allowlist, is already sp-fountain's own.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -24,17 +24,8 @@ pub mod shared {
     /// `MAX_IMAGES` (src/parser/artwork.ts).
     pub const MAX_IMAGES: usize = 60;
 
-    /// `isSafeImageFile` (src/fountain/notes.ts):
-    /// `/^[A-Za-z0-9._-]{1,64}\.png$/`.
-    pub fn is_safe_image_file(file: &str) -> bool {
-        let Some(stem) = file.strip_suffix(".png") else {
-            return false;
-        };
-        (1..=64).contains(&stem.len())
-            && stem
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
-    }
+    /// `isSafeImageFile`: sp-fountain's, the one allowlist.
+    pub use sp_fountain::notes::is_safe_image_file;
 
     /// `isGeneratedImageFile` (src/parser/images.ts):
     /// `/^p\d{3,}-\d{2,}\.png$/`.

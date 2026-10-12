@@ -219,10 +219,10 @@ pub fn ts_cli(args: &[&str], env: &Env) -> TsRun {
         .current_dir(repo_root())
         .env_clear()
         .envs(env.vars());
-    if env.get("HOME").is_none() {
-        if let Some(home) = std::env::var_os("HOME") {
-            command.env("HOME", home);
-        }
+    if env.get("HOME").is_none()
+        && let Some(home) = std::env::var_os("HOME")
+    {
+        command.env("HOME", home);
     }
     let out = command.output().expect("bun runs");
     TsRun {
