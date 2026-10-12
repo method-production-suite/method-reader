@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "title": "The Proof Sheet",
+  "author": "A. N. Placeholder",
+  "pages": 17,
+  "scenes": 15,
+  "characters": 5,
+  "topCharacters": [
+    "WREN",
+    "BUNNY",
+    "CASSIUS",
+    "ODILE",
+    "DR. E. T. MARCHETTI"
+  ],
+  "warnings": [],
+  "spacingRepairs": 0,
+  "epubPath": "$WORK/out/book.epub",
+  "mobiPath": "$WORK/out/book.mobi",
+  "azw3Path": "$WORK/out/book.azw3",
+  "fountainPath": "$WORK/out/script.fountain",
+  "imagesPath": "$WORK/out/script.images",
+  "imageCount": 4,
+  "previewHtmlPath": "$WORK/out/book.preview.html",
+  "fdxPath": "$WORK/out/book.fdx",
+  "debugPath": "$WORK/out/book.elements.json"
+}

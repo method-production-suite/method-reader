@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "title": "The Last Video Store",
+  "author": "A. N. Placeholder",
+  "pages": 5,
+  "scenes": 5,
+  "characters": 3,
+  "topCharacters": [
+    "MARGO",
+    "DEV",
+    "NIECE"
+  ],
+  "warnings": [],
+  "spacingRepairs": 0,
+  "epubPath": "$WORK/out/book.epub",
+  "mobiPath": "$WORK/out/book.mobi",
+  "azw3Path": "$WORK/out/book.azw3",
+  "fountainPath": "$WORK/out/script.fountain",
+  "previewHtmlPath": "$WORK/out/book.preview.html",
+  "fdxPath": "$WORK/out/book.fdx",
+  "debugPath": "$WORK/out/book.elements.json"
+}

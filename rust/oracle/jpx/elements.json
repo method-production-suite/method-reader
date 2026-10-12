@@ -1,0 +1,157 @@
+{
+  "elements": [
+    {
+      "id": "elem0",
+      "type": "character",
+      "text": "THE SECOND UNIT",
+      "pageNum": 1,
+      "y": 504,
+      "isTitlePage": true,
+      "isReadable": true,
+      "character": "THE SECOND UNIT",
+      "baseCharacter": "THE SECOND UNIT"
+    },
+    {
+      "id": "elem1",
+      "type": "action",
+      "text": "Written by",
+      "pageNum": 1,
+      "y": 468,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem2",
+      "type": "action",
+      "text": "J. Q. Nobody",
+      "pageNum": 1,
+      "y": 432,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem3",
+      "type": "action",
+      "text": "Placeholder Pictures hello@example.com",
+      "pageNum": 1,
+      "y": 108,
+      "isTitlePage": true,
+      "isReadable": false
+    },
+    {
+      "id": "elem4",
+      "type": "page-number",
+      "text": "1.",
+      "pageNum": 2,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem5",
+      "type": "scene",
+      "text": "INT. COLOUR TIMING BAY - NIGHT",
+      "pageNum": 2,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "type": "image",
+      "text": "p002-01.png",
+      "id": "elem12",
+      "pageNum": 2,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p002-01.png",
+        "widthPct": 42,
+        "fullPage": false
+      }
+    },
+    {
+      "id": "elem6",
+      "type": "action",
+      "text": "A reference print hangs under the loupe, one frame of it circled in grease pencil.",
+      "pageNum": 2,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem7",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 2,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem8",
+      "type": "dialogue",
+      "text": "The blue is two points cold and it has been all week.",
+      "pageNum": 2,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem9",
+      "type": "action",
+      "text": "HOLT writes the number down without looking up.",
+      "pageNum": 2,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem10",
+      "type": "character",
+      "text": "HOLT",
+      "pageNum": 2,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT",
+      "baseCharacter": "HOLT"
+    },
+    {
+      "id": "elem11",
+      "type": "dialogue",
+      "text": "Then we time it again.",
+      "pageNum": 2,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT"
+    }
+  ],
+  "characters": [
+    {
+      "name": "WREN",
+      "baseName": "WREN",
+      "dialogueCount": 1,
+      "firstAppearance": 8
+    },
+    {
+      "name": "HOLT",
+      "baseName": "HOLT",
+      "dialogueCount": 1,
+      "firstAppearance": 11
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "INT. COLOUR TIMING BAY - NIGHT",
+      "sceneNumber": 1,
+      "elementIndex": 5,
+      "pageNum": 2
+    }
+  ],
+  "pageCount": 2
+}

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+<title>INT. THE LAST VIDEO STORE - NIGHT</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+h2.scene-heading {
+  font-size: 1em;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.6em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+span.scene-number {
+  font-weight: normal;
+}
+
+span.underline {
+  text-decoration: underline;
+}
+
+/* Original PDF page numbers — a marginal reference, out of the flow so
+   they cost no line. Horizontal in %, per the CSS invariants. Dimming is
+   opacity rather than a fixed gray, which would fight dark and sepia
+   themes; opacity dims against whatever the theme's text color is, and
+   engines lacking it just render full strength (registry #13a). */
+span.page-marker {
+  float: right;
+  font-size: 0.75em;
+  opacity: 0.6;
+  margin-left: 1%;
+}
+
+p {
+  margin: 0;
+  text-indent: 0;
+}
+
+p.action {
+  margin: 1em 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+p.mini-slug {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.4em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Print geometry, reflowed: dialogue is a narrow column (58% of the body
+   column in print). Cue and parenthetical indent WITHIN the column as
+   percentages of it (print: cue +1.2" and parenthetical +0.6" into the
+   3.5" column). */
+.dialogue-block {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+/* A cue must never orphan from its dialogue at a page break. Centered
+   alignment reads naturally at any screen width; indented reproduces
+   print's fixed offsets (which only optically center on paper). */
+p.character {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is
+   right that every avoid link grows the chunk a renderer pushes, and while
+   the cue keep was a WRAPPER that argument held: the chunk already carried
+   the cue and the speech, and one more link made a blank-bottom page. With
+   the wrapper gone the chunk is cue + parenthetical + the orphans minimum
+   (#17), about four lines, which is the same bound #5a accepted when it
+   traded the heading wrapper for a chain.
+
+   Without this link a cue and its parenthetical strand together, which is
+   the defect #8b exists to prevent wearing a different hat. */
+p.parenthetical {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+p.dialogue {
+  margin: 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+/* Simultaneous speech: two half-width columns, kept on one page. The
+   table spans full width (wider than the dialogue column) by design. */
+table.dual-dialogue {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+
+table.dual-dialogue td {
+  width: 50%;
+  vertical-align: top;
+  padding: 0 2%;
+}
+
+/* A transition belongs to the shot before it: it may end a page, never
+   begin one (the universal print rule, docs/pagination-reference.md §2 —
+   that doc lands from branch worktree-device-map). */
+p.transition {
+  text-align: right;
+  text-transform: uppercase;
+  margin: 1em 0;
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+p.centered {
+  text-align: center;
+  margin: 1em 0;
+}
+
+/* Title page */
+section.titlepage {
+  text-align: center;
+  margin-top: 20%;
+}
+
+section.titlepage h1 {
+  font-size: 1.6em;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 2em;
+}
+
+section.titlepage p.credit {
+  margin: 0.4em 0;
+}
+
+section.titlepage p.author {
+  font-size: 1.1em;
+  margin: 0.4em 0;
+}
+
+/* Block font shifts the PDF carried (registry #18), gated by
+   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and
+   carry no line-height. A family class sits on the paragraph itself, so it
+   locally overrides the body fontFamily option (#6) without !important.
+   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value
+   function it cannot parse. */
+.fmt-mono {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+.fmt-serif {
+  font-family: serif;
+}
+
+.fmt-sans {
+  font-family: sans-serif;
+}
+
+.fmt-cursive {
+  font-family: "Comic Sans MS", cursive;
+}
+
+.fmt-minus1 {
+  font-size: 0.85em;
+}
+
+.fmt-plus1 {
+  font-size: 1.2em;
+}
+
+.fmt-plus2 {
+  font-size: 1.5em;
+}
+
+/* ── the multicol spelling of every break rule above ──────────────────
+
+   Some engines paginate by laying the book out in CSS multi-column and
+   showing one column per screen, and they read ONLY the multicol
+   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing
+   else, and the Readium family (Thorium, Kobo's phone and tablet apps).
+
+   SEPARATE rules on purpose, and last on purpose. Separate because iBooks
+   drops BOTH spellings when they share one declaration block. Last because
+   these selectors repeat ones used above, and a shadow placed first would
+   make ruleFor() in the tests answer with the spelling nothing else reads
+   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:
+   the engines that need this largely predate it.
+
+   Derived from the same gating that emits the real rules, never a second
+   list kept by hand. A hand-kept copy once left the whole-speech keep
+   silently inert in Apple Books while the cue keep worked. */
+table.dual-dialogue { -webkit-column-break-inside: avoid; }
+
+h2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }
+
+p.transition { -webkit-column-break-before: avoid; }
+</style>
+</head>
+<body>
+<section class="scene" id="sc-001">
+<h2 class="scene-heading">INT. THE LAST VIDEO STORE - NIGHT</h2>
+<p class="action">Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.</p>
+<p class="action">MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.</p>
+<p class="action">The bell over the door RINGS.</p>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">We close at ten.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="parenthetical">(O.S.)</p>
+<p class="dialogue">It’s nine forty.</p>
+</div>
+<p class="action">DEV OKONKWO, 20s, soaked through, shakes off a jacket that was never waterproof.</p>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">And yet.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">I need something for a fourteen- year-old who thinks movies started with streaming.</p>
+</div>
+<p class="action">Margo looks up for the first time.</p>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="parenthetical">(a small conversion)</p>
+<p class="dialogue">Sit down.</p>
+</div>
+<p class="transition">CUT TO:</p>
+</section>
+<section class="scene" id="sc-002">
+<h2 class="scene-heading">INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</h2>
+<p class="action">Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.</p>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">Fourteen. Scared, or pretending not to be?</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">Pretending. Loudly.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg2" title="2" class="page-marker">2.</span>MARGO</p>
+<p class="dialogue">Then not the one with the mask. Everyone starts with the mask and nobody remembers it.</p>
+</div>
+<p class="action">She pulls a battered clamshell case and holds it like evidence.</p>
+<div class="dialogue-block">
+<p class="character">MARGO (CONT&apos;D)</p>
+<p class="dialogue">This one. Nothing happens for forty minutes and then you never sleep facing a closet again.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">That’s a pitch?</p>
+</div>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">That’s a promise.</p>
+</div>
+<p class="transition">DISSOLVE TO:</p>
+</section>
+<section class="scene" id="sc-003">
+<h2 class="scene-heading">EXT. STRIP MALL - NIGHT</h2>
+<p class="action">Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.</p>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="parenthetical">(O.S.)</p>
+<p class="dialogue">How long have you been here?</p>
+</div>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="parenthetical">(O.S.)</p>
+<p class="dialogue">Since people still rewound.</p>
+</div>
+</section>
+<section class="scene" id="sc-004">
+<h2 class="scene-heading">INT. THE LAST VIDEO STORE - COUNTER - LATER</h2>
+<p class="action">A shoebox of index cards. Margo writes on one in careful block letters and slides it across.</p>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">What’s this?</p>
+</div>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">Your card. Nineteen years running, four hundred and six members. You’re four hundred and seven.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg3" title="3" class="page-marker">3.</span>DEV</p>
+<p class="dialogue">You’re closing in a week.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">Then it’ll be a short membership.</p>
+</div>
+<p class="action">Dev takes the card anyway. Pockets it like it matters, because it does.</p>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">What happens to all of it?</p>
+</div>
+<p class="action">Margo looks down the aisles. Twenty thousand tapes. A lifetime of other people’s Friday nights.</p>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="dialogue">Somebody buys the shelves. The rest goes where the rest goes.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">That’s grim.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">MARGO</p>
+<p class="parenthetical">(not grim at all)</p>
+<p class="dialogue">It’s Tuesday.</p>
+</div>
+<p class="transition">SMASH CUT TO:</p>
+</section>
+<section class="scene" id="sc-005">
+<h2 class="scene-heading">INT. DEV’S APARTMENT - NIGHT</h2>
+<p class="action">A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.</p>
+<p class="action">His NIECE, 14, arms folded, sits as far from the screen as the room allows.</p>
+<div class="dialogue-block">
+<p class="character">NIECE</p>
+<p class="dialogue">This is going to be so boring.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DEV</p>
+<p class="dialogue">Forty minutes. Give it forty minutes.</p>
+</div>
+<p class="action"><span epub:type="pagebreak" role="doc-pagebreak" id="pg4" title="4" class="page-marker">4.</span>The countdown hits 1. The room goes dark blue.</p>
+<p class="action">Forty minutes later, she has not moved, and she is sitting considerably closer.</p>
+<p class="transition">FADE OUT.</p>
+</section>
+</body>
+</html>

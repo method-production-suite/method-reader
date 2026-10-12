@@ -1,0 +1,15 @@
+[package]
+name = "sp-model"
+description = "Screepub's shared data model: parser elements, format options, fountain-js tokens"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true

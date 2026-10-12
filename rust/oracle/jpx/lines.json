@@ -1,0 +1,223 @@
+{
+  "pageCount": 2,
+  "spacingRepairs": 0,
+  "lines": [
+    {
+      "text": "THE SECOND UNIT",
+      "indent": 41,
+      "y": 504,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "Written by",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "J. Q. Nobody",
+      "indent": 43,
+      "y": 432,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "Placeholder Pictures",
+      "indent": 18,
+      "y": 108,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "hello@example.com",
+      "indent": 18,
+      "y": 96,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "1.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. COLOUR TIMING BAY - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "A reference print hangs under the loupe, one frame of it",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "circled in grease pencil.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 504,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "The blue is two points cold and it",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "has been all week.",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "HOLT writes the number down without looking up.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 47
+        }
+      ]
+    },
+    {
+      "text": "HOLT",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then we time it again.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "p002-01.png",
+      "pageNum": 2,
+      "y": 696,
+      "pageWidthPct": 29.411764705882355,
+      "pageHeightPct": 17.045454545454543,
+      "sha256": "1c3a06900a75efd6b06d370ab4030217992132e71cf57e096652178d30033355"
+    }
+  ],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 0,
+      "width": 0,
+      "height": 0,
+      "area": 0,
+      "furniture": 0,
+      "background": 0
+    }
+  }
+}

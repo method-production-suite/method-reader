@@ -1,0 +1,35 @@
+{
+  "numPages": 2,
+  "pages": [
+    {
+      "pageNum": 1,
+      "width": 612,
+      "height": 792,
+      "items": [],
+      "fonts": {},
+      "ops": [
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [72, 72, 540, 720]
+        }
+      ],
+      "images": {}
+    },
+    {
+      "pageNum": 2,
+      "width": 612,
+      "height": 792,
+      "items": [],
+      "fonts": {},
+      "ops": [
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [72, 72, 540, 720]
+        }
+      ],
+      "images": {}
+    }
+  ]
+}

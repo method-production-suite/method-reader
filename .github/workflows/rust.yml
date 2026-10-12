@@ -1,0 +1,47 @@
+# The pure-Rust port (rust/, branch rust-port; plan in
+# docs/superpowers/plans/2026-10-11-pure-rust-port.md): formatting, clippy
+# with warnings as errors, and every crate's tests, on all three platforms.
+#
+# The toolchain comes from rust/rust-toolchain.toml, which rustup on every
+# hosted runner installs on first use (with clippy and rustfmt), so no
+# setup action is needed and the version lives in one place.
+#
+# Separate from ci.yml for the reason desktop.yml is: a cargo build is
+# minutes, and the TypeScript engine's fast loop should not wait on it.
+# The parity harness (cargo xtask parity) is not run here: it needs bun and
+# the Rust CLI, and the real scripts it also covers never reach CI.
+#
+# Path-filtered to rust/ and this file. Safe for the reason ci.yml gives: no
+# check here is a required status. The oracle dumps the tests read live in
+# rust/oracle/, so a regenerated oracle triggers this too.
+name: rust
+on:
+  push:
+    paths: ['rust/**', '.github/workflows/rust.yml', 'format-defaults.json']
+  pull_request:
+    paths: ['rust/**', '.github/workflows/rust.yml', 'format-defaults.json']
+permissions:
+  contents: read
+jobs:
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: rust-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          restore-keys: rust-${{ matrix.os }}-
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked

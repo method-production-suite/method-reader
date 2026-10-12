@@ -1,0 +1,28 @@
+{
+  "oracleFormat": 1,
+  "input": "blank-pages.pdf",
+  "inputSha256": "d68c6dccf3a8b3f35e1bb214e4dbd20483bec8a59dc6c94e0e94da4e1c67f0cd",
+  "options": null,
+  "sourceDateEpoch": 1767225600,
+  "exitCode": 1,
+  "versions": {
+    "screepub": "0.11.1",
+    "pdfjs": "6.3.289",
+    "fountainJs": "1.2.4",
+    "bun": "1.3.14"
+  },
+  "files": {
+    "convert.json": {
+      "bytes": 191,
+      "sha256": "0482e7ee2b7cf010b700b9783929dbe120831350ea141e8d31da40f132abe03a"
+    },
+    "lines.json": {
+      "bytes": 275,
+      "sha256": "a9517a473dfae03e28b0643cfae71030c4dd09182e637a4ba0aa439da65a5f77"
+    },
+    "pages.json": {
+      "bytes": 581,
+      "sha256": "3ae93e0169ddcd3b0f6e97b9b429c826a2750447581b773765bfffc73916bf57"
+    }
+  }
+}

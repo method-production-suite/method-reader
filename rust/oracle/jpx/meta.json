@@ -1,0 +1,64 @@
+{
+  "oracleFormat": 1,
+  "input": "jpx.pdf",
+  "inputSha256": "9620eaf9db015a9b36b93a3880a2887bfa1c2cd08aa539f6e151ac6cc4f64357",
+  "options": null,
+  "sourceDateEpoch": 1767225600,
+  "exitCode": 0,
+  "versions": {
+    "screepub": "0.11.1",
+    "pdfjs": "6.3.289",
+    "fountainJs": "1.2.4",
+    "bun": "1.3.14"
+  },
+  "files": {
+    "book.azw3": {
+      "bytes": 15942,
+      "sha256": "6e9d2db66c064bf63f9535fc900e65ef7f2f3124d107cca05cff03078fc47b03"
+    },
+    "book.epub": {
+      "bytes": 6245,
+      "sha256": "8331c35b35118285a8e3deac334f46e2f7cac9eb8fd9152fad6b01901dd3e1b1"
+    },
+    "book.fdx": {
+      "bytes": 2285,
+      "sha256": "c02b9c66687c15aa41f4f6ecc33ddbf153920ac4d55a005e74a5b5fa61bcd4d4"
+    },
+    "book.mobi": {
+      "bytes": 1076,
+      "sha256": "3355911e67eba9a4e8e096e46e5c9fbf852257806a02ec529b548823c765e482"
+    },
+    "book.preview.html": {
+      "bytes": 8379,
+      "sha256": "eeef79c337d4635829378298045ab9c4c9d137854a1d331a366cccfbe0c37d92"
+    },
+    "convert.json": {
+      "bytes": 567,
+      "sha256": "046daf014d41faf673309e144793bfad097da8181d0440d2933f3df37cc202f7"
+    },
+    "elements.json": {
+      "bytes": 3287,
+      "sha256": "efa5dacfe2b35d3416f439b1bad0a49ae04393f7e5e1f124356a3a854cdb2b55"
+    },
+    "images/p002-01.png": {
+      "bytes": 144,
+      "sha256": "1c3a06900a75efd6b06d370ab4030217992132e71cf57e096652178d30033355"
+    },
+    "lines.json": {
+      "bytes": 3897,
+      "sha256": "2eaaf36964cc28b9ce28bddddaeeac8f9402020faccce11e20f309fe3775a2e7"
+    },
+    "pages.json": {
+      "bytes": 6569,
+      "sha256": "f4037b4f5f8fc896c2f3db5910b8f10bba625dbcdd3f636b36d92939422d831c"
+    },
+    "script.fountain": {
+      "bytes": 346,
+      "sha256": "34d82b9e89d2105cf399446d63477819f8307ab18c9b789f0f3ae86ec3afc616"
+    },
+    "tokens.json": {
+      "bytes": 1037,
+      "sha256": "3e4a929f8e6fcec871175eb49c7f36185a34bd0b520feea9434f9eccfd87965f"
+    }
+  }
+}

@@ -1,0 +1,513 @@
+{
+  "elements": [
+    {
+      "type": "image",
+      "text": "p001-01.png",
+      "id": "elem45",
+      "pageNum": 1,
+      "y": 747,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p001-01.png",
+        "widthPct": 100,
+        "fullPage": true
+      }
+    },
+    {
+      "id": "elem0",
+      "type": "character",
+      "text": "THE PAPER LANTERN",
+      "pageNum": 1,
+      "y": 504,
+      "isTitlePage": true,
+      "isReadable": true,
+      "character": "THE PAPER LANTERN",
+      "baseCharacter": "THE PAPER LANTERN"
+    },
+    {
+      "id": "elem1",
+      "type": "action",
+      "text": "Written by",
+      "pageNum": 1,
+      "y": 468,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem2",
+      "type": "action",
+      "text": "J. Q. Nobody",
+      "pageNum": 1,
+      "y": 432,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem3",
+      "type": "action",
+      "text": "Placeholder Pictures hello@example.com",
+      "pageNum": 1,
+      "y": 108,
+      "isTitlePage": true,
+      "isReadable": false
+    },
+    {
+      "id": "elem4",
+      "type": "scene",
+      "text": "INT. ARCHIVE ROOM - DAY",
+      "pageNum": 2,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "type": "image",
+      "text": "p002-01.png",
+      "id": "elem46",
+      "pageNum": 2,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p002-01.png",
+        "widthPct": 42,
+        "fullPage": false
+      }
+    },
+    {
+      "id": "elem5",
+      "type": "action",
+      "text": "WREN, 30s, holds a storyboard panel up to the window and squints at it.",
+      "pageNum": 2,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem6",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 2,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem7",
+      "type": "dialogue",
+      "text": "Somebody drew this in 1974 and nobody has looked at it since.",
+      "pageNum": 2,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem8",
+      "type": "action",
+      "text": "HOLT sets down a box of film cans.",
+      "pageNum": 2,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem9",
+      "type": "character",
+      "text": "HOLT",
+      "pageNum": 2,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT",
+      "baseCharacter": "HOLT"
+    },
+    {
+      "id": "elem10",
+      "type": "dialogue",
+      "text": "That is the job.",
+      "pageNum": 2,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT"
+    },
+    {
+      "id": "elem11",
+      "type": "page-number",
+      "text": "2.",
+      "pageNum": 3,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem12",
+      "type": "scene",
+      "text": "INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER",
+      "pageNum": 3,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem13",
+      "type": "action",
+      "text": "A splice reel turns. The room smells of vinegar and dust.",
+      "pageNum": 3,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem14",
+      "type": "character",
+      "text": "HOLT",
+      "pageNum": 3,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT",
+      "baseCharacter": "HOLT"
+    },
+    {
+      "id": "elem15",
+      "type": "dialogue",
+      "text": "Two frames are missing from the head of the roll.",
+      "pageNum": 3,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT"
+    },
+    {
+      "id": "elem16",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 3,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem17",
+      "type": "dialogue",
+      "text": "Then we cut around them.",
+      "pageNum": 3,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem18",
+      "type": "action",
+      "text": "She threads the leader by feel, the way she was taught.",
+      "pageNum": 3,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem19",
+      "type": "page-number",
+      "text": "3.",
+      "pageNum": 4,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem20",
+      "type": "scene",
+      "text": "EXT. LOADING DOCK - NIGHT",
+      "pageNum": 4,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem21",
+      "type": "action",
+      "text": "Rain on corrugated steel. WREN wheels a cart of film cans out under a sodium lamp and counts them twice.",
+      "pageNum": 4,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem22",
+      "type": "action",
+      "text": "HOLT holds an umbrella over the cart and not over himself.",
+      "pageNum": 4,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem23",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 4,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem24",
+      "type": "dialogue",
+      "text": "Forty-one. There were forty-three when we started.",
+      "pageNum": 4,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem25",
+      "type": "character",
+      "text": "HOLT",
+      "pageNum": 4,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT",
+      "baseCharacter": "HOLT"
+    },
+    {
+      "id": "elem26",
+      "type": "dialogue",
+      "text": "Two of them went out for repair in March and nobody wrote it down.",
+      "pageNum": 4,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT"
+    },
+    {
+      "id": "elem27",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 4,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem28",
+      "type": "dialogue",
+      "text": "Nobody ever writes it down.",
+      "pageNum": 4,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem29",
+      "type": "action",
+      "text": "She pulls a tarp over the cart and ties it at the corners.",
+      "pageNum": 4,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem30",
+      "type": "character",
+      "text": "HOLT",
+      "pageNum": 4,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT",
+      "baseCharacter": "HOLT"
+    },
+    {
+      "id": "elem31",
+      "type": "dialogue",
+      "text": "The truck comes at six. Everything on that manifest has to be on the dock by then, in order, and dry.",
+      "pageNum": 4,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "HOLT"
+    },
+    {
+      "id": "elem32",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 4,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem33",
+      "type": "dialogue",
+      "text": "Then we work through it.",
+      "pageNum": 4,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem34",
+      "type": "action",
+      "text": "The lamp buzzes and cuts out. Neither of them stops moving.",
+      "pageNum": 4,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem35",
+      "type": "action",
+      "text": "In the dark the cart is a long shape and the rain is louder than it was.",
+      "pageNum": 4,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem36",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 4,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem37",
+      "type": "dialogue",
+      "text": "Bring the second cart. And the good tarp, not the one with the hole in it.",
+      "pageNum": 4,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem38",
+      "type": "action",
+      "text": "Holt goes. Wren stands in the rain with a clipboard and does not hurry.",
+      "pageNum": 4,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem39",
+      "type": "page-number",
+      "text": "4.",
+      "pageNum": 5,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem40",
+      "type": "scene",
+      "text": "INT. ARCHIVE ROOM - DAWN",
+      "pageNum": 5,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem41",
+      "type": "action",
+      "text": "The cart is gone. A single storyboard panel is still pinned to the window.",
+      "pageNum": 5,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem42",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 5,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem43",
+      "type": "dialogue",
+      "text": "Leave that one.",
+      "pageNum": 5,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem44",
+      "type": "action",
+      "text": "FADE OUT.",
+      "pageNum": 5,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    }
+  ],
+  "characters": [
+    {
+      "name": "WREN",
+      "baseName": "WREN",
+      "dialogueCount": 7,
+      "firstAppearance": 8
+    },
+    {
+      "name": "HOLT",
+      "baseName": "HOLT",
+      "dialogueCount": 4,
+      "firstAppearance": 11
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "INT. ARCHIVE ROOM - DAY",
+      "sceneNumber": 1,
+      "elementIndex": 5,
+      "pageNum": 2
+    },
+    {
+      "heading": "INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER",
+      "sceneNumber": 2,
+      "elementIndex": 14,
+      "pageNum": 3
+    },
+    {
+      "heading": "EXT. LOADING DOCK - NIGHT",
+      "sceneNumber": 3,
+      "elementIndex": 22,
+      "pageNum": 4
+    },
+    {
+      "heading": "INT. ARCHIVE ROOM - DAWN",
+      "sceneNumber": 4,
+      "elementIndex": 42,
+      "pageNum": 5
+    }
+  ],
+  "pageCount": 5
+}

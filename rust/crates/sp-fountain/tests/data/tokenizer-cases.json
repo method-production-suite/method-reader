@@ -1,0 +1,885 @@
+[
+  {
+    "name": "a right column first in the script",
+    "input": "@BOB ^\nYo.\n\nAction after.\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Yo."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      },
+      {
+        "type": "action",
+        "text": "Action after."
+      }
+    ]
+  },
+  {
+    "name": "a dual exchange separated by action still pairs",
+    "input": "@A\nHi.\n\nSome action.\n\n@B ^\nYo.\n",
+    "tokens": [
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "A"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "action",
+        "text": "Some action."
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "B"
+      },
+      {
+        "type": "dialogue",
+        "text": "Yo."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "three blocks, one caret",
+    "input": "@A\nOne.\n\n@B\nTwo.\n\n@C ^\nThree.\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "A"
+      },
+      {
+        "type": "dialogue",
+        "text": "One."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "B"
+      },
+      {
+        "type": "dialogue",
+        "text": "Two."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "C"
+      },
+      {
+        "type": "dialogue",
+        "text": "Three."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "a lyric first under a cue throws",
+    "input": "@BOB\n~la la la\n",
+    "error": "undefined is not an object (evaluating 'previousToken.type')\nPlease submit an issue to https://github.com/jonnygreenwald/fountain-js/issues"
+  },
+  {
+    "name": "lyrics after dialogue join into one token",
+    "input": "@BOB\nSing:\n~la la\n~la la la\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Sing:"
+      },
+      {
+        "type": "lyrics",
+        "text": "la la\nla la la"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "a two-space line inside a speech is an empty line",
+    "input": "@BOB\nOne.\n  \nTwo.\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "One.\n\nTwo."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "a paragraph ending in two spaces is lost to spaces",
+    "input": "foo\n  \n\nbar\n",
+    "tokens": [
+      {
+        "type": "spaces"
+      },
+      {
+        "type": "action",
+        "text": "bar"
+      }
+    ]
+  },
+  {
+    "name": "a lone two-space paragraph is a spaces token",
+    "input": "Action.\n\n  \n\nMore.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Action."
+      },
+      {
+        "type": "spaces"
+      },
+      {
+        "type": "action",
+        "text": "More."
+      }
+    ]
+  },
+  {
+    "name": "boneyard inline vanishes",
+    "input": "Before /* hidden */ after.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Before  after."
+      }
+    ]
+  },
+  {
+    "name": "boneyard ending on its own line keeps paragraphs apart",
+    "input": "Para one.\n/* hidden\n*/\nPara two.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Para one."
+      },
+      {
+        "type": "action",
+        "text": "Para two."
+      }
+    ]
+  },
+  {
+    "name": "boneyard across paragraphs",
+    "input": "One.\n\n/* gone\n\ngone too */\n\nTwo.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "One."
+      },
+      {
+        "type": "action",
+        "text": "Two."
+      }
+    ]
+  },
+  {
+    "name": "unterminated boneyard stays",
+    "input": "One /* never closed\n\nTwo.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "One /* never closed"
+      },
+      {
+        "type": "action",
+        "text": "Two."
+      }
+    ]
+  },
+  {
+    "name": "CRLF and lone CR",
+    "input": "INT. A - DAY\r\n\r\nAction.\rMore.\r\n",
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. A - DAY"
+      },
+      {
+        "type": "action",
+        "text": "Action.\nMore."
+      }
+    ]
+  },
+  {
+    "name": "title page with continuation lines",
+    "input": "Title:\n   The Long\n   Title\nCredit: Written by\nAuthor: Someone\nDraft date: 1/1/26\n\nINT. A - DAY\n",
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "The Long\nTitle"
+      },
+      {
+        "is_title": true,
+        "type": "credit",
+        "text": "Written by"
+      },
+      {
+        "is_title": true,
+        "type": "author",
+        "text": "Someone"
+      },
+      {
+        "is_title": true,
+        "type": "draft_date",
+        "text": "1/1/26"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. A - DAY"
+      }
+    ]
+  },
+  {
+    "name": "title page with a tab continuation",
+    "input": "Title: One\nContact:\n\tAddress line\n\tPhone\n\nFADE IN:\n",
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "One"
+      },
+      {
+        "is_title": true,
+        "type": "contact",
+        "text": "Address line\nPhone"
+      },
+      {
+        "type": "action",
+        "text": "FADE IN:"
+      }
+    ]
+  },
+  {
+    "name": "title page key the rule does not know",
+    "input": "Title: X\nRandom Key: value\n\nAction.\n",
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "X"
+      },
+      {
+        "is_title": true,
+        "type": "random_key",
+        "text": "value"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ]
+  },
+  {
+    "name": "title page stops at a line that is not a pair",
+    "input": "Title: X\nnot a pair\n\nAction.\n",
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "X"
+      },
+      {
+        "type": "action",
+        "text": "not a pair"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ]
+  },
+  {
+    "name": "no title page without a known key first",
+    "input": "Key: value\n\nAction.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Key: value"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ]
+  },
+  {
+    "name": "leading blank lines before the title page",
+    "input": "\n\n  Title: Spaced\n\nAction.\n",
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "Spaced"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ]
+  },
+  {
+    "name": "scene numbers with dots and dashes",
+    "input": "INT. LAB - NIGHT #1A.#\n\nEXT. ROAD #12-B#\n",
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. LAB - NIGHT",
+        "scene_number": "1A."
+      },
+      {
+        "type": "scene_heading",
+        "text": "EXT. ROAD",
+        "scene_number": "12-B"
+      }
+    ]
+  },
+  {
+    "name": "forced and lowercase scene headings",
+    "input": ".FORCED\n\nint. lower - day\n\nI/E. VAN\n\nEST. CITY\n\n..not forced\n",
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "FORCED"
+      },
+      {
+        "type": "scene_heading",
+        "text": "int. lower - day"
+      },
+      {
+        "type": "scene_heading",
+        "text": "I/E. VAN"
+      },
+      {
+        "type": "scene_heading",
+        "text": "EST. CITY"
+      },
+      {
+        "type": "action",
+        "text": "..not forced"
+      }
+    ]
+  },
+  {
+    "name": "scene heading needs a dot or space after the opener",
+    "input": "INTERIOR - DAY\n\nINT - DAY\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "INTERIOR - DAY"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT - DAY"
+      }
+    ]
+  },
+  {
+    "name": "centered text, one and two lines",
+    "input": "> THE END <\n\n>one<\n>two<\n",
+    "tokens": [
+      {
+        "type": "centered",
+        "text": "THE END"
+      },
+      {
+        "type": "centered",
+        "text": "one\ntwo"
+      }
+    ]
+  },
+  {
+    "name": "transitions forced and natural",
+    "input": "CUT TO:\n\n> SMASH TO BLACK\n\nFADE OUT.\n\nFADE TO BLACK.\n\ncut to:\n",
+    "tokens": [
+      {
+        "type": "transition",
+        "text": "CUT TO:"
+      },
+      {
+        "type": "transition",
+        "text": "SMASH TO BLACK"
+      },
+      {
+        "type": "transition",
+        "text": "FADE OUT."
+      },
+      {
+        "type": "transition",
+        "text": "FADE TO BLACK."
+      },
+      {
+        "type": "action",
+        "text": "cut to:"
+      }
+    ]
+  },
+  {
+    "name": "a cue that looks like a transition is not one",
+    "input": "BACK TO:\nSomething.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "BACK TO:\nSomething."
+      }
+    ]
+  },
+  {
+    "name": "sections and synopses",
+    "input": "# Act One\n\n## Sequence\n\n= A synopsis.\n\n== not a synopsis\n",
+    "tokens": [
+      {
+        "type": "section",
+        "text": "Act One",
+        "depth": 1
+      },
+      {
+        "type": "section",
+        "text": "Sequence",
+        "depth": 2
+      },
+      {
+        "type": "synopsis",
+        "text": "A synopsis."
+      },
+      {
+        "type": "action",
+        "text": "== not a synopsis"
+      }
+    ]
+  },
+  {
+    "name": "page breaks",
+    "input": "===\n\n=====\n\n= = =\n",
+    "tokens": [
+      {
+        "type": "page_break"
+      },
+      {
+        "type": "page_break"
+      },
+      {
+        "type": "synopsis",
+        "text": "= ="
+      }
+    ]
+  },
+  {
+    "name": "notes standalone and inline",
+    "input": "[[A note.]]\n\nAction [[inline note]] here.\n\n[[[triple]]]\n",
+    "tokens": [
+      {
+        "type": "note",
+        "text": "A note."
+      },
+      {
+        "type": "action",
+        "text": "Action [[inline note]] here."
+      },
+      {
+        "type": "action",
+        "text": "[[[triple]]]"
+      }
+    ]
+  },
+  {
+    "name": "forced action and its edges",
+    "input": "!INT. NOT A HEADING\n\n! bang space\n\n!!double\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "INT. NOT A HEADING"
+      },
+      {
+        "type": "action",
+        "text": "! bang space"
+      },
+      {
+        "type": "action",
+        "text": "!double"
+      }
+    ]
+  },
+  {
+    "name": "tabs in action become four spaces",
+    "input": "\tOne tab\n \t\tSpace then two tabs\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "    One tab\n         Space then two tabs"
+      }
+    ]
+  },
+  {
+    "name": "parentheticals with emphasis",
+    "input": "@BOB\n*(beat)*\nHi.\n_(quietly)_\n**(odd)\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "parenthetical",
+        "text": "*(beat)*"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi."
+      },
+      {
+        "type": "parenthetical",
+        "text": "_(quietly)_"
+      },
+      {
+        "type": "dialogue",
+        "text": "**(odd)"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "character extensions and escapes",
+    "input": "BOB (V.O.)\nHi.\n\n\\@NOT A CUE\nline\n\nBOB(CONT'D)\nHey.\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB (V.O.)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "action",
+        "text": "\\@NOT A CUE\nline"
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB(CONT'D)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hey."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "number-only cue is not dialogue",
+    "input": "123\nnot a speech\n\n12 (V.O.)\nalso not\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "123\nnot a speech"
+      },
+      {
+        "type": "action",
+        "text": "12 (V.O.)\nalso not"
+      }
+    ]
+  },
+  {
+    "name": "a cue with nothing under it",
+    "input": "BOB\n\nAction.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "BOB"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ]
+  },
+  {
+    "name": "uppercase lines followed by a blank are action",
+    "input": "ALL CAPS LINE\nmore\n",
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "ALL CAPS LINE"
+      },
+      {
+        "type": "dialogue",
+        "text": "more"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "emphasis is left in the text",
+    "input": "**Bold** and *italic* and _under_.\n\n@BOB\n*I* said so.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "**Bold** and *italic* and _under_."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "*I* said so."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "unicode whitespace",
+    "input": " INT. A - DAY\n\n﻿Action.\n\n@BÖB\nHallo.\n",
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. A - DAY"
+      },
+      {
+        "type": "action",
+        "text": "﻿Action."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BÖB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hallo."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "line separator inside a paragraph",
+    "input": "One two.\n\n@BOB\nHi there.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "One two."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi there."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "lyrics standalone",
+    "input": "~Sing it\n~again\n\n~ not lyric\n",
+    "tokens": [
+      {
+        "type": "lyrics",
+        "text": "Sing it\nagain"
+      },
+      {
+        "type": "action",
+        "text": "~ not lyric"
+      }
+    ]
+  },
+  {
+    "name": "the empty script",
+    "input": "",
+    "tokens": []
+  },
+  {
+    "name": "only whitespace",
+    "input": "   \n\n  \n",
+    "tokens": [
+      {
+        "type": "spaces"
+      }
+    ]
+  },
+  {
+    "name": "a note with a newline is not a note",
+    "input": "[[one\ntwo]]\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "[[one\ntwo]]"
+      }
+    ]
+  },
+  {
+    "name": "dual caret with spaces and extension",
+    "input": "@A (V.O.)\nHi.\n\n@B (O.S.)  ^  \nYo.\n",
+    "tokens": [
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "A (V.O.)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "B (O.S.)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Yo."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      }
+    ]
+  },
+  {
+    "name": "a scene heading carrying a fmt note",
+    "input": "[[fmt: sans]]\nCHYRON: LIVE.\n\n@BOB\n[[fmt: mono]] Read it.\n",
+    "tokens": [
+      {
+        "type": "action",
+        "text": "[[fmt: sans]]\nCHYRON: LIVE."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "[[fmt: mono]] Read it."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ]
+  }
+]

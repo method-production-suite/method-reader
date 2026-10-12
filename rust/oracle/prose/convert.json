@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "error": {
+    "code": "not-screenplay",
+    "message": "No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway."
+  }
+}

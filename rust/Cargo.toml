@@ -10,3 +10,20 @@ rust-version = "1.96"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# One version of each shared dependency for the whole port. A crate names
+# what it uses with `dep.workspace = true`.
+[workspace.dependencies]
+# Strict, pure-Rust XML reading, for tests that read a written document back.
+roxmltree = "0.20"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+sp-model = { path = "crates/sp-model" }
+sp-fountain = { path = "crates/sp-fountain" }
+# Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
+zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+# Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not
+# byte-identical to pako's; the parity check compares inflated entries.
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+sha2 = "0.10"
+regex = "1"

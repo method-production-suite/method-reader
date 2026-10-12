@@ -1,0 +1,6372 @@
+{
+  "numPages": 17,
+  "pages": [
+    {
+      "pageNum": 1,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "THE PROOF SHEET",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 252, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Written by",
+          "dir": "ltr",
+          "width": 72,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 270, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A. N. Placeholder",
+          "dir": "ltr",
+          "width": 122.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 244.8, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Placeholder Pictures",
+          "dir": "ltr",
+          "width": 144,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 108],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "hello@example.com",
+          "dir": "ltr",
+          "width": 122.40000000000003,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [522, 0, 0, 702, 45, 45]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "img_p0_1",
+          "width": 261,
+          "height": 351
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "img_p0_2",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "THE PROOF SHEET"
+        },
+        {
+          "op": "showText",
+          "text": "Written by"
+        },
+        {
+          "op": "showText",
+          "text": "A. N. Placeholder"
+        },
+        {
+          "op": "showText",
+          "text": "Placeholder Pictures"
+        },
+        {
+          "op": "showText",
+          "text": "hello@example.com"
+        }
+      ],
+      "images": {
+        "img_p0_1": {
+          "width": 261,
+          "height": 351,
+          "kind": 2,
+          "dataLength": 274833,
+          "dataSha256": "d1003ca688da4b3537dabe1fe2e8c22b7de76309179e2323b51312e5b9ad46b5"
+        },
+        "img_p0_2": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 2,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "1.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. ARCHIVE BASEMENT - NIGHT",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Steel shelving to the ceiling. A single bulb, swinging.",
+          "dir": "ltr",
+          "width": 395.9999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "EXT. LOADING DOCK - CONTINUOUS",
+          "dir": "ltr",
+          "width": 215.99999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Rain on corrugated tin, loud enough to argue over.",
+          "dir": "ltr",
+          "width": 359.99999999999966,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT./EXT. DELIVERY VAN - MOVING - LATER",
+          "dir": "ltr",
+          "width": 280.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The wipers lose.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "42 INT. ARCHIVE BASEMENT - RESHELVING - DAY 42",
+          "dir": "ltr",
+          "width": 331.1999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "dual-margin scene number, the shooting-script shape: the",
+          "dir": "ltr",
+          "width": 403.1999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "same number printed at both margins.",
+          "dir": "ltr",
+          "width": 259.1999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "1."
+        },
+        {
+          "op": "showText",
+          "text": "INT. ARCHIVE BASEMENT - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "Steel shelving to the ceiling. A single bulb, swinging."
+        },
+        {
+          "op": "showText",
+          "text": "EXT. LOADING DOCK - CONTINUOUS"
+        },
+        {
+          "op": "showText",
+          "text": "Rain on corrugated tin, loud enough to argue over."
+        },
+        {
+          "op": "showText",
+          "text": "INT./EXT. DELIVERY VAN - MOVING - LATER"
+        },
+        {
+          "op": "showText",
+          "text": "The wipers lose."
+        },
+        {
+          "op": "showText",
+          "text": "42 INT. ARCHIVE BASEMENT - RESHELVING - DAY 42"
+        },
+        {
+          "op": "showText",
+          "text": "A dual-margin scene number, the shooting-script shape: the"
+        },
+        {
+          "op": "showText",
+          "text": "same number printed at both margins."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 3,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "2.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. READING ROOM - DAY",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE sets down a box that is heavier than it looks.",
+          "dir": "ltr",
+          "width": 374.3999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INDEX CARDS",
+          "dir": "ltr",
+          "width": 79.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Handwriting from four decades, none of it consistent.",
+          "dir": "ltr",
+          "width": 381.5999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "LEDGER, LATER",
+          "dir": "ltr",
+          "width": 93.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "One column, ruled in",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "pencil, never once balanced.",
+          "dir": "ltr",
+          "width": 201.59999999999988,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CUT TO:",
+          "dir": "ltr",
+          "width": 50.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. STAIRWELL - CONTINUOUS",
+          "dir": "ltr",
+          "width": 194.3999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Footsteps going down",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "two at a time.",
+          "dir": "ltr",
+          "width": 100.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DISSOLVE TO:",
+          "dir": "ltr",
+          "width": 86.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "EXT. ARCHIVE - NIGHT",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The building keeps its lights on for nobody.",
+          "dir": "ltr",
+          "width": 316.7999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "SMASH CUT TO:",
+          "dir": "ltr",
+          "width": 93.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "2."
+        },
+        {
+          "op": "showText",
+          "text": "INT. READING ROOM - DAY"
+        },
+        {
+          "op": "showText",
+          "text": "ODILE sets down a box that is heavier than it looks."
+        },
+        {
+          "op": "showText",
+          "text": "INDEX CARDS"
+        },
+        {
+          "op": "showText",
+          "text": "Handwriting from four decades, none of it consistent."
+        },
+        {
+          "op": "showText",
+          "text": "LEDGER, LATER"
+        },
+        {
+          "op": "showText",
+          "text": "One column, ruled in pencil, never once balanced."
+        },
+        {
+          "op": "showText",
+          "text": "CUT TO:"
+        },
+        {
+          "op": "showText",
+          "text": "INT. STAIRWELL - CONTINUOUS"
+        },
+        {
+          "op": "showText",
+          "text": "Footsteps going down two at a time."
+        },
+        {
+          "op": "showText",
+          "text": "DISSOLVE TO:"
+        },
+        {
+          "op": "showText",
+          "text": "EXT. ARCHIVE - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "The building keeps its lights on for nobody."
+        },
+        {
+          "op": "showText",
+          "text": "SMASH CUT TO:"
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 4,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "3.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. ARCHIVE BASEMENT - NIGHT",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Nobody is where their voice says they are.",
+          "dir": "ltr",
+          "width": 302.39999999999975,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(O.S.)",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The period-full spelling, the one",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the manuals print.",
+          "dir": "ltr",
+          "width": 129.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(V.O)",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "And the one writers actually type,",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "missing its period.",
+          "dir": "ltr",
+          "width": 136.79999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(O.C)",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Off camera, also missing its",
+          "dir": "ltr",
+          "width": 201.59999999999988,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "period.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN (CONT’D)",
+          "dir": "ltr",
+          "width": 93.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A continued cue, carrying its",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "extension.",
+          "dir": "ltr",
+          "width": 72.00000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DR. E. T. MARCHETTI",
+          "dir": "ltr",
+          "width": 136.79999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Dotted abbreviations sitting inside",
+          "dir": "ltr",
+          "width": 251.99999999999983,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "a character name.",
+          "dir": "ltr",
+          "width": 122.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY (V.O.)",
+          "dir": "ltr",
+          "width": 86.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A hybrid: name and extension on one",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 384],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "cue line.",
+          "dir": "ltr",
+          "width": 64.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "3."
+        },
+        {
+          "op": "showText",
+          "text": "INT. ARCHIVE BASEMENT - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "Nobody is where their voice says they are."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "(O.S.)"
+        },
+        {
+          "op": "showText",
+          "text": "The period-full spelling, the one"
+        },
+        {
+          "op": "showText",
+          "text": "the manuals print."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "(V.O)"
+        },
+        {
+          "op": "showText",
+          "text": "And the one writers actually type,"
+        },
+        {
+          "op": "showText",
+          "text": "missing its period."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "(O.C)"
+        },
+        {
+          "op": "showText",
+          "text": "Off camera, also missing its"
+        },
+        {
+          "op": "showText",
+          "text": "period."
+        },
+        {
+          "op": "showText",
+          "text": "WREN (CONT’D)"
+        },
+        {
+          "op": "showText",
+          "text": "A continued cue, carrying its"
+        },
+        {
+          "op": "showText",
+          "text": "extension."
+        },
+        {
+          "op": "showText",
+          "text": "DR. E. T. MARCHETTI"
+        },
+        {
+          "op": "showText",
+          "text": "Dotted abbreviations sitting inside"
+        },
+        {
+          "op": "showText",
+          "text": "a character name."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY (V.O.)"
+        },
+        {
+          "op": "showText",
+          "text": "A hybrid: name and extension on one"
+        },
+        {
+          "op": "showText",
+          "text": "cue line."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 5,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "4.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. READING ROOM - DAY",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The box is open now.",
+          "dir": "ltr",
+          "width": 143.99999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "It was not worth the trip.",
+          "dir": "ltr",
+          "width": 187.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(quietly)",
+          "dir": "ltr",
+          "width": 64.80000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A leading parenthetical, before a",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "word is spoken.",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A line, and then a beat in the",
+          "dir": "ltr",
+          "width": 215.99999999999983,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "middle of it.",
+          "dir": "ltr",
+          "width": 93.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(reconsidering)",
+          "dir": "ltr",
+          "width": 108.00000000000003,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "And then the rest of it, after the",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "beat.",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(standing)",
+          "dir": "ltr",
+          "width": 72.00000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(then, to WREN)",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Two stacked parentheticals before",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "any dialogue at all.",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Short.",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "4."
+        },
+        {
+          "op": "showText",
+          "text": "INT. READING ROOM - DAY"
+        },
+        {
+          "op": "showText",
+          "text": "The box is open now. It was not worth the trip."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "(quietly)"
+        },
+        {
+          "op": "showText",
+          "text": "A leading parenthetical, before a"
+        },
+        {
+          "op": "showText",
+          "text": "word is spoken."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "A line, and then a beat in the"
+        },
+        {
+          "op": "showText",
+          "text": "middle of it."
+        },
+        {
+          "op": "showText",
+          "text": "(reconsidering)"
+        },
+        {
+          "op": "showText",
+          "text": "And then the rest of it, after the"
+        },
+        {
+          "op": "showText",
+          "text": "beat."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "(standing)"
+        },
+        {
+          "op": "showText",
+          "text": "(then, to WREN)"
+        },
+        {
+          "op": "showText",
+          "text": "Two stacked parentheticals before"
+        },
+        {
+          "op": "showText",
+          "text": "any dialogue at all."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Short."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 6,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "5.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. ARCHIVE BASEMENT - NIGHT",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "They have been at this for six hours.",
+          "dir": "ltr",
+          "width": 266.39999999999975,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "No.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Yes.",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "No.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 192],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MORE-ANCHOR. This speech begins",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 180],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "near the foot of the page on",
+          "dir": "ltr",
+          "width": 201.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 168],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "purpose, so that it runs over the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 156],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "break and has to be put back",
+          "dir": "ltr",
+          "width": 201.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 144],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "together on the other side. It",
+          "dir": "ltr",
+          "width": 215.99999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "keeps going well past the boundary",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 120],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "so the rejoin has something",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 108],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "substantial to work with, and so",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "that the same speech doubles as the",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 84],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "long-dialogue case the coverage",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 72],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "5."
+        },
+        {
+          "op": "showText",
+          "text": "INT. ARCHIVE BASEMENT - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "They have been at this for six hours."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "No."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Yes."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "No."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "MORE-ANCHOR. This speech begins"
+        },
+        {
+          "op": "showText",
+          "text": "near the foot of the page on"
+        },
+        {
+          "op": "showText",
+          "text": "purpose, so that it runs over the"
+        },
+        {
+          "op": "showText",
+          "text": "break and has to be put back"
+        },
+        {
+          "op": "showText",
+          "text": "together on the other side. It"
+        },
+        {
+          "op": "showText",
+          "text": "keeps going well past the boundary"
+        },
+        {
+          "op": "showText",
+          "text": "so the rejoin has something"
+        },
+        {
+          "op": "showText",
+          "text": "substantial to work with, and so"
+        },
+        {
+          "op": "showText",
+          "text": "that the same speech doubles as the"
+        },
+        {
+          "op": "showText",
+          "text": "long-dialogue case the coverage"
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 7,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "6.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "table asks for, rather than",
+          "dir": "ltr",
+          "width": 194.3999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "spending two constructions on what",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 708],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "is really one shape.",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "6."
+        },
+        {
+          "op": "showText",
+          "text": "table asks for, rather than"
+        },
+        {
+          "op": "showText",
+          "text": "spending two constructions on what"
+        },
+        {
+          "op": "showText",
+          "text": "is really one shape."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 8,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "7.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. CONSERVATION BENCH - DAY",
+          "dir": "ltr",
+          "width": 208.7999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The label reads",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000131,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 215.99999999999986, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "DO NOT LAMINATE",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 696],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": ", twice.",
+          "dir": "ltr",
+          "width": 57.599999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 331.2, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "She says it",
+          "dir": "ltr",
+          "width": 79.19999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000102,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 187.1999999999999, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "again",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 194.4, 672],
+          "fontName": "g_d12_f3",
+          "hasEOL": false
+        },
+        {
+          "str": ", and this time somebody writes it down.",
+          "dir": "ltr",
+          "width": 287.9999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 230.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The stamp is",
+          "dir": "ltr",
+          "width": 86.39999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000102,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 194.3999999999999, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "both bold and italic",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 201.6, 648],
+          "fontName": "g_d12_f4",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000216,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 345.5999999999998, 648],
+          "fontName": "g_d12_f4",
+          "hasEOL": false
+        },
+        {
+          "str": "at once.",
+          "dir": "ltr",
+          "width": 57.599999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 352.8, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "styled run that",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000159,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 230.39999999999984, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "crosses the wrap boundary because it keeps",
+          "dir": "ltr",
+          "width": 302.39999999999975,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 237.6, 624],
+          "fontName": "g_d12_f2",
+          "hasEOL": true
+        },
+        {
+          "str": "going for long enough to need a second line",
+          "dir": "ltr",
+          "width": 309.59999999999974,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 612],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": ", and then stops.",
+          "dir": "ltr",
+          "width": 122.39999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 417.6, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Punctuation only",
+          "dir": "ltr",
+          "width": 115.20000000000002,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": ",",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 588],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 230.39999999999998, 588],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": "styled by itself.",
+          "dir": "ltr",
+          "width": 122.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 237.6, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This word is",
+          "dir": "ltr",
+          "width": 86.39999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000102,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 194.3999999999999, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "underlined",
+          "dir": "ltr",
+          "width": 72.00000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 201.6, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000102,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 273.5999999999999, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "with drawn vector art.",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 280.8, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This phrase is",
+          "dir": "ltr",
+          "width": 100.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000131,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 208.79999999999987, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "struck through, above the baseline.",
+          "dir": "ltr",
+          "width": 251.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 216, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "table rules a border",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000216,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 266.3999999999998, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "below this cell, further down.",
+          "dir": "ltr",
+          "width": 216.00000000000003,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 273.6, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "page-wide rule crosses",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000216,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 280.7999999999998, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "this whole line",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 288, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000159,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 395.99999999999983, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "of text.",
+          "dir": "ltr",
+          "width": 57.599999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 403.2, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 108, 468],
+          "fontName": "g_d12_f5",
+          "hasEOL": true
+        },
+        {
+          "str": "CHYRON: EVERY NAME HERE IS INVENTED.",
+          "dir": "ltr",
+          "width": 256.044,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 468],
+          "fontName": "g_d12_f5",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [10, 0, 0, 10, 108, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A footnote, set smaller than the body.",
+          "dir": "ltr",
+          "width": 228,
+          "height": 10,
+          "transform": [10, 0, 0, 10, 108, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [15, 0, 0, 15, 108, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The index card, enlarged for the reader.",
+          "dir": "ltr",
+          "width": 360,
+          "height": 15,
+          "transform": [15, 0, 0, 15, 108, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [18, 0, 0, 18, 108, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A SIGN,",
+          "dir": "ltr",
+          "width": 75.6,
+          "height": 18,
+          "transform": [18, 0, 0, 18, 108, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 10.800000000000011,
+          "height": 0,
+          "transform": [18, 0, 0, 18, 183.60000000000005, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "VERY",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 18,
+          "transform": [18, 0, 0, 18, 194.40000000000006, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 10.800000000000011,
+          "height": 0,
+          "transform": [18, 0, 0, 18, 237.6000000000001, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "LARGE",
+          "dir": "ltr",
+          "width": 54,
+          "height": 18,
+          "transform": [18, 0, 0, 18, 248.40000000000012, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 10.800000000000011,
+          "height": 0,
+          "transform": [18, 0, 0, 18, 302.40000000000015, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "INDEED",
+          "dir": "ltr",
+          "width": 64.8,
+          "height": 18,
+          "transform": [18, 0, 0, 18, 313.20000000000016, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 266.4, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f5",
+          "hasEOL": true
+        },
+        {
+          "str": "A text message, in the phone’s own",
+          "dir": "ltr",
+          "width": 189.43200000000002,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f5",
+          "hasEOL": true
+        },
+        {
+          "str": "face.",
+          "dir": "ltr",
+          "width": 26.016,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 348],
+          "fontName": "g_d12_f5",
+          "hasEOL": false
+        },
+        {
+          "str": "",
+          "dir": "ltr",
+          "width": 0,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 266.4, 324],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 324],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Dialogue can be",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000159,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 287.99999999999983, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "bold",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 295.2, 312],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 323.99999999999994, 312],
+          "fontName": "g_d12_f2",
+          "hasEOL": false
+        },
+        {
+          "str": "too.",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 331.2, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 288],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "And",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 201.59999999999997, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "italic",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 208.8, 276],
+          "fontName": "g_d12_f3",
+          "hasEOL": false
+        },
+        {
+          "str": ", which is the common",
+          "dir": "ltr",
+          "width": 151.19999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 252, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "one.",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 264],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier",
+        "g_d12_f2": "Courier-Bold",
+        "g_d12_f3": "Courier-Oblique",
+        "g_d12_f4": "Courier-BoldOblique",
+        "g_d12_f5": "Helvetica"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [201.60000610351562, 562, 273.6000061035156, 562.5999755859375]
+        },
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [216, 543.5, 316.79998779296875, 544.0999755859375]
+        },
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [273.6000061035156, 510, 381.6000061035156, 510.6000061035156]
+        },
+        {
+          "op": "constructPath",
+          "paint": "fill",
+          "bbox": [36, 490, 576, 490.6000061035156]
+        },
+        {
+          "op": "showText",
+          "text": "7."
+        },
+        {
+          "op": "showText",
+          "text": "INT. CONSERVATION BENCH - DAY"
+        },
+        {
+          "op": "showText",
+          "text": "The label reads "
+        },
+        {
+          "op": "showText",
+          "text": "DO NOT LAMINATE"
+        },
+        {
+          "op": "showText",
+          "text": ", twice."
+        },
+        {
+          "op": "showText",
+          "text": "She says it "
+        },
+        {
+          "op": "showText",
+          "text": "again"
+        },
+        {
+          "op": "showText",
+          "text": ", and this time somebody writes it down."
+        },
+        {
+          "op": "showText",
+          "text": "The stamp is "
+        },
+        {
+          "op": "showText",
+          "text": "both bold and italic"
+        },
+        {
+          "op": "showText",
+          "text": " at once."
+        },
+        {
+          "op": "showText",
+          "text": "A styled run that "
+        },
+        {
+          "op": "showText",
+          "text": "crosses the wrap boundary because it keeps"
+        },
+        {
+          "op": "showText",
+          "text": "going for long enough to need a second line"
+        },
+        {
+          "op": "showText",
+          "text": ", and then stops."
+        },
+        {
+          "op": "showText",
+          "text": "Punctuation only"
+        },
+        {
+          "op": "showText",
+          "text": ","
+        },
+        {
+          "op": "showText",
+          "text": " styled by itself."
+        },
+        {
+          "op": "showText",
+          "text": "This word is "
+        },
+        {
+          "op": "showText",
+          "text": "underlined"
+        },
+        {
+          "op": "showText",
+          "text": " with drawn vector art."
+        },
+        {
+          "op": "showText",
+          "text": "This phrase is "
+        },
+        {
+          "op": "showText",
+          "text": "struck through"
+        },
+        {
+          "op": "showText",
+          "text": ", above the baseline."
+        },
+        {
+          "op": "showText",
+          "text": "A table rules a border "
+        },
+        {
+          "op": "showText",
+          "text": "below this cell"
+        },
+        {
+          "op": "showText",
+          "text": ", further down."
+        },
+        {
+          "op": "showText",
+          "text": "A page-wide rule crosses "
+        },
+        {
+          "op": "showText",
+          "text": "this whole line"
+        },
+        {
+          "op": "showText",
+          "text": " of text."
+        },
+        {
+          "op": "showText",
+          "text": "CHYRON: EVERY NAME HERE IS INVENTED."
+        },
+        {
+          "op": "showText",
+          "text": "A footnote, set smaller than the body."
+        },
+        {
+          "op": "showText",
+          "text": "The index card, enlarged for the reader."
+        },
+        {
+          "op": "showText",
+          "text": "A SIGN, VERY LARGE INDEED"
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "A text message, in the phone’s own"
+        },
+        {
+          "op": "showText",
+          "text": "face."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Dialogue can be "
+        },
+        {
+          "op": "showText",
+          "text": "bold"
+        },
+        {
+          "op": "showText",
+          "text": " too."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "And "
+        },
+        {
+          "op": "showText",
+          "text": "italic"
+        },
+        {
+          "op": "showText",
+          "text": ", which is the common"
+        },
+        {
+          "op": "showText",
+          "text": "one."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 9,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "8.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. READING ROOM - DAY",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "They speak over each",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "other.",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 158.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 194.40000000000006,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 194.39999999999995, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 388.8, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "LEFTMARK. Short, on the",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 64.80000000000024,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 302.39999999999975, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "RIGHTMARK. Short, on the",
+          "dir": "ltr",
+          "width": 172.79999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "left.",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 194.40000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 172.79999999999995, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "right.",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "And again, at length.",
+          "dir": "ltr",
+          "width": 151.19999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 158.4, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 194.40000000000006,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 194.39999999999995, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 388.8, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This column runs long",
+          "dir": "ltr",
+          "width": 151.19999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 79.20000000000022,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 287.9999999999998, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "And this one answers at",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "enough that the taller of",
+          "dir": "ltr",
+          "width": 179.99999999999991,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 50.40000000000026,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 316.7999999999997, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "similar length so neither",
+          "dir": "ltr",
+          "width": 179.99999999999991,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the two passes twelve",
+          "dir": "ltr",
+          "width": 151.19999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 79.20000000000022,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 287.9999999999998, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "column is trivially short,",
+          "dir": "ltr",
+          "width": 187.1999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "estimated rendered lines,",
+          "dir": "ltr",
+          "width": 179.99999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 50.40000000000026,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 316.7999999999997, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "because the fallback",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "which is the threshold",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 72.00000000000023,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 295.19999999999976, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "measures the taller of",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 525.5999999999998, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "the",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.7999999999998, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "where the side-by-side",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 72.00000000000023,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 295.19999999999976, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "pair and a stub would",
+          "dir": "ltr",
+          "width": 151.19999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "table gives up and both",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 64.80000000000024,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 302.39999999999975, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "never reach it.",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 367.2, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "speeches become ordinary",
+          "dir": "ltr",
+          "width": 172.79999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sequential dialogue",
+          "dir": "ltr",
+          "width": 136.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "instead.",
+          "dir": "ltr",
+          "width": 57.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 136.8, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "8."
+        },
+        {
+          "op": "showText",
+          "text": "INT. READING ROOM - DAY"
+        },
+        {
+          "op": "showText",
+          "text": "They speak over each other."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "LEFTMARK. Short, on the"
+        },
+        {
+          "op": "showText",
+          "text": "RIGHTMARK. Short, on the"
+        },
+        {
+          "op": "showText",
+          "text": "left."
+        },
+        {
+          "op": "showText",
+          "text": "right."
+        },
+        {
+          "op": "showText",
+          "text": "And again, at length."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "This column runs long"
+        },
+        {
+          "op": "showText",
+          "text": "And this one answers at"
+        },
+        {
+          "op": "showText",
+          "text": "enough that the taller of"
+        },
+        {
+          "op": "showText",
+          "text": "similar length so neither"
+        },
+        {
+          "op": "showText",
+          "text": "the two passes twelve"
+        },
+        {
+          "op": "showText",
+          "text": "column is trivially short,"
+        },
+        {
+          "op": "showText",
+          "text": "estimated rendered lines,"
+        },
+        {
+          "op": "showText",
+          "text": "because the fallback"
+        },
+        {
+          "op": "showText",
+          "text": "which is the threshold"
+        },
+        {
+          "op": "showText",
+          "text": "measures the taller of the"
+        },
+        {
+          "op": "showText",
+          "text": "where the side-by-side"
+        },
+        {
+          "op": "showText",
+          "text": "pair and a stub would"
+        },
+        {
+          "op": "showText",
+          "text": "table gives up and both"
+        },
+        {
+          "op": "showText",
+          "text": "never reach it."
+        },
+        {
+          "op": "showText",
+          "text": "speeches become ordinary"
+        },
+        {
+          "op": "showText",
+          "text": "sequential dialogue"
+        },
+        {
+          "op": "showText",
+          "text": "instead."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 10,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "9.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech one. Short.",
+          "dir": "ltr",
+          "width": 129.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 708],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 684],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech two. If this line sits alone",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "at the top or the bottom of a page,",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the keep failed.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech three. If this line sits",
+          "dir": "ltr",
+          "width": 223.19999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech four. If this line sits",
+          "dir": "ltr",
+          "width": 215.99999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech five. Short.",
+          "dir": "ltr",
+          "width": 136.79999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech six. If this line sits alone",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 384],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "at the top or the bottom of a page,",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the keep failed.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 336],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech seven. If this line sits",
+          "dir": "ltr",
+          "width": 223.19999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 324],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 300],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 288],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 264],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 252],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 228],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech eight. If this line sits",
+          "dir": "ltr",
+          "width": 223.19999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 216],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 204],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 192],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 180],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 168],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 144],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech nine. Short.",
+          "dir": "ltr",
+          "width": 136.79999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 108],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech ten. If this line sits alone",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "at the top or the bottom of a page,",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 84],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the keep failed.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 72],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "9."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech one. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech two. If this line sits alone"
+        },
+        {
+          "op": "showText",
+          "text": "at the top or the bottom of a page,"
+        },
+        {
+          "op": "showText",
+          "text": "the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech three. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech four. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech five. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech six. If this line sits alone"
+        },
+        {
+          "op": "showText",
+          "text": "at the top or the bottom of a page,"
+        },
+        {
+          "op": "showText",
+          "text": "the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech seven. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech eight. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech nine. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech ten. If this line sits alone"
+        },
+        {
+          "op": "showText",
+          "text": "at the top or the bottom of a page,"
+        },
+        {
+          "op": "showText",
+          "text": "the keep failed."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 11,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "10.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech eleven. If this line sits",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 708],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 684],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twelve. If this line sits",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirteen. Short.",
+          "dir": "ltr",
+          "width": 165.59999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech fourteen. If this line sits",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed.",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech fifteen. If this line sits",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 408],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 384],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 348],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 324],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech sixteen. If this line sits",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 300],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 288],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 264],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 240],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech seventeen. Short.",
+          "dir": "ltr",
+          "width": 172.79999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 228],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 204],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech eighteen. If this line sits",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 192],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 180],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed.",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 168],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 144],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech nineteen. If this line sits",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 120],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 108],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 84],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 72],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "10."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech eleven. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twelve. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirteen. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech fourteen. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech fifteen. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech sixteen. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech seventeen. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech eighteen. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech nineteen. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 12,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "11.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty. If this line sits",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 684],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-one. Short.",
+          "dir": "ltr",
+          "width": 179.99999999999994,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-two. If this line",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-three. If this line",
+          "dir": "ltr",
+          "width": 237.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "If this line sits alone at the top",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "or the bottom of a page, the keep",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "failed.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-four. If this line",
+          "dir": "ltr",
+          "width": 230.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 384],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 348],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 336],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-five. Short.",
+          "dir": "ltr",
+          "width": 187.19999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 300],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-six. If this line",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 264],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 252],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 240],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 216],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-seven. If this line",
+          "dir": "ltr",
+          "width": 237.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 204],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 192],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 180],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 168],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 156],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "If this line sits alone at the top",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 144],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "or the bottom of a page, the keep",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "failed.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 120],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-eight. If this line",
+          "dir": "ltr",
+          "width": 237.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 84],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 72],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "11."
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-one. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-two. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-three. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "If this line sits alone at the top"
+        },
+        {
+          "op": "showText",
+          "text": "or the bottom of a page, the keep"
+        },
+        {
+          "op": "showText",
+          "text": "failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-four. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-five. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-six. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-seven. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "If this line sits alone at the top"
+        },
+        {
+          "op": "showText",
+          "text": "or the bottom of a page, the keep"
+        },
+        {
+          "op": "showText",
+          "text": "failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-eight. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 13,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "12.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 708],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech twenty-nine. Short.",
+          "dir": "ltr",
+          "width": 187.19999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty. If this line sits",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed.",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-one. If this line",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "If this line sits alone at the top",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "or the bottom of a page, the keep",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "failed.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-two. If this line",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 444],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 432],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 408],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 396],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 372],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-three. Short.",
+          "dir": "ltr",
+          "width": 194.39999999999992,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 336],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-four. If this line",
+          "dir": "ltr",
+          "width": 230.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 324],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 312],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 300],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 276],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-five. If this line",
+          "dir": "ltr",
+          "width": 230.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 264],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 252],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 240],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 228],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 216],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "If this line sits alone at the top",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 204],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "or the bottom of a page, the keep",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 192],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "failed.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 180],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 156],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-six. If this line",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 144],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 120],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 108],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUNNY",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 72],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "12."
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech twenty-nine. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-one. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "If this line sits alone at the top"
+        },
+        {
+          "op": "showText",
+          "text": "or the bottom of a page, the keep"
+        },
+        {
+          "op": "showText",
+          "text": "failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-two. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-three. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-four. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-five. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "If this line sits alone at the top"
+        },
+        {
+          "op": "showText",
+          "text": "or the bottom of a page, the keep"
+        },
+        {
+          "op": "showText",
+          "text": "failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-six. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "BUNNY"
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 14,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "13.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-seven. Short.",
+          "dir": "ltr",
+          "width": 194.39999999999992,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CASSIUS",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-eight. If this line",
+          "dir": "ltr",
+          "width": 237.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 684],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 672],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "ODILE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 636],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech thirty-nine. If this line",
+          "dir": "ltr",
+          "width": 230.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 624],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 612],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed. If this",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "line sits alone at the top or the",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 588],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "bottom of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 576],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "If this line sits alone at the top",
+          "dir": "ltr",
+          "width": 244.79999999999978,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "or the bottom of a page, the keep",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "failed.",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Speech forty. If this line sits",
+          "dir": "ltr",
+          "width": 223.19999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alone at the top or the bottom of a",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "page, the keep failed. If this line",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 480],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "sits alone at the top or the bottom",
+          "dir": "ltr",
+          "width": 251.99999999999977,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 468],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "of a page, the keep failed.",
+          "dir": "ltr",
+          "width": 194.39999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 456],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "13."
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-seven. Short."
+        },
+        {
+          "op": "showText",
+          "text": "CASSIUS"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-eight. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "ODILE"
+        },
+        {
+          "op": "showText",
+          "text": "Speech thirty-nine. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed. If this"
+        },
+        {
+          "op": "showText",
+          "text": "line sits alone at the top or the"
+        },
+        {
+          "op": "showText",
+          "text": "bottom of a page, the keep failed."
+        },
+        {
+          "op": "showText",
+          "text": "If this line sits alone at the top"
+        },
+        {
+          "op": "showText",
+          "text": "or the bottom of a page, the keep"
+        },
+        {
+          "op": "showText",
+          "text": "failed."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Speech forty. If this line sits"
+        },
+        {
+          "op": "showText",
+          "text": "alone at the top or the bottom of a"
+        },
+        {
+          "op": "showText",
+          "text": "page, the keep failed. If this line"
+        },
+        {
+          "op": "showText",
+          "text": "sits alone at the top or the bottom"
+        },
+        {
+          "op": "showText",
+          "text": "of a page, the keep failed."
+        }
+      ],
+      "images": {
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 15,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "14.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. ART DEPARTMENT - DAY",
+          "dir": "ltr",
+          "width": 179.99999999999991,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN pins a storyboard panel to the wall, printed small.",
+          "dir": "ltr",
+          "width": 403.1999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 552],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "WREN",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 528],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Under half a column wide, and not a",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 516],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "thumbnail.",
+          "dir": "ltr",
+          "width": 72.00000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 504],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [180, 0, 0, 135, 108, 570]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "img_p14_1",
+          "width": 240,
+          "height": 180
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "14."
+        },
+        {
+          "op": "showText",
+          "text": "INT. ART DEPARTMENT - DAY"
+        },
+        {
+          "op": "showText",
+          "text": "WREN pins a storyboard panel to the wall, printed small."
+        },
+        {
+          "op": "showText",
+          "text": "WREN"
+        },
+        {
+          "op": "showText",
+          "text": "Under half a column wide, and not a"
+        },
+        {
+          "op": "showText",
+          "text": "thumbnail."
+        }
+      ],
+      "images": {
+        "img_p14_1": {
+          "width": 240,
+          "height": 180,
+          "kind": 2,
+          "dataLength": 129600,
+          "dataSha256": "2e743fb380430247290b7e2f7a7056ee79d050fecbe8520722aa8abee0dd4f75"
+        },
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 16,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "15.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. MAP ROOM - NIGHT",
+          "dir": "ltr",
+          "width": 151.19999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [558, 0, 0, 666, 27, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "img_p15_1",
+          "width": 279,
+          "height": 333
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "15."
+        },
+        {
+          "op": "showText",
+          "text": "INT. MAP ROOM - NIGHT"
+        }
+      ],
+      "images": {
+        "img_p15_1": {
+          "width": 279,
+          "height": 333,
+          "kind": 2,
+          "dataLength": 278721,
+          "dataSha256": "2df34116a0f0b4e8d4e17e0b0103c49ce7bfdbd9d82c91bcf48b572a4fb77211"
+        },
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    },
+    {
+      "pageNum": 17,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "16.",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. FIRE STAIRS - CONTINUOUS",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d12_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "production still, printed tall.",
+          "dir": "ltr",
+          "width": 223.19999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 696],
+          "fontName": "g_d12_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d12_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [240, 0, 0, 660, 186, 12]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "img_p16_1",
+          "width": 200,
+          "height": 550
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "save"
+        },
+        {
+          "op": "transform",
+          "matrix": [200, 0, 0, 100, 376, 36]
+        },
+        {
+          "op": "paintImageXObject",
+          "objId": "g_d12_img_p1_1",
+          "width": 100,
+          "height": 50
+        },
+        {
+          "op": "restore"
+        },
+        {
+          "op": "showText",
+          "text": "16."
+        },
+        {
+          "op": "showText",
+          "text": "INT. FIRE STAIRS - CONTINUOUS"
+        },
+        {
+          "op": "showText",
+          "text": "A production still, printed tall."
+        }
+      ],
+      "images": {
+        "img_p16_1": {
+          "width": 200,
+          "height": 550,
+          "kind": 2,
+          "dataLength": 330000,
+          "dataSha256": "94c33d4edb637d4bb8d7666b1f3c014693bf01ae1520dc3dcf0adcebb7f12fcd"
+        },
+        "g_d12_img_p1_1": {
+          "width": 100,
+          "height": 50,
+          "kind": 2,
+          "dataLength": 15000,
+          "dataSha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+        }
+      }
+    }
+  ]
+}

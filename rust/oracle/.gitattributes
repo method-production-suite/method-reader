@@ -1,0 +1,3 @@
+# Oracle dumps are answer keys compared byte for byte: never let a checkout
+# rewrite their line endings (a Windows runner with core.autocrlf would).
+* -text

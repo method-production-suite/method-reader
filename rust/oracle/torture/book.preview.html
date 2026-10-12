@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+<title>INT. ARCHIVE BASEMENT - NIGHT</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+h2.scene-heading {
+  font-size: 1em;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.6em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+span.scene-number {
+  font-weight: normal;
+}
+
+span.underline {
+  text-decoration: underline;
+}
+
+/* Original PDF page numbers — a marginal reference, out of the flow so
+   they cost no line. Horizontal in %, per the CSS invariants. Dimming is
+   opacity rather than a fixed gray, which would fight dark and sepia
+   themes; opacity dims against whatever the theme's text color is, and
+   engines lacking it just render full strength (registry #13a). */
+span.page-marker {
+  float: right;
+  font-size: 0.75em;
+  opacity: 0.6;
+  margin-left: 1%;
+}
+
+p {
+  margin: 0;
+  text-indent: 0;
+}
+
+p.action {
+  margin: 1em 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+p.mini-slug {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.4em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Print geometry, reflowed: dialogue is a narrow column (58% of the body
+   column in print). Cue and parenthetical indent WITHIN the column as
+   percentages of it (print: cue +1.2" and parenthetical +0.6" into the
+   3.5" column). */
+.dialogue-block {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+/* A cue must never orphan from its dialogue at a page break. Centered
+   alignment reads naturally at any screen width; indented reproduces
+   print's fixed offsets (which only optically center on paper). */
+p.character {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is
+   right that every avoid link grows the chunk a renderer pushes, and while
+   the cue keep was a WRAPPER that argument held: the chunk already carried
+   the cue and the speech, and one more link made a blank-bottom page. With
+   the wrapper gone the chunk is cue + parenthetical + the orphans minimum
+   (#17), about four lines, which is the same bound #5a accepted when it
+   traded the heading wrapper for a chain.
+
+   Without this link a cue and its parenthetical strand together, which is
+   the defect #8b exists to prevent wearing a different hat. */
+p.parenthetical {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+p.dialogue {
+  margin: 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+/* Simultaneous speech: two half-width columns, kept on one page. The
+   table spans full width (wider than the dialogue column) by design. */
+table.dual-dialogue {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+
+table.dual-dialogue td {
+  width: 50%;
+  vertical-align: top;
+  padding: 0 2%;
+}
+
+/* A transition belongs to the shot before it: it may end a page, never
+   begin one (the universal print rule, docs/pagination-reference.md §2 —
+   that doc lands from branch worktree-device-map). */
+p.transition {
+  text-align: right;
+  text-transform: uppercase;
+  margin: 1em 0;
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+p.centered {
+  text-align: center;
+  margin: 1em 0;
+}
+
+/* A picture carried out of the source PDF (registry #19). These rules are
+   only in a book that shows one. No keep, on purpose: this box holds one
+   line box, so there is nothing inside it to keep together. The reasons in
+   full are in src/epub/css.ts, above screenplayCss; this file is generated
+   from it, so that header is not here. */
+.figure {
+  margin: 1em 0;
+  text-align: center;
+}
+
+/* Only the width is authored, so the height follows the aspect ratio. A
+   defensive restatement of the initial value, against a reading system
+   whose own stylesheet sets a height on images. */
+.figure img {
+  height: auto;
+}
+
+/* The width the picture had on the printed page, as a share of the text
+   column to the nearest five. A class rather than an inline style, which
+   the reader preview refuses. */
+p.w5 img { width: 5%; }
+p.w10 img { width: 10%; }
+p.w15 img { width: 15%; }
+p.w20 img { width: 20%; }
+p.w25 img { width: 25%; }
+p.w30 img { width: 30%; }
+p.w35 img { width: 35%; }
+p.w40 img { width: 40%; }
+p.w45 img { width: 45%; }
+p.w50 img { width: 50%; }
+p.w55 img { width: 55%; }
+p.w60 img { width: 60%; }
+p.w65 img { width: 65%; }
+p.w70 img { width: 70%; }
+p.w75 img { width: 75%; }
+p.w80 img { width: 80%; }
+p.w85 img { width: 85%; }
+p.w90 img { width: 90%; }
+p.w95 img { width: 95%; }
+p.w100 img { width: 100%; }
+
+/* A plate that filled its printed page gets a page here too: before puts it
+   at the top of one, after stops the next paragraph sharing what is left.
+   No margin: the plate owns its page, and a top margin kept after the break
+   is what pushes a page-tall plate onto the next page and leaves a blank
+   one in front of it. */
+p.figure-full {
+  margin: 0;
+  page-break-before: always;
+  page-break-after: always;
+}
+
+/* Title page */
+section.titlepage {
+  text-align: center;
+  margin-top: 20%;
+}
+
+section.titlepage h1 {
+  font-size: 1.6em;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 2em;
+}
+
+section.titlepage p.credit {
+  margin: 0.4em 0;
+}
+
+section.titlepage p.author {
+  font-size: 1.1em;
+  margin: 0.4em 0;
+}
+
+/* Block font shifts the PDF carried (registry #18), gated by
+   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and
+   carry no line-height. A family class sits on the paragraph itself, so it
+   locally overrides the body fontFamily option (#6) without !important.
+   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value
+   function it cannot parse. */
+.fmt-mono {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+.fmt-serif {
+  font-family: serif;
+}
+
+.fmt-sans {
+  font-family: sans-serif;
+}
+
+.fmt-cursive {
+  font-family: "Comic Sans MS", cursive;
+}
+
+.fmt-minus1 {
+  font-size: 0.85em;
+}
+
+.fmt-plus1 {
+  font-size: 1.2em;
+}
+
+.fmt-plus2 {
+  font-size: 1.5em;
+}
+
+/* ── the multicol spelling of every break rule above ──────────────────
+
+   Some engines paginate by laying the book out in CSS multi-column and
+   showing one column per screen, and they read ONLY the multicol
+   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing
+   else, and the Readium family (Thorium, Kobo's phone and tablet apps).
+
+   SEPARATE rules on purpose, and last on purpose. Separate because iBooks
+   drops BOTH spellings when they share one declaration block. Last because
+   these selectors repeat ones used above, and a shadow placed first would
+   make ruleFor() in the tests answer with the spelling nothing else reads
+   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:
+   the engines that need this largely predate it.
+
+   Derived from the same gating that emits the real rules, never a second
+   list kept by hand. A hand-kept copy once left the whole-speech keep
+   silently inert in Apple Books while the cue keep worked. */
+table.dual-dialogue { -webkit-column-break-inside: avoid; }
+
+h2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }
+
+p.transition { -webkit-column-break-before: avoid; }
+</style>
+</head>
+<body>
+<section class="scene" id="sc-001">
+<h2 class="scene-heading">INT. ARCHIVE BASEMENT - NIGHT</h2>
+<p class="action">Steel shelving to the ceiling. A single bulb, swinging.</p>
+</section>
+<section class="scene" id="sc-002">
+<h2 class="scene-heading">EXT. LOADING DOCK - CONTINUOUS</h2>
+<p class="action">Rain on corrugated tin, loud enough to argue over.</p>
+</section>
+<section class="scene" id="sc-003">
+<h2 class="scene-heading">INT./EXT. DELIVERY VAN - MOVING - LATER</h2>
+<p class="action">The wipers lose.</p>
+</section>
+<section class="scene" id="sc-004">
+<h2 class="scene-heading">INT. ARCHIVE BASEMENT - RESHELVING - DAY</h2>
+<p class="action">A dual-margin scene number, the shooting-script shape: the same number printed at both margins.</p>
+</section>
+<section class="scene" id="sc-005">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg2" title="2" class="page-marker">2.</span>INT. READING ROOM - DAY</h2>
+<p class="action">ODILE sets down a box that is heavier than it looks.</p>
+<p class="mini-slug">INDEX CARDS</p>
+<p class="action">Handwriting from four decades, none of it consistent.</p>
+<p class="mini-slug">LEDGER, LATER</p>
+<p class="action">One column, ruled in pencil, never once balanced.</p>
+<p class="transition">CUT TO:</p>
+</section>
+<section class="scene" id="sc-006">
+<h2 class="scene-heading">INT. STAIRWELL - CONTINUOUS</h2>
+<p class="action">Footsteps going down two at a time.</p>
+<p class="transition">DISSOLVE TO:</p>
+</section>
+<section class="scene" id="sc-007">
+<h2 class="scene-heading">EXT. ARCHIVE - NIGHT</h2>
+<p class="action">The building keeps its lights on for nobody.</p>
+<p class="transition">SMASH CUT TO:</p>
+</section>
+<section class="scene" id="sc-008">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg3" title="3" class="page-marker">3.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>
+<p class="action">Nobody is where their voice says they are.</p>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="parenthetical">(O.S.)</p>
+<p class="dialogue">The period-full spelling, the one the manuals print.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="parenthetical">(V.O)</p>
+<p class="dialogue">And the one writers actually type, missing its period.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="parenthetical">(O.C)</p>
+<p class="dialogue">Off camera, also missing its period.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">A continued cue, carrying its extension.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">DR. E. T. MARCHETTI</p>
+<p class="dialogue">Dotted abbreviations sitting inside a character name.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY (V.O.)</p>
+<p class="dialogue">A hybrid: name and extension on one cue line.</p>
+</div>
+</section>
+<section class="scene" id="sc-009">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg4" title="4" class="page-marker">4.</span>INT. READING ROOM - DAY</h2>
+<p class="action">The box is open now. It was not worth the trip.</p>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="parenthetical">(quietly)</p>
+<p class="dialogue">A leading parenthetical, before a word is spoken.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">A line, and then a beat in the middle of it.</p>
+<p class="parenthetical">(reconsidering)</p>
+<p class="dialogue">And then the rest of it, after the beat.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="parenthetical">(standing)</p>
+<p class="parenthetical">(then, to WREN)</p>
+<p class="dialogue">Two stacked parentheticals before any dialogue at all.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Short.</p>
+</div>
+</section>
+<section class="scene" id="sc-010">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg5" title="5" class="page-marker">5.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>
+<p class="action">They have been at this for six hours.</p>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">No.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Yes.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">No.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">MORE-ANCHOR. This speech begins near the foot of the page on purpose, so that it runs over the break and has to be put back together on the other side. It keeps going well past the boundary so the rejoin has something substantial to work with, and so that the same speech doubles as the long-dialogue case the coverage table asks for, rather than spending two constructions on what is really one shape.</p>
+</div>
+</section>
+<section class="scene" id="sc-011">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg7" title="7" class="page-marker">7.</span>INT. CONSERVATION BENCH - DAY</h2>
+<p class="action">The label reads <strong>DO NOT LAMINATE</strong>, twice.</p>
+<p class="action">She says it <em>again</em>, and this time somebody writes it down.</p>
+<p class="action">The stamp is <strong><em>both bold and italic</em></strong> at once.</p>
+<p class="action">A styled run that <strong>crosses the wrap boundary because it keeps</strong> <strong>going for long enough to need a second line</strong>, and then stops.</p>
+<p class="action">Punctuation only, styled by itself.</p>
+<p class="action">This word is <span class="underline">underlined</span> with drawn vector art.</p>
+<p class="action">This phrase is struck through, above the baseline.</p>
+<p class="action">A table rules a border below this cell, further down.</p>
+<p class="action">A page-wide rule crosses this whole line of text.</p>
+<p class="action fmt-sans">CHYRON: EVERY NAME HERE IS INVENTED.</p>
+<p class="action fmt-minus1">A footnote, set smaller than the body.</p>
+<p class="action fmt-plus1">The index card, enlarged for the reader.</p>
+<p class="action fmt-plus2">A SIGN, VERY LARGE INDEED</p>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue fmt-sans">A text message, in the phone’s own face.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Dialogue can be <strong>bold</strong> too.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">And <em>italic</em>, which is the common one.</p>
+</div>
+</section>
+<section class="scene" id="sc-012">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg8" title="8" class="page-marker">8.</span>INT. READING ROOM - DAY</h2>
+<p class="action">They speak over each other.</p>
+<table class="dual-dialogue">
+<tr>
+<td>
+<p class="character">BUNNY</p>
+<p class="dialogue">LEFTMARK. Short, on the left.</p>
+</td>
+<td>
+<p class="character">CASSIUS</p>
+<p class="dialogue">RIGHTMARK. Short, on the right.</p>
+</td>
+</tr>
+</table>
+<p class="action">And again, at length.</p>
+<table class="dual-dialogue">
+<tr>
+<td>
+<p class="character">ODILE</p>
+<p class="dialogue">This column runs long</p>
+</td>
+<td>
+<p class="character">WREN</p>
+<p class="dialogue">And this one answers at</p>
+</td>
+</tr>
+</table>
+<p class="action">enough that the taller of similar length so neither the two passes twelve column is trivially short, estimated rendered lines, because the fallback which is the threshold measures the taller of the where the side-by-side pair and a stub would table gives up and both never reach it. speeches become ordinary sequential dialogue instead.</p>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg9" title="9" class="page-marker">9.</span>BUNNY</p>
+<p class="dialogue">Speech one. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech five. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech nine. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech ten. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg10" title="10" class="page-marker">10.</span>ODILE</p>
+<p class="dialogue">Speech eleven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech twelve. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech thirteen. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech fourteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech fifteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech sixteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech seventeen. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech eighteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg11" title="11" class="page-marker">11.</span>WREN</p>
+<p class="dialogue">Speech twenty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech twenty-one. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech twenty-two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech twenty-three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech twenty-four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech twenty-five. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech twenty-six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech twenty-seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech twenty-eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg12" title="12" class="page-marker">12.</span>BUNNY</p>
+<p class="dialogue">Speech twenty-nine. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech thirty. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech thirty-one. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech thirty-two. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech thirty-three. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">CASSIUS</p>
+<p class="dialogue">Speech thirty-four. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech thirty-five. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech thirty-six. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">BUNNY</p>
+<p class="dialogue">Speech thirty-seven. Short.</p>
+</div>
+<div class="dialogue-block">
+<p class="character"><span epub:type="pagebreak" role="doc-pagebreak" id="pg13" title="13" class="page-marker">13.</span>CASSIUS</p>
+<p class="dialogue">Speech thirty-eight. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">ODILE</p>
+<p class="dialogue">Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>
+</div>
+</section>
+<section class="scene" id="sc-013">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg14" title="14" class="page-marker">14.</span>INT. ART DEPARTMENT - DAY</h2>
+<p class="figure w40"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAAC0CAIAAAAl/ja/AAABkElEQVR42u3YsQ2AMBAEwQXRCiV8vbTqBigArJnQobW64I+Zpzd3eff+u/cz2IigETQIGgQNgkbQsIer8QlYaBA0CBoEjaBB0CBoyB0aLDSCBkGDoEHQIGgEDblDg4UGQYOgETQIGgQNgobcobHQIGgQNAgaBI2gQdCQOzRYaAQNggZBg6BB0AgacocGCw2CBkEjaBA0CBoEDblDY6FB0CBoEDQIGkGDoCF3aLDQIGgEDYIGQYOgQdDkDg0WGgQNgkbQIGgQNAgacofGQoOgQdAgaBA0ggZBQ+7QYKFB0AgaBA2CBkGDoMkdGiw0CBoEDYJG0CBoEDTkDg0WGkGDoEHQIGgEDYKG3KHBQoOgETQIGgQNggZBkzs0WGgQNAgaBI2gQdAgaMgdGiw0ggZBg6BB0CBoBA25Q4OFBkGDoBE0CBoEDYImd2iw0CBoEDQIGkGDoEHQkDs0WGgEDYIGQYOgQdAIGnKHBgsNggZBI2gQNAgaBA25Q2OhQdAgaBA0CBpBg6Ahd2iw0AgaBA1ftACAnQtcRKN0/wAAAABJRU5ErkJggg==" alt="Illustration"/></p>
+<p class="action">WREN pins a storyboard panel to the wall, printed small.</p>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">Under half a column wide, and not a thumbnail.</p>
+</div>
+</section>
+<section class="scene" id="sc-014">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg15" title="15" class="page-marker">15.</span>INT. MAP ROOM - NIGHT</h2>
+<p class="figure w100 figure-full"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARcAAAFNCAIAAAClpLwSAAAC6klEQVR42u3ZMQ2AMBRF0QvBChLqXwRK6gADDCQdupwzdmxy84Z/zPn05S7v3r3/eT8D1qgIVAQqAhWBigAVwV5XwyeALQIVgYpARYCKQEWgIsi9CLBFoCJQEagIUBGoCFQEuRcBtghUBCoCFQEqAhWBiiD3IsAWgYpARaAiQEWgIlAR5F4E2CJQEagIVASoCFQEKoLciwBbBCoCFYGKABWBikBFkHsRYItARaAiUBGgIlARqAhyLwJsEagIVAQqAlQEKgIVQe5FgC0CFYGKQEWAikBFoCLIvQiwRaAiUBGoCFARqAhUBLkXAbYIVAQqAhUBKgIVgYog9yLAFoGKQEWgIkBFoCJQEeReBNgiUBGoCFQEKvIFoCJQEeReBLYIUBGoCFQEKgJUBCqC3IvAFgEqAhWBikBFgIpARZB7EdgiQEWgIlARqAhQEagIci8CWwSoCFQEKgIVASoCFUHuRWCLABWBikBFoCJARaAiyL0IbBGgIlARqAhUBKgIVAS5F4EtAlQEKgIVgYoAFYGKIPcisEWAikBFoCJQEaAiUBHkXgS2CFARqAhUBCoCVAQqgtyLwBYBKgIVgYpARYCKQEWQexHYIkBFoCJQEagIUBGoCHIvAlsEqAhUBCoCFQEqAhVB7kVgiwAVgYpARaAiUBGgIsi9CGwRqAhQEagIVAQqAlQEuReBLQIVASoCFYGKQEWAiiD3IrBFoCJARaAiUBGoCFAR5F4EtghUBKgIVAQqAhUBKoLci8AWgYoAFYGKQEWgIkBFkHsR2CJQEaAiUBGoCFQEqAhyLwJbBCoCVAQqAhWBigAVQe5FYItARYCKQEWgIlARoCLIvQhsEagIUBGoCFQEKgJUBLkXgS0CFQEqAhWBikBFgIog9yKwRaAiQEWgIlARqAhQEeReBLYIVASoCFQEKgIVASqC3IvAFoGKQEW+AFQEKgIVgYqA3IvAFoGKQEWAikBFoCJQEZB7EdgiUBGoCFARbPECaK4TCEhylCIAAAAASUVORK5CYII=" alt="Illustration"/></p>
+</section>
+<section class="scene" id="sc-015">
+<h2 class="scene-heading"><span epub:type="pagebreak" role="doc-pagebreak" id="pg16" title="16" class="page-marker">16.</span>INT. FIRE STAIRS - CONTINUOUS</h2>
+<p class="action">A production still, printed tall.</p>
+<p class="figure w55"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAAImCAIAAACZ61ISAAAELElEQVR42u3YsQ2AMBAEwQXRCiVQHHW6IRogQnbETOjQWl3w2xh3b87y7v3z+x4sICyEhbAQFggLYfFnR5dPwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwIHcsLBbCAmEhLIQFwkJY5I4FFgthISwQFsJCWCAscsfCYoGwEBbCAmEhLIQFuWNhsRAWCAthISwQFsIidyywWAgLYYGwEBbCAmGROxYWC4SFsBAWCAthISzIHQuLhbBAWAgLYYGwEBa5Y4HFQlgIC2GBsBAWwoLcsbBYCAuEhbAQFggLYZE7FlgshIWwQFgIC2GBsMgdC4sFwkJYCAuEhbAQFuSOhcVCWCAshIWwQFgIi9yxwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwIHcsLBbCAmEhLIQFwkJY5I4FFgthISwQFsJCWCAscsfCYoGwEBbCAmEhLIRF7ljuWFgshIWwQFgIC2GBsMgdC4sFwkJYCAuEhbAQFuSOhcVCWCAshIWwQFgIi9yxwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwIHcsLBbCAmEhLIQFwkJY5I4FFgthISwQFsJCWCAscsfCYoGwEBbCAmEhLIQFuWNhsRAWCAthISwQFsIidyywWAgLYSEsX4CwEBbCgtyxsFgIC4SFsBAWCAthkTsWWCyEhbBAWAgLYYGwyB0LiwXCQlgIC4SFsBAW5I6FxUJYICyEhbBAWAiL3LHAYiEshAXCQlgIC4RF7lhYLBAWwkJYICyEhbAgdywsFsICYSEshAXCQljkjgUWC2EhLBAWwkJYICxyx8JigbAQFsICYSEshAXuWFgshIWwQFgIC2GBsMgdC4sFwkJYCAuEhbAQFuSOhcVCWCAshIWwQFgIi9yxwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwIHcsLBbCAmEhLIQFwkJY5I4FFgthISwQFsJCWCAscsfCYoGwEBbCAmEhLIQFuWNhsRAWCAthISwQFsIidyywWAgLYYGwEBbCQliQOxYWC2GBsBAWwgJhISxyxwKLhbAQFggLYSEsEBa5Y2GxQFgIC2GBsBAWwoLcsbBYCAuEhbAQFggLYZE7FlgshIWwQFgIC2GBsMgdC4sFwkJYCAuEhbAQFuSOhcVCWCAshIWwQFgIi9yxwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwwB0Li4WwEJYvQFgIC2GBsMgdC4sFwkJYCAuEhbAQFuSOhcVCWCAshIWwQFgIi9yxwGIhLIQFwkJYCAuERe5YWCwQFsJCWCAshIWwIHcsLBbCAmEhLIQFwkJY5I4FFgthISwQFsJCWCAscsfCYoGwEBbCAmEhLIQFuWNhsRAWCAthISwQFsIidyywWAgLYYGwEBbCAmGROxYWC2GBsBAWwoK5HqCGGH9nAjavAAAAAElFTkSuQmCC" alt="Illustration"/></p>
+</section>
+</body>
+</html>

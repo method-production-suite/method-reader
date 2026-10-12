@@ -1,0 +1,22 @@
+[package]
+name = "sp-parser"
+description = "Screepub's screenplay parser: what a PDF's pages say, as classified screenplay elements"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+# float_roundtrip: serde_json's default float parser can land one ULP off
+# (it reads 107.99999999999999 as 108), and the oracle's numbers are pdf.js's
+# exact doubles, which every threshold here is compared against.
+serde_json = { workspace = true, features = ["float_roundtrip"] }
+sp-model.workspace = true
+# Pure-Rust deflate and inflate: png.ts used node:zlib (level 9).
+miniz_oxide = "0.8"
+regex = "1"
