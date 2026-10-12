@@ -7,13 +7,16 @@
 //! book, book-queue.js). Answers come back as events at the top of the next
 //! frame and are handed to the surface that asked, by [`Purpose`].
 
+pub mod book;
+pub mod bookview;
 pub mod convert;
 pub mod frame;
 pub mod host;
+pub mod menu;
 pub mod panel;
-pub mod preview;
 pub mod read;
 pub mod show;
+pub mod sound;
 pub mod tune;
 pub mod widgets;
 
@@ -92,6 +95,9 @@ pub struct App {
     pub drag_hover: bool,
     pub dark: bool,
     fonts_set: bool,
+    /// The Mac menu bar (menu.rs), when this window installed one.
+    #[cfg(target_os = "macos")]
+    pub menus: Option<menu::Menus>,
     /// Whether the window had the focus last frame (a return is news).
     pub window_focused: bool,
 
@@ -103,6 +109,8 @@ pub struct App {
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
+    /// The book as each place shows it (bookview.rs).
+    pub views: bookview::Views,
 }
 
 impl App {
@@ -133,6 +141,8 @@ impl App {
             drag_hover: false,
             dark: false,
             fonts_set: false,
+            #[cfg(target_os = "macos")]
+            menus: None,
             window_focused: true,
             convert: convert::State::default(),
             show: None,
@@ -142,6 +152,7 @@ impl App {
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
+            views: bookview::Views::default(),
         };
         // The one line that proves the engine is there.
         app.call(Request::Version, Purpose::Version);
@@ -255,13 +266,7 @@ impl App {
     /// Everything that has arrived since the last frame.
     pub fn pump(&mut self) {
         for (purpose, message) in std::mem::take(&mut self.refused) {
-            self.deliver(
-                purpose,
-                Reply {
-                    answer: Err(message),
-                    preview: None,
-                },
-            );
+            self.deliver(purpose, Reply::failed(message));
         }
         for event in self.rt.poll() {
             match event {
@@ -406,6 +411,10 @@ impl App {
 
     /// One frame: answers in, timers, input, drawing, the keyboard back.
     pub fn frame(&mut self, ui: &mut Ui) {
+        #[cfg(target_os = "macos")]
+        if let Some(menus) = &self.menus {
+            menus.pump(ui.ctx());
+        }
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
@@ -415,11 +424,13 @@ impl App {
             return;
         }
         self.dark = ui.ctx().system_theme() == Some(egui::Theme::Dark);
+        self.views.scale = ui.ctx().pixels_per_point();
         self.pump();
         self.tick();
         frame::input(self, ui);
         self.stops.clear();
         frame::draw(self, ui);
+        panel::give_back_focus(self, ui.ctx());
         if self.restore_focus {
             self.restore_focus = false;
             let pane = Stop {
@@ -443,6 +454,7 @@ impl App {
                 ui.memory_mut(|m| m.request_focus(id));
             }
         }
+        panel::pay_brass(self, ui.ctx());
         if !self.quiet()
             || self.show.as_ref().is_some_and(show::Show::running)
             || self.watcher.running()
@@ -459,6 +471,20 @@ impl App {
             Err(m) => serde_json::json!({"ok": false, "error": {"code": "internal", "message": m}}),
         }
     }
+}
+
+/// The window as tauri.conf.json described it: "Screepub", 1280 by 800,
+/// a 640 by 480 floor, and on a Mac no title bar of its own (the paper runs
+/// under the traffic lights).
+pub fn viewport() -> egui::ViewportBuilder {
+    egui::ViewportBuilder::default()
+        .with_title("Screepub")
+        .with_inner_size([1280.0, 800.0])
+        .with_min_inner_size([640.0, 480.0])
+        .with_resizable(true)
+        .with_fullsize_content_view(true)
+        .with_title_shown(false)
+        .with_titlebar_shown(false)
 }
 
 /// eframe's window: the App, drawn once a frame.

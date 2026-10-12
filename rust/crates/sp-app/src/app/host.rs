@@ -28,6 +28,18 @@ pub trait Poster: Send + Sync {
     fn post(&self, url: &str, body: &Value) -> Option<(u16, Option<Value>)>;
 }
 
+/// One of the typewriter's two sounds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Sound {
+    Key,
+    Ding,
+}
+
+pub trait Speaker {
+    /// Play a sound now; a computer that cannot is quiet.
+    fn play(&mut self, sound: Sound);
+}
+
 pub trait Updater {
     /// Whether this build can update itself at all.
     fn ready(&self) -> bool;
@@ -55,6 +67,7 @@ pub struct Host {
     pub platform: Platform,
     pub reduced_motion: Arc<AtomicBool>,
     pub updater: Box<dyn Updater>,
+    pub speaker: Box<dyn Speaker>,
 }
 
 impl Host {
@@ -207,11 +220,50 @@ impl Host {
             platform: Platform::current(),
             reduced_motion,
             updater: Box::new(NoUpdater),
+            speaker: Box::new(Typewriter::default()),
+        }
+    }
+}
+
+/// The real speaker, opened at the first sound. If opening fails it is
+/// not tried again (typewriter.js's `broken`).
+#[derive(Default)]
+struct Typewriter {
+    speaker: Option<super::sound::Speaker>,
+    broken: bool,
+}
+
+impl Speaker for Typewriter {
+    fn play(&mut self, sound: Sound) {
+        if self.broken {
+            return;
+        }
+        if self.speaker.is_none() {
+            self.speaker = super::sound::Speaker::open();
+            self.broken = self.speaker.is_none();
+        }
+        if let Some(speaker) = self.speaker.as_mut() {
+            match sound {
+                Sound::Key => speaker.key(),
+                Sound::Ding => speaker.ding(),
+            }
         }
     }
 }
 
 // ------------------------------------------------------------------ fakes
+
+/// A speaker that remembers what it was asked to play.
+#[derive(Clone, Default)]
+pub struct FakeSpeaker {
+    pub played: Arc<Mutex<Vec<Sound>>>,
+}
+
+impl Speaker for FakeSpeaker {
+    fn play(&mut self, sound: Sound) {
+        self.played.lock().expect("fake").push(sound);
+    }
+}
 
 /// Dialogs that answer from a script, and remember being asked.
 #[derive(Clone, Default)]
@@ -307,6 +359,7 @@ pub struct Fakes {
     pub poster: Arc<FakePoster>,
     pub clock: FakeClock,
     pub reduced_motion: Arc<AtomicBool>,
+    pub speaker: FakeSpeaker,
 }
 
 impl Fakes {
@@ -324,6 +377,7 @@ impl Fakes {
                 ready: platform == Platform::Mac,
                 found: Ok(None),
             }),
+            speaker: Box::new(self.speaker.clone()),
         }
     }
 

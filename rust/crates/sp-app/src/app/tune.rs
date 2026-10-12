@@ -362,12 +362,11 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 app.tune.status = status_for(Phase::Failed(said.as_deref()));
                 return;
             }
-            if let Some(preview) = reply.preview
+            if let Some(html) = answer.get("previewHtml").and_then(Value::as_str)
+                && !html.trim().is_empty()
                 && let Some(script) = app.script.as_mut()
             {
-                script.preview = Some(preview)
-                    .filter(|p| !p.is_blank())
-                    .or(script.preview.take());
+                script.preview_html = html.to_string();
             }
             read::rerendered(app);
             app.tune.status = status_for(if app.tune.pending.is_empty() {
@@ -599,10 +598,40 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         widgets::state_label(ui, &t, "Preview");
         let frame =
             Rect::from_min_size(ui.cursor().min, Vec2::new(preview_rect.width(), preview_h));
-        super::preview::sheet(ui, &t, frame);
-        if let Some(preview) = app.script.as_ref().and_then(|s| s.preview.clone()) {
-            let laid = super::preview::lay_out(ui, &t, &preview, frame.width());
-            super::preview::paint(ui, &laid, frame.min, frame.shrink(1.0), &t, |_| true);
+        super::bookview::sheet(ui, &t, frame);
+        let html = app
+            .script
+            .as_ref()
+            .map(|s| s.preview_html.clone())
+            .unwrap_or_default();
+        if !html.trim().is_empty() {
+            // The same document as Read, at this column's width; a swatch,
+            // not somewhere you read: painted, hidden from the screen reader.
+            let dark = app.dark;
+            let inner = frame.shrink(1.0);
+            let view = app
+                .views
+                .get(super::bookview::Place::Tune, &html, inner.width(), &t, dark);
+            let content = view.book.height;
+            ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt("tune-preview")
+                    .max_height(inner.height())
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        let (rect, _) = ui
+                            .allocate_exact_size(Vec2::new(inner.width(), content), Sense::hover());
+                        let visible = ui.clip_rect().intersect(rect);
+                        if visible.height() > 0.0 {
+                            view.paint_slice(
+                                ui,
+                                "tune-preview",
+                                visible,
+                                visible.top() - rect.top(),
+                            );
+                        }
+                    });
+            });
         }
         ui.allocate_rect(frame, Sense::hover());
     });
@@ -726,9 +755,10 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
             |ui| match &knob.kind {
                 Kind::Toggle => {
                     let mut on = value.as_ref().and_then(Value::as_bool).unwrap_or(false);
-                    let r = ui
-                        .add_enabled(!idle, egui::Checkbox::without_text(&mut on))
-                        .labelled_by(label.id);
+                    let r = ui.add_enabled(!idle, egui::Checkbox::without_text(&mut on));
+                    ui.ctx()
+                        .accesskit_node_builder(r.id, |n| n.set_label(knob.label));
+                    let _ = label.id;
                     control_id = Some(r.id);
                     if r.changed() {
                         moved = Some(Value::Bool(on));
@@ -756,7 +786,9 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
                                 }
                             })
                     });
-                    let r = combo.inner.response.labelled_by(label.id);
+                    let r = combo.inner.response;
+                    ui.ctx()
+                        .accesskit_node_builder(r.id, |n| n.set_label(knob.label));
                     control_id = Some(r.id);
                 }
                 Kind::Range { .. } => {
@@ -875,6 +907,7 @@ fn draw_keep_choice(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(group.response.id, |n| {
         n.set_role(accesskit::Role::RadioGroup);
+        n.set_bounds(widgets::bounds(group.response.rect));
         n.set_label(m::KEEP_LEGEND);
     });
 }
@@ -931,6 +964,7 @@ fn draw_page_switches(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(group.response.id, |n| {
         n.set_role(accesskit::Role::Group);
+        n.set_bounds(widgets::bounds(group.response.rect));
         n.set_label(m::SWITCHES_LEGEND);
     });
 }

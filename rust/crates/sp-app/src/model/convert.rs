@@ -5,7 +5,6 @@
 use serde_json::{Map, Value};
 
 use super::json::{error_message, ok, str_at};
-use super::preview::Preview;
 
 /// The heading names the CAUSE, not the failure.
 pub const HEADINGS: &[(&str, &str)] = &[
@@ -340,15 +339,16 @@ pub struct Script {
     pub warnings: Vec<String>,
     pub epub_path: Option<String>,
     pub fountain_path: Option<String>,
-    /// None when the engine sent no pages (Read's blank notice).
-    pub preview: Option<Preview>,
+    /// The engine's own preview document (`previewHtml`, the EPUB's
+    /// XHTML with css.ts inline); empty when it sent none (Read's blank
+    /// notice).
+    pub preview_html: String,
     /// The script's settings once this window has read them.
     pub settings: Option<Map<String, Value>>,
 }
 
-/// `scriptFrom(path, answer)`. The preview rides beside the JSON answer
-/// (the engine's preview model, not a field of the CLI's answer).
-pub fn script_from(path: &str, answer: &Value, preview: Option<Preview>) -> Script {
+/// `scriptFrom(path, answer)`.
+pub fn script_from(path: &str, answer: &Value) -> Script {
     let text = |key: &str| str_at(answer, key).map(str::to_string);
     Script {
         path: path.to_string(),
@@ -368,7 +368,7 @@ pub fn script_from(path: &str, answer: &Value, preview: Option<Preview>) -> Scri
             .unwrap_or_default(),
         epub_path: text("epubPath"),
         fountain_path: text("fountainPath"),
-        preview: preview.filter(|p| !p.is_blank()),
+        preview_html: text("previewHtml").unwrap_or_default(),
         settings: None,
     }
 }
@@ -705,7 +705,7 @@ mod tests {
 
     #[test]
     fn the_still_open_note_names_the_book_or_nothing() {
-        let mut script = script_from("/x/a.pdf", &json!({"title": "Field Station"}), None);
+        let mut script = script_from("/x/a.pdf", &json!({"title": "Field Station"}));
         assert_eq!(
             still_open_note(Some(&script)).as_deref(),
             Some("Field Station is still open. This changed nothing about it.")
@@ -717,15 +717,11 @@ mod tests {
 
     #[test]
     fn a_script_is_normalised_once() {
-        let s = script_from(
-            "/x/Dropped.pdf",
-            &json!({"ok": true, "warnings": ["w", 3]}),
-            None,
-        );
+        let s = script_from("/x/Dropped.pdf", &json!({"ok": true, "warnings": ["w", 3]}));
         assert_eq!(s.title, "Dropped.pdf");
         assert_eq!(s.warnings, vec!["w".to_string()]);
         assert_eq!(s.epub_path, None);
-        assert!(s.preview.is_none());
+        assert!(s.preview_html.is_empty());
     }
 
     #[test]
