@@ -160,7 +160,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "update-signature",
-        help: "the tag-time gate: does the app's config trust a real updater key",
+        help: "the tag-time gate: does the app trust a real updater key (sp_update::PUBKEY)",
         main: packaging::update_signature_main,
     },
     Command {
