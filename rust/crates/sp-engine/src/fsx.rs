@@ -29,6 +29,10 @@ pub fn read_text(path: &str) -> Result<String, EngineError> {
 
 /// `writeFileSync(path, data)`.
 pub fn write(path: &str, data: &[u8]) -> Result<(), EngineError> {
+    if testing::take_fault(testing::Fault::Write) {
+        let _ = fs::write(path, &data[..data.len() / 2]);
+        return Err(testing::enospc());
+    }
     fs::write(path, data).map_err(|e| fs_err(&e, "open", path, None))
 }
 
@@ -39,9 +43,60 @@ pub fn rename(from: &str, to: &str) -> Result<(), EngineError> {
 
 /// `copyFileSync(from, to)`.
 pub fn copy(from: &str, to: &str) -> Result<(), EngineError> {
+    if testing::take_fault(testing::Fault::Copy) {
+        if let Ok(bytes) = fs::read(from) {
+            let _ = fs::write(to, &bytes[..bytes.len() / 2]);
+        }
+        return Err(testing::enospc());
+    }
     fs::copy(from, to)
         .map(|_| ())
         .map_err(|e| fs_err(&e, "copyfile", from, Some(to)))
+}
+
+/// A seam for tests only: make the NEXT write or copy on this thread put
+/// half its bytes down and then fail the way a full disk does, which is
+/// what the TypeScript's tests do with `spyOn(fs, ...)`. Thread-local, and
+/// Rust runs each test on its own thread, so one test's fault never reaches
+/// another's write.
+#[doc(hidden)]
+pub mod testing {
+    use std::cell::Cell;
+
+    use crate::errors::{EngineError, FsError};
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Fault {
+        Write,
+        Copy,
+    }
+
+    thread_local! {
+        static NEXT: Cell<Option<Fault>> = const { Cell::new(None) };
+    }
+
+    /// Arm one fault for the next matching call on this thread.
+    pub fn fail_next(fault: Fault) {
+        NEXT.with(|n| n.set(Some(fault)));
+    }
+
+    pub(crate) fn take_fault(fault: Fault) -> bool {
+        NEXT.with(|n| {
+            if n.get() == Some(fault) {
+                n.set(None);
+                true
+            } else {
+                false
+            }
+        })
+    }
+
+    pub(crate) fn enospc() -> EngineError {
+        EngineError::Fs(FsError::with_code(
+            "ENOSPC",
+            "ENOSPC: no space left on device, write",
+        ))
+    }
 }
 
 /// `mkdirSync(path, { recursive: true })`.
