@@ -752,6 +752,18 @@ names the check it affects.
   `/*`, 50,000 `[[`), which fountain-js finishes in seconds to hours and
   Rust refuses in about a second. Checked by sp-fountain/tests/hostile.rs;
   no committed fixture or real script trips either budget.
+- **Over-size pictures are not decoded (review, 2026-10-12).** sp-pdf
+  sizes every buffer from a picture's declared Width and Height (and the
+  widest by the tallest of the picture and its masks, and a JPEG's own
+  frame), not from the bytes it carries, so a few hundred bytes of PDF
+  took 2.2 GB (12,000 x 12,000 with an SMask) or 2.7 GB (a JPEG whose frame
+  says 30,000 x 30,000), and the old 1e9-pixel cap allowed about 15 GB:
+  an allocation failure aborts the process. `sp_pdf::images::MAX_PIXELS`
+  (2^26, a 600 dpi Letter page with room) now refuses such a picture as an
+  undecodable one is refused. pdf.js has no cap; a picture between 2^26 and
+  pdf.js's own failure point would be carried by the TypeScript and not by
+  Rust. No committed fixture or real script comes near it. Checked by
+  sp-pdf/tests/hostile_images.rs.
 - **services/device-requests (decided 2026-10-11).** Ported to Rust
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker

@@ -871,6 +871,11 @@ impl JpegImage {
                     f.scan_lines = dnl_scan_lines.unwrap_or(sof_scan_lines);
                     f.samples_per_line = get_u16(data, offset)? as usize;
                     offset += 2;
+                    // The coefficient buffers are sized from the frame, not
+                    // from the scan data: the same cap as the picture's own.
+                    if f.samples_per_line * f.scan_lines > crate::images::MAX_PIXELS {
+                        return Err(JpegError);
+                    }
                     let count = *data.get(offset).ok_or(JpegError)?;
                     offset += 1;
                     let (mut max_h, mut max_v) = (0, 0);
