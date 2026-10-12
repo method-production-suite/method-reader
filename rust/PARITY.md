@@ -618,7 +618,22 @@ cutover.
 | tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | todo |
 | tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | `build-sidecar` answers "retired" | retired |
 | tools/sidecar-targets.ts | TS | build-sidecar.ts, desktop/src-tauri/src/sidecar.rs | none | retired |
-| tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine's answers; deleted at cutover with it | stays until cutover |
+| tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine asked to show its work (dump.ts also writes each picture's raw pixels to `pixels/`); deleted at cutover with it | stays until cutover |
+
+Transitional TypeScript generators outside tools/. Each reads the TypeScript
+engine or its dependencies (pdfjs-dist, fountain-js), so each retires at
+cutover and the file it wrote stays committed as the only copy.
+`rust/crates/xtask/tests/generated_files.rs` pins every such file by
+sha256 (LF line endings), so a hand edit or a regeneration from a different
+pdf.js shows; a deliberate regeneration before cutover updates the digest in
+the same commit.
+
+| Generator | Writes (committed) | status |
+|---|---|---|
+| rust/crates/sp-pdf/oracle/gen-tables.ts | rust/crates/sp-pdf/src/tables.rs (pdf.js 6.3.289's data tables as Rust) | retires at cutover; output pinned |
+| rust/crates/sp-epub/tests/data/options-golden.ts | rust/crates/sp-epub/tests/data/options-golden.json | retires at cutover; output pinned |
+| rust/crates/sp-mobi/tests/data/mobi-sources.ts | rust/crates/sp-mobi/tests/data/mobi-sources.json | retires at cutover; output pinned |
+| rust/crates/sp-fdx/tests/data/record-tokens.ts | rust/crates/sp-fdx/tests/data/fountain-tokens.json | retires at cutover; output pinned |
 
 ## Decisions
 

@@ -5077,6 +5077,7 @@ name = "xtask"
 version = "0.11.1"
 dependencies = [
  "serde_json",
+ "sha2",
  "zip",
 ]
 
