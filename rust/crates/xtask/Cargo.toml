@@ -6,10 +6,36 @@ license.workspace = true
 version.workspace = true
 rust-version.workspace = true
 publish = false
+# `cargo xtask` runs this one; the other binary is a test stand-in.
+default-run = "xtask"
 
 [lints]
 workspace = true
 
+[[bin]]
+name = "xtask"
+path = "src/main.rs"
+
+# A stand-in for Chrome, for tests/capture_chrome.rs: it writes the
+# DevToolsActivePort a test's fake DevTools server needs, then waits.
+[[bin]]
+name = "capture-fake-chrome"
+path = "src/capture/fake_chrome.rs"
+test = false
+doc = false
+
 [dependencies]
 serde_json.workspace = true
 zip.workspace = true
+# The capture tool (src/capture/): Chrome's DevTools protocol over a plain
+# ws://127.0.0.1 socket (no TLS feature), the screenshots' base64, reading
+# and diffing PNGs, and Ctrl-C/SIGTERM so an interrupted run cleans up.
+tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
+base64 = "0.23"
+png = "0.18"
+signal-hook = { version = "0.4", default-features = false }
+
+[target.'cfg(unix)'.dependencies]
+# Safe kill(2): SIGTERM before SIGKILL, and "is that pid alive" for the
+# capture's library marker.
+nix = { version = "0.31", default-features = false, features = ["signal"] }
