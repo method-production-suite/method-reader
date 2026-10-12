@@ -1,0 +1,2358 @@
+{
+  "$machine": {
+    "os": "darwin",
+    "calibre": true,
+    "kfxPlugin": true,
+    "previewer": true,
+    "books": true,
+    "sendToKindle": false,
+    "mailHandler": "efa0c2bcce3dc31a"
+  },
+  "$epoch": 1767225600,
+  "convert": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "mobiPath": "$WORK/out/book.mobi",
+      "azw3Path": "$WORK/out/book.azw3",
+      "fountainPath": "$WORK/out/script.fountain",
+      "imagesPath": "$WORK/out/script.images",
+      "imageCount": 1,
+      "previewHtmlPath": "$WORK/out/book.preview.html",
+      "fdxPath": "$WORK/out/book.fdx",
+      "debugPath": "$WORK/out/book.elements.json"
+    },
+    "stderr": null,
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/book.mobi": {
+        "header": "c94092fa69d3e955",
+        "records": [
+          "f406b8221d73707c",
+          "58625e65762e5100",
+          "17d828b58581e73e",
+          "61fec89439b10d8e",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.azw3": {
+        "header": "5fca12af9eba692d",
+        "records": [
+          "cd929367e77a36c9",
+          "891f24c33cabd2ea",
+          "7208c8651904c8be",
+          "93cb1d824946ee88",
+          "6e340b9cffb37a98",
+          "cdbae062d186cf8b",
+          "1fa2f292826f7581",
+          "540cc8e9015de791",
+          "4cab30ce69cb85ee",
+          "cb844a7b52af4f7f",
+          "84d739f61f80a9c4",
+          "38bb1ffddcf2a4ec",
+          "8772cc799ca70378",
+          "ac2b0609989d50d8",
+          "cd3517aa4a74c8f5",
+          "e4259213b4a0593b",
+          "px:7d593ed429f44ea1",
+          "b044696731865e85",
+          "17d828b58581e73e",
+          "1e1f8d95395f6a00",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.fdx": {
+        "text": "c02b9c66687c15aa"
+      },
+      "out/book.preview.html": {
+        "html": "d5ab7a1850693b15"
+      },
+      "out/book.elements.json": {
+        "json": "3c313c4f0e5a9896"
+      },
+      "out/script.fountain": {
+        "text": "34d82b9e89d2105c"
+      },
+      "out/script.images": {
+        "folder": {
+          "p002-01.png": "px:7d593ed429f44ea1"
+        }
+      }
+    }
+  },
+  "convert-phone": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "mobiPath": "$WORK/out/book.mobi",
+      "azw3Path": "$WORK/out/book.azw3",
+      "fountainPath": "$WORK/out/script.fountain",
+      "imagesPath": "$WORK/out/script.images",
+      "imageCount": 1,
+      "previewHtmlPath": "$WORK/out/book.preview.html",
+      "fdxPath": "$WORK/out/book.fdx",
+      "debugPath": "$WORK/out/book.elements.json"
+    },
+    "stderr": null,
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "f0c503a92a0681ef"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/book.mobi": {
+        "header": "c94092fa69d3e955",
+        "records": [
+          "f406b8221d73707c",
+          "58625e65762e5100",
+          "17d828b58581e73e",
+          "61fec89439b10d8e",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.azw3": {
+        "header": "5fca12af9eba692d",
+        "records": [
+          "cd929367e77a36c9",
+          "999e8ec71241870d",
+          "7208c8651904c8be",
+          "93cb1d824946ee88",
+          "6e340b9cffb37a98",
+          "cdbae062d186cf8b",
+          "1fa2f292826f7581",
+          "540cc8e9015de791",
+          "4cab30ce69cb85ee",
+          "cb844a7b52af4f7f",
+          "84d739f61f80a9c4",
+          "38bb1ffddcf2a4ec",
+          "8772cc799ca70378",
+          "ac2b0609989d50d8",
+          "cd3517aa4a74c8f5",
+          "e4259213b4a0593b",
+          "px:7d593ed429f44ea1",
+          "b044696731865e85",
+          "17d828b58581e73e",
+          "1e1f8d95395f6a00",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.fdx": {
+        "text": "c02b9c66687c15aa"
+      },
+      "out/book.preview.html": {
+        "html": "550b3000f9e6db44"
+      },
+      "out/book.elements.json": {
+        "json": "3c313c4f0e5a9896"
+      },
+      "out/script.fountain": {
+        "text": "34d82b9e89d2105c"
+      },
+      "out/script.images": {
+        "folder": {
+          "p002-01.png": "px:7d593ed429f44ea1"
+        }
+      }
+    }
+  },
+  "convert-human": {
+    "exit": 0,
+    "stdout": "<not JSON> The Second Unit, by J. Q. Nobody\n  2 pages · 1 scenes · 2 speaking characters (WREN, HOLT…)\n  wrote $WORK/out/book.epub\n  wrote $WORK/out/book.mobi\n  wrote $WORK/out/book.fountain\n  wrote $WORK/out/book.images\n",
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/book.mobi": {
+        "header": "c94092fa69d3e955",
+        "records": [
+          "f406b8221d73707c",
+          "58625e65762e5100",
+          "17d828b58581e73e",
+          "61fec89439b10d8e",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.fountain": {
+        "text": "34d82b9e89d2105c"
+      },
+      "out/book.images": {
+        "folder": {
+          "p002-01.png": "px:7d593ed429f44ea1"
+        }
+      }
+    }
+  },
+  "convert-progress": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "imageCount": 1
+    },
+    "stderr": "{\"progress\":{\"stage\":\"parse\",\"percent\":30,\"page\":1,\"pages\":2}}\n{\"progress\":{\"stage\":\"page\",\"page\":2,\"paragraphs\":[\"INT. COLOUR TIMING BAY - NIGHT\",\"A reference print hangs under the loupe, one frame of it circled in grease pencil.\",\"WREN\",\"The blue is two points cold and it has been all week.\",\"HOLT writes the number down without looking up.\",\"HOLT\",\"Then we time it again.\"]}}\n{\"progress\":{\"stage\":\"parse\",\"percent\":60,\"page\":2,\"pages\":2}}\n{\"progress\":{\"stage\":\"pictures\",\"percent\":60}}\n{\"progress\":{\"stage\":\"pictures\",\"percent\":85}}\n{\"progress\":{\"stage\":\"render\",\"percent\":85}}\n{\"progress\":{\"stage\":\"render\",\"percent\":100}}\n",
+    "outputs": {}
+  },
+  "convert-inline": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "imageCount": 1,
+      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. COLOUR TIMING BAY - NIGHT</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* A picture carried out of the source PDF (registry #19). These rules are\n   only in a book that shows one. No keep, on purpose: this box holds one\n   line box, so there is nothing inside it to keep together. The reasons in\n   full are in src/epub/css.ts, above screenplayCss; this file is generated\n   from it, so that header is not here. */\n.figure {\n  margin: 1em 0;\n  text-align: center;\n}\n\n/* Only the width is authored, so the height follows the aspect ratio. A\n   defensive restatement of the initial value, against a reading system\n   whose own stylesheet sets a height on images. */\n.figure img {\n  height: auto;\n}\n\n/* The width the picture had on the printed page, as a share of the text\n   column to the nearest five. A class rather than an inline style, which\n   the reader preview refuses. */\np.w5 img { width: 5%; }\np.w10 img { width: 10%; }\np.w15 img { width: 15%; }\np.w20 img { width: 20%; }\np.w25 img { width: 25%; }\np.w30 img { width: 30%; }\np.w35 img { width: 35%; }\np.w40 img { width: 40%; }\np.w45 img { width: 45%; }\np.w50 img { width: 50%; }\np.w55 img { width: 55%; }\np.w60 img { width: 60%; }\np.w65 img { width: 65%; }\np.w70 img { width: 70%; }\np.w75 img { width: 75%; }\np.w80 img { width: 80%; }\np.w85 img { width: 85%; }\np.w90 img { width: 90%; }\np.w95 img { width: 95%; }\np.w100 img { width: 100%; }\n\n/* A plate that filled its printed page gets a page here too: before puts it\n   at the top of one, after stops the next paragraph sharing what is left.\n   No margin: the plate owns its page, and a top margin kept after the break\n   is what pushes a page-tall plate onto the next page and leaves a blank\n   one in front of it. */\np.figure-full {\n  margin: 0;\n  page-break-before: always;\n  page-break-after: always;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. COLOUR TIMING BAY - NIGHT</h2>\n<p class=\"figure w40\"><img src=\"data:image/png;base64,<pixels 10f9bb5e5265ed47>\" alt=\"Illustration\"/></p>\n<p class=\"action\">A reference print hangs under the loupe, one frame of it circled in grease pencil.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">The blue is two points cold and it has been all week.</p>\n</div>\n<p class=\"action\">HOLT writes the number down without looking up.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">Then we time it again.</p>\n</div>\n</section>\n</body>\n</html>\n"
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "convert-beside": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/in/jpx.epub",
+      "mobiPath": "$WORK/in/jpx.mobi",
+      "fountainPath": "$WORK/in/jpx.fountain",
+      "imagesPath": "$WORK/in/jpx.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "in": {
+        "tree": {
+          "jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx.mobi": {
+            "header": "c94092fa69d3e955",
+            "records": [
+              "f406b8221d73707c",
+              "58625e65762e5100",
+              "17d828b58581e73e",
+              "61fec89439b10d8e",
+              "3712d3408f89530c"
+            ]
+          },
+          "jpx.pdf": {
+            "text": "5fd39c7a54258756"
+          }
+        }
+      }
+    }
+  },
+  "convert-library": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/library/jpx/jpx.epub",
+      "fountainPath": "$WORK/library/jpx/jpx.fountain",
+      "imagesPath": "$WORK/library/jpx/jpx.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {
+          "jpx/jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx/jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx/jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx/jpx.screepub.json": {
+            "json": "577898c1941870e6"
+          },
+          "jpx/source.json": {
+            "json": "70383e02915a1ab9"
+          }
+        }
+      }
+    }
+  },
+  "convert-library-again": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/library/jpx/jpx.epub",
+      "mobiPath": "$WORK/library/jpx/jpx.mobi",
+      "fountainPath": "$WORK/library/jpx/jpx.fountain",
+      "imagesPath": "$WORK/library/jpx/jpx.images",
+      "imageCount": 1,
+      "settingsPath": "$WORK/library/jpx/jpx.screepub.json"
+    },
+    "stderr": "screepub: using this script's saved settings in $WORK/library/jpx/jpx.screepub.json\n",
+    "outputs": {
+      "library": {
+        "tree": {
+          "jpx/jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx/jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx/jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx/jpx.mobi": {
+            "header": "c94092fa69d3e955",
+            "records": [
+              "f406b8221d73707c",
+              "58625e65762e5100",
+              "17d828b58581e73e",
+              "61fec89439b10d8e",
+              "3712d3408f89530c"
+            ]
+          },
+          "jpx/jpx.screepub.json": {
+            "json": "577898c1941870e6"
+          },
+          "jpx/source.json": {
+            "json": "70383e02915a1ab9"
+          }
+        }
+      }
+    }
+  },
+  "convert-sidecar": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/library/jpx/jpx.epub",
+      "fountainPath": "$WORK/library/jpx/jpx.fountain",
+      "imagesPath": "$WORK/library/jpx/jpx.images",
+      "imageCount": 1,
+      "settingsPath": "$WORK/in/jpx.screepub.json"
+    },
+    "stderr": "screepub: using this script's saved settings in $WORK/in/jpx.screepub.json\n",
+    "outputs": {
+      "library": {
+        "tree": {
+          "jpx/jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "a146a380fa17f0d4"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx/jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx/jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx/jpx.screepub.json": {
+            "json": "6e968ac32fc6651e"
+          },
+          "jpx/source.json": {
+            "json": "70383e02915a1ab9"
+          }
+        }
+      },
+      "out": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-sidecar-override": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "fountainPath": "$WORK/out/book.fountain",
+      "imagesPath": "$WORK/out/book.images",
+      "imageCount": 1,
+      "settingsPath": "$WORK/in/jpx.screepub.json"
+    },
+    "stderr": "screepub: using this script's saved settings in $WORK/in/jpx.screepub.json (the options you passed override them)\n",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "602b47b53808f0c4"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      }
+    }
+  },
+  "convert-sidecar-broken": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "fountainPath": "$WORK/out/book.fountain",
+      "imagesPath": "$WORK/out/book.images",
+      "imageCount": 1
+    },
+    "stderr": "screepub: ignoring $WORK/in/jpx.screepub.json, which is not a settings object\n",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      }
+    }
+  },
+  "convert-app-defaults": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/library/jpx/jpx.epub",
+      "fountainPath": "$WORK/library/jpx/jpx.fountain",
+      "imagesPath": "$WORK/library/jpx/jpx.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {
+          "jpx/jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "b4ab249128f550ed"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx/jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx/jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx/jpx.screepub.json": {
+            "json": "5052154e6f36ffad"
+          },
+          "jpx/source.json": {
+            "json": "70383e02915a1ab9"
+          }
+        }
+      },
+      "config": {
+        "tree": {
+          "settings.json": {
+            "json": "2e0f56ec42c5f00b"
+          }
+        }
+      }
+    }
+  },
+  "convert-follow-defaults": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/library/jpx/jpx.epub",
+      "fountainPath": "$WORK/library/jpx/jpx.fountain",
+      "imagesPath": "$WORK/library/jpx/jpx.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {
+          "jpx/jpx.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "jpx/jpx.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "jpx/jpx.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "jpx/source.json": {
+            "json": "70383e02915a1ab9"
+          }
+        }
+      }
+    }
+  },
+  "convert-options-file": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "fountainPath": "$WORK/out/book.fountain",
+      "imagesPath": "$WORK/out/book.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "e23d13957df74e33"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "6b3733f87a64726d"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "9190cf2238c13aeb"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/book.fountain": {
+        "text": "34d82b9e89d2105c"
+      }
+    }
+  },
+  "convert-title": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "An Invented Title",
+      "author": "Nobody In Particular",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "mobiPath": "$WORK/out/book.mobi",
+      "fountainPath": "$WORK/out/book.fountain",
+      "imagesPath": "$WORK/out/book.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "e6b19775cc6496a7"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "76b317b85540a122"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "e19f42887f2d8f30"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/book.mobi": {
+        "header": "c30908aca17fe259",
+        "records": [
+          "fd3177efc7299a4f",
+          "7e8d039c54f5e201",
+          "17d828b58581e73e",
+          "6177541ad446c67e",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/book.fountain": {
+        "text": "40a22a1c8e3beef0"
+      }
+    }
+  },
+  "convert-force": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      }
+    }
+  },
+  "convert-no-pictures": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "pages": 2,
+      "scenes": 1,
+      "characters": 2,
+      "topCharacters": [
+        "WREN",
+        "HOLT"
+      ],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/book.epub",
+      "fountainPath": "$WORK/out/book.fountain",
+      "imagesPath": "$WORK/out/book.images",
+      "imageCount": 1
+    },
+    "stderr": "",
+    "outputs": {
+      "out": {
+        "tree": {
+          "book.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "b04877fc1d6837d9"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "980e45c41a8f0857"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "deb5e581f7f4aace"
+              }
+            ]
+          },
+          "book.fountain": {
+            "text": "34d82b9e89d2105c"
+          },
+          "book.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          }
+        }
+      }
+    }
+  },
+  "convert-fountain": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "topCharacters": [],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/f.epub",
+      "mobiPath": "$WORK/out/f.mobi",
+      "azw3Path": "$WORK/out/f.azw3",
+      "previewHtmlPath": "$WORK/out/f.html",
+      "fdxPath": "$WORK/out/f.fdx"
+    },
+    "stderr": "",
+    "outputs": {
+      "out/f.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "97618fa338dd4733"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "0b73cab296d0a10f"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "cc9db0edf5b9ea39"
+          },
+          {
+            "name": "OEBPS/images/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/images/p002-01.png",
+            "stored": true,
+            "content": "px:7d593ed429f44ea1"
+          }
+        ]
+      },
+      "out/f.mobi": {
+        "header": "c94092fa69d3e955",
+        "records": [
+          "f406b8221d73707c",
+          "58625e65762e5100",
+          "17d828b58581e73e",
+          "61fec89439b10d8e",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/f.azw3": {
+        "header": "5fca12af9eba692d",
+        "records": [
+          "cd929367e77a36c9",
+          "891f24c33cabd2ea",
+          "7208c8651904c8be",
+          "93cb1d824946ee88",
+          "6e340b9cffb37a98",
+          "cdbae062d186cf8b",
+          "1fa2f292826f7581",
+          "540cc8e9015de791",
+          "4cab30ce69cb85ee",
+          "cb844a7b52af4f7f",
+          "84d739f61f80a9c4",
+          "38bb1ffddcf2a4ec",
+          "8772cc799ca70378",
+          "ac2b0609989d50d8",
+          "cd3517aa4a74c8f5",
+          "e4259213b4a0593b",
+          "px:7d593ed429f44ea1",
+          "b044696731865e85",
+          "17d828b58581e73e",
+          "1e1f8d95395f6a00",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/f.fdx": {
+        "text": "c02b9c66687c15aa"
+      },
+      "out/f.html": {
+        "html": "d5ab7a1850693b15"
+      }
+    }
+  },
+  "convert-fountain-strip": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "topCharacters": [],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/f.epub"
+    },
+    "stderr": "",
+    "outputs": {
+      "out/f.epub": {
+        "zip": [
+          {
+            "name": "mimetype",
+            "stored": true,
+            "content": "e468e350d1143eb6"
+          },
+          {
+            "name": "META-INF/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "META-INF/container.xml",
+            "stored": false,
+            "content": "44e3de6d78297460"
+          },
+          {
+            "name": "OEBPS/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/package.opf",
+            "stored": false,
+            "content": "b04877fc1d6837d9"
+          },
+          {
+            "name": "OEBPS/nav.xhtml",
+            "stored": false,
+            "content": "24310a63e6043e0f"
+          },
+          {
+            "name": "OEBPS/style.css",
+            "stored": false,
+            "content": "980e45c41a8f0857"
+          },
+          {
+            "name": "OEBPS/titlepage.xhtml",
+            "stored": false,
+            "content": "b4eac57e7af5a4c3"
+          },
+          {
+            "name": "OEBPS/text/",
+            "stored": true,
+            "content": "e3b0c44298fc1c14"
+          },
+          {
+            "name": "OEBPS/text/body001.xhtml",
+            "stored": false,
+            "content": "deb5e581f7f4aace"
+          }
+        ]
+      }
+    }
+  },
+  "convert-txt": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "title": "The Second Unit",
+      "author": "J. Q. Nobody",
+      "topCharacters": [],
+      "warnings": [],
+      "spacingRepairs": 0,
+      "epubPath": "$WORK/out/script.epub"
+    },
+    "stderr": "",
+    "outputs": {
+      "out": {
+        "tree": {
+          "book.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "script.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          },
+          "script.images/p002-01.png": {
+            "file": "px:7d593ed429f44ea1"
+          },
+          "script.txt": {
+            "text": "34d82b9e89d2105c"
+          }
+        }
+      }
+    }
+  },
+  "send-one": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "device": {
+        "id": "$WORK/kobo-only/KOBOeReader",
+        "kind": "kobo",
+        "name": "KOBOeReader"
+      },
+      "destination": "$WORK/kobo-only/KOBOeReader/book.epub"
+    },
+    "stderr": "",
+    "outputs": {
+      "kobo-only": {
+        "tree": {
+          "KOBOeReader/book.epub": {
+            "zip": [
+              {
+                "name": "mimetype",
+                "stored": true,
+                "content": "e468e350d1143eb6"
+              },
+              {
+                "name": "META-INF/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "META-INF/container.xml",
+                "stored": false,
+                "content": "44e3de6d78297460"
+              },
+              {
+                "name": "OEBPS/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/package.opf",
+                "stored": false,
+                "content": "97618fa338dd4733"
+              },
+              {
+                "name": "OEBPS/nav.xhtml",
+                "stored": false,
+                "content": "24310a63e6043e0f"
+              },
+              {
+                "name": "OEBPS/style.css",
+                "stored": false,
+                "content": "0b73cab296d0a10f"
+              },
+              {
+                "name": "OEBPS/titlepage.xhtml",
+                "stored": false,
+                "content": "b4eac57e7af5a4c3"
+              },
+              {
+                "name": "OEBPS/text/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/text/body001.xhtml",
+                "stored": false,
+                "content": "cc9db0edf5b9ea39"
+              },
+              {
+                "name": "OEBPS/images/",
+                "stored": true,
+                "content": "e3b0c44298fc1c14"
+              },
+              {
+                "name": "OEBPS/images/p002-01.png",
+                "stored": true,
+                "content": "px:7d593ed429f44ea1"
+              }
+            ]
+          }
+        }
+      },
+      "config": {
+        "tree": {
+          "settings.json": {
+            "json": "da694aea879112e2"
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "settings": {
+        "scenePageBreaks": false,
+        "dialogueSideMarginPct": 20,
+        "cueIndentPct": 33,
+        "parentheticalIndentPct": 17,
+        "elementSpacingEm": 1,
+        "keepSceneHeadingWithScene": true,
+        "keepSpeechesWhole": false,
+        "fontFamily": "courier",
+        "rejoinSplitDialogue": true,
+        "contdMode": "auto",
+        "cueAlignment": "centered",
+        "includeTitlePage": true,
+        "showSceneNumbers": false,
+        "showPageMarkers": true,
+        "dualDialogue": "sideBySide",
+        "justifyText": false,
+        "printSplitMinimums": true,
+        "preserveFontShifts": true,
+        "includeImages": true,
+        "promoteCoverImage": true
+      },
+      "defaults": {
+        "scenePageBreaks": false,
+        "dialogueSideMarginPct": 20,
+        "cueIndentPct": 33,
+        "parentheticalIndentPct": 17,
+        "elementSpacingEm": 1,
+        "keepSceneHeadingWithScene": true,
+        "keepSpeechesWhole": false,
+        "fontFamily": "courier",
+        "rejoinSplitDialogue": true,
+        "contdMode": "auto",
+        "cueAlignment": "centered",
+        "includeTitlePage": true,
+        "showSceneNumbers": false,
+        "showPageMarkers": true,
+        "dualDialogue": "sideBySide",
+        "justifyText": false,
+        "printSplitMinimums": true,
+        "preserveFontShifts": true,
+        "includeImages": true,
+        "promoteCoverImage": true
+      },
+      "appDefaults": {
+        "scenePageBreaks": false,
+        "dialogueSideMarginPct": 20,
+        "cueIndentPct": 33,
+        "parentheticalIndentPct": 17,
+        "elementSpacingEm": 1,
+        "keepSceneHeadingWithScene": true,
+        "keepSpeechesWhole": false,
+        "fontFamily": "courier",
+        "rejoinSplitDialogue": true,
+        "contdMode": "auto",
+        "cueAlignment": "centered",
+        "includeTitlePage": true,
+        "showSceneNumbers": false,
+        "showPageMarkers": true,
+        "dualDialogue": "sideBySide",
+        "justifyText": false,
+        "printSplitMinimums": true,
+        "preserveFontShifts": true,
+        "includeImages": true,
+        "promoteCoverImage": true
+      },
+      "preset": "kindleEink",
+      "presets": [
+        {
+          "id": "kindleEink",
+          "displayName": "Kindle e-ink (6\")",
+          "settings": {
+            "scenePageBreaks": false,
+            "dialogueSideMarginPct": 20,
+            "cueIndentPct": 33,
+            "parentheticalIndentPct": 17,
+            "elementSpacingEm": 1,
+            "keepSceneHeadingWithScene": true,
+            "keepSpeechesWhole": false,
+            "fontFamily": "courier",
+            "rejoinSplitDialogue": true,
+            "contdMode": "auto",
+            "cueAlignment": "centered",
+            "includeTitlePage": true,
+            "showSceneNumbers": false,
+            "showPageMarkers": true,
+            "dualDialogue": "sideBySide",
+            "justifyText": false,
+            "printSplitMinimums": true,
+            "preserveFontShifts": true,
+            "includeImages": true,
+            "promoteCoverImage": true
+          }
+        },
+        {
+          "id": "phone",
+          "displayName": "Phone / narrow screen",
+          "settings": {
+            "scenePageBreaks": false,
+            "dialogueSideMarginPct": 10,
+            "cueIndentPct": 33,
+            "parentheticalIndentPct": 17,
+            "elementSpacingEm": 1,
+            "keepSceneHeadingWithScene": true,
+            "keepSpeechesWhole": false,
+            "fontFamily": "courier",
+            "rejoinSplitDialogue": true,
+            "contdMode": "auto",
+            "cueAlignment": "centered",
+            "includeTitlePage": true,
+            "showSceneNumbers": false,
+            "showPageMarkers": true,
+            "dualDialogue": "sequential",
+            "justifyText": false,
+            "printSplitMinimums": true,
+            "preserveFontShifts": true,
+            "includeImages": true,
+            "promoteCoverImage": true
+          }
+        }
+      ],
+      "sidecar": "$WORK/out/script.screepub.json",
+      "keepScriptSettings": true
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "export-epub": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "path": "$WORK/out/book.epub",
+      "format": "epub",
+      "extension": "epub",
+      "label": "EPUB: for emailing to Kindle, and most e-readers",
+      "available": [
+        "epub",
+        "kindle"
+      ],
+      "stages": []
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "export-azw3": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "path": "$WORK/out/copy.azw3",
+      "format": "azw3",
+      "extension": "azw3",
+      "label": "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed",
+      "available": [
+        "epub",
+        "kindle"
+      ],
+      "stages": [
+        "building the AZW3 for Kindle…"
+      ],
+      "beta": true
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.azw3": {
+        "header": "5fca12af9eba692d",
+        "records": [
+          "cd929367e77a36c9",
+          "891f24c33cabd2ea",
+          "7208c8651904c8be",
+          "93cb1d824946ee88",
+          "6e340b9cffb37a98",
+          "cdbae062d186cf8b",
+          "1fa2f292826f7581",
+          "540cc8e9015de791",
+          "4cab30ce69cb85ee",
+          "cb844a7b52af4f7f",
+          "84d739f61f80a9c4",
+          "38bb1ffddcf2a4ec",
+          "8772cc799ca70378",
+          "ac2b0609989d50d8",
+          "cd3517aa4a74c8f5",
+          "e4259213b4a0593b",
+          "px:7d593ed429f44ea1",
+          "b044696731865e85",
+          "17d828b58581e73e",
+          "1e1f8d95395f6a00",
+          "3712d3408f89530c"
+        ]
+      },
+      "out/copy.azw3": {
+        "header": "5fca12af9eba692d",
+        "records": [
+          "cd929367e77a36c9",
+          "891f24c33cabd2ea",
+          "7208c8651904c8be",
+          "93cb1d824946ee88",
+          "6e340b9cffb37a98",
+          "cdbae062d186cf8b",
+          "1fa2f292826f7581",
+          "540cc8e9015de791",
+          "4cab30ce69cb85ee",
+          "cb844a7b52af4f7f",
+          "84d739f61f80a9c4",
+          "38bb1ffddcf2a4ec",
+          "8772cc799ca70378",
+          "ac2b0609989d50d8",
+          "cd3517aa4a74c8f5",
+          "e4259213b4a0593b",
+          "px:7d593ed429f44ea1",
+          "b044696731865e85",
+          "17d828b58581e73e",
+          "1e1f8d95395f6a00",
+          "3712d3408f89530c"
+        ]
+      }
+    }
+  },
+  "export-mobi": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "path": "$WORK/out/book.mobi",
+      "format": "mobi",
+      "extension": "mobi",
+      "label": "MOBI: for the oldest Kindles",
+      "available": [
+        "epub",
+        "kindle"
+      ],
+      "stages": [
+        "rebuilding the Kindle file…"
+      ]
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.mobi": {
+        "header": "c94092fa69d3e955",
+        "records": [
+          "f406b8221d73707c",
+          "58625e65762e5100",
+          "17d828b58581e73e",
+          "61fec89439b10d8e",
+          "3712d3408f89530c"
+        ]
+      }
+    }
+  },
+  "export-fountain": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "path": "$WORK/out/copy.fountain",
+      "format": "fountain",
+      "extension": "fountain",
+      "label": "Fountain: the script as plain text, for screenwriting apps",
+      "available": [
+        "epub",
+        "kindle"
+      ],
+      "stages": []
+    },
+    "stderr": "",
+    "outputs": {
+      "out/copy.fountain": {
+        "text": "2904241bbfe8ccc6"
+      }
+    }
+  },
+  "export-fdx": {
+    "exit": 0,
+    "stdout": {
+      "ok": true,
+      "path": "$WORK/out/copy.fdx",
+      "format": "fdx",
+      "extension": "fdx",
+      "label": "FDX: the script to keep editing, in Final Draft and most screenwriting apps",
+      "stages": [],
+      "available": [
+        "epub",
+        "kindle"
+      ],
+      "beta": true
+    },
+    "stderr": "",
+    "outputs": {
+      "out/copy.fdx": {
+        "text": "c02b9c66687c15aa"
+      }
+    }
+  }
+}

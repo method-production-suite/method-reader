@@ -1,0 +1,436 @@
+{
+  "$machine": {
+    "os": "darwin",
+    "calibre": true,
+    "kfxPlugin": true,
+    "previewer": true,
+    "books": true,
+    "sendToKindle": false,
+    "mailHandler": "efa0c2bcce3dc31a"
+  },
+  "$epoch": 1767225600,
+  "convert": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": null,
+    "outputs": {
+      "out/book.epub": null,
+      "out/book.mobi": null,
+      "out/book.azw3": null,
+      "out/book.fdx": null,
+      "out/book.preview.html": null,
+      "out/book.elements.json": null,
+      "out/script.fountain": null,
+      "out/script.images": null
+    }
+  },
+  "convert-phone": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": null,
+    "outputs": {
+      "out/book.epub": null,
+      "out/book.mobi": null,
+      "out/book.azw3": null,
+      "out/book.fdx": null,
+      "out/book.preview.html": null,
+      "out/book.elements.json": null,
+      "out/script.fountain": null,
+      "out/script.images": null
+    }
+  },
+  "convert-human": {
+    "exit": 1,
+    "stdout": "<not JSON> ",
+    "stderr": "screepub: No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first.\n",
+    "outputs": {
+      "out/book.epub": null,
+      "out/book.mobi": null,
+      "out/book.fountain": null,
+      "out/book.images": null
+    }
+  },
+  "convert-progress": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "{\"progress\":{\"stage\":\"parse\",\"percent\":30,\"page\":1,\"pages\":2}}\n{\"progress\":{\"stage\":\"parse\",\"percent\":60,\"page\":2,\"pages\":2}}\n",
+    "outputs": {}
+  },
+  "convert-inline": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "convert-beside": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "in": {
+        "tree": {
+          "blank-pages.pdf": {
+            "text": "d68c6dccf3a8b3f3"
+          }
+        }
+      }
+    }
+  },
+  "convert-library": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-library-again": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-sidecar": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "screepub: using this script's saved settings in $WORK/in/blank-pages.screepub.json\n",
+    "outputs": {
+      "library": {
+        "tree": {}
+      },
+      "out": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-sidecar-override": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "screepub: using this script's saved settings in $WORK/in/blank-pages.screepub.json (the options you passed override them)\n",
+    "outputs": {
+      "out/book.epub": null
+    }
+  },
+  "convert-sidecar-broken": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "screepub: ignoring $WORK/in/blank-pages.screepub.json, which is not a settings object\n",
+    "outputs": {
+      "out/book.epub": null
+    }
+  },
+  "convert-app-defaults": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {}
+      },
+      "config": {
+        "tree": {
+          "settings.json": {
+            "json": "2e0f56ec42c5f00b"
+          }
+        }
+      }
+    }
+  },
+  "convert-follow-defaults": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "library": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-options-file": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": null,
+      "out/book.fountain": null
+    }
+  },
+  "convert-title": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": null,
+      "out/book.mobi": null,
+      "out/book.fountain": null
+    }
+  },
+  "convert-force": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.epub": null
+    }
+  },
+  "convert-no-pictures": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "scanned",
+        "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out": {
+        "tree": {}
+      }
+    }
+  },
+  "convert-fountain": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the input file (ENOENT)"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/f.epub": null,
+      "out/f.mobi": null,
+      "out/f.azw3": null,
+      "out/f.fdx": null,
+      "out/f.html": null
+    }
+  },
+  "convert-fountain-strip": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the input file (ENOENT)"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/f.epub": null
+    }
+  },
+  "convert-txt": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the input file (ENOENT)"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out": {
+        "tree": {}
+      }
+    }
+  },
+  "send-one": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the file to send: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "kobo-only": {
+        "tree": {}
+      },
+      "config": {
+        "tree": {}
+      }
+    }
+  },
+  "settings": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the script: $WORK/out/script.fountain"
+      }
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "export-epub": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the book to export: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {}
+  },
+  "export-azw3": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the book to export: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.azw3": null,
+      "out/copy.azw3": null
+    }
+  },
+  "export-mobi": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the book to export: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/book.mobi": null
+    }
+  },
+  "export-fountain": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the book to export: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/copy.fountain": null
+    }
+  },
+  "export-fdx": {
+    "exit": 1,
+    "stdout": {
+      "ok": false,
+      "error": {
+        "code": "unreadable",
+        "message": "cannot read the book to export: $WORK/out/book.epub"
+      }
+    },
+    "stderr": "",
+    "outputs": {
+      "out/copy.fdx": null
+    }
+  }
+}
