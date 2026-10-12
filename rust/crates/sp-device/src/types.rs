@@ -15,6 +15,14 @@ pub enum DeviceKind {
 }
 
 impl DeviceKind {
+    /// Every kind, in `DEVICE_DISPLAY_NAMES`' key order.
+    pub const ALL: [DeviceKind; 4] = [
+        DeviceKind::Kindle,
+        DeviceKind::Kobo,
+        DeviceKind::Tolino,
+        DeviceKind::Remarkable,
+    ];
+
     /// The word the engine writes for the kind (`kindle`, `kobo`, ...).
     pub fn as_str(self) -> &'static str {
         match self {

@@ -10,7 +10,6 @@ use serde::Serialize;
 use sp_model::FormatOptions;
 
 use crate::errors::EngineError;
-use crate::export::azw3_revision::azw3_revision_of_file;
 use crate::export::calibre::strip_epub;
 use crate::export::formats::{ExportFormat, KindleRung, ToolchainState, ladder_rung};
 use crate::export::freshness::{modified_date, needs_regeneration};
@@ -86,7 +85,8 @@ pub fn rung_plan(rung: KindleRung, epub: &str, writer_revision: u32) -> KindleAr
     };
     let current = !needs_regeneration(&path, epub)
         && (rung != KindleRung::Azw3
-            || azw3_revision_of_file(&path).unwrap_or(0) >= writer_revision);
+            || sp_azw3::azw3_revision_of_file(std::path::Path::new(&path)).unwrap_or(0)
+                >= writer_revision);
     KindleArtifactPlan {
         path,
         fresh: current,

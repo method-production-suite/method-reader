@@ -29,11 +29,11 @@ move too.
 | tests/azw3-index.test.ts | 7 | sp-azw3 | done | sp-azw3/tests/parts.rs |
 | tests/azw3-kindleunpack.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs; runs where SCREEPUB_KINDLEUNPACK names KindleUnpack |
 | tests/azw3-palmdoc.test.ts | 5 | sp-azw3 | done | sp-azw3/tests/parts.rs |
-| tests/azw3-revision.test.ts | 8 | sp-azw3 + sp-engine | partial | the stamp and its reader: sp-azw3/tests/azw3.rs; the five staleness-rule tests (rungPlan, freshKindleArtifact) go to sp-engine |
+| tests/azw3-revision.test.ts | 8 | sp-azw3 + sp-engine | done | the stamp and its reader: sp-azw3/tests/azw3.rs; the five staleness-rule tests (rungPlan, freshKindleArtifact) in sp-engine/tests/azw3_revision.rs (6: the five, plus the stand-in stamp read back through sp_azw3::azw3_revision) |
 | tests/azw3-tbs.test.ts | 4 | sp-azw3 | done | sp-azw3/tests/parts.rs |
 | tests/azw3-xml.test.ts | 6 | sp-azw3 | done | sp-azw3/tests/parts.rs; the round trip reads the oracle's EPUBs instead of a convertFountain |
 | tests/azw3.test.ts | 9 | sp-azw3 | done | sp-azw3/tests/azw3.rs |
-| tests/beta-marks.test.ts | 10 | sp-cli | todo | the CLI help, README and site say "beta" the same way |
+| tests/beta-marks.test.ts | 10 | sp-cli + sp-app | partial | CLI help: sp-cli/tests/beta_marks.rs (6); the 3 badge tests are sp-app's; the 2 README/site checks read documents, not code, and move to the xtask with no-em-dash and site |
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
@@ -48,24 +48,24 @@ move too.
 | tests/capture-chrome.test.ts | 5 | xtask | todo |  |
 | tests/capture.test.ts | 46 | xtask | todo | README and site pictures; drives desktop/ui/app.js today |
 | tests/check-latest.test.ts | 17 | sp-release | partial | sp-release/src/check_latest.rs (judge_manifest: version, platforms, key id, foreign key); the Intel-era and per-asset signature cases are ported in code, 2 of 17 checks written as tests so far |
-| tests/cli-app-defaults.test.ts | 8 | sp-cli | todo |  |
-| tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
-| tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
-| tests/cli-device-commands.test.ts | 35 | sp-cli | todo |  |
-| tests/cli-devices.test.ts | 32 | sp-cli | partial | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; left for sp-cli: verb dispatch (resolveCommand, VERBS) and the settings file a send remembers into (sp-device takes `remember` as a callback) |
-| tests/cli-eject.test.ts | 24 | sp-cli | partial | the handler and the real runner are in sp-device/tests/eject.rs; left for sp-cli: the spawned-CLI refusals and --help |
-| tests/cli-export-fdx.test.ts | 20 | sp-cli | partial | the renderer half (its script's FDX) is in sp-fdx/tests/fdx.rs; the `formats` block goes with export-formats to sp-engine; the export command and CLI blocks are left |
-| tests/cli-export.test.ts | 79 | sp-cli | todo |  |
-| tests/cli-kfx.test.ts | 24 | sp-cli | todo |  |
-| tests/cli-reveal.test.ts | 21 | sp-cli | partial | the handler and the real opener are in sp-device/tests/reveal.rs; left for sp-cli: the spawned-CLI refusals and --help |
-| tests/cli-routes.test.ts | 82 | sp-cli | todo |  |
-| tests/cli-settings.test.ts | 26 | sp-cli | todo |  |
-| tests/cli-update.test.ts | 17 | sp-cli | todo |  |
-| tests/cli-verb-flags.test.ts | 7 | sp-cli | todo |  |
-| tests/cli.test.ts | 78 | sp-cli | todo |  |
+| tests/cli-app-defaults.test.ts | 8 | sp-cli | done | sp-cli/tests/cli_app_defaults.rs (8), through the CLI; the app-defaults reads themselves are sp-engine/tests/settings_app_defaults.rs |
+| tests/cli-app-settings.test.ts | 56 | sp-cli | done | sp-cli/tests/cli_app_settings.rs (56): the handler in process with an injected path, platform and env (43), the verb through the CLI with HOME in the scratch folder (13) |
+| tests/cli-azw3.test.ts | 4 | sp-cli | done | sp-cli/tests/cli_azw3.rs (4), read back with sp-azw3's tests/common/kf8_reader.rs |
+| tests/cli-device-commands.test.ts | 35 | sp-cli | done | sp-cli/tests/cli_device_commands.rs (35); the no-hint checks are case-blind (the TypeScript's lower-case "did you mean" never matched the real hint) |
+| tests/cli-devices.test.ts | 32 | sp-cli | done | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; sp-cli/tests/cli_devices.rs (15): the JSON error shape, verb dispatch and VERBS through the spawned binary, and the settings file a send remembers into; the non-Error-throw check has no Rust subject |
+| tests/cli-eject.test.ts | 24 | sp-cli | done | the handler and the real runner are in sp-device/tests/eject.rs; the spawned-CLI refusals and --help in sp-cli/tests/cli_eject.rs (3) |
+| tests/cli-export-fdx.test.ts | 20 | sp-cli | done | export command and CLI blocks (19) in sp-cli/tests/cli_export_fdx.rs; the renderer half is in sp-fdx/tests/fdx.rs; the `formats` block (1) is in sp-engine/tests/export_small.rs |
+| tests/cli-export.test.ts | 79 | sp-cli | done | sp-cli/tests/cli_export.rs (79): handler checks against sp-engine's export_command with the TypeScript's seams and the real Books; spawned checks through the built screepub; the real KFX build runs only where the toolchain is ready, Calibre at a scratch copy; the relative --out checks run without the TypeScript's process.chdir guard (threads cannot change folder); the temp-and-rename source check reads sp-engine's commands/export.rs |
+| tests/cli-kfx.test.ts | 24 | sp-cli | done | sp-cli/tests/cli_kfx.rs (24): handlers with a stand-in probe and installer; spawned kfx-status with Calibre at a scratch copy; kfx-install never runs (only --help is spawned), its refusal order read from sp-cli/src/verbs.rs; resolveCommand checks run through the CLI |
+| tests/cli-reveal.test.ts | 21 | sp-cli | done | the handler and the real opener are in sp-device/tests/reveal.rs; the spawned-CLI refusals and --help in sp-cli/tests/cli_reveal.rs (6) |
+| tests/cli-routes.test.ts | 82 | sp-cli | done | sp-cli/tests/cli_routes.rs (106: the refusal table and the three setup platforms expanded); handlers in process through sp-engine with a recording opener, spawned runs with stand-in open/xdg-open/defaults and a local stand-in tablet; the never-settling folder-opener race has no Rust subject (the opener is synchronous): its order half is kept; the cli.ts source pin reads verbs.rs |
+| tests/cli-settings.test.ts | 26 | sp-cli | done | sp-cli/tests/cli_settings.rs (26): the handler in process (19), the verb through the CLI (7); "no appSettingsPath given" runs through the CLI, because the Rust handler takes the path as a required field and the CLI resolves it |
+| tests/cli-update.test.ts | 17 | sp-cli | done | sp-cli/tests/cli_update.rs (17); resolveCommand/VERBS checks run through the CLI; the offline check reads sp-engine/src/update/ and verbs.rs's update arms |
+| tests/cli-verb-flags.test.ts | 7 | sp-cli | done | sp-cli/tests/verb_flags.rs (7; the per-verb loop is one matrix test), the table checked against verbs.rs's VERBS and VERB_SPECS; cargo xtask parity runs every verb against every foreign flag against the TypeScript |
+| tests/cli.test.ts | 78 | sp-cli | done | sp-cli/tests/cli.rs (93: the five-output-flag loop runs once per flag); the error-mapping and unwritable tests run on sp_engine::errors; retired: "--debug lets pdf.js warnings through" (no pdf.js, nothing warns; PARITY Decisions). The password test checks that a path containing "password" stays `unreadable`; the typed half holds by construction (ConvertError::Password), with no encrypted fixture |
 | tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
-| tests/conversion-settings.test.ts | 18 | sp-engine | todo | conversion through the CLI (`--library`, the pin): wave 3 with convert.ts and cli.ts; the functions it leans on (library_output, adopt_sidecar, keeps_script_settings, the sidecar) are ported and tested |
-| tests/convert.test.ts | 58 | sp-engine | todo | wave 3 (convert.ts); export's MOBI rung calls it through `Renderers::render_mobi` |
+| tests/conversion-settings.test.ts | 18 | sp-cli | done | sp-cli/tests/conversion_settings.rs (18), through the CLI; "a sidecar write that fails" uses the debug binary's SCREEPUB_TEST_FAIL_PIN (compiled out of release builds) where the TypeScript patched fs.writeFileSync with a bun --preload |
+| tests/convert.test.ts | 58 | sp-engine | done | sp-engine/tests/convert.rs (58), in process on tests/fixtures through sp-pdf. The resolveImageData/encodePng spies become a count of picture fetches through `convert_facts_with` (the facts sp-pdf reads first carry no pixels, so no fetch means nothing encoded). The two real-script blocks read root fixtures/ (the main checkout's from a worktree) and skip without it, counts only |
 | tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | done | sp-epub/tests/css_rules.rs (11) |
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
@@ -89,8 +89,8 @@ move too.
 | tests/device-watch.test.ts | 9 | sp-app | done | m/device_watch.rs |
 | tests/epub-images.test.ts | 23 | sp-epub | done | sp-epub/tests/epub_images.rs (26: the 23 `test`s and the 3 epubcheck `checked`s, which skip without epubcheck on PATH). Where the TypeScript converts images.pdf or torture.pdf it reads the oracle dump of that conversion |
 | tests/epub.test.ts | 117 | sp-epub | done | sp-epub/tests/epub.rs (117, plus the XHTML half of serialize.test.ts's mini-slug seam); the classify.ts pin reads src/parser/classify.ts until sp-parser has its copy; the token half of "PRIMARY_SLUG stays in lockstep with fountain-js" is in sp-fountain/tests/slug.rs; the XHTML half and the classify.ts pin (import `sp_fountain::PRIMARY_SLUG_SOURCE`) stay here |
-| tests/export-artifact.test.ts | 22 | sp-engine | partial | sp-engine/tests/export_artifact.rs (22) pins the ladder against stand-in book makers (tests/common/books.rs); the checks that read a real KF8 (readKf8) or MOBI (mobiPictures) back wait for sp-azw3 and the conversion to be plugged into `Renderers` (wave 3) |
-| tests/export-calibre.test.ts | 8 | sp-engine | partial | sp-engine/tests/export_calibre.rs (8, stand-in tools only); the two real-Calibre checks (toKepub's koboSpan, the dialogue column in an exploded AZW3) need the engine's own EPUB: wave 3, isolated with common::calibre_env |
+| tests/export-artifact.test.ts | 22 | sp-engine | done | sp-engine/tests/export_artifact.rs (22) pins the ladder against stand-in book makers (tests/common/books.rs); the checks that read a real KF8 (readKf8, sp-azw3's reader via #[path]) or MOBI (mobiPictures) back run against `Books` in sp-engine/tests/export_artifact_books.rs (7) |
+| tests/export-calibre.test.ts | 8 | sp-engine | done | sp-engine/tests/export_calibre.rs (8, stand-in tools only); the two real-Calibre checks (toKepub's koboSpan, the dialogue column in an exploded AZW3) on the engine's own EPUB in sp-engine/tests/export_calibre_real.rs (2), only through common::calibre_env's scratch copy, each checking the real folder unchanged; a binary of their own so they never load the machine under export_calibre.rs's timeout check |
 | tests/export-formats.test.ts | 6 | sp-engine | done | sp-engine/tests/export_small.rs |
 | tests/export-freshness.test.ts | 5 | sp-engine | done | sp-engine/tests/export_small.rs |
 | tests/export-kfx-setup.test.ts | 13 | sp-engine | done | sp-engine/tests/export_small.rs |
@@ -98,27 +98,27 @@ move too.
 | tests/extract.test.ts | 83 | sp-parser | done | sp-parser/tests/extract.rs (83; the file has 83 tests, not 103); fixture PDFs read through the oracle's pages.json until sp-pdf lands. The real-script repair-count test checks nothing until the script it was written for is dumped (every current real dump repairs 0) |
 | tests/fdx-integration.test.ts | 6 | sp-fdx | done | sp-fdx/tests/fdx_integration.rs; reads the oracle's tokens.json and script.fountain where the TypeScript converts the PDF on the spot, until sp-parser and sp-fountain land |
 | tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
-| tests/field-station.test.ts | 2 | sp-engine | partial | parser half in sp-parser/tests/field_station.rs (scenes, pages, cast, the site's scene walked over elements); the convertPdf title and the .fountain walk stay with sp-engine/sp-fountain |
-| tests/first-page.test.ts | 10 | sp-parser | partial | sp-parser/tests/first_page.rs (10); the progress test's stderr events, exit codes and --json halves move to sp-cli |
+| tests/field-station.test.ts | 2 | sp-engine | done | parser half in sp-parser/tests/field_station.rs (scenes, pages, cast, the site's scene walked over elements); the convertPdf title and the .fountain `= pg N` walk in sp-engine/tests/field_station.rs (one in-process conversion stands for the CLI run) |
+| tests/first-page.test.ts | 10 | sp-parser + sp-cli | done | sp-parser/tests/first_page.rs (10); the --progress CLI test (stderr page events, exit codes, --json): sp-cli/tests/first_page.rs (1) |
 | tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
-| tests/images-fixture.test.ts | 24 | sp-parser | partial | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; three pixel checks run on the dump's facts until sp-pdf supplies decoded pixels |
+| tests/images-fixture.test.ts | 24 | sp-parser | done | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; the pixel side reads images.pdf through sp-pdf (dev-dependency), so its three pixel checks compare the real decoded bytes |
 | tests/images.test.ts | 68 | sp-parser | done | sp-parser/tests/images.rs (57); retired: the 10 resolveImageData store-race and timeout tests and the lying-buffer test (pixels arrive resolved, a slice cannot misstate its length) |
 | tests/isolate-app-settings.ts | 0 | sp-engine | done | sp-engine/tests/common/mod.rs (guarded_env) and tests/guards.rs: every test hands the engine an environment carrying the guard, and no test file may use this process's own |
 | tests/isolate-calibre-config.ts | 0 | sp-engine | done | sp-engine/tests/common/mod.rs (calibre_config_copy, calibre_env): a scratch COPY per test binary, caches left behind |
-| tests/jpx-fixture.test.ts | 11 | sp-pdf | todo | JPEG2000 picture decodes pixel for pixel |
+| tests/jpx-fixture.test.ts | 11 | sp-pdf | done | sp-pdf/tests/jpx.rs (4: reaches the book, the codestream's size, decoders available, the fixture's gradient pixel for pixel); retired (7): the decoder directory (4), the decoders failing to unpack (2), a decoder folder removed between documents (1): sp-pdf's decoders are compiled in, so there is no folder to guard |
 | tests/kfx-snippet-stubs.ts | 0 | sp-engine | done | sp-engine/tests/common/kfx_stubs.rs |
 | tests/library-images.test.ts | 55 | sp-engine | done | sp-engine/tests/library_images.rs (55); the PNG encoder it uses is a stored-deflate stand-in (tests/common/png.rs) until sp-parser's lands, which is the worst case the size bound must hold for |
-| tests/library.test.ts | 45 | sp-engine | partial | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the `--library` CLI block (6) is the conversion's: wave 3 |
+| tests/library.test.ts | 45 | sp-engine + sp-cli | done | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the --library CLI block: sp-cli/tests/cli_library.rs (6) |
 | tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
 | tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
 | tests/no-em-dash.test.ts | 3 | xtask | partial | repo-wide copy rule; the window's half is rust/crates/sp-app/tests/no_em_dash.rs; the engine crates are left |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
-| tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain to sp-engine |
+| tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain + sp-engine | done | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain (1) ported (sp-engine/tests/options.rs) |
 | tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, app/show.rs, tests/behaviors.rs |
 | tests/page-timing.test.ts | 16 | sp-app | done | m/page_timing.rs |
-| tests/parser-pipeline.test.ts | 47 | sp-parser | partial | sp-parser/tests/parser_pipeline.rs (45); 2 tests and the toFountain halves of 3 move to sp-fountain |
+| tests/parser-pipeline.test.ts | 47 | sp-parser + sp-fountain | done | sp-parser/tests/parser_pipeline.rs (45); the 2 tests and the toFountain halves of 3 in sp-fountain/tests/parser_pipeline.rs (5, sp-parser as dev-dependency) |
 | tests/parser.test.ts | 137 | sp-parser | done | sp-parser/tests/parser.rs (137) |
-| tests/pdfjs-wasm.test.ts | 11 | sp-pdf | todo | pdf.js unpacks its JPEG2000/JBIG2 decoders to a temp folder; the Rust decoders are compiled in, so most of this retires: keep the "JPEG2000 decodes" half |
+| tests/pdfjs-wasm.test.ts | 11 | sp-pdf | done | the "JPEG2000 decodes" half is sp-pdf/tests/jpx.rs; the rest (decoder filenames, the wasmUrl string, removePdfjsWasmDir, exit hooks, the bun-run temp check) retires with pdf.js's decoder folder |
 | tests/png.test.ts | 24 | sp-parser | done | sp-parser/tests/png.rs (24); IDAT is miniz_oxide level 9, compared by decoded pixels (Decisions) |
 | tests/presets.test.ts | 7 | sp-model | done | sp-model/tests/presets.rs; the aliasing test has no Rust form (presets are returned by value) |
 | tests/release-app-step.test.ts | 23 | xtask | todo |  |
@@ -149,8 +149,8 @@ move too.
 | tests/torture-coverage.test.ts | 6 | xtask | todo | tools/torture-manifest.json |
 | tests/torture-layout.test.ts | 4 | xtask | todo | make-fixture.py --emit-layout |
 | tests/torture-markup.test.ts | 10 | xtask | todo |  |
-| tests/torture-pictures.test.ts | 14 | sp-parser | partial | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks move to sp-engine with sp-epub/sp-mobi |
-| tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
+| tests/torture-pictures.test.ts | 14 | sp-parser + sp-engine | done | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks in sp-engine/tests/torture_pictures.rs (7) |
+| tests/torture.test.ts | 23 | sp-parser + sp-engine | done | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks in sp-engine/tests/torture.rs (they read torture.pdf through sp-pdf and serialize with sp-fountain) |
 | tests/update-compare-module.test.ts | 9 | sp-app | done | m/update_compare.rs; one Rust copy serves both |
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
 | tests/update-signature.test.ts | 14 | sp-release | partial | sp-release/src/sign.rs (keygen, key text or file, password, the plugin's and the Rust app's checks) and sp-update/src/verify.rs (key id of the shipped key, signed-version rules from the plugin's own tests) |
@@ -170,7 +170,7 @@ users until hardware day (see Decisions). These files exist only on branch
 | native/mtp-helper (cargo tests) | 47 | sp-mtp | done | moved to rust/crates/sp-mtp unchanged but for the crate name; 40 unit tests and tests/virtual_device.rs (7, mtp-rs's in-memory device) |
 | tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
 | tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
-| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes, the two end-to-end runs to sp-cli |
+| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes; the two end-to-end runs are in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli) |
 | tests/mtp-window-rules.test.ts | 7 | sp-app | todo | the window's rules for an MTP Kindle (Beta badge, no Eject, the copy note) |
 
 ### Test helpers: tests/helpers/
@@ -186,7 +186,7 @@ users until hardware day (see Decisions). These files exist only on branch
 | tests/helpers/mini-xml.ts | sp-epub | retired | sp-fdx reads its XML back with roxmltree (dev-dependency) instead |
 | tests/helpers/mobi-records.ts | sp-mobi | done | sp-mobi/tests/common/mod.rs |
 | tests/helpers/palmdoc-decode.ts | sp-azw3 | done | sp-azw3/tests/common/palmdoc_decode.rs (only the AZW3 is compressed) |
-| tests/helpers/stamped-azw3.ts | sp-azw3 | partial | sp-azw3/tests/azw3.rs's stamped_azw3; sp-engine's staleness tests need it too |
+| tests/helpers/stamped-azw3.ts | sp-azw3 + sp-engine | done | sp-azw3/tests/azw3.rs's stamped_azw3; sp-engine/tests/common/books.rs's stamped_azw3, checked against sp_azw3::azw3_revision in sp-engine/tests/azw3_revision.rs |
 
 ## Stage parity: the oracle
 
@@ -206,7 +206,7 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | AZW3 | book.azw3 | sp-azw3 | todo |
 | FDX | book.fdx | sp-fdx | todo |
 | pictures | images/ | sp-parser | todo |
-| --json answer | convert.json | sp-cli | todo |
+| --json answer | convert.json | sp-cli | done: `cargo xtask parity` runs both CLIs on every committed fixture and real script and compares the answer as values (the convert rows), with every book and the picture folder |
 
 ## Window feature inventory
 
@@ -775,3 +775,48 @@ names the check it affects.
 - **Timeouts.** resolveImageData's per-image wait and store race have no Rust
   counterpart (pixels arrive resolved); the 20 s document budget still charges
   conversion and encoding. `imageStats.decodersUnavailable` is never set.
+- **Pictures are decoded past the guards, inside the budget (sp-cli,
+  2026-10-11).** convert.ts decodes a PDF's pictures only after the scanned
+  and not-a-screenplay refusals, and its budget counts the waiting for
+  pdf.js's pixels. sp-pdf's `read` decodes every picture up front, so the
+  conversion uses `sp_pdf::read_pages` (text and operators only) and fetches
+  each picture's pixels through `sp_pdf::image_fact` as sp-parser reaches it
+  (`PendingExtract::decode_images_with`), inside the timed region that
+  charges the budget. A refused PDF decodes nothing. `sp_pdf::read` keeps
+  its old answer (read_pages, then every picture).
+- **PNG deflate level (sp-parser, 2026-10-11).** Pictures compare by decoded
+  pixels (above), so the IDAT deflate is free to be the one that keeps the
+  picture budget comfortably met; the budget itself is unchanged. Measured
+  on the real scripts, release build, picture stage alone: the one
+  picture-heavy document (converted with --force) took the whole 20 s at
+  miniz_oxide level 9 (the budget ran out and pictures were dropped), 10.7 s
+  at miniz 6, 17.0 s at zlib-rs 9, 6.9 s at zlib-rs 6 and 5.1 s at level 1
+  (whose files are up to three times larger). sp-parser now deflates with
+  zlib-rs (flate2) at level 6 (`PNG_DEFLATE_LEVEL`): files 2.5% larger than
+  zlib-rs 9 on that document, 6% on the script with one large picture.
+  The budget is wall-clock, so an unoptimized build ran out of it on that
+  script (sp-parser's real-script oracle test dropped 107 pictures in a
+  debug build); the workspace now builds sp-parser, sp-pdf and every
+  dependency at opt-level 3 in dev and test profiles, which changes no
+  answer and keeps the tests' timing the shipped program's.
+- **What the parity harness compares, and how (sp-cli, 2026-10-11).** The
+  `--debug` dump (`<stem>.elements.json`) is compared as JSON VALUES, not
+  bytes: the TypeScript's key order is whatever order each code path built
+  its element object in (`id` first on some, `type` first on others), an
+  accident of object literals that nothing reads; the values match on every
+  fixture and real script. Pictures compare by decoded content wherever they
+  appear: the picture folder, EPUB entries, the preview's and the inline
+  answer's `data:image/png` URIs, and MOBI and AZW3 records (record by
+  record, a PNG record by its pixels; the PalmDB record offsets move with a
+  picture's size and are not compared). Every other file is compared as
+  before. Text files in a compared folder tree (library, config) have each
+  side's scratch folder spelled `$WORK`.
+- **No pdf.js warnings (sp-cli, 2026-10-11).** `--debug` let pdf.js's own
+  warnings through to stderr; there is no pdf.js in Rust, so `--debug` writes
+  only the elements dump. cli.test.ts's "--debug lets them through" retires.
+- **The pages.json test path was never shipped (sp-cli, 2026-10-11).** sp-pdf
+  landed before sp-cli needed it, so PDF input is always sp-pdf's.
+- **Two copies of Node's path functions (open, for the owner).** sp-fsutil
+  (`nodepath`) and sp-engine (`nodepath`) each port node:path; the CLI uses
+  sp-engine's, sp-device uses sp-fsutil's. Both are checked against Bun;
+  folding them into sp-fsutil's is a mechanical follow-up.

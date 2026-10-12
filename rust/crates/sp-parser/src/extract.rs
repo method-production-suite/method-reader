@@ -16,8 +16,8 @@ use sp_model::{FamilyBucket, FontRun, RawImage, RawLine, SizeStep};
 use crate::cue::is_cue_text;
 use crate::facts::{DocumentFacts, Op, PageFacts, TextItemFact};
 use crate::images::{
-    EncodedCandidate, ImageStats, PageSize, collect_image_placements, collect_page_images,
-    finish_images, new_image_run,
+    EncodedCandidate, FetchImage, ImageStats, PageSize, collect_image_placements,
+    collect_page_images_with, finish_images, new_image_run,
 };
 use crate::js;
 
@@ -84,7 +84,19 @@ impl PendingExtract<'_> {
     /// those: one tick at 0 before the first of them, so a caller can name
     /// the stage the moment it begins rather than after its first page, and
     /// one after each. A document that places none never calls it.
-    pub fn decode_images(&self, mut on_progress: Option<&mut PageProgress<'_>>) -> ExtractedImages {
+    pub fn decode_images(&self, on_progress: Option<&mut PageProgress<'_>>) -> ExtractedImages {
+        self.decode_images_with(on_progress, None)
+    }
+
+    /// [`Self::decode_images`], with the pixels the facts do not carry
+    /// fetched through `fetch` as each picture is reached: how the engine
+    /// keeps a document's pictures undecoded until both refusals have
+    /// passed, while the picture budget still charges their decoding.
+    pub fn decode_images_with(
+        &self,
+        mut on_progress: Option<&mut PageProgress<'_>>,
+        fetch: Option<&FetchImage<'_>>,
+    ) -> ExtractedImages {
         // ONE budget for the whole document, threaded through every page,
         // and the same object caches encoded pixels.
         let mut run = new_image_run();
@@ -113,12 +125,13 @@ impl PendingExtract<'_> {
         // filled in document order: the cap and the budget both rely on that.
         for (done, &&(i, text_lines)) in with_pictures.iter().enumerate() {
             let page = &self.facts.pages[i];
-            candidates.extend(collect_page_images(
+            candidates.extend(collect_page_images_with(
                 page,
                 page.ops.as_deref(),
                 page.page_num,
                 text_lines,
                 &mut run,
+                fetch,
             ));
             if let Some(cb) = on_progress.as_deref_mut() {
                 cb(

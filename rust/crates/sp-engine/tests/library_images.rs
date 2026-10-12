@@ -10,12 +10,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use common::png::{encode_png, png};
 use common::{Scratch, names, write};
 use sp_engine::fsx::{temp_path_for, write_atomic};
-use sp_engine::library_images::shared::{IMAGE_MAX_EDGE, MAX_IMAGES};
 use sp_engine::library_images::{
     ImagesRead, MAX_IMAGE_FILE_BYTES, image_folder_warnings, images_dir_for, is_image_temp,
     prune_images, read_images, write_images,
 };
 use sp_engine::nodepath::host;
+use sp_parser::artwork::MAX_IMAGES;
+use sp_parser::images::IMAGE_MAX_EDGE;
 
 struct Case {
     _s: Scratch,
@@ -118,7 +119,7 @@ fn a_dotted_name_keeps_everything_but_the_last_extension() {
 
 #[test]
 fn the_largest_picture_an_encoder_can_emit_fits_inside_it() {
-    let edge = IMAGE_MAX_EDGE as usize;
+    let edge = IMAGE_MAX_EDGE;
     let px = edge * edge * 3;
     let mut noise = vec![0u8; px];
     let mut s: u32 = 12345;

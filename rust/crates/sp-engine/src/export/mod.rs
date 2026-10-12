@@ -2,7 +2,6 @@
 //! toolchain, and the send routes.
 
 pub mod artifact;
-pub mod azw3_revision;
 pub mod calibre;
 pub mod formats;
 pub mod freshness;

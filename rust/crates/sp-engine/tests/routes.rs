@@ -2,7 +2,7 @@
 //! draws it, and the rule that what you chose last time wins.
 
 use serde_json::{Value, json};
-use sp_engine::device_types::{ConnectedDevice, DeviceKind};
+use sp_device::types::{ConnectedDevice, DeviceKind};
 use sp_engine::export::routes::{
     Route, RouteFacts, Unavailable, device_kinds, preselected, routes,
 };
@@ -12,6 +12,8 @@ fn dev(kind: DeviceKind, name: &str, volume: Option<&str>) -> ConnectedDevice {
         kind,
         name: name.into(),
         volume: volume.map(str::to_owned),
+        transport: None,
+        serial: None,
     }
 }
 

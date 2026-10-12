@@ -30,8 +30,29 @@ miniz_oxide = "0.8"
 # SHA-256 for the tests that pin a book by its digest.
 sha2 = "0.10"
 sp-fdx = { path = "crates/sp-fdx" }
+sp-parser = { path = "crates/sp-parser" }
+sp-epub = { path = "crates/sp-epub" }
+sp-azw3 = { path = "crates/sp-azw3" }
+sp-device = { path = "crates/sp-device" }
+sp-fsutil = { path = "crates/sp-fsutil" }
+sp-engine = { path = "crates/sp-engine" }
+sp-pdf = { path = "crates/sp-pdf" }
 # Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
 zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not
 # byte-identical to pako's; the parity check compares inflated entries.
 flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+
+# The picture budget (sp-parser's IMAGE_BUDGET_MS) is wall-clock, and an
+# unoptimized build spends it on pixel work: a picture-heavy script that a
+# release build reads in 7 s ran out of its 20 s in a debug test. Optimizing
+# the pixel crates and every dependency in dev and test builds keeps the
+# tests' answers the shipped program's, without loosening the budget.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev.package.sp-parser]
+opt-level = 3
+
+[profile.dev.package.sp-pdf]
+opt-level = 3

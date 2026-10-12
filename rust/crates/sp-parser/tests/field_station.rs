@@ -25,6 +25,8 @@
 //! walk runs here over the parser's elements, split at the printed page mark
 //! the parser reads on each page (the element the `= pg N` marker is written
 //! from) with each cue joined to its speech as `@CUE speech`.
+//!
+//! Both MOVED halves are in sp-engine/tests/field_station.rs.
 
 mod common;
 

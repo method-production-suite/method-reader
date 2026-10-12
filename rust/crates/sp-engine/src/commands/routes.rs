@@ -296,7 +296,7 @@ pub fn route_command(
                 devices: Some(Box::new(Vec::new)),
                 ..Default::default()
             },
-            false,
+            &sp_device::ListDevicesOptions::default(),
         ),
     };
     let list = routes(&facts);

@@ -5334,6 +5334,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-cli"
+version = "0.11.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sp-azw3",
+ "sp-device",
+ "sp-engine",
+ "sp-fdx",
+ "sp-fountain",
+ "sp-model",
+ "sp-parser",
+ "tempfile",
+ "zip",
+]
+
+[[package]]
 name = "sp-device"
 version = "0.11.1"
 dependencies = [
@@ -5358,14 +5375,22 @@ dependencies = [
 name = "sp-engine"
 version = "0.11.1"
 dependencies = [
+ "regex",
  "rustix 1.1.5",
  "serde",
  "serde_json",
  "sha2",
+ "sp-azw3",
+ "sp-device",
+ "sp-epub",
  "sp-fdx",
  "sp-fountain",
+ "sp-mobi",
  "sp-model",
+ "sp-parser",
+ "sp-pdf",
  "tempfile",
+ "zip",
 ]
 
 [[package]]
@@ -5398,6 +5423,7 @@ version = "0.11.1"
 dependencies = [
  "serde_json",
  "sp-model",
+ "sp-parser",
  "unicode-general-category",
 ]
 
@@ -5448,11 +5474,13 @@ dependencies = [
 name = "sp-parser"
 version = "0.11.1"
 dependencies = [
+ "flate2",
  "miniz_oxide 0.8.9",
  "regex",
  "serde",
  "serde_json",
  "sp-model",
+ "sp-pdf",
 ]
 
 [[package]]
@@ -7489,6 +7517,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 name = "xtask"
 version = "0.11.1"
 dependencies = [
+ "miniz_oxide 0.8.9",
  "serde_json",
  "zip",
 ]

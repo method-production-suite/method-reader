@@ -14,8 +14,8 @@
 //! notes.ts, pointed the wrong way.
 //!
 //! The IDAT stream is ours too: the TypeScript deflated with node:zlib at
-//! level 9, this deflates with miniz_oxide at level 9, and the two streams
-//! differ byte for byte while inflating to the same rows. rust/PARITY.md
+//! level 9, this deflates with zlib-rs at level 6 (see [`PNG_DEFLATE_LEVEL`]),
+//! and the two streams differ byte for byte while inflating to the same rows. rust/PARITY.md
 //! records the decision that pictures compare by decoded pixels for exactly
 //! this reason. Everything else here (signature, IHDR, the per-row filter
 //! choice, IEND) is the TypeScript's, byte for byte.
@@ -266,12 +266,34 @@ pub fn encode_png(rgb: &[u8], width: usize, height: usize) -> Result<Vec<u8>, Pn
     let mut out = Vec::new();
     out.extend_from_slice(&PNG_SIGNATURE);
     out.extend(chunk(b"IHDR", &ihdr));
-    out.extend(chunk(
-        b"IDAT",
-        &miniz_oxide::deflate::compress_to_vec_zlib(&raw, 9),
-    ));
+    out.extend(chunk(b"IDAT", &deflate(&raw)));
     out.extend(chunk(b"IEND", &[]));
     Ok(out)
+}
+
+/// The deflate level for a picture's IDAT, through zlib-rs (flate2).
+///
+/// Measured 2026-10-11 on the real scripts, release build, the picture
+/// stage alone: the one picture-heavy document took 20.0 s at miniz_oxide's
+/// level 9 (the whole IMAGE_BUDGET_MS, so pictures were dropped), 10.7 s at
+/// miniz's 6, 17.0 s at zlib-rs's 9 and 6.9 s at zlib-rs's 6, whose files
+/// are 2.5% larger than zlib-rs's 9 there and 6% on the script with one
+/// big picture. Level 1 saves only another 1.8 s (the rest is decoding and
+/// downscaling) for files up to three times larger. Pictures compare by
+/// decoded pixels (rust/PARITY.md, Decisions), so the level is free to be
+/// the one that keeps the budget comfortably met; the budget itself is
+/// never loosened.
+pub const PNG_DEFLATE_LEVEL: u32 = 6;
+
+fn deflate(raw: &[u8]) -> Vec<u8> {
+    use std::io::Write;
+    let mut e = flate2::write::ZlibEncoder::new(
+        Vec::with_capacity(raw.len() / 2),
+        flate2::Compression::new(PNG_DEFLATE_LEVEL),
+    );
+    // Writing into a Vec cannot fail.
+    e.write_all(raw).expect("deflate into memory");
+    e.finish().expect("deflate into memory")
 }
 
 /// Pixels after `downscale_rgb`: the same buffer when nothing had to move.

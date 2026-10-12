@@ -20,6 +20,7 @@
 //   sp-fountain toFountain, ports with that crate.
 // MOVED: "the body itself carries no notes": counts `[[fmt:` in toFountain output; needs
 //   sp-fountain toFountain, ports with that crate.
+// All four are in sp-engine/tests/torture.rs (they read the PDF through sp-pdf).
 
 mod common;
 

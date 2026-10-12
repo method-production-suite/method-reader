@@ -4,17 +4,16 @@
 //! machine, and the Books, Send to Kindle and mail probes run only on a
 //! Mac.
 //!
-//! The device scan is the caller's: device detection is ported on its own
-//! (src/device/*), so [`route_facts`] takes the device list as a probe and
-//! has no default for it.
+//! The device scan defaults to sp-device's `list_devices`; the CLI passes
+//! its own, carrying its test seams (`SCREEPUB_VOLUME_ROOTS`, ...).
 
 use std::process::{Command, Stdio};
 
-use crate::device_types::ConnectedDevice;
 use crate::env::{Env, host_platform};
 use crate::export::routes::RouteFacts;
 use crate::nodepath::posix;
 use crate::settings::app::home_folder;
+use sp_device::types::ConnectedDevice;
 
 /// `MailtoHandlerResult`: a bundle id; `Some(None)` for no mailto entry at
 /// all (an unmodified Mac, so Apple Mail); `None` when the probe could not
@@ -39,8 +38,7 @@ pub type DevicesProbe<'a> = dyn Fn() -> Vec<ConnectedDevice> + 'a;
 /// `existsSync`.
 pub type ExistsProbe<'a> = dyn Fn(&str) -> bool + 'a;
 
-/// `RouteProbes`: every probe, each defaulting to the real machine (but
-/// `devices`, which the caller always supplies).
+/// `RouteProbes`: every probe, each defaulting to the real machine.
 #[derive(Default)]
 pub struct RouteProbes<'a> {
     pub devices: Option<Box<DevicesProbe<'a>>>,
@@ -215,10 +213,15 @@ pub fn mailto_handler_via(run: &CommandRunner) -> MailtoHandlerResult {
     None
 }
 
-/// `routeFacts(probes, { skipRemarkable })`. `skip_remarkable` says the
-/// device list was gathered without looking for a reMarkable, which the
-/// facts then say (`remarkableChecked: false`).
-pub fn route_facts(probes: &RouteProbes, skip_remarkable: bool) -> RouteFacts {
+/// `routeFacts(probes, deviceOptions)`. With no `devices` probe, the list
+/// is sp-device's `list_devices(device_options)`. `skip_remarkable` in the
+/// options says the list was gathered without looking for a reMarkable,
+/// which the facts then say (`remarkableChecked: false`).
+pub fn route_facts(
+    probes: &RouteProbes,
+    device_options: &sp_device::ListDevicesOptions,
+) -> RouteFacts {
+    let skip_remarkable = device_options.skip_remarkable;
     let platform = probes
         .platform
         .clone()
@@ -251,7 +254,10 @@ pub fn route_facts(probes: &RouteProbes, skip_remarkable: bool) -> RouteFacts {
         };
     }
 
-    let devices = probes.devices.as_ref().map(|f| f()).unwrap_or_default();
+    let devices = match &probes.devices {
+        Some(f) => f(),
+        None => sp_device::list_devices(device_options),
+    };
     RouteFacts {
         platform,
         devices,

@@ -11,7 +11,8 @@ mod common;
 use std::cell::{Cell, RefCell};
 
 use common::env_of;
-use sp_engine::device_types::{ConnectedDevice, DeviceKind};
+use sp_device::ListDevicesOptions;
+use sp_device::types::{ConnectedDevice, DeviceKind};
 use sp_engine::env::Env;
 use sp_engine::export::route_facts::{
     CommandResult, MailtoHandlerResult, RouteProbes, parse_mailto_handler, route_facts,
@@ -23,6 +24,8 @@ fn kindle() -> ConnectedDevice {
         kind: DeviceKind::Kindle,
         name: "Kindle".into(),
         volume: Some("/Volumes/Kindle".into()),
+        transport: None,
+        serial: None,
     }
 }
 
@@ -39,7 +42,7 @@ fn base<'a>() -> RouteProbes<'a> {
 }
 
 fn facts(probes: &RouteProbes) -> RouteFacts {
-    route_facts(probes, false)
+    route_facts(probes, &ListDevicesOptions::default())
 }
 
 // ---- parseMailtoHandler ----
@@ -402,7 +405,13 @@ fn the_platform_defaults_to_this_one() {
 fn skip_remarkable_says_the_tablet_was_not_looked_for() {
     let mut p = base();
     p.devices = Some(Box::new(|| vec![kindle()]));
-    let f = route_facts(&p, true);
+    let f = route_facts(
+        &p,
+        &ListDevicesOptions {
+            skip_remarkable: true,
+            ..Default::default()
+        },
+    );
     assert_eq!(f.devices, vec![kindle()]);
     assert_eq!(f.remarkable_checked, Some(false));
 }
@@ -411,6 +420,74 @@ fn skip_remarkable_says_the_tablet_was_not_looked_for() {
 fn a_full_answer_carries_no_such_fact() {
     let mut p = base();
     p.devices = Some(Box::new(|| vec![kindle()]));
-    let f = route_facts(&p, false);
+    let f = route_facts(&p, &ListDevicesOptions::default());
+    assert_eq!(f.remarkable_checked, None);
+}
+
+// ---- the default device probe (sp-device's list_devices) ----
+
+fn never_probe(_: &str, _: std::time::Duration) -> Result<bool, String> {
+    panic!("the reMarkable probe ran")
+}
+
+fn no_tablet(_: &str, _: std::time::Duration) -> Result<bool, String> {
+    Ok(false)
+}
+
+fn scan_kindle(_: Option<&[String]>) -> Vec<ConnectedDevice> {
+    vec![kindle()]
+}
+
+#[test]
+fn with_no_devices_probe_the_default_is_list_devices_with_the_options() {
+    // No roots scans nothing (no real /Volumes read); the closed local port
+    // fails the reMarkable probe at once.
+    let mut p = base();
+    p.platform = Some("linux".into());
+    p.devices = None;
+    let f = route_facts(
+        &p,
+        &ListDevicesOptions {
+            roots: Some(Vec::new()),
+            remarkable_endpoint: Some("http://127.0.0.1:9".into()),
+            skip_mtp: true,
+            ..Default::default()
+        },
+    );
+    assert_eq!(f.devices, Vec::<ConnectedDevice>::new());
+}
+
+#[test]
+fn skip_remarkable_lists_the_mounted_readers_and_never_probes() {
+    let mut p = base();
+    p.devices = None;
+    let f = route_facts(
+        &p,
+        &ListDevicesOptions {
+            scan: Some(&scan_kindle),
+            probe: Some(&never_probe),
+            skip_remarkable: true,
+            skip_mtp: true,
+            ..Default::default()
+        },
+    );
+    assert_eq!(f.devices, vec![kindle()]);
+    assert_eq!(f.remarkable_checked, Some(false));
+}
+
+#[test]
+fn a_full_default_answer_looked_for_the_tablet() {
+    let mut p = base();
+    p.devices = None;
+    let f = route_facts(
+        &p,
+        &ListDevicesOptions {
+            scan: Some(&scan_kindle),
+            probe: Some(&no_tablet),
+            skip_mtp: true,
+            ..Default::default()
+        },
+    );
+    assert_eq!(f.devices, vec![kindle()]);
     assert_eq!(f.remarkable_checked, None);
 }

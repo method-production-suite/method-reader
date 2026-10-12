@@ -36,7 +36,7 @@ use std::rc::Rc;
 
 use serde::{Deserialize, Serialize};
 
-pub use facts::{read, read_document};
+pub use facts::{image_fact, read, read_document, read_pages};
 pub use images::PdfImage;
 pub use oplist::PageOp;
 pub use text::TextItem;

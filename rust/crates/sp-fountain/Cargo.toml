@@ -18,3 +18,5 @@ unicode-general-category = "1"
 
 [dev-dependencies]
 serde_json.workspace = true
+# What the parser makes from ordinary lines, serialized (tests/parser_pipeline.rs).
+sp-parser.workspace = true

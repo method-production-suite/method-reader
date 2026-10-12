@@ -15,7 +15,7 @@
 //! reaches through [`export::renderers::Renderers`].
 
 pub mod commands;
-pub mod device_types;
+pub mod convert;
 pub mod env;
 pub mod errors;
 pub mod export;
