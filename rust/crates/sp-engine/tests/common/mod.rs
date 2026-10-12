@@ -16,6 +16,7 @@
 
 #![allow(dead_code)]
 
+pub mod books;
 pub mod png;
 
 use std::path::{Path, PathBuf};
