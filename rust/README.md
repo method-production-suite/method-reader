@@ -70,17 +70,23 @@ cargo xtask parity --rust-cli path/to/screepub
 cargo xtask parity --against-ts          # the harness against the TypeScript alone
 ```
 
-Both CLIs get the same arguments, a scratch folder each (a copy of the input,
-empty settings, an empty library), and the same `SOURCE_DATE_EPOCH` and
-`TZ`. Compared: the exit code, the `--json` answer as values (paths and times
-normalized), the EPUB entry by entry (names, order, stored or deflated,
-contents), and the MOBI, AZW3, FDX, preview, `--debug` elements, `.fountain`
-and picture folder byte for byte. Real scripts are reported as counts only.
+Both CLIs get the same arguments; a scratch folder each (a copy of the input,
+empty settings, an empty library); the same `SOURCE_DATE_EPOCH` and `TZ`;
+the device seams pinned; and Calibre at a guard path, or, for the rows that
+ask Calibre a question, a scratch COPY of its settings. Compared: the exit
+code, stdout (the `--json` answer as values, or a person's text) with paths
+and times normalized, stderr where the row asks, the EPUB entry by entry,
+MOBI and AZW3 record by record, and the FDX, preview, `.fountain` and
+folder trees byte for byte. Pictures compare by their decoded pixels
+wherever they appear, and `--debug`'s elements as JSON values (PARITY.md,
+Decisions). Real scripts are reported as counts only.
 
-The Rust CLI is built from `crates/sp-cli` once that exists (binary
-`screepub`); until then parity says so and exits cleanly. Commands are rows
-in `crates/xtask/src/table.rs`; adding `devices`, `settings`, `export` and
-the rest is adding rows.
+The Rust CLI is `crates/sp-cli` (binary `screepub`), built in the release
+profile. Commands are rows in `crates/xtask/src/table.rs`: every verb of
+`--help` and every flag combination the TypeScript CLI tests exercise. A
+row can write files into its scratch folder first and run earlier steps
+with the same side's CLI (a conversion before an `export`). `--command`
+takes a row name or a prefix ending in `*` (`--command 'export-*'`).
 
 ## Checks
 

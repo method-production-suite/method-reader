@@ -206,7 +206,7 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | AZW3 | book.azw3 | sp-azw3 | todo |
 | FDX | book.fdx | sp-fdx | todo |
 | pictures | images/ | sp-parser | todo |
-| --json answer | convert.json | sp-cli | todo |
+| --json answer | convert.json | sp-cli | done: `cargo xtask parity` runs both CLIs on every committed fixture and real script and compares the answer as values (the convert rows), with every book and the picture folder |
 
 ## Window feature inventory
 
@@ -752,3 +752,43 @@ names the check it affects.
 - **Timeouts.** resolveImageData's per-image wait and store race have no Rust
   counterpart (pixels arrive resolved); the 20 s document budget still charges
   conversion and encoding. `imageStats.decodersUnavailable` is never set.
+- **Pictures are decoded past the guards, inside the budget (sp-cli,
+  2026-10-11).** convert.ts decodes a PDF's pictures only after the scanned
+  and not-a-screenplay refusals, and its budget counts the waiting for
+  pdf.js's pixels. sp-pdf's `read` decodes every picture up front, so the
+  conversion uses `sp_pdf::read_pages` (text and operators only) and fetches
+  each picture's pixels through `sp_pdf::image_fact` as sp-parser reaches it
+  (`PendingExtract::decode_images_with`), inside the timed region that
+  charges the budget. A refused PDF decodes nothing. `sp_pdf::read` keeps
+  its old answer (read_pages, then every picture).
+- **PNG deflate level (sp-parser, 2026-10-11).** Pictures compare by decoded
+  pixels (above), so the IDAT deflate is free to be the one that keeps the
+  picture budget comfortably met; the budget itself is unchanged. Measured
+  on the real scripts, release build, picture stage alone: the one
+  picture-heavy document (converted with --force) took the whole 20 s at
+  miniz_oxide level 9 (the budget ran out and pictures were dropped), 10.7 s
+  at miniz 6, 17.0 s at zlib-rs 9, 6.9 s at zlib-rs 6 and 5.1 s at level 1
+  (whose files are up to three times larger). sp-parser now deflates with
+  zlib-rs (flate2) at level 6 (`PNG_DEFLATE_LEVEL`): files 2.5% larger than
+  zlib-rs 9 on that document, 6% on the script with one large picture.
+- **What the parity harness compares, and how (sp-cli, 2026-10-11).** The
+  `--debug` dump (`<stem>.elements.json`) is compared as JSON VALUES, not
+  bytes: the TypeScript's key order is whatever order each code path built
+  its element object in (`id` first on some, `type` first on others), an
+  accident of object literals that nothing reads; the values match on every
+  fixture and real script. Pictures compare by decoded content wherever they
+  appear: the picture folder, EPUB entries, the preview's and the inline
+  answer's `data:image/png` URIs, and MOBI and AZW3 records (record by
+  record, a PNG record by its pixels; the PalmDB record offsets move with a
+  picture's size and are not compared). Every other file is compared as
+  before. Text files in a compared folder tree (library, config) have each
+  side's scratch folder spelled `$WORK`.
+- **No pdf.js warnings (sp-cli, 2026-10-11).** `--debug` let pdf.js's own
+  warnings through to stderr; there is no pdf.js in Rust, so `--debug` writes
+  only the elements dump. cli.test.ts's "--debug lets them through" retires.
+- **The pages.json test path was never shipped (sp-cli, 2026-10-11).** sp-pdf
+  landed before sp-cli needed it, so PDF input is always sp-pdf's.
+- **Two copies of Node's path functions (open, for the owner).** sp-fsutil
+  (`nodepath`) and sp-engine (`nodepath`) each port node:path; the CLI uses
+  sp-engine's, sp-device uses sp-fsutil's. Both are checked against Bun;
+  folding them into sp-fsutil's is a mechanical follow-up.
