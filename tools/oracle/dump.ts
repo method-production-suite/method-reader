@@ -13,6 +13,8 @@
 //   tokens.json      fountain-js tokens, exactly as the renderers receive them
 //   book.epub, book.mobi, book.azw3, book.fdx, book.preview.html
 //   images/          the picture folder the CLI wrote beside the .fountain
+//   pixels/          each picture's source pixels as pdf.js handed them over,
+//                    named <dataSha256>.bin after pages.json's hash (PDF only)
 //   convert.json     the CLI's --json answer, with the scratch folder as $WORK
 //   meta.json        what produced all of the above, and every file's sha256
 //
@@ -127,8 +129,10 @@ interface PageObjs {
   commonObjs: { has(k: string): boolean; get(k: string, cb?: (o: unknown) => void): unknown };
 }
 
-/** pages.json: per page, the facts extract.ts reads off pdf.js. */
-async function pdfFacts(bytes: Uint8Array): Promise<unknown> {
+/** pages.json: per page, the facts extract.ts reads off pdf.js. With
+ * `pixelsDir`, each picture's bytes are also written there as
+ * `<dataSha256>.bin`, the layout sp-pdf and sp-parser read pixels from. */
+async function pdfFacts(bytes: Uint8Array, pixelsDir?: string): Promise<unknown> {
   const wasmUrl = pdfjsWasmDir();
   const pdf = await getDocument({ data: bytes.slice(), wasmUrl: wasmUrl ?? undefined }).promise;
   const pages: unknown[] = [];
@@ -179,6 +183,11 @@ async function pdfFacts(bytes: Uint8Array): Promise<unknown> {
     for (const o of (walked ?? []) as { op: string; objId?: unknown }[]) {
       if (o.op !== 'paintImageXObject' || typeof o.objId !== 'string' || o.objId in images) continue;
       const img = await resolveImageData(store.objs, store.commonObjs as never, o.objId);
+      if (img?.data && pixelsDir) {
+        const data = new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength);
+        mkdirSync(pixelsDir, { recursive: true });
+        writeFileSync(join(pixelsDir, `${sha256(data)}.bin`), data);
+      }
       images[o.objId] = img === null
         ? null
         : {
@@ -319,7 +328,7 @@ export async function dump({ input, out, options, epoch = DEFAULT_EPOCH }: DumpO
 
     if (isPdf) {
       const bytes = new Uint8Array(readFileSync(input));
-      writeJson(join(out, 'pages.json'), await pdfFacts(bytes));
+      writeJson(join(out, 'pages.json'), await pdfFacts(bytes, join(out, 'pixels')));
       const doc = await extractDocument(bytes.slice());
       writeJson(join(out, 'lines.json'), {
         pageCount: doc.pageCount,
