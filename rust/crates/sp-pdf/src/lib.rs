@@ -1,0 +1,139 @@
+//! sp-pdf: what pdf.js gives Screepub's parser, in pure Rust.
+//!
+//! The TypeScript engine reads a PDF through pdf.js: per page, the text
+//! items of `getTextContent`, the font names behind them, a handful of
+//! operators out of `getOperatorList` (the transforms, the drawn rules, the
+//! painted images and the glyph runs), and each painted image's pixels.
+//! This crate produces the same things from the same file, using
+//! hayro-syntax for the file structure and a port of pdf.js's own evaluator
+//! for everything whose exact behavior the parser depends on.
+//!
+//! Large parts are ported from pdf.js (Mozilla Foundation, Apache License
+//! 2.0); each such module says so, and the crate's NOTICE carries the
+//! license notice.
+
+pub mod bidi;
+pub mod cmap;
+pub mod fonts;
+pub mod js;
+pub mod lexer;
+pub mod obj;
+pub mod ops;
+pub mod page;
+#[allow(clippy::all, clippy::pedantic)]
+pub mod tables;
+pub mod text;
+pub mod truetype;
+pub mod unicode;
+
+use std::collections::{BTreeMap, HashSet};
+use std::rc::Rc;
+
+use serde::{Deserialize, Serialize};
+
+pub use text::TextItem;
+
+use crate::fonts::FontLoader;
+use crate::obj::{Obj, Ref, XRef};
+
+/// Why a document could not be opened at all.
+#[derive(Debug)]
+pub enum LoadError {
+    /// Not a PDF hayro-syntax can read (no usable xref, no pages).
+    Invalid,
+    /// Encrypted with a password we do not have.
+    Encrypted,
+}
+
+/// One page, as the parser sees it.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct PageData {
+    #[serde(rename = "pageNum")]
+    pub page_num: usize,
+    /// `getViewport({ scale: 1 })`.
+    pub width: f64,
+    pub height: f64,
+    pub view: [f64; 4],
+    pub rotate: i64,
+    pub items: Vec<TextItem>,
+    /// Each item font's PostScript name (`commonObjs.get(fontName).name`),
+    /// null where pdf.js has none (an unusable font).
+    pub fonts: BTreeMap<String, Option<String>>,
+}
+
+/// An open document.
+pub struct Document {
+    pdf: hayro_syntax::Pdf,
+}
+
+impl Document {
+    pub fn load(bytes: Vec<u8>) -> Result<Self, LoadError> {
+        match hayro_syntax::Pdf::new(bytes) {
+            Ok(pdf) => Ok(Self { pdf }),
+            Err(hayro_syntax::LoadPdfError::Decryption(_)) => Err(LoadError::Encrypted),
+            Err(_) => Err(LoadError::Invalid),
+        }
+    }
+
+    pub fn num_pages(&self) -> usize {
+        self.pdf.pages().len()
+    }
+
+    /// Every page in order, read in one pass so fonts and images are shared
+    /// the way pdf.js shares them across a document.
+    pub fn pages(&self) -> Vec<PageData> {
+        let xref = XRef::new(&self.pdf);
+        let mut fonts = FontLoader::new();
+        let mut out = Vec::new();
+        for (i, p) in self.pdf.pages().iter().enumerate() {
+            let dict = match p.raw().obj_id() {
+                Some(id) => xref.fetch(Ref {
+                    num: id.obj_number,
+                    generation: id.gen_number,
+                }),
+                None => Obj::Null,
+            };
+            let dict = match dict {
+                Obj::Dict(d) => d,
+                _ => Rc::new(obj::Dict::default()),
+            };
+            out.push(read_page(&xref, &mut fonts, dict, i));
+        }
+        out
+    }
+}
+
+fn read_page(
+    xref: &XRef<'_>,
+    fonts: &mut FontLoader,
+    dict: Rc<obj::Dict>,
+    index: usize,
+) -> PageData {
+    let info = page::page_info(xref, dict);
+    let (content, content_dict) = page::content_bytes(xref, &info.dict);
+    let resources = page::merged_resources(xref, content_dict.as_ref(), &info.resources);
+    let mut ex = text::TextExtractor {
+        xref,
+        fonts,
+        view_box: info.view,
+        items: Vec::new(),
+    };
+    ex.run(&content, &resources, None, &HashSet::new());
+    let items = ex.items;
+    let (width, height) = page::viewport_size(&info.view, info.rotate);
+    let mut font_names = BTreeMap::new();
+    for it in &items {
+        if !font_names.contains_key(&it.font_name) {
+            font_names.insert(it.font_name.clone(), fonts.name_of(&it.font_name));
+        }
+    }
+    PageData {
+        page_num: index + 1,
+        width,
+        height,
+        view: info.view,
+        rotate: info.rotate,
+        items,
+        fonts: font_names,
+    }
+}

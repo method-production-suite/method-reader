@@ -1,0 +1,20 @@
+[package]
+name = "sp-pdf"
+description = "What pdf.js gives Screepub's parser, in pure Rust: text items, font facts, the operators the parser walks, and image pixels."
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+hayro-syntax = "0.8.0"
+hayro-jpeg2000 = "0.4.1"
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1"
+sha2 = "0.10"
+
+[lints]
+workspace = true

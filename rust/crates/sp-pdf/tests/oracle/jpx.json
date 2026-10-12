@@ -1,0 +1,409 @@
+{
+ "numPages": 2,
+ "pages": [
+  {
+   "pageNum": 1,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "THE SECOND UNIT",
+     "dir": "ltr",
+     "width": 108,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      252,
+      504
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Written by",
+     "dir": "ltr",
+     "width": 72,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      270,
+      468
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "J. Q. Nobody",
+     "dir": "ltr",
+     "width": 86.39999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      262.8,
+      432
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Placeholder Pictures",
+     "dir": "ltr",
+     "width": 144,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      108
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "hello@example.com",
+     "dir": "ltr",
+     "width": 122.40000000000003,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      96
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "showText",
+     "text": "THE SECOND UNIT"
+    },
+    {
+     "op": "showText",
+     "text": "Written by"
+    },
+    {
+     "op": "showText",
+     "text": "J. Q. Nobody"
+    },
+    {
+     "op": "showText",
+     "text": "Placeholder Pictures"
+    },
+    {
+     "op": "showText",
+     "text": "hello@example.com"
+    }
+   ],
+   "images": []
+  },
+  {
+   "pageNum": 2,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "1.",
+     "dir": "ltr",
+     "width": 14.4,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      532.8,
+      756
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "INT. COLOUR TIMING BAY - NIGHT",
+     "dir": "ltr",
+     "width": 215.99999999999986,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      720
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "A",
+     "dir": "ltr",
+     "width": 7.2,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      540
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": " ",
+     "dir": "ltr",
+     "width": 7.200000000000003,
+     "height": 0,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      115.2,
+      540
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": "reference print hangs under the loupe, one frame of it",
+     "dir": "ltr",
+     "width": 388.7999999999996,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      122.4,
+      540
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "circled in grease pencil.",
+     "dir": "ltr",
+     "width": 179.99999999999991,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      528
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      504
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "The blue is two points cold and it",
+     "dir": "ltr",
+     "width": 244.79999999999978,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      492
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "has been all week.",
+     "dir": "ltr",
+     "width": 129.6,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      480
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT writes the number down without looking up.",
+     "dir": "ltr",
+     "width": 338.3999999999997,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      456
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      432
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Then we time it again.",
+     "dir": "ltr",
+     "width": 158.39999999999992,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      420
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      180,
+      0,
+      0,
+      135,
+      108,
+      561
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p1_1",
+     "w": 64,
+     "h": 48
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "1."
+    },
+    {
+     "op": "showText",
+     "text": "INT. COLOUR TIMING BAY - NIGHT"
+    },
+    {
+     "op": "showText",
+     "text": "A reference print hangs under the loupe, one frame of it"
+    },
+    {
+     "op": "showText",
+     "text": "circled in grease pencil."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "The blue is two points cold and it"
+    },
+    {
+     "op": "showText",
+     "text": "has been all week."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT writes the number down without looking up."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT"
+    },
+    {
+     "op": "showText",
+     "text": "Then we time it again."
+    }
+   ],
+   "images": [
+    {
+     "objId": "img_p1_1",
+     "width": 64,
+     "height": 48,
+     "kind": 3,
+     "len": 12288,
+     "sha256": "356334e5ac31420bace45d45d7f6e4c7dd74a5a58779b96384fbb4aad6d2922a"
+    }
+   ]
+  }
+ ]
+}

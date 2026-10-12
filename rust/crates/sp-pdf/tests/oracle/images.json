@@ -1,0 +1,1728 @@
+{
+ "numPages": 5,
+ "pages": [
+  {
+   "pageNum": 1,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "THE PAPER LANTERN",
+     "dir": "ltr",
+     "width": 122.4,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      244.8,
+      504
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Written by",
+     "dir": "ltr",
+     "width": 72,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      270,
+      468
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "J. Q. Nobody",
+     "dir": "ltr",
+     "width": 86.39999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      262.8,
+      432
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Placeholder Pictures",
+     "dir": "ltr",
+     "width": 144,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      108
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "hello@example.com",
+     "dir": "ltr",
+     "width": 122.40000000000003,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      96
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      522,
+      0,
+      0,
+      702,
+      45,
+      45
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p0_1",
+     "w": 261,
+     "h": 351
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      200,
+      0,
+      0,
+      100,
+      376,
+      36
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p0_2",
+     "w": 100,
+     "h": 50
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "THE PAPER LANTERN"
+    },
+    {
+     "op": "showText",
+     "text": "Written by"
+    },
+    {
+     "op": "showText",
+     "text": "J. Q. Nobody"
+    },
+    {
+     "op": "showText",
+     "text": "Placeholder Pictures"
+    },
+    {
+     "op": "showText",
+     "text": "hello@example.com"
+    }
+   ],
+   "images": [
+    {
+     "objId": "img_p0_1",
+     "width": 261,
+     "height": 351,
+     "kind": 2,
+     "len": 274833,
+     "sha256": "d1003ca688da4b3537dabe1fe2e8c22b7de76309179e2323b51312e5b9ad46b5"
+    },
+    {
+     "objId": "img_p0_2",
+     "width": 100,
+     "height": 50,
+     "kind": 2,
+     "len": 15000,
+     "sha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+    }
+   ]
+  },
+  {
+   "pageNum": 2,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "INT. ARCHIVE ROOM - DAY",
+     "dir": "ltr",
+     "width": 165.59999999999994,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      720
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN, 30s, holds a storyboard panel up to the window and",
+     "dir": "ltr",
+     "width": 403.1999999999996,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      540
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "squints at it.",
+     "dir": "ltr",
+     "width": 100.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      528
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      504
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Somebody drew this in 1974 and",
+     "dir": "ltr",
+     "width": 215.99999999999986,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      492
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "nobody has looked at it since.",
+     "dir": "ltr",
+     "width": 215.99999999999986,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      480
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT sets down a box",
+     "dir": "ltr",
+     "width": 143.99999999999994,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      456
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": " ",
+     "dir": "ltr",
+     "width": 7.200000000000017,
+     "height": 0,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      251.9999999999998,
+      456
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": "of film cans.",
+     "dir": "ltr",
+     "width": 93.6,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      259.1999999999998,
+      456
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      432
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "That is the job.",
+     "dir": "ltr",
+     "width": 115.19999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      420
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      180,
+      0,
+      0,
+      135,
+      108,
+      561
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p1_1",
+     "w": 240,
+     "h": 180
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      200,
+      0,
+      0,
+      100,
+      376,
+      36
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "g_d0_img_p1_2",
+     "w": 100,
+     "h": 50
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "INT. ARCHIVE ROOM - DAY"
+    },
+    {
+     "op": "showText",
+     "text": "WREN, 30s, holds a storyboard panel up to the window and"
+    },
+    {
+     "op": "showText",
+     "text": "squints at it."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Somebody drew this in 1974 and"
+    },
+    {
+     "op": "showText",
+     "text": "nobody has looked at it since."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT sets down a box of film cans."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT"
+    },
+    {
+     "op": "showText",
+     "text": "That is the job."
+    }
+   ],
+   "images": [
+    {
+     "objId": "img_p1_1",
+     "width": 240,
+     "height": 180,
+     "kind": 2,
+     "len": 129600,
+     "sha256": "2e743fb380430247290b7e2f7a7056ee79d050fecbe8520722aa8abee0dd4f75"
+    },
+    {
+     "objId": "g_d0_img_p1_2",
+     "width": 100,
+     "height": 50,
+     "kind": 2,
+     "len": 15000,
+     "sha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+    }
+   ]
+  },
+  {
+   "pageNum": 3,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "2.",
+     "dir": "ltr",
+     "width": 14.4,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      532.8,
+      756
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER",
+     "dir": "ltr",
+     "width": 316.7999999999997,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      720
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "A",
+     "dir": "ltr",
+     "width": 7.2,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": " ",
+     "dir": "ltr",
+     "width": 7.200000000000003,
+     "height": 0,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      115.2,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": "splice reel turns.",
+     "dir": "ltr",
+     "width": 129.6,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      122.4,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": " ",
+     "dir": "ltr",
+     "width": 7.200000000000017,
+     "height": 0,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      251.9999999999998,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": "The room smells of vinegar and dust.",
+     "dir": "ltr",
+     "width": 259.1999999999998,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      259.1999999999998,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      672
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Two frames are missing from the",
+     "dir": "ltr",
+     "width": 223.19999999999985,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      660
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "head of the roll.",
+     "dir": "ltr",
+     "width": 122.39999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      648
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      624
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Then we cut around them.",
+     "dir": "ltr",
+     "width": 172.79999999999993,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      612
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "She threads the leader by feel, the way she was taught.",
+     "dir": "ltr",
+     "width": 395.9999999999996,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      588
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      130,
+      0,
+      0,
+      130,
+      108,
+      400
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p2_1",
+     "w": 16,
+     "h": 16
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      20,
+      0,
+      0,
+      20,
+      300,
+      440
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p2_2",
+     "w": 200,
+     "h": 200
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      200,
+      0,
+      0,
+      100,
+      376,
+      36
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "g_d0_img_p1_2",
+     "w": 100,
+     "h": 50
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "2."
+    },
+    {
+     "op": "showText",
+     "text": "INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER"
+    },
+    {
+     "op": "showText",
+     "text": "A splice reel turns. The room smells of vinegar and dust."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT"
+    },
+    {
+     "op": "showText",
+     "text": "Two frames are missing from the"
+    },
+    {
+     "op": "showText",
+     "text": "head of the roll."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Then we cut around them."
+    },
+    {
+     "op": "showText",
+     "text": "She threads the leader by feel, the way she was taught."
+    }
+   ],
+   "images": [
+    {
+     "objId": "img_p2_1",
+     "width": 16,
+     "height": 16,
+     "kind": 2,
+     "len": 768,
+     "sha256": "2a798cd70e1e8579be21785d3cbe75d132e79467880a73808e7a87e948ab982e"
+    },
+    {
+     "objId": "img_p2_2",
+     "width": 200,
+     "height": 200,
+     "kind": 2,
+     "len": 120000,
+     "sha256": "600c2cbf08996c5b7b712273fe7401dd1011703911b4f0d307758e5ab237e56f"
+    },
+    {
+     "objId": "g_d0_img_p1_2",
+     "width": 100,
+     "height": 50,
+     "kind": 2,
+     "len": 15000,
+     "sha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+    }
+   ]
+  },
+  {
+   "pageNum": 4,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "3.",
+     "dir": "ltr",
+     "width": 14.4,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      532.8,
+      756
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "EXT. LOADING DOCK - NIGHT",
+     "dir": "ltr",
+     "width": 179.99999999999991,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      720
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Rain on corrugated steel. WREN wheels a cart of film cans",
+     "dir": "ltr",
+     "width": 410.3999999999996,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "out under a sodium lamp and counts them twice.",
+     "dir": "ltr",
+     "width": 331.1999999999997,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      684
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT holds an umbrella over the cart and not over himself.",
+     "dir": "ltr",
+     "width": 417.59999999999957,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      660
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      636
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Forty-one. There were forty-three",
+     "dir": "ltr",
+     "width": 237.59999999999982,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      624
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "when we started.",
+     "dir": "ltr",
+     "width": 115.2,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      612
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      588
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Two of them went out for repair in",
+     "dir": "ltr",
+     "width": 244.79999999999978,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      576
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "March and nobody wrote it down.",
+     "dir": "ltr",
+     "width": 223.19999999999985,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      564
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      540
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Nobody ever writes it down.",
+     "dir": "ltr",
+     "width": 194.3999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      528
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "She pulls a tarp over the cart and ties it at the corners.",
+     "dir": "ltr",
+     "width": 417.5999999999995,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      504
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "HOLT",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      480
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "The truck comes at six. Everything",
+     "dir": "ltr",
+     "width": 244.7999999999998,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      468
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "on that manifest has to be on the",
+     "dir": "ltr",
+     "width": 237.59999999999982,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      456
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "dock by then, in order, and dry.",
+     "dir": "ltr",
+     "width": 230.3999999999998,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      444
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      420
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Then we work through it.",
+     "dir": "ltr",
+     "width": 172.79999999999993,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      408
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "The lamp buzzes and cuts out. Neither of them stops moving.",
+     "dir": "ltr",
+     "width": 424.79999999999956,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      384
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "In the dark the cart",
+     "dir": "ltr",
+     "width": 143.99999999999994,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      360
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": " ",
+     "dir": "ltr",
+     "width": 7.200000000000017,
+     "height": 0,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      251.9999999999998,
+      360
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    },
+    {
+     "str": "is a long shape and the rain is louder",
+     "dir": "ltr",
+     "width": 273.59999999999974,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      259.1999999999998,
+      360
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "than it was.",
+     "dir": "ltr",
+     "width": 86.39999999999999,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      348
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      324
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Bring the second cart. And the good",
+     "dir": "ltr",
+     "width": 251.9999999999998,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      312
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "tarp, not the one with the hole in",
+     "dir": "ltr",
+     "width": 244.79999999999978,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      300
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "it.",
+     "dir": "ltr",
+     "width": 21.6,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      288
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Holt goes. Wren stands in the rain with a clipboard and does",
+     "dir": "ltr",
+     "width": 431.99999999999955,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      264
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "not hurry.",
+     "dir": "ltr",
+     "width": 72,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      252
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      612,
+      0,
+      0,
+      792,
+      0,
+      0
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "img_p3_1",
+     "w": 120,
+     "h": 160
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      200,
+      0,
+      0,
+      100,
+      376,
+      36
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "g_d0_img_p1_2",
+     "w": 100,
+     "h": 50
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "3."
+    },
+    {
+     "op": "showText",
+     "text": "EXT. LOADING DOCK - NIGHT"
+    },
+    {
+     "op": "showText",
+     "text": "Rain on corrugated steel. WREN wheels a cart of film cans"
+    },
+    {
+     "op": "showText",
+     "text": "out under a sodium lamp and counts them twice."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT holds an umbrella over the cart and not over himself."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Forty-one. There were forty-three"
+    },
+    {
+     "op": "showText",
+     "text": "when we started."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT"
+    },
+    {
+     "op": "showText",
+     "text": "Two of them went out for repair in"
+    },
+    {
+     "op": "showText",
+     "text": "March and nobody wrote it down."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Nobody ever writes it down."
+    },
+    {
+     "op": "showText",
+     "text": "She pulls a tarp over the cart and ties it at the corners."
+    },
+    {
+     "op": "showText",
+     "text": "HOLT"
+    },
+    {
+     "op": "showText",
+     "text": "The truck comes at six. Everything"
+    },
+    {
+     "op": "showText",
+     "text": "on that manifest has to be on the"
+    },
+    {
+     "op": "showText",
+     "text": "dock by then, in order, and dry."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Then we work through it."
+    },
+    {
+     "op": "showText",
+     "text": "The lamp buzzes and cuts out. Neither of them stops moving."
+    },
+    {
+     "op": "showText",
+     "text": "In the dark the cart is a long shape and the rain is louder"
+    },
+    {
+     "op": "showText",
+     "text": "than it was."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Bring the second cart. And the good"
+    },
+    {
+     "op": "showText",
+     "text": "tarp, not the one with the hole in"
+    },
+    {
+     "op": "showText",
+     "text": "it."
+    },
+    {
+     "op": "showText",
+     "text": "Holt goes. Wren stands in the rain with a clipboard and does"
+    },
+    {
+     "op": "showText",
+     "text": "not hurry."
+    }
+   ],
+   "images": [
+    {
+     "objId": "img_p3_1",
+     "width": 120,
+     "height": 160,
+     "kind": 2,
+     "len": 57600,
+     "sha256": "16588dd8cb1e7ba6198097d4a15754f3a1d63f6248cc4aee9726bbf32343aabc"
+    },
+    {
+     "objId": "g_d0_img_p1_2",
+     "width": 100,
+     "height": 50,
+     "kind": 2,
+     "len": 15000,
+     "sha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+    }
+   ]
+  },
+  {
+   "pageNum": 5,
+   "width": 612,
+   "height": 792,
+   "view": [
+    0,
+    0,
+    612,
+    792
+   ],
+   "rotate": 0,
+   "items": [
+    {
+     "str": "4.",
+     "dir": "ltr",
+     "width": 14.4,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      532.8,
+      756
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "INT. ARCHIVE ROOM - DAWN",
+     "dir": "ltr",
+     "width": 172.79999999999993,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      720
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "The cart is gone. A single storyboard panel is still pinned",
+     "dir": "ltr",
+     "width": 424.7999999999995,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      696
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "to the window.",
+     "dir": "ltr",
+     "width": 100.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      108,
+      684
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "WREN",
+     "dir": "ltr",
+     "width": 28.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      266.4,
+      660
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "Leave that one.",
+     "dir": "ltr",
+     "width": 108,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      180,
+      648
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": true
+    },
+    {
+     "str": "FADE OUT.",
+     "dir": "ltr",
+     "width": 64.8,
+     "height": 12,
+     "transform": [
+      12,
+      0,
+      0,
+      12,
+      432,
+      624
+     ],
+     "fontName": "g_d0_f1",
+     "hasEOL": false
+    }
+   ],
+   "fonts": {
+    "g_d0_f1": "Courier"
+   },
+   "ops": [
+    {
+     "op": "save"
+    },
+    {
+     "op": "transform",
+     "m": [
+      200,
+      0,
+      0,
+      100,
+      376,
+      36
+     ]
+    },
+    {
+     "op": "paintImageXObject",
+     "objId": "g_d0_img_p1_2",
+     "w": 100,
+     "h": 50
+    },
+    {
+     "op": "restore"
+    },
+    {
+     "op": "showText",
+     "text": "4."
+    },
+    {
+     "op": "showText",
+     "text": "INT. ARCHIVE ROOM - DAWN"
+    },
+    {
+     "op": "showText",
+     "text": "The cart is gone. A single storyboard panel is still pinned"
+    },
+    {
+     "op": "showText",
+     "text": "to the window."
+    },
+    {
+     "op": "showText",
+     "text": "WREN"
+    },
+    {
+     "op": "showText",
+     "text": "Leave that one."
+    },
+    {
+     "op": "showText",
+     "text": "FADE OUT."
+    }
+   ],
+   "images": [
+    {
+     "objId": "g_d0_img_p1_2",
+     "width": 100,
+     "height": 50,
+     "kind": 2,
+     "len": 15000,
+     "sha256": "9a5ae32bc588d66ddaeeb82b2adbeb7b41a6a33f417beae8d8b5314e10953885"
+    }
+   ]
+  }
+ ]
+}
