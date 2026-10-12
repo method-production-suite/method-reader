@@ -54,5 +54,7 @@ pub fn capture_index(html: &str, cfg: &CaptureConfig<'_>) -> Result<String, Stri
         "<script type=\"module\" src=\"/tools/capture/bridge.js\"></script>\n    {MAIN}\n    \
          <script type=\"module\" src=\"/tools/capture/steps.js\"></script>"
     );
-    Ok(html.replacen("<head>", &head, 1).replacen(MAIN, &scripts, 1))
+    Ok(html
+        .replacen("<head>", &head, 1)
+        .replacen(MAIN, &scripts, 1))
 }

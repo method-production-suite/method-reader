@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicUsize, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -272,7 +272,10 @@ pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)
         ("SCREEPUB_LIBRARY", library.to_path_buf()),
         ("SCREEPUB_CONFIG_DIR", library.join(".capture-app-settings")),
         ("SCREEPUB_VOLUME_ROOTS", library.join(".no-volumes")),
-        ("SCREEPUB_REMARKABLE_ENDPOINT", PathBuf::from("http://127.0.0.1:9")),
+        (
+            "SCREEPUB_REMARKABLE_ENDPOINT",
+            PathBuf::from("http://127.0.0.1:9"),
+        ),
         ("CALIBRE_CONFIG_DIRECTORY", calibre.to_path_buf()),
     ]
 }
@@ -348,7 +351,10 @@ fn engine_runner(
         // the arrangement the tests pin.
         let no_volumes = library.join(".no-volumes");
         if let Err(e) = std::fs::create_dir_all(&no_volumes) {
-            return refuse(format!("capture: could not make {}: {e}", no_volumes.display()));
+            return refuse(format!(
+                "capture: could not make {}: {e}",
+                no_volumes.display()
+            ));
         }
         let Some((program, rest)) = engine.split_first() else {
             return refuse("capture: no engine to run".into());
@@ -539,9 +545,8 @@ pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
             // Only now: every picture taken, nothing refused, nothing failed.
             // (Written even if cleanup then failed; that is said after.)
             for (out, png) in &pictures {
-                let written = write_if_changed(&o.out_dir.join(out), png).map_err(|e| {
-                    RunError::other(format!("capture: could not write {out}: {e}"))
-                })?;
+                let written = write_if_changed(&o.out_dir.join(out), png)
+                    .map_err(|e| RunError::other(format!("capture: could not write {out}: {e}")))?;
                 log(&format!("{}  {out}", written.word()));
             }
             if errors.is_empty() {
@@ -575,7 +580,10 @@ fn take(
         .calibre_scratch
         .insert(make_temp_dir(&tmp, "screepub-capture-calibre-").map_err(io("make a temp folder"))?)
         .clone();
-    let real = o.calibre_config.clone().unwrap_or_else(default_calibre_config);
+    let real = o
+        .calibre_config
+        .clone()
+        .unwrap_or_else(default_calibre_config);
     let calibre = copy_calibre_config(&real, &scratch).map_err(io("copy Calibre's settings"))?;
 
     let token = super::random_token();
@@ -620,7 +628,11 @@ fn take(
     let base = format!("http://{host}");
     let interrupt = o.interrupt.clone();
     let failure = || {
-        if let Some(sig) = interrupt.as_ref().map(|i| i.load(Ordering::SeqCst)).filter(|s| *s != 0) {
+        if let Some(sig) = interrupt
+            .as_ref()
+            .map(|i| i.load(Ordering::SeqCst))
+            .filter(|s| *s != 0)
+        {
             return Some(format!("interrupted by {}", signal_name(sig)));
         }
         let errs = snapshot(&server_errors);
@@ -674,7 +686,8 @@ fn take(
                         })
                         .map_err(RunError::other)?;
                     let name = format!("{}-{}.png", shot.name, theme.word());
-                    std::fs::write(pass_one.join(&name), &one).map_err(io("keep a first-pass picture"))?;
+                    std::fs::write(pass_one.join(&name), &one)
+                        .map_err(io("keep a first-pass picture"))?;
                     let (w, h) = framed_size(shot);
                     let mut opts = CaptureOptions::page(
                         format!(

@@ -100,13 +100,16 @@ fn hex_pair(two: &[u8]) -> Option<u8> {
 
 /// decodeURIComponent: every `%XX` decoded, and the whole must be UTF-8.
 /// A malformed escape or bad UTF-8 is an error, as it throws in JavaScript.
-pub fn decode_uri_component(s: &str) -> Result<String, ()> {
+pub fn decode_uri_component(s: &str) -> Result<String, String> {
     let b = s.as_bytes();
     let mut out = Vec::with_capacity(b.len());
     let mut i = 0;
     while i < b.len() {
         if b[i] == b'%' {
-            let x = b.get(i + 1..i + 3).and_then(hex_pair).ok_or(())?;
+            let x = b
+                .get(i + 1..i + 3)
+                .and_then(hex_pair)
+                .ok_or("a malformed escape")?;
             out.push(x);
             i += 3;
         } else {
@@ -114,7 +117,7 @@ pub fn decode_uri_component(s: &str) -> Result<String, ()> {
             i += 1;
         }
     }
-    String::from_utf8(out).map_err(|_| ())
+    String::from_utf8(out).map_err(|_| "not UTF-8 once decoded".to_string())
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -135,7 +138,11 @@ impl Response {
 
     /// Plain text, as the capture's own answers are.
     pub fn say(body: &str, status: u16) -> Response {
-        Response::new(status, "text/plain; charset=utf-8", body.as_bytes().to_vec())
+        Response::new(
+            status,
+            "text/plain; charset=utf-8",
+            body.as_bytes().to_vec(),
+        )
     }
 
     pub fn text(&self) -> String {
@@ -312,7 +319,8 @@ pub fn fetch(
         .parse()
         .map_err(|_| format!("not an address this client can reach: {host}"))?;
     let mut s = TcpStream::connect_timeout(&addr, timeout).map_err(|e| e.to_string())?;
-    s.set_read_timeout(Some(timeout)).map_err(|e| e.to_string())?;
+    s.set_read_timeout(Some(timeout))
+        .map_err(|e| e.to_string())?;
     s.set_write_timeout(Some(timeout))
         .map_err(|e| e.to_string())?;
     let mut head = format!(
@@ -325,8 +333,28 @@ pub fn fetch(
     head.push_str("\r\n");
     s.write_all(head.as_bytes()).map_err(|e| e.to_string())?;
     s.write_all(body).map_err(|e| e.to_string())?;
+    // Read to the end of the body the head promises, not to the end of the
+    // connection: a server may keep it open whatever this asked for.
     let mut raw = Vec::new();
-    s.read_to_end(&mut raw).map_err(|e| e.to_string())?;
+    let mut buf = [0u8; 16 * 1024];
+    loop {
+        if let Some(split) = raw.windows(4).position(|w| w == b"\r\n\r\n") {
+            let head = String::from_utf8_lossy(&raw[..split]).to_ascii_lowercase();
+            let length = head.lines().find_map(|l| {
+                l.strip_prefix("content-length:")
+                    .and_then(|v| v.trim().parse::<usize>().ok())
+            });
+            if length.is_some_and(|n| raw.len() >= split + 4 + n) {
+                raw.truncate(split + 4 + length.unwrap_or(0));
+                break;
+            }
+        }
+        match s.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => raw.extend_from_slice(&buf[..n]),
+            Err(e) => return Err(e.to_string()),
+        }
+    }
     parse_response(&raw)
 }
 
@@ -344,7 +372,8 @@ fn parse_response(raw: &[u8]) -> Result<(u16, Vec<u8>), String> {
     let mut body = raw[split + 4..].to_vec();
     let chunked = head.lines().any(|l| {
         l.split_once(':').is_some_and(|(n, v)| {
-            n.trim().eq_ignore_ascii_case("transfer-encoding") && v.trim().eq_ignore_ascii_case("chunked")
+            n.trim().eq_ignore_ascii_case("transfer-encoding")
+                && v.trim().eq_ignore_ascii_case("chunked")
         })
     });
     if chunked {

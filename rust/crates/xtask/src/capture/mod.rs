@@ -137,7 +137,10 @@ pub fn capture_main(args: &[String]) -> u8 {
     }
     let chrome = PathBuf::from(cdp::CHROME);
     if !chrome.exists() {
-        eprintln!("capture: no Chrome at {}. Pictures NOT retaken.", cdp::CHROME);
+        eprintln!(
+            "capture: no Chrome at {}. Pictures NOT retaken.",
+            cdp::CHROME
+        );
         return 2;
     }
 
@@ -157,15 +160,19 @@ pub fn capture_main(args: &[String]) -> u8 {
     let repo = repo_root();
     let result = run_capture(RunOptions {
         shots,
-        demo_pdf: repo.join("tests").join("fixtures").join("field-station.pdf"),
+        demo_pdf: repo
+            .join("tests")
+            .join("fixtures")
+            .join("field-station.pdf"),
         library: PathBuf::from(LIBRARY),
-        launch: Box::new(move || {
-            cdp::launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)
-        }),
+        launch: Box::new(move || cdp::launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)),
         window: Box::new(DesktopUi),
         engine: vec![
             bun().to_string_lossy().into_owned(),
-            repo.join("src").join("cli.ts").to_string_lossy().into_owned(),
+            repo.join("src")
+                .join("cli.ts")
+                .to_string_lossy()
+                .into_owned(),
         ],
         out_dir: repo.clone(),
         repo_dir: repo,
@@ -233,7 +240,10 @@ pub fn make_og_main(_args: &[String]) -> u8 {
     let site = repo_root().join("site");
     match make_og(chrome, &site.join("og-card.html"), &site.join("og.png")) {
         Ok((w, h)) => {
-            println!("{}\n  pixelWidth: {w}\n  pixelHeight: {h}", site.join("og.png").display());
+            println!(
+                "{}\n  pixelWidth: {w}\n  pixelHeight: {h}",
+                site.join("og.png").display()
+            );
             0
         }
         Err(e) => {

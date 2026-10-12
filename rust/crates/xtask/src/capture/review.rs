@@ -39,6 +39,9 @@ pub struct ChangedPicture {
     pub after: Option<Vec<u8>>,
 }
 
+/// A picture's bytes at HEAD and on disk: the key a change is grouped by.
+type Pair = (Option<Vec<u8>>, Option<Vec<u8>>);
+
 fn git(repo: &Path, args: &[&str]) -> Result<(bool, Vec<u8>, String), String> {
     let out = Command::new("git")
         .args(args)
@@ -56,7 +59,13 @@ fn git(repo: &Path, args: &[&str]) -> Result<(bool, Vec<u8>, String), String> {
 /// the same change in two places is listed once, sorted by first path.
 pub fn changed_pictures(repo: &Path) -> Result<Vec<ChangedPicture>, String> {
     let dirs = picture_dirs();
-    let mut args = vec!["status", "--porcelain=v1", "-z", "--untracked-files=all", "--"];
+    let mut args = vec![
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+        "--",
+    ];
     args.extend(dirs.iter().map(String::as_str));
     let (ok, out, err) = git(repo, &args)?;
     if !ok {
@@ -86,7 +95,7 @@ pub fn changed_pictures(repo: &Path) -> Result<Vec<ChangedPicture>, String> {
     paths.sort();
 
     // Keyed by (before, after), in first-seen order.
-    let mut order: Vec<(Option<Vec<u8>>, Option<Vec<u8>>)> = Vec::new();
+    let mut order: Vec<Pair> = Vec::new();
     let mut groups: BTreeMap<usize, ChangedPicture> = BTreeMap::new();
     for path in paths {
         let (ok, head, _) = git(repo, &["cat-file", "blob", &format!("HEAD:{path}")])?;
@@ -216,7 +225,8 @@ fn review(args: &[String], default_repo: &Path) -> Result<(), String> {
         println!("No picture changed.");
         return Ok(());
     }
-    std::fs::write(out, review_page(&pictures)).map_err(|e| format!("could not write {out}: {e}"))?;
+    std::fs::write(out, review_page(&pictures))
+        .map_err(|e| format!("could not write {out}: {e}"))?;
     let n = pictures.len();
     println!(
         "{n} picture{} changed. Old beside new: {out}",

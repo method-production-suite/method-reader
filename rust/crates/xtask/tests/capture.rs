@@ -7,16 +7,17 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use serde_json::{Value, json};
 use xtask::capture::backend::{Browser, CaptureOptions, DesktopUi};
 use xtask::capture::gate::{GateAnswer, GateContext, gate_engine_call};
-use xtask::capture::http::{Request, Response, fetch};
+use xtask::capture::http::{Request, Response};
 use xtask::capture::page::{CaptureConfig, capture_index, config_json};
 use xtask::capture::run::{MARKER, RunError, RunOptions, claim_library, run_capture};
 use xtask::capture::server::{EngineResult, Handler, HandlerOptions, Records, snapshot};
-use xtask::capture::shots::{FRAME_PAD, Kind, SHOTS, Written, all_outputs, framed_size, write_if_changed};
+use xtask::capture::shots::{
+    FRAME_PAD, Kind, SHOTS, Written, all_outputs, framed_size, write_if_changed,
+};
 use xtask::capture::window_argv as argv;
 use xtask::paths::repo_root;
 
@@ -30,9 +31,7 @@ impl Scratch {
             xtask::capture::random_token()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        // Canonical, so a path the run builds compares equal to one built here
-        // (macOS's temp folder sits behind a symlink).
-        Scratch(dir.canonicalize().unwrap())
+        Scratch(dir)
     }
     fn path(&self) -> &Path {
         &self.0
@@ -195,7 +194,11 @@ fn gate_refuses_a_book_outside_the_library_and_any_other_app_settings_write() {
 #[test]
 fn gate_refuses_a_conversion_of_any_file_but_the_demo_script() {
     let c = Ctx::new();
-    match c.ask(&argv::convert(&s(&abs("Users/someone/real-script.pdf")), false, None)) {
+    match c.ask(&argv::convert(
+        &s(&abs("Users/someone/real-script.pdf")),
+        false,
+        None,
+    )) {
         GateAnswer::Allow => panic!("allowed"),
         GateAnswer::Refuse(r) => assert!(r.contains("real-script.pdf")),
     }
@@ -212,7 +215,10 @@ fn gate_refuses_a_rerender_that_would_write_outside_the_library() {
     assert!(!a.allowed());
     // A path that merely STARTS with the library's name is not inside it.
     let evil = format!("{}-evil", s(&c.library));
-    let b = c.ask(&argv::settings(&s(&Path::new(&evil).join("x.fountain")), None));
+    let b = c.ask(&argv::settings(
+        &s(&Path::new(&evil).join("x.fountain")),
+        None,
+    ));
     assert!(!b.allowed());
 }
 
@@ -241,15 +247,30 @@ fn gate_refuses_any_call_whose_whole_shape_the_window_would_not_produce() {
     let refusals: Vec<(&str, Vec<String>)> = vec![
         (
             "a flag smuggled onto a convert after --library",
-            plus(argv::convert(&d, false, None), &["--fountain", "/Users/me/real.fountain"]),
+            plus(
+                argv::convert(&d, false, None),
+                &["--fountain", "/Users/me/real.fountain"],
+            ),
         ),
         (
             "a second flag smuggled onto a convert after --library",
-            plus(argv::convert(&d, false, None), &["--preview-html", "/anywhere.html"]),
+            plus(
+                argv::convert(&d, false, None),
+                &["--preview-html", "/anywhere.html"],
+            ),
         ),
-        ("--output instead of -o", plus(argv::convert(&d, false, None), &["--output", "/x.epub"])),
-        ("--output= form", plus(argv::convert(&d, false, None), &["--output=/x.epub"])),
-        ("-o glued to its value", plus(argv::convert(&d, false, None), &["-o/x.epub"])),
+        (
+            "--output instead of -o",
+            plus(argv::convert(&d, false, None), &["--output", "/x.epub"]),
+        ),
+        (
+            "--output= form",
+            plus(argv::convert(&d, false, None), &["--output=/x.epub"]),
+        ),
+        (
+            "-o glued to its value",
+            plus(argv::convert(&d, false, None), &["-o/x.epub"]),
+        ),
         (
             "a repeated -o",
             vec![
@@ -269,20 +290,47 @@ fn gate_refuses_any_call_whose_whole_shape_the_window_would_not_produce() {
             "a convert without --library, which would write into tests/fixtures",
             vec![d.clone(), "--json".into()],
         ),
-        ("an unknown flag after --library", plus(argv::convert(&d, false, None), &["--options", "/any/file"])),
+        (
+            "an unknown flag after --library",
+            plus(argv::convert(&d, false, None), &["--options", "/any/file"]),
+        ),
         (
             "a flag smuggled onto a reconvert after --options-json",
             plus(argv::reconvert(&f, &e, "{}"), &["--output=/x.epub"]),
         ),
         ("a .. escape out of the library", argv::settings(&up, None)),
-        ("a relative demo path", argv::convert("tests/fixtures/field-station.pdf", false, None)),
-        ("a relative settings path", argv::settings("field-station/x.fountain", None)),
-        ("flag-first", vec!["--json".into(), "settings".into(), f.clone()]),
-        ("update-decision", strings(&["update-decision", "--offered", "1", "--current", "0"])),
-        ("update-should-check", strings(&["update-should-check", "--json"])),
-        ("extra args on version", strings(&["--version", "--json", "--debug"])),
-        ("kfx-status: the KFX checklist is never captured", argv::kfx_status()),
-        ("kfx-install: a capture must never install anything", argv::kfx_install()),
+        (
+            "a relative demo path",
+            argv::convert("tests/fixtures/field-station.pdf", false, None),
+        ),
+        (
+            "a relative settings path",
+            argv::settings("field-station/x.fountain", None),
+        ),
+        (
+            "flag-first",
+            vec!["--json".into(), "settings".into(), f.clone()],
+        ),
+        (
+            "update-decision",
+            strings(&["update-decision", "--offered", "1", "--current", "0"]),
+        ),
+        (
+            "update-should-check",
+            strings(&["update-should-check", "--json"]),
+        ),
+        (
+            "extra args on version",
+            strings(&["--version", "--json", "--debug"]),
+        ),
+        (
+            "kfx-status: the KFX checklist is never captured",
+            argv::kfx_status(),
+        ),
+        (
+            "kfx-install: a capture must never install anything",
+            argv::kfx_install(),
+        ),
     ];
     for (label, args) in refusals {
         assert!(!c.ask(&args).allowed(), "{label}");
@@ -358,7 +406,11 @@ fn page_fails_loudly_for_a_window_page_it_does_not_recognise() {
         "</body>",
         r#"<script type="module" src="main.js"></script></body>"#,
     );
-    assert!(capture_index(&twice, &CFG).unwrap_err().contains("exactly once"));
+    assert!(
+        capture_index(&twice, &CFG)
+            .unwrap_err()
+            .contains("exactly once")
+    );
 }
 
 #[test]
@@ -404,7 +456,11 @@ fn shots_are_the_four_readme_pictures_with_light_and_dark_for_the_window() {
     assert_eq!(names, ["hero", "drop", "result", "read"]);
     for s in SHOTS {
         let words: Vec<&str> = s.themes.iter().map(|t| t.word()).collect();
-        let want: &[&str] = if s.kind == Kind::Window { &["light", "dark"] } else { &["light"] };
+        let want: &[&str] = if s.kind == Kind::Window {
+            &["light", "dark"]
+        } else {
+            &["light"]
+        };
         assert_eq!(words, want);
     }
 }
@@ -424,19 +480,36 @@ fn window_shots_are_the_windows_own_size() {
 #[test]
 fn readme_gets_every_picture_and_the_site_the_light_drop_and_result() {
     let all = all_outputs(SHOTS);
-    assert_eq!(all.iter().filter(|p| p.starts_with("assets/screens/")).count(), 7);
+    assert_eq!(
+        all.iter()
+            .filter(|p| p.starts_with("assets/screens/"))
+            .count(),
+        7
+    );
     let mut site: Vec<&String> = all.iter().filter(|p| p.starts_with("site/img/")).collect();
     site.sort();
-    assert_eq!(site, ["site/img/drop-light.png", "site/img/result-light.png"]);
+    assert_eq!(
+        site,
+        ["site/img/drop-light.png", "site/img/result-light.png"]
+    );
 }
 
 #[test]
 fn a_file_is_written_only_when_its_bytes_differ() {
     let dir = Scratch::new("write");
     let path = dir.path().join("x.png");
-    assert_eq!(write_if_changed(&path, &[1, 2, 3]).unwrap(), Written::Written);
-    assert_eq!(write_if_changed(&path, &[1, 2, 3]).unwrap(), Written::Unchanged);
-    assert_eq!(write_if_changed(&path, &[1, 2, 4]).unwrap(), Written::Written);
+    assert_eq!(
+        write_if_changed(&path, &[1, 2, 3]).unwrap(),
+        Written::Written
+    );
+    assert_eq!(
+        write_if_changed(&path, &[1, 2, 3]).unwrap(),
+        Written::Unchanged
+    );
+    assert_eq!(
+        write_if_changed(&path, &[1, 2, 4]).unwrap(),
+        Written::Written
+    );
     assert_eq!(std::fs::read(&path).unwrap(), [1, 2, 4]);
 }
 
@@ -444,11 +517,7 @@ fn a_file_is_written_only_when_its_bytes_differ() {
 fn the_capture_command_and_chrome_driver_are_wired() {
     // Was "they import without running, so tsc covers them": the compiler
     // covers that now; what is left is the command row and the path.
-    assert!(
-        xtask::COMMANDS
-            .iter()
-            .any(|c| c.name == "capture-screens")
-    );
+    assert!(xtask::COMMANDS.iter().any(|c| c.name == "capture-screens"));
     assert_eq!(
         xtask::capture::cdp::CHROME,
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -541,7 +610,10 @@ impl ServerScene {
     }
 
     fn engine(&self, args: &[String]) -> Response {
-        self.engine_raw(&json!({ "args": args }).to_string(), &[("x-capture-token", "secret")])
+        self.engine_raw(
+            &json!({ "args": args }).to_string(),
+            &[("x-capture-token", "secret")],
+        )
     }
 
     fn calls(&self) -> Vec<Vec<String>> {
@@ -593,8 +665,16 @@ fn server_serves_nothing_outside_the_window_the_site_and_the_capture_scripts() {
 #[test]
 fn server_refuses_any_other_host_so_a_rebound_name_cannot_reach_it() {
     let s = ServerScene::new();
-    assert_eq!(s.get("/site/index.html", &[("host", "evil.example:4321")]).status, 403);
-    assert_eq!(s.get("/site/index.html", &[("host", "localhost:4321")]).status, 403);
+    assert_eq!(
+        s.get("/site/index.html", &[("host", "evil.example:4321")])
+            .status,
+        403
+    );
+    assert_eq!(
+        s.get("/site/index.html", &[("host", "localhost:4321")])
+            .status,
+        403
+    );
     let r = s.engine_raw(
         &json!({ "args": argv::version() }).to_string(),
         &[("host", "evil.example:4321"), ("x-capture-token", "secret")],
@@ -608,7 +688,10 @@ fn server_engine_needs_the_run_token_and_refuses_what_the_gate_refuses() {
     let s = ServerScene::new();
     let body = json!({ "args": argv::version() }).to_string();
     assert_eq!(s.engine_raw(&body, &[]).status, 403);
-    assert_eq!(s.engine_raw(&body, &[("x-capture-token", "guess")]).status, 403);
+    assert_eq!(
+        s.engine_raw(&body, &[("x-capture-token", "guess")]).status,
+        403
+    );
     assert!(s.calls().is_empty());
     let r = s.engine(&argv::eject("/Volumes/Kindle"));
     assert_eq!(r.status, 403);
@@ -617,12 +700,20 @@ fn server_engine_needs_the_run_token_and_refuses_what_the_gate_refuses() {
     assert_eq!(refused.len(), 1);
     assert!(refused[0].contains("eject /Volumes/Kindle --json"));
     assert!(s.calls().is_empty());
-    assert_eq!(s.engine_raw("not json", &[("x-capture-token", "secret")]).status, 400);
     assert_eq!(
-        s.engine_raw(r#"{"args":[1,2]}"#, &[("x-capture-token", "secret")]).status,
+        s.engine_raw("not json", &[("x-capture-token", "secret")])
+            .status,
         400
     );
-    assert_eq!(s.get("/engine", &[("x-capture-token", "secret")]).status, 405);
+    assert_eq!(
+        s.engine_raw(r#"{"args":[1,2]}"#, &[("x-capture-token", "secret")])
+            .status,
+        400
+    );
+    assert_eq!(
+        s.get("/engine", &[("x-capture-token", "secret")]).status,
+        405
+    );
 }
 
 #[test]
@@ -687,7 +778,8 @@ fn server_serves_pass_one_pictures_by_bare_name_only() {
     let s = ServerScene::new();
     assert_eq!(s.get("/pass-one/drop-light.png", &[]).status, 200);
     assert_eq!(
-        s.get("/pass-one/..%2f..%2fScreepub%2fpackage.json", &[]).status,
+        s.get("/pass-one/..%2f..%2fScreepub%2fpackage.json", &[])
+            .status,
         404
     );
     assert_eq!(s.get("/pass-one/missing-light.png", &[]).status, 404);
@@ -929,10 +1021,10 @@ fn run_refuses_a_library_a_running_capture_is_using_naming_its_pid() {
     });
     let e = failed(run_capture(o));
     assert!(e.expected);
-    assert!(
-        e.message
-            .contains(&format!("capture pid {pid} is using {}", s.library.display()))
-    );
+    assert!(e.message.contains(&format!(
+        "capture pid {pid} is using {}",
+        s.library.display()
+    )));
     assert!(!*launched.lock().unwrap());
     assert_eq!(entries(&s.library), [MARKER, "book-in-progress.epub"]);
 }
@@ -949,8 +1041,10 @@ fn run_refuses_a_marker_that_does_not_say_whose_it_is() {
 }
 
 /// The window's boot: read the token off the window page, post an engine call.
+#[cfg(unix)]
 fn post_version(url: &str) -> Result<(u16, String), String> {
-    let (_, html) = fetch("GET", url, &[], &[], Duration::from_secs(10))?;
+    let (_, html) =
+        xtask::capture::http::fetch("GET", url, &[], &[], std::time::Duration::from_secs(10))?;
     let html = String::from_utf8_lossy(&html).into_owned();
     let token = html
         .split("\"token\":\"")
@@ -960,16 +1054,20 @@ fn post_version(url: &str) -> Result<(u16, String), String> {
         .to_string();
     let base = &url[..url.find("/capture/").unwrap()];
     let body = json!({ "args": argv::version() }).to_string();
-    let (status, said) = fetch(
+    let (status, said) = xtask::capture::http::fetch(
         "POST",
         &format!("{base}/engine"),
-        &[("content-type", "application/json"), ("x-capture-token", &token)],
+        &[
+            ("content-type", "application/json"),
+            ("x-capture-token", &token),
+        ],
         body.as_bytes(),
-        Duration::from_secs(40),
+        std::time::Duration::from_secs(40),
     )?;
     Ok((status, String::from_utf8_lossy(&said).into_owned()))
 }
 
+#[cfg(unix)]
 fn drop_only(o: &mut RunOptions) {
     o.shots = SHOTS.iter().filter(|s| s.name == "drop").copied().collect();
 }
@@ -1002,7 +1100,7 @@ fn run_cleanup_refuses_an_engine_call_made_while_it_runs_instead_of_waiting() {
         let url = url.to_string();
         std::thread::spawn(move || post_version(&url));
         while pgrep(&p2).is_empty() {
-            std::thread::sleep(Duration::from_millis(10));
+            std::thread::sleep(std::time::Duration::from_millis(10));
         }
         Err("capture failed".into())
     }));
@@ -1016,7 +1114,11 @@ fn run_cleanup_refuses_an_engine_call_made_while_it_runs_instead_of_waiting() {
     });
     let mut o = s.options(Ok(b));
     drop_only(&mut o);
-    o.engine = vec!["/bin/sh".into(), "-c".into(), format!("exec sleep {seconds}")];
+    o.engine = vec![
+        "/bin/sh".into(),
+        "-c".into(),
+        format!("exec sleep {seconds}"),
+    ];
     let e = failed(run_capture(o));
     assert_eq!(e.message, "capture failed");
     let (status, body) = during.lock().unwrap().clone().unwrap();
@@ -1062,7 +1164,10 @@ fn run_gives_the_engine_its_own_screepub_config_dir_never_the_real_settings() {
     let s = RunScene::new(false);
     let said = one_engine_call(&s, "printf %s \"$SCREEPUB_CONFIG_DIR\"", None);
     // Under the run's own scratch library, a folder the run never writes into.
-    assert_eq!(said, s.library.join(".capture-app-settings").to_string_lossy());
+    assert_eq!(
+        said,
+        s.library.join(".capture-app-settings").to_string_lossy()
+    );
 }
 
 #[cfg(unix)]
@@ -1080,7 +1185,10 @@ fn run_gives_the_engine_a_scratch_copy_of_calibres_settings_never_the_real_folde
     let (dir, listed) = said.split_once('|').unwrap();
     assert!(!dir.is_empty());
     assert_ne!(Path::new(dir), real);
-    assert_ne!(Path::new(dir), xtask::capture::run::default_calibre_config());
+    assert_ne!(
+        Path::new(dir),
+        xtask::capture::run::default_calibre_config()
+    );
     assert!(Path::new(dir).starts_with(&s.tmp));
     assert_eq!(listed.trim(), "KFX Output.zip");
     // Gone with the run, and the real folder untouched.
@@ -1098,7 +1206,10 @@ fn untold_the_folder_copied_is_the_one_calibre_itself_would_use() {
         os: "macos",
         home: home.clone(),
     };
-    assert_eq!(real_calibre_config(&mac), home.join("Library/Preferences/calibre"));
+    assert_eq!(
+        real_calibre_config(&mac),
+        home.join("Library/Preferences/calibre")
+    );
     let set = |k: &str| (k == "CALIBRE_CONFIG_DIRECTORY").then(|| s(&abs("x/cal")));
     let linux = Host {
         env: &set,
@@ -1156,7 +1267,12 @@ fn the_frame_page_pads_the_window_by_exactly_what_pass_two_is_sized_for() {
     assert_eq!(px.len(), 3);
     assert_eq!(
         (px[0], px[1], px[2], px[1]),
-        (FRAME_PAD.top, FRAME_PAD.right, FRAME_PAD.bottom, FRAME_PAD.left)
+        (
+            FRAME_PAD.top,
+            FRAME_PAD.right,
+            FRAME_PAD.bottom,
+            FRAME_PAD.left
+        )
     );
     let drop = SHOTS.iter().find(|x| x.name == "drop").unwrap();
     assert_eq!(framed_size(drop), (1280 + 56 + 56, 800 + 44 + 68));
@@ -1188,7 +1304,12 @@ fn the_window_still_draws_the_library_slot_the_step_runner_hides() {
     let convert = read("desktop/ui/convert.js");
     let a = convert.find("function buildLibrarySlot").unwrap();
     let b = convert.find("async function probeLibrary").unwrap();
-    assert_eq!(convert[a..b].matches("class: 'well-ask well-library'").count(), 2);
+    assert_eq!(
+        convert[a..b]
+            .matches("class: 'well-ask well-library'")
+            .count(),
+        2
+    );
     let steps = read("tools/capture/steps.js");
     assert!(steps.contains(".well-library"));
     assert!(steps.contains(".well-library { display: none !important; }"));

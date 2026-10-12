@@ -103,7 +103,9 @@ fn pass_one_name(name: &str) -> bool {
     let Some((shot, theme)) = stem.rsplit_once('-') else {
         return false;
     };
-    !shot.is_empty() && shot.bytes().all(|b| b.is_ascii_lowercase()) && matches!(theme, "light" | "dark")
+    !shot.is_empty()
+        && shot.bytes().all(|b| b.is_ascii_lowercase())
+        && matches!(theme, "light" | "dark")
 }
 
 /// Node's posix normalize for an absolute path: `.` and `..` folded, runs
@@ -169,7 +171,9 @@ impl Handler {
         }
         let run = (self.o.run_engine)(&args);
         let said = run.stderr.trim();
-        let code = run.code.map_or_else(|| "null".to_string(), |c| c.to_string());
+        let code = run
+            .code
+            .map_or_else(|| "null".to_string(), |c| c.to_string());
         if run.code != Some(0) {
             note(
                 &self.o.records.failed,
@@ -193,7 +197,8 @@ impl Handler {
     }
 
     fn file(&self, path: &Path, content_type: &str) -> Result<Response, String> {
-        let body = std::fs::read(path).map_err(|e| format!("could not read {}: {e}", path.display()))?;
+        let body =
+            std::fs::read(path).map_err(|e| format!("could not read {}: {e}", path.display()))?;
         Ok(Response::new(200, content_type, body))
     }
 
@@ -212,10 +217,21 @@ impl Handler {
 
         if path == "/capture/window.html" {
             let shot = req.query("shot").unwrap_or_default();
-            if !SHOTS.iter().any(|s| s.kind == Kind::Window && s.name == shot) {
-                return Ok(Response::say(&format!("capture: no window shot named {shot}"), 400));
+            if !SHOTS
+                .iter()
+                .any(|s| s.kind == Kind::Window && s.name == shot)
+            {
+                return Ok(Response::say(
+                    &format!("capture: no window shot named {shot}"),
+                    400,
+                ));
             }
-            let index = self.o.repo_dir.join("desktop").join("ui").join("index.html");
+            let index = self
+                .o
+                .repo_dir
+                .join("desktop")
+                .join("ui")
+                .join("index.html");
             let html = std::fs::read_to_string(&index)
                 .map_err(|e| format!("could not read {}: {e}", index.display()))?;
             let demo = self.o.demo_pdf.to_string_lossy();
@@ -227,7 +243,11 @@ impl Handler {
                     token: &self.o.token,
                 },
             )?;
-            return Ok(Response::new(200, "text/html; charset=utf-8", page.into_bytes()));
+            return Ok(Response::new(
+                200,
+                "text/html; charset=utf-8",
+                page.into_bytes(),
+            ));
         }
 
         if let Some(name) = path.strip_prefix("/pass-one/") {

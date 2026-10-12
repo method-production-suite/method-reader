@@ -90,7 +90,10 @@ pub enum Diff {
     /// Every pixel the same (the bytes may still differ).
     Same,
     /// Not the same size, so not comparable pixel by pixel.
-    Size { before: (u32, u32), after: (u32, u32) },
+    Size {
+        before: (u32, u32),
+        after: (u32, u32),
+    },
     /// The same size, with this many pixels of `total` different.
     Pixels { changed: u64, total: u64 },
 }

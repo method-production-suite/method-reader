@@ -112,8 +112,13 @@ fn page_target(port: &str) -> Result<String, String> {
             .map(str::to_string)
     };
     for _ in 0..20 {
-        if let Ok((200, body)) = http::fetch("GET", &format!("{base}/json/list"), &[], &[], REQUEST_TIMEOUT)
-            && let Ok(Value::Array(list)) = serde_json::from_slice::<Value>(&body)
+        if let Ok((200, body)) = http::fetch(
+            "GET",
+            &format!("{base}/json/list"),
+            &[],
+            &[],
+            REQUEST_TIMEOUT,
+        ) && let Ok(Value::Array(list)) = serde_json::from_slice::<Value>(&body)
             && let Some(url) = list
                 .iter()
                 .filter(|t| t.get("type").and_then(Value::as_str) == Some("page"))
@@ -207,7 +212,10 @@ impl Session {
                         continue;
                     }
                     if let Some(err) = m.get("error") {
-                        let msg = err.get("message").and_then(Value::as_str).unwrap_or("an error");
+                        let msg = err
+                            .get("message")
+                            .and_then(Value::as_str)
+                            .unwrap_or("an error");
                         return Err(format!("capture: {method}: {msg}"));
                     }
                     return Ok(m.get("result").cloned().unwrap_or(Value::Null));
@@ -308,7 +316,10 @@ pub fn launch(chrome: &Path) -> Result<Chrome, String> {
         Ok(p) => p,
         Err(e) => {
             let _ = std::fs::remove_dir_all(&profile);
-            return Err(format!("capture: could not start Chrome at {}: {e}", chrome.display()));
+            return Err(format!(
+                "capture: could not start Chrome at {}: {e}",
+                chrome.display()
+            ));
         }
     };
     let mut browser = Chrome {
@@ -328,6 +339,20 @@ pub fn launch(chrome: &Path) -> Result<Chrome, String> {
 }
 
 impl Chrome {
+    /// Runs `expression` in the page last captured, awaiting a promise, and
+    /// answers its value: for checks that ask the page a question.
+    pub fn evaluate(&mut self, expression: &str) -> Result<Value, String> {
+        let cdp = self.session.as_mut().ok_or("capture: Chrome is closed")?;
+        let r = cdp.send(
+            "Runtime.evaluate",
+            json!({ "expression": expression, "awaitPromise": true, "returnByValue": true }),
+        )?;
+        if let Some(ex) = r.get("exceptionDetails") {
+            return Err(format!("capture: the page threw: {ex}"));
+        }
+        Ok(r.pointer("/result/value").cloned().unwrap_or(Value::Null))
+    }
+
     fn connect(&mut self, chrome: &Path) -> Result<(), String> {
         let port = debugging_port(&self.profile, &mut self.proc, chrome)?;
         let session = self.session.insert(Session::connect(&page_target(&port)?)?);
@@ -380,7 +405,11 @@ impl Browser for Chrome {
                 "delete window.__captureState; delete window.__captureError; window.__captureOld = true" }),
         )?;
         let nav = cdp.send("Page.navigate", json!({ "url": o.url }))?;
-        if let Some(err) = nav.get("errorText").and_then(Value::as_str).filter(|e| !e.is_empty()) {
+        if let Some(err) = nav
+            .get("errorText")
+            .and_then(Value::as_str)
+            .filter(|e| !e.is_empty())
+        {
             return Err(format!("capture: Chrome could not load {}: {err}", o.url));
         }
 
@@ -412,7 +441,11 @@ impl Browser for Chrome {
                 .and_then(Value::as_str)
                 .and_then(|s| serde_json::from_str::<Value>(s).ok())
                 .unwrap_or(Value::Null);
-            state = said.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+            state = said
+                .get(0)
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
             if state == "failed" {
                 let err = said.get(1).and_then(Value::as_str).unwrap_or("undefined");
                 return Err(format!("capture failed at {}: {err}", o.url));
@@ -429,7 +462,11 @@ impl Browser for Chrome {
                 o.url,
                 o.timeout.as_secs_f64(),
                 if state.is_empty() { "none" } else { &state },
-                if why.is_empty() { String::new() } else { format!("; {why}") }
+                if why.is_empty() {
+                    String::new()
+                } else {
+                    format!("; {why}")
+                }
             ));
         }
         let shot = cdp.send("Page.captureScreenshot", json!({ "format": "png" }))?;

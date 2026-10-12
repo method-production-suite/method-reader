@@ -9,8 +9,9 @@
 //! installed, tests/capture_chrome.rs runs app.js's builders in Chrome and
 //! compares their answers with these.
 //!
-//! JavaScript's `x ? flag : null` drops a flag whose value is falsy, so an
-//! empty string counts as absent here too.
+//! JavaScript's `x ? flag : null, x` drops the flag of a falsy value but
+//! keeps the value itself unless it is null, so an empty string rides along
+//! without its flag here too.
 
 use serde_json::json;
 
@@ -26,12 +27,12 @@ fn truthy(s: Option<&str>) -> Option<&str> {
     s.filter(|s| !s.is_empty())
 }
 
-/// `flag, value` when the value is truthy.
+/// `value ? flag : null, value`, then the null filter: the flag only when
+/// the value is truthy, but the value whenever it is not null, so an empty
+/// string rides along without its flag, exactly as app.js builds it
+/// (measured in Chrome by tests/capture_chrome.rs).
 fn pair<'a>(flag: &'a str, value: Option<&'a str>) -> [Option<&'a str>; 2] {
-    match truthy(value) {
-        Some(x) => [Some(flag), Some(x)],
-        None => [None, None],
-    }
+    [truthy(value).map(|_| flag), value]
 }
 
 pub fn version() -> Vec<String> {
@@ -73,7 +74,12 @@ pub fn eject(volume: &str) -> Vec<String> {
 
 pub fn reader_device(kind: &str) -> Vec<String> {
     let set = json!({ "readerDevice": kind }).to_string();
-    v(&[Some("app-settings"), Some("--json"), Some("--set"), Some(&set)])
+    v(&[
+        Some("app-settings"),
+        Some("--json"),
+        Some("--set"),
+        Some(&set),
+    ])
 }
 
 pub fn send(file: &str, device_id: Option<&str>) -> Vec<String> {
@@ -95,7 +101,13 @@ pub fn export(
     options_json: Option<&str>,
     out: Option<&str>,
 ) -> Vec<String> {
-    let mut args = v(&[Some("export"), Some(epub), Some("--json"), Some("--for"), Some(for_format)]);
+    let mut args = v(&[
+        Some("export"),
+        Some(epub),
+        Some("--json"),
+        Some("--for"),
+        Some(for_format),
+    ]);
     args.extend(v(&pair("--fountain", fountain)));
     args.extend(v(&pair("--options-json", options_json)));
     args.extend(v(&pair("--out", out)));
