@@ -11,8 +11,8 @@
 //! [`FakeEngine`] answers from fixtures for every state a screen can be in,
 //! so every screen is testable before sp-engine exists.
 
-use std::collections::{HashMap, VecDeque};
-use std::sync::Mutex;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::{Condvar, Mutex};
 
 use serde_json::{Value, json};
 
@@ -386,6 +386,11 @@ pub struct FakeEngine {
     once: Mutex<HashMap<&'static str, VecDeque<Reply>>>,
     progress: Mutex<Vec<Value>>,
     calls: Mutex<Vec<Request>>,
+    /// Kinds whose answer waits for `release` (after any progress lines),
+    /// for a test that looks at a screen while a call is out. Only with a
+    /// runtime on threads: inline, a held call would wait forever.
+    held: Mutex<HashSet<&'static str>>,
+    released: Condvar,
 }
 
 impl FakeEngine {
@@ -420,6 +425,16 @@ impl FakeEngine {
         *self.progress.lock().expect("fake") = lines;
     }
 
+    /// Hold the answers of this kind until `release`.
+    pub fn hold(&self, kind: &'static str) {
+        self.held.lock().expect("fake").insert(kind);
+    }
+
+    pub fn release(&self, kind: &'static str) {
+        self.held.lock().expect("fake").remove(kind);
+        self.released.notify_all();
+    }
+
     /// Every request so far, in order.
     pub fn calls(&self) -> Vec<Request> {
         self.calls.lock().expect("fake").clone()
@@ -442,6 +457,11 @@ impl Engine for FakeEngine {
             }
         }
         let kind = request.kind();
+        let mut held = self.held.lock().expect("fake");
+        while held.contains(kind) {
+            held = self.released.wait(held).expect("fake");
+        }
+        drop(held);
         if let Some(reply) = self
             .once
             .lock()

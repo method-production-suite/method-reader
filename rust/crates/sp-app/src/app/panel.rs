@@ -125,6 +125,8 @@ pub struct State {
     /// The panel's buttons as drawn this frame, by key, and the brass.
     keyed: Vec<Keyed<Id>>,
     brass: Option<Keyed<Id>>,
+    /// The asterisks drawn this frame, by kind.
+    asterisks: Vec<String>,
     /// A flow started from the keyboard on this key, in this era: the
     /// keyboard goes back there when the buttons live again.
     give_back: Option<(String, u64)>,
@@ -168,6 +170,7 @@ impl Default for State {
             kfx: Kfx::default(),
             keyed: Vec::new(),
             brass: None,
+            asterisks: Vec::new(),
             give_back: None,
             brass_owed: None,
             net_tx,
@@ -1278,6 +1281,7 @@ fn showing(app: &App) -> bool {
 pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     app.panel.keyed.clear();
+    app.panel.asterisks.clear();
     app.panel.brass = None;
     if let Some(blocked) = app.panel.blocked {
         widgets::heading(
@@ -1838,8 +1842,12 @@ fn asterisk(app: &mut App, ui: &mut Ui, kind: &str) {
         ui.painter()
             .layout_no_wrap("*".into(), theme::structure_bold(size::LEDE), t.ink_muted);
     let (rect, resp) = ui.allocate_exact_size(galley.size() + Vec2::new(6.0, 0.0), Sense::click());
+    // One kind can wear two asterisks (the calm screen's and Other ways'
+    // fold): each its own widget, by its place in the drawing order.
+    let n = app.panel.asterisks.iter().filter(|k| *k == kind).count();
+    app.panel.asterisks.push(kind.to_string());
     let resp = ui
-        .interact(rect, Id::new(("asterisk", kind)), Sense::click())
+        .interact(rect, Id::new(("asterisk", kind, n)), Sense::click())
         .union(resp);
     let name = format!("About {}: never tried on real hardware", d::name_of(kind));
     resp.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, &name));
