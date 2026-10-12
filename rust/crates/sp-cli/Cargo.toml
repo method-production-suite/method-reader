@@ -27,4 +27,5 @@ sp-engine.workspace = true
 [dev-dependencies]
 tempfile = "3"
 sp-engine.workspace = true
+sp-parser.workspace = true
 zip.workspace = true

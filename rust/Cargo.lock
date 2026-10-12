@@ -3602,6 +3602,7 @@ dependencies = [
  "sp-fdx",
  "sp-fountain",
  "sp-model",
+ "sp-parser",
  "tempfile",
  "zip",
 ]
