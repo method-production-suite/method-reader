@@ -53,10 +53,10 @@ pub fn canonical(path: &Path) -> PathBuf {
     #[cfg(windows)]
     {
         let text = real.to_string_lossy();
-        if let Some(rest) = text.strip_prefix(r"\\?\") {
-            if !rest.starts_with(r"UNC\") {
-                return PathBuf::from(rest);
-            }
+        if let Some(rest) = text.strip_prefix(r"\\?\")
+            && !rest.starts_with(r"UNC\")
+        {
+            return PathBuf::from(rest);
         }
     }
     real
