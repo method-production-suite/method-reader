@@ -46,3 +46,6 @@ desktop/src-tauri/gen/
 # Not a secret, root only: the value is a fixed, harmless guard path (see
 # the file itself and tests/isolate-app-settings.ts). bun test auto-loads it.
 !/.env.test
+
+# The Rust port builds here.
+rust/target/
