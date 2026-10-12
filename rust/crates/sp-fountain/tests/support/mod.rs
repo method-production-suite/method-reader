@@ -17,11 +17,16 @@ pub fn repo_root() -> PathBuf {
 
 const RUNNER: &str = r#"
 const { readFileSync } = require('node:fs');
+const { join } = require('node:path');
 const { Fountain } = require(process.argv[2]);
+const { Lexer } = require(join(process.argv[2], 'dist/lexer.js'));
+const { rules } = require(join(process.argv[2], 'dist/rules.js'));
 const inputs = JSON.parse(readFileSync(process.argv[3], 'utf8'));
-// One process, parses in order: fountain-js's module state carries from
-// each parse to the next, exactly as FountainJs's does.
+// fountain-js keeps two module statics across parses; the port starts every
+// parse fresh (PARITY.md Decisions), so reset them to a first parse's.
 const out = inputs.map((s) => {
+  Lexer.lastLineWasDualDialogue = undefined;
+  rules.blank_lines.lastIndex = 0;
   try {
     return { tokens: new Fountain().parse(s, true).tokens };
   } catch (e) {

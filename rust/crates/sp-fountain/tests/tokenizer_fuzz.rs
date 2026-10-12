@@ -1,6 +1,6 @@
 //! Differential fuzzing: random Fountain-shaped text through fountain-js and
-//! through the port, one process each, parses in the same order, so the
-//! module state fountain-js carries between parses is compared too.
+//! through the port. fountain-js is reset to a first parse before each one,
+//! because the port does not carry its state between parses (PARITY.md).
 //!
 //! `#[ignore]`d: it needs bun and node_modules (tests/support/mod.rs).
 //! `FUZZ_CASES` and `FUZZ_SEED` widen or move the run.
@@ -8,7 +8,7 @@
 mod support;
 
 use serde_json::{Value, json};
-use sp_fountain::tokenizer::FountainJs;
+use sp_fountain::tokenizer::tokenize;
 
 struct Rng(u64);
 
@@ -117,8 +117,8 @@ fn random_script(rng: &mut Rng) -> String {
     s
 }
 
-fn ours(fj: &mut FountainJs, s: &str) -> Value {
-    match fj.parse(s) {
+fn ours(s: &str) -> Value {
+    match tokenize(s) {
         Ok(tokens) => json!({ "tokens": tokens }),
         Err(e) => json!({ "error": e.message }),
     }
@@ -138,10 +138,9 @@ fn random_scripts_tokenize_as_fountain_js_does() {
     let mut rng = Rng(seed);
     let inputs: Vec<String> = (0..cases).map(|_| random_script(&mut rng)).collect();
     let want = support::fountain_js(&inputs);
-    let mut fj = FountainJs::new();
     let mut bad = Vec::new();
     for (i, s) in inputs.iter().enumerate() {
-        let got = ours(&mut fj, s);
+        let got = ours(s);
         if got != want[i] {
             bad.push(format!(
                 "case {i}: {s:?}\n  fountain-js: {}\n  port:        {got}",

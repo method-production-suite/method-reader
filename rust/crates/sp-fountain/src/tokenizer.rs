@@ -15,9 +15,11 @@
 //! matchedBy` calls `.test()` on. So the same text can tokenize differently
 //! the second time a process parses it (a script whose FIRST dialogue block
 //! is a `^` right column makes the LAST block of the next parse a left
-//! column). [`FountainJs`] carries that state the same way, for a caller that
-//! needs to reproduce a run of parses exactly; [`tokenize`] starts fresh, as
-//! a process's first parse does.
+//! column). That is a fountain-js bug, and the port does NOT reproduce it
+//! (decided 2026-10-11, rust/PARITY.md Decisions): every [`tokenize`] starts
+//! fresh, exactly as a clean process's FIRST parse does. Within one parse the
+//! state still moves as fountain-js moves it, which is part of what one parse
+//! answers.
 //!
 //! The renderers' inline markup (emphasis to HTML) is not here: fountain-js
 //! leaves it in the token text, and each TypeScript renderer converts it
@@ -141,18 +143,20 @@ fn lyric_first_error() -> FountainError {
     }
 }
 
-/// fountain-js with its module state: see the module documentation.
-#[derive(Debug, Clone, Default)]
-pub struct FountainJs {
+/// fountain-js's module state, for the length of ONE parse: see the module
+/// documentation for why it never outlives it.
+#[derive(Debug, Default)]
+struct Lexer {
     /// `rules.blank_lines.lastIndex`.
     blank_lines_last_index: usize,
     /// `Lexer.lastLineWasDualDialogue`.
     last_line_was_dual: bool,
 }
 
-/// Tokenize as a process's first `new Fountain().parse(text, true)` would.
+/// `new Fountain().parse(script, true).tokens`, as a clean process's first
+/// parse answers it. Errs where fountain-js throws.
 pub fn tokenize(script: &str) -> Result<Vec<Token>, FountainError> {
-    FountainJs::new().parse(script)
+    Lexer::default().parse(script)
 }
 
 fn chars(s: &str) -> Vec<char> {
@@ -163,14 +167,8 @@ fn text_token(kind: TokenType, text: String) -> Token {
     Token::with_text(kind, text)
 }
 
-impl FountainJs {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// `new Fountain().parse(script, true).tokens`, carrying this instance's
-    /// state from any parse before it.
-    pub fn parse(&mut self, script: &str) -> Result<Vec<Token>, FountainError> {
+impl Lexer {
+    fn parse(&mut self, script: &str) -> Result<Vec<Token>, FountainError> {
         let r = &*RULES;
         // Boneyard out first; a boneyard whose `*/` opens a line leaves a
         // blank line behind so the paragraphs around it stay apart.

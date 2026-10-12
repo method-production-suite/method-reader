@@ -218,6 +218,22 @@ names the check it affects.
   sp-engine directly. The CLI build checks those files also hold move to
   the release-pipeline crate (the `screepub` CLI is still built and
   smoke-tested per platform).
+- **fountain-js state between parses (decided 2026-10-11): a TypeScript bug
+  the port fixes.** fountain-js 1.2.4 keeps two module statics it never
+  resets: `Lexer.lastLineWasDualDialogue` and the `lastIndex` of its global
+  `blank_lines` rule. So in one process the same text can tokenize
+  differently the second time: a script whose FIRST speech is a `NAME ^`
+  right column makes the next parse wrap its LAST speech in a dual exchange
+  (as a left column with no partner, which the renderers then drop or
+  mis-set). The Rust tokenizer (`sp_fountain::tokenizer::tokenize`) starts
+  every parse fresh, answering as a clean process's first parse does; within
+  one parse the state still moves exactly as fountain-js moves it. No
+  committed fixture or real script triggers it (the oracle, which dumps every
+  fixture in one bun process, matches token for token). Checked by
+  `a_script_opening_on_a_right_column_tokenizes_the_same_twice` and
+  `a_parse_never_depends_on_the_one_before` (sp-fountain/tests/tokenizer.rs);
+  the fuzz and case tests reset fountain-js to a first parse before each
+  input so they compare the same thing.
 - **services/device-requests (decided 2026-10-11).** Ported to Rust
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
