@@ -694,6 +694,11 @@ pub fn rpm_bytes(
     let a = NATIVE_APP;
     let ver = package_version(version);
     let release = "1";
+    // rpm looks files up by path with a binary search, so the header's file
+    // list (and the payload, to match) is sorted, as rpmbuild sorts it.
+    let mut sorted = files.to_vec();
+    sorted.sort_by(|x, y| x.path.cmp(&y.path));
+    let files = sorted.as_slice();
     let n = files.len();
     let mut dirnames: Vec<String> = Vec::new();
     let mut dirindexes = Vec::new();
@@ -724,6 +729,8 @@ pub fn rpm_bytes(
     let arr = |v: Vec<String>| Val::StrArr(v);
     let main = rpm_header(
         vec![
+            // HEADERI18NTABLE: the one locale the I18N strings are in.
+            (100, arr(vec!["C".into()])),
             (1000, s(a.package)),
             (1001, s(&ver)),
             (1002, s(release)),

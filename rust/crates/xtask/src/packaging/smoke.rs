@@ -552,6 +552,12 @@ pub fn smoke_built_bundles(
 
 /// `cargo xtask smoke-bundle`.
 pub fn main(args: &[String]) -> u8 {
+    if super::util::wants_help(
+        args,
+        "usage: cargo xtask smoke-bundle --expect-version <x.y.z> (--bundle <file> | --built) [--fixture <pdf>] [--app tauri|native]",
+    ) {
+        return 0;
+    }
     let parsed = parse_flags(
         args,
         &[

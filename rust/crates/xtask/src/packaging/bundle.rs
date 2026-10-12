@@ -504,6 +504,12 @@ pub fn build_bundles(
 
 /// `cargo xtask build-app-bundle`.
 pub fn main(argv: &[String]) -> u8 {
+    if super::util::wants_help(
+        argv,
+        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--config <overlay>] [--updater] [--app tauri|native] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set).\n--app picks the window; without it, the Tauri window while desktop/src-tauri/tauri.conf.json exists, the native one after.\nNative outside tools can be redirected with SCREEPUB_CARGO, SCREEPUB_CODESIGN, SCREEPUB_DITTO, SCREEPUB_XCRUN, SCREEPUB_HDIUTIL and SCREEPUB_MAKENSIS.",
+    ) {
+        return 0;
+    }
     let result = parse_bundle_args(argv, host_platform(), host_arch()).and_then(|args| {
         let env: Env = std::env::vars().collect();
         // cargo's progress goes to the terminal; every other tool's answer

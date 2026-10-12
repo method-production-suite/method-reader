@@ -25,7 +25,9 @@ use xtask::packaging::util::RunResult;
 use xtask::paths::{bun, repo_root};
 
 fn committed() -> Option<String> {
-    fs::read_to_string(repo_root().join(TARGET)).ok()
+    fs::read_to_string(repo_root().join(TARGET))
+        .ok()
+        .map(|s| s.replace("\r\n", "\n"))
 }
 
 fn bun_available() -> bool {
@@ -135,7 +137,9 @@ fn no_typescript_survived_the_trip() {
 
 #[test]
 fn the_type_declaration_beside_it_is_current_too_and_is_a_re_export() {
-    let Ok(types) = fs::read_to_string(repo_root().join(TYPES_TARGET)) else {
+    let Ok(types) =
+        fs::read_to_string(repo_root().join(TYPES_TARGET)).map(|s| s.replace("\r\n", "\n"))
+    else {
         return;
     };
     assert_eq!(types, render_compare_types());

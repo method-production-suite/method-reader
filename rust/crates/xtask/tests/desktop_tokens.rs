@@ -8,7 +8,11 @@ use xtask::desktop_tokens::{CORE_IN_STYLE_CSS, brand_colors, build_desktop_token
 use xtask::paths::repo_root;
 
 fn read(p: &str) -> String {
-    fs::read_to_string(repo_root().join(p)).unwrap_or_else(|e| panic!("{p}: {e}"))
+    // A Windows checkout carries CRLF; git stores LF, and LF is what
+    // the generator writes.
+    fs::read_to_string(repo_root().join(p))
+        .unwrap_or_else(|e| panic!("{p}: {e}"))
+        .replace("\r\n", "\n")
 }
 
 fn generated() -> String {

@@ -223,6 +223,12 @@ fn now_ms() -> i64 {
 
 /// `cargo xtask build-update-manifest`.
 pub fn main(args: &[String]) -> u8 {
+    if super::util::wants_help(
+        args,
+        "usage: cargo xtask build-update-manifest --dir <arrivals> --version <tag or version> --out <latest.json> [--repo <owner/name>]",
+    ) {
+        return 0;
+    }
     let run = || -> Result<(), String> {
         let a = parse_manifest_args(args)?;
         let artifacts = collect_signed_artifacts(&a.dir)?;

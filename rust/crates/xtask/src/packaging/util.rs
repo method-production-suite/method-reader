@@ -230,6 +230,15 @@ pub fn parse_flags(args: &[String], spec: &[FlagSpec]) -> Result<BTreeMap<String
     Ok(out)
 }
 
+/// `-h` or `--help` anywhere: print `usage` and stop.
+pub fn wants_help(args: &[String], usage: &str) -> bool {
+    let asked = args.iter().any(|a| a == "-h" || a == "--help");
+    if asked {
+        println!("{usage}");
+    }
+    asked
+}
+
 /// A path made absolute against the current folder.
 pub fn absolute(p: &str) -> PathBuf {
     let path = PathBuf::from(p);

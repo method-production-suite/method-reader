@@ -18,7 +18,8 @@ use xtask::packaging::bundle::{
     resolve_app,
 };
 use xtask::packaging::kinds::{
-    AppSource, BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_TARGET, MagicAt, NATIVE_FLOOR, for_app,
+    AppSource, BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_TARGET, MagicAt, NATIVE_FLOOR,
+    bundle_dir_for, for_app,
 };
 use xtask::packaging::manifest::collect_signed_artifacts;
 use xtask::packaging::native::{
@@ -623,11 +624,7 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
     .unwrap();
     assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
     assert_eq!(fake.tools(), ["cargo", "codesign", "hdiutil"]);
-    let app = dirs
-        .rust_dir
-        .join("target")
-        .join(MAC_TARGET)
-        .join("release/bundle/macos/Screepub.app");
+    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Screepub.app");
     assert_eq!(
         fake.calls[1],
         ["codesign", "--force", "--sign", "-", app.to_str().unwrap()]

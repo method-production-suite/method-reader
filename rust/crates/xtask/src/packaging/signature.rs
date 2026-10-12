@@ -265,6 +265,9 @@ pub fn pubkey_from_config(path: &Path) -> Result<String, String> {
 pub fn main(args: &[String]) -> u8 {
     use super::util::{FlagSpec, parse_flags};
     let usage = "usage: cargo xtask update-signature --pubkey-from-config <tauri.conf.json>";
+    if super::util::wants_help(args, usage) {
+        return 0;
+    }
     let flags = match parse_flags(
         args,
         &[FlagSpec {
