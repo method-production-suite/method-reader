@@ -51,16 +51,16 @@ move too.
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | done | sp-cli/tests/cli_app_defaults.rs (8), through the CLI; the app-defaults reads themselves are sp-engine/tests/settings_app_defaults.rs |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | done | sp-cli/tests/cli_app_settings.rs (56): the handler in process with an injected path, platform and env (43), the verb through the CLI with HOME in the scratch folder (13) |
 | tests/cli-azw3.test.ts | 4 | sp-cli | done | sp-cli/tests/cli_azw3.rs (4), read back with sp-azw3's tests/common/kf8_reader.rs |
-| tests/cli-device-commands.test.ts | 35 | sp-cli | todo |  |
-| tests/cli-devices.test.ts | 32 | sp-cli | partial | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; left for sp-cli: verb dispatch (resolveCommand, VERBS) and the settings file a send remembers into (sp-device takes `remember` as a callback) |
-| tests/cli-eject.test.ts | 24 | sp-cli | partial | the handler and the real runner are in sp-device/tests/eject.rs; left for sp-cli: the spawned-CLI refusals and --help |
-| tests/cli-export-fdx.test.ts | 20 | sp-cli | partial | the renderer half (its script's FDX) is in sp-fdx/tests/fdx.rs; the `formats` block goes with export-formats to sp-engine; the export command and CLI blocks are left |
-| tests/cli-export.test.ts | 79 | sp-cli | todo |  |
-| tests/cli-kfx.test.ts | 24 | sp-cli | todo |  |
-| tests/cli-reveal.test.ts | 21 | sp-cli | partial | the handler and the real opener are in sp-device/tests/reveal.rs; left for sp-cli: the spawned-CLI refusals and --help |
-| tests/cli-routes.test.ts | 82 | sp-cli | todo |  |
+| tests/cli-device-commands.test.ts | 35 | sp-cli | done | sp-cli/tests/cli_device_commands.rs (35); the no-hint checks are case-blind (the TypeScript's lower-case "did you mean" never matched the real hint) |
+| tests/cli-devices.test.ts | 32 | sp-cli | done | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; sp-cli/tests/cli_devices.rs (15): the JSON error shape, verb dispatch and VERBS through the spawned binary, and the settings file a send remembers into; the non-Error-throw check has no Rust subject |
+| tests/cli-eject.test.ts | 24 | sp-cli | done | the handler and the real runner are in sp-device/tests/eject.rs; the spawned-CLI refusals and --help in sp-cli/tests/cli_eject.rs (3) |
+| tests/cli-export-fdx.test.ts | 20 | sp-cli | done | export command and CLI blocks (19) in sp-cli/tests/cli_export_fdx.rs; the renderer half is in sp-fdx/tests/fdx.rs; the `formats` block (1) is in sp-engine/tests/export_small.rs |
+| tests/cli-export.test.ts | 79 | sp-cli | done | sp-cli/tests/cli_export.rs (79): handler checks against sp-engine's export_command with the TypeScript's seams and the real Books; spawned checks through the built screepub; the real KFX build runs only where the toolchain is ready, Calibre at a scratch copy; the relative --out checks run without the TypeScript's process.chdir guard (threads cannot change folder); the temp-and-rename source check reads sp-engine's commands/export.rs |
+| tests/cli-kfx.test.ts | 24 | sp-cli | done | sp-cli/tests/cli_kfx.rs (24): handlers with a stand-in probe and installer; spawned kfx-status with Calibre at a scratch copy; kfx-install never runs (only --help is spawned), its refusal order read from sp-cli/src/verbs.rs; resolveCommand checks run through the CLI |
+| tests/cli-reveal.test.ts | 21 | sp-cli | done | the handler and the real opener are in sp-device/tests/reveal.rs; the spawned-CLI refusals and --help in sp-cli/tests/cli_reveal.rs (6) |
+| tests/cli-routes.test.ts | 82 | sp-cli | done | sp-cli/tests/cli_routes.rs (106: the refusal table and the three setup platforms expanded); handlers in process through sp-engine with a recording opener, spawned runs with stand-in open/xdg-open/defaults and a local stand-in tablet; the never-settling folder-opener race has no Rust subject (the opener is synchronous): its order half is kept; the cli.ts source pin reads verbs.rs |
 | tests/cli-settings.test.ts | 26 | sp-cli | done | sp-cli/tests/cli_settings.rs (26): the handler in process (19), the verb through the CLI (7); "no appSettingsPath given" runs through the CLI, because the Rust handler takes the path as a required field and the CLI resolves it |
-| tests/cli-update.test.ts | 17 | sp-cli | todo |  |
+| tests/cli-update.test.ts | 17 | sp-cli | done | sp-cli/tests/cli_update.rs (17); resolveCommand/VERBS checks run through the CLI; the offline check reads sp-engine/src/update/ and verbs.rs's update arms |
 | tests/cli-verb-flags.test.ts | 7 | sp-cli | done | sp-cli/tests/verb_flags.rs (7; the per-verb loop is one matrix test), the table checked against verbs.rs's VERBS and VERB_SPECS; cargo xtask parity runs every verb against every foreign flag against the TypeScript |
 | tests/cli.test.ts | 78 | sp-cli | done | sp-cli/tests/cli.rs (93: the five-output-flag loop runs once per flag); the error-mapping and unwritable tests run on sp_engine::errors; retired: "--debug lets pdf.js warnings through" (no pdf.js, nothing warns; PARITY Decisions). The password test checks that a path containing "password" stays `unreadable`; the typed half holds by construction (ConvertError::Password), with no encrypted fixture |
 | tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
@@ -170,7 +170,7 @@ users until hardware day (see Decisions). These files exist only on branch
 | native/mtp-helper (cargo tests) | 47 | sp-mtp | done | moved to rust/crates/sp-mtp unchanged but for the crate name; 40 unit tests and tests/virtual_device.rs (7, mtp-rs's in-memory device) |
 | tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
 | tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
-| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes, the two end-to-end runs to sp-cli |
+| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes; the two end-to-end runs are in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli) |
 | tests/mtp-window-rules.test.ts | 7 | sp-app | todo | the window's rules for an MTP Kindle (Beta badge, no Eject, the copy note) |
 
 ### Test helpers: tests/helpers/
