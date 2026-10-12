@@ -41,9 +41,12 @@ anyrender_vello_cpu = "0.18"
 parley = "0.12"
 data-url = "0.3"
 cpal = "0.18"
+# The updater transport and the consent carried from the Tauri window.
+sp-update = { path = "../sp-update" }
 
 [dev-dependencies]
 egui_kittest = "0.36.2"
+tempfile = "3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 arboard = { version = "3.6", default-features = false }

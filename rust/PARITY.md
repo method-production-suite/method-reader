@@ -37,17 +37,17 @@ move too.
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
-| tests/build-app-bundle.test.ts | 72 | xtask | todo |  |
+| tests/build-app-bundle.test.ts | 72 | sp-release | partial | sp-release (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs) and tests/pipeline.rs: the names, layouts and update archive; the Tauri-bundler checks (overlay, discovered artifact, magic) retire with tauri-bundler; the container checks moved into release.yml's per-bundle check step |
 | tests/build-cli-e2e.test.ts | 4 | xtask | todo |  |
 | tests/build-cli.test.ts | 83 | xtask | todo |  |
 | tests/build-sidecar.test.ts | 28 | xtask | todo | the Rust app has no sidecar: most of this retires; decision for the owner |
-| tests/build-update-manifest.test.ts | 20 | xtask | todo |  |
+| tests/build-update-manifest.test.ts | 20 | sp-release | done | sp-release/src/manifest.rs (shape pinned byte for byte, every refusal) and tests/pipeline.rs |
 | tests/bump-version.test.ts | 15 | xtask | todo |  |
-| tests/bundle-archive.test.ts | 27 | xtask | todo |  |
+| tests/bundle-archive.test.ts | 27 | sp-release | partial | sp-release/src/archive.rs (reproducible tar.gz, cli tarball and zip); the Bun-engine archive checks retire with the sidecar |
 | tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
 | tests/capture-chrome.test.ts | 5 | xtask | todo |  |
 | tests/capture.test.ts | 46 | xtask | todo | README and site pictures; drives desktop/ui/app.js today |
-| tests/check-latest.test.ts | 17 | xtask | todo |  |
+| tests/check-latest.test.ts | 17 | sp-release | partial | sp-release/src/check_latest.rs (judge_manifest: version, platforms, key id, foreign key); the Intel-era and per-asset signature cases are ported in code, 2 of 17 checks written as tests so far |
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | todo |  |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
 | tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
@@ -83,7 +83,7 @@ move too.
 | tests/device-list.test.ts | 6 | sp-device | done | sp-device/tests/device_list.rs (with mtp-kindle's three listing checks) |
 | tests/device-remarkable.test.ts | 8 | sp-device | done | sp-device/tests/device_remarkable.rs, through the real ureq client against a local stand-in |
 | tests/device-requests-ui.test.ts | 11 | sp-app | done | m/requests.rs, tests/screens.rs |
-| tests/device-requests-worker.test.ts | 24 | (services/) | todo | tests the Cloudflare Worker in services/device-requests/, which is a web service, not app code: decision for the owner whether it stays JavaScript |
+| tests/device-requests-worker.test.ts | 24 | sp-device-requests | done | sp-device-requests/tests/worker.rs (all 24) and tests/sqlite.rs (the SQL and the migration on real SQLite with the service's schema.sql) |
 | tests/device-transfer.test.ts | 9 | sp-device | done | sp-device/tests/device_transfer.rs |
 | tests/device-volumes.test.ts | 9 | sp-device | done | sp-device/tests/device_volumes.rs |
 | tests/device-watch.test.ts | 9 | sp-app | done | m/device_watch.rs |
@@ -139,11 +139,11 @@ move too.
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | done | sp-engine/tests/settings_app_defaults.rs |
 | tests/sidecar-targets.test.ts | 26 | xtask | todo | no sidecar in the Rust app: retires with build-sidecar; decision for the owner |
 | tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
-| tests/signature-box.ts | 0 | sp-app | todo | test helper: minisign boxes for the updater |
+| tests/signature-box.ts | 0 | sp-update | done | test helper: sp-update/tests/common/mod.rs (TestKey signs as tauri-cli does) and sp-release/src/sign.rs |
 | tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
 | tests/smoke-bundle.test.ts | 35 | xtask | todo |  |
 | tests/smoke-cli.test.ts | 21 | xtask | todo |  |
-| tests/tap-scripts.test.ts | 15 | xtask | todo |  |
+| tests/tap-scripts.test.ts | 15 | xtask | todo | tools/bump-tap.sh and check-tap.sh stay shell (CI glue) and need no change for the Rust release (same tarball name and formula); the tests that run them against a fake tap are the xtask wave's |
 | tests/temp-hygiene.test.ts | 14 | xtask | todo | must cover the Rust tests' temp folders |
 | tests/tool-temp-folders.test.ts | 4 | xtask | todo |  |
 | tests/torture-coverage.test.ts | 6 | xtask | todo | tools/torture-manifest.json |
@@ -153,7 +153,7 @@ move too.
 | tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
 | tests/update-compare-module.test.ts | 9 | sp-app | done | m/update_compare.rs; one Rust copy serves both |
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
-| tests/update-signature.test.ts | 14 | xtask | todo |  |
+| tests/update-signature.test.ts | 14 | sp-release | partial | sp-release/src/sign.rs (keygen, key text or file, password, the plugin's and the Rust app's checks) and sp-update/src/verify.rs (key id of the shipped key, signed-version rules from the plugin's own tests) |
 | tests/verify-signing.test.ts | 32 | xtask | todo |  |
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
 | tests/workflow-shell.test.ts | 3 | xtask | todo |  |
@@ -239,7 +239,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | W7 | macOS minimum 13.0; Apple-silicon-only Mac build | tauri/tauri.conf.json, desktop/README.md | wave 3 |
 | W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | wave 3 |
 | W9 | Linux launcher entry Categories=Office; no PDF file association; no path read from the command line | desktop/README.md | wave 3 |
-| W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | done (muda: app, Edit and Window menus; Edit items passed on to egui, menu.rs test) |
+| W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | todo |
 | W11 | Boot check: the engine is asked `--version --json`; a failure puts the engine's sentence on its own alarm-coloured line above the stamp (the stamp stays) | ui/main.js, ui/frame.js engineFailed | done |
 | W12 | Engine missing or unstartable: "could not find/start the Screepub engine (sidecar ...)" with the build hint | tauri/src/sidecar.rs | gap: no sidecar in Rust (direct calls); the line is shown for an engine call that cannot start at all |
 | W13 | No Cancel during a conversion; quitting mid-call lets the engine finish (atomic writes) | tauri/src/sidecar.rs, desktop/README.md | wave 3 (no Cancel already holds; quitting mid-call with in-process calls is the engine wiring) |
@@ -490,7 +490,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | U6 | The label: "Update to 0.8.0", "Downloading 0.8.0…" / "… 40%", "Installing…", "Restarting after this finishes…", "Restart now", "Restarting…", "Update failed. Try again", "Update installed. Quit and reopen Screepub to use 0.8.0."; clickable only on offer (not a retry's), failed and stalled | ui/update.js updateLabel, labelActionable | model |
 | U7 | Download, verify (minisign), swap the bundle, then retire the engine, wait for 500 ms of quiet (capped at 120 s, then "Restart now"), restart into the new bundle; a refused restart is "installed", not a failure; a failed cleanup after a good install is not a failure | ui/update.js installAndRestart, ui/app.js updateInstall | wave 3 (its rules are ported: model/update.rs) |
 | U8 | The endpoint: latest.json on the GitHub releases; the public key | tauri/tauri.conf.json | wave 3 |
-| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | done (model/update_flow.rs; the run inside it is the wave 3 transport) |
+| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | todo |
 | U10 | Version comparison is the engine's (`src/update/compare.ts`: v prefix, build metadata, describe suffixes, prereleases) | ui/update-compare.js | done |
 
 ### O. Release notes sheet
@@ -675,6 +675,27 @@ names the check it affects.
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
   answers the same two forms identically.
+  **Ported 2026-10-11** (rust/crates/sp-device-requests, branch
+  rust/release): every answer byte for byte, all 24 checks. Two inputs
+  answer differently and are refused either way (400), neither one the
+  window sends: a JSON number beyond the double range and a lone UTF-16
+  surrogate escape. JSON.parse accepts both and the form check refuses with
+  "That request is not one this service takes."; serde_json refuses them as
+  "That request is not JSON." Not deployed; the release design (part f)
+  says what deploying it takes.
+- **The release pipeline (2026-10-11, branch rust/release; design
+  docs/superpowers/specs/2026-10-11-rust-release-design.md).** Bundles are
+  laid out by sp-release to match the Tauri ones file for file (the
+  window's executable keeps the name `screepub-desktop`); the Linux release
+  gains an AppImage (the Bun engine made one impossible), so SHA256SUMS-app
+  covers five installers. The Rust app's updater requires the signed
+  version the Tauri windows only check when present, and stages its swap
+  beside the bundle. Its HTTPS is rustls on the ring provider (C and
+  assembly inside ring): an owner decision whether to take the unaudited
+  pure-Rust provider instead. tools/bump-tap.sh and tools/check-tap.sh stay
+  shell. rust/handover-proof compiles Tauri on purpose, in its own
+  workspace, to run the window's own updater as the release's handover
+  gate; it goes once no Tauri window is left to carry over.
 - **The Kindle books' clock (2026-10-11).** `MobiInput::time` and the AZW3's
   `build_azw3_at` take the build time explicitly; `None` (and `build_azw3`)
   read `SOURCE_DATE_EPOCH`, else the system clock (sp-mobi's `clock`). The

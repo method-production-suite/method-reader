@@ -155,6 +155,26 @@ impl FileStorage {
         Self { path, data }
     }
 
+    /// The first run after the handover: no storage file yet, so start from
+    /// the update consent the Tauri window kept in WebKit's localStorage
+    /// (sp_update::webkit), and write it down so this happens once.
+    pub fn open_or_import(
+        path: std::path::PathBuf,
+        website_data: Option<&std::path::Path>,
+    ) -> Self {
+        let first_run = !path.exists();
+        let mut storage = Self::open(path);
+        if first_run && let Some(dir) = website_data {
+            let imported = sp_update::webkit::import_update_consent(dir);
+            let mut keys: Vec<_> = imported.into_iter().collect();
+            keys.sort();
+            for (k, v) in keys {
+                storage.set_item(&k, &v);
+            }
+        }
+        storage
+    }
+
     /// Where the window keeps it: the platform's per-user config folder.
     pub fn default_path() -> Option<std::path::PathBuf> {
         let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
@@ -168,10 +188,79 @@ impl FileStorage {
                 .map(Into::into)
                 .unwrap_or(home.join(".config"))
         };
-        Some(
-            base.join("com.darkwell.screepub")
-                .join("window-storage.json"),
-        )
+        Some(base.join(running_identifier()).join("window-storage.json"))
+    }
+}
+
+/// The bundle identifier this copy runs under: its own Info.plist's inside
+/// a Mac bundle (so a rehearsal built under another identifier keeps to
+/// its own storage), else the shipped `com.darkwell.screepub`.
+pub fn running_identifier() -> String {
+    std::env::current_exe()
+        .ok()
+        .and_then(|exe| sp_update::install::bundle_of_exe(&exe))
+        .and_then(|b| sp_update::install::bundle_identifier(&b))
+        .unwrap_or_else(|| sp_update::IDENTIFIER.to_string())
+}
+
+/// The Tauri window's WebKit data for this identifier, on a Mac.
+fn tauri_website_data() -> Option<std::path::PathBuf> {
+    if !cfg!(target_os = "macos") {
+        return None;
+    }
+    let home = std::env::var_os("HOME")?;
+    let home = std::path::Path::new(&home);
+    let running = running_identifier();
+    // A 0.7.x window (identifier com.darkwell.screepub.desktop) that skipped
+    // every release since updates straight to the Rust app; its answer is
+    // under its old identifier.
+    let mut candidates = vec![running.clone()];
+    if running == sp_update::IDENTIFIER {
+        candidates.push(format!("{}.desktop", sp_update::IDENTIFIER));
+    }
+    candidates
+        .iter()
+        .map(|id| sp_update::webkit::website_data(home, id))
+        .find(|dir| dir.is_dir())
+}
+
+/// The updater: latest.json through sp-update, with the key and endpoint
+/// every Tauri window trusts. Ready only in a Mac app bundle (inventory
+/// row U1: the manifest lists darwin only, and a development build has no
+/// bundle to swap).
+pub struct ManifestUpdater {
+    pub bundle: Option<std::path::PathBuf>,
+}
+
+impl ManifestUpdater {
+    pub fn for_this_copy() -> Self {
+        let bundle = if cfg!(target_os = "macos") {
+            std::env::current_exe()
+                .ok()
+                .and_then(|exe| sp_update::install::bundle_of_exe(&exe))
+        } else {
+            None
+        };
+        Self { bundle }
+    }
+}
+
+impl Updater for ManifestUpdater {
+    fn ready(&self) -> bool {
+        self.bundle.is_some()
+    }
+    fn check(&self) -> Result<Option<Found>, String> {
+        let current = sp_update::manifest::parse_version(env!("CARGO_PKG_VERSION"))?;
+        let config = sp_update::Config::screepub(Some(sp_update::Installer::App));
+        sp_update::check(&config, &current)
+            .map(|found| {
+                found.map(|u| Found {
+                    version: u.version,
+                    current_version: u.current_version,
+                    body: u.body,
+                })
+            })
+            .map_err(|e| e.to_string())
     }
 }
 
@@ -208,7 +297,10 @@ impl Host {
     pub fn native(reduced_motion: Arc<AtomicBool>) -> Self {
         let start = std::time::Instant::now();
         let storage: Box<dyn Storage> = match FileStorage::default_path() {
-            Some(path) => Box::new(FileStorage::open(path)),
+            Some(path) => Box::new(FileStorage::open_or_import(
+                path,
+                tauri_website_data().as_deref(),
+            )),
             None => Box::new(MemoryStorage::default()),
         };
         Self {
@@ -219,7 +311,7 @@ impl Host {
             clock: Box::new(move || start.elapsed().as_secs_f64() * 1000.0),
             platform: Platform::current(),
             reduced_motion,
-            updater: Box::new(NoUpdater),
+            updater: Box::new(ManifestUpdater::for_this_copy()),
             speaker: Box::new(Typewriter::default()),
         }
     }

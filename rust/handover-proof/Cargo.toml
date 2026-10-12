@@ -1,0 +1,21 @@
+[package]
+name = "handover-proof"
+description = "Runs tauri-plugin-updater 2.12.0, the exact code in every Tauri window, against a Rust release's update files, headless"
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+# Its own workspace: this is the one place the port still compiles Tauri,
+# on purpose, and it must not pull Tauri into rust/'s lockfile. Deleted
+# once the first Rust release has carried the 0.11.x windows across.
+[workspace]
+
+[dependencies]
+# Exactly what desktop/src-tauri/Cargo.lock ships in every window since
+# 0.7.1 (checked per tag in the release design, part b).
+tauri = { version = "=2.11.5", features = ["test"] }
+tauri-plugin-updater = "=2.12.0"
+plist = "1"
+serde_json = "1"
+semver = "1"

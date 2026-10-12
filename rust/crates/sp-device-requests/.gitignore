@@ -1,0 +1,2 @@
+# worker-build's output (the wasm, the wasm-bindgen glue, the shim).
+/build/

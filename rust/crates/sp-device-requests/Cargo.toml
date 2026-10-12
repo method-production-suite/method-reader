@@ -1,0 +1,25 @@
+[package]
+name = "sp-device-requests"
+description = "The device-request service (a Cloudflare Worker with D1), ported from services/device-requests to workers-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+# cdylib for worker-build (wasm32); rlib for the native tests.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde_json.workspace = true
+
+# workers-rs only where it runs: the native build and tests never link it.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+worker = { version = "0.8.7", features = ["d1"] }
+
+[dev-dependencies]
+tempfile = "3"
