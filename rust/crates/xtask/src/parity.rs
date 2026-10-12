@@ -52,6 +52,13 @@ usage: cargo xtask parity [options]
   --rust-cli <path>     the Rust binary (default: build crates/sp-cli,
                         or $SCREEPUB_RUST_CLI)
   --keep                keep the scratch folders and print where
+  --accept <row>...     a DELIBERATE output change: run only the named rows
+                        (or prefixes ending in *) on the committed fixtures,
+                        show how each differs from its frozen answer, and
+                        rewrite those rows' frozen answers, nothing else.
+                        Read the diff, then say why in the commit.
+  --oracle-dir <dir>    where the committed fixtures' frozen answers are
+                        (default rust/oracle/parity; for tests)
 ";
 
 struct Options {
@@ -60,6 +67,9 @@ struct Options {
     commands: Vec<String>,
     rust_cli: Option<PathBuf>,
     keep: bool,
+    /// `--accept`: given, even empty, means accepting.
+    accept: Option<Vec<String>>,
+    oracle_dir: Option<PathBuf>,
 }
 
 impl Options {
@@ -70,13 +80,15 @@ impl Options {
             commands: Vec::new(),
             rust_cli: None,
             keep: false,
+            accept: None,
+            oracle_dir: None,
         }
     }
 }
 
 fn parse(args: &[String], rows: &[CommandRow]) -> Result<Options, String> {
     let mut o = Options::blank();
-    let mut it = args.iter();
+    let mut it = args.iter().peekable();
     while let Some(a) = it.next() {
         let mut value = |flag: &str| it.next().cloned().ok_or(format!("{flag} needs a value"));
         match a.as_str() {
@@ -84,16 +96,37 @@ fn parse(args: &[String], rows: &[CommandRow]) -> Result<Options, String> {
             "--fixture" => o.fixtures.push(value("--fixture")?),
             "--command" => o.commands.push(value("--command")?),
             "--rust-cli" => o.rust_cli = Some(PathBuf::from(value("--rust-cli")?)),
+            "--oracle-dir" => o.oracle_dir = Some(PathBuf::from(value("--oracle-dir")?)),
             "--keep" => o.keep = true,
+            "--accept" => {
+                let names = o.accept.get_or_insert_with(Vec::new);
+                while let Some(n) = it.next_if(|n| !n.starts_with("--")) {
+                    names.push(n.clone());
+                }
+            }
             other => return Err(format!("parity: unknown option {other}")),
         }
     }
-    for c in &o.commands {
-        let one = Options {
-            commands: vec![c.clone()],
-            ..Options::blank()
-        };
-        if !rows.iter().any(|row| selected(&one, row)) {
+    if let Some(names) = &o.accept {
+        if names.is_empty() {
+            return Err("parity --accept: name the rows to accept (for example \
+                 --accept help help-short); nothing is accepted wholesale"
+                .into());
+        }
+        if let Some(bare) = names.iter().find(|n| n.trim_end_matches('*').is_empty()) {
+            return Err(format!(
+                "parity --accept: {bare:?} names every row; name the rows to accept"
+            ));
+        }
+        if !o.commands.is_empty() {
+            return Err("parity --accept: the rows are --accept's own; leave out --command".into());
+        }
+    }
+    for c in o.commands.iter().chain(o.accept.iter().flatten()) {
+        if !rows
+            .iter()
+            .any(|row| names_row(std::slice::from_ref(c), row))
+        {
             let names: Vec<&str> = rows.iter().map(|r| r.name.as_str()).collect();
             return Err(format!("parity: no command row {c:?} (rows: {names:?})"));
         }
@@ -101,13 +134,21 @@ fn parse(args: &[String], rows: &[CommandRow]) -> Result<Options, String> {
     Ok(o)
 }
 
-/// Whether `--command` names a row: exactly, or by a prefix ending in `*`.
+/// Whether one of `names` names a row: exactly, or by a prefix ending in `*`.
+fn names_row(names: &[String], row: &CommandRow) -> bool {
+    names.iter().any(|c| match c.strip_suffix('*') {
+        Some(prefix) => row.name.starts_with(prefix),
+        None => row.name == *c,
+    })
+}
+
+/// Whether a row runs: `--accept`'s rows when accepting, else `--command`'s
+/// (all rows when it is not given).
 fn selected(opts: &Options, row: &CommandRow) -> bool {
-    opts.commands.is_empty()
-        || opts.commands.iter().any(|c| match c.strip_suffix('*') {
-            Some(prefix) => row.name.starts_with(prefix),
-            None => row.name == *c,
-        })
+    match &opts.accept {
+        Some(names) => names_row(names, row),
+        None => opts.commands.is_empty() || names_row(&opts.commands, row),
+    }
 }
 
 /// How one side is started.
@@ -360,17 +401,31 @@ fn machine_bound(row: &CommandRow) -> bool {
 }
 
 /// Where an input's frozen answers live.
-fn frozen_file(input: &Path, committed: bool) -> PathBuf {
-    let base = if committed {
-        paths::workspace_root().join("oracle/parity")
-    } else {
-        paths::workspace_root().join("oracle-real/parity")
+fn frozen_file(input: &Path, committed: bool, oracle_dir: Option<&Path>) -> PathBuf {
+    let base = match (committed, oracle_dir) {
+        (true, Some(dir)) => dir.to_path_buf(),
+        (true, None) => paths::workspace_root().join("oracle/parity"),
+        (false, _) => paths::workspace_root().join("oracle-real/parity"),
     };
     base.join(format!("{}.json", paths::stem(input)))
 }
 
-fn read_frozen(input: &Path, committed: bool) -> Result<serde_json::Map<String, Value>, String> {
-    let file = frozen_file(input, committed);
+/// A frozen answer file's text, as the freezing wrote it: two-space JSON in
+/// the rows' own order, and a newline. Every committed file reads back to
+/// these exact bytes (tests/parity_accept.rs), so accepting one row
+/// rewrites that row and nothing else.
+pub fn frozen_text(answers: &serde_json::Map<String, Value>) -> String {
+    let mut text = serde_json::to_string_pretty(answers).expect("JSON values serialize");
+    text.push('\n');
+    text
+}
+
+fn read_frozen(
+    input: &Path,
+    committed: bool,
+    oracle_dir: Option<&Path>,
+) -> Result<serde_json::Map<String, Value>, String> {
+    let file = frozen_file(input, committed, oracle_dir);
     let text = std::fs::read_to_string(&file).map_err(|e| {
         format!(
             "no frozen answers for {} ({e})",
@@ -411,7 +466,11 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         paths::real_fixtures()
     };
 
-    let scratch = std::env::temp_dir().join(format!("screepub-parity-{}", std::process::id()));
+    // One folder per run, even for two runs in one process (the tests).
+    static RUNS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let nth = RUNS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let scratch =
+        std::env::temp_dir().join(format!("screepub-parity-{}-{nth}", std::process::id()));
     let machine = crate::machine::facts(None);
     if !cfg!(target_os = "macos") {
         println!(
@@ -426,13 +485,23 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         run_side(&side, row, input, &base.join(side.label), DEFAULT_EPOCH)
     };
 
+    if let Some(names) = &opts.accept {
+        let result = accept(names, &rows, &committed, &opts, &machine, &mut run_case);
+        if opts.keep {
+            println!("scratch kept in {}", scratch.display());
+        } else {
+            let _ = std::fs::remove_dir_all(&scratch);
+        }
+        return result;
+    }
+
     println!(
         "parity: {} against the frozen TypeScript answers",
         side.program.display()
     );
     let (mut runs, mut same, mut skipped) = (0usize, 0usize, 0usize);
     for input in &committed {
-        let frozen = read_frozen(input, true)?;
+        let frozen = read_frozen(input, true, opts.oracle_dir.as_deref())?;
         let name = paths::stem(input);
         let here = frozen.get("$machine") == Some(&machine);
         for row in rows.iter().filter(|r| r.inputs.accepts(input, true)) {
@@ -471,7 +540,7 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         let (mut cases, mut same, mut skipped, mut missing) = (0usize, 0usize, 0usize, 0usize);
         let mut by_output: BTreeMap<String, usize> = BTreeMap::new();
         for input in &real {
-            let Ok(frozen) = read_frozen(input, false) else {
+            let Ok(frozen) = read_frozen(input, false, None) else {
                 missing += 1;
                 continue;
             };
@@ -530,4 +599,189 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         }
     );
     Ok(clean)
+}
+
+/// A row's frozen answer, as the freezing wrote it, from a Rust run: the
+/// exit code, stdout, stderr where the row compares it (else what was
+/// there), and each listed output's summary.
+fn frozen_value(row: &CommandRow, rs: &Run, before: Option<&Value>) -> Value {
+    let mut outputs = serde_json::Map::new();
+    for o in &row.outputs {
+        outputs.insert(
+            o.file.clone(),
+            compare::summary(&rs.work.join(&o.file), o.compare, &rs.work),
+        );
+    }
+    let stderr = if row.stderr {
+        Value::String(rs.stderr.clone())
+    } else {
+        before.map_or(Value::Null, |b| b["stderr"].clone())
+    };
+    serde_json::json!({
+        "exit": rs.exit,
+        "stdout": rs.answer,
+        "stderr": stderr,
+        "outputs": outputs,
+    })
+}
+
+/// `--accept`: the named rows on the committed fixtures, each shown against
+/// its frozen answer and, where it differs, written in its place. Rows this
+/// machine cannot answer as the freezing one did (Calibre, routes) are left
+/// alone. Real scripts are never touched: their answers quote the scripts.
+fn accept(
+    names: &[String],
+    rows: &[&CommandRow],
+    committed: &[PathBuf],
+    opts: &Options,
+    machine: &Value,
+    run_case: &mut dyn FnMut(&Path, &CommandRow) -> Result<Run, String>,
+) -> Result<bool, String> {
+    println!(
+        "parity --accept {}: the committed fixtures' frozen answers for these rows",
+        names.join(" ")
+    );
+    let (mut changed_rows, mut files, mut same, mut left) = (0usize, 0usize, 0usize, 0usize);
+    for input in committed {
+        let mut frozen = read_frozen(input, true, opts.oracle_dir.as_deref())?;
+        let name = paths::stem(input);
+        let here = frozen.get("$machine") == Some(machine);
+        let mut changed = false;
+        for row in rows.iter().filter(|r| r.inputs.accepts(input, true)) {
+            if machine_bound(row) && !here {
+                left += 1;
+                println!("  left  {name} {} (frozen on another machine)", row.name);
+                continue;
+            }
+            let before = frozen.get(&row.name).cloned();
+            let got = run_case(input, row)?;
+            let after = frozen_value(row, &got, before.as_ref());
+            if before.as_ref() == Some(&after) {
+                same += 1;
+                println!("  same  {name} {}", row.name);
+                continue;
+            }
+            println!("  NEW   {name} {}", row.name);
+            print!(
+                "{}",
+                indent(&value_diff(before.as_ref().unwrap_or(&Value::Null), &after))
+            );
+            frozen.insert(row.name.clone(), after);
+            changed = true;
+            changed_rows += 1;
+        }
+        if changed {
+            let file = frozen_file(input, true, opts.oracle_dir.as_deref());
+            std::fs::write(&file, frozen_text(&frozen))
+                .map_err(|e| format!("could not write {}: {e}", file.display()))?;
+            files += 1;
+        }
+    }
+    println!(
+        "  accepted {changed_rows} rows in {files} files; {same} already matched, {left} left alone"
+    );
+    if changed_rows > 0 {
+        println!(
+            "parity: frozen answers rewritten. Read the diff above, then say why the output changed in the commit message."
+        );
+    }
+    Ok(true)
+}
+
+fn indent(text: &str) -> String {
+    text.lines().map(|l| format!("          {l}\n")).collect()
+}
+
+/// How a row's frozen answer changes, field by field: the exit code, and a
+/// line diff of stdout, stderr and the outputs' summaries.
+pub fn value_diff(before: &Value, after: &Value) -> String {
+    let mut out = String::new();
+    for key in ["exit", "stdout", "stderr", "outputs"] {
+        let (b, a) = (&before[key], &after[key]);
+        if b == a {
+            continue;
+        }
+        out.push_str(&format!("{key}:\n"));
+        out.push_str(&line_diff(&as_lines(b), &as_lines(a)));
+    }
+    out
+}
+
+/// A text field as its own lines; anything else as two-space JSON.
+fn as_lines(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.clone(),
+        Value::Null => String::new(),
+        other => serde_json::to_string_pretty(other).expect("JSON values serialize"),
+    }
+}
+
+/// A unified-style line diff: `-` for a line only before, `+` only after,
+/// two lines of unchanged context around each change.
+pub fn line_diff(before: &str, after: &str) -> String {
+    let a: Vec<&str> = before.split('\n').collect();
+    let b: Vec<&str> = after.split('\n').collect();
+    let head = a.iter().zip(&b).take_while(|(x, y)| x == y).count();
+    let tail = a[head..]
+        .iter()
+        .rev()
+        .zip(b[head..].iter().rev())
+        .take_while(|(x, y)| x == y)
+        .count();
+    let (mid_a, mid_b) = (&a[head..a.len() - tail], &b[head..b.len() - tail]);
+    // The longest common subsequence of the middle; a middle too large for
+    // that is shown as all of one side, then all of the other.
+    let mut ops: Vec<(char, &str)> = Vec::new();
+    if mid_a.len().saturating_mul(mid_b.len()) <= 4_000_000 {
+        let (n, m) = (mid_a.len(), mid_b.len());
+        let mut lcs = vec![vec![0u32; m + 1]; n + 1];
+        for i in (0..n).rev() {
+            for j in (0..m).rev() {
+                lcs[i][j] = if mid_a[i] == mid_b[j] {
+                    lcs[i + 1][j + 1] + 1
+                } else {
+                    lcs[i + 1][j].max(lcs[i][j + 1])
+                };
+            }
+        }
+        let (mut i, mut j) = (0, 0);
+        while i < n || j < m {
+            if i < n && j < m && mid_a[i] == mid_b[j] {
+                ops.push((' ', mid_a[i]));
+                i += 1;
+                j += 1;
+            } else if i < n && (j == m || lcs[i + 1][j] >= lcs[i][j + 1]) {
+                ops.push(('-', mid_a[i]));
+                i += 1;
+            } else {
+                ops.push(('+', mid_b[j]));
+                j += 1;
+            }
+        }
+    } else {
+        ops.extend(mid_a.iter().map(|l| ('-', *l)));
+        ops.extend(mid_b.iter().map(|l| ('+', *l)));
+    }
+    let mut all: Vec<(char, &str)> = a[..head].iter().map(|l| (' ', *l)).collect();
+    all.extend(ops);
+    all.extend(a[a.len() - tail..].iter().map(|l| (' ', *l)));
+    let near = |k: usize| {
+        all[k.saturating_sub(2)..(k + 3).min(all.len())]
+            .iter()
+            .any(|(op, _)| *op != ' ')
+    };
+    let mut out = String::new();
+    let mut skipped = false;
+    for (k, (op, line)) in all.iter().enumerate() {
+        if near(k) {
+            if skipped {
+                out.push_str("  ...\n");
+                skipped = false;
+            }
+            out.push_str(&format!("{op} {line}\n"));
+        } else {
+            skipped = true;
+        }
+    }
+    out
 }

@@ -103,6 +103,13 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   together.
 - **Keep the window logic-free.** Decisions belong in the engine crates;
   `sp-app` asks the engine and draws its answer.
+- **Run `cargo xtask parity`** after any change to what the command line
+  writes or says. It holds the Rust CLI to the frozen answers in
+  `rust/oracle/`. A deliberate output change: run parity, read the diff,
+  accept the rows (`cargo xtask parity --accept <row>...`, which shows each
+  row's diff and rewrites only those rows' frozen answers), and explain it
+  in the commit. Never accept a row to make a difference you cannot explain
+  go away.
 - Run `cargo fmt --all --check`, the clippy line above and
   `cargo test --workspace` before you push.
 

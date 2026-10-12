@@ -175,7 +175,9 @@ The crates, in the order a conversion passes through them (each one's
   rust/oracle/parity/ what its CLI answered for every command row; the
   tests and `cargo xtask parity` compare against them. Never edit a frozen
   answer to make a check pass: a difference is a bug, or a decision written
-  into rust/PARITY.md for the owner.
+  into rust/PARITY.md for the owner. A deliberate output change goes through
+  `cargo xtask parity --accept <row>...` (it shows each row's diff and
+  rewrites only those rows), with the reason in the commit.
 - Formatting behaviors are cataloged in **docs/formatting-options-log.md**.
   Update it whenever one changes; it's the app's options registry.
 

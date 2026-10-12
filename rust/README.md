@@ -101,8 +101,24 @@ Rust CLI honors both the same way: `SOURCE_DATE_EPOCH` for the EPUB's
 EXTH 106.
 
 There is no TypeScript left to ask again. A deliberate change to what the
-engine writes therefore shows up as a parity difference, to be written up
-in PARITY.md for the owner before any frozen answer is touched.
+engine writes therefore shows up as a parity difference first. To make it
+the new answer: run parity, read the diff, accept the rows, and explain it
+in the commit (and in PARITY.md's Decisions when it is a choice the owner
+should see):
+
+```bash
+cargo xtask parity --committed-only               # see what differs
+cargo xtask parity --accept help help-short       # show each row's diff, rewrite only those rows
+```
+
+`--accept` refuses unless rows are named (exact names, or prefixes ending
+in `*`; never a bare `*`), runs only those rows on the committed fixtures
+(`--fixture` narrows it further), prints each row's diff against its frozen
+answer, and rewrites just those rows in rust/oracle/parity/. A row this
+machine cannot answer as the freezing Mac did (Calibre, the routes) is left
+alone, and the real scripts' answers in rust/oracle-real/ are never
+rewritten. The stage dumps in rust/oracle/<fixture>/ and the frozen answers
+beside the tests are not rows; a test that reads one says what it pins.
 
 ## Parity
 
@@ -111,6 +127,7 @@ cargo xtask parity                       # every committed fixture and real scri
 cargo xtask parity --committed-only      # invented fixtures only
 cargo xtask parity --fixture torture --command convert
 cargo xtask parity --rust-cli path/to/screepub
+cargo xtask parity --accept <row>...     # a deliberate change (above)
 ```
 
 The Rust CLI gets, per row, a scratch folder (a copy of the input, empty
@@ -134,6 +151,14 @@ only where the facts read the same; elsewhere they are counted as skipped.
 The Rust CLI is `crates/sp-cli` (binary `screepub`), built in the release
 profile. `--command` takes a row name or a prefix ending in `*`
 (`--command 'export-*'`).
+
+## No JavaScript runtime
+
+Nothing in the workspace runs bun, node or a package runner, with one
+exception: `cargo xtask rehearse-handover prepare` builds the old v0.11.1
+Tauri window from its own tag, whose engine was TypeScript, so the
+rehearsal can start from the window people have. Nothing it builds ships.
+xtask's tests/no_js_runtime.rs fails if any other Rust file starts one.
 
 ## Rules, in short
 
