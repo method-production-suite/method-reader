@@ -13,16 +13,17 @@
 //! - [`compare`] holds desktop/ui/update-compare.js.
 
 pub mod archive;
+pub mod bundle;
 pub mod compare;
 pub mod kinds;
 pub mod manifest;
+pub mod native;
 pub mod signature;
 pub mod util;
 
 /// `cargo xtask build-app-bundle`: its exit code.
-pub fn build_app_bundle_main(_args: &[String]) -> u8 {
-    eprintln!("xtask: build-app-bundle is not ported yet");
-    2
+pub fn build_app_bundle_main(args: &[String]) -> u8 {
+    bundle::main(args)
 }
 
 /// `cargo xtask bundle-archive`: its exit code.
