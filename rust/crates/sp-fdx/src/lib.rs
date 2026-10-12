@@ -21,12 +21,11 @@
 //! tokenizer's answer; that tokenizer is sp-fountain's, so the text-in entry
 //! point is TODO(sp-fountain) and the CLI composes the two meanwhile.
 
-pub mod fountain_shim;
 mod js;
 
 use sp_model::{Token, TokenType};
 
-use fountain_shim::{is_mini_slug, strip_notes};
+use sp_fountain::{is_mini_slug, strip_notes};
 
 /// The FinalDraft root's Version attribute. ONE constant, because the
 /// owner's Final Draft is an older licence and this may have to come down:

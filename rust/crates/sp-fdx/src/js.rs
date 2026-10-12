@@ -19,11 +19,6 @@ pub fn is_space(c: char) -> bool {
     )
 }
 
-/// A JavaScript LineTerminator: where `^` matches under the `m` flag.
-pub fn is_line_terminator(c: char) -> bool {
-    matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')
-}
-
 /// `String.prototype.trim`.
 pub fn trim(s: &str) -> &str {
     s.trim_matches(is_space)

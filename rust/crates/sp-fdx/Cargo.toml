@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 sp-model.workspace = true
+sp-fountain.workspace = true
 
 [dev-dependencies]
 roxmltree.workspace = true

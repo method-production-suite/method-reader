@@ -14,8 +14,8 @@ mod common;
 use std::path::PathBuf;
 
 use common::{XmlElement, parse_xml};
-use sp_fdx::fountain_shim::{is_primary_slug, strip_notes};
 use sp_fdx::tokens_to_fdx;
+use sp_fountain::{is_primary_slug, strip_notes};
 use sp_model::{Token, TokenType};
 
 fn oracle(name: &str, file: &str) -> String {
