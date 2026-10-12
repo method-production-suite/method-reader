@@ -3670,6 +3670,7 @@ version = "0.11.1"
 dependencies = [
  "serde_json",
  "sp-model",
+ "sp-parser",
  "unicode-general-category",
 ]
 
