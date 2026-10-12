@@ -42,13 +42,30 @@ pub fn replace_file_with(
 ) -> Result<(), NodeIoError> {
     let partial = partial_path_for(destination);
     let result = (|| {
-        fs::copy(source, &partial)
-            .map_err(|e| NodeIoError::from_io(&e, "copyfile", Some(source), Some(&partial)))?;
-        let file = OpenOptions::new()
+        // The partial is made new, never opened as found: on a volume that
+        // can hold links, one planted at the partial's (predictable) name
+        // would have had the book written through it, off the reader. A
+        // left-over partial, or a link, is removed first; remove_file never
+        // follows a link.
+        let _ = fs::remove_file(&partial);
+        let copy_err =
+            |e: io::Error| NodeIoError::from_io(&e, "copyfile", Some(source), Some(&partial));
+        let mut from = File::open(source).map_err(copy_err)?;
+        let mut file = OpenOptions::new()
             .read(true)
             .write(true)
+            .create_new(true)
             .open(&partial)
-            .map_err(|e| NodeIoError::from_io(&e, "open", Some(&partial), None))?;
+            .map_err(|e| {
+                // A folder in the partial's place (which remove_file could
+                // not take): copyfile's own answer for it.
+                if e.kind() == io::ErrorKind::AlreadyExists && partial.is_dir() {
+                    copy_err(io::Error::from(io::ErrorKind::IsADirectory))
+                } else {
+                    copy_err(e)
+                }
+            })?;
+        io::copy(&mut from, &mut file).map_err(copy_err)?;
         sync(&file).map_err(|e| NodeIoError::from_io(&e, "fsync", None, None))?;
         drop(file);
         fs::rename(&partial, destination)

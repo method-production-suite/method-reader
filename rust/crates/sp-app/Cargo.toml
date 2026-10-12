@@ -45,6 +45,9 @@ cpal = "0.18"
 sp-update = { path = "../sp-update" }
 # The engine, in-process: the same run() the screepub binary is.
 sp-cli = { path = "../sp-cli" }
+# The window's own state file is written whole or not at all, as the
+# engine's files are.
+sp-fsutil.workspace = true
 
 [dev-dependencies]
 egui_kittest = { version = "0.36.2", features = ["wgpu"] }

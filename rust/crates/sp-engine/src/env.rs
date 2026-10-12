@@ -26,9 +26,29 @@ impl Env {
             .collect())
     }
 
-    /// `env.NAME`, `undefined` as `None`.
+    /// `env.NAME`, `undefined` as `None`. On Windows, as Node's
+    /// `process.env` there, the name's case does not matter: Windows calls
+    /// the search path `Path`, and `env.PATH` still finds it.
     pub fn get(&self, name: &str) -> Option<&str> {
-        self.0.get(name).map(String::as_str)
+        self.get_on(name, cfg!(windows))
+    }
+
+    /// [`Env::get`] with the platform's rule given: `windows` reads names
+    /// without regard to ASCII case (an exact match first).
+    pub fn get_on(&self, name: &str, windows: bool) -> Option<&str> {
+        self.0
+            .get(name)
+            .or_else(|| {
+                windows
+                    .then(|| {
+                        self.0
+                            .iter()
+                            .find(|(k, _)| k.eq_ignore_ascii_case(name))
+                            .map(|(_, v)| v)
+                    })
+                    .flatten()
+            })
+            .map(String::as_str)
     }
 
     /// `env.NAME || ''`-style truthiness: set and not empty.
@@ -36,8 +56,26 @@ impl Env {
         self.get(name).filter(|v| !v.is_empty())
     }
 
+    /// `env.NAME = value`. On Windows a variable of the same name in
+    /// another case is replaced, not doubled (a child given both `Path` and
+    /// `PATH` would see one of them, unpredictably).
     pub fn set(&mut self, name: impl Into<String>, value: impl Into<String>) -> &mut Self {
-        self.0.insert(name.into(), value.into());
+        self.set_on(name, value, cfg!(windows))
+    }
+
+    /// [`Env::set`] with the platform's rule given.
+    pub fn set_on(
+        &mut self,
+        name: impl Into<String>,
+        value: impl Into<String>,
+        windows: bool,
+    ) -> &mut Self {
+        let name = name.into();
+        if windows {
+            self.0
+                .retain(|k, _| k == &name || !k.eq_ignore_ascii_case(&name));
+        }
+        self.0.insert(name, value.into());
         self
     }
 
@@ -100,4 +138,20 @@ pub fn js_trim(s: &str) -> &str {
 /// `s.trimStart()`.
 pub fn js_trim_start(s: &str) -> &str {
     s.trim_start_matches(js_space)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn windows_reads_and_replaces_a_name_in_any_case() {
+        let env: Env = [("Path", r"C:\\Calibre2")].into_iter().collect();
+        assert_eq!(env.get_on("PATH", true), Some(r"C:\\Calibre2"));
+        assert_eq!(env.get_on("PATH", false), None, "elsewhere case matters");
+        let mut env = env;
+        env.set_on("PATH", "X", true);
+        assert_eq!(env.vars().count(), 1);
+        assert_eq!(env.get_on("path", true), Some("X"));
+    }
 }

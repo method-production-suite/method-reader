@@ -1,6 +1,6 @@
 //! src/device/transfer.ts: copy a book to where its vendor indexes it.
 
-use crate::kindle::{copy_to_kindle_volume, make_dir_all};
+use crate::kindle::{copy_to_kindle_volume, make_dir_all, refuse_link};
 use crate::types::{ConnectedDevice, DeviceKind};
 use sp_fsutil::NodeIoError;
 use sp_fsutil::nodepath::host;
@@ -48,6 +48,7 @@ pub fn copy_to_device(file: &str, device: &ConnectedDevice) -> Result<String, Tr
         DeviceKind::Tolino => host::join(&[volume, "Books"]),
         DeviceKind::Remarkable => return Err(TransferError::NoVolume),
     };
+    refuse_link(&dest_dir)?;
     make_dir_all(&dest_dir)?;
     let dest = host::join(&[&dest_dir, &host::basename(file)]);
     sp_fsutil::replace_file(Path::new(file), Path::new(&dest))?;

@@ -213,7 +213,7 @@ fn resolve_out(artifact_path: &str, out: &str) -> Result<String, EngineError> {
     if host::resolve(&[out]) != host::resolve(&[artifact_path])
         && let Err(err) = copy_artifact_atomic(artifact_path, out)
     {
-        let reason = err.message().replace(&fsx::temp_path_for(out), out);
+        let reason = fsx::hide_temp(&err.message(), out);
         return Err(export_failed(format!(
             "could not save the copy to {out}: {reason}"
         )));
@@ -255,7 +255,7 @@ fn save_fountain_copy(
     if let Err(err) =
         fsx::mkdir_all(&host::dirname(out)).and_then(|()| fsx::write_atomic(out, clean.as_bytes()))
     {
-        let reason = err.message().replace(&fsx::temp_path_for(out), out);
+        let reason = fsx::hide_temp(&err.message(), out);
         return Err(export_failed(format!(
             "could not save the copy to {out}: {reason}"
         )));
@@ -337,7 +337,7 @@ fn export_fdx(
             fsx::write_atomic(&path, fdx.as_bytes())
         });
     if let Err(err) = written {
-        let reason = err.message().replace(&fsx::temp_path_for(&path), &path);
+        let reason = fsx::hide_temp(&err.message(), &path);
         return Err(export_failed(format!(
             "could not save the FDX to {path}: {reason}"
         )));

@@ -428,7 +428,7 @@ impl Storage for FileStorage {
             let _ = std::fs::create_dir_all(dir);
         }
         if let Ok(text) = serde_json::to_string(&self.data.0) {
-            let _ = std::fs::write(&self.path, text);
+            let _ = sp_fsutil::write_file_atomic(&self.path, text);
         }
     }
 }

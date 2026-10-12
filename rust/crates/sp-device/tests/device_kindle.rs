@@ -97,3 +97,22 @@ fn copy_lands_in_documents_keeps_the_content_and_overwrites_on_a_second_copy() {
     copy_to_kindle_volume(&src, &vol).unwrap();
     assert_eq!(std::fs::read_to_string(&dest).unwrap(), "v2");
 }
+
+#[cfg(unix)]
+#[test]
+fn a_documents_folder_that_is_a_link_off_the_volume_is_refused() {
+    let s = scratch("screepub-device-kindle-");
+    let vol = volume(s.path(), "Kindle", &["system"]);
+    let elsewhere = join(&join(&vol, ".."), "elsewhere");
+    std::fs::create_dir_all(&elsewhere).unwrap();
+    std::os::unix::fs::symlink(&elsewhere, join(&vol, "documents")).unwrap();
+    let src = join(&join(&vol, ".."), "Test.epub");
+    std::fs::write(&src, "v1").unwrap();
+    let err = copy_to_kindle_volume(&src, &vol).unwrap_err();
+    assert!(err.message.contains("documents"), "{}", err.message);
+    assert_eq!(
+        std::fs::read_dir(&elsewhere).unwrap().count(),
+        0,
+        "nothing written off the volume"
+    );
+}

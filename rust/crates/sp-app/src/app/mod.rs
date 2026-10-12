@@ -159,6 +159,7 @@ impl App {
         };
         // The one line that proves the engine is there.
         app.call(Request::Version, Purpose::Version);
+        app.update.inline_checks = mode == Mode::Inline;
         app.update.boot(&mut app.host);
         convert::draw_well(&mut app);
         app

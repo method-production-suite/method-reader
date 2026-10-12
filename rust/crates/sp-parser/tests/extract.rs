@@ -44,6 +44,29 @@ mod group_items_into_lines {
     use super::*;
 
     #[test]
+    fn a_nan_position_from_a_damaged_pdf_does_not_panic_the_sort() {
+        // A mutated torture.pdf gave a text item a NaN coordinate, and the
+        // NaN-as-equal comparator (JavaScript's reading of `a - b`) is not a
+        // total order, which Rust's sort is entitled to panic on.
+        let mut items = Vec::new();
+        for i in 0..64 {
+            let y = if i % 3 == 0 {
+                f64::NAN
+            } else {
+                (i * 37 % 61) as f64 * 10.0
+            };
+            let x = if i % 5 == 0 {
+                f64::NAN
+            } else {
+                (i * 13 % 29) as f64 * 5.0
+            };
+            items.push(item("w", x, y));
+        }
+        let lines = group_items_into_lines(&items, 612.0, 1);
+        assert!(!lines.is_empty());
+    }
+
+    #[test]
     fn items_on_one_y_join_into_a_single_line_with_indent_pct() {
         let lines = group_items_into_lines(
             &[item("Hello", 61.0, 700.0), item("world", 120.0, 700.0)],

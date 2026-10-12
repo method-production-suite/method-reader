@@ -10,7 +10,7 @@
 
 use std::io::Read;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -173,7 +173,7 @@ pub fn run_with_timeout(
     timeout_ms: u64,
 ) -> Result<TimedRun, EngineError> {
     let (program, args) = argv.split_first().expect("argv names a program");
-    let mut command = Command::new(program);
+    let mut command = sp_device::process::quiet_command(program);
     command
         .args(args)
         .env_clear()
