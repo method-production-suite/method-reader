@@ -66,7 +66,7 @@ move too.
 | tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
 | tests/conversion-settings.test.ts | 18 | sp-engine | todo |  |
 | tests/convert.test.ts | 58 | sp-engine | todo |  |
-| tests/cover.test.ts | 10 | sp-fountain | todo |  |
+| tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | todo |  |
 | tests/css-rules.ts | 0 | sp-epub | todo | test helper (selector-exact rule extractor) |
 | tests/cue-text.test.ts | 4 | sp-parser | todo |  |
@@ -88,7 +88,7 @@ move too.
 | tests/device-volumes.test.ts | 9 | sp-engine | todo |  |
 | tests/device-watch.test.ts | 9 | sp-app | todo |  |
 | tests/epub-images.test.ts | 23 | sp-epub | todo |  |
-| tests/epub.test.ts | 117 | sp-epub | todo |  |
+| tests/epub.test.ts | 117 | sp-epub | todo | the token half of "PRIMARY_SLUG stays in lockstep with fountain-js" is in sp-fountain/tests/slug.rs; the XHTML half and the classify.ts pin (import `sp_fountain::PRIMARY_SLUG_SOURCE`) stay here |
 | tests/export-artifact.test.ts | 22 | sp-engine | todo |  |
 | tests/export-calibre.test.ts | 8 | sp-engine | todo | isolate CALIBRE_CONFIG_DIRECTORY |
 | tests/export-formats.test.ts | 6 | sp-engine | todo |  |
@@ -112,8 +112,8 @@ move too.
 | tests/mobi-picture-probe.test.ts | 7 | xtask | todo |  |
 | tests/mobi.test.ts | 65 | sp-mobi | todo |  |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
-| tests/notes.test.ts | 49 | sp-fountain | todo |  |
-| tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the CSS blocks go to sp-epub, the serializer blocks (rejoin, contdMode, showPageMarkers, dualDialogue) to sp-fountain, convertFountain to sp-engine |
+| tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
+| tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS blocks go to sp-epub, convertFountain to sp-engine |
 | tests/page-show.test.ts | 22 | sp-app | todo |  |
 | tests/page-timing.test.ts | 16 | sp-app | todo |  |
 | tests/parser-pipeline.test.ts | 47 | sp-parser | todo |  |
@@ -135,7 +135,7 @@ move too.
 | tests/send-device.test.ts | 34 | sp-engine | todo |  |
 | tests/send-panel-ui.test.ts | 125 | sp-app | todo |  |
 | tests/send-routes-ui.test.ts | 71 | sp-app | todo |  |
-| tests/serialize.test.ts | 64 | sp-fountain | todo |  |
+| tests/serialize.test.ts | 64 | sp-fountain | done | sp-fountain/tests/serialize.rs (64); "a parsed mini-slug reaches the EPUB" keeps its token half here, its `<p class="mini-slug">` half is sp-epub's |
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | todo |  |
 | tests/sidecar-targets.test.ts | 26 | xtask | todo | no sidecar in the Rust app: retires with build-sidecar; decision for the owner |
 | tests/sidecar.test.ts | 10 | sp-engine | todo | the per-script settings sidecar (<script>.screepub.json), not the engine sidecar binary |
@@ -184,8 +184,8 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | pdf.js facts | pages.json | sp-pdf | todo |
 | lines and pictures | lines.json | sp-parser (extract) | todo |
 | parsed elements | elements.json | sp-parser | todo; the model reads and writes it back unchanged (sp-model/tests/oracle.rs) |
-| .fountain | script.fountain | sp-fountain | todo |
-| tokens | tokens.json | sp-fountain (tokenizer) | todo; the model reads and writes it back unchanged |
+| .fountain | script.fountain | sp-fountain | done: byte for byte on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs) |
+| tokens | tokens.json | sp-fountain (tokenizer) | done: equal on all 5 converting fixtures and every converting real script (sp-fountain/tests/oracle.rs); plus 44 hand cases recorded from fountain-js (tests/tokenizer.rs) and an ignored differential fuzz test against fountain-js under bun (tests/tokenizer_fuzz.rs) |
 | EPUB | book.epub | sp-epub | todo |
 | preview | book.preview.html | sp-epub | todo |
 | MOBI | book.mobi | sp-mobi | todo |
@@ -218,6 +218,39 @@ names the check it affects.
   sp-engine directly. The CLI build checks those files also hold move to
   the release-pipeline crate (the `screepub` CLI is still built and
   smoke-tested per platform).
+- **fountain-js state between parses (decided 2026-10-11): a TypeScript bug
+  the port fixes.** fountain-js 1.2.4 keeps two module statics it never
+  resets: `Lexer.lastLineWasDualDialogue` and the `lastIndex` of its global
+  `blank_lines` rule. So in one process the same text can tokenize
+  differently the second time: a script whose FIRST speech is a `NAME ^`
+  right column makes the next parse wrap its LAST speech in a dual exchange
+  (as a left column with no partner, which the renderers then drop or
+  mis-set). The Rust tokenizer (`sp_fountain::tokenizer::tokenize`) starts
+  every parse fresh, answering as a clean process's first parse does; within
+  one parse the state still moves exactly as fountain-js moves it. No
+  committed fixture or real script triggers it (the oracle, which dumps every
+  fixture in one bun process, matches token for token). Checked by
+  `a_script_opening_on_a_right_column_tokenizes_the_same_twice` and
+  `a_parse_never_depends_on_the_one_before` (sp-fountain/tests/tokenizer.rs);
+  the fuzz and case tests reset fountain-js to a first parse before each
+  input so they compare the same thing.
+- **`[[fmt: ...]]` words that name a JavaScript object property (open
+  question for the owner).** notes.ts looks a word up with
+  `FAMILY_CLASS[word]`, a plain-object index, so a hand-written
+  `[[fmt: toString]]` (or `constructor`, `valueOf`, ...) finds the
+  inherited function and `fmtClasses` appends its source text (checked under
+  bun: `" function toString() {\n    [native code]\n}"`) to the class
+  attribute. The
+  Rust `fmt_classes` knows only the seven real words and ignores the rest,
+  which is what the comment above FAMILY_CLASS says the code means to do.
+  Screepub never writes such a note and no fixture or real script has one.
+  Affects sp-epub's class attributes only; suggested fix on the TypeScript
+  side is `Object.hasOwn`.
+- **fountain-js's one throw is an `Err`.** A dialogue block whose first
+  line is a lyric (`@BOB\n~la la`) makes fountain-js read
+  `previousToken.type` of nothing and throw. `tokenize` returns
+  `Err(FountainError)` for exactly that input, with the message bun prints
+  (issue link included), so a caller can fail the way the TypeScript fails.
 - **services/device-requests (decided 2026-10-11).** Ported to Rust
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
