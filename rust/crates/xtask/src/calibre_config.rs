@@ -164,9 +164,9 @@ mod tests {
 
     #[test]
     fn the_copy_leaves_caches_behind_and_an_absent_folder_copies_as_empty() {
-        let root =
-            std::env::temp_dir().join(format!("screepub-calibre-config-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&root);
+        // Removed when dropped, on a failing assertion's unwind too.
+        let work = crate::scratch::TempDir::new("screepub-calibre-config-").unwrap();
+        let root = work.path();
         let real = root.join("real");
         std::fs::create_dir_all(real.join("caches")).unwrap();
         std::fs::create_dir_all(real.join("plugins")).unwrap();
@@ -188,6 +188,5 @@ mod tests {
         std::fs::create_dir_all(&empty_scratch).unwrap();
         let copy = copy_calibre_config(&root.join("missing"), &empty_scratch).unwrap();
         assert_eq!(std::fs::read_dir(&copy).unwrap().count(), 0);
-        let _ = std::fs::remove_dir_all(&root);
     }
 }

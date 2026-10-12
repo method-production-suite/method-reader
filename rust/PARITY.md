@@ -114,7 +114,7 @@ move too.
 | tests/no-em-dash.test.ts | 3 | xtask | partial | repo-wide copy rule; the window's half is rust/crates/sp-app/tests/no_em_dash.rs; the engine crates are left |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain + sp-engine | done | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain (1) ported (sp-engine/tests/options.rs) |
-| tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, app/show.rs, tests/behaviors.rs |
+| tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, src/app/show.rs, tests/behaviors.rs |
 | tests/page-timing.test.ts | 16 | sp-app | done | m/page_timing.rs |
 | tests/parser-pipeline.test.ts | 47 | sp-parser + sp-fountain | done | sp-parser/tests/parser_pipeline.rs (45); the 2 tests and the toFountain halves of 3 in sp-fountain/tests/parser_pipeline.rs (5, sp-parser as dev-dependency) |
 | tests/parser.test.ts | 137 | sp-parser | done | sp-parser/tests/parser.rs (137) |
@@ -556,7 +556,7 @@ for it):
 | send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), behaviors (D rows, keep-focus-by-key D26), m/device.rs, m/focus.rs | partial: build-ahead timing blocks ported as model tests only |
 | send-routes-ui.test.ts (71) | m/send_routes.rs | partial: the round trip against the engine's real route catalog waits on sp-engine |
 | send-device.test.ts (34) | m/device.rs | ported |
-| page-show.test.ts (22) | m/page_show.rs, app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
+| page-show.test.ts (22) | m/page_show.rs, src/app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
 | page-timing.test.ts (16) | m/page_timing.rs | ported |
 | device-watch.test.ts (9) | m/device_watch.rs | ported |
 | device-requests-ui.test.ts (11) | m/requests.rs, screens (My device isn't here) | ported |
@@ -565,7 +565,7 @@ for it):
 | desktop-layout.test.ts (26) | m/layout.rs | partial: geometry ported; CSS-text pins have no Rust subject |
 | desktop-layout-measured.test.ts (16) | m/layout.rs (900, 1280, 1800) | ported as geometry; a pass measuring drawn rects is still to write |
 | desktop-tokens.test.ts (9) | theme.rs (values pinned to tokens.css and style.css), fonts.rs (the six faces, byte for byte) | ported |
-| desktop-shell.test.ts (67) | app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
+| desktop-shell.test.ts (67) | src/app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
 | beta-marks.test.ts (10) | m/tune.rs, m/device.rs (which rows wear it), screens (badges drawn) | partial: CLI help, README and site checks are not the window's |
 | update-compare-module.test.ts (9) | m/update_compare.rs | ported (moves to sp-engine) |
 | no-em-dash.test.ts (3) | tests/no_em_dash.rs (sp-app's sources, comments stripped, allow-list kept honest) | ported for the window; the engine crates' half belongs to the xtask scan |

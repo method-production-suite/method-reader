@@ -21,7 +21,7 @@ is what makes its **Gate 2** checkable rather than remembered:
 > Gate 2 — the replacement does what the thing being retired does, or the gap
 > is written down and accepted by name.
 
-`tests/app-references.test.ts` reads this file and fails if a section is
+`rust/crates/xtask/tests/app_references.rs` reads this file and fails if a section is
 listed without a decision.
 
 ## Read this before reading the table
