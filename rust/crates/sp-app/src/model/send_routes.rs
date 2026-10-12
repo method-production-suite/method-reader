@@ -880,7 +880,7 @@ mod tests {
     fn a_book_with_no_epub_cannot_be_sent() {
         use crate::model::convert::script_from;
         assert_eq!(blocked_reason(None), Some("Convert a script first."));
-        let none = script_from("/a.pdf", &json!({}), None);
+        let none = script_from("/a.pdf", &json!({}));
         assert!(
             blocked_reason(Some(&none))
                 .unwrap()
@@ -889,7 +889,6 @@ mod tests {
         let book = script_from(
             "/a.pdf",
             &json!({"epubPath": "/lib/a.epub", "fountainPath": "/lib/a.fountain"}),
-            None,
         );
         assert_eq!(blocked_reason(Some(&book)), None);
         assert!(needs_settings(Some(&book)));

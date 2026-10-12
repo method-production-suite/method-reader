@@ -643,7 +643,7 @@ fn stop_color(stops: &[(f32, Color32)], t: f32) -> Color32 {
     for &next in &stops[1..] {
         if t <= next.0 {
             let k = (t - prev.0) / (next.0 - prev.0).max(1e-6);
-            return super::preview::mix(prev.1, next.1, k);
+            return super::bookview::mix(prev.1, next.1, k);
         }
         prev = next;
     }

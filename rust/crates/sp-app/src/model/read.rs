@@ -1,7 +1,5 @@
 //! What the Read surface decides: `desktop/ui/read.js`, above its line.
 
-use super::preview::Preview;
-
 /// What the surface has to show.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ReaderState {
@@ -13,7 +11,7 @@ pub enum ReaderState {
 pub fn reader_state(script: Option<&super::convert::Script>) -> ReaderState {
     match script {
         None => ReaderState::Closed,
-        Some(s) if s.preview.as_ref().is_none_or(Preview::is_blank) => ReaderState::Blank,
+        Some(s) if s.preview_html.trim().is_empty() => ReaderState::Blank,
         Some(_) => ReaderState::Ready,
     }
 }
@@ -132,15 +130,16 @@ pub struct RailEntry {
     pub label: SceneLabel,
 }
 
-/// The rail, from the engine's own scenes in the engine's own order.
-pub fn rail_entries(preview: &Preview) -> Vec<RailEntry> {
-    preview
-        .scenes
+/// The rail, from the engine's own scenes in the engine's own order: each
+/// scene's id and its heading's words (without the page number inside it),
+/// as the laid-out book reports them.
+pub fn rail_entries(scenes: &[(Mark, String)]) -> Vec<RailEntry> {
+    scenes
         .iter()
-        .filter(|s| !s.id.is_empty())
-        .map(|s| RailEntry {
-            id: s.id.clone(),
-            label: scene_label(&s.heading()),
+        .filter(|(m, _)| !m.id.is_empty())
+        .map(|(m, heading)| RailEntry {
+            id: m.id.clone(),
+            label: scene_label(heading),
         })
         .collect()
 }
@@ -239,7 +238,6 @@ pub const PAGE_MARGIN_INLINE_PCT: f32 = 7.0;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::preview::{Block, BlockKind, Scene};
 
     #[test]
     fn a_slugline_reads_as_where_then_when() {
@@ -290,27 +288,18 @@ mod tests {
     }
 
     #[test]
-    fn the_rail_comes_from_the_engines_scenes_with_headings_without_page_marks() {
-        let mut heading = Block::new(BlockKind::SceneHeading, "EXT. FIELD STATION - DAY");
-        heading.page_marker = Some("2.".into());
-        let preview = Preview {
-            scenes: vec![
-                Scene {
-                    id: "sc-000".into(),
-                    blocks: vec![Block::new(BlockKind::Action, "FADE IN:")],
-                },
-                Scene {
-                    id: "sc-001".into(),
-                    blocks: vec![heading],
-                },
-                Scene {
-                    id: String::new(),
-                    blocks: vec![],
-                },
-            ],
-            ..Default::default()
+    fn the_rail_comes_from_the_engines_scenes() {
+        let mark = |id: &str| Mark {
+            id: id.into(),
+            top: 0.0,
+            height: 1.0,
         };
-        let rail = rail_entries(&preview);
+        let scenes = vec![
+            (mark("sc-000"), String::new()),
+            (mark("sc-001"), "EXT. FIELD STATION - DAY".to_string()),
+            (mark(""), "lost".to_string()),
+        ];
+        let rail = rail_entries(&scenes);
         assert_eq!(rail.len(), 2);
         assert_eq!(rail[0].label.place, OPENING);
         assert_eq!(rail[1].label.place, "EXT. FIELD STATION");
@@ -373,16 +362,12 @@ mod tests {
     fn the_reader_has_three_states() {
         use crate::model::convert::script_from;
         assert_eq!(reader_state(None), ReaderState::Closed);
-        let blank = script_from("/a.pdf", &serde_json::json!({}), None);
+        let blank = script_from("/a.pdf", &serde_json::json!({"previewHtml": "  "}));
         assert_eq!(reader_state(Some(&blank)), ReaderState::Blank);
-        let preview = Preview {
-            scenes: vec![Scene {
-                id: "s".into(),
-                blocks: vec![Block::new(BlockKind::Action, "x")],
-            }],
-            ..Default::default()
-        };
-        let ready = script_from("/a.pdf", &serde_json::json!({}), Some(preview));
+        let ready = script_from(
+            "/a.pdf",
+            &serde_json::json!({"previewHtml": "<html></html>"}),
+        );
         assert_eq!(reader_state(Some(&ready)), ReaderState::Ready);
     }
 }

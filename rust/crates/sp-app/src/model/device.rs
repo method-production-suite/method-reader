@@ -799,7 +799,7 @@ mod tests {
     #[test]
     fn the_save_rows_say_who_each_file_is_for_and_why_one_cannot_be_made() {
         use crate::model::convert::script_from;
-        let no_fountain = script_from("/a.pdf", &json!({"epubPath": "/a.epub"}), None);
+        let no_fountain = script_from("/a.pdf", &json!({"epubPath": "/a.epub"}));
         let rows = save_rows(Some(&no_fountain), None);
         assert_eq!(rows.len(), 6);
         for kind in ["mobi", "fountain", "fdx"] {

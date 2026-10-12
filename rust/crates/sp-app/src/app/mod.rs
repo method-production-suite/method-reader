@@ -8,11 +8,11 @@
 //! frame and are handed to the surface that asked, by [`Purpose`].
 
 pub mod book;
+pub mod bookview;
 pub mod convert;
 pub mod frame;
 pub mod host;
 pub mod panel;
-pub mod preview;
 pub mod read;
 pub mod show;
 pub mod tune;
@@ -104,6 +104,8 @@ pub struct App {
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
+    /// The book as each place shows it (bookview.rs).
+    pub views: bookview::Views,
 }
 
 impl App {
@@ -143,6 +145,7 @@ impl App {
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
+            views: bookview::Views::default(),
         };
         // The one line that proves the engine is there.
         app.call(Request::Version, Purpose::Version);
@@ -256,13 +259,7 @@ impl App {
     /// Everything that has arrived since the last frame.
     pub fn pump(&mut self) {
         for (purpose, message) in std::mem::take(&mut self.refused) {
-            self.deliver(
-                purpose,
-                Reply {
-                    answer: Err(message),
-                    preview: None,
-                },
-            );
+            self.deliver(purpose, Reply::failed(message));
         }
         for event in self.rt.poll() {
             match event {

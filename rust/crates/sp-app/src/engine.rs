@@ -17,7 +17,6 @@ use std::sync::Mutex;
 use serde_json::{Value, json};
 
 use crate::model::busy::Call;
-use crate::model::preview::{Block, BlockKind, Preview, Scene};
 
 /// Everything the window ever asks the engine, one variant per argv
 /// builder in app.js (rust/PARITY.md, rows E1 to E19).
@@ -250,18 +249,21 @@ impl Request {
 
 /// What the engine said. `Err` is a call that could not run at all (the
 /// JavaScript's rejected runEngine); its message is fit to show a person.
-/// A conversion or a rebuild carries the book's pages beside its answer.
+/// A conversion or a rebuild carries the book's pages in its answer, as
+/// `previewHtml` (the CLI's `--preview-inline`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct Reply {
     pub answer: Result<Value, String>,
-    pub preview: Option<Preview>,
 }
 
 impl Reply {
     pub fn ok(answer: Value) -> Self {
+        Self { answer: Ok(answer) }
+    }
+
+    pub fn failed(message: impl Into<String>) -> Self {
         Self {
-            answer: Ok(answer),
-            preview: None,
+            answer: Err(message.into()),
         }
     }
 }
@@ -272,55 +274,9 @@ pub trait Engine: Send + Sync {
     fn run(&self, request: &Request, progress: &mut dyn FnMut(Value)) -> Reply;
 }
 
-/// An invented script's first pages, for the fake engine and the tests.
-pub fn sample_preview() -> Preview {
-    let mut cue = Block::new(BlockKind::Character, "MARA");
-    cue.speech = Some(1);
-    let mut line = Block::new(
-        BlockKind::Dialogue,
-        "Again? The rain gauge was full an hour ago.",
-    );
-    line.speech = Some(1);
-    let mut paren = Block::new(BlockKind::Parenthetical, "(not looking up)");
-    paren.speech = Some(2);
-    let mut cue2 = Block::new(BlockKind::Character, "TEO");
-    cue2.speech = Some(2);
-    let mut line2 = Block::new(BlockKind::Dialogue, "Then it was wrong an hour ago.");
-    line2.speech = Some(2);
-    let mut heading2 = Block::new(BlockKind::SceneHeading, "EXT. FIELD STATION - ROOF - NIGHT");
-    heading2.page_marker = Some("2.".into());
-    Preview {
-        scenes: vec![
-            Scene {
-                id: "sc-001".into(),
-                blocks: vec![
-                    Block::new(BlockKind::SceneHeading, "INT. FIELD STATION - DAY"),
-                    Block::new(
-                        BlockKind::Action,
-                        "Rain on a tin roof. MARA (40s) taps a glass gauge.",
-                    ),
-                    cue,
-                    line,
-                    cue2,
-                    paren,
-                    line2,
-                ],
-            },
-            Scene {
-                id: "sc-002".into(),
-                blocks: vec![
-                    heading2,
-                    Block::new(
-                        BlockKind::Action,
-                        "The antenna sways. Somewhere below, a door bangs.",
-                    ),
-                    Block::new(BlockKind::Transition, "CUT TO:"),
-                ],
-            },
-        ],
-        style: Default::default(),
-    }
-}
+/// The engine's own preview of the invented demo script (tests/fixtures/
+/// field-station.pdf), as the TypeScript engine wrote it: the oracle dump.
+pub const SAMPLE_PREVIEW: &str = include_str!("../../../oracle/field-station/book.preview.html");
 
 /// The answers a fresh fake engine gives: a clean conversion of an invented
 /// script, a default library, no devices, every route the engine lists on a
@@ -330,11 +286,14 @@ pub fn default_answer(request: &Request) -> Value {
     match request {
         Request::Version => json!({"ok": true, "version": "0.11.1"}),
         Request::Convert { path, .. } => json!({
-            "ok": true, "title": "Field Station", "author": "A. Writer", "pages": 18, "scenes": 2,
+            "ok": true, "title": "Field Station", "author": "the Screepub project", "pages": 19, "scenes": 11,
             "warnings": [], "epubPath": "/library/Field Station/Field Station.epub",
             "fountainPath": "/library/Field Station/Field Station.fountain", "source": path,
+            "previewHtml": SAMPLE_PREVIEW,
         }),
-        Request::Reconvert { .. } => json!({"ok": true, "warnings": []}),
+        Request::Reconvert { .. } => {
+            json!({"ok": true, "warnings": [], "previewHtml": SAMPLE_PREVIEW})
+        }
         Request::Devices { .. } => json!({"ok": true, "devices": []}),
         Request::Eject { .. } => json!({"ok": true}),
         Request::Send { .. } => {
@@ -433,7 +392,7 @@ impl FakeEngine {
     pub fn new() -> Self {
         let fake = Self::default();
         fake.set_progress(vec![
-            json!({"stage": "page", "page": 1, "paragraphs": ["INT. FIELD STATION - DAY", "Rain on a tin roof. MARA (40s) taps a glass gauge.", "MARA", "Again? The rain gauge was full an hour ago."]}),
+            json!({"stage": "page", "page": 1, "paragraphs": ["EXT. RIDGE ROAD - DAY", "Wind comes down off the ridge in long flat gusts, pushing the grass one way and then, for no reason, the other.", "DELACROIX", "Thirty-one."]}),
             json!({"stage": "parse", "percent": 30, "page": 6, "pages": 18}),
             json!({"stage": "parse", "percent": 60, "page": 18, "pages": 18}),
             json!({"stage": "render", "percent": 100}),
@@ -495,13 +454,7 @@ impl Engine for FakeEngine {
         if let Some(reply) = self.always.lock().expect("fake").get(kind) {
             return reply.clone();
         }
-        let answer = default_answer(request);
-        let preview = matches!(request, Request::Convert { .. } | Request::Reconvert { .. })
-            .then(sample_preview);
-        Reply {
-            answer: Ok(answer),
-            preview,
-        }
+        Reply::ok(default_answer(request))
     }
 }
 
@@ -666,8 +619,14 @@ mod tests {
             &mut |l| heard.push(l),
         );
         assert_eq!(heard.len(), 4);
-        assert!(reply.preview.is_some());
-        assert_eq!(reply.answer.unwrap()["title"], "Field Station");
+        let answer = reply.answer.unwrap();
+        assert_eq!(answer["title"], "Field Station");
+        assert!(
+            answer["previewHtml"]
+                .as_str()
+                .unwrap()
+                .contains("section class=\"scene\"")
+        );
         fake.once(
             "convert",
             Reply::ok(json!({"ok": false, "error": {"code": "scanned", "message": "x"}})),

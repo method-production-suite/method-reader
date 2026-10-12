@@ -199,15 +199,7 @@ impl Book {
         });
         let mut painter =
             anyrender_vello_cpu::VelloCpuScenePainter::new(self.width.max(1) as u16, height as u16);
-        blitz_paint::paint_scene(
-            &mut painter,
-            base,
-            1.0,
-            self.width.max(1),
-            height,
-            0,
-            0,
-        );
+        blitz_paint::paint_scene(&mut painter, base, 1.0, self.width.max(1), height, 0, 0);
         let pixmap = painter.finish();
         let pixels = pixmap
             .data()

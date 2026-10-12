@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use egui::{Align, Color32, Id, Layout, Rect, Sense, Shape, Stroke, Ui, Vec2, accesskit};
 use serde_json::Value;
 
+use super::bookview::{BOOK_EM, Place, sheet};
 use super::widgets::{self, Look};
 use super::{App, Purpose as AppPurpose};
 use crate::engine::{Reply, Request};
@@ -217,7 +218,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     if let Some(epub) = answer.get("epubPath").and_then(Value::as_str) {
                         app.convert.landed.insert(path.clone(), epub.into());
                     }
-                    draw_result(app, &path, &answer, reply.preview);
+                    draw_result(app, &path, &answer);
                 }
                 Ok(answer) => {
                     super::show::stop(app);
@@ -235,13 +236,8 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
     }
 }
 
-fn draw_result(
-    app: &mut App,
-    path: &str,
-    answer: &Value,
-    preview: Option<crate::model::preview::Preview>,
-) {
-    let script = m::script_from(path, answer, preview);
+fn draw_result(app: &mut App, path: &str, answer: &Value) {
+    let script = m::script_from(path, answer);
     if let Some(result) = &app.send_result
         && result.book != script.epub_path
         && result.eject.is_none()
@@ -251,9 +247,12 @@ fn draw_result(
     app.script = Some(script);
     paint_result(app);
     app.script_changed();
-    if let Some(show) = app.show.as_mut() {
+    if app.show.is_some() {
         let now = (app.host.clock)();
-        show.adopt(app.script.as_ref().and_then(|s| s.preview.as_ref()), now);
+        let words = first_page_words(app);
+        if let Some(show) = app.show.as_mut() {
+            show.adopt(words.as_deref(), now);
+        }
     }
     app.restore_focus = true;
 }
@@ -690,8 +689,7 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
     side_top.y = side.response.rect.bottom() + layout::SPACE[7];
     let page_y = page_top_y.unwrap_or(side_top.y);
     let rect = page_rect(page_height).translate(Vec2::new(0.0, page_y - top.y));
-    let preview = app.script.as_ref().and_then(|s| s.preview.clone());
-    super::preview::first_page(ui, &t, rect, preview.as_ref(), app.show.as_ref());
+    first_page(app, ui, rect);
     let bottom = side.response.rect.bottom().max(rect.bottom());
     ui.allocate_rect(
         Rect::from_min_max(top, egui::pos2(top.x + block.width, bottom)),
@@ -795,5 +793,62 @@ pub fn draw_reveal_foot(app: &mut App, ui: &mut Ui) {
     {
         let note = note.clone();
         widgets::caption(ui, &t, &note, false);
+    }
+}
+
+/// The width the result's first page is laid out at.
+const FIRST_PAGE_WIDTH: f32 = layout::RESULT_PAGE;
+
+/// The book's headings and paragraphs as the first page lays them out, for
+/// the page show to pair its typed paragraphs with; None with no pages.
+fn first_page_words(app: &mut App) -> Option<Vec<String>> {
+    let html = app
+        .script
+        .as_ref()
+        .map(|s| s.preview_html.clone())
+        .filter(|h| !h.trim().is_empty())?;
+    let (t, dark) = (app.tokens(), app.dark);
+    let view = app
+        .views
+        .get(Place::FirstPage, &html, FIRST_PAGE_WIDTH, &t, dark);
+    Some(view.book.blocks.iter().map(|b| b.words.clone()).collect())
+}
+
+/// The result's first page: the book's own, opened on its first scene a
+/// line and a half down; painted only (hidden from the screen reader, like
+/// the frame it replaces). While the page writes itself, the typed page is
+/// drawn over it.
+fn first_page(app: &mut App, ui: &mut Ui, rect: Rect) {
+    let (t, dark) = (app.tokens(), app.dark);
+    sheet(ui, &t, rect);
+    let html = app
+        .script
+        .as_ref()
+        .map(|s| s.preview_html.clone())
+        .unwrap_or_default();
+    let covering = app.show.as_ref().is_some_and(|s| s.covers_page());
+    let fade = app.show.as_ref().map(|s| s.page_opacity()).unwrap_or(0.0);
+    if html.trim().is_empty() {
+        if let Some(show) = app.show.as_ref().filter(|_| covering) {
+            super::show::paint_typed(ui, &t, rect, show, None, fade);
+        }
+        return;
+    }
+    let view = app
+        .views
+        .get(Place::FirstPage, &html, rect.width(), &t, dark);
+    let scene_top = view
+        .book
+        .scenes
+        .iter()
+        .find(|(_, heading)| !heading.is_empty())
+        .map(|(m, _)| m.top)
+        .unwrap_or(0.0);
+    let top = (scene_top - 1.5 * BOOK_EM).max(0.0);
+    if !covering || fade < 1.0 {
+        view.paint_slice(ui, "first-page", rect.shrink(1.0), top);
+    }
+    if covering && let Some(show) = app.show.as_ref() {
+        super::show::paint_typed(ui, &t, rect, show, Some(view), fade);
     }
 }
