@@ -192,7 +192,7 @@ fn the_administrator_path_stages_in_a_fresh_private_folder() {
         archive_bundle(&build.path().join("Built.app"))
     };
     std::fs::set_permissions(apps.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
-    let predictable = std::env::temp_dir().join(format!("screepub-update-{}", std::process::id()));
+    let predictable = format!("screepub-update-{}", std::process::id());
     let seen = std::cell::RefCell::new(None);
     let admin = |_: &Path, new: &Path| -> Result<(), InstallError> {
         let mode = std::fs::metadata(new.parent().unwrap())
@@ -206,7 +206,12 @@ fn the_administrator_path_stages_in_a_fresh_private_folder() {
     std::fs::set_permissions(apps.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
     result.unwrap();
     let (new, mode) = seen.into_inner().expect("the administrator was asked");
-    assert!(!new.starts_with(&predictable), "{}", new.display());
+    assert!(
+        !new.ancestors()
+            .any(|a| a.file_name() == Some(std::ffi::OsStr::new(&predictable))),
+        "{}",
+        new.display()
+    );
     assert_eq!(mode, 0o700, "only this account can reach the staged copy");
     assert!(!new.exists(), "the staged copy is cleaned up");
     let _ = no_admin;

@@ -426,11 +426,11 @@ fn contributing_and_the_ledger_describe_the_retired_cask_the_same_way() {
 fn contributing_says_an_intel_mac_cannot_run_the_window_where_it_says_to_open_it() {
     let c = read("CONTRIBUTING.md");
     let at = c
-        .find("cargo run")
+        .find("cargo run -p sp-app")
         .expect("CONTRIBUTING says how to open the window");
     let after = flat(&c[at..(at + 800).min(c.len())]);
     assert!(
-        after.contains("An Intel Mac cannot run the window"),
+        after.contains("On an Intel Mac** the window is not offered"),
         "{after}"
     );
 }

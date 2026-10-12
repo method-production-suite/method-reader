@@ -118,8 +118,10 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   Mac downloads, builds every bundle and archive, checks each one before
   uploading, and publishes the window's update manifest.
 - **Weekly**: the Homebrew formula and the update manifest still match the
-  newest release (`tap-freshness.yml`), and the whole test suite still
-  passes with Calibre's newest version installed (`weekly-toolchain.yml`).
+  newest release, and the retired Homebrew cask still says it is retired
+  (deprecated, and disabled from the release after 0.9.0); that is
+  `tap-freshness.yml`. And the whole test suite still passes with Calibre's
+  newest version installed (`weekly-toolchain.yml`).
 
 ## Licensing of contributions
 
