@@ -11,7 +11,6 @@ use xtask::packaging::manifest::{
     MANIFEST_NAME, RELEASE_REPO, SignedArtifact, asset_url, collect_signed_artifacts, iso8601,
     manifest_endpoint, parse_manifest_args, render_manifest,
 };
-use xtask::paths::repo_root;
 
 const TAR: &str = "Screepub-macOS.app.tar.gz";
 /// 2026-09-21T18:00:00Z
@@ -70,14 +69,9 @@ fn one() -> SignedArtifact {
 
 #[test]
 fn the_endpoint_is_the_one_url_the_app_is_configured_with() {
-    let conf_path = repo_root().join("desktop/src-tauri/tauri.conf.json");
-    if let Ok(text) = fs::read_to_string(&conf_path) {
-        let conf: serde_json::Value = serde_json::from_str(&text).unwrap();
-        assert_eq!(
-            conf["plugins"]["updater"]["endpoints"],
-            serde_json::json!([manifest_endpoint(RELEASE_REPO)])
-        );
-    }
+    // The app's one endpoint lives in sp-update (it was tauri.conf.json's
+    // plugins.updater.endpoints until the Rust cutover).
+    assert_eq!(manifest_endpoint(RELEASE_REPO), sp_update::ENDPOINT);
     assert_eq!(
         manifest_endpoint(RELEASE_REPO),
         "https://github.com/ssandweiss/screepub/releases/latest/download/latest.json"

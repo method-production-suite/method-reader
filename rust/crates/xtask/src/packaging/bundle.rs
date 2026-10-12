@@ -2,35 +2,28 @@
 //! tools/build-app-bundle.ts.
 //!
 //! ```text
-//! cargo xtask build-app-bundle --version 0.6.0 --out dist/
-//! cargo xtask build-app-bundle --version 0.6.0 --out dist/ --arch arm64 --updater
-//! cargo xtask build-app-bundle --version 0.12.0 --out dist/ --app native
+//! cargo xtask build-app-bundle --version 0.12.0 --out dist/
+//! cargo xtask build-app-bundle --version 0.12.0 --out dist/ --arch arm64 --updater
 //! ```
 //!
-//! Two windows can be bundled, and `--app` picks one; without it the Tauri
-//! window is bundled while desktop/src-tauri/tauri.conf.json exists and the
-//! native one after that.
+//! The window is the native one: `cargo build -p sp-app` in rust/, then
+//! [`super::native`] assembles the .app, .dmg, .deb, .rpm and NSIS
+//! installer and signs the updater archive, calling the outside tools
+//! (codesign, ditto, xcrun, hdiutil, makensis) through the [`Runner`] seam.
+//! (Until the Rust cutover `--app tauri` bundled the Tauri window through
+//! `cargo tauri build`, with its engine sidecar; that went with the window.)
 //!
-//! - `tauri`: one `cargo tauri build` in desktop/src-tauri, which bundles,
-//!   signs and notarizes (tauri-bundler, from the APPLE_* variables) and
-//!   signs the updater archive (tauri-cli, from TAURI_SIGNING_PRIVATE_KEY).
-//! - `native`: `cargo build -p sp-app` in rust/, then [`super::native`]
-//!   assembles the .app, .dmg, .deb, .rpm and NSIS installer itself and
-//!   signs the updater archive itself, calling the outside tools (codesign,
-//!   ditto, xcrun, hdiutil, makensis) through the same seam.
-//!
-//! Either way the files land in `<root>/target/[<triple>/]release/bundle/`
-//! and the second half is shared: discover each kind's one file, verify its
-//! container and size, copy it out under its published name, verify again,
-//! and write SHA256SUMS-app. A Mac bundle is Apple silicon ONLY.
+//! The files land in `rust/target/[<triple>/]release/bundle/`, and then:
+//! discover each kind's one file, verify its container and size, copy it
+//! out under its published name, verify again, and write SHA256SUMS-app. A
+//! Mac bundle is Apple silicon ONLY.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use super::kinds::{
-    AppSource, BundleArch, BundleOs, MAC_ARCH, MAC_TARGET, SIGNATURE_EXT, UPDATER_OVERLAY,
-    bundle_dir_for, bundle_list_for, discover_artifact, for_app, kinds_for_os, released_name,
-    updater_kinds_for_os, verify_bundle_file,
+    BundleArch, BundleOs, MAC_ARCH, MAC_TARGET, SIGNATURE_EXT, bundle_dir_for, discover_artifact,
+    kinds_for_os, released_name, updater_kinds_for_os, verify_bundle_file,
 };
 use super::native;
 use super::signature::parse_signature_box;
@@ -49,13 +42,11 @@ pub struct BundleArgs {
     pub os: BundleOs,
     pub arch: BundleArch,
     pub target: Option<String>,
-    pub config: Option<String>,
     /// Also produce the updater archive and its signature.
     pub updater: bool,
-    /// Which window; None chooses by what exists.
-    pub app: Option<AppSource>,
-    /// The public key the native updater archive must verify against (a
-    /// path or the base64 text); defaults to tauri.conf.json's.
+    /// The public key the updater archive must verify against (a path or
+    /// the base64 text); defaults to [`sp_update::PUBKEY`], the key the
+    /// shipped app trusts.
     pub pubkey: Option<String>,
 }
 
@@ -68,9 +59,7 @@ impl BundleArgs {
             os,
             arch,
             target: None,
-            config: None,
             updater: false,
-            app: None,
             pubkey: None,
         }
     }
@@ -81,9 +70,7 @@ impl BundleArgs {
 #[derive(Clone, Debug)]
 pub struct BundleDirs {
     pub repo_dir: PathBuf,
-    /// desktop/src-tauri.
-    pub desktop_dir: PathBuf,
-    /// rust/, the native window's workspace.
+    /// rust/, the window's workspace.
     pub rust_dir: PathBuf,
 }
 
@@ -91,33 +78,9 @@ impl BundleDirs {
     pub fn for_repo(repo: &Path) -> Self {
         BundleDirs {
             repo_dir: repo.to_path_buf(),
-            desktop_dir: repo.join("desktop").join("src-tauri"),
             rust_dir: repo.join("rust"),
         }
     }
-}
-
-/// `cargo tauri build`, its bundle list pinned, the overlays in order.
-pub fn build_argv(
-    os: BundleOs,
-    target: Option<&str>,
-    config: Option<&str>,
-    updater: bool,
-) -> Vec<String> {
-    let mut argv: Vec<String> = ["cargo", "tauri", "build", "--bundles", bundle_list_for(os)]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
-    if let Some(t) = target {
-        argv.extend(["--target".into(), t.to_string()]);
-    }
-    if let Some(c) = config {
-        argv.extend(["--config".into(), c.to_string()]);
-    }
-    if updater {
-        argv.extend(["--config".into(), UPDATER_OVERLAY.to_string()]);
-    }
-    argv
 }
 
 /// The `version` key of the `[package]` TABLE and nothing else: a missing
@@ -126,7 +89,7 @@ pub fn cargo_package_version(text: &str) -> Option<String> {
     crate::cli_build::toml_string(text, "package", "version")
 }
 
-/// `[workspace.package]`'s version, which every native crate inherits:
+/// `[workspace.package]`'s version, which every crate inherits:
 /// [`sp_release::version::workspace_version`], the reader release.yml's
 /// version gate uses.
 pub fn workspace_package_version(text: &str) -> Option<String> {
@@ -138,36 +101,7 @@ fn read(path: &Path) -> Result<String, String> {
         .map_err(|e| format!("build-app-bundle: cannot read {}: {e}", path.display()))
 }
 
-fn json_version(path: &Path) -> Result<Option<String>, String> {
-    let v: serde_json::Value = serde_json::from_str(&read(path)?)
-        .map_err(|e| format!("build-app-bundle: {}: {e}", path.display()))?;
-    Ok(v.get("version")
-        .and_then(|x| x.as_str())
-        .map(str::to_string))
-}
-
-fn version_mismatch(file: &str, found: Option<String>, version: &str) -> Result<(), String> {
-    if found.as_deref() == Some(version) {
-        return Ok(());
-    }
-    Err(format!(
-        "build-app-bundle: {file} says {} but the version being built is {version}. All three must agree at a release, or the bundle's filename and the engine inside it tell a user two different things.",
-        found.as_deref().unwrap_or("<nothing>")
-    ))
-}
-
-/// package.json (the engine), the crate and tauri.conf.json (the bundle's
-/// name and every version field in it) must all say `version`.
-pub fn assert_bundle_versions(version: &str, repo: &Path) -> Result<(), String> {
-    let pkg = json_version(&repo.join("package.json"))?;
-    let cargo = cargo_package_version(&read(&repo.join("desktop/src-tauri/Cargo.toml"))?);
-    let conf = json_version(&repo.join("desktop/src-tauri/tauri.conf.json"))?;
-    version_mismatch("package.json", pkg, version)?;
-    version_mismatch("desktop/src-tauri/Cargo.toml", cargo, version)?;
-    version_mismatch("desktop/src-tauri/tauri.conf.json", conf, version)
-}
-
-/// The native window's one version: rust/Cargo.toml's
+/// The window's one version: rust/Cargo.toml's
 /// `[workspace.package]`, which sp-app must inherit rather than override.
 pub fn assert_native_versions(version: &str, rust_dir: &Path) -> Result<(), String> {
     let workspace = workspace_package_version(&read(&rust_dir.join("Cargo.toml"))?);
@@ -238,10 +172,6 @@ pub fn parse_bundle_args(
                 value: true,
             },
             FlagSpec {
-                name: "config",
-                value: true,
-            },
-            FlagSpec {
                 name: "updater",
                 value: false,
             },
@@ -285,35 +215,27 @@ pub fn parse_bundle_args(
         .cloned()
         .or_else(|| (os == BundleOs::Macos).then(|| MAC_TARGET.to_string()));
     assert_apple_silicon_mac(os, arch, target.as_deref())?;
-    let app = match f.get("app").map(String::as_str) {
-        None => None,
-        Some("tauri") => Some(AppSource::Tauri),
-        Some("native") => Some(AppSource::Native),
+    // `--app native` is still taken, so a command written before the
+    // cutover keeps working; it names the only window there is.
+    match f.get("app").map(String::as_str) {
+        None | Some("native") => {}
+        Some("tauri") => {
+            return Err("build-app-bundle: the Tauri window is gone (the Rust cutover); the native window is the only one, so drop --app tauri.".into());
+        }
         Some(other) => {
             return Err(format!(
-                "build-app-bundle: --app is tauri or native, not \"{other}\""
+                "build-app-bundle: --app is native, the only window, not \"{other}\""
             ));
         }
-    };
+    }
     Ok(BundleArgs {
         version,
         out_dir: absolute(out),
         os,
         arch,
         target,
-        config: f.get("config").cloned(),
         updater: f.contains_key("updater"),
-        app,
         pubkey: f.get("pubkey").cloned(),
-    })
-}
-
-/// Which window a run bundles.
-pub fn resolve_app(asked: Option<AppSource>, dirs: &BundleDirs) -> AppSource {
-    asked.unwrap_or(if dirs.desktop_dir.join("tauri.conf.json").is_file() {
-        AppSource::Tauri
-    } else {
-        AppSource::Native
     })
 }
 
@@ -342,11 +264,7 @@ pub fn build_bundles(
     env: &Env,
 ) -> Result<Vec<PathBuf>, String> {
     assert_apple_silicon_mac(args.os, args.arch, args.target.as_deref())?;
-    let app = resolve_app(args.app, dirs);
-    match app {
-        AppSource::Tauri => assert_bundle_versions(&args.version, &dirs.repo_dir)?,
-        AppSource::Native => assert_native_versions(&args.version, &dirs.rust_dir)?,
-    }
+    assert_native_versions(&args.version, &dirs.rust_dir)?;
     if args.updater
         && env
             .get("TAURI_SIGNING_PRIVATE_KEY")
@@ -355,10 +273,7 @@ pub fn build_bundles(
         return Err("build-app-bundle: --updater needs TAURI_SIGNING_PRIVATE_KEY in the environment, and it is not set. See docs/release-secrets.md §4.".into());
     }
     if args.updater && !env.contains_key("TAURI_SIGNING_PRIVATE_KEY_PASSWORD") {
-        return Err("build-app-bundle: --updater needs TAURI_SIGNING_PRIVATE_KEY_PASSWORD SET in the environment, empty if the key has no password (TAURI_SIGNING_PRIVATE_KEY_PASSWORD=\"\"). Unset, tauri-cli tries to prompt for one and there is no terminal here.".into());
-    }
-    if app == AppSource::Native && args.config.is_some() {
-        return Err("build-app-bundle: --config is a Tauri overlay, and the native window has no tauri.conf.json to lay it over.".into());
+        return Err("build-app-bundle: --updater needs TAURI_SIGNING_PRIVATE_KEY_PASSWORD SET in the environment, empty if the key has no password (TAURI_SIGNING_PRIVATE_KEY_PASSWORD=\"\"), the contract release.yml's secrets keep. Unset, a missing secret would read as no password and fail later, after the build.".into());
     }
     std::fs::create_dir_all(&args.out_dir).map_err(|e| {
         format!(
@@ -367,33 +282,11 @@ pub fn build_bundles(
         )
     })?;
 
-    let root = match app {
-        AppSource::Tauri => {
-            let argv = build_argv(
-                args.os,
-                args.target.as_deref(),
-                args.config.as_deref(),
-                args.updater,
-            );
-            println!("── {}", argv.join(" "));
-            let r = run(&argv, Some(&dirs.desktop_dir));
-            if r.exit_code != 0 {
-                return Err(format!(
-                    "build-app-bundle: cargo tauri build failed (exit {})\n{}",
-                    r.exit_code,
-                    r.stderr.trim()
-                ));
-            }
-            dirs.desktop_dir.clone()
-        }
-        AppSource::Native => {
-            native::build_native(args, run, dirs, env)?;
-            dirs.rust_dir.clone()
-        }
-    };
+    native::build_native(args, run, dirs, env)?;
+    let root = dirs.rust_dir.clone();
 
     let mut names = Vec::new();
-    for kind in kinds_for_os(args.os).into_iter().map(|k| for_app(k, app)) {
+    for kind in kinds_for_os(args.os) {
         let built = discover_artifact(
             &bundle_dir_for(kind.dir, args.target.as_deref(), &root),
             &kind,
@@ -413,10 +306,7 @@ pub fn build_bundles(
     // SHA256SUMS-app: the archive is proven by its signature.
     let mut extras = Vec::new();
     if args.updater {
-        for kind in updater_kinds_for_os(args.os)
-            .into_iter()
-            .map(|k| for_app(k, app))
-        {
+        for kind in updater_kinds_for_os(args.os) {
             let built = discover_artifact(
                 &bundle_dir_for(kind.dir, args.target.as_deref(), &root),
                 &kind,
@@ -425,7 +315,7 @@ pub fn build_bundles(
             let sig = PathBuf::from(format!("{}{SIGNATURE_EXT}", built.display()));
             if !sig.exists() {
                 return Err(format!(
-                    "build-app-bundle: {}: {} has no {} beside it. tauri-cli writes the signature right after bundling, so a missing one means signing did not run. Was --config {UPDATER_OVERLAY} passed?",
+                    "build-app-bundle: {}: {} has no {} beside it. The archive is signed right after it is packed, so a missing one means signing did not run.",
                     kind.id,
                     name_of(&built),
                     name_of(&sig)
@@ -482,7 +372,7 @@ pub fn build_bundles(
 pub fn main(argv: &[String]) -> u8 {
     if super::util::wants_help(
         argv,
-        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--config <overlay>] [--updater] [--app tauri|native] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set).\n--app picks the window; without it, the Tauri window while desktop/src-tauri/tauri.conf.json exists, the native one after.\nNative outside tools can be redirected with SCREEPUB_CARGO, SCREEPUB_CODESIGN, SCREEPUB_DITTO, SCREEPUB_XCRUN, SCREEPUB_HDIUTIL and SCREEPUB_MAKENSIS.",
+        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--updater] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set), checked against the key the shipped app trusts (sp_update::PUBKEY) unless --pubkey names another.\nThe outside tools can be redirected with SCREEPUB_CARGO, SCREEPUB_CODESIGN, SCREEPUB_DITTO, SCREEPUB_XCRUN, SCREEPUB_HDIUTIL and SCREEPUB_MAKENSIS.",
     ) {
         return 0;
     }

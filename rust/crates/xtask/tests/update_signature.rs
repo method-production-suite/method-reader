@@ -130,38 +130,71 @@ fn a_key_of_the_wrong_length_is_refused() {
 }
 
 #[test]
-fn the_tag_time_gate_reads_the_key_out_of_a_tauri_conf_json_and_says_yes_or_no() {
+fn the_tag_time_gate_checks_the_key_the_app_trusts_and_says_yes() {
+    // With no flag the gate reads sp_update::PUBKEY, the one home of the
+    // key the shipped app trusts (was: plugins.updater.pubkey of the Tauri
+    // window's tauri.conf.json, read with --pubkey-from-config).
+    let (code, out, err) = xtask(&["update-signature"]);
+    assert_eq!(code, 0, "{err}");
+    let id = parse_public_key_box(sp_update::PUBKEY).unwrap().key_id;
+    assert_eq!(id, "E4D0668D54F6EB34");
+    assert!(out.contains(&id), "{out}");
+}
+
+#[test]
+fn the_tag_time_gate_checks_an_explicit_key_and_says_yes_or_no() {
     let s = Scratch::new("pubkey-gate");
-    let conf = s.join("tauri.conf.json");
-    let run = |value: serde_json::Value| {
-        fs::write(&conf, value.to_string()).unwrap();
-        xtask(&[
-            "update-signature",
-            "--pubkey-from-config",
-            conf.to_str().unwrap(),
-        ])
-    };
-    let (code, out, _) = run(
-        serde_json::json!({"plugins": {"updater": {"pubkey": fake_public_key_box(FAKE_KEY_ID)}}}),
-    );
+    let (code, out, _) = xtask(&[
+        "update-signature",
+        "--pubkey",
+        &fake_public_key_box(FAKE_KEY_ID),
+    ]);
     assert_eq!(code, 0);
     assert!(out.contains(&key_id_hex(FAKE_KEY_ID)), "{out}");
 
-    let (code, _, err) = run(serde_json::json!({"plugins": {"updater": {"pubkey": ""}}}));
-    assert_ne!(code, 0);
+    // A file holding the key, as the private key may be given.
+    let file = s.join("updater.pub");
+    fs::write(&file, fake_public_key_box(OTHER_ID)).unwrap();
+    let (code, out, _) = xtask(&["update-signature", "--pubkey", file.to_str().unwrap()]);
+    assert_eq!(code, 0);
+    assert!(out.contains(&key_id_hex(OTHER_ID)), "{out}");
+
+    let (code, _, err) = xtask(&["update-signature", "--pubkey", ""]);
+    assert_eq!(code, 1);
     assert!(err.to_lowercase().contains("empty"), "{err}");
     assert!(err.contains("release-secrets"), "{err}");
+    assert!(err.contains("sp-update"), "{err}");
 
-    let (code, _, _) = run(serde_json::json!({"plugins": {}}));
-    assert_ne!(code, 0);
+    let (code, _, _) = xtask(&["update-signature", "--pubkey", "bm90IGEga2V5"]);
+    assert_eq!(code, 1);
 
-    let (code, _, _) = run(serde_json::json!({"plugins": {"updater": {"pubkey": "bm90IGEga2V5"}}}));
-    assert_ne!(code, 0);
+    // A malformed box: the right shape with a key of the wrong length.
+    let mut key = b"Ed".to_vec();
+    key.extend_from_slice(&FAKE_KEY_ID);
+    key.extend_from_slice(&[3u8; 31]);
+    let short = b64(&format!(
+        "untrusted comment: minisign public key: X\n{}\n",
+        STANDARD.encode(&key)
+    ));
+    let (code, _, err) = xtask(&["update-signature", "--pubkey", &short]);
+    assert_eq!(code, 1);
+    assert!(err.contains("42"), "{err}");
 
-    // No flag at all is a usage error, not a pass.
-    let (code, _, err) = xtask(&["update-signature"]);
+    // The retired flag, a missing value or a stray argument is a usage
+    // error, not a pass.
+    let conf = s.join("tauri.conf.json");
+    fs::write(&conf, "{}").unwrap();
+    let (code, _, err) = xtask(&[
+        "update-signature",
+        "--pubkey-from-config",
+        conf.to_str().unwrap(),
+    ]);
     assert_eq!(code, 2);
     assert!(err.contains("--pubkey-from-config"), "{err}");
+    let (code, _, _) = xtask(&["update-signature", "--pubkey"]);
+    assert_eq!(code, 2);
+    let (code, _, _) = xtask(&["update-signature", "stray"]);
+    assert_eq!(code, 2);
 }
 
 #[test]

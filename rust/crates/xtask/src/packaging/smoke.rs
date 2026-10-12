@@ -2,20 +2,26 @@
 //! was tools/smoke-bundle.ts, with the half of tools/dmg.ts it used.
 //!
 //! ```text
-//! cargo xtask smoke-bundle --bundle dist/Screepub-linux-arm64.deb --expect-version 0.6.0
-//! cargo xtask smoke-bundle --built --expect-version 0.6.0
+//! cargo xtask smoke-bundle --bundle dist/Screepub-linux-amd64.deb --expect-version 0.12.0
+//! cargo xtask smoke-bundle --built --expect-version 0.12.0
 //! ```
 //!
-//! For the Tauri window the engine sidecar comes out of the bundle and is
-//! RUN: `--version --json` must report the version the bundle claims, and a
-//! conversion of the committed fixture must produce a zip. The native
-//! window has no sidecar and no headless mode yet, so for it the window's
-//! binary must be present, non-empty and executable, and the version the
-//! package declares (the .deb's control file, the .rpm's header, the .app's
-//! Info.plist) must be the one expected. A .dmg needs hdiutil (macOS) and
-//! an NSIS .exe needs 7z (Windows): either is REFUSED off its own OS rather
-//! than skipped, because a check that prints nothing and exits 0 reads like
-//! a check that ran.
+//! The window's binary comes out of the bundle and is RUN headless (sp-app's
+//! src/headless.rs), as the Tauri bundle's engine sidecar was until the Rust
+//! cutover: `--version --json` must report the version the bundle claims,
+//! and `--smoke` of the committed fixture (tests/fixtures/field-station.pdf)
+//! must write an EPUB. Both runs get a scratch SCREEPUB_CONFIG_DIR and
+//! SCREEPUB_LIBRARY under the work folder and a Calibre config path nothing
+//! can be made at, so a smoke never reads or writes the real settings,
+//! library or Calibre folder. Before that, the binary must be present,
+//! non-empty and executable, and the version the package declares (the
+//! .deb's control file, the .rpm's header, the .app's Info.plist) must be
+//! the one expected.
+//!
+//! A .deb or .rpm needs Linux, a .dmg needs hdiutil (macOS) and an NSIS .exe
+//! needs 7z (Windows): each is REFUSED off its own OS rather than skipped,
+//! because a check that prints nothing and exits 0 reads like a check that
+//! ran.
 //!
 //! The DMG half is [`crate::dmg`], the one copy verify-signing uses too.
 
@@ -24,15 +30,27 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use super::archive::{bundle_entries, deb_control_field, find_entry, rpm_header_string};
-use super::bundle::{BundleDirs, os_for_platform, resolve_app};
-use super::kinds::{
-    AppSource, BundleOs, bundle_dir_for, discover_artifact, for_app, kinds_for_os,
-    verify_bundle_file,
-};
+use super::bundle::{BundleDirs, os_for_platform};
+use super::kinds::{BundleOs, bundle_dir_for, discover_artifact, kinds_for_os, verify_bundle_file};
 use super::native::{NATIVE_APP, package_version, plist_string};
-use super::util::{FlagSpec, RunResult, Runner, host_platform, parse_flags, real_run, strip_v};
+use super::util::{
+    FlagSpec, RunResult, Runner, host_platform, parse_flags, real_run, real_run_env, strip_v,
+};
 use crate::dmg::MountedApp;
 use crate::paths::repo_root;
+
+/// Runs the window: its argv and the environment it is given on top of
+/// this process's. A test passes a closure; the tool passes
+/// [`real_run_env`].
+pub type WindowRunner<'a> = dyn FnMut(&[String], &[(String, String)]) -> RunResult + 'a;
+
+/// The committed fixture a smoke converts.
+pub fn default_fixture() -> PathBuf {
+    repo_root()
+        .join("tests")
+        .join("fixtures")
+        .join("field-station.pdf")
+}
 
 fn trimmed(s: &str, n: usize) -> String {
     s.trim().chars().take(n).collect()
@@ -60,19 +78,19 @@ pub fn sole_json(stdout: &str, what: &str) -> Result<serde_json::Map<String, Val
     }
 }
 
-/// The bundled engine's `--version --json`, against the bundle's version.
-pub fn check_engine_version(result: &RunResult, expected: &str) -> Result<(), String> {
+/// The bundled window's `--version --json`, against the bundle's version.
+pub fn check_window_version(result: &RunResult, expected: &str) -> Result<(), String> {
     if result.exit_code != 0 {
         return Err(format!(
-            "smoke-bundle: the engine inside the bundle exited {}: {}",
+            "smoke-bundle: the window inside the bundle exited {}: {}",
             result.exit_code,
             trimmed(&result.stderr, 500)
         ));
     }
-    let json = sole_json(&result.stdout, "the bundled engine")?;
+    let json = sole_json(&result.stdout, "the bundled window")?;
     if json.get("ok") != Some(&Value::Bool(true)) {
         return Err(format!(
-            "smoke-bundle: the bundled engine reported {}",
+            "smoke-bundle: the bundled window reported {}",
             Value::Object(json)
         ));
     }
@@ -81,13 +99,13 @@ pub fn check_engine_version(result: &RunResult, expected: &str) -> Result<(), St
             .get("version")
             .map_or("undefined".to_string(), |v| v.to_string());
         return Err(format!(
-            "smoke-bundle: the engine inside this bundle says {said} but the bundle is {expected}. An installer whose About line contradicts its own filename lies about itself in every bug report it appears in."
+            "smoke-bundle: the window inside this bundle says {said} but the bundle is {expected}. An installer whose About line contradicts its own filename lies about itself in every bug report it appears in."
         ));
     }
     Ok(())
 }
 
-/// smoke-cli's conversion check, applied to the bundled engine.
+/// smoke-cli's conversion check, applied to the bundled window's `--smoke`.
 pub fn check_convert_result(result: &RunResult, epub: &Path) -> Result<(), String> {
     if result.exit_code != 0 {
         return Err(format!(
@@ -134,7 +152,7 @@ pub fn check_epub_bytes(head: &[u8]) -> Result<(), String> {
 pub fn platform_refusal(bundle: &str, platform: &str) -> Option<String> {
     let wrong_os = |os: &str, tool: &str| {
         format!(
-            "smoke-bundle: {bundle} can only be opened ({tool}) and its engine run on {os}, and this machine is {platform}. NOTHING WAS CHECKED -- run this step on a {os} runner. Reporting success here would mean reporting success for a sidecar no one has executed."
+            "smoke-bundle: {bundle} can only be opened ({tool}) and its window run on {os}, and this machine is {platform}. NOTHING WAS CHECKED -- run this step on a {os} runner. Reporting success here would mean reporting success for a window no one has run."
         )
     };
     if bundle.ends_with(".deb") || bundle.ends_with(".rpm") {
@@ -151,11 +169,60 @@ pub fn platform_refusal(bundle: &str, platform: &str) -> Option<String> {
     ))
 }
 
-const ENGINE_IN_ARCHIVE: &str = "usr/bin/screepub-engine";
-const ENGINE_IN_EXE: &str = "screepub-engine.exe";
+/// The environment every window run gets: settings and a library of its
+/// own under `work`, and a Calibre config folder that cannot be made (it
+/// sits under a FILE, which works as a guard on every OS). Never the real
+/// ones.
+pub fn window_env(work: &Path) -> Result<Vec<(String, String)>, String> {
+    let guard = work.join("calibre-guard");
+    std::fs::write(&guard, "a file, so nothing can be made under it")
+        .map_err(|e| format!("smoke-bundle: cannot write {}: {e}", guard.display()))?;
+    let s = |p: PathBuf| p.to_string_lossy().into_owned();
+    Ok(vec![
+        ("SCREEPUB_CONFIG_DIR".into(), s(work.join("config"))),
+        ("SCREEPUB_LIBRARY".into(), s(work.join("library"))),
+        ("CALIBRE_CONFIG_DIRECTORY".into(), s(guard.join("config"))),
+    ])
+}
 
-fn engine_in_app() -> PathBuf {
-    Path::new("Contents").join("MacOS").join("screepub-engine")
+/// Two runs of the window that came out of the bundle, headless: its
+/// version, then a real conversion of `fixture`, whose EPUB is then read
+/// back.
+pub fn smoke_window(
+    window: &Path,
+    fixture: &Path,
+    work: &Path,
+    expected: &str,
+    run_window: &mut WindowRunner<'_>,
+) -> Result<(), String> {
+    if !fixture.exists() {
+        return Err(format!("smoke-bundle: no fixture at {}", fixture.display()));
+    }
+    let env = window_env(work)?;
+    let w = window.to_string_lossy().into_owned();
+    check_window_version(
+        &run_window(&[w.clone(), "--version".into(), "--json".into()], &env),
+        expected,
+    )?;
+    let epub = work.join("smoke.epub");
+    let r = run_window(
+        &[
+            w,
+            "--smoke".into(),
+            fixture.to_string_lossy().into_owned(),
+            "--out".into(),
+            epub.to_string_lossy().into_owned(),
+        ],
+        &env,
+    );
+    check_convert_result(&r, &epub)?;
+    let Ok(bytes) = std::fs::read(&epub) else {
+        return Err(format!(
+            "smoke-bundle: the bundled window reported a successful conversion but {} is not there. A success object is not a book.",
+            epub.display()
+        ));
+    };
+    check_epub_bytes(&bytes[..bytes.len().min(8)])
 }
 
 /// Writes an executable file (the archive's mode does not come along).
@@ -174,12 +241,28 @@ fn write_executable(dest: &Path, data: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-/// The engine out of a .deb or an .rpm, written executable under `work`.
-pub fn extract_archive_engine(bundle: &Path, work: &Path) -> Result<PathBuf, String> {
+/// Where a .deb or an .rpm installs the window.
+pub fn window_in_archive() -> String {
+    format!("usr/bin/{}", NATIVE_APP.linux_executable)
+}
+
+/// The window out of a .deb or an .rpm, checked (non-empty, executable)
+/// and written executable under `work`.
+pub fn extract_archive_window(bundle: &Path, work: &Path) -> Result<PathBuf, String> {
     let entries = bundle_entries(bundle)?;
-    let entry = find_entry(&entries, ENGINE_IN_ARCHIVE)?;
-    let dest = work.join(ENGINE_IN_ARCHIVE);
-    write_executable(&dest, &entry.data)?;
+    let name = window_in_archive();
+    let bin = find_entry(&entries, &name)?;
+    if bin.data.is_empty() || bin.mode & 0o111 == 0 {
+        return Err(format!(
+            "smoke-bundle: {} in {} is {} bytes with mode {:o}; the window must be a non-empty executable",
+            bin.name,
+            bundle.display(),
+            bin.data.len(),
+            bin.mode
+        ));
+    }
+    let dest = work.join(&name);
+    write_executable(&dest, &bin.data)?;
     Ok(dest)
 }
 
@@ -202,14 +285,19 @@ pub fn detach(m: &Mounted, run: &mut Runner<'_>) {
     m.detach(&mut |a: &[String]| run(a, None));
 }
 
-/// The engine inside a .dmg's app. The caller detaches.
-pub fn extract_dmg_engine(
+/// The window inside a .dmg's app. The caller detaches.
+pub fn extract_dmg_window(
     bundle: &Path,
     work: &Path,
     run: &mut Runner<'_>,
 ) -> Result<(PathBuf, Mounted), String> {
     let m = mount_dmg_app(bundle, work, run, "smoke-bundle")?;
-    Ok((m.app_path.join(engine_in_app()), m))
+    let exe = m
+        .app_path
+        .join("Contents")
+        .join("MacOS")
+        .join(NATIVE_APP.mac_executable);
+    Ok((exe, m))
 }
 
 fn listing(dir: &Path) -> String {
@@ -229,13 +317,13 @@ fn listing(dir: &Path) -> String {
 }
 
 /// Unpacks an NSIS installer with 7z (on GitHub's Windows image) and finds
-/// `file` in what came out.
-fn unpack_exe(
+/// the window in what came out.
+pub fn extract_exe_window(
     bundle: &Path,
     work: &Path,
     run: &mut Runner<'_>,
-    file: &str,
 ) -> Result<PathBuf, String> {
+    let file = NATIVE_APP.windows_executable;
     let r = run(
         &[
             "7z".into(),
@@ -262,89 +350,25 @@ fn unpack_exe(
             listing(work)
         ));
     }
+    if std::fs::metadata(&dest).map(|x| x.len()).unwrap_or(0) == 0 {
+        return Err(format!("smoke-bundle: {} is empty", dest.display()));
+    }
     Ok(dest)
-}
-
-pub fn extract_exe_engine(
-    bundle: &Path,
-    work: &Path,
-    run: &mut Runner<'_>,
-) -> Result<PathBuf, String> {
-    unpack_exe(bundle, work, run, ENGINE_IN_EXE)
 }
 
 fn ends(path: &Path, ext: &str) -> bool {
     path.to_string_lossy().ends_with(ext)
 }
 
-/// Two runs of the engine that came out of the bundle: its version, then a
-/// real conversion of the fixture, whose EPUB is then read back.
+/// Smoke one bundle: the window is in it and declares the expected version,
+/// then it runs headless (see [`smoke_window`]).
 pub fn smoke_bundle(
     bundle: &Path,
     fixture: &Path,
     work: &Path,
     expected: &str,
     run: &mut Runner<'_>,
-) -> Result<(), String> {
-    if !bundle.exists() {
-        return Err(format!("smoke-bundle: no bundle at {}", bundle.display()));
-    }
-    if !fixture.exists() {
-        return Err(format!("smoke-bundle: no fixture at {}", fixture.display()));
-    }
-    let (engine, mounted) = if ends(bundle, ".deb") || ends(bundle, ".rpm") {
-        (extract_archive_engine(bundle, work)?, None)
-    } else if ends(bundle, ".dmg") {
-        let (e, m) = extract_dmg_engine(bundle, work, run)?;
-        (e, Some(m))
-    } else if ends(bundle, ".exe") {
-        (extract_exe_engine(bundle, work, run)?, None)
-    } else {
-        return Err(format!(
-            "smoke-bundle: {} is not a .deb, .rpm, .dmg or .exe",
-            bundle.display()
-        ));
-    };
-    let result = (|| {
-        let e = engine.to_string_lossy().into_owned();
-        check_engine_version(
-            &run(&[e.clone(), "--version".into(), "--json".into()], None),
-            expected,
-        )?;
-        let epub = work.join("smoke.epub");
-        let r = run(
-            &[
-                e,
-                fixture.to_string_lossy().into_owned(),
-                "-o".into(),
-                epub.to_string_lossy().into_owned(),
-                "--no-fountain".into(),
-                "--json".into(),
-            ],
-            None,
-        );
-        check_convert_result(&r, &epub)?;
-        let Ok(bytes) = std::fs::read(&epub) else {
-            return Err(format!(
-                "smoke-bundle: the bundled engine reported a successful conversion but {} is not there. A success object is not a book.",
-                epub.display()
-            ));
-        };
-        check_epub_bytes(&bytes[..bytes.len().min(8)])
-    })();
-    if let Some(m) = mounted {
-        detach(&m, run);
-    }
-    result
-}
-
-/// The native window's half: its binary is in the bundle, non-empty and
-/// executable, and the package declares the expected version.
-pub fn smoke_native_bundle(
-    bundle: &Path,
-    work: &Path,
-    expected: &str,
-    run: &mut Runner<'_>,
+    run_window: &mut WindowRunner<'_>,
 ) -> Result<(), String> {
     if !bundle.exists() {
         return Err(format!("smoke-bundle: no bundle at {}", bundle.display()));
@@ -362,35 +386,21 @@ pub fn smoke_native_bundle(
         ))
     };
     if ends(bundle, ".deb") || ends(bundle, ".rpm") {
-        let entries = bundle_entries(bundle)?;
-        let bin = find_entry(&entries, &format!("usr/bin/{}", a.linux_executable))?;
-        if bin.data.is_empty() || bin.mode & 0o111 == 0 {
-            return Err(format!(
-                "smoke-bundle: {} in {} is {} bytes with mode {:o}; the window must be a non-empty executable",
-                bin.name,
-                bundle.display(),
-                bin.data.len(),
-                bin.mode
-            ));
-        }
+        let window = extract_archive_window(bundle, work)?;
         if ends(bundle, ".deb") {
             mismatch(
                 deb_control_field(bundle, "Version")?,
                 &pkg_version,
                 "control file",
-            )
+            )?;
         } else {
             let bytes = std::fs::read(bundle).map_err(|e| e.to_string())?;
-            mismatch(rpm_header_string(&bytes, 1001)?, &pkg_version, "rpm header")
+            mismatch(rpm_header_string(&bytes, 1001)?, &pkg_version, "rpm header")?;
         }
+        smoke_window(&window, fixture, work, expected, run_window)
     } else if ends(bundle, ".dmg") {
-        let m = mount_dmg_app(bundle, work, run, "smoke-bundle")?;
+        let (exe, m) = extract_dmg_window(bundle, work, run)?;
         let result = (|| {
-            let exe = m
-                .app_path
-                .join("Contents")
-                .join("MacOS")
-                .join(a.mac_executable);
             let size = std::fs::metadata(&exe).map(|x| x.len()).unwrap_or(0);
             if size == 0 {
                 return Err(format!(
@@ -412,16 +422,14 @@ pub fn smoke_native_bundle(
                 plist_string(&plist, "CFBundleShortVersionString"),
                 expected,
                 "Info.plist",
-            )
+            )?;
+            smoke_window(&exe, fixture, work, expected, run_window)
         })();
         detach(&m, run);
         result
     } else if ends(bundle, ".exe") {
-        let exe = unpack_exe(bundle, work, run, a.windows_executable)?;
-        if std::fs::metadata(&exe).map(|x| x.len()).unwrap_or(0) == 0 {
-            return Err(format!("smoke-bundle: {} is empty", exe.display()));
-        }
-        Ok(())
+        let exe = extract_exe_window(bundle, work, run)?;
+        smoke_window(&exe, fixture, work, expected, run_window)
     } else {
         Err(format!(
             "smoke-bundle: {} is not a .deb, .rpm, .dmg or .exe",
@@ -431,8 +439,7 @@ pub fn smoke_native_bundle(
 }
 
 /// What [`smoke_built_bundles`] is asked: which OS's bundles, found under
-/// `root` (desktop/src-tauri for the Tauri window, rust/ for the native one),
-/// on which host, for which window.
+/// `root` (rust/), on which host.
 #[derive(Clone, Copy, Debug)]
 pub struct BuiltSmoke<'a> {
     pub os: BundleOs,
@@ -441,15 +448,15 @@ pub struct BuiltSmoke<'a> {
     pub work_root: &'a Path,
     pub root: &'a Path,
     pub host: &'a str,
-    pub app: AppSource,
 }
 
 /// Verify and smoke every bundle this runner just built, found under
-/// `root` (desktop/src-tauri for the Tauri window, rust/ for the native
-/// one). An OS with no kinds, or a kind with no bundle, is a failure.
+/// `root` (rust/). An OS with no kinds, or a kind with no bundle, is a
+/// failure.
 pub fn smoke_built_bundles(
     s: &BuiltSmoke<'_>,
     run: &mut Runner<'_>,
+    run_window: &mut WindowRunner<'_>,
 ) -> Result<Vec<PathBuf>, String> {
     let BuiltSmoke {
         os,
@@ -458,7 +465,6 @@ pub fn smoke_built_bundles(
         work_root,
         root,
         host,
-        app,
     } = *s;
     let kinds = kinds_for_os(os);
     if kinds.is_empty() {
@@ -468,7 +474,7 @@ pub fn smoke_built_bundles(
         ));
     }
     let mut smoked = Vec::new();
-    for kind in kinds.into_iter().map(|k| for_app(k, app)) {
+    for kind in kinds {
         let path = discover_artifact(&bundle_dir_for(kind.dir, None, root), &kind)?;
         verify_bundle_file(&path, &kind)?;
         if let Some(refusal) = platform_refusal(&path.to_string_lossy(), host) {
@@ -476,10 +482,7 @@ pub fn smoke_built_bundles(
         }
         let work = work_root.join(kind.id);
         std::fs::create_dir_all(&work).map_err(|e| e.to_string())?;
-        match app {
-            AppSource::Tauri => smoke_bundle(&path, fixture, &work, expected, run)?,
-            AppSource::Native => smoke_native_bundle(&path, &work, expected, run)?,
-        }
+        smoke_bundle(&path, fixture, &work, expected, run, run_window)?;
         println!("smoke-bundle: {} ok -- {}", kind.id, path.display());
         smoked.push(path);
     }
@@ -490,7 +493,7 @@ pub fn smoke_built_bundles(
 pub fn main(args: &[String]) -> u8 {
     if super::util::wants_help(
         args,
-        "usage: cargo xtask smoke-bundle --expect-version <x.y.z> (--bundle <file> | --built) [--fixture <pdf>] [--app tauri|native]",
+        "usage: cargo xtask smoke-bundle --expect-version <x.y.z> (--bundle <file> | --built) [--fixture <pdf>]\n\nRuns the window inside the bundle headless (--version --json, then --smoke of the fixture, tests/fixtures/field-station.pdf by default) with scratch settings and library.",
     ) {
         return 0;
     }
@@ -527,57 +530,47 @@ pub fn main(args: &[String]) -> u8 {
         if expected.is_empty() {
             return Err("smoke-bundle: --expect-version <version> is required".to_string());
         }
-        let repo = repo_root();
+        // `--app native` is still taken, so a command written before the
+        // cutover keeps working; it names the only window there is.
+        match f.get("app").map(String::as_str) {
+            None | Some("native") => {}
+            Some("tauri") => {
+                return Err("smoke-bundle: the Tauri window is gone (the Rust cutover); the native window is the only one, so drop --app tauri.".to_string());
+            }
+            Some(other) => {
+                return Err(format!(
+                    "smoke-bundle: --app is native, the only window, not \"{other}\""
+                ));
+            }
+        }
         let fixture = f
             .get("fixture")
             .map(PathBuf::from)
-            .unwrap_or_else(|| repo.join("tests").join("fixtures").join("screenplay.pdf"));
-        let dirs = BundleDirs::for_repo(&repo);
-        let app = resolve_app(
-            match f.get("app").map(String::as_str) {
-                None => None,
-                Some("tauri") => Some(AppSource::Tauri),
-                Some("native") => Some(AppSource::Native),
-                Some(other) => {
-                    return Err(format!(
-                        "smoke-bundle: --app is tauri or native, not \"{other}\""
-                    ));
-                }
-            },
-            &dirs,
-        );
+            .unwrap_or_else(default_fixture);
+        let dirs = BundleDirs::for_repo(&repo_root());
         let dir =
             std::env::temp_dir().join(format!("screepub-bundle-smoke-{}", std::process::id()));
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
         work = Some(dir.clone());
         let mut run = real_run;
+        let mut run_window = |argv: &[String], env: &[(String, String)]| real_run_env(argv, env);
         if f.contains_key("built") {
             let os = os_for_platform(host_platform())?;
-            let root = if app == AppSource::Tauri {
-                dirs.desktop_dir
-            } else {
-                dirs.rust_dir
-            };
             let smoked = smoke_built_bundles(
                 &BuiltSmoke {
                     os,
                     expected: &expected,
                     fixture: &fixture,
                     work_root: &dir,
-                    root: &root,
+                    root: &dirs.rust_dir,
                     host: host_platform(),
-                    app,
                 },
                 &mut run,
+                &mut run_window,
             )?;
             println!(
-                "smoke-bundle: {} bundle(s) report {expected}{}",
-                smoked.len(),
-                if app == AppSource::Tauri {
-                    " and convert the fixture"
-                } else {
-                    ""
-                }
+                "smoke-bundle: {} bundle(s) report {expected} and convert the fixture",
+                smoked.len()
             );
         } else {
             let Some(bundle) = f.get("bundle") else {
@@ -586,21 +579,16 @@ pub fn main(args: &[String]) -> u8 {
             if let Some(refusal) = platform_refusal(bundle, host_platform()) {
                 return Err(refusal);
             }
-            match app {
-                AppSource::Tauri => {
-                    smoke_bundle(Path::new(bundle), &fixture, &dir, &expected, &mut run)?
-                }
-                AppSource::Native => {
-                    smoke_native_bundle(Path::new(bundle), &dir, &expected, &mut run)?
-                }
-            }
+            smoke_bundle(
+                Path::new(bundle),
+                &fixture,
+                &dir,
+                &expected,
+                &mut run,
+                &mut run_window,
+            )?;
             println!(
-                "smoke-bundle: {bundle} reports {expected}{}",
-                if app == AppSource::Tauri {
-                    " and its engine converts the fixture"
-                } else {
-                    ""
-                }
+                "smoke-bundle: {bundle} reports {expected} and its window converts the fixture"
             );
         }
         Ok(())

@@ -5,7 +5,10 @@
 //! by [`sp_release::sign`], the one signer release.yml uses, and a
 //! signature is checked by [`sp_update::verify`], the check the app itself
 //! runs. What stays here is the tag-time gate `cargo xtask
-//! update-signature` and reading the key the Tauri window's config trusts.
+//! update-signature`, over [`sp_update::PUBKEY`], the one home of the key
+//! the shipped app trusts. (Until the Rust cutover the gate read
+//! `plugins.updater.pubkey` out of the Tauri window's tauri.conf.json,
+//! `--pubkey-from-config`; that file went with the window.)
 
 use std::path::Path;
 
@@ -65,31 +68,30 @@ pub fn verify_file(
         })
 }
 
-/// `plugins.updater.pubkey` of a tauri.conf.json.
-pub fn pubkey_from_config(path: &Path) -> Result<String, String> {
-    let text = std::fs::read_to_string(path)
-        .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
-    let conf: serde_json::Value =
-        serde_json::from_str(&text).map_err(|e| format!("{}: {e}", path.display()))?;
-    conf.pointer("/plugins/updater/pubkey")
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_string)
-        .ok_or_else(|| "public key: plugins.updater.pubkey is missing from the config".into())
+/// The key the gate checks: `--pubkey` (a path, or the key text itself),
+/// else [`sp_update::PUBKEY`].
+pub fn trusted_pubkey(explicit: Option<&str>) -> Result<String, String> {
+    match explicit {
+        Some(value) => private_key_text(value),
+        None => Ok(sp_update::PUBKEY.to_string()),
+    }
 }
 
-/// `cargo xtask update-signature --pubkey-from-config <tauri.conf.json>`:
-/// release.yml's tag-time gate. 0 and the key id when the config trusts a
-/// real key; 1 and a reason otherwise; 2 for a usage error.
+/// `cargo xtask update-signature [--pubkey <key or file>]`: release.yml's
+/// tag-time gate. 0 and the key id when the app trusts a real key; 1 and a
+/// reason otherwise; 2 for a usage error.
 pub fn main(args: &[String]) -> u8 {
     use super::util::{FlagSpec, parse_flags};
-    let usage = "usage: cargo xtask update-signature --pubkey-from-config <tauri.conf.json>";
+    let usage = "usage: cargo xtask update-signature [--pubkey <key or file>]\n\n\
+                 Checks the updater public key the app trusts: sp_update::PUBKEY \
+                 (rust/crates/sp-update/src/lib.rs), or the one --pubkey names.";
     if super::util::wants_help(args, usage) {
         return 0;
     }
     let flags = match parse_flags(
         args,
         &[FlagSpec {
-            name: "pubkey-from-config",
+            name: "pubkey",
             value: true,
         }],
     ) {
@@ -99,11 +101,9 @@ pub fn main(args: &[String]) -> u8 {
             return 2;
         }
     };
-    let Some(path) = flags.get("pubkey-from-config") else {
-        eprintln!("{usage}");
-        return 2;
-    };
-    match pubkey_from_config(Path::new(path)).and_then(|k| parse_public_key_box(&k)) {
+    match trusted_pubkey(flags.get("pubkey").map(String::as_str))
+        .and_then(|k| parse_public_key_box(&k))
+    {
         Ok(k) => {
             println!("the app trusts updater key {}", k.key_id);
             0
@@ -111,7 +111,7 @@ pub fn main(args: &[String]) -> u8 {
         Err(e) => {
             eprintln!("::error::{e}");
             eprintln!(
-                "::error::A tag cannot ship an updater that trusts no key. Generate the pair, add the secrets, and paste the PUBLIC key into desktop/src-tauri/tauri.conf.json: docs/release-secrets.md §4."
+                "::error::A tag cannot ship an updater that trusts no key. Generate the pair, add the secrets, and paste the PUBLIC key into PUBKEY in rust/crates/sp-update/src/lib.rs: docs/release-secrets.md §4."
             );
             1
         }

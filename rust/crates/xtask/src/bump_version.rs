@@ -7,23 +7,15 @@
 //! skill calls this on `ship`; it lives here, not in the skill, because the
 //! skill is not versioned and this is logic that has to stay right.
 //!
-//! TABLE-DRIVEN, so the one command works before and after the Rust
-//! cutover. [`GROUPS`] lists every set of version files, each with the
-//! path whose presence says the repository has it:
-//!
-//! - the Bun engine: package.json, what the engine reports;
-//! - the Tauri window: its Cargo.toml, the screepub-desktop entry of its
-//!   Cargo.lock (a bump that misses it leaves a lockfile that disagrees
-//!   with its own manifest), tauri.conf.json (the bundle file, the
-//!   Info.plist, the deb Version: field and the NSIS product version), and
-//!   desktop/ui/notes.js;
-//! - the Rust workspace: rust/Cargo.toml's `[workspace.package]` version,
-//!   the rust/Cargo.lock entry of every crate that inherits it, and
-//!   sp-app's generated notes.
-//!
-//! Every group whose marker is present is bumped; while the port runs the
-//! repository has all three, and sp-app's own test holds its notes'
-//! version to the workspace's, so they move together.
+//! [`VERSION_FILES`] lists every file that carries the version: the Rust
+//! workspace's rust/Cargo.toml `[workspace.package]` version, the
+//! rust/Cargo.lock entry of every crate that inherits it (a bump that
+//! misses one leaves a lockfile that disagrees with its own manifests),
+//! and sp-app's generated notes, whose own test holds their version to
+//! the workspace's. (Until the Rust cutover the table also held the Bun
+//! engine's package.json and the Tauri window's Cargo.toml, Cargo.lock
+//! entry, tauri.conf.json and desktop/ui/notes.js; they went with the
+//! engine and the window.)
 //!
 //! All or nothing: the notes are parsed the way the window will read them,
 //! and every file's new text is worked out, before anything is written. So
@@ -46,13 +38,9 @@ use crate::desktop_notes;
 /// How a version file carries the version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
-    /// A JSON file's top-level "version", two-space formatted.
-    Json,
     /// The `version` line of a Cargo.toml table (`package`, or
     /// `workspace.package`).
     CargoTable(&'static str),
-    /// One crate's entry in a Cargo.lock, which must appear exactly once.
-    CargoLockEntry(&'static str),
     /// The Cargo.lock entry of every crate in the Rust workspace that
     /// inherits the workspace version.
     WorkspaceLockEntries,
@@ -67,134 +55,32 @@ pub struct VersionFile {
     pub kind: Kind,
 }
 
-/// A set of version files that exists, or does not, as a whole.
-#[derive(Debug, Clone, Copy)]
-pub struct Group {
-    pub name: &'static str,
-    /// The path whose presence says the repository has this group.
-    pub marker: &'static str,
-    pub files: &'static [VersionFile],
-}
-
-/// The Bun engine's version, while it exists.
-pub const BUN_ENGINE: Group = Group {
-    name: "the Bun engine",
-    marker: "package.json",
-    files: &[VersionFile {
-        path: "package.json",
-        kind: Kind::Json,
-    }],
-};
-
-/// The Tauri window, until cutover.
-pub const TAURI_WINDOW: Group = Group {
-    name: "the Tauri window",
-    marker: "desktop/src-tauri/Cargo.toml",
-    files: &[
-        VersionFile {
-            path: "desktop/src-tauri/Cargo.toml",
-            kind: Kind::CargoTable("package"),
-        },
-        VersionFile {
-            path: "desktop/src-tauri/Cargo.lock",
-            kind: Kind::CargoLockEntry("screepub-desktop"),
-        },
-        VersionFile {
-            path: "desktop/src-tauri/tauri.conf.json",
-            kind: Kind::Json,
-        },
-        VersionFile {
-            path: desktop_notes::JS_MODULE,
-            kind: Kind::Notes,
-        },
-    ],
-};
-
-/// The Rust workspace: the engine, the CLI and the native window.
+/// Every file the bump writes, in the order they are written and listed:
+/// the Rust workspace, which builds the engine, the CLI and the window.
 ///
-/// NATIVE APP BUNDLE: no slot is filled yet. The Rust app's bundling
-/// (`cargo xtask build-app-bundle`) has no version file of its own today:
-/// sp-app has no Info.plist, no `[package.metadata.bundle]`, no installer
-/// config. When packaging lands with one, it is a row here, with the Kind
-/// that says how it carries the version, and the gate below reads it back
-/// like every other row.
-pub const RUST_WORKSPACE: Group = Group {
-    name: "the Rust workspace",
-    marker: "rust/Cargo.toml",
-    files: &[
-        VersionFile {
-            path: "rust/Cargo.toml",
-            kind: Kind::CargoTable("workspace.package"),
-        },
-        VersionFile {
-            path: "rust/Cargo.lock",
-            kind: Kind::WorkspaceLockEntries,
-        },
-        VersionFile {
-            path: desktop_notes::RUST_MODULE,
-            kind: Kind::Notes,
-        },
-    ],
-};
-
-/// Every group, in the order their files are written and listed.
-pub const GROUPS: &[Group] = &[BUN_ENGINE, TAURI_WINDOW, RUST_WORKSPACE];
-
-/// The groups this repository has.
-pub fn groups_present(repo: &Path) -> Vec<Group> {
-    GROUPS
-        .iter()
-        .filter(|g| repo.join(g.marker).exists())
-        .copied()
-        .collect()
-}
-
-/// Every file the bump writes in this repository, in order.
-pub fn version_files(repo: &Path) -> Vec<VersionFile> {
-    groups_present(repo)
-        .iter()
-        .flat_map(|g| g.files.iter().copied())
-        .collect()
-}
+/// NATIVE APP BUNDLE: sp-release lays the bundles out from the workspace
+/// version (build-app-bundle reads rust/Cargo.toml), so no installer
+/// config carries a version of its own. One that does is a row here, with
+/// the Kind that says how it carries the version, and the gate below reads
+/// it back like every other row.
+pub const VERSION_FILES: &[VersionFile] = &[
+    VersionFile {
+        path: "rust/Cargo.toml",
+        kind: Kind::CargoTable("workspace.package"),
+    },
+    VersionFile {
+        path: "rust/Cargo.lock",
+        kind: Kind::WorkspaceLockEntries,
+    },
+    VersionFile {
+        path: desktop_notes::RUST_MODULE,
+        kind: Kind::Notes,
+    },
+];
 
 /// release.yml's own test of a tag, with the leading v already gone.
 static VERSION: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$").expect("regex"));
-
-/// JSON.stringify(value, null, 2) + "\n", the way this repo writes JSON
-/// (serde_json's pretty printer indents two spaces, and the workspace
-/// keeps key order).
-fn two_space_json(value: &serde_json::Value) -> String {
-    let mut s = serde_json::to_string_pretty(value).expect("JSON serializes");
-    s.push('\n');
-    s
-}
-
-/// The top-level "version" of a JSON file written the way this repo writes
-/// them (two spaces, a newline at the end). A file in any other shape is
-/// refused rather than quietly reformatted in a release commit.
-pub fn set_json_version(text: &str, version: &str, file: &str) -> Result<String, String> {
-    let mut data: serde_json::Value =
-        serde_json::from_str(text).map_err(|e| format!("{file} is not JSON: {e}"))?;
-    let Some(obj) = data.as_object_mut() else {
-        return Err(format!("{file} has no top-level \"version\" to set"));
-    };
-    if !obj.get("version").is_some_and(|v| v.is_string()) {
-        return Err(format!("{file} has no top-level \"version\" to set"));
-    }
-    if two_space_json(&serde_json::Value::Object(obj.clone())) != text {
-        return Err(format!(
-            "{file} is not in two-space JSON with a final newline, so setting its version would reformat it"
-        ));
-    }
-    obj.insert("version".into(), serde_json::Value::String(version.into()));
-    Ok(two_space_json(&data))
-}
-
-fn json_version(text: &str) -> Option<String> {
-    let data: serde_json::Value = serde_json::from_str(text).ok()?;
-    data.get("version")?.as_str().map(str::to_string)
-}
 
 static ANY_TABLE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^[ \t]*\[").expect("regex"));
 static VERSION_LINE: LazyLock<Regex> =
@@ -249,12 +135,6 @@ pub fn set_cargo_table_version(
     Ok(format!("{}{bumped}{}", &text[..start], &text[end..]))
 }
 
-/// tools/bump-version.ts's setCargoTomlVersion: the Tauri crate's
-/// `[package]` version.
-pub fn set_cargo_toml_version(text: &str, version: &str) -> Result<String, String> {
-    set_cargo_table_version(text, "package", version, "desktop/src-tauri/Cargo.toml")
-}
-
 fn lock_entry(name: &str) -> Regex {
     Regex::new(&format!(
         r#"(?m)^(\[\[package\]\]\r?\nname = "{}"\r?\nversion = )"([^"]*)""#,
@@ -282,16 +162,6 @@ pub fn set_cargo_lock_entry(
             format!("{}\"{version}\"", &c[1])
         })
         .into_owned())
-}
-
-/// tools/bump-version.ts's setCargoLockVersion: the screepub-desktop entry.
-pub fn set_cargo_lock_version(text: &str, version: &str) -> Result<String, String> {
-    set_cargo_lock_entry(
-        text,
-        "screepub-desktop",
-        version,
-        "desktop/src-tauri/Cargo.lock",
-    )
 }
 
 fn lock_entry_versions(text: &str, name: &str) -> Vec<String> {
@@ -345,9 +215,7 @@ fn next_text(
     notes: &desktop_notes::ReleaseNotes,
 ) -> Result<String, String> {
     match file.kind {
-        Kind::Json => set_json_version(current, version, file.path),
         Kind::CargoTable(table) => set_cargo_table_version(current, table, version, file.path),
-        Kind::CargoLockEntry(name) => set_cargo_lock_entry(current, name, version, file.path),
         Kind::WorkspaceLockEntries => {
             let mut text = current.to_string();
             for name in workspace_crates(repo)? {
@@ -355,29 +223,21 @@ fn next_text(
             }
             Ok(text)
         }
-        Kind::Notes => Ok(match file.path {
-            desktop_notes::JS_MODULE => desktop_notes::render_notes_module(notes),
-            _ => desktop_notes::render_notes_rust(notes),
-        }),
+        Kind::Notes => Ok(desktop_notes::render_notes_rust(notes)),
     }
 }
 
 /// The bundler's gate, run on what was just written: every version file
-/// reads back as `version`. (build-app-bundle.ts's assertBundleVersions
-/// for the Tauri files, and the same rule for the Rust workspace's.)
+/// reads back as `version` (build-app-bundle.ts's assertBundleVersions,
+/// for the Rust workspace's files).
 fn assert_versions(repo: &Path, files: &[VersionFile], version: &str) -> Result<(), String> {
     for file in files {
         let text = std::fs::read_to_string(repo.join(file.path))
             .map_err(|e| format!("cannot read back {}: {e}", file.path))?;
         let found: Vec<(String, Option<String>)> = match file.kind {
-            Kind::Json => vec![(file.path.to_string(), json_version(&text))],
             Kind::CargoTable(table) => {
                 vec![(file.path.to_string(), cargo_table_version(&text, table))]
             }
-            Kind::CargoLockEntry(name) => lock_entry_versions(&text, name)
-                .into_iter()
-                .map(|v| (format!("{}'s {name} entry", file.path), Some(v)))
-                .collect(),
             Kind::WorkspaceLockEntries => {
                 let mut out = Vec::new();
                 for name in workspace_crates(repo)? {
@@ -422,12 +282,9 @@ pub fn bump_version(repo: &Path, version: &str, check: bool) -> Result<Vec<Strin
         return Ok(Vec::new());
     }
 
-    let files = version_files(repo);
-    if files.is_empty() {
-        return Err(
-            "found no version files: none of package.json, desktop/src-tauri/Cargo.toml or rust/Cargo.toml"
-                .to_string(),
-        );
+    let files = VERSION_FILES;
+    if !repo.join("rust/Cargo.toml").is_file() {
+        return Err("found no version files: rust/Cargo.toml is not there".to_string());
     }
     // Everything is read, and every new text worked out, before anything
     // is written, so a write that fails part-way (or the gate after it)
@@ -437,7 +294,7 @@ pub fn bump_version(repo: &Path, version: &str, check: bool) -> Result<Vec<Strin
     };
     let mut original = Vec::new();
     let mut next = Vec::new();
-    for file in &files {
+    for file in files {
         let current = match file.kind {
             Kind::Notes => read(file.path).unwrap_or_default(),
             _ => read(file.path)?,
@@ -454,7 +311,7 @@ pub fn bump_version(repo: &Path, version: &str, check: bool) -> Result<Vec<Strin
             std::fs::write(repo.join(path), text)
                 .map_err(|e| format!("cannot write {path}: {e}"))?;
         }
-        assert_versions(repo, &files, version)
+        assert_versions(repo, files, version)
     };
     if let Err(e) = attempt() {
         let mut stuck = Vec::new();

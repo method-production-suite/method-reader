@@ -1,5 +1,5 @@
 //! Bundling the native window (rust/crates/sp-app's `screepub-window`) for
-//! `cargo xtask build-app-bundle --app native`.
+//! `cargo xtask build-app-bundle`.
 //!
 //! Every file is written by sp-release, the library release.yml runs: the
 //! `.app` ([`sp_release::mac`]), the update archive
@@ -26,7 +26,7 @@ use sp_release::names;
 
 use super::bundle::{BundleArgs, BundleDirs, Env};
 use super::kinds::{BundleArch, BundleOs, SIGNATURE_EXT, bundle_dir_for};
-use super::signature::{private_key_text, pubkey_from_config, sign_file, verify_file};
+use super::signature::{sign_file, verify_file};
 use super::util::Runner;
 
 /// What the native packages say about the app, from sp-release's names.
@@ -52,8 +52,8 @@ pub struct NativeApp {
     pub minimum_macos: &'static str,
     /// (file in the repo, name in the bundle)
     pub resources: &'static [(&'static str, &'static str)],
-    /// Where the icons are looked for, first match wins. desktop/ goes at
-    /// cutover, so the icons must move first (rust/PARITY.md, Decisions).
+    /// Where the icons are looked for, first match wins: sp-app's own
+    /// folder, where they moved from desktop/src-tauri/icons at the cutover.
     pub icon_dirs: &'static [&'static str],
 }
 
@@ -74,7 +74,7 @@ pub const NATIVE_APP: NativeApp = NativeApp {
         ("LICENSE", "LICENSE"),
         ("THIRD-PARTY-NOTICES.md", "THIRD-PARTY-NOTICES.md"),
     ],
-    icon_dirs: &["rust/crates/sp-app/icons", "desktop/src-tauri/icons"],
+    icon_dirs: &["rust/crates/sp-app/icons"],
 };
 
 /// The outside programs, each overridable: SCREEPUB_CARGO, SCREEPUB_CODESIGN,
@@ -304,17 +304,11 @@ fn write_file(path: &Path, bytes: &[u8], executable: bool) -> Result<(), String>
     Ok(())
 }
 
-/// The public key the shipped app trusts: `--pubkey` (a path or the text),
-/// else tauri.conf.json's.
-pub fn trusted_pubkey(args: &BundleArgs, dirs: &BundleDirs) -> Result<String, String> {
-    if let Some(k) = &args.pubkey {
-        return private_key_text(k).map(|t| t.trim().to_string());
-    }
-    let conf = dirs.desktop_dir.join("tauri.conf.json");
-    if conf.is_file() {
-        return pubkey_from_config(&conf);
-    }
-    Err("build-app-bundle: --updater needs the public key the shipped app trusts, to check the archive's signature before anything is published: pass --pubkey <file or base64> (desktop/src-tauri/tauri.conf.json, which carried it, is gone).".into())
+/// The public key the archive must verify against: `--pubkey` (a path or
+/// the text), else [`sp_update::PUBKEY`], the one home of the key the
+/// shipped app trusts.
+pub fn trusted_pubkey(args: &BundleArgs) -> Result<String, String> {
+    super::signature::trusted_pubkey(args.pubkey.as_deref()).map(|t| t.trim().to_string())
 }
 
 fn source_date(env: &Env) -> u64 {
@@ -471,7 +465,7 @@ fn build_mac(
     }
 
     if args.updater {
-        let pubkey = trusted_pubkey(args, dirs)?;
+        let pubkey = trusted_pubkey(args)?;
         let tar_path = macos.join(names::MAC_UPDATE);
         let sig_path = PathBuf::from(format!("{}{SIGNATURE_EXT}", tar_path.display()));
         let _ = std::fs::remove_file(&sig_path);

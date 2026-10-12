@@ -484,24 +484,50 @@ fn a_cask_with_no_retirement_notice_at_all_is_an_error_before_and_after() {
     assert!(text(&before.stdout).contains("deprecate!"));
 }
 
+/// What tools/bump-tap.sh's heredoc wrote for 0.8.0, expanded, recorded
+/// when the Rust cutover deleted the script (SHA_A stands for the digest).
+const SHELL_FORMULA_0_8_0: &str = r##"class Screepub < Formula
+  desc "Screenplay PDF to reflowable EPUB3/MOBI converter"
+  homepage "https://github.com/ssandweiss/screepub"
+  # Written whole by tools/bump-tap.sh in the screepub repository at every
+  # release: edit it there, not here. Apple silicon only since the release
+  # after 0.9.0; Intel Macs are no longer supported.
+  url "https://github.com/ssandweiss/screepub/releases/download/v0.8.0/screepub-cli-macos-arm64.tar.gz"
+  sha256 "SHA_A"
+  license "AGPL-3.0-or-later"
+
+  livecheck do
+    url "https://github.com/ssandweiss/screepub/releases/latest"
+    strategy :github_latest
+  end
+
+  # A signed, notarized Mach-O built by the project's release workflow.
+  # There is no source build here, so no bottles.
+  depends_on arch: :arm64
+  depends_on :macos
+
+  def install
+    # The tarball holds a single file, already named plain screepub.
+    bin.install "screepub"
+  end
+
+  test do
+    # Pins the download to the version this formula claims: a stale url or a
+    # mismatched asset fails here rather than at somebody's prompt.
+    assert_match version.to_s, shell_output("#{bin}/screepub --version")
+    assert_match "screenplay", shell_output("#{bin}/screepub --help")
+  end
+end
+"##;
+
 #[test]
-fn the_formula_is_byte_for_byte_the_one_the_shell_script_writes() {
-    // While tools/bump-tap.sh exists: its heredoc, expanded, is this
-    // command's formula, so the first Rust-driven release leaves no diff
-    // in the tap that the shell would not have.
-    let script = xtask::paths::repo_root().join("tools/bump-tap.sh");
-    let Some(sh) = common::read_lf(&script) else {
-        return;
-    };
-    let start = sh.find("<<EOF\n").expect("the heredoc") + "<<EOF\n".len();
-    let end = start + sh[start..].find("\nEOF\n").expect("its end") + 1;
-    let expanded = sh[start..end]
-        .replace("$REPO", "ssandweiss/screepub")
-        .replace("$VERSION", "0.8.0")
-        .replace("$ARM_SHA", &sha('a'));
+fn the_formula_is_byte_for_byte_the_one_the_shell_script_wrote() {
+    // Was checked against the script itself while it existed; its last
+    // output is the pin now, so the tap sees no diff the shell would not
+    // have made.
     assert_eq!(
         xtask::bump_tap::formula("ssandweiss/screepub", "0.8.0", &sha('a')),
-        expanded
+        SHELL_FORMULA_0_8_0.replace("SHA_A", &sha('a'))
     );
 }
 

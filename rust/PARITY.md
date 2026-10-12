@@ -37,17 +37,17 @@ move too.
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
-| tests/build-app-bundle.test.ts | 72 | sp-release + xtask | done | one implementation, sp-release's (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs; sp-release/tests/pipeline.rs and compat.rs); `cargo xtask build-app-bundle` keeps the Tauri path until cutover and drives sp-release for `--app native`: xtask/tests/build_app_bundle.rs (74) and native_bundle.rs (18) run against it. The Tauri-bundler checks (overlay, discovered artifact, magic) retire with tauri-bundler |
+| tests/build-app-bundle.test.ts | 72 | sp-release + xtask | done | one implementation, sp-release's (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs; sp-release/tests/pipeline.rs and compat.rs); `cargo xtask build-app-bundle` drives sp-release for the native window, the only one since the cutover: xtask/tests/build_app_bundle.rs (56) and native_bundle.rs (18) run against it. Retired at the cutover with the Tauri window: the `cargo tauri build` invocation, its overlays, the three-file version gate (package.json, the Tauri Cargo.toml, tauri.conf.json) and the Tauri floor; the whole runs drive the native path's fake tools |
 | tests/build-cli-e2e.test.ts | 4 | xtask | done | xtask/tests/build_cli_e2e.rs (2): opt-in (SCREEPUB_REAL_CLI_BUILD=1, the Mac half also SCREEPUB_REAL_CODESIGN=1), host target and Mac only, since each target builds on its own runner |
 | tests/build-cli.test.ts | 83 | xtask | done | xtask/tests/build_cli.rs (89) |
-| tests/build-sidecar.test.ts | 28 | xtask | retired | the Rust app links the engine, so there is no sidecar (Decisions); what survives (the Rust triples, now the CLI's release targets) is xtask/tests/cli_targets.rs (6); `build-sidecar` answers "retired" |
+| tests/build-sidecar.test.ts | 28 | xtask | retired | the Rust app links the engine, so there is no sidecar (Decisions); what survives (the Rust triples, now the CLI's release targets) is xtask/tests/cli_targets.rs (5); `build-sidecar`, which answered "retired", was removed at the cutover |
 | tests/build-update-manifest.test.ts | 20 | sp-release | done | sp-release/src/manifest.rs (shape pinned byte for byte, every refusal); xtask/tests/build_update_manifest.rs (21) runs the same checks through `cargo xtask build-update-manifest`, a thin caller |
-| tests/bump-version.test.ts | 15 | xtask | done | xtask/tests/bump_version.rs (20), on scratch repos shaped before and after cutover |
+| tests/bump-version.test.ts | 15 | xtask | done | xtask/tests/bump_version.rs (15), on scratch copies of the Rust workspace's version files, the only ones since the cutover (the package.json, tauri.conf.json and screepub-desktop lock entry checks went with those files) |
 | tests/bundle-archive.test.ts | 27 | xtask | done | xtask/tests/bundle_archive.rs (28): the READER of .deb and .rpm, on the same frozen archive bytes; the writers are sp-release's (archive.rs, linux.rs) |
 | tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
 | tests/capture-chrome.test.ts | 5 | xtask | done | xtask/tests/capture_chrome.rs (7), against a fake Chrome; the last needs a real Chrome and skips without it |
 | tests/capture.test.ts | 46 | xtask | done | xtask/tests/capture.rs (47) and capture_picture.rs (6); still drives desktop/ui/app.js, through a copy of its argument builders checked against app.js (Decisions) |
-| tests/check-latest.test.ts | 17 | sp-release | done | sp-release/src/check_latest.rs, the one judgement (taken from xtask's port, the faithful one); xtask/tests/check_latest.rs (18) runs every case through `cargo xtask check-latest`'s thin wrapper, against a fake GitHub on 127.0.0.1 |
+| tests/check-latest.test.ts | 17 | sp-release | done | sp-release/src/check_latest.rs, the one judgement (taken from xtask's port, the faithful one); xtask/tests/check_latest.rs (19) runs every case through `cargo xtask check-latest`'s thin wrapper, against a fake GitHub on 127.0.0.1, with the key the shipped app trusts (sp_update::PUBKEY) |
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | done | sp-cli/tests/cli_app_defaults.rs (8), through the CLI; the app-defaults reads themselves are sp-engine/tests/settings_app_defaults.rs |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | done | sp-cli/tests/cli_app_settings.rs (56): the handler in process with an injected path, platform and env (43), the verb through the CLI with HOME in the scratch folder (13) |
 | tests/cli-azw3.test.ts | 4 | sp-cli | done | sp-cli/tests/cli_azw3.rs (4), read back with sp-azw3's tests/common/kf8_reader.rs |
@@ -73,9 +73,9 @@ move too.
 | tests/desktop-bundle-step.test.ts | 7 | xtask | todo | CI workflow steps |
 | tests/desktop-layout-measured.test.ts | 16 | sp-app | partial | geometry in m/layout.rs; drawn rects measured in behaviors.rs (C3, L rows); see "Window test files" |
 | tests/desktop-layout.test.ts | 26 | sp-app | partial | see "Window test files" |
-| tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes notes.js and sp-app's notes_release.rs; the window's half is sp-app's (Window test files) |
+| tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes sp-app's notes_release.rs (notes.js and the notes-surface.js check went with the Tauri window); the window's half is sp-app's (Window test files) |
 | tests/desktop-shell.test.ts | 67 | sp-app | partial | Tauri pins retire with Tauri; see "Window test files" |
-| tests/desktop-tokens.test.ts | 9 | sp-app | done | xtask/tests/desktop_tokens.rs (11): the generator, plus sp-app's theme.rs held to brand/; skips the desktop/ui half once it is gone; and theme.rs, fonts.rs |
+| tests/desktop-tokens.test.ts | 9 | sp-app | done | xtask/tests/brand_tokens.rs (5): sp-app's theme.rs held to brand/tokens.json and brand/tokens.css, the six bundled fonts (rust/crates/sp-app/fonts) byte-identical to site/fonts, THIRD-PARTY-NOTICES naming that folder; and theme.rs, fonts.rs. The six checks of the generated desktop/ui/tokens.css retired with it and with `build-desktop-tokens` at the cutover |
 | tests/desktop-ui.test.ts | 425 | sp-app | partial | see "Window test files" |
 | tests/desktop-update-install.test.ts | 20 | sp-app | partial | m/update_flow.rs; the run waits on the wave 3 transport |
 | tests/device-classify.test.ts | 13 | sp-device | done | sp-device/tests/device_classify.rs |
@@ -141,9 +141,9 @@ move too.
 | tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
 | tests/signature-box.ts | 0 | sp-update + xtask | done | test helper: sp-update/tests/common/mod.rs (TestKey signs as tauri-cli does), xtask/tests/packaging_common/mod.rs (fake boxes and tauri-cli's published test key) |
 | tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
-| tests/smoke-bundle.test.ts | 35 | xtask | done | xtask/tests/smoke_bundle.rs (38); the native window's bundles get the binary-and-version check only until sp-app has a headless mode (Decisions) |
+| tests/smoke-bundle.test.ts | 35 | xtask | done | xtask/tests/smoke_bundle.rs (41): the window inside each bundle runs headless (`--version --json`, then `--smoke` of field-station.pdf) where the Tauri sidecar ran, with scratch settings, library and a Calibre guard; one check runs the workspace's own built window for real |
 | tests/smoke-cli.test.ts | 21 | xtask | done | xtask/tests/smoke_cli.rs (21) |
-| tests/tap-scripts.test.ts | 15 | xtask | done | xtask/tests/tap_tools.rs (18): bump-tap and check-tap against a fake tap and a fake GitHub |
+| tests/tap-scripts.test.ts | 15 | xtask | done | xtask/tests/tap_tools.rs (18): bump-tap and check-tap against a fake tap and a fake GitHub; the formula is pinned to what tools/bump-tap.sh's heredoc last wrote (the script went at the cutover) |
 | tests/temp-hygiene.test.ts | 14 | xtask | todo | must cover the Rust tests' temp folders |
 | tests/tool-temp-folders.test.ts | 4 | xtask | done | xtask/tests/tool_temp_folders.rs (4): smoke-cli twice, smoke-bundle, verify-signing |
 | tests/torture-coverage.test.ts | 6 | xtask | done | xtask/tests/torture_coverage.rs (10), with `device-checklist` |
@@ -151,9 +151,9 @@ move too.
 | tests/torture-markup.test.ts | 10 | xtask | done | xtask/tests/fixture.rs (markup_*, wrap_*: 10) |
 | tests/torture-pictures.test.ts | 14 | sp-parser + sp-engine | done | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks in sp-engine/tests/torture_pictures.rs (7) |
 | tests/torture.test.ts | 23 | sp-parser + sp-engine | done | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks in sp-engine/tests/torture.rs (they read torture.pdf through sp-pdf and serialize with sp-fountain) |
-| tests/update-compare-module.test.ts | 9 | sp-app | done | m/update_compare.rs; one Rust copy serves both |
+| tests/update-compare-module.test.ts | 9 | sp-app | done | m/update_compare.rs and sp-engine/tests/update_compare.rs hold the answers the TypeScript engine recorded (every is_newer pair, normalize_version, the describe suffixes, pick_update word for word, should_check); the generated update-compare.js, `build-update-compare` and xtask/tests/update_compare.rs retired with desktop/ui at the cutover |
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
-| tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (17) runs the readers and the signer through `cargo xtask update-signature`'s module |
+| tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (18) runs the readers and the signer through `cargo xtask update-signature`'s module, and the tag-time gate over sp_update::PUBKEY or `--pubkey` (`--pubkey-from-config` went with tauri.conf.json) |
 | tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
 | tests/workflow-shell.test.ts | 3 | xtask | todo |  |
@@ -599,26 +599,26 @@ cutover.
 | tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | drives desktop/ui today; the egui window is driven natively at cutover | partial: still drive desktop/ui; replaced at cutover |
 | tools/capture/frame.html, hero.html | HTML | capture-screens (picture frames) | stay HTML, like site/ | done: stay HTML |
 | tools/make-og.sh | shell | site/og-card.html (by hand) | `make-og` | done: xtask/tests/capture_picture.rs, capture_chrome.rs |
-| tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | done: xtask/tests/bump_version.rs (20) |
+| tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | done: xtask/tests/bump_version.rs (15); writes the Rust workspace's version files and sp-app's notes, the only version files since the cutover |
 | tools/release-notes.ts | TS | SKILL (the draft's facts) | `release-notes` | done: xtask/tests/release_notes_tool.rs (27) |
-| tools/build-desktop-notes.ts | TS | desktop.yml, bump-version.ts, SKILL | `build-desktop-notes` (also writes sp-app's notes) | done: xtask/tests/desktop_notes.rs (13) |
-| tools/build-desktop-tokens.ts | TS | desktop.yml | `build-desktop-tokens` | done: xtask/tests/desktop_tokens.rs (11) |
-| tools/build-update-compare.ts | TS | desktop.yml | `build-update-compare` | done: xtask/tests/update_compare.rs (13) |
+| tools/build-desktop-notes.ts | TS | desktop.yml, bump-version.ts, SKILL | `build-desktop-notes` (writes sp-app's notes; notes.js went with the Tauri window) | done: xtask/tests/desktop_notes.rs (13) |
+| tools/build-desktop-tokens.ts | TS | desktop.yml | none: `build-desktop-tokens` retired at the cutover with desktop/ui/tokens.css; the brand reader it kept is src/brand.rs | retired: what still has a subject is xtask/tests/brand_tokens.rs (5) |
+| tools/build-update-compare.ts | TS | desktop.yml | none: `build-update-compare` retired at the cutover with desktop/ui/update-compare.js | retired: the recorded answers are held by sp-engine/tests/update_compare.rs and sp-app's model/update_compare.rs |
 | tools/hooks/require-release-notes.sh | shell | the owner's PreToolUse hook (.claude/settings.local.json), SKILL | `require-release-notes` | done: xtask/tests/release_hook.rs (24) |
 | tools/bump-tap.sh | shell | release.yml (`tap`), SKILL | `bump-tap` | done: xtask/tests/tap_tools.rs |
 | tools/check-tap.sh | shell | release.yml, tap-freshness.yml | `check-tap` | done: xtask/tests/tap_tools.rs |
-| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | done: thin over sp-release/src/check_latest.rs (`sp-release check-latest` in release.yml and tap-freshness.yml); xtask/tests/check_latest.rs (18) |
+| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | done: thin over sp-release/src/check_latest.rs (`sp-release check-latest` in release.yml and tap-freshness.yml), checking against sp_update::PUBKEY; xtask/tests/check_latest.rs (19) |
 | tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | done: xtask/tests/build_cli.rs (89), build_cli_e2e.rs (2, opt-in); its archives are written by sp-release's `cli_tarball`/`cli_zip`, as release.yml's `sp-release cli-archive` |
-| tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | stays data, read by `build-cli` | done: stays data; three bun-era keys go at cutover (Decisions) |
+| tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | none: deleted at the cutover; `build-cli` signs with the hardened runtime and no entitlements | retired (Decisions); xtask/tests/build_cli.rs and build_cli_e2e.rs hold the signature to having none |
 | tools/smoke-cli.ts | TS | ci.yml, release.yml, desktop.yml, CLAUDE.md | `smoke-cli` | done: xtask/tests/smoke_cli.rs (21) |
 | tools/verify-signing.ts | TS | docs/mac-qa.md (by hand) | `verify-signing` | done: xtask/tests/verify_signing.rs (34) |
-| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | done: the files are sp-release's (mac, linux, nsis, archive, sign); the xtask command orders the steps (xtask/tests/build_app_bundle.rs, native_bundle.rs); release.yml calls sp-release directly |
+| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | done: the files are sp-release's (mac, linux, nsis, archive, sign); the xtask command orders the steps for the native window, the only one (xtask/tests/build_app_bundle.rs, native_bundle.rs); icons from rust/crates/sp-app/icons, the updater key sp_update::PUBKEY unless `--pubkey`; release.yml calls sp-release directly |
 | tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | done: xtask/tests/bundle_archive.rs (28); reading only |
-| tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | partial: xtask/tests/smoke_bundle.rs (38); left: running the native window headless (Decisions) |
+| tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | done: xtask/tests/smoke_bundle.rs (41); runs the native window headless (Decisions) |
 | tools/dmg.ts | TS | smoke-bundle.ts, verify-signing.ts | module `dmg`, shared by `smoke-bundle` and `verify-signing` | done: src/dmg.rs, the one copy smoke-bundle and verify-signing share |
-| tools/update-signature.ts | TS | release.yml | `update-signature` | done: thin over sp-release (boxes.rs, sign.rs) and sp-update (verify.rs); xtask/tests/update_signature.rs (17), sp-release/tests/compat.rs |
+| tools/update-signature.ts | TS | release.yml | `update-signature` (the gate reads sp_update::PUBKEY, or `--pubkey`) | done: thin over sp-release (boxes.rs, sign.rs) and sp-update (verify.rs); xtask/tests/update_signature.rs (18), sp-release/tests/compat.rs |
 | tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | done: thin over sp-release/src/manifest.rs (`sp-release manifest` in release.yml); xtask/tests/build_update_manifest.rs (21) |
-| tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | `build-sidecar` answers "retired" | retired |
+| tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | none: `build-sidecar` answered "retired" until the cutover removed it | retired |
 | tools/sidecar-targets.ts | TS | build-sidecar.ts, desktop/src-tauri/src/sidecar.rs | none | retired |
 | tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine asked to show its work (dump.ts also writes each picture's raw pixels to `pixels/`); deleted at cutover with it | stays until cutover |
 
@@ -930,12 +930,15 @@ names the check it affects.
   floors are now 1 MB for the binary and 300 KB for the archive, set where
   a truncated write would land. Re-tune them on the first real release
   build of sp-cli (`RELEASE_FLOORS` in xtask/src/cli_build/build.rs).
-- **DECIDED: the Mac CLI's bun-era entitlements go at cutover.**
-  tools/macos/screepub-cli.entitlements grants allow-jit,
+- **DONE: the Mac CLI's bun-era entitlements went at cutover.**
+  tools/macos/screepub-cli.entitlements granted allow-jit,
   allow-unsigned-executable-memory and disable-library-validation because
-  bun's JIT needed them; a Rust binary needs none of the three. They are
-  dropped at cutover, and the checks that pin the file
-  (xtask/tests/build_cli.rs, build_cli_e2e.rs) change then.
+  bun's JIT needed them; a Rust binary needs none of the three. The file is
+  deleted, `build-cli` signs with the hardened runtime and no entitlements,
+  and the checks hold it to that: xtask/tests/build_cli.rs (no
+  `--entitlements` in the codesign call, the file stays gone) and
+  build_cli_e2e.rs (a real ad-hoc signature carries no
+  `com.apple.security` key; run 2026-10-12 on an Apple silicon Mac).
 - **DECIDED: release CI builds each target on its own native runner.**
   macos-15 (arm64), windows-latest, ubuntu-latest (x64) and
   ubuntu-24.04-arm (linux-arm64), with no cross-compiling. That is also why
@@ -976,20 +979,45 @@ names the check it affects.
   Wayland and xkbcommon at run time. The .deb release.yml publishes gets
   its Depends: measured on the built binary (dpkg-shlibdeps, passed to
   `sp-release deb --depends`), but the .rpm declares no Requires: and a
-  laptop `cargo xtask build-app-bundle --app native` writes neither. Add
+  laptop `cargo xtask build-app-bundle` writes neither. Add
   the rpm's Requires: (sp-release linux.rs) before cutover.
-- **sp-app needs a headless mode for smoke-bundle (open).** The Tauri
-  bundle's smoke runs its engine sidecar (`--version --json` and a
-  conversion). The native window has neither, so smoke-bundle checks only
-  that its binary is present, executable and declares the right version.
-  sp-app needs `--version --json` and `--smoke <pdf>` for the full check.
-- **Before cutover: the icons and the updater key (build-app-bundle).**
-  `cargo xtask build-app-bundle --app native` looks for icons in
-  rust/crates/sp-app/icons first and falls back to desktop/src-tauri/icons,
-  and reads the updater public key from tauri.conf.json (release.yml hands
-  sp-release its icons by path, and the app's own key is sp_update::PUBKEY). The icons move to rust/crates/sp-app/icons, and the
-  public key needs a home of its own outside tauri.conf.json, before
-  desktop/ goes.
+- **sp-app's headless mode runs in smoke-bundle (done, 2026-10-12).** The
+  Tauri bundle's smoke ran its engine sidecar (`--version --json` and a
+  conversion). sp-app's window binary now answers both
+  (src/headless.rs), and `cargo xtask smoke-bundle` runs the window out of
+  each .deb, .rpm, .dmg and NSIS installer that way: the version must be
+  the bundle's, and `--smoke tests/fixtures/field-station.pdf --out
+  <work>/smoke.epub` must write a zip, after the binary-and-declared-version
+  checks it already had. Every run gets SCREEPUB_CONFIG_DIR and
+  SCREEPUB_LIBRARY under its scratch folder and a CALIBRE_CONFIG_DIRECTORY
+  under a file, so nothing can be made there.
+- **The icons and the updater key (build-app-bundle, done at cutover).**
+  `cargo xtask build-app-bundle` reads icons from rust/crates/sp-app/icons
+  alone, and the updater public key from sp_update::PUBKEY, the one home of
+  the key the shipped app trusts, unless `--pubkey` names another (a
+  rehearsal's throwaway key). `update-signature`'s tag-time gate and
+  `check-latest` read the same constant. tauri.conf.json, which carried the
+  key, the identity and the endpoint, is gone; native_bundle.rs and
+  build_update_manifest.rs pin what it last said.
+- **xtask after the cutover (2026-10-12, branch rust/cutover-xtask).**
+  Nothing in xtask runs bun or builds the Tauri window from this tree
+  any more, except `rehearse-handover`, which by design builds the TAGGED
+  0.11.1 window (with that tag's own bun) to watch it update itself into
+  this checkout's app, and the capture tool, whose port is its own branch.
+  Retired: `build-sidecar`, `build-desktop-tokens` and
+  `build-update-compare`, with the files they answered for. `bump-version`
+  writes rust/Cargo.toml, rust/Cargo.lock and sp-app's notes;
+  `build-desktop-notes` writes sp-app's notes; `build-app-bundle` and
+  `smoke-bundle` know one window (`--app native` is still taken, `--app
+  tauri` is refused with the reason, `--config` is gone);
+  `update-signature` checks sp_update::PUBKEY (or `--pubkey`);
+  `release-notes` counts a change under rust/ as shipping unless it is
+  xtask, the oracle, the handover rehearsal, the port's ledgers, or a
+  crate's tests, examples or benches. Checks that read a deleted file now
+  pin what the file last said: the Tauri window's identity, endpoint and
+  key, and the formula tools/bump-tap.sh wrote. The one silent pass found:
+  check-latest's end-to-end test had taken its no-key branch since
+  tauri.conf.json went; it now requires the shipped key.
 - **One implementation per release job (2026-10-11, the xtask
   integration).** The xtask tool branches and rust/release each ported the
   release tools. sp-release, the library release.yml runs, is now the one
@@ -1006,10 +1034,9 @@ names the check it affects.
   injectable fetcher. The xtask commands keep their names and flags for
   the /release skill and are thin callers: `update-signature`,
   `build-update-manifest`, `check-latest`, `build-cli`'s packing, and
-  `build-app-bundle --app native` (which still orders codesign, notarytool,
-  stapler, hdiutil and makensis on a laptop). What stays xtask's alone:
-  the Tauri path of build-app-bundle until cutover, bundle-archive and
-  smoke-bundle (readers), the one DMG helper (src/dmg.rs), verify-signing,
+  `build-app-bundle` (which still orders codesign, notarytool, stapler,
+  hdiutil and makensis on a laptop). What stays xtask's alone:
+  bundle-archive and smoke-bundle (readers), the one DMG helper (src/dmg.rs), verify-signing,
   and the tap tools. The native window's executable is `screepub-desktop`
   everywhere (xtask's branch had called it Screepub, screepub-window and
   Screepub.exe); xtask's tests were moved onto sp-release's names. Tests:

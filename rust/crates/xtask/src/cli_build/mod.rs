@@ -1,6 +1,8 @@
 //! Building and checking the screepub CLI: was tools/build-cli.ts,
-//! smoke-cli.ts, verify-signing.ts (with the half of tools/dmg.ts it uses),
-//! and the retired build-sidecar.ts and sidecar-targets.ts.
+//! smoke-cli.ts and verify-signing.ts (with the half of tools/dmg.ts it
+//! uses). build-sidecar.ts and sidecar-targets.ts retired with the engine
+//! sidecar: the Rust app links the engine, and their Rust triples are
+//! [`targets`] now.
 //!
 //! - [`build`]: `cargo xtask build-cli`, compile (cargo, crate sp-cli), sign,
 //!   notarize, package and verify the CLI per target.
@@ -233,15 +235,4 @@ pub fn smoke_cli_main(args: &[String]) -> u8 {
 /// `cargo xtask verify-signing`: its exit code.
 pub fn verify_signing_main(args: &[String]) -> u8 {
     signing::main(args)
-}
-
-/// The words `build-sidecar` answers with.
-pub const BUILD_SIDECAR_RETIRED: &str = "xtask build-sidecar: retired. The Rust app links the engine directly, so there is no sidecar to build. Build the CLI with `cargo xtask build-cli`.";
-
-/// `cargo xtask build-sidecar`: the Rust app links sp-engine directly, so
-/// there is no engine sidecar to compile (rust/PARITY.md, "The engine
-/// sidecar"). Exit 2, the code a refused tool answers, with the reason.
-pub fn build_sidecar_main(_args: &[String]) -> u8 {
-    eprintln!("{BUILD_SIDECAR_RETIRED}");
-    2
 }

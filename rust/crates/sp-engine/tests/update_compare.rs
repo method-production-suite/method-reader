@@ -271,3 +271,91 @@ fn a_missing_current_version_is_refused() {
             .contains("could not read")
     );
 }
+
+// ---- the recorded answers ----
+//
+// What the TypeScript engine answered (src/update/compare.ts, through
+// bun), once recorded in xtask's tests/data/compare-answers.json and held
+// against the window's generated module and sp-app's copy by xtask's
+// tests/update_compare.rs until the Rust cutover retired both. The
+// questions and the answers, exactly as recorded.
+
+const RECORDED_IS_NEWER: [(&str, &str, bool, &str); 14] = [
+    ("0.6.0", "0.6.0-1-g965cb10", false, "0.6.0"),
+    ("0.6.0", "0.6.0-1-g965cb10-dirty", false, "0.6.0"),
+    ("0.6.0", "0.6.0-dirty", false, "0.6.0"),
+    ("0.7.0", "0.6.0-1-g965cb10", true, "0.7.0"),
+    ("0.6.1", "0.6.0", true, "0.6.1"),
+    ("0.6.0", "0.6.0", false, "0.6.0"),
+    ("0.5.4", "0.6.0", false, "0.5.4"),
+    ("0.10.0", "0.9.0", true, "0.10.0"),
+    ("1.0.0", "0.99.99", true, "1.0.0"),
+    ("0.6.0", "0.6.0-beta.1", true, "0.6.0"),
+    ("0.6.0", "0.3.0-dev", true, "0.6.0"),
+    ("0.6.0-beta.10", "0.6.0-beta.9", true, "0.6.0-beta.10"),
+    ("v0.4.0", "0.3.0", true, "0.4.0"),
+    ("0.3.0+ci.7", "0.3.0", false, "0.3.0"),
+];
+const RECORDED_SUFFIXES: [(&str, bool); 6] = [
+    ("1-g965cb10", true),
+    ("dirty", true),
+    ("beta.1", false),
+    ("dev", false),
+    ("1-g", false),
+    ("x-g965cb10", false),
+];
+
+#[test]
+fn the_recorded_answers_is_newer_and_normalize_version() {
+    for (candidate, current, newer, normalized) in RECORDED_IS_NEWER {
+        assert_eq!(is_newer(candidate, current), newer, "{candidate} {current}");
+        assert_eq!(normalize_version(candidate), normalized, "{candidate}");
+    }
+}
+
+#[test]
+fn the_recorded_answers_is_describe_suffix() {
+    for (suffix, answer) in RECORDED_SUFFIXES {
+        assert_eq!(is_describe_suffix(suffix), answer, "{suffix}");
+    }
+}
+
+#[test]
+fn the_recorded_answers_pick_update_word_for_word() {
+    assert_eq!(refusal(pick_update(None)), "no update was reported");
+    assert_eq!(
+        pick("0.7.0", "0.6.0"),
+        UpdateDecision::Offer {
+            offer: true,
+            version: "0.7.0".into()
+        }
+    );
+    assert_eq!(
+        refusal(pick("0.6.0", "0.6.0-1-g965cb10")),
+        "0.6.0 is not newer than the running 0.6.0-1-g965cb10"
+    );
+    assert_eq!(
+        refusal(pick("not-a-version", "0.6.0")),
+        "could not read the versions: offered \"not-a-version\", running \"0.6.0\""
+    );
+    assert_eq!(
+        refusal(pick("0.6.0", "")),
+        "could not read the versions: offered \"0.6.0\", running \"\""
+    );
+}
+
+#[test]
+fn the_recorded_answers_should_check() {
+    let answers: Vec<bool> = [
+        (false, None),
+        (true, None),
+        (true, Some(NOW - hours(1.0))),
+        (true, Some(NOW - hours(25.0))),
+        (true, Some(NOW + hours(1.0))),
+    ]
+    .iter()
+    .map(|(o, l)| should_check(*o, *l, NOW))
+    .collect();
+    assert_eq!(answers, [false, true, false, true, false]);
+    assert_eq!(CHECK_INTERVAL_MS, 86_400_000.0);
+}

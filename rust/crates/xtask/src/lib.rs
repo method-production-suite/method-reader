@@ -13,6 +13,7 @@ pub mod parity;
 pub mod paths;
 pub mod table;
 
+pub mod brand;
 pub mod bump_tap;
 pub mod bump_version;
 pub mod calibre_config;
@@ -21,7 +22,6 @@ pub mod check_latest;
 pub mod check_tap;
 pub mod cli_build;
 pub mod desktop_notes;
-pub mod desktop_tokens;
 pub mod device_checklist;
 pub mod dmg;
 pub mod fixture;
@@ -109,11 +109,6 @@ pub const COMMANDS: &[Command] = &[
         main: desktop_notes::main,
     },
     Command {
-        name: "build-desktop-tokens",
-        help: "regenerate the window's colour tokens from brand/",
-        main: desktop_tokens::main,
-    },
-    Command {
         name: "require-release-notes",
         help: "the Claude Code PreToolUse hook: no release tag without its notes",
         main: release_hook::main,
@@ -150,7 +145,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "build-app-bundle",
-        help: "build the app bundles for this platform (Tauri window, or --app native)",
+        help: "build the window's app bundles for this platform",
         main: packaging::build_app_bundle_main,
     },
     Command {
@@ -165,7 +160,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "update-signature",
-        help: "the tag-time gate: does the app's config trust a real updater key",
+        help: "the tag-time gate: does the app trust a real updater key (sp_update::PUBKEY)",
         main: packaging::update_signature_main,
     },
     Command {
@@ -177,16 +172,6 @@ pub const COMMANDS: &[Command] = &[
         name: "rehearse-handover",
         help: "a local Tauri 0.11.1 window updating itself into this checkout's app",
         main: rehearse::main,
-    },
-    Command {
-        name: "build-update-compare",
-        help: "regenerate the window's version-compare module",
-        main: packaging::build_update_compare_main,
-    },
-    Command {
-        name: "build-sidecar",
-        help: "retired: the Rust app links the engine, there is no sidecar",
-        main: cli_build::build_sidecar_main,
     },
 ];
 

@@ -5,9 +5,11 @@
 //! The judgement and the fetching order are sp-release's
 //! ([`sp_release::check_latest`]), the one implementation `sp-release
 //! check-latest` runs in release.yml and tap-freshness.yml. This command
-//! keeps the old name and flags for the /release skill, reads the key the
-//! Tauri window's config trusts, and fetches through [`http`], whose bases
-//! the environment can move so tests point it at a fake GitHub.
+//! keeps the old name and flags for the /release skill, checks against the
+//! key the shipped app trusts ([`sp_update::PUBKEY`]; until the Rust cutover
+//! it read the Tauri window's tauri.conf.json), and fetches through
+//! [`http`], whose bases the environment can move so tests point it at a
+//! fake GitHub.
 //!
 //! Exit 0 when the manifest the app will fetch names the newest release,
 //! points every platform at an asset that release carries, pastes the
@@ -18,7 +20,6 @@
 pub mod http;
 
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use http::{Bases, Fetcher};
 pub use sp_release::check_latest::{
@@ -94,25 +95,10 @@ pub fn check_latest(
     .into()
 }
 
-/// What the shipped app trusts: tauri.conf.json's plugins.updater.pubkey
-/// while the Tauri window exists. The Rust app has no updater key yet;
-/// when it has one, its location is read here. Empty when there is none,
-/// which the judgement reports.
-pub fn configured_pubkey(repo_dir: &Path) -> String {
-    let conf = repo_dir.join("desktop/src-tauri/tauri.conf.json");
-    let Ok(text) = std::fs::read_to_string(conf) else {
-        return String::new();
-    };
-    serde_json::from_str::<serde_json::Value>(&text)
-        .ok()
-        .and_then(|v| {
-            v.get("plugins")?
-                .get("updater")?
-                .get("pubkey")?
-                .as_str()
-                .map(str::to_string)
-        })
-        .unwrap_or_default()
+/// What the shipped app trusts: [`sp_update::PUBKEY`], the one home of
+/// the updater's public key.
+pub fn trusted_pubkey() -> &'static str {
+    sp_update::PUBKEY
 }
 
 fn parse_args(args: &[String]) -> Result<(Option<String>, String), String> {
@@ -150,9 +136,9 @@ pub fn main(args: &[String]) -> u8 {
         }
     };
     let bases = Bases::from_env();
-    let pubkey = configured_pubkey(&crate::paths::repo_root());
+    let pubkey = trusted_pubkey();
     let mut fetcher = http::real_fetcher(&bases);
-    match check_latest(&mut fetcher, &bases, &repo, &pubkey, version.as_deref()) {
+    match check_latest(&mut fetcher, &bases, &repo, pubkey, version.as_deref()) {
         Verdict::Ok { version, platforms } => {
             println!(
                 "{MANIFEST_NAME} serves {version} for {}, signed by the key the app trusts.",

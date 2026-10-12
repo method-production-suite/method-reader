@@ -18,8 +18,7 @@ use xtask::cli_build::RunResult;
 use xtask::cli_build::archive::archive_entries;
 use xtask::cli_build::binfmt::{HEAD_BYTES, detect_binary_format, read_binary_format};
 use xtask::cli_build::build::{
-    BuildArgs, BuildEnv, MacSigning, RELEASE_FLOORS, build_all, mac_entitlements, parse_checksums,
-    verify_artifact,
+    BuildArgs, BuildEnv, MacSigning, RELEASE_FLOORS, build_all, parse_checksums, verify_artifact,
 };
 use xtask::cli_build::smoke::smoke_cli;
 use xtask::cli_build::targets::{archive_path, binary_path, host_target, mac_host_target};
@@ -91,7 +90,6 @@ fn a_real_host_build_is_genuine_runs_the_fixtures_and_its_verification_is_not_va
     let env = BuildEnv {
         workspace,
         cargo_target_dir: cargo,
-        entitlements: mac_entitlements(),
         spawn: &spawn,
         env: &no_env,
         floors: RELEASE_FLOORS,
@@ -169,7 +167,6 @@ fn on_a_mac_mac_compiles_signs_with_the_release_flags_packages_the_signed_bytes_
     let env = BuildEnv {
         workspace,
         cargo_target_dir: cargo,
-        entitlements: mac_entitlements(),
         spawn: &spawn,
         env: &no_env,
         floors: RELEASE_FLOORS,
@@ -207,7 +204,9 @@ fn on_a_mac_mac_compiles_signs_with_the_release_flags_packages_the_signed_bytes_
             .collect::<Vec<_>>(),
     )
     .stdout;
-    assert!(ents.contains("com.apple.security.cs.allow-jit"), "{ents}");
+    // No entitlements at all: the bun-era three (allow-jit among them)
+    // went at the Rust cutover, so the hardened runtime is unrelaxed.
+    assert!(!ents.contains("com.apple.security"), "{ents}");
 
     // The archive holds the SIGNED bytes: packaging came after signing.
     let entries = archive_entries(&archive_path(target, &out)).unwrap();
