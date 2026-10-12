@@ -113,6 +113,22 @@ pub fn render_manifest(
     }))
 }
 
+/// Point every platform at `<base>/<file name>` instead of the release:
+/// the handover rehearsal serves the archive from a local folder. Never
+/// used by release.yml.
+pub fn rebase(manifest: &mut Value, base: &str) {
+    if let Some(platforms) = manifest["platforms"].as_object_mut() {
+        for p in platforms.values_mut() {
+            let name = p["url"]
+                .as_str()
+                .and_then(|u| u.rsplit('/').next())
+                .unwrap_or_default()
+                .to_string();
+            p["url"] = Value::String(format!("{}/{name}", base.trim_end_matches('/')));
+        }
+    }
+}
+
 /// `JSON.stringify(manifest, null, 2)` plus a newline.
 pub fn to_text(manifest: &Value) -> String {
     let mut s = serde_json::to_string_pretty(manifest).unwrap_or_default();

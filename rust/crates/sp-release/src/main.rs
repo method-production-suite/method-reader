@@ -15,6 +15,7 @@ const USAGE: &str = "sp-release: Screepub's release tools
                                              TAURI_SIGNING_PRIVATE_KEY_PASSWORD; writes F.sig)
   keygen          --out KEYFILE [--password P]   (THROWAWAY keys: rehearsals and tests)
   manifest        --dir ARRIVALS --version V --out latest.json [--repo OWNER/NAME]
+                  [--asset-base URL]   (rehearsal only: files served from URL/<name>)
   verify-update   --dir ARRIVALS --manifest latest.json [--pubkey BASE64]
   cli-archive     --binary BIN --kind macos-arm64|linux-x64|linux-arm64|windows-x64 --out DIR
   deb | rpm       --version V --window BIN --icon SIZE=PNG... --resource FILE... --arch A
@@ -189,7 +190,10 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_millis() as u64)
                 .unwrap_or(0);
-            let m = manifest::render_manifest(&v, &artifacts, &repo, &manifest::iso_utc(now))?;
+            let mut m = manifest::render_manifest(&v, &artifacts, &repo, &manifest::iso_utc(now))?;
+            if let Some(base) = a.opt("asset-base") {
+                manifest::rebase(&mut m, &base);
+            }
             write(&a.path("out")?, manifest::to_text(&m).as_bytes())
         }
         "verify-update" => {
