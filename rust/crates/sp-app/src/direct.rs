@@ -24,6 +24,10 @@ use serde_json::Value;
 
 use crate::engine::{Engine, Reply, Request};
 
+/// Each engine call's thread stack: 8 MiB, a main thread's on macOS and
+/// Linux.
+const ENGINE_STACK: usize = 8 * 1024 * 1024;
+
 enum Line {
     Out(String),
     Err(String),
@@ -107,6 +111,11 @@ impl Engine for DirectEngine {
         let (tx, rx) = channel();
         let worker = std::thread::Builder::new()
             .name("screepub-engine".into())
+            // The stack the `screepub` binary's main thread has (std's
+            // default for a spawned thread is 2 MiB), so the window and the
+            // CLI run the same engine with the same headroom: a stack
+            // overflow aborts the process, past any catch_unwind.
+            .stack_size(ENGINE_STACK)
             .spawn(move || {
                 // The count ends when the engine itself returns, not when
                 // the window stops listening.
