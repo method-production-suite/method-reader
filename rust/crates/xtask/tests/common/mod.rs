@@ -246,3 +246,17 @@ pub fn noise(n: usize, seed: u64) -> Vec<u8> {
     out.truncate(n);
     out
 }
+
+/// tauri-cli 2.11.4's own test key (helpers/updater_signature.rs), published
+/// in its source and encrypted with an empty password. Not a credential.
+pub const TAURI_TEST_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5dkpDN09RZm5GeVAzc2RuYlNzWVVJelJRQnNIV2JUcGVXZUplWXZXYXpqUUFBQkFBQUFBQUFBQUFBQUlBQUFBQTZrN2RnWGh5dURxSzZiL1ZQSDdNcktiaHRxczQwMXdQelRHbjRNcGVlY1BLMTBxR2dpa3I3dDE1UTVDRDE4MXR4WlQwa1BQaXdxKy9UU2J2QmVSNXhOQWFDeG1GSVllbUNpTGJQRkhhTnROR3I5RmdUZi90OGtvaGhJS1ZTcjdZU0NyYzhQWlQ5cGM9Cg==";
+
+/// The public half of [`TAURI_TEST_KEY`], as tauri.conf.json would carry it.
+pub fn tauri_test_public_key() -> String {
+    let sk = minisign::SecretKeyBox::from_string(&unb64(TAURI_TEST_KEY))
+        .unwrap()
+        .into_secret_key(Some(String::new()))
+        .unwrap();
+    let pk = minisign::PublicKey::from_secret_key(&sk).unwrap();
+    STANDARD.encode(pk.to_box().unwrap().to_string())
+}
