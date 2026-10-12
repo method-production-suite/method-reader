@@ -191,22 +191,31 @@ impl Book {
 
     /// Paint the slice of the book from `top` down, `height` tall.
     pub fn paint(&mut self, top: f32, height: u32) -> ColorImage {
-        let height = height.clamp(1, 8192);
+        self.paint_scaled(top, height, 1.0)
+    }
+
+    /// The same slice at `scale` device pixels per point (2 on a Retina
+    /// screen), so the type is as sharp as the window's own.
+    pub fn paint_scaled(&mut self, top: f32, height: u32, scale: f32) -> ColorImage {
+        let scale = scale.clamp(1.0, 4.0);
+        let w = ((self.width.max(1) as f32) * scale).round() as u32;
+        let h = ((height.clamp(1, 8192) as f32) * scale)
+            .round()
+            .min(16_000.0) as u32;
         let base = self.doc.as_mut();
         base.set_viewport_scroll(blitz_dom::Point {
             x: 0.0,
             y: f64::from(top.max(0.0)),
         });
-        let mut painter =
-            anyrender_vello_cpu::VelloCpuScenePainter::new(self.width.max(1) as u16, height as u16);
-        blitz_paint::paint_scene(&mut painter, base, 1.0, self.width.max(1), height, 0, 0);
+        let mut painter = anyrender_vello_cpu::VelloCpuScenePainter::new(w as u16, h as u16);
+        blitz_paint::paint_scene(&mut painter, base, f64::from(scale), w, h, 0, 0);
         let pixmap = painter.finish();
         let pixels = pixmap
             .data()
             .iter()
             .map(|p| Color32::from_rgba_premultiplied(p.r, p.g, p.b, p.a))
             .collect();
-        ColorImage::new([self.width.max(1) as usize, height as usize], pixels)
+        ColorImage::new([w as usize, h as usize], pixels)
     }
 
     /// The scenes as read.js's marks.
@@ -332,6 +341,13 @@ mod tests {
         let mut dark = Book::new(&oracle("field-station"), 706, &DARK, true);
         assert_eq!(px(&light.paint(0.0, 10), 2, 2), LIGHT.paper);
         assert_eq!(px(&dark.paint(0.0, 10), 2, 2), DARK.paper);
+    }
+
+    #[test]
+    fn a_retina_slice_has_twice_the_pixels() {
+        let mut book = Book::new(&oracle("field-station"), 706, &LIGHT, false);
+        let img = book.paint_scaled(0.0, 100, 2.0);
+        assert_eq!(img.size, [1412, 200]);
     }
 
     #[test]

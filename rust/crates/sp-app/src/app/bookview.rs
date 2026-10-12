@@ -103,7 +103,9 @@ impl View {
         let at = top.round() as i32;
         let fresh = !matches!(&self.slice, Some((_, t, hh)) if *t == at && *hh == h);
         if fresh {
-            let image = self.book.paint(at as f32, h);
+            let image = self
+                .book
+                .paint_scaled(at as f32, h, ui.ctx().pixels_per_point());
             let tex = match self.slice.take() {
                 Some((mut tex, _, _)) => {
                     tex.set(image, TextureOptions::LINEAR);
@@ -139,7 +141,9 @@ impl View {
         };
         let h = block.rect.height().max(1.0).round() as u32;
         let tex = self.blocks.entry(index).or_insert_with(|| {
-            let image = self.book.paint(block.rect.top(), h);
+            let image = self
+                .book
+                .paint_scaled(block.rect.top(), h, ui.ctx().pixels_per_point());
             ui.ctx()
                 .load_texture(format!("book-block-{index}"), image, TextureOptions::LINEAR)
         });
