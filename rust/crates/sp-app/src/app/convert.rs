@@ -252,13 +252,8 @@ fn draw_result(app: &mut App, path: &str, answer: &Value) {
     app.script = Some(script);
     paint_result(app);
     app.script_changed();
-    if app.show.is_some() {
-        let now = (app.host.clock)();
-        let words = first_page_words(app);
-        if let Some(show) = app.show.as_mut() {
-            show.adopt(words.as_deref(), now);
-        }
-    }
+    // The page show learns of the book once its first page is laid out
+    // (adopt_when_laid).
     app.restore_focus = true;
 }
 
@@ -813,22 +808,40 @@ pub fn draw_reveal_foot(app: &mut App, ui: &mut Ui) {
     }
 }
 
-/// The width the result's first page is laid out at.
-const FIRST_PAGE_WIDTH: f32 = layout::RESULT_PAGE;
-
-/// The book's headings and paragraphs as the first page lays them out, for
-/// the page show to pair its typed paragraphs with; None with no pages.
-fn first_page_words(app: &mut App) -> Option<Vec<String>> {
-    let html = app
+/// The page show hears that the book exists once the result's first page
+/// is laid out (page-show.js took bookAt when the result's frame had
+/// loaded): its typed paragraphs are paired with the book's headings and
+/// paragraphs as that page lays them out, and the pictures of the blocks
+/// they will become are asked for ahead of the wave. A book with no pages
+/// is heard at once.
+pub fn adopt_when_laid(app: &mut App, ctx: &egui::Context) {
+    if app.convert.view != View::Done || app.show.as_ref().is_none_or(|s| s.book_arrived()) {
+        return;
+    }
+    let pages = app
         .script
         .as_ref()
-        .map(|s| s.preview_html.clone())
-        .filter(|h| !h.trim().is_empty())?;
-    let (t, dark) = (app.tokens(), app.dark);
-    let view = app
-        .views
-        .get(Place::FirstPage, &html, FIRST_PAGE_WIDTH, &t, dark);
-    Some(view.book.blocks.iter().map(|b| b.words.clone()).collect())
+        .is_some_and(|s| !s.preview_html.trim().is_empty());
+    let words = if pages {
+        match app.views.peek_fresh(Place::FirstPage) {
+            Some(view) => Some(view.words()),
+            None => return,
+        }
+    } else {
+        None
+    };
+    let now = app.now();
+    let Some(show) = app.show.as_mut() else {
+        return;
+    };
+    show.adopt(words.as_deref(), now);
+    let wanted: Vec<usize> = show
+        .sources()
+        .map(|s| s.iter().flatten().copied().collect())
+        .unwrap_or_default();
+    if let Some(view) = app.views.peek_fresh_mut(Place::FirstPage) {
+        view.want_blocks(ctx, wanted);
+    }
 }
 
 /// The result's first page: the book's own, opened on its first scene a
@@ -855,10 +868,8 @@ fn first_page(app: &mut App, ui: &mut Ui, rect: Rect) {
         .views
         .get(Place::FirstPage, &html, rect.width(), &t, dark);
     let scene_top = view
-        .book
-        .scenes
-        .iter()
-        .find(|(_, heading)| !heading.is_empty())
+        .laid()
+        .and_then(|l| l.scenes.iter().find(|(_, heading)| !heading.is_empty()))
         .map(|(m, _)| m.top)
         .unwrap_or(0.0);
     let top = (scene_top - 1.5 * BOOK_EM).max(0.0);

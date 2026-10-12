@@ -174,7 +174,7 @@ impl App {
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
-            views: bookview::Views::default(),
+            views: bookview::Views::new(mode == Mode::Threads),
             frame_log: crate::framelog::FrameLog::from_env(),
             wakes: crate::model::motion::Wakes::default(),
             wake: crate::model::motion::Wake::Idle,
@@ -198,6 +198,7 @@ impl App {
     pub fn set_repaint(&mut self, ctx: egui::Context) {
         self.repaint = Some(ctx.clone());
         self.update.repaint = Some(ctx.clone());
+        self.views.set_repaint(ctx.clone());
         self.rt.set_repaint(ctx);
     }
 
@@ -531,6 +532,10 @@ impl App {
         self.wakes = crate::model::motion::Wakes::default();
         self.dark = ui.ctx().system_theme() == Some(egui::Theme::Dark);
         self.views.scale = ui.ctx().pixels_per_point();
+        // The book's layouts and pictures, as its thread has made them.
+        if self.views.pump(ui.ctx()) {
+            self.moving();
+        }
         self.pump();
         if self.update.pump(&mut self.host) {
             // The new copy is starting: this one goes (tauri's restart).
@@ -543,6 +548,7 @@ impl App {
         frame::input(self, ui);
         self.stops.clear();
         frame::draw(self, ui);
+        convert::adopt_when_laid(self, ui.ctx());
         panel::give_back_focus(self, ui.ctx());
         if self.restore_focus {
             self.restore_focus = false;
@@ -622,6 +628,23 @@ pub fn viewport() -> egui::ViewportBuilder {
         .with_fullsize_content_view(true)
         .with_title_shown(false)
         .with_titlebar_shown(false)
+}
+
+/// How the window is opened: [`viewport`], presented on vsync with one
+/// frame in flight. eframe's default lets the CPU run two frames ahead of
+/// the screen, so a frame could begin 3 ms after the last and the next 13
+/// ms after that while the screen still showed one every 8.3 ms; anything
+/// moving was drawn at the wrong moments and stuttered. With one frame in
+/// flight each frame begins as the screen takes the last, on its refresh.
+pub fn native_options() -> eframe::NativeOptions {
+    eframe::NativeOptions {
+        viewport: viewport(),
+        wgpu_options: eframe::WgpuConfiguration {
+            surface: eframe::SurfaceConfig::LOW_LATENCY,
+            ..Default::default()
+        },
+        ..Default::default()
+    }
 }
 
 /// eframe's window: the App, drawn once a frame.

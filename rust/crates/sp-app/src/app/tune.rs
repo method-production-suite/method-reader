@@ -613,7 +613,7 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
             let view = app
                 .views
                 .get(super::bookview::Place::Tune, &html, inner.width(), &t, dark);
-            let content = view.book.height;
+            let content = view.height();
             ui.scope_builder(egui::UiBuilder::new().max_rect(inner), |ui| {
                 egui::ScrollArea::vertical()
                     .id_salt("tune-preview")

@@ -179,13 +179,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         geometry.script.width
     } - 2.0;
     let dark = app.dark;
+    // Until the book's first layout comes from its thread there is no
+    // index to draw (not an empty one: that would say there are no scenes).
     let scenes = app
         .views
         .get(Shown::Read, &html, book_width, &t, dark)
-        .book
-        .scenes
-        .clone();
-    let entries = rail_entries(&scenes);
+        .laid()
+        .map(|l| l.scenes.clone());
+    let laid = scenes.is_some();
+    let entries = rail_entries(&scenes.unwrap_or_default());
     let mut rail_bottom = top.y;
     let open = app.read.index_open;
     // Beside the script, opening and shutting slides the index 0.8rem and
@@ -200,7 +202,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
             motion::INDEX_SLIDE,
         )
     };
-    if shown > 0.0 {
+    if shown > 0.0 && laid {
         let rail_rect = if geometry.stacked {
             Rect::from_min_size(top, Vec2::new(block.width, 104.0))
         } else {
@@ -274,11 +276,14 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
     let now = app.now();
     let view = app.views.get(Shown::Read, &html, book_width, &t, dark);
     let marks = view.marks();
-    let content = view.book.height;
+    let content = view.height();
+    let fresh = view.fresh();
     app.read.marks = marks.clone();
     app.read.content_height = content;
     app.read.frame_height = height;
-    if app.read.restore {
+    // The place goes back once the layout it is measured in is the one
+    // shown (a rebuilt book's, not the one before it).
+    if app.read.restore && fresh {
         app.read.restore = false;
         app.read.scroll_to = Some(scroll_target(&marks, app.read.place.as_ref()));
     }
