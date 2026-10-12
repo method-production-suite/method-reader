@@ -1,0 +1,1105 @@
+{
+  "": {
+    "tokens": [],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n  </Content>\n</FinalDraft>\n"
+  },
+  "# Act One\n\n= The setup\n\nINT. ROOM - DAY\n\n/* a cut scene\nthat is gone */\n\n= pg 2\n\nShe sits.\n": {
+    "tokens": [
+      {
+        "type": "section",
+        "text": "Act One",
+        "depth": 1
+      },
+      {
+        "type": "synopsis",
+        "text": "The setup"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      },
+      {
+        "type": "synopsis",
+        "text": "pg 2"
+      },
+      {
+        "type": "action",
+        "text": "She sits."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>She sits.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "***\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "***"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>***</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "****a****\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "****a****"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Bold+Italic\">a</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "***a** b*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "***a** b*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Bold+Italic\">a</Text><Text Style=\"Italic\"> b</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "**_a_ *b* _**c**_**\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "**_a_ *b* _**c**_**"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Bold+Underline\">a</Text><Text Style=\"Bold\"> </Text><Text Style=\"Bold+Italic\">b</Text><Text Style=\"Bold\"> </Text><Text Style=\"Bold+Underline\">c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "**a *b** c*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "**a *b** c*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Italic\">a b c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "**x***\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "**x***"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Bold\">x</Text><Text>*</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "*a **b* c**\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "*a **b* c**"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Italic\">a b c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "*a *b* c*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "*a *b* c*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Italic\">a b c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "*a*b*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "*a*b*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Italic\">a</Text><Text>b*</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  ".A SHOT #3#\n\nINT./EXT. CAR - DAY #4#\n\nI/E. VAN #5#\n\nEST. CITY\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "A SHOT",
+        "scene_number": "3"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT./EXT. CAR - DAY",
+        "scene_number": "4"
+      },
+      {
+        "type": "scene_heading",
+        "text": "I/E. VAN",
+        "scene_number": "5"
+      },
+      {
+        "type": "scene_heading",
+        "text": "EST. CITY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Shot\" Number=\"3\"><Text>A SHOT</Text></Paragraph>\n    <Paragraph Type=\"Scene Heading\" Number=\"4\"><Text>INT./EXT. CAR - DAY</Text></Paragraph>\n    <Paragraph Type=\"Scene Heading\" Number=\"5\"><Text>I/E. VAN</Text></Paragraph>\n    <Paragraph Type=\"Scene Heading\"><Text>EST. CITY</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  ".FORCED HEADING OF A SCENE\n\n!LOUD ACTION THAT LOOKS LIKE A CUE\n\n@McCLANE\nYippee.\n\n> SMASH CUT\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "FORCED HEADING OF A SCENE"
+      },
+      {
+        "type": "action",
+        "text": "LOUD ACTION THAT LOOKS LIKE A CUE"
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "McCLANE"
+      },
+      {
+        "type": "dialogue",
+        "text": "Yippee."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "transition",
+        "text": "SMASH CUT"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Shot\"><Text>FORCED HEADING OF A SCENE</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>LOUD ACTION THAT LOOKS LIKE A CUE</Text></Paragraph>\n    <Paragraph Type=\"Character\"><Text>McCLANE</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Yippee.</Text></Paragraph>\n    <Paragraph Type=\"Transition\"><Text>SMASH CUT</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "===\n\nBOB\nLeft.\n\nALICE ^\nRight.\n": {
+    "tokens": [
+      {
+        "type": "page_break"
+      },
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Left."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "ALICE"
+      },
+      {
+        "type": "dialogue",
+        "text": "Right."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"General\" StartsNewPage=\"Yes\"><DualDialogue><Paragraph Type=\"Character\"><Text>BOB</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Left.</Text></Paragraph><Paragraph Type=\"Character\"><Text>ALICE</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Right.</Text></Paragraph></DualDialogue></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "> *THE* **END** <\n": {
+    "tokens": [
+      {
+        "type": "centered",
+        "text": "*THE* **END**"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\" Alignment=\"Center\"><Text Style=\"Italic\">THE</Text><Text> </Text><Text Style=\"Bold\">END</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "> FADE OUT.\n": {
+    "tokens": [
+      {
+        "type": "transition",
+        "text": "FADE OUT."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Transition\"><Text>FADE OUT.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "> THE END <\n": {
+    "tokens": [
+      {
+        "type": "centered",
+        "text": "THE END"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\" Alignment=\"Center\"><Text>THE END</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Action\rwith a bare return.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Action\nwith a bare return."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Action</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>with a bare return.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "BOB ^\nNobody on the left.\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Nobody on the left."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>BOB</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Nobody on the left.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Before [[a\nnote]] after.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Before [[a\nnote]] after."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Before after.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Before [[a]]   [[b]]  after.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Before [[a]]   [[b]]  after."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Before after.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Bell\u0007 and form\f feed and ￾ end.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Bell\u0007 and form\f feed and ￾ end."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Bell and form feed and  end.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "CUT TO:\n\n===\n\nBOB\nHi.\n\nALICE ^\nHey.\n\n===\n": {
+    "tokens": [
+      {
+        "type": "transition",
+        "text": "CUT TO:"
+      },
+      {
+        "type": "page_break"
+      },
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hi."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "ALICE"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hey."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      },
+      {
+        "type": "page_break"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Transition\"><Text>CUT TO:</Text></Paragraph>\n    <Paragraph Type=\"General\" StartsNewPage=\"Yes\"><DualDialogue><Paragraph Type=\"Character\"><Text>BOB</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Hi.</Text></Paragraph><Paragraph Type=\"Character\"><Text>ALICE</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Hey.</Text></Paragraph></DualDialogue></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Contact: Only a contact\n\nAction.\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "contact",
+        "text": "Only a contact"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Action.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>Only a contact</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "EXT. FIELD - DAY\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "EXT. FIELD - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>EXT. FIELD - DAY</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "He is *very* **sure**.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "He is *very* **sure**."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>He is </Text><Text Style=\"Italic\">very</Text><Text> </Text><Text Style=\"Bold\">sure</Text><Text>.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "He is *very* sure.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "He is *very* sure."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>He is </Text><Text Style=\"Italic\">very</Text><Text> sure.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. HOUSE - DAY\n\n.LATER\n\nShe waits.\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. HOUSE - DAY"
+      },
+      {
+        "type": "scene_heading",
+        "text": "LATER"
+      },
+      {
+        "type": "action",
+        "text": "She waits."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. HOUSE - DAY</Text></Paragraph>\n    <Paragraph Type=\"Shot\"><Text>LATER</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>She waits.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. HOUSE - DAY\n\n.THE HALL #7#\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. HOUSE - DAY"
+      },
+      {
+        "type": "scene_heading",
+        "text": "THE HALL",
+        "scene_number": "7"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. HOUSE - DAY</Text></Paragraph>\n    <Paragraph Type=\"Shot\" Number=\"7\"><Text>THE HALL</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. HOUSE - DAY #1-A.#\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. HOUSE - DAY",
+        "scene_number": "1-A."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\" Number=\"1-A.\"><Text>INT. HOUSE - DAY</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. HOUSE - DAY #12A#\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. HOUSE - DAY",
+        "scene_number": "12A"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\" Number=\"12A\"><Text>INT. HOUSE - DAY</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. KITCHEN - NIGHT\n\nThe kettle screams.\n\nMARGO\n(to herself)\nNot now.\n\nCUT TO:\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. KITCHEN - NIGHT"
+      },
+      {
+        "type": "action",
+        "text": "The kettle screams."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "parenthetical",
+        "text": "(to herself)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Not now."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "transition",
+        "text": "CUT TO:"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. KITCHEN - NIGHT</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>The kettle screams.</Text></Paragraph>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Parenthetical\"><Text>(to herself)</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Not now.</Text></Paragraph>\n    <Paragraph Type=\"Transition\"><Text>CUT TO:</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. ROOM - DAY\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. ROOM - DAY\n\nBOB\n(fast)\nLeft.\n\nALICE ^\nRight.\n\nThey stop.\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      },
+      {
+        "type": "dual_dialogue_begin"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "left"
+      },
+      {
+        "type": "character",
+        "text": "BOB"
+      },
+      {
+        "type": "parenthetical",
+        "text": "(fast)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Left."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dialogue_begin",
+        "dual": "right"
+      },
+      {
+        "type": "character",
+        "text": "ALICE"
+      },
+      {
+        "type": "dialogue",
+        "text": "Right."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "dual_dialogue_end"
+      },
+      {
+        "type": "action",
+        "text": "They stop."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n    <Paragraph Type=\"General\"><DualDialogue><Paragraph Type=\"Character\"><Text>BOB</Text></Paragraph><Paragraph Type=\"Parenthetical\"><Text>(fast)</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Left.</Text></Paragraph><Paragraph Type=\"Character\"><Text>ALICE</Text></Paragraph><Paragraph Type=\"Dialogue\"><Text>Right.</Text></Paragraph></DualDialogue></Paragraph>\n    <Paragraph Type=\"Action\"><Text>They stop.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. ROOM - DAY\n\nSome action.\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      },
+      {
+        "type": "action",
+        "text": "Some action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Some action.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "INT. ROOM - DAY #A\u0001\"<&>#\n": {
+    "tokens": [
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY #A\u0001\"<&>#"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY #A&quot;&lt;&amp;&gt;#</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO\n  [[fmt: mono]]   spaced\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "[[fmt: mono]]   spaced"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>spaced</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO\nFirst line\nsecond line\n\nAction one\naction two\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "First line\nsecond line"
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "action",
+        "text": "Action one\naction two"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>First line</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>second line</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Action one</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>action two</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO\nI sing:\n~la la la\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "I sing:"
+      },
+      {
+        "type": "lyrics",
+        "text": "la la la"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>I sing:</Text></Paragraph>\n    <Paragraph Type=\"Lyrics\"><Text>la la la</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO\nLine one\r\nline two\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "Line one\nline two"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Line one</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>line two</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO\n　\nafter a wide space\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "MARGO"
+      },
+      {
+        "type": "action",
+        "text": "after a wide space"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>after a wide space</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "MARGO (V.O.) (CONT'D)\nHello.\n": {
+    "tokens": [
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO (V.O.) (CONT'D)"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hello."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Character\"><Text>MARGO (V.O.) (CONT'D)</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Hello.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Notes: a note\nCopyright: (c) nobody\nRevision: Blue\nDate: 2020\n\nAction.\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "notes",
+        "text": "a note"
+      },
+      {
+        "is_title": true,
+        "type": "copyright",
+        "text": "(c) nobody"
+      },
+      {
+        "is_title": true,
+        "type": "revision",
+        "text": "Blue"
+      },
+      {
+        "is_title": true,
+        "type": "date",
+        "text": "2020"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Action.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>2020</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>Blue</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>(c) nobody</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>a note</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "One.\n\n===\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "One."
+      },
+      {
+        "type": "page_break"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>One.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "One.\n\n===\n\nTwo.\n\nThree.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "One."
+      },
+      {
+        "type": "page_break"
+      },
+      {
+        "type": "action",
+        "text": "Two."
+      },
+      {
+        "type": "action",
+        "text": "Three."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>One.</Text></Paragraph>\n    <Paragraph Type=\"Action\" StartsNewPage=\"Yes\"><Text>Two.</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Three.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "She runs.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "She runs."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>She runs.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Title:\n    Line one\n    Line two\n    Line three\nCredit: by\nAuthors: A and B\nSource: a book\nDraft date: today\nContact:\n    one\n    two\n    three\n    four\n    five\n\nINT. X - DAY\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "Line one\nLine two\nLine three"
+      },
+      {
+        "is_title": true,
+        "type": "credit",
+        "text": "by"
+      },
+      {
+        "is_title": true,
+        "type": "authors",
+        "text": "A and B"
+      },
+      {
+        "is_title": true,
+        "type": "source",
+        "text": "a book"
+      },
+      {
+        "is_title": true,
+        "type": "draft_date",
+        "text": "today"
+      },
+      {
+        "is_title": true,
+        "type": "contact",
+        "text": "one\ntwo\nthree\nfour\nfive"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. X - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. X - DAY</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Line one</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Line two</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Line three</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>by</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>A and B</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>a book</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>one</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>two</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>three</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>four</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>five</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>today</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: **THE BIG** _Thing_\n    Part Two\nCredit: Written by\nAuthor: A. Writer\nSource: Based on a story\nDraft date: 1 January 2020\nContact:\n    A. Agent\n    555-0100\n\nINT. ROOM - DAY\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "**THE BIG** _Thing_\nPart Two"
+      },
+      {
+        "is_title": true,
+        "type": "credit",
+        "text": "Written by"
+      },
+      {
+        "is_title": true,
+        "type": "author",
+        "text": "A. Writer"
+      },
+      {
+        "is_title": true,
+        "type": "source",
+        "text": "Based on a story"
+      },
+      {
+        "is_title": true,
+        "type": "draft_date",
+        "text": "1 January 2020"
+      },
+      {
+        "is_title": true,
+        "type": "contact",
+        "text": "A. Agent\n555-0100"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text Style=\"Bold\">THE BIG</Text><Text> </Text><Text Style=\"Underline\">Thing</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Part Two</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Written by</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>A. Writer</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Based on a story</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>A. Agent</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>555-0100</Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text>1 January 2020</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: A Thing\n\nINT. ROOM - DAY\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "A Thing"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>A Thing</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: Draft [[check this]] One\n\nINT. ROOM - DAY\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "Draft [[check this]] One"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Draft One</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: Only\nAuthor: One\n\nAction.\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "Only"
+      },
+      {
+        "is_title": true,
+        "type": "author",
+        "text": "One"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Action.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Only</Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>One</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: Test Piece\n\nINT. ROOM - DAY\n\nMARGO\nHello *there*.\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "Test Piece"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ROOM - DAY"
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "Hello *there*."
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ROOM - DAY</Text></Paragraph>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Hello </Text><Text Style=\"Italic\">there</Text><Text>.</Text></Paragraph>\n  </Content>\n  <TitlePage>\n    <Content>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Left\"><Text></Text></Paragraph>\n      <Paragraph Alignment=\"Center\"><Text>Test Piece</Text></Paragraph>\n    </Content>\n  </TitlePage>\n</FinalDraft>\n"
+  },
+  "Title: [[only a note]]\n\nAction.\n": {
+    "tokens": [
+      {
+        "is_title": true,
+        "type": "title",
+        "text": "[[only a note]]"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Action.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Tom & Jerry say \"<hi>\" > loudly.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Tom & Jerry say \"<hi>\" > loudly."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Tom &amp; Jerry say &quot;&lt;hi&gt;&quot; &gt; loudly.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Tom & Jerry say \"<hi>\".\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Tom & Jerry say \"<hi>\"."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Tom &amp; Jerry say &quot;&lt;hi&gt;&quot;.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Weird: key\n\nAction.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Weird: key"
+      },
+      {
+        "type": "action",
+        "text": "Action."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Weird: key</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>Action.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "Words [[note]] more.\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "Words [[note]] more."
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>Words more.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "[[fmt: sans +1]]\nA shout across the room.\n\nMARGO\n[[fmt: mono]] Typed words [[an aside]] here.\n\n[[a note on its own]]\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "[[fmt: sans +1]]\nA shout across the room."
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "[[fmt: mono]] Typed words [[an aside]] here."
+      },
+      {
+        "type": "dialogue_end"
+      },
+      {
+        "type": "note",
+        "text": "a note on its own"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>A shout across the room.</Text></Paragraph>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Typed words here.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "[[img: p001-01.png w=100 full]]\n\nINT. ARCHIVE - DAY\n\nShe holds up a panel.\n\n[[img: p002-01.png w=70]]\n\nMARGO\nLook at this. [[img: p002-02.png w=40]]\n": {
+    "tokens": [
+      {
+        "type": "note",
+        "text": "img: p001-01.png w=100 full"
+      },
+      {
+        "type": "scene_heading",
+        "text": "INT. ARCHIVE - DAY"
+      },
+      {
+        "type": "action",
+        "text": "She holds up a panel."
+      },
+      {
+        "type": "note",
+        "text": "img: p002-01.png w=70"
+      },
+      {
+        "type": "dialogue_begin"
+      },
+      {
+        "type": "character",
+        "text": "MARGO"
+      },
+      {
+        "type": "dialogue",
+        "text": "Look at this. [[img: p002-02.png w=40]]"
+      },
+      {
+        "type": "dialogue_end"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Scene Heading\"><Text>INT. ARCHIVE - DAY</Text></Paragraph>\n    <Paragraph Type=\"Action\"><Text>She holds up a panel.</Text></Paragraph>\n    <Paragraph Type=\"Character\"><Text>MARGO</Text></Paragraph>\n    <Paragraph Type=\"Dialogue\"><Text>Look at this.</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "\\\\*x*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "\\\\*x*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>\\*x*</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "_*a*_ and *_b_* and __c__\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "_*a*_ and *_b_* and __c__"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Italic+Underline\">a</Text><Text> and </Text><Text Style=\"Italic+Underline\">b</Text><Text> and </Text><Text Style=\"Underline\">c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "_a_b_\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "_a_b_"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text Style=\"Underline\">a</Text><Text>b_</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "a * b * c\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "a * b * c"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>a * b * c</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "a \\_b\\_ c \\\\_d_\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "a \\_b\\_ c \\\\_d_"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>a _b_ c \\_d_</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "lead *﻿x* and *x﻿* and *x*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "lead *﻿x* and *x﻿* and *x*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>lead *﻿x* and *x﻿* and </Text><Text Style=\"Italic\">x</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "nbsp * x* and *y　*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "nbsp * x* and *y　*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>nbsp * x* and *y　*</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "plain﷐ sentinel﷖ text ﷯*x*\n": {
+    "tokens": [
+      {
+        "type": "action",
+        "text": "plain﷐ sentinel﷖ text ﷯*x*"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Action\"><Text>plain sentinel text </Text><Text Style=\"Italic\">x</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "~Row *row* row\n~_your_ boat\n": {
+    "tokens": [
+      {
+        "type": "lyrics",
+        "text": "Row *row* row\n_your_ boat"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Lyrics\"><Text>Row </Text><Text Style=\"Italic\">row</Text><Text> row</Text></Paragraph>\n    <Paragraph Type=\"Lyrics\"><Text Style=\"Underline\">your</Text><Text> boat</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  },
+  "~Row, row, row\n~your boat\n": {
+    "tokens": [
+      {
+        "type": "lyrics",
+        "text": "Row, row, row\nyour boat"
+      }
+    ],
+    "fdx": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<FinalDraft DocumentType=\"Script\" Template=\"No\" Version=\"2\">\n  <Content>\n    <Paragraph Type=\"Lyrics\"><Text>Row, row, row</Text></Paragraph>\n    <Paragraph Type=\"Lyrics\"><Text>your boat</Text></Paragraph>\n  </Content>\n</FinalDraft>\n"
+  }
+}
