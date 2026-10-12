@@ -771,6 +771,11 @@ names the check it affects.
   (whose files are up to three times larger). sp-parser now deflates with
   zlib-rs (flate2) at level 6 (`PNG_DEFLATE_LEVEL`): files 2.5% larger than
   zlib-rs 9 on that document, 6% on the script with one large picture.
+  The budget is wall-clock, so an unoptimized build ran out of it on that
+  script (sp-parser's real-script oracle test dropped 107 pictures in a
+  debug build); the workspace now builds sp-parser, sp-pdf and every
+  dependency at opt-level 3 in dev and test profiles, which changes no
+  answer and keeps the tests' timing the shipped program's.
 - **What the parity harness compares, and how (sp-cli, 2026-10-11).** The
   `--debug` dump (`<stem>.elements.json`) is compared as JSON VALUES, not
   bytes: the TypeScript's key order is whatever order each code path built
