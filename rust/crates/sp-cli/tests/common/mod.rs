@@ -35,6 +35,34 @@ pub fn fixture(name: &str) -> PathBuf {
     repo_root().join("tests/fixtures").join(name)
 }
 
+/// `path` with every link resolved (macOS hands out /var paths that are
+/// really /private/var), written the way a person or a file dialog writes
+/// it. On Windows canonicalize answers the verbatim `\\?\C:\...` form,
+/// which turns off the system's own handling of `/` and is never what
+/// reaches the CLI, so the plain drive path is answered instead.
+pub fn canonical(path: &Path) -> PathBuf {
+    let real = path.canonicalize().expect("canonical");
+    #[cfg(windows)]
+    {
+        let text = real.to_string_lossy();
+        if let Some(rest) = text.strip_prefix(r"\\?\") {
+            if !rest.starts_with(r"UNC\") {
+                return PathBuf::from(rest);
+            }
+        }
+    }
+    real
+}
+
+/// `rel` (its parts split on `/`) inside the folder `dir`, with the host's
+/// separator, the way the engine's own paths come back.
+pub fn join(dir: &str, rel: &str) -> String {
+    rel.split('/')
+        .fold(PathBuf::from(dir), |p, part| p.join(part))
+        .to_string_lossy()
+        .into_owned()
+}
+
 /// One run of the CLI.
 #[derive(Debug, Clone)]
 pub struct Ran {
@@ -85,7 +113,7 @@ impl Sandbox {
             .prefix("screepub-cli-test-")
             .tempdir()
             .expect("a scratch folder");
-        let root = dir.path().canonicalize().expect("canonical");
+        let root = canonical(dir.path());
         for d in ["config", "library", "empty"] {
             std::fs::create_dir_all(root.join(d)).expect("mkdir");
         }
@@ -105,11 +133,13 @@ impl Sandbox {
     /// The scratch folder, canonical (macOS hands out /var paths that are
     /// really /private/var).
     pub fn root(&self) -> PathBuf {
-        self.dir.path().canonicalize().expect("canonical")
+        canonical(self.dir.path())
     }
 
+    /// `rel`, its parts split on `/`, inside the scratch folder, with the
+    /// host's separator throughout.
     pub fn path(&self, rel: &str) -> PathBuf {
-        self.root().join(rel)
+        PathBuf::from(join(&self.root().to_string_lossy(), rel))
     }
 
     /// `path` as a string, for argv.

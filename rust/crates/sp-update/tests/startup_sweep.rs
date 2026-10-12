@@ -13,8 +13,22 @@ use std::time::{Duration, SystemTime};
 
 const ME: u32 = 4_000_000_000;
 
+/// Make the folder at `path` look `by` old. Windows opens a folder only
+/// when asked for one (backup semantics), with the right to change its
+/// times.
 fn age(path: &Path, by: Duration) {
-    let f = std::fs::File::open(path).unwrap();
+    let mut open = std::fs::OpenOptions::new();
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_WRITE_ATTRIBUTES: u32 = 0x0100;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        open.access_mode(FILE_WRITE_ATTRIBUTES)
+            .custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
+    }
+    #[cfg(not(windows))]
+    open.read(true);
+    let f = open.open(path).unwrap();
     f.set_modified(SystemTime::now() - by).unwrap();
 }
 

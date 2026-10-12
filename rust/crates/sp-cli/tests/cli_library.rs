@@ -57,14 +57,14 @@ fn nothing_lands_beside_the_pdf_and_everything_lands_in_the_library() {
     assert_eq!(names(&scripts), before);
     assert_eq!(before, ["Bright Angel.pdf"]);
 
-    let folder = format!("{root}/Bright Angel");
+    let folder = common::join(&root, "Bright Angel");
     assert_eq!(
         answer["epubPath"],
-        json!(format!("{folder}/Bright Angel.epub"))
+        json!(common::join(&folder, "Bright Angel.epub"))
     );
     assert_eq!(
         answer["fountainPath"],
-        json!(format!("{folder}/Bright Angel.fountain"))
+        json!(common::join(&folder, "Bright Angel.fountain"))
     );
     assert!(Path::new(answer["epubPath"].as_str().unwrap()).exists());
     assert!(Path::new(answer["fountainPath"].as_str().unwrap()).exists());

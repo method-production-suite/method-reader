@@ -204,12 +204,34 @@ impl Drop for Scratch {
     }
 }
 
+/// The bash a workflow's `shell: bash` step runs under: /bin/bash, and on
+/// Windows the Git Bash that GitHub's runners use for it (the bash on PATH
+/// there can be WSL's, which is another system altogether).
+pub fn bash_program() -> std::path::PathBuf {
+    #[cfg(windows)]
+    {
+        let git_bash = std::env::var_os("ProgramFiles")
+            .map(|p| Path::new(&p).join("Git").join("bin").join("bash.exe"))
+            .filter(|p| p.is_file());
+        git_bash.expect("Git Bash, which the Windows release steps run under")
+    }
+    #[cfg(not(windows))]
+    std::path::PathBuf::from("/bin/bash")
+}
+
 /// Run `script` with bash -c in `cwd`, with exactly `env` (PATH included:
 /// the caller decides what is reachable) and HOME in `cwd`.
 pub fn bash(script: &str, cwd: &Path, env: &[(&str, &str)]) -> Output {
-    let mut cmd = Command::new("/bin/bash");
+    let mut cmd = Command::new(bash_program());
     cmd.arg("-c").arg(script).current_dir(cwd).env_clear();
     cmd.env("HOME", cwd);
+    // Git Bash needs to know where Windows is to start at all.
+    #[cfg(windows)]
+    for k in ["SYSTEMROOT", "WINDIR"] {
+        if let Some(v) = std::env::var_os(k) {
+            cmd.env(k, v);
+        }
+    }
     for (k, v) in env {
         cmd.env(k, v);
     }

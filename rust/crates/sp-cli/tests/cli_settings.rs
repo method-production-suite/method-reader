@@ -29,7 +29,7 @@ impl Script {
             .prefix("screepub-cli-settings-")
             .tempdir()
             .expect("a scratch folder");
-        let path = dir.path().canonicalize().expect("canonical");
+        let path = common::canonical(dir.path());
         let fountain = path.join("Script.fountain");
         std::fs::write(&fountain, "INT. ROOM - DAY\n\nA beat.\n").unwrap();
         Script {
@@ -40,11 +40,11 @@ impl Script {
     }
 
     fn app_settings(&self) -> String {
-        format!("{}/app-settings.json", self.dir)
+        join(&self.dir, "app-settings.json")
     }
 
     fn sidecar(&self) -> String {
-        format!("{}/Script.screepub.json", self.dir)
+        join(&self.dir, "Script.screepub.json")
     }
 
     fn run(&self, set: Option<&str>) -> Result<SettingsResult, EngineError> {
@@ -71,6 +71,11 @@ impl Script {
     fn ok(&self, set: Option<&str>) -> SettingsResult {
         self.run(set).expect("settings")
     }
+}
+
+/// `name` inside the folder `dir`, as the host writes it.
+fn join(dir: &str, name: &str) -> String {
+    Path::new(dir).join(name).to_string_lossy().into_owned()
 }
 
 fn code_of(err: &EngineError) -> &'static str {
@@ -171,7 +176,7 @@ fn set_clamps_rather_than_trusting() {
 fn a_missing_script_is_unreadable_not_an_empty_settings_object() {
     let s = Script::new();
     let err = s
-        .run_on(&format!("{}/nope.fountain", s.dir), None, &s.app_settings())
+        .run_on(&join(&s.dir, "nope.fountain"), None, &s.app_settings())
         .expect_err("refused");
     assert!(err.message().contains("cannot read"), "{}", err.message());
 }

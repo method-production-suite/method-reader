@@ -24,8 +24,30 @@ use common::{Sandbox, repo_root};
 
 // This HOME does not exist: nothing here may depend on, or touch, a real
 // home directory.
+// The handler is driven as THIS host's platform, because the folders it
+// checks and makes are real ones here, and a Windows folder is not a full
+// path by Linux's rules.
+#[cfg(not(windows))]
+const PLATFORM: &str = "linux";
+#[cfg(not(windows))]
 const HOME: &str = "/home/ada";
+#[cfg(not(windows))]
 const HOME_LIBRARY: &str = "/home/ada/Documents/Screepub";
+#[cfg(not(windows))]
+const ENV_LIBRARY: &str = "/env/lib";
+#[cfg(windows)]
+const PLATFORM: &str = "win32";
+#[cfg(windows)]
+const HOME: &str = r"C:\home\ada";
+#[cfg(windows)]
+const HOME_LIBRARY: &str = r"C:\home\ada\Documents\Screepub";
+#[cfg(windows)]
+const ENV_LIBRARY: &str = r"C:\env\lib";
+
+/// `name` inside the folder `dir`, as the host writes it.
+fn under(dir: &str, name: &str) -> String {
+    s(&Path::new(dir).join(name))
+}
 
 /// A scratch folder whose subfolders are numbered, so every test gets its
 /// own. Locked folders are unlocked again before it is removed.
@@ -41,7 +63,7 @@ impl Scratch {
             .prefix("screepub-cli-app-settings-")
             .tempdir()
             .expect("a scratch folder");
-        let root = dir.path().canonicalize().expect("canonical");
+        let root = common::canonical(dir.path());
         Scratch {
             _dir: dir,
             root,
@@ -59,7 +81,7 @@ impl Scratch {
 
     /// A settings.json path inside its own fresh folder, unwritten.
     fn settings_file(&self) -> String {
-        format!("{}/settings.json", self.dir("settings"))
+        under(&self.dir("settings"), "settings.json")
     }
 }
 
@@ -96,7 +118,7 @@ fn deps_on(file: &str, platform: &str, env: Env) -> AppSettingsDeps {
 }
 
 fn deps(file: &str) -> AppSettingsDeps {
-    deps_on(file, "linux", env_with(&[]))
+    deps_on(file, PLATFORM, env_with(&[]))
 }
 
 fn run(set: Option<&str>, deps: &AppSettingsDeps) -> Result<AppSettingsResult, EngineError> {
@@ -194,7 +216,7 @@ fn no_settings_file_shipped_defaults_no_chosen_folder_not_customized() {
 fn a_good_absolute_folder_is_stored_created_and_reported_back_as_chosen() {
     let sc = Scratch::new();
     let file = sc.settings_file();
-    let chosen = format!("{}/not-yet-made", sc.dir("chosen-lib"));
+    let chosen = under(&sc.dir("chosen-lib"), "not-yet-made");
     let result = set(&file, &json!({ "libraryPath": chosen }).to_string());
     assert_eq!(result.library.chosen.as_deref(), Some(chosen.as_str()));
     assert_eq!(result.library.path, chosen);
@@ -322,9 +344,9 @@ fn a_relative_library_path_is_refused_and_nothing_is_written() {
 #[test]
 fn a_path_through_a_regular_file_is_refused_not_a_stack_trace() {
     let sc = Scratch::new();
-    let blocker = format!("{}/not-a-dir", sc.dir("blocker"));
+    let blocker = under(&sc.dir("blocker"), "not-a-dir");
     std::fs::write(&blocker, "x").unwrap();
-    let target = format!("{blocker}/library");
+    let target = under(&blocker, "library");
     let file = sc.settings_file();
     let err = refused(&file, &json!({ "libraryPath": target }).to_string());
     assert_eq!(code_of(&err), "bad-settings");
@@ -337,7 +359,7 @@ fn a_regular_file_at_the_exact_library_path_is_refused_in_plain_words_and_a_good
     // formatDefaults here is GOOD: this failure happens in phase 2, the
     // folder probe, after formatDefaults has already been resolved.
     let sc = Scratch::new();
-    let already = format!("{}/already-a-file", sc.dir("eexist"));
+    let already = under(&sc.dir("eexist"), "already-a-file");
     std::fs::write(&already, "x").unwrap();
     let file = sc.settings_file();
     let err = refused(
@@ -363,7 +385,7 @@ fn an_unwritable_folder_is_refused_and_nothing_is_written() {
     let sc = Scratch::new();
     let locked = sc.dir("locked");
     lock(&locked);
-    let target = format!("{locked}/child");
+    let target = under(&locked, "child");
     let file = sc.settings_file();
     let err = refused(&file, &json!({ "libraryPath": target }).to_string());
     assert_eq!(code_of(&err), "bad-settings");
@@ -415,7 +437,7 @@ fn a_good_new_library_path_alongside_a_bad_format_defaults_creates_no_folder_sto
     // Every pure check runs for BOTH keys before either one touches disk.
     let sc = Scratch::new();
     let file = sc.settings_file();
-    let new_folder = format!("{}/not-yet-made", sc.dir("would-be-lib"));
+    let new_folder = under(&sc.dir("would-be-lib"), "not-yet-made");
     let err = refused(
         &file,
         &json!({ "libraryPath": new_folder, "formatDefaults": "nope" }).to_string(),
@@ -453,7 +475,7 @@ fn a_settings_file_that_cannot_be_saved_is_bad_settings_not_a_raw_crash_and_name
     let sc = Scratch::new();
     let locked = sc.dir("locked-config");
     lock(&locked);
-    let file = format!("{locked}/settings.json");
+    let file = under(&locked, "settings.json");
     // libraryPath: null is a pure reset, so the ONLY thing that can fail is
     // the settings write itself.
     let err = refused(&file, r#"{"libraryPath":null}"#);
@@ -556,13 +578,13 @@ fn screepub_library_overrides_path_but_chosen_still_names_the_stored_choice() {
         None,
         &deps_on(
             &file,
-            "linux",
-            env_with(&[("SCREEPUB_LIBRARY", "/env/lib")]),
+            PLATFORM,
+            env_with(&[("SCREEPUB_LIBRARY", ENV_LIBRARY)]),
         ),
     )
     .unwrap();
     assert!(result.library.from_env);
-    assert_eq!(result.library.path, "/env/lib");
+    assert_eq!(result.library.path, ENV_LIBRARY);
     assert_eq!(result.library.chosen.as_deref(), Some(chosen.as_str()));
 }
 
@@ -596,11 +618,17 @@ fn a_stored_relative_path_is_not_reported_as_chosen() {
 fn platform_default_is_correct_for_darwin_with_a_fake_home_independent_of_a_chosen_folder() {
     let sc = Scratch::new();
     let file = sc.settings_file();
-    let chosen = sc.dir("darwin-chosen");
+    // Only read, never made: a path that is full by darwin's rules on
+    // every host.
+    let chosen = "/chosen/darwin-library";
     write_app_settings(&vec![("libraryPath".into(), Some(json!(chosen)))], &file).unwrap();
 
-    let result = run(None, &deps_on(&file, "darwin", env_with(&[]))).unwrap();
-    assert_eq!(result.library.platform_default, HOME_LIBRARY);
+    let env: Env = [("HOME", "/home/ada")].into_iter().collect();
+    let result = run(None, &deps_on(&file, "darwin", env)).unwrap();
+    assert_eq!(
+        result.library.platform_default,
+        "/home/ada/Documents/Screepub"
+    );
     // The chosen folder still wins for `path`.
     assert_eq!(result.library.path, chosen);
 }
@@ -694,7 +722,7 @@ fn a_good_keep_script_settings_alongside_a_bad_format_defaults_stores_neither() 
 fn a_bad_keep_script_settings_alongside_a_good_new_library_path_creates_no_folder_stores_neither() {
     let sc = Scratch::new();
     let file = sc.settings_file();
-    let chosen = format!("{}/not-yet-made", sc.dir("keep-lib"));
+    let chosen = under(&sc.dir("keep-lib"), "not-yet-made");
     let err = refused(
         &file,
         &json!({ "libraryPath": chosen, "keepScriptSettings": "no" }).to_string(),

@@ -1000,9 +1000,9 @@ fn save_epub_writes_the_book_to_out_answers_its_path_and_remembers_it_nothing_op
 /// ladder stand-in to answer.
 fn kindle_book(r: &Rig) -> (String, String, String) {
     let epub = r.book("Script.epub");
-    let fountain = format!("{}/Script.fountain", dirname(&epub));
+    let fountain = common::join(&dirname(&epub), "Script.fountain");
     std::fs::write(&fountain, "INT. ROOM - DAY\n").unwrap();
-    let built = format!("{}/Script.azw3", dirname(&epub));
+    let built = common::join(&dirname(&epub), "Script.azw3");
     std::fs::write(&built, "azw3-bytes").unwrap();
     (epub, fountain, built)
 }

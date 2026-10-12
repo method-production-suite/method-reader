@@ -41,10 +41,25 @@ pub const CALIBRE_GUARD: &str = "/dev/null/screepub-test-calibre-guard";
 
 /// The repository root (rust/crates/sp-engine/../../..).
 pub fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../..")
-        .canonicalize()
-        .expect("the repo root exists")
+    canonical(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.."))
+}
+
+/// `path` with every link resolved, written the way a person or a file
+/// dialog writes it. On Windows canonicalize answers the verbatim
+/// `\\?\C:\...` form, which turns off the system's own handling of `/` and
+/// is never what reaches the engine, so the plain drive path is answered.
+pub fn canonical(path: &Path) -> PathBuf {
+    let real = path.canonicalize().expect("canonical");
+    #[cfg(windows)]
+    {
+        let text = real.to_string_lossy();
+        if let Some(rest) = text.strip_prefix(r"\\?\") {
+            if !rest.starts_with(r"UNC\") {
+                return PathBuf::from(rest);
+            }
+        }
+    }
+    real
 }
 
 /// A scratch folder, removed when dropped. Canonical, so a path the engine
@@ -61,7 +76,7 @@ impl Scratch {
             .prefix(&format!("screepub-{prefix}-"))
             .tempdir()
             .expect("a scratch folder");
-        let path = dir.path().canonicalize().expect("canonical");
+        let path = canonical(dir.path());
         Scratch { _dir: dir, path }
     }
 
@@ -157,11 +172,7 @@ pub fn calibre_config_copy() -> &'static Path {
                 .prefix("screepub-calibre-config-")
                 .tempdir()
                 .expect("scratch");
-            let copy = scratch
-                .path()
-                .canonicalize()
-                .expect("canonical")
-                .join("calibre");
+            let copy = canonical(scratch.path()).join("calibre");
             let real = real_calibre_config();
             if real.exists() {
                 copy_tree(&real, &copy, &real.join("caches"));

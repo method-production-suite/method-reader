@@ -127,7 +127,7 @@ impl Case {
     }
 
     fn join(&self, name: &str) -> String {
-        format!("{}/{name}", self.dir)
+        common::join(&self.dir, name)
     }
 
     /// `{ epub, for }`.
@@ -920,7 +920,7 @@ fn no_temp_file_is_left_beside_the_destination_on_success() {
     let c = Case::new();
     let dest = c.join("clean-success");
     std::fs::create_dir(&dest).unwrap();
-    let out = format!("{dest}/Saved.epub");
+    let out = common::join(&dest, "Saved.epub");
     run(&with_out(c.opts("epub"), &out), &plain()).expect("copied");
     assert_eq!(names(&dest), ["Saved.epub"]);
 }
@@ -930,7 +930,7 @@ fn no_temp_file_is_left_beside_the_destination_on_failure_and_it_answers_export_
     let c = Case::new();
     let dest = c.join("clean-failure");
     std::fs::create_dir(&dest).unwrap();
-    let out = format!("{dest}/Saved.epub");
+    let out = common::join(&dest, "Saved.epub");
     std::fs::create_dir(&out).unwrap();
     let (code, _) = refusal(run(&with_out(c.opts("epub"), &out), &plain()));
     assert_eq!(code, "export-failed");
@@ -952,7 +952,7 @@ fn a_folder_that_cannot_be_written_says_where_the_copy_was_going_never_the_temp_
     let c = Case::new();
     let dest = c.join("read-only");
     std::fs::create_dir(&dest).unwrap();
-    let out = format!("{dest}/Saved.epub");
+    let out = common::join(&dest, "Saved.epub");
     std::fs::set_permissions(&dest, std::fs::Permissions::from_mode(0o555)).unwrap();
     let answer = run(&with_out(c.opts("epub"), &out), &plain());
     std::fs::set_permissions(&dest, std::fs::Permissions::from_mode(0o755)).unwrap();
@@ -971,7 +971,7 @@ fn a_copy_that_fails_at_the_rename_names_the_chosen_path_too_never_the_temp_file
     let c = Case::new();
     let dest = c.join("rename-failure");
     std::fs::create_dir(&dest).unwrap();
-    let out = format!("{dest}/Saved.epub");
+    let out = common::join(&dest, "Saved.epub");
     std::fs::create_dir(&out).unwrap();
     let (code, message) = refusal(run(&with_out(c.opts("epub"), &out), &plain()));
     assert_eq!(code, "export-failed");

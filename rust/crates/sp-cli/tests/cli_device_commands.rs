@@ -152,7 +152,7 @@ fn send_json_reports_the_device_and_the_destination_and_the_bytes_moved() {
         result["device"],
         json!({ "id": volume, "kind": "kindle", "name": "Kindle" })
     );
-    let destination = format!("{volume}/documents/Script.epub");
+    let destination = common::join(&volume, "documents/Script.epub");
     assert_eq!(result["destination"], destination.as_str());
     assert_eq!(read(&destination), "book-bytes");
     // It worked, so it is remembered: by kind, in the settings file under
@@ -208,10 +208,10 @@ fn device_picks_one_of_several_and_the_others_are_untouched() {
     assert_eq!(ran.code, 0);
     let result = ran.json();
     assert_eq!(result["device"]["kind"], "kobo");
-    assert_eq!(result["destination"], format!("{kobo}/Script.epub"));
+    assert_eq!(result["destination"], common::join(&kobo, "Script.epub"));
     // Two devices were connected: an implementation that ignored --device
     // and took the first would have written into the Kindle instead.
-    assert_eq!(read(&format!("{kobo}/Script.epub")), "book-bytes");
+    assert_eq!(read(&common::join(&kobo, "Script.epub")), "book-bytes");
     assert!(!sb.path("vols/Kindle/documents/Script.epub").exists());
 }
 
@@ -296,7 +296,7 @@ fn send_human_output_names_the_device_and_the_destination() {
     assert!(ran.stdout.contains("Kindle"));
     assert!(
         ran.stdout
-            .contains(&format!("{volume}/documents/Script.epub"))
+            .contains(&common::join(&volume, "documents/Script.epub"))
     );
 }
 

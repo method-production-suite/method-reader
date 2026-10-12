@@ -49,7 +49,7 @@ impl Case {
     }
 
     fn join(&self, name: &str) -> String {
-        format!("{}/{name}", self.dir)
+        common::join(&self.dir, name)
     }
 
     fn opts(&self, fountain: Option<&str>, out: Option<&str>, check: bool) -> ExportOptions {

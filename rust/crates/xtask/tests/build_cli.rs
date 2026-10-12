@@ -278,9 +278,14 @@ fn host_target_agrees_with_the_running_process() {
 
 #[test]
 fn takes_a_version_and_an_output_folder() {
-    let a = parse_build_args(&args(&["--version", "0.6.0", "--out", "/tmp/x"])).unwrap();
+    // A full path by this host's rules ("/tmp/x" has no drive on Windows,
+    // so it is resolved against the current one).
+    let scratch = Scratch::new("args");
+    let out = scratch.join("x");
+    let out_arg = out.to_string_lossy().into_owned();
+    let a = parse_build_args(&args(&["--version", "0.6.0", "--out", &out_arg])).unwrap();
     assert_eq!(a.version, "0.6.0");
-    assert_eq!(a.out_dir, PathBuf::from("/tmp/x"));
+    assert_eq!(a.out_dir, out);
     assert_eq!(a.only, ["linux-x64", "linux-arm64", "windows-x64"]);
 }
 
@@ -664,7 +669,8 @@ fn zip_entries_round_trips_a_name_bytes_and_the_executable_bit() {
     let mut zip = zip::ZipWriter::new(std::fs::File::create(&archive).unwrap());
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
-        .unix_permissions(0o755);
+        .unix_permissions(0o755)
+        .system(zip::System::Unix);
     zip.start_file("screepub.exe", options).unwrap();
     zip.write_all(&payload).unwrap();
     zip.finish().unwrap();

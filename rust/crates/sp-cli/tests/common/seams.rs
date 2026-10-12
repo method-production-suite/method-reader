@@ -90,11 +90,7 @@ pub fn calibre_config_copy() -> &'static Path {
                 .prefix("screepub-calibre-config-")
                 .tempdir()
                 .expect("scratch");
-            let copy = scratch
-                .path()
-                .canonicalize()
-                .expect("canonical")
-                .join("calibre");
+            let copy = super::canonical(scratch.path()).join("calibre");
             let real = real_calibre_config();
             if real.exists() {
                 copy_tree(&real, &copy, &real.join("caches"));
