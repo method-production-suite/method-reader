@@ -1,39 +1,48 @@
-# Release on version tags. Requires repo secrets (see docs/release-secrets.md):
+# Release on version tags: the Rust app and the Rust command-line tool.
+# Rewritten for the pure-Rust port (rust-port branch; design in
+# docs/superpowers/specs/2026-10-11-rust-release-design.md). Same secrets,
+# same published names, same order (draft, every upload, then public,
+# latest.json last, then the tap), so every page, the Homebrew formula, the
+# frozen Swift updater and every Tauri window keep working.
+#
+# Secrets (docs/release-secrets.md, unchanged names):
 #   DEVELOPER_ID_CERT_P12_BASE64, CERT_PASSWORD, KEYCHAIN_PASSWORD,
 #   AC_API_KEY_P8_BASE64, AC_API_KEY_ID, AC_API_ISSUER_ID,
-#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set)
-# Least privilege + pinned third-party actions, matching ci.yml. The
-# checkout SHA, setup-bun SHA, and bun-version below are duplicated from
-# ci.yml on purpose (this workflow must validate its own toolchain rather
-# than trust ci.yml's run) — but the THREE PIN VALUES are not independently
-# defended anywhere. Bump them in both files together; bumping bun in
-# ci.yml alone would silently ship a real release on an unproven toolchain.
+#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set),
+#   TAP_TOKEN (optional).
+#
+# The Rust toolchain comes from rust/rust-toolchain.toml (rustup on every
+# hosted runner installs it on first use). Release builds are uncached on
+# purpose: a release runs a handful of times a year and builds from bytes
+# fetched fresh (Cargo.lock pins every crate, --locked enforces it).
+#
+# Every decision lives in sp-release (rust/crates/sp-release), which is
+# tested and hand-runnable; the YAML only calls it and Apple's tools.
 name: release
 on:
   push:
     tags: ['v*']
-  # Re-run entry point: a transient notarization failure used
-  # to mean deleting and re-pushing the tag. Dispatch runs against the
-  # chosen ref; the version comes from the tag that ref carries.
+  # Re-run entry point: a transient notarization failure used to mean
+  # deleting and re-pushing the tag. Dispatch runs against the chosen ref;
+  # the version comes from the tag that ref carries.
   workflow_dispatch:
 permissions:
   contents: read
-# A dispatch re-run while a prior run is still uploading assets must not
-# race it onto the same draft release.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: never
 jobs:
-  # The tag trigger is independent of ci.yml, so without this a tag could
-  # ship a DMG from a commit whose suite fails. Same checks, same runner
-  # family, gating the release job directly.
+  # The tag trigger is independent of rust.yml, so a tag could otherwise
+  # ship from a commit whose checks fail. Same checks, gating everything.
   checks:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Release notes and version are publishable
+      - name: Release notes and tag are publishable
         env:
           TAG: ${{ github.ref_name }}
         run: |
@@ -41,309 +50,478 @@ jobs:
           VERSION="${TAG#v}"
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]] || {
             echo "::error::Tag '$TAG' is not vMAJOR.MINOR.PATCH. Dispatch this workflow against a version TAG, not a branch."; exit 1; }
-
           F="docs/releases/$VERSION.md"
           git cat-file -e "$GITHUB_SHA:$F" 2>/dev/null || {
-            echo "::error file=$F::$F is missing at the tagged commit. Write it (see docs/release-notes-template.md), commit it, then re-tag."; exit 1; }
-
-          # Not a symlink: a committed symlink would be followed and published.
+            echo "::error file=$F::$F is missing at the tagged commit. Write it, commit it, then re-tag."; exit 1; }
           MODE="$(git ls-tree "$GITHUB_SHA" -- "$F" | awk '{print $1}')"
           [ "$MODE" = "100644" ] || { echo "::error file=$F::$F is not a regular file (mode $MODE)"; exit 1; }
-
-          # GitHub's release body caps near 125k; failing here costs 20s
-          # instead of failing after notarization.
           BYTES="$(git cat-file -s "$GITHUB_SHA:$F")"
           [ "$BYTES" -gt 0 ] && [ "$BYTES" -lt 60000 ] || {
             echo "::error file=$F::$F is empty or exceeds the 60000-byte body limit ($BYTES bytes)"; exit 1; }
-
           git cat-file blob "$GITHUB_SHA:$F" | iconv -f UTF-8 -t UTF-8 >/dev/null || {
             echo "::error file=$F::$F is not valid UTF-8"; exit 1; }
-
           # The workflow appends the real checksums; two on one page both
-          # look official.
-          #
-          # Process substitution, not a `cmd | grep` pipe: under pipefail,
-          # an early-exiting grep can SIGPIPE the upstream `git cat-file`,
-          # whose failing exit code can then outrank grep's own "found"
-          # status and read as false — silently waving through a checksum
-          # that's already there.
+          # look official. Process substitution, not a pipe: see the
+          # Tauri-era comment in git history (pipefail and SIGPIPE).
           if HITS="$(grep -niE -m 3 'sha-?256|[0-9a-f]{64}' < <(git cat-file blob "$GITHUB_SHA:$F"))"; then
             echo "::error file=$F::$F contains a checksum. The workflow appends the real ones. Offending line(s):"
             printf '%s\n' "$HITS"
             exit 1
           fi
-
-          # package.json must agree with the tag. tools/build-cli.ts checks
-          # this too, but only after certs are on disk, minutes in.
-          PKG="$(git cat-file blob "$GITHUB_SHA:package.json" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")"
-          [ "$PKG" = "$VERSION" ] || {
-            echo "::error file=package.json::package.json says $PKG but the tag says $VERSION"; exit 1; }
-
-          # The other two version files. package.json is what the ENGINE
-          # reports; Cargo.toml is the crate; tauri.conf.json names the
-          # bundle FILE, the Info.plist, the deb Version: field and the NSIS
-          # product version. They are deliberately allowed to disagree on a
-          # working branch -- that is why no `bun test` asserts this -- but a
-          # tag is the moment they must agree, or a 0.6.0 installer ships an
-          # engine that calls itself 0.5.4. That exact artifact was built on
-          # 2026-09-14; this is the check that would have stopped it.
-          #
-          # Read from the tagged commit, like everything else in this step.
-          # The FIRST version key AFTER [package] -- a dependency's
-          # `version = "2"` must not be mistaken for the crate's, and
-          # [dependencies] can appear first in the file.
-          #
-          # This is NOT the same expression tools/build-app-bundle.ts's
-          # cargoPackageVersion uses: that one cuts the [package] table at the
-          # next header first, and this one is a single lazy scan. They agree
-          # on every real file, and they diverge in the safe direction -- a
-          # [package] with no version of its own makes this scan run on and
-          # report a dependency's, which is a LOUDER gate with a misleading
-          # number, not a silent one. The exception worth knowing: if that
-          # dependency's version ever equalled the tag, this passes and the
-          # bundler's own check fails the build instead. Keep the two spellings
-          # in step by hand, or make this call the exported function.
-          CARGO="$(git cat-file blob "$GITHUB_SHA:desktop/src-tauri/Cargo.toml" \
-            | node -p "(/^\s*\[package\][\s\S]*?^\s*version\s*=\s*\"([^\"]+)\"/m.exec(require('fs').readFileSync(0,'utf8'))||[])[1]||''")"
-          [ "$CARGO" = "$VERSION" ] || {
-            echo "::error file=desktop/src-tauri/Cargo.toml::desktop/src-tauri/Cargo.toml says '$CARGO' but the tag says $VERSION"; exit 1; }
-
-          CONF="$(git cat-file blob "$GITHUB_SHA:desktop/src-tauri/tauri.conf.json" \
-            | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version")"
-          [ "$CONF" = "$VERSION" ] || {
-            echo "::error file=desktop/src-tauri/tauri.conf.json::desktop/src-tauri/tauri.conf.json says $CONF but the tag says $VERSION"; exit 1; }
-
-          # The tagged commit must be ON main. Without this, tagging and then
-          # amending ships a DMG built from an orphaned commit while every
-          # other check passes.
+          # The tagged commit must be ON main.
           git fetch --no-tags origin main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
             echo "::error::The tagged commit is not an ancestor of origin/main. Did you amend after tagging? Re-tag the commit you actually pushed."; exit 1; }
-
-          echo "Release notes, version and ancestry all check out for $TAG."
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - run: bun install --frozen-lockfile
-      # The app that ships must trust a real updater key. From the TAGGED
-      # commit, like every assertion above: a checkout is not proof of what
-      # was tagged. Here and not in `bun test`, because tauri.conf.json
-      # carries an EMPTY key until the owner generates the pair, and a test
-      # that fails until a person acts is a red main for nobody's fault. A
-      # TAG with an empty key would ship an updater that can never accept a
-      # release, which is exactly what ADR 2026-09-21 says v0.6.1 must not
-      # do. The tool prints the key id, so the run log records which key
-      # this release's app trusts.
-      - name: The app trusts a real updater key
+      # ONE version file now: [workspace.package] in rust/Cargo.toml, which
+      # every crate inherits (the About line, `screepub --version`, the
+      # Info.plist, the package metadata). Read from the TAGGED commit.
+      - name: The workspace version is the tag's
+        working-directory: rust
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          git cat-file blob "$GITHUB_SHA:desktop/src-tauri/tauri.conf.json" > "$RUNNER_TEMP/tauri.conf.json"
-          bun tools/update-signature.ts --pubkey-from-config "$RUNNER_TEMP/tauri.conf.json"
-      - run: bunx tsc --noEmit
-      - run: bun test
+          git cat-file blob "$GITHUB_SHA:rust/Cargo.toml" > "$RUNNER_TEMP/Cargo.toml"
+          cargo run --locked --quiet -p sp-release -- version-check --version "${TAG#v}" --cargo-toml "$RUNNER_TEMP/Cargo.toml"
+      - name: Formatting, lints and every test
+        working-directory: rust
+        run: |
+          set -euo pipefail
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo test --workspace --locked
+
+  # The command-line tool for Apple silicon: built, signed with the hardened
+  # runtime (no entitlements: the Rust binary does not JIT, unlike the Bun
+  # one), notarized, THEN packaged, so the tarball holds the signed bytes.
+  # Then the draft release, which stays a draft until `publish`.
   release:
     needs: checks
-    runs-on: macos-15   # codesign and notarytool need a Mac
+    runs-on: macos-15
     permissions:
-      contents: write   # create the GitHub Release + upload assets
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: ./.github/actions/import-developer-id
         with:
-          bun-version: 1.3.14
-      - run: bun install --frozen-lockfile
-
-      - name: Import Developer ID certificate
+          cert-b64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
+          cert-password: ${{ secrets.CERT_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+          ac-key-b64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
+      - name: Build, sign, notarize and package the macOS command-line tool
+        working-directory: rust
         env:
-          CERT_B64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
-          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          KC="$RUNNER_TEMP/build.keychain-db"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
-          security set-keychain-settings -lut 21600 "$KC"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
-          echo "$CERT_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
-          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$CERT_PASSWORD" \
-            -T /usr/bin/codesign -T /usr/bin/security
-          security list-keychains -d user -s "$KC" login.keychain-db
-          # codesign: must be in the partition list or the key is present but
-          # unusable for signing (prompts, which never succeed headlessly).
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
-            -k "$KEYCHAIN_PASSWORD" "$KC" >/dev/null
-
-          # Diagnostics — identity names and SHA-1s only, no key material.
-          echo "── valid identities in the build keychain:"
-          security find-identity -v -p codesigning "$KC" || true
-          echo "── ALL identities (including invalid — an unchained leaf lands here):"
-          security find-identity -p codesigning "$KC" || true
-
-          # Prefer a valid identity; fall back to any Developer ID present,
-          # which is what happens when the intermediate CA is missing so the
-          # leaf can't be validated even though the key is fine.
-          IDENT="$(security find-identity -v -p codesigning "$KC" \
-            | grep 'Developer ID Application' | head -1 | sed -E 's/.*"(.*)"/\1/')"
-          if [ -z "$IDENT" ]; then
-            echo "No VALID Developer ID identity; retrying without the -v filter."
-            IDENT="$(security find-identity -p codesigning "$KC" \
-              | grep 'Developer ID Application' | head -1 | sed -E 's/.*"(.*)"/\1/')"
-          fi
-          if [ -z "$IDENT" ]; then
-            echo "::error::The imported .p12 holds no 'Developer ID Application' identity."
-            echo "What it DID contain is listed above. The usual cause is exporting the"
-            echo "wrong certificate: 'Apple Development' signs builds for your own devices"
-            echo "and CANNOT notarize. In Keychain Access → login → My Certificates, export"
-            echo "the row beginning 'Developer ID Application:', not the 'Apple Development'"
-            echo "one. If the list shows neither, the certificate isn't on that Mac at all."
-            exit 1
-          fi
-          echo "Signing identity: $IDENT"
-          echo "SIGN_IDENTITY=$IDENT" >> "$GITHUB_ENV"
-
-      - name: Write App Store Connect API key
-        env:
-          AC_KEY_B64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
-        run: |
-          echo "$AC_KEY_B64" | base64 --decode > "$RUNNER_TEMP/ac_api_key.p8"
-          echo "AC_API_KEY_PATH=$RUNNER_TEMP/ac_api_key.p8" >> "$GITHUB_ENV"
-
-      - name: Build, sign and notarize the macOS command-line tool
-        env:
-          VERSION: ${{ github.ref_name }}   # 'v0.2.0'; stripped below
+          TAG: ${{ github.ref_name }}
           AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
           set -euo pipefail
-          # The formula's tarball. This used to be the Swift app's
-          # release script; since the CLI move it is tools/build-cli.ts,
-          # which compiles it, signs it (hardened runtime, the CLI's
-          # entitlements), checks what the signature says, notarizes it,
-          # and only THEN packages it, so the tarball holds the signed
-          # bytes. It refuses a tag package.json does not name, and a
-          # missing notary key before compiling anything. Apple silicon
-          # only: the Intel tarball went with Intel Macs, after the
-          # identifier release (plan 2026-10-01-f2-handover-amendment.md).
-          # AC_API_KEY_PATH comes from the step above, via GITHUB_ENV.
-          bun tools/build-cli.ts --version "${VERSION#v}" --out "$RUNNER_TEMP/cli-mac" \
-            --mac --sign "$SIGN_IDENTITY" --notarize
-
-      - name: Publish GitHub Release
+          VERSION="${TAG#v}"
+          cargo build --release --locked -p sp-cli --bin screepub --target aarch64-apple-darwin
+          cargo build --release --locked -p sp-release
+          BIN="target/aarch64-apple-darwin/release/screepub"
+          [ "$(lipo -archs "$BIN")" = arm64 ] || { echo "::error::$BIN is not arm64 only"; exit 1; }
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$BIN"
+          codesign --verify --strict --verbose=2 "$BIN"
+          ditto -c -k "$BIN" "$RUNNER_TEMP/screepub-notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/screepub-notarize.zip" \
+            --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
+          # A bare Mach-O cannot be stapled; Gatekeeper looks its ticket up
+          # online the first time. The same was true of the Bun binary.
+          "$BIN" --version | grep -qx "screepub $VERSION" \
+            || { echo "::error::screepub --version does not say $VERSION"; exit 1; }
+          target/release/sp-release cli-archive --binary "$BIN" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
+      - name: Publish the draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-
-          # The version regex (both here and in the hook) deliberately
-          # accepts a `-rc1`-style suffix, so prereleases are a supported
-          # concept -- but nothing downstream honored that until now.
-          # Without --prerelease, `gh release create` marks EVERY tag,
-          # including v0.5.0-rc1, as a normal release. The retired Swift
-          # app's update checker, still running on any Mac that never
-          # updated, does not poll `GET /releases/latest`; for its notes
-          # sheet it lists every release (`/releases?per_page=30`) and its
-          # own select() filters out anything GitHub marks isPrerelease.
-          # That filter reads the very flag this step sets, so it
-          # reinforces the need for --prerelease rather than replacing it:
-          # skip this flag and a release candidate becomes an ordinary
-          # release both to GitHub and to select().
-          # Expanded below with the ${arr[@]+...} guard, never bare.
-          # The runner is macOS, whose bash is 3.2, where expanding an EMPTY
-          # array under `set -u` is an unbound-variable error rather than
-          # nothing at all. PRE is empty for every ordinary release, so the
-          # plain spelling fails on exactly the releases that matter and
-          # works on the prereleases used to test it. v0.5.0 was the first
-          # normal tag to reach this code and it died here, AFTER
-          # notarization, with the DMG already built.
           PRE=()
           [[ "$VERSION" == *-* ]] && PRE=(--prerelease)
-
-          # Body = the committed notes, then the machine-generated install
-          # line and checksums. Copy bytes; never send content through a
-          # shell variable, and never let it reach printf as a FORMAT string
-          # ("100%" in release prose would silently corrupt the page).
           NOTES="$RUNNER_TEMP/notes.md"
           cp "docs/releases/$VERSION.md" "$NOTES"
           {
             printf '\n\n---\n\n'
-            # Since the identifier release the Mac app is the window's
-            # image, uploaded by app-upload; this job publishes none. Its
-            # checksum is in SHA256SUMS-app beside it.
             printf '%s\n\n' "**Mac:** download \`Screepub-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Screepub to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
             printf '%s\n' "Command-line tool for macOS, SHA-256:"
             printf '\n```\n'
-            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 \
-                screepub-cli-macos-arm64.tar.gz )
+            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 screepub-cli-macos-arm64.tar.gz )
             printf '```\n'
           } >> "$NOTES"
-
-          # Draft first so /releases/latest never returns a release whose
-          # assets are still uploading. Idempotent under workflow_dispatch.
-          # Without this: the app's updater throws on a release with no
-          # DMG, but it has already stamped its "last checked" clock, so a
-          # user who checks in that window is told "no update" for 24h.
-          #
-          # And it STAYS a draft here. Since the identifier release the Mac
-          # image is the window's, attached by app-upload long after this
-          # job ends; the `publish` job at the end makes the release public
-          # once every upload job has had its turn.
+          # Draft first, so /releases/latest never answers with a release
+          # whose files are still arriving. Idempotent under dispatch.
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --draft --title "Screepub $VERSION" --notes-file "$NOTES" ${PRE[@]+"${PRE[@]}"}
           else
             gh release edit "$TAG" --title "Screepub $VERSION" --notes-file "$NOTES"
           fi
-
-          # The one tarball, and never an image: the window's
-          # Screepub-macOS.dmg comes from app-upload, and the frozen Swift
-          # updater must find exactly one .dmg.
-          gh release upload "$TAG" \
-            "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" \
-            --clobber
-
-      # The fallback for when the `tap` job below cannot run (no TAP_TOKEN)
-      # or fails: the SHA, somewhere a person can copy from, so the bump is
-      # paste-and-commit rather than download-and-hash. The CASK was
-      # retired at the identifier release (deprecated) and is never bumped
-      # again; from the release after it, tools/bump-tap.sh turns that
-      # deprecate! into disable!. The formula is Apple silicon only from
-      # that release too, which changed its SHAPE (one url,
-      # `depends_on arch: :arm64`), so the sheet says to run bump-tap.sh,
-      # which writes both, and says what a hand bump of the first such
-      # release must change besides the url.
+          gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" --clobber
       - name: Tap bump crib sheet
         env:
           VERSION: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           V="${VERSION#v}"
-          # Plain command substitution and no arrays: this job runs on
-          # macos-15, whose bash is 3.2, and a bash-3.2 array trap has
-          # already killed one release here after notarization.
           ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole (Apple silicon only, `depends_on arch: :arm64`) and disables the retired cask.\n\n' "$V"
-            printf 'By hand: if the formula still holds the identifier release'"'"'s if/else on the CPU, replace the whole if/else with the one url and sha256 below, and add `depends_on arch: :arm64` on the line before `depends_on :macos`. In `Casks/screepub.rb`, change `deprecate!` to `disable!`, keeping its date (already past, as Homebrew needs). The tag is literal in the url:\n\n```ruby\n'
+            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole.\n\n```ruby\n' "$V"
             printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # The release goes public HERE, last. Since the identifier release the
-  # Mac download (Screepub-macOS.dmg, the window's image) comes from
-  # app-upload, which finishes long after the release job; publishing in
-  # the release job would leave the site's download buttons, the README
-  # link and every Swift app's update check pointing at a public release
-  # with no image for the length of the bundle legs.
-  #
-  # `!cancelled()` and not plain success: a failed bundle or smoke leg must
-  # never strand the release in draft (the command-line downloads still go
-  # out, and a re-run of the failed job attaches the rest). What DOES keep
-  # it in draft is a wrong image list: the frozen Swift updater installs
-  # the FIRST .dmg on the page, so anything but exactly
-  # Screepub-macOS.dmg (or nothing, after a failed leg) stops here.
+  # The other command-line tools, each built AND run on its own OS: Rust
+  # does not cross-compile a whole OS's worth of libraries the way Bun did,
+  # and a native runner is also the smoke test. linux-arm64 now runs on
+  # GitHub's arm64 runner, so it is executed in CI for the first time.
+  cli:
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            kind: linux-x64
+            archive: screepub-cli-linux-x64.tar.gz
+            exe: screepub
+          - os: ubuntu-24.04-arm
+            kind: linux-arm64
+            archive: screepub-cli-linux-arm64.tar.gz
+            exe: screepub
+          - os: windows-latest
+            kind: windows-x64
+            archive: screepub-cli-windows-x64.zip
+            exe: screepub.exe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build, run and package
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          cargo build --release --locked -p sp-cli --bin screepub -p sp-release
+          BIN="target/release/${{ matrix.exe }}"
+          "$BIN" --version | grep -qx "screepub $VERSION" || { echo "::error::screepub --version does not say screepub $VERSION"; exit 1; }
+          # Convert the committed fixtures, the JPEG 2000 one included, as
+          # tools/smoke-cli.ts did, in a scratch folder with empty settings.
+          W="$(mktemp -d)"
+          for f in screenplay jpx; do
+            SCREEPUB_CONFIG_DIR="$W/config" SCREEPUB_LIBRARY="$W/library" \
+              "$BIN" "../tests/fixtures/$f.pdf" --json > "$W/$f.json"
+            grep -Eq '"ok": ?true' "$W/$f.json" || { cat "$W/$f.json"; echo "::error::$f.pdf did not convert"; exit 1; }
+          done
+          SCREEPUB_CONFIG_DIR="$W/config" "$BIN" devices --json > /dev/null
+          target/release/sp-release cli-archive --binary "$BIN" --kind ${{ matrix.kind }} --out "$RUNNER_TEMP/cli"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cli-${{ matrix.kind }}
+          path: ${{ runner.temp }}/cli/${{ matrix.archive }}
+          retention-days: 1
+          if-no-files-found: error
+
+  cli-upload:
+    needs: [release, cli]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: cli-*
+          merge-multiple: true
+          path: cli
+      - name: Checksum, check the count, upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd cli
+          sha256sum screepub-cli-linux-x64.tar.gz screepub-cli-linux-arm64.tar.gz screepub-cli-windows-x64.zip > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          gh release upload "$TAG" screepub-cli-linux-x64.tar.gz screepub-cli-linux-arm64.tar.gz \
+            screepub-cli-windows-x64.zip SHA256SUMS --clobber
+
+  # The installable apps: ONE signed and notarized DMG (Apple silicon), the
+  # signed update archive the Tauri windows and the Rust app install, a
+  # .deb, an .rpm and an AppImage, and one unsigned NSIS installer.
+  app-bundles:
+    needs: checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+          - os: ubuntu-latest
+          - os: windows-latest
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/import-developer-id
+        if: runner.os == 'macOS'
+        with:
+          cert-b64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
+          cert-password: ${{ secrets.CERT_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+          ac-key-b64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
+      - name: Linux build and packaging tools
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev rpm libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
+      - name: Build the window and the release tools
+        working-directory: rust
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = macOS ]; then
+            cargo build --release --locked -p sp-app --target aarch64-apple-darwin
+          else
+            cargo build --release --locked -p sp-app
+          fi
+          cargo build --release --locked -p sp-release
+      - name: macOS app, update archive and image
+        if: runner.os == 'macOS'
+        env:
+          TAG: ${{ github.ref_name }}
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          # Refuse to start without the update key: a release that cannot
+          # sign its update is the one ADR 2026-09-21 forbids.
+          [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] || { echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set"; exit 1; }
+          SP=rust/target/release/sp-release
+          WIN=rust/target/aarch64-apple-darwin/release/screepub-window
+          [ "$(lipo -archs "$WIN")" = arm64 ] || { echo "::error::the window is not arm64 only"; exit 1; }
+          mkdir -p bundles
+          "$SP" mac-app --version "$VERSION" --window "$WIN" \
+            --icon desktop/src-tauri/icons/icon.icns \
+            --resource LICENSE --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
+          APP="$RUNNER_TEMP/app/Screepub.app"
+          # Inside out, never --deep: every executable in Contents/MacOS,
+          # then the bundle. Hardened runtime, timestamp, no entitlements.
+          for exe in "$APP"/Contents/MacOS/*; do
+            codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$exe"
+          done
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          # The designated requirement the frozen Swift updater and TCC
+          # compare: the identifier and the team, as before.
+          codesign -d -r- "$APP" 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
+          grep -q 'identifier "com.darkwell.screepub"' "$RUNNER_TEMP/requirement.txt"
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/app-notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/app-notarize.zip" \
+            --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
+          xcrun stapler staple "$APP"
+          xcrun stapler validate "$APP"
+          spctl -a -t exec -vv "$APP"
+          # The update archive is made from the stapled bundle, so a Tauri
+          # window installs exactly what Gatekeeper approved.
+          "$SP" update-archive --app "$APP" --out bundles/Screepub-macOS.app.tar.gz
+          "$SP" sign-update --file bundles/Screepub-macOS.app.tar.gz --version "$VERSION"
+          # The image: the app and an Applications link, signed, notarized,
+          # stapled. hdiutil is what tauri-bundler's dmg script ran.
+          mkdir -p "$RUNNER_TEMP/dmg"
+          cp -R "$APP" "$RUNNER_TEMP/dmg/"
+          ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
+          hdiutil create -volname Screepub -srcfolder "$RUNNER_TEMP/dmg" -fs HFS+ -format UDZO -ov bundles/Screepub-macOS.dmg
+          codesign --force --timestamp --sign "$SIGN_IDENTITY" bundles/Screepub-macOS.dmg
+          xcrun notarytool submit bundles/Screepub-macOS.dmg \
+            --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
+          xcrun stapler staple bundles/Screepub-macOS.dmg
+          xcrun stapler validate bundles/Screepub-macOS.dmg
+          spctl -a -t open --context context:primary-signature -v bundles/Screepub-macOS.dmg
+      - name: Linux packages
+        if: runner.os == 'Linux'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          SP=rust/target/release/sp-release
+          WIN=rust/target/release/screepub-window
+          # Depends: measured on the binary, never guessed.
+          D="$RUNNER_TEMP/shlibdeps"
+          mkdir -p "$D/debian"
+          printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
+          DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/$WIN" | sed -n 's/^shlibs:Depends=//p')"
+          echo "Depends: $DEPENDS"
+          ICONS=(--icon "32x32=desktop/src-tauri/icons/32x32.png"
+                 --icon "128x128=desktop/src-tauri/icons/128x128.png"
+                 --icon "256x256@2=desktop/src-tauri/icons/128x128@2x.png")
+          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          mkdir -p bundles
+          "$SP" deb --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out bundles
+          "$SP" rpm --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out bundles
+          "$SP" appdir --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --out "$RUNNER_TEMP"
+          # appimagetool and its runtime, pinned by digest (GitHub's own
+          # record of each asset, read 2026-10-11).
+          curl -fsSL -o "$RUNNER_TEMP/appimagetool" \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $RUNNER_TEMP/appimagetool" | sha256sum -c
+          curl -fsSL -o "$RUNNER_TEMP/runtime-x86_64" \
+            https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64
+          echo "2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  $RUNNER_TEMP/runtime-x86_64" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/appimagetool"
+          ARCH=x86_64 "$RUNNER_TEMP/appimagetool" --appimage-extract-and-run \
+            --runtime-file "$RUNNER_TEMP/runtime-x86_64" \
+            "$RUNNER_TEMP/Screepub.AppDir" bundles/Screepub-linux-x86_64.AppImage
+      - name: Windows installer
+        if: runner.os == 'Windows'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          STAGE="$RUNNER_TEMP/nsis"
+          mkdir -p "$STAGE" bundles
+          cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
+          cp LICENSE THIRD-PARTY-NOTICES.md desktop/src-tauri/icons/icon.ico "$STAGE/"
+          command -v makensis >/dev/null || choco install nsis -y --no-progress
+          export PATH="$PATH:/c/Program Files (x86)/NSIS"
+          rust/target/release/sp-release.exe nsis --version "$VERSION" \
+            --src "$(cygpath -w "$STAGE")" --setup "$(cygpath -w "$PWD/bundles/Screepub-windows-x64-setup.exe")" \
+            --script "$STAGE/screepub.nsi"
+          makensis -V3 "$(cygpath -w "$STAGE/screepub.nsi")"
+      # Built is not installed. Each bundle is opened on the machine that
+      # built it and checked for the files and the version it claims.
+      - name: Check each bundle
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          N=0
+          for B in bundles/*; do
+            case "$B" in
+              *.dmg)
+                M="$(mktemp -d)"
+                hdiutil attach -nobrowse -readonly -mountpoint "$M" "$B"
+                PL="$M/Screepub.app/Contents/Info.plist"
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PL")" = "$VERSION" ]
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.darkwell.screepub ]
+                codesign --verify --deep --strict "$M/Screepub.app"
+                hdiutil detach "$M"
+                ;;
+              *.app.tar.gz)
+                M="$(mktemp -d)"
+                tar -xzf "$B" -C "$M"
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$M/Screepub.app/Contents/Info.plist")" = "$VERSION" ]
+                codesign --verify --deep --strict "$M/Screepub.app"
+                xcrun stapler validate "$M/Screepub.app"
+                ;;
+              *.deb)
+                dpkg-deb --info "$B" | grep -q "Version: $VERSION"
+                sudo dpkg -i "$B" || sudo apt-get install -f -y
+                test -x /usr/bin/screepub-desktop
+                grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
+                sudo dpkg -r screepub
+                ;;
+              *.rpm)
+                rpm -qip "$B" | grep -q "Version *: $VERSION"
+                rpm -qlp "$B" | grep -qx /usr/bin/screepub-desktop
+                ;;
+              *.AppImage)
+                M="$(mktemp -d)"
+                (cd "$M" && "$GITHUB_WORKSPACE/$B" --appimage-extract >/dev/null)
+                test -x "$M/squashfs-root/usr/bin/screepub-desktop"
+                ;;
+              *.exe)
+                "$B" //S
+                test -f "$LOCALAPPDATA/Screepub/screepub-desktop.exe"
+                "$LOCALAPPDATA/Screepub/uninstall.exe" //S
+                ;;
+              *.sig) continue ;;
+              *) echo "::error::unexpected file $B"; exit 1 ;;
+            esac
+            N=$((N + 1))
+          done
+          [ "$N" -gt 0 ] || { echo "::error::bundles/ held nothing. NOTHING WAS CHECKED."; exit 1; }
+          echo "$N bundle(s) checked on this runner."
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: app-bundles-${{ matrix.os }}
+          path: bundles/*
+          retention-days: 1
+          if-no-files-found: error
+
+  # The bundles onto the draft, then latest.json LAST, built from what
+  # arrived and verified against the key every Screepub trusts before it
+  # goes up (the manifest points at files by url; uploaded first, it would
+  # describe files not there yet).
+  app-upload:
+    needs: [release, app-bundles]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: app-bundles-*
+          merge-multiple: true
+          path: arrivals
+      - name: Checksums from what arrived, then the count
+        run: |
+          set -euo pipefail
+          cd arrivals
+          rm -f SHA256SUMS-app
+          sha256sum *.deb *.rpm *.AppImage *.dmg *.exe > SHA256SUMS-app
+          # One .deb, one .rpm, one AppImage, ONE .dmg (the frozen Swift
+          # updater takes the first on the page) and one .exe.
+          LINES="$(wc -l < SHA256SUMS-app)"
+          [ "$LINES" -eq 5 ] || { echo "::error::expected 5 app bundles, got $LINES:"; cat SHA256SUMS-app; exit 1; }
+          sha256sum -c SHA256SUMS-app
+      - name: Upload the bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd arrivals
+          gh release upload "$TAG" *.deb *.rpm *.AppImage *.dmg *.exe \
+            Screepub-macOS.app.tar.gz Screepub-macOS.app.tar.gz.sig SHA256SUMS-app --clobber
+      - name: Build latest.json from what arrived, verify it, publish it last
+        working-directory: rust
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "::notice::$TAG is a prerelease, so no latest.json is published: releases/latest/download never resolves to a prerelease."
+            exit 0
+          fi
+          cargo build --release --locked -p sp-release
+          target/release/sp-release manifest --dir ../arrivals --version "$VERSION" --out ../arrivals/latest.json
+          # Every platform verifies with the shipped key and the signed
+          # version (the Rust app's rule; a Tauri window's is the same with
+          # the version optional), or nothing is published.
+          target/release/sp-release verify-update --dir ../arrivals --manifest ../arrivals/latest.json
+          gh release upload "$TAG" ../arrivals/latest.json --clobber
+
+  # Public HERE, last of the uploads. A failed bundle leg never strands the
+  # release in draft; a wrong image list does (the frozen Swift updater).
   publish:
-    needs: [release, cross-upload, app-upload]
+    needs: [release, cli-upload, app-upload]
     if: ${{ !cancelled() && needs.release.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
@@ -361,35 +539,17 @@ jobs:
             -q '[.assets[].name | select(endswith(".dmg"))] | join(" ")')"
           case "$DMGS" in
             "Screepub-macOS.dmg") ;;
-            "")
-              echo "::warning::$TAG has no Mac image (did a bundle leg fail?). Publishing anyway so the other downloads go out; re-run app-upload to attach it." ;;
-            *)
-              echo "::error::$TAG must carry exactly one .dmg, Screepub-macOS.dmg. It has: $DMGS. The Swift app's updater installs the first .dmg it finds, so this release stays a draft."
-              exit 1 ;;
+            "") echo "::warning::$TAG has no Mac image (did a bundle leg fail?). Publishing anyway; re-run app-upload to attach it." ;;
+            *) echo "::error::$TAG must carry exactly one .dmg, Screepub-macOS.dmg. It has: $DMGS."; exit 1 ;;
           esac
           PRE=()
           [[ "$VERSION" == *-* ]] && PRE=(--prerelease)
           gh release edit "$TAG" --draft=false ${PRE[@]+"${PRE[@]}"}
 
-  # Bump ssandweiss/homebrew-tap to the version just published. Separate
-  # job, `needs: release`, so it cannot start before the assets exist —
-  # tools/bump-tap.sh reads their digests and refuses to write anything
-  # without them.
-  #
-  # Degrades on purpose. Without TAP_TOKEN this notices and exits clean
-  # rather than failing the release: the crib sheet above still gets
-  # written, and tap-freshness.yml still goes red until somebody bumps by
-  # hand. Adding the secret is what turns the manual path automatic; the
-  # alarm is what makes either path honest.
   tap:
     needs: publish
-    # A PRERELEASE must never become what `brew install` hands out. Matches
-    # the `PRE` test in the release job: a hyphen in the tag means prerelease.
-    # The explicit result check, because publish runs even after a failed
-    # bundle leg and an `if` with no status function would add an implicit
-    # success() that looks at every job further up the chain.
     if: ${{ !cancelled() && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: macos-15   # `brew style` needs Homebrew, and casks are macOS-only
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Bump the Homebrew tap
@@ -401,40 +561,21 @@ jobs:
           set -euo pipefail
           V="${VERSION#v}"
           if [ -z "${TAP_TOKEN:-}" ]; then
-            echo "::notice::TAP_TOKEN is not set, so the tap was NOT bumped. Use the crib sheet in this run's summary, or see docs/release-secrets.md to add the secret and make this automatic. tap-freshness.yml will fail until the tap serves $V."
+            echo "::notice::TAP_TOKEN is not set, so the tap was NOT bumped. Use the crib sheet in this run's summary. tap-freshness.yml will fail until the tap serves $V."
             exit 0
           fi
-          git clone --depth 1 \
-            "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
+          git clone --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
           tools/bump-tap.sh "$V" tap
           if git -C tap diff --quiet; then
             echo "::notice::the tap already serves $V; nothing to commit"
             exit 0
           fi
-          # Never commit a tap that Homebrew itself rejects. This is style
-          # and syntax only; that the result is INSTALLABLE is what
-          # tap-freshness.yml confirms afterwards, from GitHub.
           brew style tap/Formula/screepub.rb tap/Casks/screepub.rb
           git -C tap -c user.name='github-actions[bot]' \
             -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
             commit -q -am "Screepub $V"
           git -C tap push
-          echo "::notice::tap bumped to $V"
 
-  # Did the bump actually produce something installable? Reads the tap FROM
-  # GITHUB, never a checkout, which is the blind spot that hid five
-  # releases.
-  #
-  # This lives HERE, in the release run, and not on a `release: published`
-  # trigger in tap-freshness.yml, because that trigger cannot work: GitHub
-  # does not start new workflow runs from events raised by a workflow using
-  # the default GITHUB_TOKEN, and the release above is created with exactly
-  # that token. It was tried at v0.5.3 and never fired once.
-  #
-  # A red job here means the release published fine and the tap does not
-  # serve it yet. That is the alarm, not a broken build. With no TAP_TOKEN
-  # it will fail every time until the tap is bumped by hand, which is the
-  # honest reading of "this release is not fully out".
   tap-check:
     needs: tap
     if: ${{ !cancelled() && needs.tap.result == 'success' && !contains(github.ref_name, '-') }}
@@ -446,9 +587,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # `needs: tap` already sequences this after the push, so there is
-          # no race to retry away. A few seconds of API propagation is the
-          # only thing worth absorbing.
           n=1
           while [ "$n" -le 3 ]; do
             if tools/check-tap.sh; then exit 0; fi
@@ -458,532 +596,29 @@ jobs:
           echo "::error::The release published, but the Homebrew tap does not serve it. Run: tools/bump-tap.sh ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
           exit 1
 
-  # Bun cross-compiles every target from one machine, so the Linux and
-  # Windows artifacts cost one free Ubuntu runner rather than a per-OS build
-  # matrix. The macOS artifact is NOT built here: the release job above
-  # builds, signs and notarizes it with `build-cli.ts --mac` on its macOS
-  # runner (notarization needs Apple's toolchain), and tools/bump-tap.sh
-  # hardcodes its filename.
-  #
-  # The matrix and every verification live in tools/build-cli.ts, which is
-  # unit-tested and hand-runnable. This job is a thin caller on purpose:
-  # workflow YAML can only be tested by cutting a release.
-  cross-cli:
-    needs: checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      # DECISION, not an omission: ci.yml's cross-cli caches Bun's
-      # cross-compile runtime bundles and this job deliberately does not. A
-      # release runs a handful of times a year and must build from bytes
-      # fetched fresh from Bun's registry rather than from whatever a push
-      # left in a cache a week ago; ~200 MB and about four seconds is a
-      # cheap price on this path and an expensive one on every push.
-      - run: bun install --frozen-lockfile
-      - name: Cross-compile and verify the Linux and Windows CLI artifacts
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          bun tools/build-cli.ts --version "${TAG#v}" --out "$RUNNER_TEMP/cli"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: cross-cli
-          path: |
-            ${{ runner.temp }}/cli/screepub-cli-linux-x64.tar.gz
-            ${{ runner.temp }}/cli/screepub-cli-linux-arm64.tar.gz
-            ${{ runner.temp }}/cli/screepub-cli-windows-x64.zip
-            ${{ runner.temp }}/cli/SHA256SUMS
-          # The upload exists to hand these to the smoke jobs and the
-          # release; once the release page has them, keeping ~250 MB of
-          # duplicates for 90 days buys nothing.
-          retention-days: 1
-          if-no-files-found: error
-
-  # Cross-compiling is not cross-testing. Each artifact is run on the OS it
-  # was built for, converting the committed fixture and listing devices.
-  # smoke-cli.ts also converts tests/fixtures/jpx.pdf and requires its one
-  # JPEG 2000 picture to come through, because pdf.js loads that decoder at
-  # runtime from a folder the engine unpacks (src/parser/pdfjs-wasm.ts), and
-  # a decoder that fails to load still exits 0. Both fixtures come from the
-  # checkout, so neither job copies one.
-  #
-  # linux-arm64 has no job here: no arm64 runner is assumed available to
-  # this repo. It ships built and verified but never executed in CI, and the
-  # release notes say so rather than implying otherwise.
-  smoke-linux-x64:
-    needs: cross-cli
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: cross-cli
-          path: cli
-      - name: The linux-x64 binary converts the fixture and lists devices
-        run: |
-          set -euo pipefail
-          tar -xzf cli/screepub-cli-linux-x64.tar.gz -C "$RUNNER_TEMP"
-          bun tools/smoke-cli.ts --binary "$RUNNER_TEMP/screepub"
-
-  # Nobody on this project has a Windows machine. This job is the first time
-  # the Windows binary will ever have executed, which is why cross-upload
-  # waits for it. It is also the only place the JPEG 2000 decoder is proven
-  # on Windows: ci.yml smokes the Linux binary on every push, not this one.
-  smoke-windows-x64:
-    needs: cross-cli
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: cross-cli
-          path: cli
-      - name: The windows-x64 binary converts the fixture and lists devices
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          Expand-Archive -Path cli/screepub-cli-windows-x64.zip -DestinationPath $env:RUNNER_TEMP -Force
-          bun tools/smoke-cli.ts --binary "$env:RUNNER_TEMP\screepub.exe"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-  # Attach the new artifacts to the release the macOS job already published.
-  # Deliberately a SEPARATE job that runs after it, rather than moving the
-  # un-draft down here: a failure in this path would otherwise leave the
-  # release permanently in draft, which is a worse outcome than the Linux
-  # and Windows downloads appearing a minute after the DMG.
-  #
-  # SHA256SUMS covers these three files. The macOS checksums stay in the
-  # release body, where they have always been.
-  cross-upload:
-    needs: [release, smoke-linux-x64, smoke-windows-x64]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: cross-cli
-          path: cli
-      # The ONE stage where a defect could still pass. build-cli.ts verified
-      # and hashed these files in the cross-cli job's $RUNNER_TEMP, but they
-      # then crossed a job boundary via upload-artifact/download-artifact,
-      # and the smoke jobs only ever open their own downloaded copies --
-      # screepub-cli-linux-arm64.tar.gz is touched by nothing after the
-      # build. This re-opens all three against the SHA256SUMS being
-      # published beside them, so the checksums file is proven to describe
-      # the bytes that reach the release page.
-      #
-      # `cd cli` is load-bearing: SHA256SUMS names bare filenames, which is
-      # what makes it usable by anyone who downloads into their own
-      # directory, so `-c` must run with the files as its cwd. sha256sum
-      # ships on the ubuntu image; this job needs no checkout.
-      - name: The checksums still describe these files after the round trip
-        run: cd cli && sha256sum -c SHA256SUMS
-      - name: Upload the Linux and Windows CLI artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # No checkout in this job, so gh has no repository to infer.
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          gh release upload "$TAG" \
-            cli/screepub-cli-linux-x64.tar.gz \
-            cli/screepub-cli-linux-arm64.tar.gz \
-            cli/screepub-cli-windows-x64.zip \
-            cli/SHA256SUMS \
-            --clobber
-
-  # The installable app bundles: a .deb and an .rpm, ONE signed and
-  # notarized DMG, and one unsigned NSIS installer. Every decision lives in
-  # tools/build-app-bundle.ts, which is unit-tested and hand-runnable; this
-  # job is a thin caller, for the same reason cross-cli is one -- workflow
-  # YAML can only be run by cutting a release.
-  #
-  # ONE macOS DMG, for Apple silicon only. One image since 2026-09-20,
-  # because the frozen Swift updater takes the FIRST .dmg asset on a
-  # release and has no architecture logic, so two images are an ambiguity
-  # it cannot resolve. That image was universal (a lipo of two engines)
-  # through the identifier release, so the Swift updater could carry Intel
-  # installs across too. From the release after it, Intel Macs are not
-  # supported (owner, 2026-10-01; plan
-  # docs/superpowers/plans/2026-10-01-f2-handover-amendment.md): one slice,
-  # one engine, no lipo, and nothing Intel built anywhere in this file.
-  #
-  # No AppImage. linuxdeploy runs its own patchelf over the Bun-compiled
-  # engine, moves the dynamic section past the 102 MB appended payload, and
-  # the extracted engine segfaults. Measured; see the design doc.
-  #
-  # The steps below tell the Mac leg apart by runner.os (RUNNER_OS in
-  # bash), never by the arch: arm64 stops meaning "the Mac" the day an
-  # arm64 Linux row is added. The cargo triple is NOT restated here:
-  # tools/build-app-bundle.ts derives aarch64-apple-darwin for every Mac
-  # build and refuses any other Mac arch or triple, so the YAML has no way
-  # to name an Intel one.
-  app-bundles:
-    needs: checks
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x64
-          - os: macos-15
-            arch: arm64
-          - os: windows-latest
-            arch: x64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      # webkit2gtk, soup3 and their pkg-config files. The Rust crates fail
-      # at BUILD time without these, so their absence is loud.
-      - name: Linux webview libraries
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
-      - run: bun install --frozen-lockfile
-      # Deliberately uncached, unlike desktop.yml's push path: a release runs
-      # a handful of times a year and must build from bytes fetched fresh,
-      # which is the same decision cross-cli's own comment records.
-      - name: Install the Tauri CLI
-        run: cargo install tauri-cli --version 2.11.4 --locked
-      # No rustup step: the Mac bundle is built for aarch64-apple-darwin,
-      # which is macos-15's own target. (The universal build needed
-      # x86_64-apple-darwin added beside it; that build is gone.)
-      #
-      # Two shapes, because the matrix has two. The Mac leg names its engine
-      # rather than asking the runner, so an Intel runner could not slip an
-      # x86_64 engine into the one Mac image; the Linux and Windows legs
-      # build for the runner they are on. The unknown case is an ERROR
-      # rather than a silent fall-through to --host, because a leg that
-      # quietly built for the runner is how a foreign engine gets inside a
-      # download with nothing failing until someone opens the window.
-      - name: Build the engine sidecar
-        shell: bash
-        env:
-          ARCH: ${{ matrix.arch }}
-        run: |
-          set -euo pipefail
-          case "$RUNNER_OS/$ARCH" in
-            macOS/arm64)           bun tools/build-sidecar.ts --target bun-darwin-arm64 ;;
-            Linux/x64|Windows/x64) bun tools/build-sidecar.ts --host ;;
-            *)
-              echo "::error::$RUNNER_OS/$ARCH is not a shape this step builds. Use macOS/arm64 (Apple silicon only) or x64 on Linux or Windows (built for the runner)."
-              exit 1
-              ;;
-          esac
-      # Signing and notarization are tauri-bundler's own, read from the
-      # secrets docs/release-secrets.md already documents under different
-      # names. macos/sign.rs builds its own keychain and imports the
-      # certificate itself, so this job runs no `security` command.
-      - name: Write the App Store Connect API key
-        if: runner.os == 'macOS'
-        env:
-          AC_KEY_B64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
-        run: |
-          echo "$AC_KEY_B64" | base64 --decode > "$RUNNER_TEMP/ac_api_key.p8"
-          echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/ac_api_key.p8" >> "$GITHUB_ENV"
-      # `--out bundles` is a WORKSPACE-relative directory and not
-      # $RUNNER_TEMP on purpose. RUNNER_TEMP on windows-latest is a
-      # backslash path (D:\a\_temp), and the smoke step below globs inside
-      # this directory under `shell: bash`, where a backslash path is not
-      # reliably globbable. One relative path behaves identically on all
-      # three runners.
-      - name: Build and verify this platform's bundles
-        shell: bash
-        env:
-          TAG: ${{ github.ref_name }}
-          ARCH: ${{ matrix.arch }}
-          # Read by tauri-bundler's macos/sign.rs, which reads its OWN
-          # variable names. Empty on Linux and Windows, where the bundler
-          # skips signing entirely. APPLE_SIGNING_IDENTITY is a SUBSTRING
-          # guard against the identity of the certificate the bundler
-          # imported, so this loose value asserts the right kind of
-          # certificate without pinning a team name into YAML.
-          APPLE_CERTIFICATE: ${{ runner.os == 'macOS' && secrets.DEVELOPER_ID_CERT_P12_BASE64 || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ runner.os == 'macOS' && secrets.CERT_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && 'Developer ID Application' || '' }}
-          APPLE_API_KEY: ${{ runner.os == 'macOS' && secrets.AC_API_KEY_ID || '' }}
-          APPLE_API_ISSUER: ${{ runner.os == 'macOS' && secrets.AC_API_ISSUER_ID || '' }}
-          # The updater archive's signing key, read by tauri-cli's
-          # sign_updaters under its OWN variable names, like the APPLE_*
-          # ones. macOS only: nothing signs the Linux and Windows artifacts
-          # yet, and the manifest builder refuses a signature it has no row
-          # for, so widening this is a deliberate three-place change. An
-          # empty password is right for a key generated without one; a key
-          # WITH a password and no secret fails loudly at decryption.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ runner.os == 'macOS' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
-        run: |
-          set -euo pipefail
-          rm -rf bundles
-          # The TAG, never package.json: a version mismatch must fail the
-          # build rather than ship a bundle that misreports itself.
-          ARGS=(--version "${TAG#v}" --out bundles)
-          if [ "$RUNNER_OS" = macOS ]; then
-            # --arch and never --target: build-app-bundle.ts derives
-            # aarch64-apple-darwin for every Mac build, and refuses any arch
-            # but arm64, so the matrix cannot ask for an Intel image.
-            #
-            # --updater: ALSO the updater archive and its signature, through
-            # the release-only overlay the tool passes for it. The tool
-            # refuses to start without TAURI_SIGNING_PRIVATE_KEY, so a
-            # release missing the secret fails in seconds, not after the
-            # full build. There is no degrade path on purpose: ADR
-            # 2026-09-21 makes the updater the precondition for v0.6.1,
-            # and a release that cannot sign one is the thing it forbids.
-            #
-            # No config overlay: the transition one that renamed this build
-            # "Screepub Desktop" was deleted at the identifier release, when
-            # the window became the Mac app (same identifier, same name).
-            ARGS+=(--arch "$ARCH" --updater)
-          fi
-          bun tools/build-app-bundle.ts ${ARGS[@]+"${ARGS[@]}"}
-      # tauri-bundler notarizes the .app and NEVER the image. app.rs
-      # submits the bundle immediately after signing it; dmg/mod.rs only
-      # signs, linking tauri-apps/tauri#12288 about not self-signing
-      # DMGs. So without this step the ticket is stapled to the app
-      # inside a container that carries none, which is exactly what
-      # v0.6.0 shipped: spctl said "rejected, source=Unnotarized
-      # Developer ID" for the image while the app inside it said
-      # "accepted, source=Notarized Developer ID".
-      #
-      # The frozen updater does not care, because dmgRequirement pins the
-      # anchor, the chain and the team and not notarization, which is how
-      # it got through the v0.6.0 gate. A PERSON cares: a browser
-      # download carries the quarantine attribute and Gatekeeper assesses
-      # the image when they double-click it. The Swift app's image never
-      # did that to anyone, because its release script notarized and
-      # stapled the container, and this is that same sequence. Since the identifier
-      # release this image IS Screepub-macOS.dmg, the one people download.
-      #
-      # BEFORE the smoke step on purpose, so the bytes that get mounted
-      # and executed below are the bytes that ship. The per-leg
-      # SHA256SUMS-app written by the bundle step is stale after this,
-      # and that is harmless: app-upload rebuilds the checksums from what
-      # actually arrives.
-      - name: Notarize and staple the disk image
-        if: runner.os == 'macOS'
-        shell: bash
-        env:
-          APPLE_API_KEY: ${{ secrets.AC_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.AC_API_ISSUER_ID }}
-        run: |
-          set -euo pipefail
-          N=0
-          for DMG in bundles/*.dmg; do
-            [ -e "$DMG" ] || continue
-            xcrun notarytool submit "$DMG" \
-              --key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" --wait
-            xcrun stapler staple "$DMG"
-            # Not decoration: `stapler staple` can exit 0 on paths that
-            # leave no ticket, and an image without one is the whole
-            # defect. Assert the result rather than trusting the verb.
-            xcrun stapler validate "$DMG"
-            spctl -a -t open --context context:primary-signature -v "$DMG"
-            N=$((N + 1))
-          done
-          # Same property the smoke step defends one below: a glob that
-          # matched nothing must not read as success.
-          if [ "$N" -eq 0 ]; then
-            echo "::error::bundles/ held no .dmg. NOTHING WAS NOTARIZED."
-            exit 1
-          fi
-          echo "$N image(s) notarized and stapled."
-      # Cross-compiling is not cross-testing, and bundling is not running.
-      # Every bundle is opened and its engine executed here, on the machine
-      # that built it. Nothing skips the loop: the x86_64 DMG of the old
-      # per-arch pair used to exit 0 having run nothing. The Apple silicon
-      # DMG is the runner's own arch, so all of it is exercised; the notice
-      # the universal image needed about its unexecuted Intel slice is gone
-      # with that slice.
-      - name: Run the engine out of each bundle
-        shell: bash
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          N=0
-          for B in bundles/*.deb bundles/*.rpm bundles/*.dmg bundles/*.exe; do
-            [ -e "$B" ] || continue
-            bun tools/smoke-bundle.ts --bundle "$B" --expect-version "${TAG#v}"
-            N=$((N + 1))
-          done
-          # smoke-bundle.ts refuses to exit 0 having opened nothing; this is
-          # that same property one level up. Without it, a glob that matched
-          # no file would make this whole step a no-op that passes.
-          if [ "$N" -eq 0 ]; then
-            echo "::error::bundles/ held no .deb, .rpm, .dmg or .exe. NOTHING WAS CHECKED."
-            exit 1
-          fi
-          echo "$N bundle(s) smoke-tested on this runner."
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: app-bundles-${{ matrix.os }}-${{ matrix.arch }}
-          path: bundles/*
-          # Handed straight to app-upload; once the release page has them,
-          # keeping ~220 MB of duplicates for 90 days buys nothing.
-          retention-days: 1
-          if-no-files-found: error
-
-  # Attach the bundles to the release the macOS job already published.
-  # Deliberately a SEPARATE job that runs after it, rather than moving the
-  # un-draft down here: a failure in this path must not leave the release
-  # permanently in draft, which is the rule cross-upload already follows for
-  # the same reason.
-  #
-  # SHA256SUMS-app, never SHA256SUMS: cross-upload publishes a file by that
-  # name for the three CLI archives onto this same release page, and one
-  # clobbering the other leaves every download silently uncheckable.
-  app-upload:
-    needs: [release, app-bundles]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      # A checkout and bun, which this job used to do without: the update
-      # manifest is built by a tool, for the reason every file in tools/
-      # gives. The download therefore lands in `arrivals`, no longer under
-      # the name that, in a checkout, was the Swift app's source directory
-      # until piece F3 deleted it.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - run: bun install --frozen-lockfile
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: app-bundles-*
-          merge-multiple: true
-          path: arrivals
-      # Each leg wrote its own SHA256SUMS-app covering only its own files,
-      # and merge-multiple keeps whichever arrived last. Rebuilt here from
-      # what actually landed, so the published file describes every file
-      # published beside it -- which no per-leg file could, since no leg
-      # ever saw the others.
-      #
-      # `cd arrivals` is load-bearing: the file names bare filenames, which
-      # is what makes it usable by anyone who downloads into their own
-      # directory, so `-c` must run with the files as its cwd.
-      - name: Rebuild the checksums from what arrived, then verify them
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd arrivals
-          rm -f SHA256SUMS-app
-          sha256sum *.deb *.rpm *.dmg *.exe > SHA256SUMS-app
-          # Exactly what the three legs produce between them: one .deb, one
-          # .rpm, ONE .dmg and one .exe. fail-fast is false, so a
-          # leg that died would otherwise publish a shorter checksums file
-          # that verified perfectly against itself.
-          #
-          # It also catches the opposite, which is now the more dangerous
-          # direction: a SECOND .dmg reaching this release. Every glob would
-          # still match and sha256sum would still succeed, but the frozen
-          # Swift updater takes the FIRST .dmg asset and has no way to
-          # choose between two. One artifact is what makes that choice
-          # unambiguous, and this count is what keeps it at one.
-          LINES="$(wc -l < SHA256SUMS-app)"
-          if [ "$LINES" -ne 4 ]; then
-            echo "::error::expected 4 app bundles from the three legs, got $LINES:"
-            cat SHA256SUMS-app
-            exit 1
-          fi
-          # Not a tautology: -c re-opens every file and re-hashes it, which
-          # is what catches a truncated artifact round trip. These were
-          # hashed in another job's workspace and then crossed a job
-          # boundary through upload-artifact/download-artifact.
-          sha256sum -c SHA256SUMS-app
-          cat SHA256SUMS-app
-      - name: Upload the app bundles
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # Explicit even though a checkout now exists: an upload should
-          # never depend on what gh infers from a working directory.
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          cd arrivals
-          # The updater archive and its signature ride with the installers.
-          # They are NOT in SHA256SUMS-app: the archive is proven by its
-          # signature, and the count above is a count of installers. Both
-          # globs must match, which is the assertion that the macOS leg
-          # produced them: a literal, unmatched glob fails the upload.
-          gh release upload "$TAG" \
-            *.deb *.rpm *.dmg *.exe *.app.tar.gz *.app.tar.gz.sig SHA256SUMS-app \
-            --clobber
-      # LAST, on purpose. The manifest points at the archive and its
-      # signature by url, and the app reads whatever is at the endpoint the
-      # moment it looks. Uploaded first, it would describe a file that is
-      # not there yet. Built from arrivals/ rather than on the macOS leg for
-      # the same reason SHA256SUMS-app is: it describes what actually
-      # landed. A prerelease gets none: releases/latest/download never
-      # resolves to one, and the tool refuses to write one anyway.
-      - name: Build the update manifest from what arrived, and publish it last
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          VERSION="${TAG#v}"
-          if [[ "$VERSION" == *-* ]]; then
-            echo "::notice::$TAG is a prerelease, so no latest.json is published: releases/latest/download never resolves to a prerelease."
-            exit 0
-          fi
-          bun tools/build-update-manifest.ts --dir arrivals --version "$VERSION" --out arrivals/latest.json
-          cd arrivals
-          gh release upload "$TAG" latest.json --clobber
-
-  # Did the manifest actually publish, and does it describe this release?
-  # Reads latest.json FROM THE ENDPOINT THE APP USES, never from arrivals/:
-  # what is checked is what a user's app fetches. Same reasoning and same
-  # shape as tap-check, including why it lives here and not on a
-  # `release: published` trigger elsewhere: that trigger never fires for a
-  # release created with the default token.
-  #
-  # A red job here means the release published fine and the updater cannot
-  # use it. No --version: the question is whether the endpoint serves the
-  # NEWEST release, which is what the app asks, and is the right question
-  # even when an old tag is being re-run.
+  # Read latest.json back from the endpoint every Screepub reads, and
+  # (--deep) download each archive it names and verify it the way the Rust
+  # app will. Red means the release is public and updates cannot use it.
   latest-check:
     needs: [app-upload, publish]
     if: ${{ !cancelled() && needs.app-upload.result == 'success' && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - run: bun install --frozen-lockfile
       - name: The published latest.json describes the newest release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # `needs` already sequences this after the upload AND the publish
-          # (releases/latest never resolves to a draft); a few seconds of
-          # propagation is the only thing worth absorbing.
+          cargo build --release --locked -p sp-release
           n=1
           while [ "$n" -le 3 ]; do
-            if bun tools/check-latest.ts; then exit 0; fi
+            if target/release/sp-release check-latest --deep; then exit 0; fi
             [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
             n=$((n + 1))
           done
-          echo "::error::The release published, but the updater manifest at releases/latest/download/latest.json does not describe it. See docs/release-secrets.md §4."
+          echo "::error::The release published, but latest.json at releases/latest/download does not describe it. See docs/release-secrets.md section 4."
           exit 1

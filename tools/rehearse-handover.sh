@@ -155,7 +155,7 @@ verify() {
     echo "  FAIL the Rust app has not written $STORE yet"
     FAIL=1
   fi
-  [ "$FAIL" = 0 ] && echo "The handover worked." || { echo "Something did not hand over; see above."; exit 1; }
+  if [ "$FAIL" = 0 ]; then echo "The handover worked."; else echo "Something did not hand over; see above."; exit 1; fi
 }
 
 clean() {
