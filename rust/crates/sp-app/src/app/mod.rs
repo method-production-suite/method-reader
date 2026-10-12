@@ -119,6 +119,10 @@ pub struct App {
     pub update: frame::UpdateState,
     /// The book as each place shows it (bookview.rs).
     pub views: bookview::Views,
+    /// SCREEPUB_FRAME_LOG's recorder (framelog.rs), when it is set.
+    pub frame_log: Option<crate::framelog::FrameLog>,
+    /// What the last frame asked of the next one, for the recorder.
+    pub wants: &'static str,
 }
 
 impl App {
@@ -163,6 +167,8 @@ impl App {
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
             views: bookview::Views::default(),
+            frame_log: crate::framelog::FrameLog::from_env(),
+            wants: "idle",
         };
         // The one line that proves the engine is there.
         app.call(Request::Version, Purpose::Version);
@@ -490,10 +496,12 @@ impl App {
             });
         }
         panel::pay_brass(self, ui.ctx());
+        self.wants = "idle";
         if !self.quiet()
             || self.show.as_ref().is_some_and(show::Show::running)
             || self.watcher.running()
         {
+            self.wants = "after:16";
             ui.ctx()
                 .request_repaint_after(std::time::Duration::from_millis(16));
         }
@@ -526,7 +534,12 @@ pub fn viewport() -> egui::ViewportBuilder {
 pub struct Window(pub App);
 
 impl eframe::App for Window {
-    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
+        let began = std::time::Instant::now();
         self.0.frame(ui);
+        let wants = self.0.wants;
+        if let Some(log) = self.0.frame_log.as_mut() {
+            log.record(began, began.elapsed(), frame.info().cpu_usage, wants);
+        }
     }
 }

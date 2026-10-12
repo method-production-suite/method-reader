@@ -10,6 +10,7 @@ pub mod capture;
 pub mod direct;
 pub mod engine;
 pub mod fonts;
+pub mod framelog;
 pub mod headless;
 pub mod model;
 pub mod runtime;

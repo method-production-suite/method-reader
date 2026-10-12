@@ -293,6 +293,13 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
     );
 }
 
+/// An entry in the scene index pressed: its scene to the top (R9).
+pub fn go_to_scene(app: &mut App, id: &str) {
+    if let Some(mark) = app.read.marks.iter().find(|m| m.id == id) {
+        app.read.scroll_to = Some(mark.top);
+    }
+}
+
 /// Mark the scene being read; the index's stop follows it unless the
 /// keyboard is walking the index.
 fn mark_current(app: &mut App) {
@@ -384,10 +391,8 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     if stop {
                         app.stop(r.id, true);
                     }
-                    if r.clicked()
-                        && let Some(mark) = app.read.marks.iter().find(|m| m.id == entry.id)
-                    {
-                        app.read.scroll_to = Some(mark.top);
+                    if r.clicked() {
+                        go_to_scene(app, &entry.id);
                     }
                     widgets::own_arrows(ui, r.id);
                     if r.has_focus() {
