@@ -882,10 +882,14 @@ names the check it affects.
   only the elements dump. cli.test.ts's "--debug lets them through" retires.
 - **The pages.json test path was never shipped (sp-cli, 2026-10-11).** sp-pdf
   landed before sp-cli needed it, so PDF input is always sp-pdf's.
-- **Two copies of Node's path functions (open, for the owner).** sp-fsutil
-  (`nodepath`) and sp-engine (`nodepath`) each port node:path; the CLI uses
-  sp-engine's, sp-device uses sp-fsutil's. Both are checked against Bun;
-  folding them into sp-fsutil's is a mechanical follow-up.
+- **One copy of Node's path functions (folded 2026-10-12, the cutover).**
+  sp-fsutil's `nodepath`, the line-for-line port checked against Bun's
+  answers (sp-fsutil/tests/node_path.rs), is the only one; sp-engine
+  re-exports it as `sp_engine::nodepath`, so the CLI, the engine and
+  sp-device print paths from the same code. sp-engine's copy brought the
+  two things it alone had: `resolve_from` (resolve against a given folder)
+  and `basename_ext` (basename with an extension), with its unit cases
+  (sp-fsutil/tests/node_path_engine.rs). Parity stayed clean.
 - **Fixture pictures (xtask make-fixture, 2026-10-11).** make-fixture's
   pictures are deflated by zlib-rs (flate2's zlib-rs backend, level 9),
   which writes the same streams zlib 1.2.12 gave Python, so every committed

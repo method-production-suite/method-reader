@@ -23,7 +23,9 @@ pub mod fsx;
 pub mod jsjson;
 pub mod library;
 pub mod library_images;
-pub mod nodepath;
+/// node:path's functions: sp-fsutil's, the one copy (re-exported so the
+/// engine's callers keep their paths).
+pub use sp_fsutil::nodepath;
 pub mod settings;
 pub mod update;
 

@@ -1,11 +1,15 @@
-//! Node's `path` functions, posix and win32, ported line for line.
+//! Node's `path` functions, posix and win32, ported line for line: the one
+//! copy every crate uses (sp-engine re-exports it as `sp_engine::nodepath`).
 //!
-//! The TypeScript engine builds every path it prints with `node:path`, and
-//! those strings reach the `--json` answers (a volume, a send's
-//! destination). `std::path` joins without normalizing and has no win32
-//! rules on a Mac, so the two would print different strings for the same
-//! input (`join('/a/b/../c', 'K')` is `/a/c/K` in Node). These are Node's
-//! algorithms, checked against Bun's answers in tests/node_path.rs.
+//! The TypeScript engine built every path it printed with `node:path`, and
+//! those strings reach the `--json` answers (the settings file, the library
+//! folder, a book's siblings, a volume, a send's destination). `std::path`
+//! joins without normalizing and has no win32 rules on a Mac, so the two
+//! would print different strings for the same input
+//! (`join('/a/b/../c', 'K')` is `/a/c/K` in Node). These are Node's
+//! algorithms, checked against Bun's answers in tests/node_path.rs. `posix`
+//! and `win32` are always both available, as `path.posix` and `path.win32`
+//! are, and `host` is the one this build runs on, as bare `path` is.
 //!
 //! Paths are `&str`: every separator and dot is ASCII, so slicing at the
 //! positions found is always on a character boundary.
@@ -17,6 +21,15 @@ pub mod host {
 
     #[cfg(not(windows))]
     pub use super::posix::*;
+}
+
+/// `process.cwd()`, as a string. Falls back to `/` (what a Finder launch
+/// gives) when the working folder cannot be read.
+pub fn cwd() -> String {
+    std::env::current_dir()
+        .ok()
+        .and_then(|p| p.to_str().map(str::to_owned))
+        .unwrap_or_else(|| "/".into())
 }
 
 fn normalize_string(
@@ -136,8 +149,12 @@ pub mod posix {
         if absolute { format!("/{out}") } else { out }
     }
 
-    pub fn join(parts: &[&str]) -> String {
-        let joined: Vec<&str> = parts.iter().copied().filter(|p| !p.is_empty()).collect();
+    pub fn join<S: AsRef<str>>(parts: &[S]) -> String {
+        let joined: Vec<&str> = parts
+            .iter()
+            .map(AsRef::as_ref)
+            .filter(|p| !p.is_empty())
+            .collect();
         if joined.is_empty() {
             return ".".into();
         }
@@ -145,18 +162,21 @@ pub mod posix {
     }
 
     /// `path.resolve`, with the current folder as Node's `process.cwd()`.
-    pub fn resolve(parts: &[&str]) -> String {
-        let cwd = std::env::current_dir()
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_else(|_| "/".into());
+    pub fn resolve<S: AsRef<str>>(parts: &[S]) -> String {
+        resolve_from(&super::cwd(), parts)
+    }
+
+    /// `path.posix.resolve(...parts)`, against `cwd` when nothing given is
+    /// absolute.
+    pub fn resolve_from<S: AsRef<str>>(cwd: &str, parts: &[S]) -> String {
         let mut resolved = String::new();
         let mut absolute = false;
         let mut i = parts.len() as isize - 1;
         while i >= -1 && !absolute {
             let path = if i >= 0 {
-                parts[i as usize]
+                parts[i as usize].as_ref()
             } else {
-                cwd.as_str()
+                cwd
             };
             i -= 1;
             if path.is_empty() {
@@ -197,6 +217,11 @@ pub mod posix {
             return String::new();
         }
         path[start..end as usize].to_string()
+    }
+
+    /// `path.posix.basename(path, ext)`.
+    pub fn basename_ext(path: &str, ext: &str) -> String {
+        super::basename_ext_from(path, ext, 0, is_sep)
     }
 
     pub fn dirname(path: &str) -> String {
@@ -355,8 +380,12 @@ pub mod win32 {
         }
     }
 
-    pub fn join(parts: &[&str]) -> String {
-        let kept: Vec<&str> = parts.iter().copied().filter(|p| !p.is_empty()).collect();
+    pub fn join<S: AsRef<str>>(parts: &[S]) -> String {
+        let kept: Vec<&str> = parts
+            .iter()
+            .map(AsRef::as_ref)
+            .filter(|p| !p.is_empty())
+            .collect();
         let Some(first) = kept.first().copied() else {
             return ".".into();
         };
@@ -391,17 +420,24 @@ pub mod win32 {
 
     /// `path.win32.resolve`. Off Windows, Node's cwd has no drive, and so
     /// neither does a resolved rooted path without one; `cwd` is the host's.
-    pub fn resolve(parts: &[&str]) -> String {
+    pub fn resolve<S: AsRef<str>>(parts: &[S]) -> String {
         let cwd = std::env::current_dir()
             .map(|p| p.to_string_lossy().into_owned())
             .unwrap_or_default();
+        resolve_from(&cwd, parts)
+    }
+
+    /// `path.win32.resolve(...parts)`, against `cwd` when nothing given is
+    /// absolute (and for a drive with no folder of its own in `=X:`).
+    pub fn resolve_from<S: AsRef<str>>(cwd: &str, parts: &[S]) -> String {
+        let cwd = cwd.to_owned();
         let mut resolved_device = String::new();
         let mut resolved_tail = String::new();
         let mut resolved_absolute = false;
         let mut i = parts.len() as isize - 1;
         while i >= -1 {
             let path: String = if i >= 0 {
-                let p = parts[i as usize];
+                let p = parts[i as usize].as_ref();
                 if p.is_empty() {
                     i -= 1;
                     continue;
@@ -562,10 +598,91 @@ pub mod win32 {
         path[..end as usize].to_string()
     }
 
+    /// `path.win32.basename(path, ext)`.
+    pub fn basename_ext(path: &str, ext: &str) -> String {
+        let start = if has_drive(path.as_bytes()) { 2 } else { 0 };
+        super::basename_ext_from(path, ext, start, is_sep)
+    }
+
     pub fn extname(path: &str) -> String {
         let start = if has_drive(path.as_bytes()) { 2 } else { 0 };
         super::extname_from(path, start, is_sep)
     }
+}
+
+/// Node's `basename(path, ext)` loop, shared by both halves (win32 starts
+/// past a drive). With an empty `ext`, or one longer than the path, it is
+/// plain `basename`.
+fn basename_ext_from(path: &str, ext: &str, start0: usize, is_sep: fn(u8) -> bool) -> String {
+    let b = path.as_bytes();
+    let len = b.len();
+    if ext.is_empty() || ext.len() > len {
+        let mut start = start0;
+        let mut end: isize = -1;
+        let mut matched_slash = true;
+        let mut i = len as isize - 1;
+        while i >= start0 as isize {
+            if is_sep(b[i as usize]) {
+                if !matched_slash {
+                    start = i as usize + 1;
+                    break;
+                }
+            } else if end == -1 {
+                matched_slash = false;
+                end = i + 1;
+            }
+            i -= 1;
+        }
+        if end == -1 {
+            return String::new();
+        }
+        return String::from_utf8_lossy(&b[start..end as usize]).into_owned();
+    }
+    if ext == path {
+        return String::new();
+    }
+    let e = ext.as_bytes();
+    let mut start = start0;
+    let mut end: isize = -1;
+    let mut matched_slash = true;
+    let mut ext_idx: isize = e.len() as isize - 1;
+    let mut first_non_slash_end: isize = -1;
+    let mut i = len as isize - 1;
+    while i >= start0 as isize {
+        let code = b[i as usize];
+        if is_sep(code) {
+            if !matched_slash {
+                start = i as usize + 1;
+                break;
+            }
+        } else {
+            if first_non_slash_end == -1 {
+                matched_slash = false;
+                first_non_slash_end = i + 1;
+            }
+            if ext_idx >= 0 {
+                if code == e[ext_idx as usize] {
+                    ext_idx -= 1;
+                    if ext_idx == -1 {
+                        end = i;
+                    }
+                } else {
+                    ext_idx = -1;
+                    end = first_non_slash_end;
+                }
+            }
+        }
+        i -= 1;
+    }
+    if start as isize == end {
+        end = first_non_slash_end;
+    } else if end == -1 {
+        end = len as isize;
+    }
+    if end < start as isize {
+        return String::new();
+    }
+    String::from_utf8_lossy(&b[start..end as usize]).into_owned()
 }
 
 /// Node's extname loop, shared by both halves (win32 starts past a drive).

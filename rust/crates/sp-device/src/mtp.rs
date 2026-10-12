@@ -114,7 +114,7 @@ pub fn mtp_helper_path(loc: &HelperLocation) -> Option<String> {
     if (loc.exists)(&beside) {
         return Some(beside);
     }
-    let dev = host::join(&[&loc.dev_target_dir.to_string_lossy(), &file]);
+    let dev = host::join(&[loc.dev_target_dir.to_string_lossy().as_ref(), file.as_str()]);
     if (loc.exists)(&dev) {
         return Some(dev);
     }

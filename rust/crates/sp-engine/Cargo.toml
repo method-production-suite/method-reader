@@ -21,6 +21,7 @@ sp-epub.workspace = true
 sp-mobi.workspace = true
 sp-azw3.workspace = true
 sp-device.workspace = true
+sp-fsutil.workspace = true
 sp-pdf.workspace = true
 sha2 = "0.10"
 regex.workspace = true

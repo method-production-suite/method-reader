@@ -5464,6 +5464,7 @@ dependencies = [
  "sp-epub",
  "sp-fdx",
  "sp-fountain",
+ "sp-fsutil",
  "sp-mobi",
  "sp-model",
  "sp-parser",
