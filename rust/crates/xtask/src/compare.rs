@@ -133,6 +133,9 @@ pub fn files(ts: &Path, rs: &Path, how: Compare) -> Option<String> {
         Compare::Text => text(&a, &b),
         Compare::ZipEntries => zip_entries(&a, &b),
         Compare::Folder => unreachable!("handled above"),
+        Compare::Json => json_text(&a, &b),
+        Compare::Html => html(&a, &b),
+        Compare::PalmDb => palm_db(&a, &b),
     }
 }
 
@@ -227,6 +230,8 @@ pub fn zip_entries(a: &[u8], b: &[u8]) -> Option<String> {
             .any(|ext| x.name.ends_with(ext));
         let diff = if is_text {
             text(&x.data, &y.data)
+        } else if x.name.ends_with(".png") {
+            png(&x.data, &y.data)
         } else {
             bytes(&x.data, &y.data)
         };
@@ -259,8 +264,190 @@ pub fn folders(a: &Path, b: &Path) -> Option<String> {
             std::fs::read(a.join(name)).ok()?,
             std::fs::read(b.join(name)).ok()?,
         );
-        bytes(&x, &y).map(|d| format!("{name}: {d}"))
+        let d = if name.ends_with(".png") {
+            png(&x, &y)
+        } else {
+            bytes(&x, &y)
+        };
+        d.map(|d| format!("{name}: {d}"))
     })
+}
+
+// ---- pictures: compared by what they decode to (PARITY.md, Decisions) ----
+
+/// A PNG's IHDR and its inflated image data (the filtered scanlines: the
+/// encoders pick filters by the same rule, so equal pixels are equal
+/// scanlines), or `None` for bytes that are not a PNG we can read.
+pub fn png_content(b: &[u8]) -> Option<Vec<u8>> {
+    const SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
+    if b.len() < 8 || b[..8] != SIGNATURE {
+        return None;
+    }
+    let mut at = 8;
+    let mut header = Vec::new();
+    let mut idat = Vec::new();
+    while at + 8 <= b.len() {
+        let len = u32::from_be_bytes([b[at], b[at + 1], b[at + 2], b[at + 3]]) as usize;
+        let kind = &b[at + 4..at + 8];
+        let data = b.get(at + 8..at + 8 + len)?;
+        match kind {
+            b"IHDR" => header.extend_from_slice(data),
+            b"IDAT" => idat.extend_from_slice(data),
+            b"IEND" => break,
+            _ => header.extend_from_slice(data),
+        }
+        at += 12 + len;
+    }
+    let pixels = miniz_oxide::inflate::decompress_to_vec_zlib(&idat).ok()?;
+    header.extend_from_slice(&pixels);
+    Some(header)
+}
+
+/// Two PNGs by their decoded content; bytes that are not a PNG, by bytes.
+pub fn png(a: &[u8], b: &[u8]) -> Option<String> {
+    match (png_content(a), png_content(b)) {
+        (Some(x), Some(y)) if x == y => None,
+        (Some(_), Some(_)) => Some(format!(
+            "a PNG of {} bytes against {}, and their pixels differ",
+            a.len(),
+            b.len()
+        )),
+        _ => bytes(a, b),
+    }
+}
+
+/// Two JSON files as values (key order does not count).
+pub fn json_text(a: &[u8], b: &[u8]) -> Option<String> {
+    match (
+        serde_json::from_slice::<Value>(a),
+        serde_json::from_slice::<Value>(b),
+    ) {
+        (Ok(x), Ok(y)) => json(&x, &y),
+        _ => text(a, b),
+    }
+}
+
+fn base64_decode(s: &str) -> Option<Vec<u8>> {
+    let val = |c: u8| -> Option<u32> {
+        Some(match c {
+            b'A'..=b'Z' => u32::from(c - b'A'),
+            b'a'..=b'z' => u32::from(c - b'a') + 26,
+            b'0'..=b'9' => u32::from(c - b'0') + 52,
+            b'+' => 62,
+            b'/' => 63,
+            _ => return None,
+        })
+    };
+    let bytes: Vec<u8> = s.bytes().filter(|&c| c != b'=').collect();
+    let mut out = Vec::with_capacity(bytes.len() * 3 / 4);
+    for chunk in bytes.chunks(4) {
+        let mut n = 0u32;
+        for (i, &c) in chunk.iter().enumerate() {
+            n |= val(c)? << (18 - 6 * i);
+        }
+        let take = chunk.len().saturating_sub(1);
+        for i in 0..take {
+            out.push((n >> (16 - 8 * i)) as u8);
+        }
+    }
+    Some(out)
+}
+
+/// The text with every inline PNG (`data:image/png;base64,...`) replaced by
+/// a digest of what it decodes to.
+fn pictures_by_content(t: &str) -> String {
+    const MARK: &str = "data:image/png;base64,";
+    let mut out = String::with_capacity(t.len());
+    let mut rest = t;
+    while let Some(i) = rest.find(MARK) {
+        out.push_str(&rest[..i + MARK.len()]);
+        let after = &rest[i + MARK.len()..];
+        let end = after
+            .find(|c: char| !(c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '='))
+            .unwrap_or(after.len());
+        let data = &after[..end];
+        match base64_decode(data).and_then(|b| png_content(&b)) {
+            Some(content) => out.push_str(&format!("<pixels {:016x}>", fnv(&content))),
+            None => out.push_str(data),
+        }
+        rest = &after[end..];
+    }
+    out.push_str(rest);
+    out
+}
+
+fn fnv(b: &[u8]) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for &x in b {
+        h ^= u64::from(x);
+        h = h.wrapping_mul(0x0100_0000_01b3);
+    }
+    h
+}
+
+/// HTML byte for byte, but each inline PNG by its pixels.
+pub fn html(a: &[u8], b: &[u8]) -> Option<String> {
+    if a == b {
+        return None;
+    }
+    let (sa, sb) = (String::from_utf8_lossy(a), String::from_utf8_lossy(b));
+    text(
+        pictures_by_content(&sa).as_bytes(),
+        pictures_by_content(&sb).as_bytes(),
+    )
+}
+
+fn palm_records(b: &[u8]) -> Option<Vec<&[u8]>> {
+    let count = usize::from(u16::from_be_bytes([*b.get(76)?, *b.get(77)?]));
+    let offsets: Vec<usize> = (0..count)
+        .map(|i| {
+            let o = 78 + i * 8;
+            b.get(o..o + 4)
+                .map(|x| u32::from_be_bytes([x[0], x[1], x[2], x[3]]) as usize)
+        })
+        .collect::<Option<_>>()?;
+    let mut out = Vec::with_capacity(count);
+    for (i, &start) in offsets.iter().enumerate() {
+        let end = offsets.get(i + 1).copied().unwrap_or(b.len());
+        out.push(b.get(start..end)?);
+    }
+    Some(out)
+}
+
+/// A MOBI or AZW3 (a PalmDB): the header up to the record list byte for
+/// byte, then record by record, each byte for byte, or by its pixels where
+/// both are PNGs. The record offsets are not compared: a picture of other
+/// bytes moves every record after it.
+pub fn palm_db(a: &[u8], b: &[u8]) -> Option<String> {
+    if a == b {
+        return None;
+    }
+    let (Some(ra), Some(rb)) = (palm_records(a), palm_records(b)) else {
+        return bytes(a, b);
+    };
+    if a.get(..76) != b.get(..76) {
+        return Some(format!(
+            "the PalmDB header differs: {}",
+            bytes(&a[..76.min(a.len())], &b[..76.min(b.len())]).unwrap_or_default()
+        ));
+    }
+    if ra.len() != rb.len() {
+        return Some(format!("{} records against {}", ra.len(), rb.len()));
+    }
+    for (i, (x, y)) in ra.iter().zip(&rb).enumerate() {
+        if x == y {
+            continue;
+        }
+        let d = if png_content(x).is_some() {
+            png(x, y)
+        } else {
+            bytes(x, y)
+        };
+        if let Some(d) = d {
+            return Some(format!("record {i}: {d}"));
+        }
+    }
+    None
 }
 
 #[cfg(test)]

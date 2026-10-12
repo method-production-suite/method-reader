@@ -15,8 +15,9 @@ use std::path::Path;
 
 /// How an output file is compared.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Bytes: no row compares raw bytes yet
 pub enum Compare {
-    /// Byte for byte (MOBI, AZW3, FDX, PNG).
+    /// Byte for byte.
     Bytes,
     /// Byte for byte, but reported as text: the first differing line.
     Text,
@@ -24,8 +25,15 @@ pub enum Compare {
     /// compression method, the same uncompressed bytes. The deflate streams
     /// themselves are not compared, because two correct deflaters differ.
     ZipEntries,
-    /// A folder: the same file names, each byte for byte.
+    /// A folder: the same file names, each byte for byte (a PNG by its
+    /// pixels).
     Folder,
+    /// JSON compared as values: key order does not count.
+    Json,
+    /// Text byte for byte, but each inline PNG by its pixels.
+    Html,
+    /// A PalmDB (MOBI, AZW3) record by record, a PNG record by its pixels.
+    PalmDb,
 }
 
 /// Which inputs a row applies to.
@@ -112,11 +120,11 @@ const CONVERT_OUTPUTS: &[Output] = &[
     },
     Output {
         file: "book.mobi",
-        compare: Compare::Bytes,
+        compare: Compare::PalmDb,
     },
     Output {
         file: "book.azw3",
-        compare: Compare::Bytes,
+        compare: Compare::PalmDb,
     },
     Output {
         file: "book.fdx",
@@ -124,11 +132,11 @@ const CONVERT_OUTPUTS: &[Output] = &[
     },
     Output {
         file: "book.preview.html",
-        compare: Compare::Text,
+        compare: Compare::Html,
     },
     Output {
         file: "book.elements.json",
-        compare: Compare::Text,
+        compare: Compare::Json,
     },
     Output {
         file: "script.fountain",

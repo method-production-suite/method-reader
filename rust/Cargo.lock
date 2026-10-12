@@ -3591,6 +3591,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-cli"
+version = "0.11.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sp-azw3",
+ "sp-device",
+ "sp-engine",
+ "sp-fdx",
+ "sp-fountain",
+ "sp-model",
+ "tempfile",
+ "zip",
+]
+
+[[package]]
 name = "sp-device"
 version = "0.11.1"
 dependencies = [
@@ -3619,6 +3635,7 @@ dependencies = [
  "sp-mobi",
  "sp-model",
  "sp-parser",
+ "sp-pdf",
  "tempfile",
 ]
 
@@ -5082,6 +5099,7 @@ checksum = "e450f9b2ed1dff33c94c12589a87338689467b9c4f5d8a5710bd09a847d2c8a7"
 name = "xtask"
 version = "0.11.1"
 dependencies = [
+ "miniz_oxide 0.8.9",
  "serde_json",
  "zip",
 ]

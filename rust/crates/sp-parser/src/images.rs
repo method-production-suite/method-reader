@@ -425,10 +425,25 @@ fn facts_convert(img: &ImageFact) -> bool {
 /// Resolve one placement's pixels and encode them, or `None` if anything
 /// refused. The blast radius of any step has to be ONE image rather than
 /// the whole book.
-fn encode_placement(page: &PageFacts, obj_id: &str, run: &mut ImageRun) -> Option<EncodedImage> {
+fn encode_placement(
+    page: &PageFacts,
+    obj_id: &str,
+    run: &mut ImageRun,
+    fetch: Option<&FetchImage<'_>>,
+) -> Option<EncodedImage> {
     let started = Instant::now();
     let result = (|| {
-        let img = page.images.get(obj_id)?.as_ref()?;
+        // Pixels not read with the page are fetched now, inside the timed
+        // region: decoding is part of what the budget charges, as waiting
+        // for pdf.js's pixels was.
+        let fetched;
+        let img = match page.images.get(obj_id) {
+            Some(img) => img.as_ref()?,
+            None => {
+                fetched = fetch?(obj_id)?;
+                &fetched
+            }
+        };
         if let Some(data) = img.data.as_deref() {
             let rgb = to_rgb(img.width, img.height, img.kind, Some(data))?;
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -474,6 +489,24 @@ pub fn collect_page_images(
     text_lines: usize,
     run: &mut ImageRun,
 ) -> Vec<EncodedCandidate> {
+    collect_page_images_with(page, ops, page_num, text_lines, run, None)
+}
+
+/// Where a picture's pixels come from when the page's facts do not carry
+/// them: the PDF layer, asked by objId only once a picture is wanted.
+pub type FetchImage<'a> = dyn Fn(&str) -> Option<ImageFact> + 'a;
+
+/// [`collect_page_images`], fetching through `fetch` the pixels of any
+/// placement `page.images` has no entry for (absent `fetch`, such a
+/// placement has no pixels and counts as failed).
+pub fn collect_page_images_with(
+    page: &PageFacts,
+    ops: Option<&[Op]>,
+    page_num: u32,
+    text_lines: usize,
+    run: &mut ImageRun,
+    fetch: Option<&FetchImage<'_>>,
+) -> Vec<EncodedCandidate> {
     let mut candidates = Vec::new();
     let Some(ops) = ops else { return candidates };
 
@@ -491,7 +524,7 @@ pub fn collect_page_images(
                 run.failed += 1;
                 continue;
             }
-            let Some(encoded) = encode_placement(page, &p.obj_id, run) else {
+            let Some(encoded) = encode_placement(page, &p.obj_id, run, fetch) else {
                 run.failed += 1;
                 continue;
             };

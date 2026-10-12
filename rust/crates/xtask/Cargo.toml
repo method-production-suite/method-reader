@@ -13,3 +13,4 @@ workspace = true
 [dependencies]
 serde_json.workspace = true
 zip.workspace = true
+miniz_oxide.workspace = true

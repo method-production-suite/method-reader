@@ -36,6 +36,7 @@ sp-azw3 = { path = "crates/sp-azw3" }
 sp-device = { path = "crates/sp-device" }
 sp-fsutil = { path = "crates/sp-fsutil" }
 sp-engine = { path = "crates/sp-engine" }
+sp-pdf = { path = "crates/sp-pdf" }
 # Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
 zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not

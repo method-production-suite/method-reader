@@ -23,7 +23,7 @@ use sp_model::{ContdMode, ElementType, FormatOptions, ParsedScreenplay, RawImage
 use sp_parser::extract::extract_text;
 use sp_parser::facts::DocumentFacts;
 use sp_parser::first_page::{is_first_real_page, page_paragraphs};
-use sp_parser::images::ImageStats;
+use sp_parser::images::{FetchImage, ImageStats};
 use sp_parser::parse_lines;
 use sp_parser::png::is_png;
 
@@ -109,6 +109,10 @@ pub enum ConvertError {
     Scanned { pages: u32, lines: usize },
     /// `NotAScreenplayError`.
     NotAScreenplay,
+    /// pdf.js's `PasswordException`: the PDF is encrypted.
+    Password,
+    /// pdf.js's `InvalidPDFException`: not a PDF the reader can open.
+    InvalidPdf,
     /// fountain-js's one throw.
     Fountain(String),
     /// A book maker refused (a bug of ours: the callers keep these out of
@@ -128,6 +132,8 @@ impl fmt::Display for ConvertError {
                 "No scene headings and no dialogue found: this does not look like a \
                  screenplay. Pass --force to convert it anyway.",
             ),
+            ConvertError::Password => f.write_str("No password given"),
+            ConvertError::InvalidPdf => f.write_str("Invalid PDF structure."),
             ConvertError::Fountain(m) | ConvertError::Book(m) => f.write_str(m),
         }
     }
@@ -288,10 +294,36 @@ fn tick(
     }
 }
 
-/// `convertPdf`, from what the PDF layer read.
+/// `convertPdf(pdfBytes, opts)`: the full pipeline for a screenplay PDF.
+///
+/// The pages are read first, text and operators only; a picture's pixels
+/// are decoded only once both refusals have passed, as each picture is
+/// reached, inside the picture budget.
+pub fn convert_pdf(bytes: Vec<u8>, opts: ConvertOptions) -> Result<ConvertResult, ConvertError> {
+    let doc = std::panic::catch_unwind(|| sp_pdf::Document::load(bytes))
+        .map_err(|_| ConvertError::InvalidPdf)?
+        .map_err(|e| match e {
+            sp_pdf::LoadError::Encrypted => ConvertError::Password,
+            sp_pdf::LoadError::Invalid => ConvertError::InvalidPdf,
+        })?;
+    let mut reader = doc.reader();
+    let facts = sp_pdf::read_pages(&doc, &mut reader);
+    let fetch = |id: &str| sp_pdf::image_fact(&reader, id);
+    convert_read(&facts, opts, Some(&fetch))
+}
+
+/// `convertPdf`, from facts already read (an oracle dump's, or a test's).
 pub fn convert_facts(
     facts: &DocumentFacts,
+    opts: ConvertOptions,
+) -> Result<ConvertResult, ConvertError> {
+    convert_read(facts, opts, None)
+}
+
+fn convert_read(
+    facts: &DocumentFacts,
     mut opts: ConvertOptions,
+    fetch: Option<&FetchImage<'_>>,
 ) -> Result<ConvertResult, ConvertError> {
     let mut warnings = Vec::new();
 
@@ -353,7 +385,7 @@ pub fn convert_facts(
                 );
             }
         };
-        pending.decode_images(Some(&mut cb))
+        pending.decode_images_with(Some(&mut cb), fetch)
     };
     let mut raw_images = decoded.images;
     if let Some(fill) = opts.picture_bytes {

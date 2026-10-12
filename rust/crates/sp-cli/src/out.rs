@@ -1,0 +1,114 @@
+//! How the CLI speaks: stdout for the answer, stderr for everything a
+//! person reads beside it, and the one place an early exit is printed.
+
+use std::io::Write;
+
+use serde_json::{Map, Value};
+use sp_engine::jsjson;
+
+/// Why a run stopped before its natural end.
+#[derive(Debug)]
+pub enum Stop {
+    /// `fail(error)`: a contract error, exit 1.
+    Fail { code: String, message: String },
+    /// Already printed; exit with this code.
+    Exit(u8),
+    /// An error nobody anticipated: the catch-all, exit 1. The message is
+    /// `String(err)`.
+    Internal(String),
+}
+
+impl Stop {
+    pub fn fail(code: &str, message: impl Into<String>) -> Stop {
+        Stop::Fail {
+            code: code.to_owned(),
+            message: message.into(),
+        }
+    }
+
+    pub fn usage(message: impl Into<String>) -> Stop {
+        Stop::fail("usage", message)
+    }
+
+    /// A throw that is not a contract error, as `String(err)` writes a
+    /// plain `Error`.
+    pub fn internal(message: impl std::fmt::Display) -> Stop {
+        Stop::Internal(format!("Error: {message}"))
+    }
+}
+
+pub type Run = Result<(), Stop>;
+
+pub struct Io {
+    pub json: bool,
+}
+
+impl Io {
+    pub fn new(json: bool) -> Io {
+        Io { json }
+    }
+
+    /// One line on stdout, written whole and flushed before anything else
+    /// happens (`sayLine`: a piped answer must never be cut short).
+    pub fn say(&mut self, text: &str) {
+        let mut out = std::io::stdout().lock();
+        let _ = out.write_all(text.as_bytes());
+        let _ = out.write_all(b"\n");
+        let _ = out.flush();
+    }
+
+    /// One line on stderr.
+    pub fn err(&mut self, text: &str) {
+        let mut e = std::io::stderr().lock();
+        let _ = e.write_all(text.as_bytes());
+        let _ = e.write_all(b"\n");
+        let _ = e.flush();
+    }
+
+    /// `JSON.stringify({ ok: true, ...answer })` on stdout.
+    pub fn ok(&mut self, answer: Value) {
+        let mut m = Map::new();
+        m.insert("ok".into(), Value::Bool(true));
+        if let Value::Object(fields) = answer {
+            for (k, v) in fields {
+                m.insert(k, v);
+            }
+        }
+        self.say(&jsjson::stringify(&Value::Object(m)));
+    }
+
+    /// `showHelp(usage)`: the text, or `{ ok, usage }` in --json; exit 0.
+    pub fn help(&mut self, usage: &str) -> Stop {
+        if self.json {
+            self.ok(serde_json::json!({ "usage": usage }));
+        } else {
+            self.say(usage);
+        }
+        Stop::Exit(0)
+    }
+
+    /// Print a stop and give the exit code.
+    pub fn finish(&mut self, stop: Stop) -> u8 {
+        match stop {
+            Stop::Exit(code) => code,
+            Stop::Fail { code, message } => {
+                if self.json {
+                    let error = serde_json::json!({ "ok": false, "error": { "code": code, "message": message } });
+                    self.say(&jsjson::stringify(&error));
+                } else {
+                    self.err(&format!("screepub: {message}"));
+                }
+                1
+            }
+            Stop::Internal(message) => {
+                if self.json {
+                    let error = serde_json::json!({ "ok": false, "error": { "code": "internal", "message": message } });
+                    self.say(&jsjson::stringify(&error));
+                } else {
+                    self.err(&message);
+                }
+                1
+            }
+        }
+    }
+}
