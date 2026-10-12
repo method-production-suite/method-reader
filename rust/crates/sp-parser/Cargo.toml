@@ -24,3 +24,6 @@ flate2.workspace = true
 [dev-dependencies]
 # Reading a written PNG back.
 miniz_oxide = "0.8"
+# The images fixture's real decoded pixels (tests/images_fixture.rs). A dev
+# dependency only: sp-pdf itself depends on this crate's facts.
+sp-pdf.workspace = true

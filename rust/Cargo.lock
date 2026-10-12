@@ -3638,6 +3638,7 @@ dependencies = [
  "sp-parser",
  "sp-pdf",
  "tempfile",
+ "zip",
 ]
 
 [[package]]
@@ -3670,6 +3671,7 @@ version = "0.11.1"
 dependencies = [
  "serde_json",
  "sp-model",
+ "sp-parser",
  "unicode-general-category",
 ]
 
@@ -3726,6 +3728,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-model",
+ "sp-pdf",
 ]
 
 [[package]]

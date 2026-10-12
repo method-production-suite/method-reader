@@ -21,6 +21,7 @@
 //   fountain-js tokens, ports with that crate.
 // MOVED: "an image between a cue and its speech costs NOTHING in ONE column": every
 //   assertion is on toFountain output; needs sp-fountain toFountain, ports with that crate.
+// All five moved halves are in sp-fountain/tests/parser_pipeline.rs.
 
 mod common;
 

@@ -29,6 +29,7 @@
 //   .mobi EXTH and picture records; needs sp-engine convertPdf + sp-mobi.
 // MOVED: "and still draws the card on a page of its own, straight after the title page":
 //   reads the .mobi HTML; needs sp-engine convertPdf + sp-mobi.
+// All seven are in sp-engine/tests/torture_pictures.rs.
 
 mod common;
 
