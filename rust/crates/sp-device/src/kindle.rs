@@ -29,10 +29,27 @@ pub fn is_kindle_volume(volume: &str) -> bool {
 /// (a no-op on any real Kindle, which is_kindle_volume guarantees has one).
 pub fn copy_to_kindle_volume(file: &str, volume: &str) -> Result<String, NodeIoError> {
     let dest_dir = host::join(&[volume, "documents"]);
+    refuse_link(&dest_dir)?;
     make_dir_all(&dest_dir)?;
     let dest = host::join(&[&dest_dir, &host::basename(file)]);
     sp_fsutil::replace_file(Path::new(file), Path::new(&dest))?;
     Ok(dest)
+}
+
+/// The book's folder on the reader must be a folder ON the reader: a link
+/// there (a volume formatted HFS+ or ext4 can hold one) would send the book,
+/// and replace a same-named file, wherever it points. Refused with Node's
+/// ELOOP words, naming the folder.
+pub(crate) fn refuse_link(dir: &str) -> Result<(), NodeIoError> {
+    match std::fs::symlink_metadata(dir) {
+        Ok(m) if m.file_type().is_symlink() => Err(NodeIoError {
+            code: Some("ELOOP".into()),
+            message: format!(
+                "ELOOP: too many symbolic links encountered, the reader's folder is a link: '{dir}'"
+            ),
+        }),
+        _ => Ok(()),
+    }
 }
 
 /// `mkdirSync(dir, { recursive: true })`, in Node's words when it fails.

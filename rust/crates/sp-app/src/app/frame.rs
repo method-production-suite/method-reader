@@ -19,10 +19,10 @@ use crate::model::layout;
 use crate::model::notes::{RELEASE, visible_sections};
 use crate::model::send_routes::Device;
 use crate::model::update::{
-    self as u, CheckOutcome, Drawn, Phase, label_actionable, notes_view, read_state,
-    remember_answer, remembered_offer, run_check, update_label, updates_possible,
+    self as u, CheckOutcome, Drawn, Phase, begin_check, finish_check, label_actionable, notes_view,
+    read_state, remember_answer, remembered_offer, update_label, updates_possible,
 };
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{Receiver, TryRecvError, channel};
 
 use sp_update::flow::Event as UpdateEvent;
 use sp_update::gate::EngineGate;
@@ -41,7 +41,22 @@ enum RunMsg {
     Event(UpdateEvent),
     Done(RunOutcome),
     Restarted(bool),
+    /// The run panicked, or its thread ended without a last word.
+    Threw,
 }
+
+impl RunMsg {
+    fn is_last(&self) -> bool {
+        !matches!(self, RunMsg::Event(_))
+    }
+}
+
+/// What the notes say when the run or the check stops without an answer.
+const RUN_STOPPED: &str = "The update stopped unexpectedly. Try again.";
+const CHECK_STOPPED: &str = "The update check stopped unexpectedly.";
+
+/// What the updater's check answers.
+type CheckAnswer = Result<Option<u::Found>, String>;
 
 /// An update event as the label and the notes draw it.
 pub fn phase_of(event: UpdateEvent) -> Option<Phase> {
@@ -79,6 +94,12 @@ pub struct UpdateState {
     pub label_focused: bool,
     /// The run on its thread, while it is out.
     run: Option<Receiver<RunMsg>>,
+    /// The check on its thread, while it is out, and whether a person
+    /// asked for it.
+    checking: Option<(Receiver<CheckAnswer>, bool)>,
+    /// Run the check at once on the window's thread (tests, as the engine
+    /// runtime's Inline mode).
+    pub inline_checks: bool,
     /// Wakes the window when the run says something.
     pub repaint: Option<egui::Context>,
 }
@@ -114,10 +135,42 @@ impl UpdateState {
         }
     }
 
-    pub fn check(&mut self, host: &mut super::Host, manual: bool) -> CheckOutcome {
+    /// Asks for latest.json. The request runs on its own thread (a stalled
+    /// network held the window for up to the transport's ten minutes, and
+    /// the launch check runs before the first frame); its answer arrives
+    /// through [`UpdateState::pump`]. In tests (`inline_checks`) it runs at
+    /// once, as the engine runtime's Inline mode does. A check already out
+    /// is not doubled.
+    pub fn check(&mut self, host: &mut super::Host, manual: bool) {
+        if self.checking.is_some() {
+            return;
+        }
         let now = (host.clock)();
-        let updater = &host.updater;
-        let outcome = run_check(manual, host.storage.as_mut(), now, || updater.check());
+        if !begin_check(manual, host.storage.as_mut(), now) {
+            self.answered(CheckOutcome::Skipped, manual);
+            return;
+        }
+        if self.inline_checks {
+            let answer = host.updater.check();
+            let outcome = finish_check(host.storage.as_mut(), answer);
+            self.answered(outcome, manual);
+            return;
+        }
+        let (tx, rx) = channel();
+        let updater = host.updater.clone();
+        let repaint = self.repaint.clone();
+        std::thread::spawn(move || {
+            let answer = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| updater.check()))
+                .unwrap_or_else(|_| Err(CHECK_STOPPED.to_string()));
+            let _ = tx.send(answer);
+            if let Some(ctx) = &repaint {
+                ctx.request_repaint();
+            }
+        });
+        self.checking = Some((rx, manual));
+    }
+
+    fn answered(&mut self, outcome: CheckOutcome, manual: bool) {
         self.flow.check_answered(&outcome);
         self.heard();
         if let CheckOutcome::Error { message } = &outcome
@@ -125,7 +178,22 @@ impl UpdateState {
         {
             self.notes_line = Some(message.clone());
         }
-        outcome
+    }
+
+    /// The check's answer, once it has come.
+    fn pump_check(&mut self, host: &mut super::Host) {
+        let Some((rx, manual)) = &self.checking else {
+            return;
+        };
+        let manual = *manual;
+        let answer = match rx.try_recv() {
+            Ok(answer) => answer,
+            Err(TryRecvError::Empty) => return,
+            Err(TryRecvError::Disconnected) => Err(CHECK_STOPPED.to_string()),
+        };
+        self.checking = None;
+        let outcome = finish_check(host.storage.as_mut(), answer);
+        self.answered(outcome, manual);
     }
 
     /// A click on the label or the notes' button: the one run, or "Restart
@@ -151,8 +219,13 @@ impl UpdateState {
                         let _ = tx.send(RunMsg::Event(e));
                         wake();
                     };
-                    let outcome = updater.install(offer.live, &gate, &mut emit);
-                    let _ = tx.send(RunMsg::Done(outcome));
+                    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        updater.install(offer.live, &gate, &mut emit)
+                    }));
+                    let _ = tx.send(match outcome {
+                        Ok(outcome) => RunMsg::Done(outcome),
+                        Err(_) => RunMsg::Threw,
+                    });
                     wake();
                 });
             }
@@ -162,8 +235,13 @@ impl UpdateState {
                         let _ = tx.send(RunMsg::Event(e));
                         wake();
                     };
-                    let started = updater.restart(&version, &mut emit);
-                    let _ = tx.send(RunMsg::Restarted(started));
+                    let started = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        updater.restart(&version, &mut emit)
+                    }));
+                    let _ = tx.send(match started {
+                        Ok(started) => RunMsg::Restarted(started),
+                        Err(_) => RunMsg::Threw,
+                    });
                     wake();
                 });
             }
@@ -174,12 +252,26 @@ impl UpdateState {
     /// What the run said since the last frame. True when the new copy has
     /// started and this window should close.
     pub fn pump(&mut self, host: &mut super::Host) -> bool {
+        self.pump_check(host);
         let Some(rx) = &self.run else {
             return false;
         };
         let mut close = false;
         let mut ended = false;
-        let msgs: Vec<RunMsg> = rx.try_iter().collect();
+        let mut msgs: Vec<RunMsg> = Vec::new();
+        loop {
+            match rx.try_recv() {
+                Ok(msg) => msgs.push(msg),
+                Err(TryRecvError::Empty) => break,
+                // The run's thread is gone; without a last word, it died.
+                Err(TryRecvError::Disconnected) => {
+                    if !msgs.iter().any(RunMsg::is_last) {
+                        msgs.push(RunMsg::Threw);
+                    }
+                    break;
+                }
+            }
+        }
         for msg in msgs {
             match msg {
                 RunMsg::Event(e) => match phase_of(e) {
@@ -193,6 +285,10 @@ impl UpdateState {
                 }
                 RunMsg::Restarted(started) => {
                     close = started;
+                    ended = true;
+                }
+                RunMsg::Threw => {
+                    self.flow.threw(RUN_STOPPED);
                     ended = true;
                 }
             }
@@ -709,10 +805,8 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
     let check = widgets::button(ui, t, Look::Small, u::CHECK_BUTTON, !view.check_disabled);
     if check.clicked() {
         app.update.drawn.drew_offer = true;
-        let outcome = app.update.check(&mut app.host, true);
-        if let CheckOutcome::Error { message } = outcome {
-            app.update.notes_line = Some(message);
-        }
+        // A failure's message reaches the notes line when the answer comes.
+        app.update.check(&mut app.host, true);
     }
     let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
     let said = app

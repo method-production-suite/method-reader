@@ -24,6 +24,15 @@ use serde::{Deserialize, Serialize};
 use crate::obj::{Dict, Obj, Stream, StreamSource, XRef};
 use crate::oplist::ImageSource;
 
+/// The most pixels a picture (or the canvas of a picture and its masks) may
+/// declare: 2^26, a 600 dpi scan of a whole US Letter page with room to
+/// spare. Every buffer is sized from the declared size, not from the bytes
+/// the stream holds, so without this a few hundred bytes of PDF could ask
+/// for gigabytes (pdf.js has no limit of its own; JavaScript's allocator
+/// throws where Rust's aborts). An over-size picture is not decoded, as an
+/// undecodable one is not, and the parser carries no picture for it.
+pub const MAX_PIXELS: usize = 1 << 26;
+
 /// What pdf.js puts in its object store for an image.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PdfImage {
@@ -863,7 +872,7 @@ impl PdfImg {
         if width.fract() != 0.0 || height.fract() != 0.0 || width < 1.0 || height < 1.0 {
             return Err(ImageError);
         }
-        if width * height > 1.0e9 {
+        if width * height > MAX_PIXELS as f64 {
             return Err(ImageError);
         }
         let image_mask = xref.get2(dict, "IM", "ImageMask").truthy();
@@ -1370,6 +1379,11 @@ impl PdfImg {
     fn create_image_data(&self) -> Result<PdfImage, ImageError> {
         let dw = self.draw_width();
         let dh = self.draw_height();
+        // The canvas is the widest of the picture and its masks by the
+        // tallest, so two pictures under the cap can still multiply past it.
+        if dw.checked_mul(dh).is_none_or(|area| area > MAX_PIXELS) {
+            return Err(ImageError);
+        }
         let ow = self.width;
         let oh = self.height;
         let bpc = self.bpc as usize;

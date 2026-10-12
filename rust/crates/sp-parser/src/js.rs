@@ -203,6 +203,49 @@ pub fn cmp_num(a: f64, b: f64) -> std::cmp::Ordering {
     a.partial_cmp(&b).unwrap_or(std::cmp::Ordering::Equal)
 }
 
+/// `Array.prototype.sort(cmp)` for a comparator that may not be a total
+/// order. [`cmp_num`] reads NaN as equal to everything, which is what
+/// JavaScript does with `a - b`, and a damaged PDF can hand the parser a NaN
+/// coordinate. Rust's `sort_by` may panic on such a comparator ("does not
+/// correctly implement a total order"); this stable merge sort never does.
+/// For a comparator that IS a total order the result is `sort_by`'s, since
+/// both are stable.
+pub fn sort_by<T>(v: &mut Vec<T>, mut cmp: impl FnMut(&T, &T) -> std::cmp::Ordering) {
+    if v.len() < 2 {
+        return;
+    }
+    let items = std::mem::take(v);
+    *v = merge_sort(items, &mut cmp);
+}
+
+fn merge_sort<T>(mut items: Vec<T>, cmp: &mut impl FnMut(&T, &T) -> std::cmp::Ordering) -> Vec<T> {
+    if items.len() < 2 {
+        return items;
+    }
+    let right = items.split_off(items.len() / 2);
+    let left = merge_sort(items, cmp);
+    let right = merge_sort(right, cmp);
+    let mut out = Vec::with_capacity(left.len() + right.len());
+    let mut l = left.into_iter().peekable();
+    let mut r = right.into_iter().peekable();
+    loop {
+        match (l.peek(), r.peek()) {
+            (Some(a), Some(b)) => {
+                // Take from the right only when it is strictly smaller:
+                // that is what keeps equal items in their order.
+                if cmp(b, a) == std::cmp::Ordering::Less {
+                    out.extend(r.next());
+                } else {
+                    out.extend(l.next());
+                }
+            }
+            (Some(_), None) => out.extend(l.next()),
+            (None, Some(_)) => out.extend(r.next()),
+            (None, None) => return out,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

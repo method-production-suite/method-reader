@@ -5390,6 +5390,7 @@ dependencies = [
  "serde_json",
  "sp-cli",
  "sp-device",
+ "sp-fsutil",
  "sp-update",
  "tempfile",
  "unicode-general-category",

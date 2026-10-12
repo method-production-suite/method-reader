@@ -288,7 +288,7 @@ fn insert_images(
         return elements;
     }
     let mut ordered: Vec<&RawImage> = images.iter().collect();
-    ordered.sort_by(|a, b| {
+    js::sort_by(&mut ordered, |a, b| {
         a.page_num
             .cmp(&b.page_num)
             .then_with(|| js::cmp_num(b.y, a.y))

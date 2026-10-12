@@ -5,7 +5,7 @@
 //! manager. Each performer returns the sentence the window shows.
 
 use std::io::Read;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 use crate::errors::{CliError, EngineError, ErrorCode};
 use crate::nodepath::host;
@@ -37,7 +37,7 @@ pub fn real_opener(argv: &[String]) -> Opened {
             stderr: "no program".into(),
         };
     };
-    let child = Command::new(program)
+    let child = sp_device::process::quiet_command(program)
         .args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::null())

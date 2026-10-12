@@ -737,6 +737,33 @@ names the check it affects.
   `previousToken.type` of nothing and throw. `tokenize` returns
   `Err(FountainError)` for exactly that input, with the message bun prints
   (issue link included), so a caller can fail the way the TypeScript fails.
+- **Hostile Fountain is refused, not an abort (review, 2026-10-12).** jsre
+  recursed once per repetition of a group, so about 3,000 blank lines,
+  lyric lines or centered lines in a row overflowed the window's 2 MiB
+  engine thread and aborted the whole app (fountain-js answers them at
+  once: V8 keeps its backtrack stack on the heap). `tokenize` now parses on
+  its own 256 MiB-stack thread, and every search carries a stack budget
+  (192 MiB there) and a step budget (200 million steps, about a second).
+  A search over either fails and `tokenize` returns an `Err` ("This script
+  is too complex to read..."). Answers differ from the TypeScript only on
+  inputs no script has: a run of roughly 100,000+ blank lines (refused;
+  fountain-js answers), and the patterns that backtrack exponentially in
+  BOTH engines (a title-page value of 26+ characters ending in U+2028, 50,000
+  `/*`, 50,000 `[[`), which fountain-js finishes in seconds to hours and
+  Rust refuses in about a second. Checked by sp-fountain/tests/hostile.rs;
+  no committed fixture or real script trips either budget.
+- **Over-size pictures are not decoded (review, 2026-10-12).** sp-pdf
+  sizes every buffer from a picture's declared Width and Height (and the
+  widest by the tallest of the picture and its masks, and a JPEG's own
+  frame), not from the bytes it carries, so a few hundred bytes of PDF
+  took 2.2 GB (12,000 x 12,000 with an SMask) or 2.7 GB (a JPEG whose frame
+  says 30,000 x 30,000), and the old 1e9-pixel cap allowed about 15 GB:
+  an allocation failure aborts the process. `sp_pdf::images::MAX_PIXELS`
+  (2^26, a 600 dpi Letter page with room) now refuses such a picture as an
+  undecodable one is refused. pdf.js has no cap; a picture between 2^26 and
+  pdf.js's own failure point would be carried by the TypeScript and not by
+  Rust. No committed fixture or real script comes near it. Checked by
+  sp-pdf/tests/hostile_images.rs.
 - **services/device-requests (decided 2026-10-11).** Ported to Rust
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker

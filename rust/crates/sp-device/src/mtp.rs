@@ -51,7 +51,7 @@ pub struct HelperLocation<'a> {
     pub platform: Platform,
     pub exists: &'a dyn Fn(&str) -> bool,
     /// The workspace's target folder, for a dev checkout's own build.
-    pub dev_target_dir: PathBuf,
+    pub dev_target_dir: Option<PathBuf>,
 }
 
 /// The process's own environment, as the `env` seams take it.
@@ -71,13 +71,29 @@ impl HelperLocation<'static> {
             exec_path: std::env::current_exe().unwrap_or_default(),
             platform: Platform::host(),
             exists: &file_exists,
-            dev_target_dir: Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("..")
-                .join("..")
-                .join("target")
-                .join("release"),
+            dev_target_dir: dev_target_dir(),
         }
     }
+}
+
+/// A dev checkout's release folder, in a debug build only: the path is the
+/// build machine's, baked in at compile time, and a shipped (release) build
+/// must never run a helper from it (on a Windows runner it is D:\a\..., a
+/// path a removable drive on someone's machine could carry).
+#[cfg(debug_assertions)]
+fn dev_target_dir() -> Option<PathBuf> {
+    Some(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("target")
+            .join("release"),
+    )
+}
+
+#[cfg(not(debug_assertions))]
+fn dev_target_dir() -> Option<PathBuf> {
+    None
 }
 
 /// Where the helper is, or None when there is none to run.
@@ -114,7 +130,10 @@ pub fn mtp_helper_path(loc: &HelperLocation) -> Option<String> {
     if (loc.exists)(&beside) {
         return Some(beside);
     }
-    let dev = host::join(&[&loc.dev_target_dir.to_string_lossy(), &file]);
+    let dev = match &loc.dev_target_dir {
+        Some(dir) => host::join(&[&dir.to_string_lossy(), &file]),
+        None => return None,
+    };
     if (loc.exists)(&dev) {
         return Some(dev);
     }

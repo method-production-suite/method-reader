@@ -2,6 +2,13 @@
 //! sp-device linked in, every call the same `sp_cli::run` the `screepub`
 //! binary is. With `--version` or `--smoke` it runs headless instead
 //! (src/headless.rs).
+//!
+//! On Windows a release build is a GUI-subsystem program, so no console
+//! opens behind the window (as the Tauri shell's main.rs declared). The
+//! headless answers still reach a caller that pipes stdout, which is how
+//! smoke-bundle reads them.
+
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 use std::process::ExitCode;
 use std::sync::Arc;

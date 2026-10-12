@@ -603,7 +603,7 @@ pub fn to_raw_images(
     page_height: f64,
 ) -> Vec<RawImage> {
     let mut sorted: Vec<&EncodedCandidate> = kept.iter().collect();
-    sorted.sort_by(|a, b| {
+    js::sort_by(&mut sorted, |a, b| {
         a.candidate
             .page_num
             .cmp(&b.candidate.page_num)

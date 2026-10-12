@@ -171,3 +171,86 @@ fn u9_a_remembered_offer_checks_afresh_and_a_withdrawn_release_takes_the_label_d
     });
     assert!(!h.state().busy.retired(), "nothing was installed");
 }
+
+/// An updater whose check takes its time (a stalled network) or whose run
+/// panics part way.
+struct Awkward {
+    check_takes: Duration,
+    install_panics: bool,
+}
+
+impl sp_app::app::host::Updater for Awkward {
+    fn ready(&self) -> bool {
+        true
+    }
+    fn check(&self) -> Result<Option<Found>, String> {
+        std::thread::sleep(self.check_takes);
+        found()
+    }
+    fn install(
+        &self,
+        live: bool,
+        gate: &sp_update::gate::EngineGate,
+        emit: &mut dyn FnMut(sp_update::flow::Event),
+    ) -> sp_app::model::update_flow::RunOutcome {
+        assert!(!self.install_panics, "the download hit a bug");
+        FakeUpdater {
+            found: found(),
+            ..FakeUpdater::default()
+        }
+        .install(live, gate, emit)
+    }
+}
+
+#[test]
+fn the_launch_check_never_holds_the_window_and_its_answer_still_arrives() {
+    // The check ran on the window's thread inside App::new, before the
+    // first frame, with the transport's ten-minute timeout.
+    let w = world();
+    let mut host = w.fakes.host(Platform::Mac);
+    sp_app::model::update::remember_answer(host.storage.as_mut(), true);
+    host.updater = Arc::new(Awkward {
+        check_takes: Duration::from_millis(1500),
+        install_panics: false,
+    });
+    let started = Instant::now();
+    let app = sp_app::app::App::new(w.engine.clone(), sp_app::runtime::Mode::Threads, host);
+    assert!(
+        started.elapsed() < Duration::from_millis(500),
+        "App::new took {:?}",
+        started.elapsed()
+    );
+    let mut h = egui_kittest::Harness::builder()
+        .with_size([1280.0, 800.0])
+        .build_ui_state(|ui, app: &mut sp_app::app::App| app.frame(ui), app);
+    until(&mut h, "the offer arrives", |h| {
+        h.query_by_role_and_label(Role::Button, "Update to 0.12.0")
+            .is_some()
+    });
+}
+
+#[test]
+fn a_run_that_panics_ends_as_a_failure_and_can_be_tried_again() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    let app = h.state_mut();
+    app.host.updater = Arc::new(Awkward {
+        check_takes: Duration::ZERO,
+        install_panics: true,
+    });
+    app.update.flow.offer_found(Offer {
+        version: "0.12.0".into(),
+        body: String::new(),
+        live: true,
+    });
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Update to 0.12.0")
+        .click();
+    until(&mut h, "the run is reported failed", |h| {
+        matches!(phase(h), Some(Phase::Failed { .. }))
+    });
+    assert!(
+        !h.state().update.flow.running(),
+        "the label can be clicked again"
+    );
+}

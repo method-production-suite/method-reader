@@ -71,8 +71,17 @@ fn location<'a>(
         exec_path: PathBuf::from(exec),
         platform,
         exists,
-        dev_target_dir: PathBuf::from("/repo/rust/target/release"),
+        dev_target_dir: Some(PathBuf::from("/repo/rust/target/release")),
     }
+}
+
+#[test]
+fn a_shipped_build_never_looks_in_the_build_machines_folders() {
+    // The dev fallback is a path baked in at compile time. In a release
+    // built on a Windows runner it is D:\a\..., and D: on a person's
+    // machine is often a removable drive that could carry that path.
+    let host = sp_device::mtp::HelperLocation::host();
+    assert_eq!(host.dev_target_dir.is_some(), cfg!(debug_assertions));
 }
 
 #[test]
