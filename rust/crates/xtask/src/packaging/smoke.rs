@@ -17,8 +17,7 @@
 //! than skipped, because a check that prints nothing and exits 0 reads like
 //! a check that ran.
 //!
-//! The DMG half is this module's own copy ([`mount_dmg_app`]); cli_build's
-//! verify-signing carries another, to be unified by the owner.
+//! The DMG half is [`crate::dmg`], the one copy verify-signing uses too.
 
 use std::path::{Path, PathBuf};
 
@@ -32,6 +31,7 @@ use super::kinds::{
 };
 use super::native::{NATIVE_APP, package_version, plist_string};
 use super::util::{FlagSpec, RunResult, Runner, host_platform, parse_flags, real_run, strip_v};
+use crate::dmg::MountedApp;
 use crate::paths::repo_root;
 
 fn trimmed(s: &str, n: usize) -> String {
@@ -184,86 +184,22 @@ pub fn extract_archive_engine(bundle: &Path, work: &Path) -> Result<PathBuf, Str
 }
 
 /// An attached image: where it is mounted and the one app on it.
-#[derive(Debug)]
-pub struct Mounted {
-    pub app_path: PathBuf,
-    pub mount: PathBuf,
-}
+pub type Mounted = MountedApp;
 
-impl Mounted {
-    /// Must run whatever happens: an attached image outlives the job.
-    pub fn detach(&self, run: &mut Runner<'_>) {
-        run(
-            &[
-                "hdiutil".into(),
-                "detach".into(),
-                self.mount.to_string_lossy().into_owned(),
-                "-force".into(),
-            ],
-            None,
-        );
-    }
-}
-
-/// Mounts `dmg` read-only under `work` and finds the one .app on it, by
-/// suffix ("Screepub Desktop.app" until the identifier release,
-/// "Screepub.app" since). Detaches before any error.
+/// [`crate::dmg::mount_dmg_app`] through this module's runner (no working
+/// folder for hdiutil).
 pub fn mount_dmg_app(
     dmg: &Path,
     work: &Path,
     run: &mut Runner<'_>,
     tool: &str,
 ) -> Result<Mounted, String> {
-    let mount = work.join("mnt");
-    std::fs::create_dir_all(&mount).map_err(|e| e.to_string())?;
-    let attach = run(
-        &[
-            "hdiutil".into(),
-            "attach".into(),
-            dmg.to_string_lossy().into_owned(),
-            "-readonly".into(),
-            "-nobrowse".into(),
-            "-mountpoint".into(),
-            mount.to_string_lossy().into_owned(),
-        ],
-        None,
-    );
-    if attach.exit_code != 0 {
-        return Err(format!(
-            "{tool}: hdiutil attach failed on {}: {}",
-            dmg.display(),
-            trimmed(&attach.stderr, 500)
-        ));
-    }
-    let mut apps: Vec<String> = std::fs::read_dir(&mount)
-        .map(|r| {
-            r.filter_map(Result::ok)
-                .map(|e| e.file_name().to_string_lossy().into_owned())
-                .filter(|n| n.ends_with(".app"))
-                .collect()
-        })
-        .unwrap_or_default();
-    apps.sort();
-    if apps.len() != 1 {
-        Mounted {
-            app_path: PathBuf::new(),
-            mount,
-        }
-        .detach(run);
-        let listed = if apps.is_empty() {
-            String::new()
-        } else {
-            format!(" ({})", apps.join(", "))
-        };
-        return Err(format!(
-            "{tool}: expected exactly one .app on the mounted image, found {}{listed}",
-            apps.len()
-        ));
-    }
-    Ok(Mounted {
-        app_path: mount.join(&apps[0]),
-        mount,
-    })
+    crate::dmg::mount_dmg_app(dmg, work, &mut |a: &[String]| run(a, None), tool)
+}
+
+/// Detach an image through this module's runner.
+pub fn detach(m: &Mounted, run: &mut Runner<'_>) {
+    m.detach(&mut |a: &[String]| run(a, None));
 }
 
 /// The engine inside a .dmg's app. The caller detaches.
@@ -397,7 +333,7 @@ pub fn smoke_bundle(
         check_epub_bytes(&bytes[..bytes.len().min(8)])
     })();
     if let Some(m) = mounted {
-        m.detach(run);
+        detach(&m, run);
     }
     result
 }
@@ -478,7 +414,7 @@ pub fn smoke_native_bundle(
                 "Info.plist",
             )
         })();
-        m.detach(run);
+        detach(&m, run);
         result
     } else if ends(bundle, ".exe") {
         let exe = unpack_exe(bundle, work, run, a.windows_executable)?;

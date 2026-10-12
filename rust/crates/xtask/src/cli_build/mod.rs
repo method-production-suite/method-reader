@@ -7,7 +7,8 @@
 //! - [`smoke`]: `cargo xtask smoke-cli`, run a built CLI over the fixtures.
 //! - [`signing`]: `cargo xtask verify-signing`, a published DMG against the
 //!   requirements the frozen Swift updater pins.
-//! - [`targets`], [`binfmt`], [`archive`], [`dmg`]: what those share.
+//! - [`targets`], [`binfmt`], [`archive`]: what those share; the DMG half
+//!   is [`crate::dmg`], shared with smoke-bundle.
 //!
 //! Every outside program (cargo, codesign, ditto, xcrun, spctl, hdiutil, the
 //! CLI under test) is run through a closure, so the tests hand in fakes.
@@ -15,13 +16,12 @@
 pub mod archive;
 pub mod binfmt;
 pub mod build;
-pub mod dmg;
 pub mod signing;
 pub mod smoke;
 pub mod targets;
 
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 /// What a program answered.
@@ -89,43 +89,7 @@ fn run_with(argv: &[String], cwd: Option<&Path>) -> RunResult {
     }
 }
 
-/// A fresh folder under the system temp folder (which honours TMPDIR),
-/// removed when this is dropped: on the way out of a failure as well as a
-/// pass, which is what tests/tool-temp-folders.test.ts exists to check.
-#[derive(Debug)]
-pub struct TempDir {
-    path: PathBuf,
-}
-
-impl TempDir {
-    /// `<temp>/<prefix><unique>`, created empty.
-    pub fn new(prefix: &str) -> std::io::Result<Self> {
-        let base = std::env::temp_dir();
-        let pid = std::process::id();
-        let nanos = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0, |d| d.as_nanos());
-        for attempt in 0..1000u32 {
-            let path = base.join(format!("{prefix}{pid}-{nanos}-{attempt}"));
-            match std::fs::create_dir(&path) {
-                Ok(()) => return Ok(Self { path }),
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-                Err(e) => return Err(e),
-            }
-        }
-        Err(std::io::Error::other("no free temp folder name"))
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-}
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.path);
-    }
-}
+pub use crate::scratch::TempDir;
 
 /// How a flag takes its value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

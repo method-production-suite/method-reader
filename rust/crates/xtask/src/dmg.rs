@@ -1,13 +1,18 @@
-//! Mount a macOS .dmg and find the one app on it (the half of tools/dmg.ts
-//! verify-signing uses). macOS only; nothing else has hdiutil.
+//! Mount a macOS .dmg and find the one app on it: was tools/dmg.ts, which
+//! smoke-bundle.ts and verify-signing.ts shared, and is again the one copy
+//! both `cargo xtask smoke-bundle` and `cargo xtask verify-signing` use.
+//! macOS only; nothing else has hdiutil.
 //!
-//! tools/dmg.ts was shared by smoke-bundle.ts and verify-signing.ts. This
-//! copy is self-contained so the two ports could proceed apart; the
-//! `packaging` module carries smoke-bundle's, and the two are to become one.
+//! hdiutil is run through the caller's closure, so tests hand in a fake.
+//! The two tools' runners differ in shape (verify-signing's takes no
+//! working folder), so each passes `&mut |argv| run(...)` adapted to this one.
 
 use std::path::{Path, PathBuf};
 
-use super::Runner;
+use crate::cli_build::RunResult;
+
+/// The runner the DMG helpers take: an argv, program first.
+pub type DmgRun<'a> = dyn FnMut(&[String]) -> RunResult + 'a;
 
 /// A mounted image and the one .app on it.
 #[derive(Debug)]
@@ -20,12 +25,12 @@ impl MountedApp {
     /// Detach the image. The caller must run this on every way out: an
     /// attached image on a runner outlives the job and the next one inherits
     /// a busy mount point.
-    pub fn detach(&self, run: Runner) {
+    pub fn detach(&self, run: &mut DmgRun<'_>) {
         detach(&self.mount, run);
     }
 }
 
-fn detach(mount: &Path, run: Runner) {
+fn detach(mount: &Path, run: &mut DmgRun<'_>) {
     run(&[
         "hdiutil".to_string(),
         "detach".to_string(),
@@ -34,18 +39,19 @@ fn detach(mount: &Path, run: Runner) {
     ]);
 }
 
-/// Mount `dmg_path` under `work_dir` and return the one .app on it. `tool`
-/// opens every error, so a failure names the tool that hit it.
+/// Mount `dmg_path` read-only under `work_dir` and return the one .app on
+/// it. `tool` opens every error, so a failure names the tool that hit it.
+/// The image is detached before any error after the attach.
 pub fn mount_dmg_app(
     dmg_path: &Path,
     work_dir: &Path,
-    run: Runner,
+    run: &mut DmgRun<'_>,
     tool: &str,
 ) -> Result<MountedApp, String> {
     let mount = work_dir.join("mnt");
     std::fs::create_dir_all(&mount)
         .map_err(|e| format!("{tool}: cannot make {}: {e}", mount.display()))?;
-    // -readonly so verifying an artifact cannot modify it; -nobrowse so no
+    // -readonly so checking an artifact cannot modify it; -nobrowse so no
     // volume appears on a desktop the next job inherits.
     let attach = run(&[
         "hdiutil".to_string(),

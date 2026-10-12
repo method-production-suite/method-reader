@@ -741,7 +741,7 @@ impl FakeCargo {
                 k,
             );
         }
-        RunResult::ok("")
+        RunResult::ok("", "")
     }
 }
 
@@ -872,7 +872,7 @@ fn a_failing_cargo_fails_the_run_and_forwards_its_stderr() {
 fn a_cargo_that_exits_0_and_writes_nothing_still_fails() {
     let s = Scratch::new("bundle-run");
     let dirs = agreeing_repo(&s, "0.6.0");
-    let mut nothing = |_: &[String], _: Option<&Path>| RunResult::ok("");
+    let mut nothing = |_: &[String], _: Option<&Path>| RunResult::ok("", "");
     err_contains(
         build_bundles(
             &linux_run(&s.join("run-empty"), BundleArch::X64),
@@ -911,7 +911,7 @@ fn a_truncated_artifact_fails_the_run_instead_of_being_published() {
         let dir = bundle_dir_for("deb", None, &desktop);
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("Screepub_0.6.0_truncated.deb"), [0u8; 64]).unwrap();
-        RunResult::ok("")
+        RunResult::ok("", "")
     };
     let out = s.join("run-trunc");
     err_contains(
@@ -962,7 +962,7 @@ impl FakeMac {
         if let Some(sig) = &self.sig {
             fs::write(format!("{}{SIGNATURE_EXT}", tar.display()), sig).unwrap();
         }
-        RunResult::ok("")
+        RunResult::ok("", "")
     }
 }
 

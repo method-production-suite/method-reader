@@ -91,7 +91,7 @@ fn the_generator_adds_the_header_to_what_bun_printed_and_refuses_a_failed_build(
         Path::new("bun"),
         &mut |a: &[String], cwd: Option<&Path>| {
             seen.push((a.to_vec(), cwd.map(Path::to_path_buf)));
-            RunResult::ok("// src/update/compare.ts\nfunction f() {}\n")
+            RunResult::ok("// src/update/compare.ts\nfunction f() {}\n", "")
         },
     )
     .unwrap();

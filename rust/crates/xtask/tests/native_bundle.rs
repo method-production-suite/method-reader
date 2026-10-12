@@ -139,14 +139,14 @@ impl FakeTools {
                 plausible(Path::new(out), &native_kind("nsis"));
             }
             "xcrun" if argv[1] == "notarytool" => {
-                return RunResult::ok(&format!(
-                    "{{\"id\":\"abc\",\"status\":\"{}\"}}",
-                    self.notary_status
-                ));
+                return RunResult::ok(
+                    &format!("{{\"id\":\"abc\",\"status\":\"{}\"}}", self.notary_status),
+                    "",
+                );
             }
             _ => {}
         }
-        RunResult::ok("")
+        RunResult::ok("", "")
     }
 
     fn tools(&self) -> Vec<String> {

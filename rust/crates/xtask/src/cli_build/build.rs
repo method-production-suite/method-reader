@@ -699,14 +699,29 @@ pub fn verify_artifact(target: &Target, out_dir: &Path, floors: Floors) -> Resul
     Ok(())
 }
 
-/// A file's SHA-256, lowercase hex.
+/// A file's SHA-256, lowercase hex, read in pieces (an app bundle's archive
+/// can be large).
 pub fn sha256_file(path: &Path) -> Result<String, String> {
-    let bytes = std::fs::read(path)
-        .map_err(|e| format!("build-cli: cannot read {}: {e}", path.display()))?;
-    Ok(Sha256::digest(&bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect())
+    use std::io::Read;
+    let mut f =
+        std::fs::File::open(path).map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+    let mut h = Sha256::new();
+    let mut buf = vec![0u8; 1 << 16];
+    loop {
+        let n = f
+            .read(&mut buf)
+            .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+        if n == 0 {
+            break;
+        }
+        h.update(&buf[..n]);
+    }
+    Ok(hex(&h.finalize()))
+}
+
+/// Lowercase hex.
+pub fn hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Name to digest, from SHA256SUMS text.
@@ -751,7 +766,7 @@ pub fn write_checksums(
                 names.push(name);
             } else {
                 eprintln!(
-                    "build-cli: {name} is named in {file_name} but no longer in {}; dropping it",
+                    "{name} is named in {file_name} but no longer in {}; dropping it",
                     out_dir.display()
                 );
             }
@@ -762,8 +777,7 @@ pub fn write_checksums(
     for name in &names {
         text.push_str(&format!("{}  {name}\n", sha256_file(&out_dir.join(name))?));
     }
-    std::fs::write(&path, &text)
-        .map_err(|e| format!("build-cli: cannot write {}: {e}", path.display()))?;
+    std::fs::write(&path, &text).map_err(|e| format!("cannot write {}: {e}", path.display()))?;
     Ok(text)
 }
 

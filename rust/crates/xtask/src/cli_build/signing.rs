@@ -27,8 +27,8 @@
 
 use std::path::Path;
 
-use super::dmg::mount_dmg_app;
 use super::{FlagKind, RunResult, Runner, TempDir, parse_flags, real_run};
+use crate::dmg::mount_dmg_app;
 
 /// UpdateInstaller.teamID.
 pub const TEAM_ID: &str = "XSRB3D643J";
@@ -398,7 +398,12 @@ pub fn main_with(args: &[String], os: &str, run: Runner) -> u8 {
     // The work folder is removed when `work` drops, and the image detached
     // first, on every way out: a failed check once left the folder behind
     // with the DMG still mounted inside it.
-    let mounted = match mount_dmg_app(Path::new(dmg), work.path(), run, "verify-signing") {
+    let mounted = match mount_dmg_app(
+        Path::new(dmg),
+        work.path(),
+        &mut |a: &[String]| run(a),
+        "verify-signing",
+    ) {
         Ok(m) => m,
         Err(message) => {
             eprintln!("{message}");
@@ -406,7 +411,7 @@ pub fn main_with(args: &[String], os: &str, run: Runner) -> u8 {
         }
     };
     let verdict = judge_signing(dmg, &mounted.app_path.display().to_string(), run);
-    mounted.detach(run);
+    mounted.detach(&mut |a: &[String]| run(a));
     let (ok, lines) = describe_verdict(&verdict, expectation);
     println!("verify-signing: {dmg} (--expect {})", expectation.name());
     for line in &lines {

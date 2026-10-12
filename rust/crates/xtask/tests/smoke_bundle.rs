@@ -11,14 +11,14 @@ use std::path::{Path, PathBuf};
 use packaging_common::*;
 use xtask::packaging::kinds::{AppSource, BundleOs, kinds_for_os};
 use xtask::packaging::smoke::{
-    BuiltSmoke, check_engine_version, extract_archive_engine, extract_dmg_engine,
+    BuiltSmoke, check_engine_version, detach, extract_archive_engine, extract_dmg_engine,
     extract_exe_engine, platform_refusal, smoke_built_bundles, smoke_bundle, smoke_native_bundle,
 };
 use xtask::packaging::util::RunResult;
 use xtask::paths::repo_root;
 
 fn ok(stdout: &str) -> RunResult {
-    RunResult::ok(stdout)
+    RunResult::ok(stdout, "")
 }
 
 fn fixture() -> PathBuf {
@@ -232,7 +232,7 @@ fn it_attaches_read_only_finds_the_app_and_points_at_the_engine_inside_it() {
     };
     let (engine, mounted) = extract_dmg_engine(&s.join("x.dmg"), &work, &mut run).unwrap();
     assert!(engine.ends_with(Path::new("Screepub.app/Contents/MacOS/screepub-engine")));
-    mounted.detach(&mut run);
+    detach(&mounted, &mut run);
     assert!(calls[0].iter().any(|a| a == "-readonly"));
     assert!(calls[0].iter().any(|a| a == "-nobrowse"));
     assert!(calls.iter().any(|c| c[1] == "detach"));

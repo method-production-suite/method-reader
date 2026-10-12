@@ -22,6 +22,7 @@ pub mod cli_build;
 pub mod desktop_notes;
 pub mod desktop_tokens;
 pub mod device_checklist;
+pub mod dmg;
 pub mod fixture;
 pub mod mobi_probe;
 pub mod packaging;
