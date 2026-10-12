@@ -291,6 +291,8 @@ pub fn keys(v: &Value) -> Vec<String> {
     let mut k: Vec<String> = v.as_object().expect("an object").keys().cloned().collect();
     k.sort();
     k
+}
+
 /// A stand-in for the reMarkable's USB web interface on 127.0.0.1: it
 /// records `METHOD /path` for every request and answers `get` to a GET and
 /// `post` to a POST, each with the body `[]`. `None` takes the request and
