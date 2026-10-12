@@ -542,6 +542,23 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 
 **Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-12 (the final cutover integration): 237 done, 1 gap (W12: no sidecar to be missing; the row says what stands in).
 
+### New window behavior, not parity: Read it | Edit it (2026-10-12)
+
+The owner's feature for the Rust window. Nothing in the TypeScript window
+did this: the editing files were reachable only under Other ways > Save a
+file, after a reader was chosen. These rows have no oracle; their tests
+are the spec (rust/crates/sp-app/tests/edit_choice.rs, src/model/intent.rs,
+sp-cli/tests/cli_app_settings.rs).
+
+| Row | Behavior | Where | Status |
+|---|---|---|---|
+| X1 | A two-way choice, Read it and Edit it, heads the send panel on the cards and on the calm screen; Read it is the panel as it was | sp-app/src/app/panel.rs intent_switch | new (edit_choice x1) |
+| X2 | One Tab stop (the chosen half); Left/Right/Up/Down flip it, Home and End pick an end, and the keyboard follows the choice; AccessKit TabList "Read it or edit it" with two Tabs, the chosen one selected; the brass knob from the tokens, the words on it ink-on-brass | sp-app/src/app/panel.rs intent_switch, sp-app/src/model/intent.rs step | new (edit_choice x2) |
+| X3 | Edit it: "Get the script back to edit, rebuilt from the PDF’s pages." then two cards in the device-card style, Final Draft ("FDX, also for most screenwriting apps", Beta) and Highland, Fade In and others ("Fountain, plain text"); each opens the Save box with the type's name and filter and runs Save a file's own export (`export --for fdx`/`fountain`), with its "Saving…" and "Saved <name>." lines; a book with no .fountain refuses with NO_FOUNTAIN and opens no Save box | sp-app/src/app/panel.rs draw_edit | new (edit_choice x3) |
+| X4 | Remembered app-wide like the reader device: app settings `panelIntent` ("read" or "edit", validated, default read; null resets), read with the reader device, written on each change | sp-engine commands/app_settings.rs, sp-app/src/app/panel.rs choose_intent | new (edit_choice x4; cli_app_settings panel_intent tests) |
+| X5 | The knob slides over the state motion (0.2 s, ease-out) through App::ease; at once with Reduce Motion | sp-app/src/app/panel.rs intent_switch | new (edit_choice x5) |
+| X6 | Other ways > Save a file keeps its FDX and Fountain rows | sp-app/src/app/panel.rs draw_other_ways | new (edit_choice x6) |
+
 ## Window test files
 
 The TypeScript tests that load `desktop/ui` (or `desktop/src-tauri`) are

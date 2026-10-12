@@ -8,6 +8,7 @@ pub mod device_watch;
 pub mod feedback;
 pub mod focus;
 pub mod frame;
+pub mod intent;
 pub mod json;
 pub mod kfx;
 pub mod layout;

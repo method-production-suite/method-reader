@@ -20,11 +20,15 @@ use crate::model::device::{
     send_it_rows,
 };
 use crate::model::focus::{Keyed, Owed, Pay, give_back, pay_owed};
+use crate::model::intent::{
+    CHOICE_LABEL, EDIT_CARDS, EDIT_LINE, Intent, intent_from, step as intent_step,
+};
 use crate::model::json::ok;
 use crate::model::kfx::{
     self as k, Checklist, Control, after_install, control_for, setup_from, show_setup,
 };
 use crate::model::layout;
+use crate::model::motion;
 use crate::model::notes::RELEASE;
 use crate::model::requests::{self as q, answer_from, device_form, report_form, report_route};
 use crate::model::send_routes::{
@@ -132,6 +136,13 @@ pub struct State {
     give_back: Option<(String, u64)>,
     /// The brass button is owed the keyboard.
     pub brass_owed: Option<Owed<Id>>,
+    /// Read it | Edit it, remembered app-wide (app settings `panelIntent`).
+    pub intent: Intent,
+    /// Where the brass knob was drawn last: 0 under Read it, 1 under Edit it.
+    pub knob: f32,
+    /// An arrow moved the choice: the keyboard follows it next frame, once
+    /// the new half is the Tab stop.
+    focus_intent: Option<Intent>,
 }
 
 impl Default for State {
@@ -173,6 +184,9 @@ impl Default for State {
             asterisks: Vec::new(),
             give_back: None,
             brass_owed: None,
+            intent: Intent::Read,
+            knob: 0.0,
+            focus_intent: None,
             net_tx,
             net_rx,
         }
@@ -914,7 +928,11 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             if mount != app.panel.mounts {
                 return;
             }
-            let device = reply.answer.ok().as_ref().and_then(d::reader_device_from);
+            let answer = reply.answer.ok();
+            if let Some(a) = answer.as_ref() {
+                app.panel.intent = intent_from(a);
+            }
+            let device = answer.as_ref().and_then(d::reader_device_from);
             app.reader_device = Some(device);
             set_mode(
                 app,
@@ -1312,11 +1330,16 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         }
         return;
     }
-    match app.panel.mode {
-        None => {}
-        Some(Mode::Cards) => draw_cards(app, ui),
-        Some(Mode::Calm) => draw_calm(app, ui),
-        Some(Mode::Missing) => draw_missing(app, ui),
+    if app.panel.mode.is_some() {
+        intent_switch(app, ui);
+        ui.add_space(layout::SPACE[5]);
+    }
+    match (app.panel.mode, app.panel.intent) {
+        (None, _) => {}
+        (Some(_), Intent::Edit) => draw_edit(app, ui),
+        (Some(Mode::Cards), Intent::Read) => draw_cards(app, ui),
+        (Some(Mode::Calm), Intent::Read) => draw_calm(app, ui),
+        (Some(Mode::Missing), Intent::Read) => draw_missing(app, ui),
     }
     let status = app.panel.status.clone();
     widgets::live(
@@ -1330,6 +1353,226 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         let artifact = app.panel.artifact.clone();
         widgets::text(ui, &artifact, theme::structure(size::FINE), t.ink_muted);
     }
+}
+
+// ------------------------------------------------------- Read it | Edit it
+
+pub fn intent_id(intent: Intent) -> Id {
+    Id::new(("panel-intent", intent.stored()))
+}
+
+/// The choice changed: drawn at once, remembered app-wide.
+fn choose_intent(app: &mut App, intent: Intent) {
+    if app.panel.intent == intent {
+        return;
+    }
+    app.panel.intent = intent;
+    app.call(
+        Request::SetAppSettings {
+            json: json!({ "panelIntent": intent.stored() }).to_string(),
+        },
+        p(Purpose::StoreDevice),
+    );
+}
+
+/// Read it | Edit it: a segmented control, one Tab stop (the chosen half),
+/// the arrows between the two, a brass knob that slides under the choice
+/// over the state motion (at once with Reduce Motion).
+fn intent_switch(app: &mut App, ui: &mut Ui) {
+    let t = app.tokens();
+    let font = theme::structure_bold(size::LABEL);
+    let pad = Vec2::new(18.0, 7.0);
+    let widest = [Intent::Read, Intent::Edit]
+        .iter()
+        .map(|i| {
+            ui.painter()
+                .layout_no_wrap(widgets::caps(i.label()), font.clone(), t.ink)
+                .size()
+        })
+        .fold(Vec2::ZERO, |a, b| a.max(b));
+    let half = (widest + pad * 2.0).ceil();
+    let knob = app.ease(
+        Id::new("panel-intent-knob"),
+        app.panel.intent.knob(),
+        motion::STATE,
+    );
+    app.panel.knob = knob;
+    let bar = ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        let (whole, _) = ui.allocate_exact_size(Vec2::new(half.x * 2.0, half.y), Sense::hover());
+        let radius = egui::CornerRadius::same(theme::RADIUS as u8);
+        let slot = |i: f32| Rect::from_min_size(whole.min + Vec2::new(half.x * i, 0.0), half);
+        ui.painter().rect_filled(slot(knob), radius, t.brass);
+        ui.painter().rect_stroke(
+            whole,
+            radius,
+            egui::Stroke::new(1.2, t.ink),
+            egui::StrokeKind::Inside,
+        );
+        let mut moved = None;
+        for intent in [Intent::Read, Intent::Edit] {
+            let rect = slot(intent.knob());
+            let selected = app.panel.intent == intent;
+            let id = intent_id(intent);
+            let response = ui.interact(
+                rect,
+                id,
+                if selected {
+                    Sense::click()
+                } else {
+                    Sense::CLICK
+                },
+            );
+            response.widget_info(|| {
+                WidgetInfo::selected(WidgetType::Button, true, selected, intent.label())
+            });
+            ui.ctx().accesskit_node_builder(id, |n| {
+                n.set_role(accesskit::Role::Tab);
+                n.set_selected(selected);
+                n.clear_toggled();
+            });
+            // The words over the knob read as ink on brass; the other as ink.
+            let over = 1.0 - (knob - intent.knob()).abs();
+            let ink = super::bookview::mix(t.ink, t.ink_on_brass, over);
+            ui.painter().text(
+                rect.center(),
+                egui::Align2::CENTER_CENTER,
+                widgets::caps(intent.label()),
+                font.clone(),
+                ink,
+            );
+            widgets::focus_ring(ui, &t, &response, 3.0);
+            app.stop(id, selected);
+            // Part of the panel for the keyboard's bookkeeping: the plan
+            // parks a fresh result here, and the brass is owed it.
+            app.panel.keyed.push(Keyed {
+                key: format!("intent-{}", intent.stored()),
+                id,
+                enabled: selected,
+            });
+            if selected && app.panel.focus_intent == Some(intent) {
+                app.panel.focus_intent = None;
+                ui.memory_mut(|m| m.request_focus(id));
+            }
+            if response.clicked() {
+                moved = Some(intent);
+            }
+            if selected {
+                widgets::own_arrows(ui, id);
+                if response.has_focus() {
+                    let key = ui.input_mut(|i| {
+                        [
+                            egui::Key::ArrowLeft,
+                            egui::Key::ArrowRight,
+                            egui::Key::ArrowUp,
+                            egui::Key::ArrowDown,
+                            egui::Key::Home,
+                            egui::Key::End,
+                        ]
+                        .into_iter()
+                        .find(|k| i.consume_key(egui::Modifiers::NONE, *k))
+                    });
+                    if let Some(next) = key.and_then(|k| intent_step(intent, k)) {
+                        moved = Some(next);
+                        app.panel.focus_intent = Some(next);
+                    }
+                }
+            }
+        }
+        moved
+    });
+    ui.ctx().accesskit_node_builder(bar.response.id, |n| {
+        n.set_role(accesskit::Role::TabList);
+        n.set_bounds(widgets::bounds(bar.response.rect));
+        n.set_label(CHOICE_LABEL);
+    });
+    if let Some(intent) = bar.inner {
+        choose_intent(app, intent);
+    }
+}
+
+/// Edit it: a line, then Final Draft and Fountain as cards. Each opens the
+/// Save box and runs the same export Save a file does.
+fn draw_edit(app: &mut App, ui: &mut Ui) {
+    let t = app.tokens();
+    widgets::text(ui, EDIT_LINE, theme::prose(size::CAPTION), t.ink_soft);
+    ui.add_space(layout::SPACE[4]);
+    let gap = 12.8;
+    let width = ((ui.available_width() - gap) / 2.0).floor().max(160.0);
+    let live = enabled(app);
+    let fountain = app
+        .script
+        .as_ref()
+        .and_then(|s| s.fountain_path.as_deref())
+        .is_some_and(|f| !f.trim().is_empty());
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = Vec2::new(gap, gap);
+        for card in EDIT_CARDS {
+            let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 72.0), Sense::hover());
+            let key = format!("edit-{}", card.kind);
+            let id = Id::new(("send-panel", key.as_str(), 0));
+            let held = ui.memory(|m| m.has_focus(id));
+            let resp = ui.interact(rect, id, if live { Sense::click() } else { Sense::hover() });
+            resp.widget_info(|| WidgetInfo::labeled(WidgetType::Button, live, card.name));
+            ui.ctx()
+                .accesskit_node_builder(id, |n| n.set_description(card.sub));
+            let hovered = live && resp.hovered();
+            ui.painter().rect_filled(
+                rect,
+                theme::RADIUS_WELL,
+                if hovered { t.hole } else { t.paper },
+            );
+            ui.painter().rect_stroke(
+                rect,
+                theme::RADIUS_WELL,
+                egui::Stroke::new(1.0, if hovered { t.ink } else { t.ink_muted }),
+                egui::StrokeKind::Inside,
+            );
+            let name = ui.painter().layout(
+                card.name.to_string(),
+                theme::structure_bold(size::UI),
+                t.ink,
+                rect.width() - 40.0,
+            );
+            let y = rect.top() + 14.0;
+            let under = y + name.size().y + 4.0;
+            ui.painter()
+                .galley(egui::pos2(rect.left() + 16.0, y), name, t.ink);
+            ui.painter().text(
+                egui::pos2(rect.left() + 16.0, under),
+                egui::Align2::LEFT_TOP,
+                card.sub,
+                theme::structure(size::NOTE),
+                t.ink_muted,
+            );
+            widgets::focus_ring(ui, &t, &resp, 2.0);
+            app.stop(id, live);
+            app.panel.keyed.push(Keyed {
+                key: key.clone(),
+                id,
+                enabled: live,
+            });
+            if card.beta {
+                let badge = Rect::from_min_size(
+                    rect.right_bottom() - Vec2::new(52.0, 22.0),
+                    Vec2::new(50.0, 20.0),
+                );
+                let mut badge_ui = ui.new_child(egui::UiBuilder::new().max_rect(badge));
+                widgets::beta_badge(&mut badge_ui, &t);
+            }
+            if resp.clicked() {
+                if !fountain {
+                    // The editing files are rebuilt from the .fountain.
+                    say(app, Status::failed(d::NO_FOUNTAIN), None);
+                } else {
+                    if held {
+                        app.panel.give_back = Some((key, app.panel.era));
+                    }
+                    save_file(app, card.kind);
+                }
+            }
+        }
+    });
 }
 
 fn enabled(app: &App) -> bool {

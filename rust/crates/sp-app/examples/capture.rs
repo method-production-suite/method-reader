@@ -23,7 +23,7 @@ use std::sync::Arc;
 use egui_kittest::Harness;
 use sp_app::app::App;
 use sp_app::capture::{
-    Guard, PIXELS_PER_POINT, REACH_LIMIT, Stepper, USAGE, capture_host, parse_args, reach,
+    Guard, PIXELS_PER_POINT, REACH_LIMIT, Stepper, USAGE, capture_host, parse_args, reach_with,
 };
 use sp_app::direct::DirectEngine;
 use sp_app::runtime::Mode;
@@ -75,7 +75,13 @@ fn draw(a: &sp_app::capture::Args) -> Result<(), String> {
     // theme egui is told, and this one is told by the capture.
     h.input_mut().system_theme = Some(a.theme.egui());
     let mut w = Window(h);
-    reach(&mut w, a.shot, &a.demo.to_string_lossy(), REACH_LIMIT)?;
+    reach_with(
+        &mut w,
+        a.shot,
+        a.panel,
+        &a.demo.to_string_lossy(),
+        REACH_LIMIT,
+    )?;
     let refused = refused.lock().map(|r| r.clone()).unwrap_or_default();
     if !refused.is_empty() {
         return Err(format!(
