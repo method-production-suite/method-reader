@@ -92,6 +92,8 @@ pub struct App {
     pub drag_hover: bool,
     pub dark: bool,
     fonts_set: bool,
+    /// Whether the window had the focus last frame (a return is news).
+    pub window_focused: bool,
 
     pub convert: convert::State,
     pub show: Option<show::Show>,
@@ -131,6 +133,7 @@ impl App {
             drag_hover: false,
             dark: false,
             fonts_set: false,
+            window_focused: true,
             convert: convert::State::default(),
             show: None,
             read: read::State::default(),

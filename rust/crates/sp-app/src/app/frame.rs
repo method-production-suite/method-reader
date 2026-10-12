@@ -169,6 +169,12 @@ pub fn input(app: &mut App, ui: &mut Ui) {
         (open, dropped, !i.raw.hovered_files.is_empty(), pressed)
     });
     app.drag_hover = hovering;
+    // Back from another app (perhaps from installing Kindle Previewer).
+    let focused = ctx.input(|i| i.focused);
+    if focused && !app.window_focused {
+        panel::focus_returned(app);
+    }
+    app.window_focused = focused;
     let now = app.now();
     if pressed && let Some(show) = app.show.as_mut() {
         show.press(now);
