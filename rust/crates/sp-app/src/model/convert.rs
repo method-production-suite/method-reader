@@ -4,7 +4,7 @@
 
 use serde_json::{Map, Value};
 
-use super::json::{error_message, is_text, ok, str_at};
+use super::json::{error_message, ok, str_at};
 use super::preview::Preview;
 
 /// The heading names the CAUSE, not the failure.
@@ -62,6 +62,12 @@ impl Progress {
             stage: None,
             label: "starting up".into(),
         }
+    }
+}
+
+impl Default for Progress {
+    fn default() -> Self {
+        Self::start()
     }
 }
 
@@ -481,12 +487,6 @@ pub fn shows_moved_line(action: LibraryAction, previous_path: &str, library: &Li
     action == LibraryAction::Change && library.path != previous_path
 }
 
-/// Whether a value is one of the engine's progress objects (app.js
-/// onProgress): anything else on the diagnostic stream is ignored.
-pub fn is_progress(line: &Value) -> bool {
-    line.is_object()
-}
-
 /// A line of text from the engine's diagnostic stream, decoded: each line
 /// that is a JSON object with a `progress` member gives that member.
 pub fn progress_lines(payload: &str) -> Vec<Value> {
@@ -498,11 +498,6 @@ pub fn progress_lines(payload: &str) -> Vec<Value> {
         .filter_map(|v| v.get("progress").cloned())
         .filter(|p| !p.is_null() && p != &Value::Bool(false))
         .collect()
-}
-
-/// Whether the engine's answer names a text (for `is_text` callers).
-pub fn has_text(answer: &Value, key: &str) -> bool {
-    is_text(answer.get(key))
 }
 
 #[cfg(test)]

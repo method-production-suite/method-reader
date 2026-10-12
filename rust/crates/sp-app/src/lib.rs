@@ -11,3 +11,5 @@ pub mod fonts;
 pub mod model;
 pub mod runtime;
 pub mod theme;
+
+pub mod app;

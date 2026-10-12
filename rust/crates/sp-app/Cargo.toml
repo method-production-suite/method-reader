@@ -31,6 +31,8 @@ rfd = "0.17.2"
 mundy = { version = "0.2.3", default-features = false, features = ["async-io", "callback", "color-scheme", "reduced-motion"] }
 unicode-normalization = "0.1"
 unicode-general-category = "1.1"
+webbrowser = "1.2"
+ureq = { version = "3", features = ["json"] }
 
 [dev-dependencies]
 egui_kittest = "0.36.2"

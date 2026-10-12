@@ -84,6 +84,13 @@ pub fn definitions() -> FontDefinitions {
         PROSE,
         &["literata-400-latin", "literata-400-latin-ext"],
     );
+    // The book's Sans typeface: egui's own proportional face.
+    let sans = defs
+        .families
+        .get(&FontFamily::Proportional)
+        .cloned()
+        .unwrap_or_default();
+    defs.families.insert(FontFamily::Name("sans".into()), sans);
     // The window's default body text is the prose face, and egui's own
     // monospace is the structure face, as the stylesheet set them.
     let prose = defs.families[&FontFamily::Name(PROSE.into())].clone();
