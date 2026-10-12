@@ -1,0 +1,1600 @@
+{
+  "numPages": 5,
+  "pages": [
+    {
+      "pageNum": 1,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "THE LAST VIDEO STORE",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 234, 504],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Written by",
+          "dir": "ltr",
+          "width": 72,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 270, 468],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A. N. Placeholder",
+          "dir": "ltr",
+          "width": 122.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 244.8, 432],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Placeholder Pictures",
+          "dir": "ltr",
+          "width": 144,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 108],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "hello@example.com",
+          "dir": "ltr",
+          "width": 122.40000000000003,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 96],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d10_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "THE LAST VIDEO STORE"
+        },
+        {
+          "op": "showText",
+          "text": "Written by"
+        },
+        {
+          "op": "showText",
+          "text": "A. N. Placeholder"
+        },
+        {
+          "op": "showText",
+          "text": "Placeholder Pictures"
+        },
+        {
+          "op": "showText",
+          "text": "hello@example.com"
+        }
+      ],
+      "images": {}
+    },
+    {
+      "pageNum": 2,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "INT. THE LAST VIDEO STORE - NIGHT",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Fluorescent light hums over aisles of VHS tapes. Rain",
+          "dir": "ltr",
+          "width": 381.5999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "streaks the front window. A hand-lettered sign reads:",
+          "dir": "ltr",
+          "width": 381.5999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 684],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "EVERYTHING MUST GO.",
+          "dir": "ltr",
+          "width": 136.79999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 672],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO SHAW, 60s, cardigan with a pen through the pocket,",
+          "dir": "ltr",
+          "width": 403.1999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 648],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "alphabetizes a shelf",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 636],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 636],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "that nobody will browse.",
+          "dir": "ltr",
+          "width": 172.79999999999993,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 636],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The bell over the door RINGS.",
+          "dir": "ltr",
+          "width": 208.79999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 612],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 588],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "We close at ten.",
+          "dir": "ltr",
+          "width": 115.19999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 540],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(O.S.)",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 516],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "It’s nine forty.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV OKONKWO, 20s, soaked through, shakes off a jacket that",
+          "dir": "ltr",
+          "width": 417.59999999999957,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 468],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "was never waterproof.",
+          "dir": "ltr",
+          "width": 151.19999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 456],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 432],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "And yet.",
+          "dir": "ltr",
+          "width": 57.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 408],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 384],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "I need something for a fourteen-",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 360],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "year-old who thinks movies started",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 348],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "with streaming.",
+          "dir": "ltr",
+          "width": 108.00000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 336],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Margo looks up for the first time.",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 312],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 288],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(a small conversion)",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 264],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Sit down.",
+          "dir": "ltr",
+          "width": 64.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 240],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "CUT TO:",
+          "dir": "ltr",
+          "width": 50.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 216],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS",
+          "dir": "ltr",
+          "width": 381.5999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 192],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Margo moves like she’s done this ten thousand times, because",
+          "dir": "ltr",
+          "width": 431.99999999999955,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 168],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "she has. Dev trails her, dripping.",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 156],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 132],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Fourteen. Scared, or pretending not",
+          "dir": "ltr",
+          "width": 251.99999999999983,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 108],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "to be?",
+          "dir": "ltr",
+          "width": 43.19999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 72],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d10_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "INT. THE LAST VIDEO STORE - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "Fluorescent light hums over aisles of VHS tapes. Rain"
+        },
+        {
+          "op": "showText",
+          "text": "streaks the front window. A hand-lettered sign reads:"
+        },
+        {
+          "op": "showText",
+          "text": "EVERYTHING MUST GO."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO SHAW, 60s, cardigan with a pen through the pocket,"
+        },
+        {
+          "op": "showText",
+          "text": "alphabetizes a shelf that nobody will browse."
+        },
+        {
+          "op": "showText",
+          "text": "The bell over the door RINGS."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "We close at ten."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "(O.S.)"
+        },
+        {
+          "op": "showText",
+          "text": "It’s nine forty."
+        },
+        {
+          "op": "showText",
+          "text": "DEV OKONKWO, 20s, soaked through, shakes off a jacket that"
+        },
+        {
+          "op": "showText",
+          "text": "was never waterproof."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "And yet."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "I need something for a fourteen-"
+        },
+        {
+          "op": "showText",
+          "text": "year-old who thinks movies started"
+        },
+        {
+          "op": "showText",
+          "text": "with streaming."
+        },
+        {
+          "op": "showText",
+          "text": "Margo looks up for the first time."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "(a small conversion)"
+        },
+        {
+          "op": "showText",
+          "text": "Sit down."
+        },
+        {
+          "op": "showText",
+          "text": "CUT TO:"
+        },
+        {
+          "op": "showText",
+          "text": "INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS"
+        },
+        {
+          "op": "showText",
+          "text": "Margo moves like she’s done this ten thousand times, because"
+        },
+        {
+          "op": "showText",
+          "text": "she has. Dev trails her, dripping."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "Fourteen. Scared, or pretending not"
+        },
+        {
+          "op": "showText",
+          "text": "to be?"
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        }
+      ],
+      "images": {}
+    },
+    {
+      "pageNum": 3,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "2.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Pretending. Loudly.",
+          "dir": "ltr",
+          "width": 136.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Then not the one with the mask.",
+          "dir": "ltr",
+          "width": 223.19999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 672],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Everyone starts with the mask and",
+          "dir": "ltr",
+          "width": 237.59999999999982,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 660],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "nobody remembers it.",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "She pulls a battered",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 624],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 624],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "clamshell case and holds it like",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 624],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "evidence.",
+          "dir": "ltr",
+          "width": 64.80000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 612],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO (CONT’D)",
+          "dir": "ltr",
+          "width": 100.80000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 588],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This one. Nothing happens for forty",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 564],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "minutes and then you never sleep",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 552],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "facing a closet again.",
+          "dir": "ltr",
+          "width": 158.39999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 540],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 516],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "That’s a pitch?",
+          "dir": "ltr",
+          "width": 108,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 492],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 468],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "That’s a promise.",
+          "dir": "ltr",
+          "width": 122.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 444],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DISSOLVE TO:",
+          "dir": "ltr",
+          "width": 86.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 420],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "EXT. STRIP MALL - NIGHT",
+          "dir": "ltr",
+          "width": 165.5999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 396],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Rain. The store’s neon sign flickers between LAST and AST.",
+          "dir": "ltr",
+          "width": 417.59999999999957,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 372],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Behind the glass, two silhouettes argue happily about",
+          "dir": "ltr",
+          "width": 381.5999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 360],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "something that doesn’t matter.",
+          "dir": "ltr",
+          "width": 215.99999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 348],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 324],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(O.S.)",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 300],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "How long have you been here?",
+          "dir": "ltr",
+          "width": 201.59999999999985,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 276],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 252],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(O.S.)",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 228],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Since people still rewound.",
+          "dir": "ltr",
+          "width": 194.3999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 204],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. THE LAST VIDEO STORE - COUNTER - LATER",
+          "dir": "ltr",
+          "width": 309.59999999999974,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 180],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 156],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 156],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "shoebox of index cards. Margo writes on one in careful",
+          "dir": "ltr",
+          "width": 388.7999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 156],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "block letters and slides it across.",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 144],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 120],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "What’s this?",
+          "dir": "ltr",
+          "width": 86.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 96],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 72],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d10_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "2."
+        },
+        {
+          "op": "showText",
+          "text": "Pretending. Loudly."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "Then not the one with the mask."
+        },
+        {
+          "op": "showText",
+          "text": "Everyone starts with the mask and"
+        },
+        {
+          "op": "showText",
+          "text": "nobody remembers it."
+        },
+        {
+          "op": "showText",
+          "text": "She pulls a battered clamshell case and holds it like"
+        },
+        {
+          "op": "showText",
+          "text": "evidence."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO (CONT’D)"
+        },
+        {
+          "op": "showText",
+          "text": "This one. Nothing happens for forty"
+        },
+        {
+          "op": "showText",
+          "text": "minutes and then you never sleep"
+        },
+        {
+          "op": "showText",
+          "text": "facing a closet again."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "That’s a pitch?"
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "That’s a promise."
+        },
+        {
+          "op": "showText",
+          "text": "DISSOLVE TO:"
+        },
+        {
+          "op": "showText",
+          "text": "EXT. STRIP MALL - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "Rain. The store’s neon sign flickers between LAST and AST."
+        },
+        {
+          "op": "showText",
+          "text": "Behind the glass, two silhouettes argue happily about"
+        },
+        {
+          "op": "showText",
+          "text": "something that doesn’t matter."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "(O.S.)"
+        },
+        {
+          "op": "showText",
+          "text": "How long have you been here?"
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "(O.S.)"
+        },
+        {
+          "op": "showText",
+          "text": "Since people still rewound."
+        },
+        {
+          "op": "showText",
+          "text": "INT. THE LAST VIDEO STORE - COUNTER - LATER"
+        },
+        {
+          "op": "showText",
+          "text": "A shoebox of index cards. Margo writes on one in careful"
+        },
+        {
+          "op": "showText",
+          "text": "block letters and slides it across."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "What’s this?"
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        }
+      ],
+      "images": {}
+    },
+    {
+      "pageNum": 4,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "3.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Your card. Nineteen years running,",
+          "dir": "ltr",
+          "width": 244.7999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 720],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "four hundred and six members.",
+          "dir": "ltr",
+          "width": 208.79999999999987,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 708],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "You’re four hundred and seven.",
+          "dir": "ltr",
+          "width": 215.99999999999986,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 672],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "You’re closing in a week.",
+          "dir": "ltr",
+          "width": 179.99999999999991,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 648],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 624],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Then it’ll be a short membership.",
+          "dir": "ltr",
+          "width": 237.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 600],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Dev takes the card anyway. Pockets it like it matters,",
+          "dir": "ltr",
+          "width": 388.7999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 576],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "because it does.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 564],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 540],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "What happens to all of it?",
+          "dir": "ltr",
+          "width": 187.1999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 516],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Margo looks down the",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 492],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 492],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "aisles. Twenty thousand tapes. A",
+          "dir": "ltr",
+          "width": 230.39999999999984,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 492],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "lifetime of other people’s Friday nights.",
+          "dir": "ltr",
+          "width": 295.19999999999976,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 480],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 456],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Somebody buys the shelves. The rest",
+          "dir": "ltr",
+          "width": 251.9999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 432],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "goes where the rest goes.",
+          "dir": "ltr",
+          "width": 179.99999999999991,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 420],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 396],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "That’s grim.",
+          "dir": "ltr",
+          "width": 86.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 372],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "MARGO",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 348],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "(not grim at all)",
+          "dir": "ltr",
+          "width": 122.39999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 223.2, 324],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "It’s Tuesday.",
+          "dir": "ltr",
+          "width": 93.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 300],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "SMASH CUT TO:",
+          "dir": "ltr",
+          "width": 93.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 276],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "INT. DEV’S APARTMENT",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 252],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 252],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "- NIGHT",
+          "dir": "ltr",
+          "width": 50.39999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 252],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 228],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.2, 228],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "television old enough to have a dial. Dev threads the tape",
+          "dir": "ltr",
+          "width": 417.59999999999957,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.4, 228],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "in. Static, then a countdown leader -- 5, 4, 3.",
+          "dir": "ltr",
+          "width": 338.3999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 216],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "His NIECE, 14, arms folded, sits as far from the screen as",
+          "dir": "ltr",
+          "width": 417.59999999999957,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 192],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the room allows.",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 180],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "NIECE",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 156],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This is going to be so boring.",
+          "dir": "ltr",
+          "width": 215.99999999999983,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 132],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "DEV",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 266.4, 108],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Forty minutes. Give it forty",
+          "dir": "ltr",
+          "width": 201.59999999999988,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 84],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "minutes.",
+          "dir": "ltr",
+          "width": 57.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 180, 72],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d10_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "3."
+        },
+        {
+          "op": "showText",
+          "text": "Your card. Nineteen years running,"
+        },
+        {
+          "op": "showText",
+          "text": "four hundred and six members."
+        },
+        {
+          "op": "showText",
+          "text": "You’re four hundred and seven."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "You’re closing in a week."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "Then it’ll be a short membership."
+        },
+        {
+          "op": "showText",
+          "text": "Dev takes the card anyway. Pockets it like it matters,"
+        },
+        {
+          "op": "showText",
+          "text": "because it does."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "What happens to all of it?"
+        },
+        {
+          "op": "showText",
+          "text": "Margo looks down the aisles. Twenty thousand tapes. A"
+        },
+        {
+          "op": "showText",
+          "text": "lifetime of other people’s Friday nights."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "Somebody buys the shelves. The rest"
+        },
+        {
+          "op": "showText",
+          "text": "goes where the rest goes."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "That’s grim."
+        },
+        {
+          "op": "showText",
+          "text": "MARGO"
+        },
+        {
+          "op": "showText",
+          "text": "(not grim at all)"
+        },
+        {
+          "op": "showText",
+          "text": "It’s Tuesday."
+        },
+        {
+          "op": "showText",
+          "text": "SMASH CUT TO:"
+        },
+        {
+          "op": "showText",
+          "text": "INT. DEV’S APARTMENT - NIGHT"
+        },
+        {
+          "op": "showText",
+          "text": "A television old enough to have a dial. Dev threads the tape"
+        },
+        {
+          "op": "showText",
+          "text": "in. Static, then a countdown leader -- 5, 4, 3."
+        },
+        {
+          "op": "showText",
+          "text": "His NIECE, 14, arms folded, sits as far from the screen as"
+        },
+        {
+          "op": "showText",
+          "text": "the room allows."
+        },
+        {
+          "op": "showText",
+          "text": "NIECE"
+        },
+        {
+          "op": "showText",
+          "text": "This is going to be so boring."
+        },
+        {
+          "op": "showText",
+          "text": "DEV"
+        },
+        {
+          "op": "showText",
+          "text": "Forty minutes. Give it forty"
+        },
+        {
+          "op": "showText",
+          "text": "minutes."
+        }
+      ],
+      "images": {}
+    },
+    {
+      "pageNum": 5,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "4.",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.8, 756],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The countdown hits 1. The room goes dark blue.",
+          "dir": "ltr",
+          "width": 331.1999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 720],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Forty minutes later,",
+          "dir": "ltr",
+          "width": 143.99999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000017,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 251.9999999999998, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "she has not moved, and she is sitting",
+          "dir": "ltr",
+          "width": 266.3999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 259.1999999999998, 696],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "considerably closer.",
+          "dir": "ltr",
+          "width": 144,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108, 684],
+          "fontName": "g_d10_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "FADE OUT.",
+          "dir": "ltr",
+          "width": 64.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 432, 660],
+          "fontName": "g_d10_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d10_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "4."
+        },
+        {
+          "op": "showText",
+          "text": "The countdown hits 1. The room goes dark blue."
+        },
+        {
+          "op": "showText",
+          "text": "Forty minutes later, she has not moved, and she is sitting"
+        },
+        {
+          "op": "showText",
+          "text": "considerably closer."
+        },
+        {
+          "op": "showText",
+          "text": "FADE OUT."
+        }
+      ],
+      "images": {}
+    }
+  ]
+}

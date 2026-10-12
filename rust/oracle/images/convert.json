@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "title": "The Paper Lantern",
+  "author": "J. Q. Nobody",
+  "pages": 5,
+  "scenes": 4,
+  "characters": 2,
+  "topCharacters": [
+    "WREN",
+    "HOLT"
+  ],
+  "warnings": [],
+  "spacingRepairs": 0,
+  "epubPath": "$WORK/out/book.epub",
+  "mobiPath": "$WORK/out/book.mobi",
+  "azw3Path": "$WORK/out/book.azw3",
+  "fountainPath": "$WORK/out/script.fountain",
+  "imagesPath": "$WORK/out/script.images",
+  "imageCount": 2,
+  "previewHtmlPath": "$WORK/out/book.preview.html",
+  "fdxPath": "$WORK/out/book.fdx",
+  "debugPath": "$WORK/out/book.elements.json"
+}

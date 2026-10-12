@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="2">
+  <Content>
+    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE ROOM - DAY</Text></Paragraph>
+    <Paragraph Type="Action"><Text>WREN, 30s, holds a storyboard panel up to the window and squints at it.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Somebody drew this in 1974 and nobody has looked at it since.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>HOLT sets down a box of film cans.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>HOLT</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>That is the job.</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER</Text></Paragraph>
+    <Paragraph Type="Action"><Text>A splice reel turns. The room smells of vinegar and dust.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>HOLT</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Two frames are missing from the head of the roll.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Then we cut around them.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>She threads the leader by feel, the way she was taught.</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>EXT. LOADING DOCK - NIGHT</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Rain on corrugated steel. WREN wheels a cart of film cans out under a sodium lamp and counts them twice.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>HOLT holds an umbrella over the cart and not over himself.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Forty-one. There were forty-three when we started.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>HOLT</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Two of them went out for repair in March and nobody wrote it down.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Nobody ever writes it down.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>She pulls a tarp over the cart and ties it at the corners.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>HOLT</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>The truck comes at six. Everything on that manifest has to be on the dock by then, in order, and dry.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Then we work through it.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>The lamp buzzes and cuts out. Neither of them stops moving.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>In the dark the cart is a long shape and the rain is louder than it was.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN (CONT'D)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Bring the second cart. And the good tarp, not the one with the hole in it.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Holt goes. Wren stands in the rain with a clipboard and does not hurry.</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE ROOM - DAWN</Text></Paragraph>
+    <Paragraph Type="Action"><Text>The cart is gone. A single storyboard panel is still pinned to the window.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Leave that one.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>FADE OUT.</Text></Paragraph>
+  </Content>
+  <TitlePage>
+    <Content>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>The Paper Lantern</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>Written by</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>J. Q. Nobody</Text></Paragraph>
+    </Content>
+  </TitlePage>
+</FinalDraft>

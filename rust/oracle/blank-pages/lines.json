@@ -1,0 +1,18 @@
+{
+  "pageCount": 2,
+  "spacingRepairs": 0,
+  "lines": [],
+  "images": [],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 0,
+      "width": 0,
+      "height": 0,
+      "area": 0,
+      "furniture": 0,
+      "background": 0
+    }
+  }
+}

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+<head>
+<title>INT. COLOUR TIMING BAY - NIGHT</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+h2.scene-heading {
+  font-size: 1em;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.6em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+span.scene-number {
+  font-weight: normal;
+}
+
+span.underline {
+  text-decoration: underline;
+}
+
+/* Original PDF page numbers — a marginal reference, out of the flow so
+   they cost no line. Horizontal in %, per the CSS invariants. Dimming is
+   opacity rather than a fixed gray, which would fight dark and sepia
+   themes; opacity dims against whatever the theme's text color is, and
+   engines lacking it just render full strength (registry #13a). */
+span.page-marker {
+  float: right;
+  font-size: 0.75em;
+  opacity: 0.6;
+  margin-left: 1%;
+}
+
+p {
+  margin: 0;
+  text-indent: 0;
+}
+
+p.action {
+  margin: 1em 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+p.mini-slug {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 1.4em 0 1em 0;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Print geometry, reflowed: dialogue is a narrow column (58% of the body
+   column in print). Cue and parenthetical indent WITHIN the column as
+   percentages of it (print: cue +1.2" and parenthetical +0.6" into the
+   3.5" column). */
+.dialogue-block {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-left: 20%;
+  margin-right: 20%;
+}
+
+/* A cue must never orphan from its dialogue at a page break. Centered
+   alignment reads naturally at any screen width; indented reproduces
+   print's fixed offsets (which only optically center on paper). */
+p.character {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is
+   right that every avoid link grows the chunk a renderer pushes, and while
+   the cue keep was a WRAPPER that argument held: the chunk already carried
+   the cue and the speech, and one more link made a blank-bottom page. With
+   the wrapper gone the chunk is cue + parenthetical + the orphans minimum
+   (#17), about four lines, which is the same bound #5a accepted when it
+   traded the heading wrapper for a chain.
+
+   Without this link a cue and its parenthetical strand together, which is
+   the defect #8b exists to prevent wearing a different hat. */
+p.parenthetical {
+  text-align: center;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+p.dialogue {
+  margin: 0;
+  text-align: left;
+  widows: 2;
+  orphans: 2;
+}
+
+/* Simultaneous speech: two half-width columns, kept on one page. The
+   table spans full width (wider than the dialogue column) by design. */
+table.dual-dialogue {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+
+table.dual-dialogue td {
+  width: 50%;
+  vertical-align: top;
+  padding: 0 2%;
+}
+
+/* A transition belongs to the shot before it: it may end a page, never
+   begin one (the universal print rule, docs/pagination-reference.md §2 —
+   that doc lands from branch worktree-device-map). */
+p.transition {
+  text-align: right;
+  text-transform: uppercase;
+  margin: 1em 0;
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+p.centered {
+  text-align: center;
+  margin: 1em 0;
+}
+
+/* A picture carried out of the source PDF (registry #19). These rules are
+   only in a book that shows one. No keep, on purpose: this box holds one
+   line box, so there is nothing inside it to keep together. The reasons in
+   full are in src/epub/css.ts, above screenplayCss; this file is generated
+   from it, so that header is not here. */
+.figure {
+  margin: 1em 0;
+  text-align: center;
+}
+
+/* Only the width is authored, so the height follows the aspect ratio. A
+   defensive restatement of the initial value, against a reading system
+   whose own stylesheet sets a height on images. */
+.figure img {
+  height: auto;
+}
+
+/* The width the picture had on the printed page, as a share of the text
+   column to the nearest five. A class rather than an inline style, which
+   the reader preview refuses. */
+p.w5 img { width: 5%; }
+p.w10 img { width: 10%; }
+p.w15 img { width: 15%; }
+p.w20 img { width: 20%; }
+p.w25 img { width: 25%; }
+p.w30 img { width: 30%; }
+p.w35 img { width: 35%; }
+p.w40 img { width: 40%; }
+p.w45 img { width: 45%; }
+p.w50 img { width: 50%; }
+p.w55 img { width: 55%; }
+p.w60 img { width: 60%; }
+p.w65 img { width: 65%; }
+p.w70 img { width: 70%; }
+p.w75 img { width: 75%; }
+p.w80 img { width: 80%; }
+p.w85 img { width: 85%; }
+p.w90 img { width: 90%; }
+p.w95 img { width: 95%; }
+p.w100 img { width: 100%; }
+
+/* A plate that filled its printed page gets a page here too: before puts it
+   at the top of one, after stops the next paragraph sharing what is left.
+   No margin: the plate owns its page, and a top margin kept after the break
+   is what pushes a page-tall plate onto the next page and leaves a blank
+   one in front of it. */
+p.figure-full {
+  margin: 0;
+  page-break-before: always;
+  page-break-after: always;
+}
+
+/* Title page */
+section.titlepage {
+  text-align: center;
+  margin-top: 20%;
+}
+
+section.titlepage h1 {
+  font-size: 1.6em;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 2em;
+}
+
+section.titlepage p.credit {
+  margin: 0.4em 0;
+}
+
+section.titlepage p.author {
+  font-size: 1.1em;
+  margin: 0.4em 0;
+}
+
+/* Block font shifts the PDF carried (registry #18), gated by
+   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and
+   carry no line-height. A family class sits on the paragraph itself, so it
+   locally overrides the body fontFamily option (#6) without !important.
+   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value
+   function it cannot parse. */
+.fmt-mono {
+  font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+.fmt-serif {
+  font-family: serif;
+}
+
+.fmt-sans {
+  font-family: sans-serif;
+}
+
+.fmt-cursive {
+  font-family: "Comic Sans MS", cursive;
+}
+
+.fmt-minus1 {
+  font-size: 0.85em;
+}
+
+.fmt-plus1 {
+  font-size: 1.2em;
+}
+
+.fmt-plus2 {
+  font-size: 1.5em;
+}
+
+/* ── the multicol spelling of every break rule above ──────────────────
+
+   Some engines paginate by laying the book out in CSS multi-column and
+   showing one column per screen, and they read ONLY the multicol
+   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing
+   else, and the Readium family (Thorium, Kobo's phone and tablet apps).
+
+   SEPARATE rules on purpose, and last on purpose. Separate because iBooks
+   drops BOTH spellings when they share one declaration block. Last because
+   these selectors repeat ones used above, and a shadow placed first would
+   make ruleFor() in the tests answer with the spelling nothing else reads
+   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:
+   the engines that need this largely predate it.
+
+   Derived from the same gating that emits the real rules, never a second
+   list kept by hand. A hand-kept copy once left the whole-speech keep
+   silently inert in Apple Books while the cue keep worked. */
+table.dual-dialogue { -webkit-column-break-inside: avoid; }
+
+h2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }
+
+p.transition { -webkit-column-break-before: avoid; }
+</style>
+</head>
+<body>
+<section class="scene" id="sc-001">
+<h2 class="scene-heading">INT. COLOUR TIMING BAY - NIGHT</h2>
+<p class="figure w40"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAIAAAAuKetIAAAAV0lEQVR42u3VMQ0AIBAEwYNgBQlowH+BHwzQE8J8+d1kiytzrpyuJ0/8ax4/AAAAgLvXMhQAAAAAsAMKAAAAANgBBQAAAADsgAIAAAAAdkABAAAAgI8AG8cfA9n8G9H7AAAAAElFTkSuQmCC" alt="Illustration"/></p>
+<p class="action">A reference print hangs under the loupe, one frame of it circled in grease pencil.</p>
+<div class="dialogue-block">
+<p class="character">WREN</p>
+<p class="dialogue">The blue is two points cold and it has been all week.</p>
+</div>
+<p class="action">HOLT writes the number down without looking up.</p>
+<div class="dialogue-block">
+<p class="character">HOLT</p>
+<p class="dialogue">Then we time it again.</p>
+</div>
+</section>
+</body>
+</html>

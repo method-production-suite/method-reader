@@ -1,0 +1,4755 @@
+{
+  "pageCount": 17,
+  "spacingRepairs": 0,
+  "lines": [
+    {
+      "text": "THE PROOF SHEET",
+      "indent": 41,
+      "y": 504,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "Written by",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "A. N. Placeholder",
+      "indent": 40,
+      "y": 432,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "Placeholder Pictures",
+      "indent": 18,
+      "y": 108,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "hello@example.com",
+      "indent": 18,
+      "y": 96,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "1.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "Steel shelving to the ceiling. A single bulb, swinging.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "EXT. LOADING DOCK - CONTINUOUS",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "Rain on corrugated tin, loud enough to argue over.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 50
+        }
+      ]
+    },
+    {
+      "text": "INT./EXT. DELIVERY VAN - MOVING - LATER",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 39
+        }
+      ]
+    },
+    {
+      "text": "The wipers lose.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "42 INT. ARCHIVE BASEMENT - RESHELVING - DAY 42",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "A dual-margin scene number, the shooting-script shape: the",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "same number printed at both margins.",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 36
+        }
+      ]
+    },
+    {
+      "text": "2.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. READING ROOM - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "ODILE sets down a box that is heavier than it looks.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "INDEX CARDS",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "Handwriting from four decades, none of it consistent.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "LEDGER, LATER",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "One column, ruled in pencil, never once balanced.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 48
+        }
+      ]
+    },
+    {
+      "text": "CUT TO:",
+      "indent": 71,
+      "y": 576,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "INT. STAIRWELL - CONTINUOUS",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "Footsteps going down two at a time.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "DISSOLVE TO:",
+      "indent": 71,
+      "y": 504,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "EXT. ARCHIVE - NIGHT",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "The building keeps its lights on for nobody.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 44
+        }
+      ]
+    },
+    {
+      "text": "SMASH CUT TO:",
+      "indent": 71,
+      "y": 432,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "3.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "Nobody is where their voice says they are.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 42
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(O.S.)",
+      "indent": 36,
+      "y": 660,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "The period-full spelling, the one",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "the manuals print.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "(V.O)",
+      "indent": 36,
+      "y": 600,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "And the one writers actually type,",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "missing its period.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 552,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(O.C)",
+      "indent": 36,
+      "y": 540,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Off camera, also missing its",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "period.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN (CONT’D)",
+      "indent": 44,
+      "y": 492,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "A continued cue, carrying its",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "extension.",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "DR. E. T. MARCHETTI",
+      "indent": 44,
+      "y": 444,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "Dotted abbreviations sitting inside",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "a character name.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "BUNNY (V.O.)",
+      "indent": 44,
+      "y": 396,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "A hybrid: name and extension on one",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "cue line.",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "4.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. READING ROOM - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "The box is open now. It was not worth the trip.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(quietly)",
+      "indent": 36,
+      "y": 660,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "A leading parenthetical, before a",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "word is spoken.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "A line, and then a beat in the",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "middle of it.",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "(reconsidering)",
+      "indent": 36,
+      "y": 564,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "And then the rest of it, after the",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "beat.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(standing)",
+      "indent": 36,
+      "y": 504,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "(then, to WREN)",
+      "indent": 36,
+      "y": 492,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "Two stacked parentheticals before",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "any dialogue at all.",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 444,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Short.",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "5.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "They have been at this for six hours.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 37
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "No.",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Yes.",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 600,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "No.",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 192,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "MORE-ANCHOR. This speech begins",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "near the foot of the page on",
+      "indent": 29,
+      "y": 168,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "purpose, so that it runs over the",
+      "indent": 29,
+      "y": 156,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "break and has to be put back",
+      "indent": 29,
+      "y": 144,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "together on the other side. It",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "keeps going well past the boundary",
+      "indent": 29,
+      "y": 120,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "so the rejoin has something",
+      "indent": 29,
+      "y": 108,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "substantial to work with, and so",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "that the same speech doubles as the",
+      "indent": 29,
+      "y": 84,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "long-dialogue case the coverage",
+      "indent": 29,
+      "y": 72,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "6.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "table asks for, rather than",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "spending two constructions on what",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "is really one shape.",
+      "indent": 29,
+      "y": 696,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "7.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. CONSERVATION BENCH - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "The label reads DO NOT LAMINATE, twice.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 8,
+      "styled": "The label reads **DO NOT LAMINATE**, twice.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 38
+        }
+      ]
+    },
+    {
+      "text": "She says it again, and this time somebody writes it down.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 8,
+      "styled": "She says it *again*, and this time somebody writes it down.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "The stamp is both bold and italic at once.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 8,
+      "styled": "The stamp is ***both bold and italic*** at once.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 40
+        }
+      ]
+    },
+    {
+      "text": "A styled run that crosses the wrap boundary because it keeps",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 8,
+      "styled": "A styled run that **crosses the wrap boundary because it keeps**",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "going for long enough to need a second line, and then stops.",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 8,
+      "styled": "**going for long enough to need a second line**, and then stops.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "Punctuation only, styled by itself.",
+      "indent": 18,
+      "y": 588,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "This word is underlined with drawn vector art.",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 8,
+      "styled": "This word is _underlined_ with drawn vector art.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 44
+        }
+      ]
+    },
+    {
+      "text": "This phrase is struck through, above the baseline.",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 49
+        }
+      ]
+    },
+    {
+      "text": "A table rules a border below this cell, further down.",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 51
+        }
+      ]
+    },
+    {
+      "text": "A page-wide rule crosses this whole line of text.",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "CHYRON: EVERY NAME HERE IS INVENTED.",
+      "indent": 18,
+      "y": 468,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "sans",
+          "size": 12,
+          "chars": 36
+        }
+      ],
+      "fmt": {
+        "family": "sans"
+      }
+    },
+    {
+      "text": "A footnote, set smaller than the body.",
+      "indent": 18,
+      "y": 444,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 10,
+          "chars": 38
+        }
+      ],
+      "fmt": {
+        "size": "-1"
+      }
+    },
+    {
+      "text": "The index card, enlarged for the reader.",
+      "indent": 18,
+      "y": 420,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 15,
+          "chars": 40
+        }
+      ],
+      "fmt": {
+        "size": "+1"
+      }
+    },
+    {
+      "text": "A SIGN, VERY LARGE INDEED",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 18,
+          "chars": 22
+        }
+      ],
+      "fmt": {
+        "size": "+2"
+      }
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "A text message, in the phone’s own",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "sans",
+          "size": 12,
+          "chars": 34
+        }
+      ],
+      "fmt": {
+        "family": "sans"
+      }
+    },
+    {
+      "text": "face.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "sans",
+          "size": 12,
+          "chars": 5
+        }
+      ],
+      "fmt": {
+        "family": "sans"
+      }
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 324,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Dialogue can be bold too.",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 8,
+      "styled": "Dialogue can be **bold** too.",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 288,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "And italic, which is the common",
+      "indent": 29,
+      "y": 276,
+      "pageNum": 8,
+      "styled": "And *italic*, which is the common",
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "one.",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "8.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. READING ROOM - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "They speak over each other.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 40,
+      "y": 672,
+      "pageNum": 9
+    },
+    {
+      "text": "LEFTMARK. Short, on the",
+      "indent": 30,
+      "y": 660,
+      "pageNum": 9
+    },
+    {
+      "text": "left.",
+      "indent": 30,
+      "y": 648,
+      "pageNum": 9
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 40,
+      "y": 672,
+      "pageNum": 9,
+      "dualRight": true
+    },
+    {
+      "text": "RIGHTMARK. Short, on the",
+      "indent": 30,
+      "y": 660,
+      "pageNum": 9
+    },
+    {
+      "text": "right.",
+      "indent": 30,
+      "y": 648,
+      "pageNum": 9
+    },
+    {
+      "text": "And again, at length.",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 40,
+      "y": 600,
+      "pageNum": 9
+    },
+    {
+      "text": "This column runs long",
+      "indent": 30,
+      "y": 588,
+      "pageNum": 9
+    },
+    {
+      "text": "WREN",
+      "indent": 40,
+      "y": 600,
+      "pageNum": 9,
+      "dualRight": true
+    },
+    {
+      "text": "And this one answers at",
+      "indent": 30,
+      "y": 588,
+      "pageNum": 9
+    },
+    {
+      "text": "enough that the taller of similar length so neither",
+      "indent": 22,
+      "y": 576,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 50
+        }
+      ]
+    },
+    {
+      "text": "the two passes twelve column is trivially short,",
+      "indent": 22,
+      "y": 564,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 47
+        }
+      ]
+    },
+    {
+      "text": "estimated rendered lines, because the fallback",
+      "indent": 22,
+      "y": 552,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 45
+        }
+      ]
+    },
+    {
+      "text": "which is the threshold measures the taller of the",
+      "indent": 22,
+      "y": 540,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 47
+        }
+      ]
+    },
+    {
+      "text": "where the side-by-side pair and a stub would",
+      "indent": 22,
+      "y": 528,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 43
+        }
+      ]
+    },
+    {
+      "text": "table gives up and both never reach it.",
+      "indent": 22,
+      "y": 516,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 38
+        }
+      ]
+    },
+    {
+      "text": "speeches become ordinary",
+      "indent": 22,
+      "y": 504,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "sequential dialogue",
+      "indent": 22,
+      "y": 492,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "instead.",
+      "indent": 22,
+      "y": 480,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 8
+        }
+      ]
+    },
+    {
+      "text": "9.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 720,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech one. Short.",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 684,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech two. If this line sits alone",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "at the top or the bottom of a page,",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "the keep failed.",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech three. If this line sits",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech four. If this line sits",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech five. Short.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 396,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech six. If this line sits alone",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "at the top or the bottom of a page,",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "the keep failed.",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech seven. If this line sits",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 276,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 252,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 228,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech eight. If this line sits",
+      "indent": 29,
+      "y": 216,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 204,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 168,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 144,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech nine. Short.",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 108,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech ten. If this line sits alone",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "at the top or the bottom of a page,",
+      "indent": 29,
+      "y": 84,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "the keep failed.",
+      "indent": 29,
+      "y": 72,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "10.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 720,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech eleven. If this line sits",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 696,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech twelve. If this line sits",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 528,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech thirteen. Short.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 492,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech fourteen. If this line sits",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech fifteen. If this line sits",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 324,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech sixteen. If this line sits",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 276,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 240,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech seventeen. Short.",
+      "indent": 29,
+      "y": 228,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 204,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech eighteen. If this line sits",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed.",
+      "indent": 29,
+      "y": 168,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 144,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech nineteen. If this line sits",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 120,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 108,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 84,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 72,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "11.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 696,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty. If this line sits",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-one. Short.",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-two. If this line",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-three. If this line",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "If this line sits alone at the top",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "or the bottom of a page, the keep",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "failed.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 396,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-four. If this line",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 336,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 312,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-five. Short.",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 276,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-six. If this line",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 252,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 240,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 216,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-seven. If this line",
+      "indent": 29,
+      "y": 204,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 168,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 156,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "If this line sits alone at the top",
+      "indent": 29,
+      "y": 144,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "or the bottom of a page, the keep",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "failed.",
+      "indent": 29,
+      "y": 120,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 96,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-eight. If this line",
+      "indent": 29,
+      "y": 84,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 72,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "12.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 696,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech twenty-nine. Short.",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty. If this line sits",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed.",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-one. If this line",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "If this line sits alone at the top",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "or the bottom of a page, the keep",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "failed.",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-two. If this line",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-three. Short.",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-four. If this line",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 276,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-five. If this line",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 252,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 240,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 228,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 216,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "If this line sits alone at the top",
+      "indent": 29,
+      "y": 204,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "or the bottom of a page, the keep",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "failed.",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 156,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-six. If this line",
+      "indent": 29,
+      "y": 144,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 120,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 108,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "BUNNY",
+      "indent": 44,
+      "y": 72,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "13.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-seven. Short.",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "CASSIUS",
+      "indent": 44,
+      "y": 696,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-eight. If this line",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "ODILE",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Speech thirty-nine. If this line",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed. If this",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "line sits alone at the top or the",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "bottom of a page, the keep failed.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "If this line sits alone at the top",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "or the bottom of a page, the keep",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "failed.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Speech forty. If this line sits",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "alone at the top or the bottom of a",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "page, the keep failed. If this line",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "sits alone at the top or the bottom",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "of a page, the keep failed.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "14.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "INT. ART DEPARTMENT - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "WREN pins a storyboard panel to the wall, printed small.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 528,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Under half a column wide, and not a",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "thumbnail.",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "15.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "INT. MAP ROOM - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "16.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "INT. FIRE STAIRS - CONTINUOUS",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "A production still, printed tall.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "p001-01.png",
+      "pageNum": 1,
+      "y": 747,
+      "pageWidthPct": 85.29411764705883,
+      "pageHeightPct": 88.63636363636364,
+      "sha256": "7fa17be123e3a3bff460db12eb59c5220eb404239268c52f15aaab3849891904"
+    },
+    {
+      "file": "p015-01.png",
+      "pageNum": 15,
+      "y": 705,
+      "pageWidthPct": 29.411764705882355,
+      "pageHeightPct": 17.045454545454543,
+      "sha256": "80f6720454c54fd0d9f0dbcec13073511e37497dffc32d68b0dc4762dba0fdb2"
+    },
+    {
+      "file": "p016-01.png",
+      "pageNum": 16,
+      "y": 702,
+      "pageWidthPct": 91.17647058823529,
+      "pageHeightPct": 84.0909090909091,
+      "sha256": "01a15f688d8c70fd74320f1fde7b12bbf30ca96255484fb1294a82fb2b2240b5"
+    },
+    {
+      "file": "p017-01.png",
+      "pageNum": 17,
+      "y": 672,
+      "pageWidthPct": 39.21568627450981,
+      "pageHeightPct": 83.33333333333334,
+      "sha256": "8cff2a4441c656e081bdc1c4a6e5112ea2338899bc630426f82930cce75ede84"
+    }
+  ],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 0,
+      "width": 0,
+      "height": 0,
+      "area": 0,
+      "furniture": 17,
+      "background": 0
+    }
+  }
+}

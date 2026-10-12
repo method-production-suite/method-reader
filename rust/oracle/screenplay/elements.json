@@ -1,0 +1,871 @@
+{
+  "elements": [
+    {
+      "id": "elem0",
+      "type": "character",
+      "text": "THE LAST VIDEO STORE",
+      "pageNum": 1,
+      "y": 504,
+      "isTitlePage": true,
+      "isReadable": true,
+      "character": "THE LAST VIDEO STORE",
+      "baseCharacter": "THE LAST VIDEO STORE"
+    },
+    {
+      "id": "elem1",
+      "type": "action",
+      "text": "Written by",
+      "pageNum": 1,
+      "y": 468,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem2",
+      "type": "action",
+      "text": "A. N. Placeholder",
+      "pageNum": 1,
+      "y": 432,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem3",
+      "type": "action",
+      "text": "Placeholder Pictures hello@example.com",
+      "pageNum": 1,
+      "y": 108,
+      "isTitlePage": true,
+      "isReadable": false
+    },
+    {
+      "id": "elem4",
+      "type": "scene",
+      "text": "INT. THE LAST VIDEO STORE - NIGHT",
+      "pageNum": 2,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem5",
+      "type": "action",
+      "text": "Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.",
+      "pageNum": 2,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem6",
+      "type": "action",
+      "text": "MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.",
+      "pageNum": 2,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem7",
+      "type": "action",
+      "text": "The bell over the door RINGS.",
+      "pageNum": 2,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem8",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 2,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem9",
+      "type": "dialogue",
+      "text": "We close at ten.",
+      "pageNum": 2,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem10",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 2,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem11",
+      "type": "parenthetical",
+      "text": "(O.S.)",
+      "pageNum": 2,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem12",
+      "type": "dialogue",
+      "text": "It’s nine forty.",
+      "pageNum": 2,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem13",
+      "type": "action",
+      "text": "DEV OKONKWO, 20s, soaked through, shakes off a jacket that was never waterproof.",
+      "pageNum": 2,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem14",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 2,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem15",
+      "type": "dialogue",
+      "text": "And yet.",
+      "pageNum": 2,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem16",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 2,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem17",
+      "type": "dialogue",
+      "text": "I need something for a fourteen- year-old who thinks movies started with streaming.",
+      "pageNum": 2,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem18",
+      "type": "action",
+      "text": "Margo looks up for the first time.",
+      "pageNum": 2,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem19",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 2,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem20",
+      "type": "parenthetical",
+      "text": "(a small conversion)",
+      "pageNum": 2,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem21",
+      "type": "dialogue",
+      "text": "Sit down.",
+      "pageNum": 2,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem22",
+      "type": "transition",
+      "text": "CUT TO:",
+      "pageNum": 2,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem23",
+      "type": "scene",
+      "text": "INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS",
+      "pageNum": 2,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem24",
+      "type": "action",
+      "text": "Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.",
+      "pageNum": 2,
+      "y": 168,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem25",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 2,
+      "y": 132,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem26",
+      "type": "dialogue",
+      "text": "Fourteen. Scared, or pretending not to be?",
+      "pageNum": 2,
+      "y": 108,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem27",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 2,
+      "y": 72,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem28",
+      "type": "page-number",
+      "text": "2.",
+      "pageNum": 3,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem29",
+      "type": "dialogue",
+      "text": "Pretending. Loudly.",
+      "pageNum": 3,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem30",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 3,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem31",
+      "type": "dialogue",
+      "text": "Then not the one with the mask. Everyone starts with the mask and nobody remembers it.",
+      "pageNum": 3,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem32",
+      "type": "action",
+      "text": "She pulls a battered clamshell case and holds it like evidence.",
+      "pageNum": 3,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem33",
+      "type": "character",
+      "text": "MARGO (CONT’D)",
+      "pageNum": 3,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem34",
+      "type": "dialogue",
+      "text": "This one. Nothing happens for forty minutes and then you never sleep facing a closet again.",
+      "pageNum": 3,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem35",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 3,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem36",
+      "type": "dialogue",
+      "text": "That’s a pitch?",
+      "pageNum": 3,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem37",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 3,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem38",
+      "type": "dialogue",
+      "text": "That’s a promise.",
+      "pageNum": 3,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem39",
+      "type": "transition",
+      "text": "DISSOLVE TO:",
+      "pageNum": 3,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem40",
+      "type": "scene",
+      "text": "EXT. STRIP MALL - NIGHT",
+      "pageNum": 3,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem41",
+      "type": "action",
+      "text": "Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.",
+      "pageNum": 3,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem42",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 3,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem43",
+      "type": "parenthetical",
+      "text": "(O.S.)",
+      "pageNum": 3,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem44",
+      "type": "dialogue",
+      "text": "How long have you been here?",
+      "pageNum": 3,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem45",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 3,
+      "y": 252,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem46",
+      "type": "parenthetical",
+      "text": "(O.S.)",
+      "pageNum": 3,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem47",
+      "type": "dialogue",
+      "text": "Since people still rewound.",
+      "pageNum": 3,
+      "y": 204,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem48",
+      "type": "scene",
+      "text": "INT. THE LAST VIDEO STORE - COUNTER - LATER",
+      "pageNum": 3,
+      "y": 180,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem49",
+      "type": "action",
+      "text": "A shoebox of index cards. Margo writes on one in careful block letters and slides it across.",
+      "pageNum": 3,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem50",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 3,
+      "y": 120,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem51",
+      "type": "dialogue",
+      "text": "What’s this?",
+      "pageNum": 3,
+      "y": 96,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem52",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 3,
+      "y": 72,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem53",
+      "type": "page-number",
+      "text": "3.",
+      "pageNum": 4,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem54",
+      "type": "dialogue",
+      "text": "Your card. Nineteen years running, four hundred and six members. You’re four hundred and seven.",
+      "pageNum": 4,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem55",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 4,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem56",
+      "type": "dialogue",
+      "text": "You’re closing in a week.",
+      "pageNum": 4,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem57",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 4,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem58",
+      "type": "dialogue",
+      "text": "Then it’ll be a short membership.",
+      "pageNum": 4,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem59",
+      "type": "action",
+      "text": "Dev takes the card anyway. Pockets it like it matters, because it does.",
+      "pageNum": 4,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem60",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 4,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem61",
+      "type": "dialogue",
+      "text": "What happens to all of it?",
+      "pageNum": 4,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem62",
+      "type": "action",
+      "text": "Margo looks down the aisles. Twenty thousand tapes. A lifetime of other people’s Friday nights.",
+      "pageNum": 4,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem63",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 4,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem64",
+      "type": "dialogue",
+      "text": "Somebody buys the shelves. The rest goes where the rest goes.",
+      "pageNum": 4,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem65",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 4,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem66",
+      "type": "dialogue",
+      "text": "That’s grim.",
+      "pageNum": 4,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem67",
+      "type": "character",
+      "text": "MARGO",
+      "pageNum": 4,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO",
+      "baseCharacter": "MARGO"
+    },
+    {
+      "id": "elem68",
+      "type": "parenthetical",
+      "text": "(not grim at all)",
+      "pageNum": 4,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem69",
+      "type": "dialogue",
+      "text": "It’s Tuesday.",
+      "pageNum": 4,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARGO"
+    },
+    {
+      "id": "elem70",
+      "type": "transition",
+      "text": "SMASH CUT TO:",
+      "pageNum": 4,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem71",
+      "type": "scene",
+      "text": "INT. DEV’S APARTMENT - NIGHT",
+      "pageNum": 4,
+      "y": 252,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem72",
+      "type": "action",
+      "text": "A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.",
+      "pageNum": 4,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem73",
+      "type": "action",
+      "text": "His NIECE, 14, arms folded, sits as far from the screen as the room allows.",
+      "pageNum": 4,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem74",
+      "type": "character",
+      "text": "NIECE",
+      "pageNum": 4,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "NIECE",
+      "baseCharacter": "NIECE"
+    },
+    {
+      "id": "elem75",
+      "type": "dialogue",
+      "text": "This is going to be so boring.",
+      "pageNum": 4,
+      "y": 132,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "NIECE"
+    },
+    {
+      "id": "elem76",
+      "type": "character",
+      "text": "DEV",
+      "pageNum": 4,
+      "y": 108,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV",
+      "baseCharacter": "DEV"
+    },
+    {
+      "id": "elem77",
+      "type": "dialogue",
+      "text": "Forty minutes. Give it forty minutes.",
+      "pageNum": 4,
+      "y": 84,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DEV"
+    },
+    {
+      "id": "elem78",
+      "type": "page-number",
+      "text": "4.",
+      "pageNum": 5,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem79",
+      "type": "action",
+      "text": "The countdown hits 1. The room goes dark blue.",
+      "pageNum": 5,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem80",
+      "type": "action",
+      "text": "Forty minutes later, she has not moved, and she is sitting considerably closer.",
+      "pageNum": 5,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem81",
+      "type": "action",
+      "text": "FADE OUT.",
+      "pageNum": 5,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    }
+  ],
+  "characters": [
+    {
+      "name": "MARGO",
+      "baseName": "MARGO",
+      "dialogueCount": 12,
+      "firstAppearance": 8
+    },
+    {
+      "name": "DEV",
+      "baseName": "DEV",
+      "dialogueCount": 10,
+      "firstAppearance": 10
+    },
+    {
+      "name": "NIECE",
+      "baseName": "NIECE",
+      "dialogueCount": 1,
+      "firstAppearance": 74
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "INT. THE LAST VIDEO STORE - NIGHT",
+      "sceneNumber": 1,
+      "elementIndex": 4,
+      "pageNum": 2
+    },
+    {
+      "heading": "INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS",
+      "sceneNumber": 2,
+      "elementIndex": 23,
+      "pageNum": 2
+    },
+    {
+      "heading": "EXT. STRIP MALL - NIGHT",
+      "sceneNumber": 3,
+      "elementIndex": 40,
+      "pageNum": 3
+    },
+    {
+      "heading": "INT. THE LAST VIDEO STORE - COUNTER - LATER",
+      "sceneNumber": 4,
+      "elementIndex": 48,
+      "pageNum": 3
+    },
+    {
+      "heading": "INT. DEV’S APARTMENT - NIGHT",
+      "sceneNumber": 5,
+      "elementIndex": 71,
+      "pageNum": 4
+    }
+  ],
+  "pageCount": 5
+}

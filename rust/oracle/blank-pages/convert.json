@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "error": {
+    "code": "scanned",
+    "message": "No usable text layer (0 text lines across 2 pages). This looks like a scanned/image-only PDF. Run OCR on it first."
+  }
+}

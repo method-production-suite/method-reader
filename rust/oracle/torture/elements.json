@@ -1,0 +1,2224 @@
+{
+  "elements": [
+    {
+      "type": "image",
+      "text": "p001-01.png",
+      "id": "elem205",
+      "pageNum": 1,
+      "y": 747,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p001-01.png",
+        "widthPct": 100,
+        "fullPage": true
+      }
+    },
+    {
+      "id": "elem0",
+      "type": "character",
+      "text": "THE PROOF SHEET",
+      "pageNum": 1,
+      "y": 504,
+      "isTitlePage": true,
+      "isReadable": true,
+      "character": "THE PROOF SHEET",
+      "baseCharacter": "THE PROOF SHEET"
+    },
+    {
+      "id": "elem1",
+      "type": "action",
+      "text": "Written by",
+      "pageNum": 1,
+      "y": 468,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem2",
+      "type": "action",
+      "text": "A. N. Placeholder",
+      "pageNum": 1,
+      "y": 432,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem3",
+      "type": "action",
+      "text": "Placeholder Pictures hello@example.com",
+      "pageNum": 1,
+      "y": 108,
+      "isTitlePage": true,
+      "isReadable": false
+    },
+    {
+      "id": "elem4",
+      "type": "page-number",
+      "text": "1.",
+      "pageNum": 2,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem5",
+      "type": "scene",
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "pageNum": 2,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem6",
+      "type": "action",
+      "text": "Steel shelving to the ceiling. A single bulb, swinging.",
+      "pageNum": 2,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem7",
+      "type": "scene",
+      "text": "EXT. LOADING DOCK - CONTINUOUS",
+      "pageNum": 2,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem8",
+      "type": "action",
+      "text": "Rain on corrugated tin, loud enough to argue over.",
+      "pageNum": 2,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem9",
+      "type": "scene",
+      "text": "INT./EXT. DELIVERY VAN - MOVING - LATER",
+      "pageNum": 2,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem10",
+      "type": "action",
+      "text": "The wipers lose.",
+      "pageNum": 2,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem11",
+      "type": "scene",
+      "text": "INT. ARCHIVE BASEMENT - RESHELVING - DAY",
+      "pageNum": 2,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "sceneNumber": "42"
+    },
+    {
+      "id": "elem12",
+      "type": "action",
+      "text": "A dual-margin scene number, the shooting-script shape: the same number printed at both margins.",
+      "pageNum": 2,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem13",
+      "type": "page-number",
+      "text": "2.",
+      "pageNum": 3,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem14",
+      "type": "scene",
+      "text": "INT. READING ROOM - DAY",
+      "pageNum": 3,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem15",
+      "type": "action",
+      "text": "ODILE sets down a box that is heavier than it looks.",
+      "pageNum": 3,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem16",
+      "type": "mini-slug",
+      "text": "INDEX CARDS",
+      "pageNum": 3,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem17",
+      "type": "action",
+      "text": "Handwriting from four decades, none of it consistent.",
+      "pageNum": 3,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem18",
+      "type": "mini-slug",
+      "text": "LEDGER, LATER",
+      "pageNum": 3,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem19",
+      "type": "action",
+      "text": "One column, ruled in pencil, never once balanced.",
+      "pageNum": 3,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem20",
+      "type": "transition",
+      "text": "CUT TO:",
+      "pageNum": 3,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem21",
+      "type": "scene",
+      "text": "INT. STAIRWELL - CONTINUOUS",
+      "pageNum": 3,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem22",
+      "type": "action",
+      "text": "Footsteps going down two at a time.",
+      "pageNum": 3,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem23",
+      "type": "transition",
+      "text": "DISSOLVE TO:",
+      "pageNum": 3,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem24",
+      "type": "scene",
+      "text": "EXT. ARCHIVE - NIGHT",
+      "pageNum": 3,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem25",
+      "type": "action",
+      "text": "The building keeps its lights on for nobody.",
+      "pageNum": 3,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem26",
+      "type": "transition",
+      "text": "SMASH CUT TO:",
+      "pageNum": 3,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem27",
+      "type": "page-number",
+      "text": "3.",
+      "pageNum": 4,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem28",
+      "type": "scene",
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "pageNum": 4,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem29",
+      "type": "action",
+      "text": "Nobody is where their voice says they are.",
+      "pageNum": 4,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem30",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 4,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem31",
+      "type": "parenthetical",
+      "text": "(O.S.)",
+      "pageNum": 4,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem32",
+      "type": "dialogue",
+      "text": "The period-full spelling, the one the manuals print.",
+      "pageNum": 4,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem33",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 4,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem34",
+      "type": "parenthetical",
+      "text": "(V.O)",
+      "pageNum": 4,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem35",
+      "type": "dialogue",
+      "text": "And the one writers actually type, missing its period.",
+      "pageNum": 4,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem36",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 4,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem37",
+      "type": "parenthetical",
+      "text": "(O.C)",
+      "pageNum": 4,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem38",
+      "type": "dialogue",
+      "text": "Off camera, also missing its period.",
+      "pageNum": 4,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem39",
+      "type": "character",
+      "text": "WREN (CONT’D)",
+      "pageNum": 4,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem40",
+      "type": "dialogue",
+      "text": "A continued cue, carrying its extension.",
+      "pageNum": 4,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem41",
+      "type": "character",
+      "text": "DR. E. T. MARCHETTI",
+      "pageNum": 4,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DR. E. T. MARCHETTI",
+      "baseCharacter": "DR. E. T. MARCHETTI"
+    },
+    {
+      "id": "elem42",
+      "type": "dialogue",
+      "text": "Dotted abbreviations sitting inside a character name.",
+      "pageNum": 4,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DR. E. T. MARCHETTI"
+    },
+    {
+      "id": "elem43",
+      "type": "character",
+      "text": "BUNNY (V.O.)",
+      "pageNum": 4,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem44",
+      "type": "dialogue",
+      "text": "A hybrid: name and extension on one cue line.",
+      "pageNum": 4,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem45",
+      "type": "page-number",
+      "text": "4.",
+      "pageNum": 5,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem46",
+      "type": "scene",
+      "text": "INT. READING ROOM - DAY",
+      "pageNum": 5,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem47",
+      "type": "action",
+      "text": "The box is open now. It was not worth the trip.",
+      "pageNum": 5,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem48",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 5,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem49",
+      "type": "parenthetical",
+      "text": "(quietly)",
+      "pageNum": 5,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem50",
+      "type": "dialogue",
+      "text": "A leading parenthetical, before a word is spoken.",
+      "pageNum": 5,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem51",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 5,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem52",
+      "type": "dialogue",
+      "text": "A line, and then a beat in the middle of it.",
+      "pageNum": 5,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem53",
+      "type": "parenthetical",
+      "text": "(reconsidering)",
+      "pageNum": 5,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem54",
+      "type": "dialogue",
+      "text": "And then the rest of it, after the beat.",
+      "pageNum": 5,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem55",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 5,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem56",
+      "type": "parenthetical",
+      "text": "(standing)",
+      "pageNum": 5,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem57",
+      "type": "parenthetical",
+      "text": "(then, to WREN)",
+      "pageNum": 5,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem58",
+      "type": "dialogue",
+      "text": "Two stacked parentheticals before any dialogue at all.",
+      "pageNum": 5,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem59",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 5,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem60",
+      "type": "dialogue",
+      "text": "Short.",
+      "pageNum": 5,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem61",
+      "type": "page-number",
+      "text": "5.",
+      "pageNum": 6,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem62",
+      "type": "scene",
+      "text": "INT. ARCHIVE BASEMENT - NIGHT",
+      "pageNum": 6,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem63",
+      "type": "action",
+      "text": "They have been at this for six hours.",
+      "pageNum": 6,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem64",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 6,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem65",
+      "type": "dialogue",
+      "text": "No.",
+      "pageNum": 6,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem66",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 6,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem67",
+      "type": "dialogue",
+      "text": "Yes.",
+      "pageNum": 6,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem68",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 6,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem69",
+      "type": "dialogue",
+      "text": "No.",
+      "pageNum": 6,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem70",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 6,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem71",
+      "type": "dialogue",
+      "text": "MORE-ANCHOR. This speech begins near the foot of the page on purpose, so that it runs over the break and has to be put back together on the other side. It keeps going well past the boundary so the rejoin has something substantial to work with, and so that the same speech doubles as the long-dialogue case the coverage table asks for, rather than spending two constructions on what is really one shape.",
+      "pageNum": 6,
+      "y": 180,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem72",
+      "type": "page-number",
+      "text": "6.",
+      "pageNum": 7,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem74",
+      "type": "page-number",
+      "text": "7.",
+      "pageNum": 8,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem75",
+      "type": "scene",
+      "text": "INT. CONSERVATION BENCH - DAY",
+      "pageNum": 8,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem76",
+      "type": "action",
+      "text": "The label reads DO NOT LAMINATE, twice.",
+      "styledText": "The label reads **DO NOT LAMINATE**, twice.",
+      "pageNum": 8,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem77",
+      "type": "action",
+      "text": "She says it again, and this time somebody writes it down.",
+      "styledText": "She says it *again*, and this time somebody writes it down.",
+      "pageNum": 8,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem78",
+      "type": "action",
+      "text": "The stamp is both bold and italic at once.",
+      "styledText": "The stamp is ***both bold and italic*** at once.",
+      "pageNum": 8,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem79",
+      "type": "action",
+      "text": "A styled run that crosses the wrap boundary because it keeps going for long enough to need a second line, and then stops.",
+      "styledText": "A styled run that **crosses the wrap boundary because it keeps** **going for long enough to need a second line**, and then stops.",
+      "pageNum": 8,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem80",
+      "type": "action",
+      "text": "Punctuation only, styled by itself.",
+      "pageNum": 8,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem81",
+      "type": "action",
+      "text": "This word is underlined with drawn vector art.",
+      "styledText": "This word is _underlined_ with drawn vector art.",
+      "pageNum": 8,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem82",
+      "type": "action",
+      "text": "This phrase is struck through, above the baseline.",
+      "pageNum": 8,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem83",
+      "type": "action",
+      "text": "A table rules a border below this cell, further down.",
+      "pageNum": 8,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem84",
+      "type": "action",
+      "text": "A page-wide rule crosses this whole line of text.",
+      "pageNum": 8,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem85",
+      "type": "action",
+      "text": "CHYRON: EVERY NAME HERE IS INVENTED.",
+      "fmt": {
+        "family": "sans"
+      },
+      "pageNum": 8,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem86",
+      "type": "action",
+      "text": "A footnote, set smaller than the body.",
+      "fmt": {
+        "size": "-1"
+      },
+      "pageNum": 8,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem87",
+      "type": "action",
+      "text": "The index card, enlarged for the reader.",
+      "fmt": {
+        "size": "+1"
+      },
+      "pageNum": 8,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem88",
+      "type": "action",
+      "text": "A SIGN, VERY LARGE INDEED",
+      "fmt": {
+        "size": "+2"
+      },
+      "pageNum": 8,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem89",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 8,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem90",
+      "type": "dialogue",
+      "text": "A text message, in the phone’s own face.",
+      "fmt": {
+        "family": "sans"
+      },
+      "pageNum": 8,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem91",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 8,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem92",
+      "type": "dialogue",
+      "text": "Dialogue can be bold too.",
+      "styledText": "Dialogue can be **bold** too.",
+      "pageNum": 8,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem93",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 8,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem94",
+      "type": "dialogue",
+      "text": "And italic, which is the common one.",
+      "styledText": "And *italic*, which is the common one.",
+      "pageNum": 8,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem95",
+      "type": "page-number",
+      "text": "8.",
+      "pageNum": 9,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem96",
+      "type": "scene",
+      "text": "INT. READING ROOM - DAY",
+      "pageNum": 9,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem97",
+      "type": "action",
+      "text": "They speak over each other.",
+      "pageNum": 9,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem98",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 9,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem99",
+      "type": "dialogue",
+      "text": "LEFTMARK. Short, on the left.",
+      "pageNum": 9,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem100",
+      "type": "character",
+      "text": "CASSIUS",
+      "dualRight": true,
+      "pageNum": 9,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem101",
+      "type": "dialogue",
+      "text": "RIGHTMARK. Short, on the right.",
+      "pageNum": 9,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem102",
+      "type": "action",
+      "text": "And again, at length.",
+      "pageNum": 9,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem103",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 9,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem104",
+      "type": "dialogue",
+      "text": "This column runs long",
+      "pageNum": 9,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem105",
+      "type": "character",
+      "text": "WREN",
+      "dualRight": true,
+      "pageNum": 9,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem106",
+      "type": "dialogue",
+      "text": "And this one answers at",
+      "pageNum": 9,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem107",
+      "type": "action",
+      "text": "enough that the taller of similar length so neither the two passes twelve column is trivially short, estimated rendered lines, because the fallback which is the threshold measures the taller of the where the side-by-side pair and a stub would table gives up and both never reach it. speeches become ordinary sequential dialogue instead.",
+      "pageNum": 9,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem108",
+      "type": "page-number",
+      "text": "9.",
+      "pageNum": 10,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem109",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 10,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem110",
+      "type": "dialogue",
+      "text": "Speech one. Short.",
+      "pageNum": 10,
+      "y": 708,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem111",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 10,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem112",
+      "type": "dialogue",
+      "text": "Speech two. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem113",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 10,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem114",
+      "type": "dialogue",
+      "text": "Speech three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem115",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 10,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem116",
+      "type": "dialogue",
+      "text": "Speech four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem117",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 10,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem118",
+      "type": "dialogue",
+      "text": "Speech five. Short.",
+      "pageNum": 10,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem119",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 10,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem120",
+      "type": "dialogue",
+      "text": "Speech six. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem121",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 10,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem122",
+      "type": "dialogue",
+      "text": "Speech seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem123",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 10,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem124",
+      "type": "dialogue",
+      "text": "Speech eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem125",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 10,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem126",
+      "type": "dialogue",
+      "text": "Speech nine. Short.",
+      "pageNum": 10,
+      "y": 132,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem127",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 10,
+      "y": 108,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem128",
+      "type": "dialogue",
+      "text": "Speech ten. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 10,
+      "y": 96,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem129",
+      "type": "page-number",
+      "text": "10.",
+      "pageNum": 11,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem130",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 11,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem131",
+      "type": "dialogue",
+      "text": "Speech eleven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 708,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem132",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 11,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem133",
+      "type": "dialogue",
+      "text": "Speech twelve. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem134",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 11,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem135",
+      "type": "dialogue",
+      "text": "Speech thirteen. Short.",
+      "pageNum": 11,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem136",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 11,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem137",
+      "type": "dialogue",
+      "text": "Speech fourteen. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem138",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 11,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem139",
+      "type": "dialogue",
+      "text": "Speech fifteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem140",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 11,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem141",
+      "type": "dialogue",
+      "text": "Speech sixteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem142",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 11,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem143",
+      "type": "dialogue",
+      "text": "Speech seventeen. Short.",
+      "pageNum": 11,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem144",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 11,
+      "y": 204,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem145",
+      "type": "dialogue",
+      "text": "Speech eighteen. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem146",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 11,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem147",
+      "type": "dialogue",
+      "text": "Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 11,
+      "y": 132,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem148",
+      "type": "page-number",
+      "text": "11.",
+      "pageNum": 12,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem150",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 12,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem151",
+      "type": "dialogue",
+      "text": "Speech twenty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem152",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 12,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem153",
+      "type": "dialogue",
+      "text": "Speech twenty-one. Short.",
+      "pageNum": 12,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem154",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 12,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem155",
+      "type": "dialogue",
+      "text": "Speech twenty-two. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem156",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 12,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem157",
+      "type": "dialogue",
+      "text": "Speech twenty-three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem158",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 12,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem159",
+      "type": "dialogue",
+      "text": "Speech twenty-four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem160",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 12,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem161",
+      "type": "dialogue",
+      "text": "Speech twenty-five. Short.",
+      "pageNum": 12,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem162",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 12,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem163",
+      "type": "dialogue",
+      "text": "Speech twenty-six. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem164",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 12,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem165",
+      "type": "dialogue",
+      "text": "Speech twenty-seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 204,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem166",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 12,
+      "y": 96,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem167",
+      "type": "dialogue",
+      "text": "Speech twenty-eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 12,
+      "y": 84,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem168",
+      "type": "page-number",
+      "text": "12.",
+      "pageNum": 13,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem170",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 13,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem171",
+      "type": "dialogue",
+      "text": "Speech twenty-nine. Short.",
+      "pageNum": 13,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem172",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 13,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem173",
+      "type": "dialogue",
+      "text": "Speech thirty. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem174",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 13,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem175",
+      "type": "dialogue",
+      "text": "Speech thirty-one. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem176",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 13,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem177",
+      "type": "dialogue",
+      "text": "Speech thirty-two. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem178",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 13,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem179",
+      "type": "dialogue",
+      "text": "Speech thirty-three. Short.",
+      "pageNum": 13,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem180",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 13,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem181",
+      "type": "dialogue",
+      "text": "Speech thirty-four. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem182",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 13,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem183",
+      "type": "dialogue",
+      "text": "Speech thirty-five. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem184",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 13,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem185",
+      "type": "dialogue",
+      "text": "Speech thirty-six. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 13,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem186",
+      "type": "character",
+      "text": "BUNNY",
+      "pageNum": 13,
+      "y": 72,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY",
+      "baseCharacter": "BUNNY"
+    },
+    {
+      "id": "elem187",
+      "type": "page-number",
+      "text": "13.",
+      "pageNum": 14,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem188",
+      "type": "dialogue",
+      "text": "Speech thirty-seven. Short.",
+      "pageNum": 14,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "BUNNY"
+    },
+    {
+      "id": "elem189",
+      "type": "character",
+      "text": "CASSIUS",
+      "pageNum": 14,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS",
+      "baseCharacter": "CASSIUS"
+    },
+    {
+      "id": "elem190",
+      "type": "dialogue",
+      "text": "Speech thirty-eight. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 14,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "CASSIUS"
+    },
+    {
+      "id": "elem191",
+      "type": "character",
+      "text": "ODILE",
+      "pageNum": 14,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE",
+      "baseCharacter": "ODILE"
+    },
+    {
+      "id": "elem192",
+      "type": "dialogue",
+      "text": "Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 14,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "ODILE"
+    },
+    {
+      "id": "elem193",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 14,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem194",
+      "type": "dialogue",
+      "text": "Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
+      "pageNum": 14,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem195",
+      "type": "page-number",
+      "text": "14.",
+      "pageNum": 15,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem196",
+      "type": "scene",
+      "text": "INT. ART DEPARTMENT - DAY",
+      "pageNum": 15,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "type": "image",
+      "text": "p015-01.png",
+      "id": "elem206",
+      "pageNum": 15,
+      "y": 705,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p015-01.png",
+        "widthPct": 42,
+        "fullPage": false
+      }
+    },
+    {
+      "id": "elem197",
+      "type": "action",
+      "text": "WREN pins a storyboard panel to the wall, printed small.",
+      "pageNum": 15,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem198",
+      "type": "character",
+      "text": "WREN",
+      "pageNum": 15,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN",
+      "baseCharacter": "WREN"
+    },
+    {
+      "id": "elem199",
+      "type": "dialogue",
+      "text": "Under half a column wide, and not a thumbnail.",
+      "pageNum": 15,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "WREN"
+    },
+    {
+      "id": "elem200",
+      "type": "page-number",
+      "text": "15.",
+      "pageNum": 16,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem201",
+      "type": "scene",
+      "text": "INT. MAP ROOM - NIGHT",
+      "pageNum": 16,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "type": "image",
+      "text": "p016-01.png",
+      "id": "elem207",
+      "pageNum": 16,
+      "y": 702,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p016-01.png",
+        "widthPct": 100,
+        "fullPage": true
+      }
+    },
+    {
+      "id": "elem202",
+      "type": "page-number",
+      "text": "16.",
+      "pageNum": 17,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem203",
+      "type": "scene",
+      "text": "INT. FIRE STAIRS - CONTINUOUS",
+      "pageNum": 17,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem204",
+      "type": "action",
+      "text": "A production still, printed tall.",
+      "pageNum": 17,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "type": "image",
+      "text": "p017-01.png",
+      "id": "elem208",
+      "pageNum": 17,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "img": {
+        "file": "p017-01.png",
+        "widthPct": 56,
+        "fullPage": false
+      }
+    }
+  ],
+  "characters": [
+    {
+      "name": "WREN",
+      "baseName": "WREN",
+      "dialogueCount": 17,
+      "firstAppearance": 40
+    },
+    {
+      "name": "BUNNY",
+      "baseName": "BUNNY",
+      "dialogueCount": 15,
+      "firstAppearance": 31
+    },
+    {
+      "name": "CASSIUS",
+      "baseName": "CASSIUS",
+      "dialogueCount": 15,
+      "firstAppearance": 34
+    },
+    {
+      "name": "ODILE",
+      "baseName": "ODILE",
+      "dialogueCount": 15,
+      "firstAppearance": 37
+    },
+    {
+      "name": "DR. E. T. MARCHETTI",
+      "baseName": "DR. E. T. MARCHETTI",
+      "dialogueCount": 1,
+      "firstAppearance": 42
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "INT. ARCHIVE BASEMENT - NIGHT",
+      "sceneNumber": 1,
+      "elementIndex": 6,
+      "pageNum": 2
+    },
+    {
+      "heading": "EXT. LOADING DOCK - CONTINUOUS",
+      "sceneNumber": 2,
+      "elementIndex": 8,
+      "pageNum": 2
+    },
+    {
+      "heading": "INT./EXT. DELIVERY VAN - MOVING - LATER",
+      "sceneNumber": 3,
+      "elementIndex": 10,
+      "pageNum": 2
+    },
+    {
+      "heading": "INT. ARCHIVE BASEMENT - RESHELVING - DAY",
+      "sceneNumber": 4,
+      "elementIndex": 12,
+      "pageNum": 2
+    },
+    {
+      "heading": "INT. READING ROOM - DAY",
+      "sceneNumber": 5,
+      "elementIndex": 15,
+      "pageNum": 3
+    },
+    {
+      "heading": "INT. STAIRWELL - CONTINUOUS",
+      "sceneNumber": 6,
+      "elementIndex": 22,
+      "pageNum": 3
+    },
+    {
+      "heading": "EXT. ARCHIVE - NIGHT",
+      "sceneNumber": 7,
+      "elementIndex": 25,
+      "pageNum": 3
+    },
+    {
+      "heading": "INT. ARCHIVE BASEMENT - NIGHT",
+      "sceneNumber": 8,
+      "elementIndex": 29,
+      "pageNum": 4
+    },
+    {
+      "heading": "INT. READING ROOM - DAY",
+      "sceneNumber": 9,
+      "elementIndex": 47,
+      "pageNum": 5
+    },
+    {
+      "heading": "INT. ARCHIVE BASEMENT - NIGHT",
+      "sceneNumber": 10,
+      "elementIndex": 63,
+      "pageNum": 6
+    },
+    {
+      "heading": "INT. CONSERVATION BENCH - DAY",
+      "sceneNumber": 11,
+      "elementIndex": 75,
+      "pageNum": 8
+    },
+    {
+      "heading": "INT. READING ROOM - DAY",
+      "sceneNumber": 12,
+      "elementIndex": 96,
+      "pageNum": 9
+    },
+    {
+      "heading": "INT. ART DEPARTMENT - DAY",
+      "sceneNumber": 13,
+      "elementIndex": 194,
+      "pageNum": 15
+    },
+    {
+      "heading": "INT. MAP ROOM - NIGHT",
+      "sceneNumber": 14,
+      "elementIndex": 200,
+      "pageNum": 16
+    },
+    {
+      "heading": "INT. FIRE STAIRS - CONTINUOUS",
+      "sceneNumber": 15,
+      "elementIndex": 203,
+      "pageNum": 17
+    }
+  ],
+  "pageCount": 17
+}

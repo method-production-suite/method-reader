@@ -1,0 +1,3561 @@
+{
+  "elements": [
+    {
+      "id": "elem0",
+      "type": "character",
+      "text": "FIELD STATION",
+      "pageNum": 1,
+      "y": 504,
+      "isTitlePage": true,
+      "isReadable": true,
+      "character": "FIELD STATION",
+      "baseCharacter": "FIELD STATION"
+    },
+    {
+      "id": "elem1",
+      "type": "action",
+      "text": "Written by",
+      "pageNum": 1,
+      "y": 468,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem2",
+      "type": "action",
+      "text": "the Screepub project",
+      "pageNum": 1,
+      "y": 432,
+      "isTitlePage": true,
+      "isReadable": true
+    },
+    {
+      "id": "elem3",
+      "type": "action",
+      "text": "Placeholder Pictures hello@example.com",
+      "pageNum": 1,
+      "y": 108,
+      "isTitlePage": true,
+      "isReadable": false
+    },
+    {
+      "id": "elem4",
+      "type": "scene",
+      "text": "EXT. RIDGE ROAD - DAY",
+      "pageNum": 2,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem5",
+      "type": "action",
+      "text": "Wind comes down off the ridge in long flat gusts, pushing the grass one way and then, for no reason, the other.",
+      "pageNum": 2,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem6",
+      "type": "action",
+      "text": "A road climbs the ridge in switchbacks. Nobody has driven it since the washout, and the grass is taking it back.",
+      "pageNum": 2,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem7",
+      "type": "action",
+      "text": "MARA, 40s, walks it with a pack on and four days in her legs. She has the face of someone who fixes things and is never thanked.",
+      "pageNum": 2,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem8",
+      "type": "action",
+      "text": "DELACROIX, 50s, walks behind her with a paper map folded to the right square. He does not look at it. He looks at the road, and counts.",
+      "pageNum": 2,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem9",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 2,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem10",
+      "type": "dialogue",
+      "text": "Thirty-one.",
+      "pageNum": 2,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem11",
+      "type": "action",
+      "text": "They take the bend. Gravel lets go under Mara’s boot and goes quietly over the edge.",
+      "pageNum": 2,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem12",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 2,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem13",
+      "type": "dialogue",
+      "text": "You don’t have to do that out loud.",
+      "pageNum": 2,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem14",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 2,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem15",
+      "type": "dialogue",
+      "text": "The map says forty. I’d like to know when it’s lying.",
+      "pageNum": 2,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem16",
+      "type": "action",
+      "text": "Cloud sits on the ridge above them like a lid somebody forgot to close.",
+      "pageNum": 2,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem17",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 2,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem18",
+      "type": "dialogue",
+      "text": "How long has he been up there?",
+      "pageNum": 2,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem19",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 2,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem20",
+      "type": "dialogue",
+      "text": "Three weeks. On his own.",
+      "pageNum": 2,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem21",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 2,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem22",
+      "type": "dialogue",
+      "text": "They said two.",
+      "pageNum": 2,
+      "y": 252,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem23",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 2,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem24",
+      "type": "dialogue",
+      "text": "They say a lot of things.",
+      "pageNum": 2,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem25",
+      "type": "action",
+      "text": "The road ends at the washout, a bite taken out of the mountain. Mara stops where the road stops, then goes round it on the rock.",
+      "pageNum": 2,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem26",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 2,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem27",
+      "type": "dialogue",
+      "text": "Thirty-eight.",
+      "pageNum": 2,
+      "y": 132,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem28",
+      "type": "page-number",
+      "text": "2.",
+      "pageNum": 3,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem29",
+      "type": "scene",
+      "text": "EXT. FIELD STATION - DAY",
+      "pageNum": 3,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem30",
+      "type": "action",
+      "text": "MARA and DELACROIX come up the last of the slope, packs on, bent into the wind. Below them the road they walked is a thin grey line, going all the way down.",
+      "pageNum": 3,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem31",
+      "type": "action",
+      "text": "The station: a prefab hut bolted to the rock, a radio mast guyed four ways, a fuel drum, a generator crouched under a tarp. Everything that can rattle, rattles.",
+      "pageNum": 3,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem32",
+      "type": "action",
+      "text": "The hut door opens before they reach it.",
+      "pageNum": 3,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem33",
+      "type": "action",
+      "text": "TEO, 20s, comes out in two jumpers and no coat. Thin. He has the look of someone who has rehearsed what to say to people and forgotten all of it.",
+      "pageNum": 3,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem34",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 3,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem35",
+      "type": "dialogue",
+      "text": "You came.",
+      "pageNum": 3,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem36",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 3,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem37",
+      "type": "dialogue",
+      "text": "We said we would.",
+      "pageNum": 3,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem38",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 3,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem39",
+      "type": "dialogue",
+      "text": "People say that on the radio. It’s different, seeing it.",
+      "pageNum": 3,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem40",
+      "type": "action",
+      "text": "He shakes Delacroix’s hand, then Mara’s, then Delacroix’s again.",
+      "pageNum": 3,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem41",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 3,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem42",
+      "type": "dialogue",
+      "text": "You’re Teo.",
+      "pageNum": 3,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem43",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 3,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem44",
+      "type": "dialogue",
+      "text": "I’m Teo. Sorry. Come in, it’s warmer. It isn’t, but it’s out of the wind.",
+      "pageNum": 3,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem45",
+      "type": "action",
+      "text": "The wind leans on all three of them. The mast answers it with a low note, like someone humming through their teeth.",
+      "pageNum": 3,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem46",
+      "type": "character",
+      "text": "TEO (CONT’D)",
+      "pageNum": 3,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem47",
+      "type": "dialogue",
+      "text": "That’s the mast. You get used to it.",
+      "pageNum": 3,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem48",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 3,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem49",
+      "type": "dialogue",
+      "text": "Do you?",
+      "pageNum": 3,
+      "y": 180,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem50",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 3,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem51",
+      "type": "dialogue",
+      "text": "No.",
+      "pageNum": 3,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem52",
+      "type": "page-number",
+      "text": "3.",
+      "pageNum": 4,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem53",
+      "type": "action",
+      "text": "Teo walks them round the station at a pace that makes it hard to see any of it.",
+      "pageNum": 4,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem54",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 4,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem55",
+      "type": "dialogue",
+      "text": "Fuel. Water. Rain gauge. It’s been fine the whole time.",
+      "pageNum": 4,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem56",
+      "type": "action",
+      "text": "He points up at the mast without looking at it.",
+      "pageNum": 4,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem57",
+      "type": "character",
+      "text": "TEO (CONT’D)",
+      "pageNum": 4,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem58",
+      "type": "dialogue",
+      "text": "It sings in a north wind. One long note. In a west wind it’s two, and they don’t agree.",
+      "pageNum": 4,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem59",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 4,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem60",
+      "type": "dialogue",
+      "text": "And an east wind?",
+      "pageNum": 4,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem61",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 4,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem62",
+      "type": "dialogue",
+      "text": "We don’t get an east wind.",
+      "pageNum": 4,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem63",
+      "type": "action",
+      "text": "He thinks about it.",
+      "pageNum": 4,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem64",
+      "type": "character",
+      "text": "TEO (CONT’D)",
+      "pageNum": 4,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem65",
+      "type": "dialogue",
+      "text": "We got one once.",
+      "pageNum": 4,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem66",
+      "type": "action",
+      "text": "Mara crouches by the generator and lifts the tarp. Oil on the housing, old and new. One bolt is missing. Another turns in her fingers with no thread left to hold it.",
+      "pageNum": 4,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem67",
+      "type": "action",
+      "text": "She looks at it for a long moment. Then she lets the tarp fall.",
+      "pageNum": 4,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem68",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 4,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem69",
+      "type": "dialogue",
+      "text": "Well?",
+      "pageNum": 4,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem70",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 4,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem71",
+      "type": "dialogue",
+      "text": "It runs.",
+      "pageNum": 4,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem72",
+      "type": "action",
+      "text": "That is all she says. Delacroix has worked with her long enough to count what she leaves out.",
+      "pageNum": 4,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem73",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 4,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem74",
+      "type": "dialogue",
+      "text": "I kept it running. Every day. I wrote it down.",
+      "pageNum": 4,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem75",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 4,
+      "y": 180,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem76",
+      "type": "dialogue",
+      "text": "I believe you.",
+      "pageNum": 4,
+      "y": 168,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem77",
+      "type": "action",
+      "text": "Teo nods too many times and goes inside. The wind shuts the door behind him, hard.",
+      "pageNum": 4,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem78",
+      "type": "page-number",
+      "text": "4.",
+      "pageNum": 5,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem79",
+      "type": "scene",
+      "text": "INT. FIELD STATION - DAY",
+      "pageNum": 5,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem80",
+      "type": "action",
+      "text": "One room. A cot, a table, one chair. A tarp lashed over a gap in the north wall where a panel used to be. It breathes with the weather.",
+      "pageNum": 5,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem81",
+      "type": "action",
+      "text": "On the wall above the radio, a map of the valley. Four pins in it, running down the line to the lowest station.",
+      "pageNum": 5,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem82",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 5,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem83",
+      "type": "parenthetical",
+      "text": "(into the handset)",
+      "pageNum": 5,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem84",
+      "type": "dialogue",
+      "text": "Base, this is Field Station. We’re up.",
+      "pageNum": 5,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem85",
+      "type": "action",
+      "text": "Static. Then a voice, patient, a long way off.",
+      "pageNum": 5,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem86",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 5,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem87",
+      "type": "dialogue",
+      "text": "Field Station, Iversen. Good to hear you. How’s the boy?",
+      "pageNum": 5,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem88",
+      "type": "action",
+      "text": "Delacroix glances at Teo, who is shelving their tins in order of size.",
+      "pageNum": 5,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem89",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 5,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem90",
+      "type": "dialogue",
+      "text": "Tidy.",
+      "pageNum": 5,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem91",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 5,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem92",
+      "type": "dialogue",
+      "text": "Pickup is tomorrow, first light. Relief team brings the new keeper up and the three of you down.",
+      "pageNum": 5,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem93",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 5,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem94",
+      "type": "dialogue",
+      "text": "First light.",
+      "pageNum": 5,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem95",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 5,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem96",
+      "type": "dialogue",
+      "text": "Weather permitting. It always permits, until it doesn’t.",
+      "pageNum": 5,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem97",
+      "type": "action",
+      "text": "He sets the handset down. Mara is looking at the map.",
+      "pageNum": 5,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem98",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 5,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem99",
+      "type": "dialogue",
+      "text": "Why four pins?",
+      "pageNum": 5,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem100",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 5,
+      "y": 204,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem101",
+      "type": "dialogue",
+      "text": "One for every station on the line. We’re the top one.",
+      "pageNum": 5,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem102",
+      "type": "action",
+      "text": "He touches the lowest pin, then takes his finger away as if it were warm.",
+      "pageNum": 5,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem103",
+      "type": "page-number",
+      "text": "5.",
+      "pageNum": 6,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem104",
+      "type": "scene",
+      "text": "EXT. RADIO MAST - DUSK",
+      "pageNum": 6,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem105",
+      "type": "action",
+      "text": "The light goes early up here. What is left of it is the colour of weak tea.",
+      "pageNum": 6,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem106",
+      "type": "action",
+      "text": "MARA climbs the mast, harness clipped to the ladder, a spanner through her belt. The wind pulls at her like it wants her for something.",
+      "pageNum": 6,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem107",
+      "type": "action",
+      "text": "DELACROIX stands at the foot, the safety line paid out through his gloves.",
+      "pageNum": 6,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem108",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 6,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem109",
+      "type": "dialogue",
+      "text": "How many rungs?",
+      "pageNum": 6,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem110",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 6,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem111",
+      "type": "dialogue",
+      "text": "I don’t count them.",
+      "pageNum": 6,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem112",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 6,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem113",
+      "type": "dialogue",
+      "text": "Forty-four. I counted for you.",
+      "pageNum": 6,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem114",
+      "type": "action",
+      "text": "She reaches the antenna. It hangs off true, its bracket worked loose by a winter of north wind.",
+      "pageNum": 6,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem115",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 6,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem116",
+      "type": "dialogue",
+      "text": "Can I ask you something?",
+      "pageNum": 6,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem117",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 6,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem118",
+      "type": "dialogue",
+      "text": "You’re going to.",
+      "pageNum": 6,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem119",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 6,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem120",
+      "type": "dialogue",
+      "text": "Why did you take this job? You could fix things anywhere. Somewhere with walls.",
+      "pageNum": 6,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem121",
+      "type": "action",
+      "text": "A gust takes the mast and leans it an inch. She waits it out, cheek against the cold steel, eyes shut.",
+      "pageNum": 6,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem122",
+      "type": "action",
+      "text": "Below her, the line goes taut in his hands and stays taut until the gust is gone.",
+      "pageNum": 6,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem123",
+      "type": "page-number",
+      "text": "6.",
+      "pageNum": 7,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem124",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 7,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem125",
+      "type": "dialogue",
+      "text": "Nothing up here pretends to work.",
+      "pageNum": 7,
+      "y": 708,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem126",
+      "type": "action",
+      "text": "Delacroix thinks about that. Decides not to agree with it out loud.",
+      "pageNum": 7,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem127",
+      "type": "action",
+      "text": "She sets the spanner to the bracket. Two turns. The antenna comes true, and the mast’s low note changes pitch, very slightly, as if it has noticed.",
+      "pageNum": 7,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem128",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 7,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem129",
+      "type": "dialogue",
+      "text": "Is that it?",
+      "pageNum": 7,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem130",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 7,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem131",
+      "type": "dialogue",
+      "text": "That’s it.",
+      "pageNum": 7,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem132",
+      "type": "action",
+      "text": "She doesn’t come down. She is looking past him, past the hut, out across the valley to the far ridge.",
+      "pageNum": 7,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem133",
+      "type": "action",
+      "text": "A light. One small steady point of it, low on the far slope, where the map shows nothing at all.",
+      "pageNum": 7,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem134",
+      "type": "action",
+      "text": "It does not flicker. Nothing out there has any reason to be lit.",
+      "pageNum": 7,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem135",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 7,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem136",
+      "type": "dialogue",
+      "text": "Mara? You’re losing the light.",
+      "pageNum": 7,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem137",
+      "type": "action",
+      "text": "The point goes out, like somebody closing a hand around it.",
+      "pageNum": 7,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem138",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 7,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem139",
+      "type": "dialogue",
+      "text": "Coming down.",
+      "pageNum": 7,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem140",
+      "type": "action",
+      "text": "She unclips and starts down, rung by rung. She does not mention it. She will not mention it for some time.",
+      "pageNum": 7,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem141",
+      "type": "page-number",
+      "text": "7.",
+      "pageNum": 8,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem142",
+      "type": "scene",
+      "text": "INT. FIELD STATION - EVENING",
+      "pageNum": 8,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem143",
+      "type": "action",
+      "text": "Three of them round a table built for one. Tins on a camping stove. The tarp on the north wall breathes in, out.",
+      "pageNum": 8,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem144",
+      "type": "action",
+      "text": "TEO eats fast, like the food might be taken back.",
+      "pageNum": 8,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem145",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 8,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem146",
+      "type": "dialogue",
+      "text": "Four pins. Tell me about them.",
+      "pageNum": 8,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem147",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 8,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem148",
+      "type": "dialogue",
+      "text": "We call down the line at six every evening. Everybody answers. We all say goodnight.",
+      "pageNum": 8,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem149",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 8,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem150",
+      "type": "dialogue",
+      "text": "Everybody?",
+      "pageNum": 8,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem151",
+      "type": "action",
+      "text": "Teo puts his fork down.",
+      "pageNum": 8,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem152",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 8,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem153",
+      "type": "dialogue",
+      "text": "The fourth hasn’t answered. Nine days.",
+      "pageNum": 8,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem154",
+      "type": "action",
+      "text": "A pause. The stove ticks as it cools.",
+      "pageNum": 8,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem155",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 8,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem156",
+      "type": "dialogue",
+      "text": "Nine days, and you didn’t report it.",
+      "pageNum": 8,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem157",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 8,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem158",
+      "type": "dialogue",
+      "text": "I did. Every night, after I called them, I reported it to base.",
+      "pageNum": 8,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem159",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 8,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem160",
+      "type": "dialogue",
+      "text": "And?",
+      "pageNum": 8,
+      "y": 300,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem161",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 8,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem162",
+      "type": "dialogue",
+      "text": "Nobody answered that either.",
+      "pageNum": 8,
+      "y": 264,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem163",
+      "type": "action",
+      "text": "Delacroix looks at Mara. Mara looks at the radio. The radio hisses and says nothing, the way it has said nothing for nine days.",
+      "pageNum": 8,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem164",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 8,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem165",
+      "type": "dialogue",
+      "text": "Iversen answered today.",
+      "pageNum": 8,
+      "y": 180,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem166",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 8,
+      "y": 156,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem167",
+      "type": "dialogue",
+      "text": "Iversen answered you.",
+      "pageNum": 8,
+      "y": 144,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem168",
+      "type": "page-number",
+      "text": "8.",
+      "pageNum": 9,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem169",
+      "type": "scene",
+      "text": "EXT. RIDGE - NIGHT",
+      "pageNum": 9,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem170",
+      "type": "action",
+      "text": "Wind, and under the wind a cold that means business.",
+      "pageNum": 9,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem171",
+      "type": "action",
+      "text": "DELACROIX walks the ridge with a torch, the beam no use against anything further off than his own boots.",
+      "pageNum": 9,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem172",
+      "type": "action",
+      "text": "He finds the marker cairn where the map says it will be: a chest-high stack of flat stones, sighted down the valley toward the fourth station. In clear weather you could see its lamp from here.",
+      "pageNum": 9,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem173",
+      "type": "action",
+      "text": "There is no lamp tonight. There is no clear weather.",
+      "pageNum": 9,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem174",
+      "type": "action",
+      "text": "He sets the torch on the ground and looks at the cairn properly.",
+      "pageNum": 9,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem175",
+      "type": "action",
+      "text": "It has been rebuilt. Carefully. Every stone seated, every gap chinked with smaller stones. Nobody did this in a hurry, and nobody did it for the weather.",
+      "pageNum": 9,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem176",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 9,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem177",
+      "type": "dialogue",
+      "text": "Hello?",
+      "pageNum": 9,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem178",
+      "type": "action",
+      "text": "The wind takes the word and does not bring it back.",
+      "pageNum": 9,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem179",
+      "type": "action",
+      "text": "He knows this cairn. He built the last one himself, eleven years ago, and he knows how many stones went into it. Twenty-six.",
+      "pageNum": 9,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem180",
+      "type": "page-number",
+      "text": "9.",
+      "pageNum": 10,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem181",
+      "type": "action",
+      "text": "He counts them. His lips move.",
+      "pageNum": 10,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem182",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 10,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem183",
+      "type": "dialogue",
+      "text": "Twenty-five.",
+      "pageNum": 10,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem184",
+      "type": "action",
+      "text": "He counts again, slower, touching each one with a gloved finger, top to bottom.",
+      "pageNum": 10,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem185",
+      "type": "character",
+      "text": "DELACROIX (CONT’D)",
+      "pageNum": 10,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem186",
+      "type": "dialogue",
+      "text": "Twenty-five.",
+      "pageNum": 10,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem187",
+      "type": "action",
+      "text": "One short. Whoever rebuilt it built it well and built it one stone short, and a careful person does not make that mistake by accident.",
+      "pageNum": 10,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem188",
+      "type": "action",
+      "text": "He sweeps the torch around his feet. Grass. Rock. No stone lying loose.",
+      "pageNum": 10,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem189",
+      "type": "action",
+      "text": "Down in the valley, where the fourth station should be, there is only dark.",
+      "pageNum": 10,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem190",
+      "type": "action",
+      "text": "He switches the torch off and stands in it for a moment, to see what his eyes will do.",
+      "pageNum": 10,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem191",
+      "type": "action",
+      "text": "Nothing out there changes. Nothing out there has changed for nine days.",
+      "pageNum": 10,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem192",
+      "type": "action",
+      "text": "He turns the torch back on and walks back toward the hut, faster than he came.",
+      "pageNum": 10,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem193",
+      "type": "page-number",
+      "text": "10.",
+      "pageNum": 11,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem194",
+      "type": "scene",
+      "text": "INT. FIELD STATION - LATER",
+      "pageNum": 11,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem195",
+      "type": "action",
+      "text": "Mara is asleep on the cot in her boots. Teo is not asleep, and not pretending to be.",
+      "pageNum": 11,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem196",
+      "type": "action",
+      "text": "The radio crackles. Delacroix comes in with the cold still on him and goes straight to the handset.",
+      "pageNum": 11,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem197",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 11,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem198",
+      "type": "dialogue",
+      "text": "Field Station, Iversen. Field Station, do you read?",
+      "pageNum": 11,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem199",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 11,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem200",
+      "type": "dialogue",
+      "text": "Go ahead.",
+      "pageNum": 11,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem201",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 11,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem202",
+      "type": "dialogue",
+      "text": "Weather’s closing over the pass. Relief is delayed.",
+      "pageNum": 11,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem203",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 11,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem204",
+      "type": "dialogue",
+      "text": "Delayed how long?",
+      "pageNum": 11,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem205",
+      "type": "action",
+      "text": "Static, for long enough that Teo sits up.",
+      "pageNum": 11,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem206",
+      "type": "character",
+      "text": "IVERSEN (V.O.)",
+      "pageNum": 11,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN",
+      "baseCharacter": "IVERSEN"
+    },
+    {
+      "id": "elem207",
+      "type": "dialogue",
+      "text": "Twenty-three hours, earliest. We’ll hold here until it...",
+      "pageNum": 11,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "IVERSEN"
+    },
+    {
+      "id": "elem208",
+      "type": "action",
+      "text": "The hiss closes over the rest.",
+      "pageNum": 11,
+      "y": 384,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem209",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 11,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem210",
+      "type": "dialogue",
+      "text": "Iversen. Come back.",
+      "pageNum": 11,
+      "y": 348,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem211",
+      "type": "action",
+      "text": "Nothing. Delacroix sets the handset down gently, as if it might still be listening.",
+      "pageNum": 11,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem212",
+      "type": "action",
+      "text": "He takes a pencil from his pocket and writes 23 on the wall beside the map, small and neat. He looks at it. Underlines it.",
+      "pageNum": 11,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem213",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 11,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem214",
+      "type": "dialogue",
+      "text": "Was that him? Was that really him?",
+      "pageNum": 11,
+      "y": 228,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem215",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 11,
+      "y": 204,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem216",
+      "type": "dialogue",
+      "text": "Go to sleep, Teo.",
+      "pageNum": 11,
+      "y": 192,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem217",
+      "type": "page-number",
+      "text": "11.",
+      "pageNum": 12,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem218",
+      "type": "scene",
+      "text": "EXT. FIELD STATION - NIGHT",
+      "pageNum": 12,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem219",
+      "type": "action",
+      "text": "The wind has found a new direction and does not like that one either.",
+      "pageNum": 12,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem220",
+      "type": "action",
+      "text": "TEO wheels the quad bike out of the lean-to. Headlamp on. A jerrycan strapped across the back, and a second map, the survey copy, rolled under his arm.",
+      "pageNum": 12,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem221",
+      "type": "action",
+      "text": "MARA comes out after him, pulling on her coat.",
+      "pageNum": 12,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem222",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 12,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem223",
+      "type": "dialogue",
+      "text": "Teo.",
+      "pageNum": 12,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem224",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 12,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem225",
+      "type": "dialogue",
+      "text": "It’s four hours down if the track’s clear. I’ll see them. I’ll come back and tell you.",
+      "pageNum": 12,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem226",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 12,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem227",
+      "type": "dialogue",
+      "text": "Don’t.",
+      "pageNum": 12,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem228",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 12,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem229",
+      "type": "dialogue",
+      "text": "Nine days. Somebody has to go and look.",
+      "pageNum": 12,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem230",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 12,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem231",
+      "type": "dialogue",
+      "text": "In the morning. With us.",
+      "pageNum": 12,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem232",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 12,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem233",
+      "type": "dialogue",
+      "text": "In the morning there’ll be a reason to wait until the afternoon.",
+      "pageNum": 12,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem234",
+      "type": "action",
+      "text": "He is not wrong, and she knows it, and that is the worst part.",
+      "pageNum": 12,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem235",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 12,
+      "y": 288,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem236",
+      "type": "dialogue",
+      "text": "Call us when you get there.",
+      "pageNum": 12,
+      "y": 276,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem237",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 12,
+      "y": 252,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem238",
+      "type": "dialogue",
+      "text": "I always call.",
+      "pageNum": 12,
+      "y": 240,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem239",
+      "type": "action",
+      "text": "He kicks the bike over. It catches first time, which feels like a verdict.",
+      "pageNum": 12,
+      "y": 216,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem240",
+      "type": "page-number",
+      "text": "12.",
+      "pageNum": 13,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem241",
+      "type": "action",
+      "text": "DELACROIX is in the doorway now, the lamp behind him.",
+      "pageNum": 13,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem242",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 13,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem243",
+      "type": "dialogue",
+      "text": "Four hours down. Four back. The relief is twenty-three.",
+      "pageNum": 13,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem244",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 13,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem245",
+      "type": "dialogue",
+      "text": "Then I’ll be back before them.",
+      "pageNum": 13,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem246",
+      "type": "action",
+      "text": "Teo pulls out onto the track. The headlamp swings across the rock, across the fuel drum, and settles on the way down.",
+      "pageNum": 13,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem247",
+      "type": "action",
+      "text": "They watch the tail light go. Red, small, smaller. It dips below the lip of the ridge, comes up once more on the next switchback, and then does not come up again.",
+      "pageNum": 13,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem248",
+      "type": "action",
+      "text": "Mara keeps looking at the place where it was.",
+      "pageNum": 13,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem249",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 13,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem250",
+      "type": "dialogue",
+      "text": "You could have stopped him.",
+      "pageNum": 13,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem251",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 13,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem252",
+      "type": "dialogue",
+      "text": "I could have slowed him down.",
+      "pageNum": 13,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem253",
+      "type": "action",
+      "text": "Behind them, under its tarp, the generator coughs.",
+      "pageNum": 13,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem254",
+      "type": "action",
+      "text": "Once. A dry, small sound, like someone clearing their throat before bad news. Then it runs on, even and ordinary, as if nothing happened.",
+      "pageNum": 13,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem255",
+      "type": "action",
+      "text": "Neither of them says anything. Delacroix looks at his watch and does not say the time.",
+      "pageNum": 13,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem256",
+      "type": "transition",
+      "text": "CUT TO:",
+      "pageNum": 13,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem257",
+      "type": "page-number",
+      "text": "13.",
+      "pageNum": 14,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem258",
+      "type": "scene",
+      "text": "EXT. LOWER STATION - NIGHT",
+      "pageNum": 14,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem259",
+      "type": "action",
+      "text": "A hut like theirs, lower and older, in a fold of the valley where the wind cannot quite reach and so sulks instead.",
+      "pageNum": 14,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem260",
+      "type": "action",
+      "text": "A headlamp comes down the track and stops. TEO kills the engine. The silence is enormous.",
+      "pageNum": 14,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem261",
+      "type": "action",
+      "text": "The door of the hut is open. Not blown open. Propped, with a stone.",
+      "pageNum": 14,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem262",
+      "type": "character",
+      "text": "TEO",
+      "pageNum": 14,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO",
+      "baseCharacter": "TEO"
+    },
+    {
+      "id": "elem263",
+      "type": "dialogue",
+      "text": "Hello? It’s Teo. From the top.",
+      "pageNum": 14,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "TEO"
+    },
+    {
+      "id": "elem264",
+      "type": "action",
+      "text": "Nothing. He goes in.",
+      "pageNum": 14,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem265",
+      "type": "action",
+      "text": "Inside, the station is neat. The cot is made. A mug stands on the table with a skin on its cold tea.",
+      "pageNum": 14,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem266",
+      "type": "action",
+      "text": "The radio is on. Its dial glows a soft green, the only light in the room.",
+      "pageNum": 14,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem267",
+      "type": "action",
+      "text": "Teo leans in to read the frequency. He knows the number. It is theirs.",
+      "pageNum": 14,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem268",
+      "type": "action",
+      "text": "Beside the radio a notebook lies open. Line after line of the same entry, in a hand that gets smaller down the page. Six o’clock. Six o’clock. Six o’clock.",
+      "pageNum": 14,
+      "y": 420,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem269",
+      "type": "action",
+      "text": "Someone has been listening. Every night. And never once said a word.",
+      "pageNum": 14,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem270",
+      "type": "action",
+      "text": "Teo picks up the handset. His thumb finds the key.",
+      "pageNum": 14,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem271",
+      "type": "action",
+      "text": "He holds it down.",
+      "pageNum": 14,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem272",
+      "type": "page-number",
+      "text": "14.",
+      "pageNum": 15,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem273",
+      "type": "scene",
+      "text": "INT. FIELD STATION - NIGHT",
+      "pageNum": 15,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem274",
+      "type": "action",
+      "text": "The generator coughs once and dies. MARA works by the light of her phone, hands steady, and does not look up.",
+      "pageNum": 15,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem275",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 15,
+      "y": 660,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem276",
+      "type": "dialogue",
+      "text": "Give it a minute. It always comes back.",
+      "pageNum": 15,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem277",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 15,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem278",
+      "type": "dialogue",
+      "text": "And if it doesn’t?",
+      "pageNum": 15,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem279",
+      "type": "action",
+      "text": "She finds the housing bolt by feel. Turns it a quarter turn.",
+      "pageNum": 15,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem280",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 15,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem281",
+      "type": "dialogue",
+      "text": "Then we do this in the dark.",
+      "pageNum": 15,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem282",
+      "type": "action",
+      "text": "The wind takes the tarp on the north wall and holds it open like a door nobody opened.",
+      "pageNum": 15,
+      "y": 516,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem283",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 15,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem284",
+      "type": "dialogue",
+      "text": "That’s not an answer.",
+      "pageNum": 15,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem285",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 15,
+      "y": 444,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem286",
+      "type": "dialogue",
+      "text": "It’s the one I have.",
+      "pageNum": 15,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem287",
+      "type": "action",
+      "text": "He crosses to the window. Outside, the ridge is a black line against a slightly less black sky.",
+      "pageNum": 15,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem288",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 15,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem289",
+      "type": "dialogue",
+      "text": "Nineteen hours until the relief team. I counted.",
+      "pageNum": 15,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem290",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 15,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem291",
+      "type": "dialogue",
+      "text": "Then stop counting.",
+      "pageNum": 15,
+      "y": 312,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem292",
+      "type": "page-number",
+      "text": "15.",
+      "pageNum": 16,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem293",
+      "type": "action",
+      "text": "The generator catches. Dies again. Catches.",
+      "pageNum": 16,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem294",
+      "type": "action",
+      "text": "Light comes up amber and unsteady, and the room assembles itself around them: the cot, the radio, the map with its four pins.",
+      "pageNum": 16,
+      "y": 696,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem295",
+      "type": "character",
+      "text": "MARA (CONT’D)",
+      "pageNum": 16,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem296",
+      "type": "dialogue",
+      "text": "There. Told you.",
+      "pageNum": 16,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem297",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 16,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem298",
+      "type": "dialogue",
+      "text": "You told me a minute. That was six.",
+      "pageNum": 16,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem299",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 16,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem300",
+      "type": "dialogue",
+      "text": "I rounded.",
+      "pageNum": 16,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem301",
+      "type": "action",
+      "text": "She wipes her hands on her thigh and sits, finally, like the sitting costs her something.",
+      "pageNum": 16,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem302",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 16,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem303",
+      "type": "dialogue",
+      "text": "You should sleep.",
+      "pageNum": 16,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem304",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 16,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem305",
+      "type": "dialogue",
+      "text": "You should stop saying that.",
+      "pageNum": 16,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem306",
+      "type": "action",
+      "text": "A long moment. The radio hisses, says nothing, hisses.",
+      "pageNum": 16,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem307",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 16,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem308",
+      "type": "dialogue",
+      "text": "If the relief doesn’t come.",
+      "pageNum": 16,
+      "y": 396,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem309",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 16,
+      "y": 372,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem310",
+      "type": "dialogue",
+      "text": "They’ll come.",
+      "pageNum": 16,
+      "y": 360,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem311",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 16,
+      "y": 336,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem312",
+      "type": "dialogue",
+      "text": "If.",
+      "pageNum": 16,
+      "y": 324,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem313",
+      "type": "page-number",
+      "text": "16.",
+      "pageNum": 17,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem314",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 17,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem315",
+      "type": "dialogue",
+      "text": "Then we walk out the way we walked in, and it takes four days instead of one, and you complain the entire time.",
+      "pageNum": 17,
+      "y": 708,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem316",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 17,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem317",
+      "type": "dialogue",
+      "text": "I don’t complain.",
+      "pageNum": 17,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem318",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 17,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem319",
+      "type": "dialogue",
+      "text": "You’re complaining now.",
+      "pageNum": 17,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem320",
+      "type": "action",
+      "text": "He almost laughs. It is the first honest sound either of them has made all night.",
+      "pageNum": 17,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem321",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 17,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem322",
+      "type": "dialogue",
+      "text": "Get some sleep. I’ll take the radio.",
+      "pageNum": 17,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem323",
+      "type": "action",
+      "text": "She doesn’t argue, which frightens him more than the dark did.",
+      "pageNum": 17,
+      "y": 492,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem324",
+      "type": "transition",
+      "text": "CUT TO:",
+      "pageNum": 17,
+      "y": 456,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem325",
+      "type": "scene",
+      "text": "INT. FIELD STATION - DAWN",
+      "pageNum": 17,
+      "y": 432,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem326",
+      "type": "action",
+      "text": "Grey light. The tarp is down. The map is gone from the wall.",
+      "pageNum": 17,
+      "y": 408,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem327",
+      "type": "page-number",
+      "text": "17.",
+      "pageNum": 18,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem328",
+      "type": "action",
+      "text": "DELACROIX sits exactly where he sat, the handset still in his fist, asleep with his eyes open the way soldiers learn.",
+      "pageNum": 18,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem329",
+      "type": "action",
+      "text": "The radio speaks. One word, clipped, in a voice neither of them has heard.",
+      "pageNum": 18,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem330",
+      "type": "action",
+      "text": "He is awake before he knows he is awake.",
+      "pageNum": 18,
+      "y": 648,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem331",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 18,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem332",
+      "type": "dialogue",
+      "text": "Say again.",
+      "pageNum": 18,
+      "y": 612,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem333",
+      "type": "action",
+      "text": "Nothing. The hiss closes over the word like water.",
+      "pageNum": 18,
+      "y": 588,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem334",
+      "type": "character",
+      "text": "DELACROIX (CONT’D)",
+      "pageNum": 18,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem335",
+      "type": "dialogue",
+      "text": "Say again.",
+      "pageNum": 18,
+      "y": 552,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem336",
+      "type": "action",
+      "text": "He turns the dial one notch, then back, then one notch the other way, hunting the frequency the way you hunt a name you have almost remembered.",
+      "pageNum": 18,
+      "y": 528,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem337",
+      "type": "character",
+      "text": "MARA (O.S.)",
+      "pageNum": 18,
+      "y": 480,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem338",
+      "type": "dialogue",
+      "text": "What was it?",
+      "pageNum": 18,
+      "y": 468,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem339",
+      "type": "page-number",
+      "text": "18.",
+      "pageNum": 19,
+      "y": 756,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem340",
+      "type": "action",
+      "text": "She is in the doorway. She has not slept and does not pretend otherwise.",
+      "pageNum": 19,
+      "y": 720,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem341",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 19,
+      "y": 684,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem342",
+      "type": "dialogue",
+      "text": "A voice. One word. I couldn’t hold it.",
+      "pageNum": 19,
+      "y": 672,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem343",
+      "type": "character",
+      "text": "MARA",
+      "pageNum": 19,
+      "y": 636,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA",
+      "baseCharacter": "MARA"
+    },
+    {
+      "id": "elem344",
+      "type": "dialogue",
+      "text": "Which word?",
+      "pageNum": 19,
+      "y": 624,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "MARA"
+    },
+    {
+      "id": "elem345",
+      "type": "action",
+      "text": "He looks at the handset, then at her.",
+      "pageNum": 19,
+      "y": 600,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem346",
+      "type": "character",
+      "text": "DELACROIX",
+      "pageNum": 19,
+      "y": 576,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX",
+      "baseCharacter": "DELACROIX"
+    },
+    {
+      "id": "elem347",
+      "type": "dialogue",
+      "text": "Ours.",
+      "pageNum": 19,
+      "y": 564,
+      "isTitlePage": false,
+      "isReadable": true,
+      "character": "DELACROIX"
+    },
+    {
+      "id": "elem348",
+      "type": "action",
+      "text": "Outside, very far off, something that is not the wind moves along the ridge.",
+      "pageNum": 19,
+      "y": 540,
+      "isTitlePage": false,
+      "isReadable": true
+    },
+    {
+      "id": "elem349",
+      "type": "action",
+      "text": "FADE OUT.",
+      "pageNum": 19,
+      "y": 504,
+      "isTitlePage": false,
+      "isReadable": true
+    }
+  ],
+  "characters": [
+    {
+      "name": "DELACROIX",
+      "baseName": "DELACROIX",
+      "dialogueCount": 42,
+      "firstAppearance": 9
+    },
+    {
+      "name": "MARA",
+      "baseName": "MARA",
+      "dialogueCount": 32,
+      "firstAppearance": 12
+    },
+    {
+      "name": "TEO",
+      "baseName": "TEO",
+      "dialogueCount": 23,
+      "firstAppearance": 34
+    },
+    {
+      "name": "IVERSEN",
+      "baseName": "IVERSEN",
+      "dialogueCount": 6,
+      "firstAppearance": 86
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "EXT. RIDGE ROAD - DAY",
+      "sceneNumber": 1,
+      "elementIndex": 4,
+      "pageNum": 2
+    },
+    {
+      "heading": "EXT. FIELD STATION - DAY",
+      "sceneNumber": 2,
+      "elementIndex": 29,
+      "pageNum": 3
+    },
+    {
+      "heading": "INT. FIELD STATION - DAY",
+      "sceneNumber": 3,
+      "elementIndex": 79,
+      "pageNum": 5
+    },
+    {
+      "heading": "EXT. RADIO MAST - DUSK",
+      "sceneNumber": 4,
+      "elementIndex": 104,
+      "pageNum": 6
+    },
+    {
+      "heading": "INT. FIELD STATION - EVENING",
+      "sceneNumber": 5,
+      "elementIndex": 142,
+      "pageNum": 8
+    },
+    {
+      "heading": "EXT. RIDGE - NIGHT",
+      "sceneNumber": 6,
+      "elementIndex": 169,
+      "pageNum": 9
+    },
+    {
+      "heading": "INT. FIELD STATION - LATER",
+      "sceneNumber": 7,
+      "elementIndex": 194,
+      "pageNum": 11
+    },
+    {
+      "heading": "EXT. FIELD STATION - NIGHT",
+      "sceneNumber": 8,
+      "elementIndex": 218,
+      "pageNum": 12
+    },
+    {
+      "heading": "EXT. LOWER STATION - NIGHT",
+      "sceneNumber": 9,
+      "elementIndex": 258,
+      "pageNum": 14
+    },
+    {
+      "heading": "INT. FIELD STATION - NIGHT",
+      "sceneNumber": 10,
+      "elementIndex": 273,
+      "pageNum": 15
+    },
+    {
+      "heading": "INT. FIELD STATION - DAWN",
+      "sceneNumber": 11,
+      "elementIndex": 325,
+      "pageNum": 17
+    }
+  ],
+  "pageCount": 19
+}

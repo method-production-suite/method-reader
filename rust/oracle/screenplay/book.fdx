@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="2">
+  <Content>
+    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - NIGHT</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>The bell over the door RINGS.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>We close at ten.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>It’s nine forty.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>DEV OKONKWO, 20s, soaked through, shakes off a jacket that was never waterproof.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>And yet.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>I need something for a fourteen- year-old who thinks movies started with streaming.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Margo looks up for the first time.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(a small conversion)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Sit down.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Fourteen. Scared, or pretending not to be?</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Pretending. Loudly.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Then not the one with the mask. Everyone starts with the mask and nobody remembers it.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>She pulls a battered clamshell case and holds it like evidence.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO (CONT'D)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>This one. Nothing happens for forty minutes and then you never sleep facing a closet again.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>That’s a pitch?</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>That’s a promise.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>DISSOLVE TO:</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>EXT. STRIP MALL - NIGHT</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>How long have you been here?</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Since people still rewound.</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - COUNTER - LATER</Text></Paragraph>
+    <Paragraph Type="Action"><Text>A shoebox of index cards. Margo writes on one in careful block letters and slides it across.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>What’s this?</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Your card. Nineteen years running, four hundred and six members. You’re four hundred and seven.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>You’re closing in a week.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Then it’ll be a short membership.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Dev takes the card anyway. Pockets it like it matters, because it does.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>What happens to all of it?</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Margo looks down the aisles. Twenty thousand tapes. A lifetime of other people’s Friday nights.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Somebody buys the shelves. The rest goes where the rest goes.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>That’s grim.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
+    <Paragraph Type="Parenthetical"><Text>(not grim at all)</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>It’s Tuesday.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>SMASH CUT TO:</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><Text>INT. DEV’S APARTMENT - NIGHT</Text></Paragraph>
+    <Paragraph Type="Action"><Text>A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>His NIECE, 14, arms folded, sits as far from the screen as the room allows.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>NIECE</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>This is going to be so boring.</Text></Paragraph>
+    <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
+    <Paragraph Type="Dialogue"><Text>Forty minutes. Give it forty minutes.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>The countdown hits 1. The room goes dark blue.</Text></Paragraph>
+    <Paragraph Type="Action"><Text>Forty minutes later, she has not moved, and she is sitting considerably closer.</Text></Paragraph>
+    <Paragraph Type="Transition"><Text>FADE OUT.</Text></Paragraph>
+  </Content>
+  <TitlePage>
+    <Content>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Left"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>The Last Video Store</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>Written by</Text></Paragraph>
+      <Paragraph Alignment="Center"><Text></Text></Paragraph>
+      <Paragraph Alignment="Center"><Text>A. N. Placeholder</Text></Paragraph>
+    </Content>
+  </TitlePage>
+</FinalDraft>

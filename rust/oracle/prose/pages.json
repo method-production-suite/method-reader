@@ -1,0 +1,908 @@
+{
+  "numPages": 1,
+  "pages": [
+    {
+      "pageNum": 1,
+      "width": 612,
+      "height": 792,
+      "items": [
+        {
+          "str": "THE",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 720],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 720],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "LAST VIDEO STORE",
+          "dir": "ltr",
+          "width": 115.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 720],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 696],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 79.2, 696],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "proposal for a documentary feature, prepared for financiers who",
+          "dir": "ltr",
+          "width": 453.5999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 86.4, 696],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 539.9999999999995, 696],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "have",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 547.1999999999996, 696],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "never",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 684],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 684],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "rewound anything.",
+          "dir": "ltr",
+          "width": 122.40000000000002,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 115.20000000000002, 684],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "THE",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 660],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 660],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "OPPORTUNITY",
+          "dir": "ltr",
+          "width": 79.20000000000002,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 660],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "There",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 636],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 636],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "were once nine thousand video rental stores in this country.",
+          "dir": "ltr",
+          "width": 431.99999999999955,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 115.20000000000002, 636],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 547.1999999999996, 636],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "There",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 554.3999999999996, 636],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "are",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "now",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 122.40000000000002, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "fewer than a dozen. Each one that closes takes with it",
+          "dir": "ltr",
+          "width": 388.7999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 129.60000000000002, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 518.3999999999994, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "a",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 532.7999999999995, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "set",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 539.9999999999995, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 561.5999999999997, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "of",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 568.7999999999997, 624],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "recommendations that existed nowhere else, held by a person who",
+          "dir": "ltr",
+          "width": 453.5999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 612],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 612],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "never",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.7999999999995, 612],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "wrote",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 600],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 600],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "any of it down.",
+          "dir": "ltr",
+          "width": 107.99999999999999,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 115.20000000000002, 600],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "We",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 576],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 86.4, 576],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "propose to film the last year of one of them.",
+          "dir": "ltr",
+          "width": 323.9999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 576],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "AUDIENCE",
+          "dir": "ltr",
+          "width": 57.60000000000001,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 552],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "The",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "film is for the generation that grew up inside these rooms",
+          "dir": "ltr",
+          "width": 417.5999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 518.3999999999994, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "and",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 547.1999999999996, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "for",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 554.3999999999996, 528],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "the",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "one",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 122.40000000000002, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "that has only ever been handed an algorithm. It argues,",
+          "dir": "ltr",
+          "width": 395.9999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 129.60000000000002, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "gently,",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 532.7999999999995, 516],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "that",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 504],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 504],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "the difference between the two is a person.",
+          "dir": "ltr",
+          "width": 309.59999999999974,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 504],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "BUDGET",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 480],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "A",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 79.2, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "crew",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 86.4, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.20000000000002, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "of four, ninety shooting days, and the patience to wait",
+          "dir": "ltr",
+          "width": 395.9999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.40000000000002, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 518.3999999999994, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "for",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 547.1999999999996, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "a",
+          "dir": "ltr",
+          "width": 7.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 554.3999999999996, 456],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "Tuesday",
+          "dir": "ltr",
+          "width": 50.400000000000006,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 444],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 122.40000000000002, 444],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "when nothing happens. The full schedule follows overleaf,",
+          "dir": "ltr",
+          "width": 410.3999999999996,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 129.60000000000002, 444],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 539.9999999999995, 444],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "along",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 547.1999999999996, 444],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "with",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 432],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 432],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "the letters of access we have already secured.",
+          "dir": "ltr",
+          "width": 331.1999999999997,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 432],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "This",
+          "dir": "ltr",
+          "width": 28.8,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 408],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 100.80000000000001, 408],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "page exists to be rejected by the screenplay guard, and its",
+          "dir": "ltr",
+          "width": 424.7999999999995,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 108.00000000000001, 408],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 532.7999999999995, 408],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "prose",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 539.9999999999995, 408],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "is",
+          "dir": "ltr",
+          "width": 14.4,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 86.4, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "padded to make sure the extractor sees a healthy text layer",
+          "dir": "ltr",
+          "width": 424.79999999999956,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 93.60000000000001, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 518.3999999999994, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "while",
+          "dir": "ltr",
+          "width": 36,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 525.5999999999995, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.2000000000000455,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 561.5999999999997, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "the",
+          "dir": "ltr",
+          "width": 21.6,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 568.7999999999997, 396],
+          "fontName": "g_d8_f1",
+          "hasEOL": true
+        },
+        {
+          "str": "parser",
+          "dir": "ltr",
+          "width": 43.2,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 72, 384],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": " ",
+          "dir": "ltr",
+          "width": 7.200000000000003,
+          "height": 0,
+          "transform": [12, 0, 0, 12, 115.20000000000002, 384],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        },
+        {
+          "str": "finds nothing screenplay-shaped in it.",
+          "dir": "ltr",
+          "width": 273.5999999999998,
+          "height": 12,
+          "transform": [12, 0, 0, 12, 122.40000000000002, 384],
+          "fontName": "g_d8_f1",
+          "hasEOL": false
+        }
+      ],
+      "fonts": {
+        "g_d8_f1": "Courier"
+      },
+      "ops": [
+        {
+          "op": "showText",
+          "text": "THE LAST VIDEO STORE"
+        },
+        {
+          "op": "showText",
+          "text": "A proposal for a documentary feature, prepared for financiers who have"
+        },
+        {
+          "op": "showText",
+          "text": "never rewound anything."
+        },
+        {
+          "op": "showText",
+          "text": "THE OPPORTUNITY"
+        },
+        {
+          "op": "showText",
+          "text": "There were once nine thousand video rental stores in this country. There"
+        },
+        {
+          "op": "showText",
+          "text": "are now fewer than a dozen. Each one that closes takes with it a set of"
+        },
+        {
+          "op": "showText",
+          "text": "recommendations that existed nowhere else, held by a person who never"
+        },
+        {
+          "op": "showText",
+          "text": "wrote any of it down."
+        },
+        {
+          "op": "showText",
+          "text": "We propose to film the last year of one of them."
+        },
+        {
+          "op": "showText",
+          "text": "AUDIENCE"
+        },
+        {
+          "op": "showText",
+          "text": "The film is for the generation that grew up inside these rooms and for"
+        },
+        {
+          "op": "showText",
+          "text": "the one that has only ever been handed an algorithm. It argues, gently,"
+        },
+        {
+          "op": "showText",
+          "text": "that the difference between the two is a person."
+        },
+        {
+          "op": "showText",
+          "text": "BUDGET"
+        },
+        {
+          "op": "showText",
+          "text": "A crew of four, ninety shooting days, and the patience to wait for a"
+        },
+        {
+          "op": "showText",
+          "text": "Tuesday when nothing happens. The full schedule follows overleaf, along"
+        },
+        {
+          "op": "showText",
+          "text": "with the letters of access we have already secured."
+        },
+        {
+          "op": "showText",
+          "text": "This page exists to be rejected by the screenplay guard, and its prose"
+        },
+        {
+          "op": "showText",
+          "text": "is padded to make sure the extractor sees a healthy text layer while the"
+        },
+        {
+          "op": "showText",
+          "text": "parser finds nothing screenplay-shaped in it."
+        }
+      ],
+      "images": {}
+    }
+  ]
+}

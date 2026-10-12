@@ -49,3 +49,6 @@ desktop/src-tauri/gen/
 
 # The Rust port builds here.
 rust/target/
+
+# Oracle dumps of the real scripts in root fixtures/: never committed.
+rust/oracle-real/

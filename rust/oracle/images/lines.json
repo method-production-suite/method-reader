@@ -1,0 +1,803 @@
+{
+  "pageCount": 5,
+  "spacingRepairs": 0,
+  "lines": [
+    {
+      "text": "THE PAPER LANTERN",
+      "indent": 40,
+      "y": 504,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "Written by",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "J. Q. Nobody",
+      "indent": 43,
+      "y": 432,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "Placeholder Pictures",
+      "indent": 18,
+      "y": 108,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "hello@example.com",
+      "indent": 18,
+      "y": 96,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE ROOM - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "WREN, 30s, holds a storyboard panel up to the window and",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "squints at it.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 504,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Somebody drew this in 1974 and",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "nobody has looked at it since.",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "HOLT sets down a box of film cans.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "HOLT",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "That is the job.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "2.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 44
+        }
+      ]
+    },
+    {
+      "text": "A splice reel turns. The room smells of vinegar and dust.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "HOLT",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Two frames are missing from the",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "head of the roll.",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then we cut around them.",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "She threads the leader by feel, the way she was taught.",
+      "indent": 18,
+      "y": 588,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "3.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "EXT. LOADING DOCK - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "Rain on corrugated steel. WREN wheels a cart of film cans",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "out under a sodium lamp and counts them twice.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "HOLT holds an umbrella over the cart and not over himself.",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Forty-one. There were forty-three",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "when we started.",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "HOLT",
+      "indent": 44,
+      "y": 588,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Two of them went out for repair in",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "March and nobody wrote it down.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Nobody ever writes it down.",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "She pulls a tarp over the cart and ties it at the corners.",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "HOLT",
+      "indent": 44,
+      "y": 480,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "The truck comes at six. Everything",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "on that manifest has to be on the",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "dock by then, in order, and dry.",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 420,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then we work through it.",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "The lamp buzzes and cuts out. Neither of them stops moving.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "In the dark the cart is a long shape and the rain is louder",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "than it was.",
+      "indent": 18,
+      "y": 348,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 324,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Bring the second cart. And the good",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "tarp, not the one with the hole in",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "it.",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Holt goes. Wren stands in the rain with a clipboard and does",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "not hurry.",
+      "indent": 18,
+      "y": 252,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "4.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. ARCHIVE ROOM - DAWN",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "The cart is gone. A single storyboard panel is still pinned",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "to the window.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "WREN",
+      "indent": 44,
+      "y": 660,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Leave that one.",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "FADE OUT.",
+      "indent": 71,
+      "y": 624,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "p001-01.png",
+      "pageNum": 1,
+      "y": 747,
+      "pageWidthPct": 85.29411764705883,
+      "pageHeightPct": 88.63636363636364,
+      "sha256": "7fa17be123e3a3bff460db12eb59c5220eb404239268c52f15aaab3849891904"
+    },
+    {
+      "file": "p002-01.png",
+      "pageNum": 2,
+      "y": 696,
+      "pageWidthPct": 29.411764705882355,
+      "pageHeightPct": 17.045454545454543,
+      "sha256": "80f6720454c54fd0d9f0dbcec13073511e37497dffc32d68b0dc4762dba0fdb2"
+    }
+  ],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 1,
+      "width": 1,
+      "height": 0,
+      "area": 0,
+      "furniture": 5,
+      "background": 1
+    }
+  }
+}

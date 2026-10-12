@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "title": "Field Station",
+  "author": "the Screepub project",
+  "pages": 19,
+  "scenes": 11,
+  "characters": 4,
+  "topCharacters": [
+    "DELACROIX",
+    "MARA",
+    "TEO",
+    "IVERSEN"
+  ],
+  "warnings": [],
+  "spacingRepairs": 0,
+  "epubPath": "$WORK/out/book.epub",
+  "mobiPath": "$WORK/out/book.mobi",
+  "azw3Path": "$WORK/out/book.azw3",
+  "fountainPath": "$WORK/out/script.fountain",
+  "previewHtmlPath": "$WORK/out/book.preview.html",
+  "fdxPath": "$WORK/out/book.fdx",
+  "debugPath": "$WORK/out/book.elements.json"
+}

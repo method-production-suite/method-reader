@@ -1,0 +1,6389 @@
+{
+  "pageCount": 19,
+  "spacingRepairs": 0,
+  "lines": [
+    {
+      "text": "FIELD STATION",
+      "indent": 42,
+      "y": 504,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "Written by",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "the Screepub project",
+      "indent": 38,
+      "y": 432,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "Placeholder Pictures",
+      "indent": 18,
+      "y": 108,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "hello@example.com",
+      "indent": 18,
+      "y": 96,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "EXT. RIDGE ROAD - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "Wind comes down off the ridge in long flat gusts, pushing",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "the grass one way and then, for no reason, the other.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "A road climbs the ridge in switchbacks. Nobody has driven it",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "since the washout, and the grass is taking it back.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 51
+        }
+      ]
+    },
+    {
+      "text": "MARA, 40s, walks it with a pack on and four days in her",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "legs. She has the face of someone who fixes things and is",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "never thanked.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX, 50s, walks behind her with a paper map folded to",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "the right square. He does not look at it. He looks at the",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "road, and counts.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 528,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Thirty-one.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "They take the bend. Gravel lets go under Mara’s boot and",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "goes quietly over the edge.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "You don’t have to do that out loud.",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 420,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "The map says forty. I’d like to",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "know when it’s lying.",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "Cloud sits on the ridge above them like a lid somebody",
+      "indent": 18,
+      "y": 372,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "forgot to close.",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "How long has he been up there?",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 300,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Three weeks. On his own.",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 264,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "They said two.",
+      "indent": 29,
+      "y": 252,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 228,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "They say a lot of things.",
+      "indent": 29,
+      "y": 216,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "The road ends at the washout, a bite taken out of the",
+      "indent": 18,
+      "y": 192,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "mountain. Mara stops where the road stops, then goes round",
+      "indent": 18,
+      "y": 180,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "it on the rock.",
+      "indent": 18,
+      "y": 168,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 144,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Thirty-eight.",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "2.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "EXT. FIELD STATION - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "MARA and DELACROIX come up the last of the slope, packs on,",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "bent into the wind. Below them the road they walked is a",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "thin grey line, going all the way down.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 39
+        }
+      ]
+    },
+    {
+      "text": "The station: a prefab hut bolted to the rock, a radio mast",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "guyed four ways, a fuel drum, a generator crouched under a",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "tarp. Everything that can rattle, rattles.",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 42
+        }
+      ]
+    },
+    {
+      "text": "The hut door opens before they reach it.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 40
+        }
+      ]
+    },
+    {
+      "text": "TEO, 20s, comes out in two jumpers and no coat. Thin. He has",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "the look of someone who has rehearsed what to say to people",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "and forgotten all of it.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 528,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "You came.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 492,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "We said we would.",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "People say that on the radio. It’s",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "different, seeing it.",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "He shakes Delacroix’s hand, then Mara’s, then Delacroix’s",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "again.",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "You’re Teo.",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "I’m Teo. Sorry. Come in, it’s",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "warmer. It isn’t, but it’s out of",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "the wind.",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "The wind leans on all three of them. The mast answers it",
+      "indent": 18,
+      "y": 276,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "with a low note, like someone humming through their teeth.",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "TEO (CONT’D)",
+      "indent": 44,
+      "y": 240,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "That’s the mast. You get used to",
+      "indent": 29,
+      "y": 228,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "it.",
+      "indent": 29,
+      "y": 216,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 192,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Do you?",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 156,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "No.",
+      "indent": 29,
+      "y": 144,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "3.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "Teo walks them round the station at a pace that makes it",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "hard to see any of it.",
+      "indent": 18,
+      "y": 708,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 684,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Fuel. Water. Rain gauge. It’s been",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "fine the whole time.",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "He points up at the mast without looking at it.",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 47
+        }
+      ]
+    },
+    {
+      "text": "TEO (CONT’D)",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "It sings in a north wind. One long",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "note. In a west wind it’s two, and",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "they don’t agree.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 552,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "And an east wind?",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "We don’t get an east wind.",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "He thinks about it.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "TEO (CONT’D)",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "We got one once.",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "Mara crouches by the generator and lifts the tarp. Oil on",
+      "indent": 18,
+      "y": 420,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "the housing, old and new. One bolt is missing. Another turns",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "in her fingers with no thread left to hold it.",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "She looks at it for a long moment. Then she lets the tarp",
+      "indent": 18,
+      "y": 372,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "fall.",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Well?",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 300,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "It runs.",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 8
+        }
+      ]
+    },
+    {
+      "text": "That is all she says. Delacroix has worked with her long",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "enough to count what she leaves out.",
+      "indent": 18,
+      "y": 252,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 228,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "I kept it running. Every day. I",
+      "indent": 29,
+      "y": 216,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "wrote it down.",
+      "indent": 29,
+      "y": 204,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 180,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "I believe you.",
+      "indent": 29,
+      "y": 168,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Teo nods too many times and goes inside. The wind shuts the",
+      "indent": 18,
+      "y": 144,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "door behind him, hard.",
+      "indent": 18,
+      "y": 132,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "4.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. FIELD STATION - DAY",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "One room. A cot, a table, one chair. A tarp lashed over a",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "gap in the north wall where a panel used to be. It breathes",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "with the weather.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "On the wall above the radio, a map of the valley. Four pins",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "in it, running down the line to the lowest station.",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 51
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "(into the handset)",
+      "indent": 36,
+      "y": 600,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "Base, this is Field Station. We’re",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "up.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Static. Then a voice, patient, a long way off.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 528,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Field Station, Iversen. Good to",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "hear you. How’s the boy?",
+      "indent": 29,
+      "y": 504,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "Delacroix glances at Teo, who is shelving their tins in",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "order of size.",
+      "indent": 18,
+      "y": 468,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 444,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Tidy.",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 408,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Pickup is tomorrow, first light.",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "Relief team brings the new keeper",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "up and the three of you down.",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 348,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "First light.",
+      "indent": 29,
+      "y": 336,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 312,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Weather permitting. It always",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "permits, until it doesn’t.",
+      "indent": 29,
+      "y": 288,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "He sets the handset down. Mara is looking at the map.",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 240,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Why four pins?",
+      "indent": 29,
+      "y": 228,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 204,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "One for every station on the line.",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "We’re the top one.",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "He touches the lowest pin, then takes his finger away as if",
+      "indent": 18,
+      "y": 156,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "it were warm.",
+      "indent": 18,
+      "y": 144,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "5.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "EXT. RADIO MAST - DUSK",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "The light goes early up here. What is left of it is the",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "colour of weak tea.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "MARA climbs the mast, harness clipped to the ladder, a",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "spanner through her belt. The wind pulls at her like it",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "wants her for something.",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX stands at the foot, the safety line paid out",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "through his gloves.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "How many rungs?",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "I don’t count them.",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 504,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Forty-four. I counted for you.",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "She reaches the antenna. It hangs off true, its bracket",
+      "indent": 18,
+      "y": 468,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "worked loose by a winter of north wind.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 39
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Can I ask you something?",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 396,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "You’re going to.",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 360,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Why did you take this job? You",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "could fix things anywhere.",
+      "indent": 29,
+      "y": 336,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "Somewhere with walls.",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "A gust takes the mast and leans it an inch. She waits it",
+      "indent": 18,
+      "y": 300,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "out, cheek against the cold steel, eyes shut.",
+      "indent": 18,
+      "y": 288,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 45
+        }
+      ]
+    },
+    {
+      "text": "Below her, the line goes taut in his hands and stays taut",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "until the gust is gone.",
+      "indent": 18,
+      "y": 252,
+      "pageNum": 6,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "6.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 720,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Nothing up here pretends to work.",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "Delacroix thinks about that. Decides not to agree with it",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "out loud.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "She sets the spanner to the bracket. Two turns. The antenna",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "comes true, and the mast’s low note changes pitch, very",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "slightly, as if it has noticed.",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 600,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Is that it?",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 564,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "That’s it.",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "She doesn’t come down. She is looking past him, past the",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "hut, out across the valley to the far ridge.",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 44
+        }
+      ]
+    },
+    {
+      "text": "A light. One small steady point of it, low on the far slope,",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "where the map shows nothing at all.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "It does not flicker. Nothing out there has any reason to be",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "lit.",
+      "indent": 18,
+      "y": 444,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 420,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Mara? You’re losing the light.",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "The point goes out, like somebody closing a hand around it.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 360,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Coming down.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "She unclips and starts down, rung by rung. She does not",
+      "indent": 18,
+      "y": 324,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "mention it. She will not mention it for some time.",
+      "indent": 18,
+      "y": 312,
+      "pageNum": 7,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 49
+        }
+      ]
+    },
+    {
+      "text": "7.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "INT. FIELD STATION - EVENING",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "Three of them round a table built for one. Tins on a camping",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "stove. The tarp on the north wall breathes in, out.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 51
+        }
+      ]
+    },
+    {
+      "text": "TEO eats fast, like the food might be taken back.",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 49
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Four pins. Tell me about them.",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 600,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "We call down the line at six every",
+      "indent": 29,
+      "y": 588,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "evening. Everybody answers. We all",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "say goodnight.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Everybody?",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "Teo puts his fork down.",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 480,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "The fourth hasn’t answered. Nine",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "days.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "A pause. The stove ticks as it cools.",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 36
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 408,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Nine days, and you didn’t report",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "it.",
+      "indent": 29,
+      "y": 384,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 360,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "I did. Every night, after I called",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "them, I reported it to base.",
+      "indent": 29,
+      "y": 336,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 312,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "And?",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 276,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Nobody answered that either.",
+      "indent": 29,
+      "y": 264,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "Delacroix looks at Mara. Mara looks at the radio. The radio",
+      "indent": 18,
+      "y": 240,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "hisses and says nothing, the way it has said nothing for",
+      "indent": 18,
+      "y": 228,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "nine days.",
+      "indent": 18,
+      "y": 216,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 192,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Iversen answered today.",
+      "indent": 29,
+      "y": 180,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 156,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Iversen answered you.",
+      "indent": 29,
+      "y": 144,
+      "pageNum": 8,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "8.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "EXT. RIDGE - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "Wind, and under the wind a cold that means business.",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX walks the ridge with a torch, the beam no use",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "against anything further off than his own boots.",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 48
+        }
+      ]
+    },
+    {
+      "text": "He finds the marker cairn where the map says it will be: a",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "chest-high stack of flat stones, sighted down the valley",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "toward the fourth station. In clear weather you could see",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "its lamp from here.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "There is no lamp tonight. There is no clear weather.",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "He sets the torch on the ground and looks at the cairn",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "properly.",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "It has been rebuilt. Carefully. Every stone seated, every",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "gap chinked with smaller stones. Nobody did this in a hurry,",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "and nobody did it for the weather.",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Hello?",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "The wind takes the word and does not bring it back.",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 51
+        }
+      ]
+    },
+    {
+      "text": "He knows this cairn. He built the last one himself, eleven",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "years ago, and he knows how many stones went into it.",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "Twenty-six.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 9,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "9.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "He counts them. His lips move.",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 696,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Twenty-five.",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "He counts again, slower, touching each one with a gloved",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "finger, top to bottom.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX (CONT’D)",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "Twenty-five.",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "One short. Whoever rebuilt it built it well and built it one",
+      "indent": 18,
+      "y": 588,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "stone short, and a careful person does not make that mistake",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "by accident.",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "He sweeps the torch around his feet. Grass. Rock. No stone",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "lying loose.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "Down in the valley, where the fourth station should be,",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "there is only dark.",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "He switches the torch off and stands in it for a moment, to",
+      "indent": 18,
+      "y": 468,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "see what his eyes will do.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "Nothing out there changes. Nothing out there has changed for",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "nine days.",
+      "indent": 18,
+      "y": 420,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "He turns the torch back on and walks back toward the hut,",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "faster than he came.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 10,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "10.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "INT. FIELD STATION - LATER",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "Mara is asleep on the cot in her boots. Teo is not asleep,",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "and not pretending to be.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "The radio crackles. Delacroix comes in with the cold still",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "on him and goes straight to the handset.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 40
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Field Station, Iversen. Field",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "Station, do you read?",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Go ahead.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Weather’s closing over the pass.",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "Relief is delayed.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 492,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Delayed how long?",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "Static, for long enough that Teo sits up.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 41
+        }
+      ]
+    },
+    {
+      "text": "IVERSEN (V.O.)",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "Twenty-three hours, earliest. We’ll",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "hold here until it...",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "The hiss closes over the rest.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 360,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Iversen. Come back.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "Nothing. Delacroix sets the handset down gently, as if it",
+      "indent": 18,
+      "y": 324,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "might still be listening.",
+      "indent": 18,
+      "y": 312,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "He takes a pencil from his pocket and writes 23 on the wall",
+      "indent": 18,
+      "y": 288,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "beside the map, small and neat. He looks at it. Underlines",
+      "indent": 18,
+      "y": 276,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "it.",
+      "indent": 18,
+      "y": 264,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 240,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Was that him? Was that really him?",
+      "indent": 29,
+      "y": 228,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 204,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Go to sleep, Teo.",
+      "indent": 29,
+      "y": 192,
+      "pageNum": 11,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "11.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "EXT. FIELD STATION - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "The wind has found a new direction and does not like that",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "one either.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "TEO wheels the quad bike out of the lean-to. Headlamp on. A",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "jerrycan strapped across the back, and a second map, the",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "survey copy, rolled under his arm.",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "MARA comes out after him, pulling on her coat.",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 45
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 588,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Teo.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 552,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "It’s four hours down if the track’s",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "clear. I’ll see them. I’ll come",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "back and tell you.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 492,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Don’t.",
+      "indent": 29,
+      "y": 480,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Nine days. Somebody has to go and",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "look.",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 408,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "In the morning. With us.",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "In the morning there’ll be a reason",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "to wait until the afternoon.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "He is not wrong, and she knows it, and that is the worst",
+      "indent": 18,
+      "y": 324,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "part.",
+      "indent": 18,
+      "y": 312,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 288,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Call us when you get there.",
+      "indent": 29,
+      "y": 276,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 252,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "I always call.",
+      "indent": 29,
+      "y": 240,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "He kicks the bike over. It catches first time, which feels",
+      "indent": 18,
+      "y": 216,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "like a verdict.",
+      "indent": 18,
+      "y": 204,
+      "pageNum": 12,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "12.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX is in the doorway now, the lamp behind him.",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 696,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Four hours down. Four back. The",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "relief is twenty-three.",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 648,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Then I’ll be back before them.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "Teo pulls out onto the track. The headlamp swings across the",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "rock, across the fuel drum, and settles on the way down.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "They watch the tail light go. Red, small, smaller. It dips",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "below the lip of the ridge, comes up once more on the next",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "switchback, and then does not come up again.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 43
+        }
+      ]
+    },
+    {
+      "text": "Mara keeps looking at the place where it was.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 45
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 504,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "You could have stopped him.",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "I could have slowed him down.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "Behind them, under its tarp, the generator coughs.",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 50
+        }
+      ]
+    },
+    {
+      "text": "Once. A dry, small sound, like someone clearing their throat",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "before bad news. Then it runs on, even and ordinary, as if",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "nothing happened.",
+      "indent": 18,
+      "y": 384,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "Neither of them says anything. Delacroix looks at his watch",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "and does not say the time.",
+      "indent": 18,
+      "y": 348,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "CUT TO:",
+      "indent": 71,
+      "y": 324,
+      "pageNum": 13,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "13.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "EXT. LOWER STATION - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "A hut like theirs, lower and older, in a fold of the valley",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "where the wind cannot quite reach and so sulks instead.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "A headlamp comes down the track and stops. TEO kills the",
+      "indent": 18,
+      "y": 660,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "engine. The silence is enormous.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "The door of the hut is open. Not blown open. Propped, with a",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "stone.",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "TEO",
+      "indent": 44,
+      "y": 588,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Hello? It’s Teo. From the top.",
+      "indent": 29,
+      "y": 576,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "Nothing. He goes in.",
+      "indent": 18,
+      "y": 552,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "Inside, the station is neat. The cot is made. A mug stands",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "on the table with a skin on its cold tea.",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 41
+        }
+      ]
+    },
+    {
+      "text": "The radio is on. Its dial glows a soft green, the only light",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "in the room.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "Teo leans in to read the frequency. He knows the number. It",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "is theirs.",
+      "indent": 18,
+      "y": 444,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "Beside the radio a notebook lies open. Line after line of",
+      "indent": 18,
+      "y": 420,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "the same entry, in a hand that gets smaller down the page.",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "Six o’clock. Six o’clock. Six o’clock.",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 38
+        }
+      ]
+    },
+    {
+      "text": "Someone has been listening. Every night. And never once said",
+      "indent": 18,
+      "y": 372,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "a word.",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "Teo picks up the handset. His thumb finds the key.",
+      "indent": 18,
+      "y": 336,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 50
+        }
+      ]
+    },
+    {
+      "text": "He holds it down.",
+      "indent": 18,
+      "y": 312,
+      "pageNum": 14,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "14.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "INT. FIELD STATION - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "The generator coughs once and dies. MARA works by the light",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "of her phone, hands steady, and does not look up.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 49
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 660,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Give it a minute. It always comes",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "back.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "And if it doesn’t?",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "She finds the housing bolt by feel. Turns it a quarter turn.",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 552,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then we do this in the dark.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "The wind takes the tarp on the north wall and holds it open",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "like a door nobody opened.",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 480,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "That’s not an answer.",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 444,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "It’s the one I have.",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "He crosses to the window. Outside, the ridge is a black line",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "against a slightly less black sky.",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Nineteen hours until the relief",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "team. I counted.",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 324,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then stop counting.",
+      "indent": 29,
+      "y": 312,
+      "pageNum": 15,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "15.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "The generator catches. Dies again. Catches.",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 43
+        }
+      ]
+    },
+    {
+      "text": "Light comes up amber and unsteady, and the room assembles",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "itself around them: the cot, the radio, the map with its",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "four pins.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "MARA (CONT’D)",
+      "indent": 44,
+      "y": 648,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "There. Told you.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "You told me a minute. That was six.",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "I rounded.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "She wipes her hands on her thigh and sits, finally, like the",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "sitting costs her something.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 504,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "You should sleep.",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "You should stop saying that.",
+      "indent": 29,
+      "y": 456,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "A long moment. The radio hisses, says nothing, hisses.",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 408,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "If the relief doesn’t come.",
+      "indent": 29,
+      "y": 396,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 372,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "They’ll come.",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 336,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "If.",
+      "indent": 29,
+      "y": 324,
+      "pageNum": 16,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "16.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 720,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Then we walk out the way we walked",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "in, and it takes four days instead",
+      "indent": 29,
+      "y": 696,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "of one, and you complain the entire",
+      "indent": 29,
+      "y": 684,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "time.",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 648,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "I don’t complain.",
+      "indent": 29,
+      "y": 636,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 612,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "You’re complaining now.",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "He almost laughs. It is the first honest sound either of",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "them has made all night.",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Get some sleep. I’ll take the",
+      "indent": 29,
+      "y": 528,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "radio.",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "She doesn’t argue, which frightens him more than the dark",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "did.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "CUT TO:",
+      "indent": 71,
+      "y": 456,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "INT. FIELD STATION - DAWN",
+      "indent": 18,
+      "y": 432,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 24
+        }
+      ]
+    },
+    {
+      "text": "Grey light. The tarp is down. The map is gone from the wall.",
+      "indent": 18,
+      "y": 408,
+      "pageNum": 17,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "17.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX sits exactly where he sat, the handset still in",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "his fist, asleep with his eyes open the way soldiers learn.",
+      "indent": 18,
+      "y": 708,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "The radio speaks. One word, clipped, in a voice neither of",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "them has heard.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "He is awake before he knows he is awake.",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 40
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Say again.",
+      "indent": 29,
+      "y": 612,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "Nothing. The hiss closes over the word like water.",
+      "indent": 18,
+      "y": 588,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 50
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX (CONT’D)",
+      "indent": 44,
+      "y": 564,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "Say again.",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "He turns the dial one notch, then back, then one notch the",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "other way, hunting the frequency the way you hunt a name you",
+      "indent": 18,
+      "y": 516,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "have almost remembered.",
+      "indent": 18,
+      "y": 504,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "MARA (O.S.)",
+      "indent": 44,
+      "y": 480,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "What was it?",
+      "indent": 29,
+      "y": 468,
+      "pageNum": 18,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "18.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "She is in the doorway. She has not slept and does not",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "pretend otherwise.",
+      "indent": 18,
+      "y": 708,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 18
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 684,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "A voice. One word. I couldn’t hold",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "it.",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "MARA",
+      "indent": 44,
+      "y": 636,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 4
+        }
+      ]
+    },
+    {
+      "text": "Which word?",
+      "indent": 29,
+      "y": 624,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 11
+        }
+      ]
+    },
+    {
+      "text": "He looks at the handset, then at her.",
+      "indent": 18,
+      "y": 600,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 37
+        }
+      ]
+    },
+    {
+      "text": "DELACROIX",
+      "indent": 44,
+      "y": 576,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "Ours.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Outside, very far off, something that is not the wind moves",
+      "indent": 18,
+      "y": 540,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "along the ridge.",
+      "indent": 18,
+      "y": 528,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "FADE OUT.",
+      "indent": 71,
+      "y": 504,
+      "pageNum": 19,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    }
+  ],
+  "images": [],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 0,
+      "width": 0,
+      "height": 0,
+      "area": 0,
+      "furniture": 0,
+      "background": 0
+    }
+  }
+}

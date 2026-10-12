@@ -1,0 +1,1423 @@
+{
+  "pageCount": 5,
+  "spacingRepairs": 0,
+  "lines": [
+    {
+      "text": "THE LAST VIDEO STORE",
+      "indent": 38,
+      "y": 504,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "Written by",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 10
+        }
+      ]
+    },
+    {
+      "text": "A. N. Placeholder",
+      "indent": 40,
+      "y": 432,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "Placeholder Pictures",
+      "indent": 18,
+      "y": 108,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "hello@example.com",
+      "indent": 18,
+      "y": 96,
+      "pageNum": 1,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "INT. THE LAST VIDEO STORE - NIGHT",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "Fluorescent light hums over aisles of VHS tapes. Rain",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "streaks the front window. A hand-lettered sign reads:",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "EVERYTHING MUST GO.",
+      "indent": 18,
+      "y": 672,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "MARGO SHAW, 60s, cardigan with a pen through the pocket,",
+      "indent": 18,
+      "y": 648,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 56
+        }
+      ]
+    },
+    {
+      "text": "alphabetizes a shelf that nobody will browse.",
+      "indent": 18,
+      "y": 636,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 44
+        }
+      ]
+    },
+    {
+      "text": "The bell over the door RINGS.",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 588,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "We close at ten.",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "(O.S.)",
+      "indent": 36,
+      "y": 516,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "It’s nine forty.",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "DEV OKONKWO, 20s, soaked through, shakes off a jacket that",
+      "indent": 18,
+      "y": 468,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "was never waterproof.",
+      "indent": 18,
+      "y": 456,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 21
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 432,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "And yet.",
+      "indent": 29,
+      "y": 408,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 8
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 384,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "I need something for a fourteen-",
+      "indent": 29,
+      "y": 360,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "year-old who thinks movies started",
+      "indent": 29,
+      "y": 348,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "with streaming.",
+      "indent": 29,
+      "y": 336,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "Margo looks up for the first time.",
+      "indent": 18,
+      "y": 312,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 288,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(a small conversion)",
+      "indent": 36,
+      "y": 264,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "Sit down.",
+      "indent": 29,
+      "y": 240,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "CUT TO:",
+      "indent": 71,
+      "y": 216,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 7
+        }
+      ]
+    },
+    {
+      "text": "INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS",
+      "indent": 18,
+      "y": 192,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "Margo moves like she’s done this ten thousand times, because",
+      "indent": 18,
+      "y": 168,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 60
+        }
+      ]
+    },
+    {
+      "text": "she has. Dev trails her, dripping.",
+      "indent": 18,
+      "y": 156,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 132,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Fourteen. Scared, or pretending not",
+      "indent": 29,
+      "y": 108,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "to be?",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 72,
+      "pageNum": 2,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "2.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "Pretending. Loudly.",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 19
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 696,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Then not the one with the mask.",
+      "indent": 29,
+      "y": 672,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 31
+        }
+      ]
+    },
+    {
+      "text": "Everyone starts with the mask and",
+      "indent": 29,
+      "y": 660,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "nobody remembers it.",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "She pulls a battered clamshell case and holds it like",
+      "indent": 18,
+      "y": 624,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "evidence.",
+      "indent": 18,
+      "y": 612,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    },
+    {
+      "text": "MARGO (CONT’D)",
+      "indent": 44,
+      "y": 588,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 14
+        }
+      ]
+    },
+    {
+      "text": "This one. Nothing happens for forty",
+      "indent": 29,
+      "y": 564,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "minutes and then you never sleep",
+      "indent": 29,
+      "y": 552,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 32
+        }
+      ]
+    },
+    {
+      "text": "facing a closet again.",
+      "indent": 29,
+      "y": 540,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 22
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 516,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "That’s a pitch?",
+      "indent": 29,
+      "y": 492,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 15
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 468,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "That’s a promise.",
+      "indent": 29,
+      "y": 444,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "DISSOLVE TO:",
+      "indent": 71,
+      "y": 420,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "EXT. STRIP MALL - NIGHT",
+      "indent": 18,
+      "y": 396,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 23
+        }
+      ]
+    },
+    {
+      "text": "Rain. The store’s neon sign flickers between LAST and AST.",
+      "indent": 18,
+      "y": 372,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "Behind the glass, two silhouettes argue happily about",
+      "indent": 18,
+      "y": 360,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 53
+        }
+      ]
+    },
+    {
+      "text": "something that doesn’t matter.",
+      "indent": 18,
+      "y": 348,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 324,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "(O.S.)",
+      "indent": 36,
+      "y": 300,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "How long have you been here?",
+      "indent": 29,
+      "y": 276,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 252,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(O.S.)",
+      "indent": 36,
+      "y": 228,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 6
+        }
+      ]
+    },
+    {
+      "text": "Since people still rewound.",
+      "indent": 29,
+      "y": 204,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "INT. THE LAST VIDEO STORE - COUNTER - LATER",
+      "indent": 18,
+      "y": 180,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 43
+        }
+      ]
+    },
+    {
+      "text": "A shoebox of index cards. Margo writes on one in careful",
+      "indent": 18,
+      "y": 156,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 55
+        }
+      ]
+    },
+    {
+      "text": "block letters and slides it across.",
+      "indent": 18,
+      "y": 144,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 120,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "What’s this?",
+      "indent": 29,
+      "y": 96,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 72,
+      "pageNum": 3,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "3.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "Your card. Nineteen years running,",
+      "indent": 29,
+      "y": 720,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 34
+        }
+      ]
+    },
+    {
+      "text": "four hundred and six members.",
+      "indent": 29,
+      "y": 708,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 29
+        }
+      ]
+    },
+    {
+      "text": "You’re four hundred and seven.",
+      "indent": 29,
+      "y": 696,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 672,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "You’re closing in a week.",
+      "indent": 29,
+      "y": 648,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 624,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Then it’ll be a short membership.",
+      "indent": 29,
+      "y": 600,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 33
+        }
+      ]
+    },
+    {
+      "text": "Dev takes the card anyway. Pockets it like it matters,",
+      "indent": 18,
+      "y": 576,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 54
+        }
+      ]
+    },
+    {
+      "text": "because it does.",
+      "indent": 18,
+      "y": 564,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 540,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "What happens to all of it?",
+      "indent": 29,
+      "y": 516,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 26
+        }
+      ]
+    },
+    {
+      "text": "Margo looks down the aisles. Twenty thousand tapes. A",
+      "indent": 18,
+      "y": 492,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 52
+        }
+      ]
+    },
+    {
+      "text": "lifetime of other people’s Friday nights.",
+      "indent": 18,
+      "y": 480,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 41
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 456,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "Somebody buys the shelves. The rest",
+      "indent": 29,
+      "y": 432,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 35
+        }
+      ]
+    },
+    {
+      "text": "goes where the rest goes.",
+      "indent": 29,
+      "y": 420,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 25
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 396,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "That’s grim.",
+      "indent": 29,
+      "y": 372,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 12
+        }
+      ]
+    },
+    {
+      "text": "MARGO",
+      "indent": 44,
+      "y": 348,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "(not grim at all)",
+      "indent": 36,
+      "y": 324,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 17
+        }
+      ]
+    },
+    {
+      "text": "It’s Tuesday.",
+      "indent": 29,
+      "y": 300,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "SMASH CUT TO:",
+      "indent": 71,
+      "y": 276,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 13
+        }
+      ]
+    },
+    {
+      "text": "INT. DEV’S APARTMENT - NIGHT",
+      "indent": 18,
+      "y": 252,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 27
+        }
+      ]
+    },
+    {
+      "text": "A television old enough to have a dial. Dev threads the tape",
+      "indent": 18,
+      "y": 228,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 59
+        }
+      ]
+    },
+    {
+      "text": "in. Static, then a countdown leader -- 5, 4, 3.",
+      "indent": 18,
+      "y": 216,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 47
+        }
+      ]
+    },
+    {
+      "text": "His NIECE, 14, arms folded, sits as far from the screen as",
+      "indent": 18,
+      "y": 192,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 58
+        }
+      ]
+    },
+    {
+      "text": "the room allows.",
+      "indent": 18,
+      "y": 180,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 16
+        }
+      ]
+    },
+    {
+      "text": "NIECE",
+      "indent": 44,
+      "y": 156,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 5
+        }
+      ]
+    },
+    {
+      "text": "This is going to be so boring.",
+      "indent": 29,
+      "y": 132,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 30
+        }
+      ]
+    },
+    {
+      "text": "DEV",
+      "indent": 44,
+      "y": 108,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 3
+        }
+      ]
+    },
+    {
+      "text": "Forty minutes. Give it forty",
+      "indent": 29,
+      "y": 84,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 28
+        }
+      ]
+    },
+    {
+      "text": "minutes.",
+      "indent": 29,
+      "y": 72,
+      "pageNum": 4,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 8
+        }
+      ]
+    },
+    {
+      "text": "4.",
+      "indent": 87,
+      "y": 756,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 2
+        }
+      ]
+    },
+    {
+      "text": "The countdown hits 1. The room goes dark blue.",
+      "indent": 18,
+      "y": 720,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 46
+        }
+      ]
+    },
+    {
+      "text": "Forty minutes later, she has not moved, and she is sitting",
+      "indent": 18,
+      "y": 696,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 57
+        }
+      ]
+    },
+    {
+      "text": "considerably closer.",
+      "indent": 18,
+      "y": 684,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 20
+        }
+      ]
+    },
+    {
+      "text": "FADE OUT.",
+      "indent": 71,
+      "y": 660,
+      "pageNum": 5,
+      "fonts": [
+        {
+          "bucket": "mono",
+          "size": 12,
+          "chars": 9
+        }
+      ]
+    }
+  ],
+  "images": [],
+  "imageStats": {
+    "failed": 0,
+    "overCap": 0,
+    "droppedBy": {
+      "pixels": 0,
+      "width": 0,
+      "height": 0,
+      "area": 0,
+      "furniture": 0,
+      "background": 0
+    }
+  }
+}
