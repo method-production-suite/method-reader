@@ -4,6 +4,7 @@
 # into the Rust app, on this Mac, with nothing published and no real key.
 #
 #   tools/rehearse-handover.sh prepare        build both apps, the archive, a signed latest.json
+#   tools/rehearse-handover.sh prove <work>   the same with no window: the real updater code, headless
 #   tools/rehearse-handover.sh run <work>     serve latest.json locally, open the Tauri window
 #   tools/rehearse-handover.sh verify <work>  check what the update left behind
 #   tools/rehearse-handover.sh clean <work>   remove the rehearsal's own folders
@@ -131,6 +132,44 @@ run() {
   echo $! > "$W/app.pid"
 }
 
+# The same handover with no window and no click, so CI can run it too:
+# rust/handover-proof runs tauri-plugin-updater 2.12.0 itself (on tauri's
+# mock runtime, configured as tauri.conf.json configures every window)
+# against a COPY of the prepared Tauri bundle: check(), then
+# downloadAndInstall(), then reads what a relaunch would start.
+prove() {
+  W="${1:?usage: rehearse-handover.sh prove <work folder>}"
+  SP="$REPO_DIR/rust/target/release/sp-release"
+  [ -f "$W/site/latest.json" ] || die "$W is not a prepared work folder"
+  (cd "$REPO_DIR/rust/handover-proof" && cargo build --release --locked)
+  rm -rf "$W/proof" "$W/proof-site"
+  mkdir -p "$W/proof" "$W/proof-site"
+  cp -R "$W/Applications/Screepub.app" "$W/proof/"
+  cp "$W/site/Screepub-macOS.app.tar.gz" "$W/site/Screepub-macOS.app.tar.gz.sig" "$W/proof-site/"
+  # Any free port (a CI runner, or something else on this Mac, may hold
+  # the rehearsal's): the server says which, and the manifest follows it.
+  "$SP" serve --dir "$W/proof-site" --port 0 > "$W/proof-serve.out" 2> "$W/proof-serve.log" &
+  SERVE=$!
+  n=0
+  until grep -q 'http://' "$W/proof-serve.out" 2>/dev/null; do
+    n=$((n + 1)); [ "$n" -lt 50 ] || die "the local server did not start"; sleep 0.1
+  done
+  BASE="$(sed -n 's/.* at \(http:[^ ]*\)$/\1/p' "$W/proof-serve.out")"
+  "$SP" manifest --dir "$W/proof-site" --version "$NEW" --out "$W/proof-site/latest.json" --asset-base "$BASE"
+  STATUS=0
+  "$REPO_DIR/rust/handover-proof/target/release/handover-proof" \
+    --bundle "$W/proof/Screepub.app" \
+    --endpoint "$BASE/latest.json" \
+    --pubkey "$(cat "$W/keys/rehearsal.key.pub")" || STATUS=$?
+  kill "$SERVE" 2>/dev/null || true
+  wait "$SERVE" 2>/dev/null || true
+  cat "$W/proof-serve.log"
+  [ "$STATUS" = 0 ] || die "the Tauri updater did not carry the bundle across (exit $STATUS)"
+  [ ! -e "$W/proof/Screepub.app/Contents/MacOS/screepub-engine" ] || die "the old engine sidecar survived"
+  [ "$(ls -A "$W/proof")" = Screepub.app ] || die "something was left beside the bundle: $(ls -A "$W/proof")"
+  echo "Proved: tauri-plugin-updater 2.12.0 installed the Rust $NEW bundle over the Tauri 0.11.1 one."
+}
+
 plist_get() { /usr/libexec/PlistBuddy -c "Print :$2" "$1/Contents/Info.plist" 2>/dev/null || true; }
 
 verify() {
@@ -174,7 +213,8 @@ clean() {
 case "${1:-}" in
   prepare) prepare ;;
   run) run "${2:-}" ;;
+  prove) prove "${2:-}" ;;
   verify) verify "${2:-}" ;;
   clean) clean "${2:-}" ;;
-  *) sed -n '3,9p' "$0"; exit 2 ;;
+  *) sed -n '3,10p' "$0"; exit 2 ;;
 esac

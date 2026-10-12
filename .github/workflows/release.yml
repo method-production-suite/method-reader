@@ -460,12 +460,64 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+  # Before latest.json can offer this release to anyone: the shipped
+  # v0.11.1 window's own updater (tauri-plugin-updater 2.12.0, run headless
+  # by rust/handover-proof on tauri's mock runtime, with the public key the
+  # v0.11.1 tauri.conf.json carries) installs THIS release's signed archive
+  # over the bundle v0.11.1 actually published. If the window that is out
+  # there could not take this update, nothing is published that offers it.
+  handover-gate:
+    needs: app-bundles
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: app-bundles-macos-15
+          path: new
+      - name: The v0.11.1 window installs this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          OLD=v0.11.1
+          mkdir -p old/Applications site
+          gh release download "$OLD" --pattern Screepub-macOS.app.tar.gz --dir old
+          tar -xzf old/Screepub-macOS.app.tar.gz -C old/Applications
+          test -d old/Applications/Screepub.app
+          PUB="$(git show "$OLD:desktop/src-tauri/tauri.conf.json" | plutil -extract plugins.updater.pubkey raw -o - -)"
+          (cd rust && cargo build --release --locked -p sp-release)
+          (cd rust/handover-proof && cargo build --release --locked)
+          cp new/Screepub-macOS.app.tar.gz new/Screepub-macOS.app.tar.gz.sig site/
+          rust/target/release/sp-release serve --dir site --port 0 > serve.out 2> serve.log &
+          SERVE=$!
+          n=0
+          until grep -q 'http://' serve.out 2>/dev/null; do
+            n=$((n + 1)); [ "$n" -lt 50 ] || { echo "::error::the local server did not start"; exit 1; }; sleep 0.1
+          done
+          BASE="$(sed -n 's/.* at \(http:[^ ]*\)$/\1/p' serve.out)"
+          rust/target/release/sp-release manifest --dir site --version "$VERSION" --out site/latest.json --asset-base "$BASE"
+          STATUS=0
+          rust/handover-proof/target/release/handover-proof --bundle old/Applications/Screepub.app \
+            --endpoint "$BASE/latest.json" --pubkey "$PUB" --current 0.11.1 || STATUS=$?
+          kill "$SERVE" || true
+          cat serve.log
+          [ "$STATUS" = 0 ] || { echo "::error::the v0.11.1 window's updater could not install this release; latest.json is NOT published"; exit 1; }
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' old/Applications/Screepub.app/Contents/Info.plist)" = "$VERSION" ]
+          [ ! -e old/Applications/Screepub.app/Contents/MacOS/screepub-engine ]
+          codesign --verify --deep --strict old/Applications/Screepub.app
+
   # The bundles onto the draft, then latest.json LAST, built from what
   # arrived and verified against the key every Screepub trusts before it
   # goes up (the manifest points at files by url; uploaded first, it would
   # describe files not there yet).
   app-upload:
-    needs: [release, app-bundles]
+    needs: [release, app-bundles, handover-gate]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -521,8 +573,11 @@ jobs:
   # Public HERE, last of the uploads. A failed bundle leg never strands the
   # release in draft; a wrong image list does (the frozen Swift updater).
   publish:
-    needs: [release, cli-upload, app-upload]
-    if: ${{ !cancelled() && needs.release.result == 'success' }}
+    needs: [release, cli-upload, app-upload, handover-gate]
+    # A failed handover gate keeps the release a draft: a public release
+    # whose update the windows already out there cannot take is the one
+    # thing worse than a late one.
+    if: ${{ !cancelled() && needs.release.result == 'success' && needs.handover-gate.result != 'failure' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
