@@ -22,3 +22,8 @@ sp-model = { path = "crates/sp-model" }
 sp-fountain = { path = "crates/sp-fountain" }
 # Pure-Rust inflate (zlib-rs): reading a zip needs no C library.
 zip = { version = "9", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+# Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not
+# byte-identical to pako's; the parity check compares inflated entries.
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+sha2 = "0.10"
+regex = "1"
