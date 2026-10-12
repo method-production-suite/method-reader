@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import { extractDocument } from '../src/parser/extract';
 import { parseLines } from '../src/parser/index';
 import { toFountain } from '../src/fountain/serialize';
@@ -695,7 +695,7 @@ describe('images merged into the element stream', () => {
       );
       // Nor does the note between the columns break the pair: fountain-js
       // still reads one dual exchange, with the note inside it.
-      expect(new Fountain().parse(out, true).tokens.map((t) => t.type)).toEqual([
+      expect(parseFountain(out).tokens.map((t) => t.type)).toEqual([
         'dual_dialogue_begin',
         'dialogue_begin', 'character', 'dialogue', 'dialogue_end',
         'note',

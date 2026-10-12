@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import JSZip from 'jszip';
 import { buildEpub, imageIds, type BookImage } from '../src/epub/build';
 import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
@@ -29,7 +29,7 @@ const META = { title: 'T', identifier: 'urn:screepub:test' };
  * renders it for a caller that has them all. */
 function bodyShowing(names: string[], format = DEFAULT_FORMAT_OPTIONS) {
   const notes = names.map((n) => `[[img: ${n} w=50]]\n\n`).join('');
-  const tokens = new Fountain().parse(`INT. LAB - DAY\n\nBefore.\n\n${notes}After.\n`, true).tokens;
+  const tokens = parseFountain(`INT. LAB - DAY\n\nBefore.\n\n${notes}After.\n`).tokens;
   return tokensToBody(tokens, { format, images: new Set(names) });
 }
 
@@ -89,7 +89,7 @@ describe('the pictures a book carries', () => {
   });
 
   test('a body that shows no picture gets no picture, whatever the caller holds', async () => {
-    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens);
+    const plain = tokensToBody(parseFountain('INT. LAB - DAY\n\nBefore.\n').tokens);
     const { zip, opf } = await open(await buildEpub(
       META, plain, DEFAULT_FORMAT_OPTIONS, [{ name: 'p001-01.png', bytes: png(1) }],
     ));
@@ -101,7 +101,7 @@ describe('the pictures a book carries', () => {
     // Passing pictures nobody shows must change nothing, and the manifest
     // seam the picture items join is pinned line for line: a stray newline
     // there would land in every book.
-    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens);
+    const plain = tokensToBody(parseFountain('INT. LAB - DAY\n\nBefore.\n').tokens);
     const strip = (s: string) => s.replace(/<meta property="dcterms:modified">[^<]*<\/meta>/, '');
     const a = await JSZip.loadAsync(await buildEpub(META, plain));
     const b = await JSZip.loadAsync(await buildEpub(
@@ -194,7 +194,7 @@ describe('the pictures a book carries', () => {
     ));
     expect(await shown.file('OEBPS/style.css')!.async('string'))
       .toBe(screenplayCss(format, { hasFigures: true }));
-    const plain = tokensToBody(new Fountain().parse('INT. LAB - DAY\n\nBefore.\n', true).tokens, { format });
+    const plain = tokensToBody(parseFountain('INT. LAB - DAY\n\nBefore.\n').tokens, { format });
     const none = await JSZip.loadAsync(await buildEpub(
       META, plain, format, [{ name: 'p001-01.png', bytes: png(1) }],
     ));
@@ -210,7 +210,7 @@ describe('the cover in the package', () => {
   const CARD = '[[img: p001-01.png w=100 full]]\n\n';
   const SCRIPT = 'INT. LAB - DAY\n\nWork.\n';
   const coverBody = (src = CARD + SCRIPT, format = DEFAULT_FORMAT_OPTIONS, names = ['p001-01.png']) =>
-    tokensToBody(new Fountain().parse(src, true).tokens, { format, images: new Set(names) });
+    tokensToBody(parseFountain(src).tokens, { format, images: new Set(names) });
   const metadataOf = (opf: string) => /<metadata[^>]*>([\s\S]*)<\/metadata>/.exec(opf)![1];
 
   test('a cover no page draws still ships: its bytes, its manifest item, and both declarations', async () => {
@@ -340,7 +340,7 @@ describe('the preview carries the pictures it shows', () => {
     fountainText = result.fountainText;
     pictures = new Map(result.images.map((img) => [img.name, img.bytes]));
   }, 60000);
-  const tokens = () => new Fountain().parse(fountainText, true).tokens;
+  const tokens = () => parseFountain(fountainText).tokens;
   const DATA = 'data:image/png;base64,';
 
   // The title card left in the flow, so both pictures are figures here; the
@@ -438,7 +438,7 @@ describe('epubcheck', () => {
   }, 60000);
 
   const build = async (images: BookImage[], text: string) => {
-    const tokens = new Fountain().parse(text, true).tokens;
+    const tokens = parseFountain(text).tokens;
     const body = tokensToBody(tokens, { images: new Set(images.map((i) => i.name)) });
     return { body, epub: await buildEpub({ ...META, title }, body, DEFAULT_FORMAT_OPTIONS, images) };
   };

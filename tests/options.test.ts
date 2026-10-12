@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import JSZip from 'jszip';
 import { DEFAULT_FORMAT_OPTIONS, resolveFormatOptions, type FormatOptions } from '../src/options';
 import { screenplayCss } from '../src/epub/css';
@@ -23,7 +23,7 @@ Stars.
 `;
 
 function tokens() {
-  return new Fountain().parse(SAMPLE, true).tokens;
+  return parseFountain(SAMPLE).tokens;
 }
 
 // ── resolveFormatOptions ─────────────────────────────────

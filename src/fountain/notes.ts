@@ -8,7 +8,7 @@
 // beside slug.ts, as the one copy both renderers import (the registry #5b
 // precedent) rather than two regexes that drift.
 
-import { Fountain } from 'fountain-js';
+import { parseFountain } from './parse';
 import type { ImageRef, SizeStep } from '../parser/types';
 
 /** Any note. Bracket-free inside, so an unterminated `[[` matches nothing and
@@ -248,7 +248,7 @@ export function rendersImage(
  */
 export function imageNoteFiles(fountainText: string): Set<string> {
   const files = new Set<string>();
-  for (const t of new Fountain().parse(fountainText, true).tokens) {
+  for (const t of parseFountain(fountainText).tokens) {
     if (t.type !== 'note') continue;
     const img = parseImgNote(t.text ?? '');
     if (img) files.add(img.file);

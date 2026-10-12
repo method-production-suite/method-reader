@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import JSZip from 'jszip';
 import { tokensToBody, tokensToPreviewHtml, type BookBody } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
@@ -28,7 +28,7 @@ The stars come out.
 `;
 
 function sampleTokens() {
-  return new Fountain().parse(SAMPLE, true).tokens;
+  return parseFountain(SAMPLE).tokens;
 }
 
 // ── tokensToBody ─────────────────────────────────────────
@@ -70,7 +70,7 @@ describe('tokensToBody', () => {
   });
 
   test('a dialogue block follows its heading directly — no outer wrapper', () => {
-    const tokens = new Fountain().parse('INT. CAR - DAY\n\n@DEV\nDrive.\n\nThey drive.\n', true).tokens;
+    const tokens = parseFountain('INT. CAR - DAY\n\n@DEV\nDrive.\n\nThey drive.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toMatch(
       /<h2 class="scene-heading">INT\. CAR - DAY<\/h2>\s*<div class="dialogue-block">/,
@@ -79,7 +79,7 @@ describe('tokensToBody', () => {
   });
 
   test('heading-only scene renders bare without error', () => {
-    const tokens = new Fountain().parse('INT. VOID - DAY\n\nEXT. VOID - NIGHT\n\nStars.\n', true).tokens;
+    const tokens = parseFountain('INT. VOID - DAY\n\nEXT. VOID - NIGHT\n\nStars.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toMatch(
       /<section class="scene" id="sc-001">\s*<h2 class="scene-heading">INT\. VOID - DAY<\/h2>\s*<\/section>/,
@@ -87,7 +87,7 @@ describe('tokensToBody', () => {
   });
 
   test('opening content without a heading renders directly in its section', () => {
-    const tokens = new Fountain().parse('Cold open action.\n\nINT. LAB - DAY\n\nWork.\n', true).tokens;
+    const tokens = parseFountain('Cold open action.\n\nINT. LAB - DAY\n\nWork.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toMatch(/<section class="scene" id="sc-001">\s*<p class="action">Cold open action\.<\/p>/);
   });
@@ -110,7 +110,7 @@ describe('tokensToBody', () => {
   });
 
   test('content before the first scene heading becomes an Opening section', () => {
-    const tokens = new Fountain().parse('Some cold-open action.\n\nINT. LAB - DAY\n\nWork.\n', true).tokens;
+    const tokens = parseFountain('Some cold-open action.\n\nINT. LAB - DAY\n\nWork.\n').tokens;
     const body = tokensToBody(tokens);
     expect(body.files[0].xhtml).toContain('Some cold-open action.');
     expect(body.toc[0].title).toBe('Opening');
@@ -123,7 +123,7 @@ describe('tokensToBody', () => {
     // scenePageBreaks is on, and every scene anchor moved one along. The
     // whole body is compared, files and toc and page list, with and without a
     // title page, because "the book does not change" is the claim.
-    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const bodyOf = (src: string) => tokensToBody(parseFountain(src).tokens);
     const note = '[[img: p001-01.png w=100 full]]\n\n';
     const script = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
     for (const head of ['', 'Title: T\nAuthor: A\n\n']) {
@@ -136,7 +136,7 @@ describe('tokensToBody', () => {
 
   test('a note ahead of real opening content leaves that Opening as it was', () => {
     // Skipping the note must not swallow the cold open that follows it.
-    const bodyOf = (src: string) => tokensToBody(new Fountain().parse(src, true).tokens);
+    const bodyOf = (src: string) => tokensToBody(parseFountain(src).tokens);
     const open = 'A cold open.\n\nINT. LAB - DAY\n\nWork.\n';
     const noted = bodyOf(`[[img: p001-01.png w=100 full]]\n\n${open}`);
     expect(noted).toEqual(bodyOf(open));
@@ -144,7 +144,7 @@ describe('tokensToBody', () => {
   });
 
   test('script with no scene headings yields one section', () => {
-    const body = tokensToBody(new Fountain().parse('Just action.\n\nMore action.\n', true).tokens);
+    const body = tokensToBody(parseFountain('Just action.\n\nMore action.\n').tokens);
     expect(body.files).toHaveLength(1);
     expect(body.files[0].xhtml).toContain('Just action.');
     expect(body.toc).toHaveLength(1);
@@ -158,13 +158,13 @@ describe('dual dialogue height fallback', () => {
     `INT. HALL - DAY\n\n@JACK\n${line}\n\n@JILL ^\nAlso talking here.\n`;
 
   test('a short exchange stays a side-by-side table', () => {
-    const tokens = new Fountain().parse(dualScript('Quick word.'), true).tokens;
+    const tokens = parseFountain(dualScript('Quick word.')).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('<table class="dual-dialogue">');
   });
 
   test('a tall exchange emits sequential speeches instead of an unbreakable table', () => {
-    const tokens = new Fountain().parse(dualScript('word '.repeat(120).trim()), true).tokens;
+    const tokens = parseFountain(dualScript('word '.repeat(120).trim())).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).not.toContain('<table class="dual-dialogue">');
     expect(file.xhtml).toContain('<p class="character">JACK</p>');
@@ -184,7 +184,7 @@ describe('dual dialogue height fallback', () => {
   // and 330. Change either constant and this pair fails.
   test('the table/sequential flip sits exactly where the constants put it', () => {
     const render = (n: number) =>
-      tokensToBody(new Fountain().parse(dualScript('x'.repeat(n)), true).tokens).files[0].xhtml;
+      tokensToBody(parseFountain(dualScript('x'.repeat(n))).tokens).files[0].xhtml;
     expect(render(329)).toContain('<table class="dual-dialogue">');
     expect(render(330)).not.toContain('<table class="dual-dialogue">');
   });
@@ -356,8 +356,8 @@ describe('buildEpub', () => {
   });
 
   test('nav.xhtml carries a hidden page-list when the script has markers', async () => {
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\n= pg 12\n\nShe waits.\n\n= pg 13\n\nHe leaves.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\n= pg 12\n\nShe waits.\n\n= pg 13\n\nHe leaves.\n',
     ).tokens;
     const body = tokensToBody(tokens);
     const zip = await JSZip.loadAsync(await buildEpub({ title: 'Test Script' }, body));
@@ -403,8 +403,8 @@ describe('buildEpub', () => {
 
 describe('inline emphasis in XHTML', () => {
   test('fountain emphasis renders as em/strong/underline', () => {
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\nThe sign reads ***DO NOT ENTER*** and **STOP** and *slow* and _underlined_.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\nThe sign reads ***DO NOT ENTER*** and **STOP** and *slow* and _underlined_.\n',
     ).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('<strong><em>DO NOT ENTER</em></strong>');
@@ -417,8 +417,8 @@ describe('inline emphasis in XHTML', () => {
     // The nesting joinLine emits for a bold+underlined run. Stars are
     // replaced before underscores, so this composes without a special case —
     // asserted here rather than assumed, on both renderers.
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\nThe stamp is **_VOID_** and ***_LOUD_*** and *_soft_*.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\nThe stamp is **_VOID_** and ***_LOUD_*** and *_soft_*.\n',
     ).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('<strong><span class="underline">VOID</span></strong>');
@@ -429,13 +429,13 @@ describe('inline emphasis in XHTML', () => {
   });
 
   test('escaping still applies inside emphasized text', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\nA *5 < 6* case.\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\nA *5 < 6* case.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('<em>5 &lt; 6</em>');
   });
 
   test('stray asterisk-free text is untouched', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\nPlain 2 * 3 math.\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\nPlain 2 * 3 math.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('Plain 2 * 3 math.');
   });
@@ -445,8 +445,8 @@ describe('inline emphasis in XHTML', () => {
 
 describe('page markers in XHTML', () => {
   test('a marker rides inside the next block, not in a paragraph of its own', () => {
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\nAction.\n\n= pg 47\n\nAnne crosses the room.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\nAction.\n\n= pg 47\n\nAnne crosses the room.\n',
     ).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).not.toContain('<p class="page-marker">');
@@ -458,7 +458,7 @@ describe('page markers in XHTML', () => {
   });
 
   test('the marker span is the EPUB3 pagination anchor', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\n= pg 47\n\nAction.\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\n= pg 47\n\nAction.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toContain('epub:type="pagebreak"');
     expect(file.xhtml).toContain('role="doc-pagebreak"');
@@ -467,14 +467,14 @@ describe('page markers in XHTML', () => {
   });
 
   test('a trailing marker with no block to ride in is dropped', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\nAnne crosses the room.\n\n= pg 48\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\nAnne crosses the room.\n\n= pg 48\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).not.toContain('page-marker');
   });
 
   test('a marker at a scene seam rides into the next heading, not lost', () => {
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\nAction.\n\n= pg 12\n\nINT. B - NIGHT\n\nMore.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\nAction.\n\n= pg 12\n\nINT. B - NIGHT\n\nMore.\n',
     ).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toMatch(
@@ -483,14 +483,14 @@ describe('page markers in XHTML', () => {
   });
 
   test('ordinary synopsis lines stay invisible', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\n= Jack discovers the truth\n\nAction.\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\n= Jack discovers the truth\n\nAction.\n').tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).not.toContain('discovers the truth');
   });
 
   test('page-list records every marker, in document order', () => {
-    const tokens = new Fountain().parse(
-      'INT. A - DAY\n\n= pg 12\n\nShe waits.\n\n= pg 13\n\nHe leaves.\n', true,
+    const tokens = parseFountain(
+      'INT. A - DAY\n\n= pg 12\n\nShe waits.\n\n= pg 13\n\nHe leaves.\n',
     ).tokens;
     const body = tokensToBody(tokens);
     expect(body.pageList).toEqual([
@@ -500,9 +500,9 @@ describe('page markers in XHTML', () => {
   });
 
   test('every page-list href resolves to an id in the file it names', () => {
-    const tokens = new Fountain().parse(
+    const tokens = parseFountain(
       'INT. A - DAY\n\n= pg 12\n\nShe waits a long while by the window.\n\n'
-      + 'INT. B - NIGHT\n\n= pg 13\n\nHe leaves without a word to anyone.\n', true,
+      + 'INT. B - NIGHT\n\n= pg 13\n\nHe leaves without a word to anyone.\n',
     ).tokens;
     const body = tokensToBody(tokens, { maxFileBytes: 400 });
     expect(body.files.length).toBeGreaterThan(1);
@@ -517,7 +517,7 @@ describe('page markers in XHTML', () => {
   });
 
   test('a dropped trailing marker never reaches the page-list', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\nShe waits.\n\n= pg 48\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\nShe waits.\n\n= pg 48\n').tokens;
     expect(tokensToBody(tokens).pageList).toEqual([]);
   });
 
@@ -534,7 +534,7 @@ describe('figures', () => {
   // Pictures on and the card left in the flow: the book before covers.
   const NO_COVER = { ...DEFAULT_FORMAT_OPTIONS, promoteCoverImage: false };
   const HAVE = new Set(['p001-01.png', 'p002-01.png']);
-  const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
+  const tokensOf = (src: string) => parseFountain(src).tokens;
   const bodyOf = (src: string, opts: Parameters<typeof tokensToBody>[1] = {}) =>
     tokensToBody(tokensOf(src), opts);
   const scene = (note: string) => `INT. LAB - DAY\n\nBefore.\n\n${note}\n\nAfter.\n`;
@@ -929,7 +929,7 @@ describe('figure CSS', () => {
     for (let w = -5; w <= 105; w++) {
       for (const full of ['', ' full']) {
         const xhtml = tokensToBody(
-          new Fountain().parse(`INT. A - DAY\n\n[[img: p001-01.png w=${w}${full}]]\n`, true).tokens,
+          parseFountain(`INT. A - DAY\n\n[[img: p001-01.png w=${w}${full}]]\n`).tokens,
           { images: have },
         ).files[0].xhtml;
         const m = /<p class="([^"]*)"><img /.exec(xhtml);
@@ -949,7 +949,7 @@ describe('figure CSS', () => {
     // The preview derives the flag from the body it rendered, as the book
     // does, so a script whose note has no picture to show styles none.
     const html = tokensToPreviewHtml(
-      new Fountain().parse('INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nAfter.\n', true).tokens,
+      parseFountain('INT. A - DAY\n\n[[img: p001-01.png w=50]]\n\nAfter.\n').tokens,
     );
     expect(html).not.toContain('.figure');
     expect(html).toContain(screenplayCss(DEFAULT_FORMAT_OPTIONS));
@@ -962,7 +962,7 @@ describe('dual dialogue table rendering', () => {
   const DUAL_SRC = 'INT. A - DAY\n\n@VERA\n(overlapping)\nRead me the last page--\n\n@INFORMANT ^\n--the last page burned.\n\nThey stare.\n';
 
   test('dual speeches render as a two-cell table', () => {
-    const tokens = new Fountain().parse(DUAL_SRC, true).tokens;
+    const tokens = parseFountain(DUAL_SRC).tokens;
     const [file] = tokensToBody(tokens).files;
     expect(file.xhtml).toMatch(
       /<table class="dual-dialogue">\s*<tr>\s*<td>\s*<p class="character">VERA<\/p>\s*<p class="parenthetical">\(overlapping\)<\/p>\s*<p class="dialogue">Read me the last page--<\/p>\s*<\/td>\s*<td>\s*<p class="character">INFORMANT<\/p>\s*<p class="dialogue">--the last page burned\.<\/p>\s*<\/td>\s*<\/tr>\s*<\/table>/,
@@ -984,13 +984,13 @@ describe('mini-slug rendering', () => {
   const SRC = 'INT. STORE - NIGHT\n\nMargo locks up.\n\n.LATER\n\nThe lights are still on.\n';
 
   test('a forced non-INT/EXT slug renders as a micro-heading, not a scene heading', () => {
-    const [file] = tokensToBody(new Fountain().parse(SRC, true).tokens).files;
+    const [file] = tokensToBody(parseFountain(SRC).tokens).files;
     expect(file.xhtml).toContain('<p class="mini-slug">LATER</p>');
     expect(file.xhtml).not.toContain('<h2 class="scene-heading">LATER</h2>');
   });
 
   test('a mini-slug stays inside its scene — no section, no TOC entry', () => {
-    const body = tokensToBody(new Fountain().parse(SRC, true).tokens);
+    const body = tokensToBody(parseFountain(SRC).tokens);
     expect(body.toc).toEqual([
       { title: 'INT. STORE - NIGHT', href: 'text/body001.xhtml#sc-001' },
     ]);
@@ -999,7 +999,7 @@ describe('mini-slug rendering', () => {
 
   test('primary sluglines are untouched — INT/EXT/EST/I-E stay scene headings', () => {
     const src = 'INT. A - DAY\n\nOne.\n\nEXT. B - DAY\n\nTwo.\n\nEST. C - DAY\n\nThree.\n\nI/E. D - DAY\n\nFour.\n';
-    const body = tokensToBody(new Fountain().parse(src, true).tokens);
+    const body = tokensToBody(parseFountain(src).tokens);
     expect(body.files[0].xhtml).not.toContain('mini-slug');
     expect(body.toc.map((t) => t.title)).toEqual([
       'INT. A - DAY', 'EXT. B - DAY', 'EST. C - DAY', 'I/E. D - DAY',
@@ -1011,13 +1011,13 @@ describe('mini-slug rendering', () => {
     // registry #5b): a dot-forced ".COLD OPEN" is a mini-slug here, not a
     // scene, so it gets no TOC entry. The trade Screepub takes for owning
     // the dot-force as its mini-slug carrier.
-    const body = tokensToBody(new Fountain().parse('.COLD OPEN\n\nBlack.\n', true).tokens);
+    const body = tokensToBody(parseFountain('.COLD OPEN\n\nBlack.\n').tokens);
     expect(body.toc).toEqual([{ title: 'Opening', href: 'text/body001.xhtml#sc-001' }]);
     expect(body.files[0].xhtml).toContain('<p class="mini-slug">COLD OPEN</p>');
   });
 
   test('a numbered mini-slug keeps its number, like a slugline does', () => {
-    const tokens = new Fountain().parse('INT. A - DAY\n\nOne.\n\n.LATER #5#\n\nTwo.\n', true).tokens;
+    const tokens = parseFountain('INT. A - DAY\n\nOne.\n\n.LATER #5#\n\nTwo.\n').tokens;
     const [file] = tokensToBody(tokens, { format: { ...DEFAULT_FORMAT_OPTIONS, showSceneNumbers: true } }).files;
     expect(file.xhtml).toContain('<p class="mini-slug"><span class="scene-number">5</span> LATER</p>');
   });
@@ -1042,9 +1042,9 @@ describe('mini-slug rendering', () => {
       ['BACK TO:', false],
     ];
     for (const [text, promotes] of cases) {
-      const unforced = new Fountain().parse(`${text}\n\nAction.\n`, true).tokens;
+      const unforced = parseFountain(`${text}\n\nAction.\n`).tokens;
       expect([text, unforced[0].type === 'scene_heading']).toEqual([text, promotes]);
-      const [file] = tokensToBody(new Fountain().parse(`.${text}\n\nAction.\n`, true).tokens).files;
+      const [file] = tokensToBody(parseFountain(`.${text}\n\nAction.\n`).tokens).files;
       expect([text, file.xhtml.includes('<h2 class="scene-heading">')]).toEqual([text, promotes]);
       expect([text, file.xhtml.includes('<p class="mini-slug">')]).toEqual([text, !promotes]);
     }
@@ -1074,10 +1074,9 @@ describe('mini-slug rendering', () => {
     // fmt-* set — real rendered output. The second is the stronger form:
     // it proves emission by executing the renderer, not by grepping it.
     const fmtProbe = tokensToBody(
-      new Fountain().parse(
+      parseFountain(
         'INT. A - DAY\n\n[[fmt: mono -1]]\nOne.\n\n[[fmt: serif +1]]\nTwo.\n\n'
         + '[[fmt: sans +2]]\nThree.\n\n[[fmt: cursive]]\nFour.\n',
-        true,
       ).tokens,
     ).files[0].xhtml;
     const emitted = readFileSync(new URL('../src/epub/html.ts', import.meta.url), 'utf8')
@@ -1107,9 +1106,8 @@ describe('mini-slug rendering', () => {
 // ── tokensToPreviewHtml ───────────────────────────────────
 
 describe('tokensToPreviewHtml', () => {
-  const tokens = new Fountain().parse(
+  const tokens = parseFountain(
     'INT. KITCHEN - DAY\n\nA kettle screams.\n\nMARGO\nTurn it off.\n',
-    true,
   ).tokens;
 
   test('emits one self-contained document with inline css', () => {
@@ -1133,7 +1131,7 @@ describe('tokensToPreviewHtml', () => {
   test('a picture note before the first heading adds no section to the preview', () => {
     // The Read window builds its scene rail from every section.scene in this
     // document, so an empty one would be an "Opening" the script never had.
-    const of = (src: string) => tokensToPreviewHtml(new Fountain().parse(src, true).tokens);
+    const of = (src: string) => tokensToPreviewHtml(parseFountain(src).tokens);
     const script = 'Title: T\n\nINT. KITCHEN - DAY\n\nA kettle screams.\n';
     const noted = of(script.replace('INT.', '[[img: p001-01.png w=100 full]]\n\nINT.'));
     expect(noted).toBe(of(script));
@@ -1145,7 +1143,7 @@ describe('tokensToPreviewHtml', () => {
 
 describe('font shifts', () => {
   const render = (src: string, format = DEFAULT_FORMAT_OPTIONS) => {
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     return tokensToBody(tokens, { format }).files[0].xhtml;
   };
 
@@ -1252,7 +1250,7 @@ describe('font shifts', () => {
 // text, which is the shape #5a already proved on this renderer.
 describe('the cue chain (no wrapper)', () => {
   const body = (src: string) =>
-    tokensToBody(new Fountain().parse(src, true).tokens).files[0].xhtml;
+    tokensToBody(parseFountain(src).tokens).files[0].xhtml;
 
   test('the cue is a direct child of the dialogue block', () => {
     expect(body('INT. A - DAY\n\nHi.\n\n@JACK\nOnly line.\n')).toMatch(

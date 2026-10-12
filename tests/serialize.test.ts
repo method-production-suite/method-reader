@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import { extractTitleMeta, toFountain } from '../src/fountain/serialize';
 import { parseImgNote } from '../src/fountain/notes';
 import { tokensToBody } from '../src/epub/html';
@@ -150,7 +150,7 @@ describe('toFountain', () => {
     // ".#2 CAMERA" tokenizes as a scene heading whose text keeps the "#".
     const out = toFountain(screenplay([el({ text: '#2 CAMERA', type: 'mini-slug' })]));
     expect(out).toBe('.#2 CAMERA\n');
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     expect(tokens.map((t) => [t.type, t.text])).toEqual([['scene_heading', '#2 CAMERA']]);
   });
 
@@ -170,9 +170,8 @@ describe('toFountain', () => {
   test('a mini-slug never becomes a transition on re-parse', () => {
     // Plain "BACK TO:" matches fountain-js's transition rule (".+ TO:") and
     // used to render right-flush; the forced slugline pins it down.
-    const { tokens } = new Fountain().parse(
+    const { tokens } = parseFountain(
       toFountain(screenplay([el({ text: 'BACK TO:', type: 'mini-slug' })])),
-      true,
     );
     expect(tokens.filter((t) => t.type !== 'title_page').map((t) => t.type)).toEqual(['scene_heading']);
   });
@@ -236,7 +235,7 @@ describe('toFountain with images', () => {
       img: { file, widthPct: 71, fullPage: false, ...over },
     });
   const noteTokens = (out: string) =>
-    new Fountain().parse(out, true).tokens.filter((t) => t.type === 'note');
+    parseFountain(out).tokens.filter((t) => t.type === 'note');
 
   test('writes a standalone note with a blank line either side', () => {
     const out = toFountain(
@@ -267,7 +266,7 @@ describe('toFountain with images', () => {
         el({ text: 'Someone waits.', type: 'action' }),
       ]),
     );
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     expect(tokens.map((t) => t.type)).toEqual(['scene_heading', 'note', 'action']);
     // Brackets already stripped by the tokenizer — which is why parseImgNote
     // takes the INNER text and, unlike fmtClasses, matches no brackets.
@@ -385,7 +384,7 @@ describe('toFountain with images', () => {
       ]),
     );
     expect(out).toBe('@BUNNY\nHer line.\n\n[[img: p001-01.png w=71]]\n');
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     expect(tokens.map((t) => t.type)).toEqual([
       'dialogue_begin', 'character', 'dialogue', 'dialogue_end', 'note',
     ]);
@@ -562,7 +561,7 @@ describe('toFountain with images', () => {
     expect(out).toBe(
       '@BUNNY\nHer line.\n\n[[img: p002-01.png w=71]]\n\n= pg 2\n\nINT. NEXT - DAY\n',
     );
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     expect(tokens.map((t) => t.type)).toEqual([
       'dialogue_begin', 'character', 'dialogue', 'dialogue_end',
       'note', 'synopsis', 'scene_heading',
@@ -675,7 +674,7 @@ describe('toFountain with images', () => {
       '@BUNNY\nFirst half.\nsecond half.\n\n[[img: p002-01.png w=71]]\n\n' +
         '= pg 2\n\nINT. NEXT - DAY\n',
     );
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     expect(tokens.filter((t) => t.type === 'action')).toEqual([]);
   });
 });
@@ -695,7 +694,7 @@ describe('fountain-js round-trip', () => {
       ]),
       { title: 'Round Trip', author: 'Tester' },
     );
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     const types = tokens.map((t) => t.type);
     expect(types).toEqual([
       'title', 'credit', 'author',
@@ -720,7 +719,7 @@ describe('fountain-js round-trip', () => {
         el({ text: 'Jack is still waiting.', type: 'action' }),
       ]),
     );
-    const { tokens } = new Fountain().parse(out, true);
+    const { tokens } = parseFountain(out);
     const body = tokensToBody(tokens);
     expect(body.files[0].xhtml).toContain('<p class="mini-slug">LATER</p>');
   });
@@ -893,7 +892,7 @@ describe('boneyard delimiters', () => {
 
   test('nothing between the two lyrics is swallowed by fountain-js', () => {
     // The bug in one assertion: everything between the delimiters vanished.
-    const tokens = new Fountain().parse(toFountain(bothRuns()), true).tokens ?? [];
+    const tokens = parseFountain(toFountain(bothRuns())).tokens ?? [];
     const text = tokens.map((t) => t.text ?? '').join('\n');
     expect(text).toContain('INT. DINER - NIGHT');
     expect(text).toContain('A jukebox coughs to life.');

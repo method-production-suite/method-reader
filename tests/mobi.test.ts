@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import JSZip from 'jszip';
 import { buildMobi } from '../src/mobi/writer';
 import { mobiArt, tokensToMobiHtml } from '../src/mobi/html';
@@ -36,7 +36,7 @@ EXT. YARD - NIGHT
 const OPTS = resolveFormatOptions({});
 
 function sampleHtml(): string {
-  const { tokens } = new Fountain().parse(SAMPLE, true);
+  const { tokens } = parseFountain(SAMPLE);
   return tokensToMobiHtml(tokens, { title: 'Test Script', author: 'Jane Doe' }, OPTS);
 }
 
@@ -204,14 +204,14 @@ describe('tokensToMobiHtml', () => {
   });
 
   test('mini-slugs read as bold paragraphs too — this dialect has no third weight', () => {
-    const tokens = new Fountain().parse('INT. STORE - NIGHT\n\nThe gate rattles.\n\n.LATER\n\nStill on.\n', true).tokens;
+    const tokens = parseFountain('INT. STORE - NIGHT\n\nThe gate rattles.\n\n.LATER\n\nStill on.\n').tokens;
     const html = tokensToMobiHtml(tokens, { title: 'T' }, OPTS);
     expect(html).toContain('<p><b>LATER</b></p>');
   });
 
   test('scenePageBreaks emits mbp:pagebreak before every scene heading except the first', () => {
     const src = 'INT. A - DAY\n\nAction.\n\nINT. B - NIGHT\n\nMore.\n';
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     const off = tokensToMobiHtml(tokens, { title: 'T' }, OPTS);
     const on = tokensToMobiHtml(tokens, { title: 'T' }, resolveFormatOptions({ scenePageBreaks: true }));
     // The title page always contributes exactly one pagebreak of its own.
@@ -220,7 +220,7 @@ describe('tokensToMobiHtml', () => {
   });
 
   test('includeTitlePage off drops the MOBI title page and its break', () => {
-    const { tokens } = new Fountain().parse(SAMPLE, true);
+    const { tokens } = parseFountain(SAMPLE);
     const on = tokensToMobiHtml(tokens, { title: 'Test Script', author: 'Jane Doe' }, OPTS);
     expect(on).toContain('Test Script');
     expect(on).toContain('Written by');
@@ -244,7 +244,7 @@ describe('tokensToMobiHtml', () => {
     // break is only correct when nothing has been emitted since the last
     // one (title page, or the very start of a title-less book).
     const src = 'Black screen. A hum builds.\n\nINT. A - DAY\n\nAction.\n';
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     const on = tokensToMobiHtml(
       tokens,
       { title: 'T' },
@@ -257,7 +257,7 @@ describe('tokensToMobiHtml', () => {
 
   test('scenePageBreaks leaves no blank leading page when a scene opens the book', () => {
     const src = 'INT. A - DAY\n\nAction.\n';
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     const withTitle = tokensToMobiHtml(
       tokens,
       { title: 'T' },
@@ -277,7 +277,7 @@ describe('tokensToMobiHtml', () => {
     // fountain-js strips the leading dot: `.LATER` tokenizes as a
     // scene_heading with text "LATER", same as the EPUB side relies on.
     const src = 'INT. A - DAY\n\nAction.\n\n.LATER\n\nMore.\n\nINT. B - NIGHT\n\nEnd.\n';
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     expect(tokens.find((t) => t.text === 'LATER')?.type).toBe('scene_heading');
     const on = tokensToMobiHtml(tokens, { title: 'T' }, resolveFormatOptions({ scenePageBreaks: true }));
     // Title page's break, plus one before INT. B — none before LATER.
@@ -395,7 +395,7 @@ describe('MOBI page markers', () => {
   // number is sized with a <font> wrapper (this file's convention) and
   // carries none of EPUB3's pagebreak semantics.
   function markerHtml(source: string): string {
-    const { tokens } = new Fountain().parse(source, true);
+    const { tokens } = parseFountain(source);
     return tokensToMobiHtml(tokens, { title: 'T', author: 'A' }, OPTS);
   }
 
@@ -437,7 +437,7 @@ Jack enters.
 
 describe('inline emphasis', () => {
   const html = (src: string) => {
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     return tokensToMobiHtml(tokens, { title: 'T' }, resolveFormatOptions({}));
   };
 
@@ -471,7 +471,7 @@ describe('inline emphasis', () => {
 
 describe('font shifts', () => {
   const html = (src: string, format = resolveFormatOptions({})) => {
-    const { tokens } = new Fountain().parse(src, true);
+    const { tokens } = parseFountain(src);
     return tokensToMobiHtml(tokens, { title: 'T' }, format);
   };
 
@@ -546,7 +546,7 @@ describe('mobiArt', () => {
   const ON = resolveFormatOptions({});
   const OFF = resolveFormatOptions({ includeImages: false });
   const HAVE = new Set(['p001-01.png', 'p002-01.png']);
-  const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
+  const tokensOf = (src: string) => parseFountain(src).tokens;
 
   test('lists the pictures in the order the body first shows them, each once', () => {
     // A picture shown twice is one record with two references, which is the
@@ -619,7 +619,7 @@ describe('MOBI figures', () => {
   const BREAKS = resolveFormatOptions({ scenePageBreaks: true });
   const HAVE = new Set(['p001-01.png', 'p002-01.png']);
   const render = (src: string, format = ON, have: ReadonlySet<string> = HAVE, title = true) => {
-    const tokens = new Fountain().parse(src, true).tokens;
+    const tokens = parseFountain(src).tokens;
     const f = title ? format : { ...format, includeTitlePage: false };
     return tokensToMobiHtml(tokens, { title: 'T' }, f, mobiArt(tokens, f, have));
   };
@@ -692,7 +692,7 @@ describe('MOBI figures', () => {
       // (registry #19b), so a card left out of the flow could vanish from the
       // book entirely. The worst case kept is the card met twice.
       const card = '[[img: p001-01.png w=100 full]]\n\nINT. LAB - DAY\n\nWork.\n';
-      const tokens = new Fountain().parse(card, true).tokens;
+      const tokens = parseFountain(card).tokens;
       const cover = mobiArt(tokens, ON, HAVE);
       expect(cover.coverIndex).toBe(0);
       const html = render(card);
@@ -972,7 +972,7 @@ describe('images.pdf in the MOBI', () => {
   }, 60000);
 
   const book = () => {
-    const tokens = new Fountain().parse(fountainText, true).tokens;
+    const tokens = parseFountain(fountainText).tokens;
     const art = mobiArt(tokens, ON, new Set(pictures.keys()));
     const html = tokensToMobiHtml(tokens, meta, ON, art);
     const images = art.order.map((file) => pictures.get(file)!);
