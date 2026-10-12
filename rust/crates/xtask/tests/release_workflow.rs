@@ -561,3 +561,45 @@ fn the_tap_is_bumped_by_the_xtask_and_checked_after() {
     assert!(crib.contains("cargo xtask bump-tap"));
     assert!(crib.contains(names::CLI_MAC_ARM64));
 }
+
+#[test]
+fn no_release_build_carries_the_handover_rehearsals_updater_values() {
+    // Review item O10. Nothing in any workflow turns the rehearsal on.
+    for f in workflow_files() {
+        let text = read(&format!(".github/workflows/{f}"));
+        assert!(!text.contains("--features rehearsal"), "{f}");
+        assert!(!text.contains("features: rehearsal"), "{f}");
+        for line in text.lines() {
+            let l = line.trim();
+            assert!(
+                !l.starts_with("SCREEPUB_UPDATE_") && !l.contains("SCREEPUB_UPDATE_ENDPOINT="),
+                "{f} sets a rehearsal value: {l}"
+            );
+        }
+    }
+    // The build step refuses before cargo starts if one is set.
+    let step = step_named(
+        &rel(),
+        "app-bundles",
+        "Build the window and the release tools",
+    );
+    let guard_end = step
+        .find("if [ \"$RUNNER_OS\" = macOS ]")
+        .expect("the build");
+    let guard = &step[..guard_end];
+    assert!(guard.contains("SCREEPUB_UPDATE_INSECURE"));
+    let dir = Scratch::new("rehearsal-guard");
+    let ok = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin")]);
+    assert!(ok.status.success(), "{}", said(&ok));
+    for v in [
+        "SCREEPUB_UPDATE_ENDPOINT",
+        "SCREEPUB_UPDATE_PUBKEY",
+        "SCREEPUB_UPDATE_INSECURE",
+    ] {
+        for value in ["http://127.0.0.1:8765/latest.json", ""] {
+            let out = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin"), (v, value)]);
+            assert!(!out.status.success(), "{v}={value:?} passed the guard");
+            assert!(said(&out).contains(v), "{}", said(&out));
+        }
+    }
+}

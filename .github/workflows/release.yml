@@ -287,6 +287,16 @@ jobs:
         working-directory: rust
         run: |
           set -euo pipefail
+          # The handover rehearsal's updater values (a local endpoint, a
+          # throwaway key, plain HTTP) never reach a release: sp-update's
+          # build.rs refuses them without its rehearsal feature, and this
+          # says so before cargo starts.
+          for v in SCREEPUB_UPDATE_ENDPOINT SCREEPUB_UPDATE_PUBKEY SCREEPUB_UPDATE_INSECURE; do
+            if [ -n "${!v+set}" ]; then
+              echo "::error::$v is set: a release never carries the handover rehearsal's updater values"
+              exit 1
+            fi
+          done
           if [ "$RUNNER_OS" = macOS ]; then
             cargo build --release --locked -p sp-app --target aarch64-apple-darwin
           else

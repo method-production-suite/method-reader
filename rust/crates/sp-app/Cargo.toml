@@ -10,6 +10,11 @@ publish = false
 [lints]
 workspace = true
 
+[features]
+# A handover-rehearsal window (sp-update's `rehearsal`): built only by
+# `cargo xtask rehearse-handover prepare`, never released.
+rehearsal = ["sp-update/rehearsal"]
+
 [[bin]]
 name = "screepub-window"
 path = "src/main.rs"

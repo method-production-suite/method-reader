@@ -19,7 +19,8 @@
 //!   (http://127.0.0.1);
 //! - the Rust app from this checkout, as version 0.12.0, with the same
 //!   identifier and its updater baked with the same throwaway key and
-//!   endpoint (`SCREEPUB_UPDATE_*` at compile time);
+//!   endpoint (`SCREEPUB_UPDATE_*` at compile time, read only because it
+//!   builds with `--features rehearsal`);
 //! - Screepub-macOS.app.tar.gz of it, signed with the throwaway key by
 //!   `sp-release sign-update`, and latest.json pointing at the local server,
 //!   checked by `sp-release verify-update` before anything runs.
@@ -265,7 +266,14 @@ fn prepare() -> Result<(), String> {
     unpack("HEAD", &rust_src)?;
     set_workspace_version(&rust_src.join("rust/Cargo.toml"), NEW)?;
     sh(Command::new("cargo")
-        .args(["build", "--release", "-p", "sp-app"])
+        .args([
+            "build",
+            "--release",
+            "-p",
+            "sp-app",
+            "--features",
+            "rehearsal",
+        ])
         .env("SCREEPUB_UPDATE_ENDPOINT", &endpoint)
         .env("SCREEPUB_UPDATE_PUBKEY", &public)
         .env("SCREEPUB_UPDATE_INSECURE", "1")

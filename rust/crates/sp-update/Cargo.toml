@@ -10,6 +10,14 @@ publish = false
 [lints]
 workspace = true
 
+[features]
+# The handover rehearsal's build: reads SCREEPUB_UPDATE_ENDPOINT,
+# SCREEPUB_UPDATE_PUBKEY and SCREEPUB_UPDATE_INSECURE at compile time.
+# Without it those values are refused (build.rs) and ignored (src/lib.rs).
+# Only `cargo xtask rehearse-handover prepare` turns it on; release.yml
+# never does, and xtask's tests/workflows.rs holds that.
+rehearsal = []
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true

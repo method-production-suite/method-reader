@@ -7,6 +7,18 @@
 //! "box" (an untrusted comment line, then the base64 key or signature, and
 //! for a signature a trusted comment and its global signature). Legacy
 //! (non-prehashed) signatures are allowed, as the plugin allows them.
+//!
+//! The trusted comment's `file:` field is NOT checked, on purpose (review
+//! item O9): tauri-plugin-updater 2.12.0, the updater in every 0.11.x
+//! window, reads only `version:` (its `signed_version`), so checking `file:`
+//! here would hold the Rust app to a rule the windows it replaces never
+//! had. It also adds nothing the signature does not already give: the
+//! signature covers the archive's bytes, and the name is whatever the
+//! release calls the asset. `version:` is checked, and the Rust app
+//! requires it (`require_signed_version`), which is stricter than the
+//! windows, whose signatures from before the Tauri CLI recorded a version
+//! still pass. The test `the_file_field_is_not_checked_as_the_plugin_does_not`
+//! pins this.
 
 use base64::Engine;
 use minisign_verify::{PublicKey, Signature};
@@ -179,6 +191,21 @@ mod tests {
         );
         assert!(verify_signed_version("version:nightly", "nightly", false).is_ok());
         assert!(verify_signed_version("version:nightly", "Nightly", false).is_err());
+    }
+
+    #[test]
+    fn the_file_field_is_not_checked_as_the_plugin_does_not() {
+        // tauri-plugin-updater 2.12.0 reads `version:` alone (module docs).
+        for comment in [
+            "timestamp:1700000000\tfile:Screepub-macOS.app.tar.gz\tversion:1.2.3",
+            "timestamp:1700000000\tfile:something-else.tar.gz\tversion:1.2.3",
+            "timestamp:1700000000\tversion:1.2.3",
+        ] {
+            assert!(
+                verify_signed_version(comment, "1.2.3", true).is_ok(),
+                "{comment}"
+            );
+        }
     }
 
     #[test]

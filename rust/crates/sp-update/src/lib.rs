@@ -44,23 +44,38 @@ pub const PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IE
 /// Rust app keeps.
 pub const IDENTIFIER: &str = "com.darkwell.screepub";
 
-/// The endpoint this build was baked with. A release bakes [`ENDPOINT`];
-/// the handover rehearsal (tools/rehearse-handover.sh) bakes a local one by
-/// setting `SCREEPUB_UPDATE_ENDPOINT` while it compiles, the way Tauri
-/// bakes tauri.conf.json into the window. Nothing reads it at run time.
+/// Whether this is a handover-rehearsal build (`--features rehearsal`,
+/// which only `cargo xtask rehearse-handover prepare` passes). Only such a
+/// build reads the `SCREEPUB_UPDATE_*` values below; any other build that
+/// is compiled with one set refuses to build (build.rs), and would ignore
+/// it anyway: a release can never carry a throwaway key, a local endpoint
+/// or plain HTTP by accident (review item O10).
+pub const REHEARSAL: bool = cfg!(feature = "rehearsal");
+
+/// The endpoint this build was baked with: [`ENDPOINT`], or in a
+/// rehearsal build the local one `SCREEPUB_UPDATE_ENDPOINT` named while it
+/// compiled, the way Tauri bakes tauri.conf.json into the window. Nothing
+/// reads it at run time.
 pub fn baked_endpoint() -> &'static str {
-    option_env!("SCREEPUB_UPDATE_ENDPOINT").unwrap_or(ENDPOINT)
+    match option_env!("SCREEPUB_UPDATE_ENDPOINT") {
+        Some(local) if REHEARSAL => local,
+        _ => ENDPOINT,
+    }
 }
 
-/// The public key this build was baked with: [`PUBKEY`], or the
-/// rehearsal's throwaway key (`SCREEPUB_UPDATE_PUBKEY` at compile time).
+/// The public key this build was baked with: [`PUBKEY`], or in a
+/// rehearsal build its throwaway key (`SCREEPUB_UPDATE_PUBKEY` at compile
+/// time).
 pub fn baked_pubkey() -> &'static str {
-    option_env!("SCREEPUB_UPDATE_PUBKEY").unwrap_or(PUBKEY)
+    match option_env!("SCREEPUB_UPDATE_PUBKEY") {
+        Some(throwaway) if REHEARSAL => throwaway,
+        _ => PUBKEY,
+    }
 }
 
 /// Whether this build may fetch over plain HTTP: only a rehearsal build
-/// (`SCREEPUB_UPDATE_INSECURE=1` at compile time), the counterpart of the
+/// compiled with `SCREEPUB_UPDATE_INSECURE=1`, the counterpart of the
 /// plugin's `dangerousInsecureTransportProtocol`.
 pub fn baked_insecure() -> bool {
-    option_env!("SCREEPUB_UPDATE_INSECURE") == Some("1")
+    REHEARSAL && option_env!("SCREEPUB_UPDATE_INSECURE") == Some("1")
 }
