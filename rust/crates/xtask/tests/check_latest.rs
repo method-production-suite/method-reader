@@ -14,8 +14,8 @@ use base64::engine::general_purpose::STANDARD;
 use common::{FakeServer, text, xtask};
 use xtask::check_latest::http::{Bases, Fetched};
 use xtask::check_latest::{
-    Release, ReleaseAsset, Verdict, check_latest, configured_pubkey, judge_manifest,
-    parse_public_key_box,
+    Release, ReleaseAsset, Verdict, check_latest, judge_manifest, parse_public_key_box,
+    trusted_pubkey,
 };
 
 const REPO: &str = "ssandweiss/screepub";
@@ -396,17 +396,25 @@ fn an_api_answer_that_is_not_a_release_is_a_problem_not_a_crash() {
 }
 
 #[test]
+fn the_key_checked_is_the_one_the_shipped_app_trusts() {
+    // sp_update::PUBKEY (was: tauri.conf.json's plugins.updater.pubkey).
+    assert_eq!(trusted_pubkey(), sp_update::PUBKEY);
+    assert_eq!(
+        parse_public_key_box(trusted_pubkey()).unwrap(),
+        "E4D0668D54F6EB34"
+    );
+}
+
+#[test]
 fn the_command_checks_a_fake_github_and_says_why_it_fails() {
     // End to end through the binary: the bases moved to 127.0.0.1, the
-    // key the checkout's app trusts, and a manifest a version behind.
+    // key the shipped app trusts, and a manifest a version behind.
     let server = FakeServer::start();
-    let trusted = configured_pubkey(&xtask::paths::repo_root());
-    let key: Option<[u8; 8]> = parse_public_key_box(&trusted).ok().map(|hex| {
-        u64::from_str_radix(&hex, 16)
-            .expect("hex key id")
-            .to_le_bytes()
-    });
-    let signature = fake_signature_box("Screepub.app.tar.gz", key.unwrap_or(FAKE_KEY_ID));
+    let hex = parse_public_key_box(trusted_pubkey()).expect("the shipped key reads");
+    let key: [u8; 8] = u64::from_str_radix(&hex, 16)
+        .expect("hex key id")
+        .to_le_bytes();
+    let signature = fake_signature_box("Screepub.app.tar.gz", key);
     let dl = |name: &str| format!("{}/dl/{name}", server.base);
     let assets: Vec<serde_json::Value> = [TAR, "Screepub-macOS.app.tar.gz.sig"]
         .iter()
@@ -437,14 +445,18 @@ fn the_command_checks_a_fake_github_and_says_why_it_fails() {
         ("GITHUB_TOKEN", ""),
     ];
     let good = xtask(&["check-latest"], &env, None, None);
-    if key.is_some() {
-        assert_eq!(good.status.code(), Some(0), "{}", text(&good.stderr));
-        assert!(text(&good.stdout).contains("latest.json serves 0.6.1 for darwin-aarch64"));
-    } else {
-        // A checkout whose app trusts no key yet: that is the problem named.
-        assert_eq!(good.status.code(), Some(1));
-        assert!(text(&good.stderr).contains("public key"));
-    }
+    assert_eq!(good.status.code(), Some(0), "{}", text(&good.stderr));
+    assert!(text(&good.stdout).contains("latest.json serves 0.6.1 for darwin-aarch64"));
+
+    // Signed by another key: named, and refused.
+    server.route(
+        "/dl/Screepub-macOS.app.tar.gz.sig",
+        200,
+        fake_signature_box("Screepub.app.tar.gz", OTHER_KEY_ID),
+    );
+    let other = xtask(&["check-latest"], &env, None, None);
+    assert_eq!(other.status.code(), Some(1));
+    server.route("/dl/Screepub-macOS.app.tar.gz.sig", 200, signature.clone());
 
     server.route(
         "/ssandweiss/screepub/releases/latest/download/latest.json",
