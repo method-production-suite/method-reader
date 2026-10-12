@@ -1,7 +1,8 @@
-//! Whether a release is newer: `src/update/compare.ts` (the engine's own
-//! comparator, which `desktop/ui/update-compare.js` was generated from).
-//! It belongs to sp-engine once that exists; it is here so the window's
-//! update flow can be built and tested now.
+//! Whether a release is newer: a port of the TypeScript engine's
+//! src/update/compare.ts, which the Tauri window's generated
+//! update-compare.js was made from. sp-engine's update::compare is the
+//! engine's own port; this copy's tests hold it to the same recorded
+//! answers.
 
 use std::cmp::Ordering;
 
@@ -193,5 +194,82 @@ mod tests {
         assert!(should_check(true, None, 0.0));
         assert!(!should_check(true, Some(0.0), CHECK_INTERVAL_MS - 1.0));
         assert!(should_check(true, Some(0.0), CHECK_INTERVAL_MS));
+    }
+
+    // ---- the recorded answers ----
+    //
+    // What the TypeScript engine answered (src/update/compare.ts, through
+    // bun), once recorded in xtask's tests/data/compare-answers.json and held
+    // against the window's generated module and sp-app's copy by xtask's
+    // tests/update_compare.rs until the Rust cutover retired both. The
+    // questions and the answers, exactly as recorded.
+
+    const RECORDED_IS_NEWER: [(&str, &str, bool, &str); 14] = [
+        ("0.6.0", "0.6.0-1-g965cb10", false, "0.6.0"),
+        ("0.6.0", "0.6.0-1-g965cb10-dirty", false, "0.6.0"),
+        ("0.6.0", "0.6.0-dirty", false, "0.6.0"),
+        ("0.7.0", "0.6.0-1-g965cb10", true, "0.7.0"),
+        ("0.6.1", "0.6.0", true, "0.6.1"),
+        ("0.6.0", "0.6.0", false, "0.6.0"),
+        ("0.5.4", "0.6.0", false, "0.5.4"),
+        ("0.10.0", "0.9.0", true, "0.10.0"),
+        ("1.0.0", "0.99.99", true, "1.0.0"),
+        ("0.6.0", "0.6.0-beta.1", true, "0.6.0"),
+        ("0.6.0", "0.3.0-dev", true, "0.6.0"),
+        ("0.6.0-beta.10", "0.6.0-beta.9", true, "0.6.0-beta.10"),
+        ("v0.4.0", "0.3.0", true, "0.4.0"),
+        ("0.3.0+ci.7", "0.3.0", false, "0.3.0"),
+    ];
+    const RECORDED_SUFFIXES: [(&str, bool); 6] = [
+        ("1-g965cb10", true),
+        ("dirty", true),
+        ("beta.1", false),
+        ("dev", false),
+        ("1-g", false),
+        ("x-g965cb10", false),
+    ];
+
+    #[test]
+    fn the_recorded_answers() {
+        for (candidate, current, newer, normalized) in RECORDED_IS_NEWER {
+            assert_eq!(is_newer(candidate, current), newer, "{candidate} {current}");
+            assert_eq!(normalize_version(candidate), normalized, "{candidate}");
+        }
+        for (suffix, answer) in RECORDED_SUFFIXES {
+            assert_eq!(is_describe_suffix(suffix), answer, "{suffix}");
+        }
+        assert_eq!(pick_update(None), Pick::No("no update was reported".into()));
+        assert_eq!(
+            pick_update(Some(("0.7.0", "0.6.0"))),
+            Pick::Offer("0.7.0".into())
+        );
+        assert_eq!(
+            pick_update(Some(("0.6.0", "0.6.0-1-g965cb10"))),
+            Pick::No("0.6.0 is not newer than the running 0.6.0-1-g965cb10".into())
+        );
+        assert_eq!(
+            pick_update(Some(("not-a-version", "0.6.0"))),
+            Pick::No(
+                "could not read the versions: offered \"not-a-version\", running \"0.6.0\"".into()
+            )
+        );
+        assert_eq!(
+            pick_update(Some(("0.6.0", ""))),
+            Pick::No("could not read the versions: offered \"0.6.0\", running \"\"".into())
+        );
+        let now = 1_800_000_000_000.0;
+        let h = 3_600_000.0;
+        let checks: Vec<bool> = [
+            (false, None),
+            (true, None),
+            (true, Some(now - h)),
+            (true, Some(now - 25.0 * h)),
+            (true, Some(now + h)),
+        ]
+        .iter()
+        .map(|(o, l)| should_check(*o, *l, now))
+        .collect();
+        assert_eq!(checks, [false, true, false, true, false]);
+        assert_eq!(CHECK_INTERVAL_MS, 86_400_000.0);
     }
 }

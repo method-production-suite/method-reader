@@ -174,11 +174,6 @@ pub const COMMANDS: &[Command] = &[
         main: rehearse::main,
     },
     Command {
-        name: "build-update-compare",
-        help: "regenerate the window's version-compare module",
-        main: packaging::build_update_compare_main,
-    },
-    Command {
         name: "build-sidecar",
         help: "retired: the Rust app links the engine, there is no sidecar",
         main: cli_build::build_sidecar_main,
