@@ -1,6 +1,13 @@
 //! Whether the engine is somebody's work right now: `desktop/ui/app.js`'s
 //! count of counted calls and holds, the quiet period an update's restart
 //! waits for, and the refusal once an update has installed.
+//!
+//! The count lives on the window's thread; an update's run waits for quiet
+//! on its own thread. So every counted call and every hold is mirrored into
+//! sp-update's [`EngineGate`] as a ticket, and the gate is what the run
+//! retires and waits on: the two can never disagree about who is busy.
+
+use sp_update::gate::{EngineGate, Ticket};
 
 /// Idle means nothing counted has run for this long.
 pub const ENGINE_QUIET_MS: f64 = 500.0;
@@ -46,13 +53,23 @@ pub fn counts_toward_busy(call: Call) -> bool {
 
 /// The count, the holds and the clock. Times are milliseconds on a
 /// monotonic clock the caller supplies.
-#[derive(Debug)]
 pub struct Busy {
     in_flight: u32,
     last_ended: f64,
     retired: bool,
     next_hold: u64,
-    holds: Vec<u64>,
+    holds: Vec<(u64, Ticket)>,
+    calls: Vec<Ticket>,
+    gate: EngineGate,
+}
+
+impl std::fmt::Debug for Busy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Busy")
+            .field("in_flight", &self.in_flight)
+            .field("retired", &self.retired())
+            .finish()
+    }
 }
 
 impl Default for Busy {
@@ -63,6 +80,8 @@ impl Default for Busy {
             retired: false,
             next_hold: 0,
             holds: Vec::new(),
+            calls: Vec::new(),
+            gate: EngineGate::new(),
         }
     }
 }
@@ -76,18 +95,20 @@ impl Busy {
     /// a refused call is no work and is not counted. Returns whether it is
     /// counted, which the caller hands back to `ended`.
     pub fn starting(&mut self, call: Call) -> Result<bool, &'static str> {
-        if self.retired {
+        if self.retired() {
             return Err(UPDATED_MESSAGE);
         }
         let counted = counts_toward_busy(call);
         if counted {
             self.in_flight += 1;
+            self.calls.push(self.gate.hold());
         }
         Ok(counted)
     }
 
     pub fn ended(&mut self, counted: bool, now: f64) {
         if counted {
+            self.calls.pop();
             self.work_ended(now);
         }
     }
@@ -96,16 +117,21 @@ impl Busy {
     pub fn hold(&mut self) -> Hold {
         self.in_flight += 1;
         self.next_hold += 1;
-        self.holds.push(self.next_hold);
+        self.holds.push((self.next_hold, self.gate.hold()));
         Hold(self.next_hold)
     }
 
     /// Let a hold go. A second release does nothing.
     pub fn release(&mut self, hold: Hold, now: f64) {
-        if let Some(i) = self.holds.iter().position(|h| *h == hold.0) {
+        if let Some(i) = self.holds.iter().position(|(h, _)| *h == hold.0) {
             self.holds.remove(i);
             self.work_ended(now);
         }
+    }
+
+    /// The gate an update's run retires and waits on.
+    pub fn gate(&self) -> EngineGate {
+        self.gate.clone()
     }
 
     fn work_ended(&mut self, now: f64) {
@@ -126,10 +152,12 @@ impl Busy {
     /// An update has been installed: refuse every call from now on.
     pub fn retire(&mut self) {
         self.retired = true;
+        self.gate.retire();
     }
 
+    /// Retired here, or by an update's run through the gate.
     pub fn retired(&self) -> bool {
-        self.retired
+        self.retired || self.gate.retired()
     }
 }
 
@@ -240,5 +268,24 @@ mod tests {
         d.closed(&mut b, 5.0);
         assert!(!b.engine_busy() && !d.is_open());
         assert!(d.try_open(&mut b));
+    }
+
+    #[test]
+    fn the_gate_an_update_waits_on_sees_the_same_count() {
+        let mut b = Busy::default();
+        let gate = b.gate();
+        assert_eq!(b.starting(Call::Devices), Ok(false));
+        assert!(!gate.busy(), "an uncounted call is nobody's work");
+        assert_eq!(b.starting(Call::Convert), Ok(true));
+        let hold = b.hold();
+        assert!(gate.busy());
+        b.ended(true, 1.0);
+        assert!(gate.busy(), "the hold is still out");
+        b.release(hold, 2.0);
+        assert!(!gate.busy());
+        // A run on another thread retires the gate: the window refuses.
+        gate.retire();
+        assert!(b.retired());
+        assert_eq!(b.starting(Call::Send), Err(UPDATED_MESSAGE));
     }
 }

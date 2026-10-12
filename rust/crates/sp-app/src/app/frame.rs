@@ -22,7 +22,12 @@ use crate::model::update::{
     self as u, CheckOutcome, Drawn, Phase, label_actionable, notes_view, read_state,
     remember_answer, remembered_offer, run_check, update_label, updates_possible,
 };
-use crate::model::update_flow::Flow;
+use std::sync::mpsc::{Receiver, channel};
+
+use sp_update::flow::Event as UpdateEvent;
+use sp_update::gate::EngineGate;
+
+use crate::model::update_flow::{Flow, RunOutcome, Start};
 use crate::theme::{self, Tokens, size};
 
 pub fn tab_id(s: Surface) -> Id {
@@ -30,6 +35,37 @@ pub fn tab_id(s: Surface) -> Id {
 }
 
 // --------------------------------------------------------------- updates
+
+/// What the update's run says from its own thread.
+enum RunMsg {
+    Event(UpdateEvent),
+    Done(RunOutcome),
+    Restarted(bool),
+}
+
+/// An update event as the label and the notes draw it.
+pub fn phase_of(event: UpdateEvent) -> Option<Phase> {
+    Some(match event {
+        UpdateEvent::Downloading {
+            version,
+            received,
+            total,
+            body,
+        } => Phase::Downloading {
+            version,
+            received: received as f64,
+            total: total.map(|t| t as f64),
+            body,
+        },
+        UpdateEvent::Installing { version } => Phase::Installing { version },
+        UpdateEvent::Waiting { version } => Phase::Waiting { version },
+        UpdateEvent::Stalled { version } => Phase::Stalled { version },
+        UpdateEvent::Restarting { version } => Phase::Restarting { version },
+        UpdateEvent::Installed { version } => Phase::Installed { version },
+        UpdateEvent::Failed { version, message } => Phase::Failed { version, message },
+        UpdateEvent::Cleared => return None,
+    })
+}
 
 #[derive(Default)]
 pub struct UpdateState {
@@ -41,6 +77,10 @@ pub struct UpdateState {
     heard: u64,
     /// The label had the keyboard when it was last drawn.
     pub label_focused: bool,
+    /// The run on its thread, while it is out.
+    run: Option<Receiver<RunMsg>>,
+    /// Wakes the window when the run says something.
+    pub repaint: Option<egui::Context>,
 }
 
 impl UpdateState {
@@ -86,6 +126,82 @@ impl UpdateState {
             self.notes_line = Some(message.clone());
         }
         outcome
+    }
+
+    /// A click on the label or the notes' button: the one run, or "Restart
+    /// now" after a stall (update-flow.js start). The run goes on its own
+    /// thread; `gate` is the window's busy count, which it retires and
+    /// waits on.
+    pub fn start(&mut self, host: &super::Host, gate: EngineGate) {
+        let what = self.flow.start();
+        self.heard();
+        let (tx, rx) = channel();
+        let updater = host.updater.clone();
+        let repaint = self.repaint.clone();
+        let wake = move || {
+            if let Some(ctx) = &repaint {
+                ctx.request_repaint();
+            }
+        };
+        match what {
+            Start::Nothing => return,
+            Start::Run(offer) => {
+                std::thread::spawn(move || {
+                    let mut emit = |e| {
+                        let _ = tx.send(RunMsg::Event(e));
+                        wake();
+                    };
+                    let outcome = updater.install(offer.live, &gate, &mut emit);
+                    let _ = tx.send(RunMsg::Done(outcome));
+                    wake();
+                });
+            }
+            Start::RestartNow(version) => {
+                std::thread::spawn(move || {
+                    let mut emit = |e| {
+                        let _ = tx.send(RunMsg::Event(e));
+                        wake();
+                    };
+                    let started = updater.restart(&version, &mut emit);
+                    let _ = tx.send(RunMsg::Restarted(started));
+                    wake();
+                });
+            }
+        }
+        self.run = Some(rx);
+    }
+
+    /// What the run said since the last frame. True when the new copy has
+    /// started and this window should close.
+    pub fn pump(&mut self, host: &mut super::Host) -> bool {
+        let Some(rx) = &self.run else {
+            return false;
+        };
+        let mut close = false;
+        let mut ended = false;
+        let msgs: Vec<RunMsg> = rx.try_iter().collect();
+        for msg in msgs {
+            match msg {
+                RunMsg::Event(e) => match phase_of(e) {
+                    Some(p) => self.flow.during(p),
+                    None => self.flow.set_phase(None),
+                },
+                RunMsg::Done(outcome) => {
+                    close = outcome == RunOutcome::Restarting;
+                    self.flow.finished(outcome, host.storage.as_mut());
+                    ended = true;
+                }
+                RunMsg::Restarted(started) => {
+                    close = started;
+                    ended = true;
+                }
+            }
+        }
+        if ended {
+            self.run = None;
+        }
+        self.heard();
+        close
     }
 
     /// The notes hear every emit of the flow, repeats included: what they
@@ -295,8 +411,8 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
             let label = update_button(ui, &t, &words, actionable);
             app.update.label_focused = label.has_focus();
             if label.clicked() && actionable {
-                // The transport is wave 3's: a click names what it would do.
-                app.update.notes_line = Some(words);
+                let gate = app.busy.gate();
+                app.update.start(&app.host, gate);
             }
         } else if std::mem::take(&mut app.update.label_focused) {
             // The label went while the keyboard stood on it: the page's
@@ -618,7 +734,8 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
     if let Some((words, disabled)) = view.install {
         let b = widgets::button(ui, t, Look::Brass, &words, !disabled);
         if b.clicked() {
-            app.update.notes_line = Some(words);
+            let gate = app.busy.gate();
+            app.update.start(&app.host, gate);
         }
     }
 }
