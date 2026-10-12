@@ -1,0 +1,31 @@
+# The device-request service, Rust edition (workers-rs, compiled to wasm).
+# Same Worker name, same database and same rate-limit binding as
+# services/device-requests/wrangler.toml, so deploying this REPLACES the
+# TypeScript Worker at the same address; tests/worker.rs holds the two
+# files together. Not deployed: see docs/superpowers/specs/
+# 2026-10-11-rust-release-design.md, part f, for what that takes.
+name = "screepub-device-requests"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# worker-build compiles this crate for wasm32-unknown-unknown, runs
+# wasm-bindgen and writes the JavaScript shim Cloudflare loads. Pinned to
+# the workers-rs release the crate depends on.
+[build]
+command = "cargo install -q worker-build --version 0.8.7 --locked && worker-build --release"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "screepub-device-requests"
+database_id = "343f8b66-876c-40e7-8cb4-9dcc6ba544b0"
+
+# Five accepted requests per sender per 60 seconds, per Cloudflare location
+# (LIMIT_PER_MINUTE in src/lib.rs; a test holds them together).
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "2610"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
