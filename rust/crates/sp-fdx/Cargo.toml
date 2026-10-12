@@ -1,0 +1,20 @@
+[package]
+name = "sp-fdx"
+description = "Screepub's Final Draft (.fdx) writer: fountain-js tokens to an editable screenplay"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-model.workspace = true
+sp-fountain.workspace = true
+
+[dev-dependencies]
+roxmltree.workspace = true
+serde.workspace = true
+serde_json.workspace = true

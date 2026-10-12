@@ -1,0 +1,20 @@
+[package]
+name = "sp-fountain"
+description = "Screepub's Fountain stage: elements to .fountain, the notes and slug rules, and a fountain-js 1.2.4 tokenizer"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-model.workspace = true
+# `\p{L}` for humanizeCaps' title-casing, the one Unicode property the
+# TypeScript asks a regex for.
+unicode-general-category = "1"
+
+[dev-dependencies]
+serde_json.workspace = true
