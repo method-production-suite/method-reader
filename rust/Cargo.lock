@@ -284,6 +284,7 @@ dependencies = [
  "regex",
  "serde_json",
  "sha2",
+ "sp-fountain",
  "sp-mobi",
  "unicode-normalization",
  "zip",

@@ -1,0 +1,22 @@
+[package]
+name = "sp-azw3"
+description = "Screepub's own AZW3 (KF8) writer, ported from Calibre's, reading the EPUB's bytes"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-fountain.workspace = true
+sp-mobi.workspace = true
+unicode-normalization.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+regex.workspace = true
+serde_json.workspace = true
+sha2.workspace = true

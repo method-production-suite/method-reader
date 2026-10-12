@@ -21,18 +21,18 @@ move too.
 | tests/app-references.test.ts | 14 | xtask | todo | the retired Swift app stays retired |
 | tests/app-settings.test.ts | 31 | sp-engine | todo |  |
 | tests/artwork.test.ts | 44 | sp-parser | todo |  |
-| tests/azw3-calibre.test.ts | 0 | sp-azw3 | todo | reads the AZW3 back through Calibre: isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/azw3-chunk.test.ts | 8 | sp-azw3 | todo |  |
-| tests/azw3-compare.test.ts | 0 | sp-azw3 | todo | compares with Calibre's AZW3: isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/azw3-corpus.test.ts | 0 | sp-azw3 | todo |  |
-| tests/azw3-epub.test.ts | 3 | sp-azw3 | todo |  |
-| tests/azw3-index.test.ts | 7 | sp-azw3 | todo |  |
-| tests/azw3-kindleunpack.test.ts | 0 | sp-azw3 | todo |  |
-| tests/azw3-palmdoc.test.ts | 5 | sp-azw3 | todo |  |
-| tests/azw3-revision.test.ts | 8 | sp-azw3 | todo |  |
-| tests/azw3-tbs.test.ts | 4 | sp-azw3 | todo |  |
-| tests/azw3-xml.test.ts | 6 | sp-azw3 | todo |  |
-| tests/azw3.test.ts | 9 | sp-azw3 | todo |  |
+| tests/azw3-calibre.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (calibres_reader_opens_our_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
+| tests/azw3-chunk.test.ts | 8 | sp-azw3 | done | sp-azw3/tests/chunk.rs |
+| tests/azw3-compare.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (ours_beside_calibres_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
+| tests/azw3-corpus.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs, over rust/oracle-real's EPUBs; counts only |
+| tests/azw3-epub.test.ts | 3 | sp-azw3 | done | sp-azw3/tests/parts.rs, on the oracle's EPUBs |
+| tests/azw3-index.test.ts | 7 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-kindleunpack.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs; runs where SCREEPUB_KINDLEUNPACK names KindleUnpack |
+| tests/azw3-palmdoc.test.ts | 5 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-revision.test.ts | 8 | sp-azw3 + sp-engine | partial | the stamp and its reader: sp-azw3/tests/azw3.rs; the five staleness-rule tests (rungPlan, freshKindleArtifact) go to sp-engine |
+| tests/azw3-tbs.test.ts | 4 | sp-azw3 | done | sp-azw3/tests/parts.rs |
+| tests/azw3-xml.test.ts | 6 | sp-azw3 | done | sp-azw3/tests/parts.rs; the round trip reads the oracle's EPUBs instead of a convertFountain |
+| tests/azw3.test.ts | 9 | sp-azw3 | done | sp-azw3/tests/azw3.rs |
 | tests/beta-marks.test.ts | 10 | sp-cli | todo | the CLI help, README and site say "beta" the same way |
 | tests/boilerplate.test.ts | 16 | sp-parser | todo |  |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
@@ -164,15 +164,15 @@ move too.
 | TypeScript | Rust owner | status | notes |
 |---|---|---|---|
 | tests/helpers/boot-window.ts | sp-app | todo | boots desktop/ui in a fake DOM |
-| tests/helpers/calibre-read.ts | sp-azw3 | todo | reads a book back through Calibre (isolated) |
+| tests/helpers/calibre-read.ts | sp-azw3 | done | sp-azw3/tests/common/calibre_read.rs, through sp-mobi/tests/common/calibre.rs's Sandbox (the Rust form of tests/isolate-calibre-config.ts for these two crates) |
 | tests/helpers/fake-dom.ts | sp-app | todo |  |
 | tests/helpers/fixture-epubs.ts | sp-epub | todo |  |
-| tests/helpers/kf8-reader.ts | sp-azw3 | todo | structural KF8 reader |
+| tests/helpers/kf8-reader.ts | sp-azw3 | done | sp-azw3/tests/common/kf8_reader.rs |
 | tests/helpers/layout-chrome.ts | sp-app | todo |  |
 | tests/helpers/mini-xml.ts | sp-epub | todo | sp-fdx reads its XML back with roxmltree (dev-dependency) instead |
 | tests/helpers/mobi-records.ts | sp-mobi | done | sp-mobi/tests/common/mod.rs |
-| tests/helpers/palmdoc-decode.ts | sp-mobi | todo |  |
-| tests/helpers/stamped-azw3.ts | sp-azw3 | todo |  |
+| tests/helpers/palmdoc-decode.ts | sp-azw3 | done | sp-azw3/tests/common/palmdoc_decode.rs (only the AZW3 is compressed) |
+| tests/helpers/stamped-azw3.ts | sp-azw3 | partial | sp-azw3/tests/azw3.rs's stamped_azw3; sp-engine's staleness tests need it too |
 
 ## Stage parity: the oracle
 
@@ -189,7 +189,7 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | EPUB | book.epub | sp-epub | todo |
 | preview | book.preview.html | sp-epub | todo |
 | MOBI | book.mobi | sp-mobi | done: sp-mobi/tests/oracle.rs, byte for byte |
-| AZW3 | book.azw3 | sp-azw3 | todo |
+| AZW3 | book.azw3 | sp-azw3 | done: sp-azw3/tests/oracle.rs, byte for byte |
 | FDX | book.fdx | sp-fdx | done: sp-fdx/tests/oracle.rs, byte for byte, 5 of 5 committed and every real script dumped (5 of 5 on 2026-10-11) |
 | pictures | images/ | sp-parser | todo |
 | --json answer | convert.json | sp-cli | todo |
