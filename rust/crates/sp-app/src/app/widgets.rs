@@ -25,6 +25,30 @@ pub enum Look {
 /// A button as `.btn-brad`, `.btn-outline`, `.btn-quiet` drew it. Its
 /// accessible name is its own words as written; the caps are paint.
 pub fn button(ui: &mut Ui, t: &Tokens, look: Look, words: &str, enabled: bool) -> Response {
+    draw_button(ui, t, look, words, enabled, None)
+}
+
+/// The same button under an id of the caller's, so it is the same widget
+/// across redraws that move it (the send panel's keyed buttons).
+pub fn button_id(
+    ui: &mut Ui,
+    t: &Tokens,
+    look: Look,
+    words: &str,
+    enabled: bool,
+    id: Id,
+) -> Response {
+    draw_button(ui, t, look, words, enabled, Some(id))
+}
+
+fn draw_button(
+    ui: &mut Ui,
+    t: &Tokens,
+    look: Look,
+    words: &str,
+    enabled: bool,
+    id: Option<Id>,
+) -> Response {
     let (font, pad) = match look {
         Look::Brass | Look::Outline => (theme::structure_bold(size::UI), Vec2::new(30.0, 10.0)),
         Look::Small => (theme::structure_bold(size::LABEL), Vec2::new(18.0, 6.0)),
@@ -44,7 +68,13 @@ pub fn button(ui: &mut Ui, t: &Tokens, look: Look, words: &str, enabled: bool) -
     } else {
         Sense::hover()
     };
-    let (rect, response) = ui.allocate_exact_size(desired, sense);
+    let (rect, response) = match id {
+        None => ui.allocate_exact_size(desired, sense),
+        Some(id) => {
+            let rect = ui.allocate_space(desired).1;
+            (rect, ui.interact(rect, id, sense))
+        }
+    };
     response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, words));
     if ui.is_rect_visible(rect) {
         let hovered = enabled && response.hovered();
@@ -167,7 +197,7 @@ pub fn state_label(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
 pub fn live(ui: &mut Ui, id: Id, words: &str, font: FontId, color: Color32) -> Response {
     let r = if words.is_empty() {
         ui.interact(
-            egui::Rect::from_min_size(ui.cursor().min, Vec2::ZERO),
+            egui::Rect::from_min_size(ui.cursor().min.round(), Vec2::ZERO),
             id,
             Sense::hover(),
         )
@@ -215,6 +245,22 @@ pub fn described_by(ui: &Ui, control: Id, description: Id) {
         .accesskit_node_builder(control, |n| n.push_described_by(description.accesskit_id()));
 }
 
+/// The arrow keys belong to this control while it has the focus (a tab
+/// bar, a list, the script's stage), not to egui's own focus moving.
+pub fn own_arrows(ui: &Ui, id: Id) {
+    ui.memory_mut(|m| {
+        m.set_focus_lock_filter(
+            id,
+            egui::EventFilter {
+                tab: false,
+                horizontal_arrows: true,
+                vertical_arrows: true,
+                escape: false,
+            },
+        );
+    });
+}
+
 /// A hairline box with the well's corners and the panel fill.
 pub fn panel_frame(t: &Tokens) -> egui::Frame {
     egui::Frame::NONE
@@ -233,4 +279,15 @@ pub fn track(ui: &mut Ui, t: &Tokens, fraction: f32) -> egui::Rect {
     fill.set_width(rect.width() * fraction.clamp(0.0, 1.0));
     ui.painter().rect_filled(fill, 0.0, t.brass);
     rect
+}
+
+/// A rect as AccessKit takes it, for groups and regions egui itself does not
+/// give bounds to.
+pub fn bounds(r: egui::Rect) -> accesskit::Rect {
+    accesskit::Rect {
+        x0: r.min.x.into(),
+        y0: r.min.y.into(),
+        x1: r.max.x.into(),
+        y1: r.max.y.into(),
+    }
 }

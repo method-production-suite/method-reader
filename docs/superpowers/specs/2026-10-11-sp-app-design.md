@@ -82,23 +82,93 @@ the verification list for wave 3.
   with the fake engine and asserts what it shows by the AccessKit tree
   (role and name), which tests the screen reader's view at the same time.
 
+## The book preview: Blitz (spike, 2026-10-11)
+
+The window's preview promise is "reflows the way it will on your reader",
+so it has to be the engine's OWN XHTML and css.ts, not a second renderer.
+The first pass drew structured blocks; the coordinator asked for a spike of
+Blitz, Dioxus's HTML/CSS engine, and it is the answer.
+
+**Pure Rust.** blitz-dom, blitz-html and blitz-paint (Stylo for CSS, Taffy
+for layout, Parley for text, vello_cpu through anyrender to paint pixels):
+`cargo tree` for macOS and Windows has no `-sys` crate, no `cc`, no Skia
+(`tiny-skia-path` is a Rust port of Skia's path code, not Skia). On Linux,
+Parley's font discovery (fontique) links the system's libfontconfig through
+`yeslogic-fontconfig-sys`; the window registers its own six faces, so the
+system-fonts feature can be turned off there (to do when wiring). Stylo is
+MPL-2.0, which is compatible with the AGPL. The network crate
+(`blitz-net`, reqwest with native-tls) is NOT used: a 20-line provider in
+the window answers `data:` URLs (the engine's pictures) and refuses
+everything else, so the preview fetches nothing.
+
+**What was rendered.** The committed oracle previews
+(`rust/oracle/{field-station,torture,images}/book.preview.html`, the
+engine's own output) at 706 wide, with read.js's device layer (ink, paper,
+1.6em/7% margins) and the bundled fonts registered:
+
+| css.ts feature | Result |
+|---|---|
+| Percentage margins, the dialogue column, centred cues | right: cues centred, dialogue in its 20% column |
+| em spacing between elements | right |
+| Dual dialogue side by side (`table.dual-dialogue`) | right: two columns, each cue over its speech |
+| Font shifts (`fmt-sans`, sizes), bold, underline | right |
+| Italic | no synthetic oblique: the window bundles no Courier Prime italic, and Blitz does not slant the regular face (browsers do) |
+| Figures (`data:` PNG) | right, with the data-only provider |
+| Courier Prime from the bundled faces | right (rendered differently with and without them) |
+| Light and dark | right (the device layer's colours) |
+| Page markers (`span.page-marker { float: right }`) | **broken**: Blitz 0.3.0-beta.2 (crates.io) hangs forever in Parley's line breaker on any float inside inline text; Blitz main (git 45496d9) no longer hangs but draws the float at the start of the line, over the heading's first letter |
+| Speed | the 18-page demo: layout 10 ms, painting the whole 12,000px page 17 ms on the CPU |
+
+**Decision.** Use Blitz for Read, the Settings preview, the result's first
+page and the page show's formed blocks, pinned to Blitz main (git rev
+45496d9) until a crates.io release carries the float fixes, with ONE
+window-only shim in the device layer, beside read.js's colours and margins:
+
+    h2.scene-heading, p { position: relative; }
+    span.page-marker { float: none; position: absolute; right: 0; top: 0; }
+
+It draws the marker where a browser draws the float (the line's top, at
+the right edge, small and dimmed), in the window only; the EPUB keeps
+css.ts untouched. It comes out when Blitz positions inline floats. Text is
+exposed to the screen reader by the window: one AccessKit node per
+heading and paragraph, named by its words, at its laid-out rect (Blitz's
+own accessibility tree is not bridged). Read pages the book by painting
+only the visible slice of the laid-out document.
+
+Owner-visible: a git dependency on an unreleased engine, and the shim.
+
+## The rows that were still to build (2026-10-11)
+
+- **The Mac menu bar** is muda 0.21 (Tauri's own menu crate): the app
+  menu, Edit and Window as Tauri's default gave them. macOS hands Edit's
+  shortcuts to the menu, so each Edit item is passed on to egui as the
+  keystroke or clipboard event it stands for (app/menu.rs).
+- **The typewriter** is cpal 0.18 playing model/typewriter.rs's samples
+  (app/sound.rs). The output opens at the first sound; a computer that
+  cannot open one is quiet and is not asked again. typewriter.js has a
+  close() nothing calls, so both keep the output for the window's life.
+- **The keyboard's return after a flow** (send-panel.js keepFocus): panel
+  buttons carry ids made from their data-key, so a button rebuilt by a
+  redraw is the same widget, and model/focus.rs decides where the
+  keyboard goes (the same key, else the brass, else the page's plan) and
+  when the brass is owed it.
+- **The update flow** is model/update_flow.rs, a state machine with the
+  run left as calls (`start`, `during`, `finished`, `threw`) for the wave
+  3 transport to drive. The label and the notes read its one phase.
+- **No em dash**: tests/no_em_dash.rs scans sp-app's sources with comments
+  taken out, as the TypeScript scan did with Bun's transpiler.
+
 ## What cannot reach 1:1, precisely
 
-1. **The book preview is not the EPUB's own CSS** (inventory R18, C17, S20,
-   P8). The window renders the engine's XHTML and `css.ts` stylesheet in a
-   browser engine, so the window and the book share one renderer. egui has
-   no HTML/CSS engine. sp-app draws the preview from structured blocks
-   (scene heading, action, cue, parenthetical, dialogue, transition, page
-   marker, figure, dual dialogue) applying the same FormatOptions. The
-   formatting decisions stay the engine's, but the RENDERING is a second
-   implementation of css.ts, and it will not be pixel-identical to a
-   reading device or to today's preview. The alternative that keeps one
-   renderer is embedding Blitz (Dioxus's pure-Rust HTML/CSS engine:
-   Stylo, Parley, Vello) into an egui texture; it is pre-1.0, would bring
-   its own accessibility tree to bridge, and is not proposed here. Owner
-   decision needed.
-2. **The formed blocks in the page show** (P8) use that same native
-   renderer, so "the book's own block" is the native rendering of it.
+1. **The page marker** is drawn by the shim above, not by the float rule
+   (until Blitz places floats). **Italic** has no synthetic slant.
+2. **Linux** links libfontconfig (C) unless fontique's system fonts are
+   switched off, and the typewriter's sound links ALSA's libasound (C):
+   cpal 0.18 reaches Core Audio on a Mac and WASAPI on Windows through
+   the OS's own APIs with no C library of ours, but its Linux backend is
+   the `alsa` crate over `alsa-sys`. A Linux machine without libasound
+   cannot start the window at all, where the webview's Web Audio needed
+   nothing; Linux packages list it as a dependency (every desktop has it).
 3. **An answer that is not JSON** (E21) cannot happen with direct calls;
    the trait's `Err(String)` is shown in its place.
 4. **No sidecar** (W12): the "could not find the engine" sentence has no

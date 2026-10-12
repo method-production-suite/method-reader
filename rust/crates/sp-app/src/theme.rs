@@ -203,4 +203,36 @@ mod tests {
         assert!(light.contains("--hole: rgba(29,27,22,0.10)"));
         assert!(dark.contains("--hole: rgba(0,0,0,0.45)"));
     }
+
+    // W22: the type scale, radii and motion are tokens.css's.
+    #[test]
+    fn the_type_scale_radii_and_motion_are_tokens_css_s() {
+        let tokens = css("desktop/ui/tokens.css");
+        let px = |name: &str, v: f32| {
+            assert!(tokens.contains(&format!("--{name}: {v}px;")), "{name} {v}")
+        };
+        px("text-fine", size::FINE);
+        px("text-note", size::NOTE);
+        px("text-label", size::LABEL);
+        px("text-ui", size::UI);
+        px("text-caption", size::CAPTION);
+        px("text-code", size::CODE);
+        px("text-body", size::BODY);
+        px("text-lede", size::LEDE);
+        px("text-title", size::TITLE);
+        px("text-display", size::DISPLAY);
+        px("radius-mark", RADIUS_MARK);
+        px("radius", RADIUS);
+        px("radius-well", RADIUS_WELL);
+        assert!(tokens.contains(&format!("--motion-press: {MOTION_PRESS}s;")));
+        assert!(tokens.contains(&format!("--motion-state: {MOTION_STATE}s;")));
+        // The spacing scale, at the window's 16px root.
+        for (i, points) in crate::model::layout::SPACE.iter().enumerate().skip(1) {
+            let rem = points / 16.0;
+            assert!(
+                tokens.contains(&format!("--space-{i}: {rem}rem;")),
+                "space-{i} {rem}"
+            );
+        }
+    }
 }

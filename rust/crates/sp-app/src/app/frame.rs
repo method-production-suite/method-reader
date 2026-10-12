@@ -22,6 +22,7 @@ use crate::model::update::{
     self as u, CheckOutcome, Drawn, Phase, label_actionable, notes_view, read_state,
     remember_answer, remembered_offer, run_check, update_label, updates_possible,
 };
+use crate::model::update_flow::Flow;
 use crate::theme::{self, Tokens, size};
 
 pub fn tab_id(s: Surface) -> Id {
@@ -32,9 +33,14 @@ pub fn tab_id(s: Surface) -> Id {
 
 #[derive(Default)]
 pub struct UpdateState {
-    pub phase: Option<Phase>,
+    /// The one moment, which the label and the notes both read
+    /// (update-flow.js).
+    pub flow: Flow,
     pub drawn: Drawn,
     pub notes_line: Option<String>,
+    heard: u64,
+    /// The label had the keyboard when it was last drawn.
+    pub label_focused: bool,
 }
 
 impl UpdateState {
@@ -42,20 +48,23 @@ impl UpdateState {
         host.updater.ready() && updates_possible(host.platform)
     }
 
-    /// At launch: what an earlier check found, then today's check.
+    pub fn phase(&self) -> Option<&Phase> {
+        self.flow.phase()
+    }
+
+    /// At launch, once: what an earlier check found, then today's check.
     pub fn boot(&mut self, host: &mut super::Host) {
         if !self.usable(host) {
             return;
         }
-        match remembered_offer(host.storage.as_ref(), RELEASE.version) {
-            Some(version) => self.set(Some(Phase::Offer {
-                version,
-                body: String::new(),
-                retrying: false,
-            })),
-            None => u::forget_found(host.storage.as_mut()),
+        let remembered = remembered_offer(host.storage.as_ref(), RELEASE.version);
+        if remembered.is_none() {
+            u::forget_found(host.storage.as_mut());
         }
-        self.check(host, false);
+        if self.flow.boot(remembered) {
+            self.heard();
+            self.check(host, false);
+        }
     }
 
     pub fn answer(&mut self, host: &mut super::Host, on: bool) {
@@ -69,23 +78,24 @@ impl UpdateState {
         let now = (host.clock)();
         let updater = &host.updater;
         let outcome = run_check(manual, host.storage.as_mut(), now, || updater.check());
-        match &outcome {
-            CheckOutcome::Offer { version, body } => {
-                self.set(Some(Phase::Offer {
-                    version: version.clone(),
-                    body: body.clone(),
-                    retrying: false,
-                }));
-            }
-            CheckOutcome::Current { .. } => self.set(None),
-            CheckOutcome::Error { message } if manual => self.notes_line = Some(message.clone()),
-            _ => {}
+        self.flow.check_answered(&outcome);
+        self.heard();
+        if let CheckOutcome::Error { message } = &outcome
+            && manual
+        {
+            self.notes_line = Some(message.clone());
         }
         outcome
     }
 
-    fn set(&mut self, phase: Option<Phase>) {
-        if let Some(p) = &phase {
+    /// The notes hear every emit of the flow, repeats included: what they
+    /// drew is kept, and a line waiting on a change ("Looking…") goes.
+    fn heard(&mut self) {
+        if self.flow.heard == self.heard {
+            return;
+        }
+        self.heard = self.flow.heard;
+        if let Some(p) = self.flow.phase() {
             self.drawn.drew_offer = true;
             if let Some(v) = p.version() {
                 self.drawn.version = Some(v.to_string());
@@ -94,7 +104,6 @@ impl UpdateState {
                 self.drawn.body = body.clone();
             }
         }
-        self.phase = phase;
         self.notes_line = None;
     }
 }
@@ -186,7 +195,14 @@ pub fn input(app: &mut App, ui: &mut Ui) {
         convert::drop_paths(app, &dropped);
     }
     if let Some(show) = app.show.as_mut() {
+        let heard = (show.keys, show.dings);
         show.tick(now);
+        if show.keys > heard.0 {
+            app.host.speaker.play(super::host::Sound::Key);
+        }
+        if show.dings > heard.1 {
+            app.host.speaker.play(super::host::Sound::Ding);
+        }
         if !show.running() && show.book_arrived() {
             app.show = None;
         }
@@ -199,7 +215,6 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     let window = ui.ctx().content_rect().size();
     let block = layout::block(window.x);
-    let (left_margin, _) = layout::margins(window.x);
     egui::CentralPanel::default()
         .frame(egui::Frame::NONE.fill(t.paper))
         .show(ui, |ui| {
@@ -217,7 +232,8 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                     ui.add_space(layout::SPACE[7]);
                     let min_height = (window.y - layout::SPACE[7]).max(0.0);
                     ui.horizontal(|ui| {
-                        ui.add_space((block.left - left_margin).max(0.0) + left_margin);
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.add_space(block.left);
                         ui.vertical(|ui| {
                             ui.set_width(block.width);
                             ui.set_min_height(min_height);
@@ -274,13 +290,18 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         if stamp.clicked() {
             app.notes_open = true;
         }
-        if let Some(words) = update_label(app.update.phase.as_ref()) {
-            let actionable = label_actionable(app.update.phase.as_ref());
+        if let Some(words) = update_label(app.update.phase()) {
+            let actionable = label_actionable(app.update.phase());
             let label = update_button(ui, &t, &words, actionable);
+            app.update.label_focused = label.has_focus();
             if label.clicked() && actionable {
                 // The transport is wave 3's: a click names what it would do.
                 app.update.notes_line = Some(words);
             }
+        } else if std::mem::take(&mut app.update.label_focused) {
+            // The label went while the keyboard stood on it: the page's
+            // first stop takes it (main.js).
+            app.restore_focus = true;
         }
     });
     ui.add_space(layout::SPACE[5]);
@@ -318,10 +339,12 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             let words = widgets::caps(s.label());
             let galley = ui.painter().layout_no_wrap(words, font, t.ink);
             let size = galley.size() + Vec2::new(0.0, layout::SPACE[1] + 2.0);
+            // A tab claims drags too: egui hands a press's drag to whatever
+            // below senses one, and the gaps under every tab do.
             let sense = if presence.tab_stop {
-                Sense::click()
+                Sense::click_and_drag()
             } else {
-                Sense::CLICK
+                Sense::CLICK | Sense::DRAG
             };
             let rect = ui.allocate_space(size).1;
             let response = ui.interact(rect, tab_id(s), sense);
@@ -353,15 +376,16 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             if response.clicked() {
                 app.go_to(s);
             }
+            widgets::own_arrows(ui, response.id);
             if response.has_focus() {
-                let key = ui.input(|i| {
-                    if i.key_pressed(Key::ArrowRight) {
+                let key = ui.input_mut(|i| {
+                    if i.consume_key(egui::Modifiers::NONE, Key::ArrowRight) {
                         Some(TabKey::Right)
-                    } else if i.key_pressed(Key::ArrowLeft) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::ArrowLeft) {
                         Some(TabKey::Left)
-                    } else if i.key_pressed(Key::Home) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::Home) {
                         Some(TabKey::Home)
-                    } else if i.key_pressed(Key::End) {
+                    } else if i.consume_key(egui::Modifiers::NONE, Key::End) {
                         Some(TabKey::End)
                     } else {
                         None
@@ -379,6 +403,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
     });
     ui.ctx().accesskit_node_builder(bar.response.id, |n| {
         n.set_role(accesskit::Role::TabList);
+        n.set_bounds(widgets::bounds(bar.response.rect));
         n.set_label("Screepub");
     });
 }
@@ -564,11 +589,7 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
         app.update.answer(&mut app.host, on);
         app.update.notes_line = Some(if on { u::AUTO_ON } else { u::AUTO_OFF }.into());
     }
-    let view = notes_view(
-        app.update.phase.as_ref(),
-        &app.update.drawn,
-        RELEASE.version,
-    );
+    let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
     let check = widgets::button(ui, t, Look::Small, u::CHECK_BUTTON, !view.check_disabled);
     if check.clicked() {
         app.update.drawn.drew_offer = true;
@@ -577,11 +598,7 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
             app.update.notes_line = Some(message);
         }
     }
-    let view = notes_view(
-        app.update.phase.as_ref(),
-        &app.update.drawn,
-        RELEASE.version,
-    );
+    let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
     let said = app
         .update
         .notes_line
@@ -643,7 +660,7 @@ fn stop_color(stops: &[(f32, Color32)], t: f32) -> Color32 {
     for &next in &stops[1..] {
         if t <= next.0 {
             let k = (t - prev.0) / (next.0 - prev.0).max(1e-6);
-            return super::preview::mix(prev.1, next.1, k);
+            return super::bookview::mix(prev.1, next.1, k);
         }
         prev = next;
     }
@@ -684,17 +701,24 @@ fn ellipse(
     };
     let rings = 14;
     let segments = 48;
+    // The fan starts at the gradient's focal point, so its first stop (a
+    // specular point) is a vertex and every ray runs the stops in order.
+    let (u0, v0) = match grad {
+        Some(g) => ((g.fx * 2.0 - 1.0) * rx, (g.fy * 2.0 - 1.0) * ry),
+        None => (0.0, 0.0),
+    };
     let mut mesh = Mesh::default();
     mesh.vertices.push(Vertex {
-        pos: map(at(0.0, 0.0)),
+        pos: map(at(u0, v0)),
         uv: egui::epaint::WHITE_UV,
-        color: color_at(0.0, 0.0),
+        color: color_at(u0, v0),
     });
     for ring in 1..=rings {
         let k = ring as f32 / rings as f32;
         for s in 0..segments {
             let a = s as f32 / segments as f32 * std::f32::consts::TAU;
-            let (u, v) = (a.cos() * rx * k, a.sin() * ry * k);
+            let (eu, ev) = (a.cos() * rx, a.sin() * ry);
+            let (u, v) = (u0 + (eu - u0) * k, v0 + (ev - v0) * k);
             mesh.vertices.push(Vertex {
                 pos: map(at(u, v)),
                 uv: egui::epaint::WHITE_UV,

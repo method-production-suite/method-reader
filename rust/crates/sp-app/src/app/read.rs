@@ -3,7 +3,7 @@
 
 use egui::{Id, Key, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType, accesskit};
 
-use super::preview::{lay_out, paint};
+use super::bookview::{Place as Shown, sheet};
 use super::widgets::{self, Look};
 use super::{App, convert};
 use crate::model::device::SEND_BOOK;
@@ -113,9 +113,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     let Some(script) = app.script.clone() else {
         return;
     };
-    let Some(preview) = script.preview.clone() else {
-        return;
-    };
+    let html = script.preview_html.clone();
     // The head: the title, the author, the index toggle, Send.
     ui.horizontal_wrapped(|ui| {
         ui.vertical(|ui| {
@@ -164,7 +162,21 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     });
     let height = layout::script_height(window.x, window.y);
     let top = ui.cursor().min;
-    let entries = rail_entries(&preview);
+    // The book, laid out at the script column's width: its scenes feed the
+    // index, its slices are what is read.
+    let book_width = if geometry.stacked {
+        block.width
+    } else {
+        geometry.script.width
+    } - 2.0;
+    let dark = app.dark;
+    let scenes = app
+        .views
+        .get(Shown::Read, &html, book_width, &t, dark)
+        .book
+        .scenes
+        .clone();
+    let entries = rail_entries(&scenes);
     let mut rail_bottom = top.y;
     if app.read.index_open {
         let rail_rect = if geometry.stacked {
@@ -193,7 +205,8 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         n.set_label(format!("{}, the script", script.title));
     });
     app.stop(stage.id, true);
-    super::preview::sheet(ui, &t, script_rect);
+    sheet(ui, &t, script_rect);
+    widgets::own_arrows(ui, stage.id);
     if stage.has_focus() {
         ui.painter().rect_stroke(
             script_rect.expand(2.0),
@@ -224,13 +237,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
             });
         }
     }
-    let laid = lay_out(ui, &t, &preview, script_rect.width());
-    app.read.marks = laid.marks.clone();
-    app.read.content_height = laid.height;
+    let view = app.views.get(Shown::Read, &html, book_width, &t, dark);
+    let marks = view.marks();
+    let content = view.book.height;
+    app.read.marks = marks.clone();
+    app.read.content_height = content;
     app.read.frame_height = height;
     if app.read.restore {
         app.read.restore = false;
-        app.read.scroll_to = Some(scroll_target(&laid.marks, app.read.place.as_ref()));
+        app.read.scroll_to = Some(scroll_target(&marks, app.read.place.as_ref()));
     }
     let mut area = egui::ScrollArea::vertical()
         .id_salt("script-frame")
@@ -243,20 +258,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         egui::UiBuilder::new().max_rect(script_rect.shrink(1.0)),
         |ui| {
             area.show(ui, |ui| {
-                let (rect, _) = ui.allocate_exact_size(
-                    Vec2::new(script_rect.width() - 2.0, laid.height),
-                    Sense::hover(),
-                );
-                paint(ui, &laid, rect.min, ui.clip_rect(), &t, |_| true);
-                // The script's words, block by block, for the screen reader.
-                for (i, placed) in laid.blocks.iter().enumerate() {
-                    let r =
-                        Rect::from_min_size(rect.min + placed.pos.to_vec2(), placed.galley.size());
-                    let node = ui.interact(r, Id::new(("script-block", i)), Sense::hover());
-                    node.widget_info(|| {
-                        WidgetInfo::labeled(WidgetType::Label, true, &placed.words)
-                    });
+                let (rect, _) =
+                    ui.allocate_exact_size(Vec2::new(book_width, content), Sense::hover());
+                // Only the slice on screen is painted.
+                let visible = ui.clip_rect().intersect(rect);
+                if visible.height() > 0.0 {
+                    view.paint_slice(ui, "read", visible, visible.top() - rect.top());
                 }
+                // The script's words, block by block, for the screen reader.
+                view.speak(ui, "read", rect.min, visible);
             })
         },
     );
@@ -365,6 +375,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     {
                         app.read.scroll_to = Some(mark.top);
                     }
+                    widgets::own_arrows(ui, r.id);
                     if r.has_focus() {
                         let key = ui.input(|i| {
                             [
@@ -391,6 +402,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
     });
     ui.ctx().accesskit_node_builder(nav.response.id, |n| {
         n.set_role(accesskit::Role::Navigation);
+        n.set_bounds(widgets::bounds(nav.response.rect));
         n.set_label("Scenes");
     });
 }

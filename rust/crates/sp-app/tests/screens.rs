@@ -116,7 +116,7 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
         ]
     );
     h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
-    assert!(has_value(&h, "18 pages, 2 scenes"));
+    assert!(has_value(&h, "19 pages, 11 scenes"));
     h.get_by_role_and_label(Role::Heading, "WHAT DO YOU READ ON?");
     for name in [
         "Kindle",
@@ -136,6 +136,34 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
     );
     for link in ["Read it", "Settings", "Convert another"] {
         h.get_by_role_and_label(Role::Button, link);
+    }
+}
+
+// desktop-layout-measured.test.ts: "every card sits inside the panel"
+#[test]
+fn the_device_cards_do_not_overlap() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    let names = [
+        "Kindle",
+        "iPhone, iPad or Mac",
+        "Kobo",
+        "tolino",
+        "reMarkable",
+        "My device isn’t here",
+    ];
+    let rects: Vec<egui::Rect> = names
+        .iter()
+        .map(|n| h.get_by_role_and_label(Role::Button, n).rect())
+        .collect();
+    for (i, a) in rects.iter().enumerate() {
+        for b in &rects[i + 1..] {
+            assert!(
+                !a.shrink(0.5).intersects(b.shrink(0.5)),
+                "{a:?} overlaps {b:?}"
+            );
+        }
     }
 }
 
@@ -214,10 +242,7 @@ fn an_engine_that_cannot_run_is_a_refusal_with_its_sentence() {
     let w = world();
     w.engine.once(
         "convert",
-        Reply {
-            answer: Err("could not start the Screepub engine".into()),
-            preview: None,
-        },
+        Reply::failed("could not start the Screepub engine"),
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
@@ -231,10 +256,7 @@ fn a_dead_engine_says_so_and_keeps_the_stamp() {
     let w = world();
     w.engine.once(
         "version",
-        Reply {
-            answer: Err("could not start the Screepub engine".into()),
-            preview: None,
-        },
+        Reply::failed("could not start the Screepub engine"),
     );
     let h = harness(&w, Platform::Mac);
     assert!(has_value(&h, "could not start the Screepub engine"));
@@ -409,16 +431,19 @@ fn read_shows_the_script_with_its_scene_index() {
     h.get_by_role_and_label(Role::Tab, "Read").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Heading, "FIELD STATION");
-    assert!(has_value(&h, "by A. Writer"));
+    assert!(has_value(&h, "by the Screepub project"));
     let toggle = h.get_by_role_and_label(Role::Button, "Hide scenes");
     assert_eq!(toggle.accesskit_node().data().is_expanded(), Some(true));
     h.get_by_role_and_label(Role::Navigation, "Scenes");
-    assert!(has_value(&h, "2 SCENES"));
-    h.get_by_role_and_label(Role::Button, "INT. FIELD STATION – DAY");
-    h.get_by_role_and_label(Role::Button, "EXT. FIELD STATION - ROOF – NIGHT");
+    assert!(has_value(&h, "11 SCENES"));
+    h.get_by_role_and_label(Role::Button, "EXT. RIDGE ROAD – DAY");
+    h.get_by_role_and_label(
+        Role::Button,
+        "EXT. RIDGE - NIGHT".replace(" - ", " – ").as_str(),
+    );
     h.get_by_role_and_label(Role::Group, "Field Station, the script");
     assert!(
-        has_value(&h, "Again? The rain gauge was full an hour ago."),
+        has_value(&h, "Thirty-one."),
         "the script's words are readable"
     );
     toggle.click();
@@ -432,14 +457,15 @@ fn a_book_with_no_pages_says_so_and_offers_the_ways_on() {
     let w = world();
     w.engine.once(
         "convert",
-        Reply {
-            answer: Ok(sp_app::engine::default_answer(&Request::Convert {
+        Reply::ok({
+            let mut a = sp_app::engine::default_answer(&Request::Convert {
                 path: String::new(),
                 force: false,
                 options: None,
-            })),
-            preview: None,
-        },
+            });
+            a["previewHtml"] = json!("");
+            a
+        }),
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);

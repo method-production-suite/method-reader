@@ -1,25 +1,27 @@
 # The pure-Rust port (rust/, branch rust-port; plan in
 # docs/superpowers/plans/2026-10-11-pure-rust-port.md): formatting, clippy
-# with warnings as errors, and every crate's tests, on all three platforms.
+# with warnings as errors, and every crate's tests, on all three platforms;
+# the device-request Worker built for wasm32; and every installer built,
+# opened and checked with no secret at all (the job desktop.yml did for
+# the Tauri window). At the cutover ci.yml and desktop.yml go, and this is
+# the push workflow.
 #
 # The toolchain comes from rust/rust-toolchain.toml, which rustup on every
 # hosted runner installs on first use (with clippy and rustfmt), so no
 # setup action is needed and the version lives in one place.
 #
-# Separate from ci.yml for the reason desktop.yml is: a cargo build is
-# minutes, and the TypeScript engine's fast loop should not wait on it.
 # The parity harness (cargo xtask parity) is not run here: it needs bun and
 # the Rust CLI, and the real scripts it also covers never reach CI.
 #
-# Path-filtered to rust/ and this file. Safe for the reason ci.yml gives: no
-# check here is a required status. The oracle dumps the tests read live in
-# rust/oracle/, so a regenerated oracle triggers this too.
+# Path-filtered to rust/ and the files the crates read. Safe for the reason
+# ci.yml gives: no check here is a required status.
 name: rust
 on:
+  workflow_dispatch:
   push:
-    paths: ['rust/**', '.github/workflows/rust.yml', 'format-defaults.json']
+    paths: ['rust/**', '.github/workflows/rust.yml', '.github/actions/**', 'format-defaults.json', 'services/device-requests/**', 'desktop/src-tauri/icons/**', 'tools/rehearse-handover.sh']
   pull_request:
-    paths: ['rust/**', '.github/workflows/rust.yml', 'format-defaults.json']
+    paths: ['rust/**', '.github/workflows/rust.yml', '.github/actions/**', 'format-defaults.json', 'services/device-requests/**', 'desktop/src-tauri/icons/**', 'tools/rehearse-handover.sh']
 permissions:
   contents: read
 jobs:
@@ -42,6 +44,151 @@ jobs:
             rust/target
           key: rust-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
           restore-keys: rust-${{ matrix.os }}-
+      # sp-device-requests runs its SQL against real SQLite (macOS ships the
+      # tool); the window's crates need the Linux windowing headers.
+      - name: Linux tools and headers
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3 libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+
+  # The Worker as Cloudflare would build it: wasm32, workers-rs, clippy
+  # clean. Built, never deployed from here (no Cloudflare credential exists
+  # in this repository).
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo clippy -p sp-device-requests --target wasm32-unknown-unknown --locked -- -D warnings
+      - run: cargo build -p sp-device-requests --target wasm32-unknown-unknown --release --locked
+
+  # Every installer, unsigned, built and opened on its own OS: the Mac app
+  # and its update archive (signed with a THROWAWAY key, verified the way a
+  # Tauri window and the Rust app verify it), the image; the .deb installed
+  # and removed, the .rpm listed, the AppImage unpacked; the NSIS installer
+  # run silently and uninstalled. Signing, notarization and the real key
+  # are release.yml's.
+  bundles:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: bundles-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          restore-keys: bundles-${{ matrix.os }}-
+      - name: Linux packaging tools and headers
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev rpm libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
+      - name: Build the window and the release tools
+        working-directory: rust
+        run: cargo build --release --locked -p sp-app -p sp-release
+      - name: Lay out, package and check
+        run: |
+          set -euo pipefail
+          VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' rust/Cargo.toml)"
+          SP=rust/target/release/sp-release
+          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          W="$RUNNER_TEMP/bundles"
+          mkdir -p "$W"
+          case "$RUNNER_OS" in
+            macOS)
+              "$SP" mac-app --version "$VERSION" --window rust/target/release/screepub-window \
+                --icon desktop/src-tauri/icons/icon.icns "${RES[@]}" --out "$W/app"
+              "$SP" update-archive --app "$W/app/Screepub.app" --out "$W/site/Screepub-macOS.app.tar.gz"
+              "$SP" keygen --out "$W/keys/throwaway.key"
+              TAURI_SIGNING_PRIVATE_KEY="$(cat "$W/keys/throwaway.key")" TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" \
+                "$SP" sign-update --file "$W/site/Screepub-macOS.app.tar.gz" --version "$VERSION"
+              "$SP" manifest --dir "$W/site" --version "$VERSION" --out "$W/site/latest.json"
+              "$SP" verify-update --dir "$W/site" --manifest "$W/site/latest.json" \
+                --pubkey "$(cat "$W/keys/throwaway.key.pub")"
+              mkdir -p "$W/dmg"
+              cp -R "$W/app/Screepub.app" "$W/dmg/"
+              ln -s /Applications "$W/dmg/Applications"
+              hdiutil create -volname Screepub -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Screepub-macOS.dmg"
+              M="$(mktemp -d)"
+              hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Screepub-macOS.dmg"
+              [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Screepub.app/Contents/Info.plist")" = com.darkwell.screepub ]
+              test -x "$M/Screepub.app/Contents/MacOS/screepub-desktop"
+              hdiutil detach "$M"
+              ;;
+            Linux)
+              ICONS=(--icon "32x32=desktop/src-tauri/icons/32x32.png"
+                     --icon "128x128=desktop/src-tauri/icons/128x128.png"
+                     --icon "256x256@2=desktop/src-tauri/icons/128x128@2x.png")
+              D="$RUNNER_TEMP/shlibdeps"
+              mkdir -p "$D/debian"
+              printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
+              DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/rust/target/release/screepub-window" | sed -n 's/^shlibs:Depends=//p')"
+              echo "Depends: $DEPENDS"
+              "$SP" deb --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out "$W"
+              "$SP" rpm --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out "$W"
+              dpkg-deb --info "$W/Screepub-linux-amd64.deb"
+              sudo dpkg -i "$W/Screepub-linux-amd64.deb" || sudo apt-get install -f -y
+              test -x /usr/bin/screepub-desktop
+              grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
+              sudo dpkg -r screepub
+              rpm -qip "$W/Screepub-linux-x86_64.rpm"
+              rpm -qlp "$W/Screepub-linux-x86_64.rpm" | grep -qx /usr/bin/screepub-desktop
+              "$SP" appdir --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --out "$W"
+              test -x "$W/Screepub.AppDir/AppRun"
+              ;;
+            Windows)
+              STAGE="$W/nsis"
+              mkdir -p "$STAGE"
+              cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
+              cp LICENSE THIRD-PARTY-NOTICES.md desktop/src-tauri/icons/icon.ico "$STAGE/"
+              command -v makensis >/dev/null || choco install nsis -y --no-progress
+              export PATH="$PATH:/c/Program Files (x86)/NSIS"
+              "$SP.exe" nsis --version "$VERSION" --src "$(cygpath -w "$STAGE")" \
+                --setup "$(cygpath -w "$W/Screepub-windows-x64-setup.exe")" --script "$STAGE/screepub.nsi"
+              makensis -V3 "$(cygpath -w "$STAGE/screepub.nsi")"
+              "$W/Screepub-windows-x64-setup.exe" //S
+              test -f "$LOCALAPPDATA/Screepub/screepub-desktop.exe"
+              "$LOCALAPPDATA/Screepub/uninstall.exe" //S
+              ;;
+          esac
+
+  # The handover rehearsal with no window (tools/rehearse-handover.sh
+  # prepare, then prove): the Tauri window built exactly as tagged v0.11.1
+  # under a rehearsal identifier and a throwaway key, this commit's Rust app
+  # as 0.12.0, and tauri-plugin-updater 2.12.0 itself installing one over
+  # the other. On demand only (it builds the Tauri window and its Bun
+  # engine); release.yml's handover-gate runs the same check on every
+  # release against the bundle v0.11.1 actually shipped.
+  handover:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+      - run: cargo install tauri-cli --version 2.11.4 --locked
+      - name: Prepare and prove
+        run: |
+          set -euo pipefail
+          tools/rehearse-handover.sh prepare | tee "$RUNNER_TEMP/prepare.log"
+          W="$(sed -n 's/^work folder: //p' "$RUNNER_TEMP/prepare.log")"
+          tools/rehearse-handover.sh prove "$W"

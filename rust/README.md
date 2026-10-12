@@ -16,7 +16,12 @@ rust/
   crates/
     sp-model/           parser types, FormatOptions and presets, the fountain-js token shape
     xtask/              the oracle and parity commands
+    sp-update/          the updater: latest.json, minisign, the bundle swap, the restart
+    sp-release/         the release tools (binary sp-release): layouts, update archive, latest.json
+    sp-device-requests/ the device-request Worker (workers-rs, wasm32; not deployed)
     ...                 one folder per crate in the plan's table, as each lands
+  handover-proof/       the Tauri window's own updater, headless: the release's
+                        handover gate (its own workspace; tools/rehearse-handover.sh)
   oracle/               the TypeScript engine's answers for tests/fixtures (committed)
   oracle-real/          the same for the real scripts in root fixtures/ (gitignored)
   PARITY.md             every TypeScript test file and window feature, and who ports it

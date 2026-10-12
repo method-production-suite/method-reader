@@ -6,14 +6,13 @@ use egui::{FontId, Id, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType};
 use serde_json::Value;
 
 use super::App;
-use super::preview::{BOOK_SIZE, Laid, mix, sheet};
+use super::bookview::{BOOK_EM, View, mix, sheet};
 use super::widgets;
 use crate::model::layout;
 use crate::model::page_show::{FADE_MS, HEADING, Reading, align_blocks, reading_line};
 use crate::model::page_timing::{
     Frame, GLOW_MS, Heard, Plan, form_at, frame_at, plan_show, sounds_due,
 };
-use crate::model::preview::Preview;
 use crate::model::read::PAGE_MARGIN_INLINE_PCT;
 use crate::theme::{self, Tokens, size};
 
@@ -68,15 +67,16 @@ impl Show {
     }
 
     /// The book exists: pair the typed paragraphs with its blocks.
-    pub fn adopt(&mut self, preview: Option<&Preview>, now: f64) {
+    /// `book` is the words of the book's headings and paragraphs (`h2, p`)
+    /// in order, without their page marks; None when it sent no pages.
+    pub fn adopt(&mut self, book: Option<&[String]>, now: f64) {
         if self.over {
             return;
         }
-        self.sources = Some(match preview {
-            Some(p) => {
+        self.sources = Some(match book {
+            Some(words) => {
                 let typed: Vec<String> = self.plan.blocks.iter().map(|b| b.text.clone()).collect();
-                let book: Vec<String> = p.blocks().iter().map(|b| b.words()).collect();
-                align_blocks(&typed, &book)
+                align_blocks(&typed, words)
             }
             None => vec![],
         });
@@ -249,19 +249,21 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span) {
 }
 
 /// The typed page: each paragraph as far as it is typed, plain and left
-/// aligned; a formed block in the book's own form, glowing brass.
+/// aligned; a formed block in the book's own form (its slice of the book,
+/// as Blitz drew it), glowing brass.
 pub fn paint_typed(
     ui: &Ui,
     t: &Tokens,
     rect: Rect,
     show: &Show,
-    book: Option<(&Preview, &Laid)>,
+    mut book: Option<&mut View>,
     opacity: f32,
 ) {
     if opacity <= 0.0 {
         return;
     }
-    let painter = ui.painter().with_clip_rect(rect.shrink(1.0));
+    let clip = rect.shrink(1.0);
+    let painter = ui.painter().with_clip_rect(clip);
     sheet(
         ui,
         &Tokens {
@@ -274,7 +276,7 @@ pub fn paint_typed(
     let frame = show.frame();
     let inline = rect.width() * PAGE_MARGIN_INLINE_PCT / 100.0;
     let width = rect.width() - 2.0 * inline;
-    let mut y = rect.top() + 1.5 * BOOK_SIZE;
+    let mut y = rect.top() + 1.5 * BOOK_EM;
     let t_ms = show.now - show.start;
     for (i, block) in show.plan.blocks.iter().enumerate() {
         let formed = i < frame.formed;
@@ -288,14 +290,10 @@ pub fn paint_typed(
             .sources
             .as_ref()
             .and_then(|s| s.get(i).copied().flatten());
-        if formed && let (Some(j), Some((_, laid))) = (source, book) {
-            let placed = &laid.blocks[j];
-            painter.galley_with_override_text_color(
-                Pos2::new(rect.left() + placed.pos.x, y),
-                placed.galley.clone(),
-                ink,
-            );
-            y += placed.galley.size().y + BOOK_SIZE;
+        if formed && let (Some(j), Some(view)) = (source, book.as_deref_mut()) {
+            let tint = mix(egui::Color32::WHITE, t.brass, glow * 0.6).gamma_multiply(opacity);
+            let h = view.paint_block(ui, j, Pos2::new(rect.left(), y), clip, tint);
+            y += h + BOOK_EM;
             continue;
         }
         let shown = if show.skipped {
@@ -306,24 +304,31 @@ pub fn paint_typed(
         let mut job = LayoutJob::single_section(
             shown,
             TextFormat {
-                font_id: FontId::new(BOOK_SIZE, egui::FontFamily::Name(theme::STRUCTURE.into())),
+                font_id: FontId::new(BOOK_EM, egui::FontFamily::Name(theme::STRUCTURE.into())),
                 color: ink,
                 ..Default::default()
             },
         );
         job.wrap.max_width = width;
         let galley = ui.fonts_mut(|f| f.layout_job(job));
-        let h = galley.size().y.max(BOOK_SIZE);
+        let h = galley.size().y.max(BOOK_EM);
         painter.galley(Pos2::new(rect.left() + inline, y), galley, ink);
-        y += h + BOOK_SIZE;
+        y += h + BOOK_EM;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::engine::sample_preview;
     use serde_json::json;
+
+    fn book() -> Vec<String> {
+        vec![
+            "EXT. RIDGE ROAD - DAY".into(),
+            "DELACROIX".into(),
+            "Thirty-one.".into(),
+        ]
+    }
 
     fn paragraphs() -> Vec<String> {
         vec![
@@ -338,7 +343,7 @@ mod tests {
         let mut show = Show::begin(&paragraphs(), "a.pdf".into(), 0.0, true);
         show.tick(2000.0);
         assert!(show.running() && show.keys > 0);
-        show.adopt(Some(&sample_preview()), 2500.0);
+        show.adopt(Some(&book()), 2500.0);
         show.tick(4000.0 + 1200.0 + 600.0 + 1.0);
         show.tick(4000.0 + 1200.0 + 600.0 + 100.0);
         assert!(show.running(), "lifting away");
@@ -353,7 +358,7 @@ mod tests {
         show.tick(100.0);
         show.press(100.0);
         assert!(show.running());
-        show.adopt(Some(&sample_preview()), 300.0);
+        show.adopt(Some(&book()), 300.0);
         assert!(!show.running(), "over the moment the book is there");
         assert_eq!(show.page_opacity(), 0.0);
     }
