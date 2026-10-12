@@ -15,6 +15,9 @@
 #   (the project's stated validity gate), and cargo xtask smoke-cli; and
 #   the release notes for the workspace version exist.
 # - worker: the device-request Worker built for wasm32, clippy clean.
+# - deny: cargo deny check against rust/deny.toml: every advisory is an
+#   error unless deny.toml lists it with a reason, only the licenses the
+#   notices name, crates.io and the two pinned git sources only.
 # - bundles: every installer built unsigned, opened and checked on its own
 #   OS, with the window's headless smoke run out of the Mac app.
 #
@@ -152,6 +155,23 @@ jobs:
       - run: rustup target add wasm32-unknown-unknown
       - run: cargo clippy -p sp-device-requests --target wasm32-unknown-unknown --locked -- -D warnings
       - run: cargo build -p sp-device-requests --target wasm32-unknown-unknown --release --locked
+
+  deny:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-deny
+          key: cargo-deny-0.20.2-${{ runner.os }}
+      # Built from crates.io at a pinned version with its own lock file,
+      # rather than through a third-party action.
+      - name: Install cargo-deny
+        run: command -v cargo-deny >/dev/null || cargo install cargo-deny --version 0.20.2 --locked
+      - run: cargo deny check
 
   # Every installer, unsigned, built and opened on its own OS: the Mac app
   # and its update archive (signed with a THROWAWAY key, verified the way a

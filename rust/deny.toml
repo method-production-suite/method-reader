@@ -1,0 +1,81 @@
+# cargo-deny: what the workspace may depend on. Run from rust/:
+#   cargo deny check
+# rust.yml runs it on every push. Changing a list here is a decision: say
+# why in the commit, and keep THIRD-PARTY-NOTICES.md in step.
+
+[graph]
+# Every platform Screepub ships for, and the Worker's wasm32: a crate only
+# one of them pulls in is still a crate the release carries.
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-pc-windows-msvc",
+  "wasm32-unknown-unknown",
+]
+all-features = true
+
+[advisories]
+# Every advisory is an error unless it is listed here, with its reason.
+# These three were known at the cutover (2026-10-12). None is a
+# vulnerability; each says a crate is no longer maintained.
+ignore = [
+  # proc-macro-error 1.0.4: a build-time macro helper inside glib-macros,
+  # which reaches the lock file only through GTK, through muda, which
+  # sp-app builds for macOS alone (where muda does not use GTK). Nothing
+  # Screepub ships runs it. Goes when muda moves off gtk-rs 0.18.
+  { id = "RUSTSEC-2024-0370", reason = "build-time macro via muda's Linux-only GTK, which sp-app never builds on Linux" },
+  # ttf-parser 0.25.1: read through ab_glyph by sctk-adwaita, the window
+  # frame winit draws on Wayland. It parses only the fonts the system
+  # offers for the title bar. No fixed release exists; goes with winit's
+  # move off ab_glyph.
+  { id = "RUSTSEC-2026-0192", reason = "winit's Wayland title-bar fonts via sctk-adwaita; no maintained release to move to yet" },
+  # unsafe-libyaml 0.2.11: serde_yaml, a dev-dependency of xtask that reads
+  # the workflow files in its tests. It never ships.
+  { id = "RUSTSEC-2024-0449", reason = "xtask's tests only (serde_yaml reads .github/workflows); never shipped" },
+]
+
+[licenses]
+# The licenses the dependencies carry today, all named in
+# THIRD-PARTY-NOTICES.md. A dependency under any other fails the check.
+allow = [
+  "0BSD",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  # Only notify, through mtp-rs, in sp-mtp, which no release ships yet (the
+  # MTP route is off until hardware day); the notices name it when it ships.
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "ISC",
+  "MIT",
+  "MPL-2.0",
+  "OFL-1.1",
+  "Ubuntu-font-1.0",
+  "Unicode-3.0",
+  "Unlicense",
+  "Zlib",
+]
+confidence-threshold = 0.9
+# Screepub's own crates (AGPL-3.0-or-later, never published).
+private = { ignore = true }
+
+[bans]
+# The window's stack (wgpu, winit, blitz, the accessibility crates) pulls
+# several versions of some crates; that is not a policy question here.
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+# Blitz, the book preview's HTML renderer, pinned to one revision in
+# sp-app's Cargo.toml (no crates.io release has what the preview needs),
+# and the taffy revision that blitz revision pins in turn.
+allow-git = [
+  "https://github.com/DioxusLabs/blitz",
+  "https://github.com/DioxusLabs/taffy",
+]

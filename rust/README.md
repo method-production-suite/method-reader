@@ -15,6 +15,7 @@ feature and where its checks live now, with the decisions taken on the way.
 rust/
   Cargo.toml            the workspace; the one version file; shared dependency versions
   rust-toolchain.toml   the pinned toolchain (rustup installs it on first use)
+  deny.toml             cargo deny check: advisories, licenses, sources (rust.yml runs it)
   .cargo/config.toml    the `cargo xtask` alias
   crates/
     sp-model/           parser types, FormatOptions and presets, the token shape
@@ -51,10 +52,11 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo xtask parity --committed-only   # add the real scripts by leaving the flag off
+cargo deny check                      # advisories, licenses, sources (rust/deny.toml)
 ```
 
-CI runs the first three on Linux, macOS and Windows, and the parity on
-macOS (.github/workflows/rust.yml).
+CI runs the first three on Linux, macOS and Windows, the parity on macOS,
+and cargo deny on Linux (.github/workflows/rust.yml).
 
 ## The oracle: the TypeScript's answers, frozen
 
