@@ -11,5 +11,9 @@ publish = false
 workspace = true
 
 [dependencies]
+# Look-behind, for Python textwrap's word separator (src/fixture/textwrap.rs).
+fancy-regex = "0.16"
+# zlib-rs at level 9 deflates make-fixture's pictures byte for byte as zlib 1.2.12 does.
+flate2.workspace = true
 serde_json.workspace = true
 zip.workspace = true
