@@ -5312,6 +5312,7 @@ dependencies = [
  "rfd",
  "serde_json",
  "sp-cli",
+ "sp-device",
  "sp-update",
  "tempfile",
  "unicode-general-category",

@@ -275,6 +275,7 @@ mod tests {
             kind: "kobo".into(),
             name: "Kobo".into(),
             volume: None,
+            ..Default::default()
         };
         assert!(show_setup(Some(&list), Some(&[]), false, false));
         assert!(!show_setup(

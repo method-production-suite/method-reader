@@ -1511,6 +1511,10 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             if r::is_device_route_key(&act.route.key) {
                 plugged_in_mark(ui, &t);
             }
+            // A Kindle over MTP wears the badge beside its brass button.
+            if r::is_beta_device(act.route.device.as_ref()) {
+                widgets::beta_badge(ui, &t);
+            }
         }
         if offer.as_ref().is_some_and(|o| o.unproven) {
             asterisk(app, ui, kind);
@@ -1708,7 +1712,9 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
                     theme::structure_bold(size::UI),
                     if route.available { t.ink } else { t.ink_muted },
                 );
-                if kindle_file_is_beta(route, app.panel.kindle.as_ref()) {
+                if kindle_file_is_beta(route, app.panel.kindle.as_ref())
+                    || r::is_beta_device(route.device.as_ref())
+                {
                     widgets::beta_badge(ui, &t);
                 }
                 if let Some(kind) = &kind

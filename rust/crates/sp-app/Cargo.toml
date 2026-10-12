@@ -49,6 +49,8 @@ sp-cli = { path = "../sp-cli" }
 [dev-dependencies]
 egui_kittest = "0.36.2"
 tempfile = "3"
+# The engine's own words about camera import, for the MTP window rules.
+sp-device = { path = "../sp-device" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 arboard = { version = "3.6", default-features = false }
