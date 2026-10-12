@@ -9,7 +9,6 @@
 pub mod compare;
 #[path = "../../sp-engine/tests/common/machine.rs"]
 pub mod machine;
-pub mod oracle;
 pub mod parity;
 pub mod paths;
 pub mod table;
@@ -40,10 +39,6 @@ pub struct Command {
     pub main: fn(&[String]) -> u8,
 }
 
-fn oracle_main(args: &[String]) -> u8 {
-    exit_of(oracle::run(args), "oracle")
-}
-
 fn parity_main(args: &[String]) -> u8 {
     exit_of(parity::run(args), "parity")
 }
@@ -63,11 +58,6 @@ fn exit_of(result: Result<bool, String>, name: &str) -> u8 {
 
 /// Every command, in the order `cargo xtask --help` lists them.
 pub const COMMANDS: &[Command] = &[
-    Command {
-        name: "oracle",
-        help: "regenerate the TypeScript oracle dumps [--committed-only] [--real <dir>]",
-        main: oracle_main,
-    },
     Command {
         name: "parity",
         help: "run the Rust CLI over every fixture against the TypeScript's frozen answers (see --help)",

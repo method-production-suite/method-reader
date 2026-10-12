@@ -2,7 +2,7 @@
 //! preload checks in tests/app-settings.test.ts: no test reaches the real
 //! settings file or the real Calibre settings folder.
 //!
-//! The TypeScript's guard is an environment mutated in a preload plus root
+//! The TypeScript's guard was an environment mutated in a preload plus root
 //! `.env.test`. Here the engine takes its environment as a value, so the
 //! guard is what tests hand it (common::guarded_env, common::calibre_env)
 //! and a check that no test reaches for this process's own environment.
@@ -19,30 +19,29 @@ use common::{
     CALIBRE_GUARD, SETTINGS_GUARD, calibre_config_copy, calibre_env, real_calibre_config,
 };
 
-fn env_test_value(name: &str) -> String {
-    let text = common::read(&common::repo_root().join(".env.test").to_string_lossy());
-    text.lines()
-        .find_map(|l| l.strip_prefix(&format!("{name}=")))
-        .unwrap_or_else(|| panic!("{name} is in .env.test"))
-        .to_owned()
-}
-
-#[test]
-fn the_settings_guard_is_the_one_in_env_test() {
-    assert_eq!(env_test_value("SCREEPUB_CONFIG_DIR"), SETTINGS_GUARD);
-}
-
-#[test]
-fn the_calibre_guard_is_the_one_in_env_test_and_tools() {
-    assert_eq!(env_test_value("CALIBRE_CONFIG_DIRECTORY"), CALIBRE_GUARD);
-    let tools = common::read(
-        &common::repo_root()
-            .join("tools/calibre-config.ts")
-            .to_string_lossy(),
+/// A guard is a path under /dev/null: nothing can be created there, so a
+/// settings write or a Calibre start that reaches it fails loudly instead of
+/// touching a real folder. (The TypeScript's guards lived in root .env.test
+/// and tools/calibre-config.ts, with these same values.)
+fn assert_uncreatable(guard: &str) {
+    assert!(guard.starts_with("/dev/null/"), "{guard}");
+    #[cfg(unix)]
+    assert!(
+        std::fs::create_dir_all(guard).is_err(),
+        "{guard} could be made"
     );
-    assert!(tools.contains(&format!(
-        "export const CALIBRE_CONFIG_GUARD = '{CALIBRE_GUARD}';"
-    )));
+}
+
+#[test]
+fn the_settings_guard_is_a_path_nothing_can_create() {
+    assert_eq!(SETTINGS_GUARD, "/dev/null/screepub-test-guard");
+    assert_uncreatable(SETTINGS_GUARD);
+}
+
+#[test]
+fn the_calibre_guard_is_a_path_nothing_can_create() {
+    assert_eq!(CALIBRE_GUARD, "/dev/null/screepub-test-calibre-guard");
+    assert_uncreatable(CALIBRE_GUARD);
 }
 
 fn canonical(p: &Path) -> std::path::PathBuf {

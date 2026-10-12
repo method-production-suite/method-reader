@@ -1,32 +1,21 @@
 //! The Rust app must trust the key and ask the endpoint every Tauri window
-//! was built with, or the first Rust release strands one side. Read from
-//! desktop/src-tauri/tauri.conf.json while that file exists; at the cutover
-//! (wave 4) it is deleted with the window and this test goes with it.
+//! was built with, or the first Rust release strands one side. The values
+//! below are desktop/src-tauri/tauri.conf.json's as shipped in 0.11.1 (the
+//! file went with the Tauri window at the cutover; `git show
+//! v0.11.1:desktop/src-tauri/tauri.conf.json` has it). No window ever set
+//! `requireSignedVersion` or `dangerousInsecureTransportProtocol`, so the
+//! Rust release may rely on their defaults.
 
-use std::path::Path;
+/// `identifier`, `plugins.updater.pubkey` and `plugins.updater.endpoints`
+/// of every Tauri window from 0.7.1 to 0.11.1.
+const TAURI_IDENTIFIER: &str = "com.darkwell.screepub";
+const TAURI_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU0RDA2NjhENTRGNkVCMzQKUldRMDYvWlVqV2JRNUQzRkpQMmVJZlQ4bTdaT2M5cmN2V05oVTJGdURUY0NwRDBRbEQ1c013UnYK";
+const TAURI_ENDPOINTS: &[&str] =
+    &["https://github.com/ssandweiss/screepub/releases/latest/download/latest.json"];
 
 #[test]
 fn the_constants_are_the_tauri_window_s() {
-    let conf =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../desktop/src-tauri/tauri.conf.json");
-    let text = std::fs::read_to_string(&conf).expect("desktop/src-tauri/tauri.conf.json");
-    let v: serde_json::Value = serde_json::from_str(&text).unwrap();
-    assert_eq!(v["identifier"], sp_update::IDENTIFIER);
-    assert_eq!(v["plugins"]["updater"]["pubkey"], sp_update::PUBKEY);
-    assert_eq!(
-        v["plugins"]["updater"]["endpoints"],
-        serde_json::json!([sp_update::ENDPOINT])
-    );
-    // No window ever turned these on, so the Rust release may rely on
-    // their defaults (the signed version is optional for a window).
-    assert!(
-        v["plugins"]["updater"]
-            .get("requireSignedVersion")
-            .is_none()
-    );
-    assert!(
-        v["plugins"]["updater"]
-            .get("dangerousInsecureTransportProtocol")
-            .is_none()
-    );
+    assert_eq!(sp_update::IDENTIFIER, TAURI_IDENTIFIER);
+    assert_eq!(sp_update::PUBKEY, TAURI_PUBKEY);
+    assert_eq!(&[sp_update::ENDPOINT], TAURI_ENDPOINTS);
 }

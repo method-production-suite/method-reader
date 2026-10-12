@@ -1,8 +1,8 @@
 # The device-request service, Rust edition (workers-rs, compiled to wasm).
-# Same Worker name, same database and same rate-limit binding as
-# services/device-requests/wrangler.toml, so deploying this REPLACES the
-# TypeScript Worker at the same address; tests/worker.rs holds the two
-# files together. Not deployed: see docs/superpowers/specs/
+# Same Worker name, same database and same rate-limit binding as the
+# TypeScript Worker's wrangler.toml had, so deploying this REPLACES that
+# Worker at the same address; tests/worker.rs holds them to those values.
+# Not deployed yet: see docs/superpowers/specs/
 # 2026-10-11-rust-release-design.md, part f, for what that takes.
 name = "screepub-device-requests"
 main = "build/worker/shim.mjs"

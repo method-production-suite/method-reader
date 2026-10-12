@@ -17,7 +17,7 @@
 use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
-use serde_json::{Value, json};
+use serde_json::Value;
 
 use super::TsRun;
 
@@ -121,33 +121,4 @@ pub fn answer(key: &str, root: &str, argv: &[&str]) -> Frozen {
         },
         files,
     }
-}
-
-/// The JSON a frozen case is stored as (the recorder writes it).
-pub fn encode(
-    argv: &[&str],
-    run: &TsRun,
-    files: Option<&[(String, Vec<u8>)]>,
-    root: &str,
-) -> Value {
-    let enc = |t: &str| t.replace(root, "$ROOT");
-    let mut v = json!({
-        "argv": argv.iter().map(|a| enc(a)).collect::<Vec<_>>(),
-        "stdout": enc(&run.stdout),
-        "stderr": enc(&run.stderr),
-        "code": run.code,
-    });
-    if let Some(files) = files {
-        v["files"] = files
-            .iter()
-            .map(|(path, bytes)| match std::str::from_utf8(bytes) {
-                Ok(t) => json!({ "path": path, "text": enc(t) }),
-                Err(_) => json!({
-                    "path": path,
-                    "hex": bytes.iter().map(|b| format!("{b:02x}")).collect::<String>(),
-                }),
-            })
-            .collect();
-    }
-    v
 }

@@ -1,6 +1,6 @@
 //! Shared by every test file: scratch folders, the guards that keep tests
 //! away from the real settings file and the real Calibre folder, and the
-//! runner for the TypeScript CLI the parity tests compare against.
+//! TypeScript CLI's frozen answers the parity tests compare against.
 //!
 //! THE GUARDS, in Rust. The TypeScript suite guards by mutating
 //! `process.env` in a preload and by root `.env.test`. Rust tests are
@@ -183,22 +183,7 @@ pub fn calibre_env() -> Env {
     )
 }
 
-/// Whether the TypeScript engine can be run here: bun on PATH and the
-/// repo's node_modules installed. CI's rust job has neither, so the parity
-/// tests skip there, saying so.
-pub fn bun_available() -> bool {
-    static AVAILABLE: OnceLock<bool> = OnceLock::new();
-    *AVAILABLE.get_or_init(|| {
-        repo_root().join("node_modules").exists()
-            && repo_root().join("src/cli.ts").exists()
-            && Command::new("bun")
-                .arg("--version")
-                .output()
-                .is_ok_and(|o| o.status.success())
-    })
-}
-
-/// What one TypeScript CLI run printed.
+/// What one TypeScript CLI run printed (frozen: see [`frozen`]).
 #[derive(Debug, Clone)]
 pub struct TsRun {
     pub stdout: String,
@@ -216,72 +201,6 @@ impl TsRun {
             )
         })
     }
-}
-
-/// `bun src/cli.ts <args>` from the repo root, with exactly `env` (plus
-/// HOME, which bun needs for its own cache, unless `env` names one). The
-/// settings and Calibre folders are whatever `env` says: a parity test
-/// always passes its own scratch folder and either the Calibre guard or
-/// [`calibre_env`]'s copy.
-pub fn ts_cli(args: &[&str], env: &Env) -> TsRun {
-    let mut command = Command::new("bun");
-    command
-        .arg("src/cli.ts")
-        .args(args)
-        .current_dir(repo_root())
-        .env_clear()
-        .envs(env.vars());
-    if env.get("HOME").is_none()
-        && let Some(home) = std::env::var_os("HOME")
-    {
-        command.env("HOME", home);
-    }
-    let out = command.output().expect("bun runs");
-    TsRun {
-        stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
-        stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
-        code: out.status.code().unwrap_or(-1),
-    }
-}
-
-/// Skip a parity test where the TypeScript cannot run, saying so.
-#[macro_export]
-macro_rules! require_bun {
-    () => {
-        if !$crate::common::bun_available() {
-            eprintln!("skipped: bun or node_modules is not available here");
-            return;
-        }
-    };
-}
-
-/// Whether this run records the TypeScript's answers instead of comparing
-/// against the frozen ones (SCREEPUB_RECORD_FROZEN=1, with bun and
-/// node_modules present). Recording rewrites tests/data/parity-cli.json.
-pub fn recording() -> bool {
-    std::env::var_os("SCREEPUB_RECORD_FROZEN").is_some()
-}
-
-/// Add one recorded answer to tests/data/parity-cli.json, with the facts of
-/// the machine it was recorded on.
-pub fn record(key: &str, value: serde_json::Value) {
-    use std::sync::Mutex;
-    static LOCK: Mutex<()> = Mutex::new(());
-    let _held = LOCK
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let file = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/parity-cli.json");
-    let mut all: std::collections::BTreeMap<String, serde_json::Value> =
-        std::fs::read_to_string(&file)
-            .ok()
-            .and_then(|t| serde_json::from_str(&t).ok())
-            .unwrap_or_default();
-    all.insert("$machine".into(), machine::facts(None));
-    all.insert(key.to_owned(), value);
-    std::fs::create_dir_all(file.parent().unwrap()).expect("mkdir");
-    let mut text = serde_json::to_string_pretty(&all).expect("json");
-    text.push('\n');
-    std::fs::write(&file, text).expect("write the frozen answers");
 }
 
 /// Write a file, making its folder.

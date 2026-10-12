@@ -1,42 +1,25 @@
-//! The help texts are src/cli.ts's, word for word, while the TypeScript
-//! exists to be read (src/usage.rs is generated from it): every verb's
-//! `--help` prints the text between that constant's backticks.
+//! The help texts are src/cli.ts's, word for word: every verb's `--help`
+//! prints the text between that constant's backticks. src/usage.rs was
+//! generated from it; the texts themselves were read out of src/cli.ts the
+//! day it was deleted (tests/data/typescript-usage.json, one per USAGE
+//! constant, unescaped as the template literal unescapes them).
 
 mod common;
 
-use common::{Sandbox, repo_root};
+use common::Sandbox;
 
-/// Every `const NAME_USAGE = \`...\`` in src/cli.ts, unescaped.
+/// Every `const NAME_USAGE = \`...\`` src/cli.ts had, unescaped.
 fn typescript_usages() -> Vec<(String, String)> {
-    let Ok(src) = std::fs::read_to_string(repo_root().join("src/cli.ts")) else {
-        return Vec::new();
-    };
-    let mut out = Vec::new();
-    let mut rest = src.as_str();
-    while let Some(i) = rest.find("const ") {
-        rest = &rest[i + 6..];
-        let Some(eq) = rest.find(" = `") else { break };
-        let name = &rest[..eq];
-        if !name.ends_with("USAGE") || name.contains(char::is_whitespace) {
-            continue;
-        }
-        let body = &rest[eq + 4..];
-        let mut text = String::new();
-        let mut chars = body.chars();
-        while let Some(c) = chars.next() {
-            match c {
-                '\\' => {
-                    if let Some(n) = chars.next() {
-                        text.push(n);
-                    }
-                }
-                '`' => break,
-                _ => text.push(c),
-            }
-        }
-        out.push((name.to_owned(), text));
-    }
-    out
+    let v: Vec<serde_json::Value> =
+        serde_json::from_str(include_str!("data/typescript-usage.json")).expect("JSON");
+    v.iter()
+        .map(|u| {
+            (
+                u["name"].as_str().unwrap().to_owned(),
+                u["text"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect()
 }
 
 fn verb_of(name: &str) -> Option<&'static str> {
@@ -61,10 +44,6 @@ fn verb_of(name: &str) -> Option<&'static str> {
 #[test]
 fn every_help_text_is_the_typescripts_word_for_word() {
     let usages = typescript_usages();
-    if usages.is_empty() {
-        eprintln!("src/cli.ts is gone: nothing to compare the help texts with");
-        return;
-    }
     assert_eq!(usages.len(), 14, "the conversion's and 13 verbs'");
     let sb = Sandbox::new();
     for (name, text) in usages {

@@ -10,7 +10,7 @@
 
 mod common;
 
-use common::{Sandbox, Tablet, book_at, repo_root};
+use common::{Sandbox, Tablet, book_at};
 use serde_json::{Value, json};
 
 /// A sandbox whose mount parent holds one invented Kobo.
@@ -363,15 +363,12 @@ fn json_help_emits_json_with_ok_true_and_non_empty_usage() {
 
 #[test]
 fn json_version_emits_json_with_ok_true_and_matching_version() {
-    let pkg: Value =
-        serde_json::from_str(&std::fs::read_to_string(repo_root().join("package.json")).unwrap())
-            .unwrap();
     let sb = Sandbox::new();
     let ran = sb.run(&["--json", "--version"]);
     assert_eq!(ran.code, 0);
     let result = ran.json();
     assert_eq!(result["ok"], true);
-    assert_eq!(result["version"], pkg["version"]);
+    assert_eq!(result["version"], env!("CARGO_PKG_VERSION"));
 }
 
 #[test]

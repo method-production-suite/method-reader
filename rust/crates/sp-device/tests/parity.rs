@@ -27,17 +27,9 @@ use sp_device::process::{Opener, OpenerOutput, RunOutput, Runner};
 use sp_device::volumes::mounted_devices;
 use sp_device::{CliError, Platform, commands::devices_command, reveal::reveal_command};
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::path::PathBuf;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-
-fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .join("..")
-}
 
 /// Whether the frozen answers apply here: they are a Mac's.
 fn frozen_here() -> bool {
@@ -47,12 +39,6 @@ fn frozen_here() -> bool {
     eprintln!("parity: the TypeScript answers were frozen on macOS; skipped");
     false
 }
-
-fn recording() -> bool {
-    std::env::var_os("SCREEPUB_RECORD_FROZEN").is_some()
-}
-
-const FROZEN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/parity.json");
 
 fn frozen_store() -> &'static BTreeMap<String, Value> {
     static STORE: OnceLock<BTreeMap<String, Value>> = OnceLock::new();
@@ -73,66 +59,16 @@ fn decode(text: &str, subs: &[(&str, &str)]) -> String {
         .fold(text.to_owned(), |t, (real, mark)| t.replace(mark, real))
 }
 
-/// The TypeScript's answer for `key`: frozen, or, while recording, asked of
-/// `bun src/cli.ts` and frozen. `subs` pairs this run's values with the
-/// placeholders the frozen answers use.
-fn ts(
-    key: &str,
-    args: &[&str],
-    roots: &str,
-    endpoint: &str,
-    config: &Path,
-    subs: &[(&str, &str)],
-) -> String {
+/// The TypeScript's frozen answer for `key`. `subs` pairs this run's values
+/// with the placeholders the frozen answers use.
+fn ts(key: &str, args: &[&str], subs: &[(&str, &str)]) -> String {
     let asked: Vec<String> = args.iter().map(|a| encode(a, subs)).collect();
-    if recording() {
-        let text = ts_live(args, roots, endpoint, config);
-        static LOCK: Mutex<()> = Mutex::new(());
-        let _held = LOCK
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let mut all: BTreeMap<String, Value> = std::fs::read_to_string(FROZEN)
-            .ok()
-            .and_then(|t| serde_json::from_str(&t).ok())
-            .unwrap_or_default();
-        all.insert(
-            key.to_owned(),
-            serde_json::json!({ "argv": asked, "answer": encode(&text, subs) }),
-        );
-        let mut out = serde_json::to_string_pretty(&all).unwrap();
-        out.push('\n');
-        std::fs::write(FROZEN, out).unwrap();
-        return text;
-    }
     let v = frozen_store()
         .get(key)
         .unwrap_or_else(|| panic!("no frozen TypeScript answer for {key:?}"));
     let want: Vec<String> = serde_json::from_value(v["argv"].clone()).unwrap();
     assert_eq!(asked, want, "{key}: the case changed since it was frozen");
     decode(v["answer"].as_str().unwrap(), subs)
-}
-
-/// One run of `bun src/cli.ts <args>` with the overrides, its stdout's one
-/// JSON object as text.
-fn ts_live(args: &[&str], roots: &str, endpoint: &str, config: &Path) -> String {
-    let out = Command::new("bun")
-        .arg(repo_root().join("src").join("cli.ts"))
-        .args(args)
-        .current_dir(repo_root())
-        .env("SCREEPUB_VOLUME_ROOTS", roots)
-        .env("SCREEPUB_REMARKABLE_ENDPOINT", endpoint)
-        // Never the real settings file or Calibre folder.
-        .env("SCREEPUB_CONFIG_DIR", config)
-        .env("CALIBRE_CONFIG_DIRECTORY", config.join("calibre"))
-        .output()
-        .unwrap();
-    let text = String::from_utf8(out.stdout).unwrap().trim().to_string();
-    // An empty answer on both sides must not pass as agreement.
-    assert!(
-        text.starts_with(r#"{"ok":"#),
-        "the TypeScript answered {text:?} to {args:?}"
-    );
-    text
 }
 
 fn ok(answer: &impl Serialize) -> String {
@@ -167,7 +103,6 @@ impl Opener for Never {
 struct Fixture {
     _scratch: tempfile::TempDir,
     roots: Vec<String>,
-    config: PathBuf,
     base: PathBuf,
 }
 
@@ -193,18 +128,11 @@ fn fixture() -> Fixture {
         }
     }
     std::fs::write(a.join("loose-file.txt"), "x").unwrap();
-    let config = base.join("config");
-    std::fs::create_dir_all(&config).unwrap();
     Fixture {
         roots: vec![s(&a), s(&b)],
-        config,
         base,
         _scratch: sc,
     }
-}
-
-fn delimited(roots: &[String]) -> String {
-    roots.join(if cfg!(windows) { ";" } else { ":" })
 }
 
 fn rust_devices(roots: &[String], endpoint: &str, quick: bool) -> String {
@@ -227,7 +155,6 @@ fn devices_answers_as_the_typescript_does() {
     let f = fixture();
     let silent = Stub::start(404);
     let answering = Stub::start(200);
-    let all = delimited(&f.roots);
     let empty = s(&f.base.join("no-mounts"));
     std::fs::create_dir_all(&empty).unwrap();
     let cases: Vec<(&str, Vec<&str>, Vec<String>, &str)> = vec![
@@ -269,25 +196,13 @@ fn devices_answers_as_the_typescript_does() {
         ),
     ];
     for (what, args, roots, endpoint) in cases {
-        let roots_arg = if roots == f.roots {
-            all.clone()
-        } else {
-            delimited(&roots)
-        };
         let base = s(&f.base);
         let subs = [
             (base.as_str(), "$BASE"),
             (silent.url.as_str(), "$SILENT"),
             (answering.url.as_str(), "$ANSWERING"),
         ];
-        let want = ts(
-            &format!("devices / {what}"),
-            &args,
-            &roots_arg,
-            endpoint,
-            &f.config,
-            &subs,
-        );
+        let want = ts(&format!("devices / {what}"), &args, &subs);
         let got = rust_devices(&roots, endpoint, args.contains(&"--quick"));
         assert_eq!(got, want, "{what}");
     }
@@ -299,7 +214,6 @@ fn eject_refuses_as_the_typescript_does() {
         return;
     }
     let f = fixture();
-    let all = delimited(&f.roots);
     let roots = f.roots.clone();
     let listed = move || mounted_devices(Some(&roots));
     // Volumes the fake roots do NOT list as readers (or that are relative):
@@ -319,9 +233,6 @@ fn eject_refuses_as_the_typescript_does() {
         let want = ts(
             &format!("eject / {}", encode(volume, &subs)),
             &["eject", volume, "--json"],
-            &all,
-            "http://127.0.0.1:1",
-            &f.config,
             &subs,
         );
         let got = match eject_command(
@@ -359,9 +270,6 @@ fn reveal_refuses_as_the_typescript_does() {
         let want = ts(
             &format!("reveal / {}", encode(path, &subs)),
             &["reveal", path, "--json"],
-            "",
-            "http://127.0.0.1:1",
-            &f.config,
             &subs,
         );
         let got = match reveal_command(path, Platform::host(), &Never) {

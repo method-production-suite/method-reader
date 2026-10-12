@@ -435,11 +435,9 @@ fn a_limiter_that_fails_is_a_500_in_plain_words_and_nothing_is_counted() {
 }
 
 #[test]
-fn both_wrangler_files_bind_rate_limiter_at_the_limit_the_worker_says_per_60_seconds() {
-    for file in [
-        service_dir().join("wrangler.toml"),
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("wrangler.toml"),
-    ] {
+fn wrangler_binds_rate_limiter_at_the_limit_the_worker_says_per_60_seconds() {
+    {
+        let file = service_dir().join("wrangler.toml");
         let toml = std::fs::read_to_string(&file).unwrap();
         let block = toml
             .split("[[ratelimits]]")
@@ -469,26 +467,33 @@ fn both_wrangler_files_bind_rate_limiter_at_the_limit_the_worker_says_per_60_sec
     }
 }
 
+/// What services/device-requests/wrangler.toml, the TypeScript Worker's,
+/// bound (as of its deletion at the cutover): deploying this crate must
+/// replace that Worker at the same address, on the same database.
+const LIVE_BINDINGS: &[(&str, &str)] = &[
+    ("name = ", "name = \"screepub-device-requests\""),
+    ("binding = ", "binding = \"DB\""),
+    (
+        "database_name = ",
+        "database_name = \"screepub-device-requests\"",
+    ),
+    (
+        "database_id = ",
+        "database_id = \"343f8b66-876c-40e7-8cb4-9dcc6ba544b0\"",
+    ),
+    ("namespace_id = ", "namespace_id = \"2610\""),
+];
+
 #[test]
 fn the_rust_worker_binds_the_same_database_as_the_live_one() {
-    let ts = std::fs::read_to_string(service_dir().join("wrangler.toml")).unwrap();
-    let rs = std::fs::read_to_string(
-        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("wrangler.toml"),
-    )
-    .unwrap();
+    let rs = std::fs::read_to_string(service_dir().join("wrangler.toml")).unwrap();
     let line = |t: &str, key: &str| {
         t.lines()
             .find(|l| l.trim_start().starts_with(key))
             .map(|l| l.trim().to_string())
     };
-    for key in [
-        "name = ",
-        "binding = ",
-        "database_name = ",
-        "database_id = ",
-        "namespace_id = ",
-    ] {
-        assert_eq!(line(&ts, key), line(&rs, key), "{key}");
+    for (key, live) in LIVE_BINDINGS {
+        assert_eq!(line(&rs, key).as_deref(), Some(*live), "{key}");
     }
 }
 

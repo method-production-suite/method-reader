@@ -37,7 +37,7 @@ use crate::compare;
 use crate::paths;
 use crate::table::{CommandRow, EnvValue, Invocation, commands};
 
-/// Matches tools/oracle/freeze-clock.ts and dump.ts: 2026-01-01T00:00:00Z.
+/// The clock every frozen answer was made with: 2026-01-01T00:00:00Z.
 const DEFAULT_EPOCH: u64 = 1_767_225_600;
 
 /// Calibre's guard: a path no Calibre can start against.
@@ -51,8 +51,6 @@ usage: cargo xtask parity [options]
   --command <name>...   only these rows of the command table
   --rust-cli <path>     the Rust binary (default: build crates/sp-cli,
                         or $SCREEPUB_RUST_CLI)
-  --record              ask the TypeScript CLI (bun src/cli.ts) and freeze
-                        its answers instead of comparing
   --keep                keep the scratch folders and print where
 ";
 
@@ -61,7 +59,6 @@ struct Options {
     fixtures: Vec<String>,
     commands: Vec<String>,
     rust_cli: Option<PathBuf>,
-    record: bool,
     keep: bool,
 }
 
@@ -72,7 +69,6 @@ impl Options {
             fixtures: Vec::new(),
             commands: Vec::new(),
             rust_cli: None,
-            record: false,
             keep: false,
         }
     }
@@ -88,7 +84,6 @@ fn parse(args: &[String], rows: &[CommandRow]) -> Result<Options, String> {
             "--fixture" => o.fixtures.push(value("--fixture")?),
             "--command" => o.commands.push(value("--command")?),
             "--rust-cli" => o.rust_cli = Some(PathBuf::from(value("--rust-cli")?)),
-            "--record" => o.record = true,
             "--keep" => o.keep = true,
             other => return Err(format!("parity: unknown option {other}")),
         }
@@ -123,19 +118,6 @@ struct Side {
 }
 
 impl Side {
-    fn typescript() -> Side {
-        let repo = paths::repo_root();
-        Side {
-            label: "ts",
-            program: paths::bun(),
-            prefix: vec![
-                "--preload".into(),
-                repo.join("tools/oracle/freeze-clock.ts").into_os_string(),
-                repo.join("src/cli.ts").into_os_string(),
-            ],
-        }
-    }
-
     fn rust(program: PathBuf) -> Side {
         Side {
             label: "rs",
@@ -330,24 +312,6 @@ fn run_side(
     })
 }
 
-/// What the TypeScript answered for one row, as frozen.
-fn frozen_of(row: &CommandRow, run: &Run) -> Value {
-    let mut outputs = serde_json::Map::new();
-    for o in &row.outputs {
-        outputs.insert(
-            o.file.clone(),
-            compare::summary(&run.work.join(&o.file), o.compare, &run.work),
-        );
-    }
-    serde_json::json!({
-        "exit": run.exit,
-        "stdout": run.answer,
-        // Only where the row compares it: pdf.js's warnings name temp paths.
-        "stderr": if row.stderr { Value::String(run.stderr.clone()) } else { Value::Null },
-        "outputs": outputs,
-    })
-}
-
 /// What differs between the frozen answer and the Rust run, as (what,
 /// detail) pairs.
 fn diff_frozen(row: &CommandRow, ts: &Value, rs: &Run) -> Vec<(String, String)> {
@@ -423,25 +387,6 @@ fn read_frozen(input: &Path, committed: bool) -> Result<serde_json::Map<String, 
     }
 }
 
-fn write_frozen(
-    input: &Path,
-    committed: bool,
-    rows: serde_json::Map<String, Value>,
-) -> Result<(), String> {
-    let file = frozen_file(input, committed);
-    std::fs::create_dir_all(file.parent().expect("a folder")).map_err(|e| e.to_string())?;
-    // A partial --command record adds to what is there.
-    let mut all = read_frozen(input, committed).unwrap_or_default();
-    all.insert("$machine".into(), crate::machine::facts(None));
-    all.insert("$epoch".into(), Value::from(DEFAULT_EPOCH));
-    for (k, v) in rows {
-        all.insert(k, v);
-    }
-    let mut text = serde_json::to_string_pretty(&Value::Object(all)).map_err(|e| e.to_string())?;
-    text.push('\n');
-    std::fs::write(&file, text).map_err(|e| e.to_string())
-}
-
 pub fn run(args: &[String]) -> Result<bool, String> {
     if args.iter().any(|a| a == "--help" || a == "-h") {
         print!("{USAGE}");
@@ -449,13 +394,9 @@ pub fn run(args: &[String]) -> Result<bool, String> {
     }
     let all = commands();
     let opts = parse(args, &all)?;
-    let side = if opts.record {
-        Side::typescript()
-    } else {
-        match rust_cli(opts.rust_cli.clone())? {
-            Some(p) => Side::rust(p),
-            None => return Err("no Rust CLI: crates/sp-cli does not build".into()),
-        }
+    let side = match rust_cli(opts.rust_cli.clone())? {
+        Some(p) => Side::rust(p),
+        None => return Err("no Rust CLI: crates/sp-cli does not build".into()),
     };
     let rows: Vec<&CommandRow> = all.iter().filter(|r| selected(&opts, r)).collect();
 
@@ -484,32 +425,6 @@ pub fn run(args: &[String]) -> Result<bool, String> {
         let base = scratch.join(format!("{case:04}"));
         run_side(&side, row, input, &base.join(side.label), DEFAULT_EPOCH)
     };
-
-    if opts.record {
-        println!("parity: freezing the TypeScript CLI's answers");
-        for (inputs, committed) in [(&committed, true), (&real, false)] {
-            let mut n = 0usize;
-            for input in inputs.iter() {
-                let mut frozen = serde_json::Map::new();
-                for row in rows.iter().filter(|r| r.inputs.accepts(input, committed)) {
-                    let run = run_case(input, row)?;
-                    frozen.insert(row.name.clone(), frozen_of(row, &run));
-                    n += 1;
-                }
-                write_frozen(input, committed, frozen)?;
-            }
-            let what = if committed {
-                "committed fixtures"
-            } else {
-                "real scripts"
-            };
-            println!("  {what}: {} inputs, {n} runs frozen", inputs.len());
-        }
-        if !opts.keep {
-            let _ = std::fs::remove_dir_all(&scratch);
-        }
-        return Ok(true);
-    }
 
     println!(
         "parity: {} against the frozen TypeScript answers",

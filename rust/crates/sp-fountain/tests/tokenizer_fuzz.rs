@@ -208,28 +208,3 @@ fn random_scripts_tokenize_as_fountain_js_did() {
         bad.iter().take(5).cloned().collect::<Vec<_>>().join("\n")
     );
 }
-
-/// Records fountain-js's answers (SCREEPUB_RECORD_FROZEN=1, bun and
-/// node_modules present).
-#[test]
-fn record_fountain_js() {
-    if std::env::var_os("SCREEPUB_RECORD_FROZEN").is_none() {
-        return;
-    }
-    let inputs = inputs();
-    let want = support::fountain_js(&inputs);
-    let digests: Vec<String> = want.iter().map(digest).collect();
-    let mut text =
-        serde_json::to_string_pretty(&json!({ "seed": SEED, "digests": digests })).unwrap();
-    text.push('\n');
-    std::fs::write(
-        concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/data/tokenizer-fuzz.json"
-        ),
-        text,
-    )
-    .unwrap();
-}
-
-mod support;

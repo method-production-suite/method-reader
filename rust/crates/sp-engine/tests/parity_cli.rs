@@ -125,11 +125,10 @@ fn reset(dir: &Path) {
     std::fs::create_dir_all(dir).unwrap();
 }
 
-/// The TypeScript's answer for this case: frozen (common::frozen), or, while
-/// recording, asked of `bun src/cli.ts` and frozen. The key is the test's
-/// name and the case's label; `dir` is the case's scratch folder when the
-/// files it leaves are compared.
-fn ts(label: &str, root: &str, argv: &[&str], env: &Env, dir: Option<&Path>) -> Frozen {
+/// The TypeScript's frozen answer for this case (common::frozen). The key is
+/// the test's name and the case's label; `dir` says the case compares the
+/// files it leaves.
+fn ts(label: &str, root: &str, argv: &[&str], _env: &Env, dir: Option<&Path>) -> Frozen {
     let test = std::thread::current()
         .name()
         .unwrap_or("unnamed")
@@ -138,13 +137,13 @@ fn ts(label: &str, root: &str, argv: &[&str], env: &Env, dir: Option<&Path>) -> 
         .unwrap_or("unnamed")
         .to_owned();
     let key = format!("{test} / {label}");
-    if common::recording() {
-        let run = common::ts_cli(argv, env);
-        let files = dir.map(snapshot);
-        common::record(&key, frozen::encode(argv, &run, files.as_deref(), root));
-        return Frozen { run, files };
-    }
-    frozen::answer(&key, root, argv)
+    let answer = frozen::answer(&key, root, argv);
+    assert_eq!(
+        answer.files.is_some(),
+        dir.is_some(),
+        "{key}: frozen with and without its files"
+    );
+    answer
 }
 
 /// One parity case: the same setup, the TypeScript's line, the Rust line,
@@ -582,7 +581,7 @@ fn parity_update_should_check() {
 #[test]
 fn parity_kfx_status() {
     require_frozen!();
-    if !common::recording() && !frozen::same_machine(None) {
+    if !frozen::same_machine(None) {
         return;
     }
     let s = Scratch::new("parity");
@@ -786,7 +785,7 @@ fn parity_export() {
 #[test]
 fn parity_export_kindle_check() {
     require_frozen!();
-    if !common::recording() && !frozen::same_machine(None) {
+    if !frozen::same_machine(None) {
         return;
     }
     export_case(
@@ -820,7 +819,7 @@ fn this_machines_facts(env: &Env) -> sp_engine::export::routes::RouteFacts {
 #[test]
 fn parity_routes_quick() {
     require_frozen!();
-    if !common::recording() && !frozen::same_machine(None) {
+    if !frozen::same_machine(None) {
         return;
     }
     for last in [

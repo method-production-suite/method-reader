@@ -31,8 +31,11 @@ pub fn block_on<F: Future>(f: F) -> F::Output {
     }
 }
 
+/// The crate's folder, which holds the service's schema.sql, migrations/
+/// and wrangler.toml (they sat in services/device-requests/ beside the
+/// TypeScript Worker until the cutover).
 pub fn service_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../services/device-requests")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
 #[derive(Clone, Debug)]

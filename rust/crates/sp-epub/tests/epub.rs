@@ -1355,22 +1355,26 @@ mod mini_slug_rendering {
 
     #[test]
     fn the_parser_excludes_from_mini_slug_exactly_what_this_promotes() {
-        // One literal, two layers: classify.ts must not mint a mini-slug the
-        // renderer would turn back into a scene heading. Read from the
-        // TypeScript until sp-parser carries its own copy, which then pins
-        // to sp_fountain::PRIMARY_SLUG_SOURCE the same way.
-        let classify = std::fs::read_to_string(common::repo_root().join("src/parser/classify.ts"))
-            .expect("src/parser/classify.ts");
-        let line = classify
-            .lines()
-            .find(|l| l.starts_with("export const PRIMARY_SLUG = /"))
-            .expect("classify.ts's PRIMARY_SLUG");
-        let literal = line
-            .trim_start_matches("export const PRIMARY_SLUG = /")
-            .trim_end_matches(';');
-        let (source, flags) = literal.rsplit_once('/').unwrap();
-        assert_eq!(source, sp_fountain::PRIMARY_SLUG_SOURCE);
-        assert_eq!(flags, "i");
+        // One literal, two layers: the parser must not mint a mini-slug the
+        // renderer would turn back into a scene heading. sp-parser keeps its
+        // own copy (classify.rs's PRIMARY_SLUG, case-blind through
+        // js::re_i), pinned here to sp_fountain::PRIMARY_SLUG_SOURCE.
+        let classify = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../sp-parser/src/classify.rs"),
+        )
+        .expect("sp-parser's classify.rs");
+        let after = classify
+            .split_once("pub static PRIMARY_SLUG: LazyLock<Regex> =")
+            .expect("classify.rs's PRIMARY_SLUG")
+            .1;
+        let literal = after
+            .split_once("js::re_i(r\"")
+            .expect("a case-blind literal")
+            .1
+            .split_once("\"))")
+            .expect("the literal's end")
+            .0;
+        assert_eq!(literal, sp_fountain::PRIMARY_SLUG_SOURCE);
     }
 
     #[test]

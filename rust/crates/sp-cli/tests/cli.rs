@@ -56,20 +56,14 @@ fn version_prints_a_semver_and_exits_0() {
 }
 
 #[test]
-fn version_matches_the_version_in_package_json() {
+fn version_matches_the_workspace_version() {
+    // The one version file is rust/Cargo.toml's [workspace.package]
+    // (package.json's, while there was a TypeScript engine).
     let ran = Sandbox::new().run(&["--version"]);
     assert_eq!(
         ran.stdout.trim(),
         format!("screepub {}", env!("CARGO_PKG_VERSION"))
     );
-    // While the TypeScript is here to be read, its package.json says the same.
-    if let Ok(pkg) = std::fs::read_to_string(common::repo_root().join("package.json")) {
-        let pkg: Value = serde_json::from_str(&pkg).expect("package.json");
-        assert_eq!(
-            ran.stdout.trim(),
-            format!("screepub {}", pkg["version"].as_str().unwrap())
-        );
-    }
 }
 
 // --- quiet ---

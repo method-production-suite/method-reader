@@ -3,11 +3,9 @@
 //!
 //! tests/data/tokenizer-cases.json holds the inputs and fountain-js's
 //! tokens (or its error). It was written by running fountain-js under bun,
-//! reset to a first parse before each case, and `cases_still_match_live_
-//! fountain_js` re-asks it whenever bun is present, so the file cannot drift
-//! from the library it records.
-
-mod support;
+//! reset to a first parse before each case, and checked against it again on
+//! the day the TypeScript was deleted; it is now the record of what
+//! fountain-js answered.
 
 use serde_json::{Value, json};
 use sp_fountain::tokenizer::tokenize;
@@ -47,20 +45,6 @@ fn hand_written_cases_match_fountain_js() {
             "case: {}",
             case["name"].as_str().unwrap()
         );
-    }
-}
-
-#[test]
-#[ignore = "needs bun and node_modules"]
-fn cases_still_match_live_fountain_js() {
-    let cases = cases();
-    let inputs: Vec<String> = cases
-        .iter()
-        .map(|c| c["input"].as_str().unwrap().to_owned())
-        .collect();
-    let live = support::fountain_js(&inputs);
-    for (case, live) in cases.iter().zip(live) {
-        assert_eq!(live, recorded(case), "case: {}", case["name"]);
     }
 }
 

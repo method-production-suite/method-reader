@@ -15,17 +15,13 @@ id_rsa*
 
 # Logs / scratch
 *.log
-*.bun-build
 .superpowers/
-node_modules/
-.next/
 dist/
 build/
 # SwiftPM's output folder. The Swift app it was for is gone (piece F3), but
 # Macs that built it still hold one (407 MB in the main checkout), and it
 # must never be swept or staged. Unanchored, so a nested package's counts.
 .build/
-npm-debug.log*
 # Root-anchored: private real scripts live in /fixtures, but the invented,
 # publishable ones in tests/fixtures/ are committed on purpose.
 /fixtures/
@@ -35,19 +31,10 @@ __pycache__/
 # Superpowers worktrees (scratch, never committed)
 .worktrees/
 
-# Tauri desktop shell build outputs
-desktop/src-tauri/target/
-# The engine sidecar is a ~100 MB build output, produced by tools/build-sidecar.ts
-desktop/src-tauri/binaries/
-desktop/src-tauri/gen/
 # The app-bundles release job writes its installers here (see release.yml)
 /bundles/
 
-# Not a secret, root only: the value is a fixed, harmless guard path (see
-# the file itself and tests/isolate-app-settings.ts). bun test auto-loads it.
-!/.env.test
-
-# The Rust port builds here.
+# The Rust workspace builds here.
 rust/target/
 
 # Oracle dumps of the real scripts in root fixtures/: never committed.
