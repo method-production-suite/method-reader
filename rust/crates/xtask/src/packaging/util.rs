@@ -20,7 +20,12 @@ pub use crate::cli_build::build::{
 /// to run it in. A test passes a closure; the tools pass [`real_run`].
 pub type Runner<'a> = dyn FnMut(&[String], Option<&Path>) -> RunResult + 'a;
 
-fn spawn(argv: &[String], cwd: Option<&Path>, inherit_stdout: bool) -> RunResult {
+fn spawn(
+    argv: &[String],
+    cwd: Option<&Path>,
+    env: &[(String, String)],
+    inherit_stdout: bool,
+) -> RunResult {
     let Some((program, rest)) = argv.split_first() else {
         return RunResult {
             exit_code: 127,
@@ -28,7 +33,10 @@ fn spawn(argv: &[String], cwd: Option<&Path>, inherit_stdout: bool) -> RunResult
         };
     };
     let mut cmd = Command::new(program);
-    cmd.args(rest).stdin(Stdio::null()).stderr(Stdio::piped());
+    cmd.args(rest)
+        .envs(env.iter().map(|(k, v)| (k, v)))
+        .stdin(Stdio::null())
+        .stderr(Stdio::piped());
     cmd.stdout(if inherit_stdout {
         Stdio::inherit()
     } else {
@@ -55,13 +63,19 @@ fn spawn(argv: &[String], cwd: Option<&Path>, inherit_stdout: bool) -> RunResult
 
 /// Runs a program, collecting both streams.
 pub fn real_run(argv: &[String], cwd: Option<&Path>) -> RunResult {
-    spawn(argv, cwd, false)
+    spawn(argv, cwd, &[], false)
+}
+
+/// Runs a program with these variables added to this process's
+/// environment, collecting both streams.
+pub fn real_run_env(argv: &[String], env: &[(String, String)]) -> RunResult {
+    spawn(argv, None, env, false)
 }
 
 /// Runs a long build: its stdout goes to the terminal, stderr is kept for
 /// the failure message.
 pub fn real_build(argv: &[String], cwd: Option<&Path>) -> RunResult {
-    spawn(argv, cwd, true)
+    spawn(argv, cwd, &[], true)
 }
 
 /// argv from string slices.

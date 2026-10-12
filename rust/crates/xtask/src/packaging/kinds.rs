@@ -4,9 +4,9 @@
 //! Every installer kind (deb, rpm, dmg, nsis) and the one updater kind
 //! (the macOS `.app.tar.gz`) with the container magic it must carry, the
 //! size floor it must clear, the bundler folder it is found in and the
-//! stable name it is published under. The same rows serve both apps: the
-//! Tauri window bundled today and the native egui window (sp-app) after
-//! cutover; only the size floor differs (see [`AppSource::floor_bytes`]).
+//! stable name it is published under, for the native egui window (sp-app).
+//! (Until the Rust cutover the same rows served the Tauri window too, with
+//! a 10 MB floor for the Bun engine it carried.)
 
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -44,41 +44,12 @@ impl BundleArch {
     }
 }
 
-/// Which window is being bundled.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AppSource {
-    /// desktop/src-tauri, driven through `cargo tauri build`, with the
-    /// engine sidecar inside.
-    Tauri,
-    /// rust/crates/sp-app's `screepub-window`, assembled by this tool.
-    Native,
-}
-
-/// Every Tauri bundle carries the ~102 MB engine (the real arm64 .deb and
-/// .rpm measure ~44.3 MB compressed), so 10 MB is an unambiguous floor.
-pub const TAURI_FLOOR: u64 = 10_000_000;
-
-/// The native window has no sidecar: egui, wgpu and the linked engine in
-/// one binary. Not measured yet (no release build of sp-app exists); 2 MB
-/// is far under any egui+wgpu binary and far over a truncated write. Raise
-/// it once the first native bundle is measured.
+/// Every bundle carries the window: egui, wgpu and the linked engine in
+/// one binary (rust/crates/sp-app's `screepub-window`). Not measured yet
+/// (no release build of sp-app has been published); 2 MB is far under any
+/// egui+wgpu binary and far over a truncated write. Raise it once the first
+/// native bundle is measured.
 pub const NATIVE_FLOOR: u64 = 2_000_000;
-
-impl AppSource {
-    pub fn name(self) -> &'static str {
-        match self {
-            AppSource::Tauri => "tauri",
-            AppSource::Native => "native",
-        }
-    }
-
-    pub fn floor_bytes(self) -> u64 {
-        match self {
-            AppSource::Tauri => TAURI_FLOOR,
-            AppSource::Native => NATIVE_FLOOR,
-        }
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MagicAt {
@@ -110,8 +81,9 @@ const GZIP_MAGIC: &[u8] = &[0x1f, 0x8b];
 pub const MAC_ARCH: BundleArch = BundleArch::Arm64;
 pub const MAC_TARGET: &str = "aarch64-apple-darwin";
 
-/// The installers. No AppImage (linuxdeploy corrupted the Bun engine), no
-/// MSI (NSIS installs per user with no administrator prompt).
+/// The installers. No AppImage here (the Bun-era table had none because
+/// linuxdeploy corrupted the Bun engine; release.yml's sp-release makes the
+/// Rust one), no MSI (NSIS installs per user with no administrator prompt).
 pub const BUNDLE_KINDS: [Kind; 4] = [
     Kind {
         id: "deb",
@@ -120,7 +92,7 @@ pub const BUNDLE_KINDS: [Kind; 4] = [
         ext: ".deb",
         magic: ARCH_MAGIC,
         magic_at: MagicAt::Head,
-        floor_bytes: TAURI_FLOOR,
+        floor_bytes: NATIVE_FLOOR,
     },
     Kind {
         id: "rpm",
@@ -129,7 +101,7 @@ pub const BUNDLE_KINDS: [Kind; 4] = [
         ext: ".rpm",
         magic: RPM_MAGIC,
         magic_at: MagicAt::Head,
-        floor_bytes: TAURI_FLOOR,
+        floor_bytes: NATIVE_FLOOR,
     },
     Kind {
         id: "dmg",
@@ -138,7 +110,7 @@ pub const BUNDLE_KINDS: [Kind; 4] = [
         ext: ".dmg",
         magic: KOLY_MAGIC,
         magic_at: MagicAt::UdifTrailer,
-        floor_bytes: TAURI_FLOOR,
+        floor_bytes: NATIVE_FLOOR,
     },
     Kind {
         id: "nsis",
@@ -147,7 +119,7 @@ pub const BUNDLE_KINDS: [Kind; 4] = [
         ext: ".exe",
         magic: MZ_MAGIC,
         magic_at: MagicAt::Head,
-        floor_bytes: TAURI_FLOOR,
+        floor_bytes: NATIVE_FLOOR,
     },
 ];
 
@@ -159,11 +131,10 @@ pub const UPDATER_KINDS: [Kind; 1] = [Kind {
     ext: ".app.tar.gz",
     magic: GZIP_MAGIC,
     magic_at: MagicAt::Head,
-    floor_bytes: TAURI_FLOOR,
+    floor_bytes: NATIVE_FLOOR,
 }];
 
 pub const SIGNATURE_EXT: &str = ".sig";
-pub const UPDATER_OVERLAY: &str = "tauri.updater.conf.json";
 
 /// The published name of `kind`: sp-release's names.rs, the one table
 /// release.yml publishes by. No version, ever: pages link to
@@ -222,26 +193,7 @@ pub fn updater_kinds_for_os(os: BundleOs) -> Vec<Kind> {
         .collect()
 }
 
-/// A kind with the floor of the app being bundled.
-pub fn for_app(kind: Kind, app: AppSource) -> Kind {
-    Kind {
-        floor_bytes: app.floor_bytes(),
-        ..kind
-    }
-}
-
-/// The `--bundles` value for `cargo tauri build`, pinned per OS and never
-/// the default (which on Linux includes an AppImage).
-pub fn bundle_list_for(os: BundleOs) -> &'static str {
-    match os {
-        BundleOs::Linux => "deb,rpm",
-        BundleOs::Macos => "app,dmg",
-        BundleOs::Windows => "nsis",
-    }
-}
-
-/// `<root>/target/[<triple>/]release/bundle/<dir>`: root is
-/// desktop/src-tauri for the Tauri window and rust/ for the native one.
+/// `<root>/target/[<triple>/]release/bundle/<dir>`, root being rust/.
 pub fn bundle_dir_for(dir: &str, target: Option<&str>, root: &Path) -> PathBuf {
     let mut p = root.join("target");
     if let Some(t) = target {
@@ -255,7 +207,7 @@ pub fn bundle_dir_for(dir: &str, target: Option<&str>, root: &Path) -> PathBuf {
 pub fn discover_artifact(dir: &Path, kind: &Kind) -> Result<PathBuf, String> {
     let Ok(read) = std::fs::read_dir(dir) else {
         return Err(format!(
-            "build-app-bundle: {}: no bundle directory at {}. cargo tauri build reported success and produced nothing there.",
+            "build-app-bundle: {}: no bundle directory at {}. The build reported success and produced nothing there.",
             kind.id,
             dir.display()
         ));
@@ -314,15 +266,10 @@ pub fn verify_bundle_file(path: &Path, kind: &Kind) -> Result<(), String> {
     let bytes = meta.len();
     if bytes < kind.floor_bytes {
         return Err(format!(
-            "build-app-bundle: {}: {} is {bytes} bytes, under the {}-byte floor. {}",
+            "build-app-bundle: {}: {} is {bytes} bytes, under the {}-byte floor. Every bundle carries the whole window and its engine in one binary.",
             kind.id,
             file_name(path),
             kind.floor_bytes,
-            if kind.floor_bytes >= TAURI_FLOOR {
-                "Every bundle carries the ~102 MB engine."
-            } else {
-                "Every native bundle carries the whole window and its engine in one binary."
-            }
         ));
     }
     let window = match kind.magic_at {

@@ -260,3 +260,177 @@ pub fn tauri_test_public_key() -> String {
     let pk = minisign::PublicKey::from_secret_key(&sk).unwrap();
     STANDARD.encode(pk.to_box().unwrap().to_string())
 }
+
+// ---- the native window's repository and outside tools, faked ----
+
+use xtask::packaging::bundle::{BundleArgs, BundleDirs, Env};
+use xtask::packaging::kinds::{
+    BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_TARGET, MagicAt, NATIVE_FLOOR,
+};
+use xtask::packaging::native::binary_path;
+use xtask::packaging::util::RunResult;
+
+/// The version the native tests bundle.
+pub const NATIVE_VERSION: &str = "0.12.0";
+
+/// A repository with what build-app-bundle reads: the workspace version,
+/// sp-app inheriting it, the icons and the two resources. No desktop/.
+pub fn native_repo(s: &Scratch, version: &str) -> BundleDirs {
+    let repo = s.fresh("repo");
+    fs::write(repo.join("LICENSE"), "GNU AFFERO GENERAL PUBLIC LICENSE").unwrap();
+    fs::write(repo.join("THIRD-PARTY-NOTICES.md"), "# Notices").unwrap();
+    let rust = repo.join("rust");
+    fs::create_dir_all(rust.join("crates/sp-app/icons")).unwrap();
+    fs::write(
+        rust.join("Cargo.toml"),
+        format!("[workspace]\nmembers = [\"crates/*\"]\n\n[workspace.package]\nedition = \"2024\"\nversion = \"{version}\"\n"),
+    )
+    .unwrap();
+    fs::write(
+        rust.join("crates/sp-app/Cargo.toml"),
+        "[package]\nname = \"sp-app\"\nversion.workspace = true\n",
+    )
+    .unwrap();
+    for icon in [
+        "icon.icns",
+        "icon.ico",
+        "32x32.png",
+        "128x128.png",
+        "128x128@2x.png",
+    ] {
+        fs::write(
+            rust.join("crates/sp-app/icons").join(icon),
+            format!("icon bytes of {icon}"),
+        )
+        .unwrap();
+    }
+    BundleDirs::for_repo(&repo)
+}
+
+/// A row of the installer table.
+pub fn native_kind(id: &str) -> Kind {
+    *BUNDLE_KINDS.iter().find(|k| k.id == id).unwrap()
+}
+
+/// A file that passes `k`'s magic check and clears its floor.
+pub fn plausible_file(path: &Path, k: &Kind) {
+    use std::io::{Seek, SeekFrom, Write};
+    let size = k.floor_bytes + 1024;
+    let mut f = fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    f.set_len(size).unwrap();
+    f.seek(SeekFrom::Start(if k.magic_at == MagicAt::Head {
+        0
+    } else {
+        size - 512
+    }))
+    .unwrap();
+    f.write_all(k.magic).unwrap();
+}
+
+/// What the fake cargo builds: bytes over the floor nothing compresses.
+pub fn the_binary() -> Vec<u8> {
+    noise(NATIVE_FLOOR as usize + 65_536, 0x5EED)
+}
+
+/// Every outside tool the native path calls, faked: cargo writes the
+/// binary, hdiutil and makensis write their containers, notarytool answers.
+pub struct FakeTools {
+    pub calls: Vec<Vec<String>>,
+    pub rust: PathBuf,
+    pub os: BundleOs,
+    pub notary_status: &'static str,
+    /// What hdiutil's image is: a plausible one, or this many zero bytes.
+    pub dmg_bytes: Option<usize>,
+}
+
+impl FakeTools {
+    pub fn new(dirs: &BundleDirs, os: BundleOs) -> Self {
+        FakeTools {
+            calls: vec![],
+            rust: dirs.rust_dir.clone(),
+            os,
+            notary_status: "Accepted",
+            dmg_bytes: None,
+        }
+    }
+
+    pub fn run(&mut self, argv: &[String], _cwd: Option<&Path>) -> RunResult {
+        self.calls.push(argv.to_vec());
+        let tool = Path::new(&argv[0])
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        match tool.as_str() {
+            "cargo" => {
+                let target = argv
+                    .iter()
+                    .position(|a| a == "--target")
+                    .map(|i| argv[i + 1].clone());
+                let bin = binary_path(&self.rust, target.as_deref(), self.os);
+                fs::create_dir_all(bin.parent().unwrap()).unwrap();
+                fs::write(&bin, the_binary()).unwrap();
+            }
+            "hdiutil" => {
+                let out = Path::new(argv.last().unwrap());
+                match self.dmg_bytes {
+                    Some(n) => fs::write(out, vec![0u8; n]).unwrap(),
+                    None => plausible_file(out, &native_kind("dmg")),
+                }
+            }
+            "makensis" => {
+                let script = fs::read_to_string(&argv[1]).unwrap();
+                let at = script.find("OutFile \"").unwrap() + 9;
+                let out = &script[at..at + script[at..].find('"').unwrap()];
+                plausible_file(Path::new(out), &native_kind("nsis"));
+            }
+            "xcrun" if argv[1] == "notarytool" => {
+                return RunResult::ok(
+                    &format!("{{\"id\":\"abc\",\"status\":\"{}\"}}", self.notary_status),
+                    "",
+                );
+            }
+            _ => {}
+        }
+        RunResult::ok("", "")
+    }
+
+    /// The tools called, in order (`xcrun <subcommand>` for xcrun).
+    pub fn tools(&self) -> Vec<String> {
+        self.calls
+            .iter()
+            .map(|c| {
+                let t = Path::new(&c[0])
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned();
+                if t == "xcrun" {
+                    format!("xcrun {}", c[1])
+                } else {
+                    t
+                }
+            })
+            .collect()
+    }
+}
+
+/// A run for `os` with nothing optional set (a Mac names its triple).
+pub fn native_args(out: &Path, os: BundleOs, arch: BundleArch) -> BundleArgs {
+    BundleArgs {
+        target: (os == BundleOs::Macos).then(|| MAC_TARGET.to_string()),
+        ..BundleArgs::new(NATIVE_VERSION, out, os, arch)
+    }
+}
+
+pub fn env_of(pairs: &[(&str, &str)]) -> Env {
+    pairs
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect()
+}

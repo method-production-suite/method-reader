@@ -1,8 +1,18 @@
 //! Port of tests/build-app-bundle.test.ts (72 checks): the bundle matrix,
-//! the `cargo tauri build` invocation, discovery, verification, the version
-//! gate, the argument parser, whole runs against a fake cargo, the updater
-//! archive, and Apple silicon only. The native window's half is in
-//! tests/native_bundle.rs.
+//! discovery, verification, the argument parser, whole runs against fake
+//! outside tools, the updater archive, and Apple silicon only. What the
+//! native window's bundles hold is in tests/native_bundle.rs.
+//!
+//! Retired with the Tauri window at the Rust cutover: the `cargo tauri
+//! build` invocation (build, never bundle; the pinned --bundles list; the
+//! --target and --config pass-through; the updater overlay), the version
+//! gate over package.json, the Tauri Cargo.toml and tauri.conf.json (the
+//! native gate over rust/Cargo.toml is in tests/native_bundle.rs), the
+//! Tauri bundle floor, and the checks of a signature tauri-cli left beside
+//! the archive (the native path signs it itself and checks it against the
+//! key the app trusts before writing it: tests/native_bundle.rs). The whole
+//! runs that drove a fake `cargo tauri build` drive the native path's fake
+//! tools now.
 
 mod packaging_common;
 
@@ -12,15 +22,14 @@ use std::path::{Path, PathBuf};
 
 use packaging_common::*;
 use xtask::packaging::bundle::{
-    BundleArgs, BundleDirs, Env, assert_bundle_versions, build_argv, build_bundles,
-    cargo_package_version, parse_bundle_args,
+    BundleArgs, Env, build_bundles, cargo_package_version, parse_bundle_args,
 };
 use xtask::packaging::kinds::{
-    AppSource, BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_ARCH, MAC_TARGET, MagicAt,
-    SIGNATURE_EXT, UPDATER_KINDS, UPDATER_OVERLAY, arch_of, bundle_dir_for, bundle_list_for,
-    discover_artifact, kinds_for_os, platform_keys, released_name, updater_kinds_for_os,
-    verify_bundle_file,
+    BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_ARCH, MAC_TARGET, MagicAt, NATIVE_FLOOR,
+    UPDATER_KINDS, arch_of, bundle_dir_for, discover_artifact, kinds_for_os, platform_keys,
+    released_name, updater_kinds_for_os, verify_bundle_file,
 };
+use xtask::packaging::native::binary_path;
 use xtask::packaging::util::{RunResult, parse_checksums, sha256_file};
 
 fn kind(id: &str) -> Kind {
@@ -92,19 +101,6 @@ fn every_row_looks_in_the_bundler_subdirectory_its_own_id_names() {
         assert!(
             bundle_dir_for(k.dir, None, Path::new("d")).ends_with(Path::new("bundle").join(k.id))
         );
-    }
-}
-
-#[test]
-fn the_bundles_list_is_pinned_per_os_and_never_left_to_the_default() {
-    assert_eq!(bundle_list_for(BundleOs::Linux), "deb,rpm");
-    assert_eq!(bundle_list_for(BundleOs::Macos), "app,dmg");
-    assert_eq!(bundle_list_for(BundleOs::Windows), "nsis");
-    for os in [BundleOs::Linux, BundleOs::Macos, BundleOs::Windows] {
-        assert!(!bundle_list_for(os).contains("appimage"));
-        for k in kinds_for_os(os) {
-            assert!(bundle_list_for(os).split(',').any(|b| b == k.id));
-        }
     }
 }
 
@@ -203,52 +199,7 @@ fn no_two_rows_can_ever_produce_the_same_published_filename() {
     assert_eq!(unique.len(), names.len() - 2);
 }
 
-// ---- the cargo tauri invocation ----
-
-#[test]
-fn it_is_build_never_bundle() {
-    let argv = build_argv(BundleOs::Linux, None, None, false);
-    assert_eq!(argv[..3], ["cargo", "tauri", "build"]);
-    assert!(!argv.iter().any(|a| a == "bundle"));
-}
-
-#[test]
-fn it_always_pins_the_bundle_list() {
-    assert_eq!(
-        build_argv(BundleOs::Linux, None, None, false),
-        ["cargo", "tauri", "build", "--bundles", "deb,rpm"]
-    );
-}
-
-#[test]
-fn a_target_triple_and_a_config_overlay_are_passed_through_when_given() {
-    assert_eq!(
-        build_argv(
-            BundleOs::Macos,
-            Some("aarch64-apple-darwin"),
-            Some("tauri.transition.conf.json"),
-            false
-        ),
-        [
-            "cargo",
-            "tauri",
-            "build",
-            "--bundles",
-            "app,dmg",
-            "--target",
-            "aarch64-apple-darwin",
-            "--config",
-            "tauri.transition.conf.json"
-        ]
-    );
-}
-
-#[test]
-fn neither_flag_appears_when_it_was_not_asked_for() {
-    let argv = build_argv(BundleOs::Windows, None, None, false);
-    assert!(!argv.iter().any(|a| a == "--target"));
-    assert!(!argv.iter().any(|a| a == "--config"));
-}
+// ---- where the bundler writes ----
 
 #[test]
 fn the_bundle_directory_moves_under_the_triple_when_one_is_given() {
@@ -422,109 +373,13 @@ fn a_missing_file_says_which_one() {
     );
 }
 
-// ---- the version gate ----
-
-fn fake_repo(s: &Scratch, pkg: Option<&str>, cargo: Option<&str>, conf: Option<&str>) -> PathBuf {
-    let dir = s.fresh("repo");
-    let desktop = dir.join("desktop/src-tauri");
-    fs::create_dir_all(&desktop).unwrap();
-    let pkg_json = match pkg {
-        Some(v) => serde_json::json!({ "version": v }),
-        None => serde_json::json!({ "name": "screepub" }),
-    };
-    fs::write(dir.join("package.json"), pkg_json.to_string()).unwrap();
-    let cargo_toml = match cargo {
-        Some(v) => format!(
-            "[package]\nname = \"screepub-desktop\"\nversion = \"{v}\"\nedition = \"2021\"\n"
-        ),
-        None => "[package]\nname = \"screepub-desktop\"\n".to_string(),
-    };
-    fs::write(desktop.join("Cargo.toml"), cargo_toml).unwrap();
-    let conf_json = match conf {
-        Some(v) => serde_json::json!({ "productName": "Screepub", "version": v }),
-        None => serde_json::json!({ "productName": "Screepub" }),
-    };
-    fs::write(desktop.join("tauri.conf.json"), conf_json.to_string()).unwrap();
-    dir
-}
-
-#[test]
-fn all_three_agreeing_with_the_version_passes() {
-    let s = Scratch::new("bundle-gate");
-    assert_bundle_versions(
-        "0.6.0",
-        &fake_repo(&s, Some("0.6.0"), Some("0.6.0"), Some("0.6.0")),
-    )
-    .unwrap();
-}
-
-#[test]
-fn a_0_6_0_bundle_around_a_0_5_4_engine_is_refused_and_says_which_file() {
-    let s = Scratch::new("bundle-gate");
-    err_contains(
-        assert_bundle_versions(
-            "0.6.0",
-            &fake_repo(&s, Some("0.5.4"), Some("0.6.0"), Some("0.6.0")),
-        ),
-        "package.json",
-    );
-}
-
-#[test]
-fn a_stale_cargo_toml_is_refused_and_named() {
-    let s = Scratch::new("bundle-gate");
-    err_contains(
-        assert_bundle_versions(
-            "0.6.0",
-            &fake_repo(&s, Some("0.6.0"), Some("0.5.4"), Some("0.6.0")),
-        ),
-        "Cargo.toml",
-    );
-}
-
-#[test]
-fn a_stale_tauri_conf_json_is_refused_and_named() {
-    let s = Scratch::new("bundle-gate");
-    err_contains(
-        assert_bundle_versions(
-            "0.6.0",
-            &fake_repo(&s, Some("0.6.0"), Some("0.6.0"), Some("0.5.4")),
-        ),
-        "tauri.conf.json",
-    );
-}
-
-#[test]
-fn the_message_carries_both_numbers_not_just_a_complaint() {
-    let s = Scratch::new("bundle-gate");
-    let e = assert_bundle_versions(
-        "0.6.0",
-        &fake_repo(&s, Some("0.5.4"), Some("0.6.0"), Some("0.6.0")),
-    )
-    .unwrap_err();
-    assert!(e.contains("0.5.4") && e.contains("0.6.0"), "{e}");
-}
-
-#[test]
-fn a_version_key_that_is_absent_fails_closed_for_each_of_the_three_files() {
-    let s = Scratch::new("bundle-gate");
-    err_contains(
-        assert_bundle_versions("0.6.0", &fake_repo(&s, None, None, None)),
-        "package.json",
-    );
-    err_contains(
-        assert_bundle_versions("0.6.0", &fake_repo(&s, Some("0.6.0"), None, None)),
-        "Cargo.toml",
-    );
-    err_contains(
-        assert_bundle_versions("0.6.0", &fake_repo(&s, Some("0.6.0"), Some("0.6.0"), None)),
-        "tauri.conf.json",
-    );
-}
+// ---- the version gate (the native gate itself: tests/native_bundle.rs) ----
 
 #[test]
 fn a_dependency_s_version_is_never_mistaken_for_the_crate_s() {
-    let text = "[package]\nname = \"screepub-desktop\"\n\n[dependencies.tauri]\nversion = \"2\"\nfeatures = []\n";
+    // What keeps sp-app from carrying a version of its own.
+    let text =
+        "[package]\nname = \"sp-app\"\n\n[dependencies.egui]\nversion = \"2\"\nfeatures = []\n";
     assert_eq!(cargo_package_version(text), None);
     assert_eq!(
         cargo_package_version(
@@ -663,7 +518,7 @@ fn out_is_made_absolute_so_the_tool_can_be_run_from_anywhere() {
 }
 
 #[test]
-fn target_and_config_reach_the_args_they_are_named_for() {
+fn target_and_pubkey_reach_the_args_they_are_named_for() {
     let a = parse_bundle_args(
         &args(&[
             "--version",
@@ -672,15 +527,24 @@ fn target_and_config_reach_the_args_they_are_named_for() {
             "o",
             "--target",
             "aarch64-apple-darwin",
-            "--config",
-            "o.json",
+            "--pubkey",
+            "k.pub",
         ]),
         "darwin",
         "arm64",
     )
     .unwrap();
     assert_eq!(a.target.as_deref(), Some("aarch64-apple-darwin"));
-    assert_eq!(a.config.as_deref(), Some("o.json"));
+    assert_eq!(a.pubkey.as_deref(), Some("k.pub"));
+    // --config was the Tauri overlay; nothing takes it now.
+    err_contains(
+        parse_bundle_args(
+            &args(&["--version", "0.6.0", "--out", "o", "--config", "o.json"]),
+            "darwin",
+            "arm64",
+        ),
+        "--config",
+    );
 }
 
 #[test]
@@ -696,54 +560,7 @@ fn an_unknown_flag_or_a_positional_is_refused_as_node_s_strict_parser_did() {
     assert!(parse_bundle_args(&args(&["0.6.0"]), "linux", "x64").is_err());
 }
 
-// ---- a whole run, against a fake cargo ----
-
-/// A repo whose three version files agree.
-fn agreeing_repo(s: &Scratch, version: &str) -> BundleDirs {
-    let repo = fake_repo(s, Some(version), Some(version), Some(version));
-    BundleDirs::for_repo(&repo)
-}
-
-fn target_of(argv: &[String]) -> Option<String> {
-    argv.iter()
-        .position(|a| a == "--target")
-        .map(|i| argv[i + 1].clone())
-}
-
-/// Stands in for `cargo tauri build`: records the argv and cwd, then writes
-/// what a real bundler would have, under the bundler's own names.
-struct FakeCargo {
-    calls: Vec<Vec<String>>,
-    cwds: Vec<PathBuf>,
-    kinds: Vec<Kind>,
-    desktop: PathBuf,
-}
-
-impl FakeCargo {
-    fn new(kinds: Vec<Kind>, desktop: &Path) -> Self {
-        FakeCargo {
-            calls: vec![],
-            cwds: vec![],
-            kinds,
-            desktop: desktop.to_path_buf(),
-        }
-    }
-
-    fn run(&mut self, argv: &[String], cwd: Option<&Path>) -> RunResult {
-        self.calls.push(argv.to_vec());
-        self.cwds.push(cwd.unwrap().to_path_buf());
-        let target = target_of(argv);
-        for k in &self.kinds {
-            let dir = bundle_dir_for(k.dir, target.as_deref(), &self.desktop);
-            fs::create_dir_all(&dir).unwrap();
-            plausible(
-                &dir.join(format!("Screepub_0.6.0_bundler-name{}", k.ext)),
-                k,
-            );
-        }
-        RunResult::ok("", "")
-    }
-}
+// ---- a whole run, against fake outside tools ----
 
 fn names_of(paths: &[PathBuf]) -> Vec<String> {
     paths.iter().map(|p| base_name(p)).collect()
@@ -754,33 +571,25 @@ fn no_env() -> Env {
 }
 
 fn with_key() -> Env {
-    [
-        (
-            "TAURI_SIGNING_PRIVATE_KEY".to_string(),
-            "not-a-real-key-but-set".to_string(),
-        ),
-        (
-            "TAURI_SIGNING_PRIVATE_KEY_PASSWORD".to_string(),
-            String::new(),
-        ),
-    ]
-    .into_iter()
-    .collect()
+    env_of(&[
+        ("TAURI_SIGNING_PRIVATE_KEY", TAURI_TEST_KEY),
+        ("TAURI_SIGNING_PRIVATE_KEY_PASSWORD", ""),
+    ])
 }
 
 fn linux_run(out: &Path, arch: BundleArch) -> BundleArgs {
-    BundleArgs::new("0.6.0", out, BundleOs::Linux, arch)
+    BundleArgs::new("0.12.0", out, BundleOs::Linux, arch)
 }
 
 #[test]
 fn it_renames_to_the_published_names_and_writes_sha256sums_app() {
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut cargo = FakeCargo::new(kinds_for_os(BundleOs::Linux), &dirs.desktop_dir);
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Linux);
     let out = s.join("run-linux");
     let made = build_bundles(
         &linux_run(&out, BundleArch::Arm64),
-        &mut |a, c| cargo.run(a, c),
+        &mut |a, c| tools.run(a, c),
         &dirs,
         &no_env(),
     )
@@ -792,12 +601,10 @@ fn it_renames_to_the_published_names_and_writes_sha256sums_app() {
     for p in &made {
         assert!(p.is_file());
     }
-    assert_eq!(cargo.calls.len(), 1);
-    assert_eq!(
-        cargo.calls[0],
-        ["cargo", "tauri", "build", "--bundles", "deb,rpm"]
-    );
-    assert_eq!(cargo.cwds[0], dirs.desktop_dir);
+    // One build, in rust/: the window crate, never `cargo tauri`.
+    assert_eq!(tools.calls.len(), 1);
+    assert_eq!(tools.calls[0][..2], ["cargo", "build"]);
+    assert!(!tools.calls[0].iter().any(|a| a == "tauri"));
 
     let sums = parse_checksums(&fs::read_to_string(out.join("SHA256SUMS-app")).unwrap());
     assert_eq!(
@@ -812,29 +619,29 @@ fn it_renames_to_the_published_names_and_writes_sha256sums_app() {
 #[test]
 fn the_version_gate_stops_a_run_before_cargo_is_ever_spawned() {
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.5.4");
-    let mut cargo = FakeCargo::new(kinds_for_os(BundleOs::Linux), &dirs.desktop_dir);
+    let dirs = native_repo(&s, "0.5.4");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Linux);
     err_contains(
         build_bundles(
             &linux_run(&s.join("run-gated"), BundleArch::X64),
-            &mut |a, c| cargo.run(a, c),
+            &mut |a, c| tools.run(a, c),
             &dirs,
             &no_env(),
         ),
         "0.5.4",
     );
-    assert!(cargo.calls.is_empty());
+    assert!(tools.calls.is_empty());
 }
 
 #[test]
 fn the_checksums_file_is_not_called_sha256sums_and_names_the_x64_build() {
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut cargo = FakeCargo::new(kinds_for_os(BundleOs::Linux), &dirs.desktop_dir);
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Linux);
     let out = s.join("run-names");
     build_bundles(
         &linux_run(&out, BundleArch::X64),
-        &mut |a, c| cargo.run(a, c),
+        &mut |a, c| tools.run(a, c),
         &dirs,
         &no_env(),
     )
@@ -851,7 +658,7 @@ fn the_checksums_file_is_not_called_sha256sums_and_names_the_x64_build() {
 #[test]
 fn a_failing_cargo_fails_the_run_and_forwards_its_stderr() {
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
+    let dirs = native_repo(&s, "0.12.0");
     let mut fail = |_: &[String], _: Option<&Path>| RunResult {
         exit_code: 101,
         stdout: String::new(),
@@ -871,148 +678,49 @@ fn a_failing_cargo_fails_the_run_and_forwards_its_stderr() {
 #[test]
 fn a_cargo_that_exits_0_and_writes_nothing_still_fails() {
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
+    let dirs = native_repo(&s, "0.12.0");
     let mut nothing = |_: &[String], _: Option<&Path>| RunResult::ok("", "");
+    let out = s.join("run-empty");
     err_contains(
         build_bundles(
-            &linux_run(&s.join("run-empty"), BundleArch::X64),
+            &linux_run(&out, BundleArch::X64),
             &mut nothing,
             &dirs,
             &no_env(),
         ),
-        "deb",
-    );
-}
-
-#[test]
-fn a_cargo_that_writes_only_the_deb_still_fails_and_no_rpm_is_published() {
-    let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut cargo = FakeCargo::new(vec![kind("deb")], &dirs.desktop_dir);
-    let out = s.join("run-half");
-    err_contains(
-        build_bundles(
-            &linux_run(&out, BundleArch::X64),
-            &mut |a, c| cargo.run(a, c),
-            &dirs,
-            &no_env(),
-        ),
-        "rpm",
+        "screepub-window",
     );
     assert!(!out.join("SHA256SUMS-app").exists());
 }
 
 #[test]
 fn a_truncated_artifact_fails_the_run_instead_of_being_published() {
+    // hdiutil reporting success over a 64-byte image.
     let s = Scratch::new("bundle-run");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let desktop = dirs.desktop_dir.clone();
-    let mut trunc = |_: &[String], _: Option<&Path>| {
-        let dir = bundle_dir_for("deb", None, &desktop);
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("Screepub_0.6.0_truncated.deb"), [0u8; 64]).unwrap();
-        RunResult::ok("", "")
-    };
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
+    tools.dmg_bytes = Some(64);
     let out = s.join("run-trunc");
     err_contains(
         build_bundles(
-            &linux_run(&out, BundleArch::X64),
-            &mut trunc,
+            &native_args(&out, BundleOs::Macos, BundleArch::Arm64),
+            &mut |a, c| tools.run(a, c),
             &dirs,
             &no_env(),
         ),
         "floor",
     );
-    assert!(!out.join("Screepub-linux-amd64.deb").exists());
+    assert!(!out.join("Screepub-macOS.dmg").exists());
+    assert!(!out.join("SHA256SUMS-app").exists());
 }
 
 // ---- the updater archive ----
 
-struct FakeMac {
-    calls: Vec<Vec<String>>,
-    desktop: PathBuf,
-    tar: bool,
-    sig: Option<String>,
-}
-
-impl FakeMac {
-    fn new(desktop: &Path, tar: bool, sig: Option<String>) -> Self {
-        FakeMac {
-            calls: vec![],
-            desktop: desktop.to_path_buf(),
-            tar,
-            sig,
-        }
-    }
-
-    fn run(&mut self, argv: &[String], _: Option<&Path>) -> RunResult {
-        self.calls.push(argv.to_vec());
-        let target = target_of(argv);
-        for k in kinds_for_os(BundleOs::Macos) {
-            let dir = bundle_dir_for(k.dir, target.as_deref(), &self.desktop);
-            fs::create_dir_all(&dir).unwrap();
-            plausible(&dir.join(format!("Screepub{}", k.ext)), &k);
-        }
-        let macos = bundle_dir_for("macos", target.as_deref(), &self.desktop);
-        fs::create_dir_all(&macos).unwrap();
-        let tar = macos.join("Screepub.app.tar.gz");
-        if self.tar {
-            plausible(&tar, &app_tar());
-        }
-        if let Some(sig) = &self.sig {
-            fs::write(format!("{}{SIGNATURE_EXT}", tar.display()), sig).unwrap();
-        }
-        RunResult::ok("", "")
-    }
-}
-
-fn good_sig() -> Option<String> {
-    Some(fake_signature_box("Screepub.app.tar.gz", FAKE_KEY_ID))
-}
-
 fn mac_run(out: &Path, updater: bool) -> BundleArgs {
     BundleArgs {
-        target: Some(MAC_TARGET.into()),
-        config: Some("tauri.transition.conf.json".into()),
         updater,
-        ..BundleArgs::new("0.6.0", out, BundleOs::Macos, BundleArch::Arm64)
-    }
-}
-
-#[test]
-fn updater_passes_the_updater_overlay_after_the_transition_overlay() {
-    assert_eq!(
-        build_argv(
-            BundleOs::Macos,
-            Some("aarch64-apple-darwin"),
-            Some("tauri.transition.conf.json"),
-            true
-        ),
-        [
-            "cargo",
-            "tauri",
-            "build",
-            "--bundles",
-            "app,dmg",
-            "--target",
-            "aarch64-apple-darwin",
-            "--config",
-            "tauri.transition.conf.json",
-            "--config",
-            UPDATER_OVERLAY
-        ]
-    );
-    assert_eq!(UPDATER_OVERLAY, "tauri.updater.conf.json");
-}
-
-#[test]
-fn without_updater_the_overlay_is_never_passed_so_a_push_build_needs_no_key() {
-    for os in [BundleOs::Linux, BundleOs::Macos, BundleOs::Windows] {
-        assert!(
-            !build_argv(os, None, None, false)
-                .iter()
-                .any(|a| a == UPDATER_OVERLAY)
-        );
+        pubkey: updater.then(tauri_test_public_key),
+        ..native_args(out, BundleOs::Macos, BundleArch::Arm64)
     }
 }
 
@@ -1059,6 +767,11 @@ fn the_updater_archive_is_a_macos_kind_only_gzip_at_the_head_floor_like_the_rest
     assert_eq!(k.magic, [0x1f, 0x8b]);
     assert_eq!(k.magic_at, MagicAt::Head);
     assert_eq!(k.floor_bytes, kind("dmg").floor_bytes);
+    // Every kind's floor is the native window's (the Tauri one's 10 MB went
+    // with the Bun engine it carried).
+    for k in BUNDLE_KINDS.iter().chain(UPDATER_KINDS.iter()) {
+        assert_eq!(k.floor_bytes, NATIVE_FLOOR, "{}", k.id);
+    }
 }
 
 #[test]
@@ -1110,12 +823,12 @@ fn the_verifier_accepts_a_plausible_archive_and_rejects_a_non_gzip_one() {
 #[test]
 fn with_updater_the_archive_and_its_signature_come_out_under_the_published_names_byte_for_byte() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, true, good_sig());
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
     let out = s.join("run-updater");
     let made = build_bundles(
         &mac_run(&out, true),
-        &mut |a, c| mac.run(a, c),
+        &mut |a, c| tools.run(a, c),
         &dirs,
         &with_key(),
     )
@@ -1130,151 +843,97 @@ fn with_updater_the_archive_and_its_signature_come_out_under_the_published_names
             "Screepub-macOS.dmg"
         ]
     );
-    assert!(mac.calls[0].iter().any(|a| a == UPDATER_OVERLAY));
-    assert_eq!(
-        fs::read_to_string(out.join("Screepub-macOS.app.tar.gz.sig")).unwrap(),
-        good_sig().unwrap()
-    );
+    let built = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir);
+    for name in ["Screepub-macOS.app.tar.gz", "Screepub-macOS.app.tar.gz.sig"] {
+        assert_eq!(
+            fs::read(out.join(name)).unwrap(),
+            fs::read(built.join(name)).unwrap(),
+            "{name}"
+        );
+    }
+    // The archive is proven by its signature, not listed in the checksums.
     let sums = parse_checksums(&fs::read_to_string(out.join("SHA256SUMS-app")).unwrap());
     assert_eq!(sums.keys().collect::<Vec<_>>(), ["Screepub-macOS.dmg"]);
 }
 
 #[test]
-fn without_updater_a_macos_run_ignores_an_archive_that_happens_to_be_there() {
+fn without_updater_a_macos_run_publishes_no_archive_and_needs_no_key() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, true, good_sig());
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
+    let out = s.join("run-no-updater");
     let made = build_bundles(
-        &mac_run(&s.join("run-no-updater"), false),
-        &mut |a, c| mac.run(a, c),
+        &mac_run(&out, false),
+        &mut |a, c| tools.run(a, c),
         &dirs,
         &no_env(),
     )
     .unwrap();
     assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
-    assert!(!mac.calls[0].iter().any(|a| a == UPDATER_OVERLAY));
+    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
 }
 
 #[test]
 fn updater_without_the_signing_key_fails_before_cargo_is_spawned() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, true, good_sig());
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
     err_contains(
         build_bundles(
             &mac_run(&s.join("run-nokey"), true),
-            &mut |a, c| mac.run(a, c),
+            &mut |a, c| tools.run(a, c),
             &dirs,
             &no_env(),
         ),
         "TAURI_SIGNING_PRIVATE_KEY",
     );
-    assert!(mac.calls.is_empty());
+    assert!(tools.calls.is_empty());
 }
 
 #[test]
 fn updater_with_the_key_but_no_password_variable_fails_before_cargo_and_says_empty_is_fine() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, true, good_sig());
-    let env: Env = [("TAURI_SIGNING_PRIVATE_KEY".to_string(), "set".to_string())]
-        .into_iter()
-        .collect();
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
+    let env = env_of(&[("TAURI_SIGNING_PRIVATE_KEY", "set")]);
     let e = err_contains(
         build_bundles(
             &mac_run(&s.join("run-nopw"), true),
-            &mut |a, c| mac.run(a, c),
+            &mut |a, c| tools.run(a, c),
             &dirs,
             &env,
         ),
         "TAURI_SIGNING_PRIVATE_KEY_PASSWORD",
     );
     assert!(e.contains("empty"));
-    assert!(mac.calls.is_empty());
+    assert!(tools.calls.is_empty());
 }
 
 #[test]
-fn a_cargo_that_exits_0_and_writes_no_archive_fails_naming_it() {
+fn the_macos_run_builds_for_the_apple_silicon_triple() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, false, None);
-    err_contains(
-        build_bundles(
-            &mac_run(&s.join("run-notar"), true),
-            &mut |a, c| mac.run(a, c),
-            &dirs,
-            &with_key(),
-        ),
-        ".app.tar.gz",
-    );
-}
-
-#[test]
-fn an_archive_with_no_signature_beside_it_fails_naming_the_signature() {
-    let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(&dirs.desktop_dir, true, None);
-    err_contains(
-        build_bundles(
-            &mac_run(&s.join("run-nosig"), true),
-            &mut |a, c| mac.run(a, c),
-            &dirs,
-            &with_key(),
-        ),
-        ".sig",
-    );
-}
-
-#[test]
-fn a_signature_that_is_not_a_minisign_box_fails_and_the_archive_is_not_published() {
-    let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut mac = FakeMac::new(
-        &dirs.desktop_dir,
-        true,
-        Some("definitely not a signature".into()),
-    );
-    let out = s.join("run-badsig");
-    err_contains(
-        build_bundles(
-            &mac_run(&out, true),
-            &mut |a, c| mac.run(a, c),
-            &dirs,
-            &with_key(),
-        ),
-        "signature",
-    );
-    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
-}
-
-#[test]
-fn the_macos_run_passes_the_target_triple_and_the_overlay_through() {
-    let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    let mut cargo = FakeCargo::new(kinds_for_os(BundleOs::Macos), &dirs.desktop_dir);
+    let dirs = native_repo(&s, "0.12.0");
+    let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
     let made = build_bundles(
         &mac_run(&s.join("run-macos"), false),
-        &mut |a, c| cargo.run(a, c),
+        &mut |a, c| tools.run(a, c),
         &dirs,
         &no_env(),
     )
     .unwrap();
-    let call = &cargo.calls[0];
-    for want in [
-        "--target",
-        "aarch64-apple-darwin",
-        "--config",
-        "tauri.transition.conf.json",
-    ] {
+    let call = &tools.calls[0];
+    assert_eq!(call[..2], ["cargo", "build"]);
+    for want in ["--target", "aarch64-apple-darwin"] {
         assert!(call.iter().any(|a| a == want), "{want}");
     }
+    assert!(binary_path(&dirs.rust_dir, Some(MAC_TARGET), BundleOs::Macos).is_file());
     assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
 }
 
 #[test]
 fn an_intel_mac_run_is_refused_before_cargo_however_the_args_were_made() {
     let s = Scratch::new("bundle-updater");
-    let dirs = agreeing_repo(&s, "0.6.0");
+    let dirs = native_repo(&s, "0.12.0");
     let cases: [(BundleArch, Option<&str>); 5] = [
         (BundleArch::X64, Some("x86_64-apple-darwin")),
         (BundleArch::X64, None),
@@ -1283,16 +942,16 @@ fn an_intel_mac_run_is_refused_before_cargo_however_the_args_were_made() {
         (BundleArch::Arm64, None),
     ];
     for (arch, target) in cases {
-        let mut cargo = FakeCargo::new(kinds_for_os(BundleOs::Macos), &dirs.desktop_dir);
+        let mut tools = FakeTools::new(&dirs, BundleOs::Macos);
         let a = BundleArgs {
             target: target.map(str::to_string),
-            ..BundleArgs::new("0.6.0", &s.join("run-intel"), BundleOs::Macos, arch)
+            ..BundleArgs::new("0.12.0", &s.join("run-intel"), BundleOs::Macos, arch)
         };
         err_contains(
-            build_bundles(&a, &mut |x, c| cargo.run(x, c), &dirs, &no_env()),
+            build_bundles(&a, &mut |x, c| tools.run(x, c), &dirs, &no_env()),
             "Apple silicon",
         );
-        assert!(cargo.calls.is_empty());
+        assert!(tools.calls.is_empty());
     }
 }
 
@@ -1384,15 +1043,4 @@ fn universal_is_not_an_architecture_any_more_on_any_os() {
             "universal",
         );
     }
-}
-
-#[test]
-fn a_tauri_run_is_chosen_while_tauri_conf_json_exists_and_tauri_floors_apply() {
-    let s = Scratch::new("bundle-choose");
-    let dirs = agreeing_repo(&s, "0.6.0");
-    assert_eq!(
-        xtask::packaging::bundle::resolve_app(None, &dirs),
-        AppSource::Tauri
-    );
-    assert_eq!(AppSource::Tauri.floor_bytes(), 10_000_000);
 }

@@ -1,179 +1,33 @@
-//! The native window's bundles (no TypeScript original: this is the
-//! cutover's new half of build-app-bundle). Every outside tool is a fake
+//! The native window's bundles (no TypeScript original: this was the
+//! cutover's new half of build-app-bundle, and since the cutover it is the
+//! only one). Every outside tool is a fake
 //! behind the runner seam; the .deb, .rpm, .app and .app.tar.gz are real,
 //! written in Rust and read back. Where `rpm` or `dpkg-deb` is installed
 //! the packages are also handed to it; elsewhere that check says it skipped.
 
 mod packaging_common;
 
-use std::fs::{self, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use packaging_common::*;
 use xtask::packaging::archive::{bundle_entries, deb_control_field, find_entry, rpm_header_string};
 use xtask::packaging::bundle::{
-    BundleArgs, BundleDirs, Env, assert_native_versions, build_bundles, parse_bundle_args,
-    resolve_app,
+    BundleArgs, Env, assert_native_versions, build_bundles, parse_bundle_args,
 };
-use xtask::packaging::kinds::{
-    AppSource, BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_TARGET, MagicAt, NATIVE_FLOOR,
-    bundle_dir_for, for_app,
-};
+use xtask::packaging::kinds::{BundleArch, BundleOs, MAC_TARGET, bundle_dir_for};
 use xtask::packaging::manifest::collect_signed_artifacts;
 use xtask::packaging::native::{
     NATIVE_APP, NativeTools, binary_path, cargo_argv, info_plist, package_version, plist_string,
+    trusted_pubkey,
 };
 use xtask::packaging::signature::verify_file;
-use xtask::packaging::util::{RunResult, parse_checksums, sha256_file};
+use xtask::packaging::util::{parse_checksums, sha256_file};
 use xtask::paths::repo_root;
 
-const VERSION: &str = "0.12.0";
-
-/// A repository with what the native path reads: the workspace version,
-/// sp-app inheriting it, the icons and the two resources. No desktop/.
-fn native_repo(s: &Scratch, version: &str) -> BundleDirs {
-    let repo = s.fresh("repo");
-    fs::write(repo.join("LICENSE"), "GNU AFFERO GENERAL PUBLIC LICENSE").unwrap();
-    fs::write(repo.join("THIRD-PARTY-NOTICES.md"), "# Notices").unwrap();
-    let rust = repo.join("rust");
-    fs::create_dir_all(rust.join("crates/sp-app/icons")).unwrap();
-    fs::write(
-        rust.join("Cargo.toml"),
-        format!("[workspace]\nmembers = [\"crates/*\"]\n\n[workspace.package]\nedition = \"2024\"\nversion = \"{version}\"\n"),
-    )
-    .unwrap();
-    fs::write(
-        rust.join("crates/sp-app/Cargo.toml"),
-        "[package]\nname = \"sp-app\"\nversion.workspace = true\n",
-    )
-    .unwrap();
-    for icon in [
-        "icon.icns",
-        "icon.ico",
-        "32x32.png",
-        "128x128.png",
-        "128x128@2x.png",
-    ] {
-        fs::write(
-            rust.join("crates/sp-app/icons").join(icon),
-            format!("icon bytes of {icon}"),
-        )
-        .unwrap();
-    }
-    BundleDirs::for_repo(&repo)
-}
-
-fn native_kind(id: &str) -> Kind {
-    for_app(
-        *BUNDLE_KINDS.iter().find(|k| k.id == id).unwrap(),
-        AppSource::Native,
-    )
-}
-
-/// A file that passes `k`'s magic check and clears its floor.
-fn plausible(path: &Path, k: &Kind) {
-    let size = k.floor_bytes + 1024;
-    let mut f = OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .write(true)
-        .open(path)
-        .unwrap();
-    f.set_len(size).unwrap();
-    f.seek(SeekFrom::Start(if k.magic_at == MagicAt::Head {
-        0
-    } else {
-        size - 512
-    }))
-    .unwrap();
-    f.write_all(k.magic).unwrap();
-}
-
-fn the_binary() -> Vec<u8> {
-    noise(NATIVE_FLOOR as usize + 65_536, 0x5EED)
-}
-
-/// Every outside tool the native path calls, faked: cargo writes the
-/// binary, hdiutil and makensis write their containers, notarytool answers.
-struct FakeTools {
-    calls: Vec<Vec<String>>,
-    rust: PathBuf,
-    os: BundleOs,
-    notary_status: &'static str,
-}
-
-impl FakeTools {
-    fn new(dirs: &BundleDirs, os: BundleOs) -> Self {
-        FakeTools {
-            calls: vec![],
-            rust: dirs.rust_dir.clone(),
-            os,
-            notary_status: "Accepted",
-        }
-    }
-
-    fn run(&mut self, argv: &[String], _cwd: Option<&Path>) -> RunResult {
-        self.calls.push(argv.to_vec());
-        let tool = Path::new(&argv[0])
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .into_owned();
-        match tool.as_str() {
-            "cargo" => {
-                let target = argv
-                    .iter()
-                    .position(|a| a == "--target")
-                    .map(|i| argv[i + 1].clone());
-                let bin = binary_path(&self.rust, target.as_deref(), self.os);
-                fs::create_dir_all(bin.parent().unwrap()).unwrap();
-                fs::write(&bin, the_binary()).unwrap();
-            }
-            "hdiutil" => plausible(Path::new(argv.last().unwrap()), &native_kind("dmg")),
-            "makensis" => {
-                let script = fs::read_to_string(&argv[1]).unwrap();
-                let at = script.find("OutFile \"").unwrap() + 9;
-                let out = &script[at..at + script[at..].find('"').unwrap()];
-                plausible(Path::new(out), &native_kind("nsis"));
-            }
-            "xcrun" if argv[1] == "notarytool" => {
-                return RunResult::ok(
-                    &format!("{{\"id\":\"abc\",\"status\":\"{}\"}}", self.notary_status),
-                    "",
-                );
-            }
-            _ => {}
-        }
-        RunResult::ok("", "")
-    }
-
-    fn tools(&self) -> Vec<String> {
-        self.calls
-            .iter()
-            .map(|c| {
-                let t = Path::new(&c[0])
-                    .file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .into_owned();
-                if t == "xcrun" {
-                    format!("xcrun {}", c[1])
-                } else {
-                    t
-                }
-            })
-            .collect()
-    }
-}
-
-fn native_args(out: &Path, os: BundleOs, arch: BundleArch) -> BundleArgs {
-    BundleArgs {
-        target: (os == BundleOs::Macos).then(|| MAC_TARGET.to_string()),
-        ..BundleArgs::new(VERSION, out, os, arch)
-    }
-}
+const VERSION: &str = NATIVE_VERSION;
 
 fn names_of(paths: &[PathBuf]) -> Vec<String> {
     paths
@@ -182,47 +36,33 @@ fn names_of(paths: &[PathBuf]) -> Vec<String> {
         .collect()
 }
 
-fn env_of(pairs: &[(&str, &str)]) -> Env {
-    pairs
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.to_string()))
-        .collect()
-}
-
 // ---- the handover: the native app is the Tauri app's successor ----
 
 #[test]
 fn the_native_app_keeps_the_tauri_window_s_identity() {
-    let conf_path = repo_root().join("desktop/src-tauri/tauri.conf.json");
-    let Ok(text) = fs::read_to_string(&conf_path) else {
-        eprintln!("skipped: tauri.conf.json is gone (cutover)");
-        return;
-    };
-    let conf: serde_json::Value = serde_json::from_str(&text).unwrap();
-    assert_eq!(conf["identifier"], NATIVE_APP.identifier);
-    assert_eq!(conf["productName"], NATIVE_APP.product_name);
-    assert_eq!(conf["bundle"]["publisher"], NATIVE_APP.publisher);
+    // What 0.11.1's desktop/src-tauri/tauri.conf.json said, recorded when
+    // the Rust cutover deleted it: the window that updates itself into this
+    // app must find the same app, so these never change.
+    assert_eq!(NATIVE_APP.identifier, "com.darkwell.screepub");
+    assert_eq!(NATIVE_APP.product_name, "Screepub");
+    assert_eq!(NATIVE_APP.publisher, "Darkwell Entertainment LLC");
     assert_eq!(
-        conf["bundle"]["shortDescription"],
-        NATIVE_APP.short_description
+        NATIVE_APP.short_description,
+        "Turn a screenplay PDF into a reflowable e-book."
     );
     assert_eq!(
-        conf["bundle"]["longDescription"],
-        NATIVE_APP.long_description
+        NATIVE_APP.long_description,
+        "Screepub converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB."
     );
+    assert_eq!(NATIVE_APP.minimum_macos, "13.0");
+    let resources: Vec<&str> = NATIVE_APP.resources.iter().map(|(_, n)| *n).collect();
+    assert_eq!(resources, ["LICENSE", "THIRD-PARTY-NOTICES.md"]);
+    // And its updater key (plugins.updater.pubkey), whose one home is now
+    // sp-update.
     assert_eq!(
-        conf["bundle"]["macOS"]["minimumSystemVersion"],
-        NATIVE_APP.minimum_macos
+        sp_update::PUBKEY,
+        "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU0RDA2NjhENTRGNkVCMzQKUldRMDYvWlVqV2JRNUQzRkpQMmVJZlQ4bTdaT2M5cmN2V05oVTJGdURUY0NwRDBRbEQ1c013UnYK"
     );
-    let resources: Vec<&str> = conf["bundle"]["resources"]
-        .as_object()
-        .unwrap()
-        .values()
-        .map(|v| v.as_str().unwrap())
-        .collect();
-    for (_, name) in NATIVE_APP.resources {
-        assert!(resources.contains(name), "{name}");
-    }
 }
 
 #[test]
@@ -234,31 +74,22 @@ fn the_table_names_the_binary_sp_app_actually_builds() {
 }
 
 #[test]
-fn the_native_window_is_chosen_once_tauri_conf_json_is_gone_or_when_asked() {
-    let s = Scratch::new("native-choose");
-    let dirs = native_repo(&s, VERSION);
-    assert_eq!(resolve_app(None, &dirs), AppSource::Native);
-    assert_eq!(resolve_app(Some(AppSource::Tauri), &dirs), AppSource::Tauri);
+fn the_native_window_is_the_only_one_and_app_tauri_is_refused() {
     let a = |v: &[&str]| v.iter().map(|x| x.to_string()).collect::<Vec<_>>();
-    assert_eq!(
-        parse_bundle_args(
-            &a(&["--version", "0.12.0", "--out", "o", "--app", "native"]),
-            "linux",
-            "x64"
-        )
-        .unwrap()
-        .app,
-        Some(AppSource::Native)
-    );
-    assert_eq!(
+    // `--app native` is still taken, naming the only window.
+    parse_bundle_args(
+        &a(&["--version", "0.12.0", "--out", "o", "--app", "native"]),
+        "linux",
+        "x64",
+    )
+    .unwrap();
+    err_contains(
         parse_bundle_args(
             &a(&["--version", "0.12.0", "--out", "o", "--app", "tauri"]),
             "linux",
-            "x64"
-        )
-        .unwrap()
-        .app,
-        Some(AppSource::Tauri)
+            "x64",
+        ),
+        "Tauri window is gone",
     );
     err_contains(
         parse_bundle_args(
@@ -267,6 +98,15 @@ fn the_native_window_is_chosen_once_tauri_conf_json_is_gone_or_when_asked() {
             "x64",
         ),
         "electron",
+    );
+    // So is --config, the Tauri overlay flag.
+    err_contains(
+        parse_bundle_args(
+            &a(&["--version", "0.12.0", "--out", "o", "--config", "x.json"]),
+            "linux",
+            "x64",
+        ),
+        "--config",
     );
 }
 
@@ -278,7 +118,15 @@ fn the_native_version_gate_reads_the_workspace_and_names_it() {
         assert_native_versions(VERSION, &dirs.rust_dir),
         "rust/Cargo.toml",
     );
+    // The message carries both numbers, not just a complaint.
     assert!(e.contains("0.11.1") && e.contains(VERSION));
+    // A workspace version that is absent fails closed.
+    fs::write(
+        dirs.rust_dir.join("Cargo.toml"),
+        "[workspace]\nmembers = []\n\n[workspace.package]\nedition = \"2024\"\n",
+    )
+    .unwrap();
+    err_contains(assert_native_versions(VERSION, &dirs.rust_dir), "<nothing>");
     let dirs = native_repo(&s, VERSION);
     assert_native_versions(VERSION, &dirs.rust_dir).unwrap();
     // sp-app may not carry a version of its own.
@@ -294,7 +142,7 @@ fn the_native_version_gate_reads_the_workspace_and_names_it() {
 }
 
 #[test]
-fn the_gate_stops_a_native_run_before_cargo_and_a_tauri_overlay_is_refused() {
+fn the_gate_stops_a_native_run_before_cargo() {
     let s = Scratch::new("native-gate");
     let dirs = native_repo(&s, "0.11.1");
     let mut fake = FakeTools::new(&dirs, BundleOs::Linux);
@@ -306,15 +154,6 @@ fn the_gate_stops_a_native_run_before_cargo_and_a_tauri_overlay_is_refused() {
             &Env::new(),
         ),
         "0.11.1",
-    );
-    let dirs = native_repo(&s, VERSION);
-    let a = BundleArgs {
-        config: Some("tauri.transition.conf.json".into()),
-        ..native_args(&s.join("o"), BundleOs::Linux, BundleArch::X64)
-    };
-    err_contains(
-        build_bundles(&a, &mut |x, c| fake.run(x, c), &dirs, &Env::new()),
-        "--config",
     );
     assert!(fake.calls.is_empty());
 }
@@ -559,7 +398,7 @@ fn the_real_package_tools_accept_them_where_installed() {
 }
 
 #[test]
-fn missing_icons_are_named_with_every_folder_searched() {
+fn missing_icons_are_named_with_the_folder_searched() {
     let s = Scratch::new("native-icons");
     let dirs = native_repo(&s, VERSION);
     fs::remove_file(dirs.rust_dir.join("crates/sp-app/icons/128x128.png")).unwrap();
@@ -573,10 +412,10 @@ fn missing_icons_are_named_with_every_folder_searched() {
         ),
         "128x128.png",
     );
-    assert!(
-        e.contains("rust/crates/sp-app/icons") && e.contains("desktop/src-tauri/icons"),
-        "{e}"
-    );
+    assert!(e.contains("rust/crates/sp-app/icons"), "{e}");
+    // desktop/src-tauri/icons went at the cutover; it is never looked in.
+    assert!(!e.contains("desktop"), "{e}");
+    assert_eq!(NATIVE_APP.icon_dirs, ["rust/crates/sp-app/icons"]);
 }
 
 // ---- macOS: the .app, the image and the updater archive ----
@@ -834,18 +673,27 @@ fn an_archive_the_shipped_app_s_key_would_not_verify_is_never_published() {
 }
 
 #[test]
-fn updater_with_no_public_key_to_check_against_is_refused() {
+fn without_pubkey_the_archive_is_checked_against_the_key_the_shipped_app_trusts() {
+    // The default is sp_update::PUBKEY (was: tauri.conf.json's). The test
+    // key signs, the shipped key does not verify it, so nothing is published.
+    let mut a = BundleArgs::new(VERSION, Path::new("o"), BundleOs::Macos, BundleArch::Arm64);
+    assert_eq!(trusted_pubkey(&a).unwrap(), sp_update::PUBKEY);
+    a.pubkey = Some(tauri_test_public_key());
+    assert_eq!(trusted_pubkey(&a).unwrap(), tauri_test_public_key());
+
     let s = Scratch::new("native-mac-nokey");
     let dirs = native_repo(&s, VERSION);
     let mut fake = FakeTools::new(&dirs, BundleOs::Macos);
+    let out = s.join("out");
     let a = BundleArgs {
         updater: true,
-        ..native_args(&s.join("out"), BundleOs::Macos, BundleArch::Arm64)
+        ..native_args(&out, BundleOs::Macos, BundleArch::Arm64)
     };
     err_contains(
         build_bundles(&a, &mut |x, c| fake.run(x, c), &dirs, &release_env()),
-        "--pubkey",
+        "does not verify",
     );
+    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
 }
 
 // ---- Windows: the NSIS installer ----
