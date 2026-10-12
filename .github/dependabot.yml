@@ -1,8 +1,8 @@
 # Dependabot version updates.
 #
 # Security ALERTS are separate and need no config — enable them in
-# Settings → Code security. They're the higher-value half and cover
-# pdfjs-dist even if the PRs below prove fiddly.
+# Settings, then Code security. They're the higher-value half and cover
+# the PDF stack even if the PRs below prove fiddly.
 version: 2
 updates:
   # GitHub Actions are a supply-chain surface: a compromised action runs
@@ -21,28 +21,21 @@ updates:
       actions:
         patterns: ["*"]
 
-  # pdfjs-dist is the one that matters: it parses UNTRUSTED PDFs — the
-  # whole point of this app — and pdf.js has a real CVE history. jszip
-  # and fountain-js are lower risk; keeping all three current is cheap.
-  #
-  # NOTE: CI runs `bun install --frozen-lockfile` against a committed
-  # bun.lock. Dependabot's npm ecosystem is built around npm/yarn/pnpm
-  # lockfiles, so a PR that bumps package.json without regenerating
-  # bun.lock will FAIL that check — loudly, which is the right failure.
-  # Fix by running `bun install` on the PR branch and pushing the lock.
-  - package-ecosystem: npm
-    directory: /
+  # The Rust workspace. The crates that read UNTRUSTED input matter most:
+  # the PDF stack under sp-pdf (the whole point of this app is opening
+  # PDFs other people made), the zip and image decoders, and the TLS stack
+  # the updater speaks through. Cargo.lock pins every crate, CI builds with
+  # --locked, so a bump arrives only as one of these PRs.
+  - package-ecosystem: cargo
+    directory: /rust
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
-    # Matches minimumReleaseAge in bunfig.toml (24 hours). Without this,
-    # Dependabot proposes versions bun then REFUSES to install — which is
-    # exactly what happened with pdfjs-dist 6.2.108, opened 2.6 hours after
-    # publication. Majors wait longer: they carry breaking-change risk on
-    # top of supply-chain risk, and this project has four documented
-    # invariants riding on pdf.js behaviour.
+    # Majors wait longer: they carry breaking-change risk on top of
+    # supply-chain risk, and the parity checks ride on the PDF stack's
+    # behaviour staying put.
     cooldown:
       default-days: 1
       semver-major-days: 30

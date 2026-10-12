@@ -1,12 +1,13 @@
 # Deploy site/ to GitHub Pages. Path-filtered so engine work never triggers a
-# site deploy, and site work never waits on one.
+# site deploy, and site work never waits on one. The site is HTML and CSS
+# with no build step: nothing here runs any code of ours.
 #
 # Pages CANNOT deploy a branch subfolder (branch deploys only offer / and
 # /docs), which is why this uses the Actions source instead of "deploy from a
 # branch". Settings -> Pages -> Source must be set to "GitHub Actions" once, by
 # hand, or this workflow succeeds and publishes nothing.
 #
-# Third-party actions are pinned to SHAs, matching ci.yml and release.yml. Bump
+# Third-party actions are pinned to SHAs, matching rust.yml and release.yml. Bump
 # with `pinact run`, never by hand-editing the tag comment.
 name: pages
 on:

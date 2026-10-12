@@ -1,27 +1,35 @@
-# The pure-Rust port (rust/, branch rust-port; plan in
-# docs/superpowers/plans/2026-10-11-pure-rust-port.md): formatting, clippy
-# with warnings as errors, and every crate's tests, on all three platforms;
-# the device-request Worker built for wasm32; and every installer built,
-# opened and checked with no secret at all (the job desktop.yml did for
-# the Tauri window). At the cutover ci.yml and desktop.yml go, and this is
-# the push workflow.
+# Every push: Screepub is one Cargo workspace (rust/), and this is its
+# check. It replaced ci.yml (the Bun engine) and desktop.yml (the Tauri
+# window) at the cutover. Least privilege by default; third-party actions
+# pinned to SHAs (pinact run).
+#
+# - rust: formatting, clippy with warnings as errors, and every crate's
+#   tests on macOS, Windows and Linux, on the committed invented fixtures
+#   in tests/fixtures/. The real scripts in root fixtures/ are private and
+#   never reach CI. No runner here has Calibre, so the tests that run the
+#   real Calibre skip; weekly-toolchain.yml runs them with Calibre.
+# - parity: the release CLI against the TypeScript engine's frozen answers
+#   for every committed fixture (cargo xtask parity --committed-only). The
+#   answers are a Mac's, so it runs on macOS.
+# - cli: the release CLI converting the fixtures, epubcheck on its books
+#   (the project's stated validity gate), and cargo xtask smoke-cli; and
+#   the release notes for the workspace version exist.
+# - worker: the device-request Worker built for wasm32, clippy clean.
+# - bundles: every installer built unsigned, opened and checked on its own
+#   OS, with the window's headless smoke run out of the Mac app.
 #
 # The toolchain comes from rust/rust-toolchain.toml, which rustup on every
 # hosted runner installs on first use (with clippy and rustfmt), so no
 # setup action is needed and the version lives in one place.
 #
-# The parity harness (cargo xtask parity) is not run here: it needs bun and
-# the Rust CLI, and the real scripts it also covers never reach CI.
-#
-# Path-filtered to rust/ and the files the crates read. Safe for the reason
-# ci.yml gives: no check here is a required status.
+# Not path-filtered: the tests read brand/ (the window's colours), site/
+# (the fonts it shares with the window) and docs/releases/ (the window's
+# notes) as well as rust/. No check here is a required status.
 name: rust
 on:
   workflow_dispatch:
   push:
-    paths: ['rust/**', '.github/workflows/rust.yml', '.github/actions/**', 'format-defaults.json', 'services/device-requests/**', 'desktop/src-tauri/icons/**', 'tools/rehearse-handover.sh']
   pull_request:
-    paths: ['rust/**', '.github/workflows/rust.yml', '.github/actions/**', 'format-defaults.json', 'services/device-requests/**', 'desktop/src-tauri/icons/**', 'tools/rehearse-handover.sh']
 permissions:
   contents: read
 jobs:
@@ -45,15 +53,91 @@ jobs:
           key: rust-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
           restore-keys: rust-${{ matrix.os }}-
       # sp-device-requests runs its SQL against real SQLite (macOS ships the
-      # tool); the window's crates need the Linux windowing headers.
+      # tool); the window's crates need the Linux windowing and sound headers.
       - name: Linux tools and headers
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y sqlite3 libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
+          sudo apt-get install -y sqlite3 libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev libasound2-dev
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+
+  parity:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: parity-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          restore-keys: parity-
+      # The rows whose answers depend on what is installed (Calibre, the Mac
+      # apps a route can use) are reported as skipped on a runner that is
+      # not the machine they were frozen on; every other row must match.
+      - run: cargo xtask parity --committed-only
+
+  cli:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The cheap early signal, not the gate: release.yml's checks job reads
+      # the TAGGED commit and checks more (mode, size, UTF-8, no checksum).
+      - name: Release notes exist for the workspace version
+        run: |
+          set -euo pipefail
+          V="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' Cargo.toml)"
+          F="../docs/releases/$V.md"
+          test -s "$F" || {
+            echo "::error file=rust/Cargo.toml::rust/Cargo.toml says $V but docs/releases/$V.md is missing or empty. Every version ships notes: add that file, or revert the bump."
+            exit 1
+          }
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: cli-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          restore-keys: cli-
+      - run: cargo build --release --locked -p sp-cli --bin screepub
+      # The three fixtures whose books carry figures (registry #19a): images.pdf
+      # keeps two pictures, jpx.pdf one JPEG 2000 picture, torture.pdf the
+      # four the device pass looks at. A scratch library and settings folder,
+      # so nothing is written beside the committed fixtures.
+      - name: The release CLI converts the committed fixtures
+        run: |
+          set -euo pipefail
+          W="$RUNNER_TEMP/books"
+          mkdir -p "$W"
+          export SCREEPUB_CONFIG_DIR="$W/config" SCREEPUB_LIBRARY="$W/library"
+          B=target/release/screepub
+          "$B" --version
+          "$B" ../tests/fixtures/screenplay.pdf --no-fountain \
+            -o "$W/smoke.epub" --mobi --azw3 "$W/smoke.azw3" --json | tee "$W/smoke.json"
+          grep -q '"ok":true' "$W/smoke.json"
+          grep -q '"azw3Path"' "$W/smoke.json"
+          test "$(head -c 68 "$W/smoke.azw3" | tail -c 8)" = BOOKMOBI
+          "$B" ../tests/fixtures/images.pdf --no-fountain -o "$W/images.epub" --json | tee "$W/images.json"
+          grep -q '"imageCount":2' "$W/images.json"
+          "$B" ../tests/fixtures/jpx.pdf --no-fountain -o "$W/jpx.epub" --json | tee "$W/jpx.json"
+          grep -q '"imageCount":1' "$W/jpx.json"
+          "$B" ../tests/fixtures/torture.pdf --no-fountain -o "$W/torture.epub" --json | tee "$W/torture.json"
+          grep -q '"imageCount":4' "$W/torture.json"
+      - name: epubcheck the books
+        run: |
+          brew install epubcheck
+          for b in smoke images jpx torture; do epubcheck "$RUNNER_TEMP/books/$b.epub"; done
+      - run: cargo xtask smoke-cli --binary target/release/screepub
 
   # The Worker as Cloudflare would build it: wasm32, workers-rs, clippy
   # clean. Built, never deployed from here (no Cloudflare credential exists
@@ -98,7 +182,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev rpm libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
+          sudo apt-get install -y dpkg-dev rpm libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev libasound2-dev
       - name: Build the window and the release tools
         working-directory: rust
         run: cargo build --release --locked -p sp-app -p sp-release
@@ -107,13 +191,24 @@ jobs:
           set -euo pipefail
           VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' rust/Cargo.toml)"
           SP=rust/target/release/sp-release
+          ICONS_DIR=rust/crates/sp-app/icons
           RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
           W="$RUNNER_TEMP/bundles"
           mkdir -p "$W"
           case "$RUNNER_OS" in
             macOS)
               "$SP" mac-app --version "$VERSION" --window rust/target/release/screepub-window \
-                --icon desktop/src-tauri/icons/icon.icns "${RES[@]}" --out "$W/app"
+                --icon "$ICONS_DIR/icon.icns" "${RES[@]}" --out "$W/app"
+              # The window's headless mode, out of the bundle: its version,
+              # then a conversion in a scratch library and settings folder.
+              EXE="$W/app/Screepub.app/Contents/MacOS/screepub-desktop"
+              "$EXE" --version --json | tee "$W/version.json"
+              grep -q "\"version\":\"$VERSION\"" "$W/version.json"
+              mkdir -p "$W/smoke"
+              SCREEPUB_CONFIG_DIR="$W/smoke/config" SCREEPUB_LIBRARY="$W/smoke/library" \
+                "$EXE" --smoke tests/fixtures/field-station.pdf --out "$W/smoke/book.epub" | tee "$W/smoke.json"
+              grep -q '"ok":true' "$W/smoke.json"
+              test -s "$W/smoke/book.epub"
               "$SP" update-archive --app "$W/app/Screepub.app" --out "$W/site/Screepub-macOS.app.tar.gz"
               "$SP" keygen --out "$W/keys/throwaway.key"
               TAURI_SIGNING_PRIVATE_KEY="$(cat "$W/keys/throwaway.key")" TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" \
@@ -132,9 +227,9 @@ jobs:
               hdiutil detach "$M"
               ;;
             Linux)
-              ICONS=(--icon "32x32=desktop/src-tauri/icons/32x32.png"
-                     --icon "128x128=desktop/src-tauri/icons/128x128.png"
-                     --icon "256x256@2=desktop/src-tauri/icons/128x128@2x.png")
+              ICONS=(--icon "32x32=$ICONS_DIR/32x32.png"
+                     --icon "128x128=$ICONS_DIR/128x128.png"
+                     --icon "256x256@2=$ICONS_DIR/128x128@2x.png")
               D="$RUNNER_TEMP/shlibdeps"
               mkdir -p "$D/debian"
               printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
@@ -156,7 +251,7 @@ jobs:
               STAGE="$W/nsis"
               mkdir -p "$STAGE"
               cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-              cp LICENSE THIRD-PARTY-NOTICES.md desktop/src-tauri/icons/icon.ico "$STAGE/"
+              cp LICENSE THIRD-PARTY-NOTICES.md "$ICONS_DIR/icon.ico" "$STAGE/"
               command -v makensis >/dev/null || choco install nsis -y --no-progress
               export PATH="$PATH:/c/Program Files (x86)/NSIS"
               "$SP.exe" nsis --version "$VERSION" --src "$(cygpath -w "$STAGE")" \
@@ -167,28 +262,3 @@ jobs:
               "$LOCALAPPDATA/Screepub/uninstall.exe" //S
               ;;
           esac
-
-  # The handover rehearsal with no window (tools/rehearse-handover.sh
-  # prepare, then prove): the Tauri window built exactly as tagged v0.11.1
-  # under a rehearsal identifier and a throwaway key, this commit's Rust app
-  # as 0.12.0, and tauri-plugin-updater 2.12.0 itself installing one over
-  # the other. On demand only (it builds the Tauri window and its Bun
-  # engine); release.yml's handover-gate runs the same check on every
-  # release against the bundle v0.11.1 actually shipped.
-  handover:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.14
-      - run: cargo install tauri-cli --version 2.11.4 --locked
-      - name: Prepare and prove
-        run: |
-          set -euo pipefail
-          tools/rehearse-handover.sh prepare | tee "$RUNNER_TEMP/prepare.log"
-          W="$(sed -n 's/^work folder: //p' "$RUNNER_TEMP/prepare.log")"
-          tools/rehearse-handover.sh prove "$W"

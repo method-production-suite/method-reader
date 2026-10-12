@@ -20,8 +20,8 @@
 # of failure as the tap itself. The check that runs per release has to live
 # INSIDE the release run, and it does.
 #
-# The logic lives in tools/check-tap.sh so it can be run by hand.
-# Least privilege + pinned actions, matching ci.yml.
+# The logic lives in `cargo xtask check-tap` so it can be run by hand.
+# Least privilege + pinned actions, matching rust.yml.
 name: tap-freshness
 on:
   schedule:
@@ -35,9 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the tap against the newest release
+        working-directory: rust
         env:
           GH_TOKEN: ${{ github.token }}
-        run: tools/check-tap.sh
+        run: cargo xtask check-tap
 
   # The same standing guard for the updater's manifest (piece A,
   # 2026-09-21). latest.json is read from the endpoint the app uses and
@@ -50,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # tools/check-latest.ts in Rust (sp-release check-latest), with --deep:
+      # sp-release check-latest, with --deep:
       # it also downloads each archive and verifies it the way the Rust app
       # will, which every Tauri window's looser check then passes too.
       - name: Check the updater manifest against the newest release

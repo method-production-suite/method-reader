@@ -165,9 +165,11 @@ jobs:
           set -euo pipefail
           V="${VERSION#v}"
           ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
+          # The backticks are Markdown for the summary, not a substitution.
+          # shellcheck disable=SC2016
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'Run `tools/bump-tap.sh %s <tap-checkout>`: it writes `Formula/screepub.rb` whole.\n\n```ruby\n' "$V"
+            printf 'Run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/screepub.rb` whole.\n\n```ruby\n' "$V"
             printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -211,7 +213,7 @@ jobs:
           BIN="target/release/${{ matrix.exe }}"
           "$BIN" --version | grep -qx "screepub $VERSION" || { echo "::error::screepub --version does not say screepub $VERSION"; exit 1; }
           # Convert the committed fixtures, the JPEG 2000 one included, as
-          # tools/smoke-cli.ts did, in a scratch folder with empty settings.
+          # cargo xtask smoke-cli does, in a scratch folder with empty settings.
           W="$(mktemp -d)"
           for f in screenplay jpx; do
             SCREEPUB_CONFIG_DIR="$W/config" SCREEPUB_LIBRARY="$W/library" \
@@ -310,7 +312,7 @@ jobs:
           [ "$(lipo -archs "$WIN")" = arm64 ] || { echo "::error::the window is not arm64 only"; exit 1; }
           mkdir -p bundles
           "$SP" mac-app --version "$VERSION" --window "$WIN" \
-            --icon desktop/src-tauri/icons/icon.icns \
+            --icon rust/crates/sp-app/icons/icon.icns \
             --resource LICENSE --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
           APP="$RUNNER_TEMP/app/Screepub.app"
           # Inside out, never --deep: every executable in Contents/MacOS,
@@ -361,9 +363,9 @@ jobs:
           printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
           DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/$WIN" | sed -n 's/^shlibs:Depends=//p')"
           echo "Depends: $DEPENDS"
-          ICONS=(--icon "32x32=desktop/src-tauri/icons/32x32.png"
-                 --icon "128x128=desktop/src-tauri/icons/128x128.png"
-                 --icon "256x256@2=desktop/src-tauri/icons/128x128@2x.png")
+          ICONS=(--icon "32x32=rust/crates/sp-app/icons/32x32.png"
+                 --icon "128x128=rust/crates/sp-app/icons/128x128.png"
+                 --icon "256x256@2=rust/crates/sp-app/icons/128x128@2x.png")
           RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
           mkdir -p bundles
           "$SP" deb --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out bundles
@@ -391,7 +393,7 @@ jobs:
           STAGE="$RUNNER_TEMP/nsis"
           mkdir -p "$STAGE" bundles
           cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-          cp LICENSE THIRD-PARTY-NOTICES.md desktop/src-tauri/icons/icon.ico "$STAGE/"
+          cp LICENSE THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
           command -v makensis >/dev/null || choco install nsis -y --no-progress
           export PATH="$PATH:/c/Program Files (x86)/NSIS"
           rust/target/release/sp-release.exe nsis --version "$VERSION" \
@@ -533,6 +535,9 @@ jobs:
           set -euo pipefail
           cd arrivals
           rm -f SHA256SUMS-app
+          # Bare names on purpose: they are what SHA256SUMS-app lists, and
+          # every one starts with "Screepub-", never a dash.
+          # shellcheck disable=SC2035
           sha256sum *.deb *.rpm *.AppImage *.dmg *.exe > SHA256SUMS-app
           # One .deb, one .rpm, one AppImage, ONE .dmg (the frozen Swift
           # updater takes the first on the page) and one .exe.
@@ -547,6 +552,7 @@ jobs:
         run: |
           set -euo pipefail
           cd arrivals
+          # shellcheck disable=SC2035
           gh release upload "$TAG" *.deb *.rpm *.AppImage *.dmg *.exe \
             Screepub-macOS.app.tar.gz Screepub-macOS.app.tar.gz.sig SHA256SUMS-app --clobber
       - name: Build latest.json from what arrived, verify it, publish it last
@@ -620,7 +626,7 @@ jobs:
             exit 0
           fi
           git clone --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
-          tools/bump-tap.sh "$V" tap
+          (cd rust && cargo xtask bump-tap "$V" "$GITHUB_WORKSPACE/tap")
           if git -C tap diff --quiet; then
             echo "::notice::the tap already serves $V; nothing to commit"
             exit 0
@@ -642,13 +648,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          (cd rust && cargo build --quiet --locked -p xtask)
           n=1
           while [ "$n" -le 3 ]; do
-            if tools/check-tap.sh; then exit 0; fi
+            if rust/target/debug/xtask check-tap; then exit 0; fi
             [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
             n=$((n + 1))
           done
-          echo "::error::The release published, but the Homebrew tap does not serve it. Run: tools/bump-tap.sh ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
+          echo "::error::The release published, but the Homebrew tap does not serve it. Run (from rust/): cargo xtask bump-tap ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
           exit 1
 
   # Read latest.json back from the endpoint every Screepub reads, and
