@@ -1,12 +1,12 @@
 //! Port of tests/export-artifact.test.ts: the Kindle ladder's work.
 //!
 //! The AZW3 writer and the MOBI conversion are reached through
-//! `Renderers`, and are stand-ins here ([`FakeRenderers`]) until sp-azw3
-//! and the conversion land: what these tests pin is the LADDER (which rung,
-//! reuse versus rebuild, the staleness rule, what is written where and
-//! what is left alone, what the MOBI render is handed). The checks that
-//! read a real KF8 or MOBI back (`readKf8`, `mobiPictures`) move to wave 3,
-//! when the real makers are plugged in; PARITY.md says so.
+//! `Renderers`, and are stand-ins here ([`FakeRenderers`]): what these
+//! tests pin is the LADDER (which rung, reuse versus rebuild, the staleness
+//! rule, what is written where and what is left alone, what the MOBI render
+//! is handed). The checks that read a real KF8 or MOBI back (`readKf8`,
+//! `mobiPictures`) run against the real makers (`Books`) in
+//! export_artifact_books.rs.
 
 #![cfg_attr(not(unix), allow(dead_code, unused_imports))]
 

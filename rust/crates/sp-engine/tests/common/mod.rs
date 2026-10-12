@@ -18,8 +18,12 @@
 
 pub mod books;
 pub mod epub;
+#[path = "../../../sp-azw3/tests/common/kf8_reader.rs"]
+pub mod kf8_reader;
 pub mod kfx_stubs;
 pub mod mobi_records;
+#[path = "../../../sp-azw3/tests/common/palmdoc_decode.rs"]
+pub mod palmdoc_decode;
 pub mod png;
 
 use std::path::{Path, PathBuf};
