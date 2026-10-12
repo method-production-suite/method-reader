@@ -3726,6 +3726,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-model",
+ "sp-pdf",
 ]
 
 [[package]]

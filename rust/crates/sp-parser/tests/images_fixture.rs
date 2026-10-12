@@ -25,13 +25,12 @@
 //! and parked in commonObjs" is retired for the same reason; its rename half
 //! is ported on the dump's object ids.
 //!
-//! NEEDS PIXELS: "the same picture through two stores carries the same
-//! pixels" compared the decoded RGB; ported here on the dump's pixel hash
-//! (`dataSha256`), the bytes themselves come with sp-pdf. "every paint
-//! resolves to pixels this parser can read" and "every paint converts to
-//! exactly width x height x 3 bytes" are ported on the dump's facts plus a
-//! buffer of the dump's own `dataLength`; the real decoded bytes come with
-//! sp-pdf.
+//! The pixel side ("the pixel side against a real PDF") reads the PDF itself
+//! through sp-pdf, which decodes the pixels as pdf.js does: "every paint
+//! resolves to pixels this parser can read", "the same picture through two
+//! stores carries the same pixels" and "every paint converts to exactly
+//! width x height x 3 bytes" check the real decoded bytes, as the TypeScript
+//! did.
 //!
 //! MOVED: the `extractTitleMeta` half of "a picture on the title page is not
 //! title-page furniture": needs sp-fountain extractTitleMeta, ports with that
@@ -82,9 +81,10 @@ fn with_pixels(mut facts: DocumentFacts) -> DocumentFacts {
 }
 
 mod the_pixel_side_against_a_real_pdf {
-    // Resolved ONCE per test from the dump, with the assertions split across
-    // small tests below so a fixture regeneration that shifts a size cannot
-    // hide the claims each test exists for.
+    // Resolved ONCE per test from the PDF itself (sp-pdf, pixels decoded),
+    // with the assertions split across small tests below so a fixture
+    // regeneration that shifts a size cannot hide the claims each test
+    // exists for.
     use super::*;
 
     struct Resolved {
@@ -96,7 +96,9 @@ mod the_pixel_side_against_a_real_pdf {
     }
 
     fn seen() -> Vec<Resolved> {
-        let facts = common::facts("images");
+        let pdf = std::fs::read(common::rust_dir().join("../tests/fixtures/images.pdf"))
+            .expect("images.pdf");
+        let facts = sp_pdf::read(pdf).expect("a PDF");
         let mut out = Vec::new();
         for page in &facts.pages {
             let ops = page.ops.as_deref().unwrap_or_default();
@@ -112,12 +114,10 @@ mod the_pixel_side_against_a_real_pdf {
         out
     }
 
-    /// `toRgb` on a buffer of the dump's own `dataLength`: whether the
-    /// parser can read pixels of that shape. The real bytes: NEEDS PIXELS.
+    /// `toRgb` on the decoded pixels.
     fn rgb(s: &Resolved) -> Option<Vec<u8>> {
         let img = s.img.as_ref()?;
-        let data = vec![0u8; img.data_length?];
-        to_rgb(img.width, img.height, img.kind, Some(&data))
+        to_rgb(img.width, img.height, img.kind, img.data.as_deref())
     }
 
     #[test]
@@ -165,14 +165,12 @@ mod the_pixel_side_against_a_real_pdf {
         // Or the furniture rule sees five different logos and keeps them
         // all. The LAST renamed one, not a fixed index: if a pdf.js bump
         // changed when a picture gets promoted, an index would panic instead
-        // of failing on the claim. Compared by the dump's pixel hash; the
-        // decoded bytes NEED PIXELS.
+        // of failing on the claim.
         let seen = seen();
         let last = seen.iter().rfind(|s| s.key.starts_with("g_")).unwrap();
         let first = seen.iter().find(|s| s.key == "img_p0_2").unwrap();
-        let sha = |s: &Resolved| s.img.as_ref().unwrap().data_sha256.clone();
-        assert!(sha(first).is_some());
-        assert_eq!(sha(last), sha(first));
+        assert!(rgb(first).is_some());
+        assert_eq!(rgb(last), rgb(first));
     }
 
     #[test]
