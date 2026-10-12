@@ -2,7 +2,7 @@ import { afterEach, describe, test, expect, spyOn } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import JSZip from 'jszip';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import { tokensToBody, tokensToPreviewHtml } from '../src/epub/html';
 import { buildEpub } from '../src/epub/build';
 import { screenplayCss } from '../src/epub/css';
@@ -347,7 +347,7 @@ describe('convertPdf carries the pictures', () => {
     // either way, so turning it back on needs no re-conversion.
     expect(result.images.map((i) => i.name)).toEqual(['p001-01.png', 'p002-01.png']);
     const zip = await JSZip.loadAsync(result.epub);
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const tokens = parseFountain(result.fountainText).tokens;
     expect(await bodyOf(zip)).toBe(tokensToBody(tokens, { format }).files.map((f) => f.xhtml).join(''));
     const entries = await tocOf(zip);
     expect(entries.map((m) => m[2])).toEqual(result.screenplay!.scenes.map((s) => s.heading));
@@ -373,7 +373,7 @@ describe('convertPdf carries the pictures', () => {
     const got = await JSZip.loadAsync(result.epub);
     const opf = await got.file('OEBPS/package.opf')!.async('string');
     const identifier = opf.match(/<dc:identifier[^>]*>([^<]+)</)![1];
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const tokens = parseFountain(result.fountainText).tokens;
     const want = await JSZip.loadAsync(
       await buildEpub({ identifier, ...result.meta }, tokensToBody(tokens, { format }), format),
     );
@@ -506,7 +506,7 @@ describe('the preview is handed the pictures the book is', () => {
     // so the preview shows the panel alone; with the cover off, both.
     for (const [format, shown] of [[{}, 1], [{ promoteCoverImage: false }, 2]] as const) {
       const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format });
-      const tokens = new Fountain().parse(result.fountainText, true).tokens;
+      const tokens = parseFountain(result.fountainText).tokens;
       expect(dataSrcs(result.previewHtml)).toBe(shown);
       expect(result.previewHtml)
         .toBe(tokensToPreviewHtml(tokens, resolveFormatOptions(format), pictureMap(result.images)));
@@ -516,14 +516,14 @@ describe('the preview is handed the pictures the book is', () => {
   test('with includeImages off, a PDF conversion’s preview shows none', async () => {
     const format = resolveFormatOptions({ includeImages: false });
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { format: { includeImages: false } });
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const tokens = parseFountain(result.fountainText).tokens;
     expect(dataSrcs(result.previewHtml)).toBe(0);
     expect(result.previewHtml).toBe(tokensToPreviewHtml(tokens, format));
   }, 60000);
 
   test('a script without pictures gets the preview it got before', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}screenplay.pdf`));
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const tokens = parseFountain(result.fountainText).tokens;
     expect(result.previewHtml).toBe(tokensToPreviewHtml(tokens, resolveFormatOptions()));
   }, 60000);
 
@@ -566,7 +566,7 @@ describe('the MOBI is handed the pictures the book is', () => {
 
   test('a PDF conversion’s MOBI carries the EPUB’s pictures, byte for byte, in mobiArt’s order', async () => {
     const result = await convertPdf(await bytes(`${PUBLIC}images.pdf`), { mobi: true, mobiPictures: true });
-    const tokens = new Fountain().parse(result.fountainText, true).tokens;
+    const tokens = parseFountain(result.fountainText).tokens;
     const { order } = mobiArt(tokens, ON, new Set(result.images.map((img) => img.name)));
     // The control, without which two empty lists would agree.
     expect(order).toEqual(['p001-01.png', 'p002-01.png']);

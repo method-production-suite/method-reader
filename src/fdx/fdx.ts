@@ -15,7 +15,8 @@
 // not a rendering of the book, so no reading knob (scene numbers shown,
 // title page included) changes it. Whatever the .fountain carries, the FDX
 // carries.
-import { Fountain, type Token } from 'fountain-js';
+import type { Token } from 'fountain-js';
+import { parseFountain } from '../fountain/parse';
 import { stripNotes } from '../fountain/notes';
 import { isMiniSlug } from '../fountain/slug';
 
@@ -304,6 +305,6 @@ export function tokensToFdx(tokens: Token[]): string {
 /** The FDX for a .fountain's text: the same tokenizer call the EPUB and
  * MOBI renderers are fed from (convert.ts's renderBooks). */
 export function fountainToFdx(fountainText: string): string {
-  const { tokens } = new Fountain().parse(fountainText, true);
+  const { tokens } = parseFountain(fountainText);
   return tokensToFdx(tokens);
 }

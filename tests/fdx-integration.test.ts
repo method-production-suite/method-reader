@@ -6,7 +6,8 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Fountain, type Token } from 'fountain-js';
+import type { Token } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import { convertPdf } from '../src/convert';
 import { fountainToFdx } from '../src/fdx/fdx';
 import { stripNotes } from '../src/fountain/notes';
@@ -86,7 +87,7 @@ for (const name of ['field-station', 'screenplay', 'torture']) {
     });
 
     test('its paragraph types follow the fountain-js token sequence exactly', () => {
-      const { tokens } = new Fountain().parse(fountainText, true);
+      const { tokens } = parseFountain(fountainText);
       const content = childElements(root, 'Content')[0];
       const expected = expectedSequence(tokens);
       expect(expected.length).toBeGreaterThan(20);
@@ -94,7 +95,7 @@ for (const name of ['field-station', 'screenplay', 'torture']) {
     });
 
     test('carries a title page with the script’s title on it', () => {
-      const { tokens } = new Fountain().parse(fountainText, true);
+      const { tokens } = parseFountain(fountainText);
       const title = tokens.find((t) => t.type === 'title')?.text;
       expect(title).toBeTruthy();
       const tp = childElements(childElements(root, 'TitlePage')[0], 'Content')[0];

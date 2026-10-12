@@ -2,7 +2,7 @@
 // halves, the EPUB declaring it and the flow leaving it out, are tested
 // beside each renderer; this file is the rule alone.
 import { describe, expect, test } from 'bun:test';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from '../src/fountain/parse';
 import { pickCover } from '../src/fountain/cover';
 import { DEFAULT_FORMAT_OPTIONS, resolveFormatOptions } from '../src/options';
 
@@ -10,7 +10,7 @@ const ON = DEFAULT_FORMAT_OPTIONS;
 const HAVE = new Set(['p001-01.png', 'p002-01.png']);
 const CARD = '[[img: p001-01.png w=100 full]]\n\n';
 const SCRIPT = 'INT. LAB - DAY\n\nWork.\n\nEXT. YARD - NIGHT\n\nRest.\n';
-const tokensOf = (src: string) => new Fountain().parse(src, true).tokens;
+const tokensOf = (src: string) => parseFountain(src).tokens;
 const coverOf = (src: string, format = ON, have: ReadonlySet<string> = HAVE) =>
   pickCover(tokensOf(src), format, have)?.file;
 

@@ -1,7 +1,7 @@
 // Orchestration: PDF/Fountain input → parsed screenplay → Fountain text →
 // fountain-js tokens → XHTML chapters → EPUB bytes.
 import { createHash } from 'node:crypto';
-import { Fountain } from 'fountain-js';
+import { parseFountain } from './fountain/parse';
 import { extractText, type ImageStats } from './parser/extract';
 import { isFirstRealPage, pageParagraphs } from './parser/first-page';
 import { parseLines } from './parser/index';
@@ -226,7 +226,7 @@ async function renderBooks(
   images: readonly BookImage[],
   mobiPictures: boolean = MOBI_CARRIES_PICTURES,
 ) {
-  const { tokens } = new Fountain().parse(fountainText, true);
+  const { tokens } = parseFountain(fountainText);
   // The book's identity is its CONTENT, not the moment of rendering. The
   // app rewrites the library EPUB on every options change; a fresh
   // urn:uuid each time would hand readers a "new" book to re-index on
@@ -373,7 +373,7 @@ export async function convertFountain(
   fountainText: string,
   opts: FountainConvertOptions = {},
 ): Promise<ConvertResult> {
-  const { tokens } = new Fountain().parse(fountainText, true);
+  const { tokens } = parseFountain(fountainText);
   const detected: TitleMeta = {
     title: tokens.find((t) => t.type === 'title')?.text?.replace(/<[^>]+>/g, ''),
     author: tokens.find((t) => t.type === 'author' || t.type === 'authors')?.text,
