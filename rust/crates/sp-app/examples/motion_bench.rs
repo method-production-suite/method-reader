@@ -73,6 +73,24 @@ struct Bench {
     last_wheel: Instant,
     acts: u32,
     done: bool,
+    /// BENCH_REST_SECS: after the book is converted and Read has opened,
+    /// the bench lets the window be for this long, asks no frame of its
+    /// own, and prints the CPU the process used meanwhile.
+    rest: Option<f64>,
+    resting: Option<(Instant, f64)>,
+}
+
+/// The process's CPU time so far, in seconds, as ps reports it.
+fn cpu_seconds() -> f64 {
+    let out = std::process::Command::new("ps")
+        .args(["-o", "time=", "-p", &std::process::id().to_string()])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default();
+    // [[hh:]mm:]ss.ss
+    out.split(':').fold(0.0, |acc, part| {
+        acc * 60.0 + part.parse::<f64>().unwrap_or(0.0)
+    })
 }
 
 fn need(name: &str) -> PathBuf {
@@ -110,7 +128,7 @@ impl Bench {
             Step::TuneEnter => self.app().go_to(Surface::Tune),
             _ => {}
         }
-        ctx.request_repaint();
+        ctx.request_repaint_after(sp_app::model::motion::NEXT_FRAME);
     }
 
     /// The step's own moves, at its moments.
@@ -213,6 +231,12 @@ impl eframe::App for Bench {
         if self.done {
             return;
         }
+        // Only the bench drives the window: whatever the person at this
+        // computer types or clicks while it runs (the window takes the
+        // focus when it opens) would end the page show early.
+        raw.events.clear();
+        raw.hovered_files.clear();
+        raw.dropped_files.clear();
         // A trackpad scroll: points at about 1200 per second, down then up.
         let now = Instant::now();
         let dt = now.duration_since(self.last_wheel).as_secs_f32().min(0.05);
@@ -235,6 +259,35 @@ impl eframe::App for Bench {
         if self.done {
             return;
         }
+        if let Some((since, cpu)) = self.resting {
+            let secs = since.elapsed().as_secs_f64();
+            if secs >= self.rest.unwrap_or(0.0) {
+                let used = cpu_seconds() - cpu;
+                println!(
+                    "rest: {used:.3} s of CPU in {secs:.1} s, {:.2}% of one core",
+                    100.0 * used / secs
+                );
+                self.done = true;
+                if let Some(log) = self.app().frame_log.as_mut() {
+                    log.flush();
+                }
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                return;
+            }
+            eframe::App::ui(&mut self.win, ui, frame);
+            ctx.request_repaint_after(std::time::Duration::from_secs_f64(
+                (self.rest.unwrap_or(0.0) - secs).max(0.05),
+            ));
+            return;
+        }
+        if self.rest.is_some() && STEPS[self.step].0 == Step::ReadEnter && self.step_over() {
+            if let Some(log) = self.app().frame_log.as_mut() {
+                log.tag = "rest".into();
+            }
+            self.resting = Some((Instant::now(), cpu_seconds()));
+            eframe::App::ui(&mut self.win, ui, frame);
+            return;
+        }
         if self.step_over() {
             self.step += 1;
             if self.step == STEPS.len() {
@@ -249,11 +302,11 @@ impl eframe::App for Bench {
         }
         self.act();
         eframe::App::ui(&mut self.win, ui, frame);
-        // The bench's own clock: wake at the next moment it acts, never
-        // more often than the window itself asks. A wheel step asks every
-        // frame, as a trackpad's stream of events does.
+        // The bench's own clock: it looks for its next move every 100 ms.
+        // A wheel step asks for every frame, as a trackpad's stream of
+        // events does.
         if STEPS[self.step].0 == Step::WheelRead || STEPS[self.step].0 == Step::WheelTune {
-            ctx.request_repaint();
+            ctx.request_repaint_after(sp_app::model::motion::NEXT_FRAME);
         } else {
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
         }
@@ -278,10 +331,16 @@ fn main() -> eframe::Result {
     let library = need("SCREEPUB_LIBRARY");
     // On the main display (on a MacBook, its own ProMotion screen), so the
     // cadence measured is that screen's and not an external monitor's.
-    let options = eframe::NativeOptions {
-        viewport: sp_app::app::viewport().with_position([40.0, 40.0]),
-        ..Default::default()
-    };
+    let mut options = sp_app::app::native_options();
+    options.viewport = options.viewport.with_position([40.0, 40.0]);
+    // BENCH_FRAMES_IN_FLIGHT=2 measures eframe's default against the
+    // window's one frame in flight.
+    if let Some(n) = std::env::var("BENCH_FRAMES_IN_FLIGHT")
+        .ok()
+        .and_then(|v| v.parse().ok())
+    {
+        options.wgpu_options.surface.desired_maximum_frame_latency = Some(n);
+    }
     eframe::run_native(
         "Screepub motion bench",
         options,
@@ -304,6 +363,10 @@ fn main() -> eframe::Result {
                 last_wheel: Instant::now(),
                 acts: 0,
                 done: false,
+                rest: std::env::var("BENCH_REST_SECS")
+                    .ok()
+                    .and_then(|v| v.parse().ok()),
+                resting: None,
             }))
         }),
     )
