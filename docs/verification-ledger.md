@@ -3,8 +3,8 @@
 Who has checked what, kept in one place so no page has to infer it from a
 green checkmark. Three lists. An item moves up only when somebody does the
 thing, and the README, the site (screepub.com) and the release notes say no
-more than this page does. `tests/site.test.ts` and
-`tests/release-artifacts.test.ts` hold the README and the site to it.
+more than this page does. `rust/crates/xtask/tests/site.rs` and
+`rust/crates/xtask/tests/readme_and_docs.rs` hold the README and the site to it.
 
 The window is the Tauri app in `desktop/`: Screepub on every platform, and
 on a Mac the one app, `Screepub-macOS.dmg`. The older Mac app was the Swift

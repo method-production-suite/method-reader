@@ -268,6 +268,12 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
         .expect("a matrix")
         .iter()
         .collect();
+    // No Mac row: the Mac tool is signed and notarized by the release job,
+    // and an unsigned one from here would replace it with a warning screen.
+    for r in &rows {
+        assert!(!s(r, "os").starts_with("macos"), "{r:?}");
+        assert!(!s(r, "archive").contains("macos"), "{r:?}");
+    }
     let archives: Vec<String> = rows.iter().map(|r| s(r, "archive").to_string()).collect();
     let others = strs(&[
         names::CLI_LINUX_X64,
