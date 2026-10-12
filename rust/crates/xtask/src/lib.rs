@@ -173,11 +173,6 @@ pub const COMMANDS: &[Command] = &[
         help: "a local Tauri 0.11.1 window updating itself into this checkout's app",
         main: rehearse::main,
     },
-    Command {
-        name: "build-sidecar",
-        help: "retired: the Rust app links the engine, there is no sidecar",
-        main: cli_build::build_sidecar_main,
-    },
 ];
 
 /// `cargo xtask` itself: the usage text.

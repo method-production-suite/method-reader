@@ -1,8 +1,9 @@
 //! What survives of tests/sidecar-targets.test.ts and
 //! tests/build-sidecar.test.ts. The engine sidecar is retired (the Rust app
 //! links the engine), so its file names, musl swap, rustc host lookup and
-//! output folder retire with it; the Rust triples it held now name the
-//! CLI's release targets, and those are pinned here.
+//! output folder retire with it, and so did `cargo xtask build-sidecar`,
+//! which answered "retired" until the cutover removed it; the Rust triples
+//! it held now name the CLI's release targets, and those are pinned here.
 
 use xtask::cli_build::binfmt::BinaryFormat as F;
 use xtask::cli_build::targets::{MAC_TARGETS, TARGETS, Target};
@@ -74,11 +75,4 @@ fn every_triple_agrees_with_the_format_it_is_checked_against() {
         assert!(t.rust_triple.starts_with(arch), "{}", t.id);
         assert!(t.rust_triple.contains(os), "{}", t.id);
     }
-}
-
-#[test]
-fn build_sidecar_answers_retired_with_exit_2_and_points_at_build_cli() {
-    assert_eq!(xtask::cli_build::build_sidecar_main(&[]), 2);
-    let words = xtask::cli_build::BUILD_SIDECAR_RETIRED;
-    assert!(words.contains("retired") && words.contains("cargo xtask build-cli"));
 }
