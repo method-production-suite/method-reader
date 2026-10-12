@@ -48,9 +48,9 @@ errors. If you must:
 2. Add it to `tokens.css` in both blocks, or only `:root` if it is
    mode-independent the way brass is.
 3. If anything sets text in it, add `"text": true` to its `tokens.json` entry
-   AND add a pair to the contrast test in `tests/brand-tokens.test.ts`. Floors
+   AND add a pair to the contrast test in `rust/crates/xtask/tests/brand.rs`. Floors
    are 7:1 for body and headings, 4.5:1 for captions and transitions. Darken
-   the color rather than lowering the floor. `tests/brand-tokens.test.ts`
+   the color rather than lowering the floor. `rust/crates/xtask/tests/brand.rs`
    fails loudly if a token is marked `"text": true` with no pair, so this
    cannot go unnoticed the way `ink-footnote` once did.
 

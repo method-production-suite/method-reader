@@ -3,10 +3,8 @@
 Who has checked what, kept in one place so no page has to infer it from a
 green checkmark. Three lists. An item moves up only when somebody does the
 thing, and the README, the site (screepub.com) and the release notes say no
-more than this page does. Until the Rust cutover, `tests/site.test.ts` and
-`tests/release-artifacts.test.ts` held the README and the site to it; their
-Rust ports are still to come (rust/PARITY.md lists them as todo), so for now
-nothing checks that automatically.
+more than this page does. `rust/crates/xtask/tests/site.rs` and
+`rust/crates/xtask/tests/readme_and_docs.rs` hold the README and the site to it.
 
 The window is Screepub on every platform, and on a Mac the one app,
 `Screepub-macOS.dmg`. From the Rust cutover on it is the native Rust window

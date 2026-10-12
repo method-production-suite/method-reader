@@ -18,7 +18,7 @@ move too.
 
 | TypeScript | tests | Rust owner | status | notes |
 |---|---:|---|---|---|
-| tests/app-references.test.ts | 14 | xtask | todo | the retired Swift app stays retired |
+| tests/app-references.test.ts | 14 | xtask | done | xtask/tests/app_references.rs (14): the same patterns over `git ls-files --cached --others --exclude-standard`, this file in place of the TypeScript one on the not-swept list, and the retired-coverage record's five checks |
 | tests/app-settings.test.ts | 31 | sp-engine | done | sp-engine/tests/app_settings.rs (28); the bun preload checks have their Rust form in tests/guards.rs (the engine takes its environment as a value, so the guard is what tests hand it) |
 | tests/artwork.test.ts | 44 | sp-parser | done | sp-parser/tests/artwork.rs (43); retired: the Bun.build bundle check that artwork.ts never reaches pdf.js (sp-parser has no PDF dependency at all) |
 | tests/azw3-calibre.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (calibres_reader_opens_our_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
@@ -33,10 +33,10 @@ move too.
 | tests/azw3-tbs.test.ts | 4 | sp-azw3 | done | sp-azw3/tests/parts.rs |
 | tests/azw3-xml.test.ts | 6 | sp-azw3 | done | sp-azw3/tests/parts.rs; the round trip reads the oracle's EPUBs instead of a convertFountain |
 | tests/azw3.test.ts | 9 | sp-azw3 | done | sp-azw3/tests/azw3.rs |
-| tests/beta-marks.test.ts | 10 | sp-cli + sp-app | partial | CLI help: sp-cli/tests/beta_marks.rs (6); the 3 badge tests are sp-app's; the 2 README/site checks read documents, not code, and move to the xtask with no-em-dash and site |
+| tests/beta-marks.test.ts | 10 | sp-cli + sp-app + xtask | done | CLI help: sp-cli/tests/beta_marks.rs (6); the 3 badge tests are sp-app's; the 2 README/site checks are one test over both pages in xtask/tests/readme_and_docs.rs |
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
-| tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
-| tests/brand-tokens.test.ts | 9 | xtask | todo |  |
+| tests/brand-components.test.ts | 6 | xtask | done | xtask/tests/brand.rs (with brand-tokens and color-contrast: 15 in all); brand/ stays HTML |
+| tests/brand-tokens.test.ts | 9 | xtask | done | xtask/tests/brand.rs: tokens.css against tokens.json in both modes, every text token's WCAG floor and the table's completeness, the brass/ink rule, the buttons' hover and focus, the arithmetic's reference points |
 | tests/build-app-bundle.test.ts | 72 | sp-release + xtask | done | one implementation, sp-release's (names.rs, mac.rs, linux.rs, nsis.rs, archive.rs; sp-release/tests/pipeline.rs and compat.rs); `cargo xtask build-app-bundle` drives sp-release for the native window, the only one since the cutover: xtask/tests/build_app_bundle.rs (56) and native_bundle.rs (18) run against it. Retired at the cutover with the Tauri window: the `cargo tauri build` invocation, its overlays, the three-file version gate (package.json, the Tauri Cargo.toml, tauri.conf.json) and the Tauri floor; the whole runs drive the native path's fake tools |
 | tests/build-cli-e2e.test.ts | 4 | xtask | done | xtask/tests/build_cli_e2e.rs (2): opt-in (SCREEPUB_REAL_CLI_BUILD=1, the Mac half also SCREEPUB_REAL_CODESIGN=1), host target and Mac only, since each target builds on its own runner |
 | tests/build-cli.test.ts | 83 | xtask | done | xtask/tests/build_cli.rs (89) |
@@ -63,14 +63,14 @@ move too.
 | tests/cli-update.test.ts | 17 | sp-cli | done | sp-cli/tests/cli_update.rs (17); resolveCommand/VERBS checks run through the CLI; the offline check reads sp-engine/src/update/ and verbs.rs's update arms |
 | tests/cli-verb-flags.test.ts | 7 | sp-cli | done | sp-cli/tests/verb_flags.rs (7; the per-verb loop is one matrix test), the table checked against verbs.rs's VERBS and VERB_SPECS; cargo xtask parity runs every verb against every foreign flag against the TypeScript |
 | tests/cli.test.ts | 78 | sp-cli | done | sp-cli/tests/cli.rs (93: the five-output-flag loop runs once per flag); the error-mapping and unwritable tests run on sp_engine::errors; retired: "--debug lets pdf.js warnings through" (no pdf.js, nothing warns; PARITY Decisions). The password test checks that a path containing "password" stays `unreadable`; the typed half holds by construction (ConvertError::Password), with no encrypted fixture |
-| tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
+| tests/color-contrast.ts | 0 | xtask | done | test helper (WCAG 2.1 luminance and contrast): `from_hex`, `luminance`, `contrast` in xtask/tests/brand.rs, with their reference-point tests |
 | tests/conversion-settings.test.ts | 18 | sp-cli | done | sp-cli/tests/conversion_settings.rs (18), through the CLI; "a sidecar write that fails" uses the debug binary's SCREEPUB_TEST_FAIL_PIN (compiled out of release builds) where the TypeScript patched fs.writeFileSync with a bun --preload |
 | tests/convert.test.ts | 58 | sp-engine | done | sp-engine/tests/convert.rs (58), in process on tests/fixtures through sp-pdf. The resolveImageData/encodePng spies become a count of picture fetches through `convert_facts_with` (the facts sp-pdf reads first carry no pixels, so no fetch means nothing encoded). The two real-script blocks read root fixtures/ (the main checkout's from a worktree) and skip without it, counts only |
 | tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | done | sp-epub/tests/css_rules.rs (11) |
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
 | tests/cue-text.test.ts | 4 | sp-parser | done | sp-parser/tests/cue_text.rs (the 17 table rows as 17 tests) |
-| tests/desktop-bundle-step.test.ts | 7 | xtask | todo | CI workflow steps |
+| tests/desktop-bundle-step.test.ts | 7 | xtask | retired | ran desktop.yml's two bash steps (the per-OS `cargo tauri build --bundles` list and the smoke step reading package.json): desktop.yml, tauri-bundler, package.json and smoke-bundle.ts are gone. rust.yml's bundles job calls sp-release, whose writers are tested in sp-release; release.yml's bundle steps are executed in xtask/tests/release_steps.rs |
 | tests/desktop-layout-measured.test.ts | 16 | sp-app | partial | geometry in m/layout.rs; drawn rects measured in behaviors.rs (C3, L rows); see "Window test files" |
 | tests/desktop-layout.test.ts | 26 | sp-app | partial | see "Window test files" |
 | tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes sp-app's notes_release.rs (notes.js and the notes-surface.js check went with the Tauri window); the window's half is sp-app's (Window test files) |
@@ -111,22 +111,22 @@ move too.
 | tests/library.test.ts | 45 | sp-engine + sp-cli | done | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the --library CLI block: sp-cli/tests/cli_library.rs (6) |
 | tests/mobi-picture-probe.test.ts | 7 | xtask | done | the MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); the run-as-a-process and EPUB halves are xtask/tests/mobi_picture_probe.rs (6; epubcheck skips where it is not installed) |
 | tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
-| tests/no-em-dash.test.ts | 3 | xtask | partial | repo-wide copy rule; the window's half is rust/crates/sp-app/tests/no_em_dash.rs; the engine crates are left |
+| tests/no-em-dash.test.ts | 3 | sp-app + xtask | done | the window: sp-app/tests/no_em_dash.rs; the engine crates (every crate's src/ but sp-app's and xtask's, comments and unit-test modules out, the same four data dashes on the list) and the copy a person reads (README and its neighbours, site/, brand/, the reader-facing docs, every release's notes): xtask/tests/no_em_dash.rs (3) |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain + sp-engine | done | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain (1) ported (sp-engine/tests/options.rs) |
-| tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, app/show.rs, tests/behaviors.rs |
+| tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, src/app/show.rs, tests/behaviors.rs |
 | tests/page-timing.test.ts | 16 | sp-app | done | m/page_timing.rs |
 | tests/parser-pipeline.test.ts | 47 | sp-parser + sp-fountain | done | sp-parser/tests/parser_pipeline.rs (45); the 2 tests and the toFountain halves of 3 in sp-fountain/tests/parser_pipeline.rs (5, sp-parser as dev-dependency) |
 | tests/parser.test.ts | 137 | sp-parser | done | sp-parser/tests/parser.rs (137) |
 | tests/pdfjs-wasm.test.ts | 11 | sp-pdf | done | the "JPEG2000 decodes" half is sp-pdf/tests/jpx.rs; the rest (decoder filenames, the wasmUrl string, removePdfjsWasmDir, exit hooks, the bun-run temp check) retires with pdf.js's decoder folder |
 | tests/png.test.ts | 24 | sp-parser | done | sp-parser/tests/png.rs (24); IDAT is miniz_oxide level 9, compared by decoded pixels (Decisions) |
 | tests/presets.test.ts | 7 | sp-model | done | sp-model/tests/presets.rs; the aliasing test has no Rust form (presets are returned by value) |
-| tests/release-app-step.test.ts | 23 | xtask | todo |  |
-| tests/release-artifacts.test.ts | 82 | xtask | todo |  |
+| tests/release-app-step.test.ts | 23 | xtask | done | xtask/tests/release_steps.rs, the rewritten release.yml's steps run under bash against stub tools: the Mac app's sign, notarize, staple and validate order (4, was the notarization step's 4), the bundle check (5, was the smoke step's 5), the checksums (4) and latest.json (3). Retired (7): the sidecar step (4; no sidecar) and the build-app-bundle.ts step (3; sp-release builds each bundle). Running the bundle check found it reported an empty bundles/ as "unexpected file bundles/*"; release.yml now says NOTHING WAS CHECKED |
+| tests/release-artifacts.test.ts | 82 | xtask | done | the workflow half: xtask/tests/release_workflow.rs (22: the job graph, draft then publish, the uploads per job, the gates, the secrets) and the pin rule in xtask/tests/workflows.rs; the documentation half: xtask/tests/readme_and_docs.rs (24, 1 ignored: the README's install table has no row for the AppImage the release now uploads, owner to word it). Retired: ci.yml's cross-cli block (3) and desktop.yml's (9), desktop/README.md's (2), the pubkey-from-config gate (tauri.conf.json is gone; the handover gate and verify-update stand in), the cross-builder and bump-tap.sh tables (cli_targets.rs and tap_tools.rs own them), the WebView2 note (the Rust installer fetches no WebView2), and the AppImage half of "nothing promises an AppImage" (the release ships one now) |
 | tests/release-notes-tool.test.ts | 26 | xtask | done | xtask/tests/release_notes_tool.rs (27), in throwaway repos |
 | tests/release-notes.test.ts | 6 | xtask | done | xtask/tests/release_notes_copy.rs (6) |
-| tests/release-version-gate.test.ts | 6 | xtask | todo |  |
-| tests/remove-pdfjs-decoders.ts | 0 | sp-pdf | todo | test preload; retires with the pdf.js decoder folder |
+| tests/release-version-gate.test.ts | 6 | xtask | done | xtask/tests/release_steps.rs: the checks job's notes-and-tag step against local git repos (5: a good tag, a ref that is no version, notes read from the TAGGED commit, empty or non-UTF-8 notes, a checksum in the notes) and its version step (2: sp-release handed the tagged rust/Cargo.toml and the bare version, a dirty working tree and a dependency's version ignored; no Cargo.toml at the tag stops before sp-release). The three version files are one now |
+| tests/remove-pdfjs-decoders.ts | 0 | sp-pdf | retired | test preload that removed pdf.js's per-process decoder folder; sp-pdf's decoders are compiled in, so there is no folder to remove |
 | tests/replace-file.test.ts | 11 | sp-fsutil | done | sp-fsutil/tests/replace_file.rs. src/atomic-write.ts has no test file of its own (its checks sit in library-images and desktop-shell); sp-fsutil/tests/atomic_write.rs pins them where the module now is |
 | tests/require-release-notes.test.ts | 22 | xtask | done | xtask/tests/release_hook.rs (24): `cargo xtask require-release-notes`, in a scratch repo |
 | tests/review-screens.test.ts | 12 | xtask | done | xtask/tests/review_screens.rs (12), in scratch repos |
@@ -140,11 +140,11 @@ move too.
 | tests/sidecar-targets.test.ts | 26 | xtask | retired | no sidecar in the Rust app (Decisions); the surviving target table is pinned by xtask/tests/cli_targets.rs |
 | tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
 | tests/signature-box.ts | 0 | sp-update + xtask | done | test helper: sp-update/tests/common/mod.rs (TestKey signs as tauri-cli does), xtask/tests/packaging_common/mod.rs (fake boxes and tauri-cli's published test key) |
-| tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
+| tests/site.test.ts | 14 | xtask | done | xtask/tests/site.rs (13, 1 ignored: the site's download table has no row for the AppImage the release now uploads, owner to word it); the names come from sp_release::names, the pictures from xtask::capture::shots |
 | tests/smoke-bundle.test.ts | 35 | xtask | done | xtask/tests/smoke_bundle.rs (41): the window inside each bundle runs headless (`--version --json`, then `--smoke` of field-station.pdf) where the Tauri sidecar ran, with scratch settings, library and a Calibre guard; one check runs the workspace's own built window for real |
 | tests/smoke-cli.test.ts | 21 | xtask | done | xtask/tests/smoke_cli.rs (21) |
 | tests/tap-scripts.test.ts | 15 | xtask | done | xtask/tests/tap_tools.rs (18): bump-tap and check-tap against a fake tap and a fake GitHub; the formula is pinned to what tools/bump-tap.sh's heredoc last wrote (the script went at the cutover) |
-| tests/temp-hygiene.test.ts | 14 | xtask | todo | must cover the Rust tests' temp folders |
+| tests/temp-hygiene.test.ts | 14 | xtask | done | xtask/tests/temp_hygiene.rs (12), the Rust form: temp_dir() only in a constructor of a type whose Drop removes what it made, no keep()/into_path() outside a folder that is itself removed, no forgetting a folder; over every crate's tests/ and the `#[cfg(test)]` part of src/. It found two unit tests (sp-mtp real.rs, xtask calibre_config.rs) that removed their temp output only on a pass; fixed |
 | tests/tool-temp-folders.test.ts | 4 | xtask | done | xtask/tests/tool_temp_folders.rs (4): smoke-cli twice, smoke-bundle, verify-signing |
 | tests/torture-coverage.test.ts | 6 | xtask | done | xtask/tests/torture_coverage.rs (10), with `device-checklist` |
 | tests/torture-layout.test.ts | 4 | xtask | done | xtask/tests/fixture.rs (emit_layout_*, atline_*: 4) |
@@ -155,9 +155,9 @@ move too.
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
 | tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (18) runs the readers and the signer through `cargo xtask update-signature`'s module, and the tag-time gate over sp_update::PUBKEY or `--pubkey` (`--pubkey-from-config` went with tauri.conf.json) |
 | tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
-| tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
-| tests/workflow-shell.test.ts | 3 | xtask | todo |  |
-| tests/workflows.test.ts | 3 | xtask | todo |  |
+| tests/weekly-toolchain.test.ts | 5 | xtask | done | xtask/tests/workflows.rs (weekly_*, 3): the Calibre job on macOS in rust/, Calibre installed before `cargo test --workspace` with SCREEPUB_REQUIRE_CALIBRE=1 (the engine-finds-Calibre step is sp-engine/tests/calibre_found.rs now), and the same pins as rust.yml. Retired: the named bun test files and the bun version |
+| tests/workflow-shell.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (3): over every workflow, a bare `"${A[@]}"` only of an array its step fills with a literal list and never empties; the guarded spelling under the real /bin/bash, empty and not. release_steps.rs runs the draft and publish steps under that bash too |
+| tests/workflows.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (with workflow-shell, weekly-toolchain and the pin rule: 15 in all): every workflow parsed, every needs: resolves, no Swift; added: no workflow runs bun, node or npm, every action pinned to a full SHA with its version comment and one pin per action, least-privilege permissions, bash on every step that can reach Windows, and tap-freshness watching the tap and the manifest |
 
 ### Branch mtp-kindle (BETA, not shipped)
 
@@ -556,7 +556,7 @@ for it):
 | send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), behaviors (D rows, keep-focus-by-key D26), m/device.rs, m/focus.rs | partial: build-ahead timing blocks ported as model tests only |
 | send-routes-ui.test.ts (71) | m/send_routes.rs | partial: the round trip against the engine's real route catalog waits on sp-engine |
 | send-device.test.ts (34) | m/device.rs | ported |
-| page-show.test.ts (22) | m/page_show.rs, app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
+| page-show.test.ts (22) | m/page_show.rs, src/app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
 | page-timing.test.ts (16) | m/page_timing.rs | ported |
 | device-watch.test.ts (9) | m/device_watch.rs | ported |
 | device-requests-ui.test.ts (11) | m/requests.rs, screens (My device isn't here) | ported |
@@ -565,10 +565,10 @@ for it):
 | desktop-layout.test.ts (26) | m/layout.rs | partial: geometry ported; CSS-text pins have no Rust subject |
 | desktop-layout-measured.test.ts (16) | m/layout.rs (900, 1280, 1800) | ported as geometry; a pass measuring drawn rects is still to write |
 | desktop-tokens.test.ts (9) | theme.rs (values pinned to tokens.css and style.css), fonts.rs (the six faces, byte for byte) | ported |
-| desktop-shell.test.ts (67) | app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
+| desktop-shell.test.ts (67) | src/app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
 | beta-marks.test.ts (10) | m/tune.rs, m/device.rs (which rows wear it), screens (badges drawn) | partial: CLI help, README and site checks are not the window's |
 | update-compare-module.test.ts (9) | m/update_compare.rs | ported (moves to sp-engine) |
-| no-em-dash.test.ts (3) | tests/no_em_dash.rs (sp-app's sources, comments stripped, allow-list kept honest) | ported for the window; the engine crates' half belongs to the xtask scan |
+| no-em-dash.test.ts (3) | tests/no_em_dash.rs (sp-app's sources, comments stripped, allow-list kept honest) | ported for the window; the engine crates' half is xtask/tests/no_em_dash.rs |
 | app-references, capture*, build-*, bump-version, cli-*, release-*, smoke-bundle | not window behavior | owned by the xtask, CLI and packaging waves |
 
 ## Tools

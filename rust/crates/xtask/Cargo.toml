@@ -58,6 +58,10 @@ signal-hook = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 zip.workspace = true
+# The repo checks (tests/workflows.rs and its neighbours) read the workflows
+# as the YAML GitHub runs, not as text. Deprecated upstream, but complete
+# for reading, and nothing outside these tests links it.
+serde_yaml = "0.9"
 # The tests' throwaway keys, and tauri-cli's published test key opened with
 # the pinned version.
 minisign.workspace = true

@@ -1,5 +1,5 @@
 /* Screepub web identity. Every color mirrors brand/tokens.json, the source,
-   and tests/brand-tokens.test.ts enforces that. See brand/README.md before
+   and rust/crates/xtask/tests/brand.rs enforces that. See brand/README.md before
    editing.
    var() and clamp() are correct here: this is the website, not the EPUB. */
 

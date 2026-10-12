@@ -410,6 +410,9 @@ jobs:
           VERSION="${TAG#v}"
           N=0
           for B in bundles/*; do
+            # An empty folder leaves the glob literal: count nothing, so
+            # the check below says so, instead of "unexpected file bundles/*".
+            [ -e "$B" ] || continue
             case "$B" in
               *.dmg)
                 M="$(mktemp -d)"

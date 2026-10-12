@@ -217,19 +217,33 @@ mod tests {
         ));
     }
 
+    /// A temp file removed when dropped, on a failing assertion's unwind too.
+    struct TempFile(std::path::PathBuf);
+
+    impl TempFile {
+        fn new(name: &str) -> Self {
+            TempFile(std::env::temp_dir().join(format!("{name}-{}.bin", std::process::id())))
+        }
+    }
+
+    impl Drop for TempFile {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
     #[test]
     fn the_file_stream_yields_the_whole_file_in_chunks() {
-        let path =
-            std::env::temp_dir().join(format!("screepub-mtp-stream-{}.bin", std::process::id()));
+        let file = TempFile::new("screepub-mtp-stream");
+        let path = &file.0;
         let data: Vec<u8> = (0..(CHUNK * 2 + 17)).map(|i| (i % 251) as u8).collect();
-        std::fs::write(&path, &data).unwrap();
+        std::fs::write(path, &data).unwrap();
         let chunks: Vec<Bytes> = block_on(futures::StreamExt::collect::<Vec<_>>(file_stream(
-            File::open(&path).unwrap(),
+            File::open(path).unwrap(),
         )))
         .into_iter()
         .map(|c| c.unwrap())
         .collect();
-        std::fs::remove_file(&path).unwrap();
         assert!(chunks.len() >= 3);
         assert_eq!(chunks.concat(), data);
     }
