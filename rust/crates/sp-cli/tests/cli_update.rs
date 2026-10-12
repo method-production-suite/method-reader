@@ -65,9 +65,17 @@ fn never_without_opt_in() {
 fn first_opted_in_launch_checks_an_hour_later_does_not_a_day_later_does() {
     assert!(update_should_check_command(true, None, NOW).unwrap().check);
     let hour = (NOW - 3_600_000.0).to_string();
-    assert!(!update_should_check_command(true, Some(&hour), NOW).unwrap().check);
+    assert!(
+        !update_should_check_command(true, Some(&hour), NOW)
+            .unwrap()
+            .check
+    );
     let day = (NOW - 25.0 * 3_600_000.0).to_string();
-    assert!(update_should_check_command(true, Some(&day), NOW).unwrap().check);
+    assert!(
+        update_should_check_command(true, Some(&day), NOW)
+            .unwrap()
+            .check
+    );
 }
 
 #[test]
@@ -95,7 +103,11 @@ fn a_real_file_of_that_name_still_wins_per_the_verb_rule() {
     let sb = Sandbox::new();
     // No file: the verb.
     let verb = sb.run(&["update-decision", "--json"]);
-    assert!(verb.error_message().contains("--offered"), "{}", verb.stdout);
+    assert!(
+        verb.error_message().contains("--offered"),
+        "{}",
+        verb.stdout
+    );
     // A file of that name in the working folder: a conversion of it.
     sb.write("update-decision", "not a screenplay");
     let convert = sb.run(&["update-decision", "--json"]);
@@ -151,7 +163,12 @@ fn a_missing_flag_is_a_usage_error_with_a_non_zero_exit() {
     let d = r.json();
     assert_eq!(d["ok"], json!(false));
     assert_eq!(d["error"]["code"], json!("usage"));
-    assert!(d["error"]["message"].as_str().unwrap().contains("--current"));
+    assert!(
+        d["error"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("--current")
+    );
 }
 
 #[test]
@@ -190,8 +207,14 @@ fn a_flag_from_another_verb_is_rejected_not_ignored() {
 fn devices_refuses_each_update_flag_and_names_its_owner() {
     let sb = Sandbox::new();
     let cases: [(&[&str], &str); 4] = [
-        (&["--offered", "1.0"], "--offered belongs to update-decision"),
-        (&["--current", "1.0"], "--current belongs to update-decision"),
+        (
+            &["--offered", "1.0"],
+            "--offered belongs to update-decision",
+        ),
+        (
+            &["--current", "1.0"],
+            "--current belongs to update-decision",
+        ),
         (
             &["--last-checked", "5"],
             "--last-checked belongs to update-should-check",

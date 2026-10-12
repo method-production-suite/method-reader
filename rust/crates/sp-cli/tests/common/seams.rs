@@ -178,7 +178,11 @@ pub fn current_azw3() -> Vec<u8> {
 /// version 36 bytes into it.
 pub fn mobi_header_version(book: &[u8]) -> u32 {
     let at = u32::from_be_bytes(book[78..82].try_into().expect("record 0")) as usize;
-    assert_eq!(&book[at + 16..at + 20], b"MOBI", "record 0 is a MOBI header");
+    assert_eq!(
+        &book[at + 16..at + 20],
+        b"MOBI",
+        "record 0 is a MOBI header"
+    );
     u32::from_be_bytes(book[at + 36..at + 40].try_into().expect("version"))
 }
 

@@ -139,7 +139,11 @@ fn success_reports_the_version_the_removed_forks_and_a_fresh_checklist() {
         },
         || {
             probed.set(probed.get() + 1);
-            if done.get() { ALL_THERE } else { MISSING_PLUGIN }
+            if done.get() {
+                ALL_THERE
+            } else {
+                MISSING_PLUGIN
+            }
         },
         "darwin",
     )
@@ -253,8 +257,8 @@ fn ok_without_a_version_is_still_a_failure_nothing_can_say_what_was_installed() 
 
 #[test]
 fn a_failure_with_no_reason_still_carries_a_sentence() {
-    let err = install_with(|| failed(None, None), || MISSING_PLUGIN, "darwin")
-        .expect_err("a failure");
+    let err =
+        install_with(|| failed(None, None), || MISSING_PLUGIN, "darwin").expect_err("a failure");
     assert_eq!(
         kfx_install_failed(err),
         "could not install the KFX plugin: Calibre did not say why"
@@ -372,7 +376,10 @@ fn both_are_verbs_and_a_file_of_either_name_still_converts() {
             .as_str()
             .unwrap_or_default()
             .to_owned();
-        assert!(usage.starts_with(&format!("screepub {verb}:")), "{verb}: {usage}");
+        assert!(
+            usage.starts_with(&format!("screepub {verb}:")),
+            "{verb}: {usage}"
+        );
     }
     // A file of that name in the working folder: the conversion's help,
     // not the verb's.
@@ -510,10 +517,7 @@ fn in_the_source_the_installing_line_is_said_only_where_an_install_can_run() {
     assert_eq!(src.matches("installing the KFX plugin from").count(), 1);
     // The nearest `if ` above it is its own guard: no statement between.
     let guard = &branch[branch[..said].rfind("if ").expect("a guard")..said];
-    assert!(
-        guard.contains("kfx_possible(host_platform())"),
-        "{guard}"
-    );
+    assert!(guard.contains("kfx_possible(host_platform())"), "{guard}");
     assert!(!guard.contains(';'), "{guard}");
 }
 
@@ -529,7 +533,11 @@ fn in_the_source_every_refusal_comes_before_either_handler_is_called() {
         let (before, after) = branch.split_at(call);
         // The arm's own refusal (the positional check) sits before the
         // call, and none after it.
-        assert_eq!(before.matches("no_arguments(verb, pos)?").count(), 1, "{verb}");
+        assert_eq!(
+            before.matches("no_arguments(verb, pos)?").count(),
+            1,
+            "{verb}"
+        );
         for refusal in ["no_arguments(", "Stop::usage(", "Stop::fail("] {
             assert!(!after.contains(refusal), "{verb}: {refusal} after the call");
         }
@@ -540,7 +548,10 @@ fn in_the_source_every_refusal_comes_before_either_handler_is_called() {
     let check = src
         .find("foreign_flag_refusal(verb, &parsed)")
         .expect("the foreign-flag check");
-    assert!(check > run_verb, "the foreign-flag check moved out of run_verb");
+    assert!(
+        check > run_verb,
+        "the foreign-flag check moved out of run_verb"
+    );
     assert!(
         check < src.find("\"kfx-status\" => {").expect("the kfx-status arm"),
         "the foreign-flag check moved below the kfx arms"

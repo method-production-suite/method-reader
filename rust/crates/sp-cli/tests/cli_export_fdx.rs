@@ -68,9 +68,7 @@ impl Case {
     fn deps(&self) -> ExportDeps<'_> {
         ExportDeps {
             calibre_available: Some(Box::new(|| false)),
-            kfx_status: Some(Box::new(|| {
-                panic!("the KFX probe must not run for an FDX")
-            })),
+            kfx_status: Some(Box::new(|| panic!("the KFX probe must not run for an FDX"))),
             fresh_kindle_artifact: Some(Box::new(|_, _| {
                 self.ladder_calls.set(self.ladder_calls.get() + 1);
                 Err(EngineError::plain(
@@ -355,9 +353,8 @@ fn a_pdf_conversion_writes_the_fdx_of_the_fountain_it_wrote_and_names_it_in_json
 fn a_fountain_conversion_writes_the_fdx_of_that_fountain() {
     let c = Case::new();
     let fdx = c.join("FromFountain.fdx");
-    let r = c
-        .sb
-        .run(&[&c.fountain, "-o", &c.join("Out.epub"), "--fdx", &fdx]);
+    let r =
+        c.sb.run(&[&c.fountain, "-o", &c.join("Out.epub"), "--fdx", &fdx]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains(&format!("wrote {fdx}")), "{}", r.stdout);
     assert_eq!(read(&fdx), fdx_of(FOUNTAIN));
@@ -366,9 +363,8 @@ fn a_fountain_conversion_writes_the_fdx_of_that_fountain() {
 #[test]
 fn without_fdx_no_fdx_is_written_and_the_answer_has_no_fdx_path() {
     let c = Case::new();
-    let r = c
-        .sb
-        .run(&[&c.fountain, "-o", &c.join("Out.epub"), "--json"]);
+    let r =
+        c.sb.run(&[&c.fountain, "-o", &c.join("Out.epub"), "--json"]);
     let answer = r.json();
     assert!(answer.get("fdxPath").is_none(), "{answer}");
     let fdx: Vec<String> = names(&c.dir)
