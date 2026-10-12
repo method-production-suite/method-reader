@@ -145,19 +145,19 @@ record, and each crate's licence text is in its published source.
 Copyright (c) 2015 Alan Dague-Greene, Quote-Unquote Apps.
 <https://quoteunquoteapps.com/courierprime/>
 
-Bundled as WOFF2 subsets in `site/fonts/` and in `desktop/ui/fonts/`,
-self-hosted so neither the website nor the window makes a third-party
-request. Not shipped inside any converted book: the EPUB and MOBI ask the
-device for Courier Prime by name and fall back to whatever typewriter face it
-carries.
+Bundled as WOFF2 subsets in `site/fonts/` and in
+`rust/crates/sp-app/fonts/` (built into the window), self-hosted so neither
+the website nor the window makes a third-party request. Not shipped inside
+any converted book: the EPUB and MOBI ask the device for Courier Prime by
+name and fall back to whatever typewriter face it carries.
 
 ## Literata 3.103: SIL Open Font License 1.1
 
 Copyright (c) 2017 Type Together, commissioned by Google.
 <https://github.com/googlefonts/literata>
 
-Bundled as WOFF2 subsets in `site/fonts/` and in `desktop/ui/fonts/`, for
-the window's running prose.
+Bundled as WOFF2 subsets in `site/fonts/` and in
+`rust/crates/sp-app/fonts/`, for the window's running prose.
 
 The OFL requires that the fonts be redistributed under the same licence, that
 this notice travel with them, and that they not be sold on their own. It also

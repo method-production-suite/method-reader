@@ -1,10 +1,19 @@
-//! Port of tests/desktop-tokens.test.ts (9 checks), plus the one check that
-//! outlives desktop/ui: sp-app's theme.rs agrees with brand/tokens.json and
-//! brand/tokens.css, read from sp-app's source without building it.
+//! What outlives tests/desktop-tokens.test.ts at the Rust cutover: the
+//! window's look is the brand's. sp-app's theme.rs agrees with
+//! brand/tokens.json and brand/tokens.css (read from sp-app's source
+//! without building it), the six WOFF2 subsets the window bundles are the
+//! website's, byte for byte, and THIRD-PARTY-NOTICES.md says where they are.
+//!
+//! Retired with desktop/ui/tokens.css and its generator (`cargo xtask
+//! build-desktop-tokens`): the six checks of the generated file (it matched
+//! the generator, its colours matched tokens.json, it left style.css's
+//! seven alone, it carried the scales, its dark block, a moved scale block
+//! refused). The scales and colours they guarded are held in theme.rs by
+//! the last two checks here.
 
 use std::fs;
 
-use xtask::desktop_tokens::{CORE_IN_STYLE_CSS, brand_colors, build_desktop_tokens};
+use xtask::brand::brand_colors;
 use xtask::paths::repo_root;
 
 fn read(p: &str) -> String {
@@ -13,14 +22,6 @@ fn read(p: &str) -> String {
     fs::read_to_string(repo_root().join(p))
         .unwrap_or_else(|e| panic!("{p}: {e}"))
         .replace("\r\n", "\n")
-}
-
-fn generated() -> String {
-    read("desktop/ui/tokens.css")
-}
-
-fn has_desktop_ui() -> bool {
-    repo_root().join("desktop/ui/tokens.css").is_file()
 }
 
 /// `--name: value;` pairs, as the TypeScript's /--([\w-]+):\s*([^;]+);/g found them.
@@ -47,112 +48,10 @@ fn declarations(css: &str) -> Vec<(String, String)> {
     out
 }
 
-#[test]
-fn the_committed_file_is_exactly_what_the_generator_produces() {
-    if !has_desktop_ui() {
-        eprintln!("skipped: desktop/ui is gone (cutover)");
-        return;
-    }
-    let built =
-        build_desktop_tokens(&read("brand/tokens.json"), &read("brand/tokens.css")).unwrap();
-    assert_eq!(generated(), built);
-}
+/// Where the window's fonts live: sp-app embeds them (src/fonts.rs).
+const APP_FONTS: &str = "rust/crates/sp-app/fonts";
 
-#[test]
-fn every_colour_it_declares_matches_brand_tokens_json() {
-    if !has_desktop_ui() {
-        return;
-    }
-    let colors = brand_colors(&read("brand/tokens.json")).unwrap();
-    let g = generated();
-    let light = &g[..g.find("@media").unwrap()];
-    let mut checked = 0;
-    for (name, value) in declarations(light) {
-        let Some((_, l, _)) = colors.iter().find(|(n, _, _)| *n == name) else {
-            continue;
-        };
-        assert_eq!(value.trim().to_lowercase(), l.to_lowercase(), "{name}");
-        checked += 1;
-    }
-    assert!(checked >= 8, "only {checked} colours checked");
-}
-
-#[test]
-fn it_does_not_redeclare_the_seven_style_css_already_pins() {
-    let g = build_desktop_tokens(&read("brand/tokens.json"), &read("brand/tokens.css")).unwrap();
-    for name in CORE_IN_STYLE_CSS {
-        assert!(
-            !declarations(&g).iter().any(|(n, _)| n == name),
-            "tokens.css redeclares --{name}, which style.css owns"
-        );
-    }
-    assert_eq!(CORE_IN_STYLE_CSS.len(), 7);
-}
-
-#[test]
-fn it_carries_the_scales_the_components_need() {
-    let g = build_desktop_tokens(&read("brand/tokens.json"), &read("brand/tokens.css")).unwrap();
-    for token in [
-        "--font-structure",
-        "--font-prose",
-        "--text-fine",
-        "--text-note",
-        "--text-label",
-        "--text-ui",
-        "--text-caption",
-        "--text-code",
-        "--text-body",
-        "--text-lede",
-        "--text-title",
-        "--text-display",
-        "--radius-mark",
-        "--radius",
-        "--radius-well",
-        "--motion-press",
-        "--motion-state",
-        "--ease",
-        "--space-1",
-        "--space-10",
-        "--measure",
-        "--brad-size",
-        "--page-shadow",
-        "--block-max",
-        "--binding-margin",
-        "--page-right",
-        "--hole-center",
-        "--hole",
-        "--ink-soft",
-        "--brass-highlight",
-        "--brass-rim",
-    ] {
-        assert!(
-            g.contains(&format!("{token}:")),
-            "tokens.css is missing {token}"
-        );
-    }
-}
-
-#[test]
-fn the_dark_block_overrides_the_mode_dependent_tokens_it_owns() {
-    let g = build_desktop_tokens(&read("brand/tokens.json"), &read("brand/tokens.css")).unwrap();
-    let dark = &g[g.find("@media").unwrap()..];
-    assert!(dark.contains("--hole:"));
-    assert!(dark.contains("--ink-soft:"));
-    let colors = brand_colors(&read("brand/tokens.json")).unwrap();
-    for want in ["ink-soft", "hole"] {
-        let (_, _, d) = colors.iter().find(|(n, _, _)| n == want).unwrap();
-        assert!(dark.contains(d.as_str()), "{want}");
-    }
-}
-
-#[test]
-fn a_moved_scale_block_is_refused_rather_than_silently_dropped() {
-    let css = read("brand/tokens.css").replace("--measure:", "--elsewhere:");
-    let err = build_desktop_tokens(&read("brand/tokens.json"), &css).unwrap_err();
-    assert!(err.contains("--measure:"), "{err}");
-}
-
-// ---- the fonts are bundled, not assumed (desktop/ui until cutover) ----
+// ---- the fonts are bundled, not assumed ----
 
 fn names_in(dir: &str) -> Vec<String> {
     let mut v: Vec<String> = fs::read_dir(repo_root().join(dir))
@@ -165,21 +64,15 @@ fn names_in(dir: &str) -> Vec<String> {
 
 #[test]
 fn the_same_six_subsets_the_website_self_hosts_are_present() {
-    if !has_desktop_ui() {
-        return;
-    }
     let site = names_in("site/fonts");
-    assert_eq!(names_in("desktop/ui/fonts"), site);
+    assert_eq!(names_in(APP_FONTS), site);
     assert_eq!(site.len(), 6);
 }
 
 #[test]
 fn each_is_a_real_woff2_and_byte_identical_to_the_website_copy() {
-    if !has_desktop_ui() {
-        return;
-    }
-    for name in names_in("desktop/ui/fonts") {
-        let bytes = fs::read(repo_root().join("desktop/ui/fonts").join(&name)).unwrap();
+    for name in names_in(APP_FONTS) {
+        let bytes = fs::read(repo_root().join(APP_FONTS).join(&name)).unwrap();
         assert_eq!(&bytes[..4], b"wOF2", "{name}");
         assert!(bytes.len() > 2000, "{name}");
         assert_eq!(
@@ -194,9 +87,8 @@ fn each_is_a_real_woff2_and_byte_identical_to_the_website_copy() {
 fn third_party_notices_no_longer_says_the_app_never_uses_them() {
     let notices = read("THIRD-PARTY-NOTICES.md");
     let flat = notices.split_whitespace().collect::<Vec<_>>().join(" ");
-    if has_desktop_ui() {
-        assert!(flat.contains("desktop/ui/fonts/"));
-    }
+    assert!(flat.contains("`rust/crates/sp-app/fonts/`"), "{flat}");
+    assert!(!flat.contains("desktop/ui/fonts/"));
     assert!(!flat.contains("Website only; the app has no running prose"));
 }
 

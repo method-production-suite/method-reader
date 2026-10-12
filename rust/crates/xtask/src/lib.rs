@@ -13,6 +13,7 @@ pub mod parity;
 pub mod paths;
 pub mod table;
 
+pub mod brand;
 pub mod bump_tap;
 pub mod bump_version;
 pub mod calibre_config;
@@ -21,7 +22,6 @@ pub mod check_latest;
 pub mod check_tap;
 pub mod cli_build;
 pub mod desktop_notes;
-pub mod desktop_tokens;
 pub mod device_checklist;
 pub mod dmg;
 pub mod fixture;
@@ -107,11 +107,6 @@ pub const COMMANDS: &[Command] = &[
         name: "build-desktop-notes",
         help: "regenerate the window's release notes from docs/releases/",
         main: desktop_notes::main,
-    },
-    Command {
-        name: "build-desktop-tokens",
-        help: "regenerate the window's colour tokens from brand/",
-        main: desktop_tokens::main,
     },
     Command {
         name: "require-release-notes",
