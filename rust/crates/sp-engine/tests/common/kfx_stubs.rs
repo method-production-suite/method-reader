@@ -129,7 +129,11 @@ impl SnippetRun {
         }
         std::fs::write(format!("{pkg}/__init__.py"), CALIBRE_INIT).unwrap();
         std::fs::write(format!("{pkg}/utils/https.py"), HTTPS).unwrap();
-        std::fs::write(format!("{pkg}/gui2/dialogs/plugin_updater.py"), PLUGIN_UPDATER).unwrap();
+        std::fs::write(
+            format!("{pkg}/gui2/dialogs/plugin_updater.py"),
+            PLUGIN_UPDATER,
+        )
+        .unwrap();
         std::fs::write(format!("{pkg}/customize/ui.py"), CUSTOMIZE_UI).unwrap();
         std::fs::write(format!("{dir}/scenario.json"), scenario.to_string()).unwrap();
         SnippetRun {
@@ -150,7 +154,10 @@ impl SnippetRun {
             .env("PYTHONNOUSERSITE", "1")
             .env("PYTHONDONTWRITEBYTECODE", "1")
             .env("SCREEPUB_STUB_LOG", &log)
-            .env("SCREEPUB_STUB_SCENARIO", format!("{}/scenario.json", self.dir))
+            .env(
+                "SCREEPUB_STUB_SCENARIO",
+                format!("{}/scenario.json", self.dir),
+            )
             .output()
             .unwrap();
         let stdout = String::from_utf8_lossy(&out.stdout).into_owned();
@@ -167,7 +174,12 @@ impl SnippetRun {
     /// Every stub call, in order.
     pub fn events(&self) -> Vec<String> {
         std::fs::read_to_string(format!("{}/events.log", self.dir))
-            .map(|t| t.lines().filter(|l| !l.is_empty()).map(str::to_owned).collect())
+            .map(|t| {
+                t.lines()
+                    .filter(|l| !l.is_empty())
+                    .map(str::to_owned)
+                    .collect()
+            })
             .unwrap_or_default()
     }
 

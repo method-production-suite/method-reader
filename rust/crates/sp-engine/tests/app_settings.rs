@@ -3,6 +3,8 @@
 //! tests off the real file. (The bun preload checks have their Rust form in
 //! tests/guards.rs.)
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use common::{Scratch, env_of, names, read_json, write};

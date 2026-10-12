@@ -4,6 +4,8 @@
 //! and the dialogue column surviving an exploded AZW3) need the engine's
 //! own EPUB, so they move with the conversion to wave 3; PARITY.md says so.
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use common::{Scratch, guarded_env};
@@ -38,7 +40,10 @@ fn is_available_agrees_with_the_tool_finder() {
 
 #[test]
 fn an_unknown_tool_name_is_not_discovered() {
-    assert_eq!(calibre_tool("definitely-not-a-calibre-tool", &guarded_env()), None);
+    assert_eq!(
+        calibre_tool("definitely-not-a-calibre-tool", &guarded_env()),
+        None
+    );
 }
 
 /// darwin's candidates are fixed paths and never PATH; Linux scans PATH.
@@ -69,7 +74,10 @@ mod path_scan {
         let fake = s.join("screepub-fake-calibre-tool2");
         std::fs::write(&fake, "#!/bin/sh\nexit 0\n").unwrap();
         common::chmod(&fake, 0o644);
-        assert_eq!(calibre_tool("screepub-fake-calibre-tool2", &on_path(&s.str())), None);
+        assert_eq!(
+            calibre_tool("screepub-fake-calibre-tool2", &on_path(&s.str())),
+            None
+        );
     }
 
     #[test]
@@ -202,6 +210,6 @@ fn the_tool_gets_exactly_the_environment_it_was_handed() {
     .unwrap();
     common::chmod(&tool, 0o755);
     let env = guarded_env().with("CALIBRE_CONFIG_DIRECTORY", "/scratch/copy");
-    run_calibre(&tool, &[seen.clone()], &env, 10_000).unwrap();
+    run_calibre(&tool, std::slice::from_ref(&seen), &env, 10_000).unwrap();
     assert_eq!(common::read(&seen), "/scratch/copy|");
 }

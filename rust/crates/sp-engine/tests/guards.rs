@@ -15,7 +15,9 @@ mod common;
 
 use std::path::Path;
 
-use common::{CALIBRE_GUARD, SETTINGS_GUARD, calibre_config_copy, calibre_env, real_calibre_config};
+use common::{
+    CALIBRE_GUARD, SETTINGS_GUARD, calibre_config_copy, calibre_env, real_calibre_config,
+};
 
 fn env_test_value(name: &str) -> String {
     let text = common::read(&common::repo_root().join(".env.test").to_string_lossy());
@@ -38,7 +40,9 @@ fn the_calibre_guard_is_the_one_in_env_test_and_tools() {
             .join("tools/calibre-config.ts")
             .to_string_lossy(),
     );
-    assert!(tools.contains(&format!("export const CALIBRE_CONFIG_GUARD = '{CALIBRE_GUARD}';")));
+    assert!(tools.contains(&format!(
+        "export const CALIBRE_CONFIG_GUARD = '{CALIBRE_GUARD}';"
+    )));
 }
 
 fn canonical(p: &Path) -> std::path::PathBuf {

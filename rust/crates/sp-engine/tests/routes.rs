@@ -22,7 +22,11 @@ fn kindle_twin() -> ConnectedDevice {
     dev(DeviceKind::Kindle, "KINDLE2", Some("/Volumes/KINDLE2"))
 }
 fn kobo() -> ConnectedDevice {
-    dev(DeviceKind::Kobo, "KOBOeReader", Some("/Volumes/KOBOeReader"))
+    dev(
+        DeviceKind::Kobo,
+        "KOBOeReader",
+        Some("/Volumes/KOBOeReader"),
+    )
 }
 fn tolino() -> ConnectedDevice {
     dev(DeviceKind::Tolino, "tolino", Some("/Volumes/tolino"))
@@ -52,10 +56,7 @@ fn on(platform: &str) -> RouteFacts {
 }
 
 fn with_devices(devices: Vec<ConnectedDevice>) -> RouteFacts {
-    RouteFacts {
-        devices,
-        ..facts()
-    }
+    RouteFacts { devices, ..facts() }
 }
 
 fn find<'a>(list: &'a [Route], key: &str) -> Option<&'a Route> {
@@ -120,8 +121,14 @@ fn a_docked_remarkable_outranks_books() {
 
 #[test]
 fn a_plugged_in_volume_wins_over_a_docked_remarkable() {
-    assert_eq!(routes(&with_devices(vec![kindle(), rm()]))[0].key, "device:kindle");
-    assert_eq!(routes(&with_devices(vec![rm(), kindle()]))[0].key, "device:kindle");
+    assert_eq!(
+        routes(&with_devices(vec![kindle(), rm()]))[0].key,
+        "device:kindle"
+    );
+    assert_eq!(
+        routes(&with_devices(vec![rm(), kindle()]))[0].key,
+        "device:kindle"
+    );
 }
 
 #[test]
@@ -198,7 +205,10 @@ fn a_remembered_value_that_is_not_a_string_falls_back() {
 fn every_kind_is_listed_while_disconnected() {
     let bare = routes(&facts());
     for name in ["Kindle", "Kobo", "tolino", "reMarkable"] {
-        assert!(bare.iter().any(|r| r.title == name && !r.available), "{name}");
+        assert!(
+            bare.iter().any(|r| r.title == name && !r.available),
+            "{name}"
+        );
     }
     assert!(bare[0].available);
     let leading = bare.iter().position(|r| !r.available).unwrap();
@@ -241,7 +251,10 @@ fn send_to_kindle_button_says_app_or_web() {
         send_to_kindle_app: true,
         ..facts()
     });
-    assert_eq!(find(&app, "send-to-kindle").unwrap().button, "Send to Kindle app");
+    assert_eq!(
+        find(&app, "send-to-kindle").unwrap().button,
+        "Send to Kindle app"
+    );
     assert_eq!(
         find(&routes(&facts()), "send-to-kindle").unwrap().button,
         "Send to Kindle web"
@@ -268,8 +281,14 @@ fn a_remembered_kobo_stays_chosen_while_unplugged() {
 
 #[test]
 fn button_verbs() {
-    assert_eq!(routes(&with_devices(vec![kindle()]))[0].button, "Copy to Kindle");
-    assert_eq!(routes(&with_devices(vec![rm()]))[0].button, "Upload to reMarkable");
+    assert_eq!(
+        routes(&with_devices(vec![kindle()]))[0].button,
+        "Copy to Kindle"
+    );
+    assert_eq!(
+        routes(&with_devices(vec![rm()]))[0].button,
+        "Upload to reMarkable"
+    );
     assert_eq!(routes(&facts())[0].button, "Add to Apple Books");
     let no_books = routes(&RouteFacts {
         books_app: false,
@@ -280,12 +299,24 @@ fn button_verbs() {
         apple_mail_default: true,
         ..facts()
     });
-    assert_eq!(find(&mail, "email-to-kindle").unwrap().button, "Send to Kindle email");
-    assert_eq!(find(&mail, "email-to-kindle").unwrap().title, "Send to Kindle email");
+    assert_eq!(
+        find(&mail, "email-to-kindle").unwrap().button,
+        "Send to Kindle email"
+    );
+    assert_eq!(
+        find(&mail, "email-to-kindle").unwrap().title,
+        "Send to Kindle email"
+    );
     let list = routes(&facts());
-    assert_eq!(find(&list, "send-to-kindle").unwrap().title, "Send to Kindle web");
+    assert_eq!(
+        find(&list, "send-to-kindle").unwrap().title,
+        "Send to Kindle web"
+    );
     assert_eq!(find(&list, "save-epub").unwrap().button, "Save the EPUB…");
-    assert_eq!(find(&list, "save-kindle").unwrap().button, "Save a Kindle file…");
+    assert_eq!(
+        find(&list, "save-kindle").unwrap().button,
+        "Save a Kindle file…"
+    );
 }
 
 // ---- the whole list, row by row ----
@@ -349,11 +380,9 @@ fn a_mac_with_everything() {
         ])
     );
     // And in the TypeScript's key order, as JSON.stringify writes it.
-    assert!(
-        sp_engine::jsjson::to_string(&list[0]).starts_with(
-            r#"{"id":"device:kindle#/Volumes/Kindle","key":"device:kindle","title":"Kindle","detail":"#
-        )
-    );
+    assert!(sp_engine::jsjson::to_string(&list[0]).starts_with(
+        r#"{"id":"device:kindle#/Volumes/Kindle","key":"device:kindle","title":"Kindle","detail":"#
+    ));
 }
 
 #[test]
@@ -416,8 +445,15 @@ fn linux_with_a_kobo_plugged_in() {
     assert_eq!(
         keys(&list),
         [
-            "device:kobo", "send-to-kindle", "save-epub", "save-kindle", "device:kindle",
-            "device:tolino", "remarkable", "apple-books", "email-to-kindle"
+            "device:kobo",
+            "send-to-kindle",
+            "save-epub",
+            "save-kindle",
+            "device:kindle",
+            "device:tolino",
+            "remarkable",
+            "apple-books",
+            "email-to-kindle"
         ]
     );
 }
@@ -427,7 +463,9 @@ fn linux_with_a_kobo_plugged_in() {
 #[test]
 fn a_mac_without_apple_mail_email_is_setup() {
     assert_eq!(
-        find(&routes(&facts()), "email-to-kindle").unwrap().unavailable,
+        find(&routes(&facts()), "email-to-kindle")
+            .unwrap()
+            .unavailable,
         Some(Unavailable::Setup)
     );
 }
@@ -453,7 +491,10 @@ fn off_a_mac_books_and_email_are_platform_whatever_the_probes_said() {
                 email.detail,
                 "on a Mac only; save the EPUB and attach it yourself"
             );
-            assert_eq!(find(&list, "send-to-kindle").unwrap().title, "Send to Kindle web");
+            assert_eq!(
+                find(&list, "send-to-kindle").unwrap().title,
+                "Send to Kindle web"
+            );
         }
         assert_eq!(routes(&on(platform))[0].key, "send-to-kindle");
     }
@@ -509,7 +550,10 @@ fn a_remarkable_not_looked_for_yet_says_so() {
         remarkable_checked: Some(true),
         ..facts()
     });
-    assert_eq!(find(&full, "remarkable").unwrap().detail, "dock over USB to send");
+    assert_eq!(
+        find(&full, "remarkable").unwrap().detail,
+        "dock over USB to send"
+    );
     assert_eq!(
         find(&routes(&facts()), "remarkable").unwrap().detail,
         "dock over USB to send"
@@ -541,7 +585,10 @@ fn a_blank_name_is_named_by_its_kind() {
         assert_eq!(row.title, name);
         assert_eq!(row.button, format!("Copy to {name}"));
         assert_eq!(row.device.as_ref().unwrap().name, name);
-        assert_eq!(&row.device.as_ref().unwrap().id, device.volume.as_ref().unwrap());
+        assert_eq!(
+            &row.device.as_ref().unwrap().id,
+            device.volume.as_ref().unwrap()
+        );
         assert_eq!(
             row.id,
             format!("device:{}#{}", device.kind.as_str(), device.volume.unwrap())
@@ -604,7 +651,10 @@ fn device_kinds_is_every_volume_mounted_kind_in_order() {
 #[test]
 fn a_remembered_kind_picks_the_first_row_of_that_kind() {
     let twins = routes(&with_devices(vec![kindle(), kindle_twin()]));
-    assert_eq!(pre(&twins, Some("device:kindle")).id, "device:kindle#/Volumes/Kindle");
+    assert_eq!(
+        pre(&twins, Some("device:kindle")).id,
+        "device:kindle#/Volumes/Kindle"
+    );
     assert_eq!(
         pre(&twins, Some("device:kindle#/Volumes/KINDLE2")).id,
         "device:kindle#/Volumes/Kindle"
@@ -640,7 +690,10 @@ fn a_remembered_mac_only_route_off_a_mac_falls_back() {
         devices: vec![kindle()],
         ..on("linux")
     });
-    assert_eq!(pre(&list, Some("apple-books")).id, "device:kindle#/Volumes/Kindle");
+    assert_eq!(
+        pre(&list, Some("apple-books")).id,
+        "device:kindle#/Volumes/Kindle"
+    );
 }
 
 #[test]
@@ -757,7 +810,12 @@ fn the_matrix_holds_every_rule() {
             }
             if r.available {
                 assert!(r.unavailable.is_none());
-                assert!(serde_json::to_value(r).unwrap().get("unavailable").is_none());
+                assert!(
+                    serde_json::to_value(r)
+                        .unwrap()
+                        .get("unavailable")
+                        .is_none()
+                );
             } else {
                 assert!(r.unavailable.is_some());
                 assert!(!r.detail.trim().is_empty());

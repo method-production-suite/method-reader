@@ -4,6 +4,8 @@
 //! for device detection (the sp-device branch): here the caller always
 //! hands the device list in.
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use std::cell::{Cell, RefCell};
@@ -74,7 +76,10 @@ fn the_exact_shape_measured_on_the_owners_mac() {
 #[test]
 fn a_bare_value_on_both_sides() {
     let output = "(\n    {\n        LSHandlerRoleAll = com.apple.mail;\n        LSHandlerURLScheme = mailto;\n    }\n)";
-    assert_eq!(parse_mailto_handler(output).as_deref(), Some("com.apple.mail"));
+    assert_eq!(
+        parse_mailto_handler(output).as_deref(),
+        Some("com.apple.mail")
+    );
 }
 
 #[test]
@@ -94,7 +99,10 @@ fn no_mailto_dict_reads_as_none() {
 
 #[test]
 fn garbage_reads_as_none() {
-    assert_eq!(parse_mailto_handler("not a plist at all {{{ broken )"), None);
+    assert_eq!(
+        parse_mailto_handler("not a plist at all {{{ broken )"),
+        None
+    );
     assert_eq!(parse_mailto_handler(""), None);
 }
 
@@ -139,7 +147,11 @@ fn send_to_kindle_true_in_the_home_folders_applications() {
     }));
     assert!(facts(&p).send_to_kindle_app);
     drop(p);
-    assert!(asked.borrow().contains(&"/Applications/Send to Kindle.app".to_owned()));
+    assert!(
+        asked
+            .borrow()
+            .contains(&"/Applications/Send to Kindle.app".to_owned())
+    );
 }
 
 #[test]
@@ -155,7 +167,10 @@ fn the_home_folder_comes_from_home_then_userprofile_then_the_os() {
         env_of(&[("HOME", "/Users/a"), ("USERPROFILE", "/Users/b")]),
         "/Users/a".into()
     ));
-    assert!(found(env_of(&[("USERPROFILE", "/Users/b")]), "/Users/b".into()));
+    assert!(found(
+        env_of(&[("USERPROFILE", "/Users/b")]),
+        "/Users/b".into()
+    ));
     assert!(found(Env::new(), sp_engine::env::os_home()));
     assert!(!found(env_of(&[("HOME", "/Users/a")]), "/Users/b".into()));
 }
@@ -245,15 +260,29 @@ fn asks_launch_services_exactly_once() {
 
 #[test]
 fn exit_1_saying_does_not_exist_is_apple_mail() {
-    assert!(via_runner("darwin", result(1, "", ABSENT)).0.apple_mail_default);
-    assert!(via_runner("darwin", result(1, ABSENT, "")).0.apple_mail_default);
+    assert!(
+        via_runner("darwin", result(1, "", ABSENT))
+            .0
+            .apple_mail_default
+    );
+    assert!(
+        via_runner("darwin", result(1, ABSENT, ""))
+            .0
+            .apple_mail_default
+    );
 }
 
 #[test]
 fn any_other_failure_could_not_tell() {
-    for stderr in ["", "Could not open the preferences database\n", "permission denied\n"] {
+    for stderr in [
+        "",
+        "Could not open the preferences database\n",
+        "permission denied\n",
+    ] {
         assert!(
-            !via_runner("darwin", result(1, "", stderr)).0.apple_mail_default,
+            !via_runner("darwin", result(1, "", stderr))
+                .0
+                .apple_mail_default,
             "{stderr:?}"
         );
     }
@@ -270,17 +299,29 @@ fn a_runner_that_fails_to_start_could_not_tell() {
 
 #[test]
 fn exit_0_naming_another_mail_app_is_not_apple_mail() {
-    assert!(!via_runner("darwin", result(0, SUPERHUMAN, "")).0.apple_mail_default);
+    assert!(
+        !via_runner("darwin", result(0, SUPERHUMAN, ""))
+            .0
+            .apple_mail_default
+    );
 }
 
 #[test]
 fn exit_0_with_no_mailto_entry_is_apple_mail() {
-    assert!(via_runner("darwin", result(0, NO_MAILTO, "")).0.apple_mail_default);
+    assert!(
+        via_runner("darwin", result(0, NO_MAILTO, ""))
+            .0
+            .apple_mail_default
+    );
 }
 
 #[test]
 fn exit_0_is_read_from_stdout_whatever_stderr_says() {
-    assert!(!via_runner("darwin", result(0, SUPERHUMAN, ABSENT)).0.apple_mail_default);
+    assert!(
+        !via_runner("darwin", result(0, SUPERHUMAN, ABSENT))
+            .0
+            .apple_mail_default
+    );
 }
 
 #[test]

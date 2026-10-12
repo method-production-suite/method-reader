@@ -1,6 +1,8 @@
 //! Port of tests/library-images.test.ts: the picture folder beside a
 //! `.fountain`.
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -36,11 +38,18 @@ fn cached(files: Option<Vec<(String, Vec<u8>)>>) -> Case {
 }
 
 fn files(pairs: &[(&str, Vec<u8>)]) -> Option<Vec<(String, Vec<u8>)>> {
-    Some(pairs.iter().map(|(n, b)| ((*n).to_owned(), b.clone())).collect())
+    Some(
+        pairs
+            .iter()
+            .map(|(n, b)| ((*n).to_owned(), b.clone()))
+            .collect(),
+    )
 }
 
 fn many(n: usize) -> Vec<(String, Vec<u8>)> {
-    (1..=n).map(|i| (format!("p{i:03}-01.png"), png(0))).collect()
+    (1..=n)
+        .map(|i| (format!("p{i:03}-01.png"), png(0)))
+        .collect()
 }
 
 fn none() -> BTreeSet<String> {
@@ -99,7 +108,10 @@ fn images_dir_does_not_care_what_the_extension_was() {
 #[cfg(unix)]
 #[test]
 fn a_dotted_name_keeps_everything_but_the_last_extension() {
-    assert_eq!(images_dir_for("/lib/Draft.v2.fountain"), "/lib/Draft.v2.images");
+    assert_eq!(
+        images_dir_for("/lib/Draft.v2.fountain"),
+        "/lib/Draft.v2.images"
+    );
 }
 
 // ---- MAX_IMAGE_FILE_BYTES ----
@@ -121,7 +133,7 @@ fn the_largest_picture_an_encoder_can_emit_fits_inside_it() {
 
 #[test]
 fn and_it_is_not_so_loose_a_4_gb_file_would_pass() {
-    assert!(MAX_IMAGE_FILE_BYTES < 16 * 1024 * 1024);
+    const { assert!(MAX_IMAGE_FILE_BYTES < 16 * 1024 * 1024) };
     assert_eq!(MAX_IMAGE_FILE_BYTES, 6_175_470);
 }
 
@@ -167,7 +179,12 @@ fn a_temp_for_something_not_our_picture_is_not_ours() {
 
 #[test]
 fn a_plain_file_is_never_a_temp() {
-    for name in ["p001-01.png", "p001-01.png.tmp", ".p001-01.png.tmp", "x.tmp"] {
+    for name in [
+        "p001-01.png",
+        "p001-01.png.tmp",
+        ".p001-01.png.tmp",
+        "x.tmp",
+    ] {
         assert!(!is_image_temp(name), "{name}");
     }
 }
@@ -213,7 +230,10 @@ fn only_names_a_note_could_have_written_and_they_are_not_refusals() {
 fn a_file_bigger_than_we_could_have_written_is_refused_and_counted() {
     let c = cached(files(&[
         ("p001-01.png", png(0)),
-        ("p002-01.png", png_of_size(MAX_IMAGE_FILE_BYTES as usize + 1)),
+        (
+            "p002-01.png",
+            png_of_size(MAX_IMAGE_FILE_BYTES as usize + 1),
+        ),
     ]));
     let read = read_images(&c.fountain, &none());
     assert_eq!(keys(&read), vec!["p001-01.png"]);
@@ -235,7 +255,10 @@ fn a_file_exactly_at_the_bound_is_still_ours() {
 fn a_picture_that_is_not_one_is_refused_and_counted() {
     let c = cached(files(&[
         ("p001-01.png", png(0)),
-        ("p002-01.png", vec![0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]),
+        (
+            "p002-01.png",
+            vec![0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46],
+        ),
         ("p003-01.png", vec![]),
         ("p004-01.png", png(0)[..28].to_vec()),
     ]));
@@ -384,7 +407,10 @@ fn junk_cannot_occupy_a_place_in_that_cap() {
 
 #[test]
 fn a_picture_the_folder_does_not_list_is_not_found() {
-    let c = cached(files(&[("p001-01.png", png(0)), (".p002-01.png.icloud", png(0))]));
+    let c = cached(files(&[
+        ("p001-01.png", png(0)),
+        (".p002-01.png.icloud", png(0)),
+    ]));
     let read = read_images(&c.fountain, &asked(&["p001-01.png", "p002-01.png"]));
     assert_eq!(keys(&read), vec!["p001-01.png"]);
     assert_eq!((read.refused, read.over_cap, read.not_found), (0, 0, 1));
@@ -523,18 +549,25 @@ fn the_two_losses_are_separate_sentences() {
     let out = image_folder_warnings(&counts(MAX_IMAGES, 2, 3, 0));
     assert_eq!(out.len(), 2);
     assert!(out.iter().any(|w| w.contains("could not be read")));
-    assert!(out.iter().any(|w| w.contains(&format!("{} pictures", MAX_IMAGES + 3))));
+    assert!(
+        out.iter()
+            .any(|w| w.contains(&format!("{} pictures", MAX_IMAGES + 3)))
+    );
 }
 
 #[test]
 fn pictures_not_found_are_said_with_the_count() {
     assert_eq!(
         image_folder_warnings(&counts(0, 0, 0, 1)),
-        vec!["1 picture this script shows could not be found in its picture folder, so the book was made without it."]
+        vec![
+            "1 picture this script shows could not be found in its picture folder, so the book was made without it."
+        ]
     );
     assert_eq!(
         image_folder_warnings(&counts(0, 0, 0, 2)),
-        vec!["2 pictures this script shows could not be found in its picture folder, so the book was made without them."]
+        vec![
+            "2 pictures this script shows could not be found in its picture folder, so the book was made without them."
+        ]
     );
 }
 
@@ -542,7 +575,10 @@ fn pictures_not_found_are_said_with_the_count() {
 fn not_found_and_not_read_are_separate_sentences() {
     let out = image_folder_warnings(&counts(0, 1, 0, 1));
     assert_eq!(out.len(), 2);
-    assert!(out.iter().any(|w| w.starts_with("1 picture could not be read")));
+    assert!(
+        out.iter()
+            .any(|w| w.starts_with("1 picture could not be read"))
+    );
     assert!(
         out.iter()
             .any(|w| w.starts_with("1 picture this script shows could not be found"))
@@ -566,8 +602,16 @@ fn prune_removes_stale_pictures_and_abandoned_temps() {
 
 #[test]
 fn prune_never_removes_a_picture_a_person_put_there() {
-    let kept = ["board-01.png", "sunset.png", "p1.png", "A-01.png", "readme.md"];
-    let c = cached(Some(kept.iter().map(|n| ((*n).to_owned(), png(0))).collect()));
+    let kept = [
+        "board-01.png",
+        "sunset.png",
+        "p1.png",
+        "A-01.png",
+        "readme.md",
+    ];
+    let c = cached(Some(
+        kept.iter().map(|n| ((*n).to_owned(), png(0))).collect(),
+    ));
     let dir = images_dir_for(&c.fountain);
     assert_eq!(prune_images(&dir, &none()), 0);
     let mut want: Vec<String> = kept.iter().map(|s| (*s).to_owned()).collect();
@@ -619,7 +663,10 @@ fn write_images_writes_and_leaves_no_temp() {
     let dir = images_dir_for(&c.fountain);
     write_images(
         &dir,
-        &[("p001-01.png".into(), png(4)), ("p002-01.png".into(), png(5))],
+        &[
+            ("p001-01.png".into(), png(4)),
+            ("p002-01.png".into(), png(5)),
+        ],
     )
     .unwrap();
     assert_eq!(names(&dir), vec!["p001-01.png", "p002-01.png"]);
@@ -637,7 +684,13 @@ fn write_images_adopts_a_folder_without_taking_the_users_files() {
 fn write_images_refuses_a_path_taken_by_a_file() {
     let c = cached(None);
     std::fs::write(images_dir_for(&c.fountain), "a file, not a folder").unwrap();
-    assert!(write_images(&images_dir_for(&c.fountain), &[("p001-01.png".into(), png(0))]).is_err());
+    assert!(
+        write_images(
+            &images_dir_for(&c.fountain),
+            &[("p001-01.png".into(), png(0))]
+        )
+        .is_err()
+    );
 }
 
 #[cfg(unix)]

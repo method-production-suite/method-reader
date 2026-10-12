@@ -8,6 +8,8 @@
 //! read a real KF8 or MOBI back (`readKf8`, `mobiPictures`) move to wave 3,
 //! when the real makers are plugged in; PARITY.md says so.
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use common::books::{FAKE_EPUB, FakeRenderers, age, stamped_azw3};
@@ -23,7 +25,12 @@ use sp_engine::export::kfx::kfx_sibling;
 use sp_engine::nodepath::host;
 use sp_model::{DEFAULT_FORMAT_OPTIONS, FormatOptions};
 
-fn opts(epub: &str, fountain: Option<&str>, calibre: bool, kfx: bool) -> FreshKindleArtifactOptions {
+fn opts(
+    epub: &str,
+    fountain: Option<&str>,
+    calibre: bool,
+    kfx: bool,
+) -> FreshKindleArtifactOptions {
     FreshKindleArtifactOptions {
         epub: epub.into(),
         fountain_path: fountain.map(str::to_owned),
@@ -83,7 +90,10 @@ fn rung(
 }
 
 fn temps(dir: &str) -> Vec<String> {
-    names(dir).into_iter().filter(|n| n.ends_with(".tmp")).collect()
+    names(dir)
+        .into_iter()
+        .filter(|n| n.ends_with(".tmp"))
+        .collect()
 }
 
 /// A stand-in book, ten seconds old.
@@ -104,7 +114,10 @@ fn the_mobi_and_azw3_siblings_share_the_epub_directory_and_stem() {
 
 #[test]
 fn epub_and_a_kindle_file_are_always_available() {
-    assert_eq!(available_formats(), vec![ExportFormat::Epub, ExportFormat::Kindle]);
+    assert_eq!(
+        available_formats(),
+        vec![ExportFormat::Epub, ExportFormat::Kindle]
+    );
 }
 
 #[test]
@@ -133,7 +146,9 @@ fn an_epub_the_writer_cannot_read_is_an_honest_error_and_leaves_the_azw3() {
     let r = FakeRenderers::default();
     let err = ladder(&opts(&epub, None, true, false), &r).0.unwrap_err();
     assert_eq!(err.name(), "RegenerationFailedError");
-    assert!(err.message().starts_with("Couldn't rebuild the Kindle file: the AZW3 could not be made from the book ("));
+    assert!(err.message().starts_with(
+        "Couldn't rebuild the Kindle file: the AZW3 could not be made from the book ("
+    ));
     assert_eq!(common::read(&azw3), "an older build");
     assert!(temps(&s.str()).is_empty());
 }
@@ -147,7 +162,9 @@ fn a_fresh_mobi_is_reused() {
     let mobi = mobi_sibling(&epub);
     std::fs::write(&mobi, "existing-mobi").unwrap();
     let r = FakeRenderers::default();
-    let out = rung(KindleRung::Mobi, &opts(&epub, None, false, false), &r).0.unwrap();
+    let out = rung(KindleRung::Mobi, &opts(&epub, None, false, false), &r)
+        .0
+        .unwrap();
     assert_eq!(out, mobi);
     assert_eq!(common::read(&mobi), "existing-mobi");
     assert!(r.mobi_calls.borrow().is_empty());
@@ -159,7 +176,9 @@ fn a_missing_mobi_with_no_fountain_is_an_honest_error() {
     let epub = s.join("Script.epub");
     std::fs::write(&epub, "epub").unwrap();
     let r = FakeRenderers::default();
-    let err = rung(KindleRung::Mobi, &opts(&epub, None, false, false), &r).0.unwrap_err();
+    let err = rung(KindleRung::Mobi, &opts(&epub, None, false, false), &r)
+        .0
+        .unwrap_err();
     assert_eq!(err.name(), "CannotRegenerateError");
     assert_eq!(
         err.message(),
@@ -171,11 +190,19 @@ fn a_missing_mobi_with_no_fountain_is_an_honest_error() {
 fn the_mobi_rung_rebuilds_from_the_fountain_and_leaves_the_epub() {
     let s = Scratch::new("export-artifact");
     let fountain = s.join("Script.fountain");
-    std::fs::write(&fountain, "Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n").unwrap();
+    std::fs::write(
+        &fountain,
+        "Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n",
+    )
+    .unwrap();
     let epub = s.join("Script.epub");
     std::fs::write(&epub, "stale").unwrap();
     let r = FakeRenderers::default();
-    let (out, stages) = rung(KindleRung::Mobi, &opts(&epub, Some(&fountain), false, false), &r);
+    let (out, stages) = rung(
+        KindleRung::Mobi,
+        &opts(&epub, Some(&fountain), false, false),
+        &r,
+    );
     let out = out.unwrap();
     assert_eq!(out, mobi_sibling(&epub));
     assert!(std::path::Path::new(&out).exists());
@@ -231,7 +258,10 @@ fn from_an_intact_folder_the_render_is_handed_every_picture() {
     rebuild(&l, &r, DEFAULT_FORMAT_OPTIONS);
     assert_eq!(
         *r.mobi_calls.borrow(),
-        vec![Some(vec!["p001-01.png".to_owned(), "p002-01.png".to_owned()])]
+        vec![Some(vec![
+            "p001-01.png".to_owned(),
+            "p002-01.png".to_owned()
+        ])]
     );
     assert_eq!(std::fs::read(&l.epub).unwrap(), FAKE_EPUB);
 }
@@ -329,8 +359,8 @@ fn kfx_ready_with_no_kfx_attempts_the_kfx_rebuild() {
         env: &env,
         renderers: &r,
     };
-    let err = fresh_kindle_artifact(&opts(&epub, None, true, true), &b, &r, &mut |_| {})
-        .unwrap_err();
+    let err =
+        fresh_kindle_artifact(&opts(&epub, None, true, true), &b, &r, &mut |_| {}).unwrap_err();
     assert!(
         [
             "CalibreMissingError",
@@ -424,9 +454,7 @@ fn the_plan_names_the_rung_its_file_what_builds_it_and_the_books_date() {
     let epub = with_sibling(&s, None, false);
     let date = sp_engine::fsx::mtime_ms(&epub);
     let plan = |state| serde_json::to_value(kindle_artifact_plan(&epub, state, 1)).unwrap();
-    let want = |path: String, by: &str| {
-        serde_json::json!({ "path": path, "fresh": false, "builtBy": by, "bookDate": date })
-    };
+    let want = |path: String, by: &str| serde_json::json!({ "path": path, "fresh": false, "builtBy": by, "bookDate": date });
     assert_eq!(
         plan(ToolchainState {
             calibre_available: true,
@@ -473,15 +501,33 @@ fn the_books_date_moves_with_the_book_and_is_null_when_unreadable() {
 #[test]
 fn the_plan_is_fresh_exactly_when_the_ladder_would_reuse() {
     let cases = [
-        ("kfx", ToolchainState { calibre_available: true, kfx_ready: true }),
-        ("azw3", ToolchainState { calibre_available: true, kfx_ready: false }),
+        (
+            "kfx",
+            ToolchainState {
+                calibre_available: true,
+                kfx_ready: true,
+            },
+        ),
+        (
+            "azw3",
+            ToolchainState {
+                calibre_available: true,
+                kfx_ready: false,
+            },
+        ),
         ("azw3", ToolchainState::default()),
     ];
     for (ext, state) in cases {
         let a = Scratch::new("export-artifact");
-        assert!(kindle_artifact_plan(&with_sibling(&a, Some(ext), true), state, 1).fresh, "{ext}");
+        assert!(
+            kindle_artifact_plan(&with_sibling(&a, Some(ext), true), state, 1).fresh,
+            "{ext}"
+        );
         let b = Scratch::new("export-artifact");
-        assert!(!kindle_artifact_plan(&with_sibling(&b, Some(ext), false), state, 1).fresh, "{ext}");
+        assert!(
+            !kindle_artifact_plan(&with_sibling(&b, Some(ext), false), state, 1).fresh,
+            "{ext}"
+        );
     }
     let c = Scratch::new("export-artifact");
     assert!(
@@ -520,7 +566,11 @@ fn a_fresh_plan_is_what_the_ladder_hands_back_untouched() {
 fn an_explicit_mobi_rung_leaves_the_epub_and_its_siblings_alone() {
     let s = Scratch::new("export-artifact");
     let fountain = s.join("Script.fountain");
-    std::fs::write(&fountain, "Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n").unwrap();
+    std::fs::write(
+        &fountain,
+        "Title: Test\n\nINT. ROOM - DAY\n\nA line of action.\n",
+    )
+    .unwrap();
     let epub = s.join("Script.epub");
     std::fs::write(&epub, "the book as it is").unwrap();
     let azw3 = azw3_sibling(&epub);
@@ -529,9 +579,13 @@ fn an_explicit_mobi_rung_leaves_the_epub_and_its_siblings_alone() {
     age(&azw3, 30);
     let before = sp_engine::fsx::mtime_ms(&epub);
     let r = FakeRenderers::default();
-    let out = rung(KindleRung::Mobi, &opts(&epub, Some(&fountain), true, false), &r)
-        .0
-        .unwrap();
+    let out = rung(
+        KindleRung::Mobi,
+        &opts(&epub, Some(&fountain), true, false),
+        &r,
+    )
+    .0
+    .unwrap();
     assert_eq!(out, mobi_sibling(&epub));
     assert!(!std::fs::read(&out).unwrap().is_empty());
     assert_eq!(common::read(&epub), "the book as it is");

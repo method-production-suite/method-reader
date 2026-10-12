@@ -8,6 +8,8 @@
 //! with CALIBRE_CONFIG_DIRECTORY pointed at the scratch copy
 //! (common::calibre_env). Nothing else here starts Calibre.
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use std::sync::OnceLock;
@@ -86,7 +88,13 @@ fn to_kfx_refuses_outright_when_calibre_is_absent() {
         tool: Some(Box::new(|| None)),
         ..Default::default()
     };
-    let err = to_kfx("/nowhere/nonexistent.epub", &mut |_| {}, &deps, &guarded_env()).unwrap_err();
+    let err = to_kfx(
+        "/nowhere/nonexistent.epub",
+        &mut |_| {},
+        &deps,
+        &guarded_env(),
+    )
+    .unwrap_err();
     assert!(err.message().contains("ebook-convert was not found"));
 }
 
@@ -99,7 +107,10 @@ fn kfx_sibling_is_same_folder_same_stem() {
 #[cfg(unix)]
 #[test]
 fn the_scratch_path_is_hidden_same_directory_and_keeps_kfx() {
-    assert_eq!(kfx_scratch_path("/tmp/dir/Book.EPUB"), "/tmp/dir/.Book.partial.kfx");
+    assert_eq!(
+        kfx_scratch_path("/tmp/dir/Book.EPUB"),
+        "/tmp/dir/.Book.partial.kfx"
+    );
 }
 
 fn ready_deps(tool: String) -> KfxDeps<'static> {
@@ -295,14 +306,22 @@ const MEASURED: Table = Table {
 #[test]
 fn the_companion_alone_is_not_the_plugin() {
     let m = &MEASURED;
-    assert!(!lists_kfx_output(&m.listing(&[m.epub_output(), m.companion()])));
+    assert!(!lists_kfx_output(
+        &m.listing(&[m.epub_output(), m.companion()])
+    ));
 }
 
 #[test]
 fn both_plugins_is_installed_and_the_converter_alone_is_too() {
     let m = &MEASURED;
-    assert!(lists_kfx_output(&m.listing(&[m.kfx_output(), m.companion(), m.epub_output()])));
-    assert!(lists_kfx_output(&m.listing(&[m.epub_output(), m.kfx_output()])));
+    assert!(lists_kfx_output(&m.listing(&[
+        m.kfx_output(),
+        m.companion(),
+        m.epub_output()
+    ])));
+    assert!(lists_kfx_output(
+        &m.listing(&[m.epub_output(), m.kfx_output()])
+    ));
 }
 
 #[test]
@@ -311,7 +330,9 @@ fn the_columns_are_read_off_the_header() {
         type_width: 18,
         name_width: 36,
     };
-    assert!(lists_kfx_output(&n.listing(&[n.companion(), n.kfx_output()])));
+    assert!(lists_kfx_output(
+        &n.listing(&[n.companion(), n.kfx_output()])
+    ));
     assert!(!lists_kfx_output(&n.listing(&[n.companion()])));
 }
 
@@ -331,7 +352,9 @@ fn the_plugin_or_a_renamed_copy_counts_and_look_alikes_do_not() {
     assert!(!named("Legacy KFX Output"));
     assert!(!named("KFX Outputs"));
     assert!(!named("KFX Output(fork)"));
-    assert!(!named("Set KFX metadata (from KFX Output (Fix Traditional Chinese))"));
+    assert!(!named(
+        "Set KFX metadata (from KFX Output (Fix Traditional Chinese))"
+    ));
 }
 
 #[test]
@@ -393,7 +416,17 @@ fn this_machines_calibre_still_prints_the_header() {
     .unwrap();
     let header = plugin_table_header(&run.stdout).expect("a header row");
     let words: Vec<&str> = header.split_whitespace().collect();
-    assert_eq!(words, ["Type", "Name", "Version", "Disabled", "Site", "Customization"]);
+    assert_eq!(
+        words,
+        [
+            "Type",
+            "Name",
+            "Version",
+            "Disabled",
+            "Site",
+            "Customization"
+        ]
+    );
     assert!(header.starts_with("Type "));
 }
 
@@ -438,7 +471,9 @@ fn plugin_installed_reads_a_fake_listing() {
 
 const TOOL: &str = "/nowhere/calibre-debug";
 
-fn answer(stdout: String) -> impl Fn(&[String]) -> Result<TimedRun, sp_engine::errors::EngineError> {
+fn answer(
+    stdout: String,
+) -> impl Fn(&[String]) -> Result<TimedRun, sp_engine::errors::EngineError> {
     move |_argv: &[String]| {
         Ok(TimedRun {
             code: 0,
@@ -483,7 +518,9 @@ fn a_conflicting_fork_is_removed_and_named() {
 #[test]
 fn a_plain_upgrade_removes_nothing() {
     let r = install_kfx_plugin(
-        &answer(result_line(json!({ "ok": true, "version": "2.20.1", "removed": [] }))),
+        &answer(result_line(
+            json!({ "ok": true, "version": "2.20.1", "removed": [] }),
+        )),
         Some(TOOL),
     );
     assert!(r.ok);
@@ -522,7 +559,9 @@ fn output_with_no_result_line_is_refused() {
 #[test]
 fn a_result_line_saying_failure_is_honoured() {
     let r = install_kfx_plugin(
-        &answer(result_line(json!({ "ok": false, "error": "size mismatch" }))),
+        &answer(result_line(
+            json!({ "ok": false, "error": "size mismatch" }),
+        )),
         Some(TOOL),
     );
     assert!(!r.ok);
@@ -532,8 +571,10 @@ fn a_result_line_saying_failure_is_honoured() {
 #[test]
 fn a_failure_after_a_copy_was_cleared_names_it() {
     let r = install_kfx_plugin(
-        &answer(result_line(json!({ "ok": false, "error": "add_plugin failed",
-            "removed": ["KFX Output (Fix Traditional Chinese)"] }))),
+        &answer(result_line(
+            json!({ "ok": false, "error": "add_plugin failed",
+            "removed": ["KFX Output (Fix Traditional Chinese)"] }),
+        )),
         Some(TOOL),
     );
     assert_eq!(
@@ -550,7 +591,9 @@ fn a_failure_after_a_copy_was_cleared_names_it() {
 #[test]
 fn a_failure_before_anything_was_cleared_reports_empty() {
     let r = install_kfx_plugin(
-        &answer(result_line(json!({ "ok": false, "error": "size mismatch", "removed": [] }))),
+        &answer(result_line(
+            json!({ "ok": false, "error": "size mismatch", "removed": [] }),
+        )),
         Some(TOOL),
     );
     assert!(!r.ok);
@@ -567,7 +610,9 @@ fn an_unreachable_site_gets_a_friendly_sentence() {
     assert!(!r.ok);
     assert_eq!(
         r.reason.as_deref(),
-        Some("Calibre's plugin site could not be reached. Check the internet connection, then try again.")
+        Some(
+            "Calibre's plugin site could not be reached. Check the internet connection, then try again."
+        )
     );
 }
 
@@ -618,7 +663,10 @@ fn snippet_installs_reports_the_version_and_clears_only_the_fork() {
     assert_eq!(kinds(&events), ["index", "zip", "remove", "add"]);
     assert!(events.contains(&format!("remove {}", FORK.0)));
     assert!(events.contains(&"add zip-present".to_owned()));
-    assert_eq!(events[1], "zip https://plugins.calibre-ebook.com/kfx_output.zip");
+    assert_eq!(
+        events[1],
+        "zip https://plugins.calibre-ebook.com/kfx_output.zip"
+    );
 }
 
 #[test]

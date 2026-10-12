@@ -29,8 +29,14 @@ fn epub_is_always_epub() {
 #[test]
 fn the_ladder_is_kfx_when_ready_and_our_azw3_otherwise() {
     assert_eq!(file_extension(ExportFormat::Kindle, st(true, true)), "kfx");
-    assert_eq!(file_extension(ExportFormat::Kindle, st(true, false)), "azw3");
-    assert_eq!(file_extension(ExportFormat::Kindle, st(false, false)), "azw3");
+    assert_eq!(
+        file_extension(ExportFormat::Kindle, st(true, false)),
+        "azw3"
+    );
+    assert_eq!(
+        file_extension(ExportFormat::Kindle, st(false, false)),
+        "azw3"
+    );
 }
 
 #[test]
@@ -136,7 +142,10 @@ fn identical_mtimes_count_as_stale() {
 #[test]
 fn an_unreadable_epub_makes_a_present_artifact_stale() {
     let p = pair(Some(10), 100);
-    assert!(needs_regeneration(&p.artifact, &p._s.join("does-not-exist.epub")));
+    assert!(needs_regeneration(
+        &p.artifact,
+        &p._s.join("does-not-exist.epub")
+    ));
 }
 
 // ---- export-kfx-setup ----
@@ -185,7 +194,13 @@ fn always_three_steps_in_order() {
             let ids: Vec<String> = setup
                 .steps
                 .iter()
-                .map(|x| serde_json::to_value(x.id).unwrap().as_str().unwrap().to_owned())
+                .map(|x| {
+                    serde_json::to_value(x.id)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_owned()
+                })
                 .collect();
             assert_eq!(ids, ["calibre", "previewer", "plugin"]);
             let names: Vec<&str> = setup.steps.iter().map(|x| x.name.as_str()).collect();
@@ -245,7 +260,11 @@ fn missing_calibre_links_to_this_platforms_page() {
 fn missing_previewer_links_where_amazon_makes_it() {
     for platform in ["darwin", "win32"] {
         assert_eq!(
-            step(&kfx_setup(&status(true, false, true), platform), "previewer").fix,
+            step(
+                &kfx_setup(&status(true, false, true), platform),
+                "previewer"
+            )
+            .fix,
             link(
                 "Get Kindle Previewer",
                 "https://kdp.amazon.com/en_US/help/topic/G202131170"
@@ -259,7 +278,11 @@ fn missing_previewer_links_where_amazon_makes_it() {
         })
     );
     assert_eq!(
-        step(&kfx_setup(&status(true, false, true), "freebsd"), "previewer").fix,
+        step(
+            &kfx_setup(&status(true, false, true), "freebsd"),
+            "previewer"
+        )
+        .fix,
         Some(KfxFix::Unavailable {
             why: "Amazon does not make it for this system".into()
         })
@@ -308,11 +331,23 @@ fn plugin_installed_means_nothing_without_calibre() {
 #[test]
 fn the_summary_names_the_rung_a_kindle_gets_today() {
     let today = "Kindles get AZW3 (beta) for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.";
-    assert_eq!(kfx_setup(&status(true, false, false), "darwin").summary, today);
-    assert_eq!(kfx_setup(&status(false, false, false), "win32").summary, today);
+    assert_eq!(
+        kfx_setup(&status(true, false, false), "darwin").summary,
+        today
+    );
+    assert_eq!(
+        kfx_setup(&status(false, false, false), "win32").summary,
+        today
+    );
     let linux = "Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3 (beta), which Screepub makes itself.";
-    assert_eq!(kfx_setup(&status(true, false, false), "linux").summary, linux);
-    assert_eq!(kfx_setup(&status(false, false, false), "linux").summary, linux);
+    assert_eq!(
+        kfx_setup(&status(true, false, false), "linux").summary,
+        linux
+    );
+    assert_eq!(
+        kfx_setup(&status(false, false, false), "linux").summary,
+        linux
+    );
 }
 
 #[test]

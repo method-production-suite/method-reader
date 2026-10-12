@@ -211,7 +211,11 @@ fn a_clock_set_backwards_does_not_trigger_a_storm() {
 #[test]
 fn exactly_at_the_interval_checks() {
     assert!(should_check(true, Some(NOW - CHECK_INTERVAL_MS), NOW));
-    assert!(!should_check(true, Some(NOW - CHECK_INTERVAL_MS + 1.0), NOW));
+    assert!(!should_check(
+        true,
+        Some(NOW - CHECK_INTERVAL_MS + 1.0),
+        NOW
+    ));
 }
 
 #[test]

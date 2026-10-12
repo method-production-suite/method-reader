@@ -2,6 +2,8 @@
 //! script owns, tuning following the script in, and writes that die part
 //! way. (The `--library` CLI block is the conversion's, wave 3.)
 
+#![cfg_attr(not(unix), allow(dead_code, unused_imports))]
+
 mod common;
 
 use common::{SETTINGS_GUARD, Scratch, env_of, names, read_json, write};
