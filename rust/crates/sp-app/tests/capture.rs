@@ -137,7 +137,11 @@ fn it_refuses_orders_it_does_not_understand() {
 
 // ------------------------------------------------------------------ the line
 
+/// A whole path on this system: a Windows one needs its drive.
+#[cfg(not(windows))]
 const LIB: &str = "/scratch/library";
+#[cfg(windows)]
+const LIB: &str = "C:\\scratch\\library";
 
 fn ask(r: Request) -> Verdict {
     verdict(&r, &demo(), Path::new(LIB))
@@ -272,14 +276,37 @@ fn it_reads_books_only_from_inside_the_scratch_library() {
     let lib = Path::new(LIB);
     assert!(inside(&book("x.fountain"), lib));
     assert!(!inside(LIB, lib), "the library itself is not a book");
-    assert!(!inside("/scratch/library/../real/x.fountain", lib));
-    assert!(!inside("/scratch/library-old/x.fountain", lib));
+    assert!(!inside(&format!("{LIB}/../real/x.fountain"), lib));
+    assert!(!inside(&format!("{LIB}-old/x.fountain"), lib));
     assert!(!inside("scratch/library/x.fountain", lib));
     let r = Request::Settings {
         fountain: "/Users/someone/Screepub/x.fountain".into(),
         set: None,
     };
     assert_eq!(ask(r), Verdict::Refuse);
+}
+
+/// Windows compares a drive written plainly or verbatim (what
+/// canonicalize answers), either separator, and names in any case, as
+/// the same place; a folder with no drive is not a whole path.
+#[cfg(windows)]
+#[test]
+fn on_windows_a_book_is_inside_however_its_path_is_spelled() {
+    let lib = Path::new(LIB);
+    assert!(inside(r"c:\SCRATCH\Library\Field Station\x.fountain", lib));
+    assert!(inside(r"\\?\C:\scratch\library\x.fountain", lib));
+    assert!(inside("C:/scratch/library/x.fountain", lib));
+    assert!(inside(
+        r"C:\scratch\library\x.fountain",
+        Path::new(r"\\?\C:\scratch\library")
+    ));
+    assert!(!inside(r"D:\scratch\library\x.fountain", lib));
+    assert!(!inside(r"\scratch\library\x.fountain", lib));
+    assert!(!inside(r"C:\scratch\library\..\..\x.fountain", lib));
+    assert!(
+        !inside(r"\\?\C:\scratch\library", lib),
+        "the library itself"
+    );
 }
 
 #[test]

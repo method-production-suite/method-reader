@@ -201,21 +201,66 @@ pub enum Verdict {
     Refuse,
 }
 
-/// `path` with `.` and `..` folded away, never above the root.
-fn folded(path: &Path) -> PathBuf {
-    let mut out = PathBuf::new();
+/// `path` with `.` and `..` folded away, never above the root, as the
+/// parts the file system compares: on Windows a drive or share is the
+/// same written plainly or verbatim (`C:` and `\\?\C:`, which is what
+/// canonicalize answers), and names match whatever their case.
+fn folded(path: &Path) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
     for c in path.components() {
         match c {
             Component::CurDir => {}
             Component::ParentDir => {
-                if out.parent().is_some() {
+                // Never above the root (or the drive and root).
+                if out.len() > root_parts(path) {
                     out.pop();
                 }
             }
-            other => out.push(other.as_os_str()),
+            Component::Prefix(p) => out.push(prefix_key(p.kind())),
+            Component::RootDir => out.push(std::path::MAIN_SEPARATOR_STR.to_owned()),
+            Component::Normal(n) => out.push(name_key(&n.to_string_lossy())),
         }
     }
     out
+}
+
+/// How many leading parts of `path` are its prefix and root.
+fn root_parts(path: &Path) -> usize {
+    path.components()
+        .take_while(|c| matches!(c, Component::Prefix(_) | Component::RootDir))
+        .count()
+}
+
+#[cfg(windows)]
+fn prefix_key(p: std::path::Prefix<'_>) -> String {
+    use std::path::Prefix;
+    match p {
+        Prefix::Disk(d) | Prefix::VerbatimDisk(d) => {
+            format!("{}:", char::from(d).to_ascii_lowercase())
+        }
+        Prefix::UNC(server, share) | Prefix::VerbatimUNC(server, share) => format!(
+            "\\\\{}\\{}",
+            name_key(&server.to_string_lossy()),
+            name_key(&share.to_string_lossy())
+        ),
+        Prefix::Verbatim(x) => format!("\\\\?\\{}", name_key(&x.to_string_lossy())),
+        Prefix::DeviceNS(x) => format!("\\\\.\\{}", name_key(&x.to_string_lossy())),
+    }
+}
+
+#[cfg(not(windows))]
+fn prefix_key(_: std::path::Prefix<'_>) -> String {
+    unreachable!("only Windows paths have a prefix")
+}
+
+#[cfg(windows)]
+fn name_key(name: &str) -> String {
+    name.to_lowercase()
+}
+
+#[cfg(not(windows))]
+fn name_key(name: &str) -> String {
+    name.to_owned()
 }
 
 /// Whether `path` is a whole path strictly inside `dir`, as written or as
@@ -248,7 +293,7 @@ pub fn is_demo(path: &str, demo: &Path) -> bool {
         return true;
     }
     match (std::fs::canonicalize(p), std::fs::canonicalize(demo)) {
-        (Ok(a), Ok(b)) => a == b,
+        (Ok(a), Ok(b)) => folded(&a) == folded(&b),
         _ => false,
     }
 }
