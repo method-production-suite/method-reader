@@ -109,8 +109,8 @@ move too.
 | tests/kfx-snippet-stubs.ts | 0 | sp-engine | todo | test helper: runs the KFX plugin install snippet under python3 |
 | tests/library-images.test.ts | 55 | sp-engine | todo |  |
 | tests/library.test.ts | 45 | sp-engine | todo |  |
-| tests/mobi-picture-probe.test.ts | 7 | xtask | todo |  |
-| tests/mobi.test.ts | 65 | sp-mobi | todo |  |
+| tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
+| tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); fountain-js tokens and the EPUB's picture answers come from tests/data/mobi-sources.json until sp-fountain and sp-epub land |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
 | tests/notes.test.ts | 49 | sp-fountain | todo |  |
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the CSS blocks go to sp-epub, the serializer blocks (rejoin, contdMode, showPageMarkers, dualDialogue) to sp-fountain, convertFountain to sp-engine |
@@ -170,7 +170,7 @@ move too.
 | tests/helpers/kf8-reader.ts | sp-azw3 | todo | structural KF8 reader |
 | tests/helpers/layout-chrome.ts | sp-app | todo |  |
 | tests/helpers/mini-xml.ts | sp-epub | todo |  |
-| tests/helpers/mobi-records.ts | sp-mobi | todo |  |
+| tests/helpers/mobi-records.ts | sp-mobi | done | sp-mobi/tests/common/mod.rs |
 | tests/helpers/palmdoc-decode.ts | sp-mobi | todo |  |
 | tests/helpers/stamped-azw3.ts | sp-azw3 | todo |  |
 
@@ -188,7 +188,7 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | tokens | tokens.json | sp-fountain (tokenizer) | todo; the model reads and writes it back unchanged |
 | EPUB | book.epub | sp-epub | todo |
 | preview | book.preview.html | sp-epub | todo |
-| MOBI | book.mobi | sp-mobi | todo |
+| MOBI | book.mobi | sp-mobi | done: sp-mobi/tests/oracle.rs, byte for byte |
 | AZW3 | book.azw3 | sp-azw3 | todo |
 | FDX | book.fdx | sp-fdx | todo |
 | pictures | images/ | sp-parser | todo |
@@ -222,3 +222,17 @@ names the check it affects.
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
   answers the same two forms identically.
+- **sp-mobi's interim copy of the stage-2 discriminators (2026-10-11, for
+  the owner).** The MOBI renderer imports src/fountain/notes.ts, slug.ts and
+  cover.ts. sp-mobi was ported beside sp-fountain and could depend only on
+  sp-model, so it carries a private line-for-line copy
+  (sp-mobi/src/notes.rs: stripNotes, fmtSizeStep, parseImgNote,
+  rendersImage, isMiniSlug, pickCover). The registry's one-copy rule (#5b,
+  #18) wants it deleted for sp-fountain's functions once that crate lands;
+  the renderer's checks (every source in tests/data/mobi-sources.json under
+  six formats, byte for byte) will say whether the swap moved anything.
+- **The Kindle books' clock (2026-10-11).** `MobiInput::time` and the AZW3's
+  `build_azw3_at` take the build time explicitly; `None` (and `build_azw3`)
+  read `SOURCE_DATE_EPOCH`, else the system clock (sp-mobi's `clock`). The
+  TypeScript read `Date.now()`. A MOBI cover index is a `usize`, so the
+  TypeScript's checks against -1 and 0.5 are refused by the type instead.
