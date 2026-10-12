@@ -56,8 +56,6 @@ tempfile = "3"
 sha2.workspace = true
 # The engine's own words about camera import, for the MTP window rules.
 sp-device = { path = "../sp-device" }
-# PNGs of the real window, for examples/capture.rs.
-image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 arboard = { version = "3.6", default-features = false }

@@ -18,12 +18,11 @@ use std::time::{Duration, Instant};
 use base64::Engine as _;
 use serde_json::{Value, json};
 use tungstenite::Message;
-use xtask::capture::backend::{Browser, CaptureOptions, DesktopUi};
+use xtask::capture::backend::{Browser, CaptureOptions, PassOne, WindowBackend};
 use xtask::capture::cdp::{self, CHROME, PROFILE_PREFIX, launch};
-use xtask::capture::http::{Response, Server};
+use xtask::capture::http::Response;
 use xtask::capture::run::{RunOptions, run_capture};
 use xtask::capture::shots::{SHOTS, Theme};
-use xtask::capture::window_argv as argv;
 
 const PNG: &[u8] = &[137, 80, 78, 71, 13, 10, 26, 10];
 
@@ -304,34 +303,48 @@ fn a_failure_the_caller_reports_ends_the_wait_at_once_and_a_timeout_names_what_t
     assert!(start.elapsed() < Duration::from_secs(3));
     assert!(failed.contains("the page server failed: boom"), "{failed}");
 
-    let explain = || "not found: /tools/capture/bridge.js".to_string();
+    let explain = || "not found: /tools/capture/frame.html".to_string();
     let mut o = shot();
     o.timeout = Duration::from_millis(300);
     o.explain = Some(&explain);
     let late = browser.capture(&o).unwrap_err();
     assert!(late.contains("timed out"), "{late}");
     assert!(
-        late.contains("not found: /tools/capture/bridge.js"),
+        late.contains("not found: /tools/capture/frame.html"),
         "{late}"
     );
     browser.close().unwrap();
     fake.expect_profile_gone();
 }
 
+/// A window that draws a picture at once, so the run reaches pass two.
+struct DrawnWindow;
+
+impl WindowBackend for DrawnWindow {
+    fn pass_one(&mut self, _p: PassOne<'_>) -> Result<Vec<u8>, String> {
+        Ok(PNG.to_vec())
+    }
+}
+
+#[cfg(unix)]
 #[test]
 fn a_page_server_that_fails_fails_the_run_at_once_naming_the_error_not_as_a_timeout() {
-    // A window whose index.html no longer loads main.js exactly once: the
-    // server's handler fails on it. The run must say so at once, not wait
-    // out 150 s and report "timed out".
+    // A frame page the server finds but cannot read: its handler fails on
+    // it. The run must say so at once, not wait out 150 s and report
+    // "timed out".
+    use std::os::unix::fs::PermissionsExt;
     let scratch = Scratch::new("run");
     let dir = scratch.0.clone();
     let repo = dir.join("repo");
-    std::fs::create_dir_all(repo.join("desktop/ui")).unwrap();
-    std::fs::write(
-        repo.join("desktop/ui/index.html"),
-        "<html><head></head><body>no script</body></html>",
-    )
-    .unwrap();
+    std::fs::create_dir_all(repo.join("tools/capture")).unwrap();
+    let frame = repo.join("tools/capture/frame.html");
+    std::fs::write(&frame, "<html><head></head><body>frame</body></html>").unwrap();
+    std::fs::set_permissions(&frame, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::read(&frame).is_ok() {
+        // Root reads anything; the handler cannot be made to fail this way.
+        eprintln!("skipped: this user can read a file with no permissions");
+        return;
+    }
     let tmp = dir.join("tmp");
     std::fs::create_dir(&tmp).unwrap();
 
@@ -355,8 +368,7 @@ fn a_page_server_that_fails_fails_the_run_at_once_naming_the_error_not_as_a_time
         repo_dir: repo,
         library: dir.join("Documents").join("Screepub"),
         launch: Box::new(move || launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)),
-        window: Box::new(DesktopUi),
-        engine: vec!["false".into()],
+        window: Box::new(DrawnWindow),
         out_dir: dir.join("out"),
         tmp: Some(tmp.clone()),
         calibre_config: Some(dir.join("no-calibre")),
@@ -364,9 +376,10 @@ fn a_page_server_that_fails_fails_the_run_at_once_naming_the_error_not_as_a_time
         interrupt: None,
     })
     .expect_err("the run should fail");
+    let _ = std::fs::set_permissions(&frame, std::fs::Permissions::from_mode(0o644));
     assert!(start.elapsed() < Duration::from_secs(5));
     assert!(
-        err.message.contains("main.js exactly once"),
+        err.message.contains("the page server failed") && err.message.contains("could not read"),
         "{}",
         err.message
     );
@@ -379,79 +392,6 @@ fn a_page_server_that_fails_fails_the_run_at_once_naming_the_error_not_as_a_time
     left.sort();
     assert_eq!(left, ["repo", "tmp"]);
     fake.expect_profile_gone();
-}
-
-/// New with the port, and only where Chrome is: app.js's own builders, run
-/// in Chrome, answer exactly what the gate's Rust copy of them does.
-#[test]
-fn with_real_chrome_app_js_builders_answer_what_the_gates_copy_does() {
-    if !Path::new(CHROME).exists() {
-        eprintln!("skipped: no Chrome at {CHROME}");
-        return;
-    }
-    let app = std::fs::read(xtask::paths::repo_root().join("desktop/ui/app.js")).unwrap();
-    let mut server = Server::start(move |req| match req.path() {
-        "/" => Response::new(
-            200,
-            "text/html; charset=utf-8",
-            b"<!doctype html><title>argv</title>".to_vec(),
-        ),
-        "/app.js" => Response::new(200, "text/javascript; charset=utf-8", app.clone()),
-        _ => Response::say("", 404),
-    })
-    .unwrap();
-    let base = format!("http://127.0.0.1:{}", server.port());
-    let mut chrome = launch(Path::new(CHROME)).unwrap();
-    let mut o = CaptureOptions::page(format!("{base}/"), 100, 100, Theme::Light);
-    o.wait = xtask::capture::backend::Wait::Loaded;
-    o.timeout = Duration::from_secs(30);
-    chrome.capture(&o).unwrap();
-    let js = r#"import('/app.js').then(({ argv: a }) => JSON.stringify([
-      a.version(),
-      a.convert('/d.pdf'), a.convert('/d.pdf', { force: true, optionsJson: '{"a":1}' }),
-      a.convert('/d.pdf', { optionsJson: '' }),
-      a.reconvert('/f.fountain', '/e.epub', '{}'),
-      a.devices(), a.devices({ quick: true }),
-      a.eject('/Volumes/K'), a.readerDevice('kobo'),
-      a.send('/e.epub'), a.send('/e.epub', 'dev'),
-      a.settings('/f.fountain'), a.settings('/f.fountain', '{"x":2}'),
-      a.export('/e.epub', { forFormat: 'kindle' }),
-      a.export('/e.epub', { forFormat: 'epub', fountain: '/f', optionsJson: '{}', out: '/o' }),
-      a.kindleCheck('/e.epub'), a.kfxStatus(), a.kfxInstall(),
-      a.appSettings(), a.appSettings('{"y":3}'),
-      a.routes('/e.epub'), a.routes('/e.epub', { quick: true }),
-      a.route('save-epub', '/e.epub', { out: '/o', fountain: '/f', optionsJson: '{}' }),
-    ]))"#;
-    let got = chrome.evaluate(js);
-    let _ = chrome.close();
-    server.stop(Duration::from_secs(5));
-    let got: Value = serde_json::from_str(got.unwrap().as_str().unwrap()).unwrap();
-    let want = json!([
-        argv::version(),
-        argv::convert("/d.pdf", false, None),
-        argv::convert("/d.pdf", true, Some(r#"{"a":1}"#)),
-        argv::convert("/d.pdf", false, Some("")),
-        argv::reconvert("/f.fountain", "/e.epub", "{}"),
-        argv::devices(false),
-        argv::devices(true),
-        argv::eject("/Volumes/K"),
-        argv::reader_device("kobo"),
-        argv::send("/e.epub", None),
-        argv::send("/e.epub", Some("dev")),
-        argv::settings("/f.fountain", None),
-        argv::settings("/f.fountain", Some(r#"{"x":2}"#)),
-        argv::export("/e.epub", "kindle", None, None, None),
-        argv::export("/e.epub", "epub", Some("/f"), Some("{}"), Some("/o")),
-        argv::kindle_check("/e.epub"),
-        argv::kfx_status(),
-        argv::kfx_install(),
-        argv::app_settings(None),
-        argv::app_settings(Some(r#"{"y":3}"#)),
-        argv::routes("/e.epub", false),
-        argv::routes("/e.epub", true),
-        argv::route("save-epub", "/e.epub", Some("/o"), Some("/f"), Some("{}")),
-    ]);
-    assert_eq!(got, want);
 }
 
 /// New with the port, and only where Chrome is: make-og draws the social
@@ -471,4 +411,70 @@ fn with_real_chrome_make_og_draws_the_card_at_1200_by_630() {
     let rgba = xtask::capture::picture::decode(&std::fs::read(&out).unwrap()).unwrap();
     // Something was drawn: not one flat colour.
     assert!(rgba.pixels.chunks_exact(4).any(|p| p != &rgba.pixels[..4]));
+}
+
+/// New with the cutover, and only where Chrome is and cargo has built
+/// sp-app's capture example: a whole run of the drop well, the real window
+/// drawn by sp-app and framed by Chrome, written into a scratch folder
+/// (never assets/ or site/), with a scratch library and no Calibre folder
+/// to copy.
+#[test]
+fn with_real_chrome_and_the_real_window_a_drop_run_writes_framed_pictures() {
+    if !Path::new(CHROME).exists() {
+        eprintln!("skipped: no Chrome at {CHROME}");
+        return;
+    }
+    let ws = xtask::paths::workspace_root();
+    let target = std::env::var_os("CARGO_TARGET_DIR")
+        .filter(|t| !t.is_empty())
+        .map_or_else(|| ws.join("target"), |t| ws.join(t));
+    let program = target.join("debug/examples/capture");
+    if !program.is_file() {
+        eprintln!(
+            "skipped: sp-app's capture example is not built (cargo test -p sp-app builds it)"
+        );
+        return;
+    }
+    let s = Scratch::new("whole");
+    let tmp = s.0.join("tmp");
+    std::fs::create_dir(&tmp).unwrap();
+    let out = s.0.join("out");
+    let library = s.0.join("Documents").join("Screepub");
+    let repo = xtask::paths::repo_root();
+    let result = run_capture(RunOptions {
+        shots: SHOTS.iter().filter(|s| s.name == "drop").copied().collect(),
+        demo_pdf: repo.join("tests/fixtures/field-station.pdf"),
+        repo_dir: repo,
+        library: library.clone(),
+        launch: Box::new(|| launch(Path::new(CHROME)).map(|c| Box::new(c) as Box<dyn Browser>)),
+        window: Box::new(xtask::capture::backend::EguiWindow::new(&program)),
+        out_dir: out.clone(),
+        tmp: Some(tmp.clone()),
+        calibre_config: Some(s.0.join("no-calibre")),
+        log: Box::new(|_| {}),
+        interrupt: None,
+    });
+    if let Err(e) = &result
+        && e.message.contains("wgpu")
+    {
+        eprintln!("skipped: wgpu could not draw here: {}", e.message);
+        return;
+    }
+    result.unwrap();
+    let drop = SHOTS.iter().find(|s| s.name == "drop").unwrap();
+    let framed = xtask::capture::shots::framed_size(drop);
+    for rel in [
+        "assets/screens/drop-light.png",
+        "assets/screens/drop-dark.png",
+        "site/img/drop-light.png",
+    ] {
+        let png = std::fs::read(out.join(rel)).unwrap();
+        assert_eq!(
+            xtask::capture::picture::size(&png).unwrap(),
+            (framed.0 * 2, framed.1 * 2),
+            "{rel}"
+        );
+    }
+    assert!(!library.exists());
+    assert!(std::fs::read_dir(&tmp).unwrap().next().is_none());
 }

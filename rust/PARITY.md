@@ -45,8 +45,8 @@ move too.
 | tests/bump-version.test.ts | 15 | xtask | done | xtask/tests/bump_version.rs (15), on scratch copies of the Rust workspace's version files, the only ones since the cutover (the package.json, tauri.conf.json and screepub-desktop lock entry checks went with those files) |
 | tests/bundle-archive.test.ts | 27 | xtask | done | xtask/tests/bundle_archive.rs (28): the READER of .deb and .rpm, on the same frozen archive bytes; the writers are sp-release's (archive.rs, linux.rs) |
 | tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
-| tests/capture-chrome.test.ts | 5 | xtask | done | xtask/tests/capture_chrome.rs (7), against a fake Chrome; the last needs a real Chrome and skips without it |
-| tests/capture.test.ts | 46 | xtask | done | xtask/tests/capture.rs (47) and capture_picture.rs (6); still drives desktop/ui/app.js, through a copy of its argument builders checked against app.js (Decisions) |
+| tests/capture-chrome.test.ts | 5 | xtask | done | xtask/tests/capture_chrome.rs (7), against a fake Chrome; the last two need a real Chrome (make-og, and a whole drop run with the real window into a scratch folder) and skip without it. The check of app.js's argv builders in Chrome went with desktop/ui (Decisions) |
+| tests/capture.test.ts | 46 | xtask, sp-app | done | xtask/tests/capture.rs (33) and capture_picture.rs (6), sp-app/tests/capture.rs (14). At cutover the window pictures come from sp-app drawn offscreen (examples/capture.rs), not desktop/ui in Chrome: the gate, the window page and the /engine route went, and their checks with them; the window program's orders and refusals, its guard around the engine, the hidden stamp and library slot, and a real render at 2560 by 1600 are checked instead |
 | tests/check-latest.test.ts | 17 | sp-release | done | sp-release/src/check_latest.rs, the one judgement (taken from xtask's port, the faithful one); xtask/tests/check_latest.rs (19) runs every case through `cargo xtask check-latest`'s thin wrapper, against a fake GitHub on 127.0.0.1, with the key the shipped app trusts (sp_update::PUBKEY) |
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | done | sp-cli/tests/cli_app_defaults.rs (8), through the CLI; the app-defaults reads themselves are sp-engine/tests/settings_app_defaults.rs |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | done | sp-cli/tests/cli_app_settings.rs (56): the handler in process with an injected path, platform and env (43), the verb through the CLI with HOME in the scratch folder (13) |
@@ -595,8 +595,9 @@ cutover.
 | tools/capture-screens.ts | TS | CLAUDE.md, SKILL, docs/mac-qa.md | `capture-screens` | done: xtask/tests/capture.rs, capture_chrome.rs |
 | tools/review-screens.ts | TS | CLAUDE.md, SKILL | `review-screens` | done: xtask/tests/review_screens.rs |
 | tools/capture/cdp.ts | TS | capture-screens, tests/helpers/layout-chrome.ts | `capture` module (CDP over tungstenite) | done: xtask/tests/capture_chrome.rs (fake Chrome) |
-| tools/capture/run.ts, server.ts, page.ts, shots.ts, gate.ts, review.ts | TS | capture-screens, review-screens | `capture` module | done: src/capture/; xtask/tests/capture.rs |
-| tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | drives desktop/ui today; the egui window is driven natively at cutover | partial: still drive desktop/ui; replaced at cutover |
+| tools/capture/run.ts, server.ts, shots.ts, review.ts | TS | capture-screens, review-screens | `capture` module | done: src/capture/; xtask/tests/capture.rs |
+| tools/capture/page.ts, gate.ts | TS | capture-screens (desktop/ui only) | none: the window is drawn by sp-app, which converts only the demo script and refuses every copy, send, build, eject, export or install in code (sp-app/src/capture.rs) | retired at cutover: sp-app/tests/capture.rs holds the line instead |
+| tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | sp-app/src/capture.rs `reach` drives the egui window into each shot natively; picture mode hides the stamp and the library slot | done: deleted at cutover; sp-app/tests/capture.rs |
 | tools/capture/frame.html, hero.html | HTML | capture-screens (picture frames) | stay HTML, like site/ | done: stay HTML |
 | tools/make-og.sh | shell | site/og-card.html (by hand) | `make-og` | done: xtask/tests/capture_picture.rs, capture_chrome.rs |
 | tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | done: xtask/tests/bump_version.rs (15); writes the Rust workspace's version files and sp-app's notes, the only version files since the cutover |
@@ -965,11 +966,19 @@ names the check it affects.
   design already leaves "the unaudited pure-Rust provider instead" to the
   owner, and that choice would now cover sp-app, sp-update, sp-release and
   xtask together.
-- **The capture gate's argument builders (2026-10-11).** The capture runs
-  the engine the way the window does, so xtask/src/capture/window_argv.rs
-  holds a copy of the window's argv builders. Until cutover
-  xtask/tests/capture.rs checks the copy against desktop/ui/app.js; after
-  it, against sp-app's own builders.
+- **The capture gate's argument builders (2026-10-11; retired 2026-10-12).**
+  The capture ran the engine the way the HTML window did, so
+  xtask/src/capture/window_argv.rs held a copy of app.js's argv builders,
+  checked against app.js. At cutover the window pictures are drawn by
+  sp-app itself (examples/capture.rs, offscreen through wgpu, one process
+  per picture with the run's scratch environment), with the engine linked
+  in, so there is no HTTP door to gate and the copy, the gate and the
+  /engine route went. The line they held is now in code, by request rather
+  than by argv shape: sp-app/src/capture.rs's guard runs only the reads and
+  the demo script's conversion, answers the Kindle file check and the KFX
+  checklist as a machine without Calibre would, and refuses everything else
+  and fails the picture. The frozen record of app.js's builders stays in
+  sp-app/tests/argv_contract.rs (tests/data/app-js-argv.json).
 - **Windows upgrade over 0.11 (sp-release nsis, open).** The NSIS script
   sp-release writes installs per user into the Tauri installer's folder
   (`%LOCALAPPDATA%\Screepub`) under its uninstall key, with the same

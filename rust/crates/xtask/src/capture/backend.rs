@@ -4,64 +4,55 @@
 //!
 //! - [`Browser`] draws web pages: the site's hero (hero.html) and pass two
 //!   of every window picture, the frame (frame.html). Chrome over the
-//!   DevTools protocol ([`super::cdp`]). Both pages are HTML and stay HTML,
-//!   so this one outlives the cutover.
+//!   DevTools protocol ([`super::cdp`]). Both pages are HTML and stay HTML.
 //! - [`WindowBackend`] draws pass one: the bare window, in one shot's
-//!   state, at the shot's size, in one theme, as PNG bytes at twice the CSS
-//!   size (a 1280 by 800 window is a 2560 by 1600 picture).
+//!   state, at the shot's size, in one theme, as PNG bytes at twice the
+//!   window's size in points (a 1280 by 800 window is a 2560 by 1600
+//!   picture, which is what frame.html expects).
 //!
-//! Today's window backend is [`DesktopUi`]: Chrome loads desktop/ui through
-//! the capture server, tools/capture/bridge.js stands in for Tauri and posts
-//! the window's engine calls to /engine (run through the gate, run by the
-//! real CLI), and tools/capture/steps.js drives the window into the shot
-//! and says `ready`.
+//! The window backend is [`EguiWindow`]: the real window, rust/crates/
+//! sp-app, drawn offscreen by egui through wgpu. It runs sp-app's capture
+//! program (examples/capture.rs, built by `cargo xtask capture-screens`
+//! before the run) once per picture, as a process of its own, because the
+//! engine linked into it reads the process environment, and that
+//! environment is the run's own ([`super::run::engine_env`]: the scratch
+//! library, scratch app settings, no volumes, a reMarkable address nothing
+//! listens on, a scratch COPY of Calibre's settings). The program:
 //!
-//! # At cutover: an egui backend
+//! - draws `shot.width` by `shot.height` points at two pixels a point;
+//! - forces light or dark, whatever the OS says;
+//! - reaches the shot as a person would: `drop` is the idle well; `result`
+//!   is the demo PDF dropped on it and converted into the scratch library,
+//!   the send panel's device cards beside the book's first page; `read` is
+//!   the same book on the Read tab, its scene index and script drawn;
+//! - waits until nothing moves, then draws with the version stamp and the
+//!   library line hidden, so a picture changes only when the window's look
+//!   does;
+//! - converts no file but the demo, reads books only from the scratch
+//!   library, answers the two Calibre questions as a machine without
+//!   Calibre would, and refuses (and fails on) anything that copies, sends,
+//!   builds, ejects, exports or installs;
+//! - writes the picture's raw RGBA, which [`super::picture::encode_rgba`]
+//!   turns into PNG bytes here, deterministically: same pixels, same bytes,
+//!   so `write_if_changed` keeps an unchanged picture unchanged.
 //!
-//! The window becomes rust/crates/sp-app, drawn by egui, and egui_kittest
-//! (already sp-app's dev-dependency; its tests/screens.rs drives the
-//! screens with `Harness`) can render a screen headlessly to an image. An
-//! `EguiWindow` implementing [`WindowBackend`] must provide, for each
-//! window shot in [`super::shots::SHOTS`] (drop, result, read):
-//!
-//! - **the size**: `shot.width` by `shot.height` points at a pixels-per-point
-//!   of 2.0, so its picture matches Chrome's deviceScaleFactor 2 and the
-//!   frame (frame.html draws the pass-one image at the CSS size `?w=&h=`);
-//! - **the theme**: light or dark forced, whatever the OS says (sp-app's
-//!   theme.rs picks the tokens; the backend sets the choice, not mundy);
-//! - **the shot's state**, reached the way steps.js reaches it: `drop` is
-//!   the idle drop well; `result` is the demo PDF converted (the engine
-//!   linked in, writing into the run's scratch library) with the send
-//!   panel's device cards (no reader's device in the scratch settings) and
-//!   the book's first page typeset; `read` is the same book on the Read
-//!   tab with its scene index and script drawn;
-//! - **settled**: no animation running, fonts loaded, the version stamp and
-//!   the library line hidden (steps.js's hideStamp and hideLibrarySlot), so
-//!   a picture changes only when the window's look does;
-//! - **the same seams**: the engine run with the run's environment
-//!   ([`super::run::engine_env`]: scratch library, scratch app settings, no
-//!   volumes, a dead reMarkable address, a scratch COPY of Calibre's
-//!   settings), and nothing that copies, sends, builds or ejects;
-//! - **PNG bytes**: [`super::picture::encode_rgba`] turns the harness's
-//!   RGBA image into them deterministically, so same pixels give the same
-//!   bytes and `write_if_changed` keeps an unchanged picture unchanged.
-//!
-//! It then goes in [`super::run::RunOptions::window`]; the hero and the
-//! frame still come from the [`Browser`], so Chrome stays a need for the
-//! README pictures even after the window stops being HTML. The gate and the
-//! /engine route are DesktopUi's concern only: an in-process engine needs
-//! no HTTP door, but the egui backend must hold the same line in code (the
-//! demo PDF only, the scratch library only).
+//! sp-app/src/capture.rs holds those rules and its tests hold it to them;
+//! this side builds the program's orders ([`window_args`]), runs it with
+//! the run's environment, stops it if the run is interrupted or it takes
+//! too long, and checks that what it wrote is the size it should be.
 
-use std::time::Duration;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 
+use super::picture::encode_rgba;
 use super::shots::{Shot, Theme};
 
 /// When a page is ready to be photographed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Wait {
     /// The page sets `window.__captureState` to `ready` or `failed` (the
-    /// capture's own pages: the window, hero.html, frame.html).
+    /// capture's own pages: hero.html, frame.html).
     PageSaysReady,
     /// A page that says nothing (site/og-card.html): loaded, fonts too.
     Loaded,
@@ -118,11 +109,16 @@ pub trait Browser {
 pub struct PassOne<'a> {
     pub shot: &'a Shot,
     pub theme: Theme,
-    /// The capture server, `http://127.0.0.1:<port>`.
-    pub base: &'a str,
-    pub browser: &'a mut dyn Browser,
+    /// The one file the window may convert.
+    pub demo_pdf: &'a Path,
+    /// The environment the window's engine runs with, on top of this
+    /// process's ([`super::run::engine_env`]).
+    pub env: &'a [(&'static str, PathBuf)],
+    /// A scratch folder of this run's, for the window's raw picture.
+    pub scratch: &'a Path,
+    /// Asked while the window works: a sentence here (an interrupt) stops
+    /// it at once.
     pub failure: &'a dyn Fn() -> Option<String>,
-    pub explain: &'a dyn Fn() -> String,
 }
 
 /// Something that draws the bare window in one shot's state.
@@ -130,19 +126,115 @@ pub trait WindowBackend {
     fn pass_one(&mut self, p: PassOne<'_>) -> Result<Vec<u8>, String>;
 }
 
-/// The window as it is today: desktop/ui in Chrome, through the server.
-pub struct DesktopUi;
+/// The capture program's orders for one picture.
+pub fn window_args(shot: &Shot, theme: Theme, demo: &Path, out: &Path) -> Vec<String> {
+    vec![
+        "--shot".into(),
+        shot.name.into(),
+        "--theme".into(),
+        theme.word().into(),
+        "--width".into(),
+        shot.width.to_string(),
+        "--height".into(),
+        shot.height.to_string(),
+        "--demo".into(),
+        demo.to_string_lossy().into_owned(),
+        "--out".into(),
+        out.to_string_lossy().into_owned(),
+    ]
+}
 
-impl WindowBackend for DesktopUi {
+/// Pixels per point in every window picture.
+pub const SCALE: u32 = 2;
+
+/// The longest one window picture may take: a conversion of the demo
+/// script, a moment to settle, and the drawing.
+pub const WINDOW_TIMEOUT: Duration = Duration::from_secs(180);
+
+/// The real window, drawn by sp-app's capture program.
+pub struct EguiWindow {
+    /// The program, then any arguments before the picture's orders.
+    pub program: Vec<String>,
+    pub timeout: Duration,
+}
+
+impl EguiWindow {
+    pub fn new(program: &Path) -> EguiWindow {
+        EguiWindow {
+            program: vec![program.to_string_lossy().into_owned()],
+            timeout: WINDOW_TIMEOUT,
+        }
+    }
+}
+
+impl WindowBackend for EguiWindow {
     fn pass_one(&mut self, p: PassOne<'_>) -> Result<Vec<u8>, String> {
-        let mut o = CaptureOptions::page(
-            format!("{}/capture/window.html?shot={}", p.base, p.shot.name),
-            p.shot.width,
-            p.shot.height,
-            p.theme,
-        );
-        o.failure = Some(p.failure);
-        o.explain = Some(p.explain);
-        p.browser.capture(&o)
+        let out = p
+            .scratch
+            .join(format!("{}-{}.rgba", p.shot.name, p.theme.word()));
+        let Some((program, rest)) = self.program.split_first() else {
+            return Err("capture: no window program to run".into());
+        };
+        let mut cmd = Command::new(program);
+        cmd.args(rest)
+            .args(window_args(p.shot, p.theme, p.demo_pdf, &out))
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped());
+        for (k, v) in p.env {
+            cmd.env(k, v);
+        }
+        let what = format!("the {} window ({})", p.shot.name, p.theme.word());
+        let mut child = cmd
+            .spawn()
+            .map_err(|e| format!("capture: could not start {what}: {e}"))?;
+        // stderr is read on a thread of its own: a pipe nobody reads fills
+        // up, and a program blocked writing to it never exits.
+        let err = child.stderr.take();
+        let said = std::thread::spawn(move || {
+            let mut s = String::new();
+            if let Some(mut e) = err {
+                let _ = std::io::Read::read_to_string(&mut e, &mut s);
+            }
+            s
+        });
+        let start = Instant::now();
+        let status = loop {
+            match child.try_wait() {
+                Ok(Some(st)) => break st,
+                Ok(None) => {}
+                Err(e) => {
+                    super::cdp::stop(&mut child);
+                    return Err(format!("capture: lost {what}: {e}"));
+                }
+            }
+            if let Some(f) = (p.failure)() {
+                super::cdp::stop(&mut child);
+                return Err(format!("capture: {what}: {f}"));
+            }
+            if start.elapsed() > self.timeout {
+                super::cdp::stop(&mut child);
+                return Err(format!(
+                    "capture: {what} timed out after {} s",
+                    self.timeout.as_secs()
+                ));
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        };
+        let said = said.join().unwrap_or_default();
+        if !status.success() {
+            let code = status
+                .code()
+                .map_or_else(|| "a signal".to_string(), |c| c.to_string());
+            return Err(format!(
+                "capture: {what} exited with {code}: {}",
+                said.trim()
+            ));
+        }
+        let pixels =
+            std::fs::read(&out).map_err(|e| format!("capture: {what} wrote no picture: {e}"))?;
+        let _ = std::fs::remove_file(&out);
+        let (w, h) = (p.shot.width * SCALE, p.shot.height * SCALE);
+        encode_rgba(w, h, &pixels).map_err(|e| format!("capture: {what}: {e}"))
     }
 }
