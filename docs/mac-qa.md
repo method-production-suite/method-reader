@@ -1,5 +1,26 @@
 # QA on a Mac: the gate nothing else can pass
 
+**Read this first (2026-10-12, the Rust cutover).** Every checklist below
+was written for a release of the TypeScript engine and the Tauri window, and
+is kept as the record of what was checked then. Its commands are that era's
+and no longer run: Bun, `tools/*.ts`, `tools/*.sh`, `src/` and `desktop/`
+are gone. For the next QA pass, the same steps are, from `rust/`:
+
+| Then | Now |
+| --- | --- |
+| `bun test`, `bunx tsc --noEmit` | `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings` |
+| `bun test tests/<name>.test.ts` | `cargo test -p <crate>` (rust/PARITY.md says which crate holds each old test file) |
+| `bun src/cli.ts <args>` | `cargo run -p sp-cli --bin screepub -- <args>` |
+| `bun tools/build-sidecar.ts --host`, then `cargo run` in `desktop/src-tauri` | `cargo run -p sp-app` (the engine is linked in; there is no sidecar) |
+| `bun tools/verify-signing.ts --dmg <dmg> --expect <coexist or handover>` | `cargo xtask verify-signing --dmg <dmg> --expect <coexist or handover>` |
+| `tools/check-tap.sh` | `cargo xtask check-tap` |
+| `bun tools/capture-screens.ts` | `cargo xtask capture-screens` |
+
+The window's update memory moved too: the Rust window keeps it in its own
+storage, and on its first run copies it once from the Tauri window's WebKit
+folder named below (docs/superpowers/specs/2026-10-11-rust-release-design.md,
+"What carries across").
+
 ## QA for the identifier release (F2)
 
 Written 2026-10-01 for the release that hands the Mac over from the Swift

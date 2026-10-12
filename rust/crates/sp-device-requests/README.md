@@ -24,83 +24,110 @@ It takes only `POST /request` with one of two JSON forms:
 Anything else is a 400, a body over 1 KB a 413, any other method or path a
 404, and a sixth accepted request from one sender within a minute a 429
 (per Cloudflare location: the binding counts in each data centre on its
-own). Tests:
-`bun test tests/device-requests-worker.test.ts` from the repo root.
+own). Tests: `cargo test -p sp-device-requests` from `rust/` (the SQL
+checks run on real SQLite, so they need the `sqlite3` tool).
 
-## Bring the live service up to date (owner, once)
+This is the Rust edition of the service, built with workers-rs. It answers
+every request byte for byte as the TypeScript Worker did, and its
+`wrangler.toml` names the same Worker, database and rate limiter, so
+deploying it **replaces the TypeScript Worker at the same address** with no
+database change. **It is not deployed yet**: the live address still runs
+the TypeScript Worker. The release design
+(docs/superpowers/specs/2026-10-11-rust-release-design.md, part f) has the
+details.
+
+Wrangler, Cloudflare's own tool, is JavaScript (like Calibre, an outside
+tool the platform requires), so the commands below run it with `npx`. Sign
+in first with `npx wrangler login`; no key ever needs to leave your
+machine. Run them from this folder, `rust/crates/sp-device-requests/`.
+
+## Deploy the Rust Worker (owner, once, when wanted)
+
+`wrangler.toml`'s `[build]` runs `worker-build` (pinned to 0.8.7, the
+workers-rs release this crate uses), which compiles the crate for wasm32
+and writes the JavaScript shim Cloudflare loads. It needs the wasm32
+target: `rustup target add wasm32-unknown-unknown`. The first build also
+downloads wasm-bindgen and esbuild.
+
+1. Try it locally first, on Cloudflare's local simulator:
+
+   ```bash
+   npx wrangler dev
+   ```
+
+2. Deploy it. This replaces the live TypeScript Worker at the same address:
+
+   ```bash
+   npx wrangler deploy
+   ```
+
+3. If anything is wrong, go back to the TypeScript Worker:
+
+   ```bash
+   npx wrangler rollback
+   ```
+
+The schema and the one migration are unchanged, so the database needs
+nothing.
+
+## The 2026-10-02 database clean-up (done)
 
 The first deploy (2026-10-02) made a database with an hourly table of
-hashed senders and dates to the millisecond. This code has neither. Run
-these from this folder, signed in with `bunx wrangler login`, IN THIS ORDER:
-the old Worker writes to the table the migration drops, so the new Worker
-goes first.
+hashed senders and dates to the millisecond. This code has neither.
+`migrations/0001-no-senders-day-dates.sql` dropped the senders table and
+rounded the stored dates to their day, after the Worker that writes days
+was deployed. The release design records it as already applied. To check
+that only the two count tables are left:
 
-1. Deploy the Worker that uses the rate-limit binding and writes days:
+```bash
+npx wrangler d1 execute screepub-device-requests --remote --command "SELECT name FROM sqlite_master WHERE type = 'table'"
+```
 
-   ```bash
-   bunx wrangler deploy
-   ```
+It should list `device_requests` and `route_reports` (and Cloudflare's
+own `_cf_KV`, if it shows one), and no `rate_limits`.
 
-2. Drop the senders table and round the dates already stored to their day
-   (safe to run twice):
-
-   ```bash
-   bunx wrangler d1 execute screepub-device-requests --remote --file=migrations/0001-no-senders-day-dates.sql
-   ```
-
-3. Check that only the two count tables are left:
-
-   ```bash
-   bunx wrangler d1 execute screepub-device-requests --remote --command "SELECT name FROM sqlite_master WHERE type = 'table'"
-   ```
-
-   It should list `device_requests` and `route_reports` (and Cloudflare's
-   own `_cf_KV`, if it shows one), and no `rate_limits`.
-
-## Deploy (once, for a fresh account)
+## Set up from nothing (once, for a fresh account)
 
 Done on 2026-10-02 for the owner's account: the Worker answers at
 `https://screepub-device-requests.samuelsandweiss.workers.dev`, the address
-the window posts to. After a change to `src/worker.ts`, only step 4 is
-needed again; after a change to `schema.sql`, step 3 (every statement in it
-is safe to run twice), or a new file in `migrations/` for a live database.
-
-Run these from this folder (`services/device-requests/`). Sign in first with
-`bunx wrangler login`; no key ever needs to leave your machine.
+the window posts to. After a change to `src/lib.rs` or `src/glue.rs`, only
+step 4 is needed again; after a change to `schema.sql`, step 3 (every
+statement in it is safe to run twice), or a new file in `migrations/` for a
+live database.
 
 1. Make the database:
 
    ```bash
-   bunx wrangler d1 create screepub-device-requests
+   npx wrangler d1 create screepub-device-requests
    ```
 
 2. Paste the `database_id` it prints into `wrangler.toml`, in place of the
-   one there.
+   one there, and into `LIVE_BINDINGS` in `tests/worker.rs`, which holds
+   `wrangler.toml` to the live service's values.
 
 3. Make the tables:
 
    ```bash
-   bunx wrangler d1 execute screepub-device-requests --remote --file=schema.sql
+   npx wrangler d1 execute screepub-device-requests --remote --file=schema.sql
    ```
 
 4. Deploy:
 
    ```bash
-   bunx wrangler deploy
+   npx wrangler deploy
    ```
 
    It prints the address, `https://screepub-device-requests.<your-subdomain>.workers.dev`.
 
-5. Put `<your-subdomain>` into the window, in two places, then rebuild it:
-   `SUBDOMAIN` in `desktop/ui/requests.js`, and the same address in the
-   `connect-src` of the CSP in `desktop/src-tauri/tauri.conf.json`. A test
-   (`tests/device-requests-ui.test.ts`) fails if the two disagree.
+5. Put `<your-subdomain>` into the window, then rebuild it: `SUBDOMAIN` and
+   `REQUEST_URL` in `rust/crates/sp-app/src/model/requests.rs`. A test in
+   that file fails if the two disagree.
 
 ## Read the list
 
 ```bash
-bunx wrangler d1 execute screepub-device-requests --remote --command "SELECT spelling, count, first_seen, last_seen FROM device_requests ORDER BY count DESC"
-bunx wrangler d1 execute screepub-device-requests --remote --command "SELECT route, platform, worked, did_not_work, last_seen FROM route_reports ORDER BY route, platform"
+npx wrangler d1 execute screepub-device-requests --remote --command "SELECT spelling, count, first_seen, last_seen FROM device_requests ORDER BY count DESC"
+npx wrangler d1 execute screepub-device-requests --remote --command "SELECT route, platform, worked, did_not_work, last_seen FROM route_reports ORDER BY route, platform"
 ```
 
 Or in the Cloudflare dashboard: Storage & Databases, D1, the

@@ -2,9 +2,9 @@
 
 Screepub is a three-stage pipeline: PDF to Fountain to EPUB3 (and MOBI). The
 `.fountain` in the middle is kept as a durable, editable file. Every
-formatting behaviour is an option (`src/options.ts`), set in the window's
-Settings page and on the command line with `--options file.json`. The
-registry of options, with the reason for each, is
+formatting behaviour is an option (`rust/crates/sp-model/src/options.rs`),
+set in the window's Settings page and on the command line with
+`--options file.json`. The registry of options, with the reason for each, is
 [`formatting-options-log.md`](formatting-options-log.md).
 
 Setting up, testing and sending a change: [CONTRIBUTING.md](../CONTRIBUTING.md).
@@ -45,15 +45,20 @@ anyway**.
 
 The window's own bundles (`.dmg`, `.exe`, `.deb`, `.rpm`) are listed in the
 [README](../README.md#install). There is no Linux ARM package of the window;
-`tools/build-app-bundle.ts` makes one by hand on an ARM machine.
+`cargo xtask build-app-bundle --version <x.y.z> --out <dir> --arch arm64`,
+run from `rust/` on an ARM machine, makes one by hand.
 
 ## The command line
 
 ```bash
-bun src/cli.ts <input.pdf | input.fountain> [options]
+screepub <input.pdf | input.fountain> [options]
 ```
 
-`bun src/cli.ts --help` is the full reference, and each verb has its own
+That is the installed converter. From a checkout, run the same thing from
+`rust/` with `cargo run -p sp-cli --bin screepub -- <input.pdf> [options]`;
+every `screepub` below works that way too.
+
+`screepub --help` is the full reference, and each verb has its own
 `--help`. Some features are marked (beta): they work in our tests, but have
 not been tried widely on real devices or apps yet, so tell us how they go.
 They are the FDX, pictures in books, eject on Windows and Linux, and the
@@ -99,8 +104,8 @@ the other outputs, and `export` makes one from a book that is already
 converted:
 
 ```bash
-bun src/cli.ts script.pdf --fdx script.fdx
-bun src/cli.ts export <file.epub> --for fdx --fountain <file.fountain> [--out <path>] [--json]
+screepub script.pdf --fdx script.fdx
+screepub export <file.epub> --for fdx --fountain <file.fountain> [--out <path>] [--json]
 ```
 
 `export --for fdx` needs the script's `.fountain`, because that is what the
@@ -122,8 +127,8 @@ uses its own screenplay template.
 It is a reconstruction from the PDF, so check it before you rely on it.
 Revision colors and marks do not carry over, and neither do the exact page
 breaks: the app lays the pages out again. The format version it declares is
-one constant, `FDX_VERSION` in `src/fdx/fdx.ts`, in case an older Final
-Draft refuses the file.
+one constant, `FDX_VERSION` in `rust/crates/sp-fdx/src/lib.rs`, in case an
+older Final Draft refuses the file.
 
 ### Fountain input
 
@@ -191,14 +196,14 @@ overrides that folder everywhere.
 ## Devices and routes
 
 ```bash
-bun src/cli.ts devices [--quick] [--json]                # list connected e-readers
-bun src/cli.ts send <file> [--device <id>] [--json]      # send an existing file to one
-bun src/cli.ts export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx]  # the file you would put on a reader
-bun src/cli.ts routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
-bun src/cli.ts route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
-bun src/cli.ts eject <volume> [--json]                   # safely remove a reader before unplugging
-bun src/cli.ts kfx-status [--json]                       # can this computer make KFX for a Kindle?
-bun src/cli.ts kfx-install [--json]                      # install the KFX plugin into Calibre (online)
+screepub devices [--quick] [--json]                # list connected e-readers
+screepub send <file> [--device <id>] [--json]      # send an existing file to one
+screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx]  # the file you would put on a reader
+screepub routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
+screepub route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
+screepub eject <volume> [--json]                   # safely remove a reader before unplugging
+screepub kfx-status [--json]                       # can this computer make KFX for a Kindle?
+screepub kfx-install [--json]                      # install the KFX plugin into Calibre (online)
 ```
 
 `devices` lists USB-mounted Kindle, Kobo and tolino volumes, plus a
@@ -259,29 +264,52 @@ no reader has been connected on Linux or Windows. See
 
 ## Architecture
 
+One Cargo workspace, `rust/`, with a crate per stage:
+
 ```
-src/
-  parser/     PDF to classified elements (geometry-driven: elements are
-              classified by where they sit on the page)
-  fountain/   elements to Fountain (title block, CONT'D, dual dialogue,
-              styled text; slug.ts and notes.ts are shared by both renderers)
-  epub/       fountain-js tokens to EPUB3 (jszip, options-driven CSS)
-  mobi/       tokens to MOBI 6 (hand-built PalmDB container)
-  azw3/       the EPUB to AZW3 (KF8), ported from Calibre's KF8 writer (beta)
-  device/     USB volumes and the reMarkable web interface
-  export/     the Kindle ladder, Calibre for KFX, and the send routes
-  settings/   per-script settings and the app settings file
-  options.ts  FormatOptions, the single knob surface
-  convert.ts  orchestration and the scanned and not-a-screenplay guards
-desktop/
-  src-tauri/  the Rust window: runs the engine and shows its answer
-  ui/         the window's pages, plain ES modules with no build step
-site/         screepub.com, one static page with no build step
+rust/crates/
+  sp-model            the shared data: parser elements, FormatOptions (the
+                      single knob surface) and presets, fountain-js tokens
+  sp-pdf              reads a PDF in pure Rust: text items, font facts, the
+                      drawing operators and picture pixels the parser needs
+  sp-parser           PDF facts to classified elements (geometry-driven:
+                      elements are classified by where they sit on the page)
+  sp-fountain         elements to Fountain (title block, CONT'D, dual
+                      dialogue, styled text), the notes and slug rules every
+                      renderer shares, and a fountain-js compatible tokenizer
+  sp-epub             tokens to EPUB3 (options-driven CSS) and the preview
+  sp-mobi             tokens to MOBI 6, and the PalmDB container
+  sp-azw3             the EPUB to AZW3 (KF8), ported from Calibre's KF8
+                      writer (beta)
+  sp-fdx              tokens to Final Draft (.fdx) (beta)
+  sp-fsutil           write-then-rename, the flushed replace, path rules
+  sp-device           USB volumes, eject, reveal, the reMarkable web
+                      interface, and MTP Kindles (beta, switched off)
+  sp-mtp              screepub-mtp, the MTP helper (off until it is tried on
+                      hardware)
+  sp-engine           conversion and its scanned and not-a-screenplay guards,
+                      settings, the library, the Kindle ladder, Calibre for
+                      KFX, the send routes and update decisions
+  sp-cli              the screepub command, and its --json contract
+  sp-app              the window (egui, with AccessKit for screen readers)
+  sp-update           the window's updater: latest.json, the minisign check,
+                      the bundle swap and the restart
+  sp-release          the release tools: bundle layouts, update archive and
+                      signature, latest.json, Linux packages, the Windows
+                      installer script
+  sp-device-requests  the device-request service (a Cloudflare Worker)
+  xtask               developer tools: `cargo xtask --help` lists them
+site/                 screepub.com, one static page with no build step
 ```
 
-The window holds no logic of its own: it runs the engine with arguments and
-draws the JSON the engine prints. See [desktop/README.md](../desktop/README.md)
-and [ADR 2026-09-12](adr/2026-09-12-cross-platform-tauri.md). Before changing
+The window holds no logic of its own, and it has no engine process to run:
+the engine is linked in. `sp-app` reaches it through one `Engine` trait
+(`rust/crates/sp-app/src/engine.rs`) whose requests each stand for a
+`screepub ... --json` command line, and the answers keep the CLI's `--json`
+shape, so the window and the command line answer every request with the
+same code. See [the window's design](superpowers/specs/2026-10-11-sp-app-design.md);
+[ADR 2026-09-12](adr/2026-09-12-cross-platform-tauri.md) is the history of
+the Tauri window that came before it. Before changing
 layout code, read
 [screenplay-format-reference.md](screenplay-format-reference.md): it records
 print geometry and what each e-reader's renderer honours.

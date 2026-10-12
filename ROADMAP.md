@@ -15,7 +15,7 @@ see [Influencing this list](#influencing-this-list).
   the Kindle file takes milliseconds instead of a Calibre conversion. It
   opens whole in Calibre's own reader every time in our tests, but it has
   not yet been on a Kindle. The first device pass decides whether it stays
-  beta: the checks are printed by `bun tools/device-checklist.ts`.
+  beta: the checks are printed by `cargo xtask device-checklist`.
 - **Pictures on the oldest Kindles.** Pictures from the script now reach
   the e-book (beta), and a designed title card becomes its cover. The one
   file that leaves them out is the MOBI, the file for the oldest Kindles:
@@ -104,7 +104,7 @@ is worth more than any feature request.
 **What broke.** A script that converted badly tells us more than a script
 that converted well. Please don't attach confidential material: a
 description of where the text sat on the page is almost always enough, and
-`tools/make-fixture.py` shows how to build a small invented script that
+`cargo xtask make-fixture` shows how to build a small invented script that
 reproduces a given shape.
 
 [Open an issue.](https://github.com/ssandweiss/screepub/issues/new/choose)

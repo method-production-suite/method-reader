@@ -14,8 +14,9 @@ expected.
 
 **Please don't attach a confidential script.** Most conversion bugs are about
 *layout*, not words: a description of where the text sat on the page is
-usually enough, and `tools/make-fixture.py` shows how to build a small
-invented script that reproduces a given shape.
+usually enough, and `cargo xtask make-fixture` (its source is
+`rust/crates/xtask/src/fixture/`) shows how to build a small invented script
+that reproduces a given shape.
 
 Kobo, tolino and reMarkable are written but have never run on real hardware,
 and the Windows and Linux downloads have never been installed by a person
@@ -24,32 +25,44 @@ way is genuinely valuable.
 
 ## Getting set up
 
-**The engine and the command line** need [Bun](https://bun.sh):
+Screepub is one Cargo workspace in `rust/`: the engine, the command line and
+the window. You need a Rust toolchain from [rustup](https://rustup.rs). The
+version is pinned in `rust/rust-toolchain.toml`, and rustup installs it (with
+clippy and rustfmt) the first time you run `cargo` in `rust/`.
+
+Run everything from `rust/`:
 
 ```bash
-bun install
-bun test                    # engine suite (run it from the repository root)
-bunx tsc --noEmit           # typecheck
-bun src/cli.ts <script.pdf> # convert one
+cargo test --workspace                                 # every crate's tests
+cargo fmt --all --check                                # formatting
+cargo clippy --workspace --all-targets -- -D warnings  # lints, warnings as errors
+cargo run -p sp-cli --bin screepub -- <script.pdf>     # convert one
+cargo run -p sp-app                                    # open the window
 ```
 
-**The window** (`desktop/`) also needs a Rust toolchain
-([rustup](https://rustup.rs), which brings `cargo`):
+The window links the engine in, so there is nothing else to build first.
+
+**On Linux** the window needs the windowing and sound headers. CI installs
+them with apt; the list is in `.github/workflows/rust.yml` (the "Linux tools
+and headers" step), and today it is:
 
 ```bash
-bun tools/build-sidecar.ts --host    # build the engine the window runs
-cd desktop/src-tauri && cargo run    # open the window
+sudo apt-get install -y sqlite3 libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev libasound2-dev
 ```
 
-An Intel Mac cannot run the window any more: it is built for Macs with
-Apple silicon only, and `--host` refuses an Intel Mac with that reason.
-The engine still runs there from source (`bun src/cli.ts`); cross-building
-the Apple silicon bundle from one is in desktop/README.md.
+(`sqlite3` is for the device-request service's tests, not the window.)
 
-[desktop/README.md](desktop/README.md) covers bundles, the Apple silicon
-Mac build and how the window talks to the engine.
-[docs/developers.md](docs/developers.md) covers the command line, the
-library and the architecture.
+**On an Intel Mac** the window is not offered: Screepub ships it for Macs
+with Apple silicon only, and `cargo xtask build-app-bundle` refuses to make
+an Intel bundle. An Intel Mac can still build and run the command line from
+source with `cargo`, and can cross-build the Apple silicon bundle
+(`rustup target add aarch64-apple-darwin`, then `--arch arm64`).
+
+`cargo xtask --help` lists the developer tools (fixtures, screenshots,
+release helpers). [docs/developers.md](docs/developers.md) covers the
+command line, the library and the architecture, and
+[the window's design](docs/superpowers/specs/2026-10-11-sp-app-design.md)
+covers how the window is built and tested.
 
 `epubcheck` (`brew install epubcheck`) validates output and is worth running
 after any change to the EPUB or CSS builders.
@@ -57,11 +70,15 @@ after any change to the EPUB or CSS builders.
 ## Fixtures
 
 `tests/fixtures/` holds small invented screenplays, committed and used by CI.
-Regenerate them with `tools/make-fixture.py`, for example:
+Regenerate them with `cargo xtask make-fixture <name> <out.pdf>` from
+`rust/`, for example:
 
 ```bash
-python3 tools/make-fixture.py screenplay tests/fixtures/screenplay.pdf
+cargo xtask make-fixture screenplay ../tests/fixtures/screenplay.pdf
 ```
+
+The names are `screenplay`, `prose`, `blank` (blank-pages.pdf), `images`,
+`jpx`, `torture` and `demo` (field-station.pdf).
 
 A root-level `fixtures/` directory is gitignored, for testing against real
 scripts locally. If you use it: **never commit those files, and never let a
@@ -70,7 +87,7 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 
 ## Before you send a change
 
-- **Write the failing test first.** The suite is `bun:test`.
+- **Write the failing test first.** The suite is `cargo test`.
 - **Read the invariants** in [`CLAUDE.md`](CLAUDE.md) before touching the
   parser or the EPUB CSS. Each is a device behaviour someone verified on real
   hardware, and
@@ -79,27 +96,30 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 - **Log formatting changes** in
   [`docs/formatting-options-log.md`](docs/formatting-options-log.md), the
   registry of every formatting option.
-- **Keep defaults in sync.** `src/options.ts` and the root
-  `format-defaults.json` hold the same defaults, and `tests/options.test.ts`
-  fails if they differ; change them together.
-- **Keep the window logic-free.** Decisions belong in `src/`; the window only
-  builds argument lists and draws the engine's answer.
-- Run `bun test` and `bunx tsc --noEmit` before you push.
+- **Keep defaults in sync.** `rust/crates/sp-model/src/options.rs` and the
+  root `format-defaults.json` hold the same defaults, and
+  `defaults_match_the_canonical_format_defaults_json` in
+  `rust/crates/sp-model/tests/options.rs` fails if they differ; change them
+  together.
+- **Keep the window logic-free.** Decisions belong in the engine crates;
+  `sp-app` asks the engine and draws its answer.
+- Run `cargo fmt --all --check`, the clippy line above and
+  `cargo test --workspace` before you push.
 
 ## What CI runs
 
-- **Every push** (`ci.yml`): typecheck and `bun test` on Linux, the
-  command-line archives for every platform, and the compiled command line
-  converting a fixture on a Mac, checked with `epubcheck`.
-- **Every push** (`desktop.yml`): the window compiled and bundled on macOS,
-  Windows and Linux, with the engine inside each bundle run against a fixture.
+- **Every push** (`rust.yml`): formatting, clippy with warnings as errors,
+  and every test on macOS, Windows and Linux; the parity check against the
+  TypeScript engine's frozen answers, on macOS; the release command line
+  converting the fixtures, with `epubcheck` on its books; the device-request
+  service built for wasm32; and every installer built, opened and checked on
+  its own system.
 - **Every `v*` tag** (`release.yml`): the release. It signs and notarizes the
   Mac downloads, builds every bundle and archive, checks each one before
   uploading, and publishes the window's update manifest.
 - **Weekly**: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is retired
-  (deprecated, and disabled from the release after 0.9.0),
-  and the engine's Calibre tests still pass against Calibre's newest version.
+  newest release (`tap-freshness.yml`), and the whole test suite still
+  passes with Calibre's newest version installed (`weekly-toolchain.yml`).
 
 ## Licensing of contributions
 

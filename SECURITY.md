@@ -24,7 +24,9 @@ be.
 
 The interesting attack surface is **the PDF parser**, because that's the one
 place Screepub handles a file it didn't create. A screenplay arrives from a
-producer, an agency, or a stranger, and Screepub opens it.
+producer, an agency, or a stranger, and Screepub opens it. The PDF reader is
+Screepub's own, written in pure Rust (`rust/crates/sp-pdf`), and every crate
+in the workspace forbids `unsafe` code.
 
 - **Malicious PDF leading to code execution, or reading or writing files
   outside the output path.** This is the one that matters most.
@@ -32,20 +34,22 @@ producer, an agency, or a stranger, and Screepub opens it.
   reasonable person would call small.
 - **Anything that causes a script to leave the machine without you asking.**
   Converting makes no network requests. Screepub reaches the network only
-  when you ask it to: uploading to a docked reMarkable over USB, opening a
+  when you ask it to: uploading to a docked reMarkable over USB (plain HTTP
+  to the tablet's own web interface on the USB link), opening a
   page in your browser, installing the KFX plugin from Calibre's plugin
   index, and checking for or installing an update if you switched that on.
   The [README](README.md#your-script-stays-on-your-machine) lists each one.
   A way to make it do anything else is a real finding.
 - **The update path.** The app installs an update only after checking its
-  signature against a key built into the app. The older Mac app, retired but
+  minisign signature, and the version that signature names, against a key
+  built into the app (`rust/crates/sp-update`). It fetches over HTTPS with
+  rustls on the ring crypto provider. The older Mac app, retired but
   still on some Macs, checks the Apple Developer ID signature and the version
   before it replaces itself with the current app. A way to get either to
   install something else is a real finding.
-- **Signing and entitlement weaknesses.** The Mac command-line converter is
-  signed with JIT entitlements because Bun needs them
-  (`tools/macos/screepub-cli.entitlements`). If those are exploitable beyond what
-  Bun requires, we want to know.
+- **Signing weaknesses.** The Mac app and the Mac command-line converter
+  are signed with the hardened runtime and no entitlements, and notarized.
+  If you find a way around that, we want to know.
 
 ## What's out of scope
 

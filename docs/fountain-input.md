@@ -3,7 +3,7 @@
 PDF is Screepub's primary path. `.fountain` input is **partially supported**:
 the render pipeline runs in full and 18 of the 20 formatting options apply
 normally, but two do not, because they are consumed in
-`src/fountain/serialize.ts`, upstream of the `.fountain` itself, where the
+`rust/crates/sp-fountain/src/serialize.rs`, upstream of the `.fountain` itself, where the
 pipeline's durable artifact begins. One piece of Fountain syntax also renders
 differently than another tool would render it.
 

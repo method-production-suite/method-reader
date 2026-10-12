@@ -20,8 +20,11 @@ Seven tokens (`paper`, `ink`, `ink-muted`, `ink-on-brass`, `brass`, `alarm`,
 `hole`) were first defined by the Swift Mac app's theme, and their `from`
 field says `swift-app`. That app was retired and deleted (piece F3), so
 `tokens.json` is the only source: change a value here and the copies that
-ship follow it, `tokens.css` and the window's `desktop/ui/style.css` and
-generated `desktop/ui/tokens.css`, each pinned to this file by a test.
+ship follow it, `tokens.css` and the window's colours in
+`rust/crates/sp-app/src/theme.rs`, each pinned to this file by a test
+(`rust/crates/xtask/tests/desktop_tokens.rs` holds theme.rs to it). Until
+the Rust cutover the Tauri window's `desktop/ui/style.css` and generated
+`desktop/ui/tokens.css` were the window's copies.
 
 Two of those seven exist because a color that is right in one place is wrong
 in another:

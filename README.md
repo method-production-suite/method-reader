@@ -134,8 +134,7 @@ Who has checked what, in full: [the verification ledger](docs/verification-ledge
 
 **Windows will warn you.** The Windows downloads are unsigned, so SmartScreen
 shows a "publisher unknown" screen the first time: choose **More info**, then
-**Run anyway**. The installer also fetches Microsoft's WebView2 runtime once
-if the machine has none.
+**Run anyway**.
 
 **Sending to a reader is only proven on a Mac.** On Windows and Linux,
 converting is well tested and sending to a device has never been tried on
@@ -177,7 +176,6 @@ Screepub reaches the network only when you ask it to:
   checks GitHub at most once a day, and **Check for updates** checks once.
   An update downloads only when you choose to install it, and its signature
   is checked before anything is replaced. Self-update is Mac only.
-- **The Windows installer** may fetch Microsoft's WebView2 runtime once.
 
 On a Mac the result screen can also hand a book to another app and stop there:
 Amazon's Send to Kindle app, Apple Books (which syncs through iCloud if you
@@ -185,7 +183,7 @@ use it), or a Mail message that goes nowhere until you send it.
 
 If you email a script to your `@kindle.com` address, Amazon receives it and
 their terms apply. That's your call, and Screepub never makes it for you.
-The [source is right here](src/) to check any of this.
+The [source is right here](rust/crates/) to check any of this.
 
 ## What Screepub isn't
 
@@ -196,8 +194,9 @@ The [source is right here](src/) to check any of this.
 
 ## For developers
 
-Screepub is a PDF to Fountain to EPUB3 pipeline written in TypeScript on
-Bun, with a Tauri window on top. The command line, the library layout and
+Screepub is a PDF to Fountain to EPUB3 pipeline written in Rust, as one
+Cargo workspace. The window is native (egui, with AccessKit for screen
+readers) and has the engine linked in. The command line, the library layout and
 the architecture are in [docs/developers.md](docs/developers.md); setting up
 and sending a change is in [CONTRIBUTING.md](CONTRIBUTING.md).
 

@@ -60,16 +60,26 @@ Fine-grained tokens → Generate new token**:
 
 Paste as **`TAP_TOKEN`**.
 
-## 4. `TAURI_SIGNING_PRIVATE_KEY` — the updater's signing key
+## 4. `TAURI_SIGNING_PRIVATE_KEY`: the updater's signing key
 
-Added 2026-09-21 for piece A of the parity plan. The cross-platform app
-updates itself through Tauri's updater plugin, which verifies every
-download against a minisign signature. The release signs the updater
-archive with a private key only CI holds, and the app carries the
-matching public key in `desktop/src-tauri/tauri.conf.json`.
+Added 2026-09-21 for piece A of the parity plan. The app updates itself
+through its updater (`rust/crates/sp-update`, which reads the same
+`latest.json` and the same minisign signatures the Tauri windows' updater
+plugin read), and every download is checked against a minisign signature.
+The release signs the updater archive with a private key only CI holds, and
+the app carries the matching public key. The secret keeps its Tauri-era
+name so nothing in the repository settings had to change.
 
-**Generate the pair on your own machine.** Never in a session transcript,
-never on a runner. The Tauri CLI this repository pins does it:
+**The pair already exists, and it must never change.** Its key id is
+`E4D0668D54F6EB34`, and every window since 0.7.1 and the Rust app trust
+only that key: **lose the private key or its password and no installed copy
+of the app can ever be updated again.** Store the private key where the
+Apple certificate lives.
+
+It was generated on the owner's own machine, never in a session transcript
+and never on a runner, with the Tauri CLI the repository pinned then
+(tauri-cli 2.11.4; the repository no longer pins it, and `sp-release keygen`
+makes throwaway keys for rehearsals and tests only):
 
 ```bash
 cargo install tauri-cli --version 2.11.4 --locked
@@ -79,46 +89,40 @@ cargo install tauri-cli --version 2.11.4 --locked
 cargo tauri signer generate -w ~/.tauri/screepub.key
 ```
 
-It asks for a password (optional; recommended), writes the private key to
+It asked for a password (optional; recommended), wrote the private key to
 `~/.tauri/screepub.key` and the public key beside it as
-`~/.tauri/screepub.key.pub`, and prints only the two paths. Tauri's own
-warning applies in full: **lose the private key or its password and no
-installed copy of the app can ever be updated again**, because every copy
-trusts only this key. Store the private key where the Apple certificate
-lives.
+`~/.tauri/screepub.key.pub`, and printed only the two paths.
 
-Then, three things:
+The three pieces:
 
-- **`TAURI_SIGNING_PRIVATE_KEY`** — the CONTENTS of `~/.tauri/screepub.key`
+- **`TAURI_SIGNING_PRIVATE_KEY`**: the CONTENTS of `~/.tauri/screepub.key`
   (`pbcopy < ~/.tauri/screepub.key`), pasted as a repo secret. It is one
-  line of base64 and the CLI accepts it as is.
-- **`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`** — the password, if you set one.
+  line of base64 and the release tools accept it as is.
+- **`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`**: the password, if you set one.
   Leave this secret out if you did not: the workflow then passes an empty
   string, which is what a password-less key expects.
-- **The public key** goes into `desktop/src-tauri/tauri.conf.json` as
-  `plugins.updater.pubkey`: the contents of `~/.tauri/screepub.key.pub`,
-  one line, committed. It is safe to share and safe to commit.
+- **The public key** has one home: the `PUBKEY` constant in
+  `rust/crates/sp-update/src/lib.rs` (the contents of
+  `~/.tauri/screepub.key.pub` as base64, one line, committed). It is safe
+  to share and safe to commit. The app is built with it, and the release
+  tools check against it by default.
 
 What holds this together, in the order it runs:
 
-- `bun test` accepts an EMPTY `pubkey` (the state until you act) and
-  refuses garbage, so a working branch is never red for want of the key.
-- `release.yml`'s `checks` job refuses to tag a release whose app trusts
-  no real key (`tools/update-signature.ts --pubkey-from-config`, run on
-  the tagged commit's config).
-- The macOS leg runs `tools/build-app-bundle.ts --updater`, which refuses
-  to START without the private key rather than failing after the full
-  build, then publishes
+- The macOS leg of `release.yml`'s `app-bundles` job refuses to START
+  without the private key rather than failing after the full build, then
+  signs the update archive with `sp-release sign-update` (the signature
+  records the version, which the Rust app requires) and publishes
   `Screepub-macOS.app.tar.gz` and its `.sig`.
-- `app-upload` writes `latest.json` from what arrived
-  (`tools/build-update-manifest.ts`) and uploads it LAST, so nothing it
-  names is ever missing when it is read.
+- `app-upload` writes `latest.json` from what arrived (`sp-release
+  manifest`), checks every archive it names against `PUBKEY` and the
+  signed version (`sp-release verify-update`), and uploads it LAST, so
+  nothing it names is ever missing or unverified when it is read.
 - `latest-check` reads the manifest back from the endpoint the app uses
-  (`tools/check-latest.ts`) and compares it with the newest release: the
-  version, every platform's asset, every signature, and the key id
-  against the one the app trusts. `tap-freshness.yml` repeats that
-  weekly. Both are red until a release ships with the key in place, since
-  v0.6.0 publishes no manifest, and that red is the honest reading.
+  (`sp-release check-latest --deep`) and compares it with the newest
+  release: the version, every platform's asset, every signature, and the
+  key id against `PUBKEY`; with `--deep` it also downloads each archive and
+  verifies it as the app will. `tap-freshness.yml` repeats that weekly.
 
 Unlike `TAP_TOKEN`, absence IS fatal to a release, on purpose:
 [ADR 2026-09-21](adr/2026-09-21-doors-not-commands.md) makes the updater
@@ -152,14 +156,14 @@ delete afterward.
 
 Then do the real acceptance test: download the DMG on a **different Mac**,
 open it, drag to Applications, double-click, and convert a PDF — that's
-what confirms notarization + the sidecar entitlements are correct.
+what confirms notarization and signing are correct.
 
 ## The Homebrew tap: flipped to per-arch, DONE 2026-08-07 at v0.5.2
 
 **Superseded in shape** at the release after 0.9.0, when
 Intel Macs were dropped: the formula serves one tarball,
 `screepub-cli-macos-arm64.tar.gz`, says `depends_on arch: :arm64`, and is
-written whole by `tools/bump-tap.sh`. The per-arch record below is kept
+written whole by `cargo xtask bump-tap`. The per-arch record below is kept
 for its lessons, which still hold.
 
 **Status: done and pushed** (`ssandweiss/homebrew-tap@a2034f3`). The
@@ -253,7 +257,7 @@ SHA into the run's summary. To get it after the fact:
 gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
 ```
 
-Then run `tools/bump-tap.sh X.Y.Z homebrew-tap`, which writes
+Then run `cargo xtask bump-tap X.Y.Z <tap-checkout>` from `rust/`, which writes
 `homebrew-tap/Formula/screepub.rb` whole from that digest and disables the
 cask. By hand: the FIRST bump after 0.9.0 starts from
 its two-arch tap, so besides the url and the SHA, replace the formula's
@@ -262,9 +266,10 @@ whole if/else on the CPU with the one url and sha256, add
 `homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!`, keeping
 its date and its `because:` (Homebrew compares the date with the user's
 local day, so it must already be past). Later bumps change the url and the SHA only.
-`tools/bump-tap.sh` refuses a release that still carries
+`cargo xtask bump-tap` refuses a release that still carries
 `screepub-cli-macos-x64.tar.gz`: bump the identifier release or anything
-older with that tag's own copy of the script. Verify before pushing:
+older with that tag's own copy of the tool (then `tools/bump-tap.sh`).
+Verify before pushing:
 
 ```bash
 brew style Formula/screepub.rb
@@ -281,7 +286,7 @@ clone pristine for `brew update`.
 All three pieces LANDED 2026-08-07. Two do the work, one keeps them
 honest:
 
-- **The bumper: `release.yml`'s `tap` job, running `tools/bump-tap.sh`.**
+- **The bumper: `release.yml`'s `tap` job, running `cargo xtask bump-tap`.**
   `needs: release`, so it cannot start before the assets exist. It clones
   the tap, retires the cask for good (its `deprecate!` becomes `disable!`,
   once: the last Swift app it installs would offer an Intel Mac an app it
@@ -301,7 +306,7 @@ honest:
   fallback for a missing token or a failed bump, so the hand edit is
   paste-and-commit rather than a download-and-hash chore.
 
-- **The alarm, in two places, both running `tools/check-tap.sh`.** It
+- **The alarm, in two places, both running `cargo xtask check-tap`.** It
   reads the tap's cask and formula STRAIGHT FROM GITHUB and fails when
   the formula pins something other than the newest release or carries a
   SHA that does not match that release's assets, or when the cask is not
@@ -330,14 +335,17 @@ honest:
   the release workflow**, which is why `tap-check` is a job there and not
   a trigger elsewhere.
 
-**Why the logic lives in `tools/*.sh` and not inline in the YAML:** these
-are the steps that have already failed silently once. Inline, they can
-only be tested by cutting a release. As scripts they can be run against
-the real repos, which is how `bump-tap.sh` was checked for the properties
-that matter: bumping to the version the tap already serves produces an
+**Why the logic lives in `cargo xtask` commands and not inline in the
+YAML:** these are the steps that have already failed silently once. Inline,
+they can only be tested by cutting a release. As commands they can be run
+against the real repos, which is how `bump-tap` was checked for the
+properties that matter: bumping to the version the tap already serves produces an
 EMPTY diff, bumping a tap that is a version behind restores it
 byte-for-byte, a restructured tap fails loudly instead of no-opping, and
 a tag with no release fails before touching anything. That last one found
 a real bug: `gh api` prints its 404 body on **stdout**, so an emptiness
-check accepted `{"message":"Not Found"...}` as a checksum. Both scripts
+check accepted `{"message":"Not Found"...}` as a checksum. Both tools
 now check the SHAPE of a digest, not merely that something came back.
+(They were shell scripts then, `tools/bump-tap.sh` and
+`tools/check-tap.sh`; the xtask commands are their ports, with the same
+checks.)

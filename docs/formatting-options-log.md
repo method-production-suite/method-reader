@@ -4,13 +4,22 @@ Every formatting behavior Screepub applies, logged as it was tuned
 (2026-07-22, initial build + two feedback rounds on a real script). The print
 geometry and Kindle CSS constraints behind these choices live in
 `docs/screenplay-format-reference.md` — read that first when adjusting. Each entry is
-written as a **toggle or slider in the window** (its Settings page, drawn
-by `desktop/ui/tune.js`; until piece F3 deleted it, the Swift Mac app's
-reader rail was the first home of these knobs): the engine's FormatOptions
-(`src/options.ts`) is the single knob surface, reachable via
-`--options file.json` on the CLI and through `screepub settings` from the
-window. Entries below marked "not built" remain future work; everything
-else is live.
+written as a **toggle or slider in the window** (its Settings page: the
+knobs are listed in `rust/crates/sp-app/src/model/tune.rs` and drawn by
+`rust/crates/sp-app/src/app/tune.rs`; before the Rust cutover the Tauri
+window's `rust/crates/sp-app/src/model/tune.rs` drew them, and until piece F3 deleted it, the
+Swift Mac app's reader rail was the first home of these knobs): the
+engine's FormatOptions (`rust/crates/sp-model/src/options.rs`) is the single
+knob surface, reachable via `--options file.json` on the CLI and through
+`screepub settings` from the window. Entries below marked "not built"
+remain future work; everything else is live.
+
+**Code pointers (2026-10-12, the Rust cutover):** the **Code:** lines name
+the Rust file that now holds each behaviour. The function and constant
+names in them were written for the TypeScript engine; the Rust ones are the
+same names in snake_case (`renderBooks` is `render_books`, `keepArtwork` is
+`keep_artwork`), and constants keep their names. Dated notes such as
+"measured inside `bun test`" record how a fact was established at the time.
 
 **Where a conversion's options come from (2026-09-14):** explicit flag
 (`--options` / `--options-json`) over the script's sidecar
@@ -52,7 +61,7 @@ Spec: `docs/superpowers/specs/2026-09-24-keep-script-settings-choice-design.md`.
 
 **Coverage of these entries by the committed torture fixture is tracked in
 `tools/torture-manifest.json`**, one row per entry, and
-`tests/torture-coverage.test.ts` fails when an entry has no decision
+`rust/crates/xtask/tests/torture_coverage.rs` fails when an entry has no decision
 recorded there. A row saying `"covered": false` with a reason is a
 decision; silence is not. So adding an entry below means adding its row,
 and the suite will say so if you forget.
@@ -83,8 +92,8 @@ and the suite will say so if you forget.
   body content been emitted since the last break", so the title page's
   own break (or the start of a title-less book) still leaves no blank
   leading page.
-- **Code:** `src/epub/html.ts` (`tokensToBody`, `DEFAULT_MAX_FILE_BYTES`),
-  `src/mobi/html.ts` (`scene_heading` case).
+- **Code:** `rust/crates/sp-epub/src/html.rs` (`tokensToBody`, `DEFAULT_MAX_FILE_BYTES`),
+  `rust/crates/sp-mobi/src/html.rs` (`scene_heading` case).
 
 ### 2. Centered dialogue column — % geometry (v2)
 - **What:** dialogue is a narrow column with **percentage side margins**
@@ -99,7 +108,7 @@ and the suite will say so if you forget.
 - **App options:** column width (as side-margin %), cue indent %, paren
   indent %; per-device presets (phone may want a shallower cue indent —
   see reference doc §4).
-- **Code:** `src/epub/css.ts` (`.dialogue-block`, `p.character`,
+- **Code:** `rust/crates/sp-epub/src/css.rs` (`.dialogue-block`, `p.character`,
   `p.parenthetical`).
 - **AZW3 route (2026-07-22):** Calibre's remove-fake-margins heuristic
   reads per-block side margins on most paragraphs — i.e. a screenplay's
@@ -110,13 +119,13 @@ and the suite will say so if you forget.
   CSS only to its generated inline ToC. Cure is
   `--disable-remove-fake-margins`, which lets the EPUB's own % geometry
   (and the `dialogueSideMarginPct` knob) flow through to AZW3
-  unchanged. `tests/export-calibre.test.ts` pins the flag in the recipe.
+  unchanged. `rust/crates/sp-engine/tests/export_calibre.rs` pins the flag in the recipe.
   A real-Calibre test there (weekly on CI, ported at F3 from the Swift
   app's own check) explodes an AZW3 and finds the margins, but it is an
   OUTCOME check only: on Calibre 9.11.0 it stays green with the flag
   removed, so nothing in the suite proves the flag is still needed. It
   stays on the strength of the user report above.
-  Code: `src/export/calibre.ts` (`CALIBRE_FORMAT_GUARDS`).
+  Code: `rust/crates/sp-engine/src/export/calibre.rs` (`CALIBRE_FORMAT_GUARDS`).
 
 ### 2b. Cue & parenthetical alignment (option, default centered)
 - **What:** print's fixed cue indent only *optically* centers names on
@@ -124,7 +133,7 @@ and the suite will say so if you forget.
   2026-07-22: "centered items drooping left"). Default is now
   `text-align: center` within the dialogue column; `cueAlignment:
   'indented'` restores the % offsets (sliders apply only in that mode).
-- **Code:** `src/options.ts`, `src/epub/css.ts`; app picker in the reader
+- **Code:** `rust/crates/sp-model/src/options.rs`, `rust/crates/sp-epub/src/css.rs`; app picker in the reader
   rail's Dialogue group.
 
 ### 3. Vertical rhythm between elements
@@ -136,7 +145,7 @@ and the suite will say so if you forget.
   below; mini-slug 1.4em above / 1em below (#5b).
 - **App option:** "Element spacing" slider (compact 0.6 → airy 1.4em);
   possibly independent scene-heading spacing.
-- **Code:** `src/epub/css.ts`.
+- **Code:** `rust/crates/sp-epub/src/css.rs`.
 
 ### 4. Relative-unit scaling (principle, not an option)
 - **What:** no fixed units anywhere — **horizontal structure in `%`**
@@ -196,8 +205,8 @@ and the suite will say so if you forget.
 - **Default:** on.
 - **App option:** "Keep headings with scene" toggle (the reader rail's
   Page group).
-- **Code:** `src/options.ts` (`keepSceneHeadingWithScene`),
-  `src/epub/css.ts` (`headingKeep` → `h2.scene-heading`).
+- **Code:** `rust/crates/sp-model/src/options.rs` (`keepSceneHeadingWithScene`),
+  `rust/crates/sp-epub/src/css.rs` (`headingKeep` → `h2.scene-heading`).
 
 ### 5b. Mini-slugs (secondary sluglines) — micro-headings, not scenes
 - **What:** "LATER", "IN THE BACK ROOM", "END OF MONTAGE" — the slugs that
@@ -229,7 +238,7 @@ and the suite will say so if you forget.
   the narrower `SCENE_HEADING`. Otherwise the two ends disagree: "EST. THE
   HOUSE" or "I/E CAR" classified as a mini-slug, serialized as `.EST. THE
   HOUSE`, and promoted straight back to a full scene heading with a TOC
-  entry. `tests/epub.test.ts` pins the two literals to each other and the
+  entry. `rust/crates/sp-epub/tests/epub.rs` pins the two literals to each other and the
   renderer's verdict to fountain-js's own tokenizer, so an upstream rule
   change fails a table instead of quietly reshuffling headings. The literal
   is anchored, so classify.ts also tests it against the line with a leading
@@ -351,13 +360,13 @@ and the suite will say so if you forget.
   that end on one are whole parentheticals, which have to be refused, and
   no true slug in any fixture ends on a paren. Dropping it also retired a
   redundant `PARENTHETICAL` guard the tail already subsumed.
-- **Code:** `src/fountain/serialize.ts` (`mini-slug` case),
-  `src/fountain/slug.ts` (`PRIMARY_SLUG`, `isMiniSlug` — the stage-2
+- **Code:** `rust/crates/sp-fountain/src/serialize.rs` (`mini-slug` case),
+  `rust/crates/sp-fountain/src/slug.rs` (`PRIMARY_SLUG`, `isMiniSlug` — the stage-2
   definition, moved here 2026-07-30 when MOBI became its second consumer),
-  `src/epub/html.ts` and `src/mobi/html.ts` (both import it; the MOBI side
-  uses it to keep `<mbp:pagebreak/>` off mini-slugs, #1), `src/epub/css.ts`
-  (`p.mini-slug`), `src/parser/classify.ts` (`PRIMARY_SLUG`,
-  `isMiniSlugShaped`, priority 9), `src/parser/boilerplate.ts`
+  `rust/crates/sp-epub/src/html.rs` and `rust/crates/sp-mobi/src/html.rs` (both import it; the MOBI side
+  uses it to keep `<mbp:pagebreak/>` off mini-slugs, #1), `rust/crates/sp-epub/src/css.rs`
+  (`p.mini-slug`), `rust/crates/sp-parser/src/classify.rs` (`PRIMARY_SLUG`,
+  `isMiniSlugShaped`, priority 9), `rust/crates/sp-parser/src/boilerplate.rs`
   (`suppressBoilerplate` — mini-slug as recurrence candidate).
 
 ### 5. Keep-with-next — minimal chain (v2)
@@ -393,7 +402,7 @@ and the suite will say so if you forget.
   The keep-with-*next* chains in this entry still get no shadow — we
   emit no column-spelling `break-after` — so they stay modern and
   legacy-prefixed only.
-- **Code:** `src/epub/css.ts`.
+- **Code:** `rust/crates/sp-epub/src/css.rs`.
 
 ### 6. Typeface & line height (v2)
 - **What:** `"Courier Prime", "Courier New", Courier, monospace`. The v1
@@ -403,7 +412,7 @@ and the suite will say so if you forget.
 - **App options:** font menu only. Do NOT offer a line-height slider for
   Kindle targets — it would silently not work; between-element spacing
   (option 3) is the honest spacing knob we control.
-- **Code:** `src/epub/css.ts` (`body`).
+- **Code:** `rust/crates/sp-epub/src/css.rs` (`body`).
 
 ### 6b. Body text alignment — ragged-right by default (option)
 - **What:** action and dialogue paragraphs are emitted with an explicit
@@ -425,8 +434,8 @@ and the suite will say so if you forget.
   hold there. Shipped 2026-07-30, with the `ibooks:` prefix declared on
   `<package>` so epubcheck stays quiet; every other reading system
   ignores the meta (device-map §3).
-- **Code:** `src/options.ts` (`justifyText`), `src/epub/css.ts`
-  (`bodyAlign` → `p.action`, `p.dialogue`), `src/epub/build.ts` (the OPF
+- **Code:** `rust/crates/sp-model/src/options.rs` (`justifyText`), `rust/crates/sp-epub/src/css.rs`
+  (`bodyAlign` → `p.action`, `p.dialogue`), `rust/crates/sp-epub/src/build.rs` (the OPF
   meta).
 
 ### 16. Transitions never begin a page (always on)
@@ -453,7 +462,7 @@ and the suite will say so if you forget.
   TRANSITION_MIN, so every earlier pass was looking at action elements that
   merely read like transitions.
   The verdict lands in this entry.
-- **Code:** `src/epub/css.ts` (`p.transition`).
+- **Code:** `rust/crates/sp-epub/src/css.rs` (`p.transition`).
 
 ### 17. Print split minimums (option, default ON; 2026-07-30)
 - **What:** `printSplitMinimums` emits `widows`/`orphans` on `p.dialogue`
@@ -488,8 +497,8 @@ and the suite will say so if you forget.
   format matters: KFX only. AZW3 and MOBI ignore these properties, so a
   sideload in either format would look identical whether the rule fired or
   not.
-- **Code:** `src/options.ts`, `src/epub/css.ts`, and the window's control
-  in `desktop/ui/tune.js`.
+- **Code:** `rust/crates/sp-model/src/options.rs`, `rust/crates/sp-epub/src/css.rs`, and the window's control
+  in `rust/crates/sp-app/src/model/tune.rs`.
 
 ## Cleanup & rejoining
 
@@ -503,7 +512,7 @@ and the suite will say so if you forget.
 - **Default:** drop.
 - **App option:** "Revision marks: hide / show right-aligned gutter ✱" —
   showing them needs a serializer+CSS path (float-right span), not built.
-- **Code:** `src/parser/extract.ts` (`revisionMarginX`).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`revisionMarginX`).
 
 ### 8. (MORE) / (CONT'D) page-break rejoin
 - **What:** `(MORE)` markers dropped by text match regardless of how the
@@ -514,7 +523,7 @@ and the suite will say so if you forget.
 - **Default:** rejoin on.
 - **App options:** toggle "Rejoin dialogue split by page breaks";
   possible extra: "strip all (CONT'D) extensions" (not built).
-- **Code:** `src/fountain/serialize.ts` (`prepare`, `MORE_PAREN`, `CONTD`).
+- **Code:** `rust/crates/sp-fountain/src/serialize.rs` (`prepare`, `MORE_PAREN`, `CONTD`).
 
 ### 8a. (CONT'D) normalization (option, default auto)
 - **What:** page-break (MORE)/(CONT'D) pairs are meaningless in reflow
@@ -542,8 +551,8 @@ and the suite will say so if you forget.
   indistinguishable from an ordinary same-speaker continuation — a guessed
   warning would be worse than this note. The reader rail groups both under
   "From the PDF" and says they apply on the next conversion.
-- **Code:** `src/fountain/serialize.ts` (`lastSpeaker` tracking);
-  `src/convert.ts` (`stageOneWarnings`, `CONTD_CUE`).
+- **Code:** `rust/crates/sp-fountain/src/serialize.rs` (`lastSpeaker` tracking);
+  `rust/crates/sp-engine/src/convert.rs` (`stageOneWarnings`, `CONTD_CUE`).
 
 ### 8b. Cue keeps its first dialogue line (always on)
 - **WRAPPER DELETED 2026-09-14 — the keep is a CHAIN, and the wrapper was
@@ -707,7 +716,7 @@ and the suite will say so if you forget.
   the obvious next thing to fix here. Unverified on any of those engines. **Not** a kepub claim: kepub paginates with multicol, so the
   old spelling is a plausible reach, but the evidence on record is that it
   ignores break CSS and wants file splits (device-map §6, t=346874).
-- **Code:** `src/epub/html.ts` (`speechBlock`), `src/epub/css.ts`
+- **Code:** `rust/crates/sp-epub/src/html.rs` (`speechBlock`), `rust/crates/sp-epub/src/css.rs`
   (`p.character` and `p.parenthetical`).
 
 ### 8c. Whole-speech keep (option, default OFF; 2026-07-30)
@@ -776,9 +785,9 @@ and the suite will say so if you forget.
   does now have is the one MARKUP primitive: `<mbp:pagebreak/>`, wired to
   `scenePageBreaks` on 2026-07-30 (#1). Keeps stay EPUB-only; forced
   breaks no longer are.
-- **Code:** `src/options.ts` (`keepSpeechesWhole`), `src/epub/css.ts`
+- **Code:** `rust/crates/sp-model/src/options.rs` (`keepSpeechesWhole`), `rust/crates/sp-epub/src/css.rs`
   (`speechKeep` → `.dialogue-block`), and the window's control in
-  `desktop/ui/tune.js`.
+  `rust/crates/sp-app/src/model/tune.rs`.
 
 ### 9. Page furniture stripping
 - **What:** page numbers (bare/dashed/labeled), shooting-script scene
@@ -788,7 +797,7 @@ and the suite will say so if you forget.
 - **Default:** all stripping on; recurrence threshold 40%/3 pages.
 - **App options:** master toggle unlikely to be wanted; expose the
   watermark recurrence threshold as advanced only.
-- **Code:** `src/parser/classify.ts`, `src/parser/boilerplate.ts`.
+- **Code:** `rust/crates/sp-parser/src/classify.rs`, `rust/crates/sp-parser/src/boilerplate.rs`.
 
 ### 10. Final Draft double-print dedup
 - **What:** FD double-prints (MORE)/(CONT'D) furniture at identical
@@ -796,7 +805,7 @@ and the suite will say so if you forget.
   ("RYAN (CONT'D)RYAN (CONT'D)") and merges failed. Exact-overlap
   duplicates deduped at extraction.
 - **Default:** always on; not an option (pure artifact fix). Log only.
-- **Code:** `src/parser/extract.ts` (dup check in item join).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (dup check in item join).
 
 ### 9a. Dual-margin scene numbers collapsed
 - **What:** shooting scripts print the scene number in BOTH margins of
@@ -808,20 +817,20 @@ and the suite will say so if you forget.
   DAY 2"), which defeated the ^INT/^EXT anchor — 0 scenes detected.
   Classifier now strips a same-token leading/trailing number pair and
   attaches it as `sceneNumber` when the inner text is a slugline.
-- **Code:** `src/parser/extract.ts` (normal-line emit),
-  `src/parser/classify.ts` (`DUAL_MARGIN_HEADING`).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (normal-line emit),
+  `rust/crates/sp-parser/src/classify.rs` (`DUAL_MARGIN_HEADING`).
 
 ### 9b. Hybrid character cues
 - **What:** MARGO/DEV (shared), COP #2, MOM & DAD — the name pattern
   now allows / & # and digits; previously such cues fell to action and
   their speeches collapsed (a lyrics block found in testing).
-- **Code:** `src/parser/classify.ts` (CHARACTER_NAME).
+- **Code:** `rust/crates/sp-parser/src/classify.rs` (CHARACTER_NAME).
 
 ### 9c. Width-aware item joining
 - **What:** gap detection now uses pdf.js's real item widths (falling
   back to the len×6 estimate) — fixes phantom spaces in split names
   ("Jo hn Sm ith") and sharpens dual-dialogue boundaries.
-- **Code:** `src/parser/extract.ts` (`endX`).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`endX`).
 
 ### 9d. Inline bold/italic/underline pass-through
 - **What:** per-item font styles detected from PostScript names
@@ -862,9 +871,9 @@ and the suite will say so if you forget.
   have shown a loosened threshold. Only detection was at issue here, since
   `span.underline` already shipped, so this closes the entry rather than
   opening a rendering question. Apple Books untested.
-- **Code:** `src/parser/extract.ts` (`stampFontStyles`, `stampUnderlines`,
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`stampFontStyles`, `stampUnderlines`,
   `collectUnderlineMarks`, `markUnderlinesItem`, `joinLine`),
-  `src/epub/html.ts` + `src/mobi/html.ts` (`inlineEmphasis`/`inline`).
+  `rust/crates/sp-epub/src/html.rs` + `rust/crates/sp-mobi/src/html.rs` (`inlineEmphasis`/`inline`).
 
 ### 9e. Cue extensions tolerate a missing closing period
 - **What:** `(O.S)`, `(V.O)`, `(O.C)` — the period-less spellings writers
@@ -894,7 +903,7 @@ and the suite will say so if you forget.
   its body to match. Verified: character-element counts across all five
   generator fixtures are byte-identical (none contains a dotted cue),
   so the corpus is untouched; the new shapes are pinned by unit tests.
-- **Code:** `src/parser/classify.ts` (`DIALOGUE_EXTENSIONS`).
+- **Code:** `rust/crates/sp-parser/src/classify.rs` (`DIALOGUE_EXTENSIONS`).
 
 ### 9f. Cue rescue from the character roster
 - **What:** classification is geometric, but the text guards in
@@ -913,8 +922,8 @@ and the suite will say so if you forget.
   never rescued.
 - **Also:** `CHARACTER_NAME` now accepts curly apostrophes (`MARGO’S MOM`),
   matching how §8 already treats `(CONT'D)`.
-- **Code:** `src/parser/rescue.ts`, `src/parser/index.ts`,
-  `src/parser/classify.ts` (`normalizeCueName`, `CHARACTER_NAME`).
+- **Code:** `rust/crates/sp-parser/src/rescue.rs`, `rust/crates/sp-parser/src/lib.rs`,
+  `rust/crates/sp-parser/src/classify.rs` (`normalizeCueName`, `CHARACTER_NAME`).
 
 ### 10a. Dual dialogue — de-interleaved to sequential speeches
 - **What:** simultaneous two-column speeches (seen in two different test
@@ -944,7 +953,7 @@ and the suite will say so if you forget.
   toggle back to side by side, could move it: an explicit `'sideBySide'`
   was read the same as absent and fell through to the base. The merge now
   accepts either value explicitly.
-- **Code:** `src/parser/extract.ts` (`deinterleaveDualDialogue`).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`deinterleaveDualDialogue`).
 
 ### 10b. Tall dual exchanges degrade to sequential (2026-07-30)
 - **What:** the EPUB renderer measures both columns before it emits: if
@@ -987,7 +996,7 @@ and the suite will say so if you forget.
   **Still open:** whether 12 is the RIGHT cut. This pass proves the
   threshold fires, not that it fires in the right place, since only one
   exchange either side of it was tried. Apple Books untested.
-- **Code:** `src/epub/html.ts` (`DUAL_SEQUENTIAL_LINE_THRESHOLD`,
+- **Code:** `rust/crates/sp-epub/src/html.rs` (`DUAL_SEQUENTIAL_LINE_THRESHOLD`,
   `EST_CHARS_PER_DUAL_LINE`, `dual_dialogue_end`).
 
 ## Metadata & navigation
@@ -1008,8 +1017,8 @@ and the suite will say so if you forget.
   FormatOptions for #1's MOBI arm, and was fixed in the same pass that
   found it. With the title page off there is no leading break either, so
   the body does not open on a blank page.
-- **Code:** `src/fountain/serialize.ts` (`extractTitleMeta`),
-  `src/epub/build.ts` (`titlePageXhtml`), `src/mobi/html.ts`.
+- **Code:** `rust/crates/sp-fountain/src/serialize.rs` (`extractTitleMeta`),
+  `rust/crates/sp-epub/src/build.rs` (`titlePageXhtml`), `rust/crates/sp-mobi/src/html.rs`.
 
 ### 12. Scene-level TOC
 - **What:** every PRIMARY slugline becomes a TOC entry (nav.xhtml) linking
@@ -1018,7 +1027,7 @@ and the suite will say so if you forget.
 - **Default:** on, labeled "Scenes".
 - **App options:** TOC on/off; possible "TOC every N scenes" for
    150-scene scripts where the drawer gets long.
-- **Code:** `src/epub/html.ts` (toc), `src/epub/build.ts` (`navXhtml`).
+- **Code:** `rust/crates/sp-epub/src/html.rs` (toc), `rust/crates/sp-epub/src/build.rs` (`navXhtml`).
 
 ### 13. Shooting-script scene numbers — kept in Fountain, hidden in EPUB
 - **What:** scene numbers ("1A.", "2.2.") attach to headings and
@@ -1026,7 +1035,7 @@ and the suite will say so if you forget.
   them (fountain-js splits them off; the HTML layer doesn't re-add).
 - **Default:** hidden in EPUB.
 - **App option:** "Show scene numbers in headings" — small change in
-  `src/epub/html.ts` (`scene_heading` case, `t.scene_number`).
+  `rust/crates/sp-epub/src/html.rs` (`scene_heading` case, `t.scene_number`).
 
 ### 13a. Original page-number markers (option, default ON; 2026-09-21)
 - **What:** `showPageMarkers` emits the PDF's printed pagination as small
@@ -1066,25 +1075,27 @@ and the suite will say so if you forget.
   This is a stage-2 knob, so it is written into the `.fountain` when the PDF
   is read: existing scripts keep whatever they were converted with, and only
   a fresh conversion picks the new default up.
-- **Code:** `src/fountain/serialize.ts` (`printedPageOffset`),
-  `src/epub/html.ts` + `src/mobi/html.ts` (synopsis case),
-  `src/epub/css.ts` (`span.page-marker`), `src/epub/build.ts` (page-list).
+- **Code:** `rust/crates/sp-fountain/src/serialize.rs` (`printedPageOffset`),
+  `rust/crates/sp-epub/src/html.rs` + `rust/crates/sp-mobi/src/html.rs` (synopsis case),
+  `rust/crates/sp-epub/src/css.rs` (`span.page-marker`), `rust/crates/sp-epub/src/build.rs` (page-list).
 
 ## Guards (behavior, not formatting — app should surface as dialogs)
 
 ### 14. Scanned-PDF bail-out
 - <3 text lines/page average → error "run OCR first", no silent garbage.
-  `src/convert.ts` (`MIN_LINES_PER_PAGE`).
+  `rust/crates/sp-engine/src/convert.rs` (`MIN_LINES_PER_PAGE`).
 
 ### 15. Not-a-screenplay guard
 - 0 scenes **and** 0 dialogue → error unless `--force` (caught a pitch
   deck in testing). 0 scenes with dialogue → warning only.
-  `src/convert.ts`.
+  `rust/crates/sp-engine/src/convert.rs`.
 
 ## Mac app notes
 
-**These twenty options are the Tune surface of the Tauri window**
-(`desktop/ui/tune.js`), the one Mac app since the identifier release. The
+**These twenty options are the Tune surface of the window**
+(`rust/crates/sp-app/src/model/tune.rs`; the Tauri window's
+`rust/crates/sp-app/src/model/tune.rs` until the Rust cutover), the one Mac app since the
+identifier release. The
 older SwiftUI reader rail described below was the first interface for
 eighteen of them (it never gained `includeImages` or `promoteCoverImage`);
 that app is retired, no longer published, and since piece F3 gone from this
@@ -1108,12 +1119,13 @@ they were "the only knobs consumed in fountain/serialize.ts". They are not:
 `= pg N` marker and its `^` caret), so both are written INTO the `.fountain`
 when the PDF is read and neither can move a preview that re-renders from
 that cached `.fountain`. The Swift rail filed them under `Content` and
-`Dialogue`, where they read as live knobs. `desktop/ui/tune.js` groups all
+`Dialogue`, where they read as live knobs. The window's Settings page
+(`groups()` in `rust/crates/sp-app/src/model/tune.rs`) groups all
 four together under `Read from the PDF` with the caveat, and nothing in the
 engine needs to change.
 
 - All knobs above funnel into two seams: **CSS generation**
-  (`src/epub/css.ts` — make it a function of an options object) and
+  (`rust/crates/sp-epub/src/css.rs` — make it a function of an options object) and
   **serializer/packing flags** (`tokensToBody` opts, `prepare` in the
   serializer). The parser layer should stay option-free.
 - The `.fountain` intermediate is the natural preview/re-render boundary:
@@ -1130,7 +1142,7 @@ engine needs to change.
   KEPUB via Calibre when the "as KEPUB" checkbox on the result page's
   send block is on — shown only while Kobo is the chosen destination
   (default OFF — Kobo's kepub renderer mis-justifies em-dashes/
-  ellipses, endemic in dialogue; `tests/export-calibre.test.ts` verifies
+  ellipses, endemic in dialogue; `rust/crates/sp-engine/tests/export_calibre.rs` verifies
   koboSpan markup against a real Calibre);
   tolino → EPUB into root `Books/`; reMarkable → original PDF over the
   USB web interface (its EPUB renderer re-typesets, so reflow adds
@@ -1140,7 +1152,7 @@ engine needs to change.
   opens a window rendering the engine's real preview HTML
   (`--preview-html`; the same markup as the EPUB with the CSS inlined).
   The rail edits a per-script sidecar (`<Stem>.screepub.json`, in the
-  Swift app's ScriptSettings then and `src/settings/sidecar.ts` now,
+  Swift app's ScriptSettings then and `rust/crates/sp-engine/src/settings/sidecar.rs` now,
   lenient per-field decode) with debounced,
   serialized re-renders from the cached .fountain; "Save as app
   defaults" promotes sidecar values to the global keys
@@ -1165,9 +1177,11 @@ engine needs to change.
   second surface to keep in sync. Settings sets the coarse default via a
   preset; per-script tuning belongs beside a live render. (That was the
   Swift app's rail. In the window the one surface is the Settings page,
-  and adding a knob means adding it to `GROUPS` in `desktop/ui/tune.js`.)
+  and adding a knob means adding it to `groups()` in
+`rust/crates/sp-app/src/model/tune.rs`.)
 - **Device presets (2026-07-22):** `DevicePreset` (the Swift app's; now
-  `DEVICE_PRESETS` in `src/settings/presets.ts`) bundles
+  `DevicePresetId` and `device_preset` in
+  `rust/crates/sp-model/src/presets.rs`) bundles
   a full FormatSettings per device class — "Kindle e-ink (6\")" is the
   baseline (== defaults); "Phone / narrow screen" flips dual dialogue to
   sequential (side-by-side halves are an unreadable sliver on a narrow
@@ -1176,10 +1190,10 @@ engine needs to change.
   Devices "Load device preset", or per-script via the reader rail's own
   "Load device preset" (then persisted to the sidecar). Responsive
   reflow is impossible in a fixed e-book, so a conversion-time preset is
-  the mechanism. Adding a preset: add an entry to `DEVICE_PRESETS` in
-  `src/settings/presets.ts` only. The engine hands the list to the window,
-  whose Settings page draws a button for each (`presetsFrom` in
-  `desktop/ui/tune.js`).
+  the mechanism. Adding a preset: add it to `DevicePresetId` and
+  `device_preset` in `rust/crates/sp-model/src/presets.rs` only. The engine
+  hands the list to the window, whose Settings page draws a button for each
+  (`presets_from` in `rust/crates/sp-app/src/model/tune.rs`).
 
 ### 18. Block font shifts (option, default ON; 2026-08-04)
 - **What:** `preserveFontShifts` renders block-level font family and size
@@ -1214,7 +1228,7 @@ engine needs to change.
 - **Note stripping (general correction):** both renderers now strip ALL
   `[[...]]` notes from rendered text. Before this entry we emitted none and
   stripped none, so a hand-written note rendered as literal text, which the
-  Fountain spec forbids. One copy in `src/fountain/notes.ts`, imported by
+  Fountain spec forbids. One copy in `rust/crates/sp-fountain/src/notes.rs`, imported by
   both renderers (the #5b precedent).
 - **Rendering:** EPUB adds `fmt-mono|fmt-serif|fmt-sans|fmt-cursive` and
   `fmt-minus1|fmt-plus1|fmt-plus2` to the block's paragraphs; sizes are
@@ -1251,7 +1265,7 @@ engine needs to change.
 - **A saved script leaves the notes behind (2026-10-09).** `export --for
   fountain --out` (the window's Save a file > Fountain) writes the script
   with Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes taken out
-  (`stripScreepubNotes` in `src/fountain/notes.ts`), every other line byte
+  (`stripScreepubNotes` in `rust/crates/sp-fountain/src/notes.rs`), every other line byte
   for byte; a screenwriting app has no use for them. The cached `.fountain`
   beside the book keeps every note, since it is the cache boundary, and an
   `--out` naming that very file is refused when it carries one. A writer's
@@ -1275,11 +1289,11 @@ engine needs to change.
   script in the local set carries a body font shift. A generator that sets
   its inserts differently could still bucket in a way this fixture cannot
   predict.
-- **Code:** `src/parser/extract.ts` (`familyBucket`, `fontRuns`,
-  `stampLineFmt`), `src/parser/group.ts`, `src/parser/classify.ts`,
-  `src/fountain/serialize.ts` (`fmtNote`), `src/fountain/notes.ts`,
-  `src/epub/html.ts` + `src/epub/css.ts`, `src/mobi/html.ts`,
-  `src/options.ts`, and the window's control in `desktop/ui/tune.js`.
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`familyBucket`, `fontRuns`,
+  `stampLineFmt`), `rust/crates/sp-parser/src/group.rs`, `rust/crates/sp-parser/src/classify.rs`,
+  `rust/crates/sp-fountain/src/serialize.rs` (`fmtNote`), `rust/crates/sp-fountain/src/notes.rs`,
+  `rust/crates/sp-epub/src/html.rs` + `rust/crates/sp-epub/src/css.rs`, `rust/crates/sp-mobi/src/html.rs`,
+  `rust/crates/sp-model/src/options.rs`, and the window's control in `rust/crates/sp-app/src/model/tune.rs`.
 
 ### 19. Pictures recognised, recorded as notes (always on, no option; 2026-10-01)
 - **What:** a PDF conversion finds the pictures a script paints (storyboard
@@ -1291,7 +1305,7 @@ engine needs to change.
   #19a's option; with it off, both renderers drop the note unread, exactly
   as they did before pictures existed. One thing in the EPUB changes whatever
   the option says, and on purpose: its `dc:identifier` is a hash of the
-  `.fountain` text (`renderBooks` in `src/convert.ts`; the text is the
+  `.fountain` text (`renderBooks` in `rust/crates/sp-engine/src/convert.rs`; the text is the
   identity), so a script whose `.fountain` gains notes gets a new identifier,
   and a reader that indexes by it treats the re-converted book as a new one.
   A script with no pictures keeps its identifier. Making a designed title
@@ -1331,7 +1345,7 @@ engine needs to change.
   so measuring against the page would set every picture about 30% too
   narrow. Always serialized, like #18's notes, because the `.fountain` is the
   cache boundary and has to stay byte-stable under a later settings flip. One
-  reader, `parseImgNote` in `src/fountain/notes.ts` (the #5b/#18 rule: one
+  reader, `parseImgNote` in `rust/crates/sp-fountain/src/notes.rs` (the #5b/#18 rule: one
   module, imported by everything that reads the note). It is case-sensitive on
   `img:`, a width it cannot read means 100 (too large beats too small to see),
   and the filename must pass the allowlist.
@@ -1347,7 +1361,7 @@ engine needs to change.
   `board-01.png` in that folder is never deleted.
 - **The folder:** `<stem>.images/` beside the `.fountain` (in the script's
   library folder under `--library`), written by the CLI through
-  `src/library-images.ts`, pictures first so the `.fountain` never names a
+  `rust/crates/sp-engine/src/library_images.rs`, pictures first so the `.fountain` never names a
   file that is not there. A run removes the generated pictures it did not
   produce, and a run with no pictures clears the last one's folder and creates
   none. `--no-fountain` writes neither. Reading the folder back refuses
@@ -1364,7 +1378,7 @@ engine needs to change.
   written) and `imageCount` (how many pictures the conversion carried, which
   `--no-fountain` reports too); both are omitted when there is nothing to say.
 - **What counts as a picture: six rules, in this order, and the first to fire
-  is the one reported** (`keepArtwork` in `src/parser/artwork.ts`; its
+  is the one reported** (`keepArtwork` in `rust/crates/sp-parser/src/artwork.rs`; its
   `droppedBy` histogram is the retune instrument, counted in PLACEMENTS):
   1. **Pixels:** `MIN_PIXELS = 32` source pixels on each edge, as the paint
      operator declared them. A 16x16 logo glyph is not worth carrying however
@@ -1424,14 +1438,15 @@ engine needs to change.
   dual-dialogue region follows the LEFT speech, because the right column's y
   restarts at the top of the exchange (#10a). Both speeches survive, and
   fountain-js still reads one exchange.
-- **JPEG 2000, JBIG2 and CCITT** are decoded by modules pdf.js loads from
-  OUTSIDE its bundle, through `wasmUrl`; without them every such picture is
-  lost silently. `src/parser/pdfjs-wasm.ts` embeds them and unpacks them into
-  a private temp folder, asked for per document. A machine where that folder
-  cannot be made still converts, and the warning says the cause is ours.
-  `tests/fixtures/jpx.pdf` is the guard, and `tools/smoke-cli.ts` converts it
-  with every compiled CLI it smokes and requires `imageCount` 1: the Linux
-  binary on every push (ci.yml), Linux and Windows at a tag (release.yml).
+- **JPEG 2000, JBIG2 and CCITT** were decoded by modules pdf.js loaded from
+  OUTSIDE its bundle, which the TypeScript engine had to unpack into a temp
+  folder. Since the Rust cutover the decoders are compiled into
+  `rust/crates/sp-pdf` (`images.rs`: JPEG 2000 through hayro-jpeg2000, JBIG2
+  and CCITT through hayro-syntax), so there is no folder to fail.
+  `tests/fixtures/jpx.pdf` is the guard: `rust/crates/sp-pdf/tests/jpx.rs`
+  decodes its picture pixel for pixel, and `cargo xtask smoke-cli` converts
+  it with the CLI it smokes and requires `imageCount` 1 (the release CLI on
+  every push, in rust.yml).
 - **Provenance of the numbers.** Every threshold was chosen by eye from the
   August design on 2026-08-06, against no real script, then **audited against
   the private corpus on 2026-08-12 (commit `1337863`), and none moved.** Seven
@@ -1451,10 +1466,10 @@ engine needs to change.
   `artwork.ts` keeps each of these beside its constant. `tests/fixtures/
   images.pdf` keeps two pictures and refuses four, each by a different rule
   (pixels, width, furniture, background), with each picture's margin to its
-  one governing threshold stated in `tools/make-fixture.py`. Height and area
+  one governing threshold stated in `cargo xtask make-fixture`. Height and area
   refuse nothing in it: area is pinned only from the keep side, by pictures
   that must clear it (imTiny by half a point), and both boundaries are pinned
-  by hand-built candidates in `tests/artwork.test.ts`. A fixture can show the
+  by hand-built candidates in `rust/crates/sp-parser/tests/artwork.rs`. A fixture can show the
   numbers are self-consistent, never that they are right.
 - **Measured on the corpus, 2026-10-01: the `.fountain` gains notes and
   nothing else.** Every PDF in the local set converted with `origin/main` and
@@ -1479,15 +1494,15 @@ engine needs to change.
 - **A saved script has no picture notes:** `export --for fountain --out`
   takes them out of the copy and leaves the cached `.fountain` whole (#18
   has the rule).
-- **Code:** `src/parser/images.ts` (`collectImagePlacements`, `toRgb`,
+- **Code:** `rust/crates/sp-parser/src/images.rs` (`collectImagePlacements`, `toRgb`,
   `IMAGE_MAX_EDGE`, `IMAGE_BUDGET_MS`, `isGeneratedImageFile`),
-  `src/parser/artwork.ts` (every threshold, `keepArtwork`, `MAX_IMAGES`,
-  `columnWidthPct`, `isFullPage`), `src/parser/png.ts`,
-  `src/parser/pdfjs-wasm.ts`, `src/parser/extract.ts`, `src/parser/index.ts`
-  (`insertImages`), `src/fountain/serialize.ts` (`imgNote`, `prevNonImage`,
-  `nextNonImage`, `anchorsPageMarker`), `src/fountain/notes.ts`
-  (`parseImgNote`, `isSafeImageFile`), `src/library-images.ts`,
-  `src/convert.ts` (`imageWarnings`), `src/cli.ts`, `src/cli-errors.ts`.
+  `rust/crates/sp-parser/src/artwork.rs` (every threshold, `keepArtwork`, `MAX_IMAGES`,
+  `columnWidthPct`, `isFullPage`), `rust/crates/sp-parser/src/png.rs`,
+  `rust/crates/sp-pdf/src/images.rs`, `rust/crates/sp-parser/src/extract.rs`, `rust/crates/sp-parser/src/lib.rs`
+  (`insertImages`), `rust/crates/sp-fountain/src/serialize.rs` (`imgNote`, `prevNonImage`,
+  `nextNonImage`, `anchorsPageMarker`), `rust/crates/sp-fountain/src/notes.rs`
+  (`parseImgNote`, `isSafeImageFile`), `rust/crates/sp-engine/src/library_images.rs`,
+  `rust/crates/sp-engine/src/convert.rs` (`imageWarnings`), `rust/crates/sp-cli/`, `rust/crates/sp-engine/src/errors.rs`.
 
 ### 19a. Pictures in the book (option `includeImages`, default ON; 2026-10-01)
 - **What:** a standalone `[[img: ...]]` note (#19) becomes a figure in the
@@ -1502,12 +1517,12 @@ engine needs to change.
   refused every bit of furniture the corpus audit found, and a reader who
   does not want pictures turns them off once.
 - **One predicate decides.** `rendersImage(raw, includeImages, have)` in
-  `src/fountain/notes.ts`: the option is on, the note parses (the allowlist
+  `rust/crates/sp-fountain/src/notes.rs`: the option is on, the note parses (the allowlist
   is inside `parseImgNote`), and the picture is in the set the caller can
   actually ship. The renderer and the section opener ask the same question,
   so they cannot disagree: whether the note draws a figure IN THE FLOW,
   which is rendersImage's yes for every note but the cover's
-  (`art.inFlow` in `src/epub/html.ts`). A note above the first heading (a
+  (`art.inFlow` in `rust/crates/sp-epub/src/html.rs`). A note above the first heading (a
   title card's) opens an "Opening" section only when it draws a figure
   there; otherwise the body is byte-identical to the text-only one. By
   default a full-page card at the very front is the cover (#19b) and draws
@@ -1578,9 +1593,10 @@ engine needs to change.
 - **The preview.** The same `tokensToBody` call as the book, with each `src`
   a `data:image/png;base64,...` URI, so what you proof is what ships, and
   a title card that became the cover is left out of it as it is left out of
-  the book's pages. The
-  window's CSP is `default-src 'self'; img-src 'self' data:` and nothing
-  else is loosened (pinned in `tests/desktop-shell.test.ts`). Measured
+  the book's pages. The Tauri
+  window's CSP was `default-src 'self'; img-src 'self' data:` with nothing
+  else loosened; the native window has no webview and no CSP, and lays the
+  preview out itself (Blitz, `rust/crates/sp-app/src/app/bookview.rs`). Measured
   2026-10-01 on the corpus's heaviest picture document (60 pictures,
   16.5 MB of PNG): a Tune re-render went from 121 to 174 ms and its `--json`
   answer from 26 KB to 22.09 MB, so the preview is built on every render
@@ -1589,12 +1605,12 @@ engine needs to change.
   device has opened a `.mobi` with picture records yet, and on the oldest
   Kindles, the ones this file is for, a failure could leave the book
   unopenable rather than merely plain. So `MOBI_CARRIES_PICTURES` in
-  `src/mobi/html.ts` is false: every route's `.mobi` is built as if no
+  `rust/crates/sp-mobi/src/html.rs` is false: every route's `.mobi` is built as if no
   picture could be shipped (`mobiArt` is handed an empty set), so it has no
   image record, no figure and no EXTH 201 cover, and is byte for byte the
-  book with `includeImages` off (pinned in `tests/convert.test.ts`). The EPUB
+  book with `includeImages` off (pinned in `rust/crates/sp-engine/tests/convert.rs`). The EPUB
   keeps its pictures and its cover, and so do the AZW3 and KFX Calibre builds
-  from it. The probe is `bun tools/mobi-picture-probe.ts --out <folder>`,
+  from it. The probe is `cargo xtask mobi-picture-probe --out <folder>`,
   which builds through the gate (`ConvertOptions.mobiPictures`), read on an
   older Kindle with the torture manifest's #19a rows; when every probe book
   opens with every picture, the constant becomes true, one line, and what
@@ -1608,7 +1624,7 @@ engine needs to change.
   `<p>`, because this dialect aligns by attribute. The markup and the records
   are one numbering with two ends, and a disagreement between them shows the
   WRONG picture rather than none, so the numbering exists once: `mobiArt` in
-  `src/mobi/html.ts`. It asks `rendersImage` of the same names the EPUB is
+  `rust/crates/sp-mobi/src/html.rs`. It asks `rendersImage` of the same names the EPUB is
   given, so both books of a script show the same pictures, and lists them in
   the order the body first shows them, each once (a picture shown twice is
   one record named twice). The renderer numbers its figures from that list,
@@ -1627,7 +1643,7 @@ engine needs to change.
   takes the plate's break rather than adding its own. A figure declines a
   pending page marker (#13a), as the EPUB's does. **The header** names the
   pictures in three fields, each read back from the built bytes in
-  `tests/mobi.test.ts`, each following both reference writers: 108, the
+  `rust/crates/sp-mobi/tests/mobi.rs`, each following both reference writers: 108, the
   first image record, as an ABSOLUTE record number (both wrote their first
   picture's own index); 194, the last content record, which reaches the last
   picture rather than stopping at the text (both extend it over their
@@ -1644,8 +1660,8 @@ engine needs to change.
   pictures is the book this writer built before records existed, byte for
   byte with the PDB dates (bytes 36 to 43) masked. That is pinned by hash
   three times, each hash made by the code before records: a sample book in
-  `tests/mobi.test.ts`, and the `--mobi` output of `screenplay.pdf` and of
-  `images.pdf` with the option off in `tests/convert.test.ts`. The EPUBs of
+  `rust/crates/sp-mobi/tests/mobi.rs`, and the `--mobi` output of `screenplay.pdf` and of
+  `images.pdf` with the option off in `rust/crates/sp-engine/tests/convert.rs`. The EPUBs of
   both fixtures are byte-identical across that change too, with the clock
   pinned (checked 2026-10-01). The file is assembled from typed
   arrays: copied in a byte at a time, the corpus's heaviest picture document
@@ -1685,12 +1701,12 @@ engine needs to change.
 - **On a device:** AZW3 and KFX get the pictures through Calibre from the
   EPUB, and the engine's MOBI carries its own (above). None of it is
   verified on device yet, and it is the subject of the torture.pdf pictures
-  section of `tools/device-checklist.ts`: KFX and RMSDK on the forced breaks,
+  section of `cargo xtask device-checklist`: KFX and RMSDK on the forced breaks,
   the blank page, the heading above a plate, and how a tall plate slices;
   and, for the `.mobi` sideloaded over USB, whether the pictures are there,
   whether the plate's page breaks hold, and whether an older Kindle refuses a
   picture over the single-record cap. That last has books of its own:
-  `bun tools/mobi-picture-probe.ts --out <folder>` writes
+  `cargo xtask mobi-picture-probe --out <folder>` writes
   `screepub-picture-probe.mobi` (and the same book as an EPUB, to compare),
   built by the engine's own renderer and writer, the same bytes every run. It
   carries three PNGs of about 2 KB, about 200 KB and about 1.4 MB (the last a
@@ -1711,16 +1727,15 @@ engine needs to change.
   against calibre's source (`ebooks/mobi/utils.py`, `mobi_output.py`) and the
   MobileRead wiki's KindleGen page. If any of the three fails on the device,
   the `.mobi` goes back to text only.
-- **Code:** `src/fountain/notes.ts` (`rendersImage`, `imageNoteFiles`),
-  `src/epub/html.ts` (`place`, the figure, `art.inFlow`, `usedImages`,
-  `imageSrc`, `tokensToPreviewHtml`), `src/epub/css.ts` (the
-  figure block, `FIGURE_WIDTHS`), `src/epub/build.ts` (`BookImage`,
+- **Code:** `rust/crates/sp-fountain/src/notes.rs` (`rendersImage`, `imageNoteFiles`),
+  `rust/crates/sp-epub/src/html.rs` (`place`, the figure, `art.inFlow`, `usedImages`,
+  `imageSrc`, `tokensToPreviewHtml`), `rust/crates/sp-epub/src/css.rs` (the
+  figure block, `FIGURE_WIDTHS`), `rust/crates/sp-epub/src/build.rs` (`BookImage`,
   `imageIds`),
-  `src/mobi/html.ts` (`mobiArt`, the figure, `recindex`),
-  `src/mobi/writer.ts` (the image records, fields 80, 108 and 194),
-  `src/convert.ts` (`renderBooks`, `convertFountain`), `src/cli.ts`,
-  `src/export/artifact.ts`, `desktop/ui/tune.js`,
-  `desktop/src-tauri/tauri.conf.json`.
+  `rust/crates/sp-mobi/src/html.rs` (`mobiArt`, the figure, `recindex`),
+  `rust/crates/sp-mobi/src/writer.rs` (the image records, fields 80, 108 and 194),
+  `rust/crates/sp-engine/src/convert.rs` (`renderBooks`, `convertFountain`), `rust/crates/sp-cli/`,
+  `rust/crates/sp-engine/src/export/artifact.rs`, `rust/crates/sp-app/src/model/tune.rs`.
 
 ### 19b. The title card as the cover (option `promoteCoverImage`, default ON; 2026-10-01)
 - **What:** a designed title card becomes the book's cover, so a library
@@ -1733,7 +1748,7 @@ engine needs to change.
   removes the card at the front of the preview. On by default (owner,
   2026-10-01). Off unless `includeImages` is on too.
 - **The rule.** `pickCover(tokens, format, have)` in
-  `src/fountain/cover.ts`, a module of the slug.ts and notes.ts kind, so
+  `rust/crates/sp-fountain/src/cover.rs`, a module of the slug.ts and notes.ts kind, so
   that the EPUB and the MOBI of one script wear the same cover or none.
   Walking the body in order (the title page block is not body content),
   the cover is the first picture note `rendersImage` would draw, if it is
@@ -1783,7 +1798,7 @@ engine needs to change.
   and pointing 202 at the full-size record would be a different claim. The
   record sits in type order between 100 and 501, and only when there is a
   cover. What moves with it, each read back from the built bytes in
-  `tests/mobi.test.ts`: the EXTH block's length (12 more) and count (one
+  `rust/crates/sp-mobi/tests/mobi.rs`: the EXTH block's length (12 more) and count (one
   more), and field 84, the full name's offset (12 more), which still lands
   on the title on a 4-byte boundary; record 0 grows by 12 and every PDB
   offset after it with it. What does not: the MOBI header's length (232)
@@ -1834,7 +1849,7 @@ engine needs to change.
   card from any other full-page plate at the front (a map before FADE IN,
   say): such a plate becomes the cover too, and the switch is the remedy.
   The checks are the torture manifest's 19b row, printed by
-  `tools/device-checklist.ts`.
+  `cargo xtask device-checklist`.
 - **Measured on the corpus, 2026-10-01 (images-carry tip d5bd60e against
   this entry's tip):** six of the seven scripts convert (one, the
   60-picture deck, is not a screenplay and converts only when forced; the
@@ -1858,11 +1873,11 @@ engine needs to change.
   page. Both changed EPUBs pass epubcheck clean, conversion time is
   unchanged, and with the option off all six books equal the d5bd60e
   ones.
-- **Code:** `src/fountain/cover.ts` (`pickCover`), `src/epub/html.ts`
-  (`art.inFlow`, `coverImage`), `src/epub/build.ts` (the cover
-  declarations), `src/mobi/html.ts` (`mobiArt`'s `coverIndex`),
-  `src/mobi/writer.ts` (EXTH 201 and its check), `src/convert.ts`
-  (`renderBooks`), `src/options.ts`, `src/cli.ts`, `desktop/ui/tune.js`.
+- **Code:** `rust/crates/sp-fountain/src/cover.rs` (`pickCover`), `rust/crates/sp-epub/src/html.rs`
+  (`art.inFlow`, `coverImage`), `rust/crates/sp-epub/src/build.rs` (the cover
+  declarations), `rust/crates/sp-mobi/src/html.rs` (`mobiArt`'s `coverIndex`),
+  `rust/crates/sp-mobi/src/writer.rs` (EXTH 201 and its check), `rust/crates/sp-engine/src/convert.rs`
+  (`renderBooks`), `rust/crates/sp-model/src/options.rs`, `rust/crates/sp-cli/`, `rust/crates/sp-app/src/model/tune.rs`.
 
 ## Kindle files
 
@@ -1884,7 +1899,7 @@ engine needs to change.
   field-station 11 ms against 371 ms, images.pdf 2 ms against 350 ms, the
   largest real script 40 ms against 848 ms. Those Calibre times are warm;
   a first start is slower.
-- **How:** `src/azw3/`, a TypeScript port of Calibre 9.11.0's KF8 writer
+- **How:** `rust/crates/sp-azw3/`, a TypeScript port of Calibre 9.11.0's KF8 writer
   (`src/calibre/ebooks/mobi/writer8/`: main.py, skeleton.py, index.py,
   exth.py, mobi.py, tbs.py, and the helpers in mobi/utils.py and the
   PalmDOC compressor), credited in each file and in THIRD-PARTY-NOTICES.md.
@@ -1897,7 +1912,7 @@ engine needs to change.
   overlap and trailing byte sequences; the skeleton, fragment, guide and
   NCX indices, FDST, the pictures as resource records, FLIS, FCIS and EOF
   follow, behind a version 8 record 0 (`writer.ts`). The PalmDB container
-  and EXTH record shape are the MOBI's (`src/mobi/palmdb.ts`). KF8 only:
+  and EXTH record shape are the MOBI's (`rust/crates/sp-mobi/src/palmdb.rs`). KF8 only:
   no joint MOBI 6 + KF8 file.
 - **What carries over from the EPUB:** every word, in order; the title
   page (its own skeleton); the scene sections and their ids; the
@@ -1927,7 +1942,7 @@ engine needs to change.
   the chunker: a text run too long for one fragment is never cut inside
   an entity, where Calibre's `chunk_up_text` would cut "&amp;" in two.
 - **The writer revision (2026-10-10):** every AZW3 we write carries
-  `AZW3_WRITER_REVISION` (`src/azw3/revision.ts`) as EXTH 0x5350, a
+  `AZW3_WRITER_REVISION` (`rust/crates/sp-azw3/src/revision.rs`) as EXTH 0x5350, a
   number no Kindle, Calibre or KindleUnpack reads (Amazon's and Calibre's
   run 1-4, 100-209, 300, 401-453 and 501-544, and both readers skip a
   number they do not know). The staleness rule counts an `.azw3` as
@@ -1940,10 +1955,10 @@ engine needs to change.
   with this writer or with Calibre, unpacks every committed fixture's AZW3
   and the five real scripts in the corpus that convert, and gives back
   their titles, TOCs, every block of text, every picture and the cover;
-  the five ASINs are distinct. `tests/azw3-kindleunpack.test.ts` runs it
+  the five ASINs are distinct. `rust/crates/sp-azw3/tests/readers.rs` runs it
   where `SCREEPUB_KINDLEUNPACK` names a KindleUnpack folder.
 - **Verified without a device (2026-10-10):** a structural reader in
-  `tests/helpers/kf8-reader.ts`, stricter than Calibre's (it throws where
+  `rust/crates/sp-azw3/tests/common/kf8_reader.rs`, stricter than Calibre's (it throws where
   Calibre warns), walks the PDB, record 0, EXTH, every INDX, FDST, the
   trailing bytes and the decompressed text, and rebuilds each file from
   its skeleton and fragments: every committed fixture's AZW3 carries the
@@ -1970,10 +1985,10 @@ engine needs to change.
   for the format: the KF8 renderer ignores them (#8b, `docs/device-map.md`
   §6), so cues can strand in this AZW3 as they did in Calibre's. The
   checks are the torture manifest's #20 row, printed by
-  `tools/device-checklist.ts`.
-- **Code:** `src/azw3/` (`xml.ts`, `epub.ts`, `chunk.ts`, `index.ts`,
-  `tbs.ts`, `palmdoc.ts`, `writer.ts`), `src/mobi/palmdb.ts`,
-  `src/export/formats.ts` (the ladder, `isBetaFile`),
-  `src/export/artifact.ts` (`writeAzw3`), `src/cli-export.ts`, `src/cli.ts`
-  (`--azw3`), `desktop/ui/device.js`, `desktop/ui/send-routes.js`,
-  `desktop/ui/send-panel.js`.
+  `cargo xtask device-checklist`.
+- **Code:** `rust/crates/sp-azw3/` (`xml.rs`, `epub.rs`, `chunk.rs`, `index.rs`,
+  `tbs.rs`, `palmdoc.rs`, `writer.rs`), `rust/crates/sp-mobi/src/palmdb.rs`,
+  `rust/crates/sp-engine/src/export/formats.rs` (the ladder, `isBetaFile`),
+  `rust/crates/sp-engine/src/export/artifact.rs` (`writeAzw3`), `rust/crates/sp-engine/src/commands/export.rs`, `rust/crates/sp-cli/`
+  (`--azw3`), `rust/crates/sp-app/src/model/device.rs`, `rust/crates/sp-app/src/model/send_routes.rs`,
+  `rust/crates/sp-app/src/app/panel.rs`.
