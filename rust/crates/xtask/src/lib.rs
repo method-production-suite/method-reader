@@ -18,6 +18,7 @@ pub mod calibre_config;
 pub mod capture;
 pub mod check_latest;
 pub mod check_tap;
+pub mod cli_build;
 pub mod desktop_notes;
 pub mod desktop_tokens;
 pub mod device_checklist;
@@ -26,7 +27,6 @@ pub mod mobi_probe;
 pub mod packaging;
 pub mod release_hook;
 pub mod release_notes;
-pub mod retired;
 pub mod scratch;
 
 /// One `cargo xtask` command: its name, a line of help, and its entry.
@@ -142,17 +142,17 @@ pub const COMMANDS: &[Command] = &[
     Command {
         name: "build-cli",
         help: "build, sign and check the screepub CLI for each platform",
-        main: packaging::build_cli_main,
+        main: cli_build::build_cli_main,
     },
     Command {
         name: "smoke-cli",
         help: "convert the committed fixtures with a built CLI",
-        main: packaging::smoke_cli_main,
+        main: cli_build::smoke_cli_main,
     },
     Command {
         name: "verify-signing",
         help: "check a built app or CLI is signed, notarized and stapled",
-        main: packaging::verify_signing_main,
+        main: cli_build::verify_signing_main,
     },
     Command {
         name: "build-app-bundle",
@@ -187,7 +187,7 @@ pub const COMMANDS: &[Command] = &[
     Command {
         name: "build-sidecar",
         help: "retired: the Rust app links the engine, there is no sidecar",
-        main: retired::build_sidecar_main,
+        main: cli_build::build_sidecar_main,
     },
 ];
 
