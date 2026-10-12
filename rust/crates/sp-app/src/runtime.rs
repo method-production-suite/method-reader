@@ -67,12 +67,12 @@ impl Runtime {
             let reply = engine.run(&request, &mut |line| {
                 let _ = progress_tx.send(Event::Progress { job, line });
                 if let Some(ctx) = &progress_repaint {
-                    ctx.request_repaint();
+                    ctx.request_repaint_after(crate::model::motion::NEXT_FRAME);
                 }
             });
             let _ = tx.send(Event::Done { job, reply });
             if let Some(ctx) = &repaint {
-                ctx.request_repaint();
+                ctx.request_repaint_after(crate::model::motion::NEXT_FRAME);
             }
         };
         match self.mode {

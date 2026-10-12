@@ -66,10 +66,7 @@ fn main() -> ExitCode {
     }
     let engine = Arc::new(DirectEngine::new());
     let in_flight = engine.in_flight();
-    let options = eframe::NativeOptions {
-        viewport: sp_app::app::viewport(),
-        ..Default::default()
-    };
+    let options = sp_app::app::native_options();
     let result = eframe::run_native(
         "Screepub",
         options,

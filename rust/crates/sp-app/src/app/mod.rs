@@ -599,7 +599,14 @@ impl App {
         // engine answer wakes the window itself (runtime.rs).
         self.wake = self.wakes.wake(self.now());
         match self.wake {
-            crate::model::motion::Wake::Next => ui.ctx().request_repaint(),
+            // Not request_repaint(): egui answers that with TWO frames, the
+            // second asked at the start of the next pass, so a window
+            // asking every frame got a stray frame between two vsyncs
+            // (measured: frames 3 ms then 13 ms apart, the screen still at
+            // 8.3). A delay shorter than a frame is the next frame, once.
+            crate::model::motion::Wake::Next => ui
+                .ctx()
+                .request_repaint_after(crate::model::motion::NEXT_FRAME),
             crate::model::motion::Wake::In(ms) => ui
                 .ctx()
                 .request_repaint_after(std::time::Duration::from_secs_f64(ms / 1000.0)),
@@ -630,19 +637,13 @@ pub fn viewport() -> egui::ViewportBuilder {
         .with_titlebar_shown(false)
 }
 
-/// How the window is opened: [`viewport`], presented on vsync with one
-/// frame in flight. eframe's default lets the CPU run two frames ahead of
-/// the screen, so a frame could begin 3 ms after the last and the next 13
-/// ms after that while the screen still showed one every 8.3 ms; anything
-/// moving was drawn at the wrong moments and stuttered. With one frame in
-/// flight each frame begins as the screen takes the last, on its refresh.
+/// How the window is opened: [`viewport`], presented on vsync (eframe's
+/// AutoVsync, so on the display's own refresh). One frame in flight
+/// instead of eframe's two was measured too (examples/motion_bench.rs,
+/// BENCH_FRAMES_IN_FLIGHT): no steadier on this Mac, so the default stays.
 pub fn native_options() -> eframe::NativeOptions {
     eframe::NativeOptions {
         viewport: viewport(),
-        wgpu_options: eframe::WgpuConfiguration {
-            surface: eframe::SurfaceConfig::LOW_LATENCY,
-            ..Default::default()
-        },
         ..Default::default()
     }
 }

@@ -221,7 +221,7 @@ impl Desk {
                         return;
                     }
                     if let Some(ctx) = wake.lock().ok().and_then(|w| w.clone()) {
-                        ctx.request_repaint();
+                        ctx.request_repaint_after(crate::model::motion::NEXT_FRAME);
                     }
                 }
             }

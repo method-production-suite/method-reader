@@ -261,6 +261,11 @@ impl Transition {
     }
 }
 
+/// What the window hands egui for [`Wake::Next`]: any delay shorter than
+/// a frame is "the next frame" (egui takes a frame's length off it), and,
+/// unlike a zero delay, it is asked for once rather than twice.
+pub const NEXT_FRAME: std::time::Duration = std::time::Duration::from_millis(1);
+
 /// What the next frame is owed.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Wake {
