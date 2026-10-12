@@ -216,6 +216,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
+name = "roxmltree"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
+
+[[package]]
 name = "serde"
 version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -272,6 +278,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-azw3"
+version = "0.11.1"
+dependencies = [
+ "regex",
+ "serde_json",
+ "sha2",
+ "sp-mobi",
+ "unicode-normalization",
+ "zip",
+]
+
+[[package]]
+name = "sp-fdx"
+version = "0.11.1"
+dependencies = [
+ "roxmltree",
+ "serde",
+ "serde_json",
+ "sp-fountain",
+ "sp-model",
+]
+
+[[package]]
+name = "sp-fountain"
+version = "0.11.1"
+dependencies = [
+ "serde_json",
+ "sp-model",
+ "unicode-general-category",
+]
+
+[[package]]
 name = "sp-mobi"
 version = "0.11.1"
 dependencies = [
@@ -280,6 +318,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sp-fountain",
  "sp-model",
  "zip",
 ]
@@ -304,6 +343,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyvec"
+version = "1.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
+
+[[package]]
 name = "typed-path"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -316,10 +361,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
+name = "unicode-general-category"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b993bddc193ae5bd0d623b49ec06ac3e9312875fdae725a975c51db1cc1677f"
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fd4f6878c9cb28d874b009da9e8d183b5abc80117c40bbd187a1fde336be6e8"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "version_check"

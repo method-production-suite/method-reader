@@ -1,11 +1,6 @@
 //! The MOBI picture probe's book builder (ports the MOBI half of
 //! tests/mobi-picture-probe.test.ts; the EPUB half waits for sp-epub, and
 //! the run-as-a-process half for the xtask command).
-//!
-//! sp-fountain's tokenizer is being ported beside this crate, so these
-//! tests tokenize the probe's script with the few rules it needs: a title
-//! page, scene headings, standalone notes and action. The probe's script is
-//! written by this crate, so that is all it ever holds.
 
 mod common;
 
@@ -16,30 +11,6 @@ use sp_mobi::probe::{
     BUILT_AT, EPUB_FILE, MOBI_FILE, build_probe, plain_size, probe_pictures, probe_script,
     single_mobi_file,
 };
-use sp_model::{Token, TokenType};
-
-/// fountain-js's tokens for the probe's script, by its few shapes.
-fn tokenize(text: &str) -> Vec<Token> {
-    let mut out = Vec::new();
-    let mut blocks = text.split("\n\n").map(str::trim).filter(|b| !b.is_empty());
-    let title_page = blocks.next().expect("a title page");
-    for line in title_page.lines() {
-        let (key, value) = line.split_once(": ").expect("a title-page key");
-        let mut t = Token::with_text(TokenType::from(key.to_lowercase()), value);
-        t.is_title = Some(true);
-        out.push(t);
-    }
-    for block in blocks {
-        if block.starts_with("INT. ") || block.starts_with("EXT. ") {
-            out.push(Token::with_text(TokenType::SceneHeading, block));
-        } else if let Some(inner) = block.strip_prefix("[[").and_then(|b| b.strip_suffix("]]")) {
-            out.push(Token::with_text(TokenType::Note, inner));
-        } else {
-            out.push(Token::with_text(TokenType::Action, block));
-        }
-    }
-    out
-}
 
 const SINGLE_FILES: [&str; 3] = [
     "screepub-picture-probe-2kb.mobi",
@@ -63,7 +34,7 @@ fn the_files_and_titles_are_the_ones_the_device_check_names() {
 
 #[test]
 fn each_single_book_holds_its_one_picture_the_same_bytes_as_the_combined_books() {
-    let books = build_probe(tokenize);
+    let books = build_probe();
     let combined = mobi_pictures(&books.mobi);
     assert_eq!(books.singles.len(), 3);
     for (i, single) in books.singles.iter().enumerate() {
@@ -91,7 +62,7 @@ fn each_single_book_holds_its_one_picture_the_same_bytes_as_the_combined_books()
 
 #[test]
 fn the_four_books_carry_four_titles_and_four_ids() {
-    let books = build_probe(tokenize);
+    let books = build_probe();
     let all: Vec<&Vec<u8>> = std::iter::once(&books.mobi)
         .chain(books.singles.iter().map(|s| &s.mobi))
         .collect();
@@ -117,7 +88,7 @@ fn the_four_books_carry_four_titles_and_four_ids() {
 
 #[test]
 fn the_pictures_land_where_the_device_check_needs_them() {
-    let sizes: Vec<usize> = mobi_pictures(&build_probe(tokenize).mobi)
+    let sizes: Vec<usize> = mobi_pictures(&build_probe().mobi)
         .iter()
         .map(Vec::len)
         .collect();
@@ -133,7 +104,7 @@ fn the_pictures_land_where_the_device_check_needs_them() {
 
 #[test]
 fn the_records_hold_the_three_pngs_in_the_order_the_book_shows_them() {
-    let books = build_probe(tokenize);
+    let books = build_probe();
     let records = mobi_pictures(&books.mobi);
     for p in &records {
         assert_eq!(&p[..8], &[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -145,7 +116,7 @@ fn the_records_hold_the_three_pngs_in_the_order_the_book_shows_them() {
 
 #[test]
 fn each_picture_follows_the_line_that_names_its_size_and_the_largest_is_a_plate() {
-    let books = build_probe(tokenize);
+    let books = build_probe();
     let html = mobi_html(&books.mobi);
     let records = mobi_pictures(&books.mobi);
     let mut from = 0;
@@ -176,7 +147,7 @@ fn each_picture_follows_the_line_that_names_its_size_and_the_largest_is_a_plate(
 
 #[test]
 fn every_run_writes_the_same_bytes() {
-    assert_eq!(build_probe(tokenize), build_probe(tokenize));
+    assert_eq!(build_probe(), build_probe());
 }
 
 #[test]

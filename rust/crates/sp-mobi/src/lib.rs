@@ -7,7 +7,9 @@
 //! | [`html`] | `src/mobi/html.ts`: tokens to MOBI 6 HTML, [`html::mobi_art`] and the picture gate |
 //! | [`probe`] | `tools/mobi-picture-probe.ts`'s book builder |
 //! | [`clock`] | the build time: `SOURCE_DATE_EPOCH`, else now |
-//! | [`js`] | the JavaScript whitespace and trim rules the port must keep |
+//!
+//! The notes, slug and cover rules are sp-fountain's, the one copy every
+//! renderer imports.
 //!
 //! The MOBI takes fountain-js tokens (sp-model's [`sp_model::Token`]) and
 //! [`sp_model::FormatOptions`]:
@@ -29,8 +31,6 @@
 
 pub mod clock;
 pub mod html;
-pub mod js;
-mod notes;
 pub mod palmdb;
 pub mod probe;
 pub mod writer;

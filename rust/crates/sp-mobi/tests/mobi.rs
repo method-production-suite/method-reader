@@ -1,8 +1,8 @@
 //! Ports tests/mobi.test.ts: the MOBI HTML mapping, the container, page
 //! markers, emphasis, font shifts, pictures and the EXTH 201 cover.
 //!
-//! fountain-js tokens and the EPUB renderer's picture answers come from
-//! tests/data/mobi-sources.json (tests/common/sources.rs). The two Calibre
+//! Sources are tokenized by sp-fountain; the EPUB renderer's picture
+//! answers come from tests/data/mobi-sources.json (tests/common/sources.rs). The two Calibre
 //! round trips are in tests/mobi_calibre.rs, and the images.pdf ones read
 //! the oracle's tokens and pictures.
 
@@ -712,6 +712,18 @@ fn never_two_breaks_in_a_row() {
     }
 }
 
+#[test]
+fn sp_fountain_tokenizes_every_source_as_fountain_js_did() {
+    for s in SOURCES.iter() {
+        assert_eq!(
+            sp_fountain::tokenize(&s.source).unwrap(),
+            s.tokens,
+            "{:?}",
+            s.source
+        );
+    }
+}
+
 // ── The TypeScript's own answers for every source (the renderer's parity) ──
 
 #[test]
@@ -728,10 +740,11 @@ fn every_source_renders_as_the_typescript_renders_it() {
     for s in SOURCES.iter() {
         for (key, format) in &formats {
             let want = &s.mobi[*key];
-            let art = mobi_art(&s.tokens, format, &have());
+            let toks = tokens(&s.source);
+            let art = mobi_art(&toks, format, &have());
             assert_eq!(art.order, want.order, "{key}: {:?}", s.source);
             assert_eq!(art.cover_index, want.cover_index, "{key}: {:?}", s.source);
-            let html = tokens_to_mobi_html(&s.tokens, &meta("T", Some("A")), format, &art);
+            let html = tokens_to_mobi_html(&toks, &meta("T", Some("A")), format, &art);
             assert_eq!(html, want.html, "{key}: {:?}", s.source);
             checked += 1;
         }

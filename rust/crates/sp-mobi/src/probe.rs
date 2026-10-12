@@ -13,11 +13,9 @@
 //! Every run writes the same bytes: the pictures are drawn from seeded
 //! static, and each book is built at [`BUILT_AT`].
 //!
-//! Two pieces wait for crates being ported beside this one, and are taken as
-//! arguments or left out until then:
-//! - the tokenizer (sp-fountain): [`build_probe`] takes it as a function;
-//! - the probe's EPUB (sp-epub), which the TypeScript tool writes beside the
-//!   .mobi files for comparison. [`probe_script`] is its input too.
+//! One piece waits for a crate being ported beside this one: the probe's
+//! EPUB (sp-epub), which the TypeScript tool writes beside the .mobi files
+//! for comparison. [`probe_script`] is its input too.
 //!
 //! The PNGs are this module's own encoding (adaptive filters, zlib at level
 //! 9 through miniz_oxide), so their bytes differ from node:zlib's while
@@ -26,10 +24,10 @@
 
 use std::collections::HashSet;
 
+use sp_fountain::{is_safe_image_file, tokenize};
 use sp_model::{DEFAULT_FORMAT_OPTIONS, Token, TokenType};
 
 use crate::html::{MobiMeta, mobi_art, tokens_to_mobi_html};
-use crate::notes::is_safe_image_file;
 use crate::writer::{MobiInput, build_mobi};
 
 /// The combined book's file.
@@ -326,9 +324,10 @@ fn strip_tags(s: &str) -> String {
 }
 
 /// The books: the combined one with all three pictures, and each picture
-/// alone in a book of its own, smallest first. `tokenize` is fountain-js's
-/// `parse(text, true).tokens` (sp-fountain's tokenizer).
-pub fn build_probe(tokenize: impl Fn(&str) -> Vec<Token>) -> ProbeBooks {
+/// alone in a book of its own, smallest first, each text tokenized as
+/// `convertFountain` tokenizes it.
+pub fn build_probe() -> ProbeBooks {
+    let tokenize = |text: &str| tokenize(text).expect("the probe's own script tokenizes");
     let pictures = probe_pictures();
     let combined = probe_mobi(
         &tokenize(&probe_script(&pictures, "Picture Probe")),

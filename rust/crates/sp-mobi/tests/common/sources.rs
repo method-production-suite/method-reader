@@ -3,9 +3,8 @@
 //! tests/data/mobi-sources.ts):
 //!
 //! - `tokens`: fountain-js 1.2.4's tokens, which the TypeScript tests get
-//!   from `new Fountain().parse(source, true)`. sp-fountain's tokenizer is
-//!   being ported beside this crate; once it lands, these tests can parse
-//!   the sources themselves and check the tokenizer against this file.
+//!   from `new Fountain().parse(source, true)`. The tests tokenize with
+//!   sp-fountain and check it against these.
 //! - `epub`: the EPUB renderer's `usedImages` and `coverImage` for three
 //!   formats and two picture sets, which the TypeScript tests asked
 //!   `tokensToBody` for (sp-epub is being ported too).
@@ -54,7 +53,10 @@ pub fn entry(source: &str) -> &'static Source {
         .unwrap_or_else(|| panic!("no tokens for {source:?}: add it to tests/data/mobi-sources.ts"))
 }
 
-/// fountain-js's tokens for `source`.
+/// The tokens for `source`, from sp-fountain's tokenizer (which
+/// tests/mobi.rs checks against fountain-js's recorded answer for every
+/// source).
 pub fn tokens(source: &str) -> Vec<Token> {
-    entry(source).tokens.clone()
+    let _ = entry(source);
+    sp_fountain::tokenize(source).expect("the source tokenizes")
 }

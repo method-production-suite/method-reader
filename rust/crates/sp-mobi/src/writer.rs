@@ -16,7 +16,7 @@
 use std::fmt;
 use std::sync::LazyLock;
 
-use regex::Regex;
+use sp_fountain::jsre::{Regex, group};
 
 use crate::clock;
 use crate::palmdb::{ByteWriter, exth_record, hash32, len32, palm_database};
@@ -81,8 +81,8 @@ impl std::error::Error for MobiError {}
 
 const TEXT_RECORD_SIZE: usize = 4096;
 
-static RECINDEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"recindex="([0-9]+)""#).expect("a valid pattern"));
+/// `/recindex="(\d+)"/g`.
+static RECINDEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"recindex="(\d+)""#, "g"));
 
 /// Split UTF-8 bytes into chunks of at most `size`, never inside a codepoint.
 fn split_utf8(bytes: &[u8], size: usize) -> Vec<&[u8]> {
@@ -121,8 +121,12 @@ pub fn build_mobi(input: &MobiInput) -> Result<Vec<u8>, MobiError> {
     // record sits there: past the last picture that is FLIS, and 00000 is
     // the last text record. So a number the records cannot answer puts the
     // wrong record on the page rather than leaving a picture out.
-    for m in RECINDEX.captures_iter(&input.html) {
-        let n = &m[1];
+    let html: Vec<char> = input.html.chars().collect();
+    let mut from = 0;
+    while let Some(caps) = RECINDEX.find_from(&html, from) {
+        from = caps[0].map_or(html.len(), |(_, end)| end);
+        let n = group(&html, &caps, 1).unwrap_or_default();
+        let n = n.as_str();
         let in_range = n
             .parse::<u128>()
             .ok()

@@ -20,11 +20,9 @@
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-use regex::Regex;
+use sp_fountain::jsre::{Regex, group};
+use sp_fountain::{fmt_size_step, is_mini_slug, js, pick_cover, renders_image, strip_notes};
 use sp_model::{FormatOptions, SizeStep, Token, TokenType};
-
-use crate::js::{self, JS_SPACE};
-use crate::notes::{fmt_size_step, is_mini_slug, pick_cover, renders_image, strip_notes};
 
 /// The title and author the title page shows.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -84,7 +82,7 @@ pub fn mobi_art(tokens: &[Token], format: &FormatOptions, have: &HashSet<String>
         }
     }
     let cover_index =
-        pick_cover(tokens, format, have).and_then(|file| order.iter().position(|f| *f == file));
+        pick_cover(tokens, format, have).and_then(|c| order.iter().position(|f| *f == c.file));
     MobiArt { order, cover_index }
 }
 
@@ -107,41 +105,39 @@ fn esc(s: &str) -> String {
     out
 }
 
-/// One emphasis pattern: `open(?!\s)([^m]+?)(?<!\s)close`, which the regex
-/// crate spells without lookaround: the run between the marks is every
-/// character up to the next mark, so it must start and end on non-space.
-fn emphasis(mark: &str, class: &str) -> Regex {
-    let ns = format!("[^{class}{JS_SPACE}]");
-    Regex::new(&format!("{mark}({ns}(?:[^{class}]*{ns})?){mark}")).expect("a valid pattern")
+/// One literal JavaScript pattern, compiled once.
+macro_rules! js_regex {
+    ($name:ident, $pattern:expr, $flags:expr) => {
+        static $name: LazyLock<Regex> = LazyLock::new(|| Regex::new($pattern, $flags));
+    };
 }
 
-static BOLD_ITALIC: LazyLock<Regex> = LazyLock::new(|| emphasis(r"\*\*\*", r"*"));
-static BOLD: LazyLock<Regex> = LazyLock::new(|| emphasis(r"\*\*", r"*"));
-static ITALIC: LazyLock<Regex> = LazyLock::new(|| emphasis(r"\*", r"*"));
-static UNDERLINE: LazyLock<Regex> = LazyLock::new(|| emphasis("_", "_"));
+js_regex!(BOLD_ITALIC, r"\*\*\*(?!\s)([^*]+?)(?<!\s)\*\*\*", "g");
+js_regex!(BOLD, r"\*\*(?!\s)([^*]+?)(?<!\s)\*\*", "g");
+js_regex!(ITALIC, r"\*(?!\s)([^*]+?)(?<!\s)\*", "g");
+js_regex!(UNDERLINE, r"_(?!\s)([^_]+?)(?<!\s)_", "g");
+js_regex!(
+    BLOCK_OPEN,
+    r"^<(p|blockquote|center|table|div|h[1-6])\b[^>]*>",
+    ""
+);
+js_regex!(PAGE_MARKER, r"^pg\s+(\S+)$", "");
+js_regex!(TRANSITION_PREFIX, r"^>\s*", "");
+
+/// `s.replace(re, open + '$1' + close)`, globally.
+fn wrap(re: &Regex, s: &str, open: &str, close: &str) -> String {
+    re.replace_with(s, true, |chars, caps| {
+        format!("{open}{}{close}", group(chars, caps, 1).unwrap_or_default())
+    })
+}
 
 /// Fountain inline emphasis to old-MOBI tags, applied AFTER escaping.
 fn inline(escaped: &str) -> String {
-    let s = BOLD_ITALIC.replace_all(escaped, "<b><i>$1</i></b>");
-    let s = BOLD.replace_all(&s, "<b>$1</b>");
-    let s = ITALIC.replace_all(&s, "<i>$1</i>");
-    UNDERLINE.replace_all(&s, "<u>$1</u>").into_owned()
+    let s = wrap(&BOLD_ITALIC, escaped, "<b><i>", "</i></b>");
+    let s = wrap(&BOLD, &s, "<b>", "</b>");
+    let s = wrap(&ITALIC, &s, "<i>", "</i>");
+    wrap(&UNDERLINE, &s, "<u>", "</u>")
 }
-
-/// `/^<(p|blockquote|center|table|div|h[1-6])\b[^>]*>/`.
-static BLOCK_OPEN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^<(?:p|blockquote|center|table|div|h[1-6])(?-u:\b)[^>]*>")
-        .expect("a valid pattern")
-});
-
-/// `/^pg\s+(\S+)$/`.
-static PAGE_MARKER: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(&format!(r"^pg[{JS_SPACE}]+([^{JS_SPACE}]+)$")).expect("a valid pattern")
-});
-
-/// `/^>\s*/`.
-static TRANSITION_PREFIX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(&format!(r"^>[{JS_SPACE}]*")).expect("a valid pattern"));
 
 fn size_word(step: SizeStep) -> &'static str {
     match step {
@@ -195,9 +191,10 @@ impl Out {
     /// A block that takes the pending page marker, if it can hold one.
     fn push(&mut self, mut s: String) {
         if let Some(marker) = &self.pending_marker
-            && let Some(open) = BLOCK_OPEN.find(&s)
+            && let Some(open) = BLOCK_OPEN.captures(&s)
         {
-            s.insert_str(open.end(), marker);
+            let at = open[0].as_deref().map_or(0, str::len);
+            s.insert_str(at, marker);
             self.pending_marker = None;
         }
         self.place(s);
@@ -329,7 +326,7 @@ pub fn tokens_to_mobi_html(
                 o.close_speech(&mut speech);
                 o.push(format!(
                     "<p align=\"right\">{}</p>",
-                    esc(&TRANSITION_PREFIX.replace(&text, ""))
+                    esc(&TRANSITION_PREFIX.replace_with(&text, false, |_, _| String::new()))
                 ));
             }
             TokenType::Centered => {
@@ -339,9 +336,10 @@ pub fn tokens_to_mobi_html(
             TokenType::Synopsis => {
                 // Emits no block of its own: it waits for the next one.
                 if let Some(m) = PAGE_MARKER.captures(js::trim(&text)) {
+                    let page = m[1].clone().unwrap_or_default();
                     o.pending_marker = Some(format!(
                         "<span class=\"page-marker\"><font size=\"-2\">{}.</font></span>",
-                        esc(&m[1])
+                        esc(&page)
                     ));
                 }
             }
