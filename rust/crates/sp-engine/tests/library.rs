@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 use sp_engine::env::Env;
 use sp_engine::fsx::testing::{Fault, fail_next};
 use sp_engine::library::{adopt_sidecar, env_library_override, library_output, library_root};
-use sp_engine::nodepath::{host, win32};
+use sp_engine::nodepath::{host, posix, win32};
 use sp_engine::settings::app::write_app_settings;
 
 /// `guardedRoot`: libraryRoot with the guard's SCREEPUB_CONFIG_DIR folded
@@ -55,9 +55,10 @@ fn a_fake_home_that_is_real_and_writable_is_exactly_the_hole() {
         library_root("darwin", &env_of(&[("HOME", &home)]), None),
         "/poisoned"
     );
+    // Joined by darwin's rules, whatever this host's separator is.
     assert_eq!(
         guarded_root("darwin", &[("HOME", &home)]),
-        j(&[&home, "Documents", "Screepub"])
+        posix::join(&[home.as_str(), "Documents", "Screepub"])
     );
 }
 
@@ -577,12 +578,20 @@ fn the_marker_is_json_stringify_two_spaces_and_a_newline() {
     let s = Scratch::new("library");
     let root = s.dir("lib");
     let scripts = s.dir("scripts");
-    let pdf = j(&[&scripts, "Quote \"Me\".pdf"]);
+    // Windows forbids `"` in a name; there the path's own backslashes are
+    // what the marker must escape.
+    let name = if cfg!(windows) {
+        "Quote 'Me'.pdf"
+    } else {
+        "Quote \"Me\".pdf"
+    };
+    let pdf = j(&[&scripts, name]);
     write(&pdf, "x");
     let output = library_output(&pdf, &root).unwrap();
     let marker = common::read(&j(&[&host::dirname(&output), "source.json"]));
     let mut quoted = String::new();
     sp_engine::jsjson::write_string(&mut quoted, &pdf);
+    assert!(quoted.contains('\\'), "an escape to check: {quoted}");
     assert_eq!(marker, format!("{{\n  \"source\": {quoted}\n}}\n"));
 }
 

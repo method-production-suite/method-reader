@@ -489,11 +489,11 @@ fn under_library_the_picture_folder_sits_in_the_scripts_own_library_folder() {
     let res = ran.json();
     assert_eq!(
         res["fountainPath"],
-        s(&root.join("Plates/Plates.fountain")).as_str()
+        common::join(&s(&root), "Plates/Plates.fountain").as_str()
     );
     assert_eq!(
         res["imagesPath"],
-        s(&root.join("Plates/Plates.images")).as_str()
+        common::join(&s(&root), "Plates/Plates.images").as_str()
     );
     assert_eq!(
         list_dir(&root.join("Plates/Plates.images")),
