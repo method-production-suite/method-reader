@@ -1,11 +1,10 @@
-//! Ports the cli_build half of tests/tool-temp-folders.test.ts: the tools
-//! that make a temp folder remove it again, on the way out of a failure as
-//! well as a pass.
+//! Ports tests/tool-temp-folders.test.ts: the tools that make a temp folder
+//! (smoke-cli, smoke-bundle, verify-signing) remove it again, on the way
+//! out of a failure as well as a pass.
 //!
 //! Each tool runs as a real `xtask` process with its temp folder pointed at
 //! a folder of this test's own, so whatever it leaves behind shows up here
-//! and never lands in the shared temp folder. smoke-bundle's check belongs
-//! to the `packaging` module's tests.
+//! and never lands in the shared temp folder.
 
 mod cli_build_common;
 
@@ -128,6 +127,29 @@ fn verify_signing_removes_its_work_folder_when_the_image_will_not_mount_and_stil
     );
     let (code, stderr, left) = with_own_tmp(&scratch, &args, Some(&bin));
     assert!(stderr.contains("hdiutil attach failed"), "{stderr}");
+    assert_eq!(code, 1);
+    assert!(left.is_empty(), "left behind: {left:?}");
+}
+
+#[test]
+fn smoke_bundle_removes_its_work_folder_after_a_refusal_and_still_fails() {
+    let scratch = Scratch::new("temp-smoke-bundle");
+    let bundle = scratch.join("not-a-bundle.txt").display().to_string();
+    let (code, stderr, left) = with_own_tmp(
+        &scratch,
+        &[
+            "smoke-bundle",
+            "--bundle",
+            &bundle,
+            "--expect-version",
+            "0.0.0",
+        ],
+        None,
+    );
+    assert!(
+        stderr.contains("is not a .deb, .rpm, .dmg or .exe"),
+        "{stderr}"
+    );
     assert_eq!(code, 1);
     assert!(left.is_empty(), "left behind: {left:?}");
 }
