@@ -36,6 +36,38 @@ pub fn read_json(path: &Path) -> Option<Value> {
     Some(serde_json::from_str(&text).expect("oracle JSON parses"))
 }
 
+/// A committed fixture's PDF facts (`rust/oracle/<fixture>/pages.json`):
+/// what pdf.js said about `tests/fixtures/<fixture>.pdf`, standing in for
+/// the PDF itself until sp-pdf reads it.
+pub fn facts(fixture: &str) -> sp_parser::facts::DocumentFacts {
+    let v = read_json(&oracle(fixture).join("pages.json"))
+        .unwrap_or_else(|| panic!("no oracle dump for {fixture}"));
+    serde_json::from_value(v).expect("pages.json reads into DocumentFacts")
+}
+
+/// `extractDocument(tests/fixtures/<fixture>.pdf)`.
+pub fn extract(fixture: &str) -> sp_parser::extract::ExtractResult {
+    sp_parser::extract::extract_document(&facts(fixture), None, None)
+}
+
+/// `parseLines(...extractDocument(tests/fixtures/<fixture>.pdf))`.
+pub fn parse(fixture: &str) -> sp_model::ParsedScreenplay {
+    let doc = extract(fixture);
+    sp_parser::parse_lines(&doc.lines, &doc.images)
+}
+
+/// The real-script dumps in rust/oracle-real/ (gitignored; empty on CI).
+/// Refer to them by number only, never by name.
+pub fn real_dumps() -> Vec<PathBuf> {
+    dumps("oracle-real")
+}
+
+/// A real script's facts, from its dump folder.
+pub fn facts_at(dir: &Path) -> sp_parser::facts::DocumentFacts {
+    let v = read_json(&dir.join("pages.json")).expect("pages.json");
+    serde_json::from_value(v).expect("pages.json reads into DocumentFacts")
+}
+
 /// Where two JSON values first differ, as a path and both sides: for
 /// failure messages that point at the difference instead of printing both.
 pub fn first_diff(a: &Value, b: &Value, path: &str) -> Option<String> {
