@@ -110,7 +110,12 @@ fn check_writable(path: &str) -> Result<(), EngineError> {
         let meta = std::fs::metadata(path).map_err(|e| {
             EngineError::Fs(crate::errors::FsError::from_io(&e, "access", path, None))
         })?;
-        if meta.permissions().readonly() {
+        // libuv's access(W_OK) on Windows refuses a READONLY file but
+        // ignores the attribute on a folder, where Windows sets it on any
+        // customized folder (Documents, Music, a OneDrive folder, one with
+        // its own icon) without making it unwritable. Reading it there
+        // refused exactly the folders a person is likely to pick.
+        if meta.permissions().readonly() && !meta.is_dir() {
             return Err(EngineError::Fs(crate::errors::FsError::with_code(
                 "EPERM",
                 format!("EPERM: operation not permitted, access '{path}'"),
