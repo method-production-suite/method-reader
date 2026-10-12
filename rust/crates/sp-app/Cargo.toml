@@ -33,6 +33,9 @@ unicode-normalization = "0.1"
 unicode-general-category = "1.1"
 webbrowser = "1.2"
 ureq = { version = "3", features = ["json"] }
+# The updater transport and the consent carried from the Tauri window.
+sp-update = { path = "../sp-update" }
 
 [dev-dependencies]
 egui_kittest = "0.36.2"
+tempfile = "3"

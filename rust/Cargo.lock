@@ -3831,6 +3831,8 @@ dependencies = [
  "mundy",
  "rfd",
  "serde_json",
+ "sp-update",
+ "tempfile",
  "unicode-general-category",
  "unicode-normalization",
  "ureq",
