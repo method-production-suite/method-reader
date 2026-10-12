@@ -39,6 +39,7 @@ use crate::app::{App, convert, panel};
 use crate::engine::{Engine, Reply, Request};
 use crate::model::convert::Platform;
 use crate::model::frame::Surface;
+use crate::model::intent::Intent;
 use crate::model::update::MemoryStorage;
 
 /// The window's pictures: what each one shows.
@@ -114,10 +115,14 @@ pub struct Args {
     pub out: PathBuf,
     /// SCREEPUB_LIBRARY, the only place a book may be read from.
     pub library: PathBuf,
+    /// `--panel read|edit` (optional, read): which half of the send
+    /// panel's Read it | Edit it the result shows.
+    pub panel: Intent,
 }
 
 pub const USAGE: &str = "usage: capture --shot drop|result|read --theme light|dark \
-     --width <points> --height <points> --demo <file.pdf> --out <file.rgba>\n\
+     --width <points> --height <points> --demo <file.pdf> --out <file.rgba> \
+     [--panel read|edit]\n\
      with SCREEPUB_CONFIG_DIR and SCREEPUB_LIBRARY set to scratch folders";
 
 /// The orders, read from the arguments and the environment. Every flag is
@@ -132,8 +137,8 @@ pub fn parse_args(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Resu
         }
     }
     let library = PathBuf::from(env("SCREEPUB_LIBRARY").unwrap_or_default());
-    const NAMES: [&str; 6] = ["shot", "theme", "width", "height", "demo", "out"];
-    let mut got: [Option<String>; 6] = Default::default();
+    const NAMES: [&str; 7] = ["shot", "theme", "width", "height", "demo", "out", "panel"];
+    let mut got: [Option<String>; 7] = Default::default();
     let mut it = args.iter();
     while let Some(a) = it.next() {
         let Some(name) = a.strip_prefix("--") else {
@@ -150,7 +155,12 @@ pub fn parse_args(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Resu
             .ok_or_else(|| format!("capture: --{name} needs a value"))?;
         got[i] = Some(value.clone());
     }
-    let [shot, theme, width, height, demo, out] = got;
+    let [shot, theme, width, height, demo, out, panel] = got;
+    let panel = match panel.as_deref() {
+        None | Some("read") => Intent::Read,
+        Some("edit") => Intent::Edit,
+        Some(other) => return Err(format!("capture: no panel named {other}")),
+    };
     let need =
         |v: Option<String>, name: &str| v.ok_or_else(|| format!("capture: --{name} is required"));
     let shot = need(shot, "shot")?;
@@ -185,6 +195,7 @@ pub fn parse_args(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Resu
         demo,
         out,
         library,
+        panel,
     })
 }
 
@@ -431,6 +442,19 @@ fn converted(app: &App) -> Result<bool, String> {
 /// Drive the window into `shot` and let it settle. `demo` is dropped on
 /// the well as a file from the desktop would be.
 pub fn reach(s: &mut dyn Stepper, shot: Shot, demo: &str, limit: Duration) -> Result<(), String> {
+    reach_with(s, shot, Intent::Read, demo, limit)
+}
+
+/// [`reach`], with the send panel on `panel`'s half: chosen as a click
+/// would choose it, less the write to app settings (the picture is of the
+/// panel, not the file).
+pub fn reach_with(
+    s: &mut dyn Stepper,
+    shot: Shot,
+    panel: Intent,
+    demo: &str,
+    limit: Duration,
+) -> Result<(), String> {
     let limit = Instant::now() + limit;
     s.app_mut().picture_mode = true;
     s.step();
@@ -461,6 +485,7 @@ pub fn reach(s: &mut dyn Stepper, shot: Shot, demo: &str, limit: Duration) -> Re
             until(s, "the first page", limit, &|app| {
                 Ok(app.views.peek(Place::FirstPage).is_some())
             })?;
+            s.app_mut().panel.intent = panel;
         }
         Shot::Read => {
             s.app_mut().go_to(Surface::Read);

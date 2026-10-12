@@ -740,7 +740,7 @@ fn an_unknown_key_is_refused_naming_every_key_this_verb_may_write() {
     assert_eq!(code_of(&err), "usage");
     assert_eq!(
         err.message(),
-        "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \"theme\""
+        "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage, typewriterSounds and panelIntent, not \"theme\""
     );
 }
 
@@ -767,6 +767,42 @@ fn a_device_is_stored_reported_back_and_removed_by_null() {
     let cleared = set(&file, r#"{"readerDevice":null}"#);
     assert_eq!(cleared.reader_device, None);
     assert!(!read_app_settings(&file).contains_key("readerDevice"));
+}
+
+// ---- panelIntent (the Rust window's Read it | Edit it; new, not parity) ----
+
+#[test]
+fn the_panel_intent_defaults_to_read_is_stored_and_reset_by_null() {
+    let sc = Scratch::new();
+    let file = sc.settings_file();
+    assert_eq!(read(&file).panel_intent, "read");
+    let stored = set(&file, r#"{"panelIntent":"edit"}"#);
+    assert_eq!(stored.panel_intent, "edit");
+    assert_eq!(read_app_settings(&file)["panelIntent"], json!("edit"));
+    let cleared = set(&file, r#"{"panelIntent":null}"#);
+    assert_eq!(cleared.panel_intent, "read");
+    assert!(!read_app_settings(&file).contains_key("panelIntent"));
+}
+
+#[test]
+fn an_unknown_panel_intent_is_refused_and_the_file_is_untouched() {
+    let sc = Scratch::new();
+    let file = sc.settings_file();
+    set(&file, r#"{"panelIntent":"edit"}"#);
+    let before = std::fs::read_to_string(&file).unwrap();
+    for bad in ["\"write\"", "1", "true", "\"Edit\""] {
+        let err = refused(&file, &format!("{{\"panelIntent\":{bad}}}"));
+        assert_eq!(code_of(&err), "bad-settings", "{bad}");
+        assert_eq!(err.message(), "panelIntent must be read, edit or null");
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), before);
+    }
+    // A stored value the window never wrote reads as the default.
+    write_app_settings(
+        &vec![("panelIntent".into(), Some(json!("sideways")))],
+        &file,
+    )
+    .unwrap();
+    assert_eq!(read(&file).panel_intent, "read");
 }
 
 #[test]

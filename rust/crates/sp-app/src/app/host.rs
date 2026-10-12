@@ -511,11 +511,16 @@ impl Speaker for FakeSpeaker {
     }
 }
 
+/// A Save box's filter: the type's name and its extensions.
+pub type SaveFilter = (String, Vec<String>);
+
 /// Dialogs that answer from a script, and remember being asked.
 #[derive(Clone, Default)]
 pub struct FakeDialogs {
     pub answers: Arc<Mutex<Vec<Option<String>>>>,
     pub asked: Arc<Mutex<Vec<String>>>,
+    /// Each Save box's filter: the type's name and its extensions.
+    pub filters: Arc<Mutex<Vec<SaveFilter>>>,
 }
 
 impl FakeDialogs {
@@ -537,7 +542,8 @@ impl Dialogs for FakeDialogs {
     fn pick_folder(&self, start: &str) -> Option<String> {
         self.next(format!("folder {start}"))
     }
-    fn save(&self, name: &str, _filter: &(String, Vec<String>)) -> Option<String> {
+    fn save(&self, name: &str, filter: &(String, Vec<String>)) -> Option<String> {
+        self.filters.lock().expect("fake").push(filter.clone());
         self.next(format!("save {name}"))
     }
 }

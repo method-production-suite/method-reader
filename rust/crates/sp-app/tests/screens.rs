@@ -81,7 +81,7 @@ fn read_and_settings_are_absent_until_a_script_is_open() {
     convert(&w, &mut h);
     h.get_by_role_and_label(Role::Tab, "Read");
     h.get_by_role_and_label(Role::Tab, "Settings");
-    h.get_by_role(Role::TabList);
+    h.get_by_role_and_label(Role::TabList, "Screepub");
 }
 
 // desktop-ui.test.ts: "the Convert page asks once whether to look for new versions"
@@ -134,7 +134,7 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
             .is_none(),
         "a Kindle on a Mac is proven"
     );
-    for link in ["Read it", "Settings", "Convert another"] {
+    for link in ["Open in Read", "Settings", "Convert another"] {
         h.get_by_role_and_label(Role::Button, link);
     }
 }

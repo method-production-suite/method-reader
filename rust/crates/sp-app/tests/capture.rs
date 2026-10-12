@@ -60,6 +60,21 @@ fn orders(demo: &Path) -> Vec<String> {
 // ------------------------------------------------------------------ orders
 
 #[test]
+fn the_panel_half_is_optional_and_named() {
+    use sp_app::model::intent::Intent;
+    let d = demo();
+    let mut o = orders(&d);
+    o.extend(strings(&["--panel", "edit"]));
+    assert_eq!(parse_args(&o, &scratch_env).unwrap().panel, Intent::Edit);
+    let mut bad = orders(&d);
+    bad.extend(strings(&["--panel", "write"]));
+    assert_eq!(
+        parse_args(&bad, &scratch_env).unwrap_err(),
+        "capture: no panel named write"
+    );
+}
+
+#[test]
 fn its_orders_are_one_shot_in_one_theme_at_one_size() {
     let d = demo();
     let a = parse_args(&orders(&d), &scratch_env).unwrap();
@@ -73,6 +88,7 @@ fn its_orders_are_one_shot_in_one_theme_at_one_size() {
             demo: d,
             out: PathBuf::from("/scratch/result-dark.rgba"),
             library: PathBuf::from("/scratch/library"),
+            panel: sp_app::model::intent::Intent::Read,
         }
     );
 }

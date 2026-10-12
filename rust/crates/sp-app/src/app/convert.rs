@@ -684,7 +684,7 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
             ui.add_space(layout::SPACE[3]);
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = layout::SPACE[6];
-                for (words, go) in [("Read it", 1), ("Settings", 2), ("Convert another", 3)] {
+                for (words, go) in [("Open in Read", 1), ("Settings", 2), ("Convert another", 3)] {
                     let b = widgets::button(ui, &t, Look::Quiet, words, true);
                     app.stop(b.id, true);
                     if b.clicked() {

@@ -1,8 +1,9 @@
 //! Port of `src/cli-app-settings.ts`: the `app-settings` verb. Where books
 //! land, and what new scripts start from. Writes `libraryPath`,
 //! `formatDefaults`, `keepScriptSettings` and the window's three remembered
-//! choices (`readerDevice`, `animatePage`, `typewriterSounds`); never
-//! `lastRoute`. Returns a result; the CLI owns stdout.
+//! choices (`readerDevice`, `animatePage`, `typewriterSounds`), and the
+//! Rust window's `panelIntent` (read or edit, new behavior, not in the
+//! TypeScript); never `lastRoute`. Returns a result; the CLI owns stdout.
 
 use serde::Serialize;
 use serde_json::Value;
@@ -17,20 +18,22 @@ use crate::library::{
     resolved_if_absolute,
 };
 use crate::settings::app::{
-    Patch, READER_DEVICES, app_settings_path, home_folder, read_app_settings, write_app_settings,
+    PANEL_INTENTS, Patch, READER_DEVICES, app_settings_path, home_folder, read_app_settings,
+    write_app_settings,
 };
 use crate::settings::app_defaults::{
     app_default_options, app_defaults_customized, keeps_script_settings,
 };
 
 /// The only keys this verb may write.
-const WRITABLE_KEYS: [&str; 6] = [
+const WRITABLE_KEYS: [&str; 7] = [
     "libraryPath",
     "formatDefaults",
     "keepScriptSettings",
     "readerDevice",
     "animatePage",
     "typewriterSounds",
+    "panelIntent",
 ];
 
 /// `AppSettingsOptions`.
@@ -78,6 +81,8 @@ pub struct AppSettingsResult {
     pub reader_device: Option<String>,
     pub animate_page: bool,
     pub typewriter_sounds: bool,
+    /// "read" (the default) or "edit".
+    pub panel_intent: String,
 }
 
 fn bad(message: impl Into<String>) -> EngineError {
@@ -169,6 +174,14 @@ fn validated_reader_device(value: &Value) -> Result<Option<Value>, EngineError> 
     }
 }
 
+fn validated_panel_intent(value: &Value) -> Result<Option<Value>, EngineError> {
+    match value {
+        Value::Null => Ok(None),
+        Value::String(s) if PANEL_INTENTS.contains(&s.as_str()) => Ok(Some(value.clone())),
+        _ => Err(bad("panelIntent must be read, edit or null")),
+    }
+}
+
 fn build_answer(file: &str, platform: &str, env: &Env) -> AppSettingsResult {
     let stored = read_app_settings(file);
     let reader_device = match stored.get("readerDevice") {
@@ -191,6 +204,10 @@ fn build_answer(file: &str, platform: &str, env: &Env) -> AppSettingsResult {
         reader_device,
         animate_page: stored.get("animatePage") != Some(&Value::Bool(false)),
         typewriter_sounds: stored.get("typewriterSounds") == Some(&Value::Bool(true)),
+        panel_intent: match stored.get("panelIntent") {
+            Some(Value::String(i)) if PANEL_INTENTS.contains(&i.as_str()) => i.clone(),
+            _ => "read".into(),
+        },
     }
 }
 
@@ -223,7 +240,7 @@ pub fn app_settings_command(
                 return Err(CliError::new(
                     ErrorCode::Usage,
                     format!(
-                        "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage and typewriterSounds, not \"{key}\""
+                        "app-settings --set takes only libraryPath, formatDefaults, keepScriptSettings, readerDevice, animatePage, typewriterSounds and panelIntent, not \"{key}\""
                     ),
                 )
                 .into());
@@ -262,6 +279,10 @@ pub fn app_settings_command(
                 "typewriterSounds".into(),
                 validated_switch("typewriterSounds", v)?,
             ));
+        }
+
+        if let Some(v) = patch.get("panelIntent") {
+            write.push(("panelIntent".into(), validated_panel_intent(v)?));
         }
 
         // Phase 2: the one side effect, last.

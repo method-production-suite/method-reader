@@ -355,7 +355,7 @@ pub fn default_answer(request: &Request) -> Value {
         Request::AppSettings | Request::SetAppSettings { .. } => json!({
             "ok": true, "home": "/Users/reader",
             "library": {"path": "/Users/reader/Screepub", "chosen": null, "platformDefault": "/Users/reader/Screepub", "fromEnv": false},
-            "readerDevice": null, "animatePage": true, "typewriterSounds": false, "keepScriptSettings": true,
+            "readerDevice": null, "animatePage": true, "typewriterSounds": false, "panelIntent": "read", "keepScriptSettings": true,
             "formatDefaults": defaults, "shippedDefaults": defaults,
         }),
         Request::Reveal { .. } => json!({"ok": true}),
