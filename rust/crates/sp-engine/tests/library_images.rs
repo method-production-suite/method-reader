@@ -526,7 +526,7 @@ fn one_refusal_is_singular_and_says_where_to_look() {
     let w = &image_folder_warnings(&counts(0, 1, 0, 0))[0];
     assert!(w.starts_with("1 picture ") && !w.starts_with("1 pictures"));
     assert!(w.contains("picture folder"));
-    assert!(!w.contains('—'));
+    assert!(!w.contains('\u{2014}'));
     assert!(w.ends_with('.'));
 }
 
@@ -541,7 +541,7 @@ fn a_folder_holding_more_than_the_book_can_carry_says_so() {
     assert!(w.contains(&format!("{} pictures", MAX_IMAGES + 5)));
     assert!(w.contains(&format!("first {MAX_IMAGES}")));
     assert!(w.contains("picture folder"));
-    assert!(!w.contains('—'));
+    assert!(!w.contains('\u{2014}'));
 }
 
 #[test]
@@ -583,7 +583,7 @@ fn not_found_and_not_read_are_separate_sentences() {
         out.iter()
             .any(|w| w.starts_with("1 picture this script shows could not be found"))
     );
-    assert!(out.iter().all(|w| !w.contains('—')));
+    assert!(out.iter().all(|w| !w.contains('\u{2014}')));
 }
 
 // ---- pruneImages ----

@@ -383,7 +383,7 @@ fn no_string_a_person_reads_carries_an_em_dash() {
     for platform in ["darwin", "win32", "linux", "freebsd"] {
         for s in all() {
             let text = serde_json::to_string(&kfx_setup(&s, platform)).unwrap();
-            assert!(!text.contains('—'), "{platform}");
+            assert!(!text.contains('\u{2014}'), "{platform}");
         }
     }
 }
