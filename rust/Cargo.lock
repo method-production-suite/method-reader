@@ -5078,6 +5078,10 @@ version = "0.11.1"
 dependencies = [
  "serde_json",
  "sha2",
+ "sp-epub",
+ "sp-fountain",
+ "sp-mobi",
+ "sp-model",
  "zip",
 ]
 
