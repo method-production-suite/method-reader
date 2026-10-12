@@ -456,6 +456,91 @@ fn r3_under_the_fold_the_index_sits_above_the_script() {
     );
 }
 
+/// The window sizes the layout has rules for: the floor, the short and
+/// narrow breakpoints, the fold, the default and a large one.
+const SIZES: [[f32; 2]; 8] = [
+    [640.0, 480.0],
+    [720.0, 560.0],
+    [640.0, 800.0],
+    [1280.0, 480.0],
+    [900.0, 620.0],
+    [900.0, 800.0],
+    [1280.0, 800.0],
+    [1800.0, 1100.0],
+];
+
+// N9: the rev stamp is drawn whole inside the window on Read,
+// which fits the window rather than scrolling the page. It was clipped by
+// the window's bottom edge at 1280 by 800.
+#[test]
+fn n9_the_rev_stamp_is_whole_inside_the_window_on_read() {
+    // Every size, and the default and the floor again with the dead
+    // engine's line above the stamp.
+    let cases = SIZES
+        .map(|s| (s, false))
+        .into_iter()
+        .chain([([1280.0, 800.0], true), ([640.0, 480.0], true)]);
+    for ([width, height], dead) in cases {
+        let w = world();
+        if dead {
+            w.engine.once(
+                "version",
+                Reply::failed("could not start the Screepub engine"),
+            );
+        }
+        let mut h = harness_sized(&w, Platform::Mac, [width, height]);
+        convert(&w, &mut h);
+        h.get_by_role_and_label(Role::Tab, "Read").click();
+        steps(&mut h);
+        let stamp = h.get_by_role_and_label(Role::Button, "rev 0.11.1").rect();
+        let window = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(width, height));
+        assert!(
+            stamp.height() > 5.0 && window.contains_rect(stamp),
+            "at {width} by {height} (dead engine: {dead}) the stamp is at {stamp:?}"
+        );
+    }
+}
+
+/// Wheel the page itself (over the binding margin) as far down as it goes.
+fn scroll_page_to_end(h: &mut H, height: f32) {
+    h.event(egui::Event::PointerMoved(egui::pos2(20.0, height / 2.0)));
+    h.run_steps(2);
+    for _ in 0..5 {
+        h.event(egui::Event::MouseWheel {
+            unit: egui::MouseWheelUnit::Point,
+            delta: egui::vec2(0.0, -4000.0),
+            phase: egui::TouchPhase::Move,
+            modifiers: Modifiers::NONE,
+        });
+        h.run_steps(30);
+    }
+}
+
+// N9: the surfaces that scroll the page (Convert, empty and with a result;
+// Settings) end with the stamp whole inside the window.
+#[test]
+fn n9_at_the_end_of_a_scrolling_page_the_rev_stamp_is_whole() {
+    for [width, height] in SIZES {
+        let w = world();
+        let mut h = harness_sized(&w, Platform::Mac, [width, height]);
+        let window = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(width, height));
+        let check = |h: &mut H, what: &str| {
+            scroll_page_to_end(h, height);
+            let stamp = h.get_by_role_and_label(Role::Button, "rev 0.11.1").rect();
+            assert!(
+                stamp.height() > 5.0 && window.contains_rect(stamp),
+                "{what} at {width} by {height}: the stamp is at {stamp:?}"
+            );
+        };
+        check(&mut h, "Convert");
+        convert(&w, &mut h);
+        check(&mut h, "the result");
+        h.get_by_role_and_label(Role::Tab, "Settings").click();
+        steps(&mut h);
+        check(&mut h, "Settings");
+    }
+}
+
 #[test]
 fn r9_r10_pressing_a_scene_scrolls_to_it_and_marks_it() {
     let w = world();

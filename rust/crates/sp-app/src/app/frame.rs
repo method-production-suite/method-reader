@@ -382,9 +382,14 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         n.set_label(app.surface.label());
         n.push_labelled_by(tab_id(app.surface).accesskit_id());
     });
+    // Where a surface that fits the window (Read) must end for the foot
+    // below it to sit whole inside the window: the page's top, plus the
+    // window, less the foot.
+    let page_top = sheet_top - layout::SPACE[7];
+    let surface_end = page_top + window.y - foot_height(app, ui, block);
     match app.surface {
         Surface::Convert => convert::draw(app, ui, block, window),
-        Surface::Read => read::draw(app, ui, block, window),
+        Surface::Read => read::draw(app, ui, block, window, surface_end),
         Surface::Tune => tune::draw(app, ui, block, window),
     }
     // The foot: the update label beside the rev stamp, the dead-engine line
@@ -522,6 +527,26 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
         n.set_bounds(widgets::bounds(bar.response.rect));
         n.set_label("Screepub");
     });
+}
+
+/// How tall the foot `sheet` draws below a surface is: the gap above it,
+/// the dead-engine line if there is one, the stamp's row (as tall as the
+/// update label, its taller member) and the margin under it, with the
+/// spacing egui puts after each.
+fn foot_height(app: &App, ui: &Ui, block: layout::Span) -> f32 {
+    let gap = ui.spacing().item_spacing.y;
+    let font = theme::structure(size::FINE);
+    let row = ui.fonts_mut(|f| f.row_height(&font)) + layout::SPACE[1];
+    let fault = app.engine_fault.as_ref().map_or(0.0, |fault| {
+        let galley = ui.painter().layout(
+            fault.clone(),
+            theme::structure(size::NOTE),
+            Color32::PLACEHOLDER,
+            block.width.min(66.0 * 8.0),
+        );
+        galley.size().y + gap
+    });
+    layout::SPACE[10] + fault + row + gap + layout::SPACE[5]
 }
 
 /// The rev stamp: a printer's mark at the foot of the page, and a button.
