@@ -397,6 +397,11 @@ fn the_result_shot_is_the_converted_demo_with_the_device_cards_and_its_first_pag
     assert_eq!(app.convert.view, convert::View::Done);
     assert_eq!(app.panel.mode, Some(panel::Mode::Cards));
     assert!(app.views.peek(Place::FirstPage).is_some());
+    assert_eq!(
+        w.0.ctx.memory(|m| m.focused()),
+        None,
+        "a focus ring in the picture"
+    );
     assert_eq!(app.surface, Surface::Convert);
     assert!(app.quiet());
     assert!(refused.lock().unwrap().is_empty(), "{:?}", refused.lock());

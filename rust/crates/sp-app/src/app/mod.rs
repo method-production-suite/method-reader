@@ -105,7 +105,8 @@ pub struct App {
     /// Drawn for the README pictures (src/capture.rs), never set by the
     /// shipped window: the version stamp keeps its place but is not
     /// painted, and the Convert page's library slot is not drawn at all,
-    /// so a picture changes only when the window's look does.
+    /// so a picture changes only when the window's look does; and no
+    /// control keeps the keyboard's focus ring, since nobody is typing.
     pub picture_mode: bool,
 
     pub convert: convert::State,
@@ -474,6 +475,15 @@ impl App {
             if let Some(id) = first_stop(&plan) {
                 ui.memory_mut(|m| m.request_focus(id));
             }
+        }
+        if self.picture_mode {
+            // Nobody is at the keyboard in a picture: no control wears the
+            // focus ring the window's own focus restoring would give it.
+            ui.memory_mut(|m| {
+                if let Some(id) = m.focused() {
+                    m.surrender_focus(id);
+                }
+            });
         }
         panel::pay_brass(self, ui.ctx());
         if !self.quiet()
