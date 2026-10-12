@@ -1,0 +1,354 @@
+//! The artifacts a release publishes, as data: was the tables at the top of
+//! tools/build-app-bundle.ts.
+//!
+//! Every installer kind (deb, rpm, dmg, nsis) and the one updater kind
+//! (the macOS `.app.tar.gz`) with the container magic it must carry, the
+//! size floor it must clear, the bundler folder it is found in and the
+//! stable name it is published under. The same rows serve both apps: the
+//! Tauri window bundled today and the native egui window (sp-app) after
+//! cutover; only the size floor differs (see [`AppSource::floor_bytes`]).
+
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
+use std::path::{Path, PathBuf};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BundleOs {
+    Linux,
+    Macos,
+    Windows,
+}
+
+impl BundleOs {
+    pub fn name(self) -> &'static str {
+        match self {
+            BundleOs::Linux => "linux",
+            BundleOs::Macos => "macos",
+            BundleOs::Windows => "windows",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BundleArch {
+    X64,
+    Arm64,
+}
+
+impl BundleArch {
+    pub fn name(self) -> &'static str {
+        match self {
+            BundleArch::X64 => "x64",
+            BundleArch::Arm64 => "arm64",
+        }
+    }
+}
+
+/// Which window is being bundled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AppSource {
+    /// desktop/src-tauri, driven through `cargo tauri build`, with the
+    /// engine sidecar inside.
+    Tauri,
+    /// rust/crates/sp-app's `screepub-window`, assembled by this tool.
+    Native,
+}
+
+/// Every Tauri bundle carries the ~102 MB engine (the real arm64 .deb and
+/// .rpm measure ~44.3 MB compressed), so 10 MB is an unambiguous floor.
+pub const TAURI_FLOOR: u64 = 10_000_000;
+
+/// The native window has no sidecar: egui, wgpu and the linked engine in
+/// one binary. Not measured yet (no release build of sp-app exists); 2 MB
+/// is far under any egui+wgpu binary and far over a truncated write. Raise
+/// it once the first native bundle is measured.
+pub const NATIVE_FLOOR: u64 = 2_000_000;
+
+impl AppSource {
+    pub fn name(self) -> &'static str {
+        match self {
+            AppSource::Tauri => "tauri",
+            AppSource::Native => "native",
+        }
+    }
+
+    pub fn floor_bytes(self) -> u64 {
+        match self {
+            AppSource::Tauri => TAURI_FLOOR,
+            AppSource::Native => NATIVE_FLOOR,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MagicAt {
+    Head,
+    /// A UDIF image's `koly` block is the LAST 512 bytes of the file.
+    UdifTrailer,
+}
+
+/// One artifact kind.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Kind {
+    pub id: &'static str,
+    pub os: BundleOs,
+    /// The folder under `target/[<triple>/]release/bundle/`.
+    pub dir: &'static str,
+    pub ext: &'static str,
+    pub magic: &'static [u8],
+    pub magic_at: MagicAt,
+    pub floor_bytes: u64,
+}
+
+const ARCH_MAGIC: &[u8] = b"!<arch>\n";
+const RPM_MAGIC: &[u8] = &[0xed, 0xab, 0xee, 0xdb];
+const MZ_MAGIC: &[u8] = b"MZ";
+const KOLY_MAGIC: &[u8] = b"koly";
+const GZIP_MAGIC: &[u8] = &[0x1f, 0x8b];
+
+/// The one architecture a Mac bundle is built for, and its cargo triple.
+pub const MAC_ARCH: BundleArch = BundleArch::Arm64;
+pub const MAC_TARGET: &str = "aarch64-apple-darwin";
+
+/// The installers. No AppImage (linuxdeploy corrupted the Bun engine), no
+/// MSI (NSIS installs per user with no administrator prompt).
+pub const BUNDLE_KINDS: [Kind; 4] = [
+    Kind {
+        id: "deb",
+        os: BundleOs::Linux,
+        dir: "deb",
+        ext: ".deb",
+        magic: ARCH_MAGIC,
+        magic_at: MagicAt::Head,
+        floor_bytes: TAURI_FLOOR,
+    },
+    Kind {
+        id: "rpm",
+        os: BundleOs::Linux,
+        dir: "rpm",
+        ext: ".rpm",
+        magic: RPM_MAGIC,
+        magic_at: MagicAt::Head,
+        floor_bytes: TAURI_FLOOR,
+    },
+    Kind {
+        id: "dmg",
+        os: BundleOs::Macos,
+        dir: "dmg",
+        ext: ".dmg",
+        magic: KOLY_MAGIC,
+        magic_at: MagicAt::UdifTrailer,
+        floor_bytes: TAURI_FLOOR,
+    },
+    Kind {
+        id: "nsis",
+        os: BundleOs::Windows,
+        dir: "nsis",
+        ext: ".exe",
+        magic: MZ_MAGIC,
+        magic_at: MagicAt::Head,
+        floor_bytes: TAURI_FLOOR,
+    },
+];
+
+/// What the in-app updater downloads: the macOS `.app.tar.gz`, signed.
+pub const UPDATER_KINDS: [Kind; 1] = [Kind {
+    id: "app-tar",
+    os: BundleOs::Macos,
+    dir: "macos",
+    ext: ".app.tar.gz",
+    magic: GZIP_MAGIC,
+    magic_at: MagicAt::Head,
+    floor_bytes: TAURI_FLOOR,
+}];
+
+pub const SIGNATURE_EXT: &str = ".sig";
+pub const UPDATER_OVERLAY: &str = "tauri.updater.conf.json";
+
+/// The published name of `kind`. No version, ever: pages link to
+/// releases/latest/download/<name>. The arch is in the name only where more
+/// than one is built.
+pub fn released_name(kind: &Kind, _version: &str, arch: BundleArch) -> String {
+    match kind.id {
+        "deb" => format!(
+            "Screepub-linux-{}.deb",
+            if arch == BundleArch::X64 {
+                "amd64"
+            } else {
+                "arm64"
+            }
+        ),
+        "rpm" => format!(
+            "Screepub-linux-{}.rpm",
+            if arch == BundleArch::X64 {
+                "x86_64"
+            } else {
+                "aarch64"
+            }
+        ),
+        "dmg" => "Screepub-macOS.dmg".into(),
+        "nsis" => "Screepub-windows-x64-setup.exe".into(),
+        "app-tar" => "Screepub-macOS.app.tar.gz".into(),
+        other => panic!("no published name for kind {other}"),
+    }
+}
+
+/// The inverse of [`released_name`] for an updater kind: the arch a
+/// published name serves, or None when it is not this kind's.
+pub fn arch_of(kind: &Kind, released: &str) -> Option<BundleArch> {
+    (kind.id == "app-tar" && released == "Screepub-macOS.app.tar.gz").then_some(MAC_ARCH)
+}
+
+/// The `<os>-<arch>` keys of latest.json an updater kind answers for.
+pub fn platform_keys(kind: &Kind, _arch: BundleArch) -> Vec<&'static str> {
+    match kind.id {
+        "app-tar" => vec!["darwin-aarch64"],
+        _ => Vec::new(),
+    }
+}
+
+pub fn kinds_for_os(os: BundleOs) -> Vec<Kind> {
+    BUNDLE_KINDS
+        .iter()
+        .copied()
+        .filter(|k| k.os == os)
+        .collect()
+}
+
+pub fn updater_kinds_for_os(os: BundleOs) -> Vec<Kind> {
+    UPDATER_KINDS
+        .iter()
+        .copied()
+        .filter(|k| k.os == os)
+        .collect()
+}
+
+/// A kind with the floor of the app being bundled.
+pub fn for_app(kind: Kind, app: AppSource) -> Kind {
+    Kind {
+        floor_bytes: app.floor_bytes(),
+        ..kind
+    }
+}
+
+/// The `--bundles` value for `cargo tauri build`, pinned per OS and never
+/// the default (which on Linux includes an AppImage).
+pub fn bundle_list_for(os: BundleOs) -> &'static str {
+    match os {
+        BundleOs::Linux => "deb,rpm",
+        BundleOs::Macos => "app,dmg",
+        BundleOs::Windows => "nsis",
+    }
+}
+
+/// `<root>/target/[<triple>/]release/bundle/<dir>`: root is
+/// desktop/src-tauri for the Tauri window and rust/ for the native one.
+pub fn bundle_dir_for(dir: &str, target: Option<&str>, root: &Path) -> PathBuf {
+    let mut p = root.join("target");
+    if let Some(t) = target {
+        p.push(t);
+    }
+    p.join("release").join("bundle").join(dir)
+}
+
+/// The one file the bundler wrote, found by extension, never by
+/// reconstructing its name. `rw.*` is bundle_dmg's crash leftover.
+pub fn discover_artifact(dir: &Path, kind: &Kind) -> Result<PathBuf, String> {
+    let Ok(read) = std::fs::read_dir(dir) else {
+        return Err(format!(
+            "build-app-bundle: {}: no bundle directory at {}. cargo tauri build reported success and produced nothing there.",
+            kind.id,
+            dir.display()
+        ));
+    };
+    let mut found: Vec<String> = read
+        .filter_map(Result::ok)
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| n.ends_with(kind.ext) && !n.starts_with("rw."))
+        .collect();
+    found.sort();
+    if found.len() != 1 {
+        let listed = if found.is_empty() {
+            String::new()
+        } else {
+            format!(" ({})", found.join(", "))
+        };
+        return Err(format!(
+            "build-app-bundle: {}: expected exactly one {} in {}, found {}{listed}. A leftover from an earlier version is the usual cause; clear the directory and rebuild.",
+            kind.id,
+            kind.ext,
+            dir.display(),
+            found.len()
+        ));
+    }
+    Ok(dir.join(&found[0]))
+}
+
+fn bytes_at(path: &Path, n: usize, position: u64) -> Vec<u8> {
+    let Ok(mut f) = File::open(path) else {
+        return Vec::new();
+    };
+    if f.seek(SeekFrom::Start(position)).is_err() {
+        return Vec::new();
+    }
+    let mut buf = Vec::with_capacity(n);
+    let _ = f.take(n as u64).read_to_end(&mut buf);
+    buf
+}
+
+fn file_name(path: &Path) -> String {
+    path.file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default()
+}
+
+/// Checks what was PRODUCED: present, over the floor, and carrying its
+/// container's magic where that container keeps it.
+pub fn verify_bundle_file(path: &Path, kind: &Kind) -> Result<(), String> {
+    let Ok(meta) = std::fs::metadata(path) else {
+        return Err(format!(
+            "build-app-bundle: {}: nothing at {}",
+            kind.id,
+            path.display()
+        ));
+    };
+    let bytes = meta.len();
+    if bytes < kind.floor_bytes {
+        return Err(format!(
+            "build-app-bundle: {}: {} is {bytes} bytes, under the {}-byte floor. {}",
+            kind.id,
+            file_name(path),
+            kind.floor_bytes,
+            if kind.floor_bytes >= TAURI_FLOOR {
+                "Every bundle carries the ~102 MB engine."
+            } else {
+                "Every native bundle carries the whole window and its engine in one binary."
+            }
+        ));
+    }
+    let window = match kind.magic_at {
+        MagicAt::UdifTrailer => bytes_at(path, 512, bytes.saturating_sub(512)),
+        MagicAt::Head => bytes_at(path, kind.magic.len(), 0),
+    };
+    let ok = window.len() >= kind.magic.len() && window[..kind.magic.len()] == *kind.magic;
+    if !ok {
+        let got: Vec<String> = window
+            .iter()
+            .take(kind.magic.len())
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        return Err(format!(
+            "build-app-bundle: {}: {} does not carry the {} container magic at the {} (saw {}). A renamed file of another format is the usual cause.",
+            kind.id,
+            file_name(path),
+            kind.id,
+            if kind.magic_at == MagicAt::Head {
+                "start"
+            } else {
+                "UDIF trailer"
+            },
+            got.join(" ")
+        ));
+    }
+    Ok(())
+}

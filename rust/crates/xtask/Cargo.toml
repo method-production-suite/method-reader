@@ -42,7 +42,7 @@ sp-epub = { path = "../sp-epub" }
 # no aws-lc) is compiled in; roots from webpki-roots.
 ureq = { version = "3", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots"] }
 rustls-rustcrypto = "0.0.2-alpha"
-# The contents API, the minisign boxes and the capture's screenshots are base64.
+# The contents API, the minisign boxes, the updater signature and the capture's screenshots are base64.
 base64 = "0.22"
 # The capture tool (src/capture/): Chrome's DevTools protocol over a plain
 # ws://127.0.0.1 socket (no TLS feature), reading and diffing PNGs, and
@@ -50,6 +50,13 @@ base64 = "0.22"
 tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
 png = "0.18"
 signal-hook = { version = "0.4", default-features = false }
+# The updater archive's signature, made and checked the way tauri-cli 2.11.4
+# does: the same crate at the same pinned version (later 0.7.x releases
+# could not open a key encrypted with an empty password). Pure Rust.
+minisign = "=0.7.3"
+# The .app.tar.gz and the .deb's tars, written the way tauri-bundler wrote
+# them (tar::Builder, symlinks kept). Pure Rust; xattr support left off.
+tar = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 zip.workspace = true
