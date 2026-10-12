@@ -58,7 +58,7 @@ pub struct MobiArt {
 /// pictures, byte for byte. The EPUB, and the AZW3 and KFX made from it,
 /// keep both.
 ///
-/// The probe is [`crate::probe`] (today `bun tools/mobi-picture-probe.ts`).
+/// The probe is [`crate::probe`] (`cargo xtask mobi-picture-probe`).
 /// When it passes, this is the one line to change. A caller's own override
 /// for one build (the probe itself, and the tests that keep the records
 /// proven while the gate is shut) passes the picture set to [`mobi_art`]

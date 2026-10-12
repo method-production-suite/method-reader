@@ -32,6 +32,13 @@
 //! Needs: macOS on Apple silicon, cargo (rustup), bun 1.3.14 (the TAGGED
 //! window's engine is TypeScript; this checkout has none), the Tauri CLI
 //! 2.11.4 (`cargo install tauri-cli --version 2.11.4 --locked`), git.
+//!
+//! `prepare` is the ONE place left in the workspace that runs bun (or any
+//! JavaScript tool): it builds the old v0.11.1 window from its own tag,
+//! whose engine was TypeScript, because the handover has to start from the
+//! window people actually have. Nothing it builds ships, and no other
+//! command, test or workflow needs bun; xtask's tests/no_js_runtime.rs and
+//! tests/workflows.rs hold that.
 
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -234,6 +241,8 @@ fn prepare() -> Result<(), String> {
         serde_json::to_string_pretty(&overlay).expect("json"),
     )
     .map_err(|e| say(&e.to_string()))?;
+    // The one bun call left in the workspace (module docs): the TAGGED
+    // window's engine, built from the tag.
     sh(Command::new("bun")
         .args(["install", "--frozen-lockfile"])
         .current_dir(&tauri_src))?;

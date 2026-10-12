@@ -2,7 +2,7 @@
 //!
 //! Source-side assertions against the committed torture fixture. Device-side
 //! behavior (keeps, orphan control, transitions never beginning a page) can
-//! only be looked at on hardware: see `bun tools/device-checklist.ts`.
+//! only be looked at on hardware: see `cargo xtask device-checklist`.
 //!
 //! The PDF is the oracle's dump of `tests/fixtures/torture.pdf`
 //! (`common::extract("torture")`), and, as in the TypeScript, the text is

@@ -47,35 +47,17 @@ pub fn typescript_fdx(source: &str) -> Option<&'static str> {
     recorded(source).map(|r| r.fdx.as_str())
 }
 
-/// fountain-js 1.2.4's tokens for each inline Fountain source these tests
-/// use, recorded by tests/data/record-tokens.ts.
-///
-/// TODO(sp-fountain): once its tokenizer lands, tokenize `source` with it
-/// instead and keep only the recorded FDX; the tests' Fountain strings stay
-/// as they are, which is why they are kept as Fountain and not as tokens.
+/// fountain-js 1.2.4's tokens for an inline Fountain source: as the
+/// TypeScript recorded them for the sources it was asked about, and
+/// otherwise as sp-fountain's tokenizer (the fountain-js port, held to
+/// fountain-js by its own frozen cases) makes them. A new source has no
+/// TypeScript FDX to compare with, since the TypeScript is gone; it is
+/// checked by what the test asserts.
 pub fn tokens(source: &str) -> Vec<Token> {
     if let Some(r) = recorded(source) {
         return r.tokens.clone();
     }
-    // A new case: note its source so the recorder can tokenize it.
-    if std::env::var_os("SP_FDX_RECORD").is_some() {
-        use std::io::Write;
-        // Tests run on parallel threads: one line, one write, one at a time.
-        static WRITING: std::sync::Mutex<()> = std::sync::Mutex::new(());
-        let _held = WRITING.lock().unwrap();
-        let mut f = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(data_dir().join("pending-sources.jsonl"))
-            .unwrap();
-        let line = format!("{}\n", serde_json::to_string(source).unwrap());
-        f.write_all(line.as_bytes()).unwrap();
-        return Vec::new();
-    }
-    panic!(
-        "no recorded tokens for {source:?}: run the tests with SP_FDX_RECORD=1, then \
-         `bun rust/crates/sp-fdx/tests/data/record-tokens.ts`"
-    );
+    sp_fountain::tokenize(source).expect("sp-fountain tokenizes the test's Fountain")
 }
 
 /// The FDX for an inline Fountain source.

@@ -50,7 +50,7 @@ fn run_hook_raw(command: &str) -> Decision {
 
 #[test]
 fn ignores_commands_that_have_nothing_to_do_with_tags() {
-    assert_eq!(code("bun test"), 0);
+    assert_eq!(code("cargo test --workspace"), 0);
     assert_eq!(code("git status"), 0);
     assert_eq!(code("git commit -m \"wip\""), 0);
 }

@@ -17,11 +17,6 @@ pub fn workspace_root() -> PathBuf {
     repo_root().join("rust")
 }
 
-/// `bun`, or `$BUN` when set.
-pub fn bun() -> PathBuf {
-    std::env::var_os("BUN").map_or_else(|| PathBuf::from("bun"), PathBuf::from)
-}
-
 /// The committed, invented fixtures: tests/fixtures/*.pdf, sorted.
 pub fn committed_fixtures() -> Vec<PathBuf> {
     inputs_in(&repo_root().join("tests/fixtures"), &["pdf"])
