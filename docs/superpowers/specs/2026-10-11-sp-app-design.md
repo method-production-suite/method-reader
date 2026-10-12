@@ -137,6 +137,27 @@ only the visible slice of the laid-out document.
 
 Owner-visible: a git dependency on an unreleased engine, and the shim.
 
+## The rows that were still to build (2026-10-11)
+
+- **The Mac menu bar** is muda 0.21 (Tauri's own menu crate): the app
+  menu, Edit and Window as Tauri's default gave them. macOS hands Edit's
+  shortcuts to the menu, so each Edit item is passed on to egui as the
+  keystroke or clipboard event it stands for (app/menu.rs).
+- **The typewriter** is cpal 0.18 playing model/typewriter.rs's samples
+  (app/sound.rs). The output opens at the first sound; a computer that
+  cannot open one is quiet and is not asked again. typewriter.js has a
+  close() nothing calls, so both keep the output for the window's life.
+- **The keyboard's return after a flow** (send-panel.js keepFocus): panel
+  buttons carry ids made from their data-key, so a button rebuilt by a
+  redraw is the same widget, and model/focus.rs decides where the
+  keyboard goes (the same key, else the brass, else the page's plan) and
+  when the brass is owed it.
+- **The update flow** is model/update_flow.rs, a state machine with the
+  run left as calls (`start`, `during`, `finished`, `threw`) for the wave
+  3 transport to drive. The label and the notes read its one phase.
+- **No em dash**: tests/no_em_dash.rs scans sp-app's sources with comments
+  taken out, as the TypeScript scan did with Bun's transpiler.
+
 ## What cannot reach 1:1, precisely
 
 1. **The page marker** is drawn by the shim above, not by the float rule

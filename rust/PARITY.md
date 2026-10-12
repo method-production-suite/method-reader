@@ -71,22 +71,22 @@ move too.
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
 | tests/cue-text.test.ts | 4 | sp-parser | done | sp-parser/tests/cue_text.rs (the 17 table rows as 17 tests) |
 | tests/desktop-bundle-step.test.ts | 7 | xtask | todo | CI workflow steps |
-| tests/desktop-layout-measured.test.ts | 16 | sp-app | todo | measured in headless Chrome today; a native toolkit measures its own layout |
-| tests/desktop-layout.test.ts | 26 | sp-app | todo |  |
+| tests/desktop-layout-measured.test.ts | 16 | sp-app | partial | geometry in m/layout.rs; drawn rects measured in behaviors.rs (C3, L rows); see "Window test files" |
+| tests/desktop-layout.test.ts | 26 | sp-app | partial | see "Window test files" |
 | tests/desktop-notes.test.ts | 14 | xtask | todo |  |
-| tests/desktop-shell.test.ts | 67 | sp-app | todo |  |
-| tests/desktop-tokens.test.ts | 9 | sp-app | todo | brand tokens into the window theme |
-| tests/desktop-ui.test.ts | 425 | sp-app | todo |  |
-| tests/desktop-update-install.test.ts | 20 | sp-app | todo | updater handover |
+| tests/desktop-shell.test.ts | 67 | sp-app | partial | Tauri pins retire with Tauri; see "Window test files" |
+| tests/desktop-tokens.test.ts | 9 | sp-app | done | theme.rs, fonts.rs |
+| tests/desktop-ui.test.ts | 425 | sp-app | partial | see "Window test files" |
+| tests/desktop-update-install.test.ts | 20 | sp-app | partial | m/update_flow.rs; the run waits on the wave 3 transport |
 | tests/device-classify.test.ts | 13 | sp-device | done | sp-device/tests/device_classify.rs |
 | tests/device-kindle.test.ts | 8 | sp-device | done | sp-device/tests/device_kindle.rs |
 | tests/device-list.test.ts | 6 | sp-device | done | sp-device/tests/device_list.rs (with mtp-kindle's three listing checks) |
 | tests/device-remarkable.test.ts | 8 | sp-device | done | sp-device/tests/device_remarkable.rs, through the real ureq client against a local stand-in |
-| tests/device-requests-ui.test.ts | 11 | sp-app | todo |  |
+| tests/device-requests-ui.test.ts | 11 | sp-app | done | m/requests.rs, tests/screens.rs |
 | tests/device-requests-worker.test.ts | 24 | (services/) | todo | tests the Cloudflare Worker in services/device-requests/, which is a web service, not app code: decision for the owner whether it stays JavaScript |
 | tests/device-transfer.test.ts | 9 | sp-device | done | sp-device/tests/device_transfer.rs |
 | tests/device-volumes.test.ts | 9 | sp-device | done | sp-device/tests/device_volumes.rs |
-| tests/device-watch.test.ts | 9 | sp-app | todo |  |
+| tests/device-watch.test.ts | 9 | sp-app | done | m/device_watch.rs |
 | tests/epub-images.test.ts | 23 | sp-epub | done | sp-epub/tests/epub_images.rs (26: the 23 `test`s and the 3 epubcheck `checked`s, which skip without epubcheck on PATH). Where the TypeScript converts images.pdf or torture.pdf it reads the oracle dump of that conversion |
 | tests/epub.test.ts | 117 | sp-epub | done | sp-epub/tests/epub.rs (117, plus the XHTML half of serialize.test.ts's mini-slug seam); the classify.ts pin reads src/parser/classify.ts until sp-parser has its copy; the token half of "PRIMARY_SLUG stays in lockstep with fountain-js" is in sp-fountain/tests/slug.rs; the XHTML half and the classify.ts pin (import `sp_fountain::PRIMARY_SLUG_SOURCE`) stay here |
 | tests/export-artifact.test.ts | 22 | sp-engine | todo |  |
@@ -111,11 +111,11 @@ move too.
 | tests/library.test.ts | 45 | sp-engine | todo |  |
 | tests/mobi-picture-probe.test.ts | 7 | xtask | todo |  |
 | tests/mobi.test.ts | 65 | sp-mobi | todo |  |
-| tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
+| tests/no-em-dash.test.ts | 3 | xtask | partial | repo-wide copy rule; the window's half is rust/crates/sp-app/tests/no_em_dash.rs; the engine crates are left |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
 | tests/options.test.ts | 45 | sp-model + sp-epub + sp-fountain | partial | resolveFormatOptions and keepSpeechesWhole blocks ported (sp-model/tests/options.rs); the serializer blocks (rejoin 2, contdMode 5, showPageMarkers 4, dualDialogue 2) ported (sp-fountain/tests/options.rs, 13); the CSS, body and package blocks (screenplayCss 10, tokensToBody 2, buildEpub 1, cueAlignment 2) ported (sp-epub/tests/options.rs, 15); convertFountain to sp-engine |
-| tests/page-show.test.ts | 22 | sp-app | todo |  |
-| tests/page-timing.test.ts | 16 | sp-app | todo |  |
+| tests/page-show.test.ts | 22 | sp-app | done | m/page_show.rs, app/show.rs, tests/behaviors.rs |
+| tests/page-timing.test.ts | 16 | sp-app | done | m/page_timing.rs |
 | tests/parser-pipeline.test.ts | 47 | sp-parser | partial | sp-parser/tests/parser_pipeline.rs (45); 2 tests and the toFountain halves of 3 move to sp-fountain |
 | tests/parser.test.ts | 137 | sp-parser | done | sp-parser/tests/parser.rs (137) |
 | tests/pdfjs-wasm.test.ts | 11 | sp-pdf | todo | pdf.js unpacks its JPEG2000/JBIG2 decoders to a temp folder; the Rust decoders are compiled in, so most of this retires: keep the "JPEG2000 decodes" half |
@@ -133,8 +133,8 @@ move too.
 | tests/route-facts.test.ts | 32 | sp-engine | todo |  |
 | tests/routes.test.ts | 82 | sp-engine | todo |  |
 | tests/send-device.test.ts | 34 | sp-engine | todo |  |
-| tests/send-panel-ui.test.ts | 125 | sp-app | todo |  |
-| tests/send-routes-ui.test.ts | 71 | sp-app | todo |  |
+| tests/send-panel-ui.test.ts | 125 | sp-app | partial | see "Window test files" |
+| tests/send-routes-ui.test.ts | 71 | sp-app | partial | see "Window test files" |
 | tests/serialize.test.ts | 64 | sp-fountain | done | sp-fountain/tests/serialize.rs (64); "a parsed mini-slug reaches the EPUB" keeps its token half here, its `<p class="mini-slug">` half is sp-epub's (sp-epub/tests/epub.rs, done) |
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | todo |  |
 | tests/sidecar-targets.test.ts | 26 | xtask | todo | no sidecar in the Rust app: retires with build-sidecar; decision for the owner |
@@ -151,7 +151,7 @@ move too.
 | tests/torture-markup.test.ts | 10 | xtask | todo |  |
 | tests/torture-pictures.test.ts | 14 | sp-parser | partial | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks move to sp-engine with sp-epub/sp-mobi |
 | tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
-| tests/update-compare-module.test.ts | 9 | sp-app | todo | the window's copy of update/compare; one Rust copy serves both |
+| tests/update-compare-module.test.ts | 9 | sp-app | done | m/update_compare.rs; one Rust copy serves both |
 | tests/update-compare.test.ts | 34 | sp-engine | todo |  |
 | tests/update-signature.test.ts | 14 | xtask | todo |  |
 | tests/verify-signing.test.ts | 32 | xtask | todo |  |
@@ -177,12 +177,12 @@ users until hardware day (see Decisions). These files exist only on branch
 
 | TypeScript | Rust owner | status | notes |
 |---|---|---|---|
-| tests/helpers/boot-window.ts | sp-app | todo | boots desktop/ui in a fake DOM |
+| tests/helpers/boot-window.ts | sp-app | retired | egui_kittest drives the real window headless (tests/common/mod.rs) |
 | tests/helpers/calibre-read.ts | sp-azw3 | todo | reads a book back through Calibre (isolated) |
-| tests/helpers/fake-dom.ts | sp-app | todo |  |
+| tests/helpers/fake-dom.ts | sp-app | retired | egui_kittest drives the real window headless (tests/common/mod.rs) |
 | tests/helpers/fixture-epubs.ts | sp-epub | retired | the fixtures' EPUBs are rust/oracle/<fixture>/book.epub, which sp-epub/tests/oracle.rs proves the Rust renderer reproduces; the AZW3 tests read those |
 | tests/helpers/kf8-reader.ts | sp-azw3 | todo | structural KF8 reader |
-| tests/helpers/layout-chrome.ts | sp-app | todo |  |
+| tests/helpers/layout-chrome.ts | sp-app | retired | egui_kittest drives the real window headless (tests/common/mod.rs) |
 | tests/helpers/mini-xml.ts | sp-epub | retired | sp-fdx reads its XML back with roxmltree (dev-dependency) instead |
 | tests/helpers/mobi-records.ts | sp-mobi | todo |  |
 | tests/helpers/palmdoc-decode.ts | sp-mobi | todo |  |
@@ -242,7 +242,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | done (muda: app, Edit and Window menus; Edit items passed on to egui, menu.rs test) |
 | W11 | Boot check: the engine is asked `--version --json`; a failure puts the engine's sentence on its own alarm-coloured line above the stamp (the stamp stays) | ui/main.js, ui/frame.js engineFailed | done |
 | W12 | Engine missing or unstartable: "could not find/start the Screepub engine (sidecar ...)" with the build hint | tauri/src/sidecar.rs | gap: no sidecar in Rust (direct calls); the line is shown for an engine call that cannot start at all |
-| W13 | No Cancel during a conversion; quitting mid-call lets the engine finish (atomic writes) | tauri/src/sidecar.rs, desktop/README.md | todo |
+| W13 | No Cancel during a conversion; quitting mid-call lets the engine finish (atomic writes) | tauri/src/sidecar.rs, desktop/README.md | wave 3 (no Cancel already holds; quitting mid-call with in-process calls is the engine wiring) |
 | W14 | Paper background edge to edge; page padding: 100px binding on the left, 48px on the right; the content block capped at 1180 and centred in what is left | ui/style.css .page .sheet | done |
 | W15 | The rail: two brads and one punched hole, fixed to the window (the paper scrolls under them) at 30.7%, 50%, 69.3% of the height, centred 44px from the left edge, size clamp(20px, 3.4%, 36px) | ui/style.css .rail, ui/frame.js | done |
 | W16 | Brad drawn as brand/components/brad.html: cast shadow ellipse, edge ring, radial brass face (specular, highlight, brass, shadow, rim stops), bounce ellipse, specular ellipse, edge stroke | ui/frame.js DEFS | done |
@@ -539,26 +539,28 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | A5 | Decorative furniture hidden from assistive technology: the rail, the well's mark, the result's page, the typed page, the preview, the build bar | all | done |
 | A6 | Nothing is announced twice: a live line is rewritten only when its words change | ui/send-panel.js showBuild, ui/kfx.js say | done |
 
-**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-11: 122 done, 69 built, 29 model, 6 todo, 6 wave 3, 1 engine, 5 gap.
+**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-11 (wave 2 end): 201 done, 28 model, 7 wave 3, 2 gap, 0 todo.
 
 ## Window test files
 
 The TypeScript tests that load `desktop/ui` (or `desktop/src-tauri`) are
 the window's parity spec. Where each one's behaviors live in `sp-app`
 (`m/` is `rust/crates/sp-app/src/model/`, `screens` is
-`rust/crates/sp-app/tests/screens.rs`):
+`rust/crates/sp-app/tests/screens.rs`, `behaviors` is
+`rust/crates/sp-app/tests/behaviors.rs`, one test per inventory row, named
+for it):
 
 | TS test file (tests) | Rust tests | Status |
 |---|---|---|
 | desktop-ui.test.ts (425) | m/convert.rs, m/read.rs, m/tune.rs, m/kfx.rs, m/book_queue.rs, m/busy.rs, m/focus.rs, m/frame.rs, m/update.rs, m/feedback.rs, engine.rs (argv contract), screens (Convert, Read, Settings, notes, heads-up, focus after a dialog, stray null) | partial: every decision block ported; mounted-DOM blocks ported as screens tests where the behavior is drawn; source-reading tests about desktop/ui itself (CSP, no innerHTML, one file talks to Tauri) have no Rust subject |
-| send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), m/device.rs | partial: build-ahead timing, the reMarkable clock and keep-focus-by-key blocks not yet ported |
+| send-panel-ui.test.ts (125) | screens (cards, calm, Other ways, after a copy, My device isn't here), behaviors (D rows, keep-focus-by-key D26), m/device.rs, m/focus.rs | partial: build-ahead timing blocks ported as model tests only |
 | send-routes-ui.test.ts (71) | m/send_routes.rs | partial: the round trip against the engine's real route catalog waits on sp-engine |
 | send-device.test.ts (34) | m/device.rs | ported |
-| page-show.test.ts (22) | m/page_show.rs, app/show.rs tests, screens (the page writes itself) | ported (formed blocks draw natively: gap R18) |
+| page-show.test.ts (22) | m/page_show.rs, app/show.rs tests, screens (the page writes itself), behaviors (P2, P4, P10, P13 sounds) | ported (formed blocks drawn by Blitz from the book) |
 | page-timing.test.ts (16) | m/page_timing.rs | ported |
 | device-watch.test.ts (9) | m/device_watch.rs | ported |
 | device-requests-ui.test.ts (11) | m/requests.rs, screens (My device isn't here) | ported |
-| desktop-update-install.test.ts (20) | m/update.rs, m/busy.rs (retire, holds, quiet) | partial: the install and restart run waits on the wave 3 transport |
+| desktop-update-install.test.ts (20) | m/update.rs, m/update_flow.rs (the one run's state machine), m/busy.rs (retire, holds, quiet), behaviors (U9, N12) | partial: the install and restart run itself waits on the wave 3 transport |
 | desktop-notes.test.ts (14) | m/notes.rs, screens (the stamp opens the notes) | ported (the generator becomes an xtask) |
 | desktop-layout.test.ts (26) | m/layout.rs | partial: geometry ported; CSS-text pins have no Rust subject |
 | desktop-layout-measured.test.ts (16) | m/layout.rs (900, 1280, 1800) | ported as geometry; a pass measuring drawn rects is still to write |
@@ -566,7 +568,7 @@ the window's parity spec. Where each one's behaviors live in `sp-app`
 | desktop-shell.test.ts (67) | app/host.rs (opener allow-list, the one network address), main.rs (window size, floor) | partial: Tauri pins (sidecar name, capabilities, tauri.conf) retire with Tauri; updater and bundle pins move to wave 3 |
 | beta-marks.test.ts (10) | m/tune.rs, m/device.rs (which rows wear it), screens (badges drawn) | partial: CLI help, README and site checks are not the window's |
 | update-compare-module.test.ts (9) | m/update_compare.rs | ported (moves to sp-engine) |
-| no-em-dash.test.ts (3) | none yet | todo: a Rust source scan of user-facing strings |
+| no-em-dash.test.ts (3) | tests/no_em_dash.rs (sp-app's sources, comments stripped, allow-list kept honest) | ported for the window; the engine crates' half belongs to the xtask scan |
 | app-references, capture*, build-*, bump-version, cli-*, release-*, smoke-bundle | not window behavior | owned by the xtask, CLI and packaging waves |
 
 ## Decisions
