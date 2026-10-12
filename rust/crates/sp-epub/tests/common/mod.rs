@@ -1,12 +1,11 @@
 //! Shared by the sp-epub test files: where the oracle is, reading a zip
-//! back, the recorded fountain-js tokens, and tests/css-rules.ts's
+//! back, tokens for a script, and tests/css-rules.ts's
 //! selector-exact rule reader.
 #![allow(dead_code)]
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
 
 use sp_epub::{BodyOptions, BookBody, tokens_to_body};
 use sp_model::{FormatOptions, Token};
@@ -140,22 +139,9 @@ pub fn header_fields(bytes: &[u8]) -> Vec<[u64; 11]> {
     out
 }
 
-/// TRANSITIONAL (until sp-fountain's tokenizer lands): fountain-js's tokens
-/// for a source the TypeScript tests parse, recorded by
-/// tests/data/record-tokens.ts. A source missing from the recording is a
-/// test written without regenerating it.
+/// `new Fountain().parse(src, true).tokens`, through sp-fountain's port.
 pub fn tokens(src: &str) -> Vec<Token> {
-    static RECORDED: OnceLock<BTreeMap<String, Vec<Token>>> = OnceLock::new();
-    let all = RECORDED.get_or_init(|| {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/fountain-tokens.json");
-        serde_json::from_str(&std::fs::read_to_string(path).expect("the recording"))
-            .expect("recorded tokens")
-    });
-    all.get(src)
-        .unwrap_or_else(|| {
-            panic!("no recorded tokens for {src:?}: rerun tests/data/record-tokens.ts")
-        })
-        .clone()
+    sp_fountain::tokenize(src).expect("a script fountain-js parses")
 }
 
 /// `tokensToBody(tokens(src), { format, images })`.

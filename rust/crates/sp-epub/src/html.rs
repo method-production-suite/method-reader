@@ -8,12 +8,58 @@
 //! next block, #13a); they are summarized here where the code needs them.
 
 use std::collections::HashSet;
+use std::sync::LazyLock;
 
-use sp_model::{Dual, FormatOptions, Token, TokenType};
+use sp_fountain::js::trim;
+use sp_fountain::jsre::{self, Regex};
+use sp_fountain::{fmt_classes, is_mini_slug, pick_cover, renders_image, strip_notes};
+use sp_model::{Dual, FormatOptions, ImageRef, Token, TokenType};
 
 use crate::css::screenplay_css;
-use crate::fountain::{self, ImageRef};
 use crate::js;
+
+/// The TypeScript's regexes, compiled once by sp-fountain's JavaScript-
+/// semantics engine so they match exactly as they match there.
+struct Patterns {
+    /// `/\*\*\*(?!\s)([^*]+?)(?<!\s)\*\*\*/g` and its three siblings, in
+    /// the order inlineEmphasis applies them, with their replacements.
+    emphasis: [(Regex, &'static str, &'static str); 4],
+    opening_tag: Regex,
+    tag: Regex,
+    transition: Regex,
+    page_marker: Regex,
+    stylesheet_link: Regex,
+}
+
+static P: LazyLock<Patterns> = LazyLock::new(|| Patterns {
+    emphasis: [
+        (
+            Regex::new(r"\*\*\*(?!\s)([^*]+?)(?<!\s)\*\*\*", "g"),
+            "<strong><em>",
+            "</em></strong>",
+        ),
+        (
+            Regex::new(r"\*\*(?!\s)([^*]+?)(?<!\s)\*\*", "g"),
+            "<strong>",
+            "</strong>",
+        ),
+        (
+            Regex::new(r"\*(?!\s)([^*]+?)(?<!\s)\*", "g"),
+            "<em>",
+            "</em>",
+        ),
+        (
+            Regex::new(r"_(?!\s)([^_]+?)(?<!\s)_", "g"),
+            "<span class=\"underline\">",
+            "</span>",
+        ),
+    ],
+    opening_tag: Regex::new(r"^<(p|h[1-6]|div)\b[^>]*>", ""),
+    tag: Regex::new(r"<[^>]*>", "g"),
+    transition: Regex::new(r"^>\s*", ""),
+    page_marker: Regex::new(r"^pg\s+(\S+)$", ""),
+    stylesheet_link: Regex::new(r#"<link rel="stylesheet"[^>]*\/>"#, ""),
+});
 
 /// One XHTML body file.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,42 +125,18 @@ pub fn escape_xml(s: &str) -> String {
     out
 }
 
-/// One pass of the emphasis regexes, e.g. `/\*\*(?!\s)([^*]+?)(?<!\s)\*\*/g`:
-/// `count` delimiters, a run of non-delimiters that neither starts nor ends
-/// with JavaScript whitespace, and `count` delimiters again.
-fn emphasis_pass(s: &str, delim: char, count: usize, open: &str, close: &str) -> String {
-    let c: Vec<char> = s.chars().collect();
-    let n = c.len();
-    let delims_at = |i: usize| i + count <= n && c[i..i + count].iter().all(|&x| x == delim);
-    let mut out = String::with_capacity(s.len());
-    let mut i = 0;
-    while i < n {
-        if delims_at(i) {
-            let start = i + count;
-            let mut j = start;
-            while j < n && c[j] != delim {
-                j += 1;
-            }
-            if j > start && delims_at(j) && !js::is_space(c[start]) && !js::is_space(c[j - 1]) {
-                out.push_str(open);
-                out.extend(&c[start..j]);
-                out.push_str(close);
-                i = j + count;
-                continue;
-            }
-        }
-        out.push(c[i]);
-        i += 1;
-    }
-    out
-}
-
 /// Fountain inline emphasis to XHTML, applied AFTER escaping.
 fn inline_emphasis(escaped: &str) -> String {
-    let s = emphasis_pass(escaped, '*', 3, "<strong><em>", "</em></strong>");
-    let s = emphasis_pass(&s, '*', 2, "<strong>", "</strong>");
-    let s = emphasis_pass(&s, '*', 1, "<em>", "</em>");
-    emphasis_pass(&s, '_', 1, "<span class=\"underline\">", "</span>")
+    let mut s = escaped.to_owned();
+    for (re, open, close) in &P.emphasis {
+        s = re.replace_with(&s, true, |chars, caps| {
+            format!(
+                "{open}{}{close}",
+                jsre::group(chars, caps, 1).unwrap_or_default()
+            )
+        });
+    }
+    s
 }
 
 fn xhtml_doc(title: &str, body: &str) -> String {
@@ -147,7 +169,7 @@ struct MarkerState {
 struct Art<'a> {
     cover: Option<&'a Token>,
     include_images: bool,
-    have: &'a dyn Fn(&str) -> bool,
+    have: &'a HashSet<String>,
     src: &'a dyn Fn(&str) -> String,
     used: Vec<String>,
 }
@@ -157,37 +179,17 @@ impl Art<'_> {
         if self.cover.is_some_and(|c| std::ptr::eq(c, note)) {
             return None;
         }
-        fountain::renders_image(note.text_or_empty(), self.include_images, self.have)
+        renders_image(note.text_or_empty(), self.include_images, self.have)
     }
 }
 
-/// `/^<(p|h[1-6]|div)\b[^>]*>/`: the length of a block's opening tag.
+/// `/^<(p|h[1-6]|div)\b[^>]*>/`: the length of a block's opening tag, in
+/// bytes.
 fn opening_tag_len(s: &str) -> Option<usize> {
-    let rest = s.strip_prefix('<')?;
-    let name_len = if rest.starts_with("div") {
-        3
-    } else if rest.starts_with('h')
-        && rest
-            .as_bytes()
-            .get(1)
-            .is_some_and(|b| (b'1'..=b'6').contains(b))
-    {
-        2
-    } else if rest.starts_with('p') {
-        1
-    } else {
-        return None;
-    };
-    // `\b`: the name may not run on into another word character.
-    if rest[name_len..]
-        .chars()
-        .next()
-        .is_some_and(|c| c.is_ascii_alphanumeric() || c == '_')
-    {
-        return None;
-    }
-    let close = rest.find('>')?;
-    Some(close + 2)
+    let chars: Vec<char> = s.chars().collect();
+    let caps = P.opening_tag.exec_at(&chars, 0)?;
+    let (_, end) = caps[0]?;
+    Some(chars[..end].iter().map(|c| c.len_utf8()).sum())
 }
 
 /// Where the blocks of one section go: the open speech, if any, else the
@@ -230,20 +232,7 @@ fn speech_block(cells: &[String]) -> String {
 fn est_lines(col: &[String]) -> usize {
     col.iter()
         .map(|html| {
-            let mut text = String::new();
-            let mut rest = html.as_str();
-            // .replace(/<[^>]*>/g, '')
-            while let Some(lt) = rest.find('<') {
-                text.push_str(&rest[..lt]);
-                match rest[lt..].find('>') {
-                    Some(gt) => rest = &rest[lt + gt + 1..],
-                    None => {
-                        text.push_str(&rest[lt..]);
-                        rest = "";
-                    }
-                }
-            }
-            text.push_str(rest);
+            let text = P.tag.replace_all(html, "");
             1.max(js::length(&text).div_ceil(EST_CHARS_PER_DUAL_LINE))
         })
         .sum()
@@ -270,11 +259,11 @@ fn render_blocks(
         // The shift is read BEFORE stripping; every note is stripped from
         // every token type in this one place.
         let fmt = if format.preserve_font_shifts {
-            fountain::fmt_classes(raw)
+            fmt_classes(raw)
         } else {
             String::new()
         };
-        let text = fountain::strip_notes(raw);
+        let text = strip_notes(raw);
         match t.kind {
             TokenType::SceneHeading => {
                 let num = match t.scene_number.as_deref() {
@@ -283,7 +272,7 @@ fn render_blocks(
                     }
                     _ => String::new(),
                 };
-                out.emit(if fountain::is_mini_slug(t) {
+                out.emit(if is_mini_slug(t) {
                     format!("<p class=\"mini-slug\">{num}{}</p>\n", escape_xml(&text))
                 } else {
                     format!(
@@ -350,7 +339,7 @@ fn render_blocks(
                 // Multi-line speech arrives as one token with embedded
                 // newlines (lyrics, verse): each line its own paragraph.
                 for line in text.split('\n') {
-                    if !js::trim(line).is_empty() {
+                    if !trim(line).is_empty() {
                         out.emit(format!(
                             "<p class=\"dialogue{fmt}\">{}</p>\n",
                             inline_emphasis(&escape_xml(line))
@@ -360,12 +349,12 @@ fn render_blocks(
             }
             TokenType::Transition => {
                 // .replace(/^>\s*/, '')
-                let bare = text
-                    .strip_prefix('>')
-                    .map_or(text.as_str(), |r| r.trim_start_matches(js::is_space));
+                let bare = P
+                    .transition
+                    .replace_with(&text, false, |_, _| String::new());
                 out.emit(format!(
                     "<p class=\"transition\">{}</p>\n",
-                    escape_xml(bare)
+                    escape_xml(&bare)
                 ));
             }
             TokenType::Centered => {
@@ -377,22 +366,19 @@ fn render_blocks(
             TokenType::Synopsis => {
                 // "= pg N" lines are page markers; other synopses stay
                 // invisible. /^pg\s+(\S+)$/ on the trimmed text.
-                let trimmed = js::trim(&text);
-                if let Some(rest) = trimmed.strip_prefix("pg") {
-                    let label = rest.trim_start_matches(js::is_space);
-                    if label.len() < rest.len()
-                        && !label.is_empty()
-                        && !label.contains(js::is_space)
-                    {
-                        let esc = escape_xml(label);
-                        out.markers.pending = Some((
-                            label.to_owned(),
-                            format!(
-                                "<span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg{esc}\" \
-                                 title=\"{esc}\" class=\"page-marker\">{esc}.</span>"
-                            ),
-                        ));
-                    }
+                if let Some(label) = P
+                    .page_marker
+                    .captures(trim(&text))
+                    .and_then(|m| m[1].clone())
+                {
+                    let esc = escape_xml(&label);
+                    out.markers.pending = Some((
+                        label,
+                        format!(
+                            "<span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg{esc}\" \
+                             title=\"{esc}\" class=\"page-marker\">{esc}.</span>"
+                        ),
+                    ));
                 }
             }
             TokenType::Note => {
@@ -401,7 +387,7 @@ fn render_blocks(
                 let Some(img) = art.in_flow(t) else { continue };
                 // The width as a class in steps of five; the clamp repeats
                 // parseImgNote's on purpose.
-                let step = 100f64.min(5f64.max(js::round(f64::from(img.width_pct) / 5.0) * 5.0));
+                let step = 100f64.min(5f64.max(js::round(img.width_pct / 5.0) * 5.0));
                 let full = if img.full_page { " figure-full" } else { "" };
                 // `place`, not `emit`: a figure declines a pending marker.
                 out.place(format!(
@@ -463,20 +449,21 @@ struct SceneSection {
 /// title card that became the cover opens nothing.
 pub fn tokens_to_body(tokens: &[Token], opts: &BodyOptions<'_>) -> BookBody {
     let format = &opts.format;
-    let have = |name: &str| opts.images.contains(name);
     let body: Vec<&Token> = tokens.iter().filter(|t| !t.is_title()).collect();
-    let cover = fountain::pick_cover(&body, format, &have);
+    // The cover is found among ALL the tokens (pick_cover passes over the
+    // title page itself), and compared by identity like the TypeScript's.
+    let cover = pick_cover(tokens, format, &opts.images);
     let mut art = Art {
-        cover: cover.as_ref().map(|c| c.token),
+        cover: cover.as_ref().map(|c| &tokens[c.index]),
         include_images: format.include_images,
-        have: &have,
+        have: &opts.images,
         src: opts.image_src.unwrap_or(&book_image_src),
         used: Vec::new(),
     };
 
     let mut groups: Vec<(String, Vec<&Token>)> = Vec::new();
     for &t in &body {
-        if t.kind == TokenType::SceneHeading && !fountain::is_mini_slug(t) {
+        if t.kind == TokenType::SceneHeading && !is_mini_slug(t) {
             groups.push((
                 t.text.clone().unwrap_or_else(|| "Scene".to_owned()),
                 vec![t],
@@ -603,20 +590,9 @@ pub fn tokens_to_preview_html(
         .first()
         .map_or_else(|| xhtml_doc("Script", ""), |f| f.xhtml.clone());
     let css = screenplay_css(format, !body.used_images.is_empty());
-    // .replace(/<link rel="stylesheet"[^>]*\/>/, ...): the first one.
-    match doc.find("<link rel=\"stylesheet\"") {
-        Some(at) => match doc[at..].find('>') {
-            Some(gt) if doc[..at + gt].ends_with('/') => {
-                format!(
-                    "{}<style>\n{css}</style>{}",
-                    &doc[..at],
-                    &doc[at + gt + 1..]
-                )
-            }
-            _ => doc,
-        },
-        None => doc,
-    }
+    // .replace(/<link rel="stylesheet"[^>]*\/>/, () => ...): the first one.
+    P.stylesheet_link
+        .replace_with(&doc, false, |_, _| format!("<style>\n{css}</style>"))
 }
 
 /// Standard base64 with padding, as `Buffer.toString('base64')` writes it.

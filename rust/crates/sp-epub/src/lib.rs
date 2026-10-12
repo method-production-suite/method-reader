@@ -16,12 +16,12 @@
 //! `tests/options_matrix.rs` across the option sets the TypeScript tests
 //! exercise.
 //!
-//! The renderer asks src/fountain/'s notes, slug and cover modules; until
-//! sp-fountain lands they are a private copy in `fountain` (TODO there).
+//! The notes, slug and cover rules are sp-fountain's, the one copy every
+//! renderer asks, and so is the JavaScript-semantics regex engine the
+//! TypeScript's inline-markup regexes run on here.
 
 pub mod build;
 pub mod css;
-mod fountain;
 pub mod html;
 mod js;
 pub mod zip;

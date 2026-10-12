@@ -1,33 +1,6 @@
 //! The few JavaScript built-ins whose exact behavior reaches the bytes of a
-//! book: number to string, `toFixed`, `Math.round`, `\s`, `trim()` and
-//! `String.prototype.length`.
-
-/// JavaScript's `\s` (and the set `trim()` removes): WhiteSpace plus
-/// LineTerminator. Not Rust's `char::is_whitespace`, which differs on
-/// U+0085 (Unicode whitespace, not JavaScript's) and U+FEFF (the reverse).
-pub fn is_space(c: char) -> bool {
-    matches!(
-        c,
-        '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | ' ' | '\u{A0}' | '\u{1680}' | '\u{2000}'
-            ..='\u{200A}'
-                | '\u{2028}'
-                | '\u{2029}'
-                | '\u{202F}'
-                | '\u{205F}'
-                | '\u{3000}'
-                | '\u{FEFF}'
-    )
-}
-
-/// A JavaScript LineTerminator, where a multiline `^` may match after.
-pub fn is_line_terminator(c: char) -> bool {
-    matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}')
-}
-
-/// `String.prototype.trim()`.
-pub fn trim(s: &str) -> &str {
-    s.trim_matches(is_space)
-}
+//! book and that sp_fountain::js does not cover: number to string,
+//! `toFixed`, `Math.round` and `String.prototype.length`.
 
 /// `s.length`: UTF-16 code units.
 pub fn length(s: &str) -> usize {
@@ -154,10 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn javascript_whitespace_is_not_rusts() {
-        assert!(is_space('\u{FEFF}'));
-        assert!(!is_space('\u{85}'));
-        assert_eq!(trim("\u{FEFF} a \u{3000}"), "a");
+    fn length_counts_utf16_units() {
         assert_eq!(length("a\u{1F600}"), 3);
     }
 }

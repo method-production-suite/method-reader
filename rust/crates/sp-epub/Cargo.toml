@@ -12,6 +12,7 @@ workspace = true
 
 [dependencies]
 sp-model.workspace = true
+sp-fountain.workspace = true
 flate2.workspace = true
 sha2.workspace = true
 

@@ -2,8 +2,7 @@
 //! preview. Each `mod` is one of its describe blocks, in its order; the
 //! reasons the TypeScript's comments give are kept where a check needs one.
 //!
-//! The scripts are fountain-js's tokens for the same sources, recorded until
-//! sp-fountain has a tokenizer (common::tokens).
+//! The scripts are tokenized by sp-fountain's port of fountain-js (common::tokens).
 
 mod common;
 
@@ -12,9 +11,7 @@ use sp_epub::{
     BodyOptions, BookBody, BookMeta, build_epub, default_css, screenplay_css, tokens_to_body,
     tokens_to_preview_html,
 };
-use sp_model::{
-    CueAlignment, DEFAULT_FORMAT_OPTIONS, FontFamily, FormatOptions, resolve_format_options,
-};
+use sp_model::{DEFAULT_FORMAT_OPTIONS, FormatOptions, resolve_format_options};
 
 const SAMPLE: &str = "INT. KITCHEN - DAY
 
@@ -1356,10 +1353,66 @@ mod mini_slug_rendering {
         }
     }
 
-    // 'the parser excludes from mini-slug exactly what this promotes'
-    // compares src/parser/classify.ts's PRIMARY_SLUG with slug.ts's; both
-    // copies leave this crate, so the check moves to sp-parser against
-    // sp-fountain's (rust/PARITY.md).
+    #[test]
+    fn the_parser_excludes_from_mini_slug_exactly_what_this_promotes() {
+        // One literal, two layers: classify.ts must not mint a mini-slug the
+        // renderer would turn back into a scene heading. Read from the
+        // TypeScript until sp-parser carries its own copy, which then pins
+        // to sp_fountain::PRIMARY_SLUG_SOURCE the same way.
+        let classify = std::fs::read_to_string(common::repo_root().join("src/parser/classify.ts"))
+            .expect("src/parser/classify.ts");
+        let line = classify
+            .lines()
+            .find(|l| l.starts_with("export const PRIMARY_SLUG = /"))
+            .expect("classify.ts's PRIMARY_SLUG");
+        let literal = line
+            .trim_start_matches("export const PRIMARY_SLUG = /")
+            .trim_end_matches(';');
+        let (source, flags) = literal.rsplit_once('/').unwrap();
+        assert_eq!(source, sp_fountain::PRIMARY_SLUG_SOURCE);
+        assert_eq!(flags, "i");
+    }
+
+    #[test]
+    fn a_parsed_mini_slug_reaches_the_epub_as_a_mini_slug() {
+        // tests/serialize.test.ts's whole seam, its XHTML half: parser
+        // element, Fountain, tokens, XHTML.
+        use sp_model::{ElementType, ParsedScreenplay, ScreenplayElement};
+        let el = |kind: ElementType, text: &str| ScreenplayElement {
+            kind,
+            text: text.to_owned(),
+            id: "t".to_owned(),
+            page_num: 1,
+            is_title_page: false,
+            is_readable: true,
+            character: None,
+            base_character: None,
+            age_modifier: None,
+            age_value: None,
+            scene_number: None,
+            styled_text: None,
+            dual_right: None,
+            fmt: None,
+            img: None,
+            y: None,
+        };
+        let out = sp_fountain::to_fountain(
+            &ParsedScreenplay {
+                elements: vec![
+                    el(ElementType::Scene, "INT. KITCHEN - DAY"),
+                    el(ElementType::Action, "Jack waits."),
+                    el(ElementType::MiniSlug, "LATER"),
+                    el(ElementType::Action, "Jack is still waiting."),
+                ],
+                characters: Vec::new(),
+                scenes: Vec::new(),
+                page_count: 1,
+            },
+            None,
+            &DEFAULT_FORMAT_OPTIONS,
+        );
+        assert!(first_xhtml(&out).contains("<p class=\"mini-slug\">LATER</p>"));
+    }
 
     #[test]
     fn the_stylesheet_gives_it_the_bold_uppercase_micro_heading_treatment() {
@@ -1689,18 +1742,4 @@ mod the_column_spelling_of_the_forward_binds {
             ["p.mini-slug, p.character, p.parenthetical"]
         );
     }
-}
-
-// The option enums are used by name in options.rs; touched here so a rename
-// of either fails this file too.
-#[test]
-fn the_option_enums_the_stylesheet_reads() {
-    let o = FormatOptions {
-        cue_alignment: CueAlignment::Indented,
-        font_family: FontFamily::Sans,
-        ..DEFAULT_FORMAT_OPTIONS
-    };
-    let css = screenplay_css(&o, false);
-    assert!(rule_for(&css, "body").contains("font-family: sans-serif;"));
-    assert!(rule_for(&css, "p.character").contains("margin-left: 33%;"));
 }
