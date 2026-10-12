@@ -21,7 +21,51 @@
 //! backreferences, and the `i` and `m` flags. `g` and `y` are what the
 //! caller does with `exec_at` and `find_from`, as in JavaScript.
 
+use std::cell::Cell;
+
 use crate::js::{is_line_terminator, is_space, is_word};
+
+/// Most matcher steps one search may take before it gives up. fountain-js's
+/// patterns backtrack exponentially on a few crafted inputs (a title-page
+/// value ending in a separator that `.` cannot cross, in V8 as here); real
+/// scripts use far fewer steps per search. A search over budget fails and
+/// is counted in [`trips`], so a caller can refuse instead of hanging.
+const STEP_BUDGET: u64 = 200_000_000;
+
+/// Bytes of stack one search may use when the caller set no budget of its
+/// own ([`with_stack_budget`]): a quarter of std's 2 MiB thread default,
+/// the smallest stack this crate is called on.
+const DEFAULT_STACK_BUDGET: usize = 512 * 1024;
+
+thread_local! {
+    static STACK_BUDGET: Cell<usize> = const { Cell::new(DEFAULT_STACK_BUDGET) };
+    static TRIPS: Cell<u64> = const { Cell::new(0) };
+}
+
+/// How many searches on this thread have run out of steps or stack. The
+/// matcher recurses once per repetition of a group, so a long enough run
+/// (blank lines, lyrics) would otherwise overflow the stack, which aborts
+/// the process: no `catch_unwind` sees a stack overflow.
+pub fn trips() -> u64 {
+    TRIPS.with(Cell::get)
+}
+
+/// Runs `f` with each search on this thread allowed `bytes` of stack. The
+/// caller promises the thread has that much to spare.
+pub fn with_stack_budget<T>(bytes: usize, f: impl FnOnce() -> T) -> T {
+    let before = STACK_BUDGET.with(|b| b.replace(bytes));
+    let out = f();
+    STACK_BUDGET.with(|b| b.set(before));
+    out
+}
+
+/// Where the stack is now: the address of a local. Stacks grow down on
+/// every platform Screepub ships on.
+#[inline(never)]
+fn stack_here() -> usize {
+    let marker = 0u8;
+    std::hint::black_box(&marker) as *const u8 as usize
+}
 
 /// Capture slots: `[0]` is the whole match, `[n]` group `n`, as char ranges.
 pub type Caps = Vec<Option<(usize, usize)>>;
@@ -446,9 +490,41 @@ type Cont<'k> = dyn FnMut(usize, &mut Caps) -> bool + 'k;
 struct Ctx<'a> {
     re: &'a Regex,
     s: &'a [char],
+    /// The stack where this search began, and how far below it it may go.
+    base: usize,
+    stack_budget: usize,
+    steps: Cell<u64>,
+    /// Out of steps or stack: every node fails from here on.
+    tripped: Cell<bool>,
 }
 
-impl Ctx<'_> {
+impl<'a> Ctx<'a> {
+    fn new(re: &'a Regex, s: &'a [char]) -> Ctx<'a> {
+        Ctx {
+            re,
+            s,
+            base: stack_here(),
+            stack_budget: STACK_BUDGET.with(Cell::get),
+            steps: Cell::new(0),
+            tripped: Cell::new(false),
+        }
+    }
+
+    /// Charges one step; `true` once the search is out of steps or stack.
+    fn exhausted(&self) -> bool {
+        if self.tripped.get() {
+            return true;
+        }
+        let steps = self.steps.get() + 1;
+        self.steps.set(steps);
+        if steps > STEP_BUDGET || self.base.saturating_sub(stack_here()) > self.stack_budget {
+            self.tripped.set(true);
+            TRIPS.with(|t| t.set(t.get() + 1));
+            return true;
+        }
+        false
+    }
+
     fn char_eq(&self, a: char, b: char) -> bool {
         a == b || (self.re.icase && canon(a) == canon(b))
     }
@@ -485,6 +561,9 @@ impl Ctx<'_> {
     /// Match `n` at `i`, then the continuation. On `false`, `caps` is as it
     /// was on entry: every node restores what it changed before failing.
     fn node(&self, n: &Node, i: usize, caps: &mut Caps, k: &mut Cont<'_>) -> bool {
+        if self.exhausted() {
+            return false;
+        }
         let s = self.s;
         match n {
             Node::Empty => k(i, caps),
@@ -722,8 +801,10 @@ impl Regex {
         self.names.iter().find(|(n, _)| n == name).map(|&(_, i)| i)
     }
 
-    fn try_at(&self, s: &[char], start: usize, caps: &mut Caps) -> Option<Caps> {
-        let ctx = Ctx { re: self, s };
+    fn try_at(&self, ctx: &Ctx<'_>, start: usize, caps: &mut Caps) -> Option<Caps> {
+        if ctx.tripped.get() {
+            return None;
+        }
         let mut out = None;
         ctx.node(&self.root, start, caps, &mut |end, c: &mut Caps| {
             let mut found = c.clone();
@@ -740,13 +821,14 @@ impl Regex {
             return None;
         }
         let mut caps = vec![None; self.ncaps];
-        self.try_at(s, start, &mut caps)
+        self.try_at(&Ctx::new(self, s), start, &mut caps)
     }
 
     /// The first match starting at or after `from` (a global `exec`).
     pub fn find_from(&self, s: &[char], from: usize) -> Option<Caps> {
         let mut caps = vec![None; self.ncaps];
-        (from..=s.len()).find_map(|i| self.try_at(s, i, &mut caps))
+        let ctx = Ctx::new(self, s);
+        (from..=s.len()).find_map(|i| self.try_at(&ctx, i, &mut caps))
     }
 
     /// `re.test(s)` for a pattern without `g`.

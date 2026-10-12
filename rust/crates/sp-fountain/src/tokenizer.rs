@@ -155,8 +155,49 @@ struct Lexer {
 
 /// `new Fountain().parse(script, true).tokens`, as a clean process's first
 /// parse answers it. Errs where fountain-js throws.
+///
+/// The patterns run on jsre, which recurses once per repetition of a group
+/// (one blank line, one lyric line), where V8 keeps its backtrack stack on
+/// the heap. So the parse runs on a thread of its own with a large stack
+/// (reserved address space; only what is used is ever committed), and a
+/// search that would outgrow even that, or that backtracks without end on a
+/// crafted input, is refused with an `Err` rather than aborting the process
+/// or hanging it.
 pub fn tokenize(script: &str) -> Result<Vec<Token>, FountainError> {
-    Lexer::default().parse(script)
+    std::thread::scope(|scope| {
+        std::thread::Builder::new()
+            .name("screepub-fountain".into())
+            .stack_size(PARSE_STACK)
+            .spawn_scoped(scope, || {
+                crate::jsre::with_stack_budget(PARSE_STACK_BUDGET, || {
+                    let before = crate::jsre::trips();
+                    let tokens = Lexer::default().parse(script)?;
+                    if crate::jsre::trips() != before {
+                        return Err(too_complex_error());
+                    }
+                    Ok(tokens)
+                })
+            })
+            .map_err(|e| FountainError {
+                message: format!("The script could not be read: {e}"),
+            })?
+            .join()
+            .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+    })
+}
+
+/// The parse thread's stack, and how much of it one search may use (the
+/// rest is the Lexer's own frames and headroom).
+const PARSE_STACK: usize = 256 * 1024 * 1024;
+const PARSE_STACK_BUDGET: usize = 192 * 1024 * 1024;
+
+fn too_complex_error() -> FountainError {
+    FountainError {
+        message: "This script is too complex to read: a passage in it would take the \
+                  Fountain reader too long. Check it for a very long run of blank lines \
+                  or repeated marks."
+            .to_owned(),
+    }
 }
 
 fn chars(s: &str) -> Vec<char> {
