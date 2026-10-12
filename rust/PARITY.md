@@ -37,17 +37,17 @@ move too.
 | tests/boilerplate.test.ts | 16 | sp-parser | done | sp-parser/tests/boilerplate.rs |
 | tests/brand-components.test.ts | 6 | xtask | todo | brand/ stays HTML; the check moves |
 | tests/brand-tokens.test.ts | 9 | xtask | todo |  |
-| tests/build-app-bundle.test.ts | 72 | xtask | todo |  |
-| tests/build-cli-e2e.test.ts | 4 | xtask | todo |  |
-| tests/build-cli.test.ts | 83 | xtask | todo |  |
-| tests/build-sidecar.test.ts | 28 | xtask | todo | the Rust app has no sidecar: most of this retires; decision for the owner |
-| tests/build-update-manifest.test.ts | 20 | xtask | todo |  |
-| tests/bump-version.test.ts | 15 | xtask | todo |  |
-| tests/bundle-archive.test.ts | 27 | xtask | todo |  |
+| tests/build-app-bundle.test.ts | 72 | xtask | done | xtask/tests/build_app_bundle.rs (74); the native window's new half in xtask/tests/native_bundle.rs (18) |
+| tests/build-cli-e2e.test.ts | 4 | xtask | done | xtask/tests/build_cli_e2e.rs (2): opt-in (SCREEPUB_REAL_CLI_BUILD=1, the Mac half also SCREEPUB_REAL_CODESIGN=1), host target and Mac only, since each target builds on its own runner |
+| tests/build-cli.test.ts | 83 | xtask | done | xtask/tests/build_cli.rs (89) |
+| tests/build-sidecar.test.ts | 28 | xtask | retired | the Rust app links the engine, so there is no sidecar (Decisions); what survives (the Rust triples, now the CLI's release targets) is xtask/tests/cli_targets.rs (6); `build-sidecar` answers "retired" |
+| tests/build-update-manifest.test.ts | 20 | xtask | done | xtask/tests/build_update_manifest.rs (21) |
+| tests/bump-version.test.ts | 15 | xtask | done | xtask/tests/bump_version.rs (20), on scratch repos shaped before and after cutover |
+| tests/bundle-archive.test.ts | 27 | xtask | done | xtask/tests/bundle_archive.rs (28), on the same frozen archive bytes |
 | tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
-| tests/capture-chrome.test.ts | 5 | xtask | todo |  |
-| tests/capture.test.ts | 46 | xtask | todo | README and site pictures; drives desktop/ui/app.js today |
-| tests/check-latest.test.ts | 17 | xtask | todo |  |
+| tests/capture-chrome.test.ts | 5 | xtask | done | xtask/tests/capture_chrome.rs (7), against a fake Chrome; the last needs a real Chrome and skips without it |
+| tests/capture.test.ts | 46 | xtask | done | xtask/tests/capture.rs (47) and capture_picture.rs (6); still drives desktop/ui/app.js, through a copy of its argument builders checked against app.js (Decisions) |
+| tests/check-latest.test.ts | 17 | xtask | done | xtask/tests/check_latest.rs (18), against a fake GitHub on 127.0.0.1 |
 | tests/cli-app-defaults.test.ts | 8 | sp-cli | todo |  |
 | tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
 | tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
@@ -73,9 +73,9 @@ move too.
 | tests/desktop-bundle-step.test.ts | 7 | xtask | todo | CI workflow steps |
 | tests/desktop-layout-measured.test.ts | 16 | sp-app | todo | measured in headless Chrome today; a native toolkit measures its own layout |
 | tests/desktop-layout.test.ts | 26 | sp-app | todo |  |
-| tests/desktop-notes.test.ts | 14 | xtask | todo |  |
+| tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes notes.js and sp-app's notes_release.rs; the window's half is sp-app's (Window test files) |
 | tests/desktop-shell.test.ts | 67 | sp-app | todo |  |
-| tests/desktop-tokens.test.ts | 9 | sp-app | todo | brand tokens into the window theme |
+| tests/desktop-tokens.test.ts | 9 | sp-app | done | xtask/tests/desktop_tokens.rs (11): the generator, plus sp-app's theme.rs held to brand/; skips the desktop/ui half once it is gone |
 | tests/desktop-ui.test.ts | 425 | sp-app | todo |  |
 | tests/desktop-update-install.test.ts | 20 | sp-app | todo | updater handover |
 | tests/device-classify.test.ts | 13 | sp-device | done | sp-device/tests/device_classify.rs |
@@ -100,7 +100,7 @@ move too.
 | tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
 | tests/field-station.test.ts | 2 | sp-engine | partial | parser half in sp-parser/tests/field_station.rs (scenes, pages, cast, the site's scene walked over elements); the convertPdf title and the .fountain walk stay with sp-engine/sp-fountain |
 | tests/first-page.test.ts | 10 | sp-parser | partial | sp-parser/tests/first_page.rs (10); the progress test's stderr events, exit codes and --json halves move to sp-cli |
-| tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
+| tests/fixture-stability.test.ts | 1 | xtask | done | xtask/tests/fixture.rs (stability_*, 6): `cargo xtask make-fixture` regenerates every committed fixture but torture.pdf byte for byte (Decisions) |
 | tests/images-fixture.test.ts | 24 | sp-parser | partial | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; three pixel checks run on the dump's facts until sp-pdf supplies decoded pixels |
 | tests/images.test.ts | 68 | sp-parser | done | sp-parser/tests/images.rs (57); retired: the 10 resolveImageData store-race and timeout tests and the lying-buffer test (pixels arrive resolved, a slice cannot misstate its length) |
 | tests/isolate-app-settings.ts | 0 | sp-engine | done | sp-engine/tests/common/mod.rs (guarded_env) and tests/guards.rs: every test hands the engine an environment carrying the guard, and no test file may use this process's own |
@@ -109,7 +109,7 @@ move too.
 | tests/kfx-snippet-stubs.ts | 0 | sp-engine | done | sp-engine/tests/common/kfx_stubs.rs |
 | tests/library-images.test.ts | 55 | sp-engine | done | sp-engine/tests/library_images.rs (55); the PNG encoder it uses is a stored-deflate stand-in (tests/common/png.rs) until sp-parser's lands, which is the worst case the size bound must hold for |
 | tests/library.test.ts | 45 | sp-engine | partial | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the `--library` CLI block (6) is the conversion's: wave 3 |
-| tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
+| tests/mobi-picture-probe.test.ts | 7 | xtask | done | the MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); the run-as-a-process and EPUB halves are xtask/tests/mobi_picture_probe.rs (6; epubcheck skips where it is not installed) |
 | tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
 | tests/notes.test.ts | 49 | sp-fountain | done | sp-fountain/tests/notes.rs (49) |
@@ -123,13 +123,13 @@ move too.
 | tests/presets.test.ts | 7 | sp-model | done | sp-model/tests/presets.rs; the aliasing test has no Rust form (presets are returned by value) |
 | tests/release-app-step.test.ts | 23 | xtask | todo |  |
 | tests/release-artifacts.test.ts | 82 | xtask | todo |  |
-| tests/release-notes-tool.test.ts | 26 | xtask | todo |  |
-| tests/release-notes.test.ts | 6 | xtask | todo |  |
+| tests/release-notes-tool.test.ts | 26 | xtask | done | xtask/tests/release_notes_tool.rs (27), in throwaway repos |
+| tests/release-notes.test.ts | 6 | xtask | done | xtask/tests/release_notes_copy.rs (6) |
 | tests/release-version-gate.test.ts | 6 | xtask | todo |  |
 | tests/remove-pdfjs-decoders.ts | 0 | sp-pdf | todo | test preload; retires with the pdf.js decoder folder |
 | tests/replace-file.test.ts | 11 | sp-fsutil | done | sp-fsutil/tests/replace_file.rs. src/atomic-write.ts has no test file of its own (its checks sit in library-images and desktop-shell); sp-fsutil/tests/atomic_write.rs pins them where the module now is |
-| tests/require-release-notes.test.ts | 22 | xtask | todo | the git hook |
-| tests/review-screens.test.ts | 12 | xtask | todo |  |
+| tests/require-release-notes.test.ts | 22 | xtask | done | xtask/tests/release_hook.rs (24): `cargo xtask require-release-notes`, in a scratch repo |
+| tests/review-screens.test.ts | 12 | xtask | done | xtask/tests/review_screens.rs (12), in scratch repos |
 | tests/route-facts.test.ts | 32 | sp-engine | done | sp-engine/tests/route_facts.rs (29); the 3 checks of the DEFAULT device probe (listDevices with its options) wait for the sp-device branch: route_facts takes the device list from its caller |
 | tests/routes.test.ts | 82 | sp-engine | done | sp-engine/tests/routes.rs (49; the TypeScript's generated per-case tests folded into loops) |
 | tests/send-device.test.ts | 34 | sp-engine | todo | the sp-device branch |
@@ -137,24 +137,24 @@ move too.
 | tests/send-routes-ui.test.ts | 71 | sp-app | todo |  |
 | tests/serialize.test.ts | 64 | sp-fountain | done | sp-fountain/tests/serialize.rs (64); "a parsed mini-slug reaches the EPUB" keeps its token half here, its `<p class="mini-slug">` half is sp-epub's (sp-epub/tests/epub.rs, done) |
 | tests/settings-app-defaults.test.ts | 18 | sp-engine | done | sp-engine/tests/settings_app_defaults.rs |
-| tests/sidecar-targets.test.ts | 26 | xtask | todo | no sidecar in the Rust app: retires with build-sidecar; decision for the owner |
+| tests/sidecar-targets.test.ts | 26 | xtask | retired | no sidecar in the Rust app (Decisions); the surviving target table is pinned by xtask/tests/cli_targets.rs |
 | tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
-| tests/signature-box.ts | 0 | sp-app | todo | test helper: minisign boxes for the updater |
+| tests/signature-box.ts | 0 | sp-app | done | xtask/tests/packaging_common/mod.rs (fake_signature_box, fake_public_key_box, and tauri-cli's published test key for real signatures) |
 | tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
-| tests/smoke-bundle.test.ts | 35 | xtask | todo |  |
-| tests/smoke-cli.test.ts | 21 | xtask | todo |  |
-| tests/tap-scripts.test.ts | 15 | xtask | todo |  |
+| tests/smoke-bundle.test.ts | 35 | xtask | done | xtask/tests/smoke_bundle.rs (38); the native window's bundles get the binary-and-version check only until sp-app has a headless mode (Decisions) |
+| tests/smoke-cli.test.ts | 21 | xtask | done | xtask/tests/smoke_cli.rs (21) |
+| tests/tap-scripts.test.ts | 15 | xtask | done | xtask/tests/tap_tools.rs (18): bump-tap and check-tap against a fake tap and a fake GitHub |
 | tests/temp-hygiene.test.ts | 14 | xtask | todo | must cover the Rust tests' temp folders |
-| tests/tool-temp-folders.test.ts | 4 | xtask | todo |  |
-| tests/torture-coverage.test.ts | 6 | xtask | todo | tools/torture-manifest.json |
-| tests/torture-layout.test.ts | 4 | xtask | todo | make-fixture.py --emit-layout |
-| tests/torture-markup.test.ts | 10 | xtask | todo |  |
+| tests/tool-temp-folders.test.ts | 4 | xtask | done | xtask/tests/tool_temp_folders.rs (4): smoke-cli twice, smoke-bundle, verify-signing |
+| tests/torture-coverage.test.ts | 6 | xtask | done | xtask/tests/torture_coverage.rs (10), with `device-checklist` |
+| tests/torture-layout.test.ts | 4 | xtask | done | xtask/tests/fixture.rs (emit_layout_*, atline_*: 4) |
+| tests/torture-markup.test.ts | 10 | xtask | done | xtask/tests/fixture.rs (markup_*, wrap_*: 10) |
 | tests/torture-pictures.test.ts | 14 | sp-parser | partial | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks move to sp-engine with sp-epub/sp-mobi |
 | tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
-| tests/update-compare-module.test.ts | 9 | sp-app | todo | the window's copy of update/compare; one Rust copy serves both |
+| tests/update-compare-module.test.ts | 9 | sp-app | done | xtask/tests/update_compare.rs (13): `build-update-compare`, and sp-app's comparator held to the engine's recorded answers on every platform; the live half runs through bun and skips without it |
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
-| tests/update-signature.test.ts | 14 | xtask | todo |  |
-| tests/verify-signing.test.ts | 32 | xtask | todo |  |
+| tests/update-signature.test.ts | 14 | xtask | done | xtask/tests/update_signature.rs (17), plus signing the archive the way tauri-cli did |
+| tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
 | tests/workflow-shell.test.ts | 3 | xtask | todo |  |
 | tests/workflows.test.ts | 3 | xtask | todo |  |
@@ -583,39 +583,39 @@ cutover.
 
 | Tool | Kind | Used by | xtask command | status |
 |---|---|---|---|---|
-| tools/make-fixture.py | Python | CLAUDE.md, CONTRIBUTING.md, tests/fixture-stability, torture-layout, torture-markup (and named by many fixture tests) | `make-fixture` | todo |
-| tools/torture-content.py | Python | make-fixture.py (torture.pdf's text) | data of `make-fixture` | todo |
-| tools/field-station-content.py | Python | make-fixture.py (field-station.pdf's text) | data of `make-fixture` | todo |
-| tools/torture-manifest.json | data | tests/torture-coverage, torture-pictures; device-checklist.ts; CLAUDE.md | stays data, read by `device-checklist` | todo |
-| tools/device-checklist.ts | TS | CLAUDE.md (by hand before a device pass) | `device-checklist` | todo |
-| tools/mobi-picture-probe.ts | TS | CLAUDE.md (by hand); tests/mobi-picture-probe | `mobi-picture-probe` (books from sp-mobi::probe) | todo |
-| tools/calibre-config.ts | TS | bunfig.toml preload via tests/isolate-calibre-config.ts, src/export/calibre.ts, tools/capture/run.ts | module `calibre_config` (the engine's half belongs to sp-engine) | todo |
-| tools/capture-screens.ts | TS | CLAUDE.md, SKILL, docs/mac-qa.md | `capture-screens` | todo |
-| tools/review-screens.ts | TS | CLAUDE.md, SKILL | `review-screens` | todo |
-| tools/capture/cdp.ts | TS | capture-screens, tests/helpers/layout-chrome.ts | `capture` module (CDP over tungstenite) | todo |
-| tools/capture/run.ts, server.ts, page.ts, shots.ts, gate.ts, review.ts | TS | capture-screens, review-screens | `capture` module | todo |
-| tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | drives desktop/ui today; the egui window is driven natively at cutover | todo |
-| tools/capture/frame.html, hero.html | HTML | capture-screens (picture frames) | stay HTML, like site/ | todo |
-| tools/make-og.sh | shell | site/og-card.html (by hand) | `make-og` | todo |
-| tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | todo |
-| tools/release-notes.ts | TS | SKILL (the draft's facts) | `release-notes` | todo |
-| tools/build-desktop-notes.ts | TS | desktop.yml, bump-version.ts, SKILL | `build-desktop-notes` (also writes sp-app's notes) | todo |
-| tools/build-desktop-tokens.ts | TS | desktop.yml | `build-desktop-tokens` | todo |
-| tools/build-update-compare.ts | TS | desktop.yml | `build-update-compare` | todo |
-| tools/hooks/require-release-notes.sh | shell | the owner's PreToolUse hook (.claude/settings.local.json), SKILL | `require-release-notes` | todo |
-| tools/bump-tap.sh | shell | release.yml (`tap`), SKILL | `bump-tap` | todo |
-| tools/check-tap.sh | shell | release.yml, tap-freshness.yml | `check-tap` | todo |
-| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | todo |
-| tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | todo |
-| tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | stays data, read by `build-cli` | todo |
-| tools/smoke-cli.ts | TS | ci.yml, release.yml, desktop.yml, CLAUDE.md | `smoke-cli` | todo |
-| tools/verify-signing.ts | TS | docs/mac-qa.md (by hand) | `verify-signing` | todo |
-| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | todo |
-| tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | todo |
-| tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | todo |
-| tools/dmg.ts | TS | smoke-bundle.ts, verify-signing.ts | part of `packaging` | todo |
-| tools/update-signature.ts | TS | release.yml | `update-signature` | todo |
-| tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | todo |
+| tools/make-fixture.py | Python | CLAUDE.md, CONTRIBUTING.md, tests/fixture-stability, torture-layout, torture-markup (and named by many fixture tests) | `make-fixture` | done: xtask/tests/fixture.rs (25) |
+| tools/torture-content.py | Python | make-fixture.py (torture.pdf's text) | data of `make-fixture` | done: src/fixture/torture_content.rs |
+| tools/field-station-content.py | Python | make-fixture.py (field-station.pdf's text) | data of `make-fixture` | done: src/fixture/field_station_content.rs |
+| tools/torture-manifest.json | data | tests/torture-coverage, torture-pictures; device-checklist.ts; CLAUDE.md | stays data, read by `device-checklist` | done: xtask/tests/torture_coverage.rs |
+| tools/device-checklist.ts | TS | CLAUDE.md (by hand before a device pass) | `device-checklist` | done: xtask/tests/torture_coverage.rs |
+| tools/mobi-picture-probe.ts | TS | CLAUDE.md (by hand); tests/mobi-picture-probe | `mobi-picture-probe` (books from sp-mobi::probe) | done: xtask/tests/mobi_picture_probe.rs (6), sp-mobi/tests/probe.rs |
+| tools/calibre-config.ts | TS | bunfig.toml preload via tests/isolate-calibre-config.ts, src/export/calibre.ts, tools/capture/run.ts | module `calibre_config` (the engine's half belongs to sp-engine) | done: src/calibre_config.rs (its 4 unit tests) |
+| tools/capture-screens.ts | TS | CLAUDE.md, SKILL, docs/mac-qa.md | `capture-screens` | done: xtask/tests/capture.rs, capture_chrome.rs |
+| tools/review-screens.ts | TS | CLAUDE.md, SKILL | `review-screens` | done: xtask/tests/review_screens.rs |
+| tools/capture/cdp.ts | TS | capture-screens, tests/helpers/layout-chrome.ts | `capture` module (CDP over tungstenite) | done: xtask/tests/capture_chrome.rs (fake Chrome) |
+| tools/capture/run.ts, server.ts, page.ts, shots.ts, gate.ts, review.ts | TS | capture-screens, review-screens | `capture` module | done: src/capture/; xtask/tests/capture.rs |
+| tools/capture/bridge.js, steps.js | JS (runs in the page) | capture-screens | drives desktop/ui today; the egui window is driven natively at cutover | partial: still drive desktop/ui; replaced at cutover |
+| tools/capture/frame.html, hero.html | HTML | capture-screens (picture frames) | stay HTML, like site/ | done: stay HTML |
+| tools/make-og.sh | shell | site/og-card.html (by hand) | `make-og` | done: xtask/tests/capture_picture.rs, capture_chrome.rs |
+| tools/bump-version.ts | TS | CLAUDE.md, SKILL (`ship`) | `bump-version` | done: xtask/tests/bump_version.rs (20) |
+| tools/release-notes.ts | TS | SKILL (the draft's facts) | `release-notes` | done: xtask/tests/release_notes_tool.rs (27) |
+| tools/build-desktop-notes.ts | TS | desktop.yml, bump-version.ts, SKILL | `build-desktop-notes` (also writes sp-app's notes) | done: xtask/tests/desktop_notes.rs (13) |
+| tools/build-desktop-tokens.ts | TS | desktop.yml | `build-desktop-tokens` | done: xtask/tests/desktop_tokens.rs (11) |
+| tools/build-update-compare.ts | TS | desktop.yml | `build-update-compare` | done: xtask/tests/update_compare.rs (13) |
+| tools/hooks/require-release-notes.sh | shell | the owner's PreToolUse hook (.claude/settings.local.json), SKILL | `require-release-notes` | done: xtask/tests/release_hook.rs (24) |
+| tools/bump-tap.sh | shell | release.yml (`tap`), SKILL | `bump-tap` | done: xtask/tests/tap_tools.rs |
+| tools/check-tap.sh | shell | release.yml, tap-freshness.yml | `check-tap` | done: xtask/tests/tap_tools.rs |
+| tools/check-latest.ts | TS | release.yml, tap-freshness.yml | `check-latest` | done: xtask/tests/check_latest.rs (18) |
+| tools/build-cli.ts | TS | ci.yml, release.yml, SKILL | `build-cli` | done: xtask/tests/build_cli.rs (89), build_cli_e2e.rs (2, opt-in) |
+| tools/macos/screepub-cli.entitlements | plist | build-cli.ts, SECURITY.md | stays data, read by `build-cli` | done: stays data; three bun-era keys go at cutover (Decisions) |
+| tools/smoke-cli.ts | TS | ci.yml, release.yml, desktop.yml, CLAUDE.md | `smoke-cli` | done: xtask/tests/smoke_cli.rs (21) |
+| tools/verify-signing.ts | TS | docs/mac-qa.md (by hand) | `verify-signing` | done: xtask/tests/verify_signing.rs (34) |
+| tools/build-app-bundle.ts | TS | release.yml, CLAUDE.md | `build-app-bundle` | done: xtask/tests/build_app_bundle.rs (74), native_bundle.rs (18) |
+| tools/bundle-archive.ts | TS | desktop.yml, build-app-bundle.ts | `bundle-archive` | done: xtask/tests/bundle_archive.rs (28) |
+| tools/smoke-bundle.ts | TS | desktop.yml, release.yml | `smoke-bundle` | partial: xtask/tests/smoke_bundle.rs (38); left: running the native window headless (Decisions) |
+| tools/dmg.ts | TS | smoke-bundle.ts, verify-signing.ts | module `dmg`, shared by `smoke-bundle` and `verify-signing` | done: src/dmg.rs, the one copy smoke-bundle and verify-signing share |
+| tools/update-signature.ts | TS | release.yml | `update-signature` | done: xtask/tests/update_signature.rs (17) |
+| tools/build-update-manifest.ts | TS | release.yml | `build-update-manifest` | done: xtask/tests/build_update_manifest.rs (21) |
 | tools/build-sidecar.ts | TS | CLAUDE.md, CONTRIBUTING.md, desktop.yml, release.yml | `build-sidecar` answers "retired" | retired |
 | tools/sidecar-targets.ts | TS | build-sidecar.ts, desktop/src-tauri/src/sidecar.rs | none | retired |
 | tools/oracle/dump.ts, dump-all.ts, freeze-clock.ts | TS | `cargo xtask oracle` and `parity` | stay TypeScript: they ARE the TypeScript engine asked to show its work (dump.ts also writes each picture's raw pixels to `pixels/`); deleted at cutover with it | stays until cutover |
@@ -818,3 +818,67 @@ names the check it affects.
 - **Timeouts.** resolveImageData's per-image wait and store race have no Rust
   counterpart (pixels arrive resolved); the 20 s document budget still charges
   conversion and encoding. `imageStats.decodersUnavailable` is never set.
+- **Fixture pictures (xtask make-fixture, 2026-10-11).** make-fixture's
+  pictures are deflated by zlib-rs (flate2's zlib-rs backend, level 9),
+  which writes the same streams zlib 1.2.12 gave Python, so every committed
+  fixture but torture.pdf regenerates byte for byte
+  (xtask/tests/fixture.rs, stability_*). torture.pdf was never byte-stable.
+- **make-fixture's error text (2026-10-11).** Where Python died with a
+  traceback, the port prints only the traceback's last line (the exception
+  and its message). The exit codes are unchanged.
+- **The CLI size floors (build-cli, 2026-10-11).** The bun CLI embedded a
+  runtime (floor 20 MB); a Rust binary carries only the engine, so the
+  floors are now 1 MB for the binary and 300 KB for the archive, set where
+  a truncated write would land. Re-tune them on the first real release
+  build of sp-cli (`RELEASE_FLOORS` in xtask/src/cli_build/build.rs).
+- **DECIDED: the Mac CLI's bun-era entitlements go at cutover.**
+  tools/macos/screepub-cli.entitlements grants allow-jit,
+  allow-unsigned-executable-memory and disable-library-validation because
+  bun's JIT needed them; a Rust binary needs none of the three. They are
+  dropped at cutover, and the checks that pin the file
+  (xtask/tests/build_cli.rs, build_cli_e2e.rs) change then.
+- **DECIDED: release CI builds each target on its own native runner.**
+  macos-15 (arm64), windows-latest, ubuntu-latest (x64) and
+  ubuntu-24.04-arm (linux-arm64), with no cross-compiling. That is also why
+  build_cli_e2e.rs builds only the host target.
+- **OPEN for the owner: the TLS provider for xtask's GitHub reads.**
+  bump-tap, check-tap and check-latest use ureq over rustls with
+  rustls-rustcrypto 0.0.2-alpha, a pure-Rust provider (xtask built alone
+  compiles no C; a whole-workspace build still compiles ring for sp-app and
+  sp-device). That alpha depends on rustls-webpki 0.102.8, which
+  RUSTSEC-2026-0104 covers (advisory-db, 2026-04-22; CVE-2026-93599,
+  GHSA-82j2-j2ch-gfr8; denial of service). What it says: parsing a
+  certificate revocation list with `BorrowedCertRevocationList::from_der`
+  or `OwnedCertRevocationList::from_der` can panic on a valid but empty
+  BIT STRING in the onlySomeReasons element of an IssuingDistributionPoint
+  extension, before the CRL's signature is checked; applications that do
+  not use CRLs are not affected. Patched: >= 0.103.13 and < 0.104.0-alpha.1,
+  or >= 0.104.0-alpha.7. There is no 0.102.x fix, so 0.102.8 is in range.
+  xtask configures no CRLs, so by the advisory's own terms it is not
+  affected, but `cargo audit` will flag the lockfile. The alternative is
+  rustls's ring provider, which sp-app already uses (through ureq, on
+  rustls-webpki 0.103.15, which is patched).
+- **The capture gate's argument builders (2026-10-11).** The capture runs
+  the engine the way the window does, so xtask/src/capture/window_argv.rs
+  holds a copy of the window's argv builders. Until cutover
+  xtask/tests/capture.rs checks the copy against desktop/ui/app.js; after
+  it, against sp-app's own builders.
+- **Windows upgrade over 0.11 (build-app-bundle, open).** The native NSIS
+  installer writes the same uninstall registry key and install folder as
+  the Tauri one, so it should upgrade 0.11 in place. That is unverified on
+  a real Windows system.
+- **Linux package dependencies (build-app-bundle, open).** The native
+  window's .deb and .rpm declare no dependencies, though egui loads X11 or
+  Wayland and xkbcommon at run time. Add them (Depends: and Requires:)
+  before cutover.
+- **sp-app needs a headless mode for smoke-bundle (open).** The Tauri
+  bundle's smoke runs its engine sidecar (`--version --json` and a
+  conversion). The native window has neither, so smoke-bundle checks only
+  that its binary is present, executable and declares the right version.
+  sp-app needs `--version --json` and `--smoke <pdf>` for the full check.
+- **Before cutover: the icons and the updater key (build-app-bundle).**
+  The native bundles look for icons in rust/crates/sp-app/icons first and
+  fall back to desktop/src-tauri/icons, and read the updater public key
+  from tauri.conf.json. The icons move to rust/crates/sp-app/icons, and the
+  public key needs a home of its own outside tauri.conf.json, before
+  desktop/ goes.
