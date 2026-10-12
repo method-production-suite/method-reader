@@ -123,38 +123,14 @@ pub fn build_argv(
 /// The `version` key of the `[package]` TABLE and nothing else: a missing
 /// key answers None rather than a dependency's version.
 pub fn cargo_package_version(text: &str) -> Option<String> {
-    table_key(text, "package", "version")
+    crate::cli_build::toml_string(text, "package", "version")
 }
 
-/// `[workspace.package]`'s version, which every native crate inherits.
+/// `[workspace.package]`'s version, which every native crate inherits:
+/// [`sp_release::version::workspace_version`], the reader release.yml's
+/// version gate uses.
 pub fn workspace_package_version(text: &str) -> Option<String> {
-    table_key(text, "workspace.package", "version")
-}
-
-fn table_key(text: &str, table: &str, key: &str) -> Option<String> {
-    let mut lines = text.lines();
-    lines
-        .by_ref()
-        .find(|l| l.trim_matches([' ', '\t', '\r']) == format!("[{table}]"))?;
-    for line in lines {
-        let t = line.trim_start_matches([' ', '\t']);
-        if t.starts_with('[') {
-            return None;
-        }
-        let Some(rest) = t.strip_prefix(key) else {
-            continue;
-        };
-        let rest = rest.trim_start_matches([' ', '\t']);
-        let Some(rest) = rest.strip_prefix('=') else {
-            continue;
-        };
-        let rest = rest.trim_start_matches([' ', '\t']);
-        let Some(rest) = rest.strip_prefix('"') else {
-            continue;
-        };
-        return rest.find('"').map(|end| rest[..end].to_string());
-    }
-    None
+    sp_release::version::workspace_version(text)
 }
 
 fn read(path: &Path) -> Result<String, String> {

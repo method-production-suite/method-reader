@@ -13,6 +13,7 @@ use std::path::Path;
 
 use serde_json::{Map, Value, json};
 
+use crate::boxes::parse_signature_box;
 use crate::names::{SIGNATURE_EXT, UPDATER_KINDS, asset_url, is_release_version, release_page_url};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -52,13 +53,11 @@ pub fn collect_signed_artifacts(dir: &Path) -> Result<Vec<SignedArtifact>, Strin
                 "build-update-manifest: {sig_name} signs {name}, and no row in UPDATER_KINDS (sp-release names.rs) maps that artifact to a platform key. Add the row, or stop signing it; a signed artifact no platform can be offered is a manifest that lies by omission."
             )
         })?;
-        let signature = std::fs::read_to_string(dir.join(sig_name)).map_err(|e| e.to_string())?;
-        let decoded = sp_update::verify::base64_to_string(signature.trim());
-        if !decoded.is_ok_and(|d| minisign_verify::Signature::decode(&d).is_ok()) {
-            return Err(format!(
-                "build-update-manifest: {sig_name} is not a minisign signature"
-            ));
-        }
+        let signature = std::fs::read_to_string(dir.join(sig_name))
+            .map_err(|e| format!("build-update-manifest: cannot read {sig_name}: {e}"))?;
+        parse_signature_box(&signature).map_err(|e| {
+            format!("build-update-manifest: {sig_name} is not a minisign signature: {e}")
+        })?;
         out.push(SignedArtifact {
             name: name.to_string(),
             signature,
@@ -79,7 +78,8 @@ pub fn render_manifest(
     let v = version.trim_start_matches('v');
     if !is_release_version(v) {
         return Err(format!(
-            "build-update-manifest: --version must be MAJOR.MINOR.PATCH (got {version:?}). The plugin parses it with semver, and a branch name here is a manifest no app can read."
+            "build-update-manifest: --version must be MAJOR.MINOR.PATCH (got {}). The plugin parses it with semver, and a branch name here is a manifest no app can read.",
+            serde_json::to_string(version).unwrap_or_default()
         ));
     }
     if v.contains('-') {
@@ -96,7 +96,8 @@ pub fn render_manifest(
             if let Some(existing) = platforms.get(key) {
                 return Err(format!(
                     "build-update-manifest: {key} is claimed by two artifacts ({} and the one already at {}). One platform, one file.",
-                    a.name, existing["url"]
+                    a.name,
+                    existing["url"].as_str().unwrap_or("")
                 ));
             }
             platforms.insert(

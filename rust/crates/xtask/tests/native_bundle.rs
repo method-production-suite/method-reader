@@ -375,13 +375,15 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
     let rpm = out.join("Screepub-linux-x86_64.rpm");
     for pkg in [&deb, &rpm] {
         let entries = bundle_entries(pkg).unwrap();
-        let bin = find_entry(&entries, "usr/bin/screepub-window").unwrap();
+        // The Tauri window's executable name, so a launcher or script that
+        // names it still works after the update (sp-release names.rs).
+        let bin = find_entry(&entries, "usr/bin/screepub-desktop").unwrap();
         assert_eq!(bin.data, the_binary(), "{}", pkg.display());
         assert_eq!(bin.mode & 0o777, 0o755);
         let desktop = find_entry(&entries, "usr/share/applications/Screepub.desktop").unwrap();
         let text = String::from_utf8_lossy(&desktop.data);
         assert!(
-            text.contains("Exec=screepub-window\n") && text.contains("Icon=screepub\n"),
+            text.contains("Exec=screepub-desktop\n") && text.contains("Icon=screepub-desktop\n"),
             "{text}"
         );
         assert_eq!(
@@ -395,7 +397,7 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
         for size in ["32x32", "128x128", "256x256@2"] {
             find_entry(
                 &entries,
-                &format!("usr/share/icons/hicolor/{size}/apps/screepub.png"),
+                &format!("usr/share/icons/hicolor/{size}/apps/screepub-desktop.png"),
             )
             .unwrap();
         }
@@ -533,7 +535,7 @@ fn the_real_package_tools_accept_them_where_installed() {
             .arg(out.join("Screepub-linux-amd64.deb"))
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/screepub-window"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/screepub-desktop"));
     } else {
         eprintln!("skipped the dpkg-deb half: not installed");
     }
@@ -550,7 +552,7 @@ fn the_real_package_tools_accept_them_where_installed() {
             .arg(out.join("Screepub-linux-x86_64.rpm"))
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/screepub-window"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/screepub-desktop"));
     } else {
         eprintln!("skipped the rpm half: not installed");
     }
@@ -588,7 +590,7 @@ fn info_plist_says_what_the_tauri_app_said_about_itself() {
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),
-        Some("Screepub")
+        Some("screepub-desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleShortVersionString").as_deref(),
@@ -641,7 +643,7 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
         Some("com.darkwell.screepub")
     );
     assert_eq!(
-        fs::read(app.join("Contents/MacOS/Screepub")).unwrap(),
+        fs::read(app.join("Contents/MacOS/screepub-desktop")).unwrap(),
         the_binary()
     );
     assert!(app.join("Contents/Resources/icon.icns").is_file());
@@ -743,10 +745,10 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     // manifest builder takes it as the darwin-aarch64 entry.
     let tar = out.join("Screepub-macOS.app.tar.gz");
     let sig = fs::read_to_string(out.join("Screepub-macOS.app.tar.gz.sig")).unwrap();
-    verify_file(&tar, &sig, &pubkey).unwrap();
+    verify_file(&tar, &sig, &pubkey, VERSION).unwrap();
     let found = collect_signed_artifacts(&out).unwrap();
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].platforms, ["darwin-aarch64"]);
+    assert_eq!(found[0].platform_keys, ["darwin-aarch64"]);
 
     // What a 0.11.x window's updater lays over its own Screepub.app.
     let unpacked = unpack_like_the_updater(&tar);
@@ -756,7 +758,7 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
             .find(|(n, _, _)| n == p)
             .unwrap_or_else(|| panic!("{p} not in the archive"))
     };
-    let (_, mode, data) = file("Contents/MacOS/Screepub");
+    let (_, mode, data) = file("Contents/MacOS/screepub-desktop");
     assert_eq!(mode & 0o777, 0o755);
     assert_eq!(*data, the_binary());
     let (_, mode, plist) = file("Contents/Info.plist");
@@ -768,7 +770,7 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),
-        Some("Screepub")
+        Some("screepub-desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleShortVersionString").as_deref(),
@@ -870,15 +872,17 @@ fn a_native_windows_run_scripts_a_per_user_installer_over_the_tauri_one() {
         "!define PRODUCTNAME \"Screepub\"",
         "!define VERSION \"0.12.0\"",
         "VIProductVersion \"0.12.0.0\"",
-        "Delete \"$INSTDIR\\screepub-desktop.exe\"",
+        "!define MAINBINARYNAME \"screepub-desktop\"",
         "Delete \"$INSTDIR\\screepub-engine.exe\"",
-        "Screepub.exe\"",
         "WriteUninstaller",
         "DeleteRegKey HKCU \"${UNINSTKEY}\"",
     ] {
         assert!(script.contains(want), "the script lacks {want}");
     }
     let stage = Path::new(&fake.calls[1][1]).parent().unwrap().to_path_buf();
-    assert_eq!(fs::read(stage.join("Screepub.exe")).unwrap(), the_binary());
+    assert_eq!(
+        fs::read(stage.join("screepub-desktop.exe")).unwrap(),
+        the_binary()
+    );
     assert!(stage.join("icon.ico").is_file());
 }

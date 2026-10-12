@@ -478,21 +478,18 @@ fn it_names_every_file_it_wrote_and_fails_with_the_reason_and_nothing_written() 
 
 #[test]
 fn every_version_file_release_yml_compares_with_the_tag_is_one_this_tool_sets() {
+    // The Rust release.yml compares the tag with ONE file, rust/Cargo.toml's
+    // [workspace.package] version, through `sp-release version-check`.
     let checks = real(".github/workflows/release.yml");
     let step = &checks[checks
-        .find("Release notes and version are publishable")
+        .find("The workspace version is the tag's")
         .expect("the step")..];
+    assert!(step.contains("sp-release -- version-check"), "{step}");
+    assert!(step.contains("rust/Cargo.toml"), "{step}");
     let all: Vec<&str> = GROUPS
         .iter()
         .flat_map(|g| g.files.iter().map(|f| f.path))
         .collect();
-    for file in [
-        "package.json",
-        "desktop/src-tauri/Cargo.toml",
-        "desktop/src-tauri/tauri.conf.json",
-    ] {
-        assert!(step.contains(file), "{file}");
-        assert!(all.contains(&file), "{file}");
-    }
-    assert!(all.contains(&"desktop/src-tauri/Cargo.lock"));
+    assert!(all.contains(&"rust/Cargo.toml"));
+    assert!(all.contains(&"rust/Cargo.lock"));
 }

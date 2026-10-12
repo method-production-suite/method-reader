@@ -165,30 +165,22 @@ pub const UPDATER_KINDS: [Kind; 1] = [Kind {
 pub const SIGNATURE_EXT: &str = ".sig";
 pub const UPDATER_OVERLAY: &str = "tauri.updater.conf.json";
 
-/// The published name of `kind`. No version, ever: pages link to
+/// The published name of `kind`: sp-release's names.rs, the one table
+/// release.yml publishes by. No version, ever: pages link to
 /// releases/latest/download/<name>. The arch is in the name only where more
-/// than one is built.
+/// than one is built (sp-release publishes x64 Linux packages only; the
+/// arm64 names are this tool's, for a laptop build).
 pub fn released_name(kind: &Kind, _version: &str, arch: BundleArch) -> String {
+    use sp_release::names;
+    let x64 = arch == BundleArch::X64;
     match kind.id {
-        "deb" => format!(
-            "Screepub-linux-{}.deb",
-            if arch == BundleArch::X64 {
-                "amd64"
-            } else {
-                "arm64"
-            }
-        ),
-        "rpm" => format!(
-            "Screepub-linux-{}.rpm",
-            if arch == BundleArch::X64 {
-                "x86_64"
-            } else {
-                "aarch64"
-            }
-        ),
-        "dmg" => "Screepub-macOS.dmg".into(),
-        "nsis" => "Screepub-windows-x64-setup.exe".into(),
-        "app-tar" => "Screepub-macOS.app.tar.gz".into(),
+        "deb" if x64 => names::LINUX_DEB_AMD64.into(),
+        "deb" => "Screepub-linux-arm64.deb".into(),
+        "rpm" if x64 => names::LINUX_RPM_X86_64.into(),
+        "rpm" => "Screepub-linux-aarch64.rpm".into(),
+        "dmg" => names::MAC_DMG.into(),
+        "nsis" => names::WINDOWS_SETUP.into(),
+        "app-tar" => names::MAC_UPDATE.into(),
         other => panic!("no published name for kind {other}"),
     }
 }
@@ -196,15 +188,22 @@ pub fn released_name(kind: &Kind, _version: &str, arch: BundleArch) -> String {
 /// The inverse of [`released_name`] for an updater kind: the arch a
 /// published name serves, or None when it is not this kind's.
 pub fn arch_of(kind: &Kind, released: &str) -> Option<BundleArch> {
-    (kind.id == "app-tar" && released == "Screepub-macOS.app.tar.gz").then_some(MAC_ARCH)
+    (kind.id == "app-tar" && released == sp_release::names::MAC_UPDATE).then_some(MAC_ARCH)
 }
 
-/// The `<os>-<arch>` keys of latest.json an updater kind answers for.
-pub fn platform_keys(kind: &Kind, _arch: BundleArch) -> Vec<&'static str> {
-    match kind.id {
-        "app-tar" => vec!["darwin-aarch64"],
-        _ => Vec::new(),
+/// The `<os>-<arch>` keys of latest.json an updater kind answers for:
+/// sp-release's UPDATER_KINDS row for its published name, the table the
+/// manifest writer reads.
+pub fn platform_keys(kind: &Kind, arch: BundleArch) -> Vec<&'static str> {
+    if kind.id != "app-tar" {
+        return Vec::new();
     }
+    let name = released_name(kind, "", arch);
+    sp_release::names::UPDATER_KINDS
+        .iter()
+        .find(|k| k.name == name)
+        .map(|k| k.platform_keys.to_vec())
+        .unwrap_or_default()
 }
 
 pub fn kinds_for_os(os: BundleOs) -> Vec<Kind> {

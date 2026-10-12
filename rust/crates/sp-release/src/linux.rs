@@ -37,6 +37,13 @@ pub struct LinuxApp<'a> {
     pub depends: &'a str,
 }
 
+/// A version every package format accepts: a prerelease's `-` becomes
+/// `~`, which sorts before the release in both dpkg and rpm (rpm refuses a
+/// `-` in a version outright).
+pub fn package_version(version: &str) -> String {
+    version.replacen('-', "~", 1)
+}
+
 /// The launcher entry, as tauri-bundler wrote it, with Categories=Office.
 pub fn desktop_entry() -> String {
     format!(
@@ -101,7 +108,8 @@ fn tree(files: &[(String, Vec<u8>, bool)]) -> Vec<Entry> {
 /// The control file.
 pub fn control(version: &str, arch: &str, installed_kib: u64, depends: &str) -> String {
     let mut c = format!(
-        "Package: {PACKAGE}\nVersion: {version}\nArchitecture: {arch}\nInstalled-Size: {installed_kib}\nMaintainer: {PUBLISHER}\nPriority: optional\nSection: office\nHomepage: https://github.com/{REPO}\n"
+        "Package: {PACKAGE}\nVersion: {}\nArchitecture: {arch}\nInstalled-Size: {installed_kib}\nMaintainer: {PUBLISHER}\nPriority: optional\nSection: office\nHomepage: https://github.com/{REPO}\n",
+        package_version(version)
     );
     if !depends.trim().is_empty() {
         c += &format!("Depends: {}\n", depends.trim());
@@ -153,9 +161,10 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
     let config = rpm::BuildConfig::default()
         .compression(rpm::CompressionType::Gzip)
         .source_date(mtime);
+    let version = package_version(app.version);
     let mut b = rpm::PackageBuilder::new(
         PACKAGE,
-        app.version,
+        &version,
         "AGPL-3.0-or-later",
         arch,
         SHORT_DESCRIPTION,
@@ -281,6 +290,13 @@ mod tests {
         assert!(c.starts_with("Package: screepub\nVersion: 0.12.0\nArchitecture: amd64\n"));
         assert!(c.contains("Depends: libc6\n"));
         assert!(c.ends_with(&format!(" {LONG_DESCRIPTION}\n")));
+    }
+
+    #[test]
+    fn a_prerelease_sorts_before_its_release_in_both_formats() {
+        assert_eq!(package_version("0.12.0-rc1"), "0.12.0~rc1");
+        assert_eq!(package_version("0.12.0"), "0.12.0");
+        assert!(control("0.12.0-rc1", "amd64", 1, "").contains("\nVersion: 0.12.0~rc1\n"));
     }
 
     #[test]

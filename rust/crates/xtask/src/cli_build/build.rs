@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
 
-use super::archive::{archive_entries, write_tar_gz, write_zip};
+use super::archive::archive_entries;
 use super::binfmt::{HEAD_BYTES, detect_binary_format, read_binary_format};
 use super::targets::{
     MAC_TARGETS, Packaging, TARGETS, Target, archive_path, binary_path, build_dir, is_mac_target,
@@ -34,21 +34,8 @@ pub const CLI_CRATE: &str = "sp-cli";
 pub const CLI_BINARY: &str = "screepub";
 
 /// A release version, MAJOR.MINOR.PATCH with an optional prerelease: the
-/// one rule every release tool checks its --version against.
-pub fn is_release_version(version: &str) -> bool {
-    let (core, pre) = match version.split_once('-') {
-        Some((c, p)) => (c, Some(p)),
-        None => (version, None),
-    };
-    let parts: Vec<&str> = core.split('.').collect();
-    let core_ok = parts.len() == 3
-        && parts
-            .iter()
-            .all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()));
-    let pre_ok = pre
-        .is_none_or(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'.'));
-    core_ok && pre_ok
-}
+/// one rule every release tool checks its --version against, sp-release's.
+pub use sp_release::names::is_release_version;
 
 /// How a --mac build is signed. `sign` is the codesign identity, `-` for
 /// ad-hoc, or `None` for an explicit --unsigned.
@@ -608,7 +595,7 @@ fn submit(
 /// and one that does not. An existing archive is replaced, never appended.
 pub fn package_target(target: &Target, out_dir: &Path) -> Result<PathBuf, String> {
     let bin = binary_path(target, out_dir);
-    let bytes = std::fs::read(&bin)
+    std::fs::metadata(&bin)
         .map_err(|e| format!("build-cli: cannot read {}: {e}", bin.display()))?;
     #[cfg(unix)]
     {
@@ -618,11 +605,17 @@ pub fn package_target(target: &Target, out_dir: &Path) -> Result<PathBuf, String
     }
     let out = archive_path(target, out_dir);
     let _ = std::fs::remove_file(&out);
-    let members: [(&str, &[u8], u32); 1] = [(target.binary_name, &bytes, 0o755)];
-    match target.packaging {
-        Packaging::TarGz => write_tar_gz(&out, &members)?,
-        Packaging::Zip => write_zip(&out, &members)?,
+    // sp-release's writer, the one release.yml's `cli-archive` runs: one
+    // member named `screepub` (`screepub.exe` in the zip), mode 0755.
+    let packed = match target.packaging {
+        Packaging::TarGz => {
+            sp_release::archive::cli_tarball(&bin, sp_release::archive::build_time())
+        }
+        Packaging::Zip => sp_release::archive::cli_zip(&bin),
     }
+    .map_err(|e| format!("build-cli: cannot write {}: {e}", out.display()))?;
+    std::fs::write(&out, packed)
+        .map_err(|e| format!("build-cli: cannot write {}: {e}", out.display()))?;
     Ok(out)
 }
 

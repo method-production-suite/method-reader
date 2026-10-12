@@ -62,7 +62,7 @@ fn one() -> SignedArtifact {
     SignedArtifact {
         name: TAR.into(),
         signature: fake_signature_box("Screepub.app.tar.gz", FAKE_KEY_ID),
-        platforms: vec!["darwin-aarch64".into()],
+        platform_keys: vec!["darwin-aarch64".into()],
     }
 }
 
@@ -256,7 +256,7 @@ fn a_repeated_key_is_an_error() {
     let other = SignedArtifact {
         name: "Screepub-other.app.tar.gz".into(),
         signature: "a".into(),
-        platforms: vec!["darwin-aarch64".into()],
+        platform_keys: vec!["darwin-aarch64".into()],
     };
     err_contains(
         render_manifest("0.6.1", &[one(), other], RELEASE_REPO, WHEN),

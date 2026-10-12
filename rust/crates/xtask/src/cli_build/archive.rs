@@ -1,19 +1,18 @@
-//! Writing and reading the CLI's download archives: tar.gz for Linux and
-//! the Mac, zip for Windows, what each platform's users can open with
-//! nothing installed.
+//! Reading the CLI's download archives back: tar.gz for Linux and the Mac,
+//! zip for Windows, what each platform's users can open with nothing
+//! installed. Writing them is sp-release's ([`sp_release::archive`]), the
+//! one writer release.yml uses.
 //!
-//! The tar is written and walked here rather than by a `tar` program:
+//! The tar is walked here rather than by a `tar` program:
 //! `tar -tzvf` answers in a listing format that differs between GNU tar and
 //! bsdtar, and macOS's bsdtar adds a hidden `._name` member beside each file
 //! unless told not to (the TypeScript set COPYFILE_DISABLE for that). A
 //! ustar header is 512 fixed bytes.
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::Path;
 
-use flate2::Compression;
 use flate2::read::GzDecoder;
-use flate2::write::GzEncoder;
 
 /// One member of an archive.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -121,71 +120,21 @@ pub fn archive_entries(path: &Path) -> Result<Vec<ArchiveEntry>, String> {
     }
 }
 
-fn octal_field(field: &mut [u8], value: u64) {
-    // Zero-padded octal digits filling all but the last byte, then NUL.
-    let digits = field.len() - 1;
-    let text = format!("{value:0digits$o}");
-    field[..digits].copy_from_slice(&text.as_bytes()[text.len() - digits..]);
-    field[digits] = 0;
-}
-
-/// A ustar header for one regular file.
-fn tar_header(name: &str, size: u64, mode: u32, mtime: u64) -> Result<[u8; 512], String> {
-    if name.len() > 100 {
-        return Err(format!("build-cli: {name} is longer than a tar name field"));
-    }
-    let mut h = [0u8; 512];
-    h[..name.len()].copy_from_slice(name.as_bytes());
-    octal_field(&mut h[100..108], u64::from(mode));
-    octal_field(&mut h[108..116], 0); // uid
-    octal_field(&mut h[116..124], 0); // gid
-    octal_field(&mut h[124..136], size);
-    octal_field(&mut h[136..148], mtime);
-    h[156] = b'0';
-    h[257..263].copy_from_slice(b"ustar\0");
-    h[263..265].copy_from_slice(b"00");
-    // The checksum is summed with its own field as eight spaces.
-    h[148..156].copy_from_slice(b"        ");
-    let sum: u32 = h.iter().map(|&b| u32::from(b)).sum();
-    let text = format!("{sum:06o}\0 ");
-    h[148..156].copy_from_slice(text.as_bytes());
-    Ok(h)
-}
-
-/// A .tar.gz holding exactly these members, each with its mode as given.
+/// A .tar.gz holding exactly these members, each with its mode as given,
+/// written by sp-release's archive writer (the one release.yml's
+/// `cli-archive` uses). For hand-built archives in tests; the CLI's own
+/// archive is [`sp_release::archive::cli_tarball`].
 pub fn write_tar_gz(path: &Path, members: &[(&str, &[u8], u32)]) -> Result<(), String> {
-    let mtime = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs());
-    let mut tar = Vec::new();
-    for (name, data, mode) in members {
-        tar.extend_from_slice(&tar_header(name, data.len() as u64, *mode, mtime)?);
-        tar.extend_from_slice(data);
-        tar.resize(tar.len().div_ceil(512) * 512, 0);
-    }
-    tar.extend_from_slice(&[0u8; 1024]); // two zero blocks end the archive
-    let file = std::fs::File::create(path)
+    let entries: Vec<sp_release::archive::Entry> = members
+        .iter()
+        .map(|(name, data, mode)| sp_release::archive::Entry {
+            path: (*name).to_string(),
+            kind: sp_release::archive::Kind::File(data.to_vec()),
+            mode: *mode,
+        })
+        .collect();
+    let bytes = sp_release::archive::tar_gz(&entries, sp_release::archive::build_time())
         .map_err(|e| format!("build-cli: cannot write {}: {e}", path.display()))?;
-    let mut gz = GzEncoder::new(file, Compression::best());
-    gz.write_all(&tar)
-        .and_then(|()| gz.finish().map(drop))
+    std::fs::write(path, bytes)
         .map_err(|e| format!("build-cli: cannot write {}: {e}", path.display()))
-}
-
-/// A deflated .zip holding exactly these members, each with its Unix mode
-/// written into the central directory.
-pub fn write_zip(path: &Path, members: &[(&str, &[u8], u32)]) -> Result<(), String> {
-    let fail =
-        |e: &dyn std::fmt::Display| format!("build-cli: cannot write {}: {e}", path.display());
-    let file = std::fs::File::create(path).map_err(|e| fail(&e))?;
-    let mut zip = zip::ZipWriter::new(file);
-    for (name, data, mode) in members {
-        let options = zip::write::SimpleFileOptions::default()
-            .compression_method(zip::CompressionMethod::Deflated)
-            .unix_permissions(*mode);
-        zip.start_file(*name, options).map_err(|e| fail(&e))?;
-        zip.write_all(data).map_err(|e| fail(&e))?;
-    }
-    zip.finish().map_err(|e| fail(&e))?;
-    Ok(())
 }

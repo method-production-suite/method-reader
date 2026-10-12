@@ -767,12 +767,12 @@ fn a_native_package_is_checked_for_its_window_and_its_version() {
     )
     .unwrap();
     assert_eq!(smoked.len(), 2);
-    // A Tauri-era package has no window binary where the native one lives.
+    // A package without the window binary is refused, naming where it looked.
     let deb = s.join("tauri.deb");
     fake_deb(&deb, "usr/bin/screepub-engine", b"ENGINE");
     err_contains(
         smoke_native_bundle(&deb, &s.fresh("w"), "0.12.0", &mut none),
-        "screepub-window",
+        "usr/bin/screepub-desktop",
     );
 }
 
@@ -789,7 +789,7 @@ fn a_native_image_must_carry_the_tauri_identifier_and_the_version() {
                     PathBuf::from(&argv[argv.iter().position(|a| a == "-mountpoint").unwrap() + 1]);
                 let contents = mount.join("Screepub.app/Contents");
                 fs::create_dir_all(contents.join("MacOS")).unwrap();
-                fs::write(contents.join("MacOS/Screepub"), "BIN").unwrap();
+                fs::write(contents.join("MacOS/screepub-desktop"), "BIN").unwrap();
                 fs::write(
                     contents.join("Info.plist"),
                     info_plist(version).replace("com.darkwell.screepub", identifier),

@@ -184,14 +184,15 @@ fn a_signature_and_a_public_key_from_the_same_pair_agree_on_the_key_id() {
     );
 }
 
-// ---- signing, now that tauri-cli does not ----
+// ---- signing, now that tauri-cli does not: sp-release's signer, with the
+// pinned minisign, opening tauri-cli's own published test key ----
 
 #[test]
 fn a_signed_archive_is_a_box_the_readers_accept_and_the_app_s_key_verifies() {
     let s = Scratch::new("sign");
     let file = s.join("Screepub.app.tar.gz");
     fs::write(&file, b"gzip bytes, as far as a signature cares").unwrap();
-    let sig = sign_file(&file, TAURI_TEST_KEY, "", 1_758_470_000).unwrap();
+    let sig = sign_file(&file, TAURI_TEST_KEY, "", "0.12.0", 1_758_470_000).unwrap();
 
     // The container tauri-cli writes: what the bundle tool and the manifest
     // builder read back.
@@ -199,11 +200,16 @@ fn a_signed_archive_is_a_box_the_readers_accept_and_the_app_s_key_verifies() {
     assert_eq!(parsed.file_name.as_deref(), Some("Screepub.app.tar.gz"));
     let text = unb64(&sig);
     assert!(text.starts_with("untrusted comment: signature from tauri secret key\n"));
-    assert!(text.contains("trusted comment: timestamp:1758470000\tfile:Screepub.app.tar.gz\n"));
+    // tauri-cli's two fields, then the version the Rust app requires.
+    assert!(text.contains(
+        "trusted comment: timestamp:1758470000\tfile:Screepub.app.tar.gz\tversion:0.12.0\n"
+    ));
 
     let pk = tauri_test_public_key();
     assert_eq!(parse_public_key_box(&pk).unwrap().key_id, parsed.key_id);
-    verify_file(&file, &sig, &pk).unwrap();
+    verify_file(&file, &sig, &pk, "0.12.0").unwrap();
+    // Signed for one version, it does not pass for another.
+    assert!(verify_file(&file, &sig, &pk, "0.12.1").is_err());
 }
 
 #[test]
@@ -211,16 +217,16 @@ fn a_changed_byte_or_another_key_fails_verification() {
     let s = Scratch::new("verify");
     let file = s.join("Screepub.app.tar.gz");
     fs::write(&file, b"the archive").unwrap();
-    let sig = sign_file(&file, TAURI_TEST_KEY, "", 1).unwrap();
+    let sig = sign_file(&file, TAURI_TEST_KEY, "", "0.12.0", 1).unwrap();
     let pk = tauri_test_public_key();
 
     fs::write(&file, b"the archivE").unwrap();
-    assert!(verify_file(&file, &sig, &pk).is_err());
+    assert!(verify_file(&file, &sig, &pk, "0.12.0").is_err());
 
     fs::write(&file, b"the archive").unwrap();
     let other = minisign::KeyPair::generate_unencrypted_keypair().unwrap();
     let other_pk = STANDARD.encode(other.pk.to_box().unwrap().to_string());
-    assert!(verify_file(&file, &sig, &other_pk).is_err());
+    assert!(verify_file(&file, &sig, &other_pk, "0.12.0").is_err());
 }
 
 #[test]
@@ -229,8 +235,11 @@ fn a_wrong_password_or_a_key_that_is_not_one_is_refused_by_name() {
     let file = s.join("a");
     fs::write(&file, b"x").unwrap();
     err_contains(
-        sign_file(&file, TAURI_TEST_KEY, "not the password", 1),
+        sign_file(&file, TAURI_TEST_KEY, "not the password", "0.12.0", 1),
         "password",
     );
-    err_contains(sign_file(&file, &b64("not a key"), "", 1), "private key");
+    err_contains(
+        sign_file(&file, &b64("not a key"), "", "0.12.0", 1),
+        "private key",
+    );
 }

@@ -12,9 +12,8 @@
 //! `GH_TOKEN` (else `GITHUB_TOKEN`) is sent to the API when set, as `gh`
 //! did, for the rate limit; it is never sent anywhere else.
 //!
-//! TLS is rustls with RustCrypto's pure-Rust provider: no C is compiled in.
-
-use std::sync::Arc;
+//! TLS is ureq's rustls with the ring provider, the stack sp-update and
+//! sp-release use (one TLS stack for the port; rust/PARITY.md, Decisions).
 
 /// What one GET answered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,13 +61,8 @@ impl Bases {
 }
 
 fn agent() -> ureq::Agent {
-    let tls = ureq::tls::TlsConfig::builder()
-        .provider(ureq::tls::TlsProvider::Rustls)
-        .unversioned_rustls_crypto_provider(Arc::new(rustls_rustcrypto::provider()))
-        .build();
     ureq::Agent::config_builder()
         .http_status_as_error(false)
-        .tls_config(tls)
         .user_agent("screepub-xtask")
         .build()
         .new_agent()

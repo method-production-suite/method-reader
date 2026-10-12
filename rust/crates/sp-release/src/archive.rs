@@ -184,9 +184,19 @@ pub fn tar_gz(entries: &[Entry], mtime: u64) -> std::io::Result<Vec<u8>> {
 
 /// The update archive of a finished (signed, stapled) bundle: the folder
 /// under `Screepub.app/`, whatever the folder is called on disk, since the
-/// installer drops the top component anyway.
+/// installer drops the top component anyway. Every file in Contents/MacOS
+/// is 0755 whatever the host's file system says (a Windows host has no
+/// mode bits to read), so the installed window always runs.
 pub fn app_archive(bundle: &Path, mtime: u64) -> std::io::Result<Vec<u8>> {
-    tar_gz(&tree_entries(bundle, crate::names::MAC_BUNDLE)?, mtime)
+    let top = crate::names::MAC_BUNDLE;
+    let macos = format!("{top}/Contents/MacOS/");
+    let mut entries = tree_entries(bundle, top)?;
+    for e in &mut entries {
+        if matches!(e.kind, Kind::File(_)) && e.path.starts_with(&macos) {
+            e.mode = 0o755;
+        }
+    }
+    tar_gz(&entries, mtime)
 }
 
 /// A command-line tarball: one executable file named `screepub`, as the

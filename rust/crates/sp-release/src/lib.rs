@@ -12,6 +12,7 @@
 //! docs/superpowers/specs/2026-10-11-rust-release-design.md.
 
 pub mod archive;
+pub mod boxes;
 pub mod check_latest;
 pub mod linux;
 pub mod mac;

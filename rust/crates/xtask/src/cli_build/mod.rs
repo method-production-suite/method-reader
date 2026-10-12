@@ -216,7 +216,7 @@ pub fn workspace_version(workspace: &Path) -> Result<String, String> {
     let path = workspace.join("Cargo.toml");
     let text = std::fs::read_to_string(&path)
         .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
-    toml_string(&text, "workspace.package", "version")
+    sp_release::version::workspace_version(&text)
         .ok_or_else(|| format!("{} names no [workspace.package] version", path.display()))
 }
 

@@ -37,29 +37,31 @@ sp-model.workspace = true
 sp-fountain.workspace = true
 sp-mobi.workspace = true
 sp-epub = { path = "../sp-epub" }
-# The release tools' GitHub reads (bump-tap, check-tap, check-latest). TLS
-# through rustls with RustCrypto's pure-Rust provider, so no C (no ring,
-# no aws-lc) is compiled in; roots from webpki-roots.
-ureq = { version = "3", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots"] }
-rustls-rustcrypto = "0.0.2-alpha"
+# The release tools' GitHub reads (bump-tap, check-tap, check-latest): the
+# same ureq, rustls and ring sp-release and sp-update use (one TLS stack for
+# the port; rust/PARITY.md, Decisions).
+ureq = "3"
+# The release pipeline's library: the one signer, latest.json writer,
+# archive, .deb, .rpm, .app and NSIS writers, and check-latest's judgement.
+# The packaging and release commands here are thin callers of it.
+sp-release.workspace = true
+sp-update.workspace = true
 # The contents API, the minisign boxes, the updater signature and the capture's screenshots are base64.
-base64 = "0.22"
+base64.workspace = true
 # The capture tool (src/capture/): Chrome's DevTools protocol over a plain
 # ws://127.0.0.1 socket (no TLS feature), reading and diffing PNGs, and
 # Ctrl-C/SIGTERM so an interrupted run cleans up.
 tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
 png = "0.18"
 signal-hook = { version = "0.4", default-features = false }
-# The updater archive's signature, made and checked the way tauri-cli 2.11.4
-# does: the same crate at the same pinned version (later 0.7.x releases
-# could not open a key encrypted with an empty password). Pure Rust.
-minisign = "=0.7.3"
-# The .app.tar.gz and the .deb's tars, written the way tauri-bundler wrote
-# them (tar::Builder, symlinks kept). Pure Rust; xattr support left off.
-tar = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 zip.workspace = true
+# The tests' throwaway keys, and tauri-cli's published test key opened with
+# the pinned version.
+minisign.workspace = true
+# Unpacking the update archive the way tauri-plugin-updater does.
+tar.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 # Safe kill(2): SIGTERM before SIGKILL, and "is that pid alive" for the

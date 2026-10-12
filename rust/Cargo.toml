@@ -35,3 +35,14 @@ zip = { version = "9", default-features = false, features = ["deflate-flate2-zli
 # Pure-Rust deflate (zlib-rs): sp-epub's zip writer. Its stream is not
 # byte-identical to pako's; the parity check compares inflated entries.
 flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+# One base64 for every crate (minisign boxes, the contents API, screenshots):
+# 0.23, the version plist, rpm and ureq already bring, so the lock holds one.
+base64 = "0.23"
+# The updater signature, made the way tauri-cli 2.11.4 makes it: the same
+# crate at the same pinned version (later 0.7.x releases could not open a
+# key encrypted with an empty password). Pure Rust.
+minisign = "=0.7.3"
+# Tar archives, written and read in pure Rust; xattr support left off.
+tar = { version = "0.4", default-features = false }
+sp-release = { path = "crates/sp-release" }
+sp-update = { path = "crates/sp-update" }
