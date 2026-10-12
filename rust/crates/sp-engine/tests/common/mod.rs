@@ -16,6 +16,8 @@
 
 #![allow(dead_code)]
 
+pub mod png;
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
