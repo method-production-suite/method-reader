@@ -21,6 +21,11 @@ fn main() -> ExitCode {
     // raw argv: the argument parser itself can fail before it would have
     // said so.
     let mut io = out::Io::new(argv.iter().any(|a| a == "--json"));
+    // Before anything else, on a Mac: if an earlier run paused macOS's
+    // camera import for a copy to an MTP Kindle and never turned it back on
+    // (it crashed, or was killed), turn it back on now. One look at the disk
+    // when there is nothing to do; never fails.
+    sp_device::camera_import::recover_camera_import(&verbs::camera_import());
     let result = match verbs::resolve_command(&argv) {
         Some((verb, rest)) => verbs::run_verb(&mut io, verb, rest),
         None => convert::run(&mut io, &argv),
