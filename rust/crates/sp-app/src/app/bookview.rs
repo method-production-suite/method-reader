@@ -31,6 +31,7 @@ struct Key {
     html: u64,
     width: u32,
     dark: bool,
+    scale: u32,
 }
 
 pub struct View {
@@ -40,9 +41,19 @@ pub struct View {
     blocks: HashMap<usize, TextureHandle>,
 }
 
-#[derive(Default)]
 pub struct Views {
     views: HashMap<Place, View>,
+    /// The screen's device pixels per point, set by the window each frame.
+    pub scale: f32,
+}
+
+impl Default for Views {
+    fn default() -> Self {
+        Self {
+            views: HashMap::new(),
+            scale: 1.0,
+        }
+    }
 }
 
 fn hash(html: &str) -> u64 {
@@ -66,10 +77,11 @@ impl Views {
             html: hash(html),
             width: width.max(1.0).round() as u32,
             dark,
+            scale: (self.scale * 100.0).round() as u32,
         };
         let stale = self.views.get(&place).is_none_or(|v| v.key != key);
         if stale {
-            let book = Book::new(html, key.width, t, dark);
+            let book = Book::new_scaled(html, key.width, t, dark, self.scale);
             self.views.insert(
                 place,
                 View {

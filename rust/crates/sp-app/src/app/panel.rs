@@ -1230,7 +1230,7 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
     let columns = ((ui.available_width() + 12.8) / (176.0 + 12.8))
         .floor()
         .max(1.0) as usize;
-    let width = (ui.available_width() - 12.8 * (columns as f32 - 1.0)) / columns as f32;
+    let width = ((ui.available_width() - 12.8 * (columns as f32 - 1.0)) / columns as f32).floor();
     for row in cards.chunks(columns) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 12.8;
@@ -1320,19 +1320,19 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
                     rect.right_top() - Vec2::new(26.0, -2.0),
                     Vec2::new(24.0, 24.0),
                 );
-                ui.scope_builder(egui::UiBuilder::new().max_rect(corner), |ui| {
-                    if card.unproven {
-                        asterisk(app, ui, card.kind);
-                    }
-                });
+                // A child that takes no room in the row: the next card's
+                // place does not move.
+                if card.unproven {
+                    let mut corner_ui = ui.new_child(egui::UiBuilder::new().max_rect(corner));
+                    asterisk(app, &mut corner_ui, card.kind);
+                }
                 if card.kind == d::MISSING.kind {
                     let badge = Rect::from_min_size(
                         rect.right_bottom() - Vec2::new(52.0, 22.0),
                         Vec2::new(50.0, 20.0),
                     );
-                    ui.scope_builder(egui::UiBuilder::new().max_rect(badge), |ui| {
-                        widgets::beta_badge(ui, &t)
-                    });
+                    let mut badge_ui = ui.new_child(egui::UiBuilder::new().max_rect(badge));
+                    widgets::beta_badge(&mut badge_ui, &t);
                 }
             }
         });

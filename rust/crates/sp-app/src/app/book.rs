@@ -73,6 +73,8 @@ pub struct Block {
 pub struct Book {
     doc: HtmlDocument,
     pub width: u32,
+    /// Device pixels per point the book was laid out for.
+    pub scale: f32,
     pub height: f32,
     /// The scenes (`section.scene`), their headings' words, where they are.
     pub scenes: Vec<(Mark, String)>,
@@ -83,6 +85,13 @@ pub struct Book {
 impl Book {
     /// Lay the engine's document out at `width` points.
     pub fn new(html: &str, width: u32, t: &Tokens, dark: bool) -> Self {
+        Self::new_scaled(html, width, t, dark, 1.0)
+    }
+
+    /// Laid out for a screen with `scale` device pixels per point: the
+    /// layout stays in points, the type is shaped for the real pixels.
+    pub fn new_scaled(html: &str, width: u32, t: &Tokens, dark: bool, scale: f32) -> Self {
+        let scale = scale.clamp(1.0, 4.0);
         let style = format!("<style>{}</style></head>", device_css(t));
         let html = if html.contains("</head>") {
             html.replacen("</head>", &style, 1)
@@ -103,7 +112,12 @@ impl Book {
         let mut doc = HtmlDocument::from_html(
             &html,
             DocumentConfig {
-                viewport: Some(Viewport::new(width.max(1), 1000, 1.0, scheme)),
+                viewport: Some(Viewport::new(
+                    ((width.max(1) as f32) * scale).round() as u32,
+                    (1000.0 * scale) as u32,
+                    scale,
+                    scheme,
+                )),
                 font_ctx: Some(fonts),
                 net_provider: Some(Arc::new(DataOnly)),
                 ..Default::default()
@@ -117,6 +131,7 @@ impl Book {
         let mut book = Self {
             doc,
             width,
+            scale,
             height: 0.0,
             scenes: vec![],
             blocks: vec![],
@@ -191,7 +206,7 @@ impl Book {
 
     /// Paint the slice of the book from `top` down, `height` tall.
     pub fn paint(&mut self, top: f32, height: u32) -> ColorImage {
-        self.paint_scaled(top, height, 1.0)
+        self.paint_scaled(top, height, self.scale)
     }
 
     /// The same slice at `scale` device pixels per point (2 on a Retina
@@ -345,9 +360,19 @@ mod tests {
 
     #[test]
     fn a_retina_slice_has_twice_the_pixels() {
-        let mut book = Book::new(&oracle("field-station"), 706, &LIGHT, false);
-        let img = book.paint_scaled(0.0, 100, 2.0);
+        let mut book = Book::new_scaled(&oracle("field-station"), 706, &LIGHT, false, 2.0);
+        let img = book.paint(0.0, 100);
         assert_eq!(img.size, [1412, 200]);
+        let action = book
+            .blocks
+            .iter()
+            .find(|b| b.words.starts_with("Wind comes down"))
+            .unwrap();
+        assert!(
+            (action.rect.left() - 49.4).abs() < 1.0,
+            "laid out in points: {:?}",
+            action.rect
+        );
     }
 
     #[test]

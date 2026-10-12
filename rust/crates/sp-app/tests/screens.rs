@@ -139,6 +139,34 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
     }
 }
 
+// desktop-layout-measured.test.ts: "every card sits inside the panel"
+#[test]
+fn the_device_cards_do_not_overlap() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    let names = [
+        "Kindle",
+        "iPhone, iPad or Mac",
+        "Kobo",
+        "tolino",
+        "reMarkable",
+        "My device isn’t here",
+    ];
+    let rects: Vec<egui::Rect> = names
+        .iter()
+        .map(|n| h.get_by_role_and_label(Role::Button, n).rect())
+        .collect();
+    for (i, a) in rects.iter().enumerate() {
+        for b in &rects[i + 1..] {
+            assert!(
+                !a.shrink(0.5).intersects(b.shrink(0.5)),
+                "{a:?} overlaps {b:?}"
+            );
+        }
+    }
+}
+
 // desktop-ui.test.ts: "what the Convert surface decides about a refusal"
 #[test]
 fn a_refusal_names_its_cause_and_only_not_a_screenplay_can_be_overruled() {

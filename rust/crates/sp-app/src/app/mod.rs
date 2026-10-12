@@ -413,6 +413,7 @@ impl App {
             return;
         }
         self.dark = ui.ctx().system_theme() == Some(egui::Theme::Dark);
+        self.views.scale = ui.ctx().pixels_per_point();
         self.pump();
         self.tick();
         frame::input(self, ui);
