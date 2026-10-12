@@ -158,6 +158,12 @@ impl Show {
         }
     }
 
+    /// Which of the book's blocks each typed paragraph became (None: it
+    /// only glows), once the book has arrived.
+    pub fn sources(&self) -> Option<&[Option<usize>]> {
+        self.sources.as_deref()
+    }
+
     pub fn book_arrived(&self) -> bool {
         self.book_at.is_some()
     }

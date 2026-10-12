@@ -158,6 +158,36 @@ Owner-visible: a git dependency on an unreleased engine, and the shim.
 - **No em dash**: tests/no_em_dash.rs scans sp-app's sources with comments
   taken out, as the TypeScript scan did with Bun's transpiler.
 
+## Wave 3: the real engine and the updater (2026-10-11)
+
+- **The engine is in-process.** sp-cli gained a library `run(argv, sink)`;
+  the binary is that function on the process's streams, and the window's
+  `DirectEngine` (src/direct.rs) is that function on each `Request::argv`,
+  on a thread of its own per call. Every request takes exactly the CLI
+  verb's path, so the window and the CLI cannot disagree. stderr lines
+  that are `{"progress": ...}` reach the window as they are written (the
+  stage, the page reached, the first page for the page show); the last
+  stdout line is the answer, and anything else is E21's "did not answer
+  in JSON". A panic is one failed call.
+- **Quitting mid-call (W13).** The sidecar outlived the Tauri window. Here
+  the process waits, after the window has gone, for every call still
+  running (at most ten minutes), so atomic writes complete.
+- **Install.** The label and the notes' button run sp-update's
+  `install_and_restart` on a thread. The window's busy count (calls and
+  holds) is mirrored into sp-update's `EngineGate`, which the run retires
+  and waits on: 500 ms of quiet, at most 120 s, then "Restart now". Once
+  retired, every engine call is refused with the window's sentence. A
+  restart that starts closes the window.
+- **Headless.** `screepub-window --version --json` and `--smoke <pdf>
+  [--out <epub>]` print what `screepub` prints for the same command, for
+  xtask smoke-bundle.
+- **SCREEPUB_CONFIG_DIR** also moves the window's own storage file, and a
+  run with it set reads nothing of the Tauri window's WebKit storage.
+- **Unaligned overlay off.** The spacing is the stylesheet's rem scale
+  (6.4, 12.8 points), which falls between pixels as it does in a browser;
+  egui's debug-build overlay is switched off rather than rounding the
+  layout away from the CSS.
+
 ## What cannot reach 1:1, precisely
 
 1. **The page marker** is drawn by the shim above, not by the float rule

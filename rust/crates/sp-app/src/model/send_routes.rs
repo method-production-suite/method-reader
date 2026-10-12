@@ -21,12 +21,48 @@ pub fn undetectable(platform: Platform) -> Option<String> {
 }
 
 /// A connected device as a route row carries it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Device {
     pub id: String,
     pub kind: String,
     pub name: String,
     pub volume: Option<String>,
+    /// "mtp" for a Kindle reached over MTP, the one transport the engine
+    /// names; None for a mounted volume.
+    pub transport: Option<String>,
+    /// The engine's words for while a copy to it runs (camera import
+    /// paused, on a Mac).
+    pub copy_note: Option<String>,
+}
+
+/// The end of a copy to a reader that never mounted (a Kindle over MTP).
+pub const SAFE_TO_UNPLUG: &str = "It is safe to unplug.";
+
+/// `withTransport(clean, device)`: the two fields a Kindle over MTP
+/// carries, when the engine sent them; anything else is left behind.
+/// Shared by the route list and the devices poll.
+pub fn with_transport(mut clean: Device, raw: &Value) -> Device {
+    if raw.get("transport").and_then(Value::as_str) == Some("mtp") {
+        clean.transport = Some("mtp".into());
+        if let Some(note) = raw.get("copyNote").filter(|v| is_text(Some(v))) {
+            clean.copy_note = note.as_str().map(str::to_string);
+        }
+    }
+    clean
+}
+
+/// Whether a reader wears the Beta badge: a Kindle reached over MTP.
+pub fn is_beta_device(device: Option<&Device>) -> bool {
+    device.is_some_and(|d| d.transport.as_deref() == Some("mtp"))
+}
+
+/// The words for while a copy to this reader runs, or None.
+pub fn copy_note_of(device: &Device) -> Option<&str> {
+    device
+        .copy_note
+        .as_deref()
+        .map(str::trim)
+        .filter(|n| !n.is_empty())
 }
 
 /// Which rung of `export` this device asks for.
@@ -76,6 +112,9 @@ pub fn sent_line(device: &Device, answer: &Value) -> String {
     let destination = str_at(answer, "destination").map(str::trim).unwrap_or("");
     if answer.get("uploaded") == Some(&Value::Bool(true)) || destination.is_empty() {
         format!("Sent to {}.", device.name)
+    } else if answer.get("safeToUnplug") == Some(&Value::Bool(true)) {
+        // A Kindle over MTP never mounted: nothing to eject.
+        format!("Sent to {}: {destination}. {SAFE_TO_UNPLUG}", device.name)
     } else {
         format!(
             "Sent to {}: {destination}. Eject the volume before you unplug it.",
@@ -128,7 +167,10 @@ pub fn preparing(device: &Device) -> Status {
 }
 
 pub fn copying(device: &Device) -> Status {
-    Status::good(format!("Copying it to {}…", device.name))
+    Status::good(match copy_note_of(device) {
+        Some(note) => format!("Copying it to {}… {note}", device.name),
+        None => format!("Copying it to {}…", device.name),
+    })
 }
 
 pub fn opening(title: &str) -> Status {
@@ -291,12 +333,16 @@ fn route_device_from(value: &Value) -> Option<Device> {
         Value::Null => None,
         _ => return None,
     };
-    Some(Device {
-        id: text("id")?.into(),
-        kind: text("kind")?.into(),
-        name: text("name")?.into(),
-        volume,
-    })
+    Some(with_transport(
+        Device {
+            id: text("id")?.into(),
+            kind: text("kind")?.into(),
+            name: text("name")?.into(),
+            volume,
+            ..Default::default()
+        },
+        value,
+    ))
 }
 
 /// Whether a row goes through export then send.
@@ -599,6 +645,7 @@ mod tests {
             kind: kind.into(),
             name: "Kindle".into(),
             volume: volume.map(str::to_string),
+            ..Default::default()
         }
     }
 

@@ -4,8 +4,8 @@ use serde_json::Value;
 
 use super::convert::{Platform, Script};
 use super::send_routes::{
-    Device, KindleFile, PROVEN_KIND, PROVEN_PLATFORM, Route, Routes, Unavailable, button_label,
-    failure_message, is_device_route_key, sent_line, undetectable,
+    Device, KindleFile, PROVEN_KIND, PROVEN_PLATFORM, Route, Routes, SAFE_TO_UNPLUG, Unavailable,
+    button_label, failure_message, is_device_route_key, sent_line, undetectable,
 };
 
 pub const QUESTION: &str = "What do you read on?";
@@ -520,6 +520,14 @@ pub fn copied_state(title: &str, device: &Device, sent: &Value) -> (String, Opti
     } else {
         title.trim()
     };
+    // A Kindle over MTP: nothing was mounted, so no Eject, and the engine
+    // says it can be unplugged now.
+    if sent.get("safeToUnplug") == Some(&Value::Bool(true)) {
+        return (
+            format!("{book} is on your {}. {SAFE_TO_UNPLUG}", device.name),
+            None,
+        );
+    }
     match device.volume.as_deref().filter(|v| !v.trim().is_empty()) {
         None => (sent_line(device, sent), None),
         Some(volume) => {
@@ -621,6 +629,7 @@ mod tests {
             kind: "kindle".into(),
             name: "Kindle".into(),
             volume: Some("/Volumes/Kindle".into()),
+            ..Default::default()
         }
     }
 
@@ -840,6 +849,7 @@ mod tests {
             kind: "remarkable".into(),
             name: "reMarkable".into(),
             volume: None,
+            ..Default::default()
         };
         let (line, none) = copied_state("x", &tablet, &json!({"ok": true, "uploaded": true}));
         assert_eq!(line, "Sent to reMarkable.");

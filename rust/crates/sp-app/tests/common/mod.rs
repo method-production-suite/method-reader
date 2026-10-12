@@ -38,6 +38,26 @@ pub fn harness_sized(w: &World, platform: Platform, size: [f32; 2]) -> H {
     h
 }
 
+/// A window whose engine calls run on worker threads, as the real one's do:
+/// for a test that holds a call (FakeEngine::hold) and looks at the screen
+/// while it is out. `settle` steps it until the workers' events are in.
+pub fn harness_threads(w: &World, platform: Platform) -> H {
+    let app = App::new(w.engine.clone(), Mode::Threads, w.fakes.host(platform));
+    let mut h = Harness::builder()
+        .with_size([1280.0, 800.0])
+        .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
+    settle(&mut h);
+    h
+}
+
+/// Step a threaded window for a moment of real time.
+pub fn settle(h: &mut H) {
+    for _ in 0..6 {
+        std::thread::sleep(std::time::Duration::from_millis(15));
+        h.run_steps(2);
+    }
+}
+
 pub fn harness(w: &World, platform: Platform) -> H {
     harness_sized(w, platform, [1280.0, 800.0])
 }

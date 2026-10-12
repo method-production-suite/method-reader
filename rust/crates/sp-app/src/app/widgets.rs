@@ -197,7 +197,10 @@ pub fn state_label(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
 pub fn live(ui: &mut Ui, id: Id, words: &str, font: FontId, color: Color32) -> Response {
     let r = if words.is_empty() {
         ui.interact(
-            egui::Rect::from_min_size(ui.cursor().min.round(), Vec2::ZERO),
+            egui::Rect::from_min_size(
+                egui::emath::GuiRounding::round_to_pixels(ui.cursor().min, ui.pixels_per_point()),
+                Vec2::ZERO,
+            ),
             id,
             Sense::hover(),
         )

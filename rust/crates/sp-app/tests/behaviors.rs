@@ -1361,13 +1361,13 @@ fn u9_the_label_and_the_notes_tell_one_story() {
     use sp_app::model::update::Found;
     let w = world();
     let mut h = harness(&w, Platform::Mac);
-    h.state_mut().host.updater = Box::new(FakeUpdater {
-        ready: true,
+    h.state_mut().host.updater = std::sync::Arc::new(FakeUpdater {
         found: Ok(Some(Found {
             version: "0.12.0".into(),
             current_version: "0.11.1".into(),
             body: Some("Faster pages.".into()),
         })),
+        ..FakeUpdater::default()
     });
     h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
     steps(&mut h);
@@ -1377,10 +1377,7 @@ fn u9_the_label_and_the_notes_tell_one_story() {
     h.get_by_role_and_label(Role::Button, "Update to 0.12.0");
     assert!(has(&h, "Faster pages."), "the notes show the same offer");
     // Then a check that finds nothing newer takes both down.
-    h.state_mut().host.updater = Box::new(FakeUpdater {
-        ready: true,
-        found: Ok(None),
-    });
+    h.state_mut().host.updater = std::sync::Arc::new(FakeUpdater::default());
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();
     steps(&mut h);

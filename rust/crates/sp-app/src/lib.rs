@@ -6,8 +6,10 @@
 //! ported from the functions above the line in each `desktop/ui/*.js`.
 //! The screens draw them with egui and hold no rule of their own.
 
+pub mod direct;
 pub mod engine;
 pub mod fonts;
+pub mod headless;
 pub mod model;
 pub mod runtime;
 pub mod theme;

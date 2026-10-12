@@ -9,8 +9,12 @@ use std::sync::{Arc, Mutex};
 
 use serde_json::Value;
 
+use sp_update::flow::{Event as UpdateEvent, Outcome, Steps};
+use sp_update::gate::{ENGINE_QUIET, EngineGate, RESTART_WAIT_CAP};
+
 use crate::model::convert::Platform;
 use crate::model::update::{Found, MemoryStorage, Storage};
+use crate::model::update_flow::{Offer, RunOutcome};
 
 pub trait Dialogs {
     /// The open dialog, filtered to screenplays (pdf, fountain, txt).
@@ -40,10 +44,57 @@ pub trait Speaker {
     fn play(&mut self, sound: Sound);
 }
 
-pub trait Updater {
+pub trait Updater: Send + Sync {
     /// Whether this build can update itself at all.
     fn ready(&self) -> bool;
     fn check(&self) -> Result<Option<Found>, String>;
+    /// update.js installAndRestart, on a worker thread: download, verify,
+    /// swap the bundle, retire `gate`, wait for 500 ms of quiet (at most
+    /// 120 s), restart. `live`: the offer still holds the update its check
+    /// returned; otherwise the run checks afresh first.
+    fn install(
+        &self,
+        _live: bool,
+        _gate: &EngineGate,
+        emit: &mut dyn FnMut(UpdateEvent),
+    ) -> RunOutcome {
+        let message = "this build cannot update itself".to_string();
+        emit(UpdateEvent::Failed {
+            version: None,
+            message,
+        });
+        RunOutcome::Error { offer: None }
+    }
+    /// update.js restartInstalled ("Restart now"): true when the new copy
+    /// started and this one should close.
+    fn restart(&self, version: &str, emit: &mut dyn FnMut(UpdateEvent)) -> bool {
+        emit(UpdateEvent::Installed {
+            version: version.into(),
+        });
+        false
+    }
+}
+
+/// sp-update's outcome as the flow reads it.
+pub fn run_outcome(outcome: Outcome) -> RunOutcome {
+    let offer = |u: sp_update::Update| Offer {
+        version: u.version,
+        body: u.body.unwrap_or_default(),
+        live: true,
+    };
+    match outcome {
+        Outcome::Restarting { .. } => RunOutcome::Restarting,
+        Outcome::Stalled { update, .. } => RunOutcome::Stalled {
+            offer: Some(offer(update)),
+        },
+        Outcome::Installed { update, .. } => RunOutcome::Installed {
+            offer: Some(offer(update)),
+        },
+        Outcome::Current => RunOutcome::Current,
+        Outcome::Error { update, .. } => RunOutcome::Error {
+            offer: update.map(offer),
+        },
+    }
 }
 
 /// The pages the window may open, and nothing else (capabilities/
@@ -66,7 +117,7 @@ pub struct Host {
     pub clock: Box<dyn Fn() -> f64>,
     pub platform: Platform,
     pub reduced_motion: Arc<AtomicBool>,
-    pub updater: Box<dyn Updater>,
+    pub updater: Arc<dyn Updater>,
     pub speaker: Box<dyn Speaker>,
 }
 
@@ -175,8 +226,14 @@ impl FileStorage {
         storage
     }
 
-    /// Where the window keeps it: the platform's per-user config folder.
+    /// Where the window keeps it: the platform's per-user config folder,
+    /// or SCREEPUB_CONFIG_DIR when that is set (the engine's own override
+    /// for its settings, which tests and scratch runs point elsewhere, so
+    /// the window's storage goes with them).
     pub fn default_path() -> Option<std::path::PathBuf> {
+        if let Some(dir) = config_override() {
+            return Some(dir.join("window-storage.json"));
+        }
         let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
         let home = std::path::PathBuf::from(home);
         let base = if cfg!(target_os = "macos") {
@@ -204,8 +261,16 @@ pub fn running_identifier() -> String {
 }
 
 /// The Tauri window's WebKit data for this identifier, on a Mac.
+/// SCREEPUB_CONFIG_DIR, when set to something.
+fn config_override() -> Option<std::path::PathBuf> {
+    std::env::var_os("SCREEPUB_CONFIG_DIR")
+        .filter(|d| !d.is_empty())
+        .map(Into::into)
+}
+
 fn tauri_website_data() -> Option<std::path::PathBuf> {
-    if !cfg!(target_os = "macos") {
+    // A scratch run reads nothing of the real Tauri window's.
+    if !cfg!(target_os = "macos") || config_override().is_some() {
         return None;
     }
     let home = std::env::var_os("HOME")?;
@@ -230,6 +295,61 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
 /// bundle to swap).
 pub struct ManifestUpdater {
     pub bundle: Option<std::path::PathBuf>,
+    /// The update the last check returned: the offer's live handle.
+    last: Mutex<Option<sp_update::Update>>,
+}
+
+/// latest.json, asked now: a newer release for this copy, or None.
+fn check_now() -> Result<Option<sp_update::Update>, String> {
+    let current = sp_update::manifest::parse_version(env!("CARGO_PKG_VERSION"))?;
+    sp_update::check(&config(), &current).map_err(|e| e.to_string())
+}
+
+fn config() -> sp_update::Config {
+    sp_update::Config::screepub(Some(sp_update::Installer::App))
+}
+
+/// The run's side effects, for real: sp-update's transport, its swap, and
+/// the gate the window's busy count mirrors into.
+struct RealSteps<'a> {
+    bundle: &'a std::path::Path,
+    gate: &'a EngineGate,
+}
+
+impl Steps for RealSteps<'_> {
+    fn fresh_check(&mut self) -> Result<Option<sp_update::Update>, String> {
+        check_now()
+    }
+    fn download(
+        &mut self,
+        update: &sp_update::Update,
+        progress: &mut dyn FnMut(usize, Option<u64>),
+        finished: &mut dyn FnMut(),
+    ) -> Result<Vec<u8>, String> {
+        sp_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
+    }
+    fn install(&mut self, _update: &sp_update::Update, bytes: &[u8]) -> Result<(), String> {
+        sp_update::install::install_app(bytes, self.bundle, &|bundle, new| {
+            sp_update::install::admin_swap(bundle, new)
+        })
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+    }
+    fn retire(&mut self) {
+        self.gate.retire();
+    }
+    fn restart_ready(&self) -> bool {
+        sp_update::install::bundle_executable(self.bundle).is_ok()
+    }
+    fn busy(&self) -> bool {
+        self.gate.busy()
+    }
+    fn wait_quiet(&mut self) -> bool {
+        self.gate.wait_quiet(ENGINE_QUIET, RESTART_WAIT_CAP)
+    }
+    fn restart(&mut self) -> Result<(), String> {
+        sp_update::restart::relaunch(self.bundle).map_err(|e| e.to_string())
+    }
 }
 
 impl ManifestUpdater {
@@ -241,7 +361,10 @@ impl ManifestUpdater {
         } else {
             None
         };
-        Self { bundle }
+        Self {
+            bundle,
+            last: Mutex::new(None),
+        }
     }
 }
 
@@ -250,17 +373,48 @@ impl Updater for ManifestUpdater {
         self.bundle.is_some()
     }
     fn check(&self) -> Result<Option<Found>, String> {
-        let current = sp_update::manifest::parse_version(env!("CARGO_PKG_VERSION"))?;
-        let config = sp_update::Config::screepub(Some(sp_update::Installer::App));
-        sp_update::check(&config, &current)
-            .map(|found| {
-                found.map(|u| Found {
-                    version: u.version,
-                    current_version: u.current_version,
-                    body: u.body,
-                })
-            })
-            .map_err(|e| e.to_string())
+        let found = check_now()?;
+        *self.last.lock().unwrap_or_else(|e| e.into_inner()) = found.clone();
+        Ok(found.map(|u| Found {
+            version: u.version,
+            current_version: u.current_version,
+            body: u.body,
+        }))
+    }
+    fn install(
+        &self,
+        live: bool,
+        gate: &EngineGate,
+        emit: &mut dyn FnMut(UpdateEvent),
+    ) -> RunOutcome {
+        let Some(bundle) = &self.bundle else {
+            emit(UpdateEvent::Failed {
+                version: None,
+                message: "this copy of Screepub cannot update itself".into(),
+            });
+            return RunOutcome::Error { offer: None };
+        };
+        let update = if live {
+            self.last.lock().unwrap_or_else(|e| e.into_inner()).take()
+        } else {
+            None
+        };
+        let mut steps = RealSteps { bundle, gate };
+        run_outcome(sp_update::flow::install_and_restart(
+            update, &mut steps, emit,
+        ))
+    }
+    fn restart(&self, version: &str, emit: &mut dyn FnMut(UpdateEvent)) -> bool {
+        let Some(bundle) = &self.bundle else {
+            return false;
+        };
+        let gate = EngineGate::new();
+        let mut steps = RealSteps {
+            bundle,
+            gate: &gate,
+        };
+        sp_update::flow::restart_installed(version, &mut steps, emit)
+            == sp_update::flow::RestartOutcome::Restarting
     }
 }
 
@@ -311,7 +465,7 @@ impl Host {
             clock: Box::new(move || start.elapsed().as_secs_f64() * 1000.0),
             platform: Platform::current(),
             reduced_motion,
-            updater: Box::new(ManifestUpdater::for_this_copy()),
+            updater: Arc::new(ManifestUpdater::for_this_copy()),
             speaker: Box::new(Typewriter::default()),
         }
     }
@@ -416,9 +570,86 @@ impl Poster for FakePoster {
     }
 }
 
+/// An updater whose run is sp-update's real flow over fake side effects:
+/// the download and the swap succeed at once, and the wait for quiet is
+/// the real gate's, with a cap a test can shorten.
 pub struct FakeUpdater {
     pub ready: bool,
     pub found: Result<Option<Found>, String>,
+    pub can_restart: bool,
+    pub quiet: std::time::Duration,
+    pub cap: std::time::Duration,
+    /// How many times the new copy was started.
+    pub restarted: Arc<std::sync::atomic::AtomicUsize>,
+}
+
+impl Default for FakeUpdater {
+    fn default() -> Self {
+        Self {
+            ready: true,
+            found: Ok(None),
+            can_restart: true,
+            quiet: ENGINE_QUIET,
+            cap: RESTART_WAIT_CAP,
+            restarted: Arc::default(),
+        }
+    }
+}
+
+struct FakeSteps<'a> {
+    fake: &'a FakeUpdater,
+    gate: &'a EngineGate,
+}
+
+impl Steps for FakeSteps<'_> {
+    fn fresh_check(&mut self) -> Result<Option<sp_update::Update>, String> {
+        Ok(self.fake.found.clone()?.map(fake_update))
+    }
+    fn download(
+        &mut self,
+        _update: &sp_update::Update,
+        progress: &mut dyn FnMut(usize, Option<u64>),
+        finished: &mut dyn FnMut(),
+    ) -> Result<Vec<u8>, String> {
+        progress(50, Some(100));
+        progress(50, Some(100));
+        finished();
+        Ok(vec![0; 100])
+    }
+    fn install(&mut self, _update: &sp_update::Update, _bytes: &[u8]) -> Result<(), String> {
+        Ok(())
+    }
+    fn retire(&mut self) {
+        self.gate.retire();
+    }
+    fn restart_ready(&self) -> bool {
+        self.fake.can_restart
+    }
+    fn busy(&self) -> bool {
+        self.gate.busy()
+    }
+    fn wait_quiet(&mut self) -> bool {
+        self.gate.wait_quiet(self.fake.quiet, self.fake.cap)
+    }
+    fn restart(&mut self) -> Result<(), String> {
+        self.fake
+            .restarted
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        Ok(())
+    }
+}
+
+fn fake_update(f: Found) -> sp_update::Update {
+    sp_update::Update {
+        current_version: f.current_version,
+        version: f.version,
+        body: f.body,
+        date: None,
+        target: "darwin-aarch64".into(),
+        download_url: "https://example.invalid/Screepub.app.tar.gz".into(),
+        signature: String::new(),
+        raw_json: Value::Null,
+    }
 }
 
 impl Updater for FakeUpdater {
@@ -427,6 +658,31 @@ impl Updater for FakeUpdater {
     }
     fn check(&self) -> Result<Option<Found>, String> {
         self.found.clone()
+    }
+    fn install(
+        &self,
+        live: bool,
+        gate: &EngineGate,
+        emit: &mut dyn FnMut(UpdateEvent),
+    ) -> RunOutcome {
+        let update = if live {
+            self.found.clone().ok().flatten().map(fake_update)
+        } else {
+            None
+        };
+        let mut steps = FakeSteps { fake: self, gate };
+        run_outcome(sp_update::flow::install_and_restart(
+            update, &mut steps, emit,
+        ))
+    }
+    fn restart(&self, version: &str, emit: &mut dyn FnMut(UpdateEvent)) -> bool {
+        let gate = EngineGate::new();
+        let mut steps = FakeSteps {
+            fake: self,
+            gate: &gate,
+        };
+        sp_update::flow::restart_installed(version, &mut steps, emit)
+            == sp_update::flow::RestartOutcome::Restarting
     }
 }
 
@@ -465,9 +721,9 @@ impl Fakes {
             clock: Box::new(move || clock.now()),
             platform,
             reduced_motion: self.reduced_motion.clone(),
-            updater: Box::new(FakeUpdater {
+            updater: Arc::new(FakeUpdater {
                 ready: platform == Platform::Mac,
-                found: Ok(None),
+                ..FakeUpdater::default()
             }),
             speaker: Box::new(self.speaker.clone()),
         }

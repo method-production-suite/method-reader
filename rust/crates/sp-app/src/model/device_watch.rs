@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use super::device::name_of;
 use super::json::ok;
-use super::send_routes::Device;
+use super::send_routes::{Device, with_transport};
 
 pub const POLL_MS: f64 = 2000.0;
 
@@ -33,16 +33,20 @@ pub fn devices_from(answer: &Value) -> Option<Vec<Device>> {
                 Value::Null => None,
                 _ => return None,
             };
-            Some(Device {
-                id: id.into(),
-                kind: kind.into(),
-                name: if name.trim().is_empty() {
-                    name_of(kind).into()
-                } else {
-                    name.into()
+            Some(with_transport(
+                Device {
+                    id: id.into(),
+                    kind: kind.into(),
+                    name: if name.trim().is_empty() {
+                        name_of(kind).into()
+                    } else {
+                        name.into()
+                    },
+                    volume,
+                    ..Default::default()
                 },
-                volume,
-            })
+                d,
+            ))
         })
         .collect()
 }

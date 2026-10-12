@@ -100,6 +100,8 @@ pub struct App {
     pub menus: Option<menu::Menus>,
     /// Whether the window had the focus last frame (a return is news).
     pub window_focused: bool,
+    /// An update's new copy has started: this window is closing.
+    pub closing: bool,
 
     pub convert: convert::State,
     pub show: Option<show::Show>,
@@ -144,6 +146,7 @@ impl App {
             #[cfg(target_os = "macos")]
             menus: None,
             window_focused: true,
+            closing: false,
             convert: convert::State::default(),
             show: None,
             read: read::State::default(),
@@ -163,6 +166,7 @@ impl App {
 
     /// Wake egui when a worker answers.
     pub fn set_repaint(&mut self, ctx: egui::Context) {
+        self.update.repaint = Some(ctx.clone());
         self.rt.set_repaint(ctx);
     }
 
@@ -418,6 +422,10 @@ impl App {
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
+            // The window's spacing is the stylesheet's rem scale (6.4, 12.8,
+            // 19.2 points), which lands between pixels as a browser's does;
+            // egui's debug-build "Unaligned" overlay would paint over it.
+            ui.ctx().all_styles_mut(|s| s.debug.show_unaligned = false);
             // The faces are bound from the next frame on; draw nothing
             // that names them until then.
             ui.ctx().request_repaint();
@@ -426,6 +434,13 @@ impl App {
         self.dark = ui.ctx().system_theme() == Some(egui::Theme::Dark);
         self.views.scale = ui.ctx().pixels_per_point();
         self.pump();
+        if self.update.pump(&mut self.host) {
+            // The new copy is starting: this one goes (tauri's restart).
+            self.closing = true;
+        }
+        if self.closing {
+            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+        }
         self.tick();
         frame::input(self, ui);
         self.stops.clear();

@@ -171,7 +171,7 @@ users until hardware day (see Decisions). These files exist only on branch
 | tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
 | tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
 | tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes; the two end-to-end runs are in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli) |
-| tests/mtp-window-rules.test.ts | 7 | sp-app | todo | the window's rules for an MTP Kindle (Beta badge, no Eject, the copy note) |
+| tests/mtp-window-rules.test.ts | 7 | sp-app | done | tests/mtp_window_rules.rs (and send-panel-ui's "a Kindle over MTP"); MTP stays off in the engine |
 
 ### Test helpers: tests/helpers/
 
@@ -239,10 +239,10 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | W7 | macOS minimum 13.0; Apple-silicon-only Mac build | tauri/tauri.conf.json, desktop/README.md | wave 3 |
 | W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | wave 3 |
 | W9 | Linux launcher entry Categories=Office; no PDF file association; no path read from the command line | desktop/README.md | wave 3 |
-| W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | todo |
+| W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | done (muda: app, Edit and Window menus; Edit items passed on to egui, menu.rs test) |
 | W11 | Boot check: the engine is asked `--version --json`; a failure puts the engine's sentence on its own alarm-coloured line above the stamp (the stamp stays) | ui/main.js, ui/frame.js engineFailed | done |
 | W12 | Engine missing or unstartable: "could not find/start the Screepub engine (sidecar ...)" with the build hint | tauri/src/sidecar.rs | gap: no sidecar in Rust (direct calls); the line is shown for an engine call that cannot start at all |
-| W13 | No Cancel during a conversion; quitting mid-call lets the engine finish (atomic writes) | tauri/src/sidecar.rs, desktop/README.md | wave 3 (no Cancel already holds; quitting mid-call with in-process calls is the engine wiring) |
+| W13 | No Cancel during a conversion; quitting mid-call lets the engine finish (atomic writes) | tauri/src/sidecar.rs, desktop/README.md | done (no Cancel; a window closed mid-call waits for the in-process call to finish its writes: src/direct.rs in_flight, main.rs; direct.rs tests) |
 | W14 | Paper background edge to edge; page padding: 100px binding on the left, 48px on the right; the content block capped at 1180 and centred in what is left | ui/style.css .page .sheet | done |
 | W15 | The rail: two brads and one punched hole, fixed to the window (the paper scrolls under them) at 30.7%, 50%, 69.3% of the height, centred 44px from the left edge, size clamp(20px, 3.4%, 36px) | ui/style.css .rail, ui/frame.js | done |
 | W16 | Brad drawn as brand/components/brad.html: cast shadow ellipse, edge ring, radial brass face (specular, highlight, brass, shadow, rim stops), bounce ellipse, specular ellipse, edge stroke | ui/frame.js DEFS | done |
@@ -270,7 +270,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | N8 | Tab look: Courier bold 11px caps, letter-spaced, muted; the open one ink with a 1.5px brass rule under it; hover ink | ui/style.css .tab | done |
 | N9 | Rev stamp "rev 0.11.1" at the foot of the sheet, right; the version is the RELEASE notes' version, not the engine's | ui/frame.js revLabel | done |
 | N10 | The stamp is a button that opens the release notes sheet | ui/frame.js, ui/main.js | done |
-| N11 | Update label beside the stamp: hidden until the update flow has words; brass rule under it; inert moments carry aria-disabled and no pointer | ui/frame.js setUpdateLabel | model |
+| N11 | Update label beside the stamp: hidden until the update flow has words; brass rule under it; inert moments carry aria-disabled and no pointer | ui/frame.js setUpdateLabel | done (tests/model_rows.rs) |
 | N12 | If the update label hides while focused, the keyboard goes to the page's first stop | ui/main.js | done |
 | N13 | Release notes as a modal sheet: Esc closes, focus trapped inside, the background inert, focus restored on close; "Close" button; dimmed backdrop; rises 16px over 0.2 s (none with Reduce Motion); width min(44rem, 88vw), max height 82vh, scrolls | ui/main.js, ui/style.css .sheet-over | done |
 | N14 | Cmd-O (Mac) / Ctrl-O opens the file picker from any surface without changing surface; cancelling leaves the reader where they were | ui/main.js | done |
@@ -304,7 +304,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E18 | `route <key> <epub> --json [--out] [--fountain] [--options-json]` | `route(key, epub, out, fountain, options)` | yes | done |
 | E19 | `route kindle-email-setup --json` | `email_setup()` | yes | done |
 | E20 | Progress lines on stderr: `{"progress":{stage,percent,page,pages}}` and the page line `{"progress":{stage:"page",page,paragraphs}}`; several or partial lines per event; anything not a progress object ignored | `on_progress` callback | | done |
-| E21 | An answer that is not JSON: "the engine did not answer in JSON:\n" plus the first 300 characters and an ellipsis | ui/app.js RAW_SHOWN | | gap: a direct call returns typed values, so there is no unparseable answer; the trait's `Err(String)` stands in |
+| E21 | An answer that is not JSON: "the engine did not answer in JSON:\n" plus the first 300 characters and an ellipsis | ui/app.js RAW_SHOWN | | done (src/direct.rs answer_from: the last stdout line, else "the engine did not answer in JSON:" and its first 300 characters) |
 | E22 | Busy count: counted calls in flight plus holds; idle = nothing counted running for 500 ms (ENGINE_QUIET_MS); holds released idempotently | ui/app.js holdEngine, whenIdle | | done |
 | E23 | After an update installs, every engine call is refused with "Screepub has been updated. Restart it to keep going." | ui/app.js retireEngine | | done |
 | E24 | One native dialog at a time (open, folder, save); a second ask returns nothing without opening; a dialog holds the engine (counted) while up; every close runs the focus restore | ui/app.js withOneDialog | | done |
@@ -323,12 +323,12 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | C4 | One-time question under the well: "Check for new versions once a day?" Turn on / No thanks; only where updates are possible and the question is unanswered; a stale click after the notes switch answered does not overwrite; the line removes itself and the keyboard is restored | ui/convert.js askLine | done |
 | C5 | Library line: "Books are saved in ~/…." or "…, set by SCREEPUB_LIBRARY."; the home folder folded to ~ only when the path is genuinely under it (case-insensitive on Windows paths, root homes) | ui/convert.js libraryLine, shortenHome | done |
 | C6 | Change… (folder picker at the current library; a cancel or the same folder sends nothing) and Reset (only when a folder was chosen); neither when SCREEPUB_LIBRARY is set | ui/convert.js libraryActions | done |
-| C7 | After Change: "New books go here. Books already converted stay where they are." only when the library moved; a refusal or thrown call shows its sentence on the secondary line and leaves the line as it was; NO_LIBRARY_MESSAGE for an answer that breaks the contract | ui/convert.js libraryAfter, showsMovedLine | model |
+| C7 | After Change: "New books go here. Books already converted stay where they are." only when the library moved; a refusal or thrown call shows its sentence on the secondary line and leaves the line as it was; NO_LIBRARY_MESSAGE for an answer that breaks the contract | ui/convert.js libraryAfter, showsMovedLine | done (tests/model_rows.rs) |
 | C8 | Change and Reset go quiet while one runs, back afterwards even on a throw | ui/convert.js buildLibrarySlot | done |
 | C9 | A probe answer that arrives after the well was redrawn is dropped (generation guard); a malformed or failed probe draws no line | ui/convert.js probeLibrary | done |
 | C10 | The same probe carries the two page switches into the window state | ui/convert.js probeLibrary | done |
 | C11 | Working: "Converting" heading, "The pages of <file> reflow themselves, one scene at a time.", a 220px track with a brass fill (width eased 0.2 s; none with Reduce Motion), a read-out that is a polite live status, "Please stand by:" | ui/convert.js drawProgress | done |
-| C12 | Read-out words: "starting up"; while the book is held by another turn the Settings page's words for that wait ("Waiting for the Kindle file to finish building…" and the rest, longest wait first; "Waiting for the settings to finish saving…"; "Waiting for the book to be free…"); then "reading the pages (N%)", "reading the pictures (N%)", "building the book (N%)" | ui/convert.js waitingLabel, nextProgress | model |
+| C12 | Read-out words: "starting up"; while the book is held by another turn the Settings page's words for that wait ("Waiting for the Kindle file to finish building…" and the rest, longest wait first; "Waiting for the settings to finish saving…"; "Waiting for the book to be free…"); then "reading the pages (N%)", "reading the pictures (N%)", "building the book (N%)" | ui/convert.js waitingLabel, nextProgress | done (tests/model_rows.rs) |
 | C13 | The bar never goes back: the percent is the engine's whole-job figure, clamped, rounded, never falls; unknown stages and non-numbers ignored; the stage never walks back; a stage change at the same percent is news | ui/convert.js nextProgress | done |
 | C14 | Converting a PDF converted earlier in this window takes its turn on the book it rewrites | ui/convert.js landed, inTurn | done |
 | C15 | The keyboard lands on the working pane (it has no control) | ui/convert.js drawProgress | done |
@@ -342,7 +342,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | C23 | Refusal: "Smash cut to:", the heading for the code (table of ten), the engine's sentence, Convert anyway (brass, only for `not-screenplay`, converts with force), Back to one (outline), Report a bug (quiet) | ui/convert.js drawFailure, HEADINGS | done |
 | C24 | The `--force` sentence is taken out of the engine's message only where Convert anyway is drawn; never down to nothing | ui/convert.js withoutCliRemedy | done |
 | C25 | Unknown or missing code: "internal", "The engine did not answer"; no sentence: "The engine refused the file without saying why." | ui/convert.js failureFor | done |
-| C26 | "<Title> is still open. This changed nothing about it." when a book was already open; the open book survives a refusal | ui/convert.js stillOpenNote | model |
+| C26 | "<Title> is still open. This changed nothing about it." when a book was already open; the open book survives a refusal | ui/convert.js stillOpenNote | done (tests/model_rows.rs) |
 | C27 | "Error code" label and the code in a chip | ui/convert.js | done |
 | C28 | A conversion that could not run at all shows the refusal screen with code internal and the thrown sentence | ui/convert.js convertPath | done |
 | C29 | "Convert it again" (Read's blank notice, Settings' fault, the panel's no-book line): converts the open script's source, or just goes to Convert when there is none or one is running | ui/convert.js convertAgain | done |
@@ -355,12 +355,12 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 |---|---|---|---|
 | P1 | Starts when the engine's page line arrives, unless Reduce Motion is on, "Animate the page" is off, or the line carries no text | ui/page-show.js canShow | done |
 | P2 | Drawn in the result's own box: a typed page over where the result's page will be; the side says "Converting" and the file name | ui/page-show.js beginShow | done |
-| P3 | The slim line under the page, a polite live status: "Starting up", "Reading page N of M" (never back a page), "Reading the pages (N%)" from an engine that names no page, "Reading the pictures", "Building the book" | ui/page-show.js readingLine | model |
+| P3 | The slim line under the page, a polite live status: "Starting up", "Reading page N of M" (never back a page), "Reading the pages (N%)" from an engine that names no page, "Reading the pictures", "Building the book" | ui/page-show.js readingLine | done (tests/model_rows.rs) |
 | P4 | The page's whole text is in the window for a screen reader from the first moment; the typing itself is hidden from it | ui/page-show.js .page-show-words | done |
 | P5 | Typing takes 4000 ms whatever the script, spread evenly over the characters (code points); empty paragraphs skipped | ui/page-timing.js | done |
 | P6 | The wave: block i takes the book's form two blocks behind the typing, never before the book exists plus 120 ms a block (faster on long pages, a sweep never over 1200 ms) | ui/page-timing.js formAt | done |
 | P7 | Each formed block glows brass for 600 ms; the typed page lifts away over 250 ms at the end | ui/page-timing.js, ui/page-show.js | done |
-| P8 | Typed paragraphs matched to the book's blocks by their words (letters and digits, upper case; a prefix of at least half counts; the first match anywhere, then within 4); an unmatched paragraph only glows | ui/page-show.js alignBlocks | model |
+| P8 | Typed paragraphs matched to the book's blocks by their words (letters and digits, upper case; a prefix of at least half counts; the first match anywhere, then within 4); an unmatched paragraph only glows | ui/page-show.js alignBlocks | done (tests/model_rows.rs) |
 | P9 | A click anywhere or any key ends it: before the book exists the whole page shows typed, and it ends the moment the book arrives | ui/page-show.js onPress | done |
 | P10 | A refusal or another file cancels it | ui/page-show.js cancel | done |
 | P11 | Key sounds at most one per 55 ms while typing; a carriage-return bell when a block finishes, at most one per 700 ms | ui/page-timing.js soundsDue | done |
@@ -376,15 +376,15 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | R3 | Under an 880 block: the index is a short strip above the script (at most 6.5rem, entries inline), absent when shut | ui/surfaces.css | done |
 | R4 | The script's frame: 68% of the window's height (58% narrow, 62% short), at least 300, paper with a hairline and radius 5 | ui/surfaces.css .script-frame | done |
 | R5 | The stage around the script is the Tab stop, a group named "<Title>, the script", with a focus ring | ui/read.js | done |
-| R6 | Keys on the stage: Up/Down 60px, PageUp/PageDown/Space 90% of the frame (at least 120), Home/End to the ends | ui/read.js scrollStep | model |
+| R6 | Keys on the stage: Up/Down 60px, PageUp/PageDown/Space 90% of the frame (at least 120), Home/End to the ends | ui/read.js scrollStep | done (tests/model_rows.rs) |
 | R7 | The scene index, a navigation region named "Scenes": "N scenes" (1 scene), then one entry per scene: the place in caps, the time of day after an en dash, quieter; the run before the first heading is "Opening"; the page number the engine puts inside a heading is left out | ui/read.js sceneLabel, railEntries, headingText | done |
-| R8 | One Tab stop for the whole index; Up/Down/Home/End move it, stopping at the ends | ui/read.js railStep | model |
+| R8 | One Tab stop for the whole index; Up/Down/Home/End move it, stopping at the ends | ui/read.js railStep | done (tests/model_rows.rs) |
 | R9 | Pressing an entry scrolls its scene to the top (smooth, instant with Reduce Motion) | ui/read.js buildRail | done |
 | R10 | The scene being read is marked (current, highlighted) and kept in the index's view; the index's Tab stop follows it unless the keyboard is walking the index | ui/read.js markCurrent | done |
 | R11 | Open by default; opening and shutting slides 0.8rem and fades over 0.2 s (none with Reduce Motion); shut, it is out of the Tab order | ui/read.js setIndexOpen, ui/surfaces.css | done |
-| R12 | No headings: "No scene headings in this script." | ui/read.js NO_SCENES | model |
+| R12 | No headings: "No scene headings in this script." | ui/read.js NO_SCENES | done (tests/model_rows.rs) |
 | R13 | A book that came back with no pages: "No pages came back", the sentence, Convert it again, Send | ui/read.js NOTICES | done |
-| R14 | The place is kept as a scene and a fraction into it, across a Settings re-render, a window resize and a tab switch; a scene that is gone puts the reader at the top | ui/read.js readerPlace, scrollTarget, keep, restore | model |
+| R14 | The place is kept as a scene and a fraction into it, across a Settings re-render, a window resize and a tab switch; a scene that is gone puts the reader at the top | ui/read.js readerPlace, scrollTarget, keep, restore | done (tests/model_rows.rs) |
 | R15 | Re-rendered from every Settings save that rebuilds the book | ui/tune.js flush | done |
 | R16 | The device layer over the book: the window's ink and paper, margins 1.6em and 7%, re-dressed live when the OS theme changes | ui/read.js deviceCss, followTheme | done |
 | R17 | Pictures in the book shown (the engine writes them as data: URIs) | ui/read.js header | done (Blitz draws the data: URIs; book.rs pictures_are_drawn) |
@@ -407,9 +407,9 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | S10 | Character name indent and Parenthetical indent are idle (disabled, muted) unless Character names are Indented: "Only when character names are indented." and they come back live in place when it changes | ui/tune.js idleReason, refreshIdle | done |
 | S11 | A moved value is clamped to the engine's range; a non-value is never sent | ui/tune.js coerceValue | done |
 | S12 | Changes gather for 300 ms, then save on the book's turn: settings --set, then the rebuild; the status line, a live status: "Changed. Saving in a moment…", "Saving, and rebuilding the book to match…", "Saved. The book on disk matches what you see.", the wait's words, or the engine's refusal in alarm colour | ui/tune.js STATUS, statusFor, schedule, flush | done |
-| S13 | A failed save owes its changes again; a newer change wins; another script opened meanwhile drops the answer (era) | ui/tune.js restorePending, era | model |
+| S13 | A failed save owes its changes again; a newer change wins; another script opened meanwhile drops the answer (era) | ui/tune.js restorePending, era | done (tests/model_rows.rs) |
 | S14 | The engine's stored values redraw the screen when they differ and nothing newer is owed | ui/tune.js flush | done |
-| S15 | The rebuild's warnings in parentheses under the status, as a live status, replaced only by the next good rebuild | ui/tune.js warningLines | model |
+| S15 | The rebuild's warnings in parentheses under the status, as a live status, replaced only by the next good rebuild | ui/tune.js warningLines | done (tests/model_rows.rs) |
 | S16 | A settle holds a pending update restart until its save has started | ui/tune.js holdEngine | done |
 | S17 | Foot: "New scripts start from Screepub’s own defaults." / "… your own defaults.", Use these for new scripts, Reset new scripts to Screepub’s defaults (only when they differ), a live note ("New scripts will start from these settings." and the reset's), both quiet while one runs, era guard | ui/tune.js drawDefaultsFoot, writeDefaults | done |
 | S18 | "When a PDF is converted": a named radio group, Keep its settings / Follow the defaults, each with its line as its description; one Tab stop and arrows; writes queued, only the newest paints; "Saved. It applies to PDFs you convert from now on." | ui/tune.js KEEP_CHOICE, chooseKeep | done |
@@ -422,23 +422,23 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | ID | Feature | Source | Status |
 |---|---|---|---|
 | D1 | Nothing drawn until the reader's device is known (app settings `readerDevice`), so the cards never flash for someone who chose | ui/send-panel.js start | done |
-| D2 | No book on disk: "No book to send", the reason, Convert it again | ui/send-panel.js drawBlocked, send-routes.js blockedReason | model |
+| D2 | No book on disk: "No book to send", the reason, Convert it again | ui/send-panel.js drawBlocked, send-routes.js blockedReason | done (tests/model_rows.rs) |
 | D3 | Cards: "What do you read on?", Kindle; iPhone, iPad or Mac (Apple Books); Kobo; tolino; reMarkable; My device isn’t here (Beta) | ui/device.js DEVICES, MISSING | done |
 | D4 | A card for a reader plugged in now: brass edge and a green dot with "Plugged in"; its name read as "<Name>, plugged in"; marked in place when the poll changes | ui/send-panel.js markCard | done |
 | D5 | A card press goes calm at once and stores the choice app-wide; a refused store says why on the status line | ui/send-panel.js chooseDevice | done |
 | D6 | The asterisk on what nobody has run on that hardware (everything but a Kindle on a Mac; Apple never): "About <Name>: never tried on real hardware"; hover opens the note, leaving closes it after 400 ms; a press pins it (expanded state exposed) | ui/send-panel.js asterisk, device.js asteriskNote | done |
-| D7 | The note: "Built and tested in code, never tried with a real Kindle on Windows/Linux yet…" or "… on a real <Name> yet…", then It worked / It did not work (Beta) where there is a route to report | ui/device.js, ui/requests.js reportRoute | model |
+| D7 | The note: "Built and tested in code, never tried with a real Kindle on Windows/Linux yet…" or "… on a real <Name> yet…", then It worked / It did not work (Beta) where there is a route to report | ui/device.js, ui/requests.js reportRoute | done (tests/model_rows.rs) |
 | D8 | A report: both answers dead while it is out; thanks takes them away; a failure offers Try again for the same answer | ui/send-panel.js reportAnswers | done |
 | D9 | Calm screen: one brass button for the way that fits (device.js offerFor), its Beta badge for our own AZW3, "Plugged in" beside a device button, the asterisk; the lines under it (the web-drag line, the plug-in line, Apple elsewhere, tolino on Windows) | ui/send-panel.js drawCalm, device.js offerFor | done |
-| D10 | Kindle: plugged in → copy (then web and email lead Other ways); otherwise Send to Kindle (web), then email, then Save the EPUB | ui/device.js offerFor | model |
-| D11 | Apple: Books on a Mac; elsewhere Save the EPUB with the iCloud line | ui/device.js offerFor | model |
-| D12 | While the route list is out: "Looking for every way to send it…" | ui/device.js LOOKING | model |
+| D10 | Kindle: plugged in → copy (then web and email lead Other ways); otherwise Send to Kindle (web), then email, then Save the EPUB | ui/device.js offerFor | done (tests/model_rows.rs) |
+| D11 | Apple: Books on a Mac; elsewhere Save the EPUB with the iCloud line | ui/device.js offerFor | done (tests/model_rows.rs) |
+| D12 | While the route list is out: "Looking for every way to send it…" | ui/device.js LOOKING | done (tests/model_rows.rs) |
 | D13 | Route list asked quick then full on the calm screen's first draw for a book and on every plug-in change; an older answer never replaces a newer one; nothing redraws while a send runs (owed, asked after); an unchanged list does not redraw | ui/send-panel.js refresh | done |
-| D14 | A list that cannot be read: the engine's sentence in place of the brass button, never a brass picked from half a list | ui/send-panel.js fault, send-routes.js routesFrom | model |
+| D14 | A list that cannot be read: the engine's sentence in place of the brass button, never a brass picked from half a list | ui/send-panel.js fault, send-routes.js routesFrom | done (tests/model_rows.rs) |
 | D15 | A reMarkable reader: the full list asked again every 10 s while the calm screen shows, and on a focus return | ui/send-panel.js lookForRemarkable | done |
 | D16 | Other ways (outline, expanded state) and Different device (quiet); opening and shutting keeps the keyboard on the toggle; shutting puts the KFX checklist away | ui/send-panel.js toggleWays | done |
 | D17 | Other ways, Send it: the offer's follow-ups, then every other route in the engine's order, dimmed ones with their fix; never the brass one or the two saves | ui/device.js sendItRows | done |
-| D18 | Readers that only need plugging in or docking folded into one muted line ("Kobo, tolino and reMarkable: plug in over USB to send."), each name with its own asterisk; fewer than two stay rows | ui/device.js foldUnplugged | model |
+| D18 | Readers that only need plugging in or docking folded into one muted line ("Kobo, tolino and reMarkable: plug in over USB to send."), each name with its own asterisk; fewer than two stay rows | ui/device.js foldUnplugged | done (tests/model_rows.rs) |
 | D19 | A route row: title, the engine's detail, the volume for a mounted reader, the email row's "First time? Amazon needs your sender address approved…" with Open Amazon’s page; the button (none when dimmed) | ui/send-panel.js routeRow, send-routes.js routeLines, emailSetupHint | done |
 | D20 | Buttons that hand over the Kindle file name it: "Copy to Kindle (.kfx)", "Save a Kindle file (.azw3)…" | ui/send-routes.js buttonLabel | done |
 | D21 | Save a file: EPUB, KFX, AZW3 (Beta), MOBI, Fountain, FDX (Beta), each with who it is for and Save…; KFX not makeable here: "This computer cannot make one yet." and Set it up; no .fountain: "This book was made without a .fountain, so there is none to work from." | ui/device.js SAVE_TYPES, saveRows | done |
@@ -450,7 +450,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | D27 | Eject <Name> (Beta off a Mac): "Ejecting <Name>…", "Your <Name> is ejected. You can unplug it now.", "… is not plugged in any more.", or the refusal with the button kept while it is still plugged in; unplugging takes the button away and keeps the line | ui/device.js ejectOutcome, ejectStillThere | done |
 | D28 | A reader still waiting to be ejected follows the reader to the next book's result | ui/send-panel.js mountPanel, sendTo | done |
 | D29 | The Kindle file asked about when the result shows and on every focus return (`export --check`), naming the file on its buttons | ui/send-panel.js checkKindle | done |
-| D30 | Built ahead in the background when the check says the KFX is out of date, Calibre builds it, a Kindle is in play, once per book version and file kind, never while one runs or a flow is busy | ui/send-routes.js buildsAhead, send-panel.js maybeBuildAhead | model |
+| D30 | Built ahead in the background when the check says the KFX is out of date, Calibre builds it, a Kindle is in play, once per book version and file kind, never while one runs or a flow is busy | ui/send-routes.js buildsAhead, send-panel.js maybeBuildAhead | done (tests/model_rows.rs) |
 | D31 | The build line and a sweeping bar while a Kindle file builds: "Building the Kindle file. This takes about half a minute." (KFX), "… This takes a moment.", "Building the Kindle file…"; the bar breathes instead of sweeping under Reduce Motion; a live status that speaks only when its words change | ui/send-routes.js buildLine, ui/surfaces.css .build-sweep | done |
 | D32 | Settings fetched before an export if this window never saw them, so a rebuild uses the script's own | ui/send-routes.js needsSettings | done |
 | D33 | My device isn’t here: the sentence, "Which device?" field (80 characters), Send (Beta; dead while empty or sending), "Sends the device’s name, Screepub’s version and your platform. Nothing else.", a live line for the answer, Save the EPUB…, Back; the typed name survives a redraw and Back | ui/send-panel.js missingPanel, ui/requests.js | done |
@@ -460,10 +460,10 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 
 | ID | Feature | Source | Status |
 |---|---|---|---|
-| K1 | Opened by Set it up under Save a file, in place; the engine's checklist taken whole or not at all (Calibre, Kindle Previewer, the KFX plugin) | ui/kfx.js checklistFrom | model |
-| K2 | Shown only where KFX is possible, and only while not ready (or an install just ran or is running) | ui/kfx.js showSetup | model |
+| K1 | Opened by Set it up under Save a file, in place; the engine's checklist taken whole or not at all (Calibre, Kindle Previewer, the KFX plugin) | ui/kfx.js checklistFrom | done (tests/model_rows.rs) |
+| K2 | Shown only where KFX is possible, and only while not ready (or an install just ran or is running) | ui/kfx.js showSetup | done (tests/model_rows.rs) |
 | K3 | Each step: its name and Installed, a link button (opens the page; a failure says "Could not open the page. It is at <url>"), an Install button (brass, dead while busy, "Installing…"), or the engine's why | ui/kfx.js controlFor | done |
-| K4 | Install: "Downloading and installing the KFX plugin. This takes a few seconds.", then "Installed the KFX plugin <v>. Kindles now get KFX. Removed an older copy: <name>." or the refusal; every other panel button dead while it runs | ui/kfx.js afterInstall, installedLine | model |
+| K4 | Install: "Downloading and installing the KFX plugin. This takes a few seconds.", then "Installed the KFX plugin <v>. Kindles now get KFX. Removed an older copy: <name>." or the refusal; every other panel button dead while it runs | ui/kfx.js afterInstall, installedLine | done (tests/model_rows.rs) |
 | K5 | Asked again whenever the window gets the focus back; an unchanged answer redraws nothing | ui/kfx.js probe | done |
 | K6 | The links allowed: the issue tracker, Calibre's macOS and Windows download pages, Kindle Previewer's page; nothing else opens | tauri/capabilities/default.json | done |
 
@@ -472,7 +472,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | ID | Feature | Source | Status |
 |---|---|---|---|
 | H1 | `devices --quick` every 2 s while a book is open, stopped when none is; one ask out at a time; a failed or malformed listing changes nothing; listeners hear only a changed list | ui/device-watch.js | done |
-| H2 | A reader with an empty name is named for its kind | ui/device-watch.js devicesFrom | model |
+| H2 | A reader with an empty name is named for its kind | ui/device-watch.js devicesFrom | done (tests/model_rows.rs) |
 | H3 | Heads-up: "Kindle plugged in. Copy <Title>?" in a box under the tabs, a live status, Copy it (brass) and Not now; once per plug-in (the first list only seeds; a Kindle that leaves and returns is news again) | ui/heads-up.js, ui/device.js headsUpFor | done |
 | H4 | Not over the result (its card says it), never while converting; closes when the page under it becomes one of those | ui/heads-up.js recheck | done |
 | H5 | Goes by itself after 8 s; slides in from above (none with Reduce Motion); the keyboard is not left on it as it goes | ui/heads-up.js, ui/surfaces.css | done |
@@ -484,13 +484,13 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 |---|---|---|---|
 | U1 | Only on a Mac, and only where the updater exists in the build | ui/update.js updatesPossible, ui/app.js updaterReady | done |
 | U2 | Opt-in once ("Check for new versions once a day?"); "said no" and "never asked" kept apart; stored in the window's own storage | ui/update.js rememberAnswer, shouldAsk | done |
-| U3 | At most one check a day, stamped BEFORE the request; a manual check ignores the switch and the throttle | ui/update.js runCheck | model |
-| U4 | A failed check is a message, never "you are current"; an Intel Mac is told "New versions of Screepub run only on Macs with Apple silicon…" | ui/update.js isIntelMacRetired | model |
-| U5 | A version found is remembered across launches until a check answers otherwise | ui/update.js rememberFound, rememberedOffer | model |
-| U6 | The label: "Update to 0.8.0", "Downloading 0.8.0…" / "… 40%", "Installing…", "Restarting after this finishes…", "Restart now", "Restarting…", "Update failed. Try again", "Update installed. Quit and reopen Screepub to use 0.8.0."; clickable only on offer (not a retry's), failed and stalled | ui/update.js updateLabel, labelActionable | model |
-| U7 | Download, verify (minisign), swap the bundle, then retire the engine, wait for 500 ms of quiet (capped at 120 s, then "Restart now"), restart into the new bundle; a refused restart is "installed", not a failure; a failed cleanup after a good install is not a failure | ui/update.js installAndRestart, ui/app.js updateInstall | wave 3 (its rules are ported: model/update.rs) |
-| U8 | The endpoint: latest.json on the GitHub releases; the public key | tauri/tauri.conf.json | wave 3 |
-| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | todo |
+| U3 | At most one check a day, stamped BEFORE the request; a manual check ignores the switch and the throttle | ui/update.js runCheck | done (tests/model_rows.rs) |
+| U4 | A failed check is a message, never "you are current"; an Intel Mac is told "New versions of Screepub run only on Macs with Apple silicon…" | ui/update.js isIntelMacRetired | done (tests/model_rows.rs) |
+| U5 | A version found is remembered across launches until a check answers otherwise | ui/update.js rememberFound, rememberedOffer | done (tests/model_rows.rs) |
+| U6 | The label: "Update to 0.8.0", "Downloading 0.8.0…" / "… 40%", "Installing…", "Restarting after this finishes…", "Restart now", "Restarting…", "Update failed. Try again", "Update installed. Quit and reopen Screepub to use 0.8.0."; clickable only on offer (not a retry's), failed and stalled | ui/update.js updateLabel, labelActionable | done (tests/model_rows.rs) |
+| U7 | Download, verify (minisign), swap the bundle, then retire the engine, wait for 500 ms of quiet (capped at 120 s, then "Restart now"), restart into the new bundle; a refused restart is "installed", not a failure; a failed cleanup after a good install is not a failure | ui/update.js installAndRestart, ui/app.js updateInstall | done (sp-update flow over the engine gate the busy count mirrors into; tests/update_run.rs) |
+| U8 | The endpoint: latest.json on the GitHub releases; the public key | tauri/tauri.conf.json | done (sp-update baked endpoint and key; ManifestUpdater) |
+| U9 | One run, one moment, heard by the label and the notes alike; a newer offer during a run waits; a same-version offer after a failure keeps the failure on screen | ui/update-flow.js | done (model/update_flow.rs; tests/update_run.rs) |
 | U10 | Version comparison is the engine's (`src/update/compare.ts`: v prefix, build metadata, describe suffixes, prereleases) | ui/update-compare.js | done |
 
 ### O. Release notes sheet
@@ -539,7 +539,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | A5 | Decorative furniture hidden from assistive technology: the rail, the well's mark, the result's page, the typed page, the preview, the build bar | all | done |
 | A6 | Nothing is announced twice: a live line is rewritten only when its words change | ui/send-panel.js showBuild, ui/kfx.js say | done |
 
-**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-11 (wave 2 end): 201 done, 28 model, 7 wave 3, 2 gap, 0 todo.
+**Inventory size: 238 rows** (W 25, N 19, E 28, C 31, P 13, R 19, S 21, D 34, K 6, H 6, U 10, O 6, B 6, L 8, A 6). As of 2026-10-11 (wave 3): 233 done, 4 wave 3 (W6 to W9, the bundle: the xtask's), 1 gap (W12: no sidecar to be missing).
 
 ## Window test files
 
