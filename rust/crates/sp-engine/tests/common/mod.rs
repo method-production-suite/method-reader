@@ -17,7 +17,9 @@
 #![allow(dead_code)]
 
 pub mod books;
+pub mod epub;
 pub mod kfx_stubs;
+pub mod mobi_records;
 pub mod png;
 
 use std::path::{Path, PathBuf};

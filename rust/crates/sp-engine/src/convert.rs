@@ -320,6 +320,18 @@ pub fn convert_facts(
     convert_read(facts, opts, None)
 }
 
+/// [`convert_facts`], with the pixels the facts do not carry fetched
+/// through `fetch` as each picture is reached: what [`convert_pdf`] does
+/// with sp-pdf's reader, open to a caller that wants to watch the fetches
+/// (a refused document must make none).
+pub fn convert_facts_with(
+    facts: &DocumentFacts,
+    opts: ConvertOptions,
+    fetch: Option<&FetchImage<'_>>,
+) -> Result<ConvertResult, ConvertError> {
+    convert_read(facts, opts, fetch)
+}
+
 fn convert_read(
     facts: &DocumentFacts,
     mut opts: ConvertOptions,
