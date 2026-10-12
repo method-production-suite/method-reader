@@ -196,10 +196,19 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
         return None;
     }
     let home = std::env::var_os("HOME")?;
-    Some(sp_update::webkit::website_data(
-        std::path::Path::new(&home),
-        &running_identifier(),
-    ))
+    let home = std::path::Path::new(&home);
+    let running = running_identifier();
+    // A 0.7.x window (identifier com.darkwell.screepub.desktop) that skipped
+    // every release since updates straight to the Rust app; its answer is
+    // under its old identifier.
+    let mut candidates = vec![running.clone()];
+    if running == sp_update::IDENTIFIER {
+        candidates.push(format!("{}.desktop", sp_update::IDENTIFIER));
+    }
+    candidates
+        .iter()
+        .map(|id| sp_update::webkit::website_data(home, id))
+        .find(|dir| dir.is_dir())
 }
 
 /// The updater: latest.json through sp-update, with the key and endpoint
