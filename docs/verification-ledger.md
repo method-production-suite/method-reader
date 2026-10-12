@@ -3,11 +3,16 @@
 Who has checked what, kept in one place so no page has to infer it from a
 green checkmark. Three lists. An item moves up only when somebody does the
 thing, and the README, the site (screepub.com) and the release notes say no
-more than this page does. `tests/site.test.ts` and
-`tests/release-artifacts.test.ts` hold the README and the site to it.
+more than this page does. Until the Rust cutover, `tests/site.test.ts` and
+`tests/release-artifacts.test.ts` held the README and the site to it; their
+Rust ports are still to come (rust/PARITY.md lists them as todo), so for now
+nothing checks that automatically.
 
-The window is the Tauri app in `desktop/`: Screepub on every platform, and
-on a Mac the one app, `Screepub-macOS.dmg`. The older Mac app was the Swift
+The window is Screepub on every platform, and on a Mac the one app,
+`Screepub-macOS.dmg`. From the Rust cutover on it is the native Rust window
+(`rust/crates/sp-app`); every release through 0.11.1 shipped the Tauri
+window that came before it, and the checks by a person below were made on
+that one. The older Mac app was the Swift
 app, deleted from the source at piece F3. It is no longer published, and
 its own updater, where it is switched on, installs the window in its place.
 
@@ -43,17 +48,20 @@ its own updater, where it is switched on, installs the window in its place.
 
 **Verified only by CI, and only as far as CI can reach**
 
-- `ci.yml`, on every push: the engine's test suite and typecheck on Linux,
-  the command-line archives built for every target and the Linux one run,
-  and the compiled command line converting a fixture on a Mac, checked with
-  epubcheck.
-- `desktop.yml`, on every push: the window compiles on macOS, Windows and
-  Linux, each platform's bundles are produced, and the engine inside each one
-  runs and converts a fixture without installing anything. No runner has a
-  display, so nothing here opens the window.
+- `rust.yml`, on every push: formatting, lints and every crate's tests on
+  macOS, Windows and Linux; the release command line converting the
+  fixtures on a Mac, checked with epubcheck; and every installer built
+  unsigned and opened on its own system (the `.deb` installed and removed,
+  the `.rpm` listed, the AppImage unpacked, the Windows installer run
+  silently and uninstalled), with the Mac app's headless mode converting a
+  fixture. No runner has a display, so nothing here opens the window.
+  Until the Rust cutover, `ci.yml` and `desktop.yml` did this for the
+  TypeScript engine and the Tauri window.
 - `release.yml`, on every tag: the same bundles, built again. Since 0.6.0 it
   has built and signed the Mac window, and since 0.7.0 it has notarized it.
-  Every bundle is opened and its engine run before anything is uploaded, and
+  Every bundle is opened and checked for the files and the version it
+  claims before anything is uploaded (until the Rust cutover, its engine was
+  run too; `rust.yml` runs the Mac app's headless conversion), and
   the update manifest (`latest.json`, Mac only) is read back from GitHub
   after it is published. The Mac `.dmg` is built for Apple silicon only, the
   runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
@@ -61,7 +69,7 @@ its own updater, where it is switched on, installs the window in its place.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0), and
-  the engine's Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
+  the Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
   own reader opening Screepub's AZW3) still pass against Calibre's newest
   version.
 
@@ -83,6 +91,10 @@ its own updater, where it is switched on, installs the window in its place.
 - The move to one Mac app, by a person: the older Mac app updating itself
   into the window, and a *Screepub Desktop* install updating into Screepub.
   Both are written and tested in code.
+- A Tauri window updating itself into the Rust window on a real Mac, by a
+  person. `release.yml`'s handover gate proves it headless, with 0.11.1's
+  own updater, before a release goes public.
+- The Linux AppImage, new with the Rust window, run by a person.
 - Kobo, tolino and reMarkable on real hardware. They are tested against
   injected mounts and a stub tablet.
 - Any e-reader connected on Linux or Windows.
