@@ -404,8 +404,15 @@ jobs:
           mkdir -p "$STAGE" bundles
           cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
           cp LICENSE THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
-          command -v makensis >/dev/null || choco install nsis -y --no-progress
+          # Chocolatey's feed times out now and then (a 504), and choco
+          # still exits 0: try three times, then fail by name.
           export PATH="$PATH:/c/Program Files (x86)/NSIS"
+          for try in 1 2 3; do
+            command -v makensis >/dev/null && break
+            choco install nsis -y --no-progress || true
+            command -v makensis >/dev/null || sleep 20
+          done
+          command -v makensis >/dev/null || { echo "makensis: NSIS did not install from Chocolatey"; exit 1; }
           rust/target/release/sp-release.exe nsis --version "$VERSION" \
             --src "$(cygpath -w "$STAGE")" --setup "$(cygpath -w "$PWD/bundles/Screepub-windows-x64-setup.exe")" \
             --script "$STAGE/screepub.nsi"
