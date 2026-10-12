@@ -71,6 +71,9 @@ fn a_write_that_cannot_be_promoted_keeps_the_old_contents_and_takes_the_temp_awa
     fs::write(path.join("inside"), "kept").unwrap();
     let err = write_file_atomic(&path, "new").unwrap_err();
     assert!(err.message.contains("rename"), "{}", err.message);
+    // Windows answers ACCESS_DENIED here; the reason a person reads is the
+    // folder, on every system.
+    assert_eq!(err.code.as_deref(), Some("EISDIR"), "{}", err.message);
     assert_eq!(names(s.path()), ["taken"]);
     assert_eq!(fs::read_to_string(path.join("inside")).unwrap(), "kept");
 }
@@ -81,10 +84,38 @@ fn a_write_into_a_missing_folder_says_enoent_on_the_temp_open_as_node_does() {
     let path = s.path().join("no-such-folder").join("x.json");
     let err = write_file_atomic(&path, "x").unwrap_err();
     assert_eq!(err.code.as_deref(), Some("ENOENT"));
-    let folder = path.parent().unwrap().display().to_string();
-    let expected = format!("ENOENT: no such file or directory, open '{folder}/.x.json.");
+    let temp_start = path.parent().unwrap().join(".x.json.");
+    let expected = format!(
+        "ENOENT: no such file or directory, open '{}",
+        temp_start.display()
+    );
     assert!(err.message.starts_with(&expected), "{}", err.message);
     assert!(err.message.ends_with(".tmp'"), "{}", err.message);
+}
+
+#[test]
+fn a_folder_made_under_a_file_says_enotdir_on_every_system() {
+    // Windows answers ALREADY_EXISTS for a path that does not exist.
+    let s = scratch();
+    let blocker = s.path().join("a-file");
+    fs::write(&blocker, "x").unwrap();
+    let made = blocker.join("Kobo");
+    let io = fs::create_dir_all(&made).unwrap_err();
+    let err = sp_fsutil::NodeIoError::from_io(&io, "mkdir", Some(&made), None);
+    assert_eq!(err.code.as_deref(), Some("ENOTDIR"), "{}", err.message);
+    // A file AT the name is still EEXIST.
+    let io = fs::create_dir(&blocker).unwrap_err();
+    let err = sp_fsutil::NodeIoError::from_io(&io, "mkdir", Some(&blocker), None);
+    assert_eq!(err.code.as_deref(), Some("EEXIST"), "{}", err.message);
+}
+
+#[test]
+fn reading_a_folder_as_a_file_says_eisdir_on_every_system() {
+    // Windows refuses to open a folder with ACCESS_DENIED.
+    let s = scratch();
+    let io = fs::read(s.path()).unwrap_err();
+    let err = sp_fsutil::NodeIoError::from_io(&io, "open", Some(s.path()), None);
+    assert_eq!(err.code.as_deref(), Some("EISDIR"), "{}", err.message);
 }
 
 #[test]

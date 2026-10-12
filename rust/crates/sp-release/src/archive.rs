@@ -219,7 +219,11 @@ pub fn cli_zip(binary: &Path) -> std::io::Result<Vec<u8>> {
     let options = SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .last_modified_time(zip::DateTime::default())
-        .unix_permissions(0o755);
+        .unix_permissions(0o755)
+        // Said outright: left to the zip crate, a zip made on Windows is
+        // recorded as DOS, which drops the executable bit and changes the
+        // bytes with the host that built it.
+        .system(zip::System::Unix);
     w.start_file(format!("{}.exe", crate::names::CLI_EXE), options)
         .map_err(std::io::Error::other)?;
     w.write_all(&std::fs::read(binary)?)?;
@@ -268,5 +272,10 @@ mod tests {
         let mut r = zip::ZipArchive::new(std::io::Cursor::new(z)).unwrap();
         assert_eq!(r.len(), 1);
         assert_eq!(r.by_index(0).unwrap().name().unwrap(), "screepub.exe");
+        // Executable, whatever system made the zip.
+        assert_eq!(
+            r.by_index(0).unwrap().unix_mode().map(|m| m & 0o777),
+            Some(0o755)
+        );
     }
 }

@@ -125,7 +125,13 @@ impl FsError {
     /// Node's error for `syscall` on `path` (and `dest`, for the two-path
     /// calls: rename and copyfile).
     pub fn from_io(err: &io::Error, syscall: &str, path: &str, dest: Option<&str>) -> Self {
-        match node_code(err) {
+        let posix = sp_fsutil::error::posix_code_for(
+            err,
+            syscall,
+            Some(std::path::Path::new(path)),
+            dest.map(std::path::Path::new),
+        );
+        match posix.or_else(|| node_code(err)) {
             Some(code) => {
                 let mut message = format!("{code}: {}, {syscall} '{path}'", describe(code));
                 if let Some(dest) = dest {

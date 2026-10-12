@@ -36,7 +36,11 @@ impl NodeIoError {
         path: Option<&Path>,
         dest: Option<&Path>,
     ) -> NodeIoError {
-        let Some((code, words)) = code_of(err) else {
+        let found = match posix_code_for(err, syscall, path, dest) {
+            Some(code) => named(code),
+            None => code_of(err),
+        };
+        let Some((code, words)) = found else {
             return NodeIoError {
                 code: None,
                 message: err.to_string(),
@@ -54,6 +58,39 @@ impl NodeIoError {
             message,
         }
     }
+}
+
+/// The code a POSIX system gives for a failure Windows words differently,
+/// so the reason a person reads is the same on every system:
+///
+/// - Windows refuses to open a folder as a file, or to rename or copy a
+///   file over a folder, with ACCESS_DENIED, which reads as "permission
+///   denied" when the truth is "that is a folder, not a file" (EISDIR).
+/// - Making a folder whose parent is a FILE fails on Windows as
+///   ALREADY_EXISTS, naming a path that does not exist; a POSIX system says
+///   ENOTDIR ("part of that path is not a folder").
+///
+/// `None` when the system's own code is already the right one.
+pub fn posix_code_for(
+    err: &io::Error,
+    syscall: &str,
+    path: Option<&Path>,
+    dest: Option<&Path>,
+) -> Option<&'static str> {
+    const ACCESS_DENIED: i32 = 5;
+    if cfg!(windows) && err.raw_os_error() == Some(ACCESS_DENIED) {
+        let target = dest.or(path)?;
+        return target.is_dir().then_some("EISDIR");
+    }
+    if syscall == "mkdir" && err.kind() == io::ErrorKind::AlreadyExists {
+        let made = path?;
+        // Something at the name itself is EEXIST, as everywhere; nothing
+        // there means a parent on the way is a file.
+        return std::fs::symlink_metadata(made)
+            .is_err()
+            .then_some("ENOTDIR");
+    }
+    None
 }
 
 /// libuv's name and sentence for an error, by its OS number where there is
