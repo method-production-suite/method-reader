@@ -7,7 +7,7 @@
 //! The device scan defaults to sp-device's `list_devices`; the CLI passes
 //! its own, carrying its test seams (`SCREEPUB_VOLUME_ROOTS`, ...).
 
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 use crate::env::{Env, host_platform};
 use crate::export::routes::RouteFacts;
@@ -188,7 +188,7 @@ pub fn parse_mailto_handler(defaults_output: &str) -> Option<String> {
 /// streams read.
 pub fn real_run(argv: &[&str]) -> Result<CommandResult, String> {
     let (program, args) = argv.split_first().ok_or("no program")?;
-    let out = Command::new(program)
+    let out = sp_device::process::quiet_command(program)
         .args(args)
         .stdin(Stdio::null())
         .output()

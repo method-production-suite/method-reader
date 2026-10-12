@@ -11,6 +11,24 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
+/// A child started by the window: on Windows, with no console of its own.
+/// The window is a GUI-subsystem program, so a console tool it starts
+/// (PowerShell for an eject, ebook-convert for minutes) would otherwise open
+/// a console window over it. Every Command the engine spawns goes through
+/// this. Elsewhere it is the Command as given.
+pub fn quiet_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
+    #[allow(unused_mut)]
+    let mut command = Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        /// CREATE_NO_WINDOW, from the Win32 process creation flags.
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    command
+}
+
 /// The operating system whose rules apply, as Node's `process.platform`
 /// splits them: macOS, Windows, and everything else, which the TypeScript
 /// treats as Linux.
@@ -78,7 +96,7 @@ impl Runner for SpawnRunner {
         let (program, args) = argv
             .split_first()
             .ok_or_else(|| "nothing to run".to_string())?;
-        let mut child = Command::new(program)
+        let mut child = quiet_command(program)
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
@@ -127,7 +145,7 @@ impl Opener for SpawnOpener {
         let (program, args) = argv
             .split_first()
             .ok_or_else(|| "nothing to run".to_string())?;
-        let mut child = Command::new(program)
+        let mut child = quiet_command(program)
             .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
