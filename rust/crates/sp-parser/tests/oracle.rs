@@ -13,10 +13,10 @@
 //!
 //! Pictures: the dump names each picture's source pixels by hash rather than
 //! carrying them, so these checks judge pictures on their facts (see
-//! images.rs, `facts_hash`). Set `SP_PARSER_PIXELS` to a folder of raw pixel
-//! dumps (`<dump>/<page>-<objId>.bin`, as tools/oracle would write them) and
-//! the pictures are decoded, encoded and compared by DECODED PIXELS with the
-//! oracle's `images/` folder too (rust/PARITY.md, Decisions).
+//! images.rs, `facts_hash`). Where the dump carries its `pixels/` folder
+//! (`<dataSha256>.bin`, as tools/oracle writes it), or `SP_PARSER_PIXELS`
+//! names one, the pictures are decoded, encoded and compared by DECODED
+//! PIXELS with the oracle's `images/` folder too (rust/PARITY.md, Decisions).
 
 mod common;
 
@@ -151,7 +151,11 @@ fn check_dump(label: &str, dir: &Path) -> usize {
         first_diff(&back, &pages, "").unwrap_or_default()
     );
 
-    let pixels = std::env::var_os("SP_PARSER_PIXELS").map(std::path::PathBuf::from);
+    // The dump's own pixels/ folder (tools/oracle writes it), or a folder
+    // named by SP_PARSER_PIXELS.
+    let pixels = std::env::var_os("SP_PARSER_PIXELS")
+        .map(std::path::PathBuf::from)
+        .or_else(|| Some(dir.join("pixels")).filter(|p| p.is_dir()));
     let pictures = match &pixels {
         // A refused document writes no picture folder, so its pictures are
         // judged (the statistics still compare) but not compared as PNGs.

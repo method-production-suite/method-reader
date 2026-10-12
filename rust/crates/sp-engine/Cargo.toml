@@ -1,0 +1,27 @@
+[package]
+name = "sp-engine"
+description = "Screepub's engine beyond conversion: settings, the library, export and send routes, update decisions"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sp-model.workspace = true
+sp-fountain.workspace = true
+sp-fdx.workspace = true
+sha2 = "0.10"
+
+[target.'cfg(unix)'.dependencies]
+# Safe wrappers for the two process-group calls a Calibre timeout needs
+# (signal the whole group, so Kindle Previewer dies with ebook-convert).
+rustix = { version = "1", default-features = false, features = ["std", "process", "fs"] }
+
+[dev-dependencies]
+tempfile = "3"

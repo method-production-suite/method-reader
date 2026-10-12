@@ -19,7 +19,7 @@ move too.
 | TypeScript | tests | Rust owner | status | notes |
 |---|---:|---|---|---|
 | tests/app-references.test.ts | 14 | xtask | todo | the retired Swift app stays retired |
-| tests/app-settings.test.ts | 31 | sp-engine | todo |  |
+| tests/app-settings.test.ts | 31 | sp-engine | done | sp-engine/tests/app_settings.rs (28); the bun preload checks have their Rust form in tests/guards.rs (the engine takes its environment as a value, so the guard is what tests hand it) |
 | tests/artwork.test.ts | 44 | sp-parser | done | sp-parser/tests/artwork.rs (43); retired: the Bun.build bundle check that artwork.ts never reaches pdf.js (sp-parser has no PDF dependency at all) |
 | tests/azw3-calibre.test.ts | 0 | sp-azw3 | done | sp-azw3/tests/readers.rs (calibres_reader_opens_our_azw3); run only through a Sandbox that hands Calibre a scratch copy of its settings, and check the real folder is unchanged afterwards |
 | tests/azw3-chunk.test.ts | 8 | sp-azw3 | done | sp-azw3/tests/chunk.rs |
@@ -44,7 +44,7 @@ move too.
 | tests/build-update-manifest.test.ts | 20 | xtask | todo |  |
 | tests/bump-version.test.ts | 15 | xtask | todo |  |
 | tests/bundle-archive.test.ts | 27 | xtask | todo |  |
-| tests/calibre-config-isolation.test.ts | 7 | sp-engine | todo |  |
+| tests/calibre-config-isolation.test.ts | 7 | sp-engine | done | sp-engine/tests/guards.rs; not ported: the bare calibre-customize spawn on the guard path (it would start Calibre against a folder that is not a scratch copy, which this port's rules forbid), the guard VALUE is checked instead |
 | tests/capture-chrome.test.ts | 5 | xtask | todo |  |
 | tests/capture.test.ts | 46 | xtask | todo | README and site pictures; drives desktop/ui/app.js today |
 | tests/check-latest.test.ts | 17 | xtask | todo |  |
@@ -64,8 +64,8 @@ move too.
 | tests/cli-verb-flags.test.ts | 7 | sp-cli | todo |  |
 | tests/cli.test.ts | 78 | sp-cli | todo |  |
 | tests/color-contrast.ts | 0 | xtask | todo | test helper: WCAG contrast |
-| tests/conversion-settings.test.ts | 18 | sp-engine | todo |  |
-| tests/convert.test.ts | 58 | sp-engine | todo |  |
+| tests/conversion-settings.test.ts | 18 | sp-engine | todo | conversion through the CLI (`--library`, the pin): wave 3 with convert.ts and cli.ts; the functions it leans on (library_output, adopt_sidecar, keeps_script_settings, the sidecar) are ported and tested |
+| tests/convert.test.ts | 58 | sp-engine | todo | wave 3 (convert.ts); export's MOBI rung calls it through `Renderers::render_mobi` |
 | tests/cover.test.ts | 10 | sp-fountain | done | sp-fountain/tests/cover.rs (10); `Cover.index` stands for the TypeScript's token identity |
 | tests/css-rules.test.ts | 11 | sp-epub | done | sp-epub/tests/css_rules.rs (11) |
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
@@ -89,12 +89,12 @@ move too.
 | tests/device-watch.test.ts | 9 | sp-app | todo |  |
 | tests/epub-images.test.ts | 23 | sp-epub | done | sp-epub/tests/epub_images.rs (26: the 23 `test`s and the 3 epubcheck `checked`s, which skip without epubcheck on PATH). Where the TypeScript converts images.pdf or torture.pdf it reads the oracle dump of that conversion |
 | tests/epub.test.ts | 117 | sp-epub | done | sp-epub/tests/epub.rs (117, plus the XHTML half of serialize.test.ts's mini-slug seam); the classify.ts pin reads src/parser/classify.ts until sp-parser has its copy; the token half of "PRIMARY_SLUG stays in lockstep with fountain-js" is in sp-fountain/tests/slug.rs; the XHTML half and the classify.ts pin (import `sp_fountain::PRIMARY_SLUG_SOURCE`) stay here |
-| tests/export-artifact.test.ts | 22 | sp-engine | todo |  |
-| tests/export-calibre.test.ts | 8 | sp-engine | todo | isolate CALIBRE_CONFIG_DIRECTORY |
-| tests/export-formats.test.ts | 6 | sp-engine | todo |  |
-| tests/export-freshness.test.ts | 5 | sp-engine | todo |  |
-| tests/export-kfx-setup.test.ts | 13 | sp-engine | todo |  |
-| tests/export-kfx.test.ts | 54 | sp-engine | todo | isolate CALIBRE_CONFIG_DIRECTORY |
+| tests/export-artifact.test.ts | 22 | sp-engine | partial | sp-engine/tests/export_artifact.rs (22) pins the ladder against stand-in book makers (tests/common/books.rs); the checks that read a real KF8 (readKf8) or MOBI (mobiPictures) back wait for sp-azw3 and the conversion to be plugged into `Renderers` (wave 3) |
+| tests/export-calibre.test.ts | 8 | sp-engine | partial | sp-engine/tests/export_calibre.rs (8, stand-in tools only); the two real-Calibre checks (toKepub's koboSpan, the dialogue column in an exploded AZW3) need the engine's own EPUB: wave 3, isolated with common::calibre_env |
+| tests/export-formats.test.ts | 6 | sp-engine | done | sp-engine/tests/export_small.rs |
+| tests/export-freshness.test.ts | 5 | sp-engine | done | sp-engine/tests/export_small.rs |
+| tests/export-kfx-setup.test.ts | 13 | sp-engine | done | sp-engine/tests/export_small.rs |
+| tests/export-kfx.test.ts | 54 | sp-engine | done | sp-engine/tests/export_kfx.rs (46; the TypeScript's loops and PATH-shadow cases folded); Calibre only through common::calibre_env's scratch copy |
 | tests/extract.test.ts | 83 | sp-parser | done | sp-parser/tests/extract.rs (83; the file has 83 tests, not 103); fixture PDFs read through the oracle's pages.json until sp-pdf lands. The real-script repair-count test checks nothing until the script it was written for is dumped (every current real dump repairs 0) |
 | tests/fdx-integration.test.ts | 6 | sp-fdx | done | sp-fdx/tests/fdx_integration.rs; reads the oracle's tokens.json and script.fountain where the TypeScript converts the PDF on the spot, until sp-parser and sp-fountain land |
 | tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
@@ -103,12 +103,12 @@ move too.
 | tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
 | tests/images-fixture.test.ts | 24 | sp-parser | partial | sp-parser/tests/images_fixture.rs (22); retired: the two pdf.js objs.has() checks; moved: extractTitleMeta to sp-fountain; three pixel checks run on the dump's facts until sp-pdf supplies decoded pixels |
 | tests/images.test.ts | 68 | sp-parser | done | sp-parser/tests/images.rs (57); retired: the 10 resolveImageData store-race and timeout tests and the lying-buffer test (pixels arrive resolved, a slice cannot misstate its length) |
-| tests/isolate-app-settings.ts | 0 | sp-engine | todo | test preload: no test reaches the real settings file |
-| tests/isolate-calibre-config.ts | 0 | sp-engine | todo | test preload: Calibre only ever sees a scratch copy |
+| tests/isolate-app-settings.ts | 0 | sp-engine | done | sp-engine/tests/common/mod.rs (guarded_env) and tests/guards.rs: every test hands the engine an environment carrying the guard, and no test file may use this process's own |
+| tests/isolate-calibre-config.ts | 0 | sp-engine | done | sp-engine/tests/common/mod.rs (calibre_config_copy, calibre_env): a scratch COPY per test binary, caches left behind |
 | tests/jpx-fixture.test.ts | 11 | sp-pdf | todo | JPEG2000 picture decodes pixel for pixel |
-| tests/kfx-snippet-stubs.ts | 0 | sp-engine | todo | test helper: runs the KFX plugin install snippet under python3 |
-| tests/library-images.test.ts | 55 | sp-engine | todo |  |
-| tests/library.test.ts | 45 | sp-engine | todo |  |
+| tests/kfx-snippet-stubs.ts | 0 | sp-engine | done | sp-engine/tests/common/kfx_stubs.rs |
+| tests/library-images.test.ts | 55 | sp-engine | done | sp-engine/tests/library_images.rs (55); the PNG encoder it uses is a stored-deflate stand-in (tests/common/png.rs) until sp-parser's lands, which is the worst case the size bound must hold for |
+| tests/library.test.ts | 45 | sp-engine | partial | sp-engine/tests/library.rs (37, the half-written-file checks through fsx::testing's fault seam); the `--library` CLI block (6) is the conversion's: wave 3 |
 | tests/mobi-picture-probe.test.ts | 7 | xtask | partial | the book builder is sp-mobi's `probe` module and its MOBI checks are sp-mobi/tests/probe.rs (byte-identical to the TypeScript's MOBI for the same pictures); left: the EPUB half (needs sp-epub) and the run-as-a-process half (the xtask command) |
 | tests/mobi.test.ts | 65 | sp-mobi | done | sp-mobi/tests/mobi.rs, pictures.rs (images.pdf in the MOBI), mobi_calibre.rs (the two Calibre round trips, isolated); sources tokenized by sp-fountain (checked against fountain-js's recorded tokens); the EPUB's picture answers come from tests/data/mobi-sources.json until sp-epub lands |
 | tests/no-em-dash.test.ts | 3 | xtask | todo | repo-wide copy rule; must cover the Rust sources |
@@ -130,15 +130,15 @@ move too.
 | tests/replace-file.test.ts | 11 | sp-fsutil | done | sp-fsutil/tests/replace_file.rs. src/atomic-write.ts has no test file of its own (its checks sit in library-images and desktop-shell); sp-fsutil/tests/atomic_write.rs pins them where the module now is |
 | tests/require-release-notes.test.ts | 22 | xtask | todo | the git hook |
 | tests/review-screens.test.ts | 12 | xtask | todo |  |
-| tests/route-facts.test.ts | 32 | sp-engine | todo |  |
-| tests/routes.test.ts | 82 | sp-engine | todo |  |
-| tests/send-device.test.ts | 34 | sp-engine | todo |  |
+| tests/route-facts.test.ts | 32 | sp-engine | done | sp-engine/tests/route_facts.rs (29); the 3 checks of the DEFAULT device probe (listDevices with its options) wait for the sp-device branch: route_facts takes the device list from its caller |
+| tests/routes.test.ts | 82 | sp-engine | done | sp-engine/tests/routes.rs (49; the TypeScript's generated per-case tests folded into loops) |
+| tests/send-device.test.ts | 34 | sp-engine | todo | the sp-device branch |
 | tests/send-panel-ui.test.ts | 125 | sp-app | todo |  |
 | tests/send-routes-ui.test.ts | 71 | sp-app | todo |  |
 | tests/serialize.test.ts | 64 | sp-fountain | done | sp-fountain/tests/serialize.rs (64); "a parsed mini-slug reaches the EPUB" keeps its token half here, its `<p class="mini-slug">` half is sp-epub's (sp-epub/tests/epub.rs, done) |
-| tests/settings-app-defaults.test.ts | 18 | sp-engine | todo |  |
+| tests/settings-app-defaults.test.ts | 18 | sp-engine | done | sp-engine/tests/settings_app_defaults.rs |
 | tests/sidecar-targets.test.ts | 26 | xtask | todo | no sidecar in the Rust app: retires with build-sidecar; decision for the owner |
-| tests/sidecar.test.ts | 10 | sp-engine | todo | the per-script settings sidecar (<script>.screepub.json), not the engine sidecar binary |
+| tests/sidecar.test.ts | 10 | sp-engine | done | sp-engine/tests/sidecar.rs (the per-script settings sidecar) |
 | tests/signature-box.ts | 0 | sp-app | todo | test helper: minisign boxes for the updater |
 | tests/site.test.ts | 14 | xtask | todo | site/ stays HTML; the check moves |
 | tests/smoke-bundle.test.ts | 35 | xtask | todo |  |
@@ -152,7 +152,7 @@ move too.
 | tests/torture-pictures.test.ts | 14 | sp-parser | partial | sp-parser/tests/torture_pictures.rs (7); the 5 EPUB and 2 MOBI checks move to sp-engine with sp-epub/sp-mobi |
 | tests/torture.test.ts | 23 | sp-parser | partial | sp-parser/tests/torture.rs (19); the 4 [[fmt]] note checks move to sp-fountain |
 | tests/update-compare-module.test.ts | 9 | sp-app | todo | the window's copy of update/compare; one Rust copy serves both |
-| tests/update-compare.test.ts | 34 | sp-engine | todo |  |
+| tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
 | tests/update-signature.test.ts | 14 | xtask | todo |  |
 | tests/verify-signing.test.ts | 32 | xtask | todo |  |
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
@@ -634,6 +634,50 @@ cutover.
 Differences the port keeps on purpose, and questions for the owner. Each
 names the check it affects.
 
+- **sp-engine's CLI parity (2026-10-11).** `sp-engine/tests/parity_cli.rs`
+  runs `bun src/cli.ts <verb> ... --json` and the crate's handler for the
+  same verb on the same files, and requires the same line byte for byte and
+  the same files left behind: `app-settings` (25 cases, reads, every key,
+  every refusal, a file the TypeScript wrote with keys this build does not
+  know), `settings` (10), `update-decision` (18), `update-should-check`
+  (11), `kfx-status`, `export` (28, among them the FDX bytes and the
+  Fountain copy with Screepub's notes stripped), `export --for kindle|kfx
+  --check`, `routes --quick` (5 remembered routes) and `route` (17: every
+  refusal, and `save-epub`). All agree. Not compared: any `route` performer
+  (they open Books, a browser or Mail) and any Kindle BUILD (the AZW3 and
+  MOBI makers are not plugged in yet, and a KFX build is a real Calibre and
+  Kindle Previewer run); the device rows of `routes` (device detection is
+  the sp-device branch).
+- **The KFX plugin install needs no HTTP in Rust (2026-10-11).** The
+  TypeScript does not fetch the plugin itself: it hands Calibre's own
+  Python (`calibre-debug -c`) the install snippet, which fetches Calibre's
+  index with Calibre's pinned CA, checks the zip's size against the index
+  and that it is a plugin, and installs it with Calibre's add_plugin. The
+  port runs the same snippet, byte for byte (`export/kfx_install.py`), so
+  the two downloads, the checks and the trust root are unchanged, and the
+  engine stays without a network stack. A Rust (rustls) fetch would have
+  replaced Calibre's certificate pinning with ours and changed what is
+  trusted; nothing in this crate's half needs HTTP.
+- **The environment is a value, not a global (2026-10-11).** Every
+  function the TypeScript gives `env = process.env` takes an `Env` here
+  (`Env::process()` for a real run), and every Calibre spawn gets exactly
+  the `Env` it is handed (`env_clear`), as the TypeScript's `runCalibre`
+  passes `process.env` on purpose. Rust tests are threads of one process,
+  where mutating the environment is unsafe, so this is also how tests keep
+  off the real settings file and the real Calibre folder.
+- **Open differences in sp-engine (for the owner; none reached by any
+  committed fixture or parity case).** (1) A settings file holding a lone
+  UTF-16 surrogate escape (`"\ud800"`) or a number past the f64 range
+  (`1e400`) is unreadable to serde_json and reads as `{}` (JavaScript reads
+  it), so the next save drops it; Screepub never writes either. (2) A
+  filesystem error the engine has no Node code for reports Rust's own
+  wording where Node's `plainReason` falls back to Node's message. (3)
+  `localeCompare(..., { numeric: true })` for two pre-release tags is an
+  ICU collation; the port's is digits-as-numbers, letters without case
+  first, then ICU root's punctuation order, checked against bun on the
+  version pairs in parity_cli.rs, but not every Unicode letter. (4)
+  `installKfxPlugin` returns a reason when calibre-debug cannot be started
+  at all, where the TypeScript's promise rejects.
 - **PNG bytes (decided 2026-10-11).** Pictures compare by DECODED PIXELS
   (dimensions, colour type and every pixel), not by compressed bytes. The
   Rust side uses its own deflater; reproducing node:zlib's exact stream buys

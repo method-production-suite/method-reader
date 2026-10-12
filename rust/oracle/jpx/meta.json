@@ -52,6 +52,10 @@
       "bytes": 6569,
       "sha256": "f4037b4f5f8fc896c2f3db5910b8f10bba625dbcdd3f636b36d92939422d831c"
     },
+    "pixels/356334e5ac31420bace45d45d7f6e4c7dd74a5a58779b96384fbb4aad6d2922a.bin": {
+      "bytes": 12288,
+      "sha256": "356334e5ac31420bace45d45d7f6e4c7dd74a5a58779b96384fbb4aad6d2922a"
+    },
     "script.fountain": {
       "bytes": 346,
       "sha256": "34d82b9e89d2105cf399446d63477819f8307ab18c9b789f0f3ae86ec3afc616"
