@@ -32,10 +32,12 @@ with 1:1 feature parity. Maximize parallel work.
 | `sp-mobi` | src/mobi/* | sp-fountain |
 | `sp-azw3` | src/azw3/* | sp-mobi (palmdb) |
 | `sp-fdx` | src/fdx/* | sp-fountain |
-| `sp-engine` | convert, library, library-images, settings, update/compare, device, export, routes, eject, reveal, atomic writes | the above |
+| `sp-fsutil` | atomic-write.ts, replace-file.ts, Node's path functions | none |
+| `sp-device` | src/device/*, eject, reveal, the MTP route and macOS camera-import pause (off until hardware day) | sp-fsutil, sp-mtp's JSON |
+| `sp-engine` | convert, library, library-images, settings, update/compare, export, routes | the above |
 | `sp-cli` | src/cli*.ts: binary `screepub`, the same flags and the same `--json` contract | sp-engine |
 | `sp-app` | desktop/ (window, every screen, updater, device watching, page show, sounds) | sp-engine directly, no sidecar |
-| `sp-mtp` | native/mtp-helper from branch `mtp-kindle` | mtp-rs |
+| `sp-mtp` | native/mtp-helper from branch `mtp-kindle` (binary `screepub-mtp`) | mtp-rs |
 | `xtask` | tools/*.ts the project needs (fixtures stay Python-generated until ported; capture-screens, review-screens, bump-version, release-notes, smoke) | |
 
 Every crate is `unsafe_code = "forbid"` unless a crate documents why not.

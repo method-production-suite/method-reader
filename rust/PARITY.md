@@ -52,12 +52,12 @@ move too.
 | tests/cli-app-settings.test.ts | 56 | sp-cli | todo |  |
 | tests/cli-azw3.test.ts | 4 | sp-cli | todo |  |
 | tests/cli-device-commands.test.ts | 35 | sp-cli | todo |  |
-| tests/cli-devices.test.ts | 32 | sp-cli | todo |  |
-| tests/cli-eject.test.ts | 24 | sp-cli | todo |  |
+| tests/cli-devices.test.ts | 32 | sp-cli | partial | the handlers (devicesCommand, selectDevice, sendCommand) are in sp-device/tests/commands.rs; left for sp-cli: verb dispatch (resolveCommand, VERBS) and the settings file a send remembers into (sp-device takes `remember` as a callback) |
+| tests/cli-eject.test.ts | 24 | sp-cli | partial | the handler and the real runner are in sp-device/tests/eject.rs; left for sp-cli: the spawned-CLI refusals and --help |
 | tests/cli-export-fdx.test.ts | 20 | sp-cli | partial | the renderer half (its script's FDX) is in sp-fdx/tests/fdx.rs; the `formats` block goes with export-formats to sp-engine; the export command and CLI blocks are left |
 | tests/cli-export.test.ts | 79 | sp-cli | todo |  |
 | tests/cli-kfx.test.ts | 24 | sp-cli | todo |  |
-| tests/cli-reveal.test.ts | 21 | sp-cli | todo |  |
+| tests/cli-reveal.test.ts | 21 | sp-cli | partial | the handler and the real opener are in sp-device/tests/reveal.rs; left for sp-cli: the spawned-CLI refusals and --help |
 | tests/cli-routes.test.ts | 82 | sp-cli | todo |  |
 | tests/cli-settings.test.ts | 26 | sp-cli | todo |  |
 | tests/cli-update.test.ts | 17 | sp-cli | todo |  |
@@ -78,14 +78,14 @@ move too.
 | tests/desktop-tokens.test.ts | 9 | sp-app | todo | brand tokens into the window theme |
 | tests/desktop-ui.test.ts | 425 | sp-app | todo |  |
 | tests/desktop-update-install.test.ts | 20 | sp-app | todo | updater handover |
-| tests/device-classify.test.ts | 13 | sp-engine | todo |  |
-| tests/device-kindle.test.ts | 8 | sp-engine | todo |  |
-| tests/device-list.test.ts | 6 | sp-engine | todo |  |
-| tests/device-remarkable.test.ts | 8 | sp-engine | todo |  |
+| tests/device-classify.test.ts | 13 | sp-device | done | sp-device/tests/device_classify.rs |
+| tests/device-kindle.test.ts | 8 | sp-device | done | sp-device/tests/device_kindle.rs |
+| tests/device-list.test.ts | 6 | sp-device | done | sp-device/tests/device_list.rs (with mtp-kindle's three listing checks) |
+| tests/device-remarkable.test.ts | 8 | sp-device | done | sp-device/tests/device_remarkable.rs, through the real ureq client against a local stand-in |
 | tests/device-requests-ui.test.ts | 11 | sp-app | todo |  |
 | tests/device-requests-worker.test.ts | 24 | (services/) | todo | tests the Cloudflare Worker in services/device-requests/, which is a web service, not app code: decision for the owner whether it stays JavaScript |
-| tests/device-transfer.test.ts | 9 | sp-engine | todo |  |
-| tests/device-volumes.test.ts | 9 | sp-engine | todo |  |
+| tests/device-transfer.test.ts | 9 | sp-device | done | sp-device/tests/device_transfer.rs |
+| tests/device-volumes.test.ts | 9 | sp-device | done | sp-device/tests/device_volumes.rs |
 | tests/device-watch.test.ts | 9 | sp-app | todo |  |
 | tests/epub-images.test.ts | 23 | sp-epub | todo |  |
 | tests/epub.test.ts | 117 | sp-epub | todo | the token half of "PRIMARY_SLUG stays in lockstep with fountain-js" is in sp-fountain/tests/slug.rs; the XHTML half and the classify.ts pin (import `sp_fountain::PRIMARY_SLUG_SOURCE`) stay here |
@@ -127,7 +127,7 @@ move too.
 | tests/release-notes.test.ts | 6 | xtask | todo |  |
 | tests/release-version-gate.test.ts | 6 | xtask | todo |  |
 | tests/remove-pdfjs-decoders.ts | 0 | sp-pdf | todo | test preload; retires with the pdf.js decoder folder |
-| tests/replace-file.test.ts | 11 | sp-engine | todo |  |
+| tests/replace-file.test.ts | 11 | sp-fsutil | done | sp-fsutil/tests/replace_file.rs. src/atomic-write.ts has no test file of its own (its checks sit in library-images and desktop-shell); sp-fsutil/tests/atomic_write.rs pins them where the module now is |
 | tests/require-release-notes.test.ts | 22 | xtask | todo | the git hook |
 | tests/review-screens.test.ts | 12 | xtask | todo |  |
 | tests/route-facts.test.ts | 32 | sp-engine | todo |  |
@@ -158,6 +158,20 @@ move too.
 | tests/weekly-toolchain.test.ts | 5 | xtask | todo |  |
 | tests/workflow-shell.test.ts | 3 | xtask | todo |  |
 | tests/workflows.test.ts | 3 | xtask | todo |  |
+
+### Branch mtp-kindle (BETA, not shipped)
+
+Merged into the port by sp-device's helper on 2026-10-11 and kept off for
+users until hardware day (see Decisions). These files exist only on branch
+`mtp-kindle`, so they are not in the count above.
+
+| TypeScript or Rust | tests | Rust owner | status | notes |
+|---|---:|---|---|---|
+| native/mtp-helper (cargo tests) | 47 | sp-mtp | done | moved to rust/crates/sp-mtp unchanged but for the crate name; 40 unit tests and tests/virtual_device.rs (7, mtp-rs's in-memory device) |
+| tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
+| tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
+| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs; the route list (3) goes to sp-engine's routes, the two end-to-end runs to sp-cli |
+| tests/mtp-window-rules.test.ts | 7 | sp-app | todo | the window's rules for an MTP Kindle (Beta badge, no Eject, the copy note) |
 
 ### Test helpers: tests/helpers/
 
@@ -268,3 +282,34 @@ names the check it affects.
   script that does would show as a parity difference that is the
   TypeScript's bug. sp-fdx's recorded test tokens are made from a clean
   state for this reason (sp-fdx/tests/data/record-tokens.ts).
+
+- **Device children are killed with SIGKILL (sp-device, 2026-10-11).** Bun's
+  `proc.kill()` sends SIGTERM to an eject, MTP helper or launchctl step that
+  outlived its timeout; std's `Child::kill` sends SIGKILL, and sending
+  SIGTERM needs an unsafe libc call the workspace forbids. Either stops the
+  child; the answer (`code: null`, "it took too long to answer") is the same.
+  Checked by sp-device/tests/eject.rs.
+- **The reMarkable client has no TLS (sp-device, 2026-10-11).** The tablet's
+  USB web interface is plain HTTP on 10.11.99.1, so ureq is built with no TLS
+  feature at all: pure Rust, no ring, no C. A crate that needs HTTPS (the
+  update check) adds its own pure-Rust TLS. Bun's two network failures keep
+  their words: "Unable to connect. Is the computer able to access the url?"
+  and "The operation timed out." (device_remarkable.rs). Any other transport
+  failure also reads as the first; Bun has a few rarer sentences.
+- **MTP stays off (sp-device, 2026-10-11).** `sp_device::mtp::MTP_SHIPPED` is
+  false. Until hardware day the engine looks for MTP Kindles only when
+  SCREEPUB_MTP_HELPER names a helper, which is how hardware day turns it on
+  and why no user meets it. That replaces mtp-kindle's `.env.test` guard
+  paths. A dev checkout's helper is now `rust/target/release/screepub-mtp`.
+  The helper's release profile (strip, lto, one codegen unit) was a
+  per-crate profile and is not carried into the workspace: the packaging
+  wave decides the release profile for every binary.
+- **Where the camera-import marker lives (sp-device, 2026-10-11).** sp-device
+  takes the config folder (`camera_import_marker(config_dir)`,
+  `CameraImportDeps::host(config_dir)`); sp-engine supplies the folder its
+  app-settings path names, so SCREEPUB_CONFIG_DIR still moves it.
+- **A copy from a folder (sp-fsutil, 2026-10-11).** Bun's copyFileSync on a
+  folder says `ENOTSUP` on a Mac; std's copy refuses it before the system
+  call and sp-fsutil reports `EINVAL: invalid argument`. Both fail the send
+  and leave the reader's old copy; `send` refuses a folder as `unreadable`
+  before it gets that far, so no person reads either.

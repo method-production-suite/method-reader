@@ -1,0 +1,47 @@
+# The MTP helper, `screepub-mtp` (BETA, not shipped: it stays off for users
+# until a 2024-or-newer Kindle has been on the owner's desk; see
+# docs/superpowers/specs/2026-10-10-mtp-kindle-design.md on branch
+# mtp-kindle). It lists Kindles that connect over MTP (every Kindle since
+# October 2024) and copies one file to one of them. It knows nothing about
+# books. sp-device (src/mtp.rs) runs it and reads the one JSON object it
+# prints.
+#
+# Brought here from branch mtp-kindle's native/mtp-helper. Every direct
+# dependency stays pinned exactly: a helper that changed under us between two
+# builds would be the hardest kind of bug to find, because nobody on the
+# project can run it yet. mtp-rs 0.33.0 and the nusb it resolves to were read
+# from their crates.io tarballs on 2026-10-10.
+[package]
+name = "sp-mtp"
+description = "screepub-mtp: lists MTP Kindles and copies one file to one (beta, off until hardware day)"
+edition.workspace = true
+license.workspace = true
+version = "0.1.0"
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "screepub-mtp"
+path = "src/main.rs"
+
+[lib]
+name = "sp_mtp"
+path = "src/lib.rs"
+
+[dependencies]
+mtp-rs = "=0.33.0"
+# The same nusb mtp-rs uses, for the one thing done without it: listing USB
+# devices without opening any of them (the engine's two-second poll).
+nusb = "=0.2.7"
+futures = "=0.3.34"
+bytes = "=1.12.1"
+# preserve_order: `ok` prints first, as the engine's own answers do.
+serde_json.workspace = true
+
+[dev-dependencies]
+# An in-memory MTP device backed by a folder, for the integration tests only:
+# the shipped binary carries no virtual device.
+mtp-rs = { version = "=0.33.0", features = ["virtual-device"] }

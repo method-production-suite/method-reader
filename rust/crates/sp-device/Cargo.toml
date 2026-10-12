@@ -1,0 +1,28 @@
+[package]
+name = "sp-device"
+description = "Screepub's readers: finding them, copying to them, ejecting them, a reMarkable over its USB web interface, and (beta, off) MTP Kindles"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sp-fsutil = { path = "../sp-fsutil" }
+# The reMarkable's USB web interface is plain HTTP on a fixed address, so no
+# TLS stack is compiled in at all. ureq is pure Rust; with TLS off it pulls
+# no C and no ring.
+ureq = { version = "3", default-features = false }
+
+# The person's uid (camera import's launchd domain) and "is this pid alive"
+# (its marker), without an unsafe call: rustix wraps both safely.
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1", features = ["process"] }
+
+[dev-dependencies]
+tempfile = "3"
