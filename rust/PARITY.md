@@ -54,7 +54,7 @@ move too.
 | tests/cli-device-commands.test.ts | 35 | sp-cli | todo |  |
 | tests/cli-devices.test.ts | 32 | sp-cli | todo |  |
 | tests/cli-eject.test.ts | 24 | sp-cli | todo |  |
-| tests/cli-export-fdx.test.ts | 20 | sp-cli | todo |  |
+| tests/cli-export-fdx.test.ts | 20 | sp-cli | partial | the renderer half (its script's FDX) is in sp-fdx/tests/fdx.rs; the `formats` block goes with export-formats to sp-engine; the export command and CLI blocks are left |
 | tests/cli-export.test.ts | 79 | sp-cli | todo |  |
 | tests/cli-kfx.test.ts | 24 | sp-cli | todo |  |
 | tests/cli-reveal.test.ts | 21 | sp-cli | todo |  |
@@ -96,8 +96,8 @@ move too.
 | tests/export-kfx-setup.test.ts | 13 | sp-engine | todo |  |
 | tests/export-kfx.test.ts | 54 | sp-engine | todo | isolate CALIBRE_CONFIG_DIRECTORY |
 | tests/extract.test.ts | 103 | sp-parser | todo | reads pdf.js items: run against oracle pages.json until sp-pdf lands |
-| tests/fdx-integration.test.ts | 6 | sp-fdx | todo |  |
-| tests/fdx.test.ts | 38 | sp-fdx | todo |  |
+| tests/fdx-integration.test.ts | 6 | sp-fdx | done | sp-fdx/tests/fdx_integration.rs; reads the oracle's tokens.json and script.fountain where the TypeScript converts the PDF on the spot, until sp-parser and sp-fountain land |
+| tests/fdx.test.ts | 38 | sp-fdx | done | sp-fdx/tests/fdx.rs, every case's Fountain kept as written; its tokens are fountain-js's, recorded in sp-fdx/tests/data/ until sp-fountain's tokenizer lands (TODO(sp-fountain) there). The lone-surrogate case becomes "cannot reach the writer": a Rust string cannot hold one. sp-fdx/tests/against_typescript.rs adds byte parity with the TypeScript on every recorded case plus 36 corners |
 | tests/field-station.test.ts | 2 | sp-engine | todo |  |
 | tests/first-page.test.ts | 10 | sp-parser | todo |  |
 | tests/fixture-stability.test.ts | 1 | xtask | todo | fixtures stay Python-generated (tools/make-fixture.py) |
@@ -169,7 +169,7 @@ move too.
 | tests/helpers/fixture-epubs.ts | sp-epub | todo |  |
 | tests/helpers/kf8-reader.ts | sp-azw3 | todo | structural KF8 reader |
 | tests/helpers/layout-chrome.ts | sp-app | todo |  |
-| tests/helpers/mini-xml.ts | sp-epub | todo |  |
+| tests/helpers/mini-xml.ts | sp-epub | todo | sp-fdx reads its XML back with roxmltree (dev-dependency) instead |
 | tests/helpers/mobi-records.ts | sp-mobi | todo |  |
 | tests/helpers/palmdoc-decode.ts | sp-mobi | todo |  |
 | tests/helpers/stamped-azw3.ts | sp-azw3 | todo |  |
@@ -190,7 +190,7 @@ and `rust/oracle-real/` (local only). Regenerate with `cargo xtask oracle`.
 | preview | book.preview.html | sp-epub | todo |
 | MOBI | book.mobi | sp-mobi | todo |
 | AZW3 | book.azw3 | sp-azw3 | todo |
-| FDX | book.fdx | sp-fdx | todo |
+| FDX | book.fdx | sp-fdx | done: sp-fdx/tests/oracle.rs, byte for byte, 5 of 5 committed and every real script dumped (5 of 5 on 2026-10-11) |
 | pictures | images/ | sp-parser | todo |
 | --json answer | convert.json | sp-cli | todo |
 
@@ -222,3 +222,16 @@ names the check it affects.
   (workers-rs, compiled to wasm) in a late wave, with its tests; the owner
   asked for no code but Rust. It stays deployed as is until the Rust worker
   answers the same two forms identically.
+- **fountain-js carries state between parses (found 2026-10-11, open, for
+  sp-fountain and the owner).** `Lexer.lastLineWasDualDialogue` is static
+  and never reset. When a script's FIRST speech is the right half of a dual
+  exchange (`NAME ^`), the NEXT parse in the same process opens a dual
+  exchange around its LAST speech, and that speech is lost: the TypeScript
+  `fountainToFdx` of such a script differs between its first and second
+  call, the second missing the final speech. One conversion parses the same
+  .fountain several times (src/convert.ts twice, fdx.ts, notes.ts), so books
+  of such a script can disagree with each other. No committed fixture or
+  real script triggers it. A pure Rust tokenizer will not reproduce it, so a
+  script that does would show as a parity difference that is the
+  TypeScript's bug. sp-fdx's recorded test tokens are made from a clean
+  state for this reason (sp-fdx/tests/data/record-tokens.ts).
