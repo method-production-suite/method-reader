@@ -1,101 +1,100 @@
-//! The real window, photographed: the real App on the linked engine (with
-//! the real settings code) converts one PDF, and egui renders the Convert
-//! result and Read to PNGs through wgpu, offscreen, as egui_kittest's
-//! snapshots do. Offscreen because macOS paints nothing for a window it
-//! counts as hidden, and a window started from a shell often is.
+//! One README picture of the real window: the real App on the linked
+//! engine, behind src/capture.rs's guard, driven into one shot and drawn
+//! offscreen by egui through wgpu, as egui_kittest's snapshots are.
+//! Offscreen because macOS paints nothing for a window it counts as
+//! hidden, and a window started from a shell often is.
+//!
+//! `cargo xtask capture-screens` runs it once per picture with the run's
+//! own environment and frames what it draws; run by hand it is
 //!
 //!     SCREEPUB_CONFIG_DIR=<scratch>/config SCREEPUB_LIBRARY=<scratch>/library \
-//!       cargo run -p sp-app --example capture -- <file.pdf> <out-folder>
+//!       cargo run -p sp-app --example capture -- --shot result --theme dark \
+//!       --width 1280 --height 800 --demo <repo>/tests/fixtures/field-station.pdf \
+//!       --out <scratch>/result-dark.rgba
 //!
-//! It refuses to run unless both are set, so it never reaches the real
-//! settings or the real library.
+//! It refuses to run unless both folders are set, so it never reaches the
+//! real settings or the real library. It writes the picture's raw RGBA
+//! (width x height x 4 bytes at two pixels a point) and nothing else; the
+//! xtask turns that into PNG bytes. Exit codes: 0 drawn, 1 failed (nothing
+//! written), 2 refused its orders.
 
-use std::path::PathBuf;
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use std::time::{Duration, Instant};
 
 use egui_kittest::Harness;
-use sp_app::app::{App, Host, convert};
+use sp_app::app::App;
+use sp_app::capture::{
+    Guard, PIXELS_PER_POINT, REACH_LIMIT, Stepper, USAGE, capture_host, parse_args, reach,
+};
 use sp_app::direct::DirectEngine;
-use sp_app::engine::{Engine, Reply, Request};
-use sp_app::model::frame::Surface;
 use sp_app::runtime::Mode;
 
-/// The real engine, less the three calls that start Calibre on a machine
-/// that has it (the Kindle file check, the KFX probe and its install all
-/// list Calibre's plugins): Calibre runs only inside tests that isolate its
-/// config, never in a run like this one. Those calls answer a refusal.
-struct NoCalibre(DirectEngine);
+struct Window(Harness<'static, App>);
 
-impl Engine for NoCalibre {
-    fn run(&self, request: &Request, progress: &mut dyn FnMut(serde_json::Value)) -> Reply {
-        let calibre = matches!(
-            request,
-            Request::KindleCheck { .. } | Request::KfxStatus | Request::KfxInstall
-        ) || matches!(request, Request::Export { for_format, .. } if for_format == "kindle" || for_format == "kfx");
-        if calibre {
-            return Reply::ok(serde_json::json!({"ok": false, "error": {
-                "code": "internal", "message": "Calibre is kept out of this capture run."}}));
-        }
-        self.0.run(request, progress)
+impl Stepper for Window {
+    fn step(&mut self) {
+        self.0.step();
     }
-}
-
-fn step_until(h: &mut Harness<'static, App>, what: &str, done: impl Fn(&App) -> bool) {
-    let start = Instant::now();
-    while !done(h.state()) {
-        assert!(start.elapsed() < Duration::from_secs(60), "never: {what}");
-        std::thread::sleep(Duration::from_millis(16));
-        h.step();
+    fn app(&self) -> &App {
+        self.0.state()
     }
-    // A second more, for anything still easing in.
-    for _ in 0..60 {
-        std::thread::sleep(Duration::from_millis(16));
-        h.step();
+    fn app_mut(&mut self) -> &mut App {
+        self.0.state_mut()
     }
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let [pdf, out] = &args[..] else {
-        eprintln!("usage: capture <file.pdf> <out-folder>");
-        std::process::exit(2);
-    };
-    for var in ["SCREEPUB_CONFIG_DIR", "SCREEPUB_LIBRARY"] {
-        if std::env::var_os(var).is_none_or(|v| v.is_empty()) {
-            eprintln!("capture: set {var} to a scratch folder first");
+    let env = |k: &str| std::env::var(k).ok();
+    let a = match parse_args(&args, &env) {
+        Ok(a) => a,
+        Err(e) => {
+            eprintln!("{e}\n{USAGE}");
             std::process::exit(2);
         }
-    }
-    let pdf = std::fs::canonicalize(pdf).expect("the PDF exists");
-    let out = PathBuf::from(out);
-    std::fs::create_dir_all(&out).expect("the out folder");
-
-    let host = Host::native(Arc::new(AtomicBool::new(false)));
-    let app = App::new(
-        Arc::new(NoCalibre(DirectEngine::new())),
-        Mode::Threads,
-        host,
-    );
-    let mut h = Harness::builder()
-        .with_size([1280.0, 800.0])
-        .with_pixels_per_point(2.0)
-        .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
-    h.step();
-    convert::convert_path(h.state_mut(), &pdf.to_string_lossy(), false);
-    step_until(&mut h, "the result", |app| {
-        app.convert.view == convert::View::Done && app.show.is_none()
-    });
-    let shot = |h: &mut Harness<'static, App>, name: &str| {
-        let image = h.render().expect("wgpu renders");
-        let path = out.join(name);
-        image.save(&path).expect("the PNG writes");
-        println!("saved {}", path.display());
     };
-    shot(&mut h, "convert-result.png");
-    h.state_mut().go_to(Surface::Read);
-    step_until(&mut h, "Read", |app| app.surface == Surface::Read);
-    shot(&mut h, "read.png");
-    println!("library book: {}", h.state().convert.book);
+    if let Err(e) = draw(&a) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
+
+fn draw(a: &sp_app::capture::Args) -> Result<(), String> {
+    let guard = Guard::new(
+        Arc::new(DirectEngine::new()),
+        a.demo.clone(),
+        a.library.clone(),
+    );
+    let refused = guard.refused();
+    let app = App::new(Arc::new(guard), Mode::Threads, capture_host());
+    let mut h = Harness::builder()
+        .with_size([a.width as f32, a.height as f32])
+        .with_pixels_per_point(PIXELS_PER_POINT)
+        .with_theme(a.theme.egui())
+        .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
+    // Light or dark whatever the OS says: the window follows the system
+    // theme egui is told, and this one is told by the capture.
+    h.input_mut().system_theme = Some(a.theme.egui());
+    let mut w = Window(h);
+    reach(&mut w, a.shot, &a.demo.to_string_lossy(), REACH_LIMIT)?;
+    let refused = refused.lock().map(|r| r.clone()).unwrap_or_default();
+    if !refused.is_empty() {
+        return Err(format!(
+            "capture: the window made engine calls the capture refuses:\n  {}",
+            refused.join("\n  ")
+        ));
+    }
+    let image = w.0.render().map_err(|e| format!("capture: wgpu: {e}"))?;
+    let (pw, ph) = (
+        (a.width as f32 * PIXELS_PER_POINT).round() as u32,
+        (a.height as f32 * PIXELS_PER_POINT).round() as u32,
+    );
+    if image.dimensions() != (pw, ph) {
+        return Err(format!(
+            "capture: drew {} by {} pixels, not {pw} by {ph}",
+            image.width(),
+            image.height()
+        ));
+    }
+    std::fs::write(&a.out, image.as_raw())
+        .map_err(|e| format!("capture: could not write {}: {e}", a.out.display()))
 }

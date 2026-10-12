@@ -102,6 +102,11 @@ pub struct App {
     pub window_focused: bool,
     /// An update's new copy has started: this window is closing.
     pub closing: bool,
+    /// Drawn for the README pictures (src/capture.rs), never set by the
+    /// shipped window: the version stamp keeps its place but is not
+    /// painted, and the Convert page's library slot is not drawn at all,
+    /// so a picture changes only when the window's look does.
+    pub picture_mode: bool,
 
     pub convert: convert::State,
     pub show: Option<show::Show>,
@@ -147,6 +152,7 @@ impl App {
             menus: None,
             window_focused: true,
             closing: false,
+            picture_mode: false,
             convert: convert::State::default(),
             show: None,
             read: read::State::default(),

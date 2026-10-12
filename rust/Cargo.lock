@@ -5382,7 +5382,6 @@ dependencies = [
  "eframe",
  "egui",
  "egui_kittest",
- "image",
  "muda",
  "mundy",
  "parley",

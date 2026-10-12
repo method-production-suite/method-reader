@@ -402,9 +402,15 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     }
     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
         ui.spacing_mut().item_spacing.x = layout::SPACE[4];
-        let stamp = stamp_button(ui, &t, &rev_label(RELEASE.version));
-        if stamp.clicked() {
-            app.notes_open = true;
+        if app.picture_mode {
+            // visibility: hidden, as the capture's steps.js did: the place
+            // stays, nothing is painted and nothing can be pressed.
+            stamp_space(ui, &t, &rev_label(RELEASE.version));
+        } else {
+            let stamp = stamp_button(ui, &t, &rev_label(RELEASE.version));
+            if stamp.clicked() {
+                app.notes_open = true;
+            }
         }
         if let Some(words) = update_label(app.update.phase()) {
             let actionable = label_actionable(app.update.phase());
@@ -525,6 +531,15 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
 }
 
 /// The rev stamp: a printer's mark at the foot of the page, and a button.
+/// The stamp's room, empty: what [`stamp_button`] takes, drawn by nothing.
+fn stamp_space(ui: &mut Ui, t: &Tokens, words: &str) {
+    let font = theme::structure(size::FINE);
+    let galley = ui
+        .painter()
+        .layout_no_wrap(widgets::caps(words), font, t.ink_muted);
+    ui.allocate_exact_size(galley.size(), Sense::hover());
+}
+
 fn stamp_button(ui: &mut Ui, t: &Tokens, words: &str) -> egui::Response {
     let font = theme::structure(size::FINE);
     let galley = ui

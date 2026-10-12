@@ -487,6 +487,12 @@ fn draw_idle(app: &mut App, ui: &mut Ui, window: Vec2) {
         });
     }
 
+    // The library slot: the line, its buttons and the line under it. Not
+    // drawn for the README pictures, where it would name the capture's own
+    // scratch library (display: none, as the capture's steps.js did).
+    if app.picture_mode {
+        return;
+    }
     // The library line.
     if let Some(library) = app.convert.library.clone() {
         ui.add_space(layout::SPACE[6]);
