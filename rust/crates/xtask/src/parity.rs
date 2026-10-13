@@ -353,6 +353,27 @@ fn run_side(
     })
 }
 
+/// The version the TypeScript reported when its answers were frozen (the
+/// cutover). Only the rows that print the version itself carry it.
+pub const FROZEN_VERSION: &str = "0.11.1";
+
+/// The rows whose whole answer is the program's own version.
+const VERSION_ROWS: [&str; 2] = ["version", "version-json"];
+
+/// `frozen` with the version frozen at the cutover read as this build's
+/// version, for the rows that print it. Every release bumps the version, so
+/// without this the first release after the cutover failed parity on
+/// `--version` alone (v0.12.1). Every other row stays exact.
+fn with_this_version(row: &CommandRow, frozen: &Value) -> Value {
+    if !VERSION_ROWS.contains(&row.name.as_str()) {
+        return frozen.clone();
+    }
+    let text = frozen
+        .to_string()
+        .replace(FROZEN_VERSION, env!("CARGO_PKG_VERSION"));
+    serde_json::from_str(&text).unwrap_or_else(|_| frozen.clone())
+}
+
 /// What differs between the frozen answer and the Rust run, as (what,
 /// detail) pairs.
 fn diff_frozen(row: &CommandRow, ts: &Value, rs: &Run) -> Vec<(String, String)> {
@@ -364,7 +385,8 @@ fn diff_frozen(row: &CommandRow, ts: &Value, rs: &Run) -> Vec<(String, String)> 
             format!("{exit:?} against {:?}", rs.exit),
         ));
     }
-    if let Some(d) = compare::json(&ts["stdout"], &rs.answer) {
+    let frozen_stdout = with_this_version(row, &ts["stdout"]);
+    if let Some(d) = compare::json(&frozen_stdout, &rs.answer) {
         out.push(("stdout".into(), d));
     }
     if row.stderr
