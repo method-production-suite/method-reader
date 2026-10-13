@@ -5,7 +5,7 @@ members = ["crates/*"]
 [workspace.package]
 edition = "2024"
 license = "AGPL-3.0-or-later"
-version = "0.11.1"
+version = "0.12.0"
 rust-version = "1.96"
 
 [workspace.lints.rust]
