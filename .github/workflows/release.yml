@@ -209,7 +209,11 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          cargo build --release --locked -p sp-cli --bin screepub -p sp-release
+          # Two builds, not one: `--bin screepub` alongside `-p sp-release`
+          # limits BOTH packages to a bin named screepub, so sp-release's own
+          # binary was never built and the archive step found nothing (v0.12.0).
+          cargo build --release --locked -p sp-cli --bin screepub
+          cargo build --release --locked -p sp-release --bin sp-release
           BIN="target/release/${{ matrix.exe }}"
           "$BIN" --version | grep -qx "screepub $VERSION" || { echo "::error::screepub --version does not say screepub $VERSION"; exit 1; }
           # Convert the committed fixtures, the JPEG 2000 one included, as

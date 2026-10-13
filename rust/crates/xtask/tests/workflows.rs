@@ -131,6 +131,51 @@ fn no_workflow_runs_bun_node_or_npm() {
 }
 
 /// Every `uses:` line in the workflows and the repository's own actions.
+/// A cargo command that names more than one package with `-p` and also
+/// limits the build to a binary with `--bin`. Cargo applies `--bin` to every
+/// package named, so the other packages' binaries are never built: v0.12.0's
+/// release built `-p sp-cli --bin screepub -p sp-release` and then found no
+/// sp-release to run (only release.yml runs that line, and only on a tag).
+fn bin_with_two_packages(line: &str) -> bool {
+    let words: Vec<&str> = line.split_whitespace().collect();
+    if !words.contains(&"cargo") {
+        return false;
+    }
+    let packages = words
+        .iter()
+        .filter(|w| **w == "-p" || **w == "--package")
+        .count();
+    let bins = words
+        .iter()
+        .any(|w| *w == "--bin" || w.starts_with("--bin="));
+    packages > 1 && bins
+}
+
+#[test]
+fn no_cargo_command_limits_two_packages_to_one_bin() {
+    let mut found = vec![];
+    for (f, wf) in all() {
+        for (name, job) in jobs(&wf) {
+            for st in steps(job) {
+                for line in commands(s(st, "run")).lines() {
+                    if bin_with_two_packages(line) {
+                        found.push(format!("{f}: {name}: {}", line.trim()));
+                    }
+                }
+            }
+        }
+    }
+    assert_eq!(found, Vec::<String>::new());
+    // The rule itself, so a check that matches nothing cannot pass above.
+    assert!(bin_with_two_packages(
+        "cargo build --release --locked -p sp-cli --bin screepub -p sp-release"
+    ));
+    assert!(!bin_with_two_packages(
+        "cargo build --release --locked -p sp-cli --bin screepub"
+    ));
+    assert!(!bin_with_two_packages("cargo build -p a -p b"));
+}
+
 fn uses_lines() -> Vec<(String, String)> {
     let mut files: Vec<String> = workflow_files()
         .into_iter()
