@@ -28,7 +28,7 @@ unicode-normalization = "0.1"
 # Pure-Rust deflate, for the PNGs the MOBI picture probe draws.
 miniz_oxide = "0.8"
 # SHA-256 for the tests that pin a book by its digest.
-sha2 = "0.10"
+sha2 = "0.11"
 sp-fdx = { path = "crates/sp-fdx" }
 sp-parser = { path = "crates/sp-parser" }
 sp-epub = { path = "crates/sp-epub" }

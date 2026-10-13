@@ -11,7 +11,7 @@ publish = false
 workspace = true
 
 [dependencies]
-sha2 = "0.10"
+sha2 = "0.11"
 
 # errno numbers differ between macOS and Linux; libc names them. Constants
 # only: nothing here calls into C.
