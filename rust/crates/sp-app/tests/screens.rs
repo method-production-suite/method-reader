@@ -67,7 +67,7 @@ fn the_idle_screen_names_the_app_and_asks_for_a_pdf() {
         h.query_by_role_and_label(Role::Button, "Reset").is_none(),
         "nothing chosen to reset"
     );
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1");
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")));
 }
 
 // desktop-ui.test.ts: "a surface with nothing behind it is absent, not dimmed"
@@ -260,7 +260,7 @@ fn a_dead_engine_says_so_and_keeps_the_stamp() {
     );
     let h = harness(&w, Platform::Mac);
     assert!(has_value(&h, "could not start the Screepub engine"));
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1");
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")));
 }
 
 // desktop-ui.test.ts: "the window, booted whole": the stamp opens the notes
@@ -268,14 +268,17 @@ fn a_dead_engine_says_so_and_keeps_the_stamp() {
 fn the_stamp_opens_the_release_notes_and_close_closes_them() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Dialog, "Release notes");
-    h.get_by_role_and_label(Role::Heading, "Screepub 0.11.1");
-    assert!(has_value(
-        &h,
-        "Your Kindle file is ready almost instantly, with nothing else to install."
-    ));
+    h.get_by_role_and_label(
+        Role::Heading,
+        concat!("Screepub ", env!("CARGO_PKG_VERSION")),
+    );
+    // The sheet shows this version's own notes: its headline, read from the
+    // notes file the window was built from, so a release never edits this.
+    assert!(has_value(&h, &release_headline()));
     h.get_by_role_and_label(Role::Button, "Check for updates");
     h.get_by_role_and_label(Role::Button, "Close").click();
     steps(&mut h);
@@ -418,7 +421,7 @@ fn my_device_isnt_here_sends_the_name_and_nothing_else() {
     let sent = w.fakes.poster.sent.lock().unwrap().clone();
     assert_eq!(
         sent[0].1,
-        json!({"kind": "device", "device": "Boox Note Air", "version": "0.11.1", "platform": "linux"})
+        json!({"kind": "device", "device": "Boox Note Air", "version": env!("CARGO_PKG_VERSION"), "platform": "linux"})
     );
 }
 
@@ -638,4 +641,20 @@ fn every_value_the_tree_carries_is_a_string_not_null() {
         all.iter().all(|v| v != "null"),
         "no screen prints a stray null"
     );
+}
+
+/// The headline paragraph of docs/releases/<this version>.md, as the window
+/// shows it (the bold markers of a pre-lede line are not drawn).
+fn release_headline() -> String {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../docs/releases")
+        .join(concat!(env!("CARGO_PKG_VERSION"), ".md"));
+    let text = std::fs::read_to_string(&path).expect("this version's release notes");
+    let after_title = text.split_once('\n').map(|(_, rest)| rest).unwrap_or("");
+    let paragraph = after_title.trim_start().split("\n\n").next().unwrap_or("");
+    paragraph
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .replace("**", "")
 }

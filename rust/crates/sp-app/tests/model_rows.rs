@@ -832,7 +832,8 @@ fn u3_u5_a_check_is_stamped_before_it_asks_and_a_version_found_is_remembered() {
     );
     assert!(h.query_by_label_contains("Update to").is_none());
     // Yes: the answer is the consent, and the check runs now.
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::CheckBox, sp_app::model::update::AUTO_LABEL)
         .click_accesskit();
@@ -859,7 +860,8 @@ fn u4_a_failed_check_is_a_message_and_an_intel_mac_is_told_why() {
         found: Err("The network is down.".into()),
         ..FakeUpdater::default()
     });
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();

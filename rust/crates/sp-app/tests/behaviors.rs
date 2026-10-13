@@ -547,7 +547,9 @@ fn n9_the_rev_stamp_is_whole_inside_the_window_on_read() {
         convert(&w, &mut h);
         h.get_by_role_and_label(Role::Tab, "Read").click();
         steps(&mut h);
-        let stamp = h.get_by_role_and_label(Role::Button, "rev 0.11.1").rect();
+        let stamp = h
+            .get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+            .rect();
         let window = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(width, height));
         assert!(
             stamp.height() > 5.0 && window.contains_rect(stamp),
@@ -581,7 +583,9 @@ fn n9_at_the_end_of_a_scrolling_page_the_rev_stamp_is_whole() {
         let window = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(width, height));
         let check = |h: &mut H, what: &str| {
             scroll_page_to_end(h, height);
-            let stamp = h.get_by_role_and_label(Role::Button, "rev 0.11.1").rect();
+            let stamp = h
+                .get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+                .rect();
             assert!(
                 stamp.height() > 5.0 && window.contains_rect(stamp),
                 "{what} at {width} by {height}: the stamp is at {stamp:?}"
@@ -1159,20 +1163,29 @@ fn h5_h6_the_heads_up_goes_by_itself_and_copy_it_copies() {
 fn o3_o6_the_updates_block_checks_and_says_what_it_found() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::CheckBox, sp_app::model::update::AUTO_LABEL);
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Status, "Screepub 0.11.1 is the newest there is.");
+    h.get_by_role_and_label(
+        Role::Status,
+        concat!(
+            "Screepub ",
+            env!("CARGO_PKG_VERSION"),
+            " is the newest there is."
+        ),
+    );
 }
 
 #[test]
 fn o4_elsewhere_the_notes_say_where_releases_are() {
     let w = world();
     let mut h = harness(&w, Platform::Linux);
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     assert!(has(&h, sp_app::model::update::NOT_HERE));
     assert!(
@@ -1385,7 +1398,8 @@ fn o5_the_switch_is_read_again_each_time_the_sheet_opens() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     let open = |h: &mut H| {
-        h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+        h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+            .click();
         steps(h);
     };
     let on = |h: &H| {
@@ -1526,7 +1540,8 @@ fn u9_the_label_and_the_notes_tell_one_story() {
         })),
         ..FakeUpdater::default()
     });
-    h.get_by_role_and_label(Role::Button, "rev 0.11.1").click();
+    h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();
