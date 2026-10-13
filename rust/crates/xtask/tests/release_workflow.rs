@@ -143,26 +143,31 @@ fn the_release_job_leaves_a_draft_and_only_publish_makes_it_public() {
 }
 
 #[test]
-fn publish_runs_after_a_failed_upload_but_never_after_a_failed_release_or_handover() {
-    // A failed bundle leg must not strand the release in draft; a failed
-    // handover gate must: the windows out there could not take it.
+fn publish_waits_for_the_apps_and_the_handover_and_never_publishes_without_them() {
+    // Publishing makes the release "latest", which the site's download
+    // buttons and every window's update check read. v0.12.1 published with a
+    // failed Mac leg and broke both: so a failed or skipped app upload, like
+    // a failed handover gate, keeps the release a draft until a re-run.
     let rel = rel();
     let cond = job_if(job(&rel, "publish"));
     assert!(cond.contains("!cancelled()"));
     assert!(cond.contains("needs.release.result == 'success'"));
-    assert!(cond.contains("needs.handover-gate.result != 'failure'"));
+    assert!(cond.contains("needs.app-upload.result == 'success'"));
+    assert!(cond.contains("needs.handover-gate.result == 'success'"));
     assert!(!Regex::new(r"\bsuccess\(\)").unwrap().is_match(&cond));
+    let text = run_text(job(&rel, "publish"));
+    assert!(text.contains("grep -qx latest.json"), "{text}");
 }
 
 #[test]
-fn publish_refuses_any_image_list_but_exactly_the_one_mac_image_or_none() {
+fn publish_refuses_any_image_list_but_exactly_the_one_mac_image() {
     // The frozen Swift updater installs the FIRST .dmg on the page.
     let rel = rel();
     let text = run_text(job(&rel, "publish"));
     assert!(text.contains(r#"select(endswith(".dmg"))"#));
     assert!(text.contains(&format!(r#""{}") ;;"#, names::MAC_DMG)));
     assert!(
-        Regex::new(r#"""\)\s*echo "::warning::"#)
+        Regex::new(r#"""\)\s*echo "::error::[^\n]*; exit 1 ;;"#)
             .unwrap()
             .is_match(&text)
     );

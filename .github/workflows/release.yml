@@ -619,8 +619,12 @@ jobs:
     needs: [release, cli-upload, app-upload, handover-gate]
     # A failed handover gate keeps the release a draft: a public release
     # whose update the windows already out there cannot take is the one
-    # thing worse than a late one.
-    if: ${{ !cancelled() && needs.release.result == 'success' && needs.handover-gate.result != 'failure' }}
+    # thing worse than a late one. So does a missing app: publishing makes
+    # the release "latest", and the site's download buttons and every
+    # window's update check read releases/latest. v0.12.1 published with a
+    # failed Mac leg and broke both until a re-run attached the apps. A
+    # re-run of the failed jobs now publishes once everything is there.
+    if: ${{ !cancelled() && needs.release.result == 'success' && needs.app-upload.result == 'success' && needs.handover-gate.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -637,9 +641,12 @@ jobs:
             -q '[.assets[].name | select(endswith(".dmg"))] | join(" ")')"
           case "$DMGS" in
             "Screepub-macOS.dmg") ;;
-            "") echo "::warning::$TAG has no Mac image (did a bundle leg fail?). Publishing anyway; re-run app-upload to attach it." ;;
+            "") echo "::error::$TAG has no Mac image, so it stays a draft. Re-run the failed jobs; publish runs once the image is attached."; exit 1 ;;
             *) echo "::error::$TAG must carry exactly one .dmg, Screepub-macOS.dmg. It has: $DMGS."; exit 1 ;;
           esac
+          # The update manifest every window reads must be on the release too.
+          gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx latest.json \
+            || { echo "::error::$TAG has no latest.json, so it stays a draft. Re-run the failed jobs."; exit 1; }
           PRE=()
           [[ "$VERSION" == *-* ]] && PRE=(--prerelease)
           gh release edit "$TAG" --draft=false ${PRE[@]+"${PRE[@]}"}

@@ -789,11 +789,17 @@ fn manifest_step_uploads_nothing_when_the_manifest_or_its_check_refuses() {
 // ---- publish: exactly one Mac image, then public -----------------------
 
 fn publish_step(tag: &str, dmgs: &str) -> (Output, Vec<String>) {
+    publish_step_with(tag, dmgs, "latest.json")
+}
+
+/// The publish step against a fake release whose .dmg query answers `dmgs`
+/// and whose plain asset list answers `assets`, one name per line.
+fn publish_step_with(tag: &str, dmgs: &str, assets: &str) -> (Output, Vec<String>) {
     let sc = Scratch::new("publish");
     tool(
         &sc,
         "bin/gh",
-        "[ \"$2\" = view ] && printf '%s\\n' \"$FAKE_DMGS\"",
+        "if [ \"$2\" = view ]; then case \"$*\" in *endswith*) printf '%s\\n' \"$FAKE_DMGS\" ;; *) printf '%s\\n' \"$FAKE_ASSETS\" ;; esac; fi",
     );
     let path = path_with(&sc.join("bin"));
     let out = bash(
@@ -803,7 +809,12 @@ fn publish_step(tag: &str, dmgs: &str) -> (Output, Vec<String>) {
             "Exactly one Mac image, then make the release public",
         ),
         sc.path(),
-        &[("PATH", &path), ("TAG", tag), ("FAKE_DMGS", dmgs)],
+        &[
+            ("PATH", &path),
+            ("TAG", tag),
+            ("FAKE_DMGS", dmgs),
+            ("FAKE_ASSETS", assets),
+        ],
     );
     let calls = log(&sc);
     (out, calls)
@@ -820,11 +831,21 @@ fn publish_step_makes_public_a_release_with_exactly_the_one_image() {
 }
 
 #[test]
-fn publish_step_publishes_with_a_warning_when_no_image_arrived() {
+fn publish_step_keeps_a_release_with_no_mac_image_in_draft() {
+    // v0.12.1 went public with no app attached and broke the site's download
+    // buttons and every window's update check until a re-run.
     let (out, calls) = publish_step("v0.12.0", "");
-    assert!(out.status.success(), "{}", said(&out));
-    assert!(said(&out).contains("::warning::"));
-    assert!(calls.last().unwrap().contains("--draft=false"));
+    assert!(!out.status.success());
+    assert!(said(&out).contains("stays a draft"), "{}", said(&out));
+    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+}
+
+#[test]
+fn publish_step_keeps_a_release_with_no_update_manifest_in_draft() {
+    let (out, calls) = publish_step_with("v0.12.0", names::MAC_DMG, "SHA256SUMS");
+    assert!(!out.status.success());
+    assert!(said(&out).contains("no latest.json"), "{}", said(&out));
+    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
 }
 
 #[test]
