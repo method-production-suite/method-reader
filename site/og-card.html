@@ -1,47 +1,34 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<!-- Source for site/og.png. Rendered at 1200x630 with headless Chrome:
-     tools/make-og.sh. Not linked from anywhere; it exists to be screenshotted. -->
+<html lang="en"><head><meta charset="utf-8">
+<!-- Source for site/og.png, the 1200x630 share card. Not linked from the site; it exists
+     to be rendered: `cargo xtask make-og`. Method Budget's and Method Schedule's card
+     layout, with an e-reader showing the home page's invented scene in place of their
+     sheet. -->
+<meta name="robots" content="noindex">
+<title>Method Reader share card</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/og-card.css">
 <style>
 @font-face{font-family:"Courier Prime";font-weight:400;src:url(fonts/courier-prime-400-latin.woff2) format("woff2")}
 @font-face{font-family:"Courier Prime";font-weight:700;src:url(fonts/courier-prime-700-latin.woff2) format("woff2")}
-@font-face{font-family:"Literata";font-weight:400;src:url(fonts/literata-400-latin.woff2) format("woff2")}
-*{box-sizing:border-box;margin:0}
-html,body{width:1200px;height:630px;overflow:hidden}
-body{background:#23272F;font-family:Literata,Georgia,serif}
-.card{position:absolute;inset:0;background:#F7F2E6;display:flex;flex-direction:column;
-  justify-content:center;padding:0 96px 0 190px}
-.rail{position:absolute;left:0;top:0;bottom:0;width:150px;border-right:1px solid rgba(29,27,22,.10)}
-.rail i{position:absolute;left:56px;width:38px;height:38px;border-radius:50%;
-  background:radial-gradient(circle at 33% 27%,#FDF1CE 0%,#F6D486 17%,#E8A33D 45%,#BE7C1E 76%,#8B5917 100%);
-  box-shadow:0 3px 7px rgba(29,27,22,.35),inset 0 0 0 1px rgba(122,81,22,.55)}
-.rail i.e{background:rgba(29,27,22,.10);box-shadow:inset 0 3px 5px rgba(29,27,22,.32)}
-.rail i.a{top:193px}.rail i.b{top:315px}.rail i.c{top:437px}
-.mark{position:absolute;top:52px;left:190px;font-family:"Courier Prime",monospace;
-  font-weight:700;letter-spacing:.24em;font-size:19px;color:#1D1B16}
-.fine{position:absolute;top:54px;right:96px;font-family:"Courier Prime",monospace;
-  font-size:16px;letter-spacing:.14em;color:#6D6960}
-h1{font-size:66px;line-height:1.1;letter-spacing:-.016em;color:#1D1B16;font-weight:400;max-width:15em}
-h1 span{display:block;color:#6D6960}
-.foot{position:absolute;bottom:52px;left:190px;right:96px;display:flex;align-items:center;gap:22px}
-.pill{background:radial-gradient(circle at 33% 27%,#F6D486 0%,#E8A33D 45%,#BE7C1E 100%);
-  color:#1D1B16;font-family:"Courier Prime",monospace;font-weight:700;font-size:17px;
-  letter-spacing:.1em;padding:15px 26px;border-radius:4px}
-.note{font-family:"Courier Prime",monospace;font-size:16px;letter-spacing:.1em;color:#6D6960}
-.trans{position:absolute;bottom:56px;right:96px;font-family:"Courier Prime",monospace;
-  font-size:16px;letter-spacing:.12em;color:#6D6960}
-</style></head>
+</style>
+</head>
 <body>
   <div class="card">
-    <div class="rail"><i class="a"></i><i class="e b"></i><i class="c"></i></div>
-    <div class="mark">SCREEPUB</div>
-    <div class="fine">FREE &amp; OPEN SOURCE</div>
-    <h1>Reading scripts on an e&#8209;reader shouldn't be difficult.
-      <span>Screepub makes it easy.</span></h1>
-    <div class="foot">
-      <span class="pill">DOWNLOAD FOR MACOS</span>
-      <span class="note">SCREENPLAY PDF &#8594; E&#8209;BOOK</span>
+    <img class="wm" src="assets/brand/wordmark.svg" alt="Method Reader">
+    <p class="tag">Free and open source</p>
+    <div class="copy">
+      <h1>Screenplay PDFs, readable on your e&#8209;reader.</h1>
+      <p>Reflows at any text size, with the script's shape intact.</p>
     </div>
-    <div class="trans">screepub.com</div>
+    <div class="device"><div class="screen">
+      <p class="s">INT. FIELD STATION - NIGHT</p>
+      <p>The generator coughs once and dies. MARA works by the light of her phone.</p>
+      <p class="c">MARA</p>
+      <p class="d">Give it a minute. It always comes back.</p>
+      <p class="c">DELACROIX</p>
+      <p class="d">And if it doesn't?</p>
+    </div><span class="chin">method reader</span></div>
+    <p class="url">methodreader.com</p>
   </div>
 </body></html>

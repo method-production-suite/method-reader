@@ -1,0 +1,81 @@
+/* Method Reader brand tokens: the one place the site's colors and type are defined.
+   docs/BRAND.md explains them and lists the contrast checks (scripts/make-brand.py
+   --contrast computes them and --check fails on a weak pair).
+
+   The token names, the neutrals (paper, ink, rules, shadow), the amber note and the type
+   are Method Budget's and Method Schedule's, value for value, so the sites read as one
+   family and the neutral part can later move into one shared tokens file. What is ours
+   is the accent, a violet in the same lightness band as Budget's teal and Schedule's
+   slate blue, and the colors of the e-reader the home page draws. */
+
+:root {
+  /* Surfaces: warm paper behind white cards (shared). */
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface-2: #EFEDE7;
+
+  /* Text (shared). */
+  --ink: #1C2228;
+  --ink-soft: #3A424C;
+  --muted: #59626D;
+
+  /* Lines (shared). --rule-strong is for borders that carry meaning (3:1 or more). */
+  --rule: #DEDBD3;
+  --rule-strong: #8F897C;
+
+  /* Violet, Method Reader's accent. */
+  --accent: #7052BA;
+  --accent-strong: #573E96;
+  --accent-ink: #FFFFFF;  /* text on a violet fill */
+  --accent-soft: #ECE7F7;
+
+  /* Pencil amber: the family's caution color (beta notes). Shared. */
+  --note: #8A5A00;
+  --note-fill: #D29A12;
+
+  --code-bg: #EFEDE7;
+  --shadow: 0 1px 2px rgba(28, 34, 40, .06), 0 10px 32px rgba(28, 34, 40, .08);
+
+  /* The drawn e-readers stay the same in both schemes, like the terminal sample on the
+     other two sites: a device is a picture of an object, not a part of the page. */
+  --device: #34332F;
+  --device-chin: #C9C5BA;
+  --device-accent: #B49CF0; /* the dark-scheme violet: the device is dark in both */
+  --screen: #E9E7E0;
+  --screen-ink: #23211C;
+  --screen-muted: #5E5A51;
+  --pdf-page: #FFFDF8;
+  --pdf-ink: #2A2823;
+
+  /* Type: the system's own faces for the page (shared). The script itself is set in
+     the faces the app ships (Courier Prime, Literata), self-hosted in fonts/. */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --script: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --book: "Literata", Georgia, "Times New Roman", serif;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111417;
+    --surface: #1B1F24;
+    --surface-2: #22272E;
+    --ink: #E4E8EC;
+    --ink-soft: #C3CAD2;
+    --muted: #9AA3AD;
+    --rule: #2B3138;
+    --rule-strong: #67717D;
+    --accent: #B49CF0;
+    --accent-strong: #CDBDF6;
+    --accent-ink: #160F26;
+    --accent-soft: #2A2140;
+    --note: #E3B341;
+    --note-fill: #E3B341;
+    --code-bg: #22272E;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 32px rgba(0, 0, 0, .3);
+    --device: #0B0C0E;
+    color-scheme: dark;
+  }
+}

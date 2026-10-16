@@ -1,0 +1,27 @@
+/* The share card (og-card.html), drawn at exactly 1200x630 by `cargo xtask make-og`.
+   Method Budget's and Method Schedule's layout, with an e-reader in place of their sheet. */
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+.card { position: absolute; inset: 0; padding: 64px 80px; }
+.card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: var(--accent); }
+.wm { position: absolute; top: 66px; left: 80px; height: 36px; width: auto; } /* the same x-height as Method Schedule's card */
+.tag { position: absolute; top: 74px; right: 80px; font-size: 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.copy { position: absolute; left: 80px; top: 196px; width: 600px; }
+h1 { font-size: 58px; line-height: 1.06; letter-spacing: -.03em; font-weight: 750; margin-bottom: 22px; }
+.copy p { font-size: 25px; line-height: 1.35; color: var(--ink-soft); }
+.device {
+  position: absolute; right: 96px; top: 150px; width: 330px; height: 420px;
+  background: var(--device); border-radius: 18px; padding: 16px 14px 40px;
+  box-shadow: 0 14px 40px rgba(28, 34, 40, .22);
+}
+.screen {
+  height: 100%; background: var(--screen); color: var(--screen-ink); border-radius: 2px; overflow: hidden;
+  padding: 22px 22px 0; font: 15px/1.5 var(--script);
+}
+.screen p { margin: 0 0 12px; }
+.screen .s, .screen .c { font-weight: 700; }
+.screen .c { margin: 0 0 0 30%; }
+.screen .d { margin-left: 14%; margin-right: 8%; }
+.chin { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; font-size: 14px; font-weight: 600; color: var(--device-accent); }
+.url { position: absolute; left: 80px; bottom: 52px; font-size: 22px; color: var(--muted); }
