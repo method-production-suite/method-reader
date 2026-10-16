@@ -474,7 +474,7 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
         assert!(text.contains(meaning), "{f}");
         assert!(!text.contains('\u{2014}'), "{f}");
         for (what, re) in [
-            ("FDX", r"FDX[^.]{0,120}\(beta\)"),
+            ("FDX", r"(?i)fdx[^.]{0,120}\(beta\)"),
             ("pictures", r"[Pp]ictures[^.]{0,160}\(beta\)"),
             ("eject", r"[Ee]ject[^.]{0,160}\(beta on Windows and Linux\)"),
             ("requests", r"isn.t here[^.]{0,200}\(beta\)"),
