@@ -59,7 +59,8 @@ allow = [
   "Zlib",
 ]
 confidence-threshold = 0.9
-# Screepub's own crates (AGPL-3.0-or-later, never published).
+# Screepub's own crates (MIT OR Apache-2.0, sp-azw3 GPL-3.0-only; never
+# published).
 private = { ignore = true }
 
 [bans]

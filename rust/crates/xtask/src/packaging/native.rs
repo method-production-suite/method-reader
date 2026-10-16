@@ -71,7 +71,9 @@ pub const NATIVE_APP: NativeApp = NativeApp {
     long_description: names::LONG_DESCRIPTION,
     minimum_macos: names::MAC_MINIMUM,
     resources: &[
-        ("LICENSE", "LICENSE"),
+        ("LICENSE-MIT", "LICENSE-MIT"),
+        ("LICENSE-APACHE", "LICENSE-APACHE"),
+        ("rust/crates/sp-azw3/LICENSE-GPL-3.0", "LICENSE-GPL-3.0"),
         ("THIRD-PARTY-NOTICES.md", "THIRD-PARTY-NOTICES.md"),
     ],
     icon_dirs: &["rust/crates/sp-app/icons"],

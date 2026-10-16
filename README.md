@@ -1,7 +1,7 @@
 # Screepub
 
 [![Release](https://img.shields.io/github/v/release/ssandweiss/screepub?cacheSeconds=300)](https://github.com/ssandweiss/screepub/releases/latest)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 ![macOS, Windows, Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-black)
 
 **Read screenplays on your e-reader the way they're meant to be read.**
@@ -203,11 +203,18 @@ and sending a change is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Screepub is licensed under the **GNU Affero General Public License v3.0 or
-later** (AGPL-3.0-or-later): see [`LICENSE`](LICENSE). You're free to use,
-study, modify, and share it; if you distribute it, or run a modified version
-as a network service, the corresponding source must be made available under
-the same license.
+Screepub's code is licensed under the **MIT License or the Apache License
+2.0**, at your option: see [`LICENSE-MIT`](LICENSE-MIT) and
+[`LICENSE-APACHE`](LICENSE-APACHE). Use any part of it in your own project,
+open or closed.
+
+One crate is the exception: the AZW3 (Kindle) writer,
+[`rust/crates/sp-azw3`](rust/crates/sp-azw3), is ported from calibre and
+stays under calibre's licence, the **GNU GPL v3**
+([`LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)). The PDF reader,
+the parser, and the Fountain and Final Draft writers don't use it. Because
+the command line and the app contain it, the released programs as a whole
+are distributed under the GPL v3.
 
 Bundled third-party components are listed in
 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md), which also ships inside

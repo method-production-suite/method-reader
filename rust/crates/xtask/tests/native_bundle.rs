@@ -56,7 +56,15 @@ fn the_native_app_keeps_the_tauri_window_s_identity() {
     );
     assert_eq!(NATIVE_APP.minimum_macos, "13.0");
     let resources: Vec<&str> = NATIVE_APP.resources.iter().map(|(_, n)| *n).collect();
-    assert_eq!(resources, ["LICENSE", "THIRD-PARTY-NOTICES.md"]);
+    assert_eq!(
+        resources,
+        [
+            "LICENSE-MIT",
+            "LICENSE-APACHE",
+            "LICENSE-GPL-3.0",
+            "THIRD-PARTY-NOTICES.md"
+        ]
+    );
     // And its updater key (plugins.updater.pubkey), whose one home is now
     // sp-update.
     assert_eq!(
@@ -225,13 +233,15 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
             text.contains("Exec=screepub-desktop\n") && text.contains("Icon=screepub-desktop\n"),
             "{text}"
         );
-        assert_eq!(
-            find_entry(&entries, "usr/lib/Screepub/LICENSE")
-                .unwrap()
-                .mode
-                & 0o111,
-            0
-        );
+        for lic in ["LICENSE-MIT", "LICENSE-APACHE", "LICENSE-GPL-3.0"] {
+            assert_eq!(
+                find_entry(&entries, &format!("usr/lib/Screepub/{lic}"))
+                    .unwrap()
+                    .mode
+                    & 0o111,
+                0
+            );
+        }
         find_entry(&entries, "usr/lib/Screepub/THIRD-PARTY-NOTICES.md").unwrap();
         for size in ["32x32", "128x128", "256x256@2"] {
             find_entry(
@@ -240,7 +250,7 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
             )
             .unwrap();
         }
-        assert_eq!(entries.len(), 7);
+        assert_eq!(entries.len(), 9);
     }
     assert_eq!(
         deb_control_field(&deb, "Package").unwrap().as_deref(),
@@ -486,7 +496,9 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
         the_binary()
     );
     assert!(app.join("Contents/Resources/icon.icns").is_file());
-    assert!(app.join("Contents/Resources/LICENSE").is_file());
+    for lic in ["LICENSE-MIT", "LICENSE-APACHE", "LICENSE-GPL-3.0"] {
+        assert!(app.join("Contents/Resources").join(lic).is_file(), "{lic}");
+    }
 }
 
 fn release_env() -> Env {

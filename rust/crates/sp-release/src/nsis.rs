@@ -21,7 +21,7 @@
 use crate::names::{PRODUCT, PUBLISHER, WINDOW_EXE};
 
 /// The script, for `version` (numeric dotted, as VIProductVersion needs),
-/// packing the files in `src_dir` (the window, LICENSE,
+/// packing the files in `src_dir` (the window, the three LICENSE- files,
 /// THIRD-PARTY-NOTICES.md, icon.ico) into `out_file`.
 pub fn script(version: &str, src_dir: &str, out_file: &str) -> String {
     let numeric: String = version
@@ -85,8 +85,12 @@ Section "Install"
   ${{Loop}}
   ; The Tauri window's engine, which the Rust app does not have.
   Delete "$INSTDIR\screepub-engine.exe"
+  ; The AGPL licence file of releases up to 0.12.1.
+  Delete "$INSTDIR\LICENSE"
   File "${{SRC}}\${{MAINBINARYNAME}}.exe"
-  File "${{SRC}}\LICENSE"
+  File "${{SRC}}\LICENSE-MIT"
+  File "${{SRC}}\LICENSE-APACHE"
+  File "${{SRC}}\LICENSE-GPL-3.0"
   File "${{SRC}}\THIRD-PARTY-NOTICES.md"
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
@@ -117,6 +121,9 @@ Section "Uninstall"
   Delete "$INSTDIR\${{MAINBINARYNAME}}.exe"
   Delete "$INSTDIR\screepub-engine.exe"
   Delete "$INSTDIR\LICENSE"
+  Delete "$INSTDIR\LICENSE-MIT"
+  Delete "$INSTDIR\LICENSE-APACHE"
+  Delete "$INSTDIR\LICENSE-GPL-3.0"
   Delete "$INSTDIR\THIRD-PARTY-NOTICES.md"
   Delete "$INSTDIR\uninstall.exe"
   RMDir "$INSTDIR"
