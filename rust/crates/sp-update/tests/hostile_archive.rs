@@ -171,7 +171,7 @@ fn the_administrator_swap_puts_the_old_app_back_when_the_move_fails() {
 #[test]
 fn the_administrator_swap_replaces_the_app_and_leaves_nothing_beside_it() {
     let apps = tempfile::tempdir().unwrap();
-    let bundle = apps.path().join("Sam's \"Method Reader\".app");
+    let bundle = apps.path().join("Ann's \"Method Reader\".app");
     make_bundle(&bundle, "method-reader-app", "0.13.0");
     let staged = tempfile::tempdir().unwrap();
     let new = staged.path().join("Method Reader.app");

@@ -677,11 +677,11 @@ mod tests {
 
     #[test]
     fn the_admin_script_survives_an_apostrophe_and_a_quote() {
-        let bundle = Path::new("/Applications/Sam's \"Method Reader\".app");
+        let bundle = Path::new("/Applications/Ann's \"Method Reader\".app");
         let s = admin_swap_script(bundle, Path::new("/tmp/new"), bundle);
         let shell = admin_swap_shell(bundle, Path::new("/tmp/new"), bundle);
         assert!(
-            shell.contains(r#"'/Applications/Sam'\''s "Method Reader".app'"#),
+            shell.contains(r#"'/Applications/Ann'\''s "Method Reader".app'"#),
             "{shell}"
         );
         assert_eq!(

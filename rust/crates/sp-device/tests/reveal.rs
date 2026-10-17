@@ -15,7 +15,7 @@ use sp_device::{ErrorCode, Platform};
 fn darwin_open_r_names_the_file_itself() {
     let o = FakeOpener::ok();
     reveal_file(
-        "/Users/sam/Method Reader/My Script/My Script.epub",
+        "/Users/ann/Method Reader/My Script/My Script.epub",
         Platform::Darwin,
         &o,
     )
@@ -25,7 +25,7 @@ fn darwin_open_r_names_the_file_itself() {
         [strings(&[
             "open",
             "-R",
-            "/Users/sam/Method Reader/My Script/My Script.epub"
+            "/Users/ann/Method Reader/My Script/My Script.epub"
         ])]
     );
 }
@@ -34,14 +34,14 @@ fn darwin_open_r_names_the_file_itself() {
 fn win32_explorer_opens_the_folder_never_select() {
     let o = FakeOpener::ok();
     reveal_file(
-        r"C:\Users\Sam, O'Brien\My Scripts\Field Station.pdf",
+        r"C:\Users\Ann, O'Brien\My Scripts\Field Station.pdf",
         Platform::Win32,
         &o,
     )
     .unwrap();
     assert_eq!(
         o.calls(),
-        [strings(&["explorer", r"C:\Users\Sam, O'Brien\My Scripts"])]
+        [strings(&["explorer", r"C:\Users\Ann, O'Brien\My Scripts"])]
     );
 }
 
@@ -49,14 +49,14 @@ fn win32_explorer_opens_the_folder_never_select() {
 fn linux_and_everything_else_xdg_open_on_the_folder() {
     let o = FakeOpener::ok();
     reveal_file(
-        "/home/sam/Method Reader/Script/Script.epub",
+        "/home/ann/Method Reader/Script/Script.epub",
         Platform::Linux,
         &o,
     )
     .unwrap();
     assert_eq!(
         o.calls(),
-        [strings(&["xdg-open", "/home/sam/Method Reader/Script"])]
+        [strings(&["xdg-open", "/home/ann/Method Reader/Script"])]
     );
 }
 

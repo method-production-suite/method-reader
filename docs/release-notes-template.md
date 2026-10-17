@@ -74,7 +74,7 @@ checks the draft and publishes it) are in [RELEASING.md](RELEASING.md).
 4. **`rust/crates/sp-app/src/model/tune.rs`** if a bullet announces a new
    switch. That file holds the exact label the reader will see on the
    window's Settings page.
-5. **Who helped.** Ask Sam, and read the range for it: an issue that
+5. **Who helped.** Ask the owner, and read the range for it: an issue that
    reported a script that converted badly, a device someone tested, a
    correction to how a script is formatted on the page. Section 10 has
    the rules.
@@ -647,7 +647,7 @@ The names above are invented, as every example in this file is.
 
 - **Name people the way they asked to be named**, and only with their
   say-so: a name, a GitHub handle, or "a reader who asked not to be
-  named". Ask Sam when you do not know.
+  named". Ask the owner when you do not know.
 - **Say what they did, in the reader's words.** "tested side-by-side
   dialogue on a Kobo Clara", not "verified registry #8b".
 - **Never name the script they sent**, its title, its writer or a
@@ -684,7 +684,7 @@ verbatim:
 > rebuild, a signing fix, a dependency bump), tell me the reason in your
 > own words and I'll write the note from that.
 
-Then stop. If Sam gives a reason, the notes are written from his words and
+Then stop. If the owner gives a reason, the notes are written from their words and
 nothing else.
 
 ## 13. Pre-flight checklist
