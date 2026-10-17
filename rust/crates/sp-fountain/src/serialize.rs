@@ -199,8 +199,9 @@ pub fn extract_title_meta(elements: &[ScreenplayElement]) -> TitleMeta {
 }
 
 /// True when this element belongs in the Fountain body. A picture on a title
-/// page is admitted: it is the designed title card.
-fn is_body(el: &ScreenplayElement) -> bool {
+/// page is admitted: it is the designed title card. Public for the engine's
+/// scene measurement, which must count the elements this writes.
+pub fn is_body(el: &ScreenplayElement) -> bool {
     if el.kind == ElementType::Image {
         return el.is_readable;
     }
@@ -281,8 +282,9 @@ fn prepare(elements: &[ScreenplayElement], rejoin: bool) -> Vec<ScreenplayElemen
 }
 
 /// Sheet to printed-page offset, from the PDF's own printed page numbers:
-/// the most common offset wins (first seen on a tie).
-fn printed_page_offset(elements: &[ScreenplayElement]) -> Option<i64> {
+/// the most common offset wins (first seen on a tie). Public for the
+/// engine's scene measurement, so a saved page and a `= pg N` marker agree.
+pub fn printed_page_offset(elements: &[ScreenplayElement]) -> Option<i64> {
     let mut counts: Vec<(i64, u32)> = Vec::new();
     for el in elements {
         if el.kind != ElementType::PageNumber {

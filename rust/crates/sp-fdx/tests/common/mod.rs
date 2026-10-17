@@ -60,6 +60,21 @@ pub fn tokens(source: &str) -> Vec<Token> {
     sp_fountain::tokenize(source).expect("sp-fountain tokenizes the test's Fountain")
 }
 
+/// `fdx` with every `<SceneProperties .../>` taken out: the TypeScript
+/// writer's document, for an FDX written since scene headings carried
+/// their page and length (2026-10-16, rust/PARITY.md Decisions).
+pub fn without_scene_properties(fdx: &str) -> String {
+    let mut out = String::with_capacity(fdx.len());
+    let mut rest = fdx;
+    while let Some(at) = rest.find("<SceneProperties") {
+        out.push_str(&rest[..at]);
+        let end = rest[at..].find("/>").expect("a closed SceneProperties");
+        rest = &rest[at + end + 2..];
+    }
+    out.push_str(rest);
+    out
+}
+
 /// The FDX for an inline Fountain source.
 pub fn fountain_to_fdx(source: &str) -> String {
     sp_fdx::tokens_to_fdx(&tokens(source))

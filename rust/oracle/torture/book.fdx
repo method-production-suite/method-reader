@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <FinalDraft DocumentType="Script" Template="No" Version="2">
   <Content>
-    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>Steel shelving to the ceiling. A single bulb, swinging.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. LOADING DOCK - CONTINUOUS</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>EXT. LOADING DOCK - CONTINUOUS</Text></Paragraph>
     <Paragraph Type="Action"><Text>Rain on corrugated tin, loud enough to argue over.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT./EXT. DELIVERY VAN - MOVING - LATER</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>INT./EXT. DELIVERY VAN - MOVING - LATER</Text></Paragraph>
     <Paragraph Type="Action"><Text>The wipers lose.</Text></Paragraph>
-    <Paragraph Type="Scene Heading" Number="42"><Text>INT. ARCHIVE BASEMENT - RESHELVING - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading" Number="42"><SceneProperties Page="1"/><Text>INT. ARCHIVE BASEMENT - RESHELVING - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>A dual-margin scene number, the shooting-script shape: the same number printed at both margins.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. READING ROOM - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>INT. READING ROOM - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>ODILE sets down a box that is heavier than it looks.</Text></Paragraph>
     <Paragraph Type="Shot"><Text>INDEX CARDS</Text></Paragraph>
     <Paragraph Type="Action"><Text>Handwriting from four decades, none of it consistent.</Text></Paragraph>
     <Paragraph Type="Shot"><Text>LEDGER, LATER</Text></Paragraph>
     <Paragraph Type="Action"><Text>One column, ruled in pencil, never once balanced.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. STAIRWELL - CONTINUOUS</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>INT. STAIRWELL - CONTINUOUS</Text></Paragraph>
     <Paragraph Type="Action"><Text>Footsteps going down two at a time.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>DISSOLVE TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. ARCHIVE - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>EXT. ARCHIVE - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>The building keeps its lights on for nobody.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>SMASH CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="3"/><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>Nobody is where their voice says they are.</Text></Paragraph>
     <Paragraph Type="Character"><Text>BUNNY</Text></Paragraph>
     <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
@@ -39,7 +39,7 @@
     <Paragraph Type="Dialogue"><Text>Dotted abbreviations sitting inside a character name.</Text></Paragraph>
     <Paragraph Type="Character"><Text>BUNNY (V.O.)</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>A hybrid: name and extension on one cue line.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. READING ROOM - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="4"/><Text>INT. READING ROOM - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>The box is open now. It was not worth the trip.</Text></Paragraph>
     <Paragraph Type="Character"><Text>BUNNY</Text></Paragraph>
     <Paragraph Type="Parenthetical"><Text>(quietly)</Text></Paragraph>
@@ -54,7 +54,7 @@
     <Paragraph Type="Dialogue"><Text>Two stacked parentheticals before any dialogue at all.</Text></Paragraph>
     <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Short.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="5"/><Text>INT. ARCHIVE BASEMENT - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>They have been at this for six hours.</Text></Paragraph>
     <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>No.</Text></Paragraph>
@@ -64,7 +64,7 @@
     <Paragraph Type="Dialogue"><Text>No.</Text></Paragraph>
     <Paragraph Type="Character"><Text>ODILE</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>MORE-ANCHOR. This speech begins near the foot of the page on purpose, so that it runs over the break and has to be put back together on the other side. It keeps going well past the boundary so the rejoin has something substantial to work with, and so that the same speech doubles as the long-dialogue case the coverage table asks for, rather than spending two constructions on what is really one shape.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. CONSERVATION BENCH - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="7"/><Text>INT. CONSERVATION BENCH - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>The label reads </Text><Text Style="Bold">DO NOT LAMINATE</Text><Text>, twice.</Text></Paragraph>
     <Paragraph Type="Action"><Text>She says it </Text><Text Style="Italic">again</Text><Text>, and this time somebody writes it down.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The stamp is </Text><Text Style="Bold+Italic">both bold and italic</Text><Text> at once.</Text></Paragraph>
@@ -84,7 +84,7 @@
     <Paragraph Type="Dialogue"><Text>Dialogue can be </Text><Text Style="Bold">bold</Text><Text> too.</Text></Paragraph>
     <Paragraph Type="Character"><Text>ODILE</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>And </Text><Text Style="Italic">italic</Text><Text>, which is the common one.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. READING ROOM - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="8"/><Text>INT. READING ROOM - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>They speak over each other.</Text></Paragraph>
     <Paragraph Type="General"><DualDialogue><Paragraph Type="Character"><Text>BUNNY</Text></Paragraph><Paragraph Type="Dialogue"><Text>LEFTMARK. Short, on the left.</Text></Paragraph><Paragraph Type="Character"><Text>CASSIUS</Text></Paragraph><Paragraph Type="Dialogue"><Text>RIGHTMARK. Short, on the right.</Text></Paragraph></DualDialogue></Paragraph>
     <Paragraph Type="Action"><Text>And again, at length.</Text></Paragraph>
@@ -169,12 +169,12 @@
     <Paragraph Type="Dialogue"><Text>Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</Text></Paragraph>
     <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. ART DEPARTMENT - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="14"/><Text>INT. ART DEPARTMENT - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>WREN pins a storyboard panel to the wall, printed small.</Text></Paragraph>
     <Paragraph Type="Character"><Text>WREN</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Under half a column wide, and not a thumbnail.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. MAP ROOM - NIGHT</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIRE STAIRS - CONTINUOUS</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="15"/><Text>INT. MAP ROOM - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="16"/><Text>INT. FIRE STAIRS - CONTINUOUS</Text></Paragraph>
     <Paragraph Type="Action"><Text>A production still, printed tall.</Text></Paragraph>
   </Content>
   <TitlePage>

@@ -10,12 +10,15 @@
 //! other importers ignore them anyway. Paragraphs carry only their element
 //! Type (plus Number, Alignment and StartsNewPage where the Fountain says
 //! so), never fonts or indents, so the receiving app's own screenplay
-//! template decides how the page looks.
+//! template decides how the page looks. A Scene Heading also carries Final
+//! Draft's SceneProperties (registry #13b): the page it starts on, from the
+//! .fountain's `= pg N` markers, and its Length in eighths when the lengths
+//! measured from the PDF are handed in (`tokens_to_fdx_measured`).
 //!
 //! Format-option-free on purpose: this is a reconstruction of the script,
 //! not a rendering of the book, so no reading knob (scene numbers shown,
 //! title page included) changes it. Whatever the .fountain carries, the FDX
-//! carries.
+//! carries, and the measured lengths are the one thing beside it.
 //!
 //! The TypeScript's `fountainToFdx(text)` is `tokens_to_fdx` of the
 //! tokenizer's answer; that tokenizer is sp-fountain's, so the text-in entry
@@ -25,7 +28,7 @@ mod js;
 
 use sp_model::{Token, TokenType};
 
-use sp_fountain::{is_mini_slug, strip_notes};
+use sp_fountain::{is_mini_slug, page_marker_label, strip_notes};
 
 /// The FinalDraft root's Version attribute. ONE constant, because the
 /// owner's Final Draft is an older licence and this may have to come down:
@@ -257,7 +260,14 @@ fn open_tag(attrs: &Attrs<'_>) -> String {
 /// A whole paragraph on one line. Whitespace inside a Paragraph is text to
 /// Final Draft, so nothing is pretty-printed between its runs.
 fn paragraph(attrs: &Attrs<'_>, text: &str) -> String {
+    paragraph_with(attrs, "", text)
+}
+
+/// The same, with `inner` (a scene heading's SceneProperties) ahead of the
+/// text runs, where Final Draft writes it.
+fn paragraph_with(attrs: &Attrs<'_>, inner: &str, text: &str) -> String {
     let mut out = open_tag(attrs);
+    out.push_str(inner);
     let runs = text_runs(text);
     if runs.is_empty() {
         out.push_str("<Text></Text>");
@@ -325,7 +335,120 @@ fn drop_forced_transition(text: &str) -> &str {
     }
 }
 
-fn render_body(tokens: &[Token]) -> Vec<String> {
+/// One scene's measurements from the PDF, saved beside the script at
+/// convert time (the engine's `scene_lengths`): what the .fountain cannot
+/// say about a scene by itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SceneMeasure {
+    /// The page the scene starts on, as printed (`None`: not known, and the
+    /// `= pg N` markers answer instead).
+    pub page: Option<String>,
+    /// Its length in eighths of a page, already rounded.
+    pub eighths: u32,
+}
+
+/// True for a token that becomes a Scene Heading paragraph (and so carries
+/// SceneProperties): a scene heading that is not a mini-slug, which is a
+/// Shot.
+fn is_scene(t: &Token) -> bool {
+    t.kind == TokenType::SceneHeading && !is_mini_slug(t) && !t.is_title()
+}
+
+/// How many Scene Heading paragraphs these tokens make: the count a list of
+/// [`SceneMeasure`]s must match to be used.
+pub fn scene_heading_count(tokens: &[Token]) -> usize {
+    tokens.iter().filter(|t| is_scene(t)).count()
+}
+
+/// Eighths of a page as Final Draft writes a scene's Length: "6/8",
+/// "1 2/8", a whole number of pages bare ("1", "2"), and "0/8" for nothing.
+pub fn eighths_label(eighths: u32) -> String {
+    let (pages, rest) = (eighths / 8, eighths % 8);
+    match (pages, rest) {
+        (0, r) => format!("{r}/8"),
+        (p, 0) => p.to_string(),
+        (p, r) => format!("{p} {r}/8"),
+    }
+}
+
+/// An omitted scene's heading ("OMITTED", "OMIT", "SCENE OMITTED"): a
+/// shooting script keeps its number and its slot, and it lasts 0/8.
+pub fn is_omitted_heading(text: &str) -> bool {
+    let words: Vec<String> = js::trim(text)
+        .trim_end_matches('.')
+        .split(js::is_space)
+        .filter(|w| !w.is_empty())
+        .map(str::to_uppercase)
+        .collect();
+    let omitted = |w: &str| w == "OMITTED" || w == "OMIT";
+    let scene = |w: &str| w == "SCENE" || w == "SCENES";
+    match words.as_slice() {
+        [a] => omitted(a),
+        [a, b] => (scene(a) && omitted(b)) || (omitted(a) && scene(b)),
+        _ => false,
+    }
+}
+
+/// The page label each scene heading starts on, from the `= pg N` markers:
+/// the label of the last marker before it, and for a heading before the
+/// first marker the page before that one. `None` throughout when the
+/// .fountain has no markers (switched off, or a one-page script: it cannot
+/// tell which).
+fn marker_pages(tokens: &[Token]) -> Vec<Option<String>> {
+    fn label_of(t: &Token) -> Option<&str> {
+        (t.kind == TokenType::Synopsis)
+            .then(|| page_marker_label(t.text_or_empty()))
+            .flatten()
+    }
+    let mut page: Option<String> = tokens.iter().find_map(label_of).and_then(|first| {
+        let n: i64 = first.parse().ok()?;
+        (n > 1).then(|| (n - 1).to_string())
+    });
+    let mut out = Vec::new();
+    for t in tokens {
+        if let Some(label) = label_of(t) {
+            page = Some(label.to_owned());
+        } else if is_scene(t) {
+            out.push(page.clone());
+        }
+    }
+    out
+}
+
+/// The SceneProperties element for scene `index`, or nothing to say.
+fn scene_properties(
+    index: usize,
+    marked: &[Option<String>],
+    measures: Option<&[SceneMeasure]>,
+) -> String {
+    let measure = measures.and_then(|m| m.get(index));
+    let page = measure
+        .and_then(|m| m.page.clone())
+        .or_else(|| marked.get(index).cloned().flatten());
+    let length = measure.map(|m| eighths_label(m.eighths));
+    if page.is_none() && length.is_none() {
+        return String::new();
+    }
+    let mut out = String::from("<SceneProperties");
+    for (name, value) in [("Length", length), ("Page", page)] {
+        if let Some(value) = value {
+            out.push(' ');
+            out.push_str(name);
+            out.push_str("=\"");
+            escape_attr(&value, &mut out);
+            out.push('"');
+        }
+    }
+    out.push_str("/>");
+    out
+}
+
+fn render_body(tokens: &[Token], measures: Option<&[SceneMeasure]>) -> Vec<String> {
+    // Measures for another text (a different scene count) are not this
+    // script's: none of them is used.
+    let measures = measures.filter(|m| m.len() == scene_heading_count(tokens));
+    let marked = marker_pages(tokens);
+    let mut scene_index = 0usize;
     let mut out: Vec<String> = Vec::new();
     // A Fountain page break has no paragraph of its own in Final Draft: it
     // is a flag on whatever paragraph comes next.
@@ -380,6 +503,14 @@ fn render_body(tokens: &[Token]) -> Vec<String> {
             _ => None,
         };
         let alignment = (t.kind == TokenType::Centered).then_some("Center");
+        // Final Draft keeps one SceneProperties per scene, on its heading's
+        // first paragraph.
+        let mut props = if is_scene(t) {
+            scene_index += 1;
+            scene_properties(scene_index - 1, &marked, measures)
+        } else {
+            String::new()
+        };
 
         for line in lines_of(text) {
             // Inside a dual exchange the page flag belongs to the wrapper.
@@ -388,13 +519,14 @@ fn render_body(tokens: &[Token]) -> Vec<String> {
             } else {
                 std::mem::take(&mut new_page).then_some("Yes")
             };
-            let p = paragraph(
+            let p = paragraph_with(
                 &[
                     ("Type", Some(kind)),
                     ("Number", number),
                     ("Alignment", alignment),
                     ("StartsNewPage", starts),
                 ],
+                &std::mem::take(&mut props),
                 line,
             );
             match dual.as_mut() {
@@ -481,9 +613,18 @@ fn render_title_page(tokens: &[Token]) -> Vec<String> {
     out
 }
 
-/// The whole FDX document for a script's fountain-js tokens.
+/// The whole FDX document for a script's fountain-js tokens, with each
+/// scene's starting page from the .fountain's own markers and no Length:
+/// what a bare .fountain can say.
 pub fn tokens_to_fdx(tokens: &[Token]) -> String {
-    let body = render_body(tokens);
+    tokens_to_fdx_measured(tokens, None)
+}
+
+/// The whole FDX document, with the lengths (and pages) measured from the
+/// PDF at convert time when `measures` holds one per Scene Heading
+/// paragraph; any other count is ignored, as lengths of another text.
+pub fn tokens_to_fdx_measured(tokens: &[Token], measures: Option<&[SceneMeasure]>) -> String {
+    let body = render_body(tokens, measures);
     let title = render_title_page(tokens);
     let mut lines: Vec<String> = vec![
         XML_DECLARATION.to_owned(),
