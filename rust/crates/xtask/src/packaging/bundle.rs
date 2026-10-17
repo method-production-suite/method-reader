@@ -140,7 +140,7 @@ pub fn assert_apple_silicon_mac(
         return Ok(());
     }
     Err(format!(
-        "build-app-bundle: a Mac bundle is built for Apple silicon only (--arch {}, target {MAC_TARGET}), and this asked for arch {}, target {}. Intel Macs are not supported after 0.9.0 (docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and an Intel or universal image would be published under the one Mac name, Screepub-macOS.dmg. An Intel Mac can still cross-build the Apple silicon bundle: rustup target add aarch64-apple-darwin, then --arch arm64.",
+        "build-app-bundle: a Mac bundle is built for Apple silicon only (--arch {}, target {MAC_TARGET}), and this asked for arch {}, target {}. Intel Macs are not supported after 0.9.0 (docs/superpowers/plans/2026-10-01-f2-handover-amendment.md), and an Intel or universal image would be published under the one Mac name, Method-Reader-macOS.dmg. An Intel Mac can still cross-build the Apple silicon bundle: rustup target add aarch64-apple-darwin, then --arch arm64.",
         MAC_ARCH.name(),
         arch.name(),
         target.unwrap_or("<the host>")
@@ -372,7 +372,7 @@ pub fn build_bundles(
 pub fn main(argv: &[String]) -> u8 {
     if super::util::wants_help(
         argv,
-        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--updater] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set), checked against the key the shipped app trusts (sp_update::PUBKEY) unless --pubkey names another.\nThe outside tools can be redirected with SCREEPUB_CARGO, SCREEPUB_CODESIGN, SCREEPUB_DITTO, SCREEPUB_XCRUN, SCREEPUB_HDIUTIL and SCREEPUB_MAKENSIS.",
+        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--updater] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set), checked against the key the shipped app trusts (sp_update::PUBKEY) unless --pubkey names another.\nThe outside tools can be redirected with METHOD_READER_CARGO, METHOD_READER_CODESIGN, METHOD_READER_DITTO, METHOD_READER_XCRUN, METHOD_READER_HDIUTIL and METHOD_READER_MAKENSIS.",
     ) {
         return 0;
     }

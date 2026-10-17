@@ -1,5 +1,8 @@
-//! The Rust app must trust the key and ask the endpoint every Tauri window
-//! was built with, or the first Rust release strands one side. The values
+//! The Rust app must trust the key every Tauri window was built with, and
+//! keep its identifier, or the first Rust release strands one side. The
+//! endpoint those windows ask is [`sp_update::LEGACY_ENDPOINT`]: the
+//! repository moved, GitHub redirects it, and Method Reader asks the new
+//! one itself. The values
 //! below are desktop/src-tauri/tauri.conf.json's as shipped in 0.11.1 (the
 //! file went with the Tauri window at the cutover; `git show
 //! v0.11.1:desktop/src-tauri/tauri.conf.json` has it). No window ever set
@@ -17,5 +20,6 @@ const TAURI_ENDPOINTS: &[&str] =
 fn the_constants_are_the_tauri_window_s() {
     assert_eq!(sp_update::IDENTIFIER, TAURI_IDENTIFIER);
     assert_eq!(sp_update::PUBKEY, TAURI_PUBKEY);
-    assert_eq!(&[sp_update::ENDPOINT], TAURI_ENDPOINTS);
+    assert_eq!(&[sp_update::LEGACY_ENDPOINT], TAURI_ENDPOINTS);
+    assert_ne!(sp_update::ENDPOINT, sp_update::LEGACY_ENDPOINT);
 }

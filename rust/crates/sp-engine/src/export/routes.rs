@@ -1,5 +1,5 @@
 //! Port of `src/export/routes.ts`: the route catalog. Every way a finished
-//! book can leave Screepub, best route first, and the rule that what you
+//! book can leave Method Reader, best route first, and the rule that what you
 //! chose last time wins. The window draws this list and never ranks it.
 //!
 //! Pure: the facts arrive already probed (route_facts.rs) and the

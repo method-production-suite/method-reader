@@ -1,5 +1,5 @@
-//! Port of tests/cli-device-commands.test.ts: `screepub devices` and
-//! `screepub send` through the spawned CLI, the rule that a file named like
+//! Port of tests/cli-device-commands.test.ts: `method-reader devices` and
+//! `method-reader send` through the spawned CLI, the rule that a file named like
 //! a verb is converted, and --help / --version in --json.
 //!
 //! Every run is in a Sandbox: the mount parent is an empty scratch folder
@@ -18,7 +18,7 @@ fn with_kobo() -> Sandbox {
     let mut sb = Sandbox::new();
     sb.mkdir("vols/KOBOeReader/.kobo");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     sb
 }
 
@@ -27,7 +27,7 @@ fn with_kindle() -> (Sandbox, String) {
     let mut sb = Sandbox::new();
     sb.mkdir("vols/Kindle/documents");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     let volume = sb.p("vols/Kindle");
     (sb, volume)
 }
@@ -35,7 +35,7 @@ fn with_kindle() -> (Sandbox, String) {
 /// The tablet stand-in, set as the sandbox's reMarkable.
 fn docked(sb: &mut Sandbox, get: Option<u16>, post: Option<u16>) -> Tablet {
     let tablet = Tablet::start(get, post);
-    sb.set("SCREEPUB_REMARKABLE_ENDPOINT", tablet.url.clone());
+    sb.set("METHOD_READER_REMARKABLE_ENDPOINT", tablet.url.clone());
     tablet
 }
 
@@ -43,7 +43,7 @@ fn read(path: &str) -> String {
     std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"))
 }
 
-// ---- screepub devices ---------------------------------------------------------
+// ---- method-reader devices ---------------------------------------------------------
 
 #[test]
 fn devices_json_reports_the_injected_device_and_exits_0() {
@@ -138,7 +138,7 @@ fn quick_lists_mounted_readers_without_asking_for_a_remarkable() {
     assert!(tablet.requests().is_empty());
 }
 
-// ---- screepub send ------------------------------------------------------------
+// ---- method-reader send ------------------------------------------------------------
 
 #[test]
 fn send_json_reports_the_device_and_the_destination_and_the_bytes_moved() {
@@ -156,7 +156,7 @@ fn send_json_reports_the_device_and_the_destination_and_the_bytes_moved() {
     assert_eq!(result["destination"], destination.as_str());
     assert_eq!(read(&destination), "book-bytes");
     // It worked, so it is remembered: by kind, in the settings file under
-    // SCREEPUB_CONFIG_DIR, as the send panel's choice next time.
+    // METHOD_READER_CONFIG_DIR, as the send panel's choice next time.
     assert_eq!(
         serde_json::from_str::<Value>(&read(&sb.p("config/settings.json"))).unwrap(),
         json!({ "lastRoute": "device:kindle" })
@@ -196,7 +196,7 @@ fn device_picks_one_of_several_and_the_others_are_untouched() {
     sb.mkdir("vols/Kindle/documents");
     sb.mkdir("vols/KOBOeReader/.kobo");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     let kobo = sb.p("vols/KOBOeReader");
     let ran = sb.run(&[
         "send",
@@ -221,7 +221,7 @@ fn several_connected_and_no_device_is_ambiguous_device_naming_both() {
     sb.mkdir("vols/Kindle/documents");
     sb.mkdir("vols/KOBOeReader/.kobo");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     let ran = sb.run(&["send", &book_at(&sb, "b/Script.epub"), "--json"]);
     assert_eq!(ran.code, 1);
     assert_eq!(ran.error_code(), "ambiguous-device");
@@ -389,7 +389,7 @@ fn devices_json_help_is_the_devices_usage_not_the_conversion_usage() {
     assert_eq!(result["ok"], true);
     // A verb's help lists the verb's OWN flags; --device is send's.
     let usage = result["usage"].as_str().unwrap();
-    assert!(usage.contains("screepub devices"));
+    assert!(usage.contains("method-reader devices"));
     assert!(!usage.contains("--mobi"));
     assert!(!usage.contains("--device"));
 }
@@ -429,7 +429,7 @@ fn json_devices_says_the_verb_must_come_first() {
     assert_eq!(ran.error_code(), "unsupported-type");
     assert_eq!(
         ran.error_message(),
-        "unsupported input type \"\": expected .pdf, .fountain, or .txt. Did you mean `screepub devices`? The verb must come first"
+        "unsupported input type \"\": expected .pdf, .fountain, or .txt. Did you mean `method-reader devices`? The verb must come first"
     );
 }
 
@@ -439,7 +439,7 @@ fn json_send_gets_the_hint_naming_send_not_devices() {
     assert!(
         sb.run(&["--json", "send"])
             .error_message()
-            .contains("screepub send")
+            .contains("method-reader send")
     );
 }
 

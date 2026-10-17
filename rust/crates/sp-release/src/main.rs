@@ -5,19 +5,20 @@ use std::path::{Path, PathBuf};
 
 use sp_release::{archive, check_latest, linux, mac, manifest, names, nsis, serve, sign, version};
 
-const USAGE: &str = "sp-release: Screepub's release tools
+const USAGE: &str = "sp-release: Method Reader's release tools
 
   version-check   --version V [--cargo-toml rust/Cargo.toml]
   mac-app         --version V --window BIN --icon ICNS [--helper BIN]... [--resource FILE]...
                   [--identifier ID] --out DIR
-  update-archive  --app Screepub.app --out Screepub-macOS.app.tar.gz
+  update-archive  --app \"Method Reader.app\" --out Method-Reader-macOS.app.tar.gz
   sign-update     --file F --version V      (key: TAURI_SIGNING_PRIVATE_KEY, its password:
                                              TAURI_SIGNING_PRIVATE_KEY_PASSWORD; writes F.sig)
   keygen          --out KEYFILE [--password P]   (THROWAWAY keys: rehearsals and tests)
   manifest        --dir ARRIVALS --version V --out latest.json [--repo OWNER/NAME]
                   [--asset-base URL]   (rehearsal only: files served from URL/<name>)
   verify-update   --dir ARRIVALS --manifest latest.json [--pubkey BASE64]
-  cli-archive     --binary BIN --kind macos-arm64|linux-x64|linux-arm64|windows-x64 --out DIR
+  cli-archive     --binary BIN [--alias BIN] --kind macos-arm64|linux-x64|linux-arm64|windows-x64
+                  --out DIR   (--alias: the `screepub` binary, packed beside method-reader)
   deb | rpm       --version V --window BIN --icon SIZE=PNG... --resource FILE... --arch A
                   [--depends LINE] --out DIR
   appdir          --version V --window BIN --icon SIZE=PNG... --resource FILE... --out DIR
@@ -150,7 +151,7 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
             let file = a.path("file")?;
             let v = a.version()?;
             let key = std::env::var("TAURI_SIGNING_PRIVATE_KEY").map_err(|_| {
-                "TAURI_SIGNING_PRIVATE_KEY is not set: nothing can be signed, and an unsigned update is one no Screepub will install".to_string()
+                "TAURI_SIGNING_PRIVATE_KEY is not set: nothing can be signed, and an unsigned update is one no copy of Method Reader will install".to_string()
             })?;
             let password = std::env::var("TAURI_SIGNING_PRIVATE_KEY_PASSWORD").unwrap_or_default();
             let sk = sign::load_secret_key(&key, &password)?;
@@ -210,12 +211,15 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
         }
         "cli-archive" => {
             let bin = a.path("binary")?;
+            let alias = a.opt("alias").map(PathBuf::from);
+            let alias = alias.as_deref();
             let out = a.path("out")?;
+            let tarball = || archive::cli_tarball(&bin, alias, mtime);
             let (name, bytes) = match a.one("kind")?.as_str() {
-                "macos-arm64" => (names::CLI_MAC_ARM64, archive::cli_tarball(&bin, mtime)),
-                "linux-x64" => (names::CLI_LINUX_X64, archive::cli_tarball(&bin, mtime)),
-                "linux-arm64" => (names::CLI_LINUX_ARM64, archive::cli_tarball(&bin, mtime)),
-                "windows-x64" => (names::CLI_WINDOWS_X64, archive::cli_zip(&bin)),
+                "macos-arm64" => (names::CLI_MAC_ARM64, tarball()),
+                "linux-x64" => (names::CLI_LINUX_X64, tarball()),
+                "linux-arm64" => (names::CLI_LINUX_ARM64, tarball()),
+                "windows-x64" => (names::CLI_WINDOWS_X64, archive::cli_zip(&bin, alias)),
                 other => return Err(format!("no command-line archive is defined for {other}")),
             };
             write(&out.join(name), &bytes.map_err(|e| e.to_string())?)
@@ -240,7 +244,7 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
                     let arch = a.one("arch")?;
                     let name = match arch.as_str() {
                         "amd64" => names::LINUX_DEB_AMD64.to_string(),
-                        other => format!("Screepub-linux-{other}.deb"),
+                        other => format!("{}-linux-{other}.deb", names::INSTALLER_STEM),
                     };
                     let bytes = linux::build_deb(&app, &arch, mtime).map_err(|e| e.to_string())?;
                     write(&out.join(name), &bytes)
@@ -249,7 +253,7 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
                     let arch = a.one("arch")?;
                     let name = match arch.as_str() {
                         "x86_64" => names::LINUX_RPM_X86_64.to_string(),
-                        other => format!("Screepub-linux-{other}.rpm"),
+                        other => format!("{}-linux-{other}.rpm", names::INSTALLER_STEM),
                     };
                     let bytes = linux::build_rpm(&app, &arch, mtime as u32)?;
                     write(&out.join(name), &bytes)

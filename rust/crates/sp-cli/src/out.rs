@@ -144,7 +144,7 @@ impl Io {
                     let error = serde_json::json!({ "ok": false, "error": { "code": code, "message": message } });
                     self.say(&jsjson::stringify(&error));
                 } else {
-                    self.err(&format!("screepub: {message}"));
+                    self.err(&format!("method-reader: {message}"));
                 }
                 1
             }

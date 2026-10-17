@@ -146,7 +146,7 @@ pub fn verify_signed_version(
 }
 
 /// `signed_version`: the `version:` field of a tab-separated trusted
-/// comment, as Screepub's signer writes it
+/// comment, as Method Reader's signer writes it
 /// (`timestamp:<t>\tfile:<name>\tversion:<v>`).
 pub fn signed_version(trusted_comment: &str) -> Option<&str> {
     trusted_comment

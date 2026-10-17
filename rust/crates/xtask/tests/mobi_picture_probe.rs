@@ -13,12 +13,12 @@ use xtask::mobi_probe;
 /// The single-picture books' files, smallest first, spelled out rather than
 /// derived: these are the names the device check tells a person to copy.
 const SINGLE_FILES: [&str; 3] = [
-    "screepub-picture-probe-2kb.mobi",
-    "screepub-picture-probe-200kb.mobi",
-    "screepub-picture-probe-1400kb.mobi",
+    "method-reader-picture-probe-2kb.mobi",
+    "method-reader-picture-probe-200kb.mobi",
+    "method-reader-picture-probe-1400kb.mobi",
 ];
-const MOBI_FILE: &str = "screepub-picture-probe.mobi";
-const EPUB_FILE: &str = "screepub-picture-probe.epub";
+const MOBI_FILE: &str = "method-reader-picture-probe.mobi";
+const EPUB_FILE: &str = "method-reader-picture-probe.epub";
 
 struct Scratch(PathBuf);
 

@@ -1,6 +1,6 @@
 [package]
 name = "sp-device"
-description = "Screepub's readers: finding them, copying to them, ejecting them, a reMarkable over its USB web interface, and (beta, off) MTP Kindles"
+description = "Method Reader's readers: finding them, copying to them, ejecting them, a reMarkable over its USB web interface, and (beta, off) MTP Kindles"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

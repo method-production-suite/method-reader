@@ -1,4 +1,4 @@
-//! Screepub's MOBI 6 writer, and the PalmDB container the AZW3 shares.
+//! Method Reader's MOBI 6 writer, and the PalmDB container the AZW3 shares.
 //!
 //! | Module | Ports |
 //! |---|---|

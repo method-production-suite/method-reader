@@ -1,8 +1,11 @@
 //! `cargo xtask build-cli`: compile, sign, package and VERIFY the CLI
 //! artifacts (was tools/build-cli.ts).
 //!
-//! The CLI is crate sp-cli's binary `screepub`, compiled with `cargo build
-//! --release --target <triple>`. The Mac build signs each binary BEFORE
+//! The CLI is crate sp-cli's binary `method-reader`, compiled with `cargo
+//! build --release --target <triple>` together with its second binary
+//! `screepub` (the old name, kept a few releases: it says once that the
+//! tool was renamed, then behaves exactly like method-reader). Both ride in
+//! every archive. The Mac build signs each binary BEFORE
 //! packaging it, so the tarball holds the signed bytes, and can notarize it
 //! (`--notarize`; a bare Mach-O cannot be stapled, so notarization is
 //! recorded with Apple and checked online).
@@ -24,14 +27,17 @@ use sha2::{Digest, Sha256};
 use super::archive::archive_entries;
 use super::binfmt::{HEAD_BYTES, detect_binary_format, read_binary_format};
 use super::targets::{
-    MAC_TARGETS, Packaging, TARGETS, Target, archive_path, binary_path, build_dir, is_mac_target,
+    MAC_TARGETS, Packaging, TARGETS, Target, alias_path, archive_path, binary_path, build_dir,
+    is_mac_target,
 };
 use super::{FlagKind, RunResult, Spawn, parse_flags, real_spawn, toml_string, workspace_version};
 use crate::paths;
 
-/// The crate whose binary is the CLI, and the binary's name.
+/// The crate whose binary is the CLI, the binary's name, and the old
+/// name's binary built beside it.
 pub const CLI_CRATE: &str = "sp-cli";
-pub const CLI_BINARY: &str = "screepub";
+pub const CLI_BINARY: &str = "method-reader";
+pub const CLI_ALIAS_BINARY: &str = "screepub";
 
 /// A release version, MAJOR.MINOR.PATCH with an optional prerelease: the
 /// one rule every release tool checks its --version against, sp-release's.
@@ -183,14 +189,14 @@ pub fn cli_version(workspace: &Path) -> Result<(String, String), String> {
     Ok((workspace_version(workspace)?, "rust/Cargo.toml".to_string()))
 }
 
-/// `screepub --version` reports the crate version compiled in; --version
+/// `method-reader --version` reports the crate version compiled in; --version
 /// changes nothing about the binary. So the flag's job is to be CHECKED: a
 /// binary that disagrees with its tag lies about itself in every bug report.
 pub fn assert_crate_version(version: &str, workspace: &Path) -> Result<(), String> {
     let (have, file) = cli_version(workspace).map_err(|e| format!("build-cli: {e}"))?;
     if have != version {
         return Err(format!(
-            "build-cli: {file} says {have} but --version says {version}. `screepub --version` \
+            "build-cli: {file} says {have} but --version says {version}. `method-reader --version` \
              reports the crate version compiled in, so this binary would misreport itself. Bump \
              the version, or build the version it already names."
         ));
@@ -223,6 +229,8 @@ pub fn compile_argv(target: &Target) -> Vec<String> {
         CLI_CRATE,
         "--bin",
         CLI_BINARY,
+        "--bin",
+        CLI_ALIAS_BINARY,
         "--target",
         target.rust_triple,
     ]
@@ -237,6 +245,14 @@ pub fn cargo_output_path(target: &Target, cargo_target_dir: &Path) -> PathBuf {
         .join(target.rust_triple)
         .join("release")
         .join(target.binary_name)
+}
+
+/// Where cargo writes the alias (`screepub`) beside it.
+pub fn cargo_alias_output_path(target: &Target, cargo_target_dir: &Path) -> PathBuf {
+    cargo_target_dir
+        .join(target.rust_triple)
+        .join("release")
+        .join(target.alias_name)
 }
 
 /// Every artifact embeds the whole engine. Anything an order of magnitude
@@ -290,9 +306,9 @@ impl BuildEnv<'static> {
     }
 }
 
-/// Compile one target and put the binary in its build folder. Checks that
-/// cargo wrote the file rather than trusting its exit code. Returns where
-/// the binary now sits.
+/// Compile one target and put the binary and its alias in its build
+/// folder. Checks that cargo wrote both files rather than trusting its
+/// exit code. Returns where the binary now sits.
 pub fn compile_target(target: &Target, out_dir: &Path, env: &BuildEnv) -> Result<PathBuf, String> {
     let dir = build_dir(target, out_dir);
     std::fs::create_dir_all(&dir)
@@ -306,24 +322,34 @@ pub fn compile_target(target: &Target, out_dir: &Path, env: &BuildEnv) -> Result
             result.stderr.trim()
         ));
     }
-    let built = cargo_output_path(target, &env.cargo_target_dir);
-    if !built.is_file() {
-        return Err(format!(
-            "build-cli: {} compiled but cargo wrote nothing at {}",
-            target.id,
-            built.display()
-        ));
+    let pairs = [
+        (
+            cargo_output_path(target, &env.cargo_target_dir),
+            binary_path(target, out_dir),
+        ),
+        (
+            cargo_alias_output_path(target, &env.cargo_target_dir),
+            alias_path(target, out_dir),
+        ),
+    ];
+    for (built, dest) in &pairs {
+        if !built.is_file() {
+            return Err(format!(
+                "build-cli: {} compiled but cargo wrote nothing at {}",
+                target.id,
+                built.display()
+            ));
+        }
+        std::fs::copy(built, dest).map_err(|e| {
+            format!(
+                "build-cli: {}: cannot copy {} to {}: {e}",
+                target.id,
+                built.display(),
+                dest.display()
+            )
+        })?;
     }
-    let dest = binary_path(target, out_dir);
-    std::fs::copy(&built, &dest).map_err(|e| {
-        format!(
-            "build-cli: {}: cannot copy {} to {}: {e}",
-            target.id,
-            built.display(),
-            dest.display()
-        )
-    })?;
-    Ok(dest)
+    Ok(binary_path(target, out_dir))
 }
 
 /// The exact codesign call the shipped CLI is signed with: hardened runtime
@@ -337,24 +363,47 @@ pub fn compile_target(target: &Target, out_dir: &Path, env: &BuildEnv) -> Result
 /// cutover and the hardened runtime is now unrelaxed (rust/PARITY.md,
 /// Decisions).
 pub fn sign_argv(target: &Target, out_dir: &Path, identity: &str) -> Vec<String> {
+    sign_argv_for(
+        &binary_path(target, out_dir),
+        &signing_identifier(CLI_BINARY, target),
+        identity,
+    )
+}
+
+/// The same call for the alias, under the identifier the CLI was signed
+/// with up to 0.12.x.
+pub fn sign_alias_argv(target: &Target, out_dir: &Path, identity: &str) -> Vec<String> {
+    sign_argv_for(
+        &alias_path(target, out_dir),
+        &signing_identifier(CLI_ALIAS_BINARY, target),
+        identity,
+    )
+}
+
+/// `<name>-cli-<arch>`. codesign takes the identifier from the file name
+/// unless told, and the shipped CLI has always been signed as
+/// `screepub-cli-<arch>` (the Swift app's release script signed a file of
+/// that name). The renamed tool is `method-reader-cli-<arch>`; the alias
+/// keeps the old identifier, so its designated requirement is unchanged.
+pub fn signing_identifier(name: &str, target: &Target) -> String {
+    format!(
+        "{name}-cli-{}",
+        target.id.strip_prefix("macos-").unwrap_or(target.id)
+    )
+}
+
+fn sign_argv_for(bin: &Path, identifier: &str, identity: &str) -> Vec<String> {
     vec![
         "codesign".into(),
         "--force".into(),
         "--options".into(),
         "runtime".into(),
         "--timestamp".into(),
-        // The identifier the shipped CLI has always had: the Swift app's
-        // release script signed a file named screepub-cli-<arch>, and
-        // codesign takes the identifier from the file name, so signing one
-        // named `screepub` says so or the designated requirement changes.
         "--identifier".into(),
-        format!(
-            "screepub-cli-{}",
-            target.id.strip_prefix("macos-").unwrap_or(target.id)
-        ),
+        identifier.into(),
         "--sign".into(),
         identity.into(),
-        binary_path(target, out_dir).display().to_string(),
+        bin.display().to_string(),
     ]
 }
 
@@ -371,10 +420,10 @@ fn names_a_team(described: &str) -> bool {
     })
 }
 
-/// Sign, then check what the signature says rather than trusting codesign's
-/// exit code: it must verify strictly, carry the hardened runtime
-/// (notarization rejects a binary without it, and only after the upload),
-/// and for any identity but ad-hoc, name a team.
+/// Sign the tool, then its alias, and check what each signature says rather
+/// than trusting codesign's exit code: it must verify strictly, carry the
+/// hardened runtime (notarization rejects a binary without it, and only
+/// after the upload), and for any identity but ad-hoc, name a team.
 pub fn sign_target(
     target: &Target,
     out_dir: &Path,
@@ -388,7 +437,37 @@ pub fn sign_target(
             target.id
         ));
     }
-    let bin = binary_path(target, out_dir).display().to_string();
+    for (argv, bin) in [
+        (
+            sign_argv(target, out_dir, identity),
+            binary_path(target, out_dir),
+        ),
+        (
+            sign_alias_argv(target, out_dir, identity),
+            alias_path(target, out_dir),
+        ),
+    ] {
+        sign_one(
+            target,
+            argv,
+            &bin.display().to_string(),
+            identity,
+            spawn,
+            cwd,
+        )?;
+    }
+    Ok(())
+}
+
+fn sign_one(
+    target: &Target,
+    sign: Vec<String>,
+    bin: &str,
+    identity: &str,
+    spawn: Spawn,
+    cwd: &Path,
+) -> Result<(), String> {
+    let bin = bin.to_string();
     let run = |argv: Vec<String>, what: &str| -> Result<String, String> {
         let r = spawn(&argv, cwd);
         if r.exit_code != 0 {
@@ -401,7 +480,7 @@ pub fn sign_target(
         }
         Ok(r.stderr)
     };
-    run(sign_argv(target, out_dir, identity), "codesign")?;
+    run(sign, "codesign")?;
     run(
         vec![
             "codesign".into(),
@@ -468,14 +547,21 @@ pub fn notary_credentials(
     })
 }
 
-/// The zip the signed binary rides in for the submission alone.
+/// The zip the signed binaries ride in for the submission alone.
 pub fn notarize_zip_path(target: &Target, out_dir: &Path) -> PathBuf {
-    build_dir(target, out_dir).join("screepub-notarize.zip")
+    build_dir(target, out_dir).join("method-reader-notarize.zip")
 }
 
-/// notarytool takes an archive, not a bare Mach-O, so the signed binary
-/// rides in a zip that exists only for the submission and is removed
-/// whatever happens. The verdict is READ (`--output-format json`, status
+/// The folder the zip is made of: copies of the tool and its alias, so
+/// one submission notarizes both.
+pub fn notarize_stage_path(target: &Target, out_dir: &Path) -> PathBuf {
+    build_dir(target, out_dir).join("notarize")
+}
+
+/// notarytool takes an archive, not a bare Mach-O, so the signed binaries
+/// (the tool and its alias, copied into one folder) ride in a zip that
+/// exists only for the submission, and folder and zip are removed whatever
+/// happens. The verdict is READ (`--output-format json`, status
 /// "Accepted", as tauri-macos-sign 2.3.4 does for the window), never
 /// inferred from the exit code.
 pub fn notarize_target(
@@ -486,14 +572,31 @@ pub fn notarize_target(
     cwd: &Path,
 ) -> Result<(), String> {
     let zip = notarize_zip_path(target, out_dir);
-    let result = submit(target, out_dir, &zip, creds, spawn, cwd);
+    let stage = notarize_stage_path(target, out_dir);
+    let result = stage_both(target, out_dir, &stage)
+        .and_then(|()| submit(target, &stage, &zip, creds, spawn, cwd));
     let _ = std::fs::remove_file(&zip);
+    let _ = std::fs::remove_dir_all(&stage);
     result
+}
+
+fn stage_both(target: &Target, out_dir: &Path, stage: &Path) -> Result<(), String> {
+    let _ = std::fs::remove_dir_all(stage);
+    std::fs::create_dir_all(stage)
+        .map_err(|e| format!("build-cli: cannot make {}: {e}", stage.display()))?;
+    for (from, name) in [
+        (binary_path(target, out_dir), target.binary_name),
+        (alias_path(target, out_dir), target.alias_name),
+    ] {
+        std::fs::copy(&from, stage.join(name))
+            .map_err(|e| format!("build-cli: cannot copy {}: {e}", from.display()))?;
+    }
+    Ok(())
 }
 
 fn submit(
     target: &Target,
-    out_dir: &Path,
+    stage: &Path,
     zip: &Path,
     creds: &NotaryCredentials,
     spawn: Spawn,
@@ -517,7 +620,7 @@ fn submit(
             "ditto".into(),
             "-c".into(),
             "-k".into(),
-            binary_path(target, out_dir).display().to_string(),
+            stage.display().to_string(),
             zip_s.clone(),
         ],
         "ditto",
@@ -573,29 +676,31 @@ fn submit(
     Ok(())
 }
 
-/// Pack the binary for download, named plainly inside so an unpack leaves a
-/// runnable file in the current folder. The executable bit is SET, not
+/// Pack the binary and its alias for download, named plainly inside so an
+/// unpack leaves runnable files in the current folder. The executable bit is SET, not
 /// inherited: on Linux it is the difference between a download that runs
 /// and one that does not. An existing archive is replaced, never appended.
 pub fn package_target(target: &Target, out_dir: &Path) -> Result<PathBuf, String> {
     let bin = binary_path(target, out_dir);
-    std::fs::metadata(&bin)
-        .map_err(|e| format!("build-cli: cannot read {}: {e}", bin.display()))?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755))
-            .map_err(|e| format!("build-cli: cannot chmod {}: {e}", bin.display()))?;
+    let alias = alias_path(target, out_dir);
+    for b in [&bin, &alias] {
+        std::fs::metadata(b).map_err(|e| format!("build-cli: cannot read {}: {e}", b.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(b, std::fs::Permissions::from_mode(0o755))
+                .map_err(|e| format!("build-cli: cannot chmod {}: {e}", b.display()))?;
+        }
     }
     let out = archive_path(target, out_dir);
     let _ = std::fs::remove_file(&out);
-    // sp-release's writer, the one release.yml's `cli-archive` runs: one
-    // member named `screepub` (`screepub.exe` in the zip), mode 0755.
+    // sp-release's writer, the one release.yml's `cli-archive` runs:
+    // `method-reader` and `screepub` (`.exe` in the zip), mode 0755.
     let packed = match target.packaging {
         Packaging::TarGz => {
-            sp_release::archive::cli_tarball(&bin, sp_release::archive::build_time())
+            sp_release::archive::cli_tarball(&bin, Some(&alias), sp_release::archive::build_time())
         }
-        Packaging::Zip => sp_release::archive::cli_zip(&bin),
+        Packaging::Zip => sp_release::archive::cli_zip(&bin, Some(&alias)),
     }
     .map_err(|e| format!("build-cli: cannot write {}: {e}", out.display()))?;
     std::fs::write(&out, packed)
@@ -640,7 +745,32 @@ pub fn verify_artifact(target: &Target, out_dir: &Path, floors: Floors) -> Resul
         ));
     }
     let entries = archive_entries(&arc).map_err(|e| format!("build-cli: {id}: {e}"))?;
-    let name = target.binary_name;
+    verify_member(target, &entries, target.binary_name, bin_bytes)?;
+    // The alias: on disk, the right format, and in the archive as itself.
+    let alias = alias_path(target, out_dir);
+    let alias_bytes = std::fs::metadata(&alias)
+        .map(|m| m.len())
+        .map_err(|_| format!("build-cli: {id}: no alias binary at {}", alias.display()))?;
+    let alias_format = read_binary_format(&alias)
+        .map_err(|e| format!("build-cli: {id}: cannot read {}: {e}", alias.display()))?;
+    if alias_format != target.format {
+        return Err(format!(
+            "build-cli: {id}: the {} alias is {alias_format}, expected {}",
+            target.alias_name, target.format
+        ));
+    }
+    verify_member(target, &entries, target.alias_name, alias_bytes)
+}
+
+/// One archive member: present, as big as the file it was packed from, the
+/// target's format, executable.
+fn verify_member(
+    target: &Target,
+    entries: &[super::archive::ArchiveEntry],
+    name: &str,
+    bin_bytes: u64,
+) -> Result<(), String> {
+    let id = target.id;
     let Some(member) = entries.iter().find(|e| e.name == name) else {
         let held: Vec<&str> = entries.iter().map(|e| e.name.as_str()).collect();
         let held = if held.is_empty() {

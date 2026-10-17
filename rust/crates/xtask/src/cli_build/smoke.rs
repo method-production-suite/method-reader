@@ -6,7 +6,7 @@
 //! never executed, so each OS runs its own artifact through this.
 //!
 //! ```text
-//! cargo xtask smoke-cli --binary ./screepub
+//! cargo xtask smoke-cli --binary ./method-reader
 //! ```
 
 use std::io::Read;
@@ -53,7 +53,8 @@ pub fn sole_json(stdout: &str, what: &str) -> Result<Value, String> {
     })
 }
 
-/// `screepub --version` must print exactly `screepub <expected>`.
+/// `method-reader --version` must print exactly `method-reader <expected>`
+/// (the `screepub` alias prints the same: it behaves exactly like the tool).
 pub fn check_version(result: &RunResult, expected: &str) -> Result<(), String> {
     if result.exit_code != 0 {
         return Err(format!(
@@ -63,9 +64,9 @@ pub fn check_version(result: &RunResult, expected: &str) -> Result<(), String> {
         ));
     }
     let line = result.stdout.trim();
-    if line != format!("screepub {expected}") {
+    if line != format!("method-reader {expected}") {
         return Err(format!(
-            "smoke: --version printed \"{line}\", expected \"screepub {expected}\""
+            "smoke: --version printed \"{line}\", expected \"method-reader {expected}\""
         ));
     }
     Ok(())
@@ -233,7 +234,7 @@ pub fn smoke_cli(
 }
 
 /// `cargo xtask smoke-cli`. The expected version is the workspace's (what a
-/// Rust `screepub --version` reports) unless --expect-version names one,
+/// Rust `method-reader --version` reports) unless --expect-version names one,
 /// which also lets it smoke a bun-compiled CLI whose package.json differs.
 pub fn main(args: &[String]) -> u8 {
     match run_main(args) {
@@ -275,7 +276,7 @@ fn run_main(args: &[String]) -> Result<String, String> {
     };
     // Removed when it drops, on a failure as well as a pass.
     let work =
-        TempDir::new("screepub-smoke-").map_err(|e| format!("smoke: no work folder: {e}"))?;
+        TempDir::new("method-reader-smoke-").map_err(|e| format!("smoke: no work folder: {e}"))?;
     smoke_cli(
         Path::new(binary),
         &fixture,

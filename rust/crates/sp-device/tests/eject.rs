@@ -83,7 +83,7 @@ fn a_volume_that_is_not_a_listed_reader_is_unknown_device_and_nothing_runs() {
     assert_eq!(err.code, ErrorCode::UnknownDevice);
     assert_eq!(
         err.message,
-        "not a reader Screepub can see: /Volumes/Backup"
+        "not a reader Method Reader can see: /Volumes/Backup"
     );
     assert!(run.calls().is_empty());
 }
@@ -353,7 +353,7 @@ fn win32_a_listed_volume_that_is_not_a_drive_root_is_refused_and_powershell_neve
         assert_eq!(err.code, ErrorCode::UnknownDevice, "{volume}");
         assert_eq!(
             err.message,
-            format!("not a whole drive Screepub can eject: {volume}")
+            format!("not a whole drive Method Reader can eject: {volume}")
         );
         assert!(run.calls().is_empty());
     }

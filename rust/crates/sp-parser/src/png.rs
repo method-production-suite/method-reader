@@ -1,7 +1,7 @@
 //! Port of `src/parser/png.ts`: a minimal PNG encoder and box downscaler.
 //!
 //! The PDF layer hands back DECODED pixels and never the original JPEG, so
-//! anything Screepub carries into a book is a re-encode. That makes the
+//! anything Method Reader carries into a book is a re-encode. That makes the
 //! bytes ours to choose, which is the whole reason this file exists rather
 //! than a dependency: the same judgement that produced the hand-built
 //! PalmDB container in the MOBI writer.

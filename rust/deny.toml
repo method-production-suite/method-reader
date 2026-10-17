@@ -4,7 +4,7 @@
 # why in the commit, and keep THIRD-PARTY-NOTICES.md in step.
 
 [graph]
-# Every platform Screepub ships for, and the Worker's wasm32: a crate only
+# Every platform Method Reader ships for, and the Worker's wasm32: a crate only
 # one of them pulls in is still a crate the release carries.
 targets = [
   "aarch64-apple-darwin",
@@ -23,7 +23,7 @@ ignore = [
   # proc-macro-error 1.0.4: a build-time macro helper inside glib-macros,
   # which reaches the lock file only through GTK, through muda, which
   # sp-app builds for macOS alone (where muda does not use GTK). Nothing
-  # Screepub ships runs it. Goes when muda moves off gtk-rs 0.18.
+  # Method Reader ships runs it. Goes when muda moves off gtk-rs 0.18.
   { id = "RUSTSEC-2024-0370", reason = "build-time macro via muda's Linux-only GTK, which sp-app never builds on Linux" },
   # ttf-parser 0.25.1: read through ab_glyph by sctk-adwaita, the window
   # frame winit draws on Wayland. It parses only the fonts the system
@@ -59,7 +59,7 @@ allow = [
   "Zlib",
 ]
 confidence-threshold = 0.9
-# Screepub's own crates (MIT OR Apache-2.0, sp-azw3 GPL-3.0-only; never
+# Method Reader's own crates (MIT OR Apache-2.0, sp-azw3 GPL-3.0-only; never
 # published).
 private = { ignore = true }
 

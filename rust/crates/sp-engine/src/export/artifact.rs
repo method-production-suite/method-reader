@@ -48,7 +48,10 @@ pub fn available_formats() -> Vec<ExportFormat> {
     vec![ExportFormat::Epub, ExportFormat::Kindle]
 }
 
-/// `KindleArtifactPlan['builtBy']`.
+/// `KindleArtifactPlan['builtBy']`. `Screepub` (serialized "screepub")
+/// means "this app made it, with nothing else installed". It kept the
+/// 0.12 spelling through the rename to Method Reader: it is a token of the
+/// `--json` contract the window matches on, not a name a person reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum BuiltBy {
@@ -121,7 +124,7 @@ pub trait RungBuilders {
     fn azw3(&self, epub: &str) -> Result<String, EngineError>;
 }
 
-/// `writeAzw3(epub)`: Screepub's own AZW3 from the EPUB as it stands,
+/// `writeAzw3(epub)`: Method Reader's own AZW3 from the EPUB as it stands,
 /// written beside it through a temp file and a rename.
 pub fn write_azw3(epub: &str, renderers: &dyn Renderers) -> Result<String, EngineError> {
     let bytes = fsx::read(epub)?;

@@ -15,7 +15,7 @@ pub const LABEL: &str = "Which device?";
 pub const SEND: &str = "Send";
 pub const TRY_AGAIN: &str = "Try again";
 pub const WHAT_IS_SENT: &str =
-    "Sends the device’s name, Screepub’s version and your platform. Nothing else.";
+    "Sends the device’s name, Method Reader’s version and your platform. Nothing else.";
 pub const THANKS: &str = "Thanks. We count every request.";
 pub const WORKED: &str = "It worked";
 pub const DID_NOT_WORK: &str = "It did not work";

@@ -51,7 +51,7 @@ pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 pub const CAPTURE_TIMEOUT: Duration = Duration::from_secs(150);
 
 /// The prefix of every profile folder this makes in the temp folder.
-pub const PROFILE_PREFIX: &str = "screepub-capture-chrome-";
+pub const PROFILE_PREFIX: &str = "method-reader-capture-chrome-";
 
 /// A fresh, empty folder under `parent` whose name starts with `prefix`.
 pub fn make_temp_dir(parent: &Path, prefix: &str) -> std::io::Result<PathBuf> {

@@ -67,7 +67,7 @@ fn is_executable(_meta: &std::fs::Metadata) -> bool {
     false
 }
 
-/// Every entry of the folder `root`, under `top` (`Screepub.app`, ...),
+/// Every entry of the folder `root`, under `top` (`Method Reader.app`, ...),
 /// `top` itself first, then depth-first in name order.
 pub fn tree_entries(root: &Path, top: &str) -> std::io::Result<Vec<Entry>> {
     let mut out = vec![Entry::dir(top)];
@@ -183,7 +183,7 @@ pub fn tar_gz(entries: &[Entry], mtime: u64) -> std::io::Result<Vec<u8>> {
 }
 
 /// The update archive of a finished (signed, stapled) bundle: the folder
-/// under `Screepub.app/`, whatever the folder is called on disk, since the
+/// under `Method Reader.app/`, whatever the folder is called on disk, since the
 /// installer drops the top component anyway. Every file in Contents/MacOS
 /// is 0755 whatever the host's file system says (a Windows host has no
 /// mode bits to read), so the installed window always runs.
@@ -199,21 +199,29 @@ pub fn app_archive(bundle: &Path, mtime: u64) -> std::io::Result<Vec<u8>> {
     tar_gz(&entries, mtime)
 }
 
-/// A command-line tarball: one executable file named `screepub`, as the
-/// Homebrew formula's `bin.install "screepub"` expects.
-pub fn cli_tarball(binary: &Path, mtime: u64) -> std::io::Result<Vec<u8>> {
-    tar_gz(
-        &[Entry::file(
-            crate::names::CLI_EXE,
-            std::fs::read(binary)?,
+/// A command-line tarball: the executable `method-reader`, as the Homebrew
+/// formula's `bin.install "method-reader"` expects, and beside it, when
+/// given, the old name `screepub` (the alias binary, which says once that
+/// the tool was renamed and then does exactly what method-reader does).
+pub fn cli_tarball(binary: &Path, alias: Option<&Path>, mtime: u64) -> std::io::Result<Vec<u8>> {
+    let mut entries = vec![Entry::file(
+        crate::names::CLI_EXE,
+        std::fs::read(binary)?,
+        true,
+    )];
+    if let Some(alias) = alias {
+        entries.push(Entry::file(
+            crate::names::CLI_ALIAS_EXE,
+            std::fs::read(alias)?,
             true,
-        )],
-        mtime,
-    )
+        ));
+    }
+    tar_gz(&entries, mtime)
 }
 
-/// The Windows command-line zip: one `screepub.exe`.
-pub fn cli_zip(binary: &Path) -> std::io::Result<Vec<u8>> {
+/// The Windows command-line zip: `method-reader.exe`, and `screepub.exe`
+/// beside it when the alias is given.
+pub fn cli_zip(binary: &Path, alias: Option<&Path>) -> std::io::Result<Vec<u8>> {
     use zip::write::SimpleFileOptions;
     let mut w = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
     let options = SimpleFileOptions::default()
@@ -224,9 +232,13 @@ pub fn cli_zip(binary: &Path) -> std::io::Result<Vec<u8>> {
         // recorded as DOS, which drops the executable bit and changes the
         // bytes with the host that built it.
         .system(zip::System::Unix);
-    w.start_file(format!("{}.exe", crate::names::CLI_EXE), options)
-        .map_err(std::io::Error::other)?;
-    w.write_all(&std::fs::read(binary)?)?;
+    let members = std::iter::once((crate::names::CLI_EXE, binary))
+        .chain(alias.map(|a| (crate::names::CLI_ALIAS_EXE, a)));
+    for (name, path) in members {
+        w.start_file(format!("{name}.exe"), options)
+            .map_err(std::io::Error::other)?;
+        w.write_all(&std::fs::read(path)?)?;
+    }
     Ok(w.finish().map_err(std::io::Error::other)?.into_inner())
 }
 
@@ -255,27 +267,65 @@ mod tests {
         assert_eq!(
             names,
             [
-                "Screepub.app/",
-                "Screepub.app/Contents/",
-                "Screepub.app/Contents/MacOS/",
-                "Screepub.app/Contents/MacOS/x"
+                "Method Reader.app/",
+                "Method Reader.app/Contents/",
+                "Method Reader.app/Contents/MacOS/",
+                "Method Reader.app/Contents/MacOS/x"
             ]
         );
     }
 
     #[test]
-    fn a_cli_zip_holds_one_exe() {
+    fn a_cli_zip_holds_the_tool_and_its_old_name() {
         let dir = tempfile::tempdir().unwrap();
-        let bin = dir.path().join("screepub.exe");
+        let bin = dir.path().join("method-reader.exe");
         std::fs::write(&bin, "MZ").unwrap();
-        let z = cli_zip(&bin).unwrap();
+        let alias = dir.path().join("screepub.exe");
+        std::fs::write(&alias, "MZ alias").unwrap();
+        let z = cli_zip(&bin, Some(&alias)).unwrap();
         let mut r = zip::ZipArchive::new(std::io::Cursor::new(z)).unwrap();
-        assert_eq!(r.len(), 1);
-        assert_eq!(r.by_index(0).unwrap().name().unwrap(), "screepub.exe");
+        assert_eq!(r.len(), 2);
+        assert_eq!(r.by_index(0).unwrap().name().unwrap(), "method-reader.exe");
+        assert_eq!(r.by_index(1).unwrap().name().unwrap(), "screepub.exe");
         // Executable, whatever system made the zip.
+        for i in 0..2 {
+            assert_eq!(
+                r.by_index(i).unwrap().unix_mode().map(|m| m & 0o777),
+                Some(0o755)
+            );
+        }
+        let one = cli_zip(&bin, None).unwrap();
         assert_eq!(
-            r.by_index(0).unwrap().unix_mode().map(|m| m & 0o777),
-            Some(0o755)
+            zip::ZipArchive::new(std::io::Cursor::new(one))
+                .unwrap()
+                .len(),
+            1
+        );
+    }
+
+    #[test]
+    fn a_cli_tarball_holds_the_tool_and_its_old_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let bin = dir.path().join("method-reader");
+        std::fs::write(&bin, "elf").unwrap();
+        let alias = dir.path().join("screepub");
+        std::fs::write(&alias, "elf alias").unwrap();
+        let t = cli_tarball(&bin, Some(&alias), 7).unwrap();
+        let mut a = tar::Archive::new(flate2::read::GzDecoder::new(t.as_slice()));
+        let got: Vec<(String, u32)> = a
+            .entries()
+            .unwrap()
+            .map(|e| {
+                let e = e.unwrap();
+                (
+                    e.path().unwrap().to_string_lossy().into_owned(),
+                    e.header().mode().unwrap() & 0o777,
+                )
+            })
+            .collect();
+        assert_eq!(
+            got,
+            [("method-reader".into(), 0o755), ("screepub".into(), 0o755)]
         );
     }
 }

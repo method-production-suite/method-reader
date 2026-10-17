@@ -1,6 +1,6 @@
 [package]
 name = "sp-pdf"
-description = "What pdf.js gives Screepub's parser, in pure Rust: text items, font facts, the operators the parser walks, and image pixels."
+description = "What pdf.js gives Method Reader's parser, in pure Rust: text items, font facts, the operators the parser walks, and image pixels."
 edition.workspace = true
 license.workspace = true
 version.workspace = true

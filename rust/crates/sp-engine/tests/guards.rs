@@ -34,13 +34,13 @@ fn assert_uncreatable(guard: &str) {
 
 #[test]
 fn the_settings_guard_is_a_path_nothing_can_create() {
-    assert_eq!(SETTINGS_GUARD, "/dev/null/screepub-test-guard");
+    assert_eq!(SETTINGS_GUARD, "/dev/null/method-reader-test-guard");
     assert_uncreatable(SETTINGS_GUARD);
 }
 
 #[test]
 fn the_calibre_guard_is_a_path_nothing_can_create() {
-    assert_eq!(CALIBRE_GUARD, "/dev/null/screepub-test-calibre-guard");
+    assert_eq!(CALIBRE_GUARD, "/dev/null/method-reader-test-calibre-guard");
     assert_uncreatable(CALIBRE_GUARD);
 }
 
@@ -105,12 +105,17 @@ fn a_kfx_plugin_in_the_real_folder_is_found_in_the_copy() {
 #[test]
 fn the_guarded_env_carries_both_guards_and_nothing_of_this_process_but_path() {
     let env = common::guarded_env();
-    assert_eq!(env.get("SCREEPUB_CONFIG_DIR"), Some(SETTINGS_GUARD));
+    assert_eq!(env.get("METHOD_READER_CONFIG_DIR"), Some(SETTINGS_GUARD));
     assert_eq!(env.get("CALIBRE_CONFIG_DIRECTORY"), Some(CALIBRE_GUARD));
     let names: Vec<&String> = env.vars().map(|(k, _)| k).collect();
     for name in names {
         assert!(
-            ["PATH", "SCREEPUB_CONFIG_DIR", "CALIBRE_CONFIG_DIRECTORY"].contains(&name.as_str()),
+            [
+                "PATH",
+                "METHOD_READER_CONFIG_DIR",
+                "CALIBRE_CONFIG_DIRECTORY"
+            ]
+            .contains(&name.as_str()),
             "{name}"
         );
     }

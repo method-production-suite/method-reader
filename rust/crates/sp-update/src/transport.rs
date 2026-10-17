@@ -22,7 +22,7 @@ use crate::verify::{VerifyError, verify_signature};
 
 /// The plugin's User-Agent was `tauri-plugin-updater/2.12.0`; this one
 /// says what is asking.
-pub const USER_AGENT: &str = concat!("screepub-update/", env!("CARGO_PKG_VERSION"));
+pub const USER_AGENT: &str = concat!("method-reader-update/", env!("CARGO_PKG_VERSION"));
 
 /// No update archive is anywhere near this; a server that keeps sending is
 /// refused rather than allowed to fill the disk.
@@ -49,9 +49,9 @@ pub struct Config {
 }
 
 impl Config {
-    /// What a Screepub build trusts and asks: the baked endpoint and key
+    /// What a Method Reader build trusts and asks: the baked endpoint and key
     /// (see `crate::baked_endpoint`), signed versions required.
-    pub fn screepub(installer: Option<Installer>) -> Self {
+    pub fn method_reader(installer: Option<Installer>) -> Self {
         Self {
             endpoints: vec![crate::baked_endpoint().to_string()],
             pubkey: crate::baked_pubkey().to_string(),
@@ -108,7 +108,7 @@ impl std::fmt::Display for UpdateError {
             }
             // The plugin's `Error::Network` is displayed in backticks.
             Self::Download(s) => write!(f, "`{s}`"),
-            Self::TooLarge => f.write_str("The update is larger than any Screepub could be."),
+            Self::TooLarge => f.write_str("The update is larger than any Method Reader could be."),
             Self::Verify(e) => write!(f, "{e}"),
         }
     }
@@ -328,7 +328,7 @@ mod tests {
 
     #[test]
     fn a_plain_http_endpoint_is_refused_unless_allowed() {
-        let mut c = Config::screepub(None);
+        let mut c = Config::method_reader(None);
         c.endpoints = vec!["http://127.0.0.1:9/latest.json".into()];
         c.allow_insecure = false;
         let err = check(&c, &Version::new(0, 11, 1)).unwrap_err();
@@ -346,7 +346,7 @@ mod tests {
     #[test]
     fn a_release_build_trusts_the_shipped_key_and_endpoint() {
         // A rehearsal build bakes others in; `cargo test` never does.
-        let c = Config::screepub(Some(Installer::App));
+        let c = Config::method_reader(Some(Installer::App));
         assert_eq!(c.endpoints, [crate::ENDPOINT]);
         assert_eq!(c.pubkey, crate::PUBKEY);
         assert!(!c.allow_insecure);

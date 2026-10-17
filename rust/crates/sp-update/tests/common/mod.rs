@@ -1,4 +1,4 @@
-//! A throwaway signing key, a fake Screepub.app, its `.app.tar.gz`, and a
+//! A throwaway signing key, a fake app bundle, its `.app.tar.gz`, and a
 //! local HTTP server that answers like a GitHub release. Nothing here
 //! reaches the network or the real key.
 #![allow(dead_code)]
@@ -119,12 +119,13 @@ pub fn tar_gz(entries: &[(&str, &[u8], u32)]) -> Vec<u8> {
     b.into_inner().unwrap().finish().unwrap()
 }
 
-/// The archive of a whole bundle folder, top folder `Screepub.app`, as the
-/// Tauri bundler and `sp-release update-archive` both lay it out.
+/// The archive of a whole bundle folder, top folder `Method Reader.app`,
+/// as `sp-release update-archive` lays it out (the Tauri bundler's had
+/// `Screepub.app`; the swap drops the top folder, so it never matters).
 pub fn archive_bundle(bundle: &Path) -> Vec<u8> {
     let gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
     let mut b = tar::Builder::new(gz);
-    b.append_dir_all("Screepub.app", bundle).unwrap();
+    b.append_dir_all("Method Reader.app", bundle).unwrap();
     b.into_inner().unwrap().finish().unwrap()
 }
 

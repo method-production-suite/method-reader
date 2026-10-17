@@ -1,5 +1,5 @@
-//! Port of tests/cli-kfx.test.ts: `screepub kfx-status` and
-//! `screepub kfx-install`.
+//! Port of tests/cli-kfx.test.ts: `method-reader kfx-status` and
+//! `method-reader kfx-install`.
 //!
 //! The handlers are sp-engine's (src/commands/kfx.rs), tested here in
 //! process with a stand-in probe and a stand-in installer, as the
@@ -301,10 +301,10 @@ fn status_the_summary_then_one_aligned_line_per_step_with_its_fix() {
     assert_eq!(
         setup_lines(&setup),
         vec![
-            "Kindles get AZW3 (beta) for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.",
+            "Kindles get AZW3 (beta) for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.",
             "  Calibre           installed",
             "  Kindle Previewer  not installed: https://kdp.amazon.com/en_US/help/topic/G202131170",
-            "  KFX plugin        not installed: run screepub kfx-install",
+            "  KFX plugin        not installed: run method-reader kfx-install",
         ]
     );
 }
@@ -377,7 +377,7 @@ fn both_are_verbs_and_a_file_of_either_name_still_converts() {
             .unwrap_or_default()
             .to_owned();
         assert!(
-            usage.starts_with(&format!("screepub {verb}:")),
+            usage.starts_with(&format!("method-reader {verb}:")),
             "{verb}: {usage}"
         );
     }
@@ -388,7 +388,7 @@ fn both_are_verbs_and_a_file_of_either_name_still_converts() {
         .as_str()
         .unwrap_or_default()
         .to_owned();
-    assert!(!usage.starts_with("screepub kfx-install:"), "{usage}");
+    assert!(!usage.starts_with("method-reader kfx-install:"), "{usage}");
     assert!(usage.contains("--mobi"), "{usage}");
 }
 
@@ -429,7 +429,7 @@ fn each_verb_has_its_own_help_naming_itself_and_not_the_conversion_flags() {
         let r = sb.run(&[verb, "--json", "--help"]);
         assert_eq!(r.code, 0);
         let usage = r.json()["usage"].as_str().unwrap_or_default().to_owned();
-        assert!(usage.contains(&format!("screepub {verb}")), "{usage}");
+        assert!(usage.contains(&format!("method-reader {verb}")), "{usage}");
         assert!(!usage.contains("--mobi"), "{usage}");
     }
 }
@@ -437,8 +437,8 @@ fn each_verb_has_its_own_help_naming_itself_and_not_the_conversion_flags() {
 #[test]
 fn the_main_usage_lists_both() {
     let r = Sandbox::new().run(&["--help"]);
-    assert!(r.stdout.contains("screepub kfx-status"));
-    assert!(r.stdout.contains("screepub kfx-install"));
+    assert!(r.stdout.contains("method-reader kfx-status"));
+    assert!(r.stdout.contains("method-reader kfx-install"));
 }
 
 #[test]

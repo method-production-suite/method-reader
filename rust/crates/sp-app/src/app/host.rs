@@ -100,7 +100,7 @@ pub fn run_outcome(outcome: Outcome) -> RunOutcome {
 /// The pages the window may open, and nothing else (capabilities/
 /// default.json's opener scope).
 pub fn allowed_url(url: &str) -> bool {
-    url.starts_with("https://github.com/ssandweiss/screepub/")
+    url.starts_with("https://github.com/method-production-suite/method-reader/")
         || matches!(
             url,
             "https://calibre-ebook.com/download_osx"
@@ -227,7 +227,8 @@ impl FileStorage {
     }
 
     /// Where the window keeps it: the platform's per-user config folder,
-    /// or SCREEPUB_CONFIG_DIR when that is set (the engine's own override
+    /// or METHOD_READER_CONFIG_DIR (else the LEGACY SCREEPUB_CONFIG_DIR)
+    /// when that is set (the engine's own override
     /// for its settings, which tests and scratch runs point elsewhere, so
     /// the window's storage goes with them).
     pub fn default_path() -> Option<std::path::PathBuf> {
@@ -261,10 +262,13 @@ pub fn running_identifier() -> String {
 }
 
 /// The Tauri window's WebKit data for this identifier, on a Mac.
-/// SCREEPUB_CONFIG_DIR, when set to something.
+/// METHOD_READER_CONFIG_DIR, or the LEGACY SCREEPUB_CONFIG_DIR when the
+/// new one is unset, when set to something: the engine's own rule.
 fn config_override() -> Option<std::path::PathBuf> {
-    std::env::var_os("SCREEPUB_CONFIG_DIR")
-        .filter(|d| !d.is_empty())
+    use crate::model::names::{CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR};
+    [CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR]
+        .into_iter()
+        .find_map(|n| std::env::var_os(n).filter(|d| !d.is_empty()))
         .map(Into::into)
 }
 
@@ -289,12 +293,18 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
         .find(|dir| dir.is_dir())
 }
 
-/// The updater: latest.json through sp-update, with the key and endpoint
-/// every Tauri window trusts. Ready only in a Mac app bundle (inventory
-/// row U1: the manifest lists darwin only, and a development build has no
-/// bundle to swap).
+/// The updater: latest.json through sp-update, with the key every Tauri
+/// window trusts. Ready only in a Mac app bundle (inventory row U1: the
+/// manifest lists darwin only, and a development build has no bundle to
+/// swap).
 pub struct ManifestUpdater {
+    /// The bundle this copy started from.
     pub bundle: Option<std::path::PathBuf>,
+    /// Where the last install put the new version, when it did: the same
+    /// path, or `Method Reader.app` beside a `Screepub.app` (the one-time
+    /// rename). The restart, "Restart now" and any later install use it,
+    /// since the old path may be gone.
+    installed: Mutex<Option<std::path::PathBuf>>,
     /// The update the last check returned: the offer's live handle.
     last: Mutex<Option<sp_update::Update>>,
 }
@@ -306,13 +316,15 @@ fn check_now() -> Result<Option<sp_update::Update>, String> {
 }
 
 fn config() -> sp_update::Config {
-    sp_update::Config::screepub(Some(sp_update::Installer::App))
+    sp_update::Config::method_reader(Some(sp_update::Installer::App))
 }
 
 /// The run's side effects, for real: sp-update's transport, its swap, and
 /// the gate the window's busy count mirrors into.
 struct RealSteps<'a> {
-    bundle: &'a std::path::Path,
+    /// The bundle to swap, and after the swap the one it reported
+    /// (`Installed::bundle`), which the restart starts.
+    bundle: std::path::PathBuf,
     gate: &'a EngineGate,
 }
 
@@ -329,17 +341,18 @@ impl Steps for RealSteps<'_> {
         sp_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
     }
     fn install(&mut self, _update: &sp_update::Update, bytes: &[u8]) -> Result<(), String> {
-        sp_update::install::install_app(bytes, self.bundle, &|bundle, new| {
+        let installed = sp_update::install::install_app(bytes, &self.bundle, &|bundle, new| {
             sp_update::install::admin_swap(bundle, new)
         })
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+        self.bundle = installed.bundle;
+        Ok(())
     }
     fn retire(&mut self) {
         self.gate.retire();
     }
     fn restart_ready(&self) -> bool {
-        sp_update::install::bundle_executable(self.bundle).is_ok()
+        sp_update::install::bundle_executable(&self.bundle).is_ok()
     }
     fn busy(&self) -> bool {
         self.gate.busy()
@@ -348,7 +361,7 @@ impl Steps for RealSteps<'_> {
         self.gate.wait_quiet(ENGINE_QUIET, RESTART_WAIT_CAP)
     }
     fn restart(&mut self) -> Result<(), String> {
-        sp_update::restart::relaunch(self.bundle).map_err(|e| e.to_string())
+        sp_update::restart::relaunch(&self.bundle).map_err(|e| e.to_string())
     }
 }
 
@@ -363,8 +376,19 @@ impl ManifestUpdater {
         };
         Self {
             bundle,
+            installed: Mutex::new(None),
             last: Mutex::new(None),
         }
+    }
+
+    /// The bundle as it stands now: where the last install put it, else
+    /// the one this copy started from.
+    fn current_bundle(&self) -> Option<std::path::PathBuf> {
+        self.installed
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+            .or_else(|| self.bundle.clone())
     }
 }
 
@@ -387,10 +411,10 @@ impl Updater for ManifestUpdater {
         gate: &EngineGate,
         emit: &mut dyn FnMut(UpdateEvent),
     ) -> RunOutcome {
-        let Some(bundle) = &self.bundle else {
+        let Some(bundle) = self.current_bundle() else {
             emit(UpdateEvent::Failed {
                 version: None,
-                message: "this copy of Screepub cannot update itself".into(),
+                message: "this copy of Method Reader cannot update itself".into(),
             });
             return RunOutcome::Error { offer: None };
         };
@@ -399,13 +423,18 @@ impl Updater for ManifestUpdater {
         } else {
             None
         };
-        let mut steps = RealSteps { bundle, gate };
-        run_outcome(sp_update::flow::install_and_restart(
-            update, &mut steps, emit,
-        ))
+        let mut steps = RealSteps {
+            bundle: bundle.clone(),
+            gate,
+        };
+        let outcome = sp_update::flow::install_and_restart(update, &mut steps, emit);
+        if steps.bundle != bundle {
+            *self.installed.lock().unwrap_or_else(|e| e.into_inner()) = Some(steps.bundle);
+        }
+        run_outcome(outcome)
     }
     fn restart(&self, version: &str, emit: &mut dyn FnMut(UpdateEvent)) -> bool {
-        let Some(bundle) = &self.bundle else {
+        let Some(bundle) = self.current_bundle() else {
             return false;
         };
         let gate = EngineGate::new();
@@ -652,7 +681,7 @@ fn fake_update(f: Found) -> sp_update::Update {
         body: f.body,
         date: None,
         target: "darwin-aarch64".into(),
-        download_url: "https://example.invalid/Screepub.app.tar.gz".into(),
+        download_url: "https://example.invalid/Method-Reader-macOS.app.tar.gz".into(),
         signature: String::new(),
         raw_json: Value::Null,
     }
@@ -752,13 +781,18 @@ mod tests {
     #[test]
     fn the_window_opens_only_the_pages_it_was_granted() {
         assert!(allowed_url(
-            "https://github.com/ssandweiss/screepub/issues/new?body=x"
+            "https://github.com/method-production-suite/method-reader/issues/new?body=x"
         ));
         assert!(allowed_url("https://calibre-ebook.com/download_osx"));
         assert!(allowed_url(
             "https://kdp.amazon.com/en_US/help/topic/G202131170"
         ));
         assert!(!allowed_url("https://github.com/someone-else/repo"));
+        // The old repository redirects, but nothing the window opens is
+        // there any more.
+        assert!(!allowed_url(
+            "https://github.com/ssandweiss/screepub/issues/new?body=x"
+        ));
         assert!(!allowed_url("https://calibre-ebook.com/download_linux"));
         assert!(!allowed_url("file:///etc/passwd"));
     }

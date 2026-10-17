@@ -270,22 +270,21 @@ pub const BETA_LABEL: &str = "Beta";
 pub const BETA_NOTE: &str =
     "New: works in our tests, not yet tried widely on real devices or apps.";
 
-/// The one Beta badge: real text in a hairline box, described by its note.
+/// The one Beta badge: real text in a hairline box, in the family's caution
+/// amber (never the accent), described by its note.
 pub fn beta_badge(ui: &mut Ui, t: &Tokens) -> Response {
     let font = theme::structure(size::NOTE);
-    let galley = ui
-        .painter()
-        .layout_no_wrap(caps(BETA_LABEL), font, t.ink_muted);
+    let galley = ui.painter().layout_no_wrap(caps(BETA_LABEL), font, t.note);
     let (rect, response) =
         ui.allocate_exact_size(galley.size() + Vec2::new(8.0, 2.0), Sense::hover());
     ui.painter().rect_stroke(
         rect,
         CornerRadius::same(theme::RADIUS_MARK as u8),
-        Stroke::new(1.0, t.ink_muted),
+        Stroke::new(1.0, t.note),
         StrokeKind::Inside,
     );
     ui.painter()
-        .galley(rect.center() - galley.size() / 2.0, galley, t.ink_muted);
+        .galley(rect.center() - galley.size() / 2.0, galley, t.note);
     response.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, BETA_LABEL));
     ui.ctx()
         .accesskit_node_builder(response.id, |n| n.set_description(BETA_NOTE));

@@ -1,4 +1,4 @@
-//! screepub-mtp's entry point: parse, run, print one JSON object, exit.
+//! method-reader-mtp's entry point: parse, run, print one JSON object, exit.
 //! Every decision lives in the library modules; this file only wires them to
 //! the real USB stack.
 
@@ -316,7 +316,7 @@ fn find_kindle(serial: &str) -> Result<Found, Failure> {
             return Err(Failure::new(
                 Code::NotAKindle,
                 format!(
-                    "the device with the serial {serial} is not a Kindle ({}), so Screepub will not touch it",
+                    "the device with the serial {serial} is not a Kindle ({}), so Method Reader will not touch it",
                     found.model.as_deref().unwrap_or("unnamed")
                 ),
             ));

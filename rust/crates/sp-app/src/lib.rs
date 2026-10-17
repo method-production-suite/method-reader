@@ -1,4 +1,4 @@
-//! The Screepub window, in Rust (plan: docs/superpowers/plans/
+//! The Method Reader window, in Rust (plan: docs/superpowers/plans/
 //! 2026-10-11-pure-rust-port.md; design: docs/superpowers/specs/
 //! 2026-10-11-sp-app-design.md).
 //!

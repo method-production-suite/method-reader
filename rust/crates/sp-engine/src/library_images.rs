@@ -172,7 +172,7 @@ pub fn image_folder_warnings(read: &ImagesRead) -> Vec<String> {
     let kept = read.images.len();
     if read.over_cap > 0 {
         out.push(format!(
-            "Screepub found {} pictures in this script's picture folder. Only the first {kept} were used.",
+            "Method Reader found {} pictures in this script's picture folder. Only the first {kept} were used.",
             kept + read.over_cap
         ));
     }

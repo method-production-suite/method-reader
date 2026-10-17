@@ -46,8 +46,9 @@ pub use mac::Menus;
 
 #[cfg(target_os = "macos")]
 mod mac {
+    use crate::model::names::PRODUCT;
     use muda::accelerator::{Accelerator, Code, Modifiers};
-    use muda::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu};
+    use muda::{AboutMetadata, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu};
 
     use super::{EditAction, edit_events};
 
@@ -62,9 +63,20 @@ mod mac {
         /// thread, after the window exists.
         pub fn install() -> Option<Self> {
             let menu = Menu::new();
-            let app = Submenu::new("Screepub", true);
+            let app = Submenu::new(PRODUCT, true);
             app.append_items(&[
-                &PredefinedMenuItem::about(None, None),
+                // Named here rather than read from the bundle, so a
+                // development build and a bundle still under its old
+                // name (Screepub.app, until its first update) both say
+                // Method Reader.
+                &PredefinedMenuItem::about(
+                    Some(&format!("About {PRODUCT}")),
+                    Some(AboutMetadata {
+                        name: Some(PRODUCT.into()),
+                        version: Some(env!("CARGO_PKG_VERSION").into()),
+                        ..Default::default()
+                    }),
+                ),
                 &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::services(None),
                 &PredefinedMenuItem::separator(),

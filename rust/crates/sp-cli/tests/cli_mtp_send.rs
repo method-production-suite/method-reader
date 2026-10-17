@@ -2,7 +2,7 @@
 //! tests/cli-mtp-send.test.ts: `send` to a Kindle that connects over MTP,
 //! through the spawned CLI. MTP is off in this build
 //! (sp_device::mtp::MTP_SHIPPED is false) and on only when
-//! SCREEPUB_MTP_HELPER names a helper, which these runs do: a stand-in
+//! METHOD_READER_MTP_HELPER names a helper, which these runs do: a stand-in
 //! shell script, beside stand-in `launchctl` and `pkill`, each logging what
 //! it was asked. No real USB device, no real ptpcamerad, no real settings.
 //! The in-process half is sp-device's (tests/commands.rs) and sp-engine's
@@ -44,7 +44,7 @@ fn lists_the_mtp_kindle_copies_through_the_helper_and_pauses_only_on_a_mac() {
     let kindle = json!({ "vendorId": 6473, "productId": 39297, "serial": "G000INVENTED01", "model": "Kindle", "kindle": true });
     let listing = json!({ "ok": true, "devices": [kindle] }).to_string();
     let helper = script(
-        &sb.path("tools/screepub-mtp"),
+        &sb.path("tools/method-reader-mtp"),
         &format!(
             "echo \"helper $*\" >> \"{log}\"\ncase \"$1\" in\n  list) printf '%s\\n' '{listing}' ;;\n  put) printf '%s\\n' '{{\"ok\":true,\"path\":\"documents/Field Station.kfx\",\"bytes\":3,\"method\":\"rename\"}}' ;;\nesac"
         ),
@@ -57,9 +57,9 @@ fn lists_the_mtp_kindle_copies_through_the_helper_and_pauses_only_on_a_mac() {
         &sb.path("tools/pkill"),
         &format!("echo \"pkill $*\" >> \"{log}\"; exit 1"),
     );
-    sb.set("SCREEPUB_MTP_HELPER", helper.to_string_lossy());
-    sb.set("SCREEPUB_LAUNCHCTL", launchctl.to_string_lossy());
-    sb.set("SCREEPUB_PKILL", pkill.to_string_lossy());
+    sb.set("METHOD_READER_MTP_HELPER", helper.to_string_lossy());
+    sb.set("METHOD_READER_LAUNCHCTL", launchctl.to_string_lossy());
+    sb.set("METHOD_READER_PKILL", pkill.to_string_lossy());
     let file = book_at(&sb, "lib/Field Station.kfx");
     let darwin = cfg!(target_os = "macos");
 
@@ -122,7 +122,7 @@ fn a_marker_a_crashed_run_left_behind_is_repaired_by_the_next_run_whatever_it_is
         &sb.path("tools/launchctl"),
         &format!("echo \"launchctl $*\" >> \"{log}\""),
     );
-    sb.set("SCREEPUB_LAUNCHCTL", launchctl.to_string_lossy());
+    sb.set("METHOD_READER_LAUNCHCTL", launchctl.to_string_lossy());
     sb.write("config/camera-import-paused", "{\"uid\":501}\n");
     let ran = sb.run(&["--version", "--json"]);
     assert_eq!(ran.code, 0);

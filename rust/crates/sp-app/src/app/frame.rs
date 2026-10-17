@@ -649,7 +649,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
     ui.ctx().accesskit_node_builder(bar.response.id, |n| {
         n.set_role(accesskit::Role::TabList);
         n.set_bounds(widgets::bounds(bar.response.rect));
-        n.set_label("Screepub");
+        n.set_label(crate::model::names::PRODUCT);
     });
 }
 
@@ -835,7 +835,11 @@ fn notes_sheet(app: &mut App, ui: &mut Ui) {
             egui::ScrollArea::vertical()
                 .max_height(ctx.content_rect().height() * 0.82 - 80.0)
                 .show(ui, |ui| {
-                    widgets::slug(ui, &t, &format!("Screepub {}", RELEASE.version));
+                    widgets::slug(
+                        ui,
+                        &t,
+                        &format!("{} {}", crate::model::names::PRODUCT, RELEASE.version),
+                    );
                     widgets::prose(ui, &t, RELEASE.headline);
                     for section in visible_sections(RELEASE.sections) {
                         ui.add_space(layout::SPACE[6]);

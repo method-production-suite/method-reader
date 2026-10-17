@@ -29,7 +29,7 @@ pub struct PresetEntry {
 #[serde(rename_all = "camelCase")]
 pub struct SettingsResult {
     pub settings: FormatOptions,
-    /// Screepub's own shipped defaults, never the user's app-wide ones.
+    /// Method Reader's own shipped defaults, never the user's app-wide ones.
     pub defaults: FormatOptions,
     /// The user's app-wide format defaults.
     pub app_defaults: FormatOptions,

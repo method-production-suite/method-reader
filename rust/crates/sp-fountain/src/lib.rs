@@ -1,4 +1,4 @@
-//! Screepub's Fountain stage, ported from `src/fountain/` and fountain-js.
+//! Method Reader's Fountain stage, ported from `src/fountain/` and fountain-js.
 //!
 //! | Module | Ports |
 //! |---|---|

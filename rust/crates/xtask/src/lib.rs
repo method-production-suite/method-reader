@@ -1,4 +1,4 @@
-//! `cargo xtask <command>`: Screepub's own tooling, every developer tool
+//! `cargo xtask <command>`: Method Reader's own tooling, every developer tool
 //! that lived in tools/ as TypeScript, Python or shell.
 //!
 //! Each command is a module with `pub fn main(args: &[String]) -> u8`, the
@@ -178,7 +178,7 @@ pub const COMMANDS: &[Command] = &[
             "usage: cargo xtask bump-tap <version> <tap-checkout>\n\n\
              Writes the Homebrew formula for release <version> into a checkout of\n\
              the tap, from the release's own checksums, and retires the cask.\n\
-             SCREEPUB_REPO names the release repository.\n",
+             METHOD_READER_REPO names the release repository.\n",
         ),
     },
     Command {
@@ -201,12 +201,12 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "build-cli",
-        help: "build, sign and check the screepub CLI for each platform",
+        help: "build, sign and check the method-reader CLI for each platform",
         main: cli_build::build_cli_main,
         usage: Usage::Text(
             "usage: cargo xtask build-cli --version <x.y.z> --out <dir> [--only <target>]...\n\
              \x20      [--mac [--unsigned | --sign <identity> [--notarize]]]\n\n\
-             Compiles the screepub CLI for each release target (or only those\n\
+             Compiles the method-reader CLI (and its screepub alias) for each release target (or only those\n\
              named), packages and checks each archive, and writes SHA256SUMS.\n\
              --notarize reads AC_API_KEY_PATH, AC_API_KEY_ID and AC_API_ISSUER_ID.\n",
         ),
@@ -216,7 +216,7 @@ pub const COMMANDS: &[Command] = &[
         help: "convert the committed fixtures with a built CLI",
         main: cli_build::smoke_cli_main,
         usage: Usage::Text(
-            "usage: cargo xtask smoke-cli --binary <screepub> [--fixture <pdf>]\n\
+            "usage: cargo xtask smoke-cli --binary <method-reader> [--fixture <pdf>]\n\
              \x20      [--jpx-fixture <pdf>] [--expect-version <x.y.z>]\n\n\
              Runs a built CLI: its version, a conversion, a JPEG 2000 picture, and\n\
              the device list, each checked.\n",

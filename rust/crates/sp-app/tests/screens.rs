@@ -58,10 +58,10 @@ fn convert(w: &World, h: &mut Harness<'static, App>) {
 fn the_idle_screen_names_the_app_and_asks_for_a_pdf() {
     let w = world();
     let h = harness(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Heading, "Screepub");
+    h.get_by_role_and_label(Role::Heading, "Method Reader");
     h.get_by_role_and_label(Role::Button, "Choose PDF…  ⌘O");
     assert!(has_value(&h, "Needs selectable text, not a scan."));
-    assert!(has_value(&h, "Books are saved in ~/Screepub."));
+    assert!(has_value(&h, "Books are saved in ~/Method Reader."));
     h.get_by_role_and_label(Role::Button, "Change…");
     assert!(
         h.query_by_role_and_label(Role::Button, "Reset").is_none(),
@@ -81,7 +81,7 @@ fn read_and_settings_are_absent_until_a_script_is_open() {
     convert(&w, &mut h);
     h.get_by_role_and_label(Role::Tab, "Read");
     h.get_by_role_and_label(Role::Tab, "Settings");
-    h.get_by_role_and_label(Role::TabList, "Screepub");
+    h.get_by_role_and_label(Role::TabList, "Method Reader");
 }
 
 // desktop-ui.test.ts: "the Convert page asks once whether to look for new versions"
@@ -214,7 +214,7 @@ fn a_scan_has_no_override_and_back_to_one_returns_to_the_well() {
     );
     h.get_by_role_and_label(Role::Button, "Back to one").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "Screepub");
+    h.get_by_role_and_label(Role::Heading, "Method Reader");
 }
 
 // desktop-ui.test.ts: "a refused file is no longer a dead end" (Report a bug)
@@ -229,7 +229,11 @@ fn report_a_bug_opens_the_issue_tracker_with_the_code_and_no_paths() {
     steps(&mut h);
     let opened = w.fakes.opener.opened.lock().unwrap().clone();
     assert_eq!(opened.len(), 1);
-    assert!(opened[0].starts_with("https://github.com/ssandweiss/screepub/issues/new?body="));
+    assert!(
+        opened[0].starts_with(
+            "https://github.com/method-production-suite/method-reader/issues/new?body="
+        )
+    );
     assert!(opened[0].contains("unreadable"));
     assert!(
         !opened[0].contains("Secret"),
@@ -242,12 +246,12 @@ fn an_engine_that_cannot_run_is_a_refusal_with_its_sentence() {
     let w = world();
     w.engine.once(
         "convert",
-        Reply::failed("could not start the Screepub engine"),
+        Reply::failed("could not start the Method Reader engine"),
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
     h.get_by_role_and_label(Role::Heading, "THE ENGINE DID NOT ANSWER");
-    assert!(has_value(&h, "could not start the Screepub engine"));
+    assert!(has_value(&h, "could not start the Method Reader engine"));
 }
 
 // desktop-ui.test.ts: "the foot of the page names the release" (dead engine)
@@ -256,10 +260,10 @@ fn a_dead_engine_says_so_and_keeps_the_stamp() {
     let w = world();
     w.engine.once(
         "version",
-        Reply::failed("could not start the Screepub engine"),
+        Reply::failed("could not start the Method Reader engine"),
     );
     let h = harness(&w, Platform::Mac);
-    assert!(has_value(&h, "could not start the Screepub engine"));
+    assert!(has_value(&h, "could not start the Method Reader engine"));
     h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")));
 }
 
@@ -274,7 +278,7 @@ fn the_stamp_opens_the_release_notes_and_close_closes_them() {
     h.get_by_role_and_label(Role::Dialog, "Release notes");
     h.get_by_role_and_label(
         Role::Heading,
-        concat!("Screepub ", env!("CARGO_PKG_VERSION")),
+        concat!("Method Reader ", env!("CARGO_PKG_VERSION")),
     );
     // The sheet shows this version's own notes: its headline, read from the
     // notes file the window was built from, so a release never edits this.
@@ -313,7 +317,7 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     h.get_by_role_and_label(Role::Button, "Save AZW3…");
     assert!(has_value(
         &h,
-        "Kindles over USB, made by Screepub with nothing else installed."
+        "Kindles over USB, made by Method Reader with nothing else installed."
     ));
     h.get_by_role_and_label(Role::Button, "Show in Finder");
     assert!(

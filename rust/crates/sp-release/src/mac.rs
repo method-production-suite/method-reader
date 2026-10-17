@@ -1,16 +1,18 @@
-//! The macOS app bundle: `Screepub.app` laid out the way tauri-bundler
-//! 2.9.4 laid out the Tauri window's (macos/app.rs), so everything outside
+//! The macOS app bundle: `Method Reader.app` laid out the way tauri-bundler
+//! 2.9.4 laid out the Tauri window's (macos/app.rs), under the identifier
+//! the app has always had (com.darkwell.screepub), so everything outside
 //! the app that knew the old bundle (Launch Services, the Dock, a TCC
-//! grant keyed to the identifier and the team, the frozen Swift updater's
-//! requirement) sees the same app.
+//! grant keyed to the identifier and the team) sees the same app. Only the
+//! folder and the executable were renamed with the product (from
+//! `Screepub.app` and `screepub-desktop`, [`crate::names::LEGACY_MAC_BUNDLE`]).
 //!
 //! ```text
-//! Screepub.app/Contents/Info.plist
-//! Screepub.app/Contents/MacOS/screepub-desktop     the egui window
-//! Screepub.app/Contents/MacOS/<helpers>            screepub-mtp, when shipped
-//! Screepub.app/Contents/Resources/icon.icns
-//! Screepub.app/Contents/Resources/LICENSE
-//! Screepub.app/Contents/Resources/THIRD-PARTY-NOTICES.md
+//! Method Reader.app/Contents/Info.plist
+//! Method Reader.app/Contents/MacOS/method-reader-app     the egui window
+//! Method Reader.app/Contents/MacOS/<helpers>             method-reader-mtp, when shipped
+//! Method Reader.app/Contents/Resources/icon.icns
+//! Method Reader.app/Contents/Resources/LICENSE-MIT ...
+//! Method Reader.app/Contents/Resources/THIRD-PARTY-NOTICES.md
 //! ```
 //!
 //! This only lays files out. Signing (codesign, hardened runtime, no
@@ -24,7 +26,7 @@ use crate::names::{MAC_BUNDLE, MAC_MINIMUM, PRODUCT, WINDOW_EXE};
 pub struct MacApp<'a> {
     pub version: &'a str,
     pub identifier: &'a str,
-    /// The built window binary (`screepub-window`), copied in as
+    /// The built window binary (cargo's `method-reader-app`), copied in as
     /// [`WINDOW_EXE`].
     pub window: &'a Path,
     /// Other executables that ride in Contents/MacOS, under their own names.
@@ -136,8 +138,9 @@ mod tests {
             Some("com.darkwell.screepub")
         );
         assert!(
-            text.contains("<key>CFBundleExecutable</key>\n\t<string>screepub-desktop</string>")
+            text.contains("<key>CFBundleExecutable</key>\n\t<string>method-reader-app</string>")
         );
+        assert!(text.contains("<key>CFBundleName</key>\n\t<string>Method Reader</string>"));
         assert!(text.contains("<key>LSMinimumSystemVersion</key>\n\t<string>13.0</string>"));
         assert!(text.contains("<key>CFBundleShortVersionString</key>\n\t<string>0.12.0</string>"));
     }

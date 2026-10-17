@@ -675,7 +675,7 @@
           "images/images.images/p002-01.png": {
             "file": "px:9a2cf91793017313"
           },
-          "images/images.screepub.json": {
+          "images/images.method-reader.json": {
             "json": "577898c1941870e6"
           },
           "images/source.json": {
@@ -705,9 +705,9 @@
       "fountainPath": "$WORK/library/images/images.fountain",
       "imagesPath": "$WORK/library/images/images.images",
       "imageCount": 2,
-      "settingsPath": "$WORK/library/images/images.screepub.json"
+      "settingsPath": "$WORK/library/images/images.method-reader.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/library/images/images.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/library/images/images.method-reader.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -789,6 +789,9 @@
           "images/images.images/p002-01.png": {
             "file": "px:9a2cf91793017313"
           },
+          "images/images.method-reader.json": {
+            "json": "577898c1941870e6"
+          },
           "images/images.mobi": {
             "header": "711251a52c6f9bcc",
             "records": [
@@ -798,9 +801,6 @@
               "9a4e4a49099a753b",
               "3712d3408f89530c"
             ]
-          },
-          "images/images.screepub.json": {
-            "json": "577898c1941870e6"
           },
           "images/source.json": {
             "json": "5b9eb9694fcb9a33"
@@ -830,7 +830,7 @@
       "imageCount": 2,
       "settingsPath": "$WORK/in/images.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/images.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/images.screepub.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -912,7 +912,7 @@
           "images/images.images/p002-01.png": {
             "file": "px:9a2cf91793017313"
           },
-          "images/images.screepub.json": {
+          "images/images.method-reader.json": {
             "json": "6e968ac32fc6651e"
           },
           "images/source.json": {
@@ -946,7 +946,7 @@
       "imageCount": 2,
       "settingsPath": "$WORK/in/images.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/images.screepub.json (the options you passed override them)\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/images.screepub.json (the options you passed override them)\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -1039,7 +1039,7 @@
       "imagesPath": "$WORK/out/book.images",
       "imageCount": 2
     },
-    "stderr": "screepub: ignoring $WORK/in/images.screepub.json, which is not a settings object\n",
+    "stderr": "method-reader: ignoring $WORK/in/images.screepub.json, which is not a settings object\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -1214,7 +1214,7 @@
           "images/images.images/p002-01.png": {
             "file": "px:9a2cf91793017313"
           },
-          "images/images.screepub.json": {
+          "images/images.method-reader.json": {
             "json": "5052154e6f36ffad"
           },
           "images/source.json": {
@@ -2306,7 +2306,7 @@
           }
         }
       ],
-      "sidecar": "$WORK/out/script.screepub.json",
+      "sidecar": "$WORK/out/script.method-reader.json",
       "keepScriptSettings": true
     },
     "stderr": "",
@@ -2336,7 +2336,7 @@
       "path": "$WORK/out/copy.azw3",
       "format": "azw3",
       "extension": "azw3",
-      "label": "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed",
+      "label": "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed",
       "available": [
         "epub",
         "kindle"

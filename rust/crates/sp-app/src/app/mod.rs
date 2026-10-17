@@ -119,7 +119,7 @@ pub struct App {
     pub update: frame::UpdateState,
     /// The book as each place shows it (bookview.rs).
     pub views: bookview::Views,
-    /// SCREEPUB_FRAME_LOG's recorder (framelog.rs), when it is set.
+    /// METHOD_READER_FRAME_LOG's recorder (framelog.rs), when it is set.
     pub frame_log: Option<crate::framelog::FrameLog>,
     /// What this frame has learnt about the next: something moving, or a
     /// timer due (model/motion.rs). Gathered while the frame draws.
@@ -623,12 +623,12 @@ impl App {
     }
 }
 
-/// The window as tauri.conf.json described it: "Screepub", 1280 by 800,
-/// a 640 by 480 floor, and on a Mac no title bar of its own (the paper runs
-/// under the traffic lights).
+/// The window as tauri.conf.json described it, under the product's name:
+/// 1280 by 800, a 640 by 480 floor, and on a Mac no title bar of its own
+/// (the paper runs under the traffic lights).
 pub fn viewport() -> egui::ViewportBuilder {
     egui::ViewportBuilder::default()
-        .with_title("Screepub")
+        .with_title(crate::model::names::PRODUCT)
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([640.0, 480.0])
         .with_resizable(true)

@@ -21,8 +21,10 @@ impl Scratch {
     fn new(tag: &str) -> Self {
         static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let n = N.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let dir =
-            std::env::temp_dir().join(format!("screepub-mtp-{tag}-{}-{n}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "method-reader-mtp-{tag}-{}-{n}",
+            std::process::id()
+        ));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("device")).unwrap();
         Scratch(dir)
@@ -131,7 +133,7 @@ fn a_leftover_from_a_crashed_copy_is_cleared() {
     let s = Scratch::new("leftover");
     std::fs::create_dir_all(s.device().join("documents")).unwrap();
     std::fs::write(
-        s.device().join("documents/.Title.kfx.screepub-part"),
+        s.device().join("documents/.Title.kfx.method-reader-part"),
         b"HALF",
     )
     .unwrap();

@@ -4,7 +4,7 @@
 //! ```text
 //! cargo xtask verify-signing --dmg <path> --expect coexist
 //!     # v0.6.0 to 0.7.x: signed, and the old app must REFUSE it
-//! cargo xtask verify-signing --dmg Screepub-macOS.dmg --expect handover
+//! cargo xtask verify-signing --dmg Method-Reader-macOS.dmg --expect handover
 //!     # the identifier release: signed, and the old app must TAKE it
 //! ```
 //!
@@ -388,7 +388,7 @@ pub fn main_with(args: &[String], os: &str, run: Runner) -> u8 {
         );
         return 2;
     }
-    let work = match TempDir::new("screepub-verify-signing-") {
+    let work = match TempDir::new("method-reader-verify-signing-") {
         Ok(w) => w,
         Err(e) => {
             eprintln!("verify-signing: no work folder: {e}");

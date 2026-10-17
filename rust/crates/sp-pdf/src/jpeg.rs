@@ -1119,7 +1119,7 @@ impl JpegImage {
     }
 
     /// `getData({ width, height, forceRGB })` (forceRGBA is never asked for
-    /// under Screepub's settings).
+    /// under Method Reader's settings).
     pub fn get_data(
         &self,
         width: usize,

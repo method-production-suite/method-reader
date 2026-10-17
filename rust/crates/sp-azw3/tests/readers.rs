@@ -260,10 +260,10 @@ fn every_real_script_makes_an_azw3_that_reads_back_whole() {
 
 #[test]
 fn kindleunpack_reads_our_azw3() {
-    // SCREEPUB_KINDLEUNPACK names KindleUnpack's folder (the one holding
+    // METHOD_READER_KINDLEUNPACK names KindleUnpack's folder (the one holding
     // lib/kindleunpack.py); python3 must be on the PATH. KindleUnpack never
     // touches Calibre, and python3 runs isolated (-I).
-    let ku = std::env::var("SCREEPUB_KINDLEUNPACK").unwrap_or_default();
+    let ku = std::env::var("METHOD_READER_KINDLEUNPACK").unwrap_or_default();
     let python = std::env::var_os("PATH").and_then(|p| {
         std::env::split_paths(&p)
             .map(|d| d.join("python3"))
@@ -274,7 +274,7 @@ fn kindleunpack_reads_our_azw3() {
         python,
     ) else {
         eprintln!(
-            "skipped: SCREEPUB_KINDLEUNPACK does not name KindleUnpack, or python3 is missing"
+            "skipped: METHOD_READER_KINDLEUNPACK does not name KindleUnpack, or python3 is missing"
         );
         return;
     };

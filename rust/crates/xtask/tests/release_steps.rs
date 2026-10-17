@@ -307,7 +307,7 @@ fn draft_step_creates_a_draft_with_no_prerelease_flag_for_an_ordinary_tag() {
     let create = &calls[at(&calls, "gh\trelease\tcreate")];
     assert!(create.contains("\t--draft"), "{create}");
     assert!(!create.contains("--prerelease"), "{create}");
-    assert!(create.contains("\tScreepub 0.12.0\t"), "{create}");
+    assert!(create.contains("\tMethod Reader 0.12.0\t"), "{create}");
     let upload = at(&calls, "gh\trelease\tupload");
     assert!(calls[upload].contains(names::CLI_MAC_ARM64));
     assert!(at(&calls, "gh\trelease\tcreate") < upload);
@@ -357,7 +357,7 @@ fn mac_step(
     tool(
         sc,
         "rust/target/release/sp-release",
-        "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Screepub.app/Contents/MacOS\" && : > \"$2/Screepub.app/Contents/MacOS/screepub-desktop\"; shift; done; fi",
+        "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Method Reader.app/Contents/MacOS\" && : > \"$2/Method Reader.app/Contents/MacOS/method-reader-app\"; shift; done; fi",
     );
     tool(sc, "bin/lipo", &format!("echo '{archs}'"));
     tool(
@@ -422,9 +422,9 @@ fn mac_step_signs_inside_out_notarizes_staples_and_validates_app_then_image() {
     let sc = Scratch::new("mac-ok");
     let (out, calls) = mac_step(&sc, true, "arm64", "none");
     assert!(out.status.success(), "{}", said(&out));
-    let app = sc.join("temp/app/Screepub.app").display().to_string();
-    let exe = format!("{app}/Contents/MacOS/screepub-desktop");
-    let dmg = "bundles/Screepub-macOS.dmg";
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
+    let exe = format!("{app}/Contents/MacOS/method-reader-app");
+    let dmg = "bundles/Method-Reader-macOS.dmg";
     let order = [
         "sp-release\tmac-app\t--version\t0.12.0".to_string(),
         format!(
@@ -439,7 +439,7 @@ fn mac_step_signs_inside_out_notarizes_staples_and_validates_app_then_image() {
         format!("xcrun\tstapler\tvalidate\t{app}"),
         format!("spctl\t-a\t-t\texec\t-vv\t{app}"),
         "sp-release\tupdate-archive".to_string(),
-        "sp-release\tsign-update\t--file\tbundles/Screepub-macOS.app.tar.gz\t--version\t0.12.0"
+        "sp-release\tsign-update\t--file\tbundles/Method-Reader-macOS.app.tar.gz\t--version\t0.12.0"
             .to_string(),
         "hdiutil\tcreate".to_string(),
         format!("codesign\t--force\t--timestamp\t--sign\tDeveloper ID Application: Test\t{dmg}"),
@@ -470,11 +470,11 @@ fn mac_step_fails_when_a_staple_leaves_no_ticket() {
     // `stapler staple` can exit 0 and leave nothing: v0.6.0 shipped an
     // image Gatekeeper rejects. The validate is asserted, not trusted.
     let sc = Scratch::new("mac-dmg-ticket");
-    let (out, calls) = mac_step(&sc, true, "arm64", "bundles/Screepub-macOS.dmg");
+    let (out, calls) = mac_step(&sc, true, "arm64", "bundles/Method-Reader-macOS.dmg");
     assert!(!out.status.success());
     assert!(!calls.iter().any(|c| c.starts_with("spctl\t-a\t-t\topen")));
     let sc = Scratch::new("mac-app-ticket");
-    let app = sc.join("temp/app/Screepub.app").display().to_string();
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
     let (out, calls) = mac_step(&sc, true, "arm64", &app);
     assert!(!out.status.success());
     assert!(
@@ -519,7 +519,7 @@ fn rpm_stub_requiring(sc: &Scratch, version: &str, requires: &str) {
         sc,
         "bin/rpm",
         &format!(
-            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/screepub-desktop ;; -qp) printf '%s\\n' '{}' ;; esac",
+            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/method-reader-app ;; -qp) if [ \"$2\" = --obsoletes ]; then echo 'screepub < {version}'; else printf '%s\\n' '{}'; fi ;; esac",
             requires.replace('\n', "' '")
         ),
     );
@@ -539,14 +539,17 @@ fn check_step_opens_each_bundle_and_counts_what_it_checked() {
     rpm_stub(&sc, "0.12.0");
     let out = check_step(
         &sc,
-        &[names::LINUX_RPM_X86_64, "Screepub-macOS.app.tar.gz.sig"],
+        &[
+            names::LINUX_RPM_X86_64,
+            "Method-Reader-macOS.app.tar.gz.sig",
+        ],
     );
     assert!(out.status.success(), "{}", said(&out));
     assert!(said(&out).contains("1 bundle(s) checked"));
     let calls = log(&sc);
-    assert_eq!(calls.len(), 3, "{calls:#?}");
-    assert!(calls[0].starts_with("rpm\t-qip\tbundles/Screepub-linux-x86_64.rpm"));
-    assert!(calls[1].starts_with("rpm\t-qp\t--requires\tbundles/Screepub-linux-x86_64.rpm"));
+    assert_eq!(calls.len(), 4, "{calls:#?}");
+    assert!(calls[0].starts_with("rpm\t-qip\tbundles/Method-Reader-linux-x86_64.rpm"));
+    assert!(calls[1].starts_with("rpm\t-qp\t--requires\tbundles/Method-Reader-linux-x86_64.rpm"));
 }
 
 #[test]
@@ -571,7 +574,7 @@ fn check_step_fails_a_bundle_that_claims_another_version() {
 #[test]
 fn check_step_refuses_a_file_it_does_not_know() {
     let sc = Scratch::new("check-unknown");
-    let out = check_step(&sc, &["Screepub-linux-arm64.snap"]);
+    let out = check_step(&sc, &["Method-Reader-linux-arm64.snap"]);
     assert!(!out.status.success());
     assert!(said(&out).contains("unexpected file"), "{}", said(&out));
 }
@@ -583,11 +586,11 @@ fn check_step_installs_and_uninstalls_the_windows_installer() {
     // The installer, as the step runs it: silently, into LOCALAPPDATA.
     sc.script(
         &format!("bundles/{}", names::WINDOWS_SETUP),
-        "mkdir -p \"$LOCALAPPDATA/Screepub\"\n: > \"$LOCALAPPDATA/Screepub/screepub-desktop.exe\"\nprintf '#!/bin/sh\\nrm -rf \"$LOCALAPPDATA/Screepub\"\\n' > \"$LOCALAPPDATA/Screepub/uninstall.exe\"\nchmod +x \"$LOCALAPPDATA/Screepub/uninstall.exe\"\n",
+        "mkdir -p \"$LOCALAPPDATA/Method Reader\"\n: > \"$LOCALAPPDATA/Method Reader/method-reader-app.exe\"\nprintf '#!/bin/sh\\nrm -rf \"$LOCALAPPDATA/Method Reader\"\\n' > \"$LOCALAPPDATA/Method Reader/uninstall.exe\"\nchmod +x \"$LOCALAPPDATA/Method Reader/uninstall.exe\"\n",
     );
     let out = check_step(&sc, &[]);
     assert!(out.status.success(), "{}", said(&out));
-    assert!(!sc.join("local/Screepub").exists(), "uninstalled");
+    assert!(!sc.join("local/Method Reader").exists(), "uninstalled");
     // One that installs nothing fails.
     let sc = Scratch::new("check-exe-empty");
     std::fs::create_dir_all(sc.join("bundles")).unwrap();
@@ -683,7 +686,7 @@ fn sums_step_fails_a_second_mac_image() {
     }
     let sc = Scratch::new("sums-two-dmg");
     let mut files = five();
-    files.push("Screepub-macOS-x64.dmg");
+    files.push("Method-Reader-macOS-x64.dmg");
     let out = sums_step(&sc, &files, None);
     assert!(!out.status.success());
     assert!(
@@ -850,7 +853,10 @@ fn publish_step_keeps_a_release_with_no_update_manifest_in_draft() {
 
 #[test]
 fn publish_step_keeps_a_release_with_two_images_in_draft() {
-    let (out, calls) = publish_step("v0.12.0", "Screepub-macOS.dmg Screepub-macOS-x64.dmg");
+    let (out, calls) = publish_step(
+        "v0.12.0",
+        "Method-Reader-macOS.dmg Method-Reader-macOS-x64.dmg",
+    );
     assert!(!out.status.success());
     assert!(said(&out).contains("must carry exactly one .dmg"));
     assert!(!calls.iter().any(|c| c.contains("--draft=false")));

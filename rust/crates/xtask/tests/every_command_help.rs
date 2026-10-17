@@ -14,10 +14,10 @@ fn xtask(args: &[&str], cwd: &std::path::Path) -> Output {
         .args(args)
         .current_dir(cwd)
         // Nothing here may reach a network or a real tool.
-        .env("SCREEPUB_GITHUB_API", "http://127.0.0.1:9")
-        .env("SCREEPUB_GITHUB_WEB", "http://127.0.0.1:9")
+        .env("METHOD_READER_GITHUB_API", "http://127.0.0.1:9")
+        .env("METHOD_READER_GITHUB_WEB", "http://127.0.0.1:9")
         .env("CALIBRE_CONFIG_DIRECTORY", "/dev/null/screepub-help-guard")
-        .env("SCREEPUB_CONFIG_DIR", "/dev/null/screepub-help-guard")
+        .env("METHOD_READER_CONFIG_DIR", "/dev/null/screepub-help-guard")
         .stdin(std::process::Stdio::null())
         .output()
         .expect("xtask runs")

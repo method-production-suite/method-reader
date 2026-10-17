@@ -9,7 +9,7 @@ use std::path::Path;
 
 fn scratch() -> tempfile::TempDir {
     tempfile::Builder::new()
-        .prefix("screepub-atomic-write-")
+        .prefix("method-reader-atomic-write-")
         .tempdir()
         .unwrap()
 }

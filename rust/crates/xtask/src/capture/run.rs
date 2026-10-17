@@ -33,7 +33,7 @@ use crate::calibre_config::{copy_calibre_config, this_host_real_config};
 
 /// The file that says a library is the capture tool's. Without it, a
 /// library found at the demo path belongs to somebody and is never touched.
-pub const MARKER: &str = ".screepub-capture";
+pub const MARKER: &str = ".method-reader-capture";
 
 /// Why a run ended without its pictures.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -251,12 +251,12 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
 /// The environment the window's engine runs with, on top of this
 /// process's.
 ///
-/// - SCREEPUB_LIBRARY: the scratch library.
-/// - SCREEPUB_CONFIG_DIR: a folder under the scratch library, cleared with
+/// - METHOD_READER_LIBRARY: the scratch library.
+/// - METHOD_READER_CONFIG_DIR: a folder under the scratch library, cleared with
 ///   it before every shot, which reads back as no settings at all, so the
 ///   pictures never drift with whatever the developer last chose in their
 ///   own app settings. The window's guard lets nothing write into it.
-/// - SCREEPUB_VOLUME_ROOTS, SCREEPUB_REMARKABLE_ENDPOINT: no real reader,
+/// - METHOD_READER_VOLUME_ROOTS, METHOD_READER_REMARKABLE_ENDPOINT: no real reader,
 ///   ever: an empty mount parent, and a reMarkable address nothing listens on.
 /// - CALIBRE_CONFIG_DIRECTORY: Calibre run against its real settings
 ///   folder rewrites files there (gui.json, 0.7.3 QA). The window's guard
@@ -265,11 +265,14 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
 ///   folder is never handed to anything.
 pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
-        ("SCREEPUB_LIBRARY", library.to_path_buf()),
-        ("SCREEPUB_CONFIG_DIR", library.join(".capture-app-settings")),
-        ("SCREEPUB_VOLUME_ROOTS", library.join(".no-volumes")),
+        ("METHOD_READER_LIBRARY", library.to_path_buf()),
         (
-            "SCREEPUB_REMARKABLE_ENDPOINT",
+            "METHOD_READER_CONFIG_DIR",
+            library.join(".capture-app-settings"),
+        ),
+        ("METHOD_READER_VOLUME_ROOTS", library.join(".no-volumes")),
+        (
+            "METHOD_READER_REMARKABLE_ENDPOINT",
             PathBuf::from("http://127.0.0.1:9"),
         ),
         ("CALIBRE_CONFIG_DIRECTORY", calibre.to_path_buf()),
@@ -418,11 +421,14 @@ fn take(
     };
     let pass_one = c
         .pass_one
-        .insert(make_temp_dir(&tmp, "screepub-capture-").map_err(io("make a temp folder"))?)
+        .insert(make_temp_dir(&tmp, "method-reader-capture-").map_err(io("make a temp folder"))?)
         .clone();
     let scratch = c
         .calibre_scratch
-        .insert(make_temp_dir(&tmp, "screepub-capture-calibre-").map_err(io("make a temp folder"))?)
+        .insert(
+            make_temp_dir(&tmp, "method-reader-capture-calibre-")
+                .map_err(io("make a temp folder"))?,
+        )
         .clone();
     let real = o
         .calibre_config

@@ -1,4 +1,4 @@
-//! Screepub's EPUB3 renderer, ported from src/epub/ (build.ts, html.ts,
+//! Method Reader's EPUB3 renderer, ported from src/epub/ (build.ts, html.ts,
 //! css.ts): fountain-js tokens, FormatOptions and pictures to the bytes of a
 //! book, plus the reader preview the window shows.
 //!

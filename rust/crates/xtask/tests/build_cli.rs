@@ -1,6 +1,6 @@
 //! Ports tests/build-cli.test.ts: `cargo xtask build-cli`. Every outside
 //! program is a fake closure; the two checks that need a real cargo build of
-//! sp-cli skip unless SCREEPUB_REAL_CLI_BUILD=1 and the crate exists.
+//! sp-cli skip unless METHOD_READER_REAL_CLI_BUILD=1 and the crate exists.
 
 mod cli_build_common;
 
@@ -17,13 +17,13 @@ use xtask::cli_build::archive::{archive_entries, tar_gz_entries, write_tar_gz, z
 use xtask::cli_build::binfmt::{BinaryFormat as F, detect_binary_format, read_binary_format};
 use xtask::cli_build::build::{
     BuildArgs, BuildEnv, Floors, MacSigning, NotaryCredentials, RELEASE_FLOORS,
-    assert_crate_version, build_all, cargo_output_path, compile_argv, compile_target,
-    notarize_target, notary_credentials, package_target, parse_build_args, parse_checksums,
-    sign_argv, sign_target, verify_artifact, write_checksums,
+    assert_crate_version, build_all, cargo_alias_output_path, cargo_output_path, compile_argv,
+    compile_target, notarize_target, notary_credentials, package_target, parse_build_args,
+    parse_checksums, sign_alias_argv, sign_argv, sign_target, verify_artifact, write_checksums,
 };
 use xtask::cli_build::targets::{
-    MAC_TARGETS, TARGETS, Target, archive_path, binary_path, build_dir, find_target, host_target,
-    mac_target_id_for_host, target_id_for_host,
+    MAC_TARGETS, TARGETS, Target, alias_path, archive_path, binary_path, build_dir, find_target,
+    host_target, mac_target_id_for_host, target_id_for_host,
 };
 use xtask::cli_build::workspace_version;
 use xtask::paths;
@@ -198,9 +198,9 @@ fn the_table_is_exactly_the_three_non_macos_targets_and_nothing_darwin() {
     assert_eq!(
         archives,
         [
-            "screepub-cli-linux-x64.tar.gz",
-            "screepub-cli-linux-arm64.tar.gz",
-            "screepub-cli-windows-x64.zip"
+            "method-reader-cli-linux-x64.tar.gz",
+            "method-reader-cli-linux-arm64.tar.gz",
+            "method-reader-cli-windows-x64.zip"
         ]
     );
 }
@@ -216,7 +216,7 @@ fn every_archive_name_is_a_bare_filename_with_no_path() {
 
 #[test]
 fn each_target_builds_in_its_own_folder_and_archives_land_flat() {
-    let out = Path::new("/tmp/screepub-out");
+    let out = Path::new("/tmp/method-reader-out");
     let dirs: Vec<PathBuf> = TARGETS.iter().map(|t| build_dir(t, out)).collect();
     assert_eq!(
         dirs,
@@ -231,23 +231,31 @@ fn each_target_builds_in_its_own_folder_and_archives_land_flat() {
 fn cargo_names_the_windows_binary_with_exe_and_the_others_without() {
     // Was: the outfile passed to bun never carries .exe. cargo names the
     // file itself; what matters now is where it lands and what it is called.
-    let out = Path::new("/tmp/screepub-out");
+    let out = Path::new("/tmp/method-reader-out");
     let target_dir = Path::new("/tmp/cargo-target");
     assert_eq!(
         binary_path(t("windows-x64"), out),
-        out.join("windows-x64").join("screepub.exe")
+        out.join("windows-x64").join("method-reader.exe")
     );
     assert_eq!(
         binary_path(t("linux-x64"), out),
-        out.join("linux-x64").join("screepub")
+        out.join("linux-x64").join("method-reader")
     );
     assert_eq!(
         cargo_output_path(t("windows-x64"), target_dir),
-        target_dir.join("x86_64-pc-windows-msvc/release/screepub.exe")
+        target_dir.join("x86_64-pc-windows-msvc/release/method-reader.exe")
+    );
+    assert_eq!(
+        alias_path(t("windows-x64"), out),
+        out.join("windows-x64").join("screepub.exe")
+    );
+    assert_eq!(
+        cargo_alias_output_path(t("linux-arm64"), target_dir),
+        target_dir.join("aarch64-unknown-linux-gnu/release/screepub")
     );
     assert_eq!(
         cargo_output_path(t("linux-arm64"), target_dir),
-        target_dir.join("aarch64-unknown-linux-gnu/release/screepub")
+        target_dir.join("aarch64-unknown-linux-gnu/release/method-reader")
     );
 }
 
@@ -427,6 +435,8 @@ fn compile_argv_is_the_exact_cargo_invocation_per_target() {
             "-p",
             "sp-cli",
             "--bin",
+            "method-reader",
+            "--bin",
             "screepub",
             "--target",
             "x86_64-unknown-linux-gnu"
@@ -441,6 +451,8 @@ fn compile_argv_is_the_exact_cargo_invocation_per_target() {
             "--locked",
             "-p",
             "sp-cli",
+            "--bin",
+            "method-reader",
             "--bin",
             "screepub",
             "--target",
@@ -467,10 +479,12 @@ fn runs_cargo_in_the_workspace_and_returns_where_the_binary_was_put() {
     let seen: RefCell<Vec<(Vec<String>, PathBuf)>> = RefCell::new(Vec::new());
     let win = t("windows-x64");
     let built = cargo_output_path(win, cargo.path());
+    let alias = cargo_alias_output_path(win, cargo.path());
     let spawn = |argv: &[String], cwd: &Path| {
         seen.borrow_mut().push((argv.to_vec(), cwd.to_path_buf()));
         std::fs::create_dir_all(built.parent().unwrap()).unwrap();
         std::fs::write(&built, b"MZ").unwrap();
+        std::fs::write(&alias, b"MZ alias").unwrap();
         RunResult::ok("", "")
     };
     let env = test_env(Path::new("/repo/rust"), cargo.path(), &spawn, &no_env, TINY);
@@ -479,8 +493,15 @@ fn runs_cargo_in_the_workspace_and_returns_where_the_binary_was_put() {
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0].1, PathBuf::from("/repo/rust"));
     assert_eq!(seen[0].0, compile_argv(win));
-    assert_eq!(got, out.path().join("windows-x64").join("screepub.exe"));
+    assert_eq!(
+        got,
+        out.path().join("windows-x64").join("method-reader.exe")
+    );
     assert_eq!(std::fs::read(&got).unwrap(), b"MZ");
+    assert_eq!(
+        std::fs::read(out.path().join("windows-x64").join("screepub.exe")).unwrap(),
+        b"MZ alias"
+    );
 }
 
 #[test]
@@ -511,8 +532,10 @@ fn a_compile_that_exits_0_without_writing_the_binary_is_still_a_failure() {
 
 /// Why a real build cannot run here, or None when it can.
 fn real_build_skip_reason() -> Option<String> {
-    if std::env::var("SCREEPUB_REAL_CLI_BUILD").as_deref() != Ok("1") {
-        return Some("set SCREEPUB_REAL_CLI_BUILD=1 to run a real cargo build of sp-cli".into());
+    if std::env::var("METHOD_READER_REAL_CLI_BUILD").as_deref() != Ok("1") {
+        return Some(
+            "set METHOD_READER_REAL_CLI_BUILD=1 to run a real cargo build of sp-cli".into(),
+        );
     }
     if !paths::workspace_root()
         .join("crates/sp-cli/Cargo.toml")
@@ -566,7 +589,7 @@ fn a_real_build_of_the_host_target_is_the_format_the_table_predicts() {
 }
 
 #[test]
-fn a_real_windows_build_writes_screepub_exe_and_it_is_a_pe() {
+fn a_real_windows_build_writes_method_reader_exe_and_it_is_a_pe() {
     if let Some(why) = real_build_skip_reason() {
         eprintln!("skipping a real build: {why}");
         return;
@@ -586,7 +609,7 @@ fn a_real_windows_build_writes_screepub_exe_and_it_is_a_pe() {
         RELEASE_FLOORS,
     );
     let bin = compile_target(t("windows-x64"), out.path(), &env).unwrap();
-    assert!(bin.to_string_lossy().ends_with("screepub.exe"));
+    assert!(bin.to_string_lossy().ends_with("method-reader.exe"));
     assert_eq!(read_binary_format(&bin).unwrap(), F::PeX8664);
 }
 
@@ -684,16 +707,17 @@ fn zip_entries_round_trips_a_name_bytes_and_the_executable_bit() {
 
 // ── package_target ──────────────────────────────────────────────────────
 
-/// A stand-in binary exactly where compile_target leaves one.
+/// A stand-in binary and alias exactly where compile_target leaves them.
 fn stage(target: &Target, bytes: &[u8]) -> Scratch {
     let dir = Scratch::new("pack");
     std::fs::create_dir_all(build_dir(target, dir.path())).unwrap();
     std::fs::write(binary_path(target, dir.path()), bytes).unwrap();
+    std::fs::write(alias_path(target, dir.path()), bytes).unwrap();
     dir
 }
 
 #[test]
-fn a_linux_target_becomes_a_tar_gz_holding_one_executable_screepub() {
+fn a_linux_target_becomes_a_tar_gz_holding_the_executable_tool_and_its_alias() {
     let target = t("linux-arm64");
     let dir = stage(target, &elf_payload(3000, 0xb7));
     #[cfg(unix)]
@@ -704,27 +728,33 @@ fn a_linux_target_becomes_a_tar_gz_holding_one_executable_screepub() {
         std::fs::set_permissions(bin, std::fs::Permissions::from_mode(0o644)).unwrap();
     }
     let archive = package_target(target, dir.path()).unwrap();
-    assert_eq!(archive, dir.join("screepub-cli-linux-arm64.tar.gz"));
+    assert_eq!(archive, dir.join("method-reader-cli-linux-arm64.tar.gz"));
     let entries = archive_entries(&archive).unwrap();
-    assert_eq!(entries.len(), 1);
-    assert_eq!(entries[0].name, "screepub"); // no path prefix
-    assert_eq!(entries[0].size, 3000);
-    assert_ne!(entries[0].mode & 0o111, 0);
-    assert_eq!(detect_binary_format(&entries[0].data), F::ElfAarch64);
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].name, "method-reader"); // no path prefix
+    assert_eq!(entries[1].name, "screepub");
+    for e in &entries {
+        assert_eq!(e.size, 3000);
+        assert_ne!(e.mode & 0o111, 0);
+        assert_eq!(detect_binary_format(&e.data), F::ElfAarch64);
+    }
 }
 
 #[test]
-fn the_windows_target_becomes_a_zip_holding_one_screepub_exe() {
+fn the_windows_target_becomes_a_zip_holding_the_tool_and_its_alias() {
     let target = t("windows-x64");
     let dir = stage(target, &payload_for(F::PeX8664, 3000));
     let archive = package_target(target, dir.path()).unwrap();
-    assert_eq!(archive, dir.join("screepub-cli-windows-x64.zip"));
+    assert_eq!(archive, dir.join("method-reader-cli-windows-x64.zip"));
     let entries = archive_entries(&archive).unwrap();
-    assert_eq!(entries.len(), 1);
-    assert_eq!(entries[0].name, "screepub.exe");
-    assert_eq!(entries[0].size, 3000);
-    assert_eq!(detect_binary_format(&entries[0].data), F::PeX8664);
-    assert_ne!(entries[0].mode & 0o111, 0);
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].name, "method-reader.exe");
+    assert_eq!(entries[1].name, "screepub.exe");
+    for e in &entries {
+        assert_eq!(e.size, 3000);
+        assert_eq!(detect_binary_format(&e.data), F::PeX8664);
+        assert_ne!(e.mode & 0o111, 0);
+    }
 }
 
 #[test]
@@ -737,12 +767,12 @@ fn re_packaging_replaces_the_archive_instead_of_appending_to_it() {
         archive_entries(&archive_path(target, dir.path()))
             .unwrap()
             .len(),
-        1
+        2
     );
 }
 
 #[test]
-fn a_system_tar_unpacks_the_archive_to_one_runnable_screepub() {
+fn a_system_tar_unpacks_the_archive_to_a_runnable_tool_and_alias() {
     // New beside the port: the tar is written here now rather than by a tar
     // program, so a real tar has to agree it is a tar.
     let Some(tar) = which("tar") else {
@@ -762,20 +792,23 @@ fn a_system_tar_unpacks_the_archive_to_one_runnable_screepub() {
         .status()
         .unwrap();
     assert!(status.success());
-    let names: Vec<_> = std::fs::read_dir(&unpack)
+    let mut names: Vec<_> = std::fs::read_dir(&unpack)
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
         .collect();
-    assert_eq!(names, ["screepub"]);
-    assert_eq!(std::fs::read(unpack.join("screepub")).unwrap(), payload);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mode = std::fs::metadata(unpack.join("screepub"))
-            .unwrap()
-            .permissions()
-            .mode();
-        assert_ne!(mode & 0o111, 0);
+    names.sort();
+    assert_eq!(names, ["method-reader", "screepub"]);
+    for name in &names {
+        assert_eq!(std::fs::read(unpack.join(name)).unwrap(), payload);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(unpack.join(name))
+                .unwrap()
+                .permissions()
+                .mode();
+            assert_ne!(mode & 0o111, 0);
+        }
     }
 }
 
@@ -866,11 +899,32 @@ fn an_archive_whose_member_is_not_executable_fails() {
     let dir = built(&payload);
     write_tar_gz(
         &archive_path(target, dir.path()),
-        &[("screepub", &payload, 0o644)],
+        &[
+            ("method-reader", &payload, 0o644),
+            ("screepub", &payload, 0o755),
+        ],
     )
     .unwrap();
     let err = verify_artifact(target, dir.path(), TINY).unwrap_err();
     assert!(err.contains("not executable"), "{err}");
+}
+
+#[test]
+fn an_archive_without_the_alias_or_a_missing_alias_fails() {
+    let target = t("linux-x64");
+    let payload = elf_payload(3000, 0x3e);
+    let dir = built(&payload);
+    write_tar_gz(
+        &archive_path(target, dir.path()),
+        &[("method-reader", &payload, 0o755)],
+    )
+    .unwrap();
+    let err = verify_artifact(target, dir.path(), TINY).unwrap_err();
+    assert!(err.contains("does not contain screepub"), "{err}");
+    let dir = built(&payload);
+    std::fs::remove_file(alias_path(target, dir.path())).unwrap();
+    let err = verify_artifact(target, dir.path(), TINY).unwrap_err();
+    assert!(err.contains("no alias binary"), "{err}");
 }
 
 #[test]
@@ -889,8 +943,8 @@ fn the_production_floors_are_set_and_reject_a_toy_binary() {
 fn with_files() -> (Scratch, Vec<String>) {
     let dir = Scratch::new("sums");
     let names = strings(&[
-        "screepub-cli-windows-x64.zip",
-        "screepub-cli-linux-x64.tar.gz",
+        "method-reader-cli-windows-x64.zip",
+        "method-reader-cli-linux-x64.tar.gz",
     ]);
     std::fs::write(dir.join(&names[0]), "windows bytes").unwrap();
     std::fs::write(dir.join(&names[1]), "linux bytes").unwrap();
@@ -1013,6 +1067,8 @@ fn fake_tools(
                 let path = cargo_output_path(target, &cargo_target_dir);
                 std::fs::create_dir_all(path.parent().unwrap()).unwrap();
                 std::fs::write(&path, payload_for(target.format, 4000)).unwrap();
+                let alias = cargo_alias_output_path(target, &cargo_target_dir);
+                std::fs::write(&alias, payload_for(target.format, 4000)).unwrap();
                 RunResult::ok("", "")
             }
             "codesign" if argv[1] == "--force" => {
@@ -1024,7 +1080,7 @@ fn fake_tools(
             }
             "codesign" if argv[1] == "-dv" => RunResult::ok(
                 "",
-                "Identifier=screepub-cli-arm64\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+2\nTeamIdentifier=XSRB3D643J\n",
+                "Identifier=method-reader-cli-arm64\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+2\nTeamIdentifier=XSRB3D643J\n",
             ),
             _ => RunResult::ok("", ""),
         }
@@ -1142,9 +1198,9 @@ fn gitignore_covers_the_obvious_hand_run_output_folders() {
         return;
     }
     for path in [
-        "dist/screepub-cli-linux-x64.tar.gz",
+        "dist/method-reader-cli-linux-x64.tar.gz",
         "dist/SHA256SUMS",
-        "build/screepub-cli-windows-x64.zip",
+        "build/method-reader-cli-windows-x64.zip",
     ] {
         let ignored = std::process::Command::new("git")
             .args(["check-ignore", "-q", path])
@@ -1163,27 +1219,28 @@ fn the_mac_table_is_exactly_one_row_apple_silicon_in_the_formulas_own_name() {
     assert_eq!(MAC_TARGETS.len(), 1);
     let m = &MAC_TARGETS[0];
     assert_eq!(
-        (m.id, m.rust_triple, m.format, m.binary_name, m.archive_name),
+        (
+            m.id,
+            m.rust_triple,
+            m.format,
+            m.binary_name,
+            m.alias_name,
+            m.archive_name
+        ),
         (
             "macos-arm64",
             "aarch64-apple-darwin",
             F::MachoArm64,
+            "method-reader",
             "screepub",
-            "screepub-cli-macos-arm64.tar.gz"
+            "method-reader-cli-macos-arm64.tar.gz"
         )
     );
     assert_eq!(m.packaging, xtask::cli_build::targets::Packaging::TarGz);
-    // The name is the tap's: its bump script (the bump_tap module, which
-    // was tools/bump-tap.sh) hardcodes it.
-    let found =
-        std::fs::read_to_string(paths::repo_root().join("rust/crates/xtask/src/bump_tap.rs"))
-            .expect("the bump_tap module")
-            .contains(m.archive_name);
-    assert!(
-        found,
-        "the tap's bump script does not name {}",
-        m.archive_name
-    );
+    // The name is the tap's: its bump tool (the bump_tap module, which
+    // was tools/bump-tap.sh) writes it into the formula.
+    assert_eq!(xtask::check_tap::ARM, m.archive_name);
+    assert!(xtask::bump_tap::formula("o/r", "1.0.0", &"a".repeat(64)).contains(m.archive_name));
 }
 
 #[test]
@@ -1342,7 +1399,7 @@ fn the_rust_cli_is_signed_with_no_entitlements_and_the_bun_era_file_is_gone() {
 
 // ── signing ─────────────────────────────────────────────────────────────
 
-const GOOD_DESCRIBE: &str = "Executable=/tmp/out/macos-arm64/screepub\nIdentifier=screepub\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+2 location=embedded\nTeamIdentifier=XSRB3D643J\n";
+const GOOD_DESCRIBE: &str = "Executable=/tmp/out/macos-arm64/method-reader\nIdentifier=method-reader-cli-arm64\nCodeDirectory v=20500 size=1 flags=0x10000(runtime) hashes=1+2 location=embedded\nTeamIdentifier=XSRB3D643J\n";
 
 /// A codesign that answers by its first two words, recording every call.
 fn recorder<'a>(
@@ -1391,6 +1448,26 @@ fn sign_argv_is_the_exact_codesign_invocation_the_shipped_cli_was_signed_with() 
             "runtime",
             "--timestamp",
             "--identifier",
+            "method-reader-cli-arm64",
+            "--sign",
+            ID,
+            &Path::new("/tmp/out")
+                .join("macos-arm64")
+                .join("method-reader")
+                .display()
+                .to_string(),
+        ])
+    );
+    // The alias keeps the identifier the CLI was signed with up to 0.12.x.
+    assert_eq!(
+        sign_alias_argv(arm(), Path::new("/tmp/out"), ID),
+        strings(&[
+            "codesign",
+            "--force",
+            "--options",
+            "runtime",
+            "--timestamp",
+            "--identifier",
             "screepub-cli-arm64",
             "--sign",
             ID,
@@ -1409,18 +1486,34 @@ fn signs_then_verifies_then_reads_back_the_flags_in_that_order() {
     let spawn = recorder(&seen, &[]);
     sign(ID, &spawn).unwrap();
     let seen = seen.borrow().clone();
-    let bin = Path::new("/tmp/out")
-        .join("macos-arm64")
-        .join("screepub")
-        .display()
-        .to_string();
-    assert_eq!(seen.len(), 3);
-    assert_eq!(seen[0], sign_argv(arm(), Path::new("/tmp/out"), ID));
-    assert_eq!(
-        seen[1],
-        strings(&["codesign", "--verify", "--strict", "--verbose=2", &bin])
-    );
-    assert_eq!(seen[2], strings(&["codesign", "-dv", &bin]));
+    let path = |name: &str| {
+        Path::new("/tmp/out")
+            .join("macos-arm64")
+            .join(name)
+            .display()
+            .to_string()
+    };
+    // The tool, then its alias, each signed, verified and read back.
+    assert_eq!(seen.len(), 6);
+    for (at, argv, bin) in [
+        (
+            0,
+            sign_argv(arm(), Path::new("/tmp/out"), ID),
+            path("method-reader"),
+        ),
+        (
+            3,
+            sign_alias_argv(arm(), Path::new("/tmp/out"), ID),
+            path("screepub"),
+        ),
+    ] {
+        assert_eq!(seen[at], argv);
+        assert_eq!(
+            seen[at + 1],
+            strings(&["codesign", "--verify", "--strict", "--verbose=2", &bin])
+        );
+        assert_eq!(seen[at + 2], strings(&["codesign", "-dv", &bin]));
+    }
 }
 
 #[test]
@@ -1550,8 +1643,7 @@ fn notary_tools<'a>(
 
 #[test]
 fn zips_the_binary_submits_the_zip_and_waits_then_removes_the_zip() {
-    let dir = Scratch::new("notary");
-    std::fs::create_dir_all(build_dir(arm(), dir.path())).unwrap();
+    let dir = stage(arm(), b"signed");
     let seen = RefCell::new(Vec::new());
     let accepted = RunResult::ok(
         r#"{"id":"2efe2717-52ef-43a5-96dc-0797e4ca1041","message":"Processing complete","status":"Accepted"}"#,
@@ -1559,18 +1651,17 @@ fn zips_the_binary_submits_the_zip_and_waits_then_removes_the_zip() {
     );
     let spawn = notary_tools(&seen, accepted);
     notarize_target(arm(), dir.path(), &creds(), &spawn, Path::new("/repo")).unwrap();
-    let zip = dir.path().join("macos-arm64").join("screepub-notarize.zip");
+    let zip = dir
+        .path()
+        .join("macos-arm64")
+        .join("method-reader-notarize.zip");
     let zip_s = zip.display().to_string();
+    // One folder holding the tool and its alias: one submission for both.
+    let folder = dir.path().join("macos-arm64").join("notarize");
     assert_eq!(
         seen.borrow().clone(),
         vec![
-            strings(&[
-                "ditto",
-                "-c",
-                "-k",
-                &binary_path(arm(), dir.path()).display().to_string(),
-                &zip_s
-            ]),
+            strings(&["ditto", "-c", "-k", &folder.display().to_string(), &zip_s]),
             strings(&[
                 "xcrun",
                 "notarytool",
@@ -1589,12 +1680,12 @@ fn zips_the_binary_submits_the_zip_and_waits_then_removes_the_zip() {
         ]
     );
     assert!(!zip.exists());
+    assert!(!folder.exists());
 }
 
 #[test]
 fn an_exit_of_0_with_a_status_other_than_accepted_is_a_failure_with_the_id_to_look_up() {
-    let dir = Scratch::new("notary");
-    std::fs::create_dir_all(build_dir(arm(), dir.path())).unwrap();
+    let dir = stage(arm(), b"signed");
     let seen = RefCell::new(Vec::new());
     let invalid = notary_tools(
         &seen,
@@ -1617,15 +1708,14 @@ fn an_exit_of_0_with_a_status_other_than_accepted_is_a_failure_with_the_id_to_lo
     }
     assert!(
         !dir.path()
-            .join("macos-arm64/screepub-notarize.zip")
+            .join("macos-arm64/method-reader-notarize.zip")
             .exists()
     );
 }
 
 #[test]
 fn a_rejected_submission_fails_names_the_target_and_still_removes_the_zip() {
-    let dir = Scratch::new("notary");
-    std::fs::create_dir_all(build_dir(arm(), dir.path())).unwrap();
+    let dir = stage(arm(), b"signed");
     let seen = RefCell::new(Vec::new());
     let spawn = notary_tools(&seen, RunResult::failed(1, "status: Invalid\n"));
     let err = notarize_target(arm(), dir.path(), &creds(), &spawn, Path::new("/repo")).unwrap_err();
@@ -1635,7 +1725,7 @@ fn a_rejected_submission_fails_names_the_target_and_still_removes_the_zip() {
     );
     assert!(
         !dir.path()
-            .join("macos-arm64/screepub-notarize.zip")
+            .join("macos-arm64/method-reader-notarize.zip")
             .exists()
     );
 }
@@ -1699,14 +1789,20 @@ fn a_mac_build_signs_before_packaging_so_the_archive_holds_the_signed_bytes() {
     build_all(&a, &env).unwrap();
     let bin = std::fs::read(binary_path(arm(), &dist)).unwrap();
     assert!(bin.ends_with(b"SIGNATURE"));
+    let alias = std::fs::read(alias_path(arm(), &dist)).unwrap();
+    assert!(alias.ends_with(b"SIGNATURE"));
     let entries = archive_entries(&archive_path(arm(), &dist)).unwrap();
-    assert_eq!(entries.len(), 1);
+    assert_eq!(entries.len(), 2);
     assert_eq!(sha256(&entries[0].data), sha256(&bin));
+    assert_eq!(sha256(&entries[1].data), sha256(&alias));
     let order: Vec<String> = seen.borrow().iter().map(|a| a[..2].join(" ")).collect();
     assert_eq!(
         order,
         [
             "cargo build",
+            "codesign --force",
+            "codesign --verify",
+            "codesign -dv",
             "codesign --force",
             "codesign --verify",
             "codesign -dv"

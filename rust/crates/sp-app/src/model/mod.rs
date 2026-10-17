@@ -13,6 +13,7 @@ pub mod json;
 pub mod kfx;
 pub mod layout;
 pub mod motion;
+pub mod names;
 pub mod notes;
 pub mod page_show;
 pub mod page_timing;

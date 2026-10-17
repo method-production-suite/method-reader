@@ -23,7 +23,7 @@
 //! with a decoder loaded from outside its bundle.
 //!
 //! Geometry from docs/screenplay-format-reference.md: 12pt Courier, 10
-//! chars per inch, 6 lines per inch. Indents matter: Screepub classifies
+//! chars per inch, 6 lines per inch. Indents matter: Method Reader classifies
 //! elements by horizontal position, so a demo PDF with sloppy geometry would
 //! parse wrong and prove nothing.
 //!

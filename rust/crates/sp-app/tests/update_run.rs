@@ -143,7 +143,7 @@ fn u6_a_copy_that_cannot_restart_says_quit_and_reopen() {
     until(&mut h, "installed", |h| {
         has(
             h,
-            "Update installed. Quit and reopen Screepub to use 0.12.0.",
+            "Update installed. Quit and reopen Method Reader to use 0.12.0.",
         )
     });
     assert!(!closed(&h));

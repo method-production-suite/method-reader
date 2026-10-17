@@ -30,7 +30,7 @@ fn the_fixed_usb_endpoint_is_the_documented_address() {
 
 #[test]
 fn upload_lists_the_root_folder_immediately_before_posting() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     upload_to_remarkable(&UreqClient, &book(sc.path(), "Script.epub"), &stub.url).unwrap();
     assert_eq!(stub.requests(), ["GET /documents/", "POST /upload"]);
@@ -49,7 +49,7 @@ fn probe_asks_for_the_documents_listing_not_the_bare_root() {
 
 #[test]
 fn a_failed_root_listing_aborts_the_send_with_no_blind_post() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     stub.documents_status.store(500, Ordering::SeqCst);
     let err =
@@ -63,7 +63,7 @@ fn a_failed_root_listing_aborts_the_send_with_no_blind_post() {
 
 #[test]
 fn a_file_over_the_100_mb_cap_is_rejected_before_any_network_request() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     let big = sc.path().join("big.epub");
     std::fs::File::create(&big)
@@ -83,7 +83,7 @@ fn a_file_over_the_100_mb_cap_is_rejected_before_any_network_request() {
 fn only_pdf_and_epub_are_accepted() {
     // The literal `not .azw3.`: the file name itself ends in .azw3, so a
     // message that merely echoed the path would pass a looser check.
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     let err =
         upload_to_remarkable(&UreqClient, &book(sc.path(), "Script.azw3"), &stub.url).unwrap_err();
@@ -117,7 +117,7 @@ fn remarkable_accepts_is_the_one_copy_of_the_pdf_epub_rule() {
 
 #[test]
 fn an_unreachable_tablet_is_named_in_bun_s_words() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let err = upload_to_remarkable(
         &UreqClient,
         &book(sc.path(), "Script.epub"),
@@ -143,7 +143,7 @@ fn a_tablet_that_never_answers_times_out_in_bun_s_words() {
 
 #[test]
 fn a_failed_post_names_its_status() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     stub.status.store(413, Ordering::SeqCst);
     stub.documents_status.store(200, Ordering::SeqCst);
@@ -169,7 +169,7 @@ fn the_multipart_body_is_the_one_bun_s_form_data_sends() {
 
 #[test]
 fn a_missing_file_stops_before_any_request_in_node_s_words() {
-    let sc = scratch("screepub-device-remarkable-");
+    let sc = scratch("method-reader-device-remarkable-");
     let stub = Stub::start(200);
     let gone = s(&sc.path().join("gone.epub"));
     let err = upload_to_remarkable(&UreqClient, &gone, &stub.url).unwrap_err();

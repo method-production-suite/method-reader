@@ -1,4 +1,4 @@
-//! Whether there is a newer Screepub, and what to say about it:
+//! Whether there is a newer Method Reader, and what to say about it:
 //! was `desktop/ui/update.js`, `update-flow.js` and the Updates block's
 //! rules from `notes-surface.js`. The transport (download, signature, swap,
 //! restart) is wave 3's; everything decided here is injected-and-tested,
@@ -16,7 +16,7 @@ const FOUND: &str = "updateFound";
 /// How long a restart waits for quiet before it hands the choice over.
 pub const RESTART_WAIT_CAP_MS: f64 = 120_000.0;
 
-pub const INTEL_MAC_RETIRED: &str = "New versions of Screepub run only on Macs with Apple silicon, so this copy will not be offered updates. The version you have keeps working.";
+pub const INTEL_MAC_RETIRED: &str = "New versions of Method Reader run only on Macs with Apple silicon, so this copy will not be offered updates. The version you have keeps working.";
 
 /// The window's own string bucket (localStorage in the webview).
 pub trait Storage {
@@ -156,7 +156,7 @@ impl Phase {
 }
 
 pub fn installed_line(version: &str) -> String {
-    format!("Update installed. Quit and reopen Screepub to use {version}.")
+    format!("Update installed. Quit and reopen Method Reader to use {version}.")
 }
 
 /// The words beside the stamp, or None.
@@ -291,7 +291,7 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
         return NotesView {
             say: drawn
                 .drew_offer
-                .then(|| format!("Screepub {running} is the newest there is.")),
+                .then(|| format!("Method Reader {running} is the newest there is.")),
             body: None,
             install: None,
             check_disabled: false,
@@ -299,7 +299,7 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
     };
     if let Phase::Offer { version, body, .. } = phase {
         return NotesView {
-            say: Some(format!("Screepub {version} is available.")),
+            say: Some(format!("Method Reader {version} is available.")),
             body: (!body.is_empty()).then(|| body.clone()),
             install: Some((format!("Install {version}"), !label_actionable(Some(phase)))),
             check_disabled: false,
@@ -327,7 +327,7 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
     if let Phase::Stalled { .. } = phase {
         return NotesView {
             say: Some(format!(
-                "Screepub {version} is installed, but something is still running. Restart when you are ready."
+                "Method Reader {version} is installed, but something is still running. Restart when you are ready."
             )),
             body,
             install: Some((update_label(Some(phase)).unwrap_or_default(), false)),
@@ -345,11 +345,11 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
     }
 }
 
-pub const NOT_HERE: &str = "Screepub does not update itself here. New releases are at github.com/ssandweiss/screepub/releases.";
+pub const NOT_HERE: &str = "Method Reader does not update itself here. New releases are at github.com/method-production-suite/method-reader/releases.";
 pub const AUTO_LABEL: &str =
     "Look for a new version once a day. Off by default; nothing is sent but the request itself.";
-pub const AUTO_ON: &str = "Screepub will look once a day, and only for this file.";
-pub const AUTO_OFF: &str = "Screepub will not look on its own.";
+pub const AUTO_ON: &str = "Method Reader will look once a day, and only for this file.";
+pub const AUTO_OFF: &str = "Method Reader will not look on its own.";
 pub const CHECK_BUTTON: &str = "Check for updates";
 pub const LOOKING: &str = "Looking…";
 
@@ -509,7 +509,7 @@ mod tests {
         assert!(label_actionable(Some(&Phase::Stalled { version: v() })));
         assert_eq!(
             update_label(Some(&Phase::Installed { version: v() })).as_deref(),
-            Some("Update installed. Quit and reopen Screepub to use 0.12.0.")
+            Some("Update installed. Quit and reopen Method Reader to use 0.12.0.")
         );
         assert_eq!(update_label(None), None);
     }
@@ -528,7 +528,7 @@ mod tests {
         );
         assert_eq!(
             after.say.as_deref(),
-            Some("Screepub 0.11.1 is the newest there is.")
+            Some("Method Reader 0.11.1 is the newest there is.")
         );
         let offer = Phase::Offer {
             version: "0.12.0".into(),

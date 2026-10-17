@@ -5,7 +5,7 @@
 //! Mac.
 //!
 //! The device scan defaults to sp-device's `list_devices`; the CLI passes
-//! its own, carrying its test seams (`SCREEPUB_VOLUME_ROOTS`, ...).
+//! its own, carrying its test seams (`METHOD_READER_VOLUME_ROOTS`, ...).
 
 use std::process::Stdio;
 

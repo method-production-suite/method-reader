@@ -1,5 +1,5 @@
 //! Port of tests/cli-export-fdx.test.ts, its export-command and CLI
-//! halves: `screepub export <book.epub> --for fdx --fountain <f>`, the
+//! halves: `method-reader export <book.epub> --for fdx --fountain <f>`, the
 //! editable screenplay written the way every other export write is,
 //! atomically, and the conversion's own `--fdx <file>`.
 //!
@@ -282,7 +282,7 @@ fn the_unknown_for_message_names_all_three_formats() {
     }
 }
 
-// ---- screepub export --for fdx (through the CLI) ----
+// ---- method-reader export --for fdx (through the CLI) ----
 
 #[test]
 fn json_prints_one_object_with_the_path_and_the_file_is_there() {
@@ -327,7 +327,7 @@ fn export_help_names_fdx() {
     assert!(r.stdout.contains("fdx"));
 }
 
-// ---- screepub <script> --fdx <file> ----
+// ---- method-reader <script> --fdx <file> ----
 
 #[test]
 fn a_pdf_conversion_writes_the_fdx_of_the_fountain_it_wrote_and_names_it_in_json() {

@@ -54,7 +54,7 @@
   "convert-human": {
     "exit": 1,
     "stdout": "<not JSON> ",
-    "stderr": "screepub: No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway.\n",
+    "stderr": "method-reader: No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway.\n",
     "outputs": {
       "out/book.epub": null,
       "out/book.mobi": null,
@@ -147,7 +147,7 @@
         "message": "No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway."
       }
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/prose.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/prose.screepub.json\n",
     "outputs": {
       "library": {
         "tree": {}
@@ -166,7 +166,7 @@
         "message": "No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway."
       }
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/prose.screepub.json (the options you passed override them)\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/prose.screepub.json (the options you passed override them)\n",
     "outputs": {
       "out/book.epub": null
     }
@@ -180,7 +180,7 @@
         "message": "No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway."
       }
     },
-    "stderr": "screepub: ignoring $WORK/in/prose.screepub.json, which is not a settings object\n",
+    "stderr": "method-reader: ignoring $WORK/in/prose.screepub.json, which is not a settings object\n",
     "outputs": {
       "out/book.epub": null
     }

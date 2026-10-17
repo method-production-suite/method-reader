@@ -1,4 +1,4 @@
-//! Port of tests/cli-azw3.test.ts: the conversion's own --azw3, Screepub's
+//! Port of tests/cli-azw3.test.ts: the conversion's own --azw3, Method Reader's
 //! AZW3 of the EPUB the same run wrote, and `export --for azw3`, which
 //! needs nothing installed. Read back with sp-azw3's structural KF8 reader
 //! (independent of the writer).

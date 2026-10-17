@@ -1,6 +1,6 @@
 [package]
 name = "sp-mobi"
-description = "Screepub's MOBI 6 writer and the PalmDB container the AZW3 shares"
+description = "Method Reader's MOBI 6 writer and the PalmDB container the AZW3 shares"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

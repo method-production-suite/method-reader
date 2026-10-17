@@ -166,7 +166,7 @@ struct Lexer {
 pub fn tokenize(script: &str) -> Result<Vec<Token>, FountainError> {
     std::thread::scope(|scope| {
         std::thread::Builder::new()
-            .name("screepub-fountain".into())
+            .name("method-reader-fountain".into())
             .stack_size(PARSE_STACK)
             .spawn_scoped(scope, || {
                 crate::jsre::with_stack_budget(PARSE_STACK_BUDGET, || {

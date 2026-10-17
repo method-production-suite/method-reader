@@ -207,9 +207,12 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     assert_eq!(uploaded_by(release), vec![names::CLI_MAC_ARM64.to_string()]);
     let text = run_text(release);
     assert!(text.contains("--target aarch64-apple-darwin"));
+    // The tool and its old name, each under its own identifier.
     assert!(text.contains(
-        r#"codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$BIN""#
+        r#"codesign --force --options runtime --timestamp --identifier "${pair##*:}" --sign "$SIGN_IDENTITY" "$B""#
     ));
+    assert!(text.contains(r#""$BIN:method-reader-cli-arm64" "$ALIAS:screepub-cli-arm64""#));
+    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64"#));
     assert!(text.contains("xcrun notarytool submit"));
     // Signed and notarized, THEN packaged, so the tarball holds the signed bytes.
     let sign = text.find("codesign --force").unwrap();
@@ -289,7 +292,10 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
     // Each is run on its own OS before it is packaged: the version, two
     // conversions, the device listing.
     let text = run_text(cli);
-    assert!(text.contains(r#""$BIN" --version | grep -qx "screepub $VERSION""#));
+    assert!(text.contains(r#""$BIN" --version | grep -qx "method-reader $VERSION""#));
+    // The old name rides beside it, and behaves the same.
+    assert!(text.contains(r#""$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION""#));
+    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS""#));
     assert!(text.contains("for f in screenplay jpx; do"));
     let upload = (steps(cli).into_iter())
         .find(|st| s(st, "uses").contains("upload-artifact"))
@@ -577,7 +583,8 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
         for line in text.lines() {
             let l = line.trim();
             assert!(
-                !l.starts_with("SCREEPUB_UPDATE_") && !l.contains("SCREEPUB_UPDATE_ENDPOINT="),
+                !l.starts_with("METHOD_READER_UPDATE_")
+                    && !l.contains("METHOD_READER_UPDATE_ENDPOINT="),
                 "{f} sets a rehearsal value: {l}"
             );
         }
@@ -592,14 +599,14 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
         .find("if [ \"$RUNNER_OS\" = macOS ]")
         .expect("the build");
     let guard = &step[..guard_end];
-    assert!(guard.contains("SCREEPUB_UPDATE_INSECURE"));
+    assert!(guard.contains("METHOD_READER_UPDATE_INSECURE"));
     let dir = Scratch::new("rehearsal-guard");
     let ok = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin")]);
     assert!(ok.status.success(), "{}", said(&ok));
     for v in [
-        "SCREEPUB_UPDATE_ENDPOINT",
-        "SCREEPUB_UPDATE_PUBKEY",
-        "SCREEPUB_UPDATE_INSECURE",
+        "METHOD_READER_UPDATE_ENDPOINT",
+        "METHOD_READER_UPDATE_PUBKEY",
+        "METHOD_READER_UPDATE_INSECURE",
     ] {
         for value in ["http://127.0.0.1:8765/latest.json", ""] {
             let out = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin"), (v, value)]);

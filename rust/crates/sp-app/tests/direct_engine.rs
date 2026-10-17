@@ -2,8 +2,10 @@
 //! script, in-process, exactly as the window asks for it (`Request::Convert`
 //! is `<pdf> --json --progress --preview-inline --library`).
 //!
-//! The environment points at scratch folders: SCREEPUB_CONFIG_DIR (never
-//! the real settings), SCREEPUB_LIBRARY (never the real library) and a
+//! The environment points at scratch folders: METHOD_READER_CONFIG_DIR
+//! (never the real settings), METHOD_READER_LIBRARY (never the real
+//! library), the same under their old SCREEPUB_ names the engine falls
+//! back to, and a
 //! Calibre guard path, so a Calibre started by mistake fails instead of
 //! reaching the real one. The workspace forbids unsafe code, so the test
 //! cannot set its own environment: it runs itself again as a child with
@@ -24,9 +26,14 @@ fn a_conversion_streams_its_progress_and_answers_with_the_book() {
     let out = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", "child_converts", "--nocapture"])
         .env(CHILD, "1")
+        .env("METHOD_READER_CONFIG_DIR", &config)
+        .env("METHOD_READER_LIBRARY", &library)
         .env("SCREEPUB_CONFIG_DIR", &config)
         .env("SCREEPUB_LIBRARY", &library)
-        .env("CALIBRE_CONFIG_DIRECTORY", "/dev/null/screepub-test-guard")
+        .env(
+            "CALIBRE_CONFIG_DIRECTORY",
+            "/dev/null/method-reader-test-guard",
+        )
         .output()
         .expect("the child runs");
     let said =
@@ -40,7 +47,7 @@ fn child_converts() {
     if std::env::var(CHILD).is_err() {
         return;
     }
-    let library = std::env::var("SCREEPUB_LIBRARY").unwrap();
+    let library = std::env::var("METHOD_READER_LIBRARY").unwrap();
     let pdf = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../tests/fixtures/field-station.pdf")
         .canonicalize()

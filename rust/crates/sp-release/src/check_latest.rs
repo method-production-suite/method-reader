@@ -222,7 +222,7 @@ fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
         .http_status_as_error(false)
         .timeout_global(Some(std::time::Duration::from_secs(120)))
-        .user_agent("screepub-check-latest")
+        .user_agent("method-reader-check-latest")
         .build()
         .into()
 }
@@ -375,7 +375,7 @@ mod tests {
                 .map(|n| Asset {
                     name: n.to_string(),
                     url: format!(
-                        "https://github.com/ssandweiss/screepub/releases/download/v0.12.0/{n}"
+                        "https://github.com/method-production-suite/method-reader/releases/download/v0.12.0/{n}"
                     ),
                 })
                 .collect(),
@@ -386,21 +386,25 @@ mod tests {
     fn a_good_manifest_passes_and_a_foreign_key_fails() {
         let (sk_text, pk) = crate::sign::keygen("").unwrap();
         let sk = crate::sign::load_secret_key(&sk_text, "").unwrap();
-        let sig = crate::sign::sign(&sk, b"x", "Screepub-macOS.app.tar.gz", "0.12.0", 1).unwrap();
-        let r = release(&["Screepub-macOS.app.tar.gz", "Screepub-macOS.app.tar.gz.sig"]);
+        let sig =
+            crate::sign::sign(&sk, b"x", "Method-Reader-macOS.app.tar.gz", "0.12.0", 1).unwrap();
+        let r = release(&[
+            "Method-Reader-macOS.app.tar.gz",
+            "Method-Reader-macOS.app.tar.gz.sig",
+        ]);
         let m = crate::manifest::render_manifest(
             "0.12.0",
             &[crate::manifest::SignedArtifact {
-                name: "Screepub-macOS.app.tar.gz".into(),
+                name: "Method-Reader-macOS.app.tar.gz".into(),
                 signature: sig.clone(),
                 platform_keys: vec!["darwin-aarch64".into()],
             }],
-            "ssandweiss/screepub",
+            "method-production-suite/method-reader",
             "2026-10-12T00:00:00.000Z",
         )
         .unwrap();
         let mut sigs = BTreeMap::new();
-        sigs.insert("Screepub-macOS.app.tar.gz.sig".to_string(), sig);
+        sigs.insert("Method-Reader-macOS.app.tar.gz.sig".to_string(), sig);
         let text = m.to_string();
         assert_eq!(
             judge_manifest(&text, &r, &sigs, &pk).unwrap(),

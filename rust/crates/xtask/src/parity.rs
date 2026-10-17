@@ -41,7 +41,7 @@ use crate::table::{CommandRow, EnvValue, Invocation, commands};
 const DEFAULT_EPOCH: u64 = 1_767_225_600;
 
 /// Calibre's guard: a path no Calibre can start against.
-const CALIBRE_GUARD: &str = "/dev/null/screepub-parity-calibre-guard";
+const CALIBRE_GUARD: &str = "/dev/null/method-reader-parity-calibre-guard";
 /// `cargo xtask parity --help`.
 pub const USAGE: &str = "\
 usage: cargo xtask parity [options]
@@ -50,7 +50,7 @@ usage: cargo xtask parity [options]
   --fixture <stem>...   only these committed fixtures (e.g. torture)
   --command <name>...   only these rows of the command table
   --rust-cli <path>     the Rust binary (default: build crates/sp-cli,
-                        or $SCREEPUB_RUST_CLI)
+                        or $METHOD_READER_RUST_CLI)
   --keep                keep the scratch folders and print where
   --accept <row>...     a DELIBERATE output change: run only the named rows
                         (or prefixes ending in *) on the committed fixtures,
@@ -168,12 +168,14 @@ impl Side {
     }
 }
 
-/// The Rust CLI: `--rust-cli`, else `$SCREEPUB_RUST_CLI`, else built from
+/// The Rust CLI: `--rust-cli`, else `$METHOD_READER_RUST_CLI`, else built from
 /// crates/sp-cli in the RELEASE profile, the one that ships: the picture
 /// budget is wall-clock, and a debug build would spend it on unoptimized
 /// decoding. `Ok(None)` while there is no sp-cli crate.
 fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
-    if let Some(p) = explicit.or_else(|| std::env::var_os("SCREEPUB_RUST_CLI").map(PathBuf::from)) {
+    if let Some(p) =
+        explicit.or_else(|| std::env::var_os("METHOD_READER_RUST_CLI").map(PathBuf::from))
+    {
         return Ok(Some(p));
     }
     let ws = paths::workspace_root();
@@ -189,7 +191,7 @@ fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
             "--package",
             "sp-cli",
             "--bin",
-            "screepub",
+            sp_release::names::CLI_EXE,
         ])
         .current_dir(&ws)
         .status()
@@ -197,11 +199,11 @@ fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
     if !status.success() {
         return Err("sp-cli did not build".into());
     }
-    let exe = if cfg!(windows) {
-        "screepub.exe"
-    } else {
-        "screepub"
-    };
+    let exe = format!(
+        "{}{}",
+        sp_release::names::CLI_EXE,
+        std::env::consts::EXE_SUFFIX
+    );
     Ok(Some(ws.join("target/release").join(exe)))
 }
 
@@ -320,16 +322,16 @@ fn run_side(
             // verb row into a conversion. The scratch folder is empty but
             // for what the row put there.
             .current_dir(work.join("in"))
-            .env("SCREEPUB_CONFIG_DIR", work.join("config"))
-            .env("SCREEPUB_LIBRARY", work.join("library"))
+            .env("METHOD_READER_CONFIG_DIR", work.join("config"))
+            .env("METHOD_READER_LIBRARY", work.join("library"))
             .env("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD)
             .env("SOURCE_DATE_EPOCH", epoch.to_string())
             .env("TZ", "UTC")
             // A home of its own: a frozen answer names no one's home folder.
             .env("HOME", work.join("home"))
             .env("USERPROFILE", work.join("home"))
-            .env_remove("SCREEPUB_VOLUME_ROOTS")
-            .env_remove("SCREEPUB_REMARKABLE_ENDPOINT");
+            .env_remove("METHOD_READER_VOLUME_ROOTS")
+            .env_remove("METHOD_READER_REMARKABLE_ENDPOINT");
         for (k, v) in &extra {
             c.env(k, v);
         }
@@ -372,6 +374,20 @@ fn with_this_version(row: &CommandRow, frozen: &Value) -> Value {
         .to_string()
         .replace(FROZEN_VERSION, env!("CARGO_PKG_VERSION"));
     serde_json::from_str(&text).unwrap_or_else(|_| frozen.clone())
+}
+
+/// The other direction, for `--accept`: a version row's answer with this
+/// build's version written back as [`FROZEN_VERSION`], so the accepted row
+/// still compares through [`with_this_version`] after the next bump. Any
+/// other row is written exactly as it ran.
+pub fn at_frozen_version(row_name: &str, ran: &Value) -> Value {
+    if !VERSION_ROWS.contains(&row_name) {
+        return ran.clone();
+    }
+    let text = ran
+        .to_string()
+        .replace(env!("CARGO_PKG_VERSION"), FROZEN_VERSION);
+    serde_json::from_str(&text).unwrap_or_else(|_| ran.clone())
 }
 
 /// What differs between the frozen answer and the Rust run, as (what,
@@ -492,7 +508,7 @@ pub fn run(args: &[String]) -> Result<bool, String> {
     static RUNS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let nth = RUNS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let scratch =
-        std::env::temp_dir().join(format!("screepub-parity-{}-{nth}", std::process::id()));
+        std::env::temp_dir().join(format!("method-reader-parity-{}-{nth}", std::process::id()));
     let machine = crate::machine::facts(None);
     if !cfg!(target_os = "macos") {
         println!(
@@ -677,7 +693,7 @@ fn accept(
             }
             let before = frozen.get(&row.name).cloned();
             let got = run_case(input, row)?;
-            let after = frozen_value(row, &got, before.as_ref());
+            let after = at_frozen_version(&row.name, &frozen_value(row, &got, before.as_ref()));
             if before.as_ref() == Some(&after) {
                 same += 1;
                 println!("  same  {name} {}", row.name);

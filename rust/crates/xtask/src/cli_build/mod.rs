@@ -1,4 +1,4 @@
-//! Building and checking the screepub CLI: was tools/build-cli.ts,
+//! Building and checking the method-reader CLI: was tools/build-cli.ts,
 //! smoke-cli.ts and verify-signing.ts (with the half of tools/dmg.ts it
 //! uses). build-sidecar.ts and sidecar-targets.ts retired with the engine
 //! sidecar: the Rust app links the engine, and their Rust triples are

@@ -19,16 +19,24 @@
 //!   (http://127.0.0.1);
 //! - the Rust app from this checkout, as version 0.12.0, with the same
 //!   identifier and its updater baked with the same throwaway key and
-//!   endpoint (`SCREEPUB_UPDATE_*` at compile time, read only because it
-//!   builds with `--features rehearsal`);
-//! - Screepub-macOS.app.tar.gz of it, signed with the throwaway key by
+//!   endpoint (`METHOD_READER_UPDATE_*` at compile time, read only because
+//!   it builds with `--features rehearsal`);
+//! - Method-Reader-macOS.app.tar.gz of it, signed with the throwaway key by
 //!   `sp-release sign-update`, and latest.json pointing at the local server,
 //!   checked by `sp-release verify-update` before anything runs.
 //!
-//! Both apps run with SCREEPUB_CONFIG_DIR and SCREEPUB_LIBRARY inside the
-//! work folder, inherited across the restart, so the real settings and
-//! library are never read or written. Nothing is code-signed: locally built
+//! Both apps run with their settings and library folders inside the work
+//! folder (the Tauri window's SCREEPUB_CONFIG_DIR and SCREEPUB_LIBRARY, and
+//! the METHOD_READER_ names the Rust app reads first), inherited across
+//! the restart, so the real settings and library are never read or
+//! written. Nothing is code-signed: locally built
 //! apps carry no quarantine, and the linker signs arm64 binaries ad hoc.
+//!
+//! The old app sits where every real install of it sits, at
+//! `Applications/Screepub.app` (the name up to 0.12.x), and the update
+//! lands at that same path, as the old updater always swaps in place:
+//! what is checked is that the new build, whose archive holds
+//! `Method Reader.app` running `method-reader-app`, works from there.
 //!
 //! Needs: macOS on Apple silicon, cargo (rustup), bun 1.3.14 (the TAGGED
 //! window's engine is TypeScript; this checkout has none), the Tauri CLI
@@ -49,6 +57,11 @@ use std::time::{Duration, Instant};
 use crate::paths;
 
 const ID: &str = "com.darkwell.screepub.rehearsal";
+/// Where the old app is installed, and so where the update lands.
+const OLD_BUNDLE: &str = sp_release::names::LEGACY_MAC_BUNDLE;
+const OLD_EXE: &str = sp_release::names::LEGACY_WINDOW_EXE;
+const NEW_EXE: &str = sp_release::names::WINDOW_EXE;
+const ARCHIVE: &str = sp_release::names::MAC_UPDATE;
 const TAG: &str = "v0.11.1";
 const NEW: &str = "0.12.0";
 
@@ -198,7 +211,8 @@ fn prepare() -> Result<(), String> {
         ));
     }
 
-    let w = crate::scratch::TempDir::new("screepub-handover.").map_err(|e| say(&e.to_string()))?;
+    let w =
+        crate::scratch::TempDir::new("method-reader-handover.").map_err(|e| say(&e.to_string()))?;
     // Kept: the rehearsal's later steps read it.
     let w = {
         let p = w.path().to_path_buf();
@@ -274,13 +288,13 @@ fn prepare() -> Result<(), String> {
             "--features",
             "rehearsal",
         ])
-        .env("SCREEPUB_UPDATE_ENDPOINT", &endpoint)
-        .env("SCREEPUB_UPDATE_PUBKEY", &public)
-        .env("SCREEPUB_UPDATE_INSECURE", "1")
+        .env("METHOD_READER_UPDATE_ENDPOINT", &endpoint)
+        .env("METHOD_READER_UPDATE_PUBKEY", &public)
+        .env("METHOD_READER_UPDATE_INSECURE", "1")
         .current_dir(rust_src.join("rust")))?;
     sh(Command::new(&sp)
         .args(["mac-app", "--version", NEW, "--identifier", ID, "--window"])
-        .arg(rust_src.join("rust/target/release/screepub-window"))
+        .arg(rust_src.join("rust/target/release").join(NEW_EXE))
         .arg("--icon")
         .arg(rust_src.join("rust/crates/sp-app/icons/icon.icns"))
         .arg("--resource")
@@ -295,10 +309,10 @@ fn prepare() -> Result<(), String> {
         .arg(w.join("build")))?;
 
     // 4. The update, signed and described, as release.yml would publish it.
-    let archive = w.join("site/Screepub-macOS.app.tar.gz");
+    let archive = w.join("site").join(ARCHIVE);
     sh(Command::new(&sp)
         .args(["update-archive", "--app"])
-        .arg(w.join("build/Screepub.app"))
+        .arg(w.join("build").join(sp_release::names::MAC_BUNDLE))
         .arg("--out")
         .arg(&archive))?;
     sh(Command::new(&sp)
@@ -371,13 +385,20 @@ fn run(w: &Path) -> Result<(), String> {
     println!("     is the Rust app: its release notes say {NEW}.");
     println!("Then: cargo xtask rehearse-handover verify {}", w.display());
     let app_log = std::fs::File::create(w.join("app.log")).map_err(|e| say(&e.to_string()))?;
-    let app = Command::new(w.join("Applications/Screepub.app/Contents/MacOS/screepub-desktop"))
-        .env("SCREEPUB_CONFIG_DIR", w.join("config"))
-        .env("SCREEPUB_LIBRARY", w.join("library"))
-        .stdout(app_log.try_clone().map_err(|e| say(&e.to_string()))?)
-        .stderr(app_log)
-        .spawn()
-        .map_err(|e| say(&format!("the Tauri window: {e}")))?;
+    let app = Command::new(
+        w.join("Applications")
+            .join(OLD_BUNDLE)
+            .join("Contents/MacOS")
+            .join(OLD_EXE),
+    )
+    .env("SCREEPUB_CONFIG_DIR", w.join("config"))
+    .env("SCREEPUB_LIBRARY", w.join("library"))
+    .env("METHOD_READER_CONFIG_DIR", w.join("config"))
+    .env("METHOD_READER_LIBRARY", w.join("library"))
+    .stdout(app_log.try_clone().map_err(|e| say(&e.to_string()))?)
+    .stderr(app_log)
+    .spawn()
+    .map_err(|e| say(&format!("the Tauri window: {e}")))?;
     std::fs::write(w.join("app.pid"), app.id().to_string()).map_err(|e| say(&e.to_string()))?;
     Ok(())
 }
@@ -397,9 +418,9 @@ fn prove(w: &Path) -> Result<(), String> {
     let _ = std::fs::remove_dir_all(&proof);
     let _ = std::fs::remove_dir_all(&site);
     mkdirs(&[proof.clone(), site.clone()])?;
-    copy_app(&w.join("Applications/Screepub.app"), &proof)?;
-    for f in ["Screepub-macOS.app.tar.gz", "Screepub-macOS.app.tar.gz.sig"] {
-        std::fs::copy(w.join("site").join(f), site.join(f)).map_err(|e| say(&e.to_string()))?;
+    copy_app(&w.join("Applications").join(OLD_BUNDLE), &proof)?;
+    for f in [ARCHIVE.to_string(), format!("{ARCHIVE}.sig")] {
+        std::fs::copy(w.join("site").join(&f), site.join(&f)).map_err(|e| say(&e.to_string()))?;
     }
     // Any free port (a CI runner, or something else on this Mac, may hold
     // the rehearsal's): the server says which, and the manifest follows it.
@@ -441,7 +462,7 @@ fn prove(w: &Path) -> Result<(), String> {
         sh(
             Command::new(proof_dir.join("target/release/handover-proof"))
                 .arg("--bundle")
-                .arg(proof.join("Screepub.app"))
+                .arg(proof.join(OLD_BUNDLE))
                 .args(["--endpoint", &format!("{base}/latest.json")])
                 .args(["--pubkey", read(&w.join("keys/rehearsal.key.pub"))?.trim()]),
         )
@@ -457,7 +478,8 @@ fn prove(w: &Path) -> Result<(), String> {
         ))
     })?;
     if proof
-        .join("Screepub.app/Contents/MacOS/screepub-engine")
+        .join(OLD_BUNDLE)
+        .join("Contents/MacOS/screepub-engine")
         .exists()
     {
         return Err(say("the old engine sidecar survived"));
@@ -467,7 +489,7 @@ fn prove(w: &Path) -> Result<(), String> {
         .flatten()
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .collect();
-    if left != ["Screepub.app"] {
+    if left != [OLD_BUNDLE] {
         return Err(say(&format!(
             "something was left beside the bundle: {left:?}"
         )));
@@ -488,7 +510,7 @@ fn plist_get(app: &Path, key: &str) -> String {
 }
 
 fn verify(w: &Path) -> Result<(), String> {
-    let app = w.join("Applications/Screepub.app");
+    let app = w.join("Applications").join(OLD_BUNDLE);
     let mut fail = false;
     let mut check = |what: &str, ok: bool| {
         println!("  {} {what}", if ok { "ok  " } else { "FAIL" });
@@ -504,8 +526,8 @@ fn verify(w: &Path) -> Result<(), String> {
         plist_get(&app, "CFBundleIdentifier") == ID,
     );
     check(
-        "and runs screepub-desktop, the Rust window",
-        plist_get(&app, "CFBundleExecutable") == "screepub-desktop",
+        &format!("and runs {NEW_EXE}, the Rust window"),
+        plist_get(&app, "CFBundleExecutable") == NEW_EXE,
     );
     check(
         "the Tauri engine sidecar is gone",
@@ -518,7 +540,7 @@ fn verify(w: &Path) -> Result<(), String> {
                 .collect()
         })
         .unwrap_or_default();
-    check("nothing left beside the bundle", beside == ["Screepub.app"]);
+    check("nothing left beside the bundle", beside == [OLD_BUNDLE]);
     let serve_log = std::fs::read_to_string(w.join("serve.log")).unwrap_or_default();
     check(
         "the window fetched latest.json",
@@ -526,11 +548,11 @@ fn verify(w: &Path) -> Result<(), String> {
     );
     check(
         "and the signed archive",
-        serve_log.contains("GET /Screepub-macOS.app.tar.gz -> 200"),
+        serve_log.contains(&format!("GET /{ARCHIVE} -> 200")),
     );
     let running = Command::new("pgrep")
         .arg("-f")
-        .arg(app.join("Contents/MacOS/screepub-desktop"))
+        .arg(app.join("Contents/MacOS").join(NEW_EXE))
         .stdout(Stdio::null())
         .status()
         .is_ok_and(|s| s.success());
@@ -569,7 +591,11 @@ fn clean(w: &Path) -> Result<(), String> {
     }
     let _ = Command::new("pkill")
         .arg("-f")
-        .arg(w.join("Applications/Screepub.app/Contents/MacOS/"))
+        .arg(
+            w.join("Applications")
+                .join(OLD_BUNDLE)
+                .join("Contents/MacOS/"),
+        )
         .status();
     // Only the rehearsal identifier's folders, never com.darkwell.screepub's.
     let home = std::env::home_dir().unwrap_or_default();

@@ -35,7 +35,7 @@ fn base(p: &str) -> String {
 
 #[test]
 fn enumerate_lists_the_directories_under_an_injected_root() {
-    let sc = scratch("screepub-device-volumes-");
+    let sc = scratch("method-reader-device-volumes-");
     let root = mount_root(
         sc.path(),
         &[
@@ -54,7 +54,7 @@ fn enumerate_lists_the_directories_under_an_injected_root() {
 
 #[test]
 fn enumerate_ignores_files_and_missing_roots() {
-    let sc = scratch("screepub-device-volumes-");
+    let sc = scratch("method-reader-device-volumes-");
     let root = mount_root(sc.path(), &[("Kindle", &["documents"])]);
     std::fs::write(join(&root, "loose-file.txt"), "x").unwrap();
     let found = enumerate_volumes(Some(&[root, join(&s(sc.path()), "no-such-root")]));
@@ -66,7 +66,7 @@ fn enumerate_ignores_files_and_missing_roots() {
 
 #[test]
 fn mounted_devices_classifies_what_it_finds_and_drops_plain_drives() {
-    let sc = scratch("screepub-device-volumes-");
+    let sc = scratch("method-reader-device-volumes-");
     let root = mount_root(
         sc.path(),
         &[
@@ -92,7 +92,7 @@ fn mounted_devices_classifies_what_it_finds_and_drops_plain_drives() {
 
 #[test]
 fn mounted_devices_on_an_empty_root_finds_nothing() {
-    let sc = scratch("screepub-device-volumes-");
+    let sc = scratch("method-reader-device-volumes-");
     assert!(mounted_devices(Some(&[mount_root(sc.path(), &[])])).is_empty());
 }
 

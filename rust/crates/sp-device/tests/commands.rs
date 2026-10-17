@@ -206,7 +206,7 @@ impl Remembered {
 
 #[test]
 fn sending_to_a_volume_device_copies_it_where_that_vendor_indexes_and_remembers_the_kind() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let device = kindle_volume(sc.path());
     let file = book(sc.path(), "Script.epub");
     let remembered = Remembered::new();
@@ -248,7 +248,7 @@ fn sending_to_a_volume_device_copies_it_where_that_vendor_indexes_and_remembers_
 
 #[test]
 fn sending_to_a_remarkable_uploads_reports_no_destination_and_remembers_remarkable() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let stub = Stub::start(200);
     let remembered = Remembered::new();
     let remember = |r: &str| remembered.0.lock().unwrap().push(r.into());
@@ -275,7 +275,7 @@ fn sending_to_a_remarkable_uploads_reports_no_destination_and_remembers_remarkab
 
 #[test]
 fn a_remarkable_refuses_an_extension_it_cannot_read_before_any_request() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let stub = Stub::start(200);
     let remembered = Remembered::new();
     let remember = |r: &str| remembered.0.lock().unwrap().push(r.into());
@@ -301,7 +301,7 @@ fn a_remarkable_refuses_an_extension_it_cannot_read_before_any_request() {
 fn a_failed_copy_is_send_failed_carrying_the_underlying_message_and_remembers_nothing() {
     // A volume whose PARENT is a regular file: making the folder fails
     // ENOTDIR on every platform.
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let blocker = sc.path().join("not-a-dir");
     std::fs::write(&blocker, "x").unwrap();
     let device =
@@ -328,7 +328,7 @@ fn a_failed_copy_is_send_failed_carrying_the_underlying_message_and_remembers_no
 
 #[test]
 fn a_failed_upload_is_send_failed() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let refusing = Stub::start(500);
     let remember = |_: &str| panic!("a failed upload remembers nothing");
     let scan = |_: Option<&[String]>| Vec::new();
@@ -352,7 +352,7 @@ fn a_failed_upload_is_send_failed() {
 
 #[test]
 fn a_file_that_is_not_there_is_unreadable_and_no_device_is_touched() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let scanned = Mutex::new(0);
     let scan = |_: Option<&[String]>| {
         *scanned.lock().unwrap() += 1;
@@ -375,7 +375,7 @@ fn a_file_that_is_not_there_is_unreadable_and_no_device_is_touched() {
 
 #[test]
 fn a_directory_given_as_the_file_is_unreadable_not_send_failed() {
-    let sc = scratch("screepub-cli-devices-");
+    let sc = scratch("method-reader-cli-devices-");
     let device = kindle_volume(sc.path());
     let scan = move |_: Option<&[String]>| vec![device.clone()];
     let remember = |_: &str| {};
@@ -444,7 +444,7 @@ struct MtpCase {
 }
 
 fn mtp_case(name: &str) -> MtpCase {
-    let sc = scratch("screepub-mtp-send-");
+    let sc = scratch("method-reader-mtp-send-");
     let config = sc.path().join("config");
     std::fs::create_dir_all(&config).unwrap();
     let file = book(sc.path(), name);
@@ -475,7 +475,7 @@ fn send_mtp(
         ..Default::default()
     };
     options.mtp = MtpSend {
-        helper: Some(Some("/fake/screepub-mtp".into())),
+        helper: Some(Some("/fake/method-reader-mtp".into())),
         run: put,
         timeout: Duration::from_secs(600),
     };
@@ -511,7 +511,7 @@ fn mtp_on_a_mac_pause_copy_with_a_wait_restore_safe_to_unplug_remembered() {
     assert_eq!(
         put.calls(),
         [strings(&[
-            "/fake/screepub-mtp",
+            "/fake/method-reader-mtp",
             "put",
             "G000INVENTED01",
             &case.file,
@@ -625,7 +625,7 @@ fn mtp_an_epub_or_anything_a_kindle_cannot_open_is_refused_before_anything_runs(
     for (name, words) in [
         (
             "Field Station.epub",
-            "a Kindle does not read an EPUB copied to it. Send the Kindle file instead: screepub export --for kindle makes it",
+            "a Kindle does not read an EPUB copied to it. Send the Kindle file instead: method-reader export --for kindle makes it",
         ),
         (
             "notes.docx",

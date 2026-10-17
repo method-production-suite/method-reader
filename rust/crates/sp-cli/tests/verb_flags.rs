@@ -216,7 +216,7 @@ fn a_refused_settings_call_writes_nothing_even_with_a_real_script_and_a_set_besi
     ]);
     assert_eq!(ran.code, 1);
     assert_eq!(ran.error_code(), "usage");
-    assert!(!sb.path("settings/Script.screepub.json").exists());
+    assert!(!sb.path("settings/Script.method-reader.json").exists());
 }
 
 #[test]

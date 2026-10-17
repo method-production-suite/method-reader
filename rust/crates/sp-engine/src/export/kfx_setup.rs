@@ -13,7 +13,7 @@ use crate::export::kfx::KfxStatus;
 pub enum KfxFix {
     /// Only the user can install it; this page is where.
     Link { label: String, url: String },
-    /// Screepub can install it: `screepub kfx-install`.
+    /// Method Reader can install it: `method-reader kfx-install`.
     Install { label: String },
     /// Needs another step done first.
     After { why: String },
@@ -162,15 +162,15 @@ pub fn kfx_setup(status: &KfxStatus, platform: &str) -> KfxSetup {
         .to_uppercase()
     );
     let summary = if status.ready {
-        "Kindles get KFX, the best quality Screepub can make.".to_owned()
+        "Kindles get KFX, the best quality Method Reader can make.".to_owned()
     } else if !possible {
         format!(
-            "Amazon does not make Kindle Previewer for {}, so Kindles get {today}, which Screepub makes itself.",
+            "Amazon does not make Kindle Previewer for {}, so Kindles get {today}, which Method Reader makes itself.",
             system_name(platform)
         )
     } else {
         format!(
-            "Kindles get {today} for now, which Screepub makes itself. KFX looks better, and needs the three free tools below."
+            "Kindles get {today} for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below."
         )
     };
     KfxSetup {

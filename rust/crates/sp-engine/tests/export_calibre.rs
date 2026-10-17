@@ -59,10 +59,10 @@ mod path_scan {
     #[test]
     fn a_tool_on_path_is_discovered() {
         let s = Scratch::new("export-calibre");
-        let fake = s.join("screepub-fake-calibre-tool");
+        let fake = s.join("method-reader-fake-calibre-tool");
         common::executable(&fake, "#!/bin/sh\nexit 0\n");
         assert_eq!(
-            calibre_tool("screepub-fake-calibre-tool", &on_path(&s.str())),
+            calibre_tool("method-reader-fake-calibre-tool", &on_path(&s.str())),
             Some(fake)
         );
     }
@@ -70,11 +70,11 @@ mod path_scan {
     #[test]
     fn a_same_named_file_that_is_not_executable_is_refused() {
         let s = Scratch::new("export-calibre");
-        let fake = s.join("screepub-fake-calibre-tool2");
+        let fake = s.join("method-reader-fake-calibre-tool2");
         std::fs::write(&fake, "#!/bin/sh\nexit 0\n").unwrap();
         common::chmod(&fake, 0o644);
         assert_eq!(
-            calibre_tool("screepub-fake-calibre-tool2", &on_path(&s.str())),
+            calibre_tool("method-reader-fake-calibre-tool2", &on_path(&s.str())),
             None
         );
     }

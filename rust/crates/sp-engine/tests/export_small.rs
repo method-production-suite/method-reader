@@ -226,7 +226,7 @@ fn ready_passes_through_and_a_ready_machine_says_kfx() {
     assert!(setup.ready);
     assert_eq!(
         setup.summary,
-        "Kindles get KFX, the best quality Screepub can make."
+        "Kindles get KFX, the best quality Method Reader can make."
     );
     assert!(setup.steps.iter().all(|s| s.installed));
 }
@@ -330,7 +330,7 @@ fn plugin_installed_means_nothing_without_calibre() {
 
 #[test]
 fn the_summary_names_the_rung_a_kindle_gets_today() {
-    let today = "Kindles get AZW3 (beta) for now, which Screepub makes itself. KFX looks better, and needs the three free tools below.";
+    let today = "Kindles get AZW3 (beta) for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.";
     assert_eq!(
         kfx_setup(&status(true, false, false), "darwin").summary,
         today
@@ -339,7 +339,7 @@ fn the_summary_names_the_rung_a_kindle_gets_today() {
         kfx_setup(&status(false, false, false), "win32").summary,
         today
     );
-    let linux = "Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3 (beta), which Screepub makes itself.";
+    let linux = "Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3 (beta), which Method Reader makes itself.";
     assert_eq!(
         kfx_setup(&status(true, false, false), "linux").summary,
         linux

@@ -17,7 +17,7 @@ fn a_volume_the_engine_does_not_list_is_unknown_device_on_stdout_as_json() {
         ran.json(),
         json!({
             "ok": false,
-            "error": { "code": "unknown-device", "message": "not a reader Screepub can see: /Volumes/Backup" },
+            "error": { "code": "unknown-device", "message": "not a reader Method Reader can see: /Volumes/Backup" },
         })
     );
 }
@@ -35,5 +35,5 @@ fn eject_help_describes_the_verb() {
     let sb = Sandbox::new();
     let ran = sb.run(&["eject", "--help"]);
     assert_eq!(ran.code, 0);
-    assert!(ran.stdout.contains("screepub eject <volume>"));
+    assert!(ran.stdout.contains("method-reader eject <volume>"));
 }

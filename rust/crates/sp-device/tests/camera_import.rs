@@ -109,7 +109,7 @@ struct Scratch {
 impl Scratch {
     fn new() -> Scratch {
         Scratch {
-            dir: common::scratch("screepub-camera-"),
+            dir: common::scratch("method-reader-camera-"),
             n: Mutex::new(0),
         }
     }
@@ -462,7 +462,7 @@ fn the_words_the_window_shows_while_a_copy_pauses_camera_import() {
     assert!(!CAMERA_IMPORT_NOTE.contains('\u{2014}'));
     assert_eq!(
         CAMERA_IMPORT_NOTE,
-        "While it copies, Photos and Image Capture cannot import from a camera or phone. Screepub turns that back on when the copy ends."
+        "While it copies, Photos and Image Capture cannot import from a camera or phone. Method Reader turns that back on when the copy ends."
     );
 }
 

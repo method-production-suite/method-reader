@@ -8,7 +8,7 @@ import bz2, io, json, os, tempfile, urllib.request, zipfile
 # here, before the try, and not as the first line inside it: if anything
 # raised before that line would have run, 'except Unreachable' would be
 # evaluated against a name that was never bound, and the failure would be
-# a bare NameError with no SCREEPUB_RESULT line at all.
+# a bare NameError with no METHOD_READER_RESULT line at all.
 class Unreachable(Exception):
     pass
 
@@ -72,10 +72,10 @@ try:
         add_plugin(path)
     finally:
         os.unlink(path)
-    print('SCREEPUB_RESULT ' + json.dumps(
+    print('METHOD_READER_RESULT ' + json.dumps(
         {'ok': True, 'version': '.'.join(map(str, meta['version'])), 'removed': removed}))
 except Unreachable as e:
-    print('SCREEPUB_RESULT ' + json.dumps(
+    print('METHOD_READER_RESULT ' + json.dumps(
         {'ok': False, 'error': str(e), 'offline': True, 'removed': removed}))
 except Exception as e:
-    print('SCREEPUB_RESULT ' + json.dumps({'ok': False, 'error': str(e), 'removed': removed}))
+    print('METHOD_READER_RESULT ' + json.dumps({'ok': False, 'error': str(e), 'removed': removed}))

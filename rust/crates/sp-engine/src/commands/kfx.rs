@@ -107,7 +107,7 @@ fn step_state(step: &KfxStep) -> String {
     match &step.fix {
         None => "installed".into(),
         Some(KfxFix::Link { url, .. }) => format!("not installed: {url}"),
-        Some(KfxFix::Install { .. }) => "not installed: run screepub kfx-install".into(),
+        Some(KfxFix::Install { .. }) => "not installed: run method-reader kfx-install".into(),
         Some(KfxFix::Unavailable { why }) => format!("not available: {why}"),
         Some(KfxFix::After { why }) => format!("not installed: {why}"),
     }

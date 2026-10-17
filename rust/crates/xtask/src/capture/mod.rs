@@ -30,7 +30,7 @@
 //! cleanup), [`review`] and [`picture`].
 //!
 //! capture-screens needs Chrome at [`cdp::CHROME`], and macOS: the demo
-//! library is /Users/Shared/Documents/Screepub, because the result screen
+//! library is /Users/Shared/Documents/Method Reader, because the result screen
 //! prints the book's full path and that folder reads naturally with no
 //! username in it. The tool marks the library as its own, refuses to run if
 //! an unmarked one is already there, and removes it when done, along with
@@ -65,7 +65,7 @@ use shots::{SHOTS, Theme};
 
 use crate::paths::{repo_root, workspace_root};
 
-const LIBRARY: &str = "/Users/Shared/Documents/Screepub";
+const LIBRARY: &str = "/Users/Shared/Documents/Method Reader";
 
 /// 32 hex digits no other process can guess: SipHash under the keys std
 /// seeds from the OS's randomness, over the time and a counter.

@@ -3,10 +3,10 @@
 //! then run over the committed fixtures.
 //!
 //! Opt-in: a release build of sp-cli is minutes and a few hundred MB, so
-//! these skip unless SCREEPUB_REAL_CLI_BUILD=1 and the sp-cli crate exists.
+//! these skip unless METHOD_READER_REAL_CLI_BUILD=1 and the sp-cli crate exists.
 //! They build the HOST target only: cross-compiling to the other triples
 //! needs linkers a default machine does not have. The Mac half also signs
-//! (ad-hoc, `-`), so it additionally needs SCREEPUB_REAL_CODESIGN=1.
+//! (ad-hoc, `-`), so it additionally needs METHOD_READER_REAL_CODESIGN=1.
 
 mod cli_build_common;
 
@@ -26,8 +26,8 @@ use xtask::cli_build::{real_run, workspace_version};
 use xtask::paths;
 
 fn skip_reason() -> Option<String> {
-    if std::env::var("SCREEPUB_REAL_CLI_BUILD").as_deref() != Ok("1") {
-        return Some("set SCREEPUB_REAL_CLI_BUILD=1 to build the real CLI".into());
+    if std::env::var("METHOD_READER_REAL_CLI_BUILD").as_deref() != Ok("1") {
+        return Some("set METHOD_READER_REAL_CLI_BUILD=1 to build the real CLI".into());
     }
     if !paths::workspace_root()
         .join("crates/sp-cli/Cargo.toml")
@@ -154,8 +154,8 @@ fn on_a_mac_mac_compiles_signs_with_the_release_flags_packages_the_signed_bytes_
         eprintln!("skipping: this machine is not an Apple silicon Mac");
         return;
     };
-    if std::env::var("SCREEPUB_REAL_CODESIGN").as_deref() != Ok("1") {
-        eprintln!("skipping: set SCREEPUB_REAL_CODESIGN=1 to let this run codesign (ad-hoc)");
+    if std::env::var("METHOD_READER_REAL_CODESIGN").as_deref() != Ok("1") {
+        eprintln!("skipping: set METHOD_READER_REAL_CODESIGN=1 to let this run codesign (ad-hoc)");
         return;
     }
     let scratch = Scratch::new("e2e-mac");

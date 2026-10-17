@@ -1,6 +1,6 @@
 //! Port of `src/export/calibre.ts`: finding and running Calibre's
 //! command-line tools, for the conversions that still need Calibre (KFX,
-//! with Kindle Previewer behind it, and KEPUB). The AZW3 is Screepub's own.
+//! with Kindle Previewer behind it, and KEPUB). The AZW3 is Method Reader's own.
 //!
 //! **Every Calibre spawn goes through [`run_with_timeout`], with an explicit
 //! environment.** Calibre rewrites files in its settings folder on an
@@ -19,7 +19,7 @@ use crate::errors::{EngineError, FsError};
 use crate::fsx;
 use crate::nodepath::host;
 
-/// Calibre would otherwise undo two Screepub decisions during the convert:
+/// Calibre would otherwise undo two Method Reader decisions during the convert:
 /// scene-per-page breaks on every h2, and deleting the dialogue column's
 /// side margins as "publisher page margins". Device-verified 2026-07-29;
 /// change them in one place or not at all.

@@ -480,7 +480,7 @@ fn answer(
 }
 
 fn result_line(v: serde_json::Value) -> String {
-    format!("SCREEPUB_RESULT {v}\n")
+    format!("METHOD_READER_RESULT {v}\n")
 }
 
 #[test]
@@ -624,7 +624,7 @@ fn install(sc: serde_json::Value) -> Option<(KfxInstallResult, Vec<String>)> {
     let result = install_kfx_plugin(&|argv: &[String]| stubs.run(argv), Some(TOOL));
     let (stdout, stderr) = stubs.last();
     assert!(
-        stdout.contains("SCREEPUB_RESULT "),
+        stdout.contains("METHOD_READER_RESULT "),
         "no result line; stderr was:\n{stderr}"
     );
     Some((result, stubs.events()))

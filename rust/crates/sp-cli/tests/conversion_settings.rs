@@ -92,7 +92,7 @@ fn the_same_pdf_converts_differently_with_and_without_its_sidecar() {
     let d = defaults();
     let sb = Sandbox::new();
     let with = script(&sb, "With.pdf");
-    sb.write("scripts/With.screepub.json", tuning());
+    sb.write("scripts/With.method-reader.json", tuning());
     let without = script(&sb, "Without.pdf");
 
     let (a, _) = ok(
@@ -131,7 +131,7 @@ fn library_renders_with_the_sidecar_it_adopts_on_the_first_conversion() {
     defaults();
     let sb = Sandbox::new();
     let pdf = script(&sb, "Adopted.pdf");
-    let beside = sb.write("scripts/Adopted.screepub.json", tuning());
+    let beside = sb.write("scripts/Adopted.method-reader.json", tuning());
     let beside = beside.to_string_lossy();
 
     let (answer, stderr) = ok(&sb, &[&pdf, "--library", "--json"]);
@@ -148,19 +148,19 @@ fn a_sidecar_already_in_the_library_outranks_the_old_copy_beside_the_pdf() {
     defaults();
     let sb = Sandbox::new();
     let pdf = script(&sb, "Both.pdf");
-    // The library's word, written the way `screepub settings` writes it.
+    // The library's word, written the way `method-reader settings` writes it.
     let prefix = library_output(&pdf, &sb.p("library")).expect("the library folder");
-    std::fs::write(format!("{prefix}.screepub.json"), tuning()).unwrap();
+    std::fs::write(format!("{prefix}.method-reader.json"), tuning()).unwrap();
     // The stale copy beside the PDF says 29.
     sb.write(
-        "scripts/Both.screepub.json",
+        "scripts/Both.method-reader.json",
         "{\"dialogueSideMarginPct\":29}\n",
     );
 
     let (answer, _) = ok(&sb, &[&pdf, "--library", "--json"]);
     assert_eq!(
         answer["settingsPath"],
-        json!(format!("{prefix}.screepub.json"))
+        json!(format!("{prefix}.method-reader.json"))
     );
     let css = css_of(&answer);
     assert!(css.contains(&format!("margin-left: {SIDE}%")));
@@ -172,7 +172,7 @@ fn an_explicit_options_json_wins_knob_by_knob_over_the_sidecar() {
     defaults();
     let sb = Sandbox::new();
     let pdf = script(&sb, "Flagged.pdf");
-    sb.write("scripts/Flagged.screepub.json", tuning());
+    sb.write("scripts/Flagged.method-reader.json", tuning());
     let flag = json!({ "dialogueSideMarginPct": 13 }).to_string();
     let (answer, stderr) = ok(
         &sb,
@@ -200,7 +200,7 @@ fn a_malformed_sidecar_is_ignored_out_loud_not_fatally() {
     let sb = Sandbox::new();
     let pdf = script(&sb, "Broken.pdf");
     sb.write(
-        "scripts/Broken.screepub.json",
+        "scripts/Broken.method-reader.json",
         "{\"dialogueSideMarginPct\": 7,,,\n",
     );
     let (answer, stderr) = ok(
@@ -256,7 +256,7 @@ fn the_first_library_conversion_of_an_untuned_script_pins_this_runs_settings_so_
     // The book itself was built at the app default.
     assert!(css_of(&answer).contains(&format!("margin-left: {APP_MARGIN}%")));
 
-    let sidecar = lib(&sb, "Pinned/Pinned.screepub.json");
+    let sidecar = lib(&sb, "Pinned/Pinned.method-reader.json");
     assert!(Path::new(&sidecar).exists());
     let pinned = read_json(&sidecar);
     // The FULL resolved options, not just the one knob.
@@ -295,7 +295,7 @@ fn a_second_library_conversion_with_a_sidecar_already_present_leaves_it_unchange
     );
     let pdf = script(&sb, "Twice.pdf");
     ok(&sb, &[&pdf, "--library", "--json"]);
-    let sidecar = lib(&sb, "Twice/Twice.screepub.json");
+    let sidecar = lib(&sb, "Twice/Twice.method-reader.json");
     let before = read(&sidecar);
 
     let flag = json!({ "dialogueSideMarginPct": 25 }).to_string();
@@ -310,11 +310,14 @@ fn a_second_library_conversion_with_a_sidecar_already_present_leaves_it_unchange
 fn a_sidecar_beside_the_pdf_is_still_adopted_not_overwritten_by_the_pin() {
     let sb = Sandbox::new();
     let pdf = script(&sb, "Adopted.pdf");
-    sb.write("scripts/Adopted.screepub.json", "{\"cueIndentPct\":41}\n");
+    sb.write(
+        "scripts/Adopted.method-reader.json",
+        "{\"cueIndentPct\":41}\n",
+    );
     ok(&sb, &[&pdf, "--library", "--json"]);
     // Exactly the file that was beside the PDF, unexpanded.
     assert_eq!(
-        read_json(&lib(&sb, "Adopted/Adopted.screepub.json")),
+        read_json(&lib(&sb, "Adopted/Adopted.method-reader.json")),
         json!({ "cueIndentPct": 41 })
     );
 }
@@ -333,7 +336,7 @@ fn a_plain_conversion_without_library_writes_no_sidecar_beside_the_input() {
             "--json",
         ],
     );
-    assert!(!sb.path("scripts/NoLibrary.screepub.json").exists());
+    assert!(!sb.path("scripts/NoLibrary.method-reader.json").exists());
 }
 
 #[test]
@@ -349,7 +352,7 @@ fn a_conversion_that_fails_after_the_library_folder_opens_leaves_no_sidecar_behi
     let ran = sb.run(&[&pdf, "--library", "--json"]);
     assert_eq!(ran.code, 1, "{}", ran.stdout);
     // The book never landed, so its settings are not recorded either.
-    assert!(!Path::new(&format!("{prefix}.screepub.json")).exists());
+    assert!(!Path::new(&format!("{prefix}.method-reader.json")).exists());
     // Nor the book's own temp file.
     let folder = Path::new(&prefix).parent().unwrap();
     let temps: Vec<String> = std::fs::read_dir(folder)
@@ -375,7 +378,7 @@ fn a_flag_used_on_the_very_first_library_conversion_is_not_pinned_what_gets_save
     // The flag won for THIS conversion...
     assert!(css_of(&answer).contains("margin-left: 5%"));
     // ...but what is saved is the app default the script started from.
-    let pinned = read_json(&lib(&sb, "FlagFirst/FlagFirst.screepub.json"));
+    let pinned = read_json(&lib(&sb, "FlagFirst/FlagFirst.method-reader.json"));
     assert_eq!(pinned["dialogueSideMarginPct"], json!(APP_MARGIN));
 }
 
@@ -389,7 +392,7 @@ fn a_library_conversion_of_a_fountain_input_saves_nothing_there_is_no_library_fo
     );
     let (answer, _) = ok(&sb, &[&input.to_string_lossy(), "--library", "--json"]);
     assert_eq!(answer["ok"], json!(true));
-    assert!(!Path::new(&lib(&sb, "Loose/Loose.screepub.json")).exists());
+    assert!(!Path::new(&lib(&sb, "Loose/Loose.method-reader.json")).exists());
 }
 
 // Not ported: "a sidecar write that fails does not fail the conversion, and
@@ -415,7 +418,7 @@ fn off_an_untuned_script_gets_no_sidecar_and_a_later_app_default_change_reaches_
     let (answer, _) = ok(&sb, &[&pdf, "--library", "--json"]);
     // The book itself is still built at the app defaults.
     assert!(css_of(&answer).contains(&format!("margin-left: {APP_MARGIN}%")));
-    assert!(!Path::new(&lib(&sb, "Follows/Follows.screepub.json")).exists());
+    assert!(!Path::new(&lib(&sb, "Follows/Follows.method-reader.json")).exists());
 
     // The app defaults move, and this script moves with them.
     app_settings(
@@ -447,7 +450,7 @@ fn on_stored_explicitly_the_pin_is_written_the_same_as_when_the_key_is_absent() 
     let pdf = script(&sb, "Keeps.pdf");
     ok(&sb, &[&pdf, "--library", "--json"]);
     assert_eq!(
-        read_json(&lib(&sb, "Keeps/Keeps.screepub.json"))["dialogueSideMarginPct"],
+        read_json(&lib(&sb, "Keeps/Keeps.method-reader.json"))["dialogueSideMarginPct"],
         json!(APP_MARGIN)
     );
 }
@@ -464,7 +467,7 @@ fn switching_off_never_deletes_or_rewrites_a_sidecar_already_in_the_library_pinn
 
     // ON (absent): the first conversion pins.
     ok(&sb, &[&pdf, "--library", "--json"]);
-    let sidecar = lib(&sb, "Already/Already.screepub.json");
+    let sidecar = lib(&sb, "Already/Already.method-reader.json");
     let pinned = read(&sidecar);
 
     // OFF now, and the app defaults moved too.
@@ -490,21 +493,24 @@ fn off_a_sidecar_beside_the_pdf_is_still_adopted_because_that_one_is_tuning_not_
     let sb = Sandbox::new();
     app_settings(&sb, json!({ "keepScriptSettings": false }));
     let pdf = script(&sb, "Beside.pdf");
-    sb.write("scripts/Beside.screepub.json", "{\"cueIndentPct\":41}\n");
+    sb.write(
+        "scripts/Beside.method-reader.json",
+        "{\"cueIndentPct\":41}\n",
+    );
     ok(&sb, &[&pdf, "--library", "--json"]);
     assert_eq!(
-        read_json(&lib(&sb, "Beside/Beside.screepub.json")),
+        read_json(&lib(&sb, "Beside/Beside.method-reader.json")),
         json!({ "cueIndentPct": 41 })
     );
 }
 
 #[test]
 fn a_sidecar_write_that_fails_does_not_fail_the_conversion_and_says_so_once_on_stderr() {
-    // The debug binary's SCREEPUB_TEST_FAIL_PIN fails only the pin's save,
+    // The debug binary's METHOD_READER_TEST_FAIL_PIN fails only the pin's save,
     // as the TypeScript's preload blocked only the sidecar's temp file.
     let mut sb = Sandbox::new();
     let pdf = script(&sb, "CannotPin.pdf");
-    sb.set("SCREEPUB_TEST_FAIL_PIN", "1");
+    sb.set("METHOD_READER_TEST_FAIL_PIN", "1");
     let ran = sb.run(&[&pdf, "--library", "--json"]);
     assert_eq!(ran.code, 0, "{}\n{}", ran.stdout, ran.stderr);
     let answer = ran.json();
@@ -512,7 +518,7 @@ fn a_sidecar_write_that_fails_does_not_fail_the_conversion_and_says_so_once_on_s
     // The book is written and correct...
     assert!(Path::new(answer["epubPath"].as_str().unwrap()).exists());
     // ...the save that could not happen leaves no sidecar...
-    assert!(!Path::new(&lib(&sb, "CannotPin/CannotPin.screepub.json")).exists());
+    assert!(!Path::new(&lib(&sb, "CannotPin/CannotPin.method-reader.json")).exists());
     // ...and is said exactly once, not swallowed and not a stack trace.
     let lines: Vec<&str> = ran
         .stderr

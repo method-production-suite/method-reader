@@ -26,7 +26,7 @@ struct Script {
 impl Script {
     fn new() -> Script {
         let dir = tempfile::Builder::new()
-            .prefix("screepub-cli-settings-")
+            .prefix("method-reader-cli-settings-")
             .tempdir()
             .expect("a scratch folder");
         let path = common::canonical(dir.path());
@@ -44,7 +44,7 @@ impl Script {
     }
 
     fn sidecar(&self) -> String {
-        join(&self.dir, "Script.screepub.json")
+        join(&self.dir, "Script.method-reader.json")
     }
 
     fn run(&self, set: Option<&str>) -> Result<SettingsResult, EngineError> {
@@ -229,7 +229,7 @@ fn no_app_settings_file_app_defaults_is_exactly_the_shipped_defaults() {
     let s = Script::new();
     let result = s.ok(None);
     assert_eq!(result.app_defaults, DEFAULT_FORMAT_OPTIONS);
-    // defaults stays Screepub's own regardless of appDefaults.
+    // defaults stays Method Reader's own regardless of appDefaults.
     assert_eq!(result.defaults, DEFAULT_FORMAT_OPTIONS);
 }
 
@@ -307,7 +307,7 @@ fn the_answer_carries_keep_script_settings_for_the_settings_page() {
 #[test]
 fn with_no_app_settings_path_given_it_defaults_to_the_settings_file_the_cli_resolves() {
     // The Rust handler takes the path as a required field; the CLI resolves
-    // it (here, the Sandbox's empty SCREEPUB_CONFIG_DIR), so this is checked
+    // it (here, the Sandbox's empty METHOD_READER_CONFIG_DIR), so this is checked
     // where the default lives: a script with no app settings file reads the
     // shipped defaults rather than failing.
     let sb = Sandbox::new();
@@ -320,7 +320,7 @@ fn with_no_app_settings_path_given_it_defaults_to_the_settings_file_the_cli_reso
     );
 }
 
-// ---- screepub settings (through the CLI) ----
+// ---- method-reader settings (through the CLI) ----
 
 fn cli_script(sb: &Sandbox) -> String {
     sb.write("Script.fountain", "INT. ROOM - DAY\n\nA beat.\n")
@@ -340,7 +340,7 @@ fn cli_json_prints_one_object_carrying_the_settings_and_the_presets() {
         answer["sidecar"]
             .as_str()
             .unwrap()
-            .contains("Script.screepub.json")
+            .contains("Script.method-reader.json")
     );
 }
 

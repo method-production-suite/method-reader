@@ -1,9 +1,9 @@
-//! What the sp-cli tests share: the built `screepub`, run in a scratch
+//! What the sp-cli tests share: the built `method-reader`, run in a scratch
 //! folder with every seam pinned, so no test can read or write this
 //! machine's settings, library, readers or Calibre.
 //!
-//! The pins mirror the TypeScript tests' `runCli`: SCREEPUB_CONFIG_DIR and
-//! SCREEPUB_LIBRARY in the scratch folder, SCREEPUB_VOLUME_ROOTS at an
+//! The pins mirror the TypeScript tests' `runCli`: METHOD_READER_CONFIG_DIR and
+//! METHOD_READER_LIBRARY in the scratch folder, METHOD_READER_VOLUME_ROOTS at an
 //! empty folder, the reMarkable probe at a closed local port, and Calibre
 //! at a guard path no Calibre can start against. A test that cares passes
 //! its own values over these.
@@ -19,7 +19,7 @@ use std::process::Command;
 use serde_json::Value;
 
 /// Calibre's guard: a path no Calibre can start against.
-pub const CALIBRE_GUARD: &str = "/dev/null/screepub-test-calibre-guard";
+pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-test-calibre-guard";
 
 /// The repository root (this crate is rust/crates/sp-cli).
 pub fn repo_root() -> PathBuf {
@@ -110,7 +110,7 @@ pub struct Sandbox {
 impl Sandbox {
     pub fn new() -> Sandbox {
         let dir = tempfile::Builder::new()
-            .prefix("screepub-cli-test-")
+            .prefix("method-reader-cli-test-")
             .tempdir()
             .expect("a scratch folder");
         let root = canonical(dir.path());
@@ -119,11 +119,11 @@ impl Sandbox {
         }
         let mut env = BTreeMap::new();
         let s = |p: PathBuf| p.to_string_lossy().into_owned();
-        env.insert("SCREEPUB_CONFIG_DIR".into(), s(root.join("config")));
-        env.insert("SCREEPUB_LIBRARY".into(), s(root.join("library")));
-        env.insert("SCREEPUB_VOLUME_ROOTS".into(), s(root.join("empty")));
+        env.insert("METHOD_READER_CONFIG_DIR".into(), s(root.join("config")));
+        env.insert("METHOD_READER_LIBRARY".into(), s(root.join("library")));
+        env.insert("METHOD_READER_VOLUME_ROOTS".into(), s(root.join("empty")));
         env.insert(
-            "SCREEPUB_REMARKABLE_ENDPOINT".into(),
+            "METHOD_READER_REMARKABLE_ENDPOINT".into(),
             "http://127.0.0.1:9".into(),
         );
         env.insert("CALIBRE_CONFIG_DIRECTORY".into(), CALIBRE_GUARD.into());
@@ -182,14 +182,24 @@ impl Sandbox {
         p
     }
 
-    /// Run `screepub args` in the scratch folder.
+    /// Run `method-reader args` in the scratch folder.
     pub fn run(&self, args: &[&str]) -> Ran {
         self.run_in(&self.root(), args)
     }
 
-    /// Run `screepub args` with `cwd` as the working folder.
+    /// Run `method-reader args` with `cwd` as the working folder.
     pub fn run_in(&self, cwd: &Path, args: &[&str]) -> Ran {
-        let mut c = Command::new(env!("CARGO_BIN_EXE_screepub"));
+        self.run_exe(env!("CARGO_BIN_EXE_method-reader"), cwd, args)
+    }
+
+    /// Run the old name, `screepub args`, in the scratch folder.
+    #[allow(dead_code)]
+    pub fn run_old_name(&self, args: &[&str]) -> Ran {
+        self.run_exe(env!("CARGO_BIN_EXE_screepub"), &self.root(), args)
+    }
+
+    fn run_exe(&self, exe: &str, cwd: &Path, args: &[&str]) -> Ran {
+        let mut c = Command::new(exe);
         c.args(args).current_dir(cwd);
         // Nothing this process carries can reach the run but PATH and
         // HOME, and the pins.
@@ -209,7 +219,7 @@ impl Sandbox {
         for (k, v) in &self.env {
             c.env(k, v);
         }
-        let out = c.output().expect("screepub runs");
+        let out = c.output().expect("method-reader runs");
         Ran {
             stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
             stderr: String::from_utf8_lossy(&out.stderr).into_owned(),

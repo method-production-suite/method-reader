@@ -13,7 +13,7 @@ use sp_update::gate::{EngineGate, Ticket};
 pub const ENGINE_QUIET_MS: f64 = 500.0;
 
 /// What every engine call is told once an update has been installed.
-pub const UPDATED_MESSAGE: &str = "Screepub has been updated. Restart it to keep going.";
+pub const UPDATED_MESSAGE: &str = "Method Reader has been updated. Restart it to keep going.";
 
 /// Which calls count toward busy. The read-only ones do not: the devices
 /// poll, the KFX probe, the route list, reading app settings, the Kindle

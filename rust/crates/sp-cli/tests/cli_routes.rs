@@ -1,5 +1,5 @@
-//! Port of tests/cli-routes.test.ts: `screepub routes` (the ranked list of
-//! every way a book can leave) and `screepub route` (perform one of them).
+//! Port of tests/cli-routes.test.ts: `method-reader routes` (the ranked list of
+//! every way a book can leave) and `method-reader route` (perform one of them).
 //!
 //! The handlers are driven IN PROCESS through sp-engine with stand-in
 //! facts, an opener that records argv, and a settings file in the scratch
@@ -316,7 +316,7 @@ const MAIL_NOTE: &str =
 const SETUP_NOTE: &str = "Opened Amazon's settings page. Find your Kindle's email address there, and add the address you send from to the approved list.";
 const STK_URL: &str = "https://www.amazon.com/sendtokindle";
 const PDOC_URL: &str = "https://www.amazon.com/hz/mycd/myx#/home/settings/pdoc";
-const TO_SEND: &str = "send to a reader with screepub send; route performs the others";
+const TO_SEND: &str = "send to a reader with method-reader send; route performs the others";
 
 fn no_toolchain() -> KfxStatus {
     KfxStatus {
@@ -1463,7 +1463,7 @@ fn routes_json_is_one_object_ok_every_route_the_save_rows_available_and_chosen_a
 }
 
 #[test]
-fn routes_chosen_follows_the_settings_file_under_screepub_config_dir() {
+fn routes_chosen_follows_the_settings_file_under_method_reader_config_dir() {
     let sb = spawn_sandbox();
     sb.write("config/settings.json", r#"{"lastRoute":"save-kindle"}"#);
     let ran = sb.run(&["routes", &book_at(&sb, "b/Script.epub"), "--json"]);
@@ -1472,11 +1472,11 @@ fn routes_chosen_follows_the_settings_file_under_screepub_config_dir() {
 }
 
 #[test]
-fn a_connected_kindle_under_screepub_volume_roots_is_listed_first() {
+fn a_connected_kindle_under_method_reader_volume_roots_is_listed_first() {
     let mut sb = spawn_sandbox();
     sb.mkdir("vols/Kindle/documents");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     let answer = sb
         .run(&["routes", &book_at(&sb, "b/Script.epub"), "--json"])
         .json();
@@ -1505,7 +1505,7 @@ fn quick_answers_without_asking_the_remarkable_and_says_the_tablet_is_still_bein
     // probe's whole timeout on it. The quick answer must not ask it at all.
     let tablet = Tablet::start(None, None);
     let mut sb = spawn_sandbox();
-    sb.set("SCREEPUB_REMARKABLE_ENDPOINT", tablet.url.clone());
+    sb.set("METHOD_READER_REMARKABLE_ENDPOINT", tablet.url.clone());
     let epub = book_at(&sb, "b/Script.epub");
     let row = |answer: &Value| {
         answer["routes"]
@@ -1560,7 +1560,7 @@ fn routes_help_is_its_own_usage_not_the_conversion_flags() {
     let ran = sb.run(&["routes", "--help", "--json"]);
     assert_eq!(ran.code, 0);
     let usage = ran.json()["usage"].as_str().unwrap().to_owned();
-    assert!(usage.contains("screepub routes <file.epub>"));
+    assert!(usage.contains("method-reader routes <file.epub>"));
     assert!(usage.contains("--quick"));
     assert!(!usage.contains("--mobi"));
     assert!(!usage.contains("--out"));
@@ -1573,11 +1573,11 @@ fn the_main_usage_lists_routes() {
     assert!(
         sb.run(&["--help"])
             .stdout
-            .contains("screepub routes <file.epub> [--quick] [--json]")
+            .contains("method-reader routes <file.epub> [--quick] [--json]")
     );
 }
 
-// ---- screepub route (through the CLI) ---------------------------------------
+// ---- method-reader route (through the CLI) ---------------------------------------
 // Refusals and --help ONLY (the one spawned success, a save, has its own
 // block below). No spawned run here names a key that opens anything: what
 // those open is proven in process, above, with a stand-in opener. Every run
@@ -1612,8 +1612,8 @@ fn route_help_is_its_own_usage_naming_every_key_kindle_email_setup_included() {
     let ran = sb.run(&["route", "--help", "--json"]);
     assert_eq!(ran.code, 0);
     let usage = ran.json()["usage"].as_str().unwrap().to_owned();
-    assert!(usage.contains("screepub route <key> <file.epub>"));
-    assert!(usage.contains("screepub route kindle-email-setup"));
+    assert!(usage.contains("method-reader route <key> <file.epub>"));
+    assert!(usage.contains("method-reader route kindle-email-setup"));
     for key in [
         "apple-books",
         "send-to-kindle",
@@ -1636,7 +1636,7 @@ fn the_main_usage_lists_route() {
     assert!(
         sb.run(&["--help"])
             .stdout
-            .contains("screepub route <key> <file.epub> [--out <path>] [--json]")
+            .contains("method-reader route <key> <file.epub> [--out <path>] [--json]")
     );
 }
 
@@ -1793,7 +1793,7 @@ fn without_json_a_refusal_is_one_line_on_stderr_not_json() {
     let ran = sb.run(&["route", "remarkable", &book_at(&sb, "b/Script.epub")]);
     assert_eq!(ran.code, 1);
     assert_eq!(ran.stdout, "");
-    assert_eq!(ran.stderr.trim(), format!("screepub: {TO_SEND}"));
+    assert_eq!(ran.stderr.trim(), format!("method-reader: {TO_SEND}"));
 }
 
 #[test]
@@ -1849,7 +1849,7 @@ fn no_refusal_remembered_anything_and_no_spawned_run_opened_an_app_a_page_or_a_f
     stayed_harmless(&sb);
 }
 
-// ---- screepub route save-epub: the one route that works when spawned --------
+// ---- method-reader route save-epub: the one route that works when spawned --------
 // A save opens nothing, and --out, the settings folder, the library and the
 // mounts are all in the scratch folder. What the verb prints on success is
 // proven here, for real.

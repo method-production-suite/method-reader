@@ -211,7 +211,7 @@ pub fn route_command(
 
     if key.starts_with("device:") || key == "remarkable" {
         return Err(usage(
-            "send to a reader with screepub send; route performs the others",
+            "send to a reader with method-reader send; route performs the others",
         ));
     }
     if !ROUTE_KEYS.contains(&key) {
@@ -243,7 +243,7 @@ pub fn route_command(
 
     let Some(epub) = options.epub.as_deref() else {
         return Err(usage(format!(
-            "route {key} needs the book: screepub route {key} <file.epub>"
+            "route {key} needs the book: method-reader route {key} <file.epub>"
         )));
     };
     require_book(epub)?;

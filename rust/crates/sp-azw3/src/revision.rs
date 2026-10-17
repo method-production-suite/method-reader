@@ -21,7 +21,7 @@ pub const AZW3_WRITER_REVISION: u32 = 1;
 /// The EXTH record that holds it, as one big-endian 32-bit number. No
 /// reader acts on it: Amazon's and Calibre's numbers run 1-4, 100-209, 300,
 /// 401-453 and 501-544, and Calibre's reader and KindleUnpack both skip a
-/// number they do not know. 0x5350 is "SP", for Screepub.
+/// number they do not know. 0x5350 is "SP", for Screepub, the app's earlier name.
 pub const AZW3_REVISION_EXTH: u32 = 0x5350;
 
 fn u32_at(b: &[u8], at: usize) -> u32 {

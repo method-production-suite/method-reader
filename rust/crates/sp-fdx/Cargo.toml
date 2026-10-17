@@ -1,6 +1,6 @@
 [package]
 name = "sp-fdx"
-description = "Screepub's Final Draft (.fdx) writer: fountain-js tokens to an editable screenplay"
+description = "Method Reader's Final Draft (.fdx) writer: fountain-js tokens to an editable screenplay"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

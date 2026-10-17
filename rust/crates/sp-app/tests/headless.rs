@@ -6,10 +6,17 @@ use std::process::Command;
 use serde_json::Value;
 
 fn window(scratch: &std::path::Path) -> Command {
-    let mut c = Command::new(env!("CARGO_BIN_EXE_screepub-window"));
-    c.env("SCREEPUB_CONFIG_DIR", scratch.join("config"))
+    let mut c = Command::new(env!("CARGO_BIN_EXE_method-reader-app"));
+    // Both names, the new and the old one the engine still falls back to,
+    // so no run can reach the real settings or library.
+    c.env("METHOD_READER_CONFIG_DIR", scratch.join("config"))
+        .env("METHOD_READER_LIBRARY", scratch.join("library"))
+        .env("SCREEPUB_CONFIG_DIR", scratch.join("config"))
         .env("SCREEPUB_LIBRARY", scratch.join("library"))
-        .env("CALIBRE_CONFIG_DIRECTORY", "/dev/null/screepub-test-guard");
+        .env(
+            "CALIBRE_CONFIG_DIRECTORY",
+            "/dev/null/method-reader-test-guard",
+        );
     c
 }
 

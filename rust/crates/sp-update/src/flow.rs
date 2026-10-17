@@ -33,7 +33,7 @@ pub enum Event {
         version: String,
     },
     /// Swapped, but this copy cannot restart itself (or the restart was
-    /// refused): "Update installed. Quit and reopen Screepub to use …".
+    /// refused): "Update installed. Quit and reopen Method Reader to use …".
     Installed {
         version: String,
     },

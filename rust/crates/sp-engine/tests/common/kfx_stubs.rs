@@ -24,8 +24,8 @@ pub fn system_python() -> Option<&'static str> {
 const CALIBRE_INIT: &str = r#"
 import json, os, urllib.request
 
-LOG = os.environ['SCREEPUB_STUB_LOG']
-with open(os.environ['SCREEPUB_STUB_SCENARIO']) as f:
+LOG = os.environ['METHOD_READER_STUB_LOG']
+with open(os.environ['METHOD_READER_STUB_SCENARIO']) as f:
     SCENARIO = json.load(f)
 
 def log(event):
@@ -153,9 +153,9 @@ impl SnippetRun {
             .env("PYTHONPATH", &self.dir)
             .env("PYTHONNOUSERSITE", "1")
             .env("PYTHONDONTWRITEBYTECODE", "1")
-            .env("SCREEPUB_STUB_LOG", &log)
+            .env("METHOD_READER_STUB_LOG", &log)
             .env(
-                "SCREEPUB_STUB_SCENARIO",
+                "METHOD_READER_STUB_SCENARIO",
                 format!("{}/scenario.json", self.dir),
             )
             .output()

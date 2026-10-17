@@ -4,7 +4,7 @@
 //! and uploaded LAST.
 //!
 //! Before it goes out, [`verify_dir`] checks every signature it names
-//! against the file it points at, with the public key every Screepub
+//! against the file it points at, with the public key every Method Reader
 //! trusts and the version rule the Rust app requires (the 0.11.x windows'
 //! rule is the same check with the version optional, so passing this
 //! passes theirs).
@@ -108,7 +108,7 @@ pub fn render_manifest(
     }
     Ok(json!({
         "version": v,
-        "notes": format!("Screepub {v}. Release notes: {}", release_page_url(repo, v)),
+        "notes": format!("Method Reader {v}. Release notes: {}", release_page_url(repo, v)),
         "pub_date": now_iso,
         "platforms": platforms,
     }))
@@ -213,11 +213,11 @@ mod tests {
             to_text(&m),
             r#"{
   "version": "0.12.0",
-  "notes": "Screepub 0.12.0. Release notes: https://github.com/ssandweiss/screepub/releases/tag/v0.12.0",
+  "notes": "Method Reader 0.12.0. Release notes: https://github.com/method-production-suite/method-reader/releases/tag/v0.12.0",
   "pub_date": "2026-10-12T09:00:00.000Z",
   "platforms": {
     "darwin-aarch64": {
-      "url": "https://github.com/ssandweiss/screepub/releases/download/v0.12.0/Screepub-macOS.app.tar.gz",
+      "url": "https://github.com/method-production-suite/method-reader/releases/download/v0.12.0/Method-Reader-macOS.app.tar.gz",
       "signature": "c2ln"
     }
   }
@@ -254,13 +254,13 @@ mod tests {
     #[test]
     fn a_folder_with_a_stray_or_orphan_signature_is_refused() {
         let dir = tempfile::tempdir().unwrap();
-        std::fs::write(dir.path().join("Screepub-macOS.dmg.sig"), "x").unwrap();
+        std::fs::write(dir.path().join("Method-Reader-macOS.dmg.sig"), "x").unwrap();
         assert!(
             collect_signed_artifacts(dir.path())
                 .unwrap_err()
                 .contains("no such artifact")
         );
-        std::fs::write(dir.path().join("Screepub-macOS.dmg"), "x").unwrap();
+        std::fs::write(dir.path().join("Method-Reader-macOS.dmg"), "x").unwrap();
         assert!(
             collect_signed_artifacts(dir.path())
                 .unwrap_err()

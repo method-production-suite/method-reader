@@ -454,7 +454,10 @@ fn d2_no_book_on_disk_says_so_and_offers_to_convert_again() {
     w.engine.always("convert", Reply::ok(a));
     let h = panel(&w, Platform::Mac);
     h.get_by_role_and_label(Role::Heading, "NO BOOK TO SEND");
-    assert!(shows(&h, "Screepub has no book on disk for this script"));
+    assert!(shows(
+        &h,
+        "Method Reader has no book on disk for this script"
+    ));
     h.get_by_role_and_label(Role::Button, "Convert it again");
 }
 
@@ -911,7 +914,7 @@ fn u6_each_moment_has_its_words() {
         ),
         (
             Phase::Installed { version: v() },
-            "Update installed. Quit and reopen Screepub to use 0.8.0.",
+            "Update installed. Quit and reopen Method Reader to use 0.8.0.",
         ),
     ] {
         h.state_mut().update.flow.during(phase);

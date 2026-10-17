@@ -1,4 +1,4 @@
-//! Screepub's shared data model, ported from the TypeScript engine.
+//! Method Reader's shared data model, ported from the TypeScript engine.
 //!
 //! | Module | Ports |
 //! |---|---|

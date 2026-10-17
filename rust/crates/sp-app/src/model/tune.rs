@@ -167,10 +167,10 @@ pub fn groups() -> Vec<Group> {
                     .effect(Effect::Book)
                     .help("It appears in the finished book, not in the preview here, because the preview is the script itself."),
                 knob("showSceneNumbers", "Scene numbers", Kind::Toggle).help(
-                    "Only shows numbers the script already carried. Screepub never invents them: a numbered draft is a decision someone made, not a formatting choice.",
+                    "Only shows numbers the script already carried. Method Reader never invents them: a numbered draft is a decision someone made, not a formatting choice.",
                 ),
                 knob("includeImages", "Pictures from the script", Kind::Toggle).beta().help(
-                    "Shows the drawings and photos the PDF carried, in the book and in the preview, where they sat in the script (a title card can become the cover instead, below). The Kindle file Screepub makes without Calibre leaves them out for now. A script with no pictures makes the same book either way.",
+                    "Shows the drawings and photos the PDF carried, in the book and in the preview, where they sat in the script (a title card can become the cover instead, below). The Kindle file Method Reader makes without Calibre leaves them out for now. A script with no pictures makes the same book either way.",
                 ),
                 knob("promoteCoverImage", "Title card as the cover", Kind::Toggle).beta().help(
                     "When a script opens with a full-page picture before its first scene, the book uses it as its cover instead of its first page, so the preview leaves it out. Needs Pictures from the script on. A script without one makes the same book either way.",
@@ -180,7 +180,7 @@ pub fn groups() -> Vec<Group> {
         Group {
             id: "pdf",
             title: "Read from the PDF",
-            note: Some("These four are decided while the PDF is being read. Everything else re-renders from the script Screepub already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."),
+            note: Some("These four are decided while the PDF is being read. Everything else re-renders from the script Method Reader already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."),
             knobs: vec![
                 knob("rejoinSplitDialogue", "Rejoin speeches split across pages", Kind::Toggle)
                     .effect(Effect::Reconvert)
@@ -445,7 +445,7 @@ pub fn warning_lines(answer: &Value) -> Vec<String> {
 }
 
 pub const FAULT_SLUG: &str = "Settings out of reach";
-pub const FAULT_LINE: &str = "Screepub could not read this script’s settings. The book itself is fine and can still be sent; converting the PDF again is the way to get the knobs back.";
+pub const FAULT_LINE: &str = "Method Reader could not read this script’s settings. The book itself is fine and can still be sent; converting the PDF again is the way to get the knobs back.";
 pub const FAULT_WAY: &str = "Convert it again";
 
 pub const LEDE: &str = "These settings belong to this script alone. They are kept with it in your library, never beside the PDF you dropped, and the book on disk is rebuilt to match, so what you send is what you see.";
@@ -492,7 +492,7 @@ pub fn app_settings_after(answer: &Value) -> Result<(Settings, Settings), String
 
 pub fn defaults_caption(app: Option<&Settings>, shipped: Option<&Settings>) -> &'static str {
     if same_settings(app, shipped) {
-        "New scripts start from Screepub’s own defaults."
+        "New scripts start from Method Reader’s own defaults."
     } else {
         "New scripts start from your own defaults."
     }
@@ -507,9 +507,9 @@ pub fn defaults_write_args(next: Option<&Settings>) -> String {
 }
 
 pub const USE_DEFAULTS_LABEL: &str = "Use these for new scripts";
-pub const RESET_DEFAULTS_LABEL: &str = "Reset new scripts to Screepub’s defaults";
+pub const RESET_DEFAULTS_LABEL: &str = "Reset new scripts to Method Reader’s defaults";
 pub const USE_DEFAULTS_NOTE: &str = "New scripts will start from these settings.";
-pub const RESET_DEFAULTS_NOTE: &str = "New scripts will start from Screepub’s own defaults.";
+pub const RESET_DEFAULTS_NOTE: &str = "New scripts will start from Method Reader’s own defaults.";
 
 /// What a defaults write becomes: applied, refused, or stale.
 #[derive(Clone, Debug, PartialEq)]
@@ -663,7 +663,7 @@ pub fn group_starts_open(index: usize) -> bool {
     index == 0
 }
 
-/// Screepub's own defaults: the root format-defaults.json, the one file
+/// Method Reader's own defaults: the root format-defaults.json, the one file
 /// src/options.ts (and sp-model after it) is pinned to.
 pub mod fixtures {
     use serde_json::Value;
@@ -869,7 +869,7 @@ mod tests {
         mine.insert("fontFamily".into(), json!("serif"));
         assert_eq!(
             defaults_caption(Some(&shipped), Some(&shipped)),
-            "New scripts start from Screepub’s own defaults."
+            "New scripts start from Method Reader’s own defaults."
         );
         assert_eq!(
             defaults_caption(Some(&mine), Some(&shipped)),

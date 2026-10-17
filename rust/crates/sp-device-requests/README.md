@@ -1,6 +1,6 @@
 # Device requests
 
-The small service behind the window's "My device isn't here" field and the
+The small service behind Method Reader's "My device isn't here" field and the
 "It worked" / "It did not work" buttons beside an asterisk. A Cloudflare
 Worker on the free plan with a free D1 database. It counts requests per
 device and reports per route and platform, with the day each was first and
@@ -40,6 +40,11 @@ Wrangler, Cloudflare's own tool, is JavaScript (like Calibre, an outside
 tool the platform requires), so the commands below run it with `npx`. Sign
 in first with `npx wrangler login`; no key ever needs to leave your
 machine. Run them from this folder, `rust/crates/sp-device-requests/`.
+
+The Worker and its database keep the app's old name,
+`screepub-device-requests`, after the rename to Method Reader: they are live
+under it, and the window posts to that address. A new name would mean a new
+Worker, a new database and a new window build, for nothing a person sees.
 
 ## Deploy the Rust Worker (owner, once, when wanted)
 

@@ -600,7 +600,7 @@
           "field-station/field-station.fountain": {
             "text": "67ef4c4435776b51"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "577898c1941870e6"
           },
           "field-station/source.json": {
@@ -630,9 +630,9 @@
       "epubPath": "$WORK/library/field-station/field-station.epub",
       "mobiPath": "$WORK/library/field-station/field-station.mobi",
       "fountainPath": "$WORK/library/field-station/field-station.fountain",
-      "settingsPath": "$WORK/library/field-station/field-station.screepub.json"
+      "settingsPath": "$WORK/library/field-station/field-station.method-reader.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/library/field-station/field-station.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/library/field-station/field-station.method-reader.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -693,6 +693,9 @@
           "field-station/field-station.fountain": {
             "text": "67ef4c4435776b51"
           },
+          "field-station/field-station.method-reader.json": {
+            "json": "577898c1941870e6"
+          },
           "field-station/field-station.mobi": {
             "header": "e806bba6071b006b",
             "records": [
@@ -706,9 +709,6 @@
               "6560b53fd57773a8",
               "3712d3408f89530c"
             ]
-          },
-          "field-station/field-station.screepub.json": {
-            "json": "577898c1941870e6"
           },
           "field-station/source.json": {
             "json": "90bab57cff00934d"
@@ -738,7 +738,7 @@
       "fountainPath": "$WORK/library/field-station/field-station.fountain",
       "settingsPath": "$WORK/in/field-station.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/field-station.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/field-station.screepub.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -799,7 +799,7 @@
           "field-station/field-station.fountain": {
             "text": "67ef4c4435776b51"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "6e968ac32fc6651e"
           },
           "field-station/source.json": {
@@ -833,7 +833,7 @@
       "fountainPath": "$WORK/out/book.fountain",
       "settingsPath": "$WORK/in/field-station.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/field-station.screepub.json (the options you passed override them)\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/field-station.screepub.json (the options you passed override them)\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -911,7 +911,7 @@
       "epubPath": "$WORK/out/book.epub",
       "fountainPath": "$WORK/out/book.fountain"
     },
-    "stderr": "screepub: ignoring $WORK/in/field-station.screepub.json, which is not a settings object\n",
+    "stderr": "method-reader: ignoring $WORK/in/field-station.screepub.json, which is not a settings object\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -1050,7 +1050,7 @@
           "field-station/field-station.fountain": {
             "text": "67ef4c4435776b51"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "5052154e6f36ffad"
           },
           "field-station/source.json": {
@@ -2020,7 +2020,7 @@
           }
         }
       ],
-      "sidecar": "$WORK/out/script.screepub.json",
+      "sidecar": "$WORK/out/script.method-reader.json",
       "keepScriptSettings": true
     },
     "stderr": "",
@@ -2050,7 +2050,7 @@
       "path": "$WORK/out/copy.azw3",
       "format": "azw3",
       "extension": "azw3",
-      "label": "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed",
+      "label": "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed",
       "available": [
         "epub",
         "kindle"

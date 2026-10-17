@@ -35,7 +35,7 @@ fn open_other_ways(h: &mut H) {
 #[test]
 fn w1_w2_w3_the_window_opens_at_1280_by_800_with_a_floor_and_no_title_bar() {
     let v = sp_app::app::viewport();
-    assert_eq!(v.title.as_deref(), Some("Screepub"));
+    assert_eq!(v.title.as_deref(), Some("Method Reader"));
     assert_eq!(v.inner_size, Some(egui::vec2(1280.0, 800.0)));
     assert_eq!(v.min_inner_size, Some(egui::vec2(640.0, 480.0)));
     assert_eq!(v.resizable, Some(true));
@@ -245,7 +245,9 @@ fn c3_the_well_keeps_its_820_column() {
         .next()
         .unwrap()
         .rect();
-    let heading = h.get_by_role_and_label(Role::Heading, "Screepub").rect();
+    let heading = h
+        .get_by_role_and_label(Role::Heading, "Method Reader")
+        .rect();
     // The block is 100..1232 at 1280: an 820 column centred in it.
     // The harness frames the window in 8 points: measure from the block.
     let left = h.get_by_role_and_label(Role::Tab, "Convert").rect().left();
@@ -540,7 +542,7 @@ fn n9_the_rev_stamp_is_whole_inside_the_window_on_read() {
         if dead {
             w.engine.once(
                 "version",
-                Reply::failed("could not start the Screepub engine"),
+                Reply::failed("could not start the Method Reader engine"),
             );
         }
         let mut h = harness_sized(&w, Platform::Mac, [width, height]);
@@ -717,7 +719,7 @@ fn s7_s8_every_group_opens_and_every_knob_is_named() {
     }
     assert!(has(
         &h,
-        "These four are decided while the PDF is being read. Everything else re-renders from the script Screepub already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."
+        "These four are decided while the PDF is being read. Everything else re-renders from the script Method Reader already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."
     ));
     for slider in [
         "Space between elements",
@@ -777,10 +779,16 @@ fn s17_use_these_for_new_scripts_writes_the_defaults_and_says_so() {
     let mut h = harness_sized(&w, Platform::Mac, [1280.0, 3000.0]);
     convert(&w, &mut h);
     settings(&mut h);
-    assert!(has(&h, "New scripts start from Screepub’s own defaults."));
+    assert!(has(
+        &h,
+        "New scripts start from Method Reader’s own defaults."
+    ));
     assert!(
-        h.query_by_role_and_label(Role::Button, "Reset new scripts to Screepub’s defaults")
-            .is_none(),
+        h.query_by_role_and_label(
+            Role::Button,
+            "Reset new scripts to Method Reader’s defaults"
+        )
+        .is_none(),
         "nothing to reset"
     );
     h.get_by_role_and_label(Role::Button, "Use these for new scripts")
@@ -1173,7 +1181,7 @@ fn o3_o6_the_updates_block_checks_and_says_what_it_found() {
     h.get_by_role_and_label(
         Role::Status,
         concat!(
-            "Screepub ",
+            "Method Reader ",
             env!("CARGO_PKG_VERSION"),
             " is the newest there is."
         ),

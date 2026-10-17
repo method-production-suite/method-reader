@@ -1,6 +1,6 @@
 [package]
 name = "sp-azw3"
-description = "Screepub's own AZW3 (KF8) writer, ported from Calibre's, reading the EPUB's bytes"
+description = "Method Reader's own AZW3 (KF8) writer, ported from Calibre's, reading the EPUB's bytes"
 edition.workspace = true
 license = "GPL-3.0-only"
 version.workspace = true

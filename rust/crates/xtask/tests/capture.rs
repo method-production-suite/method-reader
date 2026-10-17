@@ -522,8 +522,8 @@ fn the_real_window_program_refuses_to_run_without_a_scratch_library() {
     let out = dir.path().join("drop-light.rgba");
     let ran = std::process::Command::new(&program)
         .args(window_args(shot("drop"), Theme::Light, &demo(), &out))
-        .env_remove("SCREEPUB_LIBRARY")
-        .env_remove("SCREEPUB_CONFIG_DIR")
+        .env_remove("METHOD_READER_LIBRARY")
+        .env_remove("METHOD_READER_CONFIG_DIR")
         .output()
         .unwrap();
     assert_eq!(ran.status.code(), Some(2));
@@ -776,7 +776,9 @@ fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() 
     let seen = seen.lock().unwrap();
     assert_eq!(seen.len(), 6);
     for e in seen.iter() {
-        assert_eq!(e, &[".no-volumes", MARKER]);
+        let mut want = vec![".no-volumes".to_string(), MARKER.to_string()];
+        want.sort();
+        assert_eq!(e, &want);
     }
     // Chrome drew the hero and framed each of the window's six pictures.
     let framed = framed.lock().unwrap();
@@ -824,15 +826,18 @@ fn run_gives_the_window_the_scratch_environment_and_never_the_real_settings() {
     run_capture(o).unwrap();
     let got = got.lock().unwrap().clone();
     let var = |k: &str| got.iter().find(|(n, _)| n == k).unwrap().1.clone();
-    assert_eq!(var("SCREEPUB_LIBRARY"), s.library);
+    assert_eq!(var("METHOD_READER_LIBRARY"), s.library);
     // Under the run's own scratch library, cleared before every shot.
     assert_eq!(
-        var("SCREEPUB_CONFIG_DIR"),
+        var("METHOD_READER_CONFIG_DIR"),
         s.library.join(".capture-app-settings")
     );
-    assert_eq!(var("SCREEPUB_VOLUME_ROOTS"), s.library.join(".no-volumes"));
     assert_eq!(
-        var("SCREEPUB_REMARKABLE_ENDPOINT"),
+        var("METHOD_READER_VOLUME_ROOTS"),
+        s.library.join(".no-volumes")
+    );
+    assert_eq!(
+        var("METHOD_READER_REMARKABLE_ENDPOINT"),
         PathBuf::from("http://127.0.0.1:9")
     );
     // A scratch COPY of Calibre's settings, never the real folder.

@@ -5,13 +5,13 @@
 use crate::output::{Code, Failure};
 use std::path::PathBuf;
 
-pub const USAGE: &str = "screepub-mtp: list Kindles connected over MTP, and copy a file to one
+pub const USAGE: &str = "method-reader-mtp: list Kindles connected over MTP, and copy a file to one
 
 Usage:
-  screepub-mtp list [--kindles] [--storages]
-  screepub-mtp put <serial> <local-file> <device-path> [--wait-ms <ms>] [--keep-session]
-  screepub-mtp ls <serial> [<device-folder>]
-  screepub-mtp --version
+  method-reader-mtp list [--kindles] [--storages]
+  method-reader-mtp put <serial> <local-file> <device-path> [--wait-ms <ms>] [--keep-session]
+  method-reader-mtp ls <serial> [<device-folder>]
+  method-reader-mtp --version
 
 Every run prints one JSON object on stdout.
 

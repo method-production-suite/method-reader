@@ -1,6 +1,6 @@
 [package]
 name = "sp-fountain"
-description = "Screepub's Fountain stage: elements to .fountain, the notes and slug rules, and a fountain-js 1.2.4 tokenizer"
+description = "Method Reader's Fountain stage: elements to .fountain, the notes and slug rules, and a fountain-js 1.2.4 tokenizer"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

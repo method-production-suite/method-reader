@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 
 /// What every engine call is told once an update has been installed
 /// (`UPDATED_MESSAGE` in desktop/ui/app.js).
-pub const UPDATED_MESSAGE: &str = "Screepub has been updated. Restart it to keep going.";
+pub const UPDATED_MESSAGE: &str = "Method Reader has been updated. Restart it to keep going.";
 
 /// How long the engine must have been idle before a restart: 500 ms
 /// (`ENGINE_QUIET_MS`), which covers the gap between two calls of one job.

@@ -7,7 +7,7 @@
 //! `cargo xtask capture-screens` runs it once per picture with the run's
 //! own environment and frames what it draws; run by hand it is
 //!
-//!     SCREEPUB_CONFIG_DIR=<scratch>/config SCREEPUB_LIBRARY=<scratch>/library \
+//!     METHOD_READER_CONFIG_DIR=<scratch>/config METHOD_READER_LIBRARY=<scratch>/library \
 //!       cargo run -p sp-app --example capture -- --shot result --theme dark \
 //!       --width 1280 --height 800 --demo <repo>/tests/fixtures/field-station.pdf \
 //!       --out <scratch>/result-dark.rgba

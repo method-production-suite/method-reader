@@ -18,8 +18,8 @@ use xtask::check_latest::{
     trusted_pubkey,
 };
 
-const REPO: &str = "ssandweiss/screepub";
-const TAR: &str = "Screepub-macOS.app.tar.gz";
+const REPO: &str = "method-production-suite/method-reader";
+const TAR: &str = "Method-Reader-macOS.app.tar.gz";
 const INTEL_CLI: &str = "screepub-cli-macos-x64.tar.gz";
 const FAKE_KEY_ID: [u8; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
 const OTHER_KEY_ID: [u8; 8] = [0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18];
@@ -69,9 +69,9 @@ fn pubkey() -> String {
 
 const DEFAULT_ASSETS: &[&str] = &[
     TAR,
-    "Screepub-macOS.app.tar.gz.sig",
+    "Method-Reader-macOS.app.tar.gz.sig",
     "latest.json",
-    "Screepub-macOS.dmg",
+    "Method-Reader-macOS.dmg",
 ];
 
 fn release_with(v: &str, assets: &[&str]) -> Release {
@@ -312,9 +312,10 @@ fn every_problem_is_reported_not_just_the_first() {
 
 // ── checking the live endpoint, with the network stubbed ────────────────
 
-const LATEST_API: &str = "https://api.github.com/repos/ssandweiss/screepub/releases/latest";
+const LATEST_API: &str =
+    "https://api.github.com/repos/method-production-suite/method-reader/releases/latest";
 const ENDPOINT: &str =
-    "https://github.com/ssandweiss/screepub/releases/latest/download/latest.json";
+    "https://github.com/method-production-suite/method-reader/releases/latest/download/latest.json";
 
 fn api(v: &str) -> String {
     let assets: Vec<serde_json::Value> = DEFAULT_ASSETS
@@ -374,7 +375,8 @@ fn a_release_with_no_latest_json_at_all_is_the_failure_this_exists_for() {
 
 #[test]
 fn version_asks_about_that_tag_instead_of_the_newest_release() {
-    let tag_api = "https://api.github.com/repos/ssandweiss/screepub/releases/tags/v0.6.1";
+    let tag_api =
+        "https://api.github.com/repos/method-production-suite/method-reader/releases/tags/v0.6.1";
     let sig_url = url("0.6.1", &format!("{TAR}.sig"));
     let (v, asked) = check_over(
         &[
@@ -416,16 +418,20 @@ fn the_command_checks_a_fake_github_and_says_why_it_fails() {
         .to_le_bytes();
     let signature = fake_signature_box("Screepub.app.tar.gz", key);
     let dl = |name: &str| format!("{}/dl/{name}", server.base);
-    let assets: Vec<serde_json::Value> = [TAR, "Screepub-macOS.app.tar.gz.sig"]
+    let assets: Vec<serde_json::Value> = [TAR, "Method-Reader-macOS.app.tar.gz.sig"]
         .iter()
         .map(|n| serde_json::json!({ "name": n, "browser_download_url": dl(n) }))
         .collect();
     server.route(
-        "/repos/ssandweiss/screepub/releases/latest",
+        "/repos/method-production-suite/method-reader/releases/latest",
         200,
         serde_json::json!({ "tag_name": "v0.6.1", "assets": assets }).to_string(),
     );
-    server.route("/dl/Screepub-macOS.app.tar.gz.sig", 200, signature.clone());
+    server.route(
+        "/dl/Method-Reader-macOS.app.tar.gz.sig",
+        200,
+        signature.clone(),
+    );
     let manifest_for = |v: &str| {
         serde_json::json!({
             "version": v,
@@ -434,13 +440,13 @@ fn the_command_checks_a_fake_github_and_says_why_it_fails() {
         .to_string()
     };
     server.route(
-        "/ssandweiss/screepub/releases/latest/download/latest.json",
+        "/method-production-suite/method-reader/releases/latest/download/latest.json",
         200,
         manifest_for("0.6.1"),
     );
     let env = [
-        ("SCREEPUB_GITHUB_API", server.base.as_str()),
-        ("SCREEPUB_GITHUB_WEB", server.base.as_str()),
+        ("METHOD_READER_GITHUB_API", server.base.as_str()),
+        ("METHOD_READER_GITHUB_WEB", server.base.as_str()),
         ("GH_TOKEN", ""),
         ("GITHUB_TOKEN", ""),
     ];
@@ -450,16 +456,20 @@ fn the_command_checks_a_fake_github_and_says_why_it_fails() {
 
     // Signed by another key: named, and refused.
     server.route(
-        "/dl/Screepub-macOS.app.tar.gz.sig",
+        "/dl/Method-Reader-macOS.app.tar.gz.sig",
         200,
         fake_signature_box("Screepub.app.tar.gz", OTHER_KEY_ID),
     );
     let other = xtask(&["check-latest"], &env, None, None);
     assert_eq!(other.status.code(), Some(1));
-    server.route("/dl/Screepub-macOS.app.tar.gz.sig", 200, signature.clone());
+    server.route(
+        "/dl/Method-Reader-macOS.app.tar.gz.sig",
+        200,
+        signature.clone(),
+    );
 
     server.route(
-        "/ssandweiss/screepub/releases/latest/download/latest.json",
+        "/method-production-suite/method-reader/releases/latest/download/latest.json",
         200,
         manifest_for("0.6.0"),
     );
@@ -471,10 +481,7 @@ fn the_command_checks_a_fake_github_and_says_why_it_fails() {
         "{err}"
     );
     assert!(err.contains("::notice::"));
-    assert!(
-        server
-            .asked()
-            .iter()
-            .any(|p| p == "/ssandweiss/screepub/releases/latest/download/latest.json")
-    );
+    assert!(server.asked().iter().any(
+        |p| p == "/method-production-suite/method-reader/releases/latest/download/latest.json"
+    ));
 }

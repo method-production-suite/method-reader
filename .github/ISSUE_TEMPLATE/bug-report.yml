@@ -1,5 +1,5 @@
 name: Bug report
-description: Screepub misbehaved, such as a crash, a failed transfer or a broken control
+description: Method Reader misbehaved, such as a crash, a failed transfer or a broken control
 labels: [bug]
 body:
   - type: textarea
@@ -22,18 +22,18 @@ body:
   - type: dropdown
     id: app
     attributes:
-      label: Which Screepub?
+      label: Which part of Method Reader?
       options:
-        - The app (Screepub, on a Mac, Windows or Linux)
-        - The command line (screepub)
+        - The app (Method Reader, on a Mac, Windows or Linux)
+        - The command line (method-reader)
     validations:
       required: true
   - type: input
     id: versions
     attributes:
-      label: Screepub and system versions
-      description: The app shows its version at the foot of the page; the command line with `screepub --version`.
-      placeholder: Screepub 0.7.4, macOS 15.6, Apple silicon
+      label: Method Reader and system versions
+      description: The app shows its version at the foot of the page; the command line with `method-reader --version`.
+      placeholder: Method Reader 0.13.0, macOS 15.6, Apple silicon
     validations:
       required: true
   - type: input

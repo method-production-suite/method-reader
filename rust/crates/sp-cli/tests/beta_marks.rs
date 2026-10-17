@@ -45,7 +45,7 @@ fn fdx_on_a_conversion_says_beta() {
 fn azw3_on_a_conversion_and_the_azw3_in_export_say_beta() {
     assert!(help_entry(&help(&["--help"]), "--azw3 <file>").contains("(beta)"));
     let text = help(&["export", "--help"]);
-    assert!(flat(&text).contains("an AZW3 (beta) that Screepub writes itself"));
+    assert!(flat(&text).contains("an AZW3 (beta) that Method Reader writes itself"));
     assert!(help_entry(&text, "--for <type>").contains("azw3 (beta)"));
 }
 
@@ -60,14 +60,14 @@ fn pictures_in_books_say_beta_in_the_conversion_help() {
 #[test]
 fn export_for_fdx_says_beta() {
     let text = help(&["export", "--help"]);
-    assert!(help_entry(&text, "screepub export <file.epub> --for fdx").contains("(beta)"));
+    assert!(help_entry(&text, "method-reader export <file.epub> --for fdx").contains("(beta)"));
     assert!(flat(&text).contains("fdx (beta) is the script itself"));
 }
 
 #[test]
 fn eject_says_beta_on_windows_and_linux_only() {
     assert!(
-        help_entry(&help(&["--help"]), "screepub eject <volume>")
+        help_entry(&help(&["--help"]), "method-reader eject <volume>")
             .contains("(beta on Windows and Linux)")
     );
     assert!(flat(&help(&["eject", "--help"])).contains("beta on Windows and Linux"));

@@ -1,4 +1,4 @@
-//! The frame-time recorder: with SCREEPUB_FRAME_LOG set to a file path,
+//! The frame-time recorder: with METHOD_READER_FRAME_LOG set to a file path,
 //! the window writes one line per frame it draws, so how smoothly it moves
 //! can be measured rather than judged by eye. Off (and free) otherwise.
 //!
@@ -30,15 +30,15 @@ pub struct FrameLog {
 }
 
 impl FrameLog {
-    /// The log SCREEPUB_FRAME_LOG names, or None when it is unset or the
+    /// The log METHOD_READER_FRAME_LOG names, or None when it is unset or the
     /// file cannot be made (said once on stderr).
     pub fn from_env() -> Option<Self> {
-        let path = std::env::var_os("SCREEPUB_FRAME_LOG")?;
+        let path = std::env::var_os("METHOD_READER_FRAME_LOG")?;
         match Self::create(Path::new(&path)) {
             Ok(log) => Some(log),
             Err(e) => {
                 eprintln!(
-                    "screepub-window: SCREEPUB_FRAME_LOG: could not write {}: {e}",
+                    "method-reader-app: METHOD_READER_FRAME_LOG: could not write {}: {e}",
                     Path::new(&path).display()
                 );
                 None

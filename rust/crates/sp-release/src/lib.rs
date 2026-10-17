@@ -1,4 +1,4 @@
-//! Screepub's release tools, in Rust: what tools/build-app-bundle.ts,
+//! Method Reader's release tools, in Rust: what tools/build-app-bundle.ts,
 //! tools/build-cli.ts (its packaging half), tools/build-update-manifest.ts,
 //! tools/update-signature.ts and tools/check-latest.ts did for the Tauri
 //! window, for the egui app. Each command is a thin caller of a tested

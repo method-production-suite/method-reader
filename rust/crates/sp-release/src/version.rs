@@ -1,6 +1,6 @@
 //! The one version file a Rust release has: `[workspace.package] version`
 //! in rust/Cargo.toml, which every crate inherits (the window's About line,
-//! `screepub --version`, the bundle's Info.plist and the package metadata
+//! `method-reader --version`, the bundle's Info.plist and the package metadata
 //! all come from it). release.yml refuses a tag it does not name, before
 //! anything is built; the TypeScript era needed four files to agree.
 

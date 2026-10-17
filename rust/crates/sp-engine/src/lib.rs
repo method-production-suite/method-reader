@@ -1,4 +1,4 @@
-//! Screepub's engine, beyond the conversion itself: the settings file and
+//! Method Reader's engine, beyond the conversion itself: the settings file and
 //! a script's sidecar, the library, the export ladder and the send routes,
 //! Calibre and the KFX toolchain, and the updater's version decisions. A
 //! port of the TypeScript engine's `src/settings/*`, `src/library*.ts`,
@@ -21,6 +21,7 @@ pub mod errors;
 pub mod export;
 pub mod fsx;
 pub mod jsjson;
+pub mod legacy;
 pub mod library;
 pub mod library_images;
 /// node:path's functions: sp-fsutil's, the one copy (re-exported so the

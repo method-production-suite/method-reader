@@ -1,4 +1,4 @@
-//! Screepub's own AZW3 (KF8) writer: the EPUB in, a Kindle book out, with
+//! Method Reader's own AZW3 (KF8) writer: the EPUB in, a Kindle book out, with
 //! no Calibre. BETA: tried in our tests and in Calibre's reader, not yet on
 //! a Kindle (docs/formatting-options-log.md, the in-house AZW3 entry).
 //!

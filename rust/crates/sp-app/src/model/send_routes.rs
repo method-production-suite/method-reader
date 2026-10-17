@@ -12,7 +12,7 @@ pub const UNPROVEN: &str = "never been tested on real hardware";
 pub const PROVEN_KIND: &str = "kindle";
 pub const PROVEN_PLATFORM: Platform = Platform::Mac;
 
-/// A reader Screepub could not find even if it were plugged in.
+/// A reader Method Reader could not find even if it were plugged in.
 pub fn undetectable(platform: Platform) -> Option<String> {
     (platform == Platform::Windows).then(|| {
         format!(
@@ -93,7 +93,7 @@ pub fn blocked_reason(script: Option<&Script>) -> Option<&'static str> {
         .is_none_or(|p| p.trim().is_empty())
     {
         return Some(
-            "Screepub has no book on disk for this script, so there is nothing to copy across. Converting it again puts one in the library.",
+            "Method Reader has no book on disk for this script, so there is nothing to copy across. Converting it again puts one in the library.",
         );
     }
     None
@@ -244,7 +244,9 @@ pub fn kindle_check_from(answer: &Value) -> Option<KindleFile> {
     let fresh = answer.get("fresh")?.as_bool()?;
     let built_by_calibre = match str_at(answer, "builtBy")? {
         "calibre" => true,
-        "screepub" => false,
+        // The engine's own AZW3, under the product's new name or the
+        // LEGACY one the 0.12.x engine answered with.
+        "method-reader" | "screepub" => false,
         _ => return None,
     };
     Some(KindleFile {
@@ -777,10 +779,17 @@ mod tests {
             .is_none()
         );
         let undated = kindle_check_from(
-            &json!({"ok": true, "extension": "azw3", "fresh": true, "builtBy": "screepub"}),
+            &json!({"ok": true, "extension": "azw3", "fresh": true, "builtBy": "method-reader"}),
         )
         .unwrap();
         assert_eq!(undated.book_date, None);
+        assert!(!undated.built_by_calibre);
+        // The old engine's word for its own AZW3 means the same.
+        let legacy = kindle_check_from(
+            &json!({"ok": true, "extension": "azw3", "fresh": true, "builtBy": "screepub"}),
+        )
+        .unwrap();
+        assert!(!legacy.built_by_calibre);
     }
 
     #[test]
@@ -912,9 +921,9 @@ mod tests {
     fn a_kindle_save_learns_its_extension_or_opens_no_box() {
         assert_eq!(
             kindle_file_from(
-                &json!({"ok": true, "extension": ".azw3", "label": "AZW3 (Screepub)"})
+                &json!({"ok": true, "extension": ".azw3", "label": "AZW3 (Method Reader)"})
             ),
-            Ok(("azw3".into(), Some("AZW3 (Screepub)".into())))
+            Ok(("azw3".into(), Some("AZW3 (Method Reader)".into())))
         );
         assert_eq!(
             kindle_file_from(&json!({"ok": true})),
@@ -932,7 +941,7 @@ mod tests {
         assert!(
             blocked_reason(Some(&none))
                 .unwrap()
-                .starts_with("Screepub has no book")
+                .starts_with("Method Reader has no book")
         );
         let book = script_from(
             "/a.pdf",

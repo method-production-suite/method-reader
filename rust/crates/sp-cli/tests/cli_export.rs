@@ -1,4 +1,4 @@
-//! Port of tests/cli-export.test.ts: `screepub export`, the file you would
+//! Port of tests/cli-export.test.ts: `method-reader export`, the file you would
 //! actually put on a reader.
 //!
 //! The handler is sp-engine's export_command (src/commands/export.rs),
@@ -8,7 +8,7 @@
 //! tests/export_artifact.rs ports the ladder's own work and
 //! tests/parity_cli.rs runs `export` against the TypeScript; no sp-engine
 //! test ported this file's handler checks, so they are all here. Every
-//! spawned check runs the built `screepub` in a Sandbox.
+//! spawned check runs the built `method-reader` in a Sandbox.
 //!
 //! CALIBRE: every handler call gets common::seams::guarded_env (Calibre at
 //! the guard path) and injected probes wherever the TypeScript injects
@@ -533,7 +533,7 @@ fn with_no_app_settings_path_given_it_defaults_to_the_production_path_test_guard
 fn no_options_json_the_ladder_gets_the_sidecars_own_value_not_the_app_defaults() {
     let c = Case::new();
     std::fs::write(
-        c.join("Script.screepub.json"),
+        c.join("Script.method-reader.json"),
         r#"{"dialogueSideMarginPct":13}"#,
     )
     .unwrap();
@@ -546,7 +546,7 @@ fn no_options_json_the_ladder_gets_the_sidecars_own_value_not_the_app_defaults()
 fn a_partial_options_json_moves_the_named_knob_and_leaves_the_sidecars_other_values_standing() {
     let c = Case::new();
     std::fs::write(
-        c.join("Script.screepub.json"),
+        c.join("Script.method-reader.json"),
         r#"{"dialogueSideMarginPct":13,"justifyText":true}"#,
     )
     .unwrap();
@@ -619,7 +619,7 @@ fn an_azw3_answer_says_it_is_beta_so_the_window_can_mark_the_file_a_kfx_answer_d
 }
 
 #[test]
-fn calibre_alone_with_an_azw3_newer_than_the_book_azw3_fresh_and_screepub_builds_it() {
+fn calibre_alone_with_an_azw3_newer_than_the_book_azw3_fresh_and_method_reader_builds_it() {
     let c = Case::new();
     c.older(&c.epub);
     std::fs::write(c.join("Script.azw3"), current_azw3()).unwrap();
@@ -630,7 +630,7 @@ fn calibre_alone_with_an_azw3_newer_than_the_book_azw3_fresh_and_screepub_builds
 }
 
 #[test]
-fn no_toolchain_our_own_azw3_which_screepub_builds_itself_and_nothing_is_built() {
+fn no_toolchain_our_own_azw3_which_method_reader_builds_itself_and_nothing_is_built() {
     let c = Case::new();
     let result = run(
         &checking(c.with_script("kindle")),
@@ -710,7 +710,7 @@ fn through_the_cli_one_object_the_extension_this_machine_makes_and_no_file_besid
     let extension = answer["extension"].as_str().unwrap_or_default();
     assert!(["kfx", "azw3", "mobi"].contains(&extension), "{answer}");
     assert!(answer["fresh"].is_boolean());
-    // Only KFX still comes from Calibre: the AZW3 is Screepub's own.
+    // Only KFX still comes from Calibre: the AZW3 is Method Reader's own.
     let by = if extension == "kfx" {
         "calibre"
     } else {
@@ -727,7 +727,7 @@ fn export_help_names_check() {
     assert!(r.stdout.contains("--check"));
 }
 
-// ---- screepub export (through the CLI) ----
+// ---- method-reader export (through the CLI) ----
 
 #[test]
 fn json_prints_one_object_with_the_path_and_the_available_formats() {
@@ -1024,7 +1024,7 @@ fn the_copy_goes_through_a_temp_name_and_a_rename_not_a_direct_write() {
     assert!(body.contains("fsx::rename(&tmp, destination)"), "{body}");
 }
 
-// ---- screepub export --out (through the CLI) ----
+// ---- method-reader export --out (through the CLI) ----
 
 #[test]
 fn epub_to_a_new_absolute_path_through_the_spawned_cli() {
@@ -1119,12 +1119,13 @@ fn fountain_with_out_writes_a_byte_for_byte_copy_there() {
     assert_eq!(read(&out), read(&c.fountain));
 }
 
-/// A script carrying Screepub's own notes (registry #18, #19): the cache
+/// A script carrying Method Reader's own notes (registry #18, #19): the cache
 /// needs them, a screenwriting app does not.
 const NOTED: &str = "INT. HUT - NIGHT\n\n[[fmt: sans +1]]\nCHYRON: LIVE.\n\n@MARA\n[[fmt: mono]] Read it back.\n\n[[img: p002-01.png w=71]]\n\nShe looks up. [[a writer's own note]]\n";
 
 #[test]
-fn fountain_with_out_leaves_screepubs_own_notes_behind_and_the_script_beside_the_book_keeps_them() {
+fn fountain_with_out_leaves_method_readers_own_notes_behind_and_the_script_beside_the_book_keeps_them()
+ {
     let c = Case::new();
     std::fs::write(&c.fountain, NOTED).unwrap();
     let b = Builders::default();
