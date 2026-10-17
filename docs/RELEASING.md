@@ -49,6 +49,11 @@ cargo xtask capture-screens                             # needs Google Chrome (m
 cargo xtask review-screens --out /tmp/screens.html      # then open the page
 ```
 
+It takes the Method suite's four shots in light and dark: the Read page,
+the before and after, the drop well with the result beside it, and the
+command line converting Field Station. Each is written to `assets/screens/`
+for the README and to `site/img/` for the site.
+
 Every picture must match the build being released. Commit the changed ones
 with the release.
 

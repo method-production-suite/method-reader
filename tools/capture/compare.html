@@ -1,10 +1,12 @@
 <!doctype html>
-<!-- The README's hero: the site's own before-and-after, as a still. The
-     site drives that section from scroll position (layout(t) in
-     site/index.html): both devices are fully in and level between t=0.42
-     and t=0.56, so this holds it at 0.49. Same origin through the capture
-     server, so this page can scroll the frame and hide the fixed top bar,
-     which would otherwise sit across the top of the picture. -->
+<!-- The before and after (shot 2, compare): the site's own two-reader
+     section, as a still, in the theme the capture asks for (the site has a
+     dark mode of its own, tokens.css). The site drives that section from
+     scroll position (layout(t) in site/index.html): both devices are fully
+     in and level between t=0.42 and t=0.56, so this holds it at 0.49. Same
+     origin through the capture server, so this page can scroll the frame
+     and hide the site's sticky header (header.top), which would otherwise
+     sit across the top of the picture. -->
 <html>
 <head>
 <meta charset="utf-8">
@@ -23,8 +25,9 @@
       const d = frame.contentDocument;
       const act = d.getElementById('act2');
       if (!act) return fail('site/index.html has no #act2 section any more');
+      if (!d.querySelector('header.top')) return fail('site/index.html has no header.top any more');
       const style = d.createElement('style');
-      style.textContent = '#topbar { display: none !important; }';
+      style.textContent = 'header.top { display: none !important; }';
       d.head.append(style);
       const span = act.offsetHeight - w.innerHeight;
       w.scrollTo(0, act.offsetTop + HOLD * span);

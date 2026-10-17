@@ -20,7 +20,10 @@ app, same books: updating from Screepub keeps your settings and your library.
 </p>
 
 <p align="center">
-  <img src="assets/screens/hero-light.png" alt="The same scene on two e-readers: on the left a screenplay PDF page shrunk to fit the screen, on the right Method Reader's e-book of it, reflowed at a readable size" width="92%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/read-dark.png">
+    <img src="assets/screens/read-light.png" alt="The Method Reader window's Read page: Field Station, an invented script, reflowed as an e-book, with its eleven scenes listed in a column beside it" width="92%">
+  </picture>
 </p>
 
 You get scripts as PDFs, and an ordinary PDF-to-ebook converter wrecks them:
@@ -29,6 +32,13 @@ lines. Method Reader reads how the scenes, cues and dialogue actually sit on the
 page and rebuilds a real e-book from that structure, so it reflows at any text
 size and still holds its shape. From the same structure it writes the script
 back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/compare-dark.png">
+    <img src="assets/screens/compare-light.png" alt="The same scene on two e-readers: on the left a screenplay PDF page shrunk to fit the screen, on the right Method Reader's e-book of it, reflowed at a readable size" width="92%">
+  </picture>
+</p>
 
 ## What it does
 
@@ -78,6 +88,13 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
   [Fountain](https://fountain.io/syntax) text or as .fdx for screenwriting apps.
   Nothing writes your script for you: every word in the book is the PDF's own.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/cli-dark.png">
+    <img src="assets/screens/cli-light.png" alt="A terminal running method-reader field-station.pdf --library: it reports 19 pages and 11 scenes and writes an EPUB and a Fountain file, then the book's folder is listed and the Fountain script's first lines print as plain text" width="92%">
+  </picture>
+</p>
+
 ## Which readers?
 
 | Device | How it's sent | Status |
@@ -116,13 +133,6 @@ here** on the same screen (beta).
 
 **What beta means here.** A feature marked (beta) works in our tests, but
 has not been tried widely on real devices or apps yet: tell us how it goes.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/read-dark.png">
-    <img src="assets/screens/read-light.png" alt="The Read page: Field Station reflowed as an e-book, with its list of scenes in a column beside the script" width="92%">
-  </picture>
-</p>
 
 ## Install
 

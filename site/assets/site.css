@@ -170,6 +170,11 @@ p { margin: 0 0 14px; }
 .shots img { width: 100%; height: auto; }
 .shots figcaption { font-size: 14px; color: var(--muted); text-align: center; margin-top: 4px; }
 @media (min-width: 900px) { .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* One wide picture of the app (the hero's Read page, the command line under Yours to
+   keep): the capture tool's frame and shadow are in the image, so no border here. */
+.shot { margin: 36px 0 0; }
+.shot img { display: block; width: 100%; height: auto; }
+.shot figcaption { font-size: 14px; color: var(--muted); text-align: center; margin-top: 4px; }
 .trans { font-family: var(--script); font-size: 13px; color: var(--muted); text-align: right; margin: 36px 0 0; }
 
 /* ------------------------------------------------------------------ who it's for */

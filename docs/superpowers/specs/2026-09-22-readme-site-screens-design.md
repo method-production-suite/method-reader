@@ -16,6 +16,21 @@ names all three platforms; "who has verified what" moved to
 `docs/verification-ledger.md`, and the developer material to
 `docs/developers.md`.
 
+2026-10-16: brought to the Method suite's picture standard
+(SUITE-STANDARDS.md section 7.1), which took this design as its model. The
+shots are now the suite's four, in its order, every one in light and dark
+and every one written to both `assets/screens/` and `site/img/` (the site
+has a dark mode now): (1) `read`, the Read page, is the README's top
+picture and the site hero's; (2) `compare`, the before and after, keeps the
+old hero's drawing (renamed from `hero`, captured by
+`tools/capture/compare.html` at 1280 by 800, with the site's sticky header
+hidden again) and sits under the README's opening paragraph; the site keeps
+its live section instead; (3) `drop` with `result` beside it, unchanged;
+(4) `cli`, new: the real `method-reader` binary converts a copy of Field
+Station into the scratch library, and `tools/capture/terminal.html` sets
+that output, the book's folder and the head of its .fountain in a terminal
+framed like the window. Under "Yours to keep" on both pages. Same command.
+
 ## The problem
 
 - **The README does two jobs badly at once.** About 3,100 words: a third is
