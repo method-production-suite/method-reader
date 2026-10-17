@@ -258,6 +258,14 @@ readers) and has the engine linked in. The command line, the library layout and
 the architecture are in [docs/developers.md](docs/developers.md); setting up
 and sending a change is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Independent
+
+Method Reader is an independent project by Method Production Suite Team and the
+Method Reader contributors, not affiliated with or endorsed by the makers of any
+e-reader, reading app or screenwriting app it works with. Kindle, Kobo, tolino,
+reMarkable, Apple Books, Calibre and Final Draft are named only to say which readers
+and file formats it works with; their trademarks belong to their owners.
+
 ## License
 
 Method Reader's code is licensed under the **MIT License or the Apache License
