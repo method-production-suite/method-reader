@@ -82,9 +82,14 @@ pub fn move_legacy_folders(platform: &str, env: &Env) -> LegacyMove {
         return moved;
     }
     if move_folder(&from, &to) {
-        rewrite_settings(platform, &settings_path, &from, &to);
-        rewrite_sources(platform, &to, &from);
-        moved.library = Some((from, to));
+        // The settings must follow, or the app would look for a library
+        // that is gone: if they cannot be saved, the folder goes back.
+        if rewrite_settings(platform, &settings_path, &from, &to) {
+            rewrite_sources(platform, &to, &from);
+            moved.library = Some((from, to));
+        } else {
+            let _ = std::fs::rename(&to, &from);
+        }
     }
     moved
 }
@@ -166,16 +171,15 @@ fn rewrite_value(platform: &str, value: &mut Value, from: &str, to: &str) -> boo
 }
 
 /// The settings file's keys that hold a path under the old library, moved.
-fn rewrite_settings(platform: &str, settings_path: &str, from: &str, to: &str) {
+/// False when they needed rewriting and could not be saved.
+fn rewrite_settings(platform: &str, settings_path: &str, from: &str, to: &str) -> bool {
     let mut patch: Patch = Vec::new();
     for (key, mut value) in read_app_settings(settings_path) {
         if rewrite_value(platform, &mut value, from, to) {
             patch.push((key, Some(value)));
         }
     }
-    if !patch.is_empty() {
-        let _ = write_app_settings(&patch, settings_path);
-    }
+    patch.is_empty() || write_app_settings(&patch, settings_path).is_ok()
 }
 
 /// Each script folder's source.json under the moved library, its recorded

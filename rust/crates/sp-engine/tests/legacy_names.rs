@@ -222,6 +222,44 @@ fn both_folders_move_once_and_paths_inside_follow() {
 }
 
 #[test]
+fn a_library_whose_new_path_cannot_be_saved_stays_where_the_settings_say() {
+    // The settings name the old library and cannot be rewritten (a locked
+    // folder, a full disk): moving the library anyway would leave the app
+    // pointing at a folder that is gone. It goes back, and nothing is lost.
+    use std::os::unix::fs::PermissionsExt;
+    let s = Scratch::new("legacy-locked");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let settings_dir = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let old_library = j(&[&home, "Documents", "Screepub"]);
+    write_app_settings(
+        &vec![("libraryPath".into(), Some(json!(old_library)))],
+        &j(&[&settings_dir, "settings.json"]),
+    )
+    .unwrap();
+    write(
+        &j(&[&old_library, "Draft", "source.json"]),
+        "{\n  \"source\": \"/elsewhere/Draft.pdf\"\n}\n",
+    );
+    let lock = |mode| {
+        std::fs::set_permissions(&settings_dir, std::fs::Permissions::from_mode(mode)).unwrap()
+    };
+    lock(0o555);
+
+    let moved = move_legacy_folders("linux", &env);
+    lock(0o755);
+
+    assert_eq!(moved.library, None);
+    assert!(exists(&j(&[&old_library, "Draft", "source.json"])));
+    assert!(!exists(&j(&[&home, "Documents", "Method Reader"])));
+    assert_eq!(
+        read_app_settings(&j(&[&settings_dir, "settings.json"]))["libraryPath"],
+        json!(old_library)
+    );
+    assert_eq!(library_root("linux", &env, None), old_library);
+}
+
+#[test]
 fn nothing_moves_over_a_folder_already_there() {
     let s = Scratch::new("legacy");
     let home = s.dir("home");

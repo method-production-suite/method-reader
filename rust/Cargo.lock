@@ -613,7 +613,7 @@ dependencies = [
 [[package]]
 name = "blitz-dom"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "accesskit 0.25.1",
  "anyrender",
@@ -624,7 +624,7 @@ dependencies = [
  "color",
  "cssparser",
  "cursor-icon",
- "debug_timer 0.1.3 (git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0)",
+ "debug_timer 0.1.3 (git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7)",
  "euclid",
  "html-escape",
  "icu_casemap",
@@ -663,7 +663,7 @@ dependencies = [
 [[package]]
 name = "blitz-html"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "blitz-dom",
  "blitz-traits",
@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "blitz-paint"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "anyrender",
  "anyrender_svg",
@@ -696,7 +696,7 @@ dependencies = [
 [[package]]
 name = "blitz-traits"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "atomic_refcell",
  "bitflags 2.13.2",
@@ -1302,7 +1302,7 @@ checksum = "da220af51a1a335e9a930beaaef53d261e41ea9eecfb3d973a3ddae1a7284b9c"
 [[package]]
 name = "debug_timer"
 version = "0.1.3"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 
 [[package]]
 name = "deranged"
@@ -5825,7 +5825,7 @@ dependencies = [
 [[package]]
 name = "stylo_taffy"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "bitflags 2.13.2",
  "stylo",

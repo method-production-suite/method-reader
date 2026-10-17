@@ -10,8 +10,8 @@ fails the check too: fail closed. With --only-changed REF, only packages added o
 since that git ref are checked. Stdlib only, so it runs anywhere Python 3 does.
 
 Method Reader's copy (from Method Budget's) adds one exception: a package from a git
-repository listed in scripts/crate-age-git-allow.txt passes when the lockfile pins it to
-a full 40-character commit, because a pinned commit cannot change under us and the
+repository listed in scripts/crate-age-git-allow.txt passes when Cargo.toml pins it with
+rev = the full 40-character commit (and the lock agrees), because a pinned commit cannot change under us and the
 repository was reviewed when it was added to that list. Anything else from git still
 fails. And one more: an exact NAME VERSION listed in scripts/crate-age-exceptions.txt, with
 its reason, may be younger than the cooldown (a security fix that cannot wait). A yanked
@@ -34,7 +34,10 @@ UA = "method-reader cooldown check (https://github.com/method-production-suite/m
 
 CRATES_IO = "registry+https://github.com/rust-lang/crates.io-index"
 GIT_ALLOW = pathlib.Path(__file__).with_name("crate-age-git-allow.txt")
-PINNED = re.compile(r"^git\+(https://[^?#]+)(?:\?[^#]*)?#([0-9a-f]{40})$")
+# The manifest's own pin, not only the lock's: the lock writes the full commit
+# after "#" whatever Cargo.toml asked for (a branch, a tag), so require the query
+# to be rev=<that same 40-character commit>.
+PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 
 
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
