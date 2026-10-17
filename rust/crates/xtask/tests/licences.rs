@@ -12,9 +12,12 @@ use std::process::Command;
 /// The crates that turn a PDF into an editable script.
 const IMPORT_CRATES: [&str; 5] = ["sp-model", "sp-pdf", "sp-parser", "sp-fountain", "sp-fdx"];
 
+/// The whole graph, every platform's packages included: not `--offline`,
+/// because a fresh CI runner has fetched only its own platform's crates and
+/// `cargo metadata` needs them all. `--locked` keeps it to Cargo.lock.
 fn metadata() -> serde_json::Value {
     let out = Command::new(env!("CARGO"))
-        .args(["metadata", "--format-version", "1", "--locked", "--offline"])
+        .args(["metadata", "--format-version", "1", "--locked"])
         .current_dir(root().join("rust"))
         .output()
         .unwrap();
