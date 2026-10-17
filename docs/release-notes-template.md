@@ -29,14 +29,20 @@ this, in this order:
 
 ## Good to know
 
-- <caveat>
+- <caveat, or a known gap>
+
+## Thanks
+
+- <who helped, and with what>
 
 *<optional italic closer>*
 ```
 
 No date line. No version-bump commentary. No checksum: the release workflow
-(`.github/workflows/release.yml`) appends the real one when it publishes,
-and two SHAs on one page both look official.
+(`.github/workflows/release.yml`) appends the real one when it writes the
+draft release, and two SHAs on one page both look official. The steps
+around the notes (the version bump, the pictures, the tag, the person who
+checks the draft and publishes it) are in [RELEASING.md](RELEASING.md).
 
 ## 0. Read these before you write a word
 
@@ -68,6 +74,10 @@ and two SHAs on one page both look official.
 4. **`rust/crates/sp-app/src/model/tune.rs`** if a bullet announces a new
    switch. That file holds the exact label the reader will see on the
    window's Settings page.
+5. **Who helped.** Ask Sam, and read the range for it: an issue that
+   reported a script that converted badly, a device someone tested, a
+   correction to how a script is formatted on the page. Section 10 has
+   the rules.
 
 ## 1. Caps, with 0.5.0's actuals as calibration
 
@@ -81,6 +91,7 @@ Word counts are `wc -w` on the file, H1 included. Verified against
 | Change sections | 2 headings, 6 bullets TOTAL | 2 and 6 |
 | One bullet | bold claim 10 words or fewer, plus 50 words or fewer of explanation | longest claim 9, longest explanation 46 |
 | Good to know | 3 bullets | 2 |
+| Thanks | 1 bullet per person or group, 15 words each | none (0.5.0 predates the slot) |
 | Closer | 1 paragraph, 70 words, optional | 47 |
 
 Every actual is comfortably under its cap. That is the point. A release
@@ -116,7 +127,7 @@ for these to fill space. A four-bullet release is a normal release.
 When you finish, count the commits that earned nothing and be ready to say
 the number. If it is small, you have probably not cut hard enough.
 
-## 3. Five slots, not fixed headings
+## 3. Six slots, not fixed headings
 
 **Do NOT use New / Improved / Fixed / Changed as a fixed heading set.**
 Readers do not care which changes were features and which were bugs. They
@@ -168,10 +179,17 @@ quietly doing nothing when you saved a file for an older Kindle. Both work
 now:". Those bullets then drop the bold-claim form, because the intro
 already made the claim.
 
-### Slot 5: Good to know, then the closer
+### Slot 5: Good to know
 
-`## Good to know` is the literal heading. Then the optional italic closer,
-with no heading of its own. Rules in sections 9 and 10.
+`## Good to know` is the literal heading: caveats about what this release
+changed, and the gaps a reader will hit in what it ships. Rules in
+section 9.
+
+### Slot 6: Thanks, then the closer
+
+`## Thanks` is the literal heading: the people who helped make this
+release, film knowledge included. Then the optional italic closer, with no
+heading of its own. Rules in sections 10 and 11.
 
 ## 4. Bullet form
 
@@ -465,7 +483,7 @@ reader nothing they can use and it spends a bullet from a budget of six.
 > devices actually do.*
 
 **Why:** these three commits changed no output. What they changed is what
-we believed. That is the closer's entire job. See section 10.
+we believed. That is the closer's entire job. See section 11.
 
 ### Pair 9: a caveat, and what licenses the reassurance
 
@@ -528,7 +546,7 @@ registry. The device coverage that genuinely matters here is a caveat, and
 
 ### Sources
 
-Two, and only two:
+Three, and only three:
 
 1. `verdictsOpenedInRange` from `cargo xtask release-notes v<previous>`:
    registry entries whose device verdict became pending during THIS range,
@@ -536,6 +554,14 @@ Two, and only two:
    actually write the caveat from. Worked example: pair 9.
 2. Standing product constraints a reader keeps hitting, such as Kindles
    refusing EPUB files over USB.
+3. Known gaps in what this release ships: something new that is not
+   finished (a file format still in beta, a platform whose copies do not
+   update themselves yet), or a problem we know about and have not fixed.
+   Say what the reader will run into and what to do meanwhile: "Windows
+   and Linux copies don't update themselves yet. Download the new version
+   from the website." Never hide a gap to keep the section short. A gap a
+   reader finds for themselves costs the next release's notes their
+   trust.
 
 **Not** the full pending list. Entries that were already pending before
 this cycle reappear in every release forever and train the reader to skip
@@ -550,6 +576,11 @@ For anything from source 1, include it only if all four are yes:
    default and that nobody turned on is not a caveat.
 3. Would the reader notice if our guess is wrong?
 4. Has it not already been disclosed in an earlier release file?
+
+Source 3 must answer yes to questions 1 and 3: a gap in something this
+release ships, that a reader would notice. A gap that an earlier release
+already disclosed is repeated only when this release's content invites the
+reader to hit it, the same test source 2 gets.
 
 Source 2 answers no to the first question by definition, so it gets a
 different and stricter test: **at most one standing constraint, and only
@@ -596,7 +627,37 @@ see.
 `docs/releases/0.5.0.md` predates this convention and carries no markers.
 For that one file, read its Good to know section directly.
 
-## 10. The closer
+## 10. Thanks
+
+Every release names who helped, film knowledge included, under
+`## Thanks`. Not only code: the person who tested a page turn on their
+Kobo, the reader who sent a script that converted badly, the script
+supervisor who said how a scene number really sits on the page, the
+person who caught a wrong claim in the last notes. Their knowledge is how
+the book comes out right.
+
+```markdown
+## Thanks
+
+- **Jo Example** tested side-by-side dialogue on a Kobo Clara.
+- **@example-handle** sent a script whose title page came out wrong.
+```
+
+The names above are invented, as every example in this file is.
+
+- **Name people the way they asked to be named**, and only with their
+  say-so: a name, a GitHub handle, or "a reader who asked not to be
+  named". Ask Sam when you do not know.
+- **Say what they did, in the reader's words.** "tested side-by-side
+  dialogue on a Kobo Clara", not "verified registry #8b".
+- **Never name the script they sent**, its title, its writer or a
+  character in it. Section 13's rule has no exception for thanks.
+- **Do not thank the project, a tool or a company.** People only.
+- If nobody outside the project helped with this release, leave the
+  section out. If the list would push the file past the cap, cut a
+  bullet from the change sections, never a name.
+
+## 11. The closer
 
 One italic paragraph, no heading, at most 70 words, and **optional**.
 
@@ -612,7 +673,7 @@ It is not a parking spot for leftover technical detail that would not fit
 in a bullet. If you find yourself moving a sentence down here to save a
 bullet's word count, delete the sentence instead.
 
-## 11. When the release earns no notes
+## 12. When the release earns no notes
 
 If nothing in the range changes what a reader would see in a converted
 script, write nothing. Do not produce a maintenance placeholder. Say this,
@@ -626,7 +687,7 @@ verbatim:
 Then stop. If Sam gives a reason, the notes are written from his words and
 nothing else.
 
-## 12. Pre-flight checklist
+## 13. Pre-flight checklist
 
 Run all of it before showing anyone anything.
 
@@ -637,7 +698,8 @@ Run all of it before showing anyone anything.
 - [ ] Lede is one sentence, under 25 words.
 - [ ] At most 2 change headings and 6 bullets total across them.
 - [ ] No bold claim over 10 words; no explanation over 50.
-- [ ] At most 3 caveats under Good to know.
+- [ ] At most 3 caveats or gaps under Good to know.
+- [ ] One Thanks bullet per person or group, 15 words or fewer each.
 - [ ] Closer, if present, is one paragraph under 70 words.
 - [ ] Compare all of the above with the previous release file. Shorter is
       the correct direction.
@@ -666,6 +728,10 @@ Run all of it before showing anyone anything.
 - [ ] Anything not verified on hardware is described as unverified,
       wherever it appears.
 - [ ] Each caveat passes all four questions and is classified honestly.
+- [ ] Every gap a reader will hit in what this release ships is under
+      Good to know, with what to do meanwhile.
+- [ ] Everyone who helped is under Thanks, named the way they asked to be
+      named, and nothing names a script they sent.
 - [ ] The previous release file's caveats were checked: retired ones are
       not repeated, standing ones are not repeated either.
 - [ ] The closer, if present, corrects a belief. If it does not, cut it.

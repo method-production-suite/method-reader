@@ -33,6 +33,7 @@ fn every_workflow_is_found_and_parsed() {
     // below pass over an empty list.
     let names = workflow_files();
     for f in [
+        "release-published.yml",
         "release.yml",
         "rust.yml",
         "tap-freshness.yml",
@@ -259,6 +260,14 @@ fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
         .collect()
 }
 
+/// A job that reads the release while it is still a DRAFT, which GitHub
+/// shows only to a token that can write: release.yml's draft-check.
+fn reads_the_draft(file: &str, name: &str, job: &Value) -> bool {
+    file == "release.yml"
+        && name == "draft-check"
+        && commands(&run_text(job)).contains("gh release view")
+}
+
 #[test]
 fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
     let release_write = Regex::new(r"gh release (upload|create|edit)").unwrap();
@@ -274,7 +283,8 @@ fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
             ));
         }
         for (name, job) in jobs(&wf) {
-            let writes = release_write.is_match(&commands(&run_text(job)));
+            let writes = release_write.is_match(&commands(&run_text(job)))
+                || reads_the_draft(&f, &name, job);
             match permissions(job) {
                 None if writes => wrong.push(format!(
                     "{f}: {name} changes a release with a read-only token"
@@ -505,8 +515,10 @@ fn the_standing_tap_check_watches_the_manifest_as_well_as_the_tap() {
             .iter()
             .any(|t| t.contains("sp-release check-latest --deep"))
     );
-    // Never on `release: published`: GitHub starts no run from an event a
-    // workflow raised with the default token, so that trigger never fired.
+    // Never on `release: published`: that is release-published.yml's
+    // trigger, and it fires only because a PERSON publishes (GitHub starts
+    // no run from an event a workflow raised with the default token, which
+    // is why this file's own copy of it never fired at v0.5.3).
     let on = serde_yaml::to_string(wf.get("on").expect("an on: table")).unwrap();
     assert!(!on.contains("release"), "{on}");
 }

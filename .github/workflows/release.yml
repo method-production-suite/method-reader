@@ -1,17 +1,26 @@
 # Release on version tags: the Rust app and the Rust command-line tool.
 # Rewritten for the pure-Rust port (rust-port branch; design in
-# docs/superpowers/specs/2026-10-11-rust-release-design.md). Same secrets,
-# same order (draft, every upload, then public, latest.json last, then the
-# tap). The published names are Method Reader's since 0.13 (Screepub's up to
-# 0.12.x, all in rust/crates/sp-release/src/names.rs); the updaters already
-# out there read latest.json and drop the archive's top folder, so the new
-# names reach them unchanged.
+# docs/superpowers/specs/2026-10-11-rust-release-design.md). The published
+# names are Method Reader's since 0.13 (Screepub's up to 0.12.x, all in
+# rust/crates/sp-release/src/names.rs); the updaters already out there read
+# latest.json and drop the archive's top folder, so the new names reach them
+# unchanged.
+#
+# The suite's release standard (SUITE-STANDARDS.md section 3; the steps in
+# docs/RELEASING.md): a tag builds a DRAFT, and a PERSON publishes it after
+# checking the .dmg on an Apple silicon Mac. Nothing here makes the release
+# public. The order is the draft, every upload, latest.json last, then
+# `draft-check`, which reads the draft back and fails loudly unless every
+# file is there. Publishing starts release-published.yml: the Homebrew tap,
+# then the checks that read the published release back. That trigger fires
+# because a person publishes; GitHub starts no run from an event raised with
+# this workflow's default token.
 #
 # Secrets (docs/release-secrets.md, unchanged names):
 #   DEVELOPER_ID_CERT_P12_BASE64, CERT_PASSWORD, KEYCHAIN_PASSWORD,
 #   AC_API_KEY_P8_BASE64, AC_API_KEY_ID, AC_API_ISSUER_ID,
-#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set),
-#   TAP_TOKEN (optional).
+#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set).
+#   TAP_TOKEN (optional) is release-published.yml's.
 #
 # The Rust toolchain comes from rust/rust-toolchain.toml (rustup on every
 # hosted runner installs it on first use). Release builds are uncached on
@@ -98,7 +107,7 @@ jobs:
   # does exactly what method-reader does): built, signed with the hardened
   # runtime (no entitlements: the Rust binary does not JIT, unlike the Bun
   # one), notarized, THEN packaged, so the tarball holds the signed bytes.
-  # Then the draft release, which stays a draft until `publish`.
+  # Then the draft release, which stays a draft until a person publishes it.
   release:
     needs: checks
     runs-on: macos-15
@@ -146,7 +155,7 @@ jobs:
           "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" \
             || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
           target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
-      - name: Publish the draft release
+      - name: Write the draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -184,7 +193,7 @@ jobs:
           # shellcheck disable=SC2016
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'Run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/method-reader.rb` whole (and renames a tap still on screepub.rb).\n\n```ruby\n' "$V"
+            printf 'The tap bumps itself once the release is published (release-published.yml). By hand: run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/method-reader.rb` whole (and renames a tap still on screepub.rb).\n\n```ruby\n' "$V"
             printf '  url ".../download/v%s/method-reader-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -644,23 +653,35 @@ jobs:
           target/release/sp-release verify-update --dir ../arrivals --manifest ../arrivals/latest.json
           gh release upload "$TAG" ../arrivals/latest.json --clobber
 
-  # Public HERE, last of the uploads. A failed bundle leg never strands the
-  # release in draft; a wrong image list does (the frozen Swift updater).
-  publish:
+  # LAST: read the draft back and say whether it is complete. A person
+  # publishes it (docs/RELEASING.md), and this is what they read first: a
+  # draft missing its Mac image or its latest.json, once public, breaks the
+  # site's download buttons and every window's update check (v0.12.1 went
+  # public that way). It runs even when a job before it failed, so the run
+  # says in one place what is missing. It changes nothing; write access is
+  # only because GitHub shows a draft to no token that cannot write.
+  draft-check:
     needs: [release, cli-upload, app-upload, handover-gate]
-    # A failed handover gate keeps the release a draft: a public release
-    # whose update the windows already out there cannot take is the one
-    # thing worse than a late one. So does a missing app: publishing makes
-    # the release "latest", and the site's download buttons and every
-    # window's update check read releases/latest. v0.12.1 published with a
-    # failed Mac leg and broke both until a re-run attached the apps. A
-    # re-run of the failed jobs now publishes once everything is there.
-    if: ${{ !cancelled() && needs.release.result == 'success' && needs.app-upload.result == 'success' && needs.handover-gate.result == 'success' }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Exactly one Mac image, then make the release public
+      - name: Every job before it succeeded
+        env:
+          RELEASE: ${{ needs.release.result }}
+          CLI_UPLOAD: ${{ needs.cli-upload.result }}
+          APP_UPLOAD: ${{ needs.app-upload.result }}
+          HANDOVER_GATE: ${{ needs.handover-gate.result }}
+        run: |
+          set -euo pipefail
+          BAD=""
+          for pair in "release=$RELEASE" "cli-upload=$CLI_UPLOAD" "app-upload=$APP_UPLOAD" "handover-gate=$HANDOVER_GATE"; do
+            [ "${pair#*=}" = success ] || BAD="$BAD ${pair%%=*} (${pair#*=})"
+          done
+          [ -z "$BAD" ] || {
+            echo "::error::The draft is NOT ready to publish. These jobs did not succeed:$BAD. Re-run the failed jobs, then read this check again."; exit 1; }
+      - name: The draft carries every file the release names
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -668,97 +689,30 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
+          # Exactly one Mac image: the frozen Swift updater takes the first
+          # .dmg on the page.
           DMGS="$(gh release view "$TAG" --json assets \
             -q '[.assets[].name | select(endswith(".dmg"))] | join(" ")')"
           case "$DMGS" in
             "Method-Reader-macOS.dmg") ;;
-            "") echo "::error::$TAG has no Mac image, so it stays a draft. Re-run the failed jobs; publish runs once the image is attached."; exit 1 ;;
-            *) echo "::error::$TAG must carry exactly one .dmg, Method-Reader-macOS.dmg. It has: $DMGS."; exit 1 ;;
+            "") echo "::error::$TAG has no Mac image, so do not publish it. Re-run the failed jobs."; exit 1 ;;
+            *) echo "::error::$TAG must carry exactly one .dmg, Method-Reader-macOS.dmg. It has: $DMGS. Do not publish it."; exit 1 ;;
           esac
-          # The update manifest every window reads must be on the release too.
-          gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx latest.json \
-            || { echo "::error::$TAG has no latest.json, so it stays a draft. Re-run the failed jobs."; exit 1; }
-          PRE=()
-          [[ "$VERSION" == *-* ]] && PRE=(--prerelease)
-          gh release edit "$TAG" --draft=false ${PRE[@]+"${PRE[@]}"}
-
-  tap:
-    needs: publish
-    if: ${{ !cancelled() && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Bump the Homebrew tap
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
-          VERSION: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          V="${VERSION#v}"
-          if [ -z "${TAP_TOKEN:-}" ]; then
-            echo "::notice::TAP_TOKEN is not set, so the tap was NOT bumped. Use the crib sheet in this run's summary. tap-freshness.yml will fail until the tap serves $V."
-            exit 0
-          fi
-          git clone --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
-          (cd rust && cargo xtask bump-tap "$V" "$GITHUB_WORKSPACE/tap")
-          # Everything, new files too: the first bump after the rename moves
-          # screepub.rb to method-reader.rb and adds the two renames files.
-          git -C tap add -A
-          if git -C tap diff --cached --quiet; then
-            echo "::notice::the tap already serves $V; nothing to commit"
-            exit 0
-          fi
-          brew style tap/Formula/method-reader.rb tap/Casks/method-reader.rb
-          git -C tap -c user.name='github-actions[bot]' \
-            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            commit -q -m "Method Reader $V"
-          git -C tap push
-
-  tap-check:
-    needs: tap
-    if: ${{ !cancelled() && needs.tap.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: The tap serves this release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          (cd rust && cargo build --quiet --locked -p xtask)
-          n=1
-          while [ "$n" -le 3 ]; do
-            if rust/target/debug/xtask check-tap; then exit 0; fi
-            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
-            n=$((n + 1))
+          ASSETS="$(gh release view "$TAG" --json assets -q '.assets[].name')"
+          # Every file the jobs above upload. latest.json only for a
+          # release: app-upload publishes none for a prerelease, because
+          # releases/latest never resolves to one.
+          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig SHA256SUMS-app)
+          [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
+          MISSING=""
+          for f in "${WANT[@]}"; do
+            grep -qxF -- "$f" <<<"$ASSETS" || MISSING="$MISSING $f"
           done
-          echo "::error::The release published, but the Homebrew tap does not serve it. Run (from rust/): cargo xtask bump-tap ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
-          exit 1
-
-  # Read latest.json back from the endpoint every copy of the app reads, and
-  # (--deep) download each archive it names and verify it the way the Rust
-  # app will. Red means the release is public and updates cannot use it.
-  latest-check:
-    needs: [app-upload, publish]
-    if: ${{ !cancelled() && needs.app-upload.result == 'success' && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rust
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: The published latest.json describes the newest release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          cargo build --release --locked -p sp-release
-          n=1
-          while [ "$n" -le 3 ]; do
-            if target/release/sp-release check-latest --deep; then exit 0; fi
-            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
-            n=$((n + 1))
-          done
-          echo "::error::The release published, but latest.json at releases/latest/download does not describe it. See docs/release-secrets.md section 4."
-          exit 1
+          [ -z "$MISSING" ] || {
+            echo "::error::$TAG is missing:$MISSING. Do not publish it. Re-run the failed jobs."; exit 1; }
+          # The backticks are Markdown for the summary, not a substitution.
+          # shellcheck disable=SC2016
+          {
+            printf '## Method Reader %s is a complete draft\n\n' "$VERSION"
+            printf 'Before you publish it: download `Method-Reader-macOS.dmg` from the draft on an Apple silicon Mac, open it, drag Method Reader to Applications, and open the app once (it must open without a warning). Then publish the draft on https://github.com/%s/releases. Publishing bumps the Homebrew tap (release-published.yml). The steps are in docs/RELEASING.md.\n' "$GH_REPO"
+          } >> "$GITHUB_STEP_SUMMARY"

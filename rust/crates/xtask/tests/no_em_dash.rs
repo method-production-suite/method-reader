@@ -280,6 +280,7 @@ fn copy_files() -> Vec<String> {
         "ROADMAP.md",
         "brand/README.md",
         "docs/developers.md",
+        "docs/RELEASING.md",
         "docs/fountain-input.md",
         "docs/send-to-kindle.md",
         "docs/release-notes-template.md",

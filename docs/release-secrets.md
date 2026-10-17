@@ -8,6 +8,11 @@ The signing identity is **Clockwork Post Production LLC** (the Apple
 Developer account). Until every secret below exists, the release job fails
 loudly and normal CI is unaffected.
 
+The release steps themselves, from the notes to the person who publishes
+the draft, are in [RELEASING.md](RELEASING.md). A tag builds a DRAFT; the
+Homebrew tap and the read-back checks run from
+`.github/workflows/release-published.yml` once a person publishes it.
+
 ## 1. Developer ID Application certificate
 
 You need a **Developer ID Application** certificate (not "Apple
@@ -42,9 +47,11 @@ base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy    # paste as AC_API_KEY_P8_BASE64
 
 ## 3. `TAP_TOKEN` — OPTIONAL, and the only one whose absence is not fatal
 
-Without it the release still succeeds; the `tap` job just says so and
-exits clean, leaving the crib sheet in the run summary and the tap to be
-bumped by hand. With it, the tap bumps itself on every non-prerelease tag.
+Without it the release still succeeds; the `tap` job
+(`release-published.yml`) just says so and exits clean, leaving the crib
+sheet in the release run's summary and the tap to be bumped by hand. With
+it, the tap bumps itself on every non-prerelease release, once a person
+publishes it.
 
 GitHub → **Settings → Developer settings → Personal access tokens →
 Fine-grained tokens → Generate new token**:
@@ -118,7 +125,8 @@ What holds this together, in the order it runs:
   manifest`), checks every archive it names against `PUBKEY` and the
   signed version (`sp-release verify-update`), and uploads it LAST, so
   nothing it names is ever missing or unverified when it is read.
-- `latest-check` reads the manifest back from the endpoint the app uses
+- `latest-check` (`release-published.yml`, once a person publishes the
+  draft) reads the manifest back from the endpoint the app uses
   (`sp-release check-latest --deep`) and compares it with the newest
   release: the version, every platform's asset, every signature, and the
   key id against `PUBKEY`; with `--deep` it also downloads each archive and
@@ -293,8 +301,10 @@ clone pristine for `brew update`.
 All three pieces LANDED 2026-08-07. Two do the work, one keeps them
 honest:
 
-- **The bumper: `release.yml`'s `tap` job, running `cargo xtask bump-tap`.**
-  `needs: release`, so it cannot start before the assets exist. It clones
+- **The bumper: `release-published.yml`'s `tap` job, running `cargo xtask bump-tap`.**
+  It runs when a person publishes the release (until 0.13 it was a job in
+  `release.yml`, after one that published automatically), so it cannot
+  start before the assets exist. It clones
   the tap, retires the cask for good (its `deprecate!` becomes `disable!`,
   once: the last Swift app it installs would offer an Intel Mac an app it
   cannot open), writes the formula whole (one url, one SHA,
@@ -321,8 +331,8 @@ honest:
   carries the Intel tarball, disabled after). No secret needed, both repos
   being public.
 
-  - `release.yml`'s **`tap-check`** job, `needs: tap`, is the per-release
-    check. A red job there means the release published fine and the tap
+  - `release-published.yml`'s **`tap-check`** job, `needs: tap`, is the
+    per-release check. A red job there means the release published fine and the tap
     does not serve it yet.
   - `.github/workflows/tap-freshness.yml` is weekly plus
     `workflow_dispatch`, and catches drift BETWEEN releases: a tap edited
@@ -338,9 +348,12 @@ honest:
   raised by a workflow using the default `GITHUB_TOKEN`, and `release.yml`
   creates the release with exactly that token. The trigger read as
   coverage while providing none, which is the same shape as the tap
-  problem itself. **Anything that must run per release has to run INSIDE
-  the release workflow**, which is why `tap-check` is a job there and not
-  a trigger elsewhere.
+  problem itself. That was true while `release.yml` published the release
+  itself. **Since the suite's release standard a person publishes the
+  draft**, and an event a person raises does start workflows, so the tap
+  and its checks moved to `release-published.yml` on that trigger. It
+  holds only while no workflow publishes: `xtask/tests/release_workflow.rs`
+  fails if one does.
 
 **Why the logic lives in `cargo xtask` commands and not inline in the
 YAML:** these are the steps that have already failed silently once. Inline,

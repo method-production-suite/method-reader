@@ -285,7 +285,7 @@ fn run_draft_step(tag: &str, exists: bool) -> (Output, Vec<String>) {
     let path = path_with(&sc.join("bin"));
     let temp = sc.join("temp").display().to_string();
     let out = bash(
-        &step_named(&release(), "release", "Publish the draft release"),
+        &step_named(&release(), "release", "Write the draft release"),
         sc.path(),
         &[
             ("PATH", &path),
@@ -333,7 +333,7 @@ fn draft_step_appends_the_cli_checksum_to_the_notes() {
     let path = path_with(&sc.join("bin"));
     let temp = sc.join("temp").display().to_string();
     let out = bash(
-        &step_named(&release(), "release", "Publish the draft release"),
+        &step_named(&release(), "release", "Write the draft release"),
         sc.path(),
         &[("PATH", &path), ("TAG", "v0.12.0"), ("RUNNER_TEMP", &temp)],
     );
@@ -789,85 +789,157 @@ fn manifest_step_uploads_nothing_when_the_manifest_or_its_check_refuses() {
     }
 }
 
-// ---- publish: exactly one Mac image, then public -----------------------
+// ---- draft-check: the draft is complete, and a person publishes it ------
 
-fn publish_step(tag: &str, dmgs: &str) -> (Output, Vec<String>) {
-    publish_step_with(tag, dmgs, "latest.json")
+/// Every file a complete release carries, one per line, as the fake
+/// release's asset list answers it.
+fn complete_assets(with_manifest: bool) -> String {
+    let mut v = vec![
+        names::CLI_MAC_ARM64.to_string(),
+        names::CLI_LINUX_X64.to_string(),
+        names::CLI_LINUX_ARM64.to_string(),
+        names::CLI_WINDOWS_X64.to_string(),
+        "SHA256SUMS".to_string(),
+        names::LINUX_DEB_AMD64.to_string(),
+        names::LINUX_RPM_X86_64.to_string(),
+        names::LINUX_APPIMAGE_X86_64.to_string(),
+        names::MAC_DMG.to_string(),
+        names::WINDOWS_SETUP.to_string(),
+        names::MAC_UPDATE.to_string(),
+        format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
+        "SHA256SUMS-app".to_string(),
+    ];
+    if with_manifest {
+        v.push(names::MANIFEST.to_string());
+    }
+    v.join("\n")
 }
 
-/// The publish step against a fake release whose .dmg query answers `dmgs`
+/// The asset step against a fake release whose .dmg query answers `dmgs`
 /// and whose plain asset list answers `assets`, one name per line.
-fn publish_step_with(tag: &str, dmgs: &str, assets: &str) -> (Output, Vec<String>) {
-    let sc = Scratch::new("publish");
+fn draft_check(tag: &str, dmgs: &str, assets: &str) -> (Output, Vec<String>, String) {
+    let sc = Scratch::new("draft-check");
     tool(
         &sc,
         "bin/gh",
         "if [ \"$2\" = view ]; then case \"$*\" in *endswith*) printf '%s\\n' \"$FAKE_DMGS\" ;; *) printf '%s\\n' \"$FAKE_ASSETS\" ;; esac; fi",
     );
     let path = path_with(&sc.join("bin"));
+    let summary = sc.join("summary.md").display().to_string();
     let out = bash(
         &step_named(
             &release(),
-            "publish",
-            "Exactly one Mac image, then make the release public",
+            "draft-check",
+            "The draft carries every file the release names",
         ),
         sc.path(),
         &[
             ("PATH", &path),
             ("TAG", tag),
+            ("GH_REPO", "method-production-suite/method-reader"),
             ("FAKE_DMGS", dmgs),
             ("FAKE_ASSETS", assets),
+            ("GITHUB_STEP_SUMMARY", &summary),
         ],
     );
     let calls = log(&sc);
-    (out, calls)
+    let said_summary = std::fs::read_to_string(&summary).unwrap_or_default();
+    (out, calls, said_summary)
+}
+
+fn changes_the_release(calls: &[String]) -> bool {
+    calls
+        .iter()
+        .any(|c| c.starts_with("gh\trelease\tedit") || c.starts_with("gh\trelease\tupload"))
 }
 
 #[test]
-fn publish_step_makes_public_a_release_with_exactly_the_one_image() {
-    let (out, calls) = publish_step("v0.12.0", names::MAC_DMG);
+fn draft_check_passes_a_complete_draft_and_leaves_it_a_draft() {
+    let (out, calls, summary) = draft_check("v0.13.0", names::MAC_DMG, &complete_assets(true));
     assert!(out.status.success(), "{}", said(&out));
-    assert_eq!(
-        calls.last().unwrap(),
-        "gh\trelease\tedit\tv0.12.0\t--draft=false"
-    );
+    assert!(!changes_the_release(&calls), "{calls:#?}");
+    // What the person does next, in the run's summary.
+    assert!(summary.contains(names::MAC_DMG), "{summary}");
+    assert!(summary.contains("Apple silicon"), "{summary}");
+    assert!(summary.contains("publish"), "{summary}");
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_no_mac_image_in_draft() {
+fn draft_check_fails_a_draft_with_no_mac_image() {
     // v0.12.1 went public with no app attached and broke the site's download
     // buttons and every window's update check until a re-run.
-    let (out, calls) = publish_step("v0.12.0", "");
+    let assets = complete_assets(true).replace(&format!("{}\n", names::MAC_DMG), "");
+    let (out, calls, _) = draft_check("v0.13.0", "", &assets);
     assert!(!out.status.success());
-    assert!(said(&out).contains("stays a draft"), "{}", said(&out));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(said(&out).contains("no Mac image"), "{}", said(&out));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_no_update_manifest_in_draft() {
-    let (out, calls) = publish_step_with("v0.12.0", names::MAC_DMG, "SHA256SUMS");
+fn draft_check_fails_a_draft_with_no_update_manifest_and_names_it() {
+    let (out, calls, _) = draft_check("v0.13.0", names::MAC_DMG, &complete_assets(false));
     assert!(!out.status.success());
-    assert!(said(&out).contains("no latest.json"), "{}", said(&out));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(said(&out).contains(names::MANIFEST), "{}", said(&out));
+    assert!(said(&out).contains("Do not publish"), "{}", said(&out));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_two_images_in_draft() {
-    let (out, calls) = publish_step(
-        "v0.12.0",
+fn draft_check_names_every_file_that_did_not_arrive() {
+    let assets = complete_assets(true)
+        .replace(&format!("{}\n", names::CLI_WINDOWS_X64), "")
+        .replace(&format!("{}\n", names::LINUX_DEB_AMD64), "");
+    let (out, _, _) = draft_check("v0.13.0", names::MAC_DMG, &assets);
+    assert!(!out.status.success());
+    let s = said(&out);
+    assert!(s.contains(names::CLI_WINDOWS_X64), "{s}");
+    assert!(s.contains(names::LINUX_DEB_AMD64), "{s}");
+}
+
+#[test]
+fn draft_check_fails_a_draft_with_two_images() {
+    let (out, calls, _) = draft_check(
+        "v0.13.0",
         "Method-Reader-macOS.dmg Method-Reader-macOS-x64.dmg",
+        &complete_assets(true),
     );
     assert!(!out.status.success());
     assert!(said(&out).contains("must carry exactly one .dmg"));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_prerelease_marked_under_the_macs_bash() {
-    let (out, calls) = publish_step("v0.12.0-rc1", names::MAC_DMG);
+fn draft_check_asks_no_update_manifest_of_a_prerelease_under_the_macs_bash() {
+    // app-upload publishes no latest.json for a prerelease, on purpose
+    // (releases/latest never resolves to one), so the check must not want
+    // it: the old publish job did, and would have kept every prerelease a
+    // draft.
+    let (out, calls, _) = draft_check("v0.13.0-rc1", names::MAC_DMG, &complete_assets(false));
     assert!(out.status.success(), "{}", said(&out));
-    assert_eq!(
-        calls.last().unwrap(),
-        "gh\trelease\tedit\tv0.12.0-rc1\t--draft=false\t--prerelease"
-    );
+    assert!(!changes_the_release(&calls));
+}
+
+#[test]
+fn draft_check_says_which_job_did_not_succeed() {
+    let text = step_named(&release(), "draft-check", "Every job before it succeeded");
+    let sc = Scratch::new("draft-check-jobs");
+    let path = path_with(&sc.join("bin"));
+    let ok = [
+        ("PATH", path.as_str()),
+        ("RELEASE", "success"),
+        ("CLI_UPLOAD", "success"),
+        ("APP_UPLOAD", "success"),
+        ("HANDOVER_GATE", "success"),
+    ];
+    let out = bash(&text, sc.path(), &ok);
+    assert!(out.status.success(), "{}", said(&out));
+    let mut bad = ok;
+    bad[3] = ("APP_UPLOAD", "failure");
+    bad[4] = ("HANDOVER_GATE", "skipped");
+    let out = bash(&text, sc.path(), &bad);
+    assert!(!out.status.success());
+    let s = said(&out);
+    assert!(s.contains("app-upload (failure)"), "{s}");
+    assert!(s.contains("handover-gate (skipped)"), "{s}");
+    assert!(!s.contains("cli-upload"), "{s}");
 }

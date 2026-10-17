@@ -59,9 +59,9 @@ its own updater, where it is switched on, installs the window in its place.
   has built and signed the Mac window, and since 0.7.0 it has notarized it.
   Every bundle is opened and checked for the files and the version it
   claims before anything is uploaded (until the Rust cutover, its engine was
-  run too; `rust.yml` runs the Mac app's headless conversion), and
-  the update manifest (`latest.json`, Mac only) is read back from GitHub
-  after it is published. The Mac `.dmg` is built for Apple silicon only, the
+  run too; `rust.yml` runs the Mac app's headless conversion), and once a
+  person publishes the draft, `release-published.yml` reads the update
+  manifest (`latest.json`, Mac only) back from GitHub. The Mac `.dmg` is built for Apple silicon only, the
   runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
   last, only the ARM half ran.
 - Weekly: the Homebrew formula and the update manifest still match the

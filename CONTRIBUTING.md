@@ -121,9 +121,13 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
   converting the fixtures, with `epubcheck` on its books; the device-request
   service built for wasm32; and every installer built, opened and checked on
   its own system.
-- **Every `v*` tag** (`release.yml`): the release. It signs and notarizes the
-  Mac downloads, builds every bundle and archive, checks each one before
-  uploading, and publishes the window's update manifest.
+- **Every `v*` tag** (`release.yml`): a draft release. It signs and
+  notarizes the Mac downloads, builds every bundle and archive, checks each
+  one before uploading, attaches the window's update manifest, and checks
+  the draft carries every file. A person checks the Mac image and publishes
+  the draft; that runs `release-published.yml`, which bumps the Homebrew
+  formula and reads the release back. The steps are in
+  [docs/RELEASING.md](docs/RELEASING.md).
 - **Weekly**: the Homebrew formula and the update manifest still match the
   newest release, and the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0); that is

@@ -10,15 +10,18 @@
 #
 # This is the STANDING guard, for drift that happens between releases: a
 # tap edited by hand, a release deleted, a formula someone half-bumped.
-# The per-release check is release.yml's own `tap-check` job.
+# The per-release check is release-published.yml's `tap-check` job.
 #
 # IT DELIBERATELY DOES NOT TRIGGER ON `release: published`. It used to, and
-# that trigger never once fired: GitHub does not start new workflow runs
-# from events raised by a workflow using the default GITHUB_TOKEN, and
-# release.yml creates the release with exactly that token. The trigger sat
-# there looking like coverage while providing none, which is the same shape
-# of failure as the tap itself. The check that runs per release has to live
-# INSIDE the release run, and it does.
+# at v0.5.3 that trigger never once fired: GitHub does not start new
+# workflow runs from events raised by a workflow using the default
+# GITHUB_TOKEN, and release.yml then made the release public with exactly
+# that token. The trigger sat there looking like coverage while providing
+# none, which is the same shape of failure as the tap itself. Since the
+# suite's release standard a PERSON publishes the draft, so that event now
+# starts release-published.yml, and nothing in any workflow publishes
+# (xtask/tests/release_workflow.rs holds that). This file stays the weekly
+# guard for drift between releases.
 #
 # The logic lives in `cargo xtask check-tap` so it can be run by hand.
 # Least privilege + pinned actions, matching rust.yml.
@@ -44,7 +47,7 @@ jobs:
   # 2026-09-21). latest.json is read from the endpoint the app uses and
   # compared with the newest release: its version, every platform's asset,
   # every signature, and the key that made them. The per-release check is
-  # release.yml's `latest-check` job, for the reason above. Red until a
+  # release-published.yml's `latest-check` job. Red until a
   # release ships WITH the updater, since v0.6.0 publishes no manifest;
   # that red is the honest reading of "the updater cannot work yet".
   manifest-matches-newest-release:
