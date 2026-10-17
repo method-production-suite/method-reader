@@ -5,7 +5,7 @@ authorities (Story Sense, the Warner Bros.-derived SimplyScripts guide,
 Final Draft's manual, Movie Magic's rule list, John August), (2) direct
 measurement of real per-tool PDFs from the local fixtures set plus the
 source code of Beat and Trelby and the official docs of the rest, (3) a
-grounding sweep of Screepub's own pipeline. Companion docs:
+grounding sweep of Method Reader's own pipeline. Companion docs:
 `screenplay-format-reference.md` (metrics and CSS), `device-map.md`
 (what each renderer honors), `formatting-options-log.md` (the options
 registry; entries cited as #N).
@@ -32,7 +32,7 @@ or software-default variation · **[C]** shooting-script-only convention
 - [A] Page number: top right, **with a trailing period** ("4."), and
   **no number on page 1**. Every measured tool agrees; Google-Docs
   scripts are the exception (bare "2", no period) [E]/[D].
-  Screepub's `PAGE_NUMBER_BARE /^\d+\.?$/` already accepts both
+  Method Reader's `PAGE_NUMBER_BARE /^\d+\.?$/` already accepts both
   (classify.ts:14).
 - [C] Production pages add: scene numbers in BOTH margins, A/B page
   numbers (78A, 78B) once locked, colored-revision asterisks in the
@@ -131,14 +131,14 @@ The single most important disambiguation in this domain:
   readers. Must survive conversion — regenerated on output if desired.
 - **Scene `CONTINUED:`**: always residue, never semantic.
 
-Screepub already implements this fork correctly for the marked case:
+Method Reader already implements this fork correctly for the marked case:
 the serializer drops a `(CONT'D)` cue only when it directly follows the
 same character's speech (serialize.ts:73-87, page-break case) and keeps
 it after intervening action (the semantic case), while `contdMode: auto`
 regenerates clean markers on output (#8, #8a). The industry research
 confirms this design; no change needed.
 
-## 5. What Screepub handles today
+## 5. What Method Reader handles today
 
 Condensed; full mechanics in the grounding notes and registry entries.
 
@@ -176,7 +176,7 @@ Recognition (parser — stays option-free per the registry note):
    won't catch the numbered variants (text varies per page). Celtx's
    parenless `CONTINUED: 2` shape included.
 2. **Unmarked page splits (Celtx, Google Docs) guillotine dialogue and
-   action silently.** Screepub merges unmarked same-speaker dialogue
+   action silently.** Method Reader merges unmarked same-speaker dialogue
    into one Fountain block, but the halves stay separate rendered
    paragraphs (epub/html.ts:167-169); split action paragraphs are never
    rejoined at any stage (group.ts:48 creates them). Candidate

@@ -5,7 +5,7 @@ It is one of two routes that keep a script's shape: Amazon converts what you
 send with its modern typesetting, so a scene heading or a character name stays
 on the same page as the line after it. The other is copying a KFX file over
 USB, which needs Calibre, Kindle Previewer and the KFX plugin on your
-computer. Without those, a Kindle over USB gets an AZW3 that Screepub makes
+computer. Without those, a Kindle over USB gets an AZW3 that Method Reader makes
 itself (beta), with nothing else installed; it, and the MOBI for the oldest
 Kindles, can strand a heading or a name at the foot of a page. Email needs no
 tools at all.
@@ -23,14 +23,14 @@ then their scripts silently never arrive.
 Everything below is at Amazon → **Manage Your Content and Devices** →
 **Preferences** → **Personal Document Settings**
 ([direct link](https://www.amazon.com/hz/mycd/myx#/home/settings/pdoc)). In
-Screepub, the email row under **Other ways** on the result screen has
+Method Reader, the email row under **Other ways** on the result screen has
 **Open Amazon's page**, which opens that same page in your browser.
 
 ## 1. Find your Kindle's own email address
 
 Under *Send-to-Kindle E-Mail Settings*, each device has an address like
 `yourname_a1b2c3@kindle.com`. That's where you send scripts. You can edit the
-part before the `@` to something memorable. Screepub does not keep this
+part before the `@` to something memorable. Method Reader does not keep this
 address: you type it into the message yourself (see below).
 
 ## 2. Approve the address you send *from*
@@ -65,7 +65,7 @@ the same list saves a copy you can attach from any mail app.
 ## What Amazon receives
 
 You are handing your script to a third party. Amazon receives the file and
-their terms apply to it, not ours. That is your call to make, and Screepub
+their terms apply to it, not ours. That is your call to make, and Method Reader
 never makes it for you: see
 [Your script stays on your machine](../README.md#your-script-stays-on-your-machine).
 If the material is confidential, USB is the route that never touches a

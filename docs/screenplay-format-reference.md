@@ -1,6 +1,6 @@
 # Screenplay format — technical baseline for reflowable conversion
 
-Collected 2026-07-22 as the ground truth for Screepub's CSS decisions and
+Collected 2026-07-22 as the ground truth for Method Reader's CSS decisions and
 the planned Mac app's formatting options. Two halves: what print format
 actually is, and what Kindle's renderer actually honors.
 Pagination — page-break rules, (MORE)/(CONT'D)/CONTINUED artifacts, and
@@ -39,12 +39,12 @@ never `text-align: center`.
 
 - **`max-width` / `max-height`: stripped** during conversion. Any layout
   relying on them (e.g. `margin: auto` + `max-width` centering) silently
-  collapses to full width. ← This was Screepub's full-width-dialogue bug.
+  collapses to full width. ← This was Method Reader's full-width-dialogue bug.
 - **Left/right margins & padding: use `%`** — Amazon's explicit
   prescription. Percentages scale with screen size, which is exactly the
   "various screen sizes" requirement.
 - **Top/bottom margins: use `em`** — vertical rhythm scales with font
-  size. (Matches what Screepub already did.)
+  size. (Matches what Method Reader already did.)
 - **Line-height / font-size on body text: leave at defaults.** Enhanced
   Typesetting expects 1em/default line height and strips or fights
   overrides; the *reader's own* line-spacing setting owns this. So:
@@ -59,7 +59,7 @@ never `text-align: center`.
 - Negative margins: unsupported. Floats in tables: unsupported. Fixed
   units (pt/px): avoid throughout.
 
-## 3. Translation table (what Screepub now emits)
+## 3. Translation table (what Method Reader now emits)
 
 | Print fact | Reflowable rule |
 | --- | --- |

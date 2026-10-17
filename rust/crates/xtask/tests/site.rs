@@ -14,7 +14,8 @@ use repo_common::*;
 use sp_release::names;
 use xtask::capture::shots::{SHOTS, Theme, outputs_for};
 
-const LATEST: &str = "https://github.com/ssandweiss/screepub/releases/latest/download/";
+const LATEST: &str =
+    "https://github.com/method-production-suite/method-reader/releases/latest/download/";
 const VERIFIED: &str = "Verified by a person";
 const NOT_YET: &str = "Built and checked automatically. Never installed by a person yet";
 
@@ -123,8 +124,8 @@ fn the_drawing_and_its_animation_are_gone() {
 
 #[test]
 fn every_local_src_and_href_resolves_to_a_file_inside_site() {
-    // The Pages workflow deploys site/ alone, so a picture referenced from
-    // assets/ (where the README's copies live) would 404 on screepub.com.
+    // The suite website copies site/ alone, so a picture referenced from
+    // assets/ (where the README's copies live) would 404 on methodreader.com.
     let site = site();
     let css: Vec<String> = Regex::new(r"url\(([^)]+)\)")
         .unwrap()
@@ -273,7 +274,10 @@ fn an_intel_mac_is_told_0_9_0_is_its_last_version() {
     let intel = &downloads[at..];
     assert!(intel.contains("0.9.0"));
     assert!(intel.contains("keeps working"));
-    assert!(intel.contains("href=\"https://github.com/ssandweiss/screepub/releases\""));
+    assert!(
+        intel
+            .contains("href=\"https://github.com/method-production-suite/method-reader/releases\"")
+    );
 }
 
 #[test]

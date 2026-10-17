@@ -1,6 +1,6 @@
 # Release notes: the template
 
-Screepub's readers are screenwriters, producers and executives. They read
+Method Reader's readers are screenwriters, producers and executives. They read
 scripts on a Kindle. They do not read our source, our commit log, or this
 repository at all. The notes exist to tell one of those people what is
 different about the script they are about to convert.
@@ -13,7 +13,7 @@ Every release file lives at `docs/releases/<version>.md` and looks like
 this, in this order:
 
 ```markdown
-# Screepub <version>
+# Method Reader <version>
 
 <one line, only if privacy, requirements or the network surface changed>
 
@@ -132,7 +132,7 @@ stakes the product's reputation on exactly five network touchpoints and on
 improvements. Most releases skip this slot entirely.
 
 Form: a single bold sentence in the reader's terms, for example
-**"Screepub now needs macOS 15 or later."** State it, then move on. Do not
+**"Method Reader now needs macOS 15 or later."** State it, then move on. Do not
 argue with it.
 
 ### Slot 2: the lede
@@ -201,7 +201,7 @@ what was it doing before, what does it do now, what do I do about it.
    the reader cannot tell whether the change affects them.
 5. **Ground defaults in print craft where that is honestly true.** "A
    printed script never leaves a single line of dialogue or action alone
-   at the top or bottom of a page. Screepub now does the same." This
+   at the top or bottom of a page. Method Reader now does the same." This
    reader knows print. Do not invent a craft justification that the
    registry does not support.
 6. **Every new switch states its default AND the reason to change it.**
@@ -215,7 +215,7 @@ what was it doing before, what does it do now, what do I do about it.
    invites the reader to go change something. A fix bullet that merely
    describes what an existing setting does may use plain English.
 8. **Assign blame accurately, including to us.** "That's Amazon's rule,
-   not ours" is fair because it is true. So is "Screepub's notes have been
+   not ours" is fair because it is true. So is "Method Reader's notes have been
    corrected." Never imply a device is at fault for something we did.
 9. **No em dashes.** House rule. Use a colon, a period, or a comma.
 
@@ -258,7 +258,7 @@ Any check you run against this table checks the left column only.
 | Readium, Thorium | several other reading apps |
 | cue | character name |
 | mini-slug | the smaller headings inside a scene |
-| emits, renders, serializes, honors | Screepub now (verb the reader recognizes) |
+| emits, renders, serializes, honors | Method Reader now (verb the reader recognizes) |
 | registry, entry #17, device verdict pending | hasn't been tested on a physical device yet |
 
 The right column is not a thesaurus exercise. Every replacement above is
@@ -310,7 +310,7 @@ into a new release.
 
 > - **No more orphaned lines.** A printed script never leaves a single
 >   line of dialogue or action alone at the top or bottom of a page.
->   Screepub now does the same. There's a new switch for it, on by
+>   Method Reader now does the same. There's a new switch for it, on by
 >   default. Turn it off if you'd rather fit more on each page.
 
 **Why:** the property name, the element selectors and the numbers 2 and 1
@@ -461,7 +461,7 @@ reader nothing they can use and it spends a bullet from a budget of six.
 > *For the curious: Amazon's published guidelines say modern Kindles
 > ignore the instructions that hold a page together. Testing on a real
 > Kindle shows they don't ignore them at all, and Amazon's own website
-> says otherwise too. Screepub's notes have been corrected to match what
+> says otherwise too. Method Reader's notes have been corrected to match what
 > devices actually do.*
 
 **Why:** these three commits changed no output. What they changed is what
@@ -512,7 +512,7 @@ as competent.
 
 > - **No more orphaned lines.** A printed script never leaves a single
 >   line of dialogue or action alone at the top or bottom of a page.
->   Screepub now does the same, using the widows and orphans controls,
+>   Method Reader now does the same, using the widows and orphans controls,
 >   which modern Kindles have honored since firmware 5.12.3 and which Kobo
 >   and tolino also read. There's a new switch for it, on by default. Turn
 >   it off if you'd rather fit more on each page. It has no effect on

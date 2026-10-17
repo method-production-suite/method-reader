@@ -1,6 +1,6 @@
 # Formatting decisions log — the options registry
 
-Every formatting behavior Screepub applies, logged as it was tuned
+Every formatting behavior Method Reader applies, logged as it was tuned
 (2026-07-22, initial build + two feedback rounds on a real script). The print
 geometry and Kindle CSS constraints behind these choices live in
 `docs/screenplay-format-reference.md` — read that first when adjusting. Each entry is
@@ -11,7 +11,7 @@ window's `rust/crates/sp-app/src/model/tune.rs` drew them, and until piece F3 de
 Swift Mac app's reader rail was the first home of these knobs): the
 engine's FormatOptions (`rust/crates/sp-model/src/options.rs`) is the single
 knob surface, reachable via `--options file.json` on the CLI and through
-`screepub settings` from the window. Entries below marked "not built"
+`method-reader settings` from the window. Entries below marked "not built"
 remain future work; everything else is live.
 
 **Code pointers (2026-10-12, the Rust cutover):** the **Code:** lines name
@@ -23,11 +23,11 @@ same names in snake_case (`renderBooks` is `render_books`, `keepArtwork` is
 
 **Where a conversion's options come from (2026-09-14):** explicit flag
 (`--options` / `--options-json`) over the script's sidecar
-(`<Stem>.screepub.json`, written by `screepub settings`) over these
+(`<Stem>.method-reader.json`, written by `method-reader settings`) over these
 defaults, knob by knob, through the one merge `resolveFormatOptions` already
 is. The conversion itself reads the sidecar — beside the input, or in the
 script's library folder under `--library`, which wins — so a tuned script's
-FIRST book carries its tuning. It used to be read only by `screepub
+FIRST book carries its tuning. It used to be read only by `method-reader
 settings`, so the library adopted a sidecar and then rendered at the
 defaults; every export rung but MOBI converts that EPUB as it stands, so
 those defaults reached the reader. An unusable sidecar is ignored (the
@@ -36,11 +36,11 @@ file it used and names it as `settingsPath` in the `--json` answer.
 
 **App defaults now sit in that chain too (2026-09-23):** one more layer,
 between the script's sidecar and these shipped defaults, holds the app-wide
-format defaults set with `screepub app-settings`. The precedence: explicit
+format defaults set with `method-reader app-settings`. The precedence: explicit
 flags > the script's saved settings > app defaults > these shipped
 defaults. The desktop window's per-script Settings page reaches the same
 layer from its foot: "Use these for new scripts" promotes that script's
-current settings to the app defaults, and "Reset new scripts to Screepub's
+current settings to the app defaults, and "Reset new scripts to Method Reader's
 defaults" (shown only when the two differ) puts the shipped defaults back.
 The first `--library` conversion of a PDF with no sidecar of its own saves
 the settings it started from as that script's own, so a later change to
@@ -51,7 +51,7 @@ keeps following the app defaults until it is tuned once.
 **That save is a choice (2026-09-24):** the Settings page's "When a PDF is
 converted" offers "Keep its settings" (the default, the behaviour above)
 and "Follow the defaults", stored as `keepScriptSettings` in the app
-settings file and written with `screepub app-settings --set
+settings file and written with `method-reader app-settings --set
 '{"keepScriptSettings":false}'`. Off, a library conversion saves nothing,
 so a script nobody has tuned keeps following the app defaults. Switching
 reaches only conversions from then on: a script that already has a
@@ -244,7 +244,7 @@ and the suite will say so if you forget.
   is anchored, so classify.ts also tests it against the line with a leading
   shooting-script number stripped — an unpaired number ("2 EXT. WOODS - DAY
   3", which the dual-margin strip leaves whole) pushes the opener off `^`.
-- **THE TRADE — hand-written Fountain (2026-07-30):** Screepub owns the
+- **THE TRADE — hand-written Fountain (2026-07-30):** Method Reader owns the
   dot-force as its mini-slug carrier, so a hand-written `.BLACK` or
   `.THE BRIDGE` from another tool renders as a **mini-slug, not a scene**:
   bold line, no section, no TOC entry. A dot-forced line that also matches
@@ -638,7 +638,7 @@ and the suite will say so if you forget.
 - **SUPERSEDED IN PART — device verdict (2026-07-29, same-day A/B on
   device):** the 2026-07-22 conclusion below was a fact about a FORMAT,
   recorded as a fact about the delivery route. Same script, same
-  Screepub EPUB, sideloaded over USB in both formats to the same Kindle
+  Method Reader EPUB, sideloaded over USB in both formats to the same Kindle
   (fw 5.19.2): the **AZW3 strands cues** exactly as documented; the
   **KFX holds every keep — no stranded cues**. Renderer selection
   follows the FILE FORMAT, not how the file arrived. Sideloaded KFX
@@ -1102,7 +1102,7 @@ that app is retired, no longer published, and since piece F3 gone from this
 repository. The Tune surface keeps the same four
 groups (the page, dialogue, the text, what the book carries), plus the four
 `Read from the PDF` knobs. The window owns no formatting rule of its own: it
-reaches every option through the CLI, `screepub settings <fountain> --set`
+reaches every option through the CLI, `method-reader settings <fountain> --set`
 to read and store the per-script sidecar and `--options-json` to re-render
 from the cached `.fountain`, so the engine remains the only thing that
 decides what a knob means. The `From the PDF` knobs carry the same "won't
@@ -1151,7 +1151,7 @@ engine needs to change.
 - **Script preview reader (2026-07-22):** READ SCRIPT on the result page
   opens a window rendering the engine's real preview HTML
   (`--preview-html`; the same markup as the EPUB with the CSS inlined).
-  The rail edits a per-script sidecar (`<Stem>.screepub.json`, in the
+  The rail edits a per-script sidecar (`<Stem>.method-reader.json`, in the
   Swift app's ScriptSettings then and `rust/crates/sp-engine/src/settings/sidecar.rs` now,
   lenient per-field decode) with debounced,
   serialized re-renders from the cached .fountain; "Save as app
@@ -1207,7 +1207,7 @@ engine needs to change.
   Serialized as Fountain notes: `[[fmt: sans]]`, `[[fmt: +2]]`,
   `[[fmt: sans +2]]` — on its own line glued above an action block, inline
   ahead of a dialogue line. The notes channel is lossless through fountain-js
-  and invisible by spec, so a tool that never heard of Screepub ignores it.
+  and invisible by spec, so a tool that never heard of Method Reader ignores it.
 - **Thresholds:** size step from the ratio to the dominant — ≤ 0.85 is `-1`,
   1.15–1.4 is `+1`, > 1.4 is `+2` — each additionally requiring ≥ 1.5pt of
   absolute change, so float jitter in a text matrix can never mint a step.
@@ -1264,7 +1264,7 @@ engine needs to change.
   body. Worth re-measuring when a script that does joins the set.
 - **A saved script leaves the notes behind (2026-10-09).** `export --for
   fountain --out` (the window's Save a file > Fountain) writes the script
-  with Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes taken out
+  with Method Reader's own `[[fmt: ...]]` and `[[img: ...]]` notes taken out
   (`stripScreepubNotes` in `rust/crates/sp-fountain/src/notes.rs`), every other line byte
   for byte; a screenwriting app has no use for them. The cached `.fountain`
   beside the book keeps every note, since it is the cache boundary, and an
@@ -1325,7 +1325,7 @@ engine needs to change.
   time. 1400 is a size cap, not a panel measurement: it refuses to carry a
   4000 px lookbook scan at full size, and it is comfortably over the width any
   figure is drawn at on the 6-inch class a script is usually read on (a
-  Paperwhite panel is 1236 across). It does not clear every panel Screepub
+  Paperwhite panel is 1236 across). It does not clear every panel Method Reader
   ships to: a portrait full-page plate filling a Paperwhite's width asks for
   about 1648 px of height and is handed 1400, and the 10-inch class
   (reMarkable, Supernote Manta, Kindle Scribe) is past 1400 on its short edge.
@@ -1415,7 +1415,7 @@ engine needs to change.
 - **The cap:** `MAX_IMAGES = 60` per document, keeping a PREFIX in document
   order rather than the largest. A size-ranked subset illustrates page 3 and
   page 40 and nothing between, which reads as damage; a prefix reads as the
-  art stopping. Over the cap the user is told so ("Screepub found 126
+  art stopping. Over the cap the user is told so ("Method Reader found 126
   pictures in this script. Only the first 60 were kept."). The only other
   picture warnings are pictures that could not be read, and decoders that
   could not be unpacked. The ordinary refusals above are never warned about,
@@ -1707,13 +1707,13 @@ engine needs to change.
   whether the plate's page breaks hold, and whether an older Kindle refuses a
   picture over the single-record cap. That last has books of its own:
   `cargo xtask mobi-picture-probe --out <folder>` writes
-  `screepub-picture-probe.mobi` (and the same book as an EPUB, to compare),
+  `method-reader-picture-probe.mobi` (and the same book as an EPUB, to compare),
   built by the engine's own renderer and writer, the same bytes every run. It
   carries three PNGs of about 2 KB, about 200 KB and about 1.4 MB (the last a
   full-page plate the size of the largest real one), each after a line of
   action naming its size, and measures which of them an older Kindle shows
   from a `.mobi`. Beside it the probe writes each picture alone in a `.mobi`
-  of its own (`screepub-picture-probe-2kb.mobi`, `-200kb.mobi`,
+  of its own (`method-reader-picture-probe-2kb.mobi`, `-200kb.mobi`,
   `-1400kb.mobi`, titled Picture Probe 2 KB and so on), so that if the
   1.4 MB record makes the Kindle refuse a whole book, the smaller sizes still
   answer; all four are copied and each is recorded. The 2 KB one tells "no
@@ -1829,7 +1829,7 @@ engine needs to change.
   9.11 to AZW3 and through Kindle Previewer 3 to KFX, and with neither the
   KFX wore Previewer's generated grey placeholder (measured 2026-08-11).
   The EPUB they are built from has the card on no page.
-  **Since 2026-10-10 the AZW3 is Screepub's own (#20)**, made from the same
+  **Since 2026-10-10 the AZW3 is Method Reader's own (#20)**, made from the same
   EPUB: it names the card as EXTH 201, a PNG resource record, and Calibre's
   KF8 reader takes that record as the book's cover, byte for byte (inside
   `bun test`, 2026-10-10). KFX is still Calibre's.
@@ -1881,7 +1881,7 @@ engine needs to change.
 
 ## Kindle files
 
-### 20. Screepub's own AZW3 (always on where KFX is not; beta; 2026-10-10)
+### 20. Method Reader's own AZW3 (always on where KFX is not; beta; 2026-10-10)
 - **What:** the Kindle file over USB, wherever the KFX toolchain is not
   ready, is an AZW3 (KF8) the engine writes itself from the EPUB, with no
   Calibre. The ladder is KFX when Calibre, the KFX Output plugin and Kindle
@@ -1956,7 +1956,7 @@ engine needs to change.
   and the five real scripts in the corpus that convert, and gives back
   their titles, TOCs, every block of text, every picture and the cover;
   the five ASINs are distinct. `rust/crates/sp-azw3/tests/readers.rs` runs it
-  where `SCREEPUB_KINDLEUNPACK` names a KindleUnpack folder.
+  where `METHOD_READER_KINDLEUNPACK` names a KindleUnpack folder.
 - **Verified without a device (2026-10-10):** a structural reader in
   `rust/crates/sp-azw3/tests/common/kf8_reader.rs`, stricter than Calibre's (it throws where
   Calibre warns), walks the PDB, record 0, EXTH, every INDX, FDST, the

@@ -246,6 +246,13 @@ See `homebrew-tap/Formula/screepub.rb` for the working form.
 
 ### Bumping the tap by hand
 
+**From 0.13 the tap's files are `method-reader`.** The first bump after
+the rename moves `Formula/screepub.rb` and `Casks/screepub.rb` to the new
+names and writes `formula_renames.json` and `cask_renames.json`, which is
+how Homebrew moves anyone who installed `screepub` over to `method-reader`.
+`cargo xtask bump-tap` does all of that itself; `check-tap` fails if either
+renames file is missing.
+
 One SHA is needed, for the one command-line tarball: Apple silicon only
 since the release after 0.9.0, so the formula has one
 url and says `depends_on arch: :arm64`. The cask is retired (deprecated
@@ -254,16 +261,16 @@ never bumped again. The release's "Tap bump crib sheet" step writes the
 SHA into the run's summary. To get it after the fact:
 
 ```bash
-gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
+gh release download vX.Y.Z --dir /tmp/tap --pattern 'method-reader-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
 ```
 
 Then run `cargo xtask bump-tap X.Y.Z <tap-checkout>` from `rust/`, which writes
-`homebrew-tap/Formula/screepub.rb` whole from that digest and disables the
+`homebrew-tap/Formula/method-reader.rb` whole from that digest and disables the
 cask. By hand: the FIRST bump after 0.9.0 starts from
 its two-arch tap, so besides the url and the SHA, replace the formula's
 whole if/else on the CPU with the one url and sha256, add
 `depends_on arch: :arm64` on the line before `depends_on :macos`, and in
-`homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!`, keeping
+`homebrew-tap/Casks/method-reader.rb` change `deprecate!` to `disable!`, keeping
 its date and its `because:` (Homebrew compares the date with the user's
 local day, so it must already be past). Later bumps change the url and the SHA only.
 `cargo xtask bump-tap` refuses a release that still carries
@@ -272,8 +279,8 @@ older with that tag's own copy of the tool (then `tools/bump-tap.sh`).
 Verify before pushing:
 
 ```bash
-brew style Formula/screepub.rb
-brew audit --strict --formula ssandweiss/tap/screepub
+brew style Formula/method-reader.rb
+brew audit --strict --formula ssandweiss/tap/method-reader
 ```
 
 Note `brew audit` reads the TAPPED clone at

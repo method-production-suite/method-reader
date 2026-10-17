@@ -1,12 +1,12 @@
-# Contributing to Screepub
+# Contributing to Method Reader
 
 Bug reports are as welcome as patches, especially from people reading
 scripts on devices nobody here owns.
 
 ## Reporting a bug
 
-[Open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
-Say which computer (Mac, Windows or Linux) and which Screepub: the app or
+[Open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose).
+Say which computer (Mac, Windows or Linux) and which Method Reader: the app or
 the command line. For a conversion
 problem, the useful details are what the PDF was written in (Final Draft,
 Highland, Fade In, Celtx, WriterDuet…), what came out wrong, and what you
@@ -25,7 +25,7 @@ way is genuinely valuable.
 
 ## Getting set up
 
-Screepub is one Cargo workspace in `rust/`: the engine, the command line and
+Method Reader is one Cargo workspace in `rust/`: the engine, the command line and
 the window. You need a Rust toolchain from [rustup](https://rustup.rs). The
 version is pinned in `rust/rust-toolchain.toml`, and rustup installs it (with
 clippy and rustfmt) the first time you run `cargo` in `rust/`.
@@ -36,7 +36,7 @@ Run everything from `rust/`:
 cargo test --workspace                                 # every crate's tests
 cargo fmt --all --check                                # formatting
 cargo clippy --workspace --all-targets -- -D warnings  # lints, warnings as errors
-cargo run -p sp-cli --bin screepub -- <script.pdf>     # convert one
+cargo run -p sp-cli --bin method-reader -- <script.pdf>     # convert one
 cargo run -p sp-app                                    # open the window
 ```
 
@@ -52,7 +52,7 @@ sudo apt-get install -y sqlite3 libasound2-dev libfontconfig1-dev libxkbcommon-d
 
 (`sqlite3` is for the device-request service's tests, not the window.)
 
-**On an Intel Mac** the window is not offered: Screepub ships it for Macs
+**On an Intel Mac** the window is not offered: Method Reader ships it for Macs
 with Apple silicon only, and `cargo xtask build-app-bundle` refuses to make
 an Intel bundle. An Intel Mac can still build and run the command line from
 source with `cargo`, and can cross-build the Apple silicon bundle
@@ -132,7 +132,7 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 
 ## Licensing of contributions
 
-Screepub is MIT OR Apache-2.0, except `rust/crates/sp-azw3`, which is
+Method Reader is MIT OR Apache-2.0, except `rust/crates/sp-azw3`, which is
 GPL-3.0-only. By opening a pull request you agree your contribution ships
 under the licence of the code it changes (both MIT and Apache-2.0, for
 everything outside sp-azw3), and you confirm you have the right to
