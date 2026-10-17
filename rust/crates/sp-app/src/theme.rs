@@ -1,24 +1,44 @@
-//! The window's colours, type and spacing, light and dark. They were
-//! desktop/ui/style.css's seven core colours and its generated tokens.css,
-//! both copied from brand/; the tests below hold every value to
-//! brand/tokens.json (colours) and brand/tokens.css (scales), the source.
+//! The window's colours, type and spacing, light and dark: Method Reader's
+//! part of the Method family palette (site/assets/tokens.css, docs/BRAND.md),
+//! warm neutrals and a violet accent, amber only for the Beta badge. The
+//! tests below hold every value to brand/tokens.json (colours) and
+//! brand/tokens.css (scales), the source.
+//!
+//! The field names are the window's own and older than the palette: `brass`
+//! is the accent role (it was a brass yellow under the Screepub name) and
+//! `brass_*` the ramp that shades the brads in it. brand/README.md maps each
+//! name to the site token it takes its value from.
 
 use egui::{Color32, FontFamily, FontId};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Tokens {
+    /// The page surface (`--bg`).
     pub paper: Color32,
+    /// Headings, sluglines, cues (`--ink`).
     pub ink: Color32,
+    /// Secondary text (`--muted`).
     pub ink_muted: Color32,
+    /// Body prose (`--ink-soft`).
     pub ink_soft: Color32,
+    /// Text on an accent fill (`--accent-ink`).
     pub ink_on_brass: Color32,
+    /// The one accent (`--accent`).
     pub brass: Color32,
+    /// The desk seen through a punched hole.
     pub ground: Color32,
+    /// Errors only.
     pub alarm: Color32,
+    /// The Beta badge: the family's caution amber (`--note`), never an accent.
+    pub note: Color32,
+    /// A card on the paper (`--surface`).
     pub panel: Color32,
+    /// Hairlines, hover grounds, punched-hole shading.
     pub hole: Color32,
+    /// The dot on a reader the computer can see.
     pub present: Color32,
     pub brass_specular: Color32,
+    /// The ramp's highlight stop, and the accent button's hover.
     pub brass_highlight: Color32,
     pub brass_shadow: Color32,
     pub brass_rim: Color32,
@@ -30,54 +50,46 @@ const fn hex(rgb: u32) -> Color32 {
     Color32::from_rgb((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8)
 }
 
-const BRASS: [Color32; 7] = [
-    hex(0xe8a33d),
-    hex(0xFDF1CE),
-    hex(0xF6D486),
-    hex(0xBE7C1E),
-    hex(0x8B5917),
-    hex(0x7A5116),
-    hex(0xF7CE7E),
-];
-
 pub const LIGHT: Tokens = Tokens {
-    paper: hex(0xf7f2e6),
-    ink: hex(0x1d1b16),
-    ink_muted: hex(0x6d6960),
-    ink_soft: hex(0x4A453A),
-    ink_on_brass: hex(0x1d1b16),
-    brass: BRASS[0],
-    ground: hex(0x23272f),
-    alarm: hex(0xaf3220),
-    panel: hex(0xFBF8F0),
-    hole: Color32::from_rgba_unmultiplied_const(29, 27, 22, 26),
+    paper: hex(0xF7F6F2),
+    ink: hex(0x1C2228),
+    ink_muted: hex(0x59626D),
+    ink_soft: hex(0x3A424C),
+    ink_on_brass: hex(0xFFFFFF),
+    brass: hex(0x7052BA),
+    ground: hex(0x1C2228),
+    alarm: hex(0xAF3220),
+    note: hex(0x8A5A00),
+    panel: hex(0xFFFFFF),
+    hole: Color32::from_rgba_unmultiplied_const(28, 34, 40, 26),
     present: hex(0x3E7D4A),
-    brass_specular: BRASS[1],
-    brass_highlight: BRASS[2],
-    brass_shadow: BRASS[3],
-    brass_rim: BRASS[4],
-    brass_edge: BRASS[5],
-    brass_bounce: BRASS[6],
+    brass_specular: hex(0xF3EFFB),
+    brass_highlight: hex(0x7C5FC6),
+    brass_shadow: hex(0x573E96),
+    brass_rim: hex(0x3F2C6E),
+    brass_edge: hex(0x33245A),
+    brass_bounce: hex(0xCDBDF6),
 };
 
 pub const DARK: Tokens = Tokens {
-    paper: hex(0x1e1c19),
-    ink: hex(0xe8e2d3),
-    ink_muted: hex(0x8f887c),
-    ink_soft: hex(0xC4BDAC),
-    ink_on_brass: hex(0x1d1b16),
-    brass: BRASS[0],
-    ground: hex(0x141517),
-    alarm: hex(0xea7a65),
-    panel: hex(0x22201C),
+    paper: hex(0x111417),
+    ink: hex(0xE4E8EC),
+    ink_muted: hex(0x9AA3AD),
+    ink_soft: hex(0xC3CAD2),
+    ink_on_brass: hex(0x160F26),
+    brass: hex(0xB49CF0),
+    ground: hex(0x0B0C0E),
+    alarm: hex(0xEA7A65),
+    note: hex(0xE3B341),
+    panel: hex(0x1B1F24),
     hole: Color32::from_rgba_unmultiplied_const(0, 0, 0, 115),
     present: hex(0x6FBF7E),
-    brass_specular: BRASS[1],
-    brass_highlight: BRASS[2],
-    brass_shadow: BRASS[3],
-    brass_rim: BRASS[4],
-    brass_edge: BRASS[5],
-    brass_bounce: BRASS[6],
+    brass_specular: hex(0xF5F1FD),
+    brass_highlight: hex(0xCDBDF6),
+    brass_shadow: hex(0x8F74D6),
+    brass_rim: hex(0x6B51B2),
+    brass_edge: hex(0x574096),
+    brass_bounce: hex(0xE4DAFA),
 };
 
 pub fn tokens(dark: bool) -> Tokens {
@@ -156,7 +168,7 @@ mod tests {
         )
     }
 
-    fn fields(t: &Tokens) -> [(&'static str, Color32); 17] {
+    fn fields(t: &Tokens) -> [(&'static str, Color32); 18] {
         [
             ("paper", t.paper),
             ("ink", t.ink),
@@ -166,6 +178,7 @@ mod tests {
             ("brass", t.brass),
             ("ground", t.ground),
             ("alarm", t.alarm),
+            ("note", t.note),
             ("panel", t.panel),
             ("hole", t.hole),
             ("present", t.present),
@@ -178,9 +191,8 @@ mod tests {
         ]
     }
 
-    // The seven core colours were desktop/ui/style.css's and the rest its
-    // generated tokens.css's; both were copied from brand/tokens.json, so
-    // every colour is held to that one source, in both modes, both ways.
+    // Every colour is held to brand/tokens.json, the one source, in both
+    // modes, both ways.
     #[test]
     fn every_colour_is_brand_tokens_json_s_in_both_modes() {
         let json: serde_json::Value = serde_json::from_str(&brand("tokens.json")).unwrap();

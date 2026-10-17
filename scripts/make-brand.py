@@ -17,6 +17,16 @@ Writes, under site/:
     assets/brand/wordmark.svg      mark and name, for light backgrounds
     assets/brand/wordmark-dark.svg mark and name, for dark backgrounds
 
+and the app icon the bundles use:
+
+    assets/icon.svg                         the icon as a vector, for reference
+    rust/crates/sp-app/icons/icon.icns      macOS, 16 to 1024 pixels
+    rust/crates/sp-app/icons/icon.ico       Windows, 16 to 256 pixels
+    rust/crates/sp-app/icons/32x32.png      Linux (hicolor 32x32)
+    rust/crates/sp-app/icons/128x128.png    Linux (hicolor 128x128)
+    rust/crates/sp-app/icons/128x128@2x.png Linux (hicolor 256x256)
+    rust/crates/sp-app/icons/icon.png       512 pixels
+
 The mark is an e-reader showing a script page: the device body at full strength, and
 on its screen the shape a screenplay keeps when it reflows (a scene heading, action, a
 cue and its dialogue) at half strength. The screen is empty, so the mark sits on any
@@ -26,10 +36,15 @@ Schedule's stripboard). The name is drawn from strokes on a 100-unit x-height
 and ships no font file. m, e, t, h, o and d are Method Budget's letters; r and a are new
 here and follow the same rules.
 
+The app icon follows macOS's grid: a rounded-square violet plate (824 of 1024 units,
+centred, with a soft shadow under it) and the white mark centred on it. At 32 pixels
+and under (the 16 and 32 point sizes) the plate fills the square and carries the
+16-unit favicon drawing, which stays sharp there.
+
 This file is a copy of Method Schedule's scripts/make-brand.py with our mark, our
-letters and our accent; keep the shared parts in step with it. The window keeps
-Screepub's own theme (brand/tokens.json) until the rename release moves it to these
-colors. Rules for using all of this are in docs/BRAND.md.
+letters and our accent; keep the shared parts in step with it. The app icon section is
+ours. The window's own colors are brand/tokens.json, in this palette. Rules for using
+all of this are in docs/BRAND.md.
 """
 
 from __future__ import annotations
@@ -44,10 +59,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BRAND = ROOT / "site" / "assets" / "brand"
 TOKENS = ROOT / "site" / "assets" / "tokens.css"
+APP_ICONS = ROOT / "rust" / "crates" / "sp-app" / "icons"
 
 # Brand colors (site/assets/tokens.css): our violet, and the ink of each scheme.
 ACCENT = "#7052BA"
 ACCENT_DARK = "#B49CF0"
+ACCENT_STRONG = "#573E96"
 INK = "#1C2228"
 INK_DARK = "#E4E8EC"
 NAME = "Method Reader"
@@ -390,6 +407,159 @@ def touch_icon() -> bytes:
     return png(180, raster(180, 64, cover_of(mark_rows()), "#FFFFFF", bg=ACCENT, inset=14))
 
 
+# ----------------------------------------------------------------------------- app icon
+# macOS's icon grid, in 1024 units: the plate is 824 square at 100, its corners 185.4
+# (Apple's template), lit from above (accent at the top to accent-strong at the
+# bottom), with a shadow 12 units down and 22 soft. The mark sits on the plate's centre
+# at 9.5 units to the mark's grid unit, so it is 494 tall, 60% of the plate: white
+# device, the screen cut out to the plate, the script's lines in white at half strength.
+# Small sizes (32 pixels and under) are drawn on their own: the plate fills the square
+# and the 16-unit favicon drawing sits on it, one grid unit to a sixteenth.
+#
+# Rasterized from signed distances (coverage is half a pixel either side of an edge),
+# which is exact enough for straight edges and round corners and quick enough for 1024.
+
+PLATE = (100.0, 100.0, 824.0, 824.0, 185.4)
+SHADOW_DY, SHADOW_SIGMA, SHADOW_ALPHA = 12.0, 22.0, 0.32
+ICON_K = 9.5  # icon units per mark unit
+ICON_O = 512 - 32 * ICON_K  # the mark's grid (64 units, centre 32) centred on 512
+SMALL = 32  # pixel sizes at or under this use the small drawing
+
+
+def sdf_rrect(u, v, x, y, w, h, r):
+    """Signed distance from (u, v) to a rounded rectangle: negative inside."""
+    qx = abs(u - (x + w / 2)) - (w / 2 - r)
+    qy = abs(v - (y + h / 2)) - (h / 2 - r)
+    ox, oy = max(qx, 0.0), max(qy, 0.0)
+    return math.hypot(ox, oy) + min(max(qx, qy), 0.0) - r
+
+
+def lerp_rgb(a, b, t):
+    return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+
+
+def icon_layers(size: int):
+    """The icon as layers in pixel space, bottom first: (bbox, alpha(u, v) -> 0..1,
+    color(u, v) -> rgb). Pixel centres are passed in."""
+    top, bottom, white = hex_rgb(ACCENT), hex_rgb(ACCENT_STRONG), (255, 255, 255)
+    clamp = lambda d: min(max(0.5 - d, 0.0), 1.0)
+    if size <= SMALL:
+        s = size / 16
+        r = 3.5 * s
+        plate = (0.0, 0.0, float(size), float(size), r)
+        body, screen = [c * s for c in FAV_BODY], [c * s for c in FAV_SCREEN]
+        lines = [[c * s for c in l] + [0.5 * s] for l in FAV_LINES]
+        layers = []
+    else:
+        s = size / 1024
+        plate = tuple(c * s for c in PLATE)
+        sh = (plate[0], plate[1] + SHADOW_DY * s, plate[2], plate[3], plate[4])
+        sigma = SHADOW_SIGMA * s
+        layers = [(None,
+                   lambda u, v: SHADOW_ALPHA * 0.5 * math.erfc(sdf_rrect(u, v, *sh) / (sigma * math.sqrt(2))),
+                   lambda u, v: (0, 0, 0))]
+        place = lambda x, y, w, h, rr: (ICON_O * s + x * ICON_K * s, ICON_O * s + y * ICON_K * s,
+                                         w * ICON_K * s, h * ICON_K * s, rr * ICON_K * s)
+        body, screen = place(*BODY), place(*SCREEN)
+        lines = [place(*l, 1.5) for l in LINES]
+    py0, ph = plate[1], plate[3]
+    layers.append((plate[:4], lambda u, v: clamp(sdf_rrect(u, v, *plate)),
+                   lambda u, v: lerp_rgb(top, bottom, min(max((v - py0) / ph, 0.0), 1.0))))
+    layers.append((tuple(body[:4]),
+                   lambda u, v: clamp(sdf_rrect(u, v, *body)) * (1 - clamp(sdf_rrect(u, v, *screen))),
+                   lambda u, v: white))
+    for l in lines:
+        layers.append((tuple(l[:4]), (lambda l: lambda u, v: 0.5 * clamp(sdf_rrect(u, v, *l)))(l),
+                       lambda u, v: white))
+    return layers
+
+
+_ICON_CACHE: dict[int, bytes] = {}
+
+
+def icon_png(size: int) -> bytes:
+    """One square of the app icon as a PNG, straight alpha."""
+    if size in _ICON_CACHE:
+        return _ICON_CACHE[size]
+    n = size * size
+    acc = [0.0] * (4 * n)  # premultiplied r, g, b, a
+    for bbox, alpha, color in icon_layers(size):
+        if bbox is None:
+            i0, j0, i1, j1 = 0, 0, size, size
+        else:
+            x, y, w, h = bbox
+            i0, j0 = max(int(x) - 1, 0), max(int(y) - 1, 0)
+            i1, j1 = min(int(x + w) + 2, size), min(int(y + h) + 2, size)
+        for j in range(j0, j1):
+            v = j + 0.5
+            for i in range(i0, i1):
+                u = i + 0.5
+                a = alpha(u, v)
+                if a <= 0.0:
+                    continue
+                r, g, b = color(u, v)
+                k = 4 * (j * size + i)
+                keep = 1 - a
+                acc[k] = r * a + acc[k] * keep
+                acc[k + 1] = g * a + acc[k + 1] * keep
+                acc[k + 2] = b * a + acc[k + 2] * keep
+                acc[k + 3] = a + acc[k + 3] * keep
+    rows = bytearray()
+    for j in range(size):
+        rows.append(0)
+        for i in range(size):
+            k = 4 * (j * size + i)
+            a = acc[k + 3]
+            if a <= 1e-6:
+                rows += b"\0\0\0\0"
+                continue
+            rows += bytes((min(round(acc[k] / a), 255), min(round(acc[k + 1] / a), 255),
+                           min(round(acc[k + 2] / a), 255), round(255 * a)))
+    out = png(size, bytes(rows))
+    _ICON_CACHE[size] = out
+    return out
+
+
+# The PNG members macOS reads from an .icns, by type: (type, pixels).
+ICNS_TYPES = [("icp4", 16), ("ic11", 32), ("icp5", 32), ("ic12", 64), ("ic07", 128),
+              ("ic13", 256), ("ic08", 256), ("ic14", 512), ("ic09", 512), ("ic10", 1024)]
+ICO_SIZES = [16, 24, 32, 48, 64, 256]
+
+
+def icns() -> bytes:
+    body = b""
+    for kind, size in ICNS_TYPES:
+        blob = icon_png(size)
+        body += kind.encode("ascii") + struct.pack(">I", 8 + len(blob)) + blob
+    return b"icns" + struct.pack(">I", 8 + len(body)) + body
+
+
+def app_ico() -> bytes:
+    return ico([(n, icon_png(n)) for n in ICO_SIZES])
+
+
+def icon_svg() -> str:
+    """The large drawing as a vector (the rasters are drawn from the same numbers)."""
+    x, y, w, h, r = PLATE
+    k = ICON_K
+    mark = rows_paths(mark_rows(), "#FFFFFF")
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">\n'
+        f"{HEADER.format(what='app icon')}\n"
+        '<defs>\n'
+        f'<linearGradient id="plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{ACCENT}"/>'
+        f'<stop offset="1" stop-color="{ACCENT_STRONG}"/></linearGradient>\n'
+        f'<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">'
+        f'<feGaussianBlur stdDeviation="{fmt(SHADOW_SIGMA)}"/></filter>\n'
+        '</defs>\n'
+        f'<rect x="{fmt(x)}" y="{fmt(y + SHADOW_DY)}" width="{fmt(w)}" height="{fmt(h)}" rx="{fmt(r)}"'
+        f' fill="#000" opacity="{fmt(SHADOW_ALPHA)}" filter="url(#shadow)"/>\n'
+        f'<rect x="{fmt(x)}" y="{fmt(y)}" width="{fmt(w)}" height="{fmt(h)}" rx="{fmt(r)}" fill="url(#plate)"/>\n'
+        f'<g transform="translate({fmt(ICON_O)} {fmt(ICON_O)}) scale({fmt(k)})">{mark}</g>\n'
+        "</svg>\n"
+    )
+
+
 # ----------------------------------------------------------------------------- files
 
 HEADER = "<!-- Method Reader {what}. Drawn by scripts/make-brand.py; edit that, not this file. -->"
@@ -440,13 +610,20 @@ def outputs() -> dict[Path, str | bytes]:
         BRAND / "mark-dark.svg": mark_svg(ACCENT_DARK, NAME),
         BRAND / "wordmark.svg": wordmark_svg(ACCENT, INK),
         BRAND / "wordmark-dark.svg": wordmark_svg(ACCENT_DARK, INK_DARK),
+        ROOT / "assets" / "icon.svg": icon_svg(),
+        APP_ICONS / "icon.icns": icns(),
+        APP_ICONS / "icon.ico": app_ico(),
+        APP_ICONS / "32x32.png": icon_png(32),
+        APP_ICONS / "128x128.png": icon_png(128),
+        APP_ICONS / "128x128@2x.png": icon_png(256),
+        APP_ICONS / "icon.png": icon_png(512),
     }
 
 
 def canonical(data: bytes) -> bytes:
     """What a file means rather than its exact bytes: a PNG's pixels (zlib versions
     compress differently, so CI on Linux and a Mac never write the same bytes), each
-    image of an .ico likewise, anything else as is."""
+    image of an .ico or .icns likewise, anything else as is."""
     if data[:8] == b"\x89PNG\r\n\x1a\n":
         pos, idat, head = 8, b"", b""
         while pos < len(data):
@@ -464,6 +641,13 @@ def canonical(data: bytes) -> bytes:
         for k in range(count):
             size, off = struct.unpack("<II", data[6 + 16 * k + 8 : 6 + 16 * k + 16])
             out += canonical(data[off : off + size])
+        return out
+    if data[:4] == b"icns":
+        pos, out = 8, b""
+        while pos < len(data):
+            kind, n = struct.unpack(">4sI", data[pos : pos + 8])
+            out += kind + canonical(data[pos + 8 : pos + n])
+            pos += n
         return out
     return data
 

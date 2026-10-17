@@ -7,9 +7,10 @@ the mark and the name, and an accent of its own. The site's tokens live in
 [site/assets/tokens.css](../site/assets/tokens.css); the artwork is drawn by
 [scripts/make-brand.py](../scripts/make-brand.py).
 
-Method Reader is the new name for Screepub. This file covers the website. The window keeps
-Screepub's own theme ([brand/](../brand/README.md), held to `sp-app`'s `theme.rs` by
-tests) until the release that renames the app moves it to these colors.
+Method Reader is the new name for Screepub. This file covers the website, the app icon,
+and the palette the window shares with them. The window's own colors are this palette
+under the window's token names ([brand/](../brand/README.md), held to `sp-app`'s
+`theme.rs` by tests); brand/README.md maps each one to the site token below.
 
 ## The name
 
@@ -17,9 +18,10 @@ tests) until the release that renames the app moves it to these colors.
 - Never shorten it to initials. On second mention "the app" or "it" is fine.
 - The wordmark is set in lowercase (`method reader`). That is artwork, not spelling: in
   text, write Method Reader.
-- Until the rename release, the app, its downloads and its command still say Screepub.
-  Say so plainly where a reader meets them (the site's notice, the downloads section);
-  never pretend a file is named something it is not.
+- Method Reader was called Screepub until 0.13. Say so once where someone arriving from
+  the old name meets it (the README's opening, the site's notice). Files released under
+  the old name (the Intel Mac's 0.9.0, for one) keep it: never pretend a file is named
+  something it is not.
 - Credit "the Method Reader contributors". No personal, company or studio names in
   public material: not in pages, alt text, metadata or file names.
 
@@ -60,6 +62,22 @@ favicons so it stays sharp at 16 and 32 pixels.
 Rules: clear space of at least a quarter of the mark's height; don't recolor it outside
 the palette, outline it, add effects or change its lines; use the `-dark` files on dark
 backgrounds (a `<picture>` with a `prefers-color-scheme: dark` source, as the site does).
+
+### The app icon
+
+The white mark on a rounded-square violet plate, lit from above (`--accent` at the top
+to `--accent-strong` at the bottom), on macOS's icon grid: the plate is 824 of 1024
+units with Apple's corner and a soft shadow, and the mark is centred at 60% of the
+plate's height. At 32 pixels and under the plate fills the square and carries the
+16-unit drawing instead, so the 16 and 32 point sizes stay sharp.
+
+| File | Use |
+|---|---|
+| `assets/icon.svg` | The icon as a vector, for reference |
+| `rust/crates/sp-app/icons/icon.icns` | The Mac bundle (16 to 1024 pixels) |
+| `rust/crates/sp-app/icons/icon.ico` | The Windows installer and app (16 to 256) |
+| `rust/crates/sp-app/icons/32x32.png`, `128x128.png`, `128x128@2x.png` | Linux (hicolor 32, 128 and 256) |
+| `rust/crates/sp-app/icons/icon.png` | 512 pixels |
 
 ### The wordmark
 
@@ -125,6 +143,5 @@ byte-identical to the app's copies by `xtask/tests/brand_tokens.rs`.
 
 - No stock photos and no other product's screens, logos or text.
 - The drag-and-drop pictures are the real window, taken by `cargo xtask capture-screens`.
-  They show the window's current (Screepub) look until the rename release retakes them.
 - The share card (`site/og.png`, 1200 by 630) is drawn from `site/og-card.html` by
   `cargo xtask make-og`.

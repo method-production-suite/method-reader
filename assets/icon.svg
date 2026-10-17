@@ -1,43 +1,10 @@
-<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- Screepub: screenplay page on an e-ink slate, send-plane accent -->
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#23272f"/>
-      <stop offset="1" stop-color="#15171c"/>
-    </linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f7f3e9"/>
-      <stop offset="1" stop-color="#eae4d3"/>
-    </linearGradient>
-  </defs>
-
-  <!-- backdrop -->
-  <rect x="32" y="32" width="960" height="960" rx="224" fill="url(#bg)"/>
-
-  <!-- e-reader page -->
-  <rect x="208" y="144" width="608" height="736" rx="56" fill="url(#paper)"/>
-  <rect x="208" y="144" width="608" height="736" rx="56" fill="none"
-        stroke="#0d0e11" stroke-opacity="0.25" stroke-width="10"/>
-
-  <!-- screenplay structure: slug / action / cue / dialogue / transition -->
-  <!-- slugline -->
-  <rect x="272" y="232" width="336" height="30" rx="15" fill="#2b2e35"/>
-  <!-- action -->
-  <rect x="272" y="308" width="480" height="20" rx="10" fill="#9a958a"/>
-  <rect x="272" y="352" width="440" height="20" rx="10" fill="#9a958a"/>
-  <!-- character cue (deep indent) -->
-  <rect x="512" y="426" width="168" height="26" rx="13" fill="#2b2e35"/>
-  <!-- dialogue (centered column) -->
-  <rect x="400" y="486" width="304" height="20" rx="10" fill="#9a958a"/>
-  <rect x="400" y="528" width="264" height="20" rx="10" fill="#9a958a"/>
-  <!-- second cue + dialogue -->
-  <rect x="512" y="602" width="128" height="26" rx="13" fill="#2b2e35"/>
-  <rect x="400" y="662" width="304" height="20" rx="10" fill="#9a958a"/>
-  <!-- transition, right-flush -->
-  <rect x="560" y="736" width="192" height="22" rx="11" fill="#6d6960"/>
-
-  <!-- send-to-device plane -->
-  <circle cx="768" cy="800" r="132" fill="#e8a33d"/>
-  <path d="M 700 812 L 848 744 L 796 862 L 774 818 Z" fill="#15171c"/>
-  <path d="M 774 818 L 782 850 L 796 862 Z" fill="#3d3526"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<!-- Method Reader app icon. Drawn by scripts/make-brand.py; edit that, not this file. -->
+<defs>
+<linearGradient id="plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7052BA"/><stop offset="1" stop-color="#573E96"/></linearGradient>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="22"/></filter>
+</defs>
+<rect x="100" y="112" width="824" height="824" rx="185.4" fill="#000" opacity="0.32" filter="url(#shadow)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#plate)"/>
+<g transform="translate(208 208) scale(9.5)"><path fill="#FFFFFF" opacity=".5" d="M20.5 14H43.5a1.5 1.5 0 0 1 1.5 1.5V15.5a1.5 1.5 0 0 1-1.5 1.5H20.5a1.5 1.5 0 0 1-1.5-1.5V15.5a1.5 1.5 0 0 1 1.5-1.5ZM20.5 20H43.5a1.5 1.5 0 0 1 1.5 1.5V21.5a1.5 1.5 0 0 1-1.5 1.5H20.5a1.5 1.5 0 0 1-1.5-1.5V21.5a1.5 1.5 0 0 1 1.5-1.5ZM20.5 26H35.5a1.5 1.5 0 0 1 1.5 1.5V27.5a1.5 1.5 0 0 1-1.5 1.5H20.5a1.5 1.5 0 0 1-1.5-1.5V27.5a1.5 1.5 0 0 1 1.5-1.5ZM29.5 32H36.5a1.5 1.5 0 0 1 1.5 1.5V33.5a1.5 1.5 0 0 1-1.5 1.5H29.5a1.5 1.5 0 0 1-1.5-1.5V33.5a1.5 1.5 0 0 1 1.5-1.5ZM24.5 38H39.5a1.5 1.5 0 0 1 1.5 1.5V39.5a1.5 1.5 0 0 1-1.5 1.5H24.5a1.5 1.5 0 0 1-1.5-1.5V39.5a1.5 1.5 0 0 1 1.5-1.5ZM24.5 44H33.5a1.5 1.5 0 0 1 1.5 1.5V45.5a1.5 1.5 0 0 1-1.5 1.5H24.5a1.5 1.5 0 0 1-1.5-1.5V45.5a1.5 1.5 0 0 1 1.5-1.5Z"/><path fill="#FFFFFF" fill-rule="evenodd" d="M17 6H47a5 5 0 0 1 5 5V53a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V11a5 5 0 0 1 5-5ZM17.5 10H46.5a1.5 1.5 0 0 1 1.5 1.5V46.5a1.5 1.5 0 0 1-1.5 1.5H17.5a1.5 1.5 0 0 1-1.5-1.5V11.5a1.5 1.5 0 0 1 1.5-1.5Z"/></g>
 </svg>

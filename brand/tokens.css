@@ -1,27 +1,29 @@
-/* Screepub web identity. Every color mirrors brand/tokens.json, the source,
-   and rust/crates/xtask/tests/brand.rs enforces that. See brand/README.md before
-   editing.
-   var() and clamp() are correct here: this is the website, not the EPUB. */
+/* Method Reader's window identity, in the Method family palette. Every color
+   mirrors brand/tokens.json, the source, and rust/crates/xtask/tests/brand.rs
+   enforces that. The names are the window's own (brass is the accent role);
+   brand/README.md maps each to its site token. See it before editing.
+   var() and clamp() are correct here: this is not the EPUB. */
 
 :root {
-  --paper: #F7F2E6;
-  --panel: #FBF8F0;
-  --ink: #1D1B16;
-  --ink-soft: #4A453A;
-  --ink-muted: #6D6960;
+  --paper: #F7F6F2;
+  --panel: #FFFFFF;
+  --ink: #1C2228;
+  --ink-soft: #3A424C;
+  --ink-muted: #59626D;
   --present: #3E7D4A;
-  --brass: #E8A33D;
-  --ground: #23272F;
+  --brass: #7052BA;
+  --ground: #1C2228;
   --alarm: #AF3220;
-  --hole: rgba(29,27,22,0.10);
-  --ink-on-brass: #1D1B16;
+  --note: #8A5A00;
+  --hole: rgba(28,34,40,0.10);
+  --ink-on-brass: #FFFFFF;
 
-  --brass-specular: #FDF1CE;
-  --brass-highlight: #F6D486;
-  --brass-shadow: #BE7C1E;
-  --brass-rim: #8B5917;
-  --brass-edge: #7A5116;
-  --brass-bounce: #F7CE7E;
+  --brass-specular: #F3EFFB;
+  --brass-highlight: #7C5FC6;
+  --brass-shadow: #573E96;
+  --brass-rim: #3F2C6E;
+  --brass-edge: #33245A;
+  --brass-bounce: #CDBDF6;
 
   --font-structure: 'Courier Prime', 'Courier New', ui-monospace, monospace;
   --font-prose: 'Literata', Georgia, 'Times New Roman', serif;
@@ -87,14 +89,23 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #1E1C19;
-    --panel: #22201C;
-    --ink: #E8E2D3;
-    --ink-soft: #C4BDAC;
-    --ink-muted: #8F887C;
+    --paper: #111417;
+    --panel: #1B1F24;
+    --ink: #E4E8EC;
+    --ink-soft: #C3CAD2;
+    --ink-muted: #9AA3AD;
     --present: #6FBF7E;
-    --ground: #141517;
+    --brass: #B49CF0;
+    --ground: #0B0C0E;
     --alarm: #EA7A65;
+    --note: #E3B341;
     --hole: rgba(0,0,0,0.45);
+    --ink-on-brass: #160F26;
+    --brass-specular: #F5F1FD;
+    --brass-highlight: #CDBDF6;
+    --brass-shadow: #8F74D6;
+    --brass-rim: #6B51B2;
+    --brass-edge: #574096;
+    --brass-bounce: #E4DAFA;
   }
 }
