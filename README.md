@@ -166,7 +166,8 @@ Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandw
 
 ## Help build it
 
-**If you read or make films:** the most useful thing is a report from a
+**If you read or make films:** start with an issue labelled
+[help wanted: film knowledge](https://github.com/method-production-suite/method-reader/labels/help%20wanted%3A%20film%20knowledge); no code needed. The most useful thing is a report from a
 reader nobody here owns (a Kobo, a tolino, a reMarkable, or a reader that is
 not on the list yet; [see above](#which-readers)), or a script whose layout
 comes out wrong. Describe the problem in
