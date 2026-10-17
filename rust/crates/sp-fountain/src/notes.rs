@@ -1,7 +1,7 @@
 //! Port of `src/fountain/notes.ts`: Fountain notes, shared by every
 //! renderer (registry #18, #19).
 //!
-//! The format says `[[...]]` is invisible in output. Screepub writes two
+//! The format says `[[...]]` is invisible in output. Method Reader writes two
 //! kinds of its own, `[[fmt: ...]]` font shifts and `[[img: ...]]` pictures,
 //! so stripping is load-bearing and lives here as the one copy every
 //! renderer uses, rather than one regex per renderer that drift apart.
@@ -68,7 +68,7 @@ pub fn strip_notes(text: &str) -> String {
     js::trim(&s).to_owned()
 }
 
-/// `stripScreepubNotes`: the script for a screenwriting app, Screepub's own
+/// `stripScreepubNotes`: the script for a screenwriting app, Method Reader's own
 /// `[[fmt: ...]]` and `[[img: ...]]` notes taken out and every other line
 /// kept byte for byte. Only the shapes serialize writes are touched: a note
 /// alone on its line, and an fmt note leading a dialogue line. A note that

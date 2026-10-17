@@ -70,7 +70,8 @@ pub fn mount_dmg_app(
         ));
     }
     // Found by suffix, not by name: the bundle was "Screepub Desktop.app"
-    // until the identifier release and is "Screepub.app" since. Sorted so a
+    // until the identifier release, "Screepub.app" until 0.12.x and is
+    // "Method Reader.app" since. Sorted so a
     // two-app error names them in a stable order.
     let mut apps: Vec<String> = std::fs::read_dir(&mount)
         .map(|rd| {

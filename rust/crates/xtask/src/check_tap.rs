@@ -8,9 +8,13 @@
 //! the entire point: the tap sat at 0.3.0 for five releases while a local
 //! checkout showed 0.4.2, because the edits were never committed.
 //!
-//! `SCREEPUB_REPO` and `SCREEPUB_TAP` name the two repositories, as the
-//! script read them; the network goes through check_latest's `http`, whose
-//! bases the environment can move (tests point it at 127.0.0.1).
+//! `METHOD_READER_REPO` and `METHOD_READER_TAP` name the two repositories,
+//! as the script read them; the network goes through check_latest's `http`,
+//! whose bases the environment can move (tests point it at 127.0.0.1).
+//!
+//! The tap serves `method-reader` (cask and formula); the 0.12.x name,
+//! `screepub`, is carried across by `cask_renames.json` and
+//! `formula_renames.json`, which must say so.
 
 use std::collections::BTreeSet;
 use std::sync::LazyLock;
@@ -19,19 +23,49 @@ use regex::Regex;
 
 use crate::check_latest::http::{self, Bases, Fetcher, ReleaseAssets};
 
-pub const ARM: &str = "screepub-cli-macos-arm64.tar.gz";
-pub const INTEL: &str = "screepub-cli-macos-x64.tar.gz";
+pub const ARM: &str = sp_release::names::CLI_MAC_ARM64;
+/// The Intel tarball of the releases through the identifier release, which
+/// predate the rename and so carry the old name.
+pub const INTEL: &str = sp_release::check_latest::INTEL_CLI_ASSET;
 
-/// SCREEPUB_REPO, else ssandweiss/screepub.
+/// The tap's files.
+pub const CASK: &str = "Casks/method-reader.rb";
+pub const FORMULA: &str = "Formula/method-reader.rb";
+pub const CASK_RENAMES: &str = "cask_renames.json";
+pub const FORMULA_RENAMES: &str = "formula_renames.json";
+/// The 0.12.x files, which the rename replaced.
+pub const LEGACY_CASK: &str = "Casks/screepub.rb";
+pub const LEGACY_FORMULA: &str = "Formula/screepub.rb";
+
+/// What both renames files hold: the old token to the new one.
+pub fn renames_json() -> String {
+    format!(
+        "{{\n  \"{}\": \"{}\"\n}}\n",
+        sp_release::names::LEGACY_PACKAGE,
+        sp_release::names::PACKAGE
+    )
+}
+
+/// Whether a renames file maps screepub to method-reader (whatever else
+/// it maps, and however it is spaced).
+pub fn renames_ok(text: &str) -> bool {
+    serde_json::from_str::<serde_json::Value>(text).is_ok_and(|v| {
+        v.get(sp_release::names::LEGACY_PACKAGE)
+            .and_then(|n| n.as_str())
+            == Some(sp_release::names::PACKAGE)
+    })
+}
+
+/// METHOD_READER_REPO, else the release repository (sp-release's REPO).
 pub fn release_repo() -> String {
-    std::env::var("SCREEPUB_REPO")
+    std::env::var("METHOD_READER_REPO")
         .ok()
         .filter(|v| !v.is_empty())
-        .unwrap_or_else(|| "ssandweiss/screepub".to_string())
+        .unwrap_or_else(|| sp_release::names::REPO.to_string())
 }
 
 fn tap_repo() -> String {
-    std::env::var("SCREEPUB_TAP")
+    std::env::var("METHOD_READER_TAP")
         .ok()
         .filter(|v| !v.is_empty())
         .unwrap_or_else(|| "ssandweiss/homebrew-tap".to_string())
@@ -91,24 +125,27 @@ pub fn check_tap(
     }
 
     let mut read = |path: &str| http::repo_file(fetcher, bases, tap, path);
-    let cask = match read("Casks/screepub.rb") {
+    let cask = match read(CASK) {
+        Ok(t) => t,
+        Err(e) => {
+            err.push(format!("check-tap: could not read {CASK} from {tap}: {e}"));
+            return (out, err, 1);
+        }
+    };
+    let formula = match read(FORMULA) {
         Ok(t) => t,
         Err(e) => {
             err.push(format!(
-                "check-tap: could not read Casks/screepub.rb from {tap}: {e}"
+                "check-tap: could not read {FORMULA} from {tap}: {e}"
             ));
             return (out, err, 1);
         }
     };
-    let formula = match read("Formula/screepub.rb") {
-        Ok(t) => t,
-        Err(e) => {
-            err.push(format!(
-                "check-tap: could not read Formula/screepub.rb from {tap}: {e}"
-            ));
-            return (out, err, 1);
-        }
-    };
+    // A missing file reads as empty, and so as wrong.
+    let renames: Vec<(&str, String)> = [CASK_RENAMES, FORMULA_RENAMES]
+        .into_iter()
+        .map(|f| (f, read(f).unwrap_or_default()))
+        .collect();
 
     // Checksums, from the digests GitHub reports per asset, so nothing is
     // downloaded. A release that cannot be read has no digests at all.
@@ -152,6 +189,14 @@ pub fn check_tap(
     out.push(format!("formula pins:   {pins_text}"));
 
     let mut fail = false;
+    for (file, text) in &renames {
+        if !renames_ok(text) {
+            out.push(format!(
+                "::error::{file} does not map screepub to method-reader, so a Mac with the old name installed is not carried across"
+            ));
+            fail = true;
+        }
+    }
     if !has_line_starting(&cask, &format!("  {cask_want}! ")) {
         out.push(format!(
             "::error::the frozen cask must say {cask_want}! for release v{version} ({cask_why}), and it does not"
@@ -200,7 +245,7 @@ pub fn check_tap(
     if intel_era {
         check_sha(INTEL, "the formula", &formula, &mut out);
     } else {
-        if formula.contains("screepub-cli-macos-x64") {
+        if formula.contains(INTEL) {
             out.push(format!(
                 "::error::the formula still serves {INTEL}, which release v{version} does not carry (Apple silicon only)"
             ));
@@ -235,9 +280,9 @@ pub const USAGE: &str = "\
 usage: cargo xtask check-tap [version]
 
 Does the Homebrew tap serve the latest release (or <version>), with the
-release's own checksums, and is the old cask still retired? Exits 0 when
-it does, 1 with what is wrong. SCREEPUB_REPO and SCREEPUB_TAP name the two
-repositories.
+release's own checksums, is the old cask still retired, and do the tap's
+renames carry screepub to method-reader? Exits 0 when it does, 1 with what
+is wrong. METHOD_READER_REPO and METHOD_READER_TAP name the two repositories.
 ";
 
 /// `cargo xtask check-tap`: its exit code.

@@ -6,16 +6,16 @@
 //! folder, creating it if need be:
 //!
 //! ```text
-//! screepub-picture-probe.mobi         all three pictures in one book
-//! screepub-picture-probe.epub         that book as an EPUB, to compare it with
-//! screepub-picture-probe-2kb.mobi     the 2 KB picture alone
-//! screepub-picture-probe-200kb.mobi   the 200 KB picture alone
-//! screepub-picture-probe-1400kb.mobi  the 1.4 MB plate alone
+//! method-reader-picture-probe.mobi         all three pictures in one book
+//! method-reader-picture-probe.epub         that book as an EPUB, to compare it with
+//! method-reader-picture-probe-2kb.mobi     the 2 KB picture alone
+//! method-reader-picture-probe-200kb.mobi   the 200 KB picture alone
+//! method-reader-picture-probe-1400kb.mobi  the 1.4 MB plate alone
 //! ```
 //!
 //! The books are sp-mobi's (`sp_mobi::probe`, the probe's builder as a
 //! library) and sp-epub's, each built as a .fountain's books are built with
-//! Screepub's defaults, at a fixed clock, so every run writes the same
+//! Method Reader's defaults, at a fixed clock, so every run writes the same
 //! bytes. Prints the files and the three sizes. Exit codes: 0 done, 1
 //! refused or failed.
 

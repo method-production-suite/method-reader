@@ -25,7 +25,7 @@ fn kinds(devices: &[ConnectedDevice]) -> Vec<&'static str> {
 
 #[test]
 fn mounted_vendors_are_listed_when_the_tablet_does_not_answer() {
-    let sc = scratch("screepub-device-list-");
+    let sc = scratch("method-reader-device-list-");
     let silent = Stub::start(404);
     let devices = list_devices(&ListDevicesOptions {
         roots: Some(vec![mount_root_with_kobo(sc.path())]),
@@ -45,7 +45,7 @@ fn mounted_vendors_are_listed_when_the_tablet_does_not_answer() {
 
 #[test]
 fn a_remarkable_that_answers_is_appended_after_the_mounted_devices() {
-    let sc = scratch("screepub-device-list-");
+    let sc = scratch("method-reader-device-list-");
     let answering = Stub::start(200);
     let devices = list_devices(&ListDevicesOptions {
         roots: Some(vec![mount_root_with_kobo(sc.path())]),
@@ -62,7 +62,7 @@ fn a_remarkable_that_answers_is_appended_after_the_mounted_devices() {
 
 #[test]
 fn nothing_connected_is_an_empty_list_not_an_error() {
-    let sc = scratch("screepub-device-list-");
+    let sc = scratch("method-reader-device-list-");
     let silent = Stub::start(404);
     let empty = tempfile::Builder::new()
         .prefix("mounts-")
@@ -220,10 +220,10 @@ fn skip_mtp_never_asks_and_a_listing_that_throws_is_no_mtp_devices() {
 
 #[test]
 fn the_default_with_mtp_unshipped_and_no_helper_named_adds_nothing() {
-    // MTP is off for users: with no SCREEPUB_MTP_HELPER the helper is never
+    // MTP is off for users: with no METHOD_READER_MTP_HELPER the helper is never
     // even looked for.
     let scan = |_: Option<&[String]>| Vec::new();
-    if std::env::var("SCREEPUB_MTP_HELPER").is_err() {
+    if std::env::var("METHOD_READER_MTP_HELPER").is_err() {
         assert!(
             list_devices(&ListDevicesOptions {
                 scan: Some(&scan),

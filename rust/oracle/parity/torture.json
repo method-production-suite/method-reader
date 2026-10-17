@@ -790,7 +790,7 @@
           "torture/torture.images/p017-01.png": {
             "file": "px:4d6c10f020813edf"
           },
-          "torture/torture.screepub.json": {
+          "torture/torture.method-reader.json": {
             "json": "577898c1941870e6"
           }
         }
@@ -820,9 +820,9 @@
       "fountainPath": "$WORK/library/torture/torture.fountain",
       "imagesPath": "$WORK/library/torture/torture.images",
       "imageCount": 4,
-      "settingsPath": "$WORK/library/torture/torture.screepub.json"
+      "settingsPath": "$WORK/library/torture/torture.method-reader.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/library/torture/torture.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/library/torture/torture.method-reader.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -923,6 +923,9 @@
           "torture/torture.images/p017-01.png": {
             "file": "px:4d6c10f020813edf"
           },
+          "torture/torture.method-reader.json": {
+            "json": "577898c1941870e6"
+          },
           "torture/torture.mobi": {
             "header": "2546b199f548cea3",
             "records": [
@@ -935,9 +938,6 @@
               "388d49981251f903",
               "3712d3408f89530c"
             ]
-          },
-          "torture/torture.screepub.json": {
-            "json": "577898c1941870e6"
           }
         }
       }
@@ -967,7 +967,7 @@
       "imageCount": 4,
       "settingsPath": "$WORK/in/torture.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/torture.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/torture.screepub.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -1068,7 +1068,7 @@
           "torture/torture.images/p017-01.png": {
             "file": "px:4d6c10f020813edf"
           },
-          "torture/torture.screepub.json": {
+          "torture/torture.method-reader.json": {
             "json": "6e968ac32fc6651e"
           }
         }
@@ -1102,7 +1102,7 @@
       "imageCount": 4,
       "settingsPath": "$WORK/in/torture.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/torture.screepub.json (the options you passed override them)\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/torture.screepub.json (the options you passed override them)\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -1208,7 +1208,7 @@
       "imagesPath": "$WORK/out/book.images",
       "imageCount": 4
     },
-    "stderr": "screepub: ignoring $WORK/in/torture.screepub.json, which is not a settings object\n",
+    "stderr": "method-reader: ignoring $WORK/in/torture.screepub.json, which is not a settings object\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -1415,7 +1415,7 @@
           "torture/torture.images/p017-01.png": {
             "file": "px:4d6c10f020813edf"
           },
-          "torture/torture.screepub.json": {
+          "torture/torture.method-reader.json": {
             "json": "5052154e6f36ffad"
           }
         }
@@ -2632,7 +2632,7 @@
           }
         }
       ],
-      "sidecar": "$WORK/out/script.screepub.json",
+      "sidecar": "$WORK/out/script.method-reader.json",
       "keepScriptSettings": true
     },
     "stderr": "",
@@ -2662,7 +2662,7 @@
       "path": "$WORK/out/copy.azw3",
       "format": "azw3",
       "extension": "azw3",
-      "label": "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed",
+      "label": "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed",
       "available": [
         "epub",
         "kindle"

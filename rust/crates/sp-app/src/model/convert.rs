@@ -6,6 +6,7 @@
 use serde_json::{Map, Value};
 
 use super::json::{error_message, ok, str_at};
+use super::names;
 
 /// The heading names the CAUSE, not the failure.
 pub const HEADINGS: &[(&str, &str)] = &[
@@ -17,7 +18,10 @@ pub const HEADINGS: &[(&str, &str)] = &[
     ("bad-options", "Bad settings"),
     ("usage", "Bad settings"),
     ("library", "No way into the library"),
-    ("unwritable", "Screepub could not save this script's files"),
+    (
+        "unwritable",
+        "Method Reader could not save this script's files",
+    ),
     ("internal", "The engine did not answer"),
 ];
 
@@ -25,19 +29,25 @@ pub fn heading_for(code: &str) -> Option<&'static str> {
     HEADINGS.iter().find(|(c, _)| *c == code).map(|(_, h)| *h)
 }
 
-/// The window's own name: on the idle screen the only place it says what
-/// it is.
-pub const WORDMARK: &str = "Screepub";
+/// The window's own name, as its title bar shows it (the idle screen no
+/// longer sets it as a wordmark: the title bar says what the window is).
+pub const WORDMARK: &str = super::names::PRODUCT;
+
+/// The window's title: the script's name before the app's, as Method
+/// Budget's "Name - Method Budget", or the app's alone with no script.
+pub fn window_title(script: Option<&str>) -> String {
+    match script.map(str::trim).filter(|s| !s.is_empty()) {
+        Some(name) => format!("{name} - {WORDMARK}"),
+        None => WORDMARK.to_string(),
+    }
+}
 
 /// The drop well's words.
 pub const WELL_CALL: &str = "Drop a screenplay PDF";
 pub const WELL_OR: &str = "or";
+/// The well's one button: the page's primary action.
+pub const CHOOSE: &str = "Choose PDF…";
 pub const WELL_LIMITS: &str = "Needs selectable text, not a scan.";
-
-/// The one-time update question under the well.
-pub const ASK_QUESTION: &str = "Check for new versions once a day?";
-pub const ASK_YES: &str = "Turn on";
-pub const ASK_NO: &str = "No thanks";
 
 /// The one guard a reader can meaningfully overrule.
 pub const OVERRIDABLE: &str = "not-screenplay";
@@ -413,11 +423,24 @@ pub fn library_from(answer: &Value) -> Option<Library> {
     })
 }
 
-/// The library line itself.
+/// The library line itself, naming the variable this process was given
+/// (METHOD_READER_LIBRARY, or the LEGACY SCREEPUB_LIBRARY when only that
+/// one is set), which is the one the engine read.
 pub fn library_line(library: &Library) -> String {
+    let var = names::var_with_legacy(
+        &names::process_env,
+        names::LIBRARY_VAR,
+        names::LEGACY_LIBRARY_VAR,
+    )
+    .map_or(names::LIBRARY_VAR, |(_, var)| var);
+    library_line_for(library, var)
+}
+
+/// [`library_line`], with the variable named.
+pub fn library_line_for(library: &Library, var: &str) -> String {
     let shown = shorten_home(&library.path, &library.home);
     if library.from_env {
-        format!("Books are saved in {shown}, set by SCREEPUB_LIBRARY.")
+        format!("Books are saved in {shown}, set by {var}.")
     } else {
         format!("Books are saved in {shown}.")
     }
@@ -470,7 +493,7 @@ pub fn library_actions(library: &Library) -> Vec<LibraryAction> {
 }
 
 pub const MOVED_LINE: &str = "New books go here. Books already converted stay where they are.";
-pub const NO_LIBRARY_MESSAGE: &str = "Screepub could not confirm where books are saved.";
+pub const NO_LIBRARY_MESSAGE: &str = "Method Reader could not confirm where books are saved.";
 
 /// The value `app-settings --set` takes for Change (a folder) or Reset.
 pub fn library_change_args(path: Option<&str>) -> String {
@@ -741,8 +764,8 @@ mod tests {
 
     #[test]
     fn the_library_line_folds_home_only_when_it_is_really_under_it() {
-        let l = library_from(&lib("/Users/ann/Screepub", None, false, "/Users/ann")).unwrap();
-        assert_eq!(library_line(&l), "Books are saved in ~/Screepub.");
+        let l = library_from(&lib("/Users/ann/Method Reader", None, false, "/Users/ann")).unwrap();
+        assert_eq!(library_line(&l), "Books are saved in ~/Method Reader.");
         assert_eq!(shorten_home("/Users/ann2/x", "/Users/ann"), "/Users/ann2/x");
         assert_eq!(shorten_home("/Users/ann", "/Users/ann/"), "~");
         assert_eq!(shorten_home("/", "/"), "~");
@@ -751,8 +774,8 @@ mod tests {
         assert_eq!(shorten_home("/Users/Ann/b", "/Users/ann"), "/Users/Ann/b");
         let env = library_from(&lib("/srv/books", None, true, "/Users/ann")).unwrap();
         assert_eq!(
-            library_line(&env),
-            "Books are saved in /srv/books, set by SCREEPUB_LIBRARY."
+            library_line_for(&env, names::LIBRARY_VAR),
+            "Books are saved in /srv/books, set by METHOD_READER_LIBRARY."
         );
     }
 

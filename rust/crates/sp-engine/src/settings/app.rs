@@ -51,21 +51,47 @@ pub fn absolute_env_folder(raw: Option<&str>) -> Option<String> {
     }
 }
 
-/// `appSettingsPath(platform, env)`: folder + `settings.json`.
-/// SCREEPUB_CONFIG_DIR wins everywhere, when it is an absolute path.
-pub fn app_settings_path(platform: &str, env: &Env) -> String {
-    if let Some(dir) = absolute_env_folder(env.get("SCREEPUB_CONFIG_DIR")) {
-        return host::join(&[dir.as_str(), "settings.json"]);
-    }
+/// The app's data folder, where settings.json and the window's own
+/// storage live: named after the bundle identifier (sp_update::IDENTIFIER,
+/// which sp-app's tests hold it to), as a Tauri app's is, under Application
+/// Support (macOS), %APPDATA% (Windows) and $XDG_CONFIG_HOME (everywhere
+/// else).
+pub const APP_DATA_FOLDER: &str = "com.methodreader.desktop";
+/// Where 0.12 and earlier kept settings.json: `Screepub` under Application
+/// Support and %APPDATA%, `screepub` under $XDG_CONFIG_HOME. Still known:
+/// it moves once into [`APP_DATA_FOLDER`]
+/// ([`crate::legacy::move_legacy_folders`]) and is used until it has.
+pub const LEGACY_SETTINGS_FOLDER: &str = "Screepub";
+pub const LEGACY_SETTINGS_FOLDER_XDG: &str = "screepub";
+/// The 0.12 bundle identifier's folder, beside the settings one: the 0.12
+/// window kept its own storage (window-storage.json, the update answer
+/// among it) there. Its entries move once into [`APP_DATA_FOLDER`].
+pub const LEGACY_APP_DATA_FOLDER: &str = "com.darkwell.screepub";
+
+/// The variable that puts the settings folder anywhere.
+pub const CONFIG_DIR_VAR: &str = "METHOD_READER_CONFIG_DIR";
+/// Its 0.12 name, still read when [`CONFIG_DIR_VAR`] is unset.
+pub const LEGACY_CONFIG_DIR_VAR: &str = "SCREEPUB_CONFIG_DIR";
+
+/// `env.NEW`, or `env.LEGACY` when NEW is unset: the rule for the variables
+/// a person might have set under the 0.12 names.
+pub fn env_or_legacy<'a>(env: &'a Env, name: &str, legacy: &str) -> Option<&'a str> {
+    env.get(name).or_else(|| env.get(legacy))
+}
+
+/// The settings folder the environment names, when it names one:
+/// METHOD_READER_CONFIG_DIR (or SCREEPUB_CONFIG_DIR, when that is unset),
+/// as an absolute path.
+pub fn config_dir_override(env: &Env) -> Option<String> {
+    absolute_env_folder(env_or_legacy(env, CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR))
+}
+
+/// The platform's settings folder, named `name` (`xdg_name` on the
+/// freedesktop systems), by that platform's path rules.
+fn platform_settings_folder(platform: &str, env: &Env, name: &str, xdg_name: &str) -> String {
     let home = home_folder(env);
     match platform {
-        "darwin" => posix::join(&[
-            home.as_str(),
-            "Library",
-            "Application Support",
-            "Screepub",
-            "settings.json",
-        ]),
+        "darwin" => posix::join(&[home.as_str(), "Library", "Application Support", name]),
         "win32" => {
             let app_data = js_trim(env.get("APPDATA").unwrap_or(""));
             let base = if app_data.is_empty() {
@@ -73,7 +99,7 @@ pub fn app_settings_path(platform: &str, env: &Env) -> String {
             } else {
                 app_data.to_owned()
             };
-            win32::join(&[base.as_str(), "Screepub", "settings.json"])
+            win32::join(&[base.as_str(), name])
         }
         _ => {
             let xdg = js_trim(env.get("XDG_CONFIG_HOME").unwrap_or(""));
@@ -82,9 +108,83 @@ pub fn app_settings_path(platform: &str, env: &Env) -> String {
             } else {
                 posix::join(&[home.as_str(), ".config"])
             };
-            posix::join(&[config_home.as_str(), "screepub", "settings.json"])
+            posix::join(&[config_home.as_str(), xdg_name])
         }
     }
+}
+
+/// `path` joined to `name` by the platform's rules.
+fn platform_join(platform: &str, path: &str, name: &str) -> String {
+    if platform == "win32" {
+        win32::join(&[path, name])
+    } else {
+        posix::join(&[path, name])
+    }
+}
+
+/// The platform's app-data folder called `name` (by identifier, so the
+/// same name everywhere), whatever is on disk.
+pub fn app_data_folder_named(platform: &str, env: &Env, name: &str) -> String {
+    platform_settings_folder(platform, env, name, name)
+}
+
+/// Method Reader's app-data folder on this platform, whatever is on disk.
+pub fn settings_folder(platform: &str, env: &Env) -> String {
+    app_data_folder_named(platform, env, APP_DATA_FOLDER)
+}
+
+/// Screepub's settings folder on this platform, whatever is on disk.
+pub fn legacy_settings_folder(platform: &str, env: &Env) -> String {
+    platform_settings_folder(
+        platform,
+        env,
+        LEGACY_SETTINGS_FOLDER,
+        LEGACY_SETTINGS_FOLDER_XDG,
+    )
+}
+
+/// The 0.12 identifier's app-data folder, whatever is on disk.
+pub fn legacy_app_data_folder(platform: &str, env: &Env) -> String {
+    app_data_folder_named(platform, env, LEGACY_APP_DATA_FOLDER)
+}
+
+/// The file `name` in the app's data folder: in METHOD_READER_CONFIG_DIR
+/// when that is an absolute path; otherwise Method Reader's own, unless it
+/// is not there yet and a 0.12 folder still holds one (the move had not
+/// happened, or could not), which is then used where it is.
+pub fn app_data_path(platform: &str, env: &Env, name: &str) -> String {
+    if let Some(dir) = config_dir_override(env) {
+        return host::join(&[dir.as_str(), name]);
+    }
+    let folder = settings_folder(platform, env);
+    let new = platform_join(platform, &folder, name);
+    if fsx::exists(&new) {
+        return new;
+    }
+    [
+        legacy_settings_folder(platform, env),
+        legacy_app_data_folder(platform, env),
+    ]
+    .iter()
+    .map(|old| platform_join(platform, old, name))
+    .find(|old| fsx::exists(old))
+    .unwrap_or(new)
+}
+
+/// `appSettingsPath(platform, env)`: folder + `settings.json`.
+/// METHOD_READER_CONFIG_DIR wins everywhere, when it is an absolute path.
+/// Otherwise Method Reader's app-data folder; Screepub's while only that
+/// one is there, or while only it holds a settings.json (it had not moved
+/// yet, or could not be moved).
+pub fn app_settings_path(platform: &str, env: &Env) -> String {
+    if config_dir_override(env).is_none() {
+        let folder = settings_folder(platform, env);
+        let legacy = legacy_settings_folder(platform, env);
+        if !fsx::exists(&folder) && fsx::is_dir(&legacy) {
+            return platform_join(platform, &legacy, "settings.json");
+        }
+    }
+    app_data_path(platform, env, "settings.json")
 }
 
 /// `readAppSettings(path)`. Never fails: missing, unreadable, not JSON, or

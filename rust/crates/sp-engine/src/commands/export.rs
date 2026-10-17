@@ -41,7 +41,7 @@ pub struct ExportResult {
     pub built_by: Option<BuiltBy>,
     /// --check on a Kindle rung only: when the EPUB was last written (ms).
     pub book_date: Option<Option<f64>>,
-    /// True when the file is one Screepub still calls beta.
+    /// True when the file is one Method Reader still calls beta.
     pub beta: bool,
     /// The FDX answer's own order: `available` after `stages` and `fresh`.
     available_last: bool,
@@ -232,7 +232,7 @@ fn check_script_readable(script: &str) -> Result<(), EngineError> {
     }
 }
 
-/// `saveFountainCopy(script, out)`: the script without Screepub's own
+/// `saveFountainCopy(script, out)`: the script without Method Reader's own
 /// notes; the script beside the book is never written.
 fn save_fountain_copy(
     script: &str,
@@ -249,7 +249,7 @@ fn save_fountain_copy(
     }
     if host::resolve(&[out]) == host::resolve(&[script]) {
         return Err(export_failed(format!(
-            "could not save the copy to {out}: that is the book's own script, which Screepub keeps; choose another place"
+            "could not save the copy to {out}: that is the book's own script, which Method Reader keeps; choose another place"
         )));
     }
     if let Err(err) =

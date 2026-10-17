@@ -1,6 +1,6 @@
 [package]
 name = "sp-model"
-description = "Screepub's shared data model: parser elements, format options, fountain-js tokens"
+description = "Method Reader's shared data model: parser elements, format options, fountain-js tokens"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

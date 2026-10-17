@@ -1,4 +1,4 @@
-//! Screepub's screenplay parser, ported from `src/parser/*`.
+//! Method Reader's screenplay parser, ported from `src/parser/*`.
 //!
 //! Two stages, each proved against the TypeScript engine's own answers
 //! (`rust/oracle/<fixture>/`):

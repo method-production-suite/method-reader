@@ -1,5 +1,5 @@
-//! The Screepub window, on the real engine (src/direct.rs): sp-engine and
-//! sp-device linked in, every call the same `sp_cli::run` the `screepub`
+//! The Method Reader window, on the real engine (src/direct.rs): sp-engine and
+//! sp-device linked in, every call the same `sp_cli::run` the `method-reader`
 //! binary is. With `--version` or `--smoke` it runs headless instead
 //! (src/headless.rs).
 //!
@@ -45,6 +45,10 @@ fn main() -> ExitCode {
     if let Some(what) = sp_app::headless::parse(&args) {
         return ExitCode::from(sp_app::headless::run(what));
     }
+    // A Screepub install's settings and library folders take the new name
+    // once, before anything reads them (sp_engine::legacy; a no-op when a
+    // settings-folder override is set, which every test and capture sets).
+    sp_cli::move_legacy_folders();
     sp_cli::recover_camera_import();
     // An update swap that died between its renames left the bundle hidden
     // beside its own name, or left a backup behind: put it back, or clear
@@ -53,13 +57,13 @@ fn main() -> ExitCode {
         let swept = sp_update::install::sweep_at_startup(&exe);
         if let Some(back) = &swept.restored {
             eprintln!(
-                "screepub-window: put {} back after an interrupted update",
+                "method-reader-app: put {} back after an interrupted update",
                 back.display()
             );
         }
         for gone in &swept.removed {
             eprintln!(
-                "screepub-window: removed {}, left by an earlier update",
+                "method-reader-app: removed {}, left by an earlier update",
                 gone.display()
             );
         }
@@ -68,12 +72,17 @@ fn main() -> ExitCode {
     let in_flight = engine.in_flight();
     let options = sp_app::app::native_options();
     let result = eframe::run_native(
-        "Screepub",
+        sp_app::model::names::PRODUCT,
         options,
         Box::new(move |cc| {
             let host = Host::native(reduce_motion_flag());
             let mut app = App::new(engine, Mode::Threads, host);
             app.set_repaint(cc.egui_ctx.clone());
+            // The quiet update checks: only the shipped window arms them
+            // (two minutes from now, then every six hours, while the switch
+            // is on), so no test, capture or headless run ever checks.
+            let now = app.now();
+            app.update.start_schedule(now);
             #[cfg(target_os = "macos")]
             {
                 app.menus = sp_app::app::menu::Menus::install();
@@ -87,7 +96,7 @@ fn main() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("screepub-window: {e}");
+            eprintln!("method-reader-app: {e}");
             ExitCode::FAILURE
         }
     }

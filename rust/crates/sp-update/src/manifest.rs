@@ -2,7 +2,7 @@
 //! (updater.rs, `impl Deserialize for RemoteRelease`): `version` (or its
 //! alias `name`, a leading `v` dropped, semver), optional `notes` and an
 //! RFC 3339 `pub_date`, and either a `platforms` map (the static format,
-//! which Screepub publishes) or a top-level `url` and `signature` (the
+//! which Method Reader publishes) or a top-level `url` and `signature` (the
 //! dynamic format, which it never has, read the same way anyway).
 
 use std::collections::BTreeMap;

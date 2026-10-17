@@ -280,7 +280,7 @@ impl Views {
             let (done_tx, done_rx) = channel();
             let w = wake.clone();
             std::thread::Builder::new()
-                .name("screepub-book".into())
+                .name("method-reader-book".into())
                 .spawn(move || Desk::default().run(jobs_rx, done_tx, w))
                 .expect("the book's thread");
             (Asker::Away(jobs_tx), Some(done_rx))

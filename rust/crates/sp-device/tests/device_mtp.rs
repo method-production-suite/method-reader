@@ -5,8 +5,8 @@
 //! to real USB. The listing checks are in device_list.rs.
 //!
 //! The TypeScript's "test guard" block pinned root .env.test's
-//! SCREEPUB_MTP_HELPER / SCREEPUB_LAUNCHCTL / SCREEPUB_PKILL guard paths.
-//! The Rust side needs no guard file: MTP is off unless SCREEPUB_MTP_HELPER
+//! METHOD_READER_MTP_HELPER / METHOD_READER_LAUNCHCTL / METHOD_READER_PKILL guard paths.
+//! The Rust side needs no guard file: MTP is off unless METHOD_READER_MTP_HELPER
 //! names a helper (mtp_enabled), and every runner here is injected.
 
 mod common;
@@ -86,7 +86,7 @@ fn a_shipped_build_never_looks_in_the_build_machines_folders() {
 
 #[test]
 fn the_override_wins_but_only_when_it_is_there() {
-    let env = |k: &str| (k == "SCREEPUB_MTP_HELPER").then(|| "/x/helper".to_string());
+    let env = |k: &str| (k == "METHOD_READER_MTP_HELPER").then(|| "/x/helper".to_string());
     let there = |p: &str| p == "/x/helper";
     let none = |_: &str| false;
     assert_eq!(
@@ -101,12 +101,12 @@ fn the_override_wins_but_only_when_it_is_there() {
 
 #[test]
 fn beside_the_running_program_where_the_bundled_app_keeps_it() {
-    let at = "/Applications/Screepub.app/Contents/MacOS/screepub-mtp";
+    let at = "/Applications/Method Reader.app/Contents/MacOS/method-reader-mtp";
     let env = |_: &str| None;
     let exists = |p: &str| p == at;
     let loc = location(
         &env,
-        "/Applications/Screepub.app/Contents/MacOS/screepub",
+        "/Applications/Method Reader.app/Contents/MacOS/method-reader",
         Platform::Darwin,
         &exists,
     );
@@ -123,7 +123,7 @@ fn on_windows_it_is_the_exe() {
     };
     mtp_helper_path(&location(
         &env,
-        "C:\\Screepub\\screepub.exe",
+        "C:\\Method Reader\\method-reader.exe",
         Platform::Win32,
         &exists,
     ));
@@ -135,14 +135,14 @@ fn on_windows_it_is_the_exe() {
         "{found:?}"
     );
     assert!(
-        found.contains(&"C:\\Screepub\\screepub-mtp.exe".to_string()),
+        found.contains(&"C:\\Method Reader\\method-reader-mtp.exe".to_string()),
         "{found:?}"
     );
 }
 
 #[test]
 fn a_dev_checkout_finds_its_own_release_build() {
-    let dev = sp_fsutil::nodepath::host::join(&["/repo/rust/target/release", "screepub-mtp"]);
+    let dev = sp_fsutil::nodepath::host::join(&["/repo/rust/target/release", "method-reader-mtp"]);
     let env = |_: &str| None;
     let d = dev.clone();
     let exists = move |p: &str| p == d;
@@ -172,7 +172,7 @@ fn mtp_is_off_unless_a_helper_is_named() {
     assert!(!mtp_enabled(&|_| None));
     assert!(!mtp_enabled(&|_| Some("  ".into())));
     assert!(mtp_enabled(
-        &|k| (k == "SCREEPUB_MTP_HELPER").then(|| "/x/screepub-mtp".into())
+        &|k| (k == "METHOD_READER_MTP_HELPER").then(|| "/x/method-reader-mtp".into())
     ));
 }
 
@@ -256,12 +256,12 @@ fn anything_that_is_not_the_contract_is_no_devices() {
 #[test]
 fn asks_for_kindles_only_from_descriptors_under_a_short_timeout() {
     let run = timed(exit(0, &listing(vec![kindle_json()]), ""));
-    let devices = list_mtp_kindles(Some("/h/screepub-mtp"), &run, MTP_LIST_TIMEOUT);
+    let devices = list_mtp_kindles(Some("/h/method-reader-mtp"), &run, MTP_LIST_TIMEOUT);
     assert_eq!(devices.len(), 1);
     assert_eq!(
         *run.calls.lock().unwrap(),
         [(
-            strings(&["/h/screepub-mtp", "list", "--kindles"]),
+            strings(&["/h/method-reader-mtp", "list", "--kindles"]),
             Duration::from_millis(3000)
         )]
     );
@@ -284,7 +284,7 @@ fn a_real_spawn_of_a_fake_helper_script() {
     use common::scratch;
     use sp_device::process::SpawnRunner;
     use std::os::unix::fs::PermissionsExt;
-    let sc = scratch("screepub-mtp-");
+    let sc = scratch("method-reader-mtp-");
     let helper = sc.path().join("list-helper");
     std::fs::write(
         &helper,

@@ -85,13 +85,13 @@ confirm) — with one hard trap: any `background-color` on html or body makes
 the KFX converter synthesize a wrapper block of its own, and every keep in
 the book then dies silently (MobileRead t=330798, where jhowell frames it
 as keeps working on top-level blocks only). Authored nesting depth is NOT
-the trigger — Screepub's keeps sit two divs deep inside `section.scene` and
+the trigger — Method Reader's keeps sit two divs deep inside `section.scene` and
 held on device (registry #8b, 2026-07-29) — so the actionable rule is the
 root-background ban, not a flat DOM. KF8/AZW3 honors `always` only; there,
 file splits remain the only hard break. The Publisher Font toggle protects
 `font-family` only.
 
-Screepub needs: (a) keep the MSC volume path (correct today); (b) something
+Method Reader needs: (a) keep the MSC volume path (correct today); (b) something
 for MTP Kindles: IOKit detection of VID `0x1949` non-MSC + guided handoff to
 Amazon's Kindle USB File Manager (bundled with Send to Kindle for Mac since
 Nov 2024, macOS 12+) or OpenMTP, or a libmtp route of our own; (c) keep STK
@@ -192,7 +192,7 @@ Two generations that behave like different brands:
   $629, Paper Pro Move 7.3" $449, legacy rM1/rM2. PDF and EPUB only; the
   device converts EPUB into its own page model on ingest (layout bugs are
   re-import territory). EPUB gets user-adjustable typography that PDF never
-  does, which is exactly Screepub's bet. 226-229 PPI (below e-reader 300);
+  does, which is exactly Method Reader's bet. 226-229 PPI (below e-reader 300);
   rM2/Pure have no light.
   - **Route (T3, already ours):** `http://10.11.99.1` when the USB web
     interface is on. Three hardening facts the current code does not know:
@@ -290,7 +290,7 @@ Kobo/reMarkable firmware, Play Books.
 ## 4. The matrix
 
 Families x transfer methods. ● = works today in the wild, ○ = possible with
-caveats (see section), · = not available. Screepub's current coverage is
+caveats (see section), · = not available. Method Reader's current coverage is
 marked in §5.
 
 | Family | T1 MSC | T2 MTP | T3 USB-web | T4 LAN-web | T5 cloud | T6 app handoff | T7 OPDS/HTTP | T8 folder |
@@ -315,14 +315,14 @@ marked in §5.
 
 ---
 
-## 5. Gap analysis: Screepub today vs the map
+## 5. Gap analysis: Method Reader today vs the map
 
 Support when this gap analysis was written (verified then against the Swift
 app's code; the engine's `rust/crates/sp-device/` and `rust/crates/sp-engine/src/export/` carry all of it now):
 
 - **Kindle MSC** via volume signature; AZW3 (ebook-convert), KFX (when the
   Calibre+plugin+Previewer toolchain exists), engine MOBI as fallback.
-  **Since 2026-10-10** the AZW3 is Screepub's own (`rust/crates/sp-azw3/`, a port of
+  **Since 2026-10-10** the AZW3 is Method Reader's own (`rust/crates/sp-azw3/`, a port of
   Calibre's KF8 writer, beta) and is made on every machine with no Calibre;
   Calibre is needed for KFX alone, and the MOBI is asked for by name.
 - **Kobo** via `KOBOeReader` volume, EPUB with KEPUB choice on the send
@@ -418,13 +418,13 @@ Amazon's EPUB conversion target (KFX vs AZW3) per title.
 
 What each rendering family does with the break, keep and split-minimum
 properties: the table to check any fragmentation decision against. §2.1
-states the Kindle column in prose; the Screepub-side counterpart is the
+states the Kindle column in prose; the Method-Reader-side counterpart is the
 registry's break entries (#5, #5a, #8b, #8c, #16, #17). "(tested)" means
 measured on device — jhowell's reporting or our own passes; everything
 else is a citation or, where marked, an inference.
 
 The KF8/AZW3 column is about the FORMAT and its renderer, so it holds for
-Screepub's own AZW3 (`rust/crates/sp-azw3/`, 2026-10-10) exactly as it did for
+Method Reader's own AZW3 (`rust/crates/sp-azw3/`, 2026-10-10) exactly as it did for
 Calibre's: the stylesheet travels into the AZW3 verbatim, keeps included,
 and the KF8 renderer then ignores the keeps it always ignored (registry
 #8b). What the writer cannot change is what this column says; which file
@@ -465,7 +465,7 @@ comes from jhowell's device-test reporting rather than any Amazon artifact
 ## 7. MTP Kindles from the Tauri window (researched 2026-09-30)
 
 **Since then (2026-10-12):** this was built as `rust/crates/sp-mtp` (the
-`screepub-mtp` helper) and the MTP route in `rust/crates/sp-device`, beta
+`method-reader-mtp` helper) and the MTP route in `rust/crates/sp-device`, beta
 and switched off until it has run on a real Kindle. The window is native
 Rust now with the engine linked in, so there is no sidecar; the plan below
 is kept as written.
@@ -511,10 +511,10 @@ plus `pkill -9 ptpcamerad` when an MTP device connects, `launchctl enable`
 when it disconnects, and `enable` unconditionally at startup to recover
 from a crash. No password prompt, and a toast tells the user it paused the
 daemon. Cmdr is source-available, NOT open source: take the idea, not the
-code. Screepub could hold the pause for the length of one copy only, and
+code. Method Reader could hold the pause for the length of one copy only, and
 restore it in a `finally` and again at engine start. The cost to say in
 the UI: while paused, Photos and Image Capture cannot import from a camera
-or phone. This is Screepub touching a system service, however briefly, so
+or phone. This is Method Reader touching a system service, however briefly, so
 it is a product decision, not an implementation detail.
 
 **Where it goes.** Not in the Tauri shell: `desktop/` holds no logic, and
@@ -527,8 +527,8 @@ signed binary in the bundle and no dylibs, built for Apple silicon only, as
 the engine is.
 
 **Kindle behavior to copy, from GPL-3 tools** (behavior reference;
-Screepub's AGPL-3.0-or-later can use GPL-3 code, but a clean reading is
-enough):
+Method Reader is MIT OR Apache-2.0 outside sp-azw3, so code from these must not
+be copied anywhere else; a clean reading of their behavior is enough):
 
 - **sync2kindle** (github.com/rupor-github/sync2kindle, Go, Kindle-only
   sideloading). Added Mac MTP on 2026-08-01, tested by its author on a
@@ -553,7 +553,7 @@ fallback in §5 item 7.
 
 **Unproven.**
 
-- The whole route on a real 2024+ Kindle from a Mac, with Screepub's files.
+- The whole route on a real 2024+ Kindle from a Mac, with Method Reader's files.
 - That sideloaded KFX over MTP gets Enhanced Typesetting and indexes. The
   format-not-route rule (registry §8b) predicts yes, and sync2kindle lists
   `.kfx` as supported over MTP, but our KFX verdict was measured on a
@@ -562,7 +562,7 @@ fallback in §5 item 7.
 - Cmdr's `ptpcamerad` pause, which we have only read.
 
 **Cheapest first test** when a 2024+ Kindle is at hand: install
-`mtp-rs-cli`, pause `ptpcamerad` by hand, push a Screepub KFX into
+`mtp-rs-cli`, pause `ptpcamerad` by hand, push a Method Reader KFX into
 `documents/`, and check it opens with Enhanced Typesetting and appears in
 the library. That answers the first two unproven items before any code is
 written.

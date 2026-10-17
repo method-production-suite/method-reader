@@ -34,10 +34,10 @@ use std::sync::OnceLock;
 use sp_engine::env::Env;
 
 /// `TEST_SETTINGS_GUARD` (tests/isolate-app-settings.ts and .env.test).
-pub const SETTINGS_GUARD: &str = "/dev/null/screepub-test-guard";
+pub const SETTINGS_GUARD: &str = "/dev/null/method-reader-test-guard";
 
 /// `CALIBRE_CONFIG_GUARD` (tools/calibre-config.ts and .env.test).
-pub const CALIBRE_GUARD: &str = "/dev/null/screepub-test-calibre-guard";
+pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-test-calibre-guard";
 
 /// The repository root (rust/crates/sp-engine/../../..).
 pub fn repo_root() -> PathBuf {
@@ -73,7 +73,7 @@ pub struct Scratch {
 impl Scratch {
     pub fn new(prefix: &str) -> Self {
         let dir = tempfile::Builder::new()
-            .prefix(&format!("screepub-{prefix}-"))
+            .prefix(&format!("method-reader-{prefix}-"))
             .tempdir()
             .expect("a scratch folder");
         let path = canonical(dir.path());
@@ -104,7 +104,7 @@ pub fn guarded_env() -> Env {
     if let Some(path) = std::env::var_os("PATH").and_then(|p| p.into_string().ok()) {
         env.set("PATH", path);
     }
-    env.set("SCREEPUB_CONFIG_DIR", SETTINGS_GUARD);
+    env.set("METHOD_READER_CONFIG_DIR", SETTINGS_GUARD);
     env.set("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD);
     env
 }
@@ -169,7 +169,7 @@ pub fn calibre_config_copy() -> &'static Path {
     &COPY
         .get_or_init(|| {
             let scratch = tempfile::Builder::new()
-                .prefix("screepub-calibre-config-")
+                .prefix("method-reader-calibre-config-")
                 .tempdir()
                 .expect("scratch");
             let copy = canonical(scratch.path()).join("calibre");

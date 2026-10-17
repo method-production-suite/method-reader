@@ -292,7 +292,7 @@ pub fn default_answer(request: &Request) -> Value {
     match request {
         Request::Version => json!({"ok": true, "version": "0.11.1"}),
         Request::Convert { path, .. } => json!({
-            "ok": true, "title": "Field Station", "author": "the Screepub project", "pages": 19, "scenes": 11,
+            "ok": true, "title": "Field Station", "author": "the Method Reader project", "pages": 19, "scenes": 11,
             "warnings": [], "epubPath": "/library/Field Station/Field Station.epub",
             "fountainPath": "/library/Field Station/Field Station.fountain", "source": path,
             "previewHtml": SAMPLE_PREVIEW,
@@ -337,10 +337,10 @@ pub fn default_answer(request: &Request) -> Value {
             let path = out
                 .clone()
                 .unwrap_or_else(|| epub.replace(".epub", &format!(".{ext}")));
-            json!({"ok": true, "path": path, "extension": ext, "label": format!("{} (Screepub)", ext.to_uppercase())})
+            json!({"ok": true, "path": path, "extension": ext, "label": format!("{} (Method Reader)", ext.to_uppercase())})
         }
         Request::KindleCheck { .. } => {
-            json!({"ok": true, "extension": "azw3", "fresh": false, "builtBy": "screepub", "bookDate": 1, "beta": true})
+            json!({"ok": true, "extension": "azw3", "fresh": false, "builtBy": "method-reader", "bookDate": 1, "beta": true})
         }
         Request::KfxStatus => json!({"ok": true, "ready": false, "possible": true,
         "summary": "Kindles get AZW3 today. Calibre with its KFX plugin and Kindle Previewer makes KFX, the best layout.",
@@ -354,7 +354,7 @@ pub fn default_answer(request: &Request) -> Value {
         }
         Request::AppSettings | Request::SetAppSettings { .. } => json!({
             "ok": true, "home": "/Users/reader",
-            "library": {"path": "/Users/reader/Screepub", "chosen": null, "platformDefault": "/Users/reader/Screepub", "fromEnv": false},
+            "library": {"path": "/Users/reader/Method Reader", "chosen": null, "platformDefault": "/Users/reader/Method Reader", "fromEnv": false},
             "readerDevice": null, "animatePage": true, "typewriterSounds": false, "panelIntent": "read", "keepScriptSettings": true,
             "formatDefaults": defaults, "shippedDefaults": defaults,
         }),

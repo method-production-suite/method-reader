@@ -1,4 +1,4 @@
-//! Port of `src/export/route-perform.ts`: the routes that leave Screepub
+//! Port of `src/export/route-perform.ts`: the routes that leave Method Reader
 //! through another program (Apple Books, Amazon's Send to Kindle, a Mail
 //! message, Amazon's settings page). Every open goes through an injectable
 //! [`Opener`], so no test ever launches Books, a browser, Mail or the file

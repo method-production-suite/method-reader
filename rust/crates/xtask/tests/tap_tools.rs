@@ -8,9 +8,15 @@
 //! shapes, each against the release it describes.
 //!
 //! No network and no real tap: GitHub is a server on 127.0.0.1 answering
-//! from a table (the bases moved by SCREEPUB_GITHUB_API), and the tap is a
+//! from a table (the bases moved by METHOD_READER_GITHUB_API), and the tap is a
 //! scratch folder. The formula fixture is the published formula as read
 //! from the tap on 2026-10-01 (v0.7.4), version and digests made up.
+//!
+//! The tap's files were renamed with the product (screepub.rb to
+//! method-reader.rb, with Homebrew's cask_renames.json and
+//! formula_renames.json carrying installs across): bump-tap makes the move
+//! for a tap that still has the old names, and check-tap reads the new
+//! ones and both renames files.
 
 mod common;
 
@@ -19,7 +25,9 @@ use base64::engine::general_purpose::STANDARD;
 use common::{FakeServer, Scratch, text, xtask};
 use std::process::Output;
 
-const ARM: &str = "screepub-cli-macos-arm64.tar.gz";
+const ARM: &str = "method-reader-cli-macos-arm64.tar.gz";
+const REPO: &str = "method-production-suite/method-reader";
+const RENAMES: &str = "{\n  \"screepub\": \"method-reader\"\n}\n";
 const INTEL: &str = "screepub-cli-macos-x64.tar.gz";
 
 fn sha(c: char) -> String {
@@ -114,7 +122,7 @@ impl Gh {
     ) -> Gh {
         let server = FakeServer::start();
         server.route(
-            "/repos/ssandweiss/screepub/releases/latest",
+            &format!("/repos/{REPO}/releases/latest"),
             200,
             serde_json::json!({ "tag_name": format!("v{release}") }).to_string(),
         );
@@ -122,7 +130,7 @@ impl Gh {
             .iter()
             .map(|(n, d)| serde_json::json!({ "name": n, "digest": format!("sha256:{d}") }))
             .collect();
-        let tag_path = format!("/repos/ssandweiss/screepub/releases/tags/v{release}");
+        let tag_path = format!("/repos/{REPO}/releases/tags/v{release}");
         if flaky {
             server.route(&tag_path, 502, "Bad Gateway");
         } else {
@@ -145,16 +153,23 @@ impl Gh {
         };
         if let Some(f) = formula {
             server.route(
-                "/repos/ssandweiss/homebrew-tap/contents/Formula/screepub.rb",
+                "/repos/ssandweiss/homebrew-tap/contents/Formula/method-reader.rb",
                 200,
                 contents(f),
             );
         }
         if let Some(c) = cask {
             server.route(
-                "/repos/ssandweiss/homebrew-tap/contents/Casks/screepub.rb",
+                "/repos/ssandweiss/homebrew-tap/contents/Casks/method-reader.rb",
                 200,
                 contents(c),
+            );
+        }
+        for renames in ["cask_renames.json", "formula_renames.json"] {
+            server.route(
+                &format!("/repos/ssandweiss/homebrew-tap/contents/{renames}"),
+                200,
+                contents(RENAMES),
             );
         }
         Gh { server }
@@ -164,10 +179,10 @@ impl Gh {
         xtask(
             args,
             &[
-                ("SCREEPUB_GITHUB_API", self.server.base.as_str()),
-                ("SCREEPUB_GITHUB_WEB", self.server.base.as_str()),
-                ("SCREEPUB_REPO", "ssandweiss/screepub"),
-                ("SCREEPUB_TAP", "ssandweiss/homebrew-tap"),
+                ("METHOD_READER_GITHUB_API", self.server.base.as_str()),
+                ("METHOD_READER_GITHUB_WEB", self.server.base.as_str()),
+                ("METHOD_READER_REPO", REPO),
+                ("METHOD_READER_TAP", "ssandweiss/homebrew-tap"),
                 ("GH_TOKEN", ""),
                 ("GITHUB_TOKEN", ""),
             ],
@@ -177,7 +192,17 @@ impl Gh {
     }
 }
 
+/// A tap already renamed: the 0.12.x cask and formula under their new
+/// file names, the cask's token not yet changed (bump-tap does that).
 fn tap_checkout(formula: &str, cask: &str) -> Scratch {
+    let tap = Scratch::new("tap");
+    tap.write("Formula/method-reader.rb", formula);
+    tap.write("Casks/method-reader.rb", cask);
+    tap
+}
+
+/// A tap as it was up to 0.12.x: the old file names, no renames files.
+fn old_tap_checkout(formula: &str, cask: &str) -> Scratch {
     let tap = Scratch::new("tap");
     tap.write("Formula/screepub.rb", formula);
     tap.write("Casks/screepub.rb", cask);
@@ -198,7 +223,7 @@ fn it_turns_the_two_arch_formula_into_one_apple_silicon_formula() {
     let r = bump(&gh, "v0.8.0", &tap);
     assert_eq!(text(&r.stderr), "");
     assert_eq!(r.status.code(), Some(0));
-    let formula = tap.read("Formula/screepub.rb");
+    let formula = tap.read("Formula/method-reader.rb");
     let urls: Vec<&str> = formula
         .lines()
         .filter_map(|l| l.trim_start().strip_prefix("url \""))
@@ -207,8 +232,8 @@ fn it_turns_the_two_arch_formula_into_one_apple_silicon_formula() {
     assert_eq!(
         urls,
         [
-            format!("https://github.com/ssandweiss/screepub/releases/download/v0.8.0/{ARM}"),
-            "https://github.com/ssandweiss/screepub/releases/latest".to_string(),
+            format!("https://github.com/{REPO}/releases/download/v0.8.0/{ARM}"),
+            format!("https://github.com/{REPO}/releases/latest"),
         ]
     );
     assert!(formula.contains(&format!("sha256 \"{arm_sha}\"")));
@@ -226,7 +251,7 @@ fn it_turns_the_two_arch_formula_into_one_apple_silicon_formula() {
     assert!(text(&r.stdout).contains("tap rewritten to 0.8.0"));
     // The cask: DISABLED, keeping the deprecation's own date, in the same
     // place and nothing else changed.
-    let c = tap.read("Casks/screepub.rb");
+    let c = tap.read("Casks/method-reader.rb");
     assert!(!c.lines().any(|l| l.starts_with("  deprecate! ")));
     assert!(c.lines().any(|l| l
         == format!("  disable! date: \"{DEPRECATED_ON}\", because: \"is now downloaded from the releases page and updates itself\"")));
@@ -236,7 +261,64 @@ fn it_turns_the_two_arch_formula_into_one_apple_silicon_formula() {
             .collect::<Vec<_>>()
             .join("\n")
     };
-    assert_eq!(notice(&c, "  disable! "), notice(&cask(), "  deprecate! "));
+    assert_eq!(
+        notice(&c, "  disable! "),
+        notice(
+            &cask().replace("cask \"screepub\" do", "cask \"method-reader\" do"),
+            "  deprecate! "
+        )
+    );
+    assert!(c.starts_with("cask \"method-reader\" do\n"), "{c}");
+    // The renames, written whole.
+    assert_eq!(tap.read("cask_renames.json"), RENAMES);
+    assert_eq!(tap.read("formula_renames.json"), RENAMES);
+}
+
+#[test]
+fn a_tap_with_the_old_file_names_is_renamed_and_its_old_files_are_gone() {
+    let gh = Gh::new("0.13.0", &[(ARM, sha('a'))], None, None, false);
+    let tap = old_tap_checkout(&two_arch_formula("0.7.4", &sha('1'), &sha('2')), &cask());
+    let r = bump(&gh, "0.13.0", &tap);
+    assert_eq!(r.status.code(), Some(0), "{}", text(&r.stderr));
+    assert!(!tap.path().join("Formula/screepub.rb").exists());
+    assert!(!tap.path().join("Casks/screepub.rb").exists());
+    let f = tap.read("Formula/method-reader.rb");
+    assert!(f.starts_with("class MethodReader < Formula\n"), "{f}");
+    assert!(
+        f.contains("    bin.install \"method-reader\", \"screepub\"\n"),
+        "{f}"
+    );
+    let c = tap.read("Casks/method-reader.rb");
+    assert!(c.starts_with("cask \"method-reader\" do\n"), "{c}");
+    assert!(c.lines().any(|l| l.starts_with("  disable! ")));
+    assert_eq!(tap.read("cask_renames.json"), RENAMES);
+    assert_eq!(tap.read("formula_renames.json"), RENAMES);
+    // A second run changes nothing.
+    assert_eq!(bump(&gh, "0.13.0", &tap).status.code(), Some(0));
+    assert_eq!(tap.read("Formula/method-reader.rb"), f);
+    assert_eq!(tap.read("Casks/method-reader.rb"), c);
+}
+
+#[test]
+fn a_tap_with_both_the_old_and_the_new_names_is_refused_and_nothing_is_written() {
+    let gh = Gh::new("0.13.0", &[(ARM, sha('a'))], None, None, false);
+    let before = two_arch_formula("0.7.4", &sha('1'), &sha('2'));
+    let tap = tap_checkout(&before, &cask());
+    tap.write("Formula/screepub.rb", &before);
+    let r = bump(&gh, "0.13.0", &tap);
+    assert_eq!(r.status.code(), Some(1));
+    assert!(text(&r.stderr).contains("Formula/screepub.rb is still in the tap"));
+    assert_eq!(tap.read("Formula/method-reader.rb"), before);
+    assert!(!tap.path().join("formula_renames.json").exists());
+}
+
+#[test]
+fn an_old_tap_whose_release_cannot_be_read_is_not_renamed() {
+    let gh = Gh::new("0.13.0", &[(ARM, sha('a'))], None, None, true);
+    let tap = old_tap_checkout(&two_arch_formula("0.7.4", &sha('1'), &sha('2')), &cask());
+    assert_ne!(bump(&gh, "0.13.0", &tap).status.code(), Some(0));
+    assert!(tap.path().join("Formula/screepub.rb").is_file());
+    assert!(!tap.path().join("Formula/method-reader.rb").exists());
 }
 
 #[test]
@@ -247,7 +329,7 @@ fn a_cask_with_no_retirement_notice_yet_gets_the_disable_after_its_livecheck_blo
         &bare_cask(),
     );
     assert_eq!(bump(&gh, "0.8.0", &tap).status.code(), Some(0));
-    let c = tap.read("Casks/screepub.rb");
+    let c = tap.read("Casks/method-reader.rb");
     assert!(c.contains(
         "    strategy :github_latest\n  end\n\n  disable! date: \"2026-10-01\", because: \"is now downloaded from the releases page and updates itself\"\n\n  app \"Screepub.app\""
     ), "{c}");
@@ -267,8 +349,8 @@ fn a_release_whose_asset_list_cannot_be_read_writes_nothing() {
     let r = bump(&gh, "0.7.5", &tap);
     assert_ne!(r.status.code(), Some(0));
     assert!(text(&r.stderr).contains("v0.7.5"));
-    assert_eq!(tap.read("Formula/screepub.rb"), before);
-    assert_eq!(tap.read("Casks/screepub.rb"), cask());
+    assert_eq!(tap.read("Formula/method-reader.rb"), before);
+    assert_eq!(tap.read("Casks/method-reader.rb"), cask());
 }
 
 #[test]
@@ -287,8 +369,8 @@ fn a_release_that_still_carries_the_intel_tarball_is_refused_and_nothing_is_writ
     let err = text(&r.stderr);
     assert!(err.contains(INTEL));
     assert!(err.contains("git show v0.7.5:tools/bump-tap.sh"));
-    assert_eq!(tap.read("Formula/screepub.rb"), before);
-    assert_eq!(tap.read("Casks/screepub.rb"), cask());
+    assert_eq!(tap.read("Formula/method-reader.rb"), before);
+    assert_eq!(tap.read("Casks/method-reader.rb"), cask());
 }
 
 #[test]
@@ -296,11 +378,11 @@ fn a_second_run_at_the_same_version_changes_nothing() {
     let gh = Gh::new("0.8.0", &[(ARM, sha('a'))], None, None, false);
     let tap = tap_checkout(&two_arch_formula("0.7.4", &sha('1'), &sha('2')), &cask());
     assert_eq!(bump(&gh, "0.8.0", &tap).status.code(), Some(0));
-    let once = tap.read("Formula/screepub.rb");
-    let cask_once = tap.read("Casks/screepub.rb");
+    let once = tap.read("Formula/method-reader.rb");
+    let cask_once = tap.read("Casks/method-reader.rb");
     assert_eq!(bump(&gh, "0.8.0", &tap).status.code(), Some(0));
-    assert_eq!(tap.read("Formula/screepub.rb"), once);
-    assert_eq!(tap.read("Casks/screepub.rb"), cask_once);
+    assert_eq!(tap.read("Formula/method-reader.rb"), once);
+    assert_eq!(tap.read("Casks/method-reader.rb"), cask_once);
 }
 
 #[test]
@@ -311,7 +393,7 @@ fn a_release_without_the_apple_silicon_tarball_writes_nothing() {
     let r = bump(&gh, "0.8.0", &tap);
     assert_ne!(r.status.code(), Some(0));
     assert!(text(&r.stderr).contains(ARM));
-    assert_eq!(tap.read("Formula/screepub.rb"), before);
+    assert_eq!(tap.read("Formula/method-reader.rb"), before);
 }
 
 #[test]
@@ -320,7 +402,7 @@ fn a_tag_with_no_release_writes_nothing_rather_than_a_404_body_as_a_digest() {
     let before = two_arch_formula("0.7.4", &sha('1'), &sha('2'));
     let tap = tap_checkout(&before, &cask());
     assert_ne!(bump(&gh, "0.9.9", &tap).status.code(), Some(0));
-    assert_eq!(tap.read("Formula/screepub.rb"), before);
+    assert_eq!(tap.read("Formula/method-reader.rb"), before);
 }
 
 #[test]
@@ -342,8 +424,8 @@ fn bumped_tap(v: &str, arm: &str) -> (String, String) {
     let tap = tap_checkout(&two_arch_formula("0.7.4", &sha('1'), &sha('2')), &cask());
     assert_eq!(bump(&gh, v, &tap).status.code(), Some(0));
     (
-        tap.read("Formula/screepub.rb"),
-        tap.read("Casks/screepub.rb"),
+        tap.read("Formula/method-reader.rb"),
+        tap.read("Casks/method-reader.rb"),
     )
 }
 
@@ -367,6 +449,42 @@ fn an_apple_silicon_release_served_by_the_tap_bump_tap_writes_is_fine() {
     assert!(out.contains("The tap serves 0.8.0"), "{out}");
     assert!(out.contains("retired (disabled)"));
     assert_eq!(r.status.code(), Some(0));
+}
+
+#[test]
+fn a_tap_whose_renames_do_not_carry_screepub_across_is_an_error() {
+    let (formula, c) = bumped_tap("0.8.0", &sha('a'));
+    for (file, body) in [
+        ("formula_renames.json", "{}\n"),
+        ("cask_renames.json", "{\"screepub\": \"something-else\"}\n"),
+    ] {
+        let gh = Gh::new("0.8.0", &[(ARM, sha('a'))], Some(&formula), Some(&c), false);
+        gh.server.route(
+            &format!("/repos/ssandweiss/homebrew-tap/contents/{file}"),
+            200,
+            serde_json::json!({ "content": STANDARD.encode(body), "encoding": "base64" })
+                .to_string(),
+        );
+        let r = gh.run(&["check-tap"]);
+        assert_ne!(r.status.code(), Some(0));
+        let out = text(&r.stdout);
+        assert!(
+            out.contains(&format!(
+                "::error::{file} does not map screepub to method-reader"
+            )),
+            "{out}"
+        );
+    }
+    // Missing altogether is the same error.
+    let gh = Gh::new("0.8.0", &[(ARM, sha('a'))], Some(&formula), Some(&c), false);
+    gh.server.route(
+        "/repos/ssandweiss/homebrew-tap/contents/cask_renames.json",
+        404,
+        "{}",
+    );
+    let r = gh.run(&["check-tap"]);
+    assert_ne!(r.status.code(), Some(0));
+    assert!(text(&r.stdout).contains("cask_renames.json does not map"));
 }
 
 #[test]
@@ -527,10 +645,30 @@ end
 fn the_formula_is_byte_for_byte_the_one_the_shell_script_wrote() {
     // Was checked against the script itself while it existed; its last
     // output is the pin now, so the tap sees no diff the shell would not
-    // have made.
+    // have made. The one deliberate change since is the licence line
+    // (AGPL to MIT OR Apache-2.0, with the GPL-3.0 AZW3 writer).
+    // The other is the rename (Method Reader, 0.13): the class, the
+    // comment, the repository, the tarball's name and the two binaries.
     assert_eq!(
-        xtask::bump_tap::formula("ssandweiss/screepub", "0.8.0", &sha('a')),
-        SHELL_FORMULA_0_8_0.replace("SHA_A", &sha('a'))
+        xtask::bump_tap::formula(REPO, "0.8.0", &sha('a')),
+        SHELL_FORMULA_0_8_0
+            .replace("SHA_A", &sha('a'))
+            .replace(
+                "  license \"AGPL-3.0-or-later\"",
+                "  license all_of: [{ any_of: [\"MIT\", \"Apache-2.0\"] }, \"GPL-3.0-only\"]"
+            )
+            .replace("class Screepub < Formula", "class MethodReader < Formula")
+            .replace(
+                "  # Written whole by tools/bump-tap.sh in the screepub repository at every\n  # release: edit it there, not here. Apple silicon only since the release\n  # after 0.9.0; Intel Macs are no longer supported.\n",
+                "  # Written whole by `cargo xtask bump-tap` in the method-reader repository\n  # at every release: edit it there, not here. Apple silicon only since the\n  # release after 0.9.0; Intel Macs are no longer supported. Called\n  # screepub up to 0.12.x (formula_renames.json carries installs across).\n"
+            )
+            .replace("ssandweiss/screepub", REPO)
+            .replace("screepub-cli-macos-arm64.tar.gz", ARM)
+            .replace(
+                "    # The tarball holds a single file, already named plain screepub.\n    bin.install \"screepub\"\n",
+                "    # The tarball holds the tool and its old name: screepub says once that\n    # it is now called method-reader, then does exactly what it does.\n    bin.install \"method-reader\", \"screepub\"\n"
+            )
+            .replace("#{bin}/screepub --", "#{bin}/method-reader --")
     );
 }
 

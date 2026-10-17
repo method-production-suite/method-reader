@@ -83,7 +83,7 @@ pub struct ToolchainState {
 }
 
 /// `ladderRung(state)`: KFX when the full toolchain is present, otherwise
-/// the AZW3 Screepub writes itself. Never the MOBI, which is asked for by
+/// the AZW3 Method Reader writes itself. Never the MOBI, which is asked for by
 /// name.
 pub fn ladder_rung(state: ToolchainState) -> KindleRung {
     if state.kfx_ready {
@@ -110,7 +110,8 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
         }
         ExportFormat::Kfx => "KFX: for modern Kindles over USB, the best layout".into(),
         ExportFormat::Azw3 => {
-            "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed".into()
+            "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed"
+                .into()
         }
         ExportFormat::Mobi => "MOBI: for the oldest Kindles".into(),
         ExportFormat::Fdx => {
@@ -129,7 +130,7 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
     }
 }
 
-/// `isBetaFile(extension)`: the AZW3 Screepub writes itself, and the FDX.
+/// `isBetaFile(extension)`: the AZW3 Method Reader writes itself, and the FDX.
 pub fn is_beta_file(extension: &str) -> bool {
     extension == "azw3" || extension == "fdx"
 }

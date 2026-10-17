@@ -143,7 +143,7 @@ fn u6_a_copy_that_cannot_restart_says_quit_and_reopen() {
     until(&mut h, "installed", |h| {
         has(
             h,
-            "Update installed. Quit and reopen Screepub to use 0.12.0.",
+            "Update installed. Quit and reopen Method Reader to use 0.12.0.",
         )
     });
     assert!(!closed(&h));
@@ -203,26 +203,33 @@ impl sp_app::app::host::Updater for Awkward {
 }
 
 #[test]
-fn the_launch_check_never_holds_the_window_and_its_answer_still_arrives() {
-    // The check ran on the window's thread inside App::new, before the
-    // first frame, with the transport's ten-minute timeout.
+fn the_quiet_check_never_holds_the_window_and_its_answer_still_arrives() {
+    // The check runs on its own thread: a stalled network (the transport's
+    // timeout is ten minutes) must not hold a frame.
     let w = world();
     let mut host = w.fakes.host(Platform::Mac);
-    sp_app::model::update::remember_answer(host.storage.as_mut(), true);
     host.updater = Arc::new(Awkward {
         check_takes: Duration::from_millis(1500),
         install_panics: false,
     });
-    let started = Instant::now();
-    let app = sp_app::app::App::new(w.engine.clone(), sp_app::runtime::Mode::Threads, host);
-    assert!(
-        started.elapsed() < Duration::from_millis(500),
-        "App::new took {:?}",
-        started.elapsed()
-    );
+    let mut app = sp_app::app::App::new(w.engine.clone(), sp_app::runtime::Mode::Threads, host);
+    let now = app.now();
+    app.update.start_schedule(now);
     let mut h = egui_kittest::Harness::builder()
         .with_size([1280.0, 800.0])
         .build_ui_state(|ui, app: &mut sp_app::app::App| app.frame(ui), app);
+    w.fakes
+        .clock
+        .advance(sp_app::model::update::FIRST_CHECK_AFTER_MS);
+    let started = Instant::now();
+    steps(&mut h);
+    assert!(
+        started.elapsed() < Duration::from_millis(500),
+        "the frame that started the check took {:?}",
+        started.elapsed()
+    );
+    // Awkward cannot download ahead of the click, so the find is offered
+    // as a person's own check would offer it.
     until(&mut h, "the offer arrives", |h| {
         h.query_by_role_and_label(Role::Button, "Update to 0.12.0")
             .is_some()

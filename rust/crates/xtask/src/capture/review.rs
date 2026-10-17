@@ -6,9 +6,9 @@
 //! 2026-09-22, part 5).
 //!
 //! Compared with HEAD, staged or not, because the release commit is what
-//! they are about to join. A picture the capture writes to two places (the
-//! light drop and result go to assets/screens/ and site/img/) is one picture
-//! to look at, shown once with both paths.
+//! they are about to join. Every picture the capture writes goes to two
+//! places (assets/screens/ and site/img/): each is one picture to look at,
+//! shown once with both paths.
 
 use std::collections::BTreeMap;
 use std::path::Path;

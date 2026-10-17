@@ -1,66 +1,116 @@
-# Screepub brand system
+# Method Reader's window identity
 
-The identity, in a form a website can use. The design decisions and their
-reasoning live in
-[the spec](../docs/superpowers/specs/2026-07-30-visual-identity-design.md);
-this file is the operating manual.
+The window's colors, type and spacing, in a form a browser can preview. They
+are Method Reader's part of the Method family palette: the site's tokens
+([site/assets/tokens.css](../site/assets/tokens.css)) and their rules
+([docs/BRAND.md](../docs/BRAND.md)) are the reference, and this folder is
+the window's copy of them under the window's own token names. The original
+design decisions live in
+[the spec](../docs/superpowers/specs/2026-07-30-visual-identity-design.md),
+written for the Screepub look. Since 2026-10-16 the window's type and
+layout are the Method family's instead (docs/BRAND.md, "The window"): the
+system's own UI sans for all chrome, sentence case, a title bar and a tab
+strip, Method Budget's control proportions, no brads. The type scale is
+unchanged; the radii grew to the family's.
 
 ## What's here
 
-- `tokens.json`: source of truth. Every color, with a `from` field saying
-  where it came from.
+- `tokens.json`: source of truth. Every color, light and dark, with a
+  `family` field naming the site token it takes its value from.
 - `tokens.css`: the same values as custom properties, light and dark.
-- `components/`: eight self-contained previews. Open any of them in a
-  browser. Each opens with a `@dsCard` marker so the Design System pane
-  indexes it without explicit registration.
+- `components/`: self-contained previews. Open any of them in a browser.
+  Each opens with a `@dsCard` marker so the Design System pane indexes it
+  without explicit registration.
 
-## Where the seven core colors came from
+Change a value in `tokens.json` and the copies follow it: `tokens.css` and
+the window's colors in `rust/crates/sp-app/src/theme.rs`, each pinned to
+this file by a test (`rust/crates/xtask/tests/brand.rs` for the CSS and the
+contrast, `rust/crates/xtask/tests/brand_tokens.rs` and theme.rs's own tests
+for the window).
 
-Seven tokens (`paper`, `ink`, `ink-muted`, `ink-on-brass`, `brass`, `alarm`,
-`hole`) were first defined by the Swift Mac app's theme, and their `from`
-field says `swift-app`. That app was retired and deleted (piece F3), so
-`tokens.json` is the only source: change a value here and the copies that
-ship follow it, `tokens.css` and the window's colours in
-`rust/crates/sp-app/src/theme.rs`, each pinned to this file by a test
-(`rust/crates/xtask/tests/desktop_tokens.rs` holds theme.rs to it). Until
-the Rust cutover the Tauri window's `desktop/ui/style.css` and generated
-`desktop/ui/tokens.css` were the window's copies.
+## The window's names and the family's
 
-Two of those seven exist because a color that is right in one place is wrong
-in another:
+The window's token names are older than the palette and were kept so the
+code that paints with them did not have to change. `brass` is the accent
+role, as it was when the accent was a brass yellow.
 
-- `ink-on-brass` is the label on a brass button, and it is deliberately the
-  same in both modes. `ink` flips to cream in dark mode while `brass` holds,
-  which put the site's primary call to action at 1.67:1. Pinned, it is 7.98:1
-  either way. A test also reads the components and fails if anything sets
-  `var(--ink)` on a `var(--brass)` ground again.
-- `ink-muted` is secondary TEXT. `inkFaint` is `ink` at 55% alpha, which
-  blends to `#7F7C74` on paper: 3.73:1, failing AA. The web split this off
-  first and the Swift app adopted it, so `inkFaint` was for hairlines,
-  strokes and fills only. If a reader has to read it, it is `ink-muted`.
+| Window token | Family token | Light | Dark |
+|---|---|---|---|
+| `paper` | `--bg` | `#F7F6F2` | `#111417` |
+| `panel` | `--surface` | `#FFFFFF` | `#1B1F24` |
+| `ink` | `--ink` | `#1C2228` | `#E4E8EC` |
+| `ink-soft` | `--ink-soft` | `#3A424C` | `#C3CAD2` |
+| `ink-muted` | `--muted` | `#59626D` | `#9AA3AD` |
+| `brass` | `--accent` | `#7052BA` | `#B49CF0` |
+| `ink-on-brass` | `--accent-ink` | `#FFFFFF` | `#160F26` |
+| `note` | `--note` | `#8A5A00` | `#E3B341` |
+| `hole` | `--ink` at 10% (light) | `rgba(28,34,40,0.10)` | `rgba(0,0,0,0.45)` |
+| `ground` | `--ink` / the dark `--device` | `#1C2228` | `#0B0C0E` |
+| `alarm` | none | `#AF3220` | `#EA7A65` |
+| `present` | none | `#3E7D4A` | `#6FBF7E` |
+| `bar` | `--surface-2` | `#EFEDE7` | `#22272E` |
+| `rule` | `--rule` | `#DEDBD3` | `#2B3138` |
+| `rule-strong` | `--rule-strong` | `#8F897C` | `#67717D` |
+| `brass-soft` | `--accent-soft` | `#ECE7F7` | `#2A2140` |
+
+`alarm` (errors only) and `present` (the dot on a reader the computer can
+see) have no family token because the site has no error state and no
+device list; they kept their values. `note` is the family's caution amber
+and colors the Beta badge only: never an accent, never decoration.
+
+`bar` is the tab strip under the title bar and a code chip's ground;
+`rule` every hairline (controls, cards, sheets, the tab strip's foot);
+`rule-strong` a border that carries meaning (the drop well's dashes, a
+hovered control); `brass-soft` a selection's ground (the chosen half of
+Read it | Edit it, the current scene, a plugged-in device's card). None of
+them sets text.
+
+The six `brass-*` ramp tokens are the accent's ramp. Only `brass-highlight`
+is still painted (the primary button's hover, which holds its label at
+4.5:1 or better); the others shaded the brads the window no longer draws
+and are kept for the brad.html preview: `brass-specular`, `brass-shadow`,
+`brass-rim`, `brass-edge` and `brass-bounce`. They follow the accent, so
+they change with the mode as it does.
+
+Two rules carried over from the brass theme still hold:
+
+- `ink-on-brass` is the label on an accent fill. Plain `ink` on the violet
+  is 2.75:1 light and 1.9:1 dark; a test reads the components and fails if
+  anything sets `var(--ink)` on a `var(--brass)` ground.
+- `ink-muted` is secondary TEXT. `ink` at 55% alpha blends to `#7F8183` on
+  paper: 3.62:1, failing AA. If a reader has to read it, it is `ink-muted`;
+  faint ink is for hairlines, strokes and fills only (`hole`).
 
 ## Adding a color
 
-Don't, if you can avoid it. The palette is six colors and one of them is for
-errors. If you must:
+Don't, if you can avoid it. If you must:
 
-1. Add it to `tokens.json` with an honest `from` value.
-2. Add it to `tokens.css` in both blocks, or only `:root` if it is
-   mode-independent the way brass is.
-3. If anything sets text in it, add `"text": true` to its `tokens.json` entry
-   AND add a pair to the contrast test in `rust/crates/xtask/tests/brand.rs`. Floors
-   are 7:1 for body and headings, 4.5:1 for captions and transitions. Darken
-   the color rather than lowering the floor. `rust/crates/xtask/tests/brand.rs`
-   fails loudly if a token is marked `"text": true` with no pair, so this
-   cannot go unnoticed the way `ink-footnote` once did.
+1. Take it from the family palette (site/assets/tokens.css) when one fits,
+   and add it to `tokens.json` with an honest `family` value.
+2. Add it to `tokens.css` in both blocks, or only `:root` if it is the same
+   in both modes.
+3. Add it to `Tokens` in theme.rs, in LIGHT and DARK.
+4. If anything sets text in it, add `"text": true` to its `tokens.json` entry
+   AND add a pair to the contrast test in `rust/crates/xtask/tests/brand.rs`.
+   Floors are WCAG 2.x as docs/BRAND.md holds the site: 4.5:1 for text; the
+   window's ink and prose are held to 7:1, which they clear. Darken the
+   color rather than lowering the floor. The test fails loudly if a token is
+   marked `"text": true` with no pair.
+
+## The app icon
+
+The window's icon is not in this folder: `scripts/make-brand.py` draws it
+from the mark into `rust/crates/sp-app/icons/` (and `assets/icon.svg`), and
+docs/BRAND.md describes it.
 
 ## var() is fine here
 
 `CLAUDE.md` bans `var()`, `min()` and `clamp()` in CSS. That rule is about
-`src/epub/css.ts` and only that: Adobe RMSDK, which is Kobo and tolino's EPUB
-path, can blank an entire book on a value function it cannot parse. This
+the EPUB's stylesheet (`rust/crates/sp-epub/src/css.rs`) and only that:
+Adobe RMSDK, which is Kobo and tolino's EPUB path, can blank an entire book
+on a value function it cannot parse. This
 folder ships to modern browsers. Use `var()` and `clamp()` here, and don't
-carry them back into `css.ts`.
+carry them back into `css.rs`.
 
 ## The brad symbols are defined per-document
 
@@ -80,9 +130,15 @@ files.
 
 ## Fonts
 
-Courier Prime for structure, Literata for prose. The previews pull both from
-Google Fonts for convenience. The site self-hosts them; both are open licensed,
-which is what makes that legal.
+The window's chrome is the system's own UI sans (`--font-ui` in
+`tokens.css`: San Francisco, Segoe UI, the Linux desktop's sans), loaded
+from the system at start by `rust/crates/sp-app/src/fonts.rs`, with Inter
+(SIL OFL 1.1, unmodified, `rust/crates/sp-app/fonts-ui/`) bundled as the
+fallback. Courier Prime and Literata set the script only. The previews in
+`components/` were drawn for the Screepub look and still show Courier
+chrome; the window is the reference now. They pull Courier Prime and
+Literata from Google Fonts for convenience. The site self-hosts them; both
+are open licensed, which is what makes that legal.
 
 ## Pushing to Claude Design
 

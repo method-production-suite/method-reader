@@ -194,8 +194,8 @@ fn outside_a_bundle_the_sweep_does_nothing() {
     std::fs::create_dir_all(&stale).unwrap();
     age(&stale, Duration::from_secs(3600));
     for exe in [
-        dir.path().join("screepub-window"),
-        dir.path().join("target/release/screepub-window"),
+        dir.path().join("method-reader-app"),
+        dir.path().join("target/release/method-reader-app"),
         dir.path()
             .join(".Screepub.app.update-5/Contents/MacOS/screepub-desktop"),
     ] {
@@ -207,4 +207,94 @@ fn outside_a_bundle_the_sweep_does_nothing() {
         );
     }
     assert!(stale.exists());
+}
+
+// ---- the one-time rename: leftovers under either name ----
+//
+// A renaming swap moves `Screepub.app` aside to `.Screepub.app.old-<pid>`
+// and its staging `.Method Reader.app.update-<pid>` into
+// `Method Reader.app`. A sweep beside either name looks after both.
+
+#[test]
+fn a_renaming_swap_that_died_between_its_renames_puts_the_old_bundle_back() {
+    let apps = tempfile::tempdir().unwrap();
+    let backup = apps.path().join(".Screepub.app.old-123");
+    make_bundle(&backup, "Screepub", "0.13.0");
+    age(&backup, Duration::from_secs(3600));
+    let staging = apps.path().join(".Method Reader.app.update-123");
+    std::fs::create_dir_all(staging.join("Contents")).unwrap();
+    age(&staging, Duration::from_secs(3600));
+
+    // Launch Services follows the moved bundle: the Dock starts the backup.
+    let swept = sweep_at_startup(&backup.join("Contents/MacOS/Screepub"));
+    let bundle = apps.path().join("Screepub.app");
+    assert_eq!(swept.restored.as_deref(), Some(bundle.as_path()));
+    assert_eq!(version_of(&bundle), "0.13.0");
+    assert_eq!(swept.removed, std::slice::from_ref(&staging));
+    assert!(!apps.path().join("Method Reader.app").exists());
+}
+
+#[test]
+fn the_new_bundle_clears_the_old_name_s_stale_backup() {
+    let apps = tempfile::tempdir().unwrap();
+    let bundle = apps.path().join("Method Reader.app");
+    make_bundle(&bundle, "method-reader-app", "0.13.1");
+    let stale = apps.path().join(".Screepub.app.old-77");
+    make_bundle(&stale, "Screepub", "0.13.0");
+    age(&stale, Duration::from_secs(3600));
+    let fresh = apps.path().join(".Screepub.app.old-78");
+    std::fs::create_dir_all(&fresh).unwrap();
+
+    let swept = sweep_at_startup(&bundle.join("Contents/MacOS/method-reader-app"));
+    assert_eq!(
+        swept,
+        Swept {
+            restored: None,
+            removed: vec![stale.clone()]
+        }
+    );
+    assert!(fresh.exists(), "minutes old: maybe a swap in progress");
+    assert!(!apps.path().join("Screepub.app").exists());
+}
+
+#[test]
+fn started_from_the_old_backup_beside_the_new_bundle_nothing_is_put_back() {
+    // The rename finished but could not delete the backup, and the Dock
+    // still points at the moved old bundle. Putting it back would leave two
+    // copies; the new bundle is already where it belongs.
+    let apps = tempfile::tempdir().unwrap();
+    make_bundle(
+        &apps.path().join("Method Reader.app"),
+        "method-reader-app",
+        "0.13.1",
+    );
+    let backup = apps.path().join(".Screepub.app.old-123");
+    make_bundle(&backup, "Screepub", "0.13.0");
+    let swept = sweep_at_startup(&backup.join("Contents/MacOS/Screepub"));
+    assert_eq!(swept.restored, None);
+    assert!(!apps.path().join("Screepub.app").exists());
+}
+
+#[test]
+fn the_old_bundle_clears_a_renaming_swap_s_stale_staging() {
+    let apps = tempfile::tempdir().unwrap();
+    let bundle = apps.path().join("Screepub.app");
+    make_bundle(&bundle, "Screepub", "0.13.0");
+    let staging = apps.path().join(".Method Reader.app.update-5");
+    std::fs::create_dir_all(staging.join("Contents")).unwrap();
+    age(&staging, Duration::from_secs(3600));
+    let swept = sweep_beside(apps.path(), "Screepub.app", ME);
+    assert_eq!(swept.removed, [staging]);
+    assert_eq!(swept.restored, None);
+}
+
+#[test]
+fn a_missing_new_bundle_is_put_back_from_its_own_backup() {
+    let apps = tempfile::tempdir().unwrap();
+    let backup = apps.path().join(".Method Reader.app.old-9");
+    make_bundle(&backup, "method-reader-app", "0.13.1");
+    let swept = sweep_beside(apps.path(), "Method Reader.app", ME);
+    let bundle = apps.path().join("Method Reader.app");
+    assert_eq!(swept.restored.as_deref(), Some(bundle.as_path()));
+    assert!(!apps.path().join("Screepub.app").exists());
 }

@@ -5,8 +5,9 @@
 //! read out of the log.
 //!
 //! ```text
-//! SCREEPUB_FRAME_LOG=out.tsv SCREEPUB_LIBRARY=<scratch> SCREEPUB_CONFIG_DIR=<scratch> \
-//! SCREEPUB_VOLUME_ROOTS=<empty> CALIBRE_CONFIG_DIRECTORY=<scratch> \
+//! METHOD_READER_FRAME_LOG=out.tsv METHOD_READER_LIBRARY=<scratch> \
+//! METHOD_READER_CONFIG_DIR=<scratch> METHOD_READER_VOLUME_ROOTS=<empty> \
+//! CALIBRE_CONFIG_DIRECTORY=<scratch> \
 //!   cargo run --release -p sp-app --example motion_bench -- tests/fixtures/field-station.pdf
 //! ```
 //!
@@ -333,11 +334,11 @@ fn main() -> eframe::Result {
         })
         .to_string_lossy()
         .into_owned();
-    need("SCREEPUB_FRAME_LOG");
-    need("SCREEPUB_CONFIG_DIR");
-    need("SCREEPUB_VOLUME_ROOTS");
+    need("METHOD_READER_FRAME_LOG");
+    need("METHOD_READER_CONFIG_DIR");
+    need("METHOD_READER_VOLUME_ROOTS");
     need("CALIBRE_CONFIG_DIRECTORY");
-    let library = need("SCREEPUB_LIBRARY");
+    let library = need("METHOD_READER_LIBRARY");
     // On the main display (on a MacBook, its own ProMotion screen), so the
     // cadence measured is that screen's and not an external monitor's.
     let mut options = sp_app::app::native_options();
@@ -351,7 +352,7 @@ fn main() -> eframe::Result {
         options.wgpu_options.surface.desired_maximum_frame_latency = Some(n);
     }
     eframe::run_native(
-        "Screepub motion bench",
+        "Method Reader motion bench",
         options,
         Box::new(move |cc| {
             let engine = Arc::new(Guard::new(

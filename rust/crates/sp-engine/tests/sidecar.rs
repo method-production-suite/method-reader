@@ -5,7 +5,10 @@ mod common;
 use common::{Scratch, names, write};
 use serde_json::{Value, json};
 use sp_engine::nodepath::host;
-use sp_engine::settings::sidecar::{load_script_settings, save_script_settings, sidecar_path};
+use sp_engine::settings::sidecar::{
+    legacy_sidecar_path, load_script_settings, read_script_settings, save_script_settings,
+    sidecar_path,
+};
 use sp_model::{DEFAULT_FORMAT_OPTIONS, FormatOptions, resolve_format_options};
 
 fn library(s: &Scratch) -> String {
@@ -18,7 +21,7 @@ fn sidecar_path_derives_from_the_fountain_stem() {
     let fountain = host::join(&[library(&s).as_str(), "Test Script.fountain"]);
     assert_eq!(
         host::basename(&sidecar_path(&fountain)),
-        "Test Script.screepub.json"
+        "Test Script.method-reader.json"
     );
 }
 
@@ -36,7 +39,7 @@ fn sidecar_naming_agrees_with_the_library_for_every_stem() {
         let stem = host::basename_ext(name, &host::extname(name));
         assert_eq!(
             host::basename(&sidecar_path(&host::join(&[dir.as_str(), name]))),
-            format!("{stem}.screepub.json")
+            format!("{stem}.method-reader.json")
         );
     }
 }
@@ -189,4 +192,55 @@ fn a_sidecar_write_that_cannot_land_leaves_no_temp_file() {
     std::fs::create_dir(sidecar_path(&fountain)).unwrap();
     assert!(save_script_settings(&DEFAULT_FORMAT_OPTIONS, &fountain).is_err());
     assert_eq!(names(&dir), vec![host::basename(&sidecar_path(&fountain))]);
+}
+
+// The 0.12 name, `<Stem>.screepub.json`: read when the new file is missing,
+// and replaced by the new name the first time the settings are saved.
+
+#[test]
+fn a_sidecar_under_the_old_name_is_still_read() {
+    let s = Scratch::new("sidecar");
+    let fountain = host::join(&[library(&s).as_str(), "Draft.fountain"]);
+    write(&fountain, "Title: T");
+    let old = host::join(&[library(&s).as_str(), "Draft.screepub.json"]);
+    write(&old, r#"{"keepSpeechesWhole":true}"#);
+    assert_eq!(legacy_sidecar_path(&fountain), old);
+    let read = read_script_settings(&fountain, &DEFAULT_FORMAT_OPTIONS).expect("read");
+    assert_eq!(read.path, old);
+    assert!(read.settings.expect("an object").keep_speeches_whole);
+}
+
+#[test]
+fn the_new_name_wins_when_both_are_there() {
+    let s = Scratch::new("sidecar");
+    let fountain = host::join(&[library(&s).as_str(), "Draft.fountain"]);
+    write(&fountain, "Title: T");
+    write(
+        &host::join(&[library(&s).as_str(), "Draft.screepub.json"]),
+        r#"{"keepSpeechesWhole":true}"#,
+    );
+    write(&sidecar_path(&fountain), r#"{"keepSpeechesWhole":false}"#);
+    let read = read_script_settings(&fountain, &DEFAULT_FORMAT_OPTIONS).expect("read");
+    assert_eq!(read.path, sidecar_path(&fountain));
+    assert!(!read.settings.expect("an object").keep_speeches_whole);
+}
+
+#[test]
+fn saving_writes_the_new_name_and_removes_the_old_one() {
+    let s = Scratch::new("sidecar");
+    let fountain = host::join(&[library(&s).as_str(), "Draft.fountain"]);
+    write(&fountain, "Title: T");
+    let old = legacy_sidecar_path(&fountain);
+    write(&old, r#"{"keepSpeechesWhole":true}"#);
+    let settings = FormatOptions {
+        keep_speeches_whole: true,
+        ..DEFAULT_FORMAT_OPTIONS
+    };
+    save_script_settings(&settings, &fountain).unwrap();
+    assert!(std::path::Path::new(&sidecar_path(&fountain)).is_file());
+    assert!(!std::path::Path::new(&old).exists());
+    assert_eq!(
+        load_script_settings(&fountain, &DEFAULT_FORMAT_OPTIONS),
+        settings
+    );
 }

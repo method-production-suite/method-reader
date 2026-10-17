@@ -1,43 +1,5 @@
-<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <!-- Screepub: screenplay page on an e-ink slate, send-plane accent -->
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#23272f"/>
-      <stop offset="1" stop-color="#15171c"/>
-    </linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f7f3e9"/>
-      <stop offset="1" stop-color="#eae4d3"/>
-    </linearGradient>
-  </defs>
-
-  <!-- backdrop -->
-  <rect x="32" y="32" width="960" height="960" rx="224" fill="url(#bg)"/>
-
-  <!-- e-reader page -->
-  <rect x="208" y="144" width="608" height="736" rx="56" fill="url(#paper)"/>
-  <rect x="208" y="144" width="608" height="736" rx="56" fill="none"
-        stroke="#0d0e11" stroke-opacity="0.25" stroke-width="10"/>
-
-  <!-- screenplay structure: slug / action / cue / dialogue / transition -->
-  <!-- slugline -->
-  <rect x="272" y="232" width="336" height="30" rx="15" fill="#2b2e35"/>
-  <!-- action -->
-  <rect x="272" y="308" width="480" height="20" rx="10" fill="#9a958a"/>
-  <rect x="272" y="352" width="440" height="20" rx="10" fill="#9a958a"/>
-  <!-- character cue (deep indent) -->
-  <rect x="512" y="426" width="168" height="26" rx="13" fill="#2b2e35"/>
-  <!-- dialogue (centered column) -->
-  <rect x="400" y="486" width="304" height="20" rx="10" fill="#9a958a"/>
-  <rect x="400" y="528" width="264" height="20" rx="10" fill="#9a958a"/>
-  <!-- second cue + dialogue -->
-  <rect x="512" y="602" width="128" height="26" rx="13" fill="#2b2e35"/>
-  <rect x="400" y="662" width="304" height="20" rx="10" fill="#9a958a"/>
-  <!-- transition, right-flush -->
-  <rect x="560" y="736" width="192" height="22" rx="11" fill="#6d6960"/>
-
-  <!-- send-to-device plane -->
-  <circle cx="768" cy="800" r="132" fill="#e8a33d"/>
-  <path d="M 700 812 L 848 744 L 796 862 L 774 818 Z" fill="#15171c"/>
-  <path d="M 774 818 L 782 850 L 796 862 Z" fill="#3d3526"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<!-- Method Reader favicon. Drawn by scripts/make-brand.py; edit that, not this file. -->
+<style>path{fill:#7052BA}@media (prefers-color-scheme:dark){path{fill:#B49CF0}}</style>
+<path opacity=".5" d="M5.5 3H10.5a0.5 0.5 0 0 1 0.5 0.5V3.5a0.5 0.5 0 0 1-0.5 0.5H5.5a0.5 0.5 0 0 1-0.5-0.5V3.5a0.5 0.5 0 0 1 0.5-0.5ZM5.5 5H8.5a0.5 0.5 0 0 1 0.5 0.5V5.5a0.5 0.5 0 0 1-0.5 0.5H5.5a0.5 0.5 0 0 1-0.5-0.5V5.5a0.5 0.5 0 0 1 0.5-0.5ZM6.5 7H10.5a0.5 0.5 0 0 1 0.5 0.5V7.5a0.5 0.5 0 0 1-0.5 0.5H6.5a0.5 0.5 0 0 1-0.5-0.5V7.5a0.5 0.5 0 0 1 0.5-0.5ZM6.5 9H8.5a0.5 0.5 0 0 1 0.5 0.5V9.5a0.5 0.5 0 0 1-0.5 0.5H6.5a0.5 0.5 0 0 1-0.5-0.5V9.5a0.5 0.5 0 0 1 0.5-0.5Z"/><path fill-rule="evenodd" d="M4.5 1H11.5a1.5 1.5 0 0 1 1.5 1.5V13.5a1.5 1.5 0 0 1-1.5 1.5H4.5a1.5 1.5 0 0 1-1.5-1.5V2.5a1.5 1.5 0 0 1 1.5-1.5ZM4.5 2H11.5a0.5 0.5 0 0 1 0.5 0.5V10.5a0.5 0.5 0 0 1-0.5 0.5H4.5a0.5 0.5 0 0 1-0.5-0.5V2.5a0.5 0.5 0 0 1 0.5-0.5Z"/>
 </svg>

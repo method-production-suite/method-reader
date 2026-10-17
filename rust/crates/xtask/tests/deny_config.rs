@@ -12,7 +12,25 @@ fn every_ignored_advisory_says_why() {
         .lines()
         .filter(|l| l.trim_start().starts_with("{ id = \"RUSTSEC-"))
         .collect();
-    assert_eq!(ids.len(), 3, "the three known at the cutover: {ids:?}");
+    // Named, not counted: a new exception is a decision, made here too.
+    // The first three were known at the cutover (2026-10-12); 0370 to 0372
+    // are zbus 5's helper crates, folded into zbus 6 (2026-10-16).
+    let named: Vec<&str> = ids
+        .iter()
+        .filter_map(|l| l.split("id = \"").nth(1).and_then(|r| r.split('"').next()))
+        .collect();
+    assert_eq!(
+        named,
+        [
+            "RUSTSEC-2024-0370",
+            "RUSTSEC-2026-0192",
+            "RUSTSEC-2024-0449",
+            "RUSTSEC-2026-0370",
+            "RUSTSEC-2026-0371",
+            "RUSTSEC-2026-0372",
+        ],
+        "every ignored advisory, in order: {ids:?}"
+    );
     for line in ids {
         let reason = line
             .split("reason = \"")

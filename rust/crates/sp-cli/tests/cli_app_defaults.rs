@@ -46,7 +46,7 @@ fn epub_css(path: &str) -> String {
         .unwrap_or_else(|| panic!("no stylesheet in {path}"))
 }
 
-/// The Sandbox's SCREEPUB_CONFIG_DIR holding `settings.json` with these
+/// The Sandbox's METHOD_READER_CONFIG_DIR holding `settings.json` with these
 /// `formatDefaults`.
 fn app_defaults(sb: &Sandbox, format_defaults: Value) {
     sb.write(
@@ -125,7 +125,7 @@ fn a_sidecar_outranks_the_app_defaults_knob_by_knob() {
     );
     // The sidecar only ever mentions ONE of those three knobs.
     sb.write(
-        "scripts/Sidecar.screepub.json",
+        "scripts/Sidecar.method-reader.json",
         json!({ "dialogueSideMarginPct": SIDECAR_SIDE }).to_string(),
     );
     let out = sb.p("out/sidecar.epub");
@@ -145,7 +145,7 @@ fn an_explicit_options_json_flag_wins_over_both_the_sidecar_and_the_app_defaults
     let pdf = script(&sb, "screenplay.pdf", "Flagged.pdf");
     app_defaults(&sb, json!({ "dialogueSideMarginPct": APP_SIDE }));
     sb.write(
-        "scripts/Flagged.screepub.json",
+        "scripts/Flagged.method-reader.json",
         json!({ "dialogueSideMarginPct": SIDECAR_SIDE }).to_string(),
     );
     let out = sb.p("out/flagged.epub");
@@ -179,7 +179,7 @@ fn a_sidecar_side_by_side_wins_over_app_defaults_sequential_through_the_real_pre
     let pdf = script(&sb, "torture.pdf", "Dual.pdf");
     app_defaults(&sb, json!({ "dualDialogue": "sequential" }));
     sb.write(
-        "scripts/Dual.screepub.json",
+        "scripts/Dual.method-reader.json",
         json!({ "dualDialogue": "sideBySide" }).to_string(),
     );
     let out = sb.p("out/dual-sidecar.epub");
@@ -193,7 +193,7 @@ fn an_explicit_options_json_flag_wins_the_same_way_over_a_sequential_sidecar_and
     let pdf = script(&sb, "torture.pdf", "DualFlag.pdf");
     app_defaults(&sb, json!({ "dualDialogue": "sequential" }));
     sb.write(
-        "scripts/DualFlag.screepub.json",
+        "scripts/DualFlag.method-reader.json",
         json!({ "dualDialogue": "sequential" }).to_string(),
     );
     let out = sb.p("out/dual-flag.epub");

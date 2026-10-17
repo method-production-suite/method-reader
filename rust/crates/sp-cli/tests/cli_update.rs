@@ -1,5 +1,5 @@
-//! Port of tests/cli-update.test.ts: `screepub update-decision` and
-//! `screepub update-should-check`, the updater's second opinion for
+//! Port of tests/cli-update.test.ts: `method-reader update-decision` and
+//! `method-reader update-should-check`, the updater's second opinion for
 //! everything that is not the window.
 //!
 //! BOTH VERBS ARE OFFLINE: the caller hands over the versions or the
@@ -10,7 +10,7 @@
 //! tests/update_compare.rs ports update-compare.test.ts (the comparator
 //! itself) and tests/parity_cli.rs runs both verbs against the TypeScript.
 //! Here: the handler checks this file made in process, and every spawned
-//! check through the built `screepub`. `resolveCommand(.., exists)` is the
+//! check through the built `method-reader`. `resolveCommand(.., exists)` is the
 //! binary's own, so "a real file of that name wins" runs through the CLI
 //! with such a file in its working folder.
 

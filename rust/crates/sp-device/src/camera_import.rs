@@ -7,7 +7,7 @@
 //! the moment it connects and holds it exclusively, so no other program can
 //! open a Kindle. The shipped precedent disables it in the person's own
 //! launchd domain and kills it, which needs no password, and enables it
-//! again afterwards. Screepub does that for ONE copy, never longer:
+//! again afterwards. Method Reader does that for ONE copy, never longer:
 //!
 //!  - Darwin only. Anywhere else every function here does nothing.
 //!  - If the daemon is already disabled, someone chose that: leave it
@@ -25,7 +25,7 @@
 //!    marker so the next run tries again.
 //!
 //! Every launchctl and pkill call goes through a [`Runner`]. The tests use
-//! fakes, and `SCREEPUB_LAUNCHCTL` / `SCREEPUB_PKILL` name the tools so a
+//! fakes, and `METHOD_READER_LAUNCHCTL` / `METHOD_READER_PKILL` name the tools so a
 //! test guard can point them where nothing real runs.
 
 use crate::process::{Platform, Runner, SpawnRunner};
@@ -41,7 +41,7 @@ pub const PTPCAMERAD_PROCESS: &str = "ptpcamerad";
 /// What the window shows for the whole of a copy to an MTP Kindle on a Mac
 /// (the route device's `copyNote`). The engine writes the words; the window
 /// only shows them.
-pub const CAMERA_IMPORT_NOTE: &str = "While it copies, Photos and Image Capture cannot import from a camera or phone. Screepub turns that back on when the copy ends.";
+pub const CAMERA_IMPORT_NOTE: &str = "While it copies, Photos and Image Capture cannot import from a camera or phone. Method Reader turns that back on when the copy ends.";
 
 /// The marker's file name, in the app's config folder beside settings.json.
 pub const MARKER_NAME: &str = "camera-import-paused";
@@ -56,7 +56,7 @@ pub const STEP_TIMEOUT: Duration = Duration::from_secs(10);
 pub const MARKER_STALE: Duration = Duration::from_secs(15 * 60);
 
 /// Where the marker lives: beside settings.json, in the folder sp-engine's
-/// app-settings path names (so SCREEPUB_CONFIG_DIR, the test guard
+/// app-settings path names (so METHOD_READER_CONFIG_DIR, the test guard
 /// included, moves it too). The settings path is sp-engine's to compute.
 pub fn camera_import_marker(config_dir: &Path) -> PathBuf {
     config_dir.join(MARKER_NAME)
@@ -108,7 +108,7 @@ pub struct CameraImportDeps {
     pub uid: u32,
     pub run: Arc<dyn Runner>,
     pub marker: PathBuf,
-    /// `SCREEPUB_LAUNCHCTL` / `SCREEPUB_PKILL` as this run sees them.
+    /// `METHOD_READER_LAUNCHCTL` / `METHOD_READER_PKILL` as this run sees them.
     pub launchctl: String,
     pub pkill: String,
     /// This run's pid, written into the marker.
@@ -135,8 +135,8 @@ impl CameraImportDeps {
             uid: current_uid(),
             run: Arc::new(SpawnRunner),
             marker: camera_import_marker(config_dir),
-            launchctl: tool("SCREEPUB_LAUNCHCTL", "/bin/launchctl"),
-            pkill: tool("SCREEPUB_PKILL", "/usr/bin/pkill"),
+            launchctl: tool("METHOD_READER_LAUNCHCTL", "/bin/launchctl"),
+            pkill: tool("METHOD_READER_PKILL", "/usr/bin/pkill"),
             pid: std::process::id(),
             is_alive: Arc::new(process_alive),
             now: Arc::new(now_ms),
@@ -216,7 +216,7 @@ fn enable(deps: &CameraImportDeps) -> bool {
 pub struct CameraImportPause {
     /// True when this pause disabled the daemon and restore() will enable it.
     pub paused: bool,
-    /// True when the daemon was already disabled before Screepub looked.
+    /// True when the daemon was already disabled before Method Reader looked.
     pub already_off: bool,
     deps: Option<CameraImportDeps>,
     restored: OnceLock<bool>,

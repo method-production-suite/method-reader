@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use egui::{Align, Color32, Id, Layout, Rect, Sense, Shape, Stroke, Ui, Vec2, accesskit};
+use egui::{Color32, Id, Rect, Sense, Shape, Stroke, Ui, Vec2, accesskit};
 use serde_json::Value;
 
 use super::bookview::{BOOK_EM, Place, sheet};
@@ -18,7 +18,6 @@ use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::notes::RELEASE;
 use crate::model::page_show::{can_show, page_paragraphs, page_switches_from};
-use crate::model::update::should_ask;
 use crate::theme::{self, size};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -396,96 +395,48 @@ fn column(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
 
 fn draw_idle(app: &mut App, ui: &mut Ui, window: Vec2) {
     let t = app.tokens();
+    // The app's name is the title bar's; the page is the drop well alone,
+    // set a calm distance down (less in a short window).
     let short = window.y <= layout::SHORT_PAGE;
-    let (size, above, below) = if short {
-        (size::LEDE, layout::SPACE[5], layout::SPACE[6])
+    ui.add_space(if short {
+        layout::SPACE[5]
     } else {
-        (size::TITLE, layout::SPACE[9], layout::SPACE[8])
-    };
-    ui.add_space(above);
-    ui.vertical_centered(|ui| {
-        let font = theme::structure_bold(size);
-        let shown = widgets::caps(m::WORDMARK)
-            .chars()
-            .map(String::from)
-            .collect::<Vec<_>>()
-            .join("\u{200A}");
-        let r = widgets::text(ui, &shown, font, t.ink);
-        ui.ctx().accesskit_node_builder(r.id, |n| {
-            n.set_role(accesskit::Role::Heading);
-            n.set_level(1);
-            n.set_label(m::WORDMARK);
-        });
-        let y = r.rect.bottom() + layout::SPACE[3];
-        ui.painter()
-            .hline(r.rect.x_range(), y, Stroke::new(2.0, t.brass));
-        ui.add_space(layout::SPACE[3]);
+        layout::SPACE[10]
     });
-    ui.add_space(below);
-    // The well.
     let targeted = app.drag_hover;
-    let frame = egui::Frame::NONE.inner_margin(egui::Margin::symmetric(19, 26));
+    let frame = egui::Frame::NONE
+        .fill(if targeted { t.brass_soft } else { t.panel })
+        .corner_radius(theme::RADIUS_WELL)
+        .inner_margin(egui::Margin::symmetric(24, 36));
     let inner = frame.show(ui, |ui| {
         ui.set_width(ui.available_width());
         ui.vertical_centered(|ui| {
             ui.spacing_mut().item_spacing.y = layout::SPACE[2];
-            let (rect, _) = ui.allocate_exact_size(Vec2::splat(26.0), Sense::hover());
+            let (rect, _) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::hover());
             paint_well_mark(ui, rect, if targeted { t.brass } else { t.ink_muted });
-            widgets::text(
-                ui,
-                &widgets::caps(m::WELL_CALL),
-                theme::structure_bold(size::UI),
-                t.ink,
-            );
-            widgets::text(ui, m::WELL_OR, theme::structure(size::FINE), t.ink_muted);
-            let words = format!("Choose PDF…  {}", m::shortcut_label(app.host.platform));
-            let b = widgets::button(ui, &t, Look::Small, &words, true);
+            ui.add_space(layout::SPACE[1]);
+            let call = widgets::text(ui, m::WELL_CALL, theme::chrome_strong(size::BODY), t.ink);
+            ui.ctx().accesskit_node_builder(call.id, |n| {
+                n.set_role(accesskit::Role::Heading);
+                n.set_level(1);
+                n.set_label(m::WELL_CALL);
+            });
+            widgets::text(ui, m::WELL_OR, theme::chrome(size::LABEL), t.ink_muted);
+            let b = widgets::button(ui, &t, Look::Brass, m::CHOOSE, true);
+            let shortcut = m::shortcut_label(app.host.platform);
+            ui.ctx()
+                .accesskit_node_builder(b.id, |n| n.set_keyboard_shortcut(shortcut));
             app.stop(b.id, true);
             if b.clicked() {
                 choose(app);
             }
-            widgets::text(
-                ui,
-                m::WELL_LIMITS,
-                theme::structure(size::FINE),
-                t.ink_muted,
-            );
+            ui.add_space(layout::SPACE[1]);
+            widgets::text(ui, m::WELL_LIMITS, theme::chrome(size::LABEL), t.ink_muted);
         });
     });
     let rect = inner.response.rect;
-    let color = if targeted { t.brass } else { t.ink_muted };
-    dashed_round_rect(ui, rect, 5.0, Stroke::new(1.5, color));
-
-    // The one-time update question.
-    let usable = app.update.usable(&app.host);
-    if should_ask(usable, app.host.storage.as_ref()) {
-        ui.add_space(layout::SPACE[6]);
-        ui.horizontal_wrapped(|ui| {
-            widgets::text(
-                ui,
-                m::ASK_QUESTION,
-                theme::structure(size::NOTE),
-                t.ink_muted,
-            );
-            let yes = widgets::button(ui, &t, Look::Quiet, m::ASK_YES, true);
-            let no = widgets::button(ui, &t, Look::Quiet, m::ASK_NO, true);
-            app.stop(yes.id, true);
-            app.stop(no.id, true);
-            let answer = if yes.clicked() {
-                Some(true)
-            } else if no.clicked() {
-                Some(false)
-            } else {
-                None
-            };
-            if let Some(on) = answer {
-                if should_ask(usable, app.host.storage.as_ref()) {
-                    app.update.answer(&mut app.host, on);
-                }
-                app.restore_focus = true;
-            }
-        });
-    }
+    let color = if targeted { t.brass } else { t.rule_strong };
+    dashed_round_rect(ui, rect, theme::RADIUS_WELL, Stroke::new(1.0, color));
 
     // The library slot: the line, its buttons and the line under it. Not
     // drawn for the README pictures, where it would name the capture's own
@@ -500,7 +451,7 @@ fn draw_idle(app: &mut App, ui: &mut Ui, window: Vec2) {
             widgets::text(
                 ui,
                 &m::library_line(&library),
-                theme::structure(size::NOTE),
+                theme::chrome(size::LABEL),
                 t.ink_muted,
             );
             for action in m::library_actions(&library) {
@@ -520,7 +471,7 @@ fn draw_idle(app: &mut App, ui: &mut Ui, window: Vec2) {
     }
     if !app.convert.secondary.is_empty() {
         let line = app.convert.secondary.clone();
-        widgets::text(ui, &line, theme::structure(size::NOTE), t.ink_muted);
+        widgets::text(ui, &line, theme::chrome(size::LABEL), t.ink_muted);
     }
 }
 
@@ -585,16 +536,17 @@ fn dashed_round_rect(ui: &Ui, rect: Rect, radius: f32, stroke: Stroke) {
 
 fn draw_working(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
-    widgets::slug(ui, &t, "Converting");
-    ui.add_space(layout::SPACE[3]);
+    ui.add_space(layout::SPACE[8]);
+    widgets::title(ui, &t, "Converting");
+    ui.add_space(layout::SPACE[2]);
     widgets::text(
         ui,
         &format!(
             "The pages of {} reflow themselves, one scene at a time.",
             m::file_name(&app.convert.path)
         ),
-        theme::structure(size::UI),
-        t.ink,
+        theme::chrome(size::UI),
+        t.ink_soft,
     );
     ui.add_space(layout::SPACE[6]);
     ui.vertical_centered(|ui| {
@@ -614,16 +566,7 @@ fn draw_working(app: &mut App, ui: &mut Ui) {
             ui,
             Id::new("read-out"),
             &words,
-            theme::structure(size::NOTE),
-            t.ink_muted,
-        );
-    });
-    ui.add_space(layout::SPACE[6]);
-    ui.with_layout(Layout::top_down(Align::Max), |ui| {
-        widgets::text(
-            ui,
-            &widgets::caps("Please stand by:"),
-            theme::structure(size::UI),
+            theme::chrome(size::LABEL),
             t.ink_muted,
         );
     });
@@ -658,8 +601,8 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
             let title = script.as_ref().map(|s| s.title.clone()).unwrap_or_default();
             widgets::heading(
                 ui,
-                &widgets::caps(&m::ready_line(&title)),
-                theme::structure_bold(size::BODY),
+                &m::ready_line(&title),
+                theme::chrome_strong(size::BODY),
                 t.ink,
             );
             let counts = script
@@ -667,7 +610,7 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
                 .map(|s| m::counts_line(s.pages, s.scenes))
                 .unwrap_or_default();
             if !counts.is_empty() {
-                widgets::text(ui, &counts, theme::structure(size::UI), t.ink_muted);
+                widgets::text(ui, &counts, theme::chrome(size::UI), t.ink_muted);
             }
             for w in script
                 .as_ref()
@@ -683,7 +626,7 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
             });
             ui.add_space(layout::SPACE[3]);
             ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing.x = layout::SPACE[6];
+                ui.spacing_mut().item_spacing.x = layout::SPACE[1];
                 for (words, go) in [("Open in Read", 1), ("Settings", 2), ("Convert another", 3)] {
                     let b = widgets::button(ui, &t, Look::Quiet, words, true);
                     app.stop(b.id, true);
@@ -714,29 +657,21 @@ fn draw_failed(app: &mut App, ui: &mut Ui) {
     let Some(refusal) = app.convert.refusal.clone() else {
         return;
     };
-    ui.with_layout(Layout::top_down(Align::Max), |ui| {
-        widgets::text(
-            ui,
-            &widgets::caps("Smash cut to:"),
-            theme::structure_bold(size::UI),
-            t.ink_muted,
-        );
-    });
-    ui.add_space(layout::SPACE[5]);
+    ui.add_space(layout::SPACE[8]);
     widgets::heading(
         ui,
-        &widgets::caps(refusal.heading),
-        theme::structure_bold(size::BODY),
+        refusal.heading,
+        theme::chrome_strong(size::BODY),
         t.alarm,
     );
-    ui.add_space(layout::SPACE[3]);
+    ui.add_space(layout::SPACE[2]);
     ui.scope(|ui| {
-        ui.set_max_width(52.0 * 8.0);
-        widgets::text(ui, &refusal.message, theme::structure(size::UI), t.ink);
+        ui.set_max_width(66.0 * 8.0);
+        widgets::text(ui, &refusal.message, theme::chrome(size::UI), t.ink);
     });
     ui.add_space(layout::SPACE[6]);
     ui.horizontal_wrapped(|ui| {
-        ui.spacing_mut().item_spacing.x = layout::SPACE[3];
+        ui.spacing_mut().item_spacing.x = layout::SPACE[2];
         if refusal.can_force {
             let b = widgets::button(ui, &t, Look::Brass, "Convert anyway", true);
             app.stop(b.id, true);
@@ -759,22 +694,18 @@ fn draw_failed(app: &mut App, ui: &mut Ui) {
     });
     if let Some(kept) = m::still_open_note(app.script.as_ref()) {
         ui.add_space(layout::SPACE[5]);
-        widgets::text(ui, &kept, theme::structure(size::NOTE), t.ink_muted);
+        widgets::text(ui, &kept, theme::chrome(size::LABEL), t.ink_muted);
     }
     ui.add_space(layout::SPACE[6]);
     ui.horizontal(|ui| {
-        widgets::text(
-            ui,
-            &widgets::caps("Error code"),
-            theme::structure(size::FINE),
-            t.ink_muted,
-        );
+        widgets::text(ui, "Error code", theme::chrome(size::LABEL), t.ink_muted);
+        ui.add_space(layout::SPACE[1]);
         egui::Frame::NONE
-            .fill(t.hole)
+            .fill(t.bar)
             .corner_radius(theme::RADIUS_MARK)
             .inner_margin(egui::Margin::symmetric(6, 2))
             .show(ui, |ui| {
-                widgets::text(ui, &refusal.code, theme::structure(size::NOTE), t.ink_muted);
+                widgets::text(ui, &refusal.code, theme::chrome(size::LABEL), t.ink_soft);
             });
     });
 }
@@ -798,7 +729,7 @@ pub fn draw_reveal_foot(app: &mut App, ui: &mut Ui) {
     if b.clicked() {
         reveal(app, book.clone());
     }
-    widgets::text(ui, &book, theme::structure(size::FINE), t.ink_muted);
+    widgets::text(ui, &book, theme::chrome(size::NOTE), t.ink_muted);
     if let Some((for_book, note)) = &app.convert.reveal_note
         && *for_book == book
         && !note.is_empty()

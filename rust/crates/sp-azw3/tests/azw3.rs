@@ -1,4 +1,4 @@
-//! Screepub's own AZW3, read back by the structural reader
+//! Method Reader's own AZW3, read back by the structural reader
 //! (tests/common/kf8_reader.rs): no Calibre needed, so this is what CI
 //! proves. Ports tests/azw3.test.ts and tests/azw3-revision.test.ts's
 //! writer half (the staleness rule that reads the stamp is sp-engine's).

@@ -60,7 +60,7 @@ pub fn with_stack_budget<T>(bytes: usize, f: impl FnOnce() -> T) -> T {
 }
 
 /// Where the stack is now: the address of a local. Stacks grow down on
-/// every platform Screepub ships on.
+/// every platform Method Reader ships on.
 #[inline(never)]
 fn stack_here() -> usize {
     let marker = 0u8;

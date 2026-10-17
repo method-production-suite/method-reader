@@ -1,5 +1,13 @@
 # sp-app: the window in Rust, and the toolkit it is drawn with
 
+> **Superseded in part (2026-10-16):** the window's look is now the Method
+> family's, not the Screepub paper this spec describes: the system's own UI
+> sans for all chrome (Inter bundled as the fallback), sentence case, a
+> normal title bar, a tab strip, Method Budget's control proportions, and no
+> brads or wordmark. docs/BRAND.md ("The window") and brand/README.md
+> describe it; Courier Prime and Literata set only the script. The toolkit
+> decision and everything else below still hold.
+
 Date: 2026-10-11. Plan: `docs/superpowers/plans/2026-10-11-pure-rust-port.md`
 (the UI spike). Inventory: `rust/PARITY.md`, "Window feature inventory".
 

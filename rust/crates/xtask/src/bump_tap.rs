@@ -9,9 +9,19 @@
 //! nothing is downloaded and nothing is re-hashed. The asset list is read
 //! ONCE, and every decision (the digest, and whether the release still
 //! serves Intel) comes from that one answer; if it cannot be read, nothing
-//! is written. `SCREEPUB_REPO` names the release repository; the network
-//! goes through check_latest's `http`, whose bases the environment can
-//! move (tests point it at 127.0.0.1).
+//! is written. `METHOD_READER_REPO` names the release repository; the
+//! network goes through check_latest's `http`, whose bases the environment
+//! can move (tests point it at 127.0.0.1).
+//!
+//! The tap's files are `Casks/method-reader.rb` and
+//! `Formula/method-reader.rb`. Up to 0.12.x they were `screepub.rb`; the
+//! rename is Homebrew's own tap migration, `cask_renames.json` and
+//! `formula_renames.json` at the tap's root mapping `screepub` to
+//! `method-reader`, which bump-tap writes whole every time. A tap that
+//! still has the old files has them moved to the new names (the cask's
+//! token renamed, nothing else in it changed) once the release has been
+//! read; one that has both is refused, since Homebrew only migrates a
+//! renamed file that is gone.
 
 use std::path::Path;
 use std::sync::LazyLock;
@@ -19,7 +29,10 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::check_latest::http::{self, Bases, Fetcher};
-use crate::check_tap::{ARM, INTEL, is_sha, release_repo};
+use crate::check_tap::{
+    ARM, CASK, CASK_RENAMES, FORMULA, FORMULA_RENAMES, INTEL, LEGACY_CASK, LEGACY_FORMULA, is_sha,
+    release_repo, renames_json,
+};
 
 /// The day Intel was dropped: the disable! date of a cask that had no
 /// deprecate! of its own. Fixed, so a second run writes the same bytes,
@@ -96,21 +109,34 @@ pub fn retire_cask(cask: &str) -> String {
     unlines(&out)
 }
 
+/// The cask under its new token: the retired cask's text with its first
+/// line `cask "screepub" do` made `cask "method-reader" do`, and nothing
+/// else changed (it is never bumped; the app updates itself). Already
+/// renamed, it is left as it is.
+pub fn rename_cask(cask: &str) -> String {
+    let old = "cask \"screepub\" do\n";
+    match cask.strip_prefix(old) {
+        Some(rest) => format!("cask \"method-reader\" do\n{rest}"),
+        None => cask.to_string(),
+    }
+}
+
 /// The formula, Apple silicon only, written WHOLE: a pure function of the
 /// version and the digest, so a second run is byte-identical. No version
 /// stanza (brew reads it from the url), and `depends_on arch:` before
 /// `depends_on :macos` (brew style sorts dependencies by name).
 pub fn formula(repo: &str, version: &str, arm_sha: &str) -> String {
     format!(
-        r##"class Screepub < Formula
+        r##"class MethodReader < Formula
   desc "Screenplay PDF to reflowable EPUB3/MOBI converter"
   homepage "https://github.com/{repo}"
-  # Written whole by tools/bump-tap.sh in the screepub repository at every
-  # release: edit it there, not here. Apple silicon only since the release
-  # after 0.9.0; Intel Macs are no longer supported.
-  url "https://github.com/{repo}/releases/download/v{version}/screepub-cli-macos-arm64.tar.gz"
+  # Written whole by `cargo xtask bump-tap` in the method-reader repository
+  # at every release: edit it there, not here. Apple silicon only since the
+  # release after 0.9.0; Intel Macs are no longer supported. Called
+  # screepub up to 0.12.x (formula_renames.json carries installs across).
+  url "https://github.com/{repo}/releases/download/v{version}/{ARM}"
   sha256 "{arm_sha}"
-  license "AGPL-3.0-or-later"
+  license all_of: [{{ any_of: ["MIT", "Apache-2.0"] }}, "GPL-3.0-only"]
 
   livecheck do
     url "https://github.com/{repo}/releases/latest"
@@ -123,15 +149,16 @@ pub fn formula(repo: &str, version: &str, arm_sha: &str) -> String {
   depends_on :macos
 
   def install
-    # The tarball holds a single file, already named plain screepub.
-    bin.install "screepub"
+    # The tarball holds the tool and its old name: screepub says once that
+    # it is now called method-reader, then does exactly what it does.
+    bin.install "method-reader", "screepub"
   end
 
   test do
     # Pins the download to the version this formula claims: a stale url or a
     # mismatched asset fails here rather than at somebody's prompt.
-    assert_match version.to_s, shell_output("#{{bin}}/screepub --version")
-    assert_match "screenplay", shell_output("#{{bin}}/screepub --help")
+    assert_match version.to_s, shell_output("#{{bin}}/method-reader --version")
+    assert_match "screenplay", shell_output("#{{bin}}/method-reader --help")
   end
 end
 "##
@@ -156,9 +183,13 @@ fn verify(cask: &str, formula: &str, version: &str, arm_sha: &str) -> Result<(),
     if cask_lines.iter().any(|l| l.starts_with("  deprecate! ")) {
         return Err("cask still carries deprecate! beside disable!".to_string());
     }
-    if !formula.contains(&format!(
-        "/download/v{version}/screepub-cli-macos-arm64.tar.gz"
-    )) {
+    if cask_lines.first() != Some(&"cask \"method-reader\" do") {
+        return Err("cask is not under the token method-reader".to_string());
+    }
+    if !formula.starts_with("class MethodReader < Formula\n") {
+        return Err("formula is not class MethodReader".to_string());
+    }
+    if !formula.contains(&format!("/download/v{version}/{ARM}")) {
         return Err("formula arm64 url did not take".to_string());
     }
     if !formula.contains(&format!("\"{arm_sha}\"")) {
@@ -167,7 +198,7 @@ fn verify(cask: &str, formula: &str, version: &str, arm_sha: &str) -> Result<(),
     if !formula_lines.contains(&"  depends_on arch: :arm64") {
         return Err("formula does not declare arm64".to_string());
     }
-    if formula.contains("screepub-cli-macos-x64") {
+    if formula.contains(INTEL) {
         return Err("formula still names the Intel tarball".to_string());
     }
     let this = format!("/download/v{version}/");
@@ -191,12 +222,27 @@ pub fn bump_tap(
     let out = Vec::new();
     let mut err = Vec::new();
     let version = version.strip_prefix('v').unwrap_or(version);
-    let cask_path = tap.join("Casks/screepub.rb");
-    let formula_path = tap.join("Formula/screepub.rb");
-    for f in [&cask_path, &formula_path] {
-        if !f.is_file() {
-            err.push(format!("not a tap checkout: {} missing", f.display()));
-            return (out, err, 1);
+    let cask_path = tap.join(CASK);
+    let formula_path = tap.join(FORMULA);
+    // Each file under its new name, or (a tap from before the rename) its
+    // old one, which is moved once the release has been read. Never both:
+    // Homebrew only migrates a renamed file that is gone.
+    let mut moves: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
+    for (new, old) in [(CASK, LEGACY_CASK), (FORMULA, LEGACY_FORMULA)] {
+        let (new_p, old_p) = (tap.join(new), tap.join(old));
+        match (new_p.is_file(), old_p.exists()) {
+            (true, false) => {}
+            (false, true) if old_p.is_file() => moves.push((old_p, new_p)),
+            (true, true) => {
+                err.push(format!(
+                    "bump-tap: {old} is still in the tap beside {new}; Homebrew only migrates a renamed file that is gone. Remove it (git rm) and run again."
+                ));
+                return (out, err, 1);
+            }
+            _ => {
+                err.push(format!("not a tap checkout: {} missing", new_p.display()));
+                return (out, err, 1);
+            }
         }
     }
 
@@ -250,6 +296,17 @@ pub fn bump_tap(
         std::fs::write(path, text)
             .map_err(|e| format!("bump-tap: cannot write {}: {e}", path.display()))
     };
+    // The rename, for a tap that still has the 0.12.x names.
+    for (old, new) in &moves {
+        if let Err(e) = std::fs::rename(old, new) {
+            err.push(format!(
+                "bump-tap: cannot move {} to {}: {e}",
+                old.display(),
+                new.display()
+            ));
+            return (out, err, 1);
+        }
+    }
     let cask = match std::fs::read_to_string(&cask_path) {
         Ok(t) => t,
         Err(e) => {
@@ -260,7 +317,7 @@ pub fn bump_tap(
             return (out, err, 1);
         }
     };
-    let new_cask = retire_cask(&cask);
+    let new_cask = retire_cask(&rename_cask(&cask));
     if new_cask != cask
         && let Err(e) = write(&cask_path, &new_cask)
     {
@@ -271,6 +328,12 @@ pub fn bump_tap(
     if let Err(e) = write(&formula_path, &new_formula) {
         err.push(e);
         return (out, err, 1);
+    }
+    for renames in [CASK_RENAMES, FORMULA_RENAMES] {
+        if let Err(e) = write(&tap.join(renames), &renames_json()) {
+            err.push(e);
+            return (out, err, 1);
+        }
     }
 
     let cask_now = std::fs::read_to_string(&cask_path).unwrap_or_default();
@@ -283,6 +346,7 @@ pub fn bump_tap(
     let out = vec![
         format!("tap rewritten to {version}"),
         "  cask    retired (disabled, never bumped)".to_string(),
+        "  renames screepub -> method-reader (cask and formula)".to_string(),
         format!("  formula arm64 {arm_sha} (Apple silicon only)"),
     ];
     (out, err, 0)

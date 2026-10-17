@@ -1,6 +1,6 @@
-# Screepub in Rust
+# Method Reader in Rust
 
-All of Screepub: the engine, the `screepub` command line, the window, the
+All of Method Reader: the engine, the `method-reader` command line, the window, the
 updater, the release tools, the device-request service and the developer
 tools, in one Cargo workspace. It was ported from the TypeScript engine and
 the Tauri window, and switched over on 2026-10-12 once it matched them on
@@ -28,9 +28,9 @@ rust/
     sp-fdx/             tokens to Final Draft (beta)
     sp-fsutil/          atomic writes, file replacement, node:path's algorithms
     sp-device/          readers on USB, the reMarkable, eject, reveal, the MTP route (off)
-    sp-mtp/             the MTP helper binary (screepub-mtp; off until hardware day)
+    sp-mtp/             the MTP helper binary (method-reader-mtp; off until hardware day)
     sp-engine/          conversion, library, settings, update decisions, export, routes
-    sp-cli/             the `screepub` binary and its --json contract
+    sp-cli/             the `method-reader` binary and its --json contract
     sp-app/             the window (egui and AccessKit), its fonts and icons
     sp-update/          the updater: latest.json, minisign, the bundle swap, the restart
     sp-release/         the release tools (binary sp-release): layouts, update archive, latest.json
@@ -128,7 +128,7 @@ beside the tests are not rows; a test that reads one says what it pins.
 cargo xtask parity                       # every committed fixture and real script
 cargo xtask parity --committed-only      # invented fixtures only
 cargo xtask parity --fixture torture --command convert
-cargo xtask parity --rust-cli path/to/screepub
+cargo xtask parity --rust-cli path/to/method-reader
 cargo xtask parity --accept <row>...     # a deliberate change (above)
 ```
 
@@ -150,7 +150,7 @@ answer file records the facts of the machine it was frozen on
 (crates/sp-engine/tests/common/machine.rs), and those rows are compared
 only where the facts read the same; elsewhere they are counted as skipped.
 
-The Rust CLI is `crates/sp-cli` (binary `screepub`), built in the release
+The Rust CLI is `crates/sp-cli` (binary `method-reader`), built in the release
 profile. `--command` takes a row name or a prefix ending in `*`
 (`--command 'export-*'`).
 

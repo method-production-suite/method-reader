@@ -3,7 +3,7 @@
 //! send remembers into. The handlers (devicesCommand, selectDevice,
 //! sendCommand) are sp-device's, tested in sp-device/tests/commands.rs;
 //! sp-device takes `remember` as a callback, and what this CLI hands it
-//! writes the app settings file named by SCREEPUB_CONFIG_DIR.
+//! writes the app settings file named by METHOD_READER_CONFIG_DIR.
 //!
 //! `resolve_command` lives in the binary, so it is driven through the
 //! spawned CLI: a verb answers as itself (its own usage, its own handler's
@@ -35,7 +35,7 @@ fn a_contract_error_renders_the_exact_json_error_shape() {
     sb.mkdir("vols/Kindle/documents");
     sb.mkdir("vols/KOBOeReader/.kobo");
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     let answer = sb
         .run(&["send", &book_at(&sb, "b/Script.epub"), "--json"])
         .json();
@@ -119,7 +119,7 @@ fn unknown_words_and_an_empty_argv_are_the_default_path() {
     assert_eq!(help.code, 0);
     assert!(
         help.stdout
-            .contains("screepub <input.pdf | input.fountain>")
+            .contains("method-reader <input.pdf | input.fountain>")
     );
 }
 
@@ -147,7 +147,7 @@ fn verbs_is_the_single_list_of_known_verbs() {
         let ran = sb.run(&[verb, "--help", "--json"]);
         assert_eq!(ran.code, 0, "{verb}");
         let usage = ran.json()["usage"].as_str().unwrap().to_owned();
-        assert!(usage.contains(&format!("screepub {verb}")), "{verb}");
+        assert!(usage.contains(&format!("method-reader {verb}")), "{verb}");
     }
     for word in [
         "update",
@@ -175,13 +175,13 @@ fn with_readers(dirs: &[&str]) -> Sandbox {
         sb.mkdir(&format!("vols/{d}"));
     }
     let vols = sb.p("vols");
-    sb.set("SCREEPUB_VOLUME_ROOTS", vols);
+    sb.set("METHOD_READER_VOLUME_ROOTS", vols);
     sb
 }
 
 fn docked(sb: &mut Sandbox, post: u16) -> Tablet {
     let tablet = Tablet::start(Some(200), Some(post));
-    sb.set("SCREEPUB_REMARKABLE_ENDPOINT", tablet.url.clone());
+    sb.set("METHOD_READER_REMARKABLE_ENDPOINT", tablet.url.clone());
     tablet
 }
 
@@ -269,7 +269,7 @@ fn a_read_only_settings_folder_does_not_fail_the_send_the_book_is_on_the_reader(
     let folder = sb.mkdir("readonly");
     chmod(&folder, 0o555);
     let config = sb.p("readonly");
-    sb.set("SCREEPUB_CONFIG_DIR", config);
+    sb.set("METHOD_READER_CONFIG_DIR", config);
     let ran = sb.run(&["send", &book_at(&sb, "b/Script.epub"), "--json"]);
     chmod(&folder, 0o755);
     assert_eq!(ran.code, 0, "{ran:?}");
@@ -285,7 +285,7 @@ fn a_settings_path_that_cannot_exist_its_parent_is_a_file_does_not_fail_the_send
     let mut sb = Sandbox::new();
     let blocker = sb.write("block/a-file", "x");
     sb.set(
-        "SCREEPUB_CONFIG_DIR",
+        "METHOD_READER_CONFIG_DIR",
         format!("{}/config", blocker.display()),
     );
     let tablet = docked(&mut sb, 200);

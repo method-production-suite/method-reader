@@ -169,7 +169,7 @@ fn value<T: serde::Serialize>(answer: &T) -> Value {
     serde_json::to_value(answer).expect("an answer serializes")
 }
 
-/// `deviceSeams()`: SCREEPUB_VOLUME_ROOTS and SCREEPUB_REMARKABLE_ENDPOINT.
+/// `deviceSeams()`: METHOD_READER_VOLUME_ROOTS and METHOD_READER_REMARKABLE_ENDPOINT.
 fn device_seams(skip_remarkable: bool) -> ListDevicesOptions<'static> {
     ListDevicesOptions {
         skip_remarkable,
@@ -390,7 +390,7 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&result));
             } else {
                 let where_ = if result.library.from_env {
-                    "set by SCREEPUB_LIBRARY"
+                    "set by METHOD_READER_LIBRARY"
                 } else if result.library.chosen.is_some() {
                     "the folder you chose"
                 } else {
@@ -403,7 +403,7 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.say(if result.customized {
                     "new scripts start from: your own defaults"
                 } else {
-                    "new scripts start from: Screepub's defaults"
+                    "new scripts start from: Method Reader's defaults"
                 });
                 io.say(if result.keep_script_settings {
                     "when a PDF is converted: keep its settings"

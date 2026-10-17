@@ -12,7 +12,7 @@ fn read(p: &str) -> String {
 
 #[test]
 fn copy_to_kindle_lands_in_documents() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "Kindle", &["documents"]);
     let src = join(&join(&vol, ".."), "Test.epub");
     std::fs::write(&src, "v1").unwrap();
@@ -27,7 +27,7 @@ fn copy_to_kindle_lands_in_documents() {
 
 #[test]
 fn copy_to_kobo_lands_in_the_volume_root() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "KOBOeReader", &[".kobo"]);
     let src = join(&join(&vol, ".."), "Book.epub");
     std::fs::write(&src, "content").unwrap();
@@ -42,7 +42,7 @@ fn copy_to_kobo_lands_in_the_volume_root() {
 
 #[test]
 fn copy_to_tolino_lands_in_the_books_subfolder() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "tolino", &[]);
     let src = join(&join(&vol, ".."), "Story.epub");
     std::fs::write(&src, "text").unwrap();
@@ -57,7 +57,7 @@ fn copy_to_tolino_lands_in_the_books_subfolder() {
 
 #[test]
 fn the_tolino_books_folder_is_made_if_missing() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "tolino", &[]);
     let src = join(&join(&vol, ".."), "Book.epub");
     std::fs::write(&src, "data").unwrap();
@@ -71,7 +71,7 @@ fn the_tolino_books_folder_is_made_if_missing() {
 
 #[test]
 fn copy_overwrites_an_existing_file() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "Kindle", &["documents"]);
     let src = join(&join(&vol, ".."), "Test.epub");
     std::fs::write(&src, "v1").unwrap();
@@ -85,7 +85,7 @@ fn copy_overwrites_an_existing_file() {
 
 #[test]
 fn a_remarkable_is_refused_even_with_a_volume_present() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "ReMarkable", &[]);
     let src = join(&join(&vol, ".."), "Book.epub");
     std::fs::write(&src, "content").unwrap();
@@ -97,7 +97,7 @@ fn a_remarkable_is_refused_even_with_a_volume_present() {
 
 #[test]
 fn a_device_with_no_volume_is_refused() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let src = join(&common::s(s.path()), "Book.epub");
     std::fs::write(&src, "content").unwrap();
     let device = ConnectedDevice {
@@ -112,7 +112,7 @@ fn a_device_with_no_volume_is_refused() {
 
 #[test]
 fn a_kobo_copy_overwrites_an_existing_file_at_the_volume_root() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "KOBOeReader", &[".kobo"]);
     let src = join(&join(&vol, ".."), "Book.epub");
     std::fs::write(&src, "v1").unwrap();
@@ -126,7 +126,7 @@ fn a_kobo_copy_overwrites_an_existing_file_at_the_volume_root() {
 
 #[test]
 fn a_tolino_copy_overwrites_an_existing_file_in_books() {
-    let s = scratch("screepub-device-transfer-");
+    let s = scratch("method-reader-device-transfer-");
     let vol = volume(s.path(), "tolino", &[]);
     let src = join(&join(&vol, ".."), "Book.epub");
     std::fs::write(&src, "v1").unwrap();

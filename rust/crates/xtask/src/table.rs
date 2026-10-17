@@ -9,7 +9,7 @@
 //! scratch folder normalized) and the exit code are always compared, and
 //! stderr where the row asks for it.
 //!
-//! Every verb of `screepub --help` and every flag combination the
+//! Every verb of `method-reader --help` and every flag combination the
 //! TypeScript tests exercise has a row, except what would reach outside
 //! the scratch folder: `kfx-install` and `route` performers (Books, a
 //! browser, Mail), `reveal` that opens a file manager, an `eject` that
@@ -267,8 +267,8 @@ fn words(name: &str, inputs: Inputs, list: &'static [&'static str]) -> CommandRo
 const NO_TABLET: EnvValue = EnvValue::Text("http://127.0.0.1:9");
 
 fn devices_env(row: CommandRow, roots: &'static str) -> CommandRow {
-    row.env("SCREEPUB_VOLUME_ROOTS", EnvValue::Work(roots))
-        .env("SCREEPUB_REMARKABLE_ENDPOINT", NO_TABLET)
+    row.env("METHOD_READER_VOLUME_ROOTS", EnvValue::Work(roots))
+        .env("METHOD_READER_REMARKABLE_ENDPOINT", NO_TABLET)
 }
 
 fn fake_readers(inv: &Invocation) {
@@ -411,6 +411,11 @@ pub fn commands() -> Vec<CommandRow> {
         }))
         .outputs(&[("library", C::Tree)]),
         // A script tuned beside its PDF: the sidecar is used, and adopted.
+        // The three sidecar rows write it under its OLD name
+        // (`<stem>.screepub.json`, the 0.12.x name), on purpose: the engine
+        // writes `<stem>.method-reader.json` now and still reads the old
+        // name when the new one is missing, and these rows pin that
+        // fallback against the frozen answers. Do not rename them.
         words("convert-sidecar", Pdf, &["@IN", "--library", "--json"])
             .prepare(Box::new(|inv| {
                 write(
@@ -1533,8 +1538,8 @@ pub fn commands() -> Vec<CommandRow> {
                         a
                     }),
                 )
-                .env("SCREEPUB_VOLUME_ROOTS", EnvValue::Work("empty"))
-                .env("SCREEPUB_REMARKABLE_ENDPOINT", NO_TABLET),
+                .env("METHOD_READER_VOLUME_ROOTS", EnvValue::Work("empty"))
+                .env("METHOD_READER_REMARKABLE_ENDPOINT", NO_TABLET),
             );
         }
     }

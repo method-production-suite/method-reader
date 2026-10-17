@@ -98,7 +98,7 @@ pub fn partial_path_for(destination: &Path) -> PathBuf {
         .unwrap_or_default();
     let digest = Sha256::digest(name.as_bytes());
     let mark: String = digest.iter().take(4).map(|b| format!("{b:02x}")).collect();
-    let file = format!(".screepub-{mark}.partial");
+    let file = format!(".method-reader-{mark}.partial");
     match destination.parent() {
         Some(parent) => parent.join(file),
         None => PathBuf::from(file),

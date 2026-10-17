@@ -1,4 +1,4 @@
-//! Bundling the native window (rust/crates/sp-app's `screepub-window`) for
+//! Bundling the native window (rust/crates/sp-app's `method-reader-app`) for
 //! `cargo xtask build-app-bundle`.
 //!
 //! Every file is written by sp-release, the library release.yml runs: the
@@ -12,13 +12,16 @@
 //! `xcrun notarytool`, `xcrun stapler` and `hdiutil`; on Windows
 //! `makensis`.
 //!
-//! The facts the updater handover depends on are the Tauri window's own
-//! and live in sp-release's names.rs: the bundle identifier, the product
-//! name, the .app's name, the executable name (`screepub-desktop`), the
-//! Linux package name and the Windows install folder. A 0.11.x window's
-//! updater downloads `Screepub-macOS.app.tar.gz`, checks its signature
-//! against the key it was built with, strips the archive's first path
-//! component and moves what is left over its own `Screepub.app`.
+//! The names live in sp-release's names.rs: the product name, the .app's
+//! name, the executable name (`method-reader-app`), the Linux package name
+//! and the Windows install folder, each with the 0.12.x (Screepub) name it
+//! replaces beside it. The bundle identifier is Method Reader's own from
+//! 0.13 (com.methodreader.desktop; it was com.darkwell.screepub), which
+//! no updater compares. A 0.11.x or
+//! 0.12.x app's updater downloads `Method-Reader-macOS.app.tar.gz`, checks
+//! its signature against the key it was built with, strips the archive's
+//! first path component and moves what is left over its own
+//! `Screepub.app`, whatever the archive's top folder is called.
 
 use std::path::{Path, PathBuf};
 
@@ -33,16 +36,16 @@ use super::util::Runner;
 #[derive(Clone, Copy, Debug)]
 pub struct NativeApp {
     pub product_name: &'static str,
-    /// CFBundleIdentifier: the Tauri window's, so macOS sees one app.
+    /// CFBundleIdentifier: the Tauri window's, unchanged by the rename, so
+    /// macOS sees one app.
     pub identifier: &'static str,
-    /// The .deb and .rpm package name: the Tauri window's, so a package
-    /// manager upgrades it in place.
+    /// The .deb and .rpm package name, which replaces the old `screepub`
+    /// package ([`sp_release::linux`]).
     pub package: &'static str,
     pub crate_name: &'static str,
     /// What cargo builds.
     pub binary: &'static str,
-    /// The installed executable on every platform (`.exe` on Windows): the
-    /// name tauri-cli gave the Tauri window's.
+    /// The installed executable on every platform (`.exe` on Windows).
     pub mac_executable: &'static str,
     pub linux_executable: &'static str,
     pub windows_executable: &'static str,
@@ -62,23 +65,25 @@ pub const NATIVE_APP: NativeApp = NativeApp {
     identifier: sp_update::IDENTIFIER,
     package: sp_release::linux::PACKAGE,
     crate_name: "sp-app",
-    binary: "screepub-window",
+    binary: names::WINDOW_EXE,
     mac_executable: names::WINDOW_EXE,
     linux_executable: names::WINDOW_EXE,
-    windows_executable: "screepub-desktop.exe",
+    windows_executable: "method-reader-app.exe",
     publisher: names::PUBLISHER,
     short_description: names::SHORT_DESCRIPTION,
     long_description: names::LONG_DESCRIPTION,
     minimum_macos: names::MAC_MINIMUM,
     resources: &[
-        ("LICENSE", "LICENSE"),
+        ("LICENSE-MIT", "LICENSE-MIT"),
+        ("LICENSE-APACHE", "LICENSE-APACHE"),
+        ("rust/crates/sp-azw3/LICENSE-GPL-3.0", "LICENSE-GPL-3.0"),
         ("THIRD-PARTY-NOTICES.md", "THIRD-PARTY-NOTICES.md"),
     ],
     icon_dirs: &["rust/crates/sp-app/icons"],
 };
 
-/// The outside programs, each overridable: SCREEPUB_CARGO, SCREEPUB_CODESIGN,
-/// SCREEPUB_DITTO, SCREEPUB_XCRUN, SCREEPUB_HDIUTIL, SCREEPUB_MAKENSIS.
+/// The outside programs, each overridable: METHOD_READER_CARGO, METHOD_READER_CODESIGN,
+/// METHOD_READER_DITTO, METHOD_READER_XCRUN, METHOD_READER_HDIUTIL, METHOD_READER_MAKENSIS.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NativeTools {
     pub cargo: String,
@@ -94,12 +99,12 @@ impl NativeTools {
         let pick =
             |var: &str, default: &str| env.get(var).cloned().unwrap_or_else(|| default.into());
         NativeTools {
-            cargo: pick("SCREEPUB_CARGO", "cargo"),
-            codesign: pick("SCREEPUB_CODESIGN", "codesign"),
-            ditto: pick("SCREEPUB_DITTO", "ditto"),
-            xcrun: pick("SCREEPUB_XCRUN", "xcrun"),
-            hdiutil: pick("SCREEPUB_HDIUTIL", "hdiutil"),
-            makensis: pick("SCREEPUB_MAKENSIS", "makensis"),
+            cargo: pick("METHOD_READER_CARGO", "cargo"),
+            codesign: pick("METHOD_READER_CODESIGN", "codesign"),
+            ditto: pick("METHOD_READER_DITTO", "ditto"),
+            xcrun: pick("METHOD_READER_XCRUN", "xcrun"),
+            hdiutil: pick("METHOD_READER_HDIUTIL", "hdiutil"),
+            makensis: pick("METHOD_READER_MAKENSIS", "makensis"),
         }
     }
 }
@@ -241,7 +246,7 @@ fn linux_icons(repo: &Path) -> Result<Vec<(String, PathBuf)>, String> {
     .collect())
 }
 
-/// Lays out `<dir>/Screepub.app` around `binary` with [`sp_release::mac::build_app`].
+/// Lays out `<dir>/Method Reader.app` around `binary` with [`sp_release::mac::build_app`].
 pub fn assemble_app(
     dir: &Path,
     binary: &Path,

@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "Screepub's own tooling: the oracle and the TypeScript-against-Rust parity harness"
+description = "Method Reader's own tooling: the oracle and the TypeScript-against-Rust parity harness"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

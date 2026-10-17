@@ -8,6 +8,9 @@ name = "screepub-device-requests"
 main = "build/worker/shim.mjs"
 compatibility_date = "2026-09-01"
 workers_dev = true
+# The suite address the window posts to since 0.13 (attached 2026-10-17 as a
+# Custom Domain on the live Worker). workers.dev stays on for 0.12 and older.
+routes = [{ pattern = "requests.methodreader.com", custom_domain = true }]
 
 # worker-build compiles this crate for wasm32-unknown-unknown, runs
 # wasm-bindgen and writes the JavaScript shim Cloudflare loads. Pinned to

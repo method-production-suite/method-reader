@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 use base64::Engine as _;
 use serde_json::{Value, json};
 use tungstenite::Message;
-use xtask::capture::backend::{Browser, CaptureOptions};
+use xtask::capture::backend::{Browser, CaptureOptions, CommandLine, Exchange, Terminal};
 #[cfg(unix)]
 use xtask::capture::backend::{PassOne, WindowBackend};
 use xtask::capture::cdp::{self, CHROME, PROFILE_PREFIX, launch};
@@ -319,6 +319,15 @@ fn a_failure_the_caller_reports_ends_the_wait_at_once_and_a_timeout_names_what_t
     fake.expect_profile_gone();
 }
 
+/// A command line for runs with no terminal shot in them: never asked.
+struct NoCli;
+
+impl CommandLine for NoCli {
+    fn transcript(&mut self, _t: Terminal<'_>) -> Result<Vec<Exchange>, String> {
+        Err("no terminal shot in this run".into())
+    }
+}
+
 /// A window that draws a picture at once, so the run reaches pass two.
 #[cfg(unix)]
 struct DrawnWindow;
@@ -373,6 +382,7 @@ fn a_page_server_that_fails_fails_the_run_at_once_naming_the_error_not_as_a_time
         library: dir.join("Documents").join("Screepub"),
         launch: Box::new(move || launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)),
         window: Box::new(DrawnWindow),
+        cli: Box::new(NoCli),
         out_dir: dir.join("out"),
         tmp: Some(tmp.clone()),
         calibre_config: Some(dir.join("no-calibre")),
@@ -452,6 +462,7 @@ fn with_real_chrome_and_the_real_window_a_drop_run_writes_framed_pictures() {
         library: library.clone(),
         launch: Box::new(|| launch(Path::new(CHROME)).map(|c| Box::new(c) as Box<dyn Browser>)),
         window: Box::new(xtask::capture::backend::EguiWindow::new(&program)),
+        cli: Box::new(NoCli),
         out_dir: out.clone(),
         tmp: Some(tmp.clone()),
         calibre_config: Some(s.0.join("no-calibre")),
@@ -471,6 +482,7 @@ fn with_real_chrome_and_the_real_window_a_drop_run_writes_framed_pictures() {
         "assets/screens/drop-light.png",
         "assets/screens/drop-dark.png",
         "site/img/drop-light.png",
+        "site/img/drop-dark.png",
     ] {
         let png = std::fs::read(out.join(rel)).unwrap();
         assert_eq!(

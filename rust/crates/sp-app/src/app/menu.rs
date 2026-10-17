@@ -1,6 +1,9 @@
 //! The Mac's menu bar, as Tauri's default menu gave the window: the app
 //! menu (About, Services, Hide, Hide Others, Show All, Quit), Edit (Undo,
-//! Redo, Cut, Copy, Paste, Select All) and Window (Minimize, Zoom, Close).
+//! Redo, Cut, Copy, Paste, Select All) and Window (Minimize, Zoom, Close);
+//! and from 0.13 Help, the suite's Help menu (model/help.rs). About and
+//! every Help item open the window's own sheets (src/app/help.rs), so a screen
+//! reader meets them as it meets the rest of the window.
 //!
 //! The Edit items carry their usual shortcuts, which macOS then hands to the
 //! menu and not to the window; so each one is passed on to egui as the
@@ -46,15 +49,22 @@ pub use mac::Menus;
 
 #[cfg(target_os = "macos")]
 mod mac {
+    use crate::model::convert::Platform;
+    use crate::model::help::{HelpItem, groups};
+    use crate::model::names::PRODUCT;
     use muda::accelerator::{Accelerator, Code, Modifiers};
-    use muda::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu};
+    use muda::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu};
 
     use super::{EditAction, edit_events};
 
-    /// The menu bar, kept alive for the window's life, and its Edit items.
+    /// The menu bar, kept alive for the window's life, its Edit items, and
+    /// the items that open the window's Help sheets.
     pub struct Menus {
         _menu: Menu,
         edit: Vec<(MenuId, EditAction)>,
+        help: Vec<(MenuId, HelpItem)>,
+        /// Check for Updates Automatically, kept to the stored switch.
+        automatic: CheckMenuItem,
     }
 
     impl Menus {
@@ -62,9 +72,14 @@ mod mac {
         /// thread, after the window exists.
         pub fn install() -> Option<Self> {
             let menu = Menu::new();
-            let app = Submenu::new("Screepub", true);
+            let app = Submenu::new(PRODUCT, true);
+            // The window's own About sheet (version, website, licence),
+            // named here rather than read from the bundle, so a development
+            // build and a bundle still under its old name (Screepub.app,
+            // until its first update) both say Method Reader.
+            let about = MenuItem::new(HelpItem::About.label(), true, None);
             app.append_items(&[
-                &PredefinedMenuItem::about(None, None),
+                &about,
                 &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::services(None),
                 &PredefinedMenuItem::separator(),
@@ -106,9 +121,33 @@ mod mac {
                     &PredefinedMenuItem::close_window(None),
                 ])
                 .ok()?;
-            menu.append_items(&[&app, &edit_menu, &window]).ok()?;
+            let help_menu = Submenu::new("Help", true);
+            let mut help = vec![(about.id().clone(), HelpItem::About)];
+            let automatic =
+                CheckMenuItem::new(HelpItem::AutomaticUpdates.label(), true, true, None);
+            for (i, group) in groups(Platform::Mac).into_iter().enumerate() {
+                if i > 0 {
+                    help_menu.append(&PredefinedMenuItem::separator()).ok()?;
+                }
+                for item in group {
+                    match item {
+                        HelpItem::AutomaticUpdates => {
+                            help_menu.append(&automatic).ok()?;
+                            help.push((automatic.id().clone(), item));
+                        }
+                        _ => {
+                            let entry = MenuItem::new(item.label(), true, None);
+                            help_menu.append(&entry).ok()?;
+                            help.push((entry.id().clone(), item));
+                        }
+                    }
+                }
+            }
+            menu.append_items(&[&app, &edit_menu, &window, &help_menu])
+                .ok()?;
             menu.init_for_nsapp();
             window.set_as_windows_menu_for_nsapp();
+            help_menu.set_as_help_menu_for_nsapp();
             let edit = vec![
                 (undo.id().clone(), EditAction::Undo),
                 (redo.id().clone(), EditAction::Redo),
@@ -117,12 +156,36 @@ mod mac {
                 (paste.id().clone(), EditAction::Paste),
                 (all.id().clone(), EditAction::SelectAll),
             ];
-            Some(Self { _menu: menu, edit })
+            Some(Self {
+                _menu: menu,
+                edit,
+                help,
+                automatic,
+            })
         }
 
-        /// Pass every Edit item chosen since the last frame on to egui.
-        pub fn pump(&self, ctx: &egui::Context) {
+        /// Keep the switch to what is stored (it can change in the update
+        /// sheet too), and to whether this copy can update itself at all.
+        /// Check for Updates… stays enabled: where this copy cannot update
+        /// itself it says where releases are.
+        pub fn sync(&self, usable: bool, automatic: bool) {
+            if self.automatic.is_checked() != (usable && automatic) {
+                self.automatic.set_checked(usable && automatic);
+            }
+            if self.automatic.is_enabled() != usable {
+                self.automatic.set_enabled(usable);
+            }
+        }
+
+        /// Pass every Edit item chosen since the last frame on to egui, and
+        /// hand back the Help items chosen, for the window to act on.
+        pub fn pump(&self, ctx: &egui::Context) -> Vec<HelpItem> {
+            let mut chosen = Vec::new();
             while let Ok(event) = MenuEvent::receiver().try_recv() {
+                if let Some((_, item)) = self.help.iter().find(|(id, _)| *id == event.id) {
+                    chosen.push(*item);
+                    continue;
+                }
                 let Some((_, action)) = self.edit.iter().find(|(id, _)| *id == event.id) else {
                     continue;
                 };
@@ -132,6 +195,7 @@ mod mac {
                 let events = edit_events(*action, clipboard);
                 ctx.input_mut(|i| i.events.extend(events));
             }
+            chosen
         }
     }
 }

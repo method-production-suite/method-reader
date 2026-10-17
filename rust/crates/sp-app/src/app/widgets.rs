@@ -1,6 +1,8 @@
-//! The window's controls: `surfaces.css`'s buttons (brass, outline,
-//! quiet), its text styles, the Beta badge and live lines, each with the
-//! name and role a screen reader hears.
+//! The window's controls in the Method family's proportions (Method
+//! Budget's `.btn`, `.btn-primary`, `.btn-quiet`: 28 points tall, a 1pt
+//! rule border, a 5pt radius, the system sans at 13), its text styles, the
+//! Beta badge and live lines, each with the name and role a screen reader
+//! hears. Every word is drawn as written: sentence case, no caps.
 
 use egui::{
     Align2, Color32, CornerRadius, FontId, Id, Response, RichText, Sense, Stroke, StrokeKind, Ui,
@@ -9,21 +11,24 @@ use egui::{
 
 use crate::theme::{self, Tokens, size};
 
-/// The CSS caps: the structure face set in upper case.
-pub fn caps(text: &str) -> String {
-    text.to_uppercase()
-}
+/// The family's control height, and the compact one.
+pub const CONTROL_HEIGHT: f32 = 28.0;
+pub const SMALL_HEIGHT: f32 = 24.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Look {
+    /// The primary action: the accent's fill (`.btn-primary`).
     Brass,
+    /// A plain bordered button (`.btn`).
     Outline,
+    /// A borderless one, ink on nothing until hovered (`.btn-quiet`).
     Quiet,
+    /// A plain bordered button, compact.
     Small,
 }
 
-/// A button as `.btn-brad`, `.btn-outline`, `.btn-quiet` drew it. Its
-/// accessible name is its own words as written; the caps are paint.
+/// A button as the family's `.btn`, `.btn-primary` and `.btn-quiet` draw
+/// it. Its accessible name is its own words as written.
 pub fn button(ui: &mut Ui, t: &Tokens, look: Look, words: &str, enabled: bool) -> Response {
     draw_button(ui, t, look, words, enabled, None)
 }
@@ -49,19 +54,20 @@ fn draw_button(
     enabled: bool,
     id: Option<Id>,
 ) -> Response {
-    let (font, pad) = match look {
-        Look::Brass | Look::Outline => (theme::structure_bold(size::UI), Vec2::new(30.0, 10.0)),
-        Look::Small => (theme::structure_bold(size::LABEL), Vec2::new(18.0, 6.0)),
-        Look::Quiet => (theme::structure_bold(size::NOTE), Vec2::new(0.0, 2.0)),
+    let (font, pad_x, height) = match look {
+        Look::Brass => (theme::chrome_strong(size::UI), 12.0, CONTROL_HEIGHT),
+        Look::Outline => (theme::chrome(size::UI), 12.0, CONTROL_HEIGHT),
+        Look::Small => (theme::chrome(size::UI), 10.0, SMALL_HEIGHT),
+        Look::Quiet => (theme::chrome(size::UI), 8.0, CONTROL_HEIGHT),
     };
-    let shown = caps(words);
+    let shown = words.to_string();
     let galley = ui
         .painter()
         .layout_no_wrap(shown.clone(), font.clone(), t.ink);
     let max = ui.available_width().max(galley.size().x.min(120.0));
     let desired = Vec2::new(
-        (galley.size().x + pad.x * 2.0).min(max),
-        galley.size().y + pad.y * 2.0,
+        (galley.size().x + pad_x * 2.0).min(max),
+        height.max(galley.size().y + 4.0),
     );
     let sense = if enabled {
         Sense::click()
@@ -79,10 +85,11 @@ fn draw_button(
     if ui.is_rect_visible(rect) {
         let hovered = enabled && response.hovered();
         let pressed = enabled && response.is_pointer_button_down_on();
+        // `:disabled { opacity: 0.45 }`; a press darkens a little.
         let alpha = if !enabled {
-            0.35
+            0.45
         } else if pressed {
-            0.75
+            0.8
         } else {
             1.0
         };
@@ -93,17 +100,13 @@ fn draw_button(
                 None,
             ),
             Look::Outline | Look::Small => (
-                if hovered {
-                    t.hole
-                } else {
-                    Color32::TRANSPARENT
-                },
+                if hovered { t.bar } else { t.panel },
                 t.ink,
-                Some(t.ink),
+                Some(t.rule_strong.lerp_to_gamma(t.rule, 0.6)),
             ),
             Look::Quiet => (
-                Color32::TRANSPARENT,
-                if hovered { t.ink } else { t.ink_muted },
+                if hovered { t.bar } else { Color32::TRANSPARENT },
+                t.ink,
                 None,
             ),
         };
@@ -114,7 +117,7 @@ fn draw_button(
             p.rect_stroke(
                 rect,
                 radius,
-                Stroke::new(1.2, line.gamma_multiply(alpha)),
+                Stroke::new(1.0, line.gamma_multiply(alpha)),
                 StrokeKind::Inside,
             );
         }
@@ -180,13 +183,14 @@ pub fn ring_shown(ui: &Ui, response: &Response) -> bool {
             .unwrap_or(crate::model::focus::RINGS_AT_START)
 }
 
-/// The 2px ink ring a focused control wears, after keyboard use only.
+/// The 2px accent ring a focused control wears, after keyboard use only
+/// (the family's `:focus-visible { outline: 2px solid var(--accent) }`).
 pub fn focus_ring(ui: &Ui, t: &Tokens, response: &Response, offset: f32) {
     if ring_shown(ui, response) {
         ui.painter().rect_stroke(
             response.rect.expand(offset),
             CornerRadius::same(theme::RADIUS as u8),
-            Stroke::new(2.0, t.ink),
+            Stroke::new(2.0, t.brass),
             StrokeKind::Outside,
         );
     }
@@ -207,20 +211,14 @@ pub fn heading(ui: &mut Ui, words: &str, font: FontId, color: Color32) -> Respon
     r
 }
 
-/// A slugline: Courier bold caps at body size, ink. The heading's name is
-/// its words as written.
-pub fn slug(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
-    let r = text(ui, &caps(words), theme::structure_bold(size::BODY), t.ink);
-    ui.ctx().accesskit_node_builder(r.id, |n| {
-        n.set_role(accesskit::Role::Heading);
-        n.set_label(words);
-    });
-    r
+/// A page or sheet's title: the system sans at 600, ink, sentence case.
+pub fn title(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
+    heading(ui, words, theme::chrome_strong(size::BODY), t.ink)
 }
 
-/// Running prose at body size.
+/// Running text at the chrome's size.
 pub fn prose(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
-    text(ui, words, theme::prose(size::BODY), t.ink_soft)
+    text(ui, words, theme::chrome(size::UI), t.ink_soft)
 }
 
 /// A caption under a component; alarm-coloured when `bad`.
@@ -228,14 +226,14 @@ pub fn caption(ui: &mut Ui, t: &Tokens, words: &str, bad: bool) -> Response {
     text(
         ui,
         words,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         if bad { t.alarm } else { t.ink_muted },
     )
 }
 
-/// A state label: small caps in the structure face, muted.
+/// A group's label: the system sans at 600, small, muted.
 pub fn state_label(ui: &mut Ui, t: &Tokens, words: &str) -> Response {
-    let r = text(ui, &caps(words), theme::structure(size::NOTE), t.ink_muted);
+    let r = text(ui, words, theme::chrome_strong(size::LABEL), t.ink_muted);
     ui.ctx()
         .accesskit_node_builder(r.id, |n| n.set_value(words));
     r
@@ -270,22 +268,23 @@ pub const BETA_LABEL: &str = "Beta";
 pub const BETA_NOTE: &str =
     "New: works in our tests, not yet tried widely on real devices or apps.";
 
-/// The one Beta badge: real text in a hairline box, described by its note.
+/// The one Beta badge: real text in a hairline box, in the family's caution
+/// amber (never the accent), described by its note.
 pub fn beta_badge(ui: &mut Ui, t: &Tokens) -> Response {
-    let font = theme::structure(size::NOTE);
+    let font = theme::chrome_strong(size::NOTE);
     let galley = ui
         .painter()
-        .layout_no_wrap(caps(BETA_LABEL), font, t.ink_muted);
+        .layout_no_wrap(BETA_LABEL.to_string(), font, t.note);
     let (rect, response) =
-        ui.allocate_exact_size(galley.size() + Vec2::new(8.0, 2.0), Sense::hover());
+        ui.allocate_exact_size(galley.size() + Vec2::new(10.0, 2.0), Sense::hover());
     ui.painter().rect_stroke(
         rect,
         CornerRadius::same(theme::RADIUS_MARK as u8),
-        Stroke::new(1.0, t.ink_muted),
+        Stroke::new(1.0, t.note),
         StrokeKind::Inside,
     );
     ui.painter()
-        .galley(rect.center() - galley.size() / 2.0, galley, t.ink_muted);
+        .galley(rect.center() - galley.size() / 2.0, galley, t.note);
     response.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, BETA_LABEL));
     ui.ctx()
         .accesskit_node_builder(response.id, |n| n.set_description(BETA_NOTE));
@@ -314,23 +313,23 @@ pub fn own_arrows(ui: &Ui, id: Id) {
     });
 }
 
-/// A hairline box with the well's corners and the panel fill.
+/// A card: the surface fill, a rule hairline, the well's corners.
 pub fn panel_frame(t: &Tokens) -> egui::Frame {
     egui::Frame::NONE
         .fill(t.panel)
-        .stroke(Stroke::new(1.0, t.hole))
+        .stroke(Stroke::new(1.0, t.rule))
         .corner_radius(CornerRadius::same(theme::RADIUS_WELL as u8))
-        .inner_margin(egui::Margin::same(19))
+        .inner_margin(egui::Margin::same(16))
 }
 
-/// A thin horizontal track and its fill (the conversion bar), 220 wide.
+/// A thin horizontal track and its fill (the conversion bar), 260 wide.
 pub fn track(ui: &mut Ui, t: &Tokens, fraction: f32) -> egui::Rect {
-    let width = 220.0f32.min(ui.available_width() * 0.7);
-    let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 3.0), Sense::hover());
-    ui.painter().rect_filled(rect, 0.0, t.hole);
+    let width = 260.0f32.min(ui.available_width() * 0.7);
+    let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 4.0), Sense::hover());
+    ui.painter().rect_filled(rect, 2.0, t.rule);
     let mut fill = rect;
     fill.set_width(rect.width() * fraction.clamp(0.0, 1.0));
-    ui.painter().rect_filled(fill, 0.0, t.brass);
+    ui.painter().rect_filled(fill, 2.0, t.brass);
     rect
 }
 

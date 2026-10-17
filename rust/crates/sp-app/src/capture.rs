@@ -9,8 +9,10 @@
 //! reads the process environment, so the xtask starts this program with
 //! the run's own: a scratch library, scratch app settings, no volumes, a
 //! reMarkable address nothing listens on, a scratch COPY of Calibre's
-//! settings. [`parse_args`] refuses to start without SCREEPUB_CONFIG_DIR
-//! and SCREEPUB_LIBRARY, and [`Guard`] holds the line the old capture
+//! settings. [`parse_args`] refuses to start without
+//! METHOD_READER_CONFIG_DIR and METHOD_READER_LIBRARY (or, each unset, the
+//! LEGACY SCREEPUB_ name the engine falls back to), and [`Guard`] holds
+//! the line the old capture
 //! gate held, in code: the demo PDF is the only file it converts, the
 //! scratch library the only place it reads a book from, and nothing that
 //! copies, sends, builds, ejects, exports or installs gets through. The
@@ -113,7 +115,8 @@ pub struct Args {
     /// Where the picture's raw RGBA goes: width x height x 4 bytes, row by
     /// row, at [`PIXELS_PER_POINT`].
     pub out: PathBuf,
-    /// SCREEPUB_LIBRARY, the only place a book may be read from.
+    /// METHOD_READER_LIBRARY (or SCREEPUB_LIBRARY), the only place a book
+    /// may be read from.
     pub library: PathBuf,
     /// `--panel read|edit` (optional, read): which half of the send
     /// panel's Read it | Edit it the result shows.
@@ -123,20 +126,27 @@ pub struct Args {
 pub const USAGE: &str = "usage: capture --shot drop|result|read --theme light|dark \
      --width <points> --height <points> --demo <file.pdf> --out <file.rgba> \
      [--panel read|edit]\n\
-     with SCREEPUB_CONFIG_DIR and SCREEPUB_LIBRARY set to scratch folders";
+     with METHOD_READER_CONFIG_DIR and METHOD_READER_LIBRARY set to scratch folders";
 
 /// The orders, read from the arguments and the environment. Every flag is
 /// required, once; anything else is refused.
 pub fn parse_args(args: &[String], env: &dyn Fn(&str) -> Option<String>) -> Result<Args, String> {
-    for var in ["SCREEPUB_CONFIG_DIR", "SCREEPUB_LIBRARY"] {
-        if env(var).is_none_or(|v| v.trim().is_empty()) {
-            return Err(format!(
+    use crate::model::names::{
+        CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR, LEGACY_LIBRARY_VAR, LIBRARY_VAR,
+    };
+    // The folder the engine will use: the new name when it is set at all
+    // (a blank one is refused, never passed over), else the old one.
+    let scratch = |var: &str, legacy: &str| -> Result<String, String> {
+        match env(var).or_else(|| env(legacy)) {
+            Some(v) if !v.trim().is_empty() => Ok(v),
+            _ => Err(format!(
                 "capture: set {var} to a scratch folder first; this never runs against \
                  the real settings or the real library"
-            ));
+            )),
         }
-    }
-    let library = PathBuf::from(env("SCREEPUB_LIBRARY").unwrap_or_default());
+    };
+    scratch(CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR)?;
+    let library = PathBuf::from(scratch(LIBRARY_VAR, LEGACY_LIBRARY_VAR)?);
     const NAMES: [&str; 7] = ["shot", "theme", "width", "height", "demo", "out", "panel"];
     let mut got: [Option<String>; 7] = Default::default();
     let mut it = args.iter();
@@ -373,7 +383,7 @@ impl Engine for Guard {
 }
 
 /// A computer that answers nothing of its own: no dialog, no browser, no
-/// network, no updater (so no update question and no update label, as the
+/// network, no updater (so no quiet checks and no update label, as the
 /// old capture's window, which had no updater, drew it), no sound, a
 /// storage that starts empty and is never written to disk, and the real
 /// clock, so the window's motion runs and settles as it would.

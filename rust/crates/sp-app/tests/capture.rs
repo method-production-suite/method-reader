@@ -34,8 +34,8 @@ fn strings(v: &[&str]) -> Vec<String> {
 
 fn scratch_env(k: &str) -> Option<String> {
     match k {
-        "SCREEPUB_CONFIG_DIR" => Some("/scratch/config".into()),
-        "SCREEPUB_LIBRARY" => Some("/scratch/library".into()),
+        "METHOD_READER_CONFIG_DIR" => Some("/scratch/config".into()),
+        "METHOD_READER_LIBRARY" => Some("/scratch/library".into()),
         _ => None,
     }
 }
@@ -96,7 +96,7 @@ fn its_orders_are_one_shot_in_one_theme_at_one_size() {
 #[test]
 fn it_refuses_to_start_without_a_scratch_settings_folder_and_library() {
     let d = demo();
-    for missing in ["SCREEPUB_CONFIG_DIR", "SCREEPUB_LIBRARY"] {
+    for missing in ["METHOD_READER_CONFIG_DIR", "METHOD_READER_LIBRARY"] {
         let env = |k: &str| (k != missing).then(|| scratch_env(k)).flatten();
         let e = parse_args(&orders(&d), &env).unwrap_err();
         assert!(e.contains(missing), "{e}");
@@ -110,6 +110,38 @@ fn it_refuses_to_start_without_a_scratch_settings_folder_and_library() {
         let e = parse_args(&orders(&d), &blank).unwrap_err();
         assert!(e.contains(missing), "{e}");
     }
+}
+
+#[test]
+fn the_old_names_still_point_it_at_scratch_folders() {
+    // The engine reads SCREEPUB_CONFIG_DIR and SCREEPUB_LIBRARY when the new
+    // names are unset, so the guard accepts them the same way.
+    let d = demo();
+    let old = |k: &str| match k {
+        "SCREEPUB_CONFIG_DIR" => Some("/scratch/config".into()),
+        "SCREEPUB_LIBRARY" => Some("/old/library".into()),
+        _ => None,
+    };
+    assert_eq!(
+        parse_args(&orders(&d), &old).unwrap().library,
+        PathBuf::from("/old/library")
+    );
+    // The new name wins, as it does in the engine.
+    let both = |k: &str| match k {
+        "METHOD_READER_LIBRARY" => Some("/scratch/library".into()),
+        _ => old(k),
+    };
+    assert_eq!(
+        parse_args(&orders(&d), &both).unwrap().library,
+        PathBuf::from("/scratch/library")
+    );
+    // A blank new name is refused, never passed over for the old one.
+    let blank_new = |k: &str| match k {
+        "METHOD_READER_LIBRARY" => Some(" ".into()),
+        _ => old(k),
+    };
+    let e = parse_args(&orders(&d), &blank_new).unwrap_err();
+    assert!(e.contains("METHOD_READER_LIBRARY"), "{e}");
 }
 
 #[test]
@@ -417,7 +449,7 @@ fn the_picture_hides_the_stamp_and_the_library_slot_and_nothing_else() {
         w.0.output()
             .shapes
             .iter()
-            .any(|c| shape_says(&c.shape, "REV"));
+            .any(|c| shape_says(&c.shape, "rev "));
     assert!(!painted, "the stamp is painted");
     // The well itself is still there.
     assert!(has(&w.0, "Needs selectable text, not a scan."));

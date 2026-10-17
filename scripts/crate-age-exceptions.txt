@@ -1,0 +1,5 @@
+# Exact versions allowed under the 14-day cooldown, read by scripts/check-crate-ages.py.
+# Only for a security fix that cannot wait. One "name version" per line with the reason.
+# Remove a line once the version is 14 days old.
+rustls 0.23.46   # RUSTSEC-2026-0346 to 0349 (2026-10-14)
+zip 9.0.3        # every zip 9.0.0 to 9.0.2 is yanked for extraction safety fixes; 9.0.3 is the oldest left (2026-10-13)

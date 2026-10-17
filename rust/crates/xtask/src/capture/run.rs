@@ -24,7 +24,10 @@ use std::time::Duration;
 
 use serde_json::{Value, json};
 
-use super::backend::{Browser, CaptureOptions, PassOne, WindowBackend};
+use super::backend::{
+    Browser, CaptureOptions, CommandLine, Exchange, PassOne, Terminal, WindowBackend,
+    terminal_query,
+};
 use super::cdp::make_temp_dir;
 use super::http::{Response, Server};
 use super::server::{Handler, HandlerOptions, Records, snapshot};
@@ -33,7 +36,7 @@ use crate::calibre_config::{copy_calibre_config, this_host_real_config};
 
 /// The file that says a library is the capture tool's. Without it, a
 /// library found at the demo path belongs to somebody and is never touched.
-pub const MARKER: &str = ".screepub-capture";
+pub const MARKER: &str = ".method-reader-capture";
 
 /// Why a run ended without its pictures.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -77,6 +80,9 @@ pub struct RunOptions {
     pub launch: Launch,
     /// What draws pass one of a window shot: [`super::backend::EguiWindow`].
     pub window: Box<dyn WindowBackend>,
+    /// What runs the command line for the terminal shot:
+    /// [`super::backend::RealCli`].
+    pub cli: Box<dyn CommandLine>,
     /// Where the pictures go: the repository, outside tests.
     pub out_dir: PathBuf,
     /// Where the first-pass pictures and the Calibre copy are kept.
@@ -251,12 +257,12 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
 /// The environment the window's engine runs with, on top of this
 /// process's.
 ///
-/// - SCREEPUB_LIBRARY: the scratch library.
-/// - SCREEPUB_CONFIG_DIR: a folder under the scratch library, cleared with
+/// - METHOD_READER_LIBRARY: the scratch library.
+/// - METHOD_READER_CONFIG_DIR: a folder under the scratch library, cleared with
 ///   it before every shot, which reads back as no settings at all, so the
 ///   pictures never drift with whatever the developer last chose in their
 ///   own app settings. The window's guard lets nothing write into it.
-/// - SCREEPUB_VOLUME_ROOTS, SCREEPUB_REMARKABLE_ENDPOINT: no real reader,
+/// - METHOD_READER_VOLUME_ROOTS, METHOD_READER_REMARKABLE_ENDPOINT: no real reader,
 ///   ever: an empty mount parent, and a reMarkable address nothing listens on.
 /// - CALIBRE_CONFIG_DIRECTORY: Calibre run against its real settings
 ///   folder rewrites files there (gui.json, 0.7.3 QA). The window's guard
@@ -265,11 +271,14 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
 ///   folder is never handed to anything.
 pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
-        ("SCREEPUB_LIBRARY", library.to_path_buf()),
-        ("SCREEPUB_CONFIG_DIR", library.join(".capture-app-settings")),
-        ("SCREEPUB_VOLUME_ROOTS", library.join(".no-volumes")),
+        ("METHOD_READER_LIBRARY", library.to_path_buf()),
         (
-            "SCREEPUB_REMARKABLE_ENDPOINT",
+            "METHOD_READER_CONFIG_DIR",
+            library.join(".capture-app-settings"),
+        ),
+        ("METHOD_READER_VOLUME_ROOTS", library.join(".no-volumes")),
+        (
+            "METHOD_READER_REMARKABLE_ENDPOINT",
             PathBuf::from("http://127.0.0.1:9"),
         ),
         ("CALIBRE_CONFIG_DIRECTORY", calibre.to_path_buf()),
@@ -349,10 +358,17 @@ impl WindowBackend for Taken {
     }
 }
 
+impl CommandLine for Taken {
+    fn transcript(&mut self, _t: Terminal<'_>) -> Result<Vec<Exchange>, String> {
+        Err("capture: the command line was already taken".into())
+    }
+}
+
 /// Takes every picture, then writes them all, or none.
 pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
     let launch = std::mem::replace(&mut o.launch, Box::new(|| Err("already launched".into())));
     let mut window = std::mem::replace(&mut o.window, Box::new(Taken));
+    let mut cli = std::mem::replace(&mut o.cli, Box::new(Taken));
     let mut log = std::mem::replace(&mut o.log, Box::new(|_| {}));
     let top = claim_library(&o.library, std::process::id())?;
     let mut c = Cleanup {
@@ -364,7 +380,14 @@ pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
         calibre_scratch: None,
     };
     let mut pictures: Vec<(String, Vec<u8>)> = Vec::new();
-    let result = take(&mut c, window.as_mut(), log.as_mut(), &mut pictures, launch);
+    let result = take(
+        &mut c,
+        window.as_mut(),
+        cli.as_mut(),
+        log.as_mut(),
+        &mut pictures,
+        launch,
+    );
     let errors = c.run();
     let interrupted = o
         .interrupt
@@ -406,6 +429,7 @@ pub fn run_capture(mut o: RunOptions) -> Result<(), RunError> {
 fn take(
     c: &mut Cleanup<'_>,
     window: &mut dyn WindowBackend,
+    cli: &mut dyn CommandLine,
     log: &mut dyn FnMut(&str),
     pictures: &mut Vec<(String, Vec<u8>)>,
     launch: Launch,
@@ -418,11 +442,14 @@ fn take(
     };
     let pass_one = c
         .pass_one
-        .insert(make_temp_dir(&tmp, "screepub-capture-").map_err(io("make a temp folder"))?)
+        .insert(make_temp_dir(&tmp, "method-reader-capture-").map_err(io("make a temp folder"))?)
         .clone();
     let scratch = c
         .calibre_scratch
-        .insert(make_temp_dir(&tmp, "screepub-capture-calibre-").map_err(io("make a temp folder"))?)
+        .insert(
+            make_temp_dir(&tmp, "method-reader-capture-calibre-")
+                .map_err(io("make a temp folder"))?,
+        )
         .clone();
     let real = o
         .calibre_config
@@ -478,6 +505,7 @@ fn take(
     let version = browser.version();
     log(&format!("chrome  {version}"));
 
+    let mut transcript: Option<Vec<Exchange>> = None;
     for shot in &o.shots {
         for &theme in shot.themes {
             // One capture's checks: fail at once on a server error, and if
@@ -492,10 +520,33 @@ fn take(
                     format!("the page server could not find {}", mine.join(", "))
                 }
             };
+            // Pass two of a framed shot: its first-pass picture, kept in
+            // this run's scratch folder, placed in frame.html's window.
+            let frame = |browser: &mut Box<dyn Browser>, one: &[u8]| {
+                let name = format!("{}-{}.png", shot.name, theme.word());
+                std::fs::write(pass_one.join(&name), one)
+                    .map_err(io("keep a first-pass picture"))?;
+                let (w, h) = framed_size(shot);
+                let mut opts = CaptureOptions::page(
+                    format!(
+                        "{base}/tools/capture/frame.html?img=/pass-one/{name}&w={}&h={}&title={}",
+                        shot.width,
+                        shot.height,
+                        shot.title.replace(' ', "%20")
+                    ),
+                    w,
+                    h,
+                    theme,
+                );
+                opts.transparent = true;
+                opts.failure = Some(&failure);
+                opts.explain = Some(&explain);
+                browser.capture(&opts).map_err(RunError::other)
+            };
             let png = match shot.kind {
                 Kind::Site => {
                     let mut opts = CaptureOptions::page(
-                        format!("{base}/tools/capture/hero.html"),
+                        format!("{base}/tools/capture/compare.html"),
                         shot.width,
                         shot.height,
                         theme,
@@ -521,23 +572,37 @@ fn take(
                             failure: &failure,
                         })
                         .map_err(RunError::other)?;
-                    let name = format!("{}-{}.png", shot.name, theme.word());
-                    std::fs::write(pass_one.join(&name), &one)
-                        .map_err(io("keep a first-pass picture"))?;
-                    let (w, h) = framed_size(shot);
+                    frame(browser, &one)?
+                }
+                Kind::Terminal => {
+                    // The command line runs once, from an empty library, and
+                    // both themes draw what it printed.
+                    if transcript.is_none() {
+                        empty_library(&o.library).map_err(io("empty the library"))?;
+                        std::fs::create_dir_all(o.library.join(".no-volumes"))
+                            .map_err(io("make the empty volumes folder"))?;
+                        transcript = Some(
+                            cli.transcript(Terminal {
+                                demo_pdf: &o.demo_pdf,
+                                library: &o.library,
+                                env: &env,
+                                scratch: &pass_one,
+                                failure: &failure,
+                            })
+                            .map_err(RunError::other)?,
+                        );
+                    }
+                    let t = transcript.as_deref().unwrap_or_default();
                     let mut opts = CaptureOptions::page(
-                        format!(
-                            "{base}/tools/capture/frame.html?img=/pass-one/{name}&w={}&h={}",
-                            shot.width, shot.height
-                        ),
-                        w,
-                        h,
+                        format!("{base}/tools/capture/terminal.html?t={}", terminal_query(t)),
+                        shot.width,
+                        shot.content_height(),
                         theme,
                     );
-                    opts.transparent = true;
                     opts.failure = Some(&failure);
                     opts.explain = Some(&explain);
-                    browser.capture(&opts).map_err(RunError::other)?
+                    let one = browser.capture(&opts).map_err(RunError::other)?;
+                    frame(browser, &one)?
                 }
             };
             for out in outputs_for(shot, theme) {

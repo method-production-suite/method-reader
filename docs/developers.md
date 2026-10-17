@@ -1,6 +1,6 @@
-# Screepub for developers
+# Method Reader for developers
 
-Screepub is a three-stage pipeline: PDF to Fountain to EPUB3 (and MOBI). The
+Method Reader is a three-stage pipeline: PDF to Fountain to EPUB3 (and MOBI). The
 `.fountain` in the middle is kept as a durable, editable file. Every
 formatting behaviour is an option (`rust/crates/sp-model/src/options.rs`),
 set in the window's Settings page and on the command line with
@@ -13,29 +13,29 @@ Setting up, testing and sending a change: [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 The converter ships on its own for macOS, Linux and Windows. Download the
 file for your machine from the
-[latest release](https://github.com/ssandweiss/screepub/releases/latest),
+[latest release](https://github.com/method-production-suite/method-reader/releases/latest),
 unpack it, and run it.
 
 | Machine | File |
 | --- | --- |
-| Mac, Apple silicon | `screepub-cli-macos-arm64.tar.gz` |
-| Linux, Intel or AMD | `screepub-cli-linux-x64.tar.gz` |
-| Linux, ARM (Asahi, Raspberry Pi, ARM servers) | `screepub-cli-linux-arm64.tar.gz` |
-| Windows, 64-bit | `screepub-cli-windows-x64.zip` |
+| Mac, Apple silicon | `method-reader-cli-macos-arm64.tar.gz` |
+| Linux, Intel or AMD | `method-reader-cli-linux-x64.tar.gz` |
+| Linux, ARM (Asahi, Raspberry Pi, ARM servers) | `method-reader-cli-linux-arm64.tar.gz` |
+| Windows, 64-bit | `method-reader-cli-windows-x64.zip` |
 
 ```bash
-tar -xzf screepub-cli-linux-x64.tar.gz
-./screepub script.pdf
+tar -xzf method-reader-cli-linux-x64.tar.gz
+./method-reader script.pdf
 ```
 
-There is no build for Intel Macs: Screepub supports Macs with Apple
+There is no build for Intel Macs: Method Reader supports Macs with Apple
 silicon only.
 
 On a Mac with Apple silicon, Homebrew installs the same converter and keeps
 it current:
 
 ```bash
-brew install --formula ssandweiss/tap/screepub
+brew install --formula ssandweiss/tap/method-reader
 ```
 
 The Mac archive is signed and notarized. `SHA256SUMS` on the release page
@@ -51,14 +51,14 @@ run from `rust/` on an ARM machine, makes one by hand.
 ## The command line
 
 ```bash
-screepub <input.pdf | input.fountain> [options]
+method-reader <input.pdf | input.fountain> [options]
 ```
 
 That is the installed converter. From a checkout, run the same thing from
-`rust/` with `cargo run -p sp-cli --bin screepub -- <input.pdf> [options]`;
-every `screepub` below works that way too.
+`rust/` with `cargo run -p sp-cli --bin method-reader -- <input.pdf> [options]`;
+every `method-reader` below works that way too.
 
-`screepub --help` is the full reference, and each verb has its own
+`method-reader --help` is the full reference, and each verb has its own
 `--help`. Some features are marked (beta): they work in our tests, but have
 not been tried widely on real devices or apps yet, so tell us how they go.
 They are the FDX, pictures in books, eject on Windows and Linux, and the
@@ -69,7 +69,7 @@ window's device requests and route reports. The options most people want:
 | `-o, --output <file>` | EPUB path (default `<input>.epub`; companions follow it) |
 | `--library` | write into the library instead of beside the input (see below) |
 | `--mobi` | also write a MOBI 6, for the oldest Kindles (text-only for now, see Pictures below) |
-| `--azw3 <file>` | also write an AZW3 for Kindles over USB, made by Screepub from the EPUB with nothing else installed (beta) |
+| `--azw3 <file>` | also write an AZW3 for Kindles over USB, made by Method Reader from the EPUB with nothing else installed (beta) |
 | `--preview-html <file>` | also write the script as one self-contained HTML file |
 | `--fdx <file>` | also write the script as a Final Draft file (beta; see [Final Draft (FDX)](#final-draft-fdx-beta)) |
 | `--fountain <file>` / `--no-fountain` | where the intermediate `.fountain` goes, or skip it |
@@ -98,14 +98,14 @@ A verb is only a verb when no file of that name exists, so a script saved as
 
 ### Final Draft (FDX) (beta)
 
-Screepub can hand back the script itself, as a file to keep writing in,
+Method Reader can hand back the script itself, as a file to keep writing in,
 not only a book to read. `--fdx <file>` on a conversion writes one beside
 the other outputs, and `export` makes one from a book that is already
 converted:
 
 ```bash
-screepub script.pdf --fdx script.fdx
-screepub export <file.epub> --for fdx --fountain <file.fountain> [--out <path>] [--json]
+method-reader script.pdf --fdx script.fdx
+method-reader export <file.epub> --for fdx --fountain <file.fountain> [--out <path>] [--json]
 ```
 
 `export --for fdx` needs the script's `.fountain`, because that is what the
@@ -117,7 +117,7 @@ The file opens in Final Draft, and Fade In, WriterDuet, Highland and Celtx
 import it. It carries scene headings (with their scene numbers), action,
 character cues with their extensions, parentheticals, dialogue, transitions,
 lyrics, centered text, dual dialogue, forced page breaks, bold, italic and
-underline, and a title page. Fountain notes (Screepub's own formatting
+underline, and a title page. Fountain notes (Method Reader's own formatting
 and picture notes among them), sections, synopses and boneyard are left out,
 so a picture carried out of the PDF never appears in the FDX. A
 secondary heading such as LATER becomes a Shot, so it is not counted as a
@@ -144,31 +144,31 @@ together in one folder per script:
 
 | Platform | Library |
 | --- | --- |
-| macOS | `~/Documents/Screepub` |
-| Windows | `%USERPROFILE%\Documents\Screepub` |
-| Linux / other | `<Documents>/Screepub`, where `<Documents>` is `XDG_DOCUMENTS_DIR` (from the environment, else from `~/.config/user-dirs.dirs`), and `~/Documents` when neither says otherwise |
+| macOS | `~/Documents/Method Reader` |
+| Windows | `%USERPROFILE%\Documents\Method Reader` |
+| Linux / other | `<Documents>/Method Reader`, where `<Documents>` is `XDG_DOCUMENTS_DIR` (from the environment, else from `~/.config/user-dirs.dirs`), and `~/Documents` when neither says otherwise |
 
 Each script gets `<library>/<stem>/<stem>.epub`. Two different PDFs with the
 same name do not share a folder: the second gets `<stem>-<hash>`, keyed on its
 own path. The `source.json` in each folder records which PDF it came from. A
-`<stem>.screepub.json` sitting beside the PDF from an earlier conversion is
+`<stem>.method-reader.json` sitting beside the PDF from an earlier conversion is
 copied in the first time that script reaches the library.
 
 Books made by the older Mac app sit flat in the same default folder
 (`<folder>/<stem>.epub`). The window leaves those books alone.
 
-`screepub app-settings --set '{"libraryPath": "/some/folder"}'` chooses a
+`method-reader app-settings --set '{"libraryPath": "/some/folder"}'` chooses a
 different folder (a full path), and `'{"libraryPath": null}'` goes back to the
 default. The window's Convert page offers the same choice: **Change…** beside
-the library line, and **Reset**. Precedence is `SCREEPUB_LIBRARY`, then the
+the library line, and **Reset**. Precedence is `METHOD_READER_LIBRARY`, then the
 chosen folder, then the platform default. Choosing a new folder moves
 nothing: books already converted stay where they are.
 
 ### Settings and defaults
 
 A conversion starts from, in order of precedence: flags on the command line,
-the script's own saved settings (`screepub settings`), the app defaults, and
-Screepub's own defaults. `screepub app-settings` reads or writes the app
+the script's own saved settings (`method-reader settings`), the app defaults, and
+Method Reader's own defaults. `method-reader app-settings` reads or writes the app
 defaults as `formatDefaults`; the window's Settings page has **Use these for
 new scripts**, which makes that script's settings the app defaults.
 
@@ -184,26 +184,26 @@ script follows the app defaults until it is tuned.
 `animatePage` (whether the first page types in; default `true`) and
 `typewriterSounds` (whether the typewriter sounds play; default `false`).
 
-`screepub reveal <file>` shows a converted file in the system's file manager.
+`method-reader reveal <file>` shows a converted file in the system's file manager.
 
 The app settings live in one small file outside the library:
-`~/Library/Application Support/Screepub/settings.json` on macOS,
-`%APPDATA%\Screepub\settings.json` on Windows, and
-`$XDG_CONFIG_HOME/screepub/settings.json` on Linux
-(`~/.config/screepub/settings.json` by default). `SCREEPUB_CONFIG_DIR`
+`~/Library/Application Support/Method Reader/settings.json` on macOS,
+`%APPDATA%\Method Reader\settings.json` on Windows, and
+`$XDG_CONFIG_HOME/method-reader/settings.json` on Linux
+(`~/.config/method-reader/settings.json` by default). `METHOD_READER_CONFIG_DIR`
 overrides that folder everywhere.
 
 ## Devices and routes
 
 ```bash
-screepub devices [--quick] [--json]                # list connected e-readers
-screepub send <file> [--device <id>] [--json]      # send an existing file to one
-screepub export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx]  # the file you would put on a reader
-screepub routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
-screepub route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
-screepub eject <volume> [--json]                   # safely remove a reader before unplugging
-screepub kfx-status [--json]                       # can this computer make KFX for a Kindle?
-screepub kfx-install [--json]                      # install the KFX plugin into Calibre (online)
+method-reader devices [--quick] [--json]                # list connected e-readers
+method-reader send <file> [--device <id>] [--json]      # send an existing file to one
+method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx]  # the file you would put on a reader
+method-reader routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
+method-reader route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
+method-reader eject <volume> [--json]                   # safely remove a reader before unplugging
+method-reader kfx-status [--json]                       # can this computer make KFX for a Kindle?
+method-reader kfx-install [--json]                      # install the KFX plugin into Calibre (online)
 ```
 
 `devices` lists USB-mounted Kindle, Kobo and tolino volumes, plus a
@@ -217,16 +217,16 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 `export --for` takes seven values:
 
 - `epub`: the EPUB itself (the default).
-- `kindle`: the Kindle file this computer makes: KFX where its tools are installed, and otherwise the AZW3 Screepub writes itself (beta).
+- `kindle`: the Kindle file this computer makes: KFX where its tools are installed, and otherwise the AZW3 Method Reader writes itself (beta).
 - `kfx`: a KFX file, and only that.
-- `azw3` (beta): Screepub's own AZW3, made from the EPUB with nothing else installed.
+- `azw3` (beta): Method Reader's own AZW3, made from the EPUB with nothing else installed.
 - `mobi`: the engine's own MOBI, for the oldest Kindles, and only that; the EPUB is left as it is. It needs `--fountain`.
-- `fountain`: the script, for a screenwriting app. It needs `--fountain`, and that file must end in `.fountain`. With `--out`, the copy written there leaves out Screepub's own `[[fmt: ...]]` and `[[img: ...]]` notes and keeps every other line as it is; the `.fountain` beside the book keeps them, because rebuilds read them, and an `--out` naming that file is refused while it carries one. Without `--out`, the answer names the `.fountain` beside the book, notes and all.
+- `fountain`: the script, for a screenwriting app. It needs `--fountain`, and that file must end in `.fountain`. With `--out`, the copy written there leaves out Method Reader's own `[[fmt: ...]]` and `[[img: ...]]` notes and keeps every other line as it is; the `.fountain` beside the book keeps them, because rebuilds read them, and an `--out` naming that file is refused while it carries one. Without `--out`, the answer names the `.fountain` beside the book, notes and all.
 - `fdx` (beta): a Final Draft file rebuilt from the `.fountain` (see above).
 
 `kfx` refuses, with an error, when this computer lacks the tools to make it;
 `mobi` and `fountain` refuse without `--fountain`. The `--json` answer says
-`"beta": true` for a file Screepub still calls beta (the AZW3 and the FDX).
+`"beta": true` for a file Method Reader still calls beta (the AZW3 and the FDX).
 `export` never sends. It makes or reuses the file, and `send` moves it.
 
 `eject <volume>` (beta on Windows and Linux) takes the full path of a reader that `devices` lists right
@@ -253,7 +253,7 @@ A Kindle gets its best rendering from KFX, which needs Calibre, Amazon's
 Kindle Previewer and the KFX Output plugin inside Calibre. `kfx-status` says
 which are installed; `kfx-install` installs the plugin from Calibre's own
 plugin index. Amazon makes no Kindle Previewer for Linux. Without all three,
-a Kindle gets the AZW3 Screepub writes itself (beta), which needs nothing
+a Kindle gets the AZW3 Method Reader writes itself (beta), which needs nothing
 installed. KFX is optional; email and Send to Kindle need no tools at all and
 get Amazon's own conversion.
 
@@ -285,12 +285,12 @@ rust/crates/
   sp-fsutil           write-then-rename, the flushed replace, path rules
   sp-device           USB volumes, eject, reveal, the reMarkable web
                       interface, and MTP Kindles (beta, switched off)
-  sp-mtp              screepub-mtp, the MTP helper (off until it is tried on
+  sp-mtp              method-reader-mtp, the MTP helper (off until it is tried on
                       hardware)
   sp-engine           conversion and its scanned and not-a-screenplay guards,
                       settings, the library, the Kindle ladder, Calibre for
                       KFX, the send routes and update decisions
-  sp-cli              the screepub command, and its --json contract
+  sp-cli              the method-reader command, and its --json contract
   sp-app              the window (egui, with AccessKit for screen readers)
   sp-update           the window's updater: latest.json, the minisign check,
                       the bundle swap and the restart
@@ -299,13 +299,13 @@ rust/crates/
                       installer script
   sp-device-requests  the device-request service (a Cloudflare Worker)
   xtask               developer tools: `cargo xtask --help` lists them
-site/                 screepub.com, one static page with no build step
+site/                 methodreader.com, one static page with no build step
 ```
 
 The window holds no logic of its own, and it has no engine process to run:
 the engine is linked in. `sp-app` reaches it through one `Engine` trait
 (`rust/crates/sp-app/src/engine.rs`) whose requests each stand for a
-`screepub ... --json` command line, and the answers keep the CLI's `--json`
+`method-reader ... --json` command line, and the answers keep the CLI's `--json`
 shape, so the window and the command line answer every request with the
 same code. See [the window's design](superpowers/specs/2026-10-11-sp-app-design.md);
 [ADR 2026-09-12](adr/2026-09-12-cross-platform-tauri.md) is the history of

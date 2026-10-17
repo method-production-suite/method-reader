@@ -285,7 +285,7 @@ fn run_draft_step(tag: &str, exists: bool) -> (Output, Vec<String>) {
     let path = path_with(&sc.join("bin"));
     let temp = sc.join("temp").display().to_string();
     let out = bash(
-        &step_named(&release(), "release", "Publish the draft release"),
+        &step_named(&release(), "release", "Write the draft release"),
         sc.path(),
         &[
             ("PATH", &path),
@@ -307,7 +307,7 @@ fn draft_step_creates_a_draft_with_no_prerelease_flag_for_an_ordinary_tag() {
     let create = &calls[at(&calls, "gh\trelease\tcreate")];
     assert!(create.contains("\t--draft"), "{create}");
     assert!(!create.contains("--prerelease"), "{create}");
-    assert!(create.contains("\tScreepub 0.12.0\t"), "{create}");
+    assert!(create.contains("\tMethod Reader 0.12.0\t"), "{create}");
     let upload = at(&calls, "gh\trelease\tupload");
     assert!(calls[upload].contains(names::CLI_MAC_ARM64));
     assert!(at(&calls, "gh\trelease\tcreate") < upload);
@@ -333,7 +333,7 @@ fn draft_step_appends_the_cli_checksum_to_the_notes() {
     let path = path_with(&sc.join("bin"));
     let temp = sc.join("temp").display().to_string();
     let out = bash(
-        &step_named(&release(), "release", "Publish the draft release"),
+        &step_named(&release(), "release", "Write the draft release"),
         sc.path(),
         &[("PATH", &path), ("TAG", "v0.12.0"), ("RUNNER_TEMP", &temp)],
     );
@@ -357,13 +357,13 @@ fn mac_step(
     tool(
         sc,
         "rust/target/release/sp-release",
-        "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Screepub.app/Contents/MacOS\" && : > \"$2/Screepub.app/Contents/MacOS/screepub-desktop\"; shift; done; fi",
+        "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Method Reader.app/Contents/MacOS\" && : > \"$2/Method Reader.app/Contents/MacOS/method-reader-app\"; shift; done; fi",
     );
     tool(sc, "bin/lipo", &format!("echo '{archs}'"));
     tool(
         sc,
         "bin/codesign",
-        "[ \"$1\" = -d ] && echo 'designated => identifier \"com.darkwell.screepub\" and anchor apple generic' >&2",
+        "[ \"$1\" = -d ] && echo 'designated => identifier \"com.methodreader.desktop\" and anchor apple generic' >&2",
     );
     tool(
         sc,
@@ -422,9 +422,9 @@ fn mac_step_signs_inside_out_notarizes_staples_and_validates_app_then_image() {
     let sc = Scratch::new("mac-ok");
     let (out, calls) = mac_step(&sc, true, "arm64", "none");
     assert!(out.status.success(), "{}", said(&out));
-    let app = sc.join("temp/app/Screepub.app").display().to_string();
-    let exe = format!("{app}/Contents/MacOS/screepub-desktop");
-    let dmg = "bundles/Screepub-macOS.dmg";
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
+    let exe = format!("{app}/Contents/MacOS/method-reader-app");
+    let dmg = "bundles/Method-Reader-macOS.dmg";
     let order = [
         "sp-release\tmac-app\t--version\t0.12.0".to_string(),
         format!(
@@ -439,7 +439,7 @@ fn mac_step_signs_inside_out_notarizes_staples_and_validates_app_then_image() {
         format!("xcrun\tstapler\tvalidate\t{app}"),
         format!("spctl\t-a\t-t\texec\t-vv\t{app}"),
         "sp-release\tupdate-archive".to_string(),
-        "sp-release\tsign-update\t--file\tbundles/Screepub-macOS.app.tar.gz\t--version\t0.12.0"
+        "sp-release\tsign-update\t--file\tbundles/Method-Reader-macOS.app.tar.gz\t--version\t0.12.0"
             .to_string(),
         "hdiutil\tcreate".to_string(),
         format!("codesign\t--force\t--timestamp\t--sign\tDeveloper ID Application: Test\t{dmg}"),
@@ -470,11 +470,11 @@ fn mac_step_fails_when_a_staple_leaves_no_ticket() {
     // `stapler staple` can exit 0 and leave nothing: v0.6.0 shipped an
     // image Gatekeeper rejects. The validate is asserted, not trusted.
     let sc = Scratch::new("mac-dmg-ticket");
-    let (out, calls) = mac_step(&sc, true, "arm64", "bundles/Screepub-macOS.dmg");
+    let (out, calls) = mac_step(&sc, true, "arm64", "bundles/Method-Reader-macOS.dmg");
     assert!(!out.status.success());
     assert!(!calls.iter().any(|c| c.starts_with("spctl\t-a\t-t\topen")));
     let sc = Scratch::new("mac-app-ticket");
-    let app = sc.join("temp/app/Screepub.app").display().to_string();
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
     let (out, calls) = mac_step(&sc, true, "arm64", &app);
     assert!(!out.status.success());
     assert!(
@@ -519,7 +519,7 @@ fn rpm_stub_requiring(sc: &Scratch, version: &str, requires: &str) {
         sc,
         "bin/rpm",
         &format!(
-            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/screepub-desktop ;; -qp) printf '%s\\n' '{}' ;; esac",
+            "case \"$1\" in -qip) echo 'Version     : {version}' ;; -qlp) echo /usr/bin/method-reader-app ;; -qp) if [ \"$2\" = --obsoletes ]; then echo 'screepub < {version}'; else printf '%s\\n' '{}'; fi ;; esac",
             requires.replace('\n', "' '")
         ),
     );
@@ -539,14 +539,17 @@ fn check_step_opens_each_bundle_and_counts_what_it_checked() {
     rpm_stub(&sc, "0.12.0");
     let out = check_step(
         &sc,
-        &[names::LINUX_RPM_X86_64, "Screepub-macOS.app.tar.gz.sig"],
+        &[
+            names::LINUX_RPM_X86_64,
+            "Method-Reader-macOS.app.tar.gz.sig",
+        ],
     );
     assert!(out.status.success(), "{}", said(&out));
     assert!(said(&out).contains("1 bundle(s) checked"));
     let calls = log(&sc);
-    assert_eq!(calls.len(), 3, "{calls:#?}");
-    assert!(calls[0].starts_with("rpm\t-qip\tbundles/Screepub-linux-x86_64.rpm"));
-    assert!(calls[1].starts_with("rpm\t-qp\t--requires\tbundles/Screepub-linux-x86_64.rpm"));
+    assert_eq!(calls.len(), 4, "{calls:#?}");
+    assert!(calls[0].starts_with("rpm\t-qip\tbundles/Method-Reader-linux-x86_64.rpm"));
+    assert!(calls[1].starts_with("rpm\t-qp\t--requires\tbundles/Method-Reader-linux-x86_64.rpm"));
 }
 
 #[test]
@@ -571,7 +574,7 @@ fn check_step_fails_a_bundle_that_claims_another_version() {
 #[test]
 fn check_step_refuses_a_file_it_does_not_know() {
     let sc = Scratch::new("check-unknown");
-    let out = check_step(&sc, &["Screepub-linux-arm64.snap"]);
+    let out = check_step(&sc, &["Method-Reader-linux-arm64.snap"]);
     assert!(!out.status.success());
     assert!(said(&out).contains("unexpected file"), "{}", said(&out));
 }
@@ -583,11 +586,11 @@ fn check_step_installs_and_uninstalls_the_windows_installer() {
     // The installer, as the step runs it: silently, into LOCALAPPDATA.
     sc.script(
         &format!("bundles/{}", names::WINDOWS_SETUP),
-        "mkdir -p \"$LOCALAPPDATA/Screepub\"\n: > \"$LOCALAPPDATA/Screepub/screepub-desktop.exe\"\nprintf '#!/bin/sh\\nrm -rf \"$LOCALAPPDATA/Screepub\"\\n' > \"$LOCALAPPDATA/Screepub/uninstall.exe\"\nchmod +x \"$LOCALAPPDATA/Screepub/uninstall.exe\"\n",
+        "mkdir -p \"$LOCALAPPDATA/Method Reader\"\n: > \"$LOCALAPPDATA/Method Reader/method-reader-app.exe\"\nprintf '#!/bin/sh\\nrm -rf \"$LOCALAPPDATA/Method Reader\"\\n' > \"$LOCALAPPDATA/Method Reader/uninstall.exe\"\nchmod +x \"$LOCALAPPDATA/Method Reader/uninstall.exe\"\n",
     );
     let out = check_step(&sc, &[]);
     assert!(out.status.success(), "{}", said(&out));
-    assert!(!sc.join("local/Screepub").exists(), "uninstalled");
+    assert!(!sc.join("local/Method Reader").exists(), "uninstalled");
     // One that installs nothing fails.
     let sc = Scratch::new("check-exe-empty");
     std::fs::create_dir_all(sc.join("bundles")).unwrap();
@@ -683,7 +686,7 @@ fn sums_step_fails_a_second_mac_image() {
     }
     let sc = Scratch::new("sums-two-dmg");
     let mut files = five();
-    files.push("Screepub-macOS-x64.dmg");
+    files.push("Method-Reader-macOS-x64.dmg");
     let out = sums_step(&sc, &files, None);
     assert!(!out.status.success());
     assert!(
@@ -786,82 +789,157 @@ fn manifest_step_uploads_nothing_when_the_manifest_or_its_check_refuses() {
     }
 }
 
-// ---- publish: exactly one Mac image, then public -----------------------
+// ---- draft-check: the draft is complete, and a person publishes it ------
 
-fn publish_step(tag: &str, dmgs: &str) -> (Output, Vec<String>) {
-    publish_step_with(tag, dmgs, "latest.json")
+/// Every file a complete release carries, one per line, as the fake
+/// release's asset list answers it.
+fn complete_assets(with_manifest: bool) -> String {
+    let mut v = vec![
+        names::CLI_MAC_ARM64.to_string(),
+        names::CLI_LINUX_X64.to_string(),
+        names::CLI_LINUX_ARM64.to_string(),
+        names::CLI_WINDOWS_X64.to_string(),
+        "SHA256SUMS".to_string(),
+        names::LINUX_DEB_AMD64.to_string(),
+        names::LINUX_RPM_X86_64.to_string(),
+        names::LINUX_APPIMAGE_X86_64.to_string(),
+        names::MAC_DMG.to_string(),
+        names::WINDOWS_SETUP.to_string(),
+        names::MAC_UPDATE.to_string(),
+        format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
+        "SHA256SUMS-app".to_string(),
+    ];
+    if with_manifest {
+        v.push(names::MANIFEST.to_string());
+    }
+    v.join("\n")
 }
 
-/// The publish step against a fake release whose .dmg query answers `dmgs`
+/// The asset step against a fake release whose .dmg query answers `dmgs`
 /// and whose plain asset list answers `assets`, one name per line.
-fn publish_step_with(tag: &str, dmgs: &str, assets: &str) -> (Output, Vec<String>) {
-    let sc = Scratch::new("publish");
+fn draft_check(tag: &str, dmgs: &str, assets: &str) -> (Output, Vec<String>, String) {
+    let sc = Scratch::new("draft-check");
     tool(
         &sc,
         "bin/gh",
         "if [ \"$2\" = view ]; then case \"$*\" in *endswith*) printf '%s\\n' \"$FAKE_DMGS\" ;; *) printf '%s\\n' \"$FAKE_ASSETS\" ;; esac; fi",
     );
     let path = path_with(&sc.join("bin"));
+    let summary = sc.join("summary.md").display().to_string();
     let out = bash(
         &step_named(
             &release(),
-            "publish",
-            "Exactly one Mac image, then make the release public",
+            "draft-check",
+            "The draft carries every file the release names",
         ),
         sc.path(),
         &[
             ("PATH", &path),
             ("TAG", tag),
+            ("GH_REPO", "method-production-suite/method-reader"),
             ("FAKE_DMGS", dmgs),
             ("FAKE_ASSETS", assets),
+            ("GITHUB_STEP_SUMMARY", &summary),
         ],
     );
     let calls = log(&sc);
-    (out, calls)
+    let said_summary = std::fs::read_to_string(&summary).unwrap_or_default();
+    (out, calls, said_summary)
+}
+
+fn changes_the_release(calls: &[String]) -> bool {
+    calls
+        .iter()
+        .any(|c| c.starts_with("gh\trelease\tedit") || c.starts_with("gh\trelease\tupload"))
 }
 
 #[test]
-fn publish_step_makes_public_a_release_with_exactly_the_one_image() {
-    let (out, calls) = publish_step("v0.12.0", names::MAC_DMG);
+fn draft_check_passes_a_complete_draft_and_leaves_it_a_draft() {
+    let (out, calls, summary) = draft_check("v0.13.0", names::MAC_DMG, &complete_assets(true));
     assert!(out.status.success(), "{}", said(&out));
-    assert_eq!(
-        calls.last().unwrap(),
-        "gh\trelease\tedit\tv0.12.0\t--draft=false"
-    );
+    assert!(!changes_the_release(&calls), "{calls:#?}");
+    // What the person does next, in the run's summary.
+    assert!(summary.contains(names::MAC_DMG), "{summary}");
+    assert!(summary.contains("Apple silicon"), "{summary}");
+    assert!(summary.contains("publish"), "{summary}");
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_no_mac_image_in_draft() {
+fn draft_check_fails_a_draft_with_no_mac_image() {
     // v0.12.1 went public with no app attached and broke the site's download
     // buttons and every window's update check until a re-run.
-    let (out, calls) = publish_step("v0.12.0", "");
+    let assets = complete_assets(true).replace(&format!("{}\n", names::MAC_DMG), "");
+    let (out, calls, _) = draft_check("v0.13.0", "", &assets);
     assert!(!out.status.success());
-    assert!(said(&out).contains("stays a draft"), "{}", said(&out));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(said(&out).contains("no Mac image"), "{}", said(&out));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_no_update_manifest_in_draft() {
-    let (out, calls) = publish_step_with("v0.12.0", names::MAC_DMG, "SHA256SUMS");
+fn draft_check_fails_a_draft_with_no_update_manifest_and_names_it() {
+    let (out, calls, _) = draft_check("v0.13.0", names::MAC_DMG, &complete_assets(false));
     assert!(!out.status.success());
-    assert!(said(&out).contains("no latest.json"), "{}", said(&out));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(said(&out).contains(names::MANIFEST), "{}", said(&out));
+    assert!(said(&out).contains("Do not publish"), "{}", said(&out));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_release_with_two_images_in_draft() {
-    let (out, calls) = publish_step("v0.12.0", "Screepub-macOS.dmg Screepub-macOS-x64.dmg");
+fn draft_check_names_every_file_that_did_not_arrive() {
+    let assets = complete_assets(true)
+        .replace(&format!("{}\n", names::CLI_WINDOWS_X64), "")
+        .replace(&format!("{}\n", names::LINUX_DEB_AMD64), "");
+    let (out, _, _) = draft_check("v0.13.0", names::MAC_DMG, &assets);
+    assert!(!out.status.success());
+    let s = said(&out);
+    assert!(s.contains(names::CLI_WINDOWS_X64), "{s}");
+    assert!(s.contains(names::LINUX_DEB_AMD64), "{s}");
+}
+
+#[test]
+fn draft_check_fails_a_draft_with_two_images() {
+    let (out, calls, _) = draft_check(
+        "v0.13.0",
+        "Method-Reader-macOS.dmg Method-Reader-macOS-x64.dmg",
+        &complete_assets(true),
+    );
     assert!(!out.status.success());
     assert!(said(&out).contains("must carry exactly one .dmg"));
-    assert!(!calls.iter().any(|c| c.contains("--draft=false")));
+    assert!(!changes_the_release(&calls));
 }
 
 #[test]
-fn publish_step_keeps_a_prerelease_marked_under_the_macs_bash() {
-    let (out, calls) = publish_step("v0.12.0-rc1", names::MAC_DMG);
+fn draft_check_asks_no_update_manifest_of_a_prerelease_under_the_macs_bash() {
+    // app-upload publishes no latest.json for a prerelease, on purpose
+    // (releases/latest never resolves to one), so the check must not want
+    // it: the old publish job did, and would have kept every prerelease a
+    // draft.
+    let (out, calls, _) = draft_check("v0.13.0-rc1", names::MAC_DMG, &complete_assets(false));
     assert!(out.status.success(), "{}", said(&out));
-    assert_eq!(
-        calls.last().unwrap(),
-        "gh\trelease\tedit\tv0.12.0-rc1\t--draft=false\t--prerelease"
-    );
+    assert!(!changes_the_release(&calls));
+}
+
+#[test]
+fn draft_check_says_which_job_did_not_succeed() {
+    let text = step_named(&release(), "draft-check", "Every job before it succeeded");
+    let sc = Scratch::new("draft-check-jobs");
+    let path = path_with(&sc.join("bin"));
+    let ok = [
+        ("PATH", path.as_str()),
+        ("RELEASE", "success"),
+        ("CLI_UPLOAD", "success"),
+        ("APP_UPLOAD", "success"),
+        ("HANDOVER_GATE", "success"),
+    ];
+    let out = bash(&text, sc.path(), &ok);
+    assert!(out.status.success(), "{}", said(&out));
+    let mut bad = ok;
+    bad[3] = ("APP_UPLOAD", "failure");
+    bad[4] = ("HANDOVER_GATE", "skipped");
+    let out = bash(&text, sc.path(), &bad);
+    assert!(!out.status.success());
+    let s = said(&out);
+    assert!(s.contains("app-upload (failure)"), "{s}");
+    assert!(s.contains("handover-gate (skipped)"), "{s}");
+    assert!(!s.contains("cli-upload"), "{s}");
 }

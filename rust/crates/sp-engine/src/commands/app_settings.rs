@@ -61,9 +61,9 @@ pub struct AppSettingsLibraryInfo {
     pub path: String,
     /// The stored choice, resolved, or null.
     pub chosen: Option<String>,
-    /// The folder with no choice and no SCREEPUB_LIBRARY.
+    /// The folder with no choice and no METHOD_READER_LIBRARY.
     pub platform_default: String,
-    /// True when SCREEPUB_LIBRARY is overriding `path`.
+    /// True when METHOD_READER_LIBRARY is overriding `path`.
     pub from_env: bool,
 }
 

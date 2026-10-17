@@ -2,7 +2,7 @@
 //! was tools/smoke-bundle.ts, with the half of tools/dmg.ts it used.
 //!
 //! ```text
-//! cargo xtask smoke-bundle --bundle dist/Screepub-linux-amd64.deb --expect-version 0.12.0
+//! cargo xtask smoke-bundle --bundle dist/Method-Reader-linux-amd64.deb --expect-version 0.12.0
 //! cargo xtask smoke-bundle --built --expect-version 0.12.0
 //! ```
 //!
@@ -10,8 +10,8 @@
 //! src/headless.rs), as the Tauri bundle's engine sidecar was until the Rust
 //! cutover: `--version --json` must report the version the bundle claims,
 //! and `--smoke` of the committed fixture (tests/fixtures/field-station.pdf)
-//! must write an EPUB. Both runs get a scratch SCREEPUB_CONFIG_DIR and
-//! SCREEPUB_LIBRARY under the work folder and a Calibre config path nothing
+//! must write an EPUB. Both runs get a scratch METHOD_READER_CONFIG_DIR and
+//! METHOD_READER_LIBRARY under the work folder and a Calibre config path nothing
 //! can be made at, so a smoke never reads or writes the real settings,
 //! library or Calibre folder. Before that, the binary must be present,
 //! non-empty and executable, and the version the package declares (the
@@ -179,8 +179,8 @@ pub fn window_env(work: &Path) -> Result<Vec<(String, String)>, String> {
         .map_err(|e| format!("smoke-bundle: cannot write {}: {e}", guard.display()))?;
     let s = |p: PathBuf| p.to_string_lossy().into_owned();
     Ok(vec![
-        ("SCREEPUB_CONFIG_DIR".into(), s(work.join("config"))),
-        ("SCREEPUB_LIBRARY".into(), s(work.join("library"))),
+        ("METHOD_READER_CONFIG_DIR".into(), s(work.join("config"))),
+        ("METHOD_READER_LIBRARY".into(), s(work.join("library"))),
         ("CALIBRE_CONFIG_DIRECTORY".into(), s(guard.join("config"))),
     ])
 }
@@ -549,7 +549,7 @@ pub fn main(args: &[String]) -> u8 {
             .unwrap_or_else(default_fixture);
         let dirs = BundleDirs::for_repo(&repo_root());
         let dir =
-            std::env::temp_dir().join(format!("screepub-bundle-smoke-{}", std::process::id()));
+            std::env::temp_dir().join(format!("method-reader-bundle-smoke-{}", std::process::id()));
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
         work = Some(dir.clone());
         let mut run = real_run;

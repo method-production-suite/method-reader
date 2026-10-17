@@ -1,15 +1,26 @@
 # Release on version tags: the Rust app and the Rust command-line tool.
 # Rewritten for the pure-Rust port (rust-port branch; design in
-# docs/superpowers/specs/2026-10-11-rust-release-design.md). Same secrets,
-# same published names, same order (draft, every upload, then public,
-# latest.json last, then the tap), so every page, the Homebrew formula, the
-# frozen Swift updater and every Tauri window keep working.
+# docs/superpowers/specs/2026-10-11-rust-release-design.md). The published
+# names are Method Reader's since 0.13 (Screepub's up to 0.12.x, all in
+# rust/crates/sp-release/src/names.rs); the updaters already out there read
+# latest.json and drop the archive's top folder, so the new names reach them
+# unchanged.
+#
+# The suite's release standard (SUITE-STANDARDS.md section 3; the steps in
+# docs/RELEASING.md): a tag builds a DRAFT, and a PERSON publishes it after
+# checking the .dmg on an Apple silicon Mac. Nothing here makes the release
+# public. The order is the draft, every upload, latest.json last, then
+# `draft-check`, which reads the draft back and fails loudly unless every
+# file is there. Publishing starts release-published.yml: the Homebrew tap,
+# then the checks that read the published release back. That trigger fires
+# because a person publishes; GitHub starts no run from an event raised with
+# this workflow's default token.
 #
 # Secrets (docs/release-secrets.md, unchanged names):
 #   DEVELOPER_ID_CERT_P12_BASE64, CERT_PASSWORD, KEYCHAIN_PASSWORD,
 #   AC_API_KEY_P8_BASE64, AC_API_KEY_ID, AC_API_ISSUER_ID,
-#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set),
-#   TAP_TOKEN (optional).
+#   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set).
+#   TAP_TOKEN (optional) is release-published.yml's.
 #
 # The Rust toolchain comes from rust/rust-toolchain.toml (rustup on every
 # hosted runner installs it on first use). Release builds are uncached on
@@ -73,7 +84,7 @@ jobs:
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main || {
             echo "::error::The tagged commit is not an ancestor of origin/main. Did you amend after tagging? Re-tag the commit you actually pushed."; exit 1; }
       # ONE version file now: [workspace.package] in rust/Cargo.toml, which
-      # every crate inherits (the About line, `screepub --version`, the
+      # every crate inherits (the About line, `method-reader --version`, the
       # Info.plist, the package metadata). Read from the TAGGED commit.
       - name: The workspace version is the tag's
         working-directory: rust
@@ -91,10 +102,12 @@ jobs:
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo test --workspace --locked
 
-  # The command-line tool for Apple silicon: built, signed with the hardened
+  # The command-line tool for Apple silicon, and its old name `screepub`
+  # (sp-cli's second binary: it says once that the tool was renamed, then
+  # does exactly what method-reader does): built, signed with the hardened
   # runtime (no entitlements: the Rust binary does not JIT, unlike the Bun
   # one), notarized, THEN packaged, so the tarball holds the signed bytes.
-  # Then the draft release, which stays a draft until `publish`.
+  # Then the draft release, which stays a draft until a person publishes it.
   release:
     needs: checks
     runs-on: macos-15
@@ -117,21 +130,32 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          cargo build --release --locked -p sp-cli --bin screepub --target aarch64-apple-darwin
+          cargo build --release --locked -p sp-cli --bin method-reader --bin screepub --target aarch64-apple-darwin
           cargo build --release --locked -p sp-release
-          BIN="target/aarch64-apple-darwin/release/screepub"
-          [ "$(lipo -archs "$BIN")" = arm64 ] || { echo "::error::$BIN is not arm64 only"; exit 1; }
-          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$BIN"
-          codesign --verify --strict --verbose=2 "$BIN"
-          ditto -c -k "$BIN" "$RUNNER_TEMP/screepub-notarize.zip"
-          xcrun notarytool submit "$RUNNER_TEMP/screepub-notarize.zip" \
+          BIN="target/aarch64-apple-darwin/release/method-reader"
+          ALIAS="target/aarch64-apple-darwin/release/screepub"
+          STAGE="$RUNNER_TEMP/cli-notarize"
+          mkdir -p "$STAGE"
+          # Each under its own identifier: the tool's new one, and the one
+          # the CLI was signed with up to 0.12.x on its old name.
+          for pair in "$BIN:method-reader-cli-arm64" "$ALIAS:screepub-cli-arm64"; do
+            B="${pair%%:*}"
+            [ "$(lipo -archs "$B")" = arm64 ] || { echo "::error::$B is not arm64 only"; exit 1; }
+            codesign --force --options runtime --timestamp --identifier "${pair##*:}" --sign "$SIGN_IDENTITY" "$B"
+            codesign --verify --strict --verbose=2 "$B"
+            cp "$B" "$STAGE/"
+          done
+          ditto -c -k "$STAGE" "$RUNNER_TEMP/method-reader-notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/method-reader-notarize.zip" \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
           # A bare Mach-O cannot be stapled; Gatekeeper looks its ticket up
           # online the first time. The same was true of the Bun binary.
-          "$BIN" --version | grep -qx "screepub $VERSION" \
-            || { echo "::error::screepub --version does not say $VERSION"; exit 1; }
-          target/release/sp-release cli-archive --binary "$BIN" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
-      - name: Publish the draft release
+          "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" \
+            || { echo "::error::method-reader --version does not say $VERSION"; exit 1; }
+          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" \
+            || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
+          target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
+      - name: Write the draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -144,33 +168,33 @@ jobs:
           cp "docs/releases/$VERSION.md" "$NOTES"
           {
             printf '\n\n---\n\n'
-            printf '%s\n\n' "**Mac:** download \`Screepub-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Screepub to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
+            printf '%s\n\n' "**Mac:** download \`Method-Reader-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Method Reader to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
             printf '%s\n' "Command-line tool for macOS, SHA-256:"
             printf '\n```\n'
-            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 screepub-cli-macos-arm64.tar.gz )
+            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 method-reader-cli-macos-arm64.tar.gz )
             printf '```\n'
           } >> "$NOTES"
           # Draft first, so /releases/latest never answers with a release
           # whose files are still arriving. Idempotent under dispatch.
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --draft --title "Screepub $VERSION" --notes-file "$NOTES" ${PRE[@]+"${PRE[@]}"}
+            gh release create "$TAG" --draft --title "Method Reader $VERSION" --notes-file "$NOTES" ${PRE[@]+"${PRE[@]}"}
           else
-            gh release edit "$TAG" --title "Screepub $VERSION" --notes-file "$NOTES"
+            gh release edit "$TAG" --title "Method Reader $VERSION" --notes-file "$NOTES"
           fi
-          gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" --clobber
+          gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/method-reader-cli-macos-arm64.tar.gz" --clobber
       - name: Tap bump crib sheet
         env:
           VERSION: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           V="${VERSION#v}"
-          ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/screepub-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
+          ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/method-reader-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
           # The backticks are Markdown for the summary, not a substitution.
           # shellcheck disable=SC2016
           {
             printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'Run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/screepub.rb` whole.\n\n```ruby\n' "$V"
-            printf '  url ".../download/v%s/screepub-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
+            printf 'The tap bumps itself once the release is published (release-published.yml). By hand: run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/method-reader.rb` whole (and renames a tap still on screepub.rb).\n\n```ruby\n' "$V"
+            printf '  url ".../download/v%s/method-reader-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
             printf '```\n'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -186,16 +210,19 @@ jobs:
         include:
           - os: ubuntu-latest
             kind: linux-x64
-            archive: screepub-cli-linux-x64.tar.gz
-            exe: screepub
+            archive: method-reader-cli-linux-x64.tar.gz
+            exe: method-reader
+            alias: screepub
           - os: ubuntu-24.04-arm
             kind: linux-arm64
-            archive: screepub-cli-linux-arm64.tar.gz
-            exe: screepub
+            archive: method-reader-cli-linux-arm64.tar.gz
+            exe: method-reader
+            alias: screepub
           - os: windows-latest
             kind: windows-x64
-            archive: screepub-cli-windows-x64.zip
-            exe: screepub.exe
+            archive: method-reader-cli-windows-x64.zip
+            exe: method-reader.exe
+            alias: screepub.exe
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -209,23 +236,26 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          # Two builds, not one: `--bin screepub` alongside `-p sp-release`
-          # limits BOTH packages to a bin named screepub, so sp-release's own
-          # binary was never built and the archive step found nothing (v0.12.0).
-          cargo build --release --locked -p sp-cli --bin screepub
+          # Two builds, not one: `--bin method-reader` alongside
+          # `-p sp-release` limits BOTH packages to bins of those names, so
+          # sp-release's own binary was never built and the archive step
+          # found nothing (v0.12.0).
+          cargo build --release --locked -p sp-cli --bin method-reader --bin screepub
           cargo build --release --locked -p sp-release --bin sp-release
           BIN="target/release/${{ matrix.exe }}"
-          "$BIN" --version | grep -qx "screepub $VERSION" || { echo "::error::screepub --version does not say screepub $VERSION"; exit 1; }
+          ALIAS="target/release/${{ matrix.alias }}"
+          "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" || { echo "::error::method-reader --version does not say method-reader $VERSION (Method Reader)"; exit 1; }
+          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
           # Convert the committed fixtures, the JPEG 2000 one included, as
           # cargo xtask smoke-cli does, in a scratch folder with empty settings.
           W="$(mktemp -d)"
           for f in screenplay jpx; do
-            SCREEPUB_CONFIG_DIR="$W/config" SCREEPUB_LIBRARY="$W/library" \
+            METHOD_READER_CONFIG_DIR="$W/config" METHOD_READER_LIBRARY="$W/library" \
               "$BIN" "../tests/fixtures/$f.pdf" --json > "$W/$f.json"
             grep -Eq '"ok": ?true' "$W/$f.json" || { cat "$W/$f.json"; echo "::error::$f.pdf did not convert"; exit 1; }
           done
-          SCREEPUB_CONFIG_DIR="$W/config" "$BIN" devices --json > /dev/null
-          target/release/sp-release cli-archive --binary "$BIN" --kind ${{ matrix.kind }} --out "$RUNNER_TEMP/cli"
+          METHOD_READER_CONFIG_DIR="$W/config" "$BIN" devices --json > /dev/null
+          target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind ${{ matrix.kind }} --out "$RUNNER_TEMP/cli"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cli-${{ matrix.kind }}
@@ -252,10 +282,10 @@ jobs:
         run: |
           set -euo pipefail
           cd cli
-          sha256sum screepub-cli-linux-x64.tar.gz screepub-cli-linux-arm64.tar.gz screepub-cli-windows-x64.zip > SHA256SUMS
+          sha256sum method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip > SHA256SUMS
           sha256sum -c SHA256SUMS
-          gh release upload "$TAG" screepub-cli-linux-x64.tar.gz screepub-cli-linux-arm64.tar.gz \
-            screepub-cli-windows-x64.zip SHA256SUMS --clobber
+          gh release upload "$TAG" method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz \
+            method-reader-cli-windows-x64.zip SHA256SUMS --clobber
 
   # The installable apps: ONE signed and notarized DMG (Apple silicon), the
   # signed update archive the Tauri windows and the Rust app install, a
@@ -295,7 +325,7 @@ jobs:
           # throwaway key, plain HTTP) never reach a release: sp-update's
           # build.rs refuses them without its rehearsal feature, and this
           # says so before cargo starts.
-          for v in SCREEPUB_UPDATE_ENDPOINT SCREEPUB_UPDATE_PUBKEY SCREEPUB_UPDATE_INSECURE; do
+          for v in METHOD_READER_UPDATE_ENDPOINT METHOD_READER_UPDATE_PUBKEY METHOD_READER_UPDATE_INSECURE; do
             if [ -n "${!v+set}" ]; then
               echo "::error::$v is set: a release never carries the handover rehearsal's updater values"
               exit 1
@@ -322,13 +352,13 @@ jobs:
           # sign its update is the one ADR 2026-09-21 forbids.
           [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] || { echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set"; exit 1; }
           SP=rust/target/release/sp-release
-          WIN=rust/target/aarch64-apple-darwin/release/screepub-window
+          WIN=rust/target/aarch64-apple-darwin/release/method-reader-app
           [ "$(lipo -archs "$WIN")" = arm64 ] || { echo "::error::the window is not arm64 only"; exit 1; }
           mkdir -p bundles
           "$SP" mac-app --version "$VERSION" --window "$WIN" \
             --icon rust/crates/sp-app/icons/icon.icns \
-            --resource LICENSE --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
-          APP="$RUNNER_TEMP/app/Screepub.app"
+            --resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
+          APP="$RUNNER_TEMP/app/Method Reader.app"
           # Inside out, never --deep: every executable in Contents/MacOS,
           # then the bundle. Hardened runtime, timestamp, no entitlements.
           for exe in "$APP"/Contents/MacOS/*; do
@@ -336,10 +366,13 @@ jobs:
           done
           codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
-          # The designated requirement the frozen Swift updater and TCC
-          # compare: the identifier and the team, as before.
+          # The designated requirement TCC compares: the identifier and the
+          # team. From 0.13 the identifier is Method Reader's own
+          # (com.methodreader.desktop; 0.12.x was com.darkwell.screepub), so
+          # macOS asks for its permissions again once. The 0.12 updater swaps
+          # by folder and never compares it.
           codesign -d -r- "$APP" 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
-          grep -q 'identifier "com.darkwell.screepub"' "$RUNNER_TEMP/requirement.txt"
+          grep -q 'identifier "com.methodreader.desktop"' "$RUNNER_TEMP/requirement.txt"
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/app-notarize.zip"
           xcrun notarytool submit "$RUNNER_TEMP/app-notarize.zip" \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
@@ -348,20 +381,20 @@ jobs:
           spctl -a -t exec -vv "$APP"
           # The update archive is made from the stapled bundle, so a Tauri
           # window installs exactly what Gatekeeper approved.
-          "$SP" update-archive --app "$APP" --out bundles/Screepub-macOS.app.tar.gz
-          "$SP" sign-update --file bundles/Screepub-macOS.app.tar.gz --version "$VERSION"
+          "$SP" update-archive --app "$APP" --out bundles/Method-Reader-macOS.app.tar.gz
+          "$SP" sign-update --file bundles/Method-Reader-macOS.app.tar.gz --version "$VERSION"
           # The image: the app and an Applications link, signed, notarized,
           # stapled. hdiutil is what tauri-bundler's dmg script ran.
           mkdir -p "$RUNNER_TEMP/dmg"
           cp -R "$APP" "$RUNNER_TEMP/dmg/"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
-          hdiutil create -volname Screepub -srcfolder "$RUNNER_TEMP/dmg" -fs HFS+ -format UDZO -ov bundles/Screepub-macOS.dmg
-          codesign --force --timestamp --sign "$SIGN_IDENTITY" bundles/Screepub-macOS.dmg
-          xcrun notarytool submit bundles/Screepub-macOS.dmg \
+          hdiutil create -volname "Method Reader" -srcfolder "$RUNNER_TEMP/dmg" -fs HFS+ -format UDZO -ov bundles/Method-Reader-macOS.dmg
+          codesign --force --timestamp --sign "$SIGN_IDENTITY" bundles/Method-Reader-macOS.dmg
+          xcrun notarytool submit bundles/Method-Reader-macOS.dmg \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
-          xcrun stapler staple bundles/Screepub-macOS.dmg
-          xcrun stapler validate bundles/Screepub-macOS.dmg
-          spctl -a -t open --context context:primary-signature -v bundles/Screepub-macOS.dmg
+          xcrun stapler staple bundles/Method-Reader-macOS.dmg
+          xcrun stapler validate bundles/Method-Reader-macOS.dmg
+          spctl -a -t open --context context:primary-signature -v bundles/Method-Reader-macOS.dmg
       - name: Linux packages
         if: runner.os == 'Linux'
         env:
@@ -370,17 +403,17 @@ jobs:
           set -euo pipefail
           VERSION="${TAG#v}"
           SP=rust/target/release/sp-release
-          WIN=rust/target/release/screepub-window
+          WIN=rust/target/release/method-reader-app
           # Depends: measured on the binary, never guessed.
           D="$RUNNER_TEMP/shlibdeps"
           mkdir -p "$D/debian"
-          printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
+          printf 'Source: method-reader\n\nPackage: method-reader\nArchitecture: any\n' > "$D/debian/control"
           DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/$WIN" | sed -n 's/^shlibs:Depends=//p')"
           echo "Depends: $DEPENDS"
           ICONS=(--icon "32x32=rust/crates/sp-app/icons/32x32.png"
                  --icon "128x128=rust/crates/sp-app/icons/128x128.png"
                  --icon "256x256@2=rust/crates/sp-app/icons/128x128@2x.png")
-          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          RES=(--resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md)
           mkdir -p bundles
           "$SP" deb --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out bundles
           "$SP" rpm --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out bundles
@@ -396,7 +429,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/appimagetool"
           ARCH=x86_64 "$RUNNER_TEMP/appimagetool" --appimage-extract-and-run \
             --runtime-file "$RUNNER_TEMP/runtime-x86_64" \
-            "$RUNNER_TEMP/Screepub.AppDir" bundles/Screepub-linux-x86_64.AppImage
+            "$RUNNER_TEMP/method-reader.AppDir" bundles/Method-Reader-linux-x86_64.AppImage
       - name: Windows installer
         if: runner.os == 'Windows'
         env:
@@ -406,8 +439,8 @@ jobs:
           VERSION="${TAG#v}"
           STAGE="$RUNNER_TEMP/nsis"
           mkdir -p "$STAGE" bundles
-          cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-          cp LICENSE THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
+          cp rust/target/release/method-reader-app.exe "$STAGE/method-reader-app.exe"
+          cp LICENSE-MIT LICENSE-APACHE rust/crates/sp-azw3/LICENSE-GPL-3.0 THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
           # Chocolatey's feed times out now and then (a 504), and choco
           # still exits 0: try three times, then fail by name.
           export PATH="$PATH:/c/Program Files (x86)/NSIS"
@@ -418,9 +451,9 @@ jobs:
           done
           command -v makensis >/dev/null || { echo "makensis: NSIS did not install from Chocolatey"; exit 1; }
           rust/target/release/sp-release.exe nsis --version "$VERSION" \
-            --src "$(cygpath -w "$STAGE")" --setup "$(cygpath -w "$PWD/bundles/Screepub-windows-x64-setup.exe")" \
-            --script "$STAGE/screepub.nsi"
-          makensis -V3 "$(cygpath -w "$STAGE/screepub.nsi")"
+            --src "$(cygpath -w "$STAGE")" --setup "$(cygpath -w "$PWD/bundles/Method-Reader-windows-x64-setup.exe")" \
+            --script "$STAGE/method-reader.nsi"
+          makensis -V3 "$(cygpath -w "$STAGE/method-reader.nsi")"
       # Built is not installed. Each bundle is opened on the machine that
       # built it and checked for the files and the version it claims.
       - name: Check each bundle
@@ -438,18 +471,18 @@ jobs:
               *.dmg)
                 M="$(mktemp -d)"
                 hdiutil attach -nobrowse -readonly -mountpoint "$M" "$B"
-                PL="$M/Screepub.app/Contents/Info.plist"
+                PL="$M/Method Reader.app/Contents/Info.plist"
                 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PL")" = "$VERSION" ]
-                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.darkwell.screepub ]
-                codesign --verify --deep --strict "$M/Screepub.app"
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.methodreader.desktop ]
+                codesign --verify --deep --strict "$M/Method Reader.app"
                 hdiutil detach "$M"
                 ;;
               *.app.tar.gz)
                 M="$(mktemp -d)"
                 tar -xzf "$B" -C "$M"
-                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$M/Screepub.app/Contents/Info.plist")" = "$VERSION" ]
-                codesign --verify --deep --strict "$M/Screepub.app"
-                xcrun stapler validate "$M/Screepub.app"
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$M/Method Reader.app/Contents/Info.plist")" = "$VERSION" ]
+                codesign --verify --deep --strict "$M/Method Reader.app"
+                xcrun stapler validate "$M/Method Reader.app"
                 ;;
               *.deb)
                 dpkg-deb --info "$B" | grep -q "Version: $VERSION"
@@ -462,10 +495,13 @@ jobs:
                   grep -qE -- "(^|[,|] *)$p( |,|\$)" <<<"$DEP"
                 done
                 # apt, not dpkg -i: it installs what Depends names first.
+                # It takes the old package's place.
+                dpkg-deb --field "$B" Replaces | grep -q '^screepub '
+                dpkg-deb --field "$B" Conflicts | grep -q '^screepub '
                 sudo apt-get install -y --no-install-recommends "$(realpath "$B")"
-                test -x /usr/bin/screepub-desktop
-                grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
-                sudo dpkg -r screepub
+                test -x /usr/bin/method-reader-app
+                grep -q '^Categories=Office;' /usr/share/applications/method-reader.desktop
+                sudo dpkg -r method-reader
                 ;;
               *.rpm)
                 rpm -qip "$B" | grep -q "Version *: $VERSION"
@@ -473,17 +509,18 @@ jobs:
                 for s in libasound.so.2 libfontconfig.so.1 libxkbcommon.so.0 libxkbcommon-x11.so.0 libwayland-client.so.0 libX11.so.6 libEGL.so.1; do
                   grep -qxF -- "$s()(64bit)" <<<"$REQ"
                 done
-                rpm -qlp "$B" | grep -qx /usr/bin/screepub-desktop
+                rpm -qlp "$B" | grep -qx /usr/bin/method-reader-app
+                rpm -qp --obsoletes "$B" | grep -q "^screepub <"
                 ;;
               *.AppImage)
                 M="$(mktemp -d)"
                 (cd "$M" && "$GITHUB_WORKSPACE/$B" --appimage-extract >/dev/null)
-                test -x "$M/squashfs-root/usr/bin/screepub-desktop"
+                test -x "$M/squashfs-root/usr/bin/method-reader-app"
                 ;;
               *.exe)
                 "$B" //S
-                test -f "$LOCALAPPDATA/Screepub/screepub-desktop.exe"
-                "$LOCALAPPDATA/Screepub/uninstall.exe" //S
+                test -f "$LOCALAPPDATA/Method Reader/method-reader-app.exe"
+                "$LOCALAPPDATA/Method Reader/uninstall.exe" //S
                 ;;
               *.sig) continue ;;
               *) echo "::error::unexpected file $B"; exit 1 ;;
@@ -503,8 +540,10 @@ jobs:
   # v0.11.1 window's own updater (tauri-plugin-updater 2.12.0, run headless
   # by rust/handover-proof on tauri's mock runtime, with the public key the
   # v0.11.1 tauri.conf.json carries) installs THIS release's signed archive
-  # over the bundle v0.11.1 actually published. If the window that is out
-  # there could not take this update, nothing is published that offers it.
+  # over the bundle v0.11.1 actually published, at its own path
+  # (Screepub.app: the old updaters swap in place, whatever the new name).
+  # If the window that is out there could not take this update, nothing is
+  # published that offers it.
   handover-gate:
     needs: app-bundles
     runs-on: macos-15
@@ -532,7 +571,7 @@ jobs:
           PUB="$(git show "$OLD:desktop/src-tauri/tauri.conf.json" | plutil -extract plugins.updater.pubkey raw -o - -)"
           (cd rust && cargo build --release --locked -p sp-release)
           (cd rust/handover-proof && cargo build --release --locked)
-          cp new/Screepub-macOS.app.tar.gz new/Screepub-macOS.app.tar.gz.sig site/
+          cp new/Method-Reader-macOS.app.tar.gz new/Method-Reader-macOS.app.tar.gz.sig site/
           rust/target/release/sp-release serve --dir site --port 0 > serve.out 2> serve.log &
           SERVE=$!
           n=0
@@ -549,10 +588,11 @@ jobs:
           [ "$STATUS" = 0 ] || { echo "::error::the v0.11.1 window's updater could not install this release; latest.json is NOT published"; exit 1; }
           [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' old/Applications/Screepub.app/Contents/Info.plist)" = "$VERSION" ]
           [ ! -e old/Applications/Screepub.app/Contents/MacOS/screepub-engine ]
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' old/Applications/Screepub.app/Contents/Info.plist)" = method-reader-app ]
           codesign --verify --deep --strict old/Applications/Screepub.app
 
   # The bundles onto the draft, then latest.json LAST, built from what
-  # arrived and verified against the key every Screepub trusts before it
+  # arrived and verified against the key every copy of the app trusts before it
   # goes up (the manifest points at files by url; uploaded first, it would
   # describe files not there yet).
   app-upload:
@@ -573,7 +613,7 @@ jobs:
           cd arrivals
           rm -f SHA256SUMS-app
           # Bare names on purpose: they are what SHA256SUMS-app lists, and
-          # every one starts with "Screepub-", never a dash.
+          # every one starts with "Method-Reader-", never a dash.
           # shellcheck disable=SC2035
           sha256sum *.deb *.rpm *.AppImage *.dmg *.exe > SHA256SUMS-app
           # One .deb, one .rpm, one AppImage, ONE .dmg (the frozen Swift
@@ -591,7 +631,7 @@ jobs:
           cd arrivals
           # shellcheck disable=SC2035
           gh release upload "$TAG" *.deb *.rpm *.AppImage *.dmg *.exe \
-            Screepub-macOS.app.tar.gz Screepub-macOS.app.tar.gz.sig SHA256SUMS-app --clobber
+            Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig SHA256SUMS-app --clobber
       - name: Build latest.json from what arrived, verify it, publish it last
         working-directory: rust
         env:
@@ -613,23 +653,35 @@ jobs:
           target/release/sp-release verify-update --dir ../arrivals --manifest ../arrivals/latest.json
           gh release upload "$TAG" ../arrivals/latest.json --clobber
 
-  # Public HERE, last of the uploads. A failed bundle leg never strands the
-  # release in draft; a wrong image list does (the frozen Swift updater).
-  publish:
+  # LAST: read the draft back and say whether it is complete. A person
+  # publishes it (docs/RELEASING.md), and this is what they read first: a
+  # draft missing its Mac image or its latest.json, once public, breaks the
+  # site's download buttons and every window's update check (v0.12.1 went
+  # public that way). It runs even when a job before it failed, so the run
+  # says in one place what is missing. It changes nothing; write access is
+  # only because GitHub shows a draft to no token that cannot write.
+  draft-check:
     needs: [release, cli-upload, app-upload, handover-gate]
-    # A failed handover gate keeps the release a draft: a public release
-    # whose update the windows already out there cannot take is the one
-    # thing worse than a late one. So does a missing app: publishing makes
-    # the release "latest", and the site's download buttons and every
-    # window's update check read releases/latest. v0.12.1 published with a
-    # failed Mac leg and broke both until a re-run attached the apps. A
-    # re-run of the failed jobs now publishes once everything is there.
-    if: ${{ !cancelled() && needs.release.result == 'success' && needs.app-upload.result == 'success' && needs.handover-gate.result == 'success' }}
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Exactly one Mac image, then make the release public
+      - name: Every job before it succeeded
+        env:
+          RELEASE: ${{ needs.release.result }}
+          CLI_UPLOAD: ${{ needs.cli-upload.result }}
+          APP_UPLOAD: ${{ needs.app-upload.result }}
+          HANDOVER_GATE: ${{ needs.handover-gate.result }}
+        run: |
+          set -euo pipefail
+          BAD=""
+          for pair in "release=$RELEASE" "cli-upload=$CLI_UPLOAD" "app-upload=$APP_UPLOAD" "handover-gate=$HANDOVER_GATE"; do
+            [ "${pair#*=}" = success ] || BAD="$BAD ${pair%%=*} (${pair#*=})"
+          done
+          [ -z "$BAD" ] || {
+            echo "::error::The draft is NOT ready to publish. These jobs did not succeed:$BAD. Re-run the failed jobs, then read this check again."; exit 1; }
+      - name: The draft carries every file the release names
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -637,94 +689,30 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
+          # Exactly one Mac image: the frozen Swift updater takes the first
+          # .dmg on the page.
           DMGS="$(gh release view "$TAG" --json assets \
             -q '[.assets[].name | select(endswith(".dmg"))] | join(" ")')"
           case "$DMGS" in
-            "Screepub-macOS.dmg") ;;
-            "") echo "::error::$TAG has no Mac image, so it stays a draft. Re-run the failed jobs; publish runs once the image is attached."; exit 1 ;;
-            *) echo "::error::$TAG must carry exactly one .dmg, Screepub-macOS.dmg. It has: $DMGS."; exit 1 ;;
+            "Method-Reader-macOS.dmg") ;;
+            "") echo "::error::$TAG has no Mac image, so do not publish it. Re-run the failed jobs."; exit 1 ;;
+            *) echo "::error::$TAG must carry exactly one .dmg, Method-Reader-macOS.dmg. It has: $DMGS. Do not publish it."; exit 1 ;;
           esac
-          # The update manifest every window reads must be on the release too.
-          gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx latest.json \
-            || { echo "::error::$TAG has no latest.json, so it stays a draft. Re-run the failed jobs."; exit 1; }
-          PRE=()
-          [[ "$VERSION" == *-* ]] && PRE=(--prerelease)
-          gh release edit "$TAG" --draft=false ${PRE[@]+"${PRE[@]}"}
-
-  tap:
-    needs: publish
-    if: ${{ !cancelled() && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Bump the Homebrew tap
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
-          VERSION: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          V="${VERSION#v}"
-          if [ -z "${TAP_TOKEN:-}" ]; then
-            echo "::notice::TAP_TOKEN is not set, so the tap was NOT bumped. Use the crib sheet in this run's summary. tap-freshness.yml will fail until the tap serves $V."
-            exit 0
-          fi
-          git clone --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
-          (cd rust && cargo xtask bump-tap "$V" "$GITHUB_WORKSPACE/tap")
-          if git -C tap diff --quiet; then
-            echo "::notice::the tap already serves $V; nothing to commit"
-            exit 0
-          fi
-          brew style tap/Formula/screepub.rb tap/Casks/screepub.rb
-          git -C tap -c user.name='github-actions[bot]' \
-            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            commit -q -am "Screepub $V"
-          git -C tap push
-
-  tap-check:
-    needs: tap
-    if: ${{ !cancelled() && needs.tap.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: The tap serves this release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          (cd rust && cargo build --quiet --locked -p xtask)
-          n=1
-          while [ "$n" -le 3 ]; do
-            if rust/target/debug/xtask check-tap; then exit 0; fi
-            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
-            n=$((n + 1))
+          ASSETS="$(gh release view "$TAG" --json assets -q '.assets[].name')"
+          # Every file the jobs above upload. latest.json only for a
+          # release: app-upload publishes none for a prerelease, because
+          # releases/latest never resolves to one.
+          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig SHA256SUMS-app)
+          [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
+          MISSING=""
+          for f in "${WANT[@]}"; do
+            grep -qxF -- "$f" <<<"$ASSETS" || MISSING="$MISSING $f"
           done
-          echo "::error::The release published, but the Homebrew tap does not serve it. Run (from rust/): cargo xtask bump-tap ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
-          exit 1
-
-  # Read latest.json back from the endpoint every Screepub reads, and
-  # (--deep) download each archive it names and verify it the way the Rust
-  # app will. Red means the release is public and updates cannot use it.
-  latest-check:
-    needs: [app-upload, publish]
-    if: ${{ !cancelled() && needs.app-upload.result == 'success' && needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rust
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: The published latest.json describes the newest release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          cargo build --release --locked -p sp-release
-          n=1
-          while [ "$n" -le 3 ]; do
-            if target/release/sp-release check-latest --deep; then exit 0; fi
-            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
-            n=$((n + 1))
-          done
-          echo "::error::The release published, but latest.json at releases/latest/download does not describe it. See docs/release-secrets.md section 4."
-          exit 1
+          [ -z "$MISSING" ] || {
+            echo "::error::$TAG is missing:$MISSING. Do not publish it. Re-run the failed jobs."; exit 1; }
+          # The backticks are Markdown for the summary, not a substitution.
+          # shellcheck disable=SC2016
+          {
+            printf '## Method Reader %s is a complete draft\n\n' "$VERSION"
+            printf 'Before you publish it: download `Method-Reader-macOS.dmg` from the draft on an Apple silicon Mac, open it, drag Method Reader to Applications, and open the app once (it must open without a warning). Then publish the draft on https://github.com/%s/releases. Publishing bumps the Homebrew tap (release-published.yml). The steps are in docs/RELEASING.md.\n' "$GH_REPO"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -12,7 +12,7 @@ use xtask::packaging::manifest::{
     manifest_endpoint, parse_manifest_args, render_manifest,
 };
 
-const TAR: &str = "Screepub-macOS.app.tar.gz";
+const TAR: &str = "Method-Reader-macOS.app.tar.gz";
 /// 2026-09-21T18:00:00Z
 const WHEN: i64 = 1_790_013_600_000;
 
@@ -39,7 +39,7 @@ fn arrivals(s: &Scratch, tag: &str, a: Arrivals) -> PathBuf {
     for n in [
         "Screepub_0.6.0_amd64.deb",
         "Screepub-0.6.0-1.x86_64.rpm",
-        "Screepub-macOS.dmg",
+        "Method-Reader-macOS.dmg",
         "Screepub-0.6.0-setup.exe",
         "SHA256SUMS-app",
     ] {
@@ -74,17 +74,25 @@ fn the_endpoint_is_the_one_url_the_app_is_configured_with() {
     assert_eq!(manifest_endpoint(RELEASE_REPO), sp_update::ENDPOINT);
     assert_eq!(
         manifest_endpoint(RELEASE_REPO),
-        "https://github.com/ssandweiss/screepub/releases/latest/download/latest.json"
+        "https://github.com/method-production-suite/method-reader/releases/latest/download/latest.json"
     );
-    assert_eq!(RELEASE_REPO, "ssandweiss/screepub");
+    assert_eq!(RELEASE_REPO, "method-production-suite/method-reader");
     assert_eq!(MANIFEST_NAME, "latest.json");
+    // What every 0.12.x copy asks, which GitHub redirects once the
+    // repository is moved: the same file name under the old repository.
+    assert_eq!(
+        manifest_endpoint(sp_release::names::LEGACY_REPO),
+        sp_update::LEGACY_ENDPOINT
+    );
 }
 
 #[test]
 fn an_asset_url_names_the_tag_and_the_published_filename_over_tls() {
     assert_eq!(
-        asset_url("ssandweiss/screepub", "0.6.1", TAR),
-        format!("https://github.com/ssandweiss/screepub/releases/download/v0.6.1/{TAR}")
+        asset_url("method-production-suite/method-reader", "0.6.1", TAR),
+        format!(
+            "https://github.com/method-production-suite/method-reader/releases/download/v0.6.1/{TAR}"
+        )
     );
 }
 
@@ -200,7 +208,7 @@ fn it_is_the_shape_the_plugin_reads_version_notes_pub_date_platforms() {
     assert_eq!(
         m["platforms"]["darwin-aarch64"],
         serde_json::json!({
-            "url": format!("https://github.com/ssandweiss/screepub/releases/download/v0.6.1/{TAR}"),
+            "url": format!("https://github.com/method-production-suite/method-reader/releases/download/v0.6.1/{TAR}"),
             "signature": one().signature,
         })
     );
@@ -213,7 +221,11 @@ fn it_is_the_shape_the_plugin_reads_version_notes_pub_date_platforms() {
 fn the_notes_point_a_person_at_the_release_page_for_that_version() {
     let m = render_manifest("0.6.1", &[one()], RELEASE_REPO, WHEN).unwrap();
     let notes = m["notes"].as_str().unwrap();
-    assert!(notes.contains("https://github.com/ssandweiss/screepub/releases/tag/v0.6.1"));
+    assert!(
+        notes.contains(
+            "https://github.com/method-production-suite/method-reader/releases/tag/v0.6.1"
+        )
+    );
     assert!(notes.contains("0.6.1"));
 }
 
@@ -337,7 +349,9 @@ fn it_writes_latest_json_describing_the_signed_archive_that_arrived() {
     );
     assert_eq!(
         m["platforms"]["darwin-aarch64"]["url"],
-        format!("https://github.com/ssandweiss/screepub/releases/download/v0.6.1/{TAR}")
+        format!(
+            "https://github.com/method-production-suite/method-reader/releases/download/v0.6.1/{TAR}"
+        )
     );
     assert!(stdout.contains("darwin-aarch64"));
     assert!(stdout.contains(TAR));

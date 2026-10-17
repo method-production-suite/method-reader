@@ -30,7 +30,7 @@ body:
       label: Where did you see the problem?
       multiple: true
       options:
-        - Screepub's built-in reader
+        - Method Reader's built-in reader
         - On the e-reader after sending
         - In the EPUB opened elsewhere
         - In the .fountain file
@@ -52,17 +52,17 @@ body:
   - type: dropdown
     id: app
     attributes:
-      label: Which Screepub?
+      label: Which part of Method Reader?
       options:
-        - The app (Screepub, on a Mac, Windows or Linux)
-        - The command line (screepub)
+        - The app (Method Reader, on a Mac, Windows or Linux)
+        - The command line (method-reader)
     validations:
       required: true
   - type: input
     id: versions
     attributes:
-      label: Screepub and system versions
-      description: The app shows its version at the foot of the page; the command line with `screepub --version`.
-      placeholder: Screepub 0.7.4, macOS 15.6
+      label: Method Reader and system versions
+      description: The app shows its version at the foot of the page; the command line with `method-reader --version`.
+      placeholder: Method Reader 0.13.0, macOS 15.6
     validations:
       required: true

@@ -1,4 +1,4 @@
-//! The real engine: every [`Request`] runs as the `screepub` command line
+//! The real engine: every [`Request`] runs as the `method-reader` command line
 //! it stands for ([`Request::argv`]), through `sp_cli::run`, in this
 //! process. The CLI's verbs dispatch to sp-engine's and sp-device's
 //! handlers, so the window and the CLI answer every request with the same
@@ -110,8 +110,8 @@ impl Engine for DirectEngine {
         let argv = request.argv();
         let (tx, rx) = channel();
         let worker = std::thread::Builder::new()
-            .name("screepub-engine".into())
-            // The stack the `screepub` binary's main thread has (std's
+            .name("method-reader-engine".into())
+            // The stack the `method-reader` binary's main thread has (std's
             // default for a spawned thread is 2 MiB), so the window and the
             // CLI run the same engine with the same headroom: a stack
             // overflow aborts the process, past any catch_unwind.
@@ -170,7 +170,7 @@ mod tests {
             progress_of(r#"{"progress":{"stage":"page","page":1}}"#).unwrap()["page"],
             1
         );
-        assert!(progress_of("screepub: using this script's saved settings").is_none());
+        assert!(progress_of("method-reader: using this script's saved settings").is_none());
         assert!(progress_of(r#"{"ok":true}"#).is_none());
     }
 

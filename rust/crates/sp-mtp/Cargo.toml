@@ -1,4 +1,4 @@
-# The MTP helper, `screepub-mtp` (BETA, not shipped: it stays off for users
+# The MTP helper, `method-reader-mtp` (BETA, not shipped: it stays off for users
 # until a 2024-or-newer Kindle has been on the owner's desk; see
 # docs/superpowers/specs/2026-10-10-mtp-kindle-design.md on branch
 # mtp-kindle). It lists Kindles that connect over MTP (every Kindle since
@@ -13,7 +13,7 @@
 # from their crates.io tarballs on 2026-10-10.
 [package]
 name = "sp-mtp"
-description = "screepub-mtp: lists MTP Kindles and copies one file to one (beta, off until hardware day)"
+description = "method-reader-mtp: lists MTP Kindles and copies one file to one (beta, off until hardware day)"
 edition.workspace = true
 license.workspace = true
 version = "0.1.0"
@@ -24,7 +24,7 @@ publish = false
 workspace = true
 
 [[bin]]
-name = "screepub-mtp"
+name = "method-reader-mtp"
 path = "src/main.rs"
 
 [lib]

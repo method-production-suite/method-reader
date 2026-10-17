@@ -1,0 +1,113 @@
+# What runs once a PERSON publishes a release: the Homebrew tap, then the
+# checks that read the published release back. A `v*` tag only builds a
+# draft (release.yml); the suite's release standard is that a person checks
+# the .dmg on an Apple silicon Mac and publishes it (docs/RELEASING.md),
+# and these jobs used to run inside the tag's run, after a job that
+# published automatically.
+#
+# This trigger fires because a person publishes. GitHub starts no run from
+# an event raised with a workflow's default GITHUB_TOKEN, which is why
+# tap-freshness.yml's own `release: published` trigger never fired at
+# v0.5.3, when release.yml made the release public itself. Nothing in any
+# workflow publishes a draft now (xtask/tests/release_workflow.rs holds
+# that), so this one fires every time.
+#
+# For this event GITHUB_REF is the published release's tag, so
+# `github.ref_name` is `vX.Y.Z` and the checkout is the tagged commit, as it
+# was in the tag's run. Prereleases are skipped, as they were there: a
+# hyphen in the tag must never become what `brew install` hands out, and
+# releases/latest never resolves to a prerelease. A failed job here is
+# re-run from this run's page ("Re-run failed jobs").
+#
+# Secrets: TAP_TOKEN (optional; docs/release-secrets.md section 3), given to
+# the one step that pushes the tap. Every job reads this repository only.
+name: release-published
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+concurrency:
+  group: release-published-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: never
+jobs:
+  tap:
+    if: ${{ !github.event.release.prerelease && !contains(github.ref_name, '-') }}
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Bump the Homebrew tap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          V="${VERSION#v}"
+          if [ -z "${TAP_TOKEN:-}" ]; then
+            echo "::notice::TAP_TOKEN is not set, so the tap was NOT bumped. Use the crib sheet in the release run's summary. tap-freshness.yml will fail until the tap serves $V."
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:$TAP_TOKEN@github.com/ssandweiss/homebrew-tap.git" tap
+          (cd rust && cargo xtask bump-tap "$V" "$GITHUB_WORKSPACE/tap")
+          # Everything, new files too: the first bump after the rename moves
+          # screepub.rb to method-reader.rb and adds the two renames files.
+          git -C tap add -A
+          if git -C tap diff --cached --quiet; then
+            echo "::notice::the tap already serves $V; nothing to commit"
+            exit 0
+          fi
+          brew style tap/Formula/method-reader.rb tap/Casks/method-reader.rb
+          git -C tap -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -q -m "Method Reader $V"
+          git -C tap push
+
+  tap-check:
+    needs: tap
+    if: ${{ !cancelled() && needs.tap.result == 'success' && !github.event.release.prerelease && !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: The tap serves this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          (cd rust && cargo build --quiet --locked -p xtask)
+          n=1
+          while [ "$n" -le 3 ]; do
+            if rust/target/debug/xtask check-tap; then exit 0; fi
+            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
+            n=$((n + 1))
+          done
+          echo "::error::The release published, but the Homebrew tap does not serve it. Run (from rust/): cargo xtask bump-tap ${GITHUB_REF_NAME#v} <tap-checkout>, then commit and push."
+          exit 1
+
+  # Read latest.json back from the endpoint every copy of the app reads, and
+  # (--deep) download each archive it names and verify it the way the Rust
+  # app will. Red means the release is public and updates cannot use it.
+  latest-check:
+    if: ${{ !github.event.release.prerelease && !contains(github.ref_name, '-') }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: The published latest.json describes the newest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cargo build --release --locked -p sp-release
+          n=1
+          while [ "$n" -le 3 ]; do
+            if target/release/sp-release check-latest --deep; then exit 0; fi
+            [ "$n" -lt 3 ] && { echo "--- attempt $n of 3, waiting 20s ---"; sleep 20; }
+            n=$((n + 1))
+          done
+          echo "::error::The release published, but latest.json at releases/latest/download does not describe it. See docs/release-secrets.md section 4."
+          exit 1

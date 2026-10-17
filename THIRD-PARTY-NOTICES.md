@@ -1,22 +1,29 @@
 # Third-party notices
 
-Screepub itself is licensed under the GNU Affero General Public License
-v3.0 or later: see [`LICENSE`](LICENSE).
+Method Reader's own code is licensed under the MIT License or the Apache
+License 2.0, at your option: see [`LICENSE-MIT`](LICENSE-MIT) and
+[`LICENSE-APACHE`](LICENSE-APACHE). The one exception is the AZW3 writer,
+`rust/crates/sp-azw3`, which is ported from calibre and so is licensed under
+the GNU General Public License version 3
+([`LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)). The command line
+and the app both contain that writer, so each program as a whole is
+distributed under GPL-3.0; every other crate can be used on its own under
+MIT or Apache-2.0. All three licence files travel inside each app bundle.
 
 ## What ships, and what it carries
 
-Screepub is written in Rust, as one Cargo workspace (`rust/`). Two programs
+Method Reader is written in Rust, as one Cargo workspace (`rust/`). Two programs
 are built from it for download, and everything third-party that either one
 carries is listed in this file.
 
-- **The command line**, `screepub` (crate `sp-cli`), ships as the
+- **The command line**, `method-reader` (crate `sp-cli`), ships as the
   command-line archives for macOS (Apple silicon), Linux (x64 and arm64) and
   Windows (x64). An archive holds only the binary; this file is its notice.
-  The binary carries the conversion engine (Screepub's own crates, including
+  The binary carries the conversion engine (Method Reader's own crates, including
   the ported code credited below) and the third-party Rust crates marked
   "CLI and app" in [the crate tables](#the-rust-crates-that-ship).
-- **The window**, `screepub-desktop` (crate `sp-app`, built as
-  `screepub-window`), ships as the app: the Mac `.dmg`, the Windows
+- **The window**, `method-reader-app` (crate `sp-app`, built as
+  `method-reader-app`), ships as the app: the Mac `.dmg`, the Windows
   installer, and the Linux `.deb`, `.rpm` and AppImage. It has the whole
   engine built in, so it carries everything the command line does, plus the
   updater (crate `sp-update`), the window's own crates (egui and eframe,
@@ -24,13 +31,13 @@ carries is listed in this file.
   marked "app" in the tables) and the two typefaces below. This file travels
   inside each bundle beside `LICENSE`.
 - **The device-request service** (crate `sp-device-requests`) is a
-  Cloudflare Worker that Screepub runs for itself. It is not in any download,
+  Cloudflare Worker that Method Reader runs for itself. It is not in any download,
   so its crates are not listed here.
 - **Developer tools** (`xtask`, `sp-release`) and the beta MTP helper
-  (`sp-mtp`, `screepub-mtp`, not yet shipped) are not in any download either.
+  (`sp-mtp`, `method-reader-mtp`, not yet shipped) are not in any download either.
 
 The installers wrap the window in other people's packaging programs, which
-are not part of Screepub: the Windows installer is made with NSIS, and the
+are not part of Method Reader: the Windows installer is made with NSIS, and the
 AppImage starts with AppImage's type2-runtime, the small program that mounts
 it. Each is distributed under its own licence; see
 <https://nsis.sourceforge.io/License> and
@@ -41,7 +48,7 @@ it. Each is distributed under its own licence; see
 ## Code ported from other projects
 
 These projects' libraries do not ship. Parts of their code were translated
-into Screepub's Rust crates, so their licences travel with that code. Each
+into Method Reader's Rust crates, so their licences travel with that code. Each
 ported file names what it ports at its head.
 
 ### pdf.js (pdfjs-dist 6.3.289): Apache License 2.0
@@ -49,7 +56,7 @@ ported file names what it ports at its head.
 PDF text extraction. Copyright Mozilla Foundation and pdf.js contributors.
 <https://github.com/mozilla/pdf.js>
 
-`rust/crates/sp-pdf` reproduces what pdf.js hands Screepub's parser: the
+`rust/crates/sp-pdf` reproduces what pdf.js hands Method Reader's parser: the
 text items of `getTextContent`, the fonts behind them, the operators the
 parser walks out of `getOperatorList`, and each painted image's pixels. Its
 modules are translations of pdf.js's `src/core/` code: the content-stream
@@ -120,7 +127,7 @@ every header field (versions, flags, method, dates, CRC, sizes,
 attributes) is JSZip's, and so is the folder entry it puts ahead of the
 first file in each folder. The compression itself is
 not JSZip's or pako's: it is the zlib-rs crate, listed below. JSZip is dual
-licensed; Screepub uses it under the MIT license, whose text is the same as
+licensed; Method Reader uses it under the MIT license, whose text is the same as
 fountain-js's above.
 
 ### Node.js's `path` module: MIT
@@ -129,7 +136,7 @@ Copyright Joyent, Inc. and other Node contributors.
 <https://github.com/nodejs/node>
 
 `rust/crates/sp-fsutil/src/nodepath.rs` is a line-for-line port of Node's
-`path` functions (`lib/path.js`), posix and win32, so the paths Screepub
+`path` functions (`lib/path.js`), posix and win32, so the paths Method Reader
 prints are the ones its earlier engine printed. Node's `path` is under the
 MIT license, whose text is the same as fountain-js's above.
 
@@ -138,7 +145,7 @@ MIT license, whose text is the same as fountain-js's above.
 Copyright Kovid Goyal and the calibre contributors.
 <https://github.com/kovidgoyal/calibre>
 
-Screepub's AZW3 (KF8) writer, `rust/crates/sp-azw3/src/`, is a Rust port of
+Method Reader's AZW3 (KF8) writer, `rust/crates/sp-azw3/src/`, is a Rust port of
 parts of calibre's KF8 writer, `src/calibre/ebooks/mobi/writer8/`: main.py
 (the text records, FDST, indices, guide, and the markup passes),
 skeleton.py (the chunker), index.py, tbs.py, mobi.py (record 0 and the
@@ -153,15 +160,16 @@ ports parts of calibre's reader (`src/calibre/ebooks/mobi/reader/index.py`,
 PalmDOC decoder (`tests/common/palmdoc_decode.rs`) is a port of
 cpalmdoc_decompress; neither test file is in any download.
 
-calibre is licensed under the GNU General Public License, version 3. The
-ported code is distributed as part of Screepub under the GNU Affero General
-Public License, version 3 or later (full text in [`LICENSE`](LICENSE));
-section 13 of each licence permits combining code under the two in one
-work.
+calibre is licensed under the GNU General Public License, version 3, and
+so is the port: sp-azw3 is GPL-3.0-only (full text in
+[`rust/crates/sp-azw3/LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)).
+The rest of Method Reader is MIT OR Apache-2.0, which GPL-3.0 code may be
+combined with; the programs that contain sp-azw3 are distributed under
+GPL-3.0 as a whole.
 
 The script `rust/crates/sp-engine/src/export/kfx_install.py`, which
-`screepub kfx-install` hands to your own calibre's `calibre-debug`, is
-Screepub's own: it calls calibre's functions inside your calibre and copies
+`method-reader kfx-install` hands to your own calibre's `calibre-debug`, is
+Method Reader's own: it calls calibre's functions inside your calibre and copies
 none of calibre's code.
 
 ---
@@ -185,7 +193,20 @@ Copyright (c) 2017 Type Together, commissioned by Google.
 <https://github.com/googlefonts/literata>
 
 Bundled as WOFF2 subsets in `site/fonts/` and in `rust/crates/sp-app/fonts/`,
-for the window's running prose.
+for the script's prose in the window (the book preview).
+
+### Inter 4.1 (font version 4.001): SIL Open Font License 1.1
+
+Copyright (c) 2016 The Inter Project Authors.
+<https://github.com/rsms/inter>
+
+Bundled as two unmodified TrueType files (Regular and SemiBold) in
+`rust/crates/sp-app/fonts-ui/`, with the licence beside them as
+`fonts-ui/OFL.txt`. The window sets its controls, labels and messages in
+the computer's own interface typeface, read from the system at start (San
+Francisco on a Mac, Segoe UI on Windows, the usual sans on Linux); none of
+those is shipped. Inter is the stand-in where no system face loads, and the
+fallback for any letter the system face lacks.
 
 The OFL requires that the fonts be redistributed under the same licence, that
 this notice travel with them, and that they not be sold on their own. It also
@@ -203,12 +224,12 @@ Emoji, Ubuntu Light and an emoji icon font); see
 
 [Calibre](https://calibre-ebook.com) (GPL-3.0) and Amazon's Kindle
 Previewer are optional and used only if you installed them yourself:
-Screepub runs your copy of `ebook-convert`, with the KFX plugin, to produce
-KFX. The AZW3 is Screepub's own (see the calibre port above), so no Calibre
-program and no Amazon code is distributed with Screepub.
+Method Reader runs your copy of `ebook-convert`, with the KFX plugin, to produce
+KFX. The AZW3 is Method Reader's own (see the calibre port above), so no Calibre
+program and no Amazon code is distributed with Method Reader.
 
 The **KFX Output plugin for Calibre** (GPL-3.0, copyright John Howell) is not
-distributed either. `screepub kfx-install`, or the Install button on the Send
+distributed either. `method-reader kfx-install`, or the Install button on the Send
 page, downloads it from Calibre's own plugin index and has **your own copy of
 Calibre** install it, only when you ask, where it runs as part of Calibre.
 The plugin drives Amazon's Kindle Previewer (proprietary, installed by you)
@@ -221,7 +242,7 @@ with the full GPL-3 text and their own copy of this notice beside it.
 
 ## The Rust crates that ship
 
-Every third-party crate built into `screepub` or `screepub-desktop`, on any
+Every third-party crate built into `method-reader` or `method-reader-app`, on any
 platform: 453 crates (62 of them in the command line; all of them
 in the window, which contains the command line's engine). The list comes from
 Cargo itself, at the versions `rust/Cargo.lock` pins: `cargo tree --locked -p
@@ -239,8 +260,8 @@ run while compiling and are not part of the program that ships.
 and arm64, the window for x64). Each download carries only its own
 platform's share.
 
-**Which licence Screepub relies on.** Many crates offer a choice ("MIT OR
-Apache-2.0"). Where MIT is one of the choices, Screepub uses the crate under
+**Which licence Method Reader relies on.** Many crates offer a choice ("MIT OR
+Apache-2.0"). Where MIT is one of the choices, Method Reader uses the crate under
 MIT; otherwise under Apache-2.0 where offered. So the Unlicense, 0BSD,
 LLVM-exception, GPL-2.0, MPL-2.0 and zlib alternatives some crates also offer
 are not the ones relied on, and their texts are not repeated here. Where a
@@ -828,7 +849,7 @@ DEALINGS IN THE SOFTWARE.
 
 ### Apache License 2.0
 
-Quoted from serde 1.0.229's LICENSE-APACHE. None of the crates above that Screepub uses under Apache-2.0 ships a NOTICE file.
+Quoted from serde 1.0.229's LICENSE-APACHE. None of the crates above that Method Reader uses under Apache-2.0 ships a NOTICE file.
 
 ```text
                               Apache License
@@ -2009,7 +2030,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### SIL Open Font License 1.1
 
-For Courier Prime, Literata and Noto Emoji. Quoted from
+For Courier Prime, Literata, Inter and Noto Emoji. Quoted from
 epaint_default_fonts 0.36.2's `fonts/OFL.txt`:
 
 ```text

@@ -31,7 +31,7 @@ fn file(dir: &Path, name: &str, body: &str) -> PathBuf {
 fn a_release_s_update_files_install_over_a_tauri_bundle() {
     let tmp = tempfile::tempdir().unwrap();
     let t = tmp.path();
-    let window = file(t, "screepub-window", "#!/bin/sh\necho rust\n");
+    let window = file(t, "method-reader-app", "#!/bin/sh\necho rust\n");
     let icon = file(t, "icon.icns", "icns");
     let license = file(t, "LICENSE", "AGPL");
     let notices = file(t, "THIRD-PARTY-NOTICES.md", "notices");
@@ -56,12 +56,12 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
         &[],
     );
     let arrivals = t.join("arrivals");
-    let archive = arrivals.join("Screepub-macOS.app.tar.gz");
+    let archive = arrivals.join("Method-Reader-macOS.app.tar.gz");
     sp_release(
         &[
             "update-archive",
             "--app",
-            &s(&t.join("build/Screepub.app")),
+            &s(&t.join("build/Method Reader.app")),
             "--out",
             &s(&archive),
         ],
@@ -120,7 +120,7 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
         &[
             "update-archive",
             "--app",
-            &s(&t.join("build/Screepub.app")),
+            &s(&t.join("build/Method Reader.app")),
             "--out",
             &s(&again),
         ],
@@ -131,8 +131,9 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
         std::fs::read(&again).unwrap()
     );
 
-    // What a Tauri window does with it: verify (its rule: version optional),
-    // then swap its own bundle.
+    // What a Tauri window or a 0.12.x Screepub does with it: verify (the
+    // Tauri rule: version optional), then swap its own bundle, in place,
+    // whatever the archive's top folder is called.
     let manifest: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&manifest_path).unwrap()).unwrap();
     let release = sp_update::Release::from_value(manifest).unwrap();
@@ -151,18 +152,28 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
     })
     .unwrap();
     assert_eq!(installed.leftover, None);
-    let exe = sp_update::install::bundle_executable(&apps.join("Screepub.app")).unwrap();
+    // A 0.12.x install named Screepub.app: the Rust updater installs the
+    // new version beside it as Method Reader.app and removes the old one.
+    assert_eq!(installed.bundle, apps.join("Method Reader.app"));
+    assert!(!apps.join("Screepub.app").exists());
+    let exe = sp_update::install::bundle_executable(&installed.bundle).unwrap();
+    assert!(exe.ends_with("Contents/MacOS/method-reader-app"), "{exe:?}");
     assert_eq!(
         std::fs::read_to_string(exe).unwrap(),
         "#!/bin/sh\necho rust\n"
     );
-    assert!(!old.join("screepub-engine").exists());
-    assert_eq!(
-        sp_update::install::bundle_identifier(&apps.join("Screepub.app")).as_deref(),
-        Some("com.darkwell.screepub")
+    assert!(
+        !installed
+            .bundle
+            .join("Contents/MacOS/screepub-engine")
+            .exists()
     );
     assert_eq!(
-        std::fs::read_to_string(apps.join("Screepub.app/Contents/Resources/LICENSE")).unwrap(),
+        sp_update::install::bundle_identifier(&installed.bundle).as_deref(),
+        Some(sp_update::IDENTIFIER)
+    );
+    assert_eq!(
+        std::fs::read_to_string(installed.bundle.join("Contents/Resources/LICENSE")).unwrap(),
         "AGPL"
     );
 }

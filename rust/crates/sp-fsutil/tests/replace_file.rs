@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 fn temp() -> (tempfile::TempDir, PathBuf) {
     let scratch = tempfile::Builder::new()
-        .prefix("screepub-replace-file-")
+        .prefix("method-reader-replace-file-")
         .tempdir()
         .unwrap();
     let dir = scratch.path().join("replace");
@@ -134,10 +134,10 @@ fn the_partial_is_short_hidden_beside_the_book_and_the_same_for_the_same_book() 
     assert_eq!(partial.parent(), dest.parent());
     let name = partial.file_name().unwrap().to_string_lossy().into_owned();
     assert!(
-        name.starts_with(".screepub-") && name.ends_with(".partial"),
+        name.starts_with(".method-reader-") && name.ends_with(".partial"),
         "{name}"
     );
-    let mark = &name[".screepub-".len()..name.len() - ".partial".len()];
+    let mark = &name[".method-reader-".len()..name.len() - ".partial".len()];
     assert_eq!(mark.len(), 8);
     assert!(
         mark.chars()
@@ -158,7 +158,7 @@ fn the_partial_name_is_the_typescript_one() {
     let partial = partial_path_for(Path::new("/v/documents/Field Station.azw3"));
     assert_eq!(
         partial,
-        Path::new("/v/documents").join(".screepub-0bbeaa17.partial")
+        Path::new("/v/documents").join(".method-reader-0bbeaa17.partial")
     );
 }
 
@@ -175,7 +175,7 @@ fn a_failed_copy_names_the_book_with_the_system_code_never_the_partial() {
         "{}",
         err.message
     );
-    assert!(!err.message.contains(".screepub-"), "{}", err.message);
+    assert!(!err.message.contains(".method-reader-"), "{}", err.message);
     assert!(!err.message.contains("partial"), "{}", err.message);
 }
 

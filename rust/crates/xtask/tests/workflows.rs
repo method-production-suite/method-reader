@@ -33,7 +33,7 @@ fn every_workflow_is_found_and_parsed() {
     // below pass over an empty list.
     let names = workflow_files();
     for f in [
-        "pages.yml",
+        "release-published.yml",
         "release.yml",
         "rust.yml",
         "tap-freshness.yml",
@@ -260,21 +260,22 @@ fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
         .collect()
 }
 
+/// A job that reads the release while it is still a DRAFT, which GitHub
+/// shows only to a token that can write: release.yml's draft-check.
+fn reads_the_draft(file: &str, name: &str, job: &Value) -> bool {
+    file == "release.yml"
+        && name == "draft-check"
+        && commands(&run_text(job)).contains("gh release view")
+}
+
 #[test]
 fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
     let release_write = Regex::new(r"gh release (upload|create|edit)").unwrap();
     let mut wrong = vec![];
     for (f, wf) in all() {
-        // Top level: contents: read, and Pages its own deploy grant.
-        let expected = if f == "pages.yml" {
-            map(&[
-                ("contents", "read"),
-                ("pages", "write"),
-                ("id-token", "write"),
-            ])
-        } else {
-            map(&[("contents", "read")])
-        };
+        // Top level: contents: read. (The site deploys from the suite's
+        // website repo now, so no workflow here needs a Pages grant.)
+        let expected = map(&[("contents", "read")]);
         if permissions(&wf).as_ref() != Some(&expected) {
             wrong.push(format!(
                 "{f}: top-level permissions {:?}, want {expected:?}",
@@ -282,7 +283,8 @@ fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
             ));
         }
         for (name, job) in jobs(&wf) {
-            let writes = release_write.is_match(&commands(&run_text(job)));
+            let writes = release_write.is_match(&commands(&run_text(job)))
+                || reads_the_draft(&f, &name, job);
             match permissions(job) {
                 None if writes => wrong.push(format!(
                     "{f}: {name} changes a release with a read-only token"
@@ -464,7 +466,7 @@ fn weekly_the_calibre_job_exists_on_macos_in_the_workspace() {
 fn weekly_installs_calibre_then_tests_with_calibre_required() {
     // The Calibre tests skip without Calibre, so a Calibre the engine can
     // no longer FIND would leave the job green while testing nothing.
-    // SCREEPUB_REQUIRE_CALIBRE turns that skip into a failure.
+    // METHOD_READER_REQUIRE_CALIBRE turns that skip into a failure.
     let wf = workflow("weekly-toolchain.yml");
     let job = job(&wf, "engine-calibre");
     let install = step_index(job, |st| {
@@ -477,10 +479,10 @@ fn weekly_installs_calibre_then_tests_with_calibre_required() {
     .expect("a cargo test --workspace --locked step");
     assert!(install < test, "Calibre must be installed before the tests");
     let env = steps(job)[test].get("env").expect("the test step's env");
-    assert_eq!(s(env, "SCREEPUB_REQUIRE_CALIBRE"), "1");
+    assert_eq!(s(env, "METHOD_READER_REQUIRE_CALIBRE"), "1");
     // The test that reads it exists and reads it.
     let found = read("rust/crates/sp-engine/tests/calibre_found.rs");
-    assert!(found.contains("SCREEPUB_REQUIRE_CALIBRE"));
+    assert!(found.contains("METHOD_READER_REQUIRE_CALIBRE"));
 }
 
 #[test]
@@ -513,8 +515,10 @@ fn the_standing_tap_check_watches_the_manifest_as_well_as_the_tap() {
             .iter()
             .any(|t| t.contains("sp-release check-latest --deep"))
     );
-    // Never on `release: published`: GitHub starts no run from an event a
-    // workflow raised with the default token, so that trigger never fired.
+    // Never on `release: published`: that is release-published.yml's
+    // trigger, and it fires only because a PERSON publishes (GitHub starts
+    // no run from an event a workflow raised with the default token, which
+    // is why this file's own copy of it never fired at v0.5.3).
     let on = serde_yaml::to_string(wf.get("on").expect("an on: table")).unwrap();
     assert!(!on.contains("release"), "{on}");
 }

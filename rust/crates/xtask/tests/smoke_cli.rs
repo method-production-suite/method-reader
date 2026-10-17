@@ -47,18 +47,23 @@ fn rejects_empty_output_and_non_json() {
 
 #[test]
 fn passes_only_on_the_exact_expected_line() {
-    assert_eq!(check_version(&ok("screepub 0.6.0\n"), "0.6.0"), Ok(()));
+    assert_eq!(
+        check_version(&ok("method-reader 0.6.0 (Method Reader)\n"), "0.6.0"),
+        Ok(())
+    );
 }
 
 #[test]
 fn a_stale_binary_reporting_the_old_version_fails() {
     assert!(
-        check_version(&ok("screepub 0.5.4\n"), "0.6.0")
+        check_version(&ok("method-reader 0.5.4 (Method Reader)\n"), "0.6.0")
             .unwrap_err()
             .contains("0.5.4")
     );
     // A substring match must not save it.
-    assert!(check_version(&ok("screepub 0.6.0-dirty\n"), "0.6.0").is_err());
+    assert!(check_version(&ok("method-reader 0.6.0-dirty (Method Reader)\n"), "0.6.0").is_err());
+    // The 0.12 line, with no product name after the version, is not it.
+    assert!(check_version(&ok("method-reader 0.6.0\n"), "0.6.0").is_err());
     let crashed = RunResult::failed(1, "boom");
     assert!(
         check_version(&crashed, "0.6.0")
@@ -193,7 +198,7 @@ fn fake_binary<'a>(
     move |argv: &[String]| {
         calls.borrow_mut().push(argv.to_vec());
         if argv[1] == "--version" {
-            return ok("screepub 0.6.0\n");
+            return ok("method-reader 0.6.0 (Method Reader)\n");
         }
         if argv[1] == "devices" {
             return ok("{\"ok\":true,\"devices\":[]}\n");

@@ -1,6 +1,6 @@
 [package]
 name = "sp-engine"
-description = "Screepub's engine beyond conversion: settings, the library, export and send routes, update decisions"
+description = "Method Reader's engine beyond conversion: settings, the library, export and send routes, update decisions"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

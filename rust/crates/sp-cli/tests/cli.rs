@@ -47,7 +47,10 @@ fn version_prints_a_semver_and_exits_0() {
     let ran = Sandbox::new().run(&["--version"]);
     assert_eq!(ran.code, 0);
     let out = ran.stdout.trim();
-    let v = out.strip_prefix("screepub ").expect("starts with screepub");
+    let v = out
+        .strip_prefix("method-reader ")
+        .and_then(|v| v.strip_suffix(" (Method Reader)"))
+        .expect("method-reader X (Method Reader)");
     let parts: Vec<&str> = v.split(['.', '-', '+']).take(3).collect();
     assert_eq!(parts.len(), 3, "{out}");
     for p in parts {
@@ -62,7 +65,10 @@ fn version_matches_the_workspace_version() {
     let ran = Sandbox::new().run(&["--version"]);
     assert_eq!(
         ran.stdout.trim(),
-        format!("screepub {}", env!("CARGO_PKG_VERSION"))
+        format!(
+            "method-reader {} (Method Reader)",
+            env!("CARGO_PKG_VERSION")
+        )
     );
 }
 
@@ -230,7 +236,7 @@ fn missing_folder_text(flag: &str, file: &str) {
     assert_eq!(ran.stdout, "");
     let lines: Vec<&str> = ran.stderr.trim().lines().collect();
     assert_eq!(lines.len(), 1, "{:?}", ran.stderr);
-    assert!(lines[0].starts_with("screepub: "), "{}", lines[0]);
+    assert!(lines[0].starts_with("method-reader: "), "{}", lines[0]);
     assert!(lines[0].contains(flag), "{}", lines[0]);
     assert!(lines[0].contains(&missing), "{}", lines[0]);
     assert!(!lines[0].contains("ENOENT"));
@@ -358,7 +364,7 @@ fn an_unwritable_output_without_json_is_one_line_not_a_stack_trace() {
     assert_eq!(ran.stdout, "");
     let lines: Vec<&str> = ran.stderr.trim().lines().collect();
     assert_eq!(lines.len(), 1, "{:?}", ran.stderr);
-    assert!(lines[0].starts_with("screepub: "));
+    assert!(lines[0].starts_with("method-reader: "));
     assert!(lines[0].contains(&target));
     assert!(!lines[0].contains('\u{2014}'));
 }
@@ -483,7 +489,7 @@ fn under_library_the_picture_folder_sits_in_the_scripts_own_library_folder() {
     let scripts = sb.mkdir("d/scripts");
     let root = sb.path("d/lib");
     sb.copy_fixture("images.pdf", "d/scripts/Plates.pdf");
-    sb.set("SCREEPUB_LIBRARY", s(&root));
+    sb.set("METHOD_READER_LIBRARY", s(&root));
     let ran = sb.run(&[&s(&scripts.join("Plates.pdf")), "--library", "--json"]);
     assert_eq!(ran.code, 0, "{}", ran.stdout);
     let res = ran.json();

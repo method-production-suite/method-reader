@@ -270,7 +270,7 @@ pub fn to_kfx(
     }
     let kfx = kfx_sibling(epub);
     let scratch = kfx_scratch_path(epub);
-    let previewer_tmp = make_temp_dir("screepub-kfx-")?;
+    let previewer_tmp = make_temp_dir("method-reader-kfx-")?;
     let child_env = env
         .with("TMPDIR", &previewer_tmp)
         .with("TMP", &previewer_tmp)
@@ -369,7 +369,7 @@ pub fn install_kfx_plugin(run: &DebugRunner, debug_tool: Option<&str>) -> KfxIns
     let Some(line) = run
         .stdout
         .split('\n')
-        .find(|l| l.starts_with("SCREEPUB_RESULT "))
+        .find(|l| l.starts_with("METHOD_READER_RESULT "))
     else {
         let stderr = crate::env::js_trim(&run.stderr);
         let stdout = crate::env::js_trim(&run.stdout);
@@ -394,7 +394,7 @@ pub fn install_kfx_plugin(run: &DebugRunner, debug_tool: Option<&str>) -> KfxIns
         )),
         ..Default::default()
     };
-    let parsed = match crate::jsjson::parse(&line["SCREEPUB_RESULT ".len()..]) {
+    let parsed = match crate::jsjson::parse(&line["METHOD_READER_RESULT ".len()..]) {
         None | Some(Value::Null) => return unreadable(),
         Some(v) => v,
     };

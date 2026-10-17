@@ -1,4 +1,4 @@
-//! `screepub`: screenplay PDF to reflowable EPUB3 (via Fountain), and the
+//! `method-reader`: screenplay PDF to reflowable EPUB3 (via Fountain), and the
 //! verbs that send, export and tune what it makes. A port of src/cli.ts:
 //! the same flags, the same help texts, the same `--json` contract (EVERY
 //! exit in that mode is one JSON object on stdout), the same progress lines
@@ -15,6 +15,64 @@ mod usage;
 mod verbs;
 
 pub use out::{Sink, Std};
+
+/// What the old command name, `screepub`, says on stderr before it runs.
+pub const OLD_NAME_NOTICE: &str =
+    "screepub is now called method-reader. This old name will stop working in a later release.";
+
+/// A binary's whole run on this process's argv and streams: the one-time
+/// move of the 0.12 folders, the camera-import recovery, then [`run`].
+/// Both command names call this.
+pub fn main() -> u8 {
+    let argv: Vec<String> = std::env::args_os()
+        .skip(1)
+        .map(|a| a.to_string_lossy().into_owned())
+        .collect();
+    move_legacy_folders();
+    recover_camera_import();
+    run(&argv, Box::new(Std))
+}
+
+/// Move Screepub's settings and library folders to Method Reader's, once
+/// (sp_engine::legacy). Never fails: a folder that cannot move stays in use
+/// where it is. Call once at startup, from a real run only: it acts on this
+/// process's own environment.
+pub fn move_legacy_folders() {
+    let _ = sp_engine::legacy::move_legacy_folders(
+        sp_engine::env::host_platform(),
+        &sp_engine::env::Env::process(),
+    );
+}
+
+/// The app-data folder's name: the bundle identifier, which the window's
+/// tests hold to sp_update::IDENTIFIER.
+pub use sp_engine::settings::app::APP_DATA_FOLDER;
+
+/// The file `name` in the app's data folder, for this process's own
+/// environment (sp_engine::settings::app::app_data_path): the override
+/// folder when one is set, else Method Reader's folder, or a 0.12 folder
+/// while only that one holds the file. The window keeps its own storage
+/// there.
+pub fn app_data_file(name: &str) -> std::path::PathBuf {
+    sp_engine::settings::app::app_data_path(
+        sp_engine::env::host_platform(),
+        &sp_engine::env::Env::process(),
+        name,
+    )
+    .into()
+}
+
+/// The platform's app-data folder called `name` (an identifier), for this
+/// process's environment: where a copy built under another identifier (a
+/// handover rehearsal) keeps its own storage.
+pub fn app_data_folder_named(name: &str) -> std::path::PathBuf {
+    sp_engine::settings::app::app_data_folder_named(
+        sp_engine::env::host_platform(),
+        &sp_engine::env::Env::process(),
+        name,
+    )
+    .into()
+}
 
 /// Run one command line, writing to `sink`; the exit code.
 pub fn run(argv: &[String], sink: Box<dyn Sink>) -> u8 {

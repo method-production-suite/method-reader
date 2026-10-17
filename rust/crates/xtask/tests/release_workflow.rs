@@ -7,6 +7,11 @@
 //! The published names are read from sp_release::names, the one place the
 //! pipeline takes them from, so a renamed artifact fails here rather than
 //! leaving a page or a gate naming a file the release does not carry.
+//!
+//! The suite's release standard (2026-10-16): a tag builds a DRAFT, a
+//! person checks the .dmg and publishes it, and only then does
+//! release-published.yml bump the Homebrew tap and read the release back.
+//! Nothing in any workflow makes the draft public.
 
 mod repo_common;
 
@@ -62,12 +67,9 @@ fn every_job_is_there_and_waits_for_what_it_must() {
             vec!["app-bundles", "handover-gate", "release"],
         ),
         (
-            "publish",
+            "draft-check",
             vec!["app-upload", "cli-upload", "handover-gate", "release"],
         ),
-        ("tap", vec!["publish"]),
-        ("tap-check", vec!["tap"]),
-        ("latest-check", vec!["app-upload", "publish"]),
     ];
     let names: Vec<String> = jobs(&rel).into_iter().map(|(n, _)| n).collect();
     assert_eq!(
@@ -126,44 +128,86 @@ fn the_checks_read_the_version_and_the_notes_from_the_tagged_commit() {
     }
 }
 
+/// Every command line, in every workflow, that could make a draft public:
+/// `--draft=false` on `gh release edit`, or a `draft` field sent to the
+/// API.
+fn undrafting_lines() -> Vec<String> {
+    let re = Regex::new(r"--draft=false|draft=false|draft:\s*false|\x22draft\x22").unwrap();
+    let mut found = vec![];
+    for f in workflow_files() {
+        let wf = workflow(&f);
+        for (name, job) in jobs(&wf) {
+            for line in commands(&run_text(job)).lines() {
+                if re.is_match(line) {
+                    found.push(format!("{f}: {name}: {}", line.trim()));
+                }
+            }
+        }
+    }
+    found
+}
+
 #[test]
-fn the_release_job_leaves_a_draft_and_only_publish_makes_it_public() {
+fn the_release_job_leaves_a_draft_and_nothing_in_any_workflow_makes_it_public() {
+    // The suite's standard: a person publishes, after checking the .dmg on
+    // an Apple silicon Mac. It is also what makes release-published.yml
+    // fire at all: GitHub starts no run from an event raised with the
+    // default token, so a workflow that published would leave the tap
+    // un-bumped and nothing red (tap-freshness.yml's old trigger, v0.5.3).
     let rel = rel();
     let release = run_text(job(&rel, "release"));
     assert!(release.contains("--draft"));
-    assert!(!release.contains("--draft=false"));
-    let publish = job(&rel, "publish");
-    assert!(run_text(publish).contains(r#"gh release edit "$TAG" --draft=false"#));
-    assert_eq!(s(publish.get("permissions").unwrap(), "contents"), "write");
-    for (name, job) in jobs(&rel) {
-        if name != "publish" {
-            assert!(!run_text(job).contains("--draft=false"), "{name} un-drafts");
+    assert_eq!(undrafting_lines(), Vec::<String>::new());
+    // The only release edits left are the release job's notes and title.
+    for f in workflow_files() {
+        let wf = workflow(&f);
+        for (name, job) in jobs(&wf) {
+            for line in commands(&run_text(job)).lines() {
+                if line.contains("gh release edit") {
+                    assert_eq!((f.as_str(), name.as_str()), ("release.yml", "release"));
+                    assert!(!line.contains("draft"), "{line}");
+                }
+            }
         }
     }
+    assert!(!has_job(&rel, "publish"));
 }
 
 #[test]
-fn publish_waits_for_the_apps_and_the_handover_and_never_publishes_without_them() {
-    // Publishing makes the release "latest", which the site's download
-    // buttons and every window's update check read. v0.12.1 published with a
-    // failed Mac leg and broke both: so a failed or skipped app upload, like
-    // a failed handover gate, keeps the release a draft until a re-run.
+fn the_draft_check_runs_last_and_fails_loudly_when_any_job_did_not_succeed() {
+    // It is what a person reads before publishing: a draft missing its Mac
+    // image or its latest.json, published, breaks the site's download
+    // buttons and every window's update check (v0.12.1). So it runs even
+    // when a job upstream failed, and names that job.
     let rel = rel();
-    let cond = job_if(job(&rel, "publish"));
-    assert!(cond.contains("!cancelled()"));
-    assert!(cond.contains("needs.release.result == 'success'"));
-    assert!(cond.contains("needs.app-upload.result == 'success'"));
-    assert!(cond.contains("needs.handover-gate.result == 'success'"));
+    let check = job(&rel, "draft-check");
+    let cond = job_if(check);
+    assert!(cond.contains("!cancelled()"), "{cond}");
     assert!(!Regex::new(r"\bsuccess\(\)").unwrap().is_match(&cond));
-    let text = run_text(job(&rel, "publish"));
-    assert!(text.contains("grep -qx latest.json"), "{text}");
+    let every = steps(check)
+        .into_iter()
+        .find(|st| s(st, "name") == "Every job before it succeeded")
+        .expect("the job-results step");
+    let env = serde_yaml::to_string(every.get("env").expect("its env")).unwrap();
+    for need in needs(check) {
+        assert!(
+            env.contains(&format!("needs.{need}.result")),
+            "{need} is not checked: {env}"
+        );
+    }
+    let text = step_named(&rel, "draft-check", "Every job before it succeeded");
+    assert!(text.contains("NOT ready to publish"), "{text}");
+    // Nothing in it changes the release: it reads the draft (which only a
+    // token that can write may see) and says what it found.
+    assert!(!commands(&run_text(check)).contains("gh release edit"));
+    assert!(!commands(&run_text(check)).contains("gh release upload"));
 }
 
 #[test]
-fn publish_refuses_any_image_list_but_exactly_the_one_mac_image() {
+fn the_draft_check_refuses_any_image_list_but_exactly_the_one_mac_image() {
     // The frozen Swift updater installs the FIRST .dmg on the page.
     let rel = rel();
-    let text = run_text(job(&rel, "publish"));
+    let text = run_text(job(&rel, "draft-check"));
     assert!(text.contains(r#"select(endswith(".dmg"))"#));
     assert!(text.contains(&format!(r#""{}") ;;"#, names::MAC_DMG)));
     assert!(
@@ -181,22 +225,68 @@ fn publish_refuses_any_image_list_but_exactly_the_one_mac_image() {
     );
 }
 
+/// Every file a complete release carries, from sp_release::names.
+fn every_release_file() -> Vec<String> {
+    let mut all: Vec<String> = [
+        names::CLI_MAC_ARM64,
+        names::CLI_LINUX_X64,
+        names::CLI_LINUX_ARM64,
+        names::CLI_WINDOWS_X64,
+        "SHA256SUMS",
+    ]
+    .iter()
+    .map(|n| n.to_string())
+    .collect();
+    all.extend(app_bundles().iter().map(|n| n.to_string()));
+    all.extend([
+        names::MAC_UPDATE.to_string(),
+        format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
+        "SHA256SUMS-app".to_string(),
+        names::MANIFEST.to_string(),
+    ]);
+    sorted(all)
+}
+
 #[test]
-fn every_job_downstream_of_publish_checks_its_own_needs_explicitly() {
-    // A job-level `if` with no status function gets an implicit success()
-    // that also looks further up the chain, so a failed bundle leg would
-    // silently skip the tap.
+fn the_draft_check_wants_every_file_the_uploads_put_there() {
+    // The list it checks the draft against is every file the release's
+    // jobs upload, no more and no fewer, so a renamed or dropped upload
+    // fails here and not on the night.
     let rel = rel();
-    assert!(job_if(job(&rel, "tap")).contains("needs.publish.result == 'success'"));
-    assert!(job_if(job(&rel, "tap-check")).contains("needs.tap.result == 'success'"));
-    let latest = job_if(job(&rel, "latest-check"));
-    assert!(latest.contains("needs.app-upload.result == 'success'"));
-    assert!(latest.contains("needs.publish.result == 'success'"));
-    for name in ["tap", "tap-check", "latest-check"] {
-        let cond = job_if(job(&rel, name));
-        assert!(cond.contains("!cancelled()"), "{name}");
-        // No prerelease reaches the tap or the manifest check.
-        assert!(cond.contains("!contains(github.ref_name, '-')"), "{name}");
+    let text = step_named(
+        &rel,
+        "draft-check",
+        "The draft carries every file the release names",
+    );
+    let line = text
+        .lines()
+        .find(|l| l.trim_start().starts_with("WANT=("))
+        .expect("a WANT=( line");
+    let mut want: Vec<String> = line
+        .trim()
+        .trim_start_matches("WANT=(")
+        .trim_end_matches(')')
+        .split_whitespace()
+        .map(str::to_string)
+        .collect();
+    // latest.json is added for a release, never for a prerelease.
+    assert!(text.contains(&format!(
+        r#"[[ "$VERSION" == *-* ]] || WANT+=({})"#,
+        names::MANIFEST
+    )));
+    want.push(names::MANIFEST.to_string());
+    assert_eq!(sorted(want), every_release_file());
+    // And each of those is uploaded by some job (the globs by extension).
+    let mut uploaded = vec![];
+    for name in ["release", "cli-upload", "app-upload"] {
+        uploaded.extend(uploaded_by(job(&rel, name)));
+    }
+    for f in every_release_file() {
+        let glob = format!("*.{}", f.rsplit_once('.').map(|x| x.1).unwrap_or(""));
+        assert!(
+            uploaded.contains(&f) || uploaded.contains(&glob),
+            "{f} is wanted but nothing uploads it: {uploaded:?}"
+        );
     }
 }
 
@@ -207,9 +297,12 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     assert_eq!(uploaded_by(release), vec![names::CLI_MAC_ARM64.to_string()]);
     let text = run_text(release);
     assert!(text.contains("--target aarch64-apple-darwin"));
+    // The tool and its old name, each under its own identifier.
     assert!(text.contains(
-        r#"codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$BIN""#
+        r#"codesign --force --options runtime --timestamp --identifier "${pair##*:}" --sign "$SIGN_IDENTITY" "$B""#
     ));
+    assert!(text.contains(r#""$BIN:method-reader-cli-arm64" "$ALIAS:screepub-cli-arm64""#));
+    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64"#));
     assert!(text.contains("xcrun notarytool submit"));
     // Signed and notarized, THEN packaged, so the tarball holds the signed bytes.
     let sign = text.find("codesign --force").unwrap();
@@ -289,7 +382,14 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
     // Each is run on its own OS before it is packaged: the version, two
     // conversions, the device listing.
     let text = run_text(cli);
-    assert!(text.contains(r#""$BIN" --version | grep -qx "screepub $VERSION""#));
+    assert!(
+        text.contains(r#""$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)""#)
+    );
+    // The old name rides beside it, and behaves the same.
+    assert!(text.contains(
+        r#""$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)""#
+    ));
+    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS""#));
     assert!(text.contains("for f in screenplay jpx; do"));
     let upload = (steps(cli).into_iter())
         .find(|st| s(st, "uses").contains("upload-artifact"))
@@ -417,7 +517,6 @@ fn the_release_uses_only_the_secrets_the_repository_already_has() {
             "secrets.CERT_PASSWORD",
             "secrets.DEVELOPER_ID_CERT_P12_BASE64",
             "secrets.KEYCHAIN_PASSWORD",
-            "secrets.TAP_TOKEN",
             "secrets.TAURI_SIGNING_PRIVATE_KEY",
             "secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD",
         ])
@@ -548,23 +647,142 @@ fn the_handover_gate_installs_this_release_with_the_shipped_window_before_anythi
 }
 
 #[test]
-fn latest_check_reads_the_manifest_back_after_publish() {
+fn the_release_run_leaves_a_crib_sheet_for_bumping_the_tap_by_hand() {
+    let crib = step_named(&rel(), "release", "Tap bump crib sheet");
+    assert!(crib.contains("cargo xtask bump-tap"));
+    assert!(crib.contains(names::CLI_MAC_ARM64));
+}
+
+// ---- release-published.yml: what runs once a person publishes ----------
+
+fn published() -> Value {
+    workflow("release-published.yml")
+}
+
+#[test]
+fn the_published_workflow_runs_when_a_release_is_published_and_at_no_other_time() {
+    let wf = published();
+    let on = wf.get("on").expect("an on: table");
+    let keys: Vec<String> = on
+        .as_mapping()
+        .expect("on: is a table")
+        .keys()
+        .map(|k| k.as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(keys, vec!["release".to_string()]);
+    let types: Vec<&str> = on
+        .get("release")
+        .and_then(|r| r.get("types"))
+        .and_then(Value::as_sequence)
+        .expect("release: types:")
+        .iter()
+        .map(|v| v.as_str().unwrap())
+        .collect();
+    assert_eq!(types, vec!["published"]);
+}
+
+#[test]
+fn the_tap_and_the_read_back_checks_moved_out_of_the_tag_run() {
     let rel = rel();
-    let job = job(&rel, "latest-check");
-    let text = run_text(job);
-    assert!(text.contains("sp-release check-latest --deep"));
-    // No --version: the question is what the ENDPOINT serves.
-    assert!(!text.contains("--version"));
+    for gone in ["tap", "tap-check", "latest-check"] {
+        assert!(!has_job(&rel, gone), "release.yml still has {gone}");
+    }
+    let wf = published();
+    let graph: Vec<(&str, Vec<&str>)> = vec![
+        ("tap", vec![]),
+        ("tap-check", vec!["tap"]),
+        ("latest-check", vec![]),
+    ];
+    let names: Vec<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
+    assert_eq!(
+        sorted(names),
+        sorted(graph.iter().map(|(n, _)| n.to_string()).collect())
+    );
+    for (name, wants) in graph {
+        assert_eq!(
+            sorted(needs(job(&wf, name))),
+            strs(&wants),
+            "{name} waits for the wrong jobs"
+        );
+    }
+}
+
+#[test]
+fn no_prerelease_reaches_the_tap_or_the_manifest_check() {
+    // A hyphen in the tag must never become what `brew install` hands out,
+    // and releases/latest never resolves to a prerelease.
+    let wf = published();
+    for name in ["tap", "tap-check", "latest-check"] {
+        let cond = job_if(job(&wf, name));
+        assert!(cond.contains("!contains(github.ref_name, '-')"), "{name}");
+        assert!(cond.contains("!github.event.release.prerelease"), "{name}");
+    }
+    // A job-level `if` with no status function gets an implicit success()
+    // that also looks further up the chain; tap-check names its own.
+    let cond = job_if(job(&wf, "tap-check"));
+    assert!(cond.contains("!cancelled()"));
+    assert!(cond.contains("needs.tap.result == 'success'"));
+}
+
+#[test]
+fn the_published_workflow_writes_nothing_to_this_repository() {
+    // The tap is pushed with TAP_TOKEN, which can reach the tap and nothing
+    // else; every job here only reads this repository.
+    let wf = published();
+    for (name, job) in jobs(&wf) {
+        assert!(job.get("permissions").is_none(), "{name} asks for more");
+        assert!(
+            !commands(&run_text(job)).contains("gh release"),
+            "{name} changes a release"
+        );
+    }
+}
+
+#[test]
+fn the_tap_token_reaches_only_the_tap_step() {
+    let text = read(".github/workflows/release-published.yml");
+    let mut declared: Vec<String> = Regex::new(r"secrets\.[A-Z0-9_]+")
+        .unwrap()
+        .find_iter(&text)
+        .map(|m| m.as_str().to_string())
+        .collect();
+    declared.sort();
+    declared.dedup();
+    assert_eq!(declared, strs(&["secrets.TAP_TOKEN"]));
+    let wf = published();
+    let mut given = 0;
+    for (name, job) in jobs(&wf) {
+        for st in steps(job) {
+            if serde_yaml::to_string(st).unwrap().contains("${{ secrets.") {
+                given += 1;
+                assert_eq!(
+                    (name.as_str(), s(st, "name")),
+                    ("tap", "Bump the Homebrew tap")
+                );
+            }
+        }
+    }
+    assert_eq!(given, 1);
 }
 
 #[test]
 fn the_tap_is_bumped_by_the_xtask_and_checked_after() {
-    let rel = rel();
-    assert!(run_text(job(&rel, "tap")).contains("cargo xtask bump-tap \"$V\""));
-    assert!(run_text(job(&rel, "tap-check")).contains("xtask check-tap"));
-    let crib = step_named(&rel, "release", "Tap bump crib sheet");
-    assert!(crib.contains("cargo xtask bump-tap"));
-    assert!(crib.contains(names::CLI_MAC_ARM64));
+    let wf = published();
+    let tap = run_text(job(&wf, "tap"));
+    assert!(tap.contains("cargo xtask bump-tap \"$V\""));
+    // A missing token is a notice, not a failure: the crib sheet and the
+    // hand path stay.
+    assert!(tap.contains("TAP_TOKEN is not set"));
+    assert!(run_text(job(&wf, "tap-check")).contains("xtask check-tap"));
+}
+
+#[test]
+fn latest_check_reads_the_manifest_back_after_publish() {
+    let wf = published();
+    let text = run_text(job(&wf, "latest-check"));
+    assert!(text.contains("sp-release check-latest --deep"));
+    // No --version: the question is what the ENDPOINT serves.
+    assert!(!text.contains("--version"));
 }
 
 #[test]
@@ -577,7 +795,8 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
         for line in text.lines() {
             let l = line.trim();
             assert!(
-                !l.starts_with("SCREEPUB_UPDATE_") && !l.contains("SCREEPUB_UPDATE_ENDPOINT="),
+                !l.starts_with("METHOD_READER_UPDATE_")
+                    && !l.contains("METHOD_READER_UPDATE_ENDPOINT="),
                 "{f} sets a rehearsal value: {l}"
             );
         }
@@ -592,14 +811,14 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
         .find("if [ \"$RUNNER_OS\" = macOS ]")
         .expect("the build");
     let guard = &step[..guard_end];
-    assert!(guard.contains("SCREEPUB_UPDATE_INSECURE"));
+    assert!(guard.contains("METHOD_READER_UPDATE_INSECURE"));
     let dir = Scratch::new("rehearsal-guard");
     let ok = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin")]);
     assert!(ok.status.success(), "{}", said(&ok));
     for v in [
-        "SCREEPUB_UPDATE_ENDPOINT",
-        "SCREEPUB_UPDATE_PUBKEY",
-        "SCREEPUB_UPDATE_INSECURE",
+        "METHOD_READER_UPDATE_ENDPOINT",
+        "METHOD_READER_UPDATE_PUBKEY",
+        "METHOD_READER_UPDATE_INSECURE",
     ] {
         for value in ["http://127.0.0.1:8765/latest.json", ""] {
             let out = bash(guard, dir.path(), &[("PATH", "/usr/bin:/bin"), (v, value)]);

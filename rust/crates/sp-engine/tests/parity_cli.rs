@@ -6,7 +6,7 @@
 //!
 //! The TypeScript's side is frozen data (tests/data/parity-cli.json,
 //! common::frozen): each case was run once under bun, in a scratch folder
-//! of its own (its own fake HOME, its own SCREEPUB_CONFIG_DIR), and its
+//! of its own (its own fake HOME, its own METHOD_READER_CONFIG_DIR), and its
 //! line and files were recorded with that folder spelled `$ROOT`. Here the
 //! case is set up again in a new scratch folder, the Rust handler runs
 //! there, and both are compared with `$ROOT` read as that folder.
@@ -53,7 +53,7 @@ fn env_for(root: &str, calibre: bool) -> Env {
         env.set("PATH", path);
     }
     env.set("HOME", format!("{root}/home"));
-    env.set("SCREEPUB_CONFIG_DIR", format!("{root}/cfg"));
+    env.set("METHOD_READER_CONFIG_DIR", format!("{root}/cfg"));
     env.set(
         "CALIBRE_CONFIG_DIRECTORY",
         if calibre {
@@ -352,11 +352,11 @@ fn parity_app_settings() {
 #[test]
 fn parity_app_settings_with_the_library_override() {
     require_frozen!();
-    // SCREEPUB_LIBRARY is set in the env both sides get, through a case of
+    // METHOD_READER_LIBRARY is set in the env both sides get, through a case of
     // its own: the env is built per case, so wrap it.
     let s = Scratch::new("parity");
     let root = s.str();
-    let env = env_for(&root, false).with("SCREEPUB_LIBRARY", &format!("{root}/envlib/"));
+    let env = env_for(&root, false).with("METHOD_READER_LIBRARY", &format!("{root}/envlib/"));
     let ts = ts(
         "the library override",
         &root,
@@ -392,7 +392,7 @@ fn parity_settings() {
     let with_sidecar = |root: &str| {
         base(root);
         write(
-            &format!("{root}/lib/My.Script.screepub.json"),
+            &format!("{root}/lib/My.Script.method-reader.json"),
             r#"{"cueIndentPct": 40, "x": 1}"#,
         );
     };
@@ -618,7 +618,7 @@ fn book_setup(root: &str) {
         "Title: P\n\nINT. A - DAY\n\nNothing of ours.\n",
     );
     write(
-        &format!("{root}/lib/Book.screepub.json"),
+        &format!("{root}/lib/Book.method-reader.json"),
         r#"{"cueIndentPct": 21}"#,
     );
     std::fs::create_dir_all(format!("{root}/out")).unwrap();
@@ -630,7 +630,7 @@ fn book_setup(root: &str) {
         "Book.epub",
         "Book.fountain",
         "Plain.fountain",
-        "Book.screepub.json",
+        "Book.method-reader.json",
     ] {
         std::fs::File::options()
             .write(true)

@@ -1,6 +1,6 @@
 [package]
 name = "sp-app"
-description = "The Screepub window: every screen, drawn natively with egui, accessible through AccessKit."
+description = "The Method Reader window: every screen, drawn natively with egui, accessible through AccessKit."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -16,7 +16,7 @@ workspace = true
 rehearsal = ["sp-update/rehearsal"]
 
 [[bin]]
-name = "screepub-window"
+name = "method-reader-app"
 path = "src/main.rs"
 
 [dependencies]
@@ -28,6 +28,10 @@ egui = "0.36.2"
 # The fonts ship as the same WOFF2 subsets the website serves; this decodes
 # them to the TrueType bytes egui's font stack reads, once, at start.
 wuff = "0.2.9"
+# The system's UI face is read from disk at start (src/fonts.rs); this is
+# the reader egui itself parses fonts with, asked first so a face egui
+# could not parse is never handed to it.
+skrifa = "0.44"
 # The engine's answers keep the CLI's --json shape (see src/engine.rs).
 serde_json = "1"
 # Native file dialogs: open a screenplay, pick a folder, save a copy.
@@ -38,17 +42,17 @@ unicode-normalization = "0.1"
 unicode-general-category = "1.1"
 webbrowser = "1.2"
 ureq = { version = "3", features = ["json"] }
-blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b0", version = "0.3.0-beta.2" }
-blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b0", version = "0.3.0-beta.2" }
-blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b0", version = "0.3.0-beta.2" }
-blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b0", version = "0.3.0-beta.2" }
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b063719ebeae4e0761273f7881b3d7", version = "0.3.0-beta.2" }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b063719ebeae4e0761273f7881b3d7", version = "0.3.0-beta.2" }
+blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b063719ebeae4e0761273f7881b3d7", version = "0.3.0-beta.2" }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "45496d9288b063719ebeae4e0761273f7881b3d7", version = "0.3.0-beta.2" }
 anyrender_vello_cpu = "0.18"
 parley = "0.12"
 data-url = "0.3"
 cpal = "0.18"
 # The updater transport and the consent carried from the Tauri window.
 sp-update = { path = "../sp-update" }
-# The engine, in-process: the same run() the screepub binary is.
+# The engine, in-process: the same run() the method-reader binary is.
 sp-cli = { path = "../sp-cli" }
 # The window's own state file is written whole or not at all, as the
 # engine's files are.

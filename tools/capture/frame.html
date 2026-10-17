@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- Pass two of a window picture. Pass one captured the window at the
-     window's own size (tauri.conf.json) (it pins its binding with fixed
-     positioning, so it cannot be drawn inside a smaller box). This page
-     places that image in
-     a macOS-style frame: rounded corners, a hairline edge, a soft shadow,
-     and the three traffic lights sitting ON the paper, where the window's
-     Overlay title bar puts them. The tool captures it on a transparent
-     background. ?img= is the pass-one image; ?w= and ?h= its CSS size. -->
+<!-- Pass two of a window picture. Pass one drew the window's content at
+     its width and its height less the title bar (shots.rs TITLE_BAR). This
+     page places that image in a macOS-style frame: rounded corners, a
+     hairline edge, a soft shadow, and the system's own title bar above it,
+     with the three traffic lights and the window's title (?title=), as the
+     window shows them. The tool captures it on a transparent background.
+     ?img= is the pass-one image; ?w= and ?h= the framed window's CSS size,
+     title bar included. -->
 <html>
 <head>
 <meta charset="utf-8">
@@ -18,21 +18,32 @@
     box-shadow: 0 0 0 0.5px rgba(0,0,0,.28), 0 22px 60px rgba(0,0,0,.30), 0 6px 16px rgba(0,0,0,.14);
   }
   .win img { display: block; }
-  .lights { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; }
+  .bar {
+    position: relative; height: 28px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    background: #E8E6E1; border-bottom: 1px solid #D3D0C8;
+    font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: #4A5058; letter-spacing: -0.01em;
+  }
+  .lights { position: absolute; top: 8px; left: 12px; display: flex; gap: 8px; }
   .lights i { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,.22); }
   .lights i:nth-child(1) { background: #ff5f57; }
   .lights i:nth-child(2) { background: #febc2e; }
   .lights i:nth-child(3) { background: #28c840; }
+  @media (prefers-color-scheme: dark) {
+    .bar { background: #2A2D31; border-bottom-color: #121416; color: #C9CED4; }
+  }
 </style>
 </head>
 <body>
-<div class="pad"><div class="win"><img id="shot" alt=""><div class="lights"><i></i><i></i><i></i></div></div></div>
+<div class="pad"><div class="win"><div class="bar"><div class="lights"><i></i><i></i><i></i></div><span id="title"></span></div><img id="shot" alt=""></div></div>
 <script>
   window.__captureState = 'working';
   const p = new URLSearchParams(location.search);
   const img = document.getElementById('shot');
+  document.getElementById('title').textContent = p.get('title') || '';
   img.width = Number(p.get('w'));
-  img.height = Number(p.get('h'));
+  img.height = Number(p.get('h')) - 28;
   img.onload = () => { window.__captureState = 'ready'; };
   img.onerror = () => { window.__captureState = 'failed'; window.__captureError = 'pass-one image did not load'; };
   img.src = p.get('img');

@@ -2,7 +2,7 @@
 //!
 //! Ported from pdf.js `src/core/evaluator.js`, `PartialEvaluator
 //! .getTextContent` (Mozilla Foundation, Apache License 2.0), with the
-//! options Screepub's engine uses: no marked content, normalization on,
+//! options Method Reader's engine uses: no marked content, normalization on,
 //! whitespace not kept. Every arithmetic step keeps pdf.js's order so the
 //! doubles come out bit for bit the same.
 

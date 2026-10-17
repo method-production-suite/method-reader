@@ -5,7 +5,7 @@
 use crate::manifest::{Platform, Release};
 
 /// How the running copy was installed, as the plugin names it
-/// (`Installer::name`). Screepub's Mac app is `app`.
+/// (`Installer::name`). Method Reader's Mac app is `app`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Installer {
     AppImage,

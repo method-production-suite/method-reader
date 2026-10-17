@@ -42,12 +42,12 @@ pub struct ListDevicesOptions<'a> {
 }
 
 impl ListDevicesOptions<'_> {
-    /// `deviceSeams()` in cli.ts: `SCREEPUB_VOLUME_ROOTS` (the platform's
-    /// path delimiter between roots) and `SCREEPUB_REMARKABLE_ENDPOINT`, the
+    /// `deviceSeams()` in cli.ts: `METHOD_READER_VOLUME_ROOTS` (the platform's
+    /// path delimiter between roots) and `METHOD_READER_REMARKABLE_ENDPOINT`, the
     /// overrides the CLI honors so a test can point it at fake readers.
     pub fn from_env() -> ListDevicesOptions<'static> {
         let delimiter = if cfg!(windows) { ';' } else { ':' };
-        let roots = std::env::var("SCREEPUB_VOLUME_ROOTS")
+        let roots = std::env::var("METHOD_READER_VOLUME_ROOTS")
             .ok()
             .filter(|r| !r.is_empty())
             .map(|r| {
@@ -56,7 +56,7 @@ impl ListDevicesOptions<'_> {
                     .map(str::to_string)
                     .collect()
             });
-        let remarkable_endpoint = std::env::var("SCREEPUB_REMARKABLE_ENDPOINT")
+        let remarkable_endpoint = std::env::var("METHOD_READER_REMARKABLE_ENDPOINT")
             .ok()
             .filter(|e| !e.is_empty());
         ListDevicesOptions {

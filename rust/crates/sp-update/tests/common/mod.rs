@@ -1,4 +1,4 @@
-//! A throwaway signing key, a fake Screepub.app, its `.app.tar.gz`, and a
+//! A throwaway signing key, a fake app bundle, its `.app.tar.gz`, and a
 //! local HTTP server that answers like a GitHub release. Nothing here
 //! reaches the network or the real key.
 #![allow(dead_code)]
@@ -53,8 +53,15 @@ impl TestKey {
     }
 }
 
-/// An Info.plist with the keys the swap and the restart read.
+/// An Info.plist with the keys the swap and the restart read, under the
+/// identifier a bundle running `exe` shipped with: the 0.12.x one for the
+/// old executables, Method Reader's own otherwise.
 pub fn info_plist(exe: &str, version: &str) -> String {
+    let id = if matches!(exe, "screepub-desktop" | "Screepub") {
+        sp_update::LEGACY_IDENTIFIER
+    } else {
+        sp_update::IDENTIFIER
+    };
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -63,7 +70,7 @@ pub fn info_plist(exe: &str, version: &str) -> String {
   <key>CFBundleExecutable</key>
   <string>{exe}</string>
   <key>CFBundleIdentifier</key>
-  <string>com.darkwell.screepub</string>
+  <string>{id}</string>
   <key>CFBundleShortVersionString</key>
   <string>{version}</string>
 </dict>
@@ -119,12 +126,13 @@ pub fn tar_gz(entries: &[(&str, &[u8], u32)]) -> Vec<u8> {
     b.into_inner().unwrap().finish().unwrap()
 }
 
-/// The archive of a whole bundle folder, top folder `Screepub.app`, as the
-/// Tauri bundler and `sp-release update-archive` both lay it out.
+/// The archive of a whole bundle folder, top folder `Method Reader.app`,
+/// as `sp-release update-archive` lays it out (the Tauri bundler's had
+/// `Screepub.app`; the swap drops the top folder, so it never matters).
 pub fn archive_bundle(bundle: &Path) -> Vec<u8> {
     let gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
     let mut b = tar::Builder::new(gz);
-    b.append_dir_all("Screepub.app", bundle).unwrap();
+    b.append_dir_all("Method Reader.app", bundle).unwrap();
     b.into_inner().unwrap().finish().unwrap()
 }
 

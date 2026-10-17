@@ -1,6 +1,6 @@
 [package]
 name = "sp-fsutil"
-description = "Screepub's file rules: write-then-rename, the flushed replace a reader's copy goes through, Node's path functions and Node's error words"
+description = "Method Reader's file rules: write-then-rename, the flushed replace a reader's copy goes through, Node's path functions and Node's error words"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

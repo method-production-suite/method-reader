@@ -2,12 +2,12 @@
 
 Who has checked what, kept in one place so no page has to infer it from a
 green checkmark. Three lists. An item moves up only when somebody does the
-thing, and the README, the site (screepub.com) and the release notes say no
+thing, and the README, the site (methodreader.com) and the release notes say no
 more than this page does. `rust/crates/xtask/tests/site.rs` and
 `rust/crates/xtask/tests/readme_and_docs.rs` hold the README and the site to it.
 
-The window is Screepub on every platform, and on a Mac the one app,
-`Screepub-macOS.dmg`. From the Rust cutover on it is the native Rust window
+The window is Method Reader on every platform, and on a Mac the one app,
+`Method-Reader-macOS.dmg`. From the Rust cutover on it is the native Rust window
 (`rust/crates/sp-app`); every release through 0.11.1 shipped the Tauri
 window that came before it, and the checks by a person below were made on
 that one. The older Mac app was the Swift
@@ -59,16 +59,16 @@ its own updater, where it is switched on, installs the window in its place.
   has built and signed the Mac window, and since 0.7.0 it has notarized it.
   Every bundle is opened and checked for the files and the version it
   claims before anything is uploaded (until the Rust cutover, its engine was
-  run too; `rust.yml` runs the Mac app's headless conversion), and
-  the update manifest (`latest.json`, Mac only) is read back from GitHub
-  after it is published. The Mac `.dmg` is built for Apple silicon only, the
+  run too; `rust.yml` runs the Mac app's headless conversion), and once a
+  person publishes the draft, `release-published.yml` reads the update
+  manifest (`latest.json`, Mac only) back from GitHub. The Mac `.dmg` is built for Apple silicon only, the
   runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
   last, only the ARM half ran.
 - Weekly: the Homebrew formula and the update manifest still match the
   newest release, the retired Homebrew cask still says it is retired
   (deprecated, and disabled from the release after 0.9.0), and
   the Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
-  own reader opening Screepub's AZW3) still pass against Calibre's newest
+  own reader opening Method Reader's AZW3) still pass against Calibre's newest
   version.
 
 **Verified by nobody**
@@ -86,8 +86,13 @@ its own updater, where it is switched on, installs the window in its place.
   verified: the 0.7.3 pass converted a script dropped on the window.
 - The window restarting itself after an update, from 0.7.3 on: written and
   tested in code, not yet recorded by a person.
+- The 0.13 update behaviour on a real Mac: the quiet check two minutes
+  after launch and every six hours, the update downloaded before **Update
+  ready, restart to update** appears, the Help menu's switch, a previous no
+  kept off, and What's New opening once after the update. Written and
+  tested in code against a fake updater, not yet seen by a person.
 - The move to one Mac app, by a person: the older Mac app updating itself
-  into the window, and a *Screepub Desktop* install updating into Screepub.
+  into the window, and a *Screepub Desktop* install updating into Method Reader.
   Both are written and tested in code.
 - A Tauri window updating itself into the Rust window on a real Mac, by a
   person. `release.yml`'s handover gate proves it headless, with 0.11.1's

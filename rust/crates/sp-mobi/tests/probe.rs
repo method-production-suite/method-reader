@@ -13,9 +13,9 @@ use sp_mobi::probe::{
 };
 
 const SINGLE_FILES: [&str; 3] = [
-    "screepub-picture-probe-2kb.mobi",
-    "screepub-picture-probe-200kb.mobi",
-    "screepub-picture-probe-1400kb.mobi",
+    "method-reader-picture-probe-2kb.mobi",
+    "method-reader-picture-probe-200kb.mobi",
+    "method-reader-picture-probe-1400kb.mobi",
 ];
 
 fn pdb_name(b: &[u8]) -> String {
@@ -26,8 +26,8 @@ fn pdb_name(b: &[u8]) -> String {
 
 #[test]
 fn the_files_and_titles_are_the_ones_the_device_check_names() {
-    assert_eq!(MOBI_FILE, "screepub-picture-probe.mobi");
-    assert_eq!(EPUB_FILE, "screepub-picture-probe.epub");
+    assert_eq!(MOBI_FILE, "method-reader-picture-probe.mobi");
+    assert_eq!(EPUB_FILE, "method-reader-picture-probe.epub");
     let files: Vec<String> = probe_pictures().iter().map(single_mobi_file).collect();
     assert_eq!(files, SINGLE_FILES);
 }

@@ -32,26 +32,42 @@ fn open_other_ways(h: &mut H) {
 
 // ------------------------------------------------------------------ window
 
+// The family's window: the system's own title bar naming the app, as
+// Method Budget's and Method Schedule's do (it was hidden under the
+// Screepub look, with the paper running under the traffic lights).
 #[test]
-fn w1_w2_w3_the_window_opens_at_1280_by_800_with_a_floor_and_no_title_bar() {
+fn w1_w2_w3_the_window_opens_at_1280_by_800_with_a_floor_and_a_title_bar() {
     let v = sp_app::app::viewport();
-    assert_eq!(v.title.as_deref(), Some("Screepub"));
+    assert_eq!(v.title.as_deref(), Some("Method Reader"));
     assert_eq!(v.inner_size, Some(egui::vec2(1280.0, 800.0)));
     assert_eq!(v.min_inner_size, Some(egui::vec2(640.0, 480.0)));
     assert_eq!(v.resizable, Some(true));
-    assert_eq!(v.titlebar_shown, Some(false));
-    assert_eq!(v.title_shown, Some(false));
-    assert_eq!(v.fullsize_content_view, Some(true));
+    assert_eq!(v.titlebar_shown, Some(true));
+    assert_eq!(v.title_shown, Some(true));
+    assert_eq!(v.fullsize_content_view, Some(false));
 }
 
 #[test]
-fn w4_the_drag_strip_covers_no_control() {
+fn w4_the_tab_strip_is_the_top_of_the_window() {
     let w = world();
     let h = harness(&w, Platform::Mac);
     let tab = h.get_by_role_and_label(Role::Tab, "Convert").rect();
     assert!(
-        tab.top() >= 32.0,
-        "the strip is the sheet's top padding: {tab:?}"
+        tab.top() >= 4.0 && tab.top() <= 16.0,
+        "the tabs sit at the top, under the title bar: {tab:?}"
+    );
+}
+
+// The title bar names the script, then the app, once there is a script.
+#[test]
+fn w2_the_title_bar_names_the_script_then_the_app() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    assert_eq!(h.state().title_shown.as_deref(), Some("Method Reader"));
+    convert(&w, &mut h);
+    assert_eq!(
+        h.state().title_shown.as_deref(),
+        Some("Field Station - Method Reader")
     );
 }
 
@@ -221,7 +237,7 @@ fn n15_a_file_dragged_over_turns_the_well_and_a_drop_converts() {
     steps(&mut h);
     let call = w.engine.calls_of("convert");
     assert_eq!(call[0].argv()[0], "/x/dropped.pdf");
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 #[test]
@@ -245,11 +261,14 @@ fn c3_the_well_keeps_its_820_column() {
         .next()
         .unwrap()
         .rect();
-    let heading = h.get_by_role_and_label(Role::Heading, "Screepub").rect();
-    // The block is 100..1232 at 1280: an 820 column centred in it.
-    // The harness frames the window in 8 points: measure from the block.
-    let left = h.get_by_role_and_label(Role::Tab, "Convert").rect().left();
-    let centre = left + 1132.0 / 2.0;
+    let heading = h
+        .get_by_role_and_label(Role::Heading, "Drop a screenplay PDF")
+        .rect();
+    // The block is 50..1230 at 1280: an 820 column centred in it, so on
+    // the window's centre line. The harness frames the window in a few
+    // points: measure from the first tab, 32 in from the window's edge.
+    let left = h.get_by_role_and_label(Role::Tab, "Convert").rect().left() - 32.0;
+    let centre = left + 640.0;
     assert!((heading.center().x - centre).abs() < 2.0, "{heading:?}");
     assert!((call.center().x - centre).abs() < 2.0);
 }
@@ -442,7 +461,7 @@ fn p2_p4_the_show_says_converting_and_carries_the_whole_page_for_a_screen_reader
         ));
     }
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "CONVERTING");
+    h.get_by_role_and_label(Role::Heading, "Converting");
     assert!(has(&h, "field-station.pdf"));
     assert!(
         has(&h, "EXT. RIDGE ROAD - DAY"),
@@ -489,7 +508,7 @@ fn p10_a_refusal_ends_the_show() {
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
     assert!(h.state().show.is_none());
-    h.get_by_role_and_label(Role::Heading, "SCANNED PDF, NO TEXT");
+    h.get_by_role_and_label(Role::Heading, "Scanned PDF, no text");
 }
 
 // -------------------------------------------------------------------- read
@@ -540,7 +559,7 @@ fn n9_the_rev_stamp_is_whole_inside_the_window_on_read() {
         if dead {
             w.engine.once(
                 "version",
-                Reply::failed("could not start the Screepub engine"),
+                Reply::failed("could not start the Method Reader engine"),
             );
         }
         let mut h = harness_sized(&w, Platform::Mac, [width, height]);
@@ -717,7 +736,7 @@ fn s7_s8_every_group_opens_and_every_knob_is_named() {
     }
     assert!(has(
         &h,
-        "These four are decided while the PDF is being read. Everything else re-renders from the script Screepub already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."
+        "These four are decided while the PDF is being read. Everything else re-renders from the script Method Reader already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."
     ));
     for slider in [
         "Space between elements",
@@ -777,10 +796,16 @@ fn s17_use_these_for_new_scripts_writes_the_defaults_and_says_so() {
     let mut h = harness_sized(&w, Platform::Mac, [1280.0, 3000.0]);
     convert(&w, &mut h);
     settings(&mut h);
-    assert!(has(&h, "New scripts start from Screepub’s own defaults."));
+    assert!(has(
+        &h,
+        "New scripts start from Method Reader’s own defaults."
+    ));
     assert!(
-        h.query_by_role_and_label(Role::Button, "Reset new scripts to Screepub’s defaults")
-            .is_none(),
+        h.query_by_role_and_label(
+            Role::Button,
+            "Reset new scripts to Method Reader’s defaults"
+        )
+        .is_none(),
         "nothing to reset"
     );
     h.get_by_role_and_label(Role::Button, "Use these for new scripts")
@@ -892,7 +917,7 @@ fn d1_a_reader_who_chose_never_sees_the_cards() {
     calm_as(&w, "kobo");
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    assert!(!has(&h, "WHAT DO YOU READ ON?"));
+    assert!(!has(&h, "What do you read on?"));
     h.get_by_role_and_label(Role::Button, "Save the EPUB…");
 }
 
@@ -1173,7 +1198,7 @@ fn o3_o6_the_updates_block_checks_and_says_what_it_found() {
     h.get_by_role_and_label(
         Role::Status,
         concat!(
-            "Screepub ",
+            "Method Reader ",
             env!("CARGO_PKG_VERSION"),
             " is the newest there is."
         ),
@@ -1257,52 +1282,60 @@ fn moves_the_window(h: &mut H, at: egui::Pos2) -> bool {
     moved
 }
 
+// The system's title bar moves the window now; nothing in the page does.
 #[test]
-fn w4_w5_the_strip_and_the_tab_bars_gaps_move_the_window_and_a_tab_is_still_a_tab() {
+fn w4_w5_the_page_never_moves_the_window_and_a_tab_is_still_a_tab() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
     assert!(
-        moves_the_window(&mut h, egui::pos2(640.0, 10.0)),
-        "the strip"
+        !moves_the_window(&mut h, egui::pos2(900.0, 10.0)),
+        "the tab strip"
     );
     let read = h.get_by_role_and_label(Role::Tab, "Read").rect();
     let settings = h.get_by_role_and_label(Role::Tab, "Settings").rect();
     let between = egui::pos2((read.right() + settings.left()) / 2.0, read.center().y);
-    assert!(moves_the_window(&mut h, between), "a gap between tabs");
-    assert!(
-        !moves_the_window(&mut h, read.center()),
-        "a tab is not a gap"
-    );
+    assert!(!moves_the_window(&mut h, between), "a gap between tabs");
+    assert!(!moves_the_window(&mut h, read.center()), "a tab");
     assert_eq!(h.state().surface, Surface::Read, "and the press chose it");
 }
 
+// The open tab joins the page (Method Budget's `.doc-tab.is-active`): the
+// page's ground, a rule round it, no accent.
 #[test]
-fn n8_the_open_tab_has_a_brass_rule_under_it() {
+fn n8_the_open_tab_takes_the_pages_ground_in_a_rule() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
     let t = h.state().tokens();
     let tab = h.get_by_role_and_label(Role::Tab, "Convert").rect();
-    let rules: Vec<_> = painted(&h)
-        .into_iter()
+    let shapes = painted(&h);
+    let rects: Vec<_> = shapes
+        .iter()
         .filter_map(|s| match s {
-            egui::Shape::LineSegment { points, stroke }
-                if stroke.width == 1.5 && stroke.color == t.brass =>
-            {
-                Some(points)
-            }
+            egui::Shape::Rect(r) if r.rect.contains(tab.center()) => Some(r.clone()),
             _ => None,
         })
         .collect();
-    assert_eq!(rules.len(), 1, "one rule, under the open tab only");
-    let [a, b] = rules[0];
-    assert!((a.x - tab.left()).abs() < 1.0 && (b.x - tab.right()).abs() < 1.0);
-    assert!((a.y - tab.bottom()).abs() < 1.5, "under it: {a:?} {tab:?}");
+    assert!(rects.iter().any(|r| r.fill == t.paper), "{rects:?}");
+    assert!(
+        rects
+            .iter()
+            .any(|r| r.stroke == egui::Stroke::new(1.0, t.rule)),
+        "{rects:?}"
+    );
+    let read = h.get_by_role_and_label(Role::Tab, "Read").rect();
+    assert!(
+        !shapes.iter().any(|s| matches!(s,
+            egui::Shape::Rect(r) if r.rect.contains(read.center())
+                && r.fill == t.paper
+                && r.rect.width() < 200.0)),
+        "only the open tab"
+    );
 }
 
 #[test]
-fn c19_the_send_panel_is_a_hairline_box_with_the_wells_corners_and_the_panel_fill() {
+fn c19_the_send_panel_is_a_rule_hairline_box_with_the_wells_corners_and_the_panel_fill() {
     let w = world();
     calm_as(&w, "kobo");
     let mut h = harness(&w, Platform::Mac);
@@ -1315,8 +1348,8 @@ fn c19_the_send_panel_is_a_hairline_box_with_the_wells_corners_and_the_panel_fil
     let boxed = painted(&h).into_iter().any(|s| match s {
         egui::Shape::Rect(r) => {
             r.fill == t.panel
-                && r.corner_radius == egui::CornerRadius::same(5)
-                && r.stroke == egui::Stroke::new(1.0, t.hole)
+                && r.corner_radius == egui::CornerRadius::same(8)
+                && r.stroke == egui::Stroke::new(1.0, t.rule)
                 && r.rect.contains(ways)
         }
         _ => false,
@@ -1324,48 +1357,20 @@ fn c19_the_send_panel_is_a_hairline_box_with_the_wells_corners_and_the_panel_fil
     assert!(boxed);
 }
 
+// The Screepub look's brads and punched hole are gone: nothing on the page
+// is painted in the accent's ramp.
 #[test]
-fn w16_w17_the_rail_is_two_brass_brads_and_a_punched_hole() {
+fn w16_w17_there_are_no_brads_and_no_punched_hole() {
     let w = world();
     let h = harness(&w, Platform::Mac);
     let t = h.state().tokens();
-    let shapes = painted(&h);
-    let colours_in = |rect: egui::Rect| {
-        let mut seen = std::collections::HashSet::new();
-        for s in &shapes {
-            if let egui::Shape::Mesh(mesh) = s {
-                for v in &mesh.vertices {
-                    if rect.contains(v.pos) {
-                        seen.insert(v.color);
-                    }
-                }
-            }
-        }
-        seen
-    };
-    let rail = sp_app::model::layout::rail(1280.0, 800.0);
-    assert_eq!(rail.iter().filter(|f| f.punch).count(), 1);
-    for f in rail {
-        let rect = egui::Rect::from_center_size(egui::pos2(f.x, f.y), egui::Vec2::splat(f.size));
-        let seen = colours_in(rect);
-        if f.punch {
+    let ramp = [t.brass_specular, t.brass_edge, t.brass_rim, t.ground];
+    for s in painted(&h) {
+        if let egui::Shape::Mesh(mesh) = s {
             assert!(
-                seen.contains(&t.paper) && seen.contains(&t.ground),
-                "lip and desk"
+                !mesh.vertices.iter().any(|v| ramp.contains(&v.color)),
+                "a brad's colour is painted"
             );
-        } else {
-            // The specular point and the edge ring exactly; the face's
-            // middle stops fall between vertices, so near enough.
-            assert!(seen.contains(&t.brass_specular) && seen.contains(&t.brass_edge));
-            let near = |a: egui::Color32, b: egui::Color32| {
-                (0..3).all(|i| (a.to_array()[i] as i32 - b.to_array()[i] as i32).abs() <= 16)
-            };
-            for stop in [t.brass_highlight, t.brass, t.brass_shadow] {
-                assert!(
-                    seen.iter().any(|c| near(*c, stop)),
-                    "the brass face passes {stop:?}"
-                );
-            }
         }
     }
 }
@@ -1410,12 +1415,12 @@ fn o5_the_switch_is_read_again_each_time_the_sheet_opens() {
             == Some(egui::accesskit::Toggled::True)
     };
     open(&mut h);
-    assert!(!on(&h));
+    assert!(on(&h), "on by default");
     h.key_press(Key::Escape);
     steps(&mut h);
-    sp_app::model::update::remember_answer(h.state_mut().host.storage.as_mut(), true);
+    sp_app::model::update::set_automatic(h.state_mut().host.storage.as_mut(), false);
     open(&mut h);
-    assert!(on(&h), "what was stored meanwhile");
+    assert!(!on(&h), "what was stored meanwhile");
 }
 
 /// A Beta badge on the same line as `rect`, just after it.
@@ -1610,7 +1615,7 @@ fn rings(h: &H) -> Vec<egui::Rect> {
     painted(h)
         .into_iter()
         .filter_map(|s| match s {
-            egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.ink) => Some(r.rect),
+            egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.brass) => Some(r.rect),
             _ => None,
         })
         .collect()
@@ -1693,7 +1698,7 @@ fn a4_the_screen_reader_still_follows_the_focus_without_a_ring() {
 }
 
 #[test]
-fn a4_a_focused_control_wears_a_2px_ink_ring_outside_it() {
+fn a4_a_focused_control_wears_a_2px_accent_ring_outside_it() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     // The keyboard is in use (rings are keyboard only).
@@ -1705,7 +1710,7 @@ fn a4_a_focused_control_wears_a_2px_ink_ring_outside_it() {
     steps(&mut h);
     let t = h.state().tokens();
     let ring = painted(&h).into_iter().find_map(|s| match s {
-        egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.ink) => Some(r.rect),
+        egui::Shape::Rect(r) if r.stroke == egui::Stroke::new(2.0, t.brass) => Some(r.rect),
         _ => None,
     });
     let ring = ring.expect("a ring");

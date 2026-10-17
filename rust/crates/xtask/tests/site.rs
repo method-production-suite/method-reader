@@ -1,8 +1,9 @@
 //! site/index.html (was tests/site.test.ts). site/ stays HTML after the
 //! cutover; only the check moved.
 //!
-//! "Drag and drop" shows the real window: the capture tool's own site
-//! pictures, sized to the files it wrote. "Every download" links each file
+//! The site shows the real window: the capture tool's own pictures, light
+//! with dark beside it, sized to the files it wrote, each where the Method
+//! suite's shot order puts it. "Every download" links each file
 //! by its version-free name through /releases/latest/download/, with a
 //! status per file that follows docs/verification-ledger.md. The names come
 //! from sp_release::names, the one place the release takes them from.
@@ -14,7 +15,8 @@ use repo_common::*;
 use sp_release::names;
 use xtask::capture::shots::{SHOTS, Theme, outputs_for};
 
-const LATEST: &str = "https://github.com/ssandweiss/screepub/releases/latest/download/";
+const LATEST: &str =
+    "https://github.com/method-production-suite/method-reader/releases/latest/download/";
 const VERIFIED: &str = "Verified by a person";
 const NOT_YET: &str = "Built and checked automatically. Never installed by a person yet";
 
@@ -51,33 +53,84 @@ fn png_size(path: &std::path::Path) -> (u32, u32) {
     (be(16), be(20))
 }
 
-fn drop_images() -> Vec<String> {
-    Regex::new(r"<img\b[^>]*>")
+/// Every `<picture>` in `html` that shows a captured picture: its light
+/// `<img>` and the srcset of its dark `<source>`.
+fn pictures(html: &str) -> Vec<(String, String)> {
+    Regex::new(r"(?s)<picture>(.*?)</picture>")
         .unwrap()
-        .find_iter(&section("drop"))
-        .map(|m| m.as_str().to_string())
+        .captures_iter(html)
+        .filter_map(|c| {
+            let inner = c[1].to_string();
+            let img = Regex::new(r"<img\b[^>]*>")
+                .unwrap()
+                .find(&inner)?
+                .as_str()
+                .to_string();
+            if !attrs(&img, "src")[0].starts_with("img/") {
+                return None;
+            }
+            let dark = attrs(&inner, "srcset").first().cloned().unwrap_or_default();
+            Some((img, dark))
+        })
+        .collect()
+}
+
+/// The captured pictures a section shows, by shot name, in order.
+fn shots_in(cls: &str) -> Vec<String> {
+    pictures(&section(cls))
+        .iter()
+        .map(|(img, _)| {
+            let src = &attrs(img, "src")[0];
+            src.strip_prefix("img/")
+                .and_then(|n| n.strip_suffix("-light.png"))
+                .unwrap_or_else(|| panic!("not a light capture: {src}"))
+                .to_string()
+        })
         .collect()
 }
 
 #[test]
-fn drag_and_drop_shows_the_capture_tools_site_pictures_drop_then_result() {
-    let captured: Vec<String> = SHOTS
+fn each_capture_sits_where_the_suite_order_puts_it() {
+    // (1) the hero, the Read page; (2) the before and after is the site's
+    // own live section, so its still is the README's; (3) drop and result
+    // under "Drag and drop"; (4) the command line under "Yours to keep".
+    assert_eq!(shots_in("hero"), ["read"]);
+    assert_eq!(shots_in("drop"), ["drop", "result"]);
+    assert_eq!(shots_in("beat band alt"), ["cli"]);
+}
+
+#[test]
+fn every_picture_is_the_capture_tools_own_light_with_its_dark_beside_it() {
+    let site_outputs: Vec<String> = SHOTS
+        .iter()
+        .flat_map(|s| s.themes.iter().flat_map(move |t| outputs_for(s, *t)))
+        .filter_map(|p| p.strip_prefix("site/").map(str::to_string))
+        .collect();
+    let all = pictures(&site());
+    assert_eq!(all.len(), 4);
+    for (img, dark) in &all {
+        let light = &attrs(img, "src")[0];
+        assert!(site_outputs.contains(light), "{light}");
+        assert_eq!(dark, &light.replace("-light.png", "-dark.png"), "{img}");
+        assert!(site_outputs.contains(dark), "{dark}");
+    }
+    // The light ones are what outputs_for gives a light capture.
+    let light: Vec<String> = SHOTS
         .iter()
         .flat_map(|s| outputs_for(s, Theme::Light))
         .filter_map(|p| p.strip_prefix("site/").map(str::to_string))
         .collect();
-    assert_eq!(captured, vec!["img/drop-light.png", "img/result-light.png"]);
-    let srcs: Vec<String> = drop_images()
-        .iter()
-        .map(|img| attrs(img, "src")[0].clone())
-        .collect();
-    assert_eq!(srcs, captured);
+    assert!(
+        all.iter()
+            .all(|(img, _)| light.contains(&attrs(img, "src")[0]))
+    );
 }
 
 #[test]
 fn each_picture_is_sized_to_its_file_which_the_tool_takes_at_2x() {
-    for img in drop_images() {
+    for (img, dark) in pictures(&site()) {
         let (w, h) = png_size(&root().join("site").join(&attrs(&img, "src")[0]));
+        assert_eq!(png_size(&root().join("site").join(&dark)), (w, h), "{dark}");
         assert_eq!(attrs(&img, "width"), vec![(w / 2).to_string()], "{img}");
         assert_eq!(attrs(&img, "height"), vec![(h / 2).to_string()], "{img}");
     }
@@ -85,7 +138,7 @@ fn each_picture_is_sized_to_its_file_which_the_tool_takes_at_2x() {
 
 #[test]
 fn each_picture_says_what_it_shows() {
-    let imgs = drop_images();
+    let imgs: Vec<String> = pictures(&site()).into_iter().map(|(i, _)| i).collect();
     let alts: Vec<String> = imgs.iter().map(|i| attrs(i, "alt")[0].clone()).collect();
     for a in &alts {
         assert!(a.len() > 30, "{a}");
@@ -123,8 +176,8 @@ fn the_drawing_and_its_animation_are_gone() {
 
 #[test]
 fn every_local_src_and_href_resolves_to_a_file_inside_site() {
-    // The Pages workflow deploys site/ alone, so a picture referenced from
-    // assets/ (where the README's copies live) would 404 on screepub.com.
+    // The suite website copies site/ alone, so a picture referenced from
+    // assets/ (where the README's copies live) would 404 on methodreader.com.
     let site = site();
     let css: Vec<String> = Regex::new(r"url\(([^)]+)\)")
         .unwrap()
@@ -273,7 +326,10 @@ fn an_intel_mac_is_told_0_9_0_is_its_last_version() {
     let intel = &downloads[at..];
     assert!(intel.contains("0.9.0"));
     assert!(intel.contains("keeps working"));
-    assert!(intel.contains("href=\"https://github.com/ssandweiss/screepub/releases\""));
+    assert!(
+        intel
+            .contains("href=\"https://github.com/method-production-suite/method-reader/releases\"")
+    );
 }
 
 #[test]
@@ -289,4 +345,14 @@ fn the_page_and_the_share_card_carry_no_em_dash_in_any_spelling() {
     for f in ["site/index.html", "site/og-card.html"] {
         assert!(!dash.is_match(&read(f)), "{f}");
     }
+}
+
+#[test]
+fn the_download_page_says_what_the_update_check_sends_and_how_to_turn_it_off() {
+    let page = flat(&site());
+    assert!(page.contains("check for updates, and you can turn that off"));
+    assert!(page.contains("every six hours"));
+    assert!(page.contains("<code>latest.json</code>"));
+    assert!(page.contains("nothing about your scripts"));
+    assert!(page.contains("Help &gt; Check for Updates Automatically"));
 }

@@ -117,12 +117,6 @@ fn hex_of(expr: &str) -> Option<[u8; 4]> {
 
 /// Every colour theme.rs gives LIGHT or DARK, as RGBA.
 fn theme_colors(src: &str, which: &str) -> Vec<(String, [u8; 4])> {
-    let brass: Vec<[u8; 4]> = block(src, "const BRASS: [Color32; 7] = [", "];")
-        .split(',')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|s| hex_of(s).unwrap_or_else(|| panic!("BRASS entry {s}")))
-        .collect();
     let body = block(src, &format!("pub const {which}: Tokens = Tokens {{"), "};");
     let mut out = Vec::new();
     for line in body.lines().map(str::trim).filter(|l| !l.is_empty()) {
@@ -130,11 +124,6 @@ fn theme_colors(src: &str, which: &str) -> Vec<(String, [u8; 4])> {
         let expr = expr.trim().trim_end_matches(',');
         let rgba = if let Some(c) = hex_of(expr) {
             c
-        } else if let Some(i) = expr
-            .strip_prefix("BRASS[")
-            .and_then(|r| r.strip_suffix(']'))
-        {
-            brass[i.parse::<usize>().unwrap()]
         } else if let Some(args) = expr
             .strip_prefix("Color32::from_rgba_unmultiplied_const(")
             .and_then(|r| r.strip_suffix(')'))
@@ -176,7 +165,7 @@ fn sp_app_s_colours_are_brand_tokens_json_s_in_both_modes() {
     let colors = brand_colors(&read("brand/tokens.json")).unwrap();
     for (which, dark) in [("LIGHT", false), ("DARK", true)] {
         let theme = theme_colors(&src, which);
-        assert!(theme.len() >= 17, "{which} has {} colours", theme.len());
+        assert!(theme.len() >= 18, "{which} has {} colours", theme.len());
         for (name, rgba) in &theme {
             let (_, l, d) = colors
                 .iter()

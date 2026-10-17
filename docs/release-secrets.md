@@ -8,6 +8,11 @@ The signing identity is **Clockwork Post Production LLC** (the Apple
 Developer account). Until every secret below exists, the release job fails
 loudly and normal CI is unaffected.
 
+The release steps themselves, from the notes to the person who publishes
+the draft, are in [RELEASING.md](RELEASING.md). A tag builds a DRAFT; the
+Homebrew tap and the read-back checks run from
+`.github/workflows/release-published.yml` once a person publishes it.
+
 ## 1. Developer ID Application certificate
 
 You need a **Developer ID Application** certificate (not "Apple
@@ -42,9 +47,11 @@ base64 -i AuthKey_XXXXXXXXXX.p8 | pbcopy    # paste as AC_API_KEY_P8_BASE64
 
 ## 3. `TAP_TOKEN` — OPTIONAL, and the only one whose absence is not fatal
 
-Without it the release still succeeds; the `tap` job just says so and
-exits clean, leaving the crib sheet in the run summary and the tap to be
-bumped by hand. With it, the tap bumps itself on every non-prerelease tag.
+Without it the release still succeeds; the `tap` job
+(`release-published.yml`) just says so and exits clean, leaving the crib
+sheet in the release run's summary and the tap to be bumped by hand. With
+it, the tap bumps itself on every non-prerelease release, once a person
+publishes it.
 
 GitHub → **Settings → Developer settings → Personal access tokens →
 Fine-grained tokens → Generate new token**:
@@ -118,7 +125,8 @@ What holds this together, in the order it runs:
   manifest`), checks every archive it names against `PUBKEY` and the
   signed version (`sp-release verify-update`), and uploads it LAST, so
   nothing it names is ever missing or unverified when it is read.
-- `latest-check` reads the manifest back from the endpoint the app uses
+- `latest-check` (`release-published.yml`, once a person publishes the
+  draft) reads the manifest back from the endpoint the app uses
   (`sp-release check-latest --deep`) and compares it with the newest
   release: the version, every platform's asset, every signature, and the
   key id against `PUBKEY`; with `--deep` it also downloads each archive and
@@ -246,6 +254,13 @@ See `homebrew-tap/Formula/screepub.rb` for the working form.
 
 ### Bumping the tap by hand
 
+**From 0.13 the tap's files are `method-reader`.** The first bump after
+the rename moves `Formula/screepub.rb` and `Casks/screepub.rb` to the new
+names and writes `formula_renames.json` and `cask_renames.json`, which is
+how Homebrew moves anyone who installed `screepub` over to `method-reader`.
+`cargo xtask bump-tap` does all of that itself; `check-tap` fails if either
+renames file is missing.
+
 One SHA is needed, for the one command-line tarball: Apple silicon only
 since the release after 0.9.0, so the formula has one
 url and says `depends_on arch: :arm64`. The cask is retired (deprecated
@@ -254,16 +269,16 @@ never bumped again. The release's "Tap bump crib sheet" step writes the
 SHA into the run's summary. To get it after the fact:
 
 ```bash
-gh release download vX.Y.Z --dir /tmp/tap --pattern 'screepub-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
+gh release download vX.Y.Z --dir /tmp/tap --pattern 'method-reader-cli-macos-*.tar.gz' && shasum -a 256 /tmp/tap/*
 ```
 
 Then run `cargo xtask bump-tap X.Y.Z <tap-checkout>` from `rust/`, which writes
-`homebrew-tap/Formula/screepub.rb` whole from that digest and disables the
+`homebrew-tap/Formula/method-reader.rb` whole from that digest and disables the
 cask. By hand: the FIRST bump after 0.9.0 starts from
 its two-arch tap, so besides the url and the SHA, replace the formula's
 whole if/else on the CPU with the one url and sha256, add
 `depends_on arch: :arm64` on the line before `depends_on :macos`, and in
-`homebrew-tap/Casks/screepub.rb` change `deprecate!` to `disable!`, keeping
+`homebrew-tap/Casks/method-reader.rb` change `deprecate!` to `disable!`, keeping
 its date and its `because:` (Homebrew compares the date with the user's
 local day, so it must already be past). Later bumps change the url and the SHA only.
 `cargo xtask bump-tap` refuses a release that still carries
@@ -272,8 +287,8 @@ older with that tag's own copy of the tool (then `tools/bump-tap.sh`).
 Verify before pushing:
 
 ```bash
-brew style Formula/screepub.rb
-brew audit --strict --formula ssandweiss/tap/screepub
+brew style Formula/method-reader.rb
+brew audit --strict --formula ssandweiss/tap/method-reader
 ```
 
 Note `brew audit` reads the TAPPED clone at
@@ -286,8 +301,10 @@ clone pristine for `brew update`.
 All three pieces LANDED 2026-08-07. Two do the work, one keeps them
 honest:
 
-- **The bumper: `release.yml`'s `tap` job, running `cargo xtask bump-tap`.**
-  `needs: release`, so it cannot start before the assets exist. It clones
+- **The bumper: `release-published.yml`'s `tap` job, running `cargo xtask bump-tap`.**
+  It runs when a person publishes the release (until 0.13 it was a job in
+  `release.yml`, after one that published automatically), so it cannot
+  start before the assets exist. It clones
   the tap, retires the cask for good (its `deprecate!` becomes `disable!`,
   once: the last Swift app it installs would offer an Intel Mac an app it
   cannot open), writes the formula whole (one url, one SHA,
@@ -314,8 +331,8 @@ honest:
   carries the Intel tarball, disabled after). No secret needed, both repos
   being public.
 
-  - `release.yml`'s **`tap-check`** job, `needs: tap`, is the per-release
-    check. A red job there means the release published fine and the tap
+  - `release-published.yml`'s **`tap-check`** job, `needs: tap`, is the
+    per-release check. A red job there means the release published fine and the tap
     does not serve it yet.
   - `.github/workflows/tap-freshness.yml` is weekly plus
     `workflow_dispatch`, and catches drift BETWEEN releases: a tap edited
@@ -331,9 +348,12 @@ honest:
   raised by a workflow using the default `GITHUB_TOKEN`, and `release.yml`
   creates the release with exactly that token. The trigger read as
   coverage while providing none, which is the same shape as the tap
-  problem itself. **Anything that must run per release has to run INSIDE
-  the release workflow**, which is why `tap-check` is a job there and not
-  a trigger elsewhere.
+  problem itself. That was true while `release.yml` published the release
+  itself. **Since the suite's release standard a person publishes the
+  draft**, and an event a person raises does start workflows, so the tap
+  and its checks moved to `release-published.yml` on that trigger. It
+  holds only while no workflow publishes: `xtask/tests/release_workflow.rs`
+  fails if one does.
 
 **Why the logic lives in `cargo xtask` commands and not inline in the
 YAML:** these are the steps that have already failed silently once. Inline,

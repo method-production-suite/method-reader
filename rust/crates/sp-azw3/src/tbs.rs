@@ -4,7 +4,7 @@
 //! Ported from Calibre 9.11.0's src/calibre/ebooks/mobi/writer8/tbs.py and
 //! the helpers it takes from mobi/utils.py (encode_tbs, encode_fvwi,
 //! encode_trailing_data). Calibre is GPL-3, Copyright Kovid Goyal; this port
-//! is part of Screepub, AGPL-3.0-or-later (see THIRD-PARTY-NOTICES.md).
+//! is licensed GPL-3.0-only (LICENSE-GPL-3.0) (see THIRD-PARTY-NOTICES.md).
 //! Ports src/azw3/tbs.ts.
 //!
 //! tbs.py's own account: for each text record, find the index entries that

@@ -1,28 +1,44 @@
-# Screepub
+# Method Reader
 
-[![Release](https://img.shields.io/github/v/release/ssandweiss/screepub?cacheSeconds=300)](https://github.com/ssandweiss/screepub/releases/latest)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/method-production-suite/method-reader?cacheSeconds=300)](https://github.com/method-production-suite/method-reader/releases/latest)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 ![macOS, Windows, Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-black)
 
-**Read screenplays on your e-reader the way they're meant to be read.**
+**Turn a screenplay PDF into an e-book for your Kindle or other e-reader,
+or into a script you can edit again (Fountain or .fdx).**
+
+Method Reader is the new name for Screepub, and it is part of the
+[Method Production Suite](https://github.com/method-production-suite). Same
+app, same books: updating from Screepub keeps your settings and your library.
 
 <p align="center">
-  <a href="https://github.com/ssandweiss/screepub/releases/latest/download/Screepub-macOS.dmg"><strong>Download for Mac</strong></a>
+  <a href="https://github.com/method-production-suite/method-reader/releases/latest/download/Method-Reader-macOS.dmg"><strong>Download for Mac</strong></a>
   &nbsp;·&nbsp;
   <a href="#install"><strong>Other platforms</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://screepub.com"><strong>Take the tour at screepub.com</strong></a>
+  <a href="https://methodreader.com"><strong>Take the tour at methodreader.com</strong></a>
 </p>
 
 <p align="center">
-  <img src="assets/screens/hero-light.png" alt="The same scene on two e-readers: on the left a screenplay PDF page shrunk to fit the screen, on the right Screepub's e-book of it, reflowed at a readable size" width="92%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/read-dark.png">
+    <img src="assets/screens/read-light.png" alt="The Method Reader window's Read page: Field Station, an invented script, reflowed as an e-book, with its eleven scenes listed in a column beside it" width="92%">
+  </picture>
 </p>
 
 You get scripts as PDFs, and an ordinary PDF-to-ebook converter wrecks them:
 dialogue collapses into paragraphs and character names drift away from their
-lines. Screepub reads how the scenes, cues and dialogue actually sit on the
+lines. Method Reader reads how the scenes, cues and dialogue actually sit on the
 page and rebuilds a real e-book from that structure, so it reflows at any text
-size and still holds its shape.
+size and still holds its shape. From the same structure it writes the script
+back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/compare-dark.png">
+    <img src="assets/screens/compare-light.png" alt="The same scene on two e-readers: on the left a screenplay PDF page shrunk to fit the screen, on the right Method Reader's e-book of it, reflowed at a readable size" width="92%">
+  </picture>
+</p>
 
 ## What it does
 
@@ -30,7 +46,7 @@ size and still holds its shape.
 - **Send it to your reader, straight from the result.** Say once what you
   read on, and one button does the rest: plug in a Kindle and it copies over
   in the right format, then offers to eject it (beta on Windows and Linux).
-  Every other way to send, and every file type Screepub makes, is under
+  Every other way to send, and every file type Method Reader makes, is under
   Other ways.
 - **Look before you send.** A built-in reader shows the script as the device
   will, and the Settings page changes margins, spacing and page numbers live.
@@ -40,7 +56,7 @@ size and still holds its shape.
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
 - **Get the script back to edit.** The same PDF also comes out as a script
-  you can keep writing in: Fountain, or Final Draft's FDX (beta), which most
+  you can keep writing in: Fountain, or .fdx (beta), which most
   screenwriting apps open. It is rebuilt from the page, so revision colors
   and the exact page breaks stay behind.
 - **Pictures from the script (beta).** Storyboard panels, photos and a
@@ -53,7 +69,7 @@ size and still holds its shape.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/screens/drop-dark.png">
-    <img src="assets/screens/drop-light.png" alt="The Screepub window waiting for a script, with a dashed area that says Drop a screenplay PDF" width="46%">
+    <img src="assets/screens/drop-light.png" alt="The Method Reader window waiting for a script, with a dashed area that says Drop a screenplay PDF" width="46%">
   </picture>
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/screens/result-dark.png">
@@ -61,11 +77,29 @@ size and still holds its shape.
   </picture>
 </p>
 
+## Yours to keep
+
+- **Free, for good, and open source** (MIT OR Apache-2.0; the AZW3 writer is
+  GPL v3, [see below](#license)). No account and no subscription.
+- **Nothing is uploaded.** Converting happens on your computer and works
+  offline; [your script stays on your machine](#your-script-stays-on-your-machine).
+- **Plain files you can open anywhere, in 20 years:** an EPUB 3 book
+  ([the standard](https://www.w3.org/TR/epub-33/)), and the script as
+  [Fountain](https://fountain.io/syntax) text or as .fdx for screenwriting apps.
+  Nothing writes your script for you: every word in the book is the PDF's own.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/cli-dark.png">
+    <img src="assets/screens/cli-light.png" alt="A terminal running method-reader field-station.pdf --library: it reports 19 pages and 11 scenes and writes an EPUB and a Fountain file, then the book's folder is listed and the Fountain script's first lines print as plain text" width="92%">
+  </picture>
+</p>
+
 ## Which readers?
 
 | Device | How it's sent | Status |
 | --- | --- | --- |
-| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Screepub makes itself (beta); MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Screepub's own AZW3 not yet tried on a Kindle |
+| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Method Reader makes itself (beta); MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Method Reader's own AZW3 not yet tried on a Kindle |
 | Any Kindle, by email | EPUB to your `@kindle.com` address | Verified |
 | Newer Kindles that don't appear as a drive | Email, or Amazon's Send to Kindle app or web page | Use email delivery |
 | iPhone, iPad, Mac (Apple Books) | Added to Books on a Mac, then synced through iCloud | Verified |
@@ -74,7 +108,7 @@ size and still holds its shape.
 | reMarkable | The EPUB over its USB web interface | Built and tested in code, never on a real device |
 
 **What each Kindle file needs.** Copying to a Kindle over USB needs nothing
-installed: Screepub writes the AZW3 itself (beta: Calibre's own reader opens
+installed: Method Reader writes the AZW3 itself (beta: Calibre's own reader opens
 every one in our tests, and it has not yet been tried on a Kindle). KFX is
 optional, and looks better: it needs three free tools on your computer
 (Calibre, Amazon's Kindle Previewer and the KFX Output plugin), and Other
@@ -93,44 +127,37 @@ does not mount: see [Emailing scripts to your Kindle](docs/send-to-kindle.md).
 the most useful thing you can send. On the result screen, that reader's
 asterisk opens a note ending in **It worked** and **It did not work**; press
 one, or
-[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose)
+[open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose)
 to say more. A reader that is not on the list goes in **My device isn't
 here** on the same screen (beta).
 
 **What beta means here.** A feature marked (beta) works in our tests, but
 has not been tried widely on real devices or apps yet: tell us how it goes.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/read-dark.png">
-    <img src="assets/screens/read-light.png" alt="The Read page: Field Station reflowed as an e-book, with its list of scenes in a column beside the script" width="92%">
-  </picture>
-</p>
-
 ## Install
 
-**On a Mac, download `Screepub-macOS.dmg`**: the Mac app, signed and
+**On a Mac, download `Method-Reader-macOS.dmg`**: the Mac app, signed and
 notarized by Apple, for Macs with Apple silicon, macOS 13 or
 later. It is the file the download button gives you, and it updates itself.
 The same app runs on Windows and Linux.
 
-**On an Intel Mac, Screepub 0.9.0 is the last version.** It keeps working,
-but it will not be offered updates. To install it, download
-`Screepub-macOS.dmg` from
-[the 0.9.0 release page](https://github.com/ssandweiss/screepub/releases/tag/v0.9.0).
+**On an Intel Mac, 0.9.0 is the last version**, released under the app's
+earlier name, Screepub. It keeps working, but it will not be offered updates.
+To install it, download `Screepub-macOS.dmg` from
+[the 0.9.0 release page](https://github.com/method-production-suite/method-reader/releases/tag/v0.9.0).
 
 | Computer | File | Status |
 | --- | --- | --- |
-| Mac | `Screepub-macOS.dmg` | Verified by a person on an Apple silicon Mac |
-| Windows, 64-bit | `Screepub-windows-x64-setup.exe` | Built and checked automatically. Never installed by a person yet |
-| Linux: Debian, Ubuntu | `Screepub-linux-amd64.deb` | Built and checked automatically. Never installed by a person yet |
-| Linux: Fedora, openSUSE | `Screepub-linux-x86_64.rpm` | Built and checked automatically. Never installed by a person yet |
-| Linux: any other, 64-bit | `Screepub-linux-x86_64.AppImage` | Built and checked automatically. Never run by a person yet |
+| Mac | `Method-Reader-macOS.dmg` | Verified by a person on an Apple silicon Mac |
+| Windows, 64-bit | `Method-Reader-windows-x64-setup.exe` | Built and checked automatically. Never installed by a person yet |
+| Linux: Debian, Ubuntu | `Method-Reader-linux-amd64.deb` | Built and checked automatically. Never installed by a person yet |
+| Linux: Fedora, openSUSE | `Method-Reader-linux-x86_64.rpm` | Built and checked automatically. Never installed by a person yet |
+| Linux: any other, 64-bit | `Method-Reader-linux-x86_64.AppImage` | Built and checked automatically. Never run by a person yet |
 
-Every file is on the [latest release](https://github.com/ssandweiss/screepub/releases/latest).
+Every file is on the [latest release](https://github.com/method-production-suite/method-reader/releases/latest).
 `SHA256SUMS-app` there covers these five files, and `SHA256SUMS`
 covers the command-line downloads. Reports from Windows and Linux are welcome:
-[open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
+[open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose).
 Who has checked what, in full: [the verification ledger](docs/verification-ledger.md).
 
 **Windows will warn you.** The Windows downloads are unsigned, so SmartScreen
@@ -145,11 +172,30 @@ not update itself: download each new version by hand.
 
 There is also a command-line converter for macOS, Linux and Windows:
 [for developers](docs/developers.md#install-the-command-line-converter). On a
-Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandweiss/tap/screepub`.
+Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandweiss/tap/method-reader`.
+
+## Help build it
+
+**If you read or make films:** start with an issue labelled
+[help wanted: film knowledge](https://github.com/method-production-suite/method-reader/labels/help%20wanted%3A%20film%20knowledge); no code needed. The most useful thing is a report from a
+reader nobody here owns (a Kobo, a tolino, a reMarkable, or a reader that is
+not on the list yet; [see above](#which-readers)), or a script whose layout
+comes out wrong. Describe the problem in
+[an issue](https://github.com/method-production-suite/method-reader/issues/new/choose)
+and never attach or quote a real script: an invented page that shows the same
+problem is enough, and the issue form says how to make one.
+
+**If you write code:** start with an issue labelled
+[good first issue](https://github.com/method-production-suite/method-reader/labels/good%20first%20issue).
+`cd rust && cargo test --workspace` checks everything, and
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the rest.
+
+Method Reader is part of the [Method Production Suite](https://methodproduction.com):
+free, open tools for making films, from the first draft to the last shoot day.
 
 ## Your script stays on your machine
 
-Scripts are confidential. Screepub is built accordingly.
+Scripts are confidential. Method Reader is built accordingly.
 
 - **No AI, no machine learning.** The conversion is ordinary code that
   measures where text sits on the page and applies screenplay layout rules.
@@ -158,35 +204,46 @@ Scripts are confidential. Screepub is built accordingly.
 - **No accounts, no telemetry, no analytics.** Nothing tracks usage or reports
   crashes.
 
-Screepub reaches the network only when you ask it to:
+Method Reader uses no network except checking for updates, which you can
+turn off. On a Mac, two minutes after the window opens and every six hours
+after that, it fetches one small file, `latest.json`, from Method Reader's
+releases on GitHub. The request carries the app's name and version
+(`method-reader-update/` and the version number) and nothing else: no
+account, no identifier, nothing about your scripts. GitHub sees your
+internet address, as any website's host does. When a newer version is
+there, the window downloads it, checks its signature, and says **Update
+ready, restart to update**; nothing is replaced until you restart. To turn
+the checks off, uncheck **Help > Check for Updates Automatically**;
+**Help > Check for Updates…** still checks once when you ask. If you said no
+to the old once-a-day question, they stay off. On Windows and Linux the
+window neither checks nor updates itself.
+
+Otherwise it reaches the network only when you ask it to:
 
 - **A docked reMarkable**: the upload goes over USB to your own tablet, not
   the internet.
-- **Pages it opens in your browser**: GitHub for **Report a bug**, Amazon's
-  Send to Kindle page and its Kindle settings page, and the Calibre and
-  Kindle Previewer download pages.
+- **Pages it opens in your browser**: GitHub for **Report a Bug** and the
+  User Guide, methodreader.com and methodproduction.com from the Help menu,
+  Amazon's Send to Kindle page and its Kindle settings page, and the Calibre
+  and Kindle Previewer download pages.
 - **Installing the KFX plugin**: fetched from Calibre's own plugin index.
-- **Screepub's request service**, only when you press **Send** in **My device
+- **Method Reader's request service**, only when you press **Send** in **My device
   isn't here** or answer **It worked** or **It did not work** beside an
   asterisk. It carries the device's name (or which reader and your answer),
   the app's version and your platform, and nothing else. The service stores
   only counts and the day: never your address or anything made from it.
   Cloudflare, which runs it, sees your address as any website's host does,
   and uses it to allow five requests a minute.
-- **Updates, only if you say yes.** The window asks once; with your yes, it
-  checks GitHub at most once a day, and **Check for updates** checks once.
-  An update downloads only when you choose to install it, and its signature
-  is checked before anything is replaced. Self-update is Mac only.
 
 On a Mac the result screen can also hand a book to another app and stop there:
 Amazon's Send to Kindle app, Apple Books (which syncs through iCloud if you
 use it), or a Mail message that goes nowhere until you send it.
 
 If you email a script to your `@kindle.com` address, Amazon receives it and
-their terms apply. That's your call, and Screepub never makes it for you.
+their terms apply. That's your call, and Method Reader never makes it for you.
 The [source is right here](rust/crates/) to check any of this.
 
-## What Screepub isn't
+## What Method Reader isn't
 
 - **Not a screenwriting app.** It reads scripts that already exist.
 - **Not a coverage or analysis tool.** No summaries, no notes, no AI.
@@ -195,22 +252,37 @@ The [source is right here](rust/crates/) to check any of this.
 
 ## For developers
 
-Screepub is a PDF to Fountain to EPUB3 pipeline written in Rust, as one
+Method Reader is a PDF to Fountain to EPUB3 pipeline written in Rust, as one
 Cargo workspace. The window is native (egui, with AccessKit for screen
 readers) and has the engine linked in. The command line, the library layout and
 the architecture are in [docs/developers.md](docs/developers.md); setting up
 and sending a change is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Independent
+
+Method Reader is an independent project by Method Production Suite Team and the
+Method Reader contributors, not affiliated with or endorsed by the makers of any
+e-reader, reading app or screenwriting app it works with. Kindle, Kobo, tolino,
+reMarkable, Apple Books, Calibre and Final Draft are named only to say which readers
+and file formats it works with; their trademarks belong to their owners.
+
 ## License
 
-Screepub is licensed under the **GNU Affero General Public License v3.0 or
-later** (AGPL-3.0-or-later): see [`LICENSE`](LICENSE). You're free to use,
-study, modify, and share it; if you distribute it, or run a modified version
-as a network service, the corresponding source must be made available under
-the same license.
+Method Reader's code is licensed under the **MIT License or the Apache License
+2.0**, at your option: see [`LICENSE-MIT`](LICENSE-MIT) and
+[`LICENSE-APACHE`](LICENSE-APACHE). Use any part of it in your own project,
+open or closed.
+
+One crate is the exception: the AZW3 (Kindle) writer,
+[`rust/crates/sp-azw3`](rust/crates/sp-azw3), is ported from calibre and
+stays under calibre's licence, the **GNU GPL v3**
+([`LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)). The PDF reader,
+the parser, and the Fountain and Final Draft writers don't use it. Because
+the command line and the app contain it, the released programs as a whole
+are distributed under the GPL v3.
 
 Bundled third-party components are listed in
 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md), which also ships inside
 the apps.
 
-Copyright © 2026 Darkwell Entertainment LLC.
+Copyright © 2026 Method Production Suite Team and the Method Reader contributors.

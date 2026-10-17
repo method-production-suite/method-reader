@@ -1,4 +1,4 @@
-//! screepub-mtp: list Kindles that connect over MTP, and copy one file to one.
+//! method-reader-mtp: list Kindles that connect over MTP, and copy one file to one.
 //!
 //! Everything that can be decided without a device lives in a module of its
 //! own and is unit-tested: the JSON envelope (`output`), argv (`args`), the

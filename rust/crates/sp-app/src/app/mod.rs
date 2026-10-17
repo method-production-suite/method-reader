@@ -11,6 +11,7 @@ pub mod book;
 pub mod bookview;
 pub mod convert;
 pub mod frame;
+pub mod help;
 pub mod host;
 pub mod menu;
 pub mod panel;
@@ -95,6 +96,8 @@ pub struct App {
     pub drag_hover: bool,
     pub dark: bool,
     fonts_set: bool,
+    /// The title the title bar was last told.
+    pub title_shown: Option<String>,
     /// The Mac menu bar (menu.rs), when this window installed one.
     #[cfg(target_os = "macos")]
     pub menus: Option<menu::Menus>,
@@ -117,9 +120,13 @@ pub struct App {
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
+    /// The Help menu's sheets (help.rs).
+    pub help: help::State,
+    /// Help menu items chosen in the Mac menu bar, applied next frame.
+    pub help_chosen: Vec<crate::model::help::HelpItem>,
     /// The book as each place shows it (bookview.rs).
     pub views: bookview::Views,
-    /// SCREEPUB_FRAME_LOG's recorder (framelog.rs), when it is set.
+    /// METHOD_READER_FRAME_LOG's recorder (framelog.rs), when it is set.
     pub frame_log: Option<crate::framelog::FrameLog>,
     /// What this frame has learnt about the next: something moving, or a
     /// timer due (model/motion.rs). Gathered while the frame draws.
@@ -161,6 +168,7 @@ impl App {
             drag_hover: false,
             dark: false,
             fonts_set: false,
+            title_shown: None,
             #[cfg(target_os = "macos")]
             menus: None,
             window_focused: true,
@@ -174,6 +182,8 @@ impl App {
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
+            help: help::State::default(),
+            help_chosen: Vec::new(),
             views: bookview::Views::new(mode == Mode::Threads),
             frame_log: crate::framelog::FrameLog::from_env(),
             wakes: crate::model::motion::Wakes::default(),
@@ -190,6 +200,13 @@ impl App {
             std::thread::spawn(book::warm_fonts);
         }
         app.update.boot(&mut app.host);
+        // What's New, once after an update (never on a fresh install).
+        if crate::model::update::whats_new_due(
+            app.host.storage.as_mut(),
+            crate::model::notes::RELEASE.version,
+        ) {
+            app.notes_open = true;
+        }
         convert::draw_well(&mut app);
         app
     }
@@ -385,6 +402,7 @@ impl App {
         tune::tick(self, now);
         frame::heads_up_tick(self, now);
         panel::tick(self, now);
+        self.update.tick(&mut self.host, now);
     }
 
     /// The timers above, as they stand once the frame has drawn (a knob
@@ -396,6 +414,7 @@ impl App {
             self.tune.deadline,
             self.heads_up.until,
             panel::next_due(self),
+            self.update.next_due(),
         ];
         for at in due.into_iter().flatten() {
             self.wakes.at(at);
@@ -512,11 +531,20 @@ impl App {
     pub fn frame(&mut self, ui: &mut Ui) {
         #[cfg(target_os = "macos")]
         if let Some(menus) = &self.menus {
-            menus.pump(ui.ctx());
+            let chosen = menus.pump(ui.ctx());
+            self.help_chosen.extend(chosen);
+            menus.sync(
+                self.update.usable(&self.host),
+                self.update.automatic(&self.host),
+            );
+        }
+        for item in std::mem::take(&mut self.help_chosen) {
+            help::choose(self, item);
         }
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
+            theme::apply_style(ui.ctx());
             // The window's spacing is the stylesheet's rem scale (6.4, 12.8,
             // 19.2 points), which lands between pixels as a browser's does;
             // egui's debug-build "Unaligned" overlay would paint over it.
@@ -545,6 +573,15 @@ impl App {
             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
         }
         self.tick();
+        // The title bar names the script, then the app (Method Budget's
+        // "Name - Method Budget"); told only when it changes.
+        let title =
+            crate::model::convert::window_title(self.script.as_ref().map(|s| s.title.as_str()));
+        if self.title_shown.as_deref() != Some(title.as_str()) {
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
+            self.title_shown = Some(title);
+        }
         frame::input(self, ui);
         self.stops.clear();
         frame::draw(self, ui);
@@ -623,18 +660,19 @@ impl App {
     }
 }
 
-/// The window as tauri.conf.json described it: "Screepub", 1280 by 800,
-/// a 640 by 480 floor, and on a Mac no title bar of its own (the paper runs
-/// under the traffic lights).
+/// The window under the product's name: 1280 by 800, a 640 by 480 floor,
+/// and the system's own title bar showing the app's name (and the
+/// script's, once there is one), as Method Budget's and Method Schedule's
+/// windows do. The page starts under it; the traffic lights sit in it.
 pub fn viewport() -> egui::ViewportBuilder {
     egui::ViewportBuilder::default()
-        .with_title("Screepub")
+        .with_title(crate::model::names::PRODUCT)
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([640.0, 480.0])
         .with_resizable(true)
-        .with_fullsize_content_view(true)
-        .with_title_shown(false)
-        .with_titlebar_shown(false)
+        .with_fullsize_content_view(false)
+        .with_title_shown(true)
+        .with_titlebar_shown(true)
 }
 
 /// How the window is opened: [`viewport`], presented on vsync (eframe's

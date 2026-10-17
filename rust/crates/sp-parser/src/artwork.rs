@@ -424,7 +424,7 @@ pub struct ArtworkVerdict<T> {
     /// a warning, as today's spec does ("keeping the first 60 and
     /// warning"), precisely because silent truncation reads as "we carried
     /// everything" when we did not. `kept.len() + over_cap` is what a caller
-    /// needs to say "this script has 73 pictures and Screepub carried 60".
+    /// needs to say "this script has 73 pictures and Method Reader carried 60".
     pub over_cap: usize,
     /// How many candidates each rule refused, keyed by the rule that fired
     /// first.

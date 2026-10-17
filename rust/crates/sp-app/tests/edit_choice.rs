@@ -53,10 +53,10 @@ fn x1_the_choice_heads_the_cards_and_the_calm_screen() {
     let h = result(&w);
     h.get_by_role_and_label(Role::TabList, CHOICE_LABEL);
     assert_eq!(selected(&h), "Read it");
-    h.get_by_role_and_label(Role::Heading, "WHAT DO YOU READ ON?");
+    h.get_by_role_and_label(Role::Heading, "What do you read on?");
     let choice = h.get_by_role_and_label(Role::TabList, CHOICE_LABEL).rect();
     let cards = h
-        .get_by_role_and_label(Role::Heading, "WHAT DO YOU READ ON?")
+        .get_by_role_and_label(Role::Heading, "What do you read on?")
         .rect();
     assert!(choice.bottom() <= cards.top(), "at the top");
 
@@ -83,7 +83,7 @@ fn x2_one_tab_stop_and_the_arrows_move_between_the_halves() {
         "the keyboard goes with the choice"
     );
     assert!(has(&h, EDIT_LINE));
-    assert!(!has(&h, "WHAT DO YOU READ ON?"));
+    assert!(!has(&h, "What do you read on?"));
     h.key_press(Key::Home);
     steps(&mut h);
     assert_eq!(selected(&h), "Read it");

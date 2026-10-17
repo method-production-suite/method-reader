@@ -14,10 +14,10 @@ use sp_engine::library::{adopt_sidecar, env_library_override, library_output, li
 use sp_engine::nodepath::{host, posix, win32};
 use sp_engine::settings::app::write_app_settings;
 
-/// `guardedRoot`: libraryRoot with the guard's SCREEPUB_CONFIG_DIR folded
+/// `guardedRoot`: libraryRoot with the guard's METHOD_READER_CONFIG_DIR folded
 /// in first, since a fake env REPLACES the real one.
 fn guarded_root(platform: &str, pairs: &[(&str, &str)]) -> String {
-    let mut env: Env = env_of(&[("SCREEPUB_CONFIG_DIR", SETTINGS_GUARD)]);
+    let mut env: Env = env_of(&[("METHOD_READER_CONFIG_DIR", SETTINGS_GUARD)]);
     for (k, v) in pairs {
         env.set(*k, *v);
     }
@@ -47,7 +47,7 @@ fn a_fake_home_that_is_real_and_writable_is_exactly_the_hole() {
         &home,
         "Library",
         "Application Support",
-        "Screepub",
+        "com.methodreader.desktop",
         "settings.json",
     ]);
     store(&settings, &[("libraryPath", json!("/poisoned"))]);
@@ -58,7 +58,7 @@ fn a_fake_home_that_is_real_and_writable_is_exactly_the_hole() {
     // Joined by darwin's rules, whatever this host's separator is.
     assert_eq!(
         guarded_root("darwin", &[("HOME", &home)]),
-        posix::join(&[home.as_str(), "Documents", "Screepub"])
+        posix::join(&[home.as_str(), "Documents", "Method Reader"])
     );
 }
 
@@ -70,11 +70,11 @@ const HOME: &str = "/home/ada";
 fn the_library_is_under_documents_not_application_state() {
     assert_eq!(
         guarded_root("darwin", &[("HOME", HOME)]),
-        "/home/ada/Documents/Screepub"
+        "/home/ada/Documents/Method Reader"
     );
     assert_eq!(
         guarded_root("linux", &[("HOME", HOME)]),
-        "/home/ada/Documents/Screepub"
+        "/home/ada/Documents/Method Reader"
     );
     for platform in ["darwin", "win32", "linux"] {
         let root = guarded_root(platform, &[("HOME", HOME)]);
@@ -88,22 +88,22 @@ fn the_library_is_under_documents_not_application_state() {
 fn windows_keeps_documents_under_the_profile() {
     assert_eq!(
         guarded_root("win32", &[("USERPROFILE", "C:\\Users\\Ada")]),
-        "C:\\Users\\Ada\\Documents\\Screepub"
+        "C:\\Users\\Ada\\Documents\\Method Reader"
     );
     assert_eq!(
         guarded_root("win32", &[("HOME", "C:\\Users\\Bo")]),
-        "C:\\Users\\Bo\\Documents\\Screepub"
+        "C:\\Users\\Bo\\Documents\\Method Reader"
     );
 }
 
 #[cfg(unix)]
 #[test]
-fn screepub_library_wins_on_every_platform() {
+fn method_reader_library_wins_on_every_platform() {
     for platform in ["darwin", "win32", "linux"] {
         assert_eq!(
             guarded_root(
                 platform,
-                &[("HOME", HOME), ("SCREEPUB_LIBRARY", "/tmp/lib")]
+                &[("HOME", HOME), ("METHOD_READER_LIBRARY", "/tmp/lib")]
             ),
             "/tmp/lib"
         );
@@ -114,11 +114,14 @@ fn screepub_library_wins_on_every_platform() {
 fn a_relative_override_is_not_a_library() {
     for relative in ["lib", "./lib", "../lib", "."] {
         assert_eq!(
-            guarded_root("linux", &[("HOME", HOME), ("SCREEPUB_LIBRARY", relative)]),
-            "/home/ada/Documents/Screepub"
+            guarded_root(
+                "linux",
+                &[("HOME", HOME), ("METHOD_READER_LIBRARY", relative)]
+            ),
+            "/home/ada/Documents/Method Reader"
         );
         assert_eq!(
-            env_library_override(&env_of(&[("SCREEPUB_LIBRARY", relative)])),
+            env_library_override(&env_of(&[("METHOD_READER_LIBRARY", relative)])),
             None
         );
     }
@@ -127,8 +130,8 @@ fn a_relative_override_is_not_a_library() {
 #[test]
 fn a_blank_override_is_not_a_library() {
     assert_eq!(
-        guarded_root("linux", &[("HOME", HOME), ("SCREEPUB_LIBRARY", "  ")]),
-        "/home/ada/Documents/Screepub"
+        guarded_root("linux", &[("HOME", HOME), ("METHOD_READER_LIBRARY", "  ")]),
+        "/home/ada/Documents/Method Reader"
     );
 }
 
@@ -155,7 +158,7 @@ fn a_renamed_documents_folder_is_honoured() {
     );
     assert_eq!(
         guarded_root("linux", &[("HOME", &home)]),
-        j(&[&home, "Documenten", "Screepub"])
+        j(&[&home, "Documenten", "Method Reader"])
     );
 }
 
@@ -166,7 +169,7 @@ fn an_absolute_path_in_the_file_is_taken_as_written() {
     let home = home_with_user_dirs(&s, "home", Some("XDG_DOCUMENTS_DIR=\"/mnt/work/docs\"\n"));
     assert_eq!(
         guarded_root("linux", &[("HOME", &home)]),
-        "/mnt/work/docs/Screepub"
+        "/mnt/work/docs/Method Reader"
     );
 }
 
@@ -182,7 +185,7 @@ fn xdg_config_home_says_where_that_file_is() {
     );
     assert_eq!(
         guarded_root("linux", &[("HOME", &home), ("XDG_CONFIG_HOME", &config)]),
-        j(&[&home, "Papers", "Screepub"])
+        j(&[&home, "Papers", "Method Reader"])
     );
 }
 
@@ -196,7 +199,7 @@ fn the_environment_variable_wins_over_the_file() {
             "linux",
             &[("HOME", &home), ("XDG_DOCUMENTS_DIR", "/srv/docs")]
         ),
-        "/srv/docs/Screepub"
+        "/srv/docs/Method Reader"
     );
 }
 
@@ -223,7 +226,7 @@ fn the_environment_branch_gets_every_guard_the_file_branch_gets() {
     for value in ["$HOME", "$HOME/", "/"] {
         assert_eq!(
             guarded_root("linux", &[("HOME", &home), ("XDG_DOCUMENTS_DIR", value)]),
-            j(&[&home, "Documents", "Screepub"])
+            j(&[&home, "Documents", "Method Reader"])
         );
     }
     assert_eq!(
@@ -234,7 +237,7 @@ fn the_environment_branch_gets_every_guard_the_file_branch_gets() {
                 ("XDG_DOCUMENTS_DIR", "\"$HOME/Documenten\"")
             ]
         ),
-        j(&[&home, "Documenten", "Screepub"])
+        j(&[&home, "Documenten", "Method Reader"])
     );
 }
 
@@ -245,26 +248,26 @@ fn no_file_no_entry_or_documents_is_home_falls_back_to_documents() {
     let bare = home_with_user_dirs(&s, "bare", None);
     assert_eq!(
         guarded_root("linux", &[("HOME", &bare)]),
-        j(&[&bare, "Documents", "Screepub"])
+        j(&[&bare, "Documents", "Method Reader"])
     );
     assert!(!std::path::Path::new(&j(&[&bare, "Documents"])).exists());
 
     let no_entry = home_with_user_dirs(&s, "noentry", Some("XDG_MUSIC_DIR=\"$HOME/Music\"\n"));
     assert_eq!(
         guarded_root("linux", &[("HOME", &no_entry)]),
-        j(&[&no_entry, "Documents", "Screepub"])
+        j(&[&no_entry, "Documents", "Method Reader"])
     );
 
     let disabled = home_with_user_dirs(&s, "disabled", Some("XDG_DOCUMENTS_DIR=\"$HOME/\"\n"));
     assert_eq!(
         guarded_root("linux", &[("HOME", &disabled)]),
-        j(&[&disabled, "Documents", "Screepub"])
+        j(&[&disabled, "Documents", "Method Reader"])
     );
 
     let relative = home_with_user_dirs(&s, "relative", Some("XDG_DOCUMENTS_DIR=\"Documenten\"\n"));
     assert_eq!(
         guarded_root("linux", &[("HOME", &relative)]),
-        j(&[&relative, "Documents", "Screepub"])
+        j(&[&relative, "Documents", "Method Reader"])
     );
 }
 
@@ -275,11 +278,11 @@ fn macos_and_windows_do_not_read_the_file() {
     let home = home_with_user_dirs(&s, "home", Some("XDG_DOCUMENTS_DIR=\"$HOME/Documenten\"\n"));
     assert_eq!(
         guarded_root("darwin", &[("HOME", &home)]),
-        j(&[&home, "Documents", "Screepub"])
+        j(&[&home, "Documents", "Method Reader"])
     );
     assert_eq!(
         guarded_root("win32", &[("HOME", &home)]),
-        win32::join(&[home.as_str(), "Documents", "Screepub"])
+        win32::join(&[home.as_str(), "Documents", "Method Reader"])
     );
 }
 
@@ -299,13 +302,13 @@ fn settings_file_with(s: &Scratch, library_path: Value) -> String {
 
 #[cfg(unix)]
 #[test]
-fn screepub_library_beats_a_stored_folder() {
+fn method_reader_library_beats_a_stored_folder() {
     let s = Scratch::new("library");
     let settings = settings_file_with(&s, json!("/chosen/lib"));
     assert_eq!(
         library_root(
             "linux",
-            &env_of(&[("HOME", HOME), ("SCREEPUB_LIBRARY", "/env/lib")]),
+            &env_of(&[("HOME", HOME), ("METHOD_READER_LIBRARY", "/env/lib")]),
             Some(&settings)
         ),
         "/env/lib"
@@ -377,7 +380,7 @@ fn unusable_stored_values_fall_through_to_the_default() {
         let settings = settings_file_with(&s, stored.clone());
         assert_eq!(
             library_root("linux", &env_of(&[("HOME", HOME)]), Some(&settings)),
-            "/home/ada/Documents/Screepub",
+            "/home/ada/Documents/Method Reader",
             "{stored}"
         );
     }
@@ -389,7 +392,7 @@ fn a_missing_settings_file_falls_through() {
     let settings = j(&[&s.dir("settings"), "never-written", "settings.json"]);
     assert_eq!(
         library_root("linux", &env_of(&[("HOME", HOME)]), Some(&settings)),
-        "/home/ada/Documents/Screepub"
+        "/home/ada/Documents/Method Reader"
     );
 }
 
@@ -400,7 +403,7 @@ fn a_corrupt_settings_file_falls_through() {
     write(&path, "this is not json");
     assert_eq!(
         library_root("linux", &env_of(&[("HOME", HOME)]), Some(&path)),
-        "/home/ada/Documents/Screepub"
+        "/home/ada/Documents/Method Reader"
     );
 }
 
@@ -433,7 +436,7 @@ fn production_shape_config_dir_in_the_env_is_honoured() {
     assert_eq!(
         library_root(
             "linux",
-            &env_of(&[("HOME", &home), ("SCREEPUB_CONFIG_DIR", &config)]),
+            &env_of(&[("HOME", &home), ("METHOD_READER_CONFIG_DIR", &config)]),
             None
         ),
         "/chosen/via-config-dir"
@@ -449,7 +452,7 @@ fn production_shape_darwin_derives_the_settings_path_from_home() {
             &home,
             "Library",
             "Application Support",
-            "Screepub",
+            "com.methodreader.desktop",
             "settings.json",
         ]),
         &[("libraryPath", json!("/chosen/via-home"))],
@@ -605,13 +608,13 @@ fn a_sidecar_beside_the_pdf_is_adopted_on_the_first_conversion() {
     let pdf = j(&[&scripts, "Draft.pdf"]);
     write(&pdf, "not really a pdf");
     write(
-        &j(&[&scripts, "Draft.screepub.json"]),
+        &j(&[&scripts, "Draft.method-reader.json"]),
         r#"{"cueIndentPct": 41}"#,
     );
     let output = library_output(&pdf, &root).unwrap();
     assert!(adopt_sidecar(&pdf, &output).unwrap());
     assert_eq!(
-        read_json(&format!("{output}.screepub.json")),
+        read_json(&format!("{output}.method-reader.json")),
         json!({ "cueIndentPct": 41 })
     );
 }
@@ -624,17 +627,17 @@ fn tuning_already_in_the_library_is_never_overwritten() {
     let pdf = j(&[&scripts, "Draft.pdf"]);
     write(&pdf, "not really a pdf");
     write(
-        &j(&[&scripts, "Draft.screepub.json"]),
+        &j(&[&scripts, "Draft.method-reader.json"]),
         r#"{"cueIndentPct": 41}"#,
     );
     let output = library_output(&pdf, &root).unwrap();
     write(
-        &format!("{output}.screepub.json"),
+        &format!("{output}.method-reader.json"),
         r#"{"cueIndentPct": 12}"#,
     );
     assert!(!adopt_sidecar(&pdf, &output).unwrap());
     assert_eq!(
-        read_json(&format!("{output}.screepub.json")),
+        read_json(&format!("{output}.method-reader.json")),
         json!({ "cueIndentPct": 12 })
     );
 }
@@ -648,7 +651,7 @@ fn nothing_to_adopt_is_not_a_failure() {
     write(&pdf, "not really a pdf");
     let output = library_output(&pdf, &root).unwrap();
     assert!(!adopt_sidecar(&pdf, &output).unwrap());
-    assert!(!std::path::Path::new(&format!("{output}.screepub.json")).exists());
+    assert!(!std::path::Path::new(&format!("{output}.method-reader.json")).exists());
 }
 
 // ---- a write that dies part way leaves nothing half written ----
@@ -678,7 +681,7 @@ fn a_failed_adoption_leaves_nothing_and_the_next_one_adopts() {
     let pdf = j(&[&scripts, "Draft.pdf"]);
     write(&pdf, "not really a pdf");
     write(
-        &j(&[&scripts, "Draft.screepub.json"]),
+        &j(&[&scripts, "Draft.method-reader.json"]),
         r#"{"cueIndentPct": 41}"#,
     );
     let output = library_output(&pdf, &root).unwrap();
@@ -688,7 +691,7 @@ fn a_failed_adoption_leaves_nothing_and_the_next_one_adopts() {
     assert_eq!(names(&host::dirname(&output)), vec!["source.json"]);
     assert!(adopt_sidecar(&pdf, &output).unwrap());
     assert_eq!(
-        read_json(&format!("{output}.screepub.json")),
+        read_json(&format!("{output}.method-reader.json")),
         json!({ "cueIndentPct": 41 })
     );
 }

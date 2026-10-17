@@ -65,12 +65,12 @@ impl eframe::App for Proof {
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Screepub proof")
+            .with_title("Method Reader proof")
             .with_inner_size([480.0, 360.0]),
         ..Default::default()
     };
     eframe::run_native(
-        "Screepub proof",
+        "Method Reader proof",
         options,
         Box::new(|_| {
             Ok(Box::new(Proof {

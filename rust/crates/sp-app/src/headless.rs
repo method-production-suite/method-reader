@@ -2,13 +2,13 @@
 //! smoke-bundle, after tools/smoke-bundle.ts): it proves the engine linked
 //! into a built app runs.
 //!
-//! - `--version --json`: `{"ok":true,"version":"…"}`, as `screepub` prints it.
+//! - `--version --json`: `{"ok":true,"version":"…"}`, as `method-reader` prints it.
 //! - `--smoke <pdf> [--out <file.epub>]`: convert one PDF with the linked
 //!   engine and print its `--json` result. Without `--out` the book goes to
 //!   a fresh folder under the system's temp folder, named in the result
 //!   (`epubPath`); the caller removes it.
 //!
-//! Both print exactly what the `screepub` binary prints for the same
+//! Both print exactly what the `method-reader` binary prints for the same
 //! command, because they are the same `sp_cli::run`.
 
 use std::path::{Path, PathBuf};
@@ -29,7 +29,7 @@ pub fn parse(args: &[String]) -> Option<Headless> {
     let at = args.iter().position(|a| a == "--smoke")?;
     let Some(pdf) = args.get(at + 1).filter(|a| !a.starts_with("--")) else {
         return Some(Headless::Usage(
-            "--smoke needs a PDF: screepub-window --smoke <file.pdf> [--out <file.epub>]".into(),
+            "--smoke needs a PDF: method-reader-app --smoke <file.pdf> [--out <file.epub>]".into(),
         ));
     };
     let out = match args.iter().position(|a| a == "--out") {
@@ -49,7 +49,7 @@ pub fn parse(args: &[String]) -> Option<Headless> {
 fn smoke_folder() -> std::io::Result<PathBuf> {
     let base = std::env::temp_dir();
     for n in 0..1000u32 {
-        let dir = base.join(format!("screepub-smoke-{}-{n}", std::process::id()));
+        let dir = base.join(format!("method-reader-smoke-{}-{n}", std::process::id()));
         match std::fs::create_dir(&dir) {
             Ok(()) => return Ok(dir),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,

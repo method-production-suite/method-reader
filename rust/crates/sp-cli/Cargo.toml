@@ -1,6 +1,6 @@
 [package]
 name = "sp-cli"
-description = "The screepub command: convert a screenplay PDF or .fountain, and the verbs that tune, export and send what it makes"
+description = "The method-reader command: convert a screenplay PDF or .fountain, and the verbs that tune, export and send what it makes"
 edition.workspace = true
 license.workspace = true
 version.workspace = true
@@ -11,8 +11,14 @@ publish = false
 workspace = true
 
 [[bin]]
-name = "screepub"
+name = "method-reader"
 path = "src/main.rs"
+
+# The old name, kept for a few releases: one line on stderr, then exactly
+# what method-reader does.
+[[bin]]
+name = "screepub"
+path = "src/old_name.rs"
 
 [dependencies]
 serde.workspace = true

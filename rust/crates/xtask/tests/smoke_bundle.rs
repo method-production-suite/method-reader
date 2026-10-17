@@ -5,8 +5,8 @@
 //! Until the Rust cutover the Tauri bundle's engine sidecar was what ran;
 //! the native window took its place (sp-app's src/headless.rs: `--version
 //! --json` and `--smoke <pdf> --out <epub>`), so the checks that ran the
-//! sidecar run the window now, with a scratch SCREEPUB_CONFIG_DIR,
-//! SCREEPUB_LIBRARY and Calibre guard. The one check that read a built
+//! sidecar run the window now, with a scratch METHOD_READER_CONFIG_DIR,
+//! METHOD_READER_LIBRARY and Calibre guard. The one check that read a built
 //! Tauri package off this machine's disk became the real-window check at
 //! the end, which runs the workspace's own built window.
 
@@ -118,14 +118,14 @@ fn a_version_that_is_a_prefix_of_the_expected_one_is_refused() {
 #[test]
 fn a_linux_package_is_smokeable_on_linux_and_refused_loudly_anywhere_else() {
     assert_eq!(
-        platform_refusal("/x/Screepub-linux-arm64.deb", "linux"),
+        platform_refusal("/x/Method-Reader-linux-arm64.deb", "linux"),
         None
     );
     assert_eq!(
-        platform_refusal("/x/Screepub-linux-aarch64.rpm", "linux"),
+        platform_refusal("/x/Method-Reader-linux-aarch64.rpm", "linux"),
         None
     );
-    let refusal = platform_refusal("/x/Screepub-linux-arm64.deb", "darwin").unwrap();
+    let refusal = platform_refusal("/x/Method-Reader-linux-arm64.deb", "darwin").unwrap();
     assert!(refusal.contains("NOTHING WAS CHECKED"), "{refusal}");
     assert!(refusal.contains("window"), "{refusal}");
 }
@@ -162,7 +162,7 @@ fn the_window_comes_out_with_its_bytes_and_an_executable_bit() {
     let s = Scratch::new("smoke-deb");
     let deb = s.join("one.deb");
     let contents = b"#!/bin/sh\necho window\n";
-    fake_deb(&deb, "usr/bin/screepub-desktop", contents);
+    fake_deb(&deb, "usr/bin/method-reader-app", contents);
     let work = s.fresh("work");
     let window = extract_archive_window(&deb, &work).unwrap();
     assert!(window.starts_with(&work));
@@ -186,7 +186,7 @@ fn a_bundle_with_no_window_inside_says_so_and_lists_what_it_held() {
     fake_deb(&deb, "usr/bin/screepub-engine", b"ENGINE");
     let e = err_contains(
         extract_archive_window(&deb, &s.fresh("work")),
-        "usr/bin/screepub-desktop",
+        "usr/bin/method-reader-app",
     );
     assert!(e.contains("screepub-engine"), "{e}");
 }
@@ -195,10 +195,10 @@ fn a_bundle_with_no_window_inside_says_so_and_lists_what_it_held() {
 fn a_near_miss_name_is_not_accepted_as_the_window() {
     let s = Scratch::new("smoke-deb");
     let deb = s.join("nearmiss.deb");
-    fake_deb(&deb, "usr/bin/not-screepub-desktop", b"X");
+    fake_deb(&deb, "usr/bin/not-method-reader-app", b"X");
     err_contains(
         extract_archive_window(&deb, &s.fresh("work")),
-        "not-screepub-desktop",
+        "not-method-reader-app",
     );
 }
 
@@ -206,14 +206,14 @@ fn a_near_miss_name_is_not_accepted_as_the_window() {
 fn an_empty_or_non_executable_window_is_refused() {
     let s = Scratch::new("smoke-deb");
     let empty = s.join("empty.deb");
-    fake_deb(&empty, "usr/bin/screepub-desktop", b"");
+    fake_deb(&empty, "usr/bin/method-reader-app", b"");
     err_contains(
         extract_archive_window(&empty, &s.fresh("work")),
         "non-empty executable",
     );
     let plain = s.join("plain.deb");
     let tar = concat(&[
-        &tar_member("usr/bin/screepub-desktop", b"BIN", 0o644),
+        &tar_member("usr/bin/method-reader-app", b"BIN", 0o644),
         &[0u8; 1024],
     ]);
     fs::write(
@@ -243,7 +243,7 @@ fn fake_hdiutil(
                 let macos = mount.join(app).join("Contents/MacOS");
                 fs::create_dir_all(&macos).unwrap();
                 if window {
-                    fs::write(macos.join("screepub-desktop"), "WINDOW").unwrap();
+                    fs::write(macos.join("method-reader-app"), "WINDOW").unwrap();
                 }
             }
         }
@@ -256,13 +256,15 @@ fn it_attaches_read_only_finds_the_app_and_points_at_the_window_inside_it() {
     let s = Scratch::new("smoke-dmg");
     let work = s.fresh("dmg");
     let mut calls: Vec<Vec<String>> = vec![];
-    let mut inner = fake_hdiutil(&["Screepub.app"], true);
+    let mut inner = fake_hdiutil(&["Method Reader.app"], true);
     let mut run = |a: &[String], c: Option<&Path>| {
         calls.push(a.to_vec());
         inner(a, c)
     };
     let (window, mounted) = extract_dmg_window(&s.join("x.dmg"), &work, &mut run).unwrap();
-    assert!(window.ends_with(Path::new("Screepub.app/Contents/MacOS/screepub-desktop")));
+    assert!(window.ends_with(Path::new(
+        "Method Reader.app/Contents/MacOS/method-reader-app"
+    )));
     detach(&mounted, &mut run);
     assert!(calls[0].iter().any(|a| a == "-readonly"));
     assert!(calls[0].iter().any(|a| a == "-nobrowse"));
@@ -328,11 +330,11 @@ fn it_unpacks_with_7z_and_looks_for_the_exe_suffixed_window() {
     let w = work.clone();
     let mut run = |a: &[String], _: Option<&Path>| {
         calls.push(a.to_vec());
-        fs::write(w.join("screepub-desktop.exe"), "WINDOW").unwrap();
+        fs::write(w.join("method-reader-app.exe"), "WINDOW").unwrap();
         ok("")
     };
     let window = extract_exe_window(&s.join("setup.exe"), &work, &mut run).unwrap();
-    assert_eq!(window, work.join("screepub-desktop.exe"));
+    assert_eq!(window, work.join("method-reader-app.exe"));
     assert_eq!(calls[0][0], "7z");
     assert!(calls[0].iter().any(|a| a == "x"));
     assert!(calls[0].contains(&format!("-o{}", work.display())));
@@ -344,7 +346,7 @@ fn an_unpack_that_produces_no_window_names_the_directory_it_searched() {
     let mut run = |_: &[String], _: Option<&Path>| ok("");
     err_contains(
         extract_exe_window(&s.join("setup.exe"), &s.fresh("exe2"), &mut run),
-        "screepub-desktop",
+        "method-reader-app",
     );
 }
 
@@ -378,8 +380,8 @@ fn native_packages(s: &Scratch) -> (PathBuf, PathBuf, PathBuf) {
     )
     .unwrap();
     (
-        out.join("Screepub-linux-amd64.deb"),
-        out.join("Screepub-linux-x86_64.rpm"),
+        out.join("Method-Reader-linux-amd64.deb"),
+        out.join("Method-Reader-linux-x86_64.rpm"),
         dirs.rust_dir,
     )
 }
@@ -430,7 +432,7 @@ fn it_runs_version_and_then_a_real_conversion_through_the_same_window() {
     )
     .unwrap();
     assert_eq!(calls.len(), 2);
-    let window = work.join("usr/bin/screepub-desktop");
+    let window = work.join("usr/bin/method-reader-app");
     assert_eq!(fs::read(&window).unwrap(), the_binary());
     assert_eq!(
         calls[0].0,
@@ -479,8 +481,8 @@ fn every_window_run_gets_scratch_settings_a_scratch_library_and_no_calibre() {
                     .1,
             )
         };
-        assert_eq!(get("SCREEPUB_CONFIG_DIR"), work.join("config"));
-        assert_eq!(get("SCREEPUB_LIBRARY"), work.join("library"));
+        assert_eq!(get("METHOD_READER_CONFIG_DIR"), work.join("config"));
+        assert_eq!(get("METHOD_READER_LIBRARY"), work.join("library"));
         // Calibre's folder sits under a FILE, so nothing can be made there.
         let calibre = get("CALIBRE_CONFIG_DIRECTORY");
         assert!(calibre.starts_with(&work));
@@ -630,19 +632,19 @@ fn a_missing_fixture_is_named_before_the_window_runs() {
 fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs() {
     use xtask::packaging::native::info_plist;
     let s = Scratch::new("smoke-native-dmg");
-    let dmg = s.join("Screepub-macOS.dmg");
+    let dmg = s.join("Method-Reader-macOS.dmg");
     fs::write(&dmg, "image").unwrap();
     let plist_for = |version: &'static str, identifier: &'static str| {
         move |argv: &[String], _: Option<&Path>| {
             if argv[1] == "attach" {
                 let mount =
                     PathBuf::from(&argv[argv.iter().position(|a| a == "-mountpoint").unwrap() + 1]);
-                let contents = mount.join("Screepub.app/Contents");
+                let contents = mount.join("Method Reader.app/Contents");
                 fs::create_dir_all(contents.join("MacOS")).unwrap();
-                fs::write(contents.join("MacOS/screepub-desktop"), "BIN").unwrap();
+                fs::write(contents.join("MacOS/method-reader-app"), "BIN").unwrap();
                 fs::write(
                     contents.join("Info.plist"),
-                    info_plist(version).replace("com.darkwell.screepub", identifier),
+                    info_plist(version).replace(sp_update::IDENTIFIER, identifier),
                 )
                 .unwrap();
             }
@@ -656,15 +658,19 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         &fixture(),
         &work,
         V,
-        &mut plist_for(V, "com.darkwell.screepub"),
+        &mut plist_for(V, "com.methodreader.desktop"),
         &mut window_run(&mut calls, V, Some(&ZIP), 18),
     )
     .unwrap();
     assert_eq!(calls.len(), 2);
-    assert!(Path::new(&calls[0].0[0]).ends_with("Screepub.app/Contents/MacOS/screepub-desktop"));
+    assert!(
+        Path::new(&calls[0].0[0]).ends_with("Method Reader.app/Contents/MacOS/method-reader-app")
+    );
     for (version, identifier, said) in [
-        ("0.11.9", "com.darkwell.screepub", "0.11.9"),
-        (V, "com.example.other", "com.darkwell.screepub"),
+        ("0.11.9", "com.methodreader.desktop", "0.11.9"),
+        (V, "com.example.other", "com.methodreader.desktop"),
+        // The 0.12.x identifier is another app's now.
+        (V, "com.darkwell.screepub", "com.methodreader.desktop"),
     ] {
         let mut calls = vec![];
         err_contains(
@@ -829,9 +835,9 @@ fn a_wrong_version_window_inside_a_built_bundle_fails_the_whole_run() {
 /// The workspace's own built window, if this machine has built one.
 fn built_window() -> Option<PathBuf> {
     let exe = if cfg!(windows) {
-        "screepub-window.exe"
+        "method-reader-app.exe"
     } else {
-        "screepub-window"
+        "method-reader-app"
     };
     let target = std::env::var_os("CARGO_TARGET_DIR")
         .map(PathBuf::from)
@@ -848,7 +854,7 @@ fn the_real_window_runs_headless_and_converts_the_fixture() {
     // checkout (`cargo build -p sp-app` first), with the real runner.
     let Some(window) = built_window() else {
         eprintln!(
-            "skipped: no screepub-window built in this workspace (cargo build -p sp-app --bin screepub-window)"
+            "skipped: no method-reader-app built in this workspace (cargo build -p sp-app --bin method-reader-app)"
         );
         return;
     };

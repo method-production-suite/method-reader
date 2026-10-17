@@ -45,7 +45,7 @@ impl BundleArch {
 }
 
 /// Every bundle carries the window: egui, wgpu and the linked engine in
-/// one binary (rust/crates/sp-app's `screepub-window`). Not measured yet
+/// one binary (rust/crates/sp-app's `method-reader-app`). Not measured yet
 /// (no release build of sp-app has been published); 2 MB is far under any
 /// egui+wgpu binary and far over a truncated write. Raise it once the first
 /// native bundle is measured.
@@ -146,9 +146,9 @@ pub fn released_name(kind: &Kind, _version: &str, arch: BundleArch) -> String {
     let x64 = arch == BundleArch::X64;
     match kind.id {
         "deb" if x64 => names::LINUX_DEB_AMD64.into(),
-        "deb" => "Screepub-linux-arm64.deb".into(),
+        "deb" => "Method-Reader-linux-arm64.deb".into(),
         "rpm" if x64 => names::LINUX_RPM_X86_64.into(),
-        "rpm" => "Screepub-linux-aarch64.rpm".into(),
+        "rpm" => "Method-Reader-linux-aarch64.rpm".into(),
         "dmg" => names::MAC_DMG.into(),
         "nsis" => names::WINDOWS_SETUP.into(),
         "app-tar" => names::MAC_UPDATE.into(),

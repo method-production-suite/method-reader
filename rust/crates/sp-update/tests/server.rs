@@ -11,7 +11,7 @@ use sp_update::install::{InstallError, install_app};
 use sp_update::target::{Installer, TargetSet};
 use sp_update::{Config, UpdateError, check, download};
 
-const ARCHIVE: &str = "/download/v0.12.0/Screepub-macOS.app.tar.gz";
+const ARCHIVE: &str = "/download/v0.13.0/Method-Reader-macOS.app.tar.gz";
 
 fn config(server: &Server, key: &TestKey) -> Config {
     Config {
@@ -28,7 +28,7 @@ fn config(server: &Server, key: &TestKey) -> Config {
 fn manifest(server: &Server, version: &str, signature: &str) -> String {
     serde_json::json!({
         "version": version,
-        "notes": format!("Screepub {version}. Release notes: https://example.invalid/v{version}"),
+        "notes": format!("Method Reader {version}. Release notes: https://example.invalid/v{version}"),
         "pub_date": "2026-10-12T09:00:00.000Z",
         "platforms": {
             "darwin-aarch64": { "url": server.url(ARCHIVE), "signature": signature }
@@ -48,7 +48,8 @@ struct World {
     archive: Vec<u8>,
 }
 
-/// A Tauri-era bundle installed, a Rust bundle published as 0.12.0.
+/// A Tauri-era bundle installed under the old name, a Method Reader
+/// bundle published as 0.13.0.
 fn world() -> World {
     let server = Server::start();
     let key = TestKey::new();
@@ -65,7 +66,11 @@ fn world() -> World {
     )
     .unwrap();
     let build = tempfile::tempdir().unwrap();
-    make_bundle(&build.path().join("Built.app"), "Screepub", "0.12.0");
+    make_bundle(
+        &build.path().join("Built.app"),
+        "method-reader-app",
+        "0.13.0",
+    );
     let archive = archive_bundle(&build.path().join("Built.app"));
     World {
         server,
@@ -79,7 +84,7 @@ impl World {
     fn publish(&self, announced: &str, signed_for: Option<&str>, bytes: &[u8]) {
         let sig = self
             .key
-            .sign(bytes, "Screepub-macOS.app.tar.gz", signed_for);
+            .sign(bytes, "Method-Reader-macOS.app.tar.gz", signed_for);
         self.server.route(
             "/latest/download/latest.json",
             Answer::json(&manifest(&self.server, announced, &sig)),
@@ -88,12 +93,24 @@ impl World {
             .route(ARCHIVE, Answer::bytes(self.archive.clone()));
     }
 
+    /// The installed bundle, under its 0.12.x name.
     fn bundle(&self) -> std::path::PathBuf {
         self.apps.path().join("Screepub.app")
     }
 
+    /// Where the update goes: the one-time rename.
+    fn renamed(&self) -> std::path::PathBuf {
+        self.apps.path().join("Method Reader.app")
+    }
+
+    /// The executables of whichever bundle is there.
     fn exe_names(&self) -> Vec<String> {
-        let mut v: Vec<String> = std::fs::read_dir(self.bundle().join("Contents/MacOS"))
+        let bundle = if self.bundle().exists() {
+            self.bundle()
+        } else {
+            self.renamed()
+        };
+        let mut v: Vec<String> = std::fs::read_dir(bundle.join("Contents/MacOS"))
             .unwrap()
             .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
             .collect();
@@ -103,13 +120,13 @@ impl World {
 }
 
 #[test]
-fn a_tauri_window_s_bundle_becomes_the_rust_app_in_place() {
+fn a_tauri_window_s_bundle_becomes_method_reader_under_its_new_name() {
     let w = world();
-    w.publish("0.12.0", Some("0.12.0"), &w.archive.clone());
+    w.publish("0.13.0", Some("0.13.0"), &w.archive.clone());
     let c = config(&w.server, &w.key);
 
     let update = check(&c, &Version::new(0, 11, 1)).unwrap().unwrap();
-    assert_eq!(update.version, "0.12.0");
+    assert_eq!(update.version, "0.13.0");
     assert_eq!(update.current_version, "0.11.1");
     assert_eq!(update.target, "darwin-aarch64");
     assert!(
@@ -117,7 +134,7 @@ fn a_tauri_window_s_bundle_becomes_the_rust_app_in_place() {
             .body
             .as_deref()
             .unwrap()
-            .starts_with("Screepub 0.12.0.")
+            .starts_with("Method Reader 0.13.0.")
     );
 
     let mut received = 0usize;
@@ -136,22 +153,27 @@ fn a_tauri_window_s_bundle_becomes_the_rust_app_in_place() {
     assert_eq!(received, w.archive.len());
 
     let installed = install_app(&bytes, &w.bundle(), &no_admin).unwrap();
-    assert_eq!(installed.bundle, w.bundle());
+    assert_eq!(installed.bundle, w.renamed());
     assert_eq!(installed.leftover, None);
-    // Same path, new contents: the old executable and sidecar are gone.
-    assert_eq!(w.exe_names(), ["Screepub"]);
+    // New name, new contents: the old bundle, its executable and its
+    // sidecar are gone.
+    assert!(!w.bundle().exists());
+    assert_eq!(w.exe_names(), ["method-reader-app"]);
+    // The bundle carries the new build's identifier, not the old one's:
+    // the swap takes the archive's Info.plist whole.
     assert_eq!(
-        sp_update::install::bundle_identifier(&w.bundle()).as_deref(),
-        Some("com.darkwell.screepub")
+        sp_update::install::bundle_identifier(&w.renamed()).as_deref(),
+        Some(sp_update::IDENTIFIER)
     );
     // Nothing left beside it.
     let beside: Vec<_> = std::fs::read_dir(w.apps.path()).unwrap().collect();
     assert_eq!(beside.len(), 1);
-    // The restart reads the NEW Info.plist, as tauri's restart_macos_app does.
-    let cmd = sp_update::restart::relaunch_command(&w.bundle(), &[]).unwrap();
+    // The restart reads the NEW Info.plist, as tauri's restart_macos_app
+    // does, at the path the install reported.
+    let cmd = sp_update::restart::relaunch_command(&installed.bundle, &[]).unwrap();
     assert_eq!(
         std::path::Path::new(cmd.get_program()),
-        w.bundle().join("Contents/MacOS/Screepub")
+        w.renamed().join("Contents/MacOS/method-reader-app")
     );
 
     let seen = w.server.seen.lock().unwrap().clone();
@@ -169,12 +191,12 @@ fn a_tauri_window_s_bundle_becomes_the_rust_app_in_place() {
 fn a_tampered_archive_is_refused_and_nothing_moves() {
     let w = world();
     let mut evil = w.archive.clone();
-    let sig = w.key.sign(&w.archive, "x", Some("0.12.0"));
+    let sig = w.key.sign(&w.archive, "x", Some("0.13.0"));
     let last = evil.len() - 9;
     evil[last] ^= 1;
     w.server.route(
         "/latest/download/latest.json",
-        Answer::json(&manifest(&w.server, "0.12.0", &sig)),
+        Answer::json(&manifest(&w.server, "0.13.0", &sig)),
     );
     w.server.route(ARCHIVE, Answer::bytes(evil));
     let c = config(&w.server, &w.key);
@@ -187,7 +209,7 @@ fn a_tampered_archive_is_refused_and_nothing_moves() {
 #[test]
 fn another_key_is_refused() {
     let w = world();
-    w.publish("0.12.0", Some("0.12.0"), &w.archive.clone());
+    w.publish("0.13.0", Some("0.13.0"), &w.archive.clone());
     let mut c = config(&w.server, &w.key);
     c.pubkey = TestKey::new().pubkey_b64();
     let update = check(&c, &Version::new(0, 11, 1)).unwrap().unwrap();
@@ -197,19 +219,19 @@ fn another_key_is_refused() {
 #[test]
 fn a_manifest_announcing_another_version_than_the_signature_is_refused() {
     let w = world();
-    w.publish("0.12.1", Some("0.12.0"), &w.archive.clone());
+    w.publish("0.13.1", Some("0.13.0"), &w.archive.clone());
     let c = config(&w.server, &w.key);
     let update = check(&c, &Version::new(0, 11, 1)).unwrap().unwrap();
     let err = download(&c, &update, |_, _| {}, || {}).unwrap_err();
     assert!(err.to_string().starts_with(
-        "The update was signed for version 0.12.0 but the update endpoint announced version 0.12.1."
+        "The update was signed for version 0.13.0 but the update endpoint announced version 0.13.1."
     ));
 }
 
 #[test]
 fn a_tauri_cli_signature_without_a_version_passes_only_where_the_window_allowed_it() {
     let w = world();
-    w.publish("0.12.0", None, &w.archive.clone());
+    w.publish("0.13.0", None, &w.archive.clone());
     let mut c = config(&w.server, &w.key);
     let update = check(&c, &Version::new(0, 11, 1)).unwrap().unwrap();
     // The Rust app requires the signed version...
@@ -266,7 +288,7 @@ fn an_intel_mac_hears_why_even_when_nothing_is_newer() {
 #[test]
 fn a_missing_archive_says_so_with_the_status() {
     let w = world();
-    w.publish("0.12.0", Some("0.12.0"), &w.archive.clone());
+    w.publish("0.13.0", Some("0.13.0"), &w.archive.clone());
     w.server.route(ARCHIVE, Answer::status(404));
     let c = config(&w.server, &w.key);
     let update = check(&c, &Version::new(0, 11, 1)).unwrap().unwrap();
@@ -282,14 +304,14 @@ fn a_missing_archive_says_so_with_the_status() {
 fn an_archive_that_is_not_a_bundle_never_moves_the_old_one() {
     let w = world();
     let no_plist = tar_gz(&[
-        ("Screepub.app/", b"", 0o755),
-        ("Screepub.app/Contents/MacOS/x", b"x", 0o755),
+        ("Method Reader.app/", b"", 0o755),
+        ("Method Reader.app/Contents/MacOS/x", b"x", 0o755),
     ]);
     let err = install_app(&no_plist, &w.bundle(), &no_admin).unwrap_err();
     assert!(err.to_string().contains("Info.plist"), "{err}");
     assert_eq!(w.exe_names(), ["screepub-desktop", "screepub-engine"]);
 
-    let escape = tar_gz(&[("Screepub.app/../../evil", b"x", 0o644)]);
+    let escape = tar_gz(&[("Method Reader.app/../../evil", b"x", 0o644)]);
     let err = install_app(&escape, &w.bundle(), &no_admin).unwrap_err();
     assert!(err.to_string().contains("outside its bundle"), "{err}");
     assert!(!w.apps.path().parent().unwrap().join("evil").exists());
@@ -310,7 +332,7 @@ fn an_old_bundle_that_cannot_be_deleted_is_left_over_not_a_failure() {
 
     let installed = install_app(&w.archive, &w.bundle(), &no_admin).unwrap();
     let leftover = installed.leftover.expect("the old bundle stays behind");
-    assert_eq!(w.exe_names(), ["Screepub"]);
+    assert_eq!(w.exe_names(), ["method-reader-app"]);
     std::fs::set_permissions(
         leftover.join("Contents/Resources/locked"),
         std::fs::Permissions::from_mode(0o755),
@@ -323,8 +345,8 @@ fn an_old_bundle_that_cannot_be_deleted_is_left_over_not_a_failure() {
 fn the_executable_bit_survives_the_round_trip() {
     use std::os::unix::fs::PermissionsExt;
     let w = world();
-    install_app(&w.archive, &w.bundle(), &no_admin).unwrap();
-    let mode = std::fs::metadata(w.bundle().join("Contents/MacOS/Screepub"))
+    let installed = install_app(&w.archive, &w.bundle(), &no_admin).unwrap();
+    let mode = std::fs::metadata(installed.bundle.join("Contents/MacOS/method-reader-app"))
         .unwrap()
         .permissions()
         .mode();

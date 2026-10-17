@@ -1,10 +1,17 @@
 //! Every picture the capture tool takes, and where each one goes (was
 //! tools/capture/shots.ts).
 //!
-//! The README gets all of them (spec 2026-09-22, decision 7): the hero, the
-//! drop-and-result pair and reading, window pictures in light AND dark so
-//! GitHub shows the one matching the reader's theme. The site gets the light
-//! drop and result for its "Drag and drop" section; it has no dark mode.
+//! The Method suite's four shots, in its order (SUITE-STANDARDS.md section
+//! 7.1): (1) the hero, the main view with real content: `read`, the book on
+//! the Read tab; (2) the signature feature, the before and after:
+//! `compare`, the site's own two-reader section held still; (3) open:
+//! `drop`, with `result` beside it, the same window once the script is in;
+//! (4) the file you own: `cli`, a terminal running the real command line
+//! on Field Station and showing the files it wrote.
+//!
+//! Every shot in light AND dark, each written twice, to assets/screens/ for
+//! the README and to site/img/ for the site (the website copies site/ alone),
+//! so both pages can show the one matching the reader's theme.
 
 use std::path::Path;
 
@@ -30,6 +37,9 @@ pub enum Kind {
     Window,
     /// A web page, captured as it is.
     Site,
+    /// A terminal window, framed like the app: the real command line run on
+    /// the demo script, its transcript drawn by tools/capture/terminal.html.
+    Terminal,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,20 +49,46 @@ pub struct Shot {
     pub width: u32,
     pub height: u32,
     pub themes: &'static [Theme],
-    /// Copied into site/img/ as well, light only.
-    pub site: bool,
+    /// What the window's title bar says in this shot (a framed shot only):
+    /// for the app, its name, or the script's before it, as sp-app's
+    /// `window_title` puts it.
+    pub title: &'static str,
+}
+
+/// The macOS title bar pass two draws above a window picture, in CSS
+/// pixels; tools/capture/frame.html draws it this tall. The window's
+/// picture is its content under it, so the framed window is still
+/// `width` by `height` in all.
+pub const TITLE_BAR: u32 = 28;
+
+impl Shot {
+    /// How tall the window's own drawing is: the shot, less the title bar.
+    pub fn content_height(&self) -> u32 {
+        match self.kind {
+            Kind::Window | Kind::Terminal => self.height - TITLE_BAR,
+            Kind::Site => self.height,
+        }
+    }
 }
 
 const BOTH: &[Theme] = &[Theme::Light, Theme::Dark];
 
 pub const SHOTS: &[Shot] = &[
     Shot {
-        name: "hero",
+        name: "read",
+        kind: Kind::Window,
+        width: 1280,
+        height: 800,
+        themes: BOTH,
+        title: "Field Station - Method Reader",
+    },
+    Shot {
+        name: "compare",
         kind: Kind::Site,
-        width: 1200,
-        height: 760,
-        themes: &[Theme::Light],
-        site: false,
+        width: 1280,
+        height: 800,
+        themes: BOTH,
+        title: "",
     },
     Shot {
         name: "drop",
@@ -60,7 +96,7 @@ pub const SHOTS: &[Shot] = &[
         width: 1280,
         height: 800,
         themes: BOTH,
-        site: true,
+        title: "Method Reader",
     },
     Shot {
         name: "result",
@@ -68,15 +104,15 @@ pub const SHOTS: &[Shot] = &[
         width: 1280,
         height: 800,
         themes: BOTH,
-        site: true,
+        title: "Field Station - Method Reader",
     },
     Shot {
-        name: "read",
-        kind: Kind::Window,
+        name: "cli",
+        kind: Kind::Terminal,
         width: 1280,
         height: 800,
         themes: BOTH,
-        site: false,
+        title: "Terminal",
     },
 ];
 
@@ -108,14 +144,11 @@ pub fn framed_size(shot: &Shot) -> (u32, u32) {
     )
 }
 
-/// Where one shot in one theme is written, relative to the repository.
+/// Where one shot in one theme is written, relative to the repository:
+/// the README's copy, then the site's.
 pub fn outputs_for(shot: &Shot, theme: Theme) -> Vec<String> {
     let file = format!("{}-{}.png", shot.name, theme.word());
-    let mut out = vec![format!("assets/screens/{file}")];
-    if shot.site && theme == Theme::Light {
-        out.push(format!("site/img/{file}"));
-    }
-    out
+    vec![format!("assets/screens/{file}"), format!("site/img/{file}")]
 }
 
 /// Every output path of every shot, in shot order.

@@ -18,8 +18,8 @@
   }
   .btn-brad { background: var(--brass); color: var(--ink-on-brass); }
   /* Hover is anticipation, active is commitment, so hover brightens and
-     active dims. The hover value is the brass ramp's own highlight stop,
-     not a filter: the metal catches the light rather than washing out. */
+     active dims. The hover value is the accent ramp's own highlight stop,
+     not a filter, and it still holds its label at 4.5:1 or better. */
   .btn-brad:hover:not(:disabled) { background: var(--brass-highlight); }
   .btn-brad:active { opacity: 0.75; transform: scale(0.985); }
   .btn-outline {
@@ -33,7 +33,7 @@
   .btn-outline:active { opacity: 0.7; }
   .btn:disabled { opacity: 0.35; cursor: default; }
   /* Keyboard focus was previously whatever the browser drew, which over
-     brass is unreliable. Offset so the ring never sits on the brass itself. */
+     the accent is unreliable. Offset so the ring never sits on the fill itself. */
   .btn:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 2px;
@@ -52,13 +52,13 @@
     <button class="btn btn-brad" disabled>Send to Kindle</button>
   </div>
   <p class="caption">
-    The brad button is the page's one brass object besides the fasteners, so
+    The brad button is the page's one accent object besides the fasteners, so
     there is never more than one on screen. Disabled is held at 35% opacity,
     not hidden: it is waiting for hardware, and saying so is the point.
-    The label uses <code class="code">--ink-on-brass</code>, which is fixed in
-    both modes because brass is: 7.98:1 either way. Plain
-    <code class="code">--ink</code> would flip to cream in dark mode and land
-    at 1.67:1. The download is an <code class="code">&lt;a&gt;</code> and the
+    The label uses <code class="code">--ink-on-brass</code>, the accent's own
+    ink: white on the light violet (5.83:1) and a deep violet on the dark one
+    (7.92:1). Plain <code class="code">--ink</code> would land at 2.75:1 in
+    light mode and 1.9:1 in dark. The download is an <code class="code">&lt;a&gt;</code> and the
     others are <code class="code">&lt;button&gt;</code>, which is why the
     hover rules key off <code class="code">:not(:disabled)</code> and not
     <code class="code">:enabled</code>: an anchor never matches

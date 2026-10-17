@@ -166,7 +166,7 @@ pub fn image_warnings(stats: &ImageStats, carried: &[BookImage]) -> Vec<String> 
     let kept = carried.len();
     if stats.over_cap > 0 {
         out.push(format!(
-            "Screepub found {} pictures in this script. Only the first {kept} were kept.",
+            "Method Reader found {} pictures in this script. Only the first {kept} were kept.",
             kept + stats.over_cap as usize
         ));
     }
@@ -181,7 +181,7 @@ pub fn image_warnings(stats: &ImageStats, carried: &[BookImage]) -> Vec<String> 
         });
         if stats.decoders_unavailable == Some(true) {
             out.push(
-                "Screepub could not unpack its picture decoders, so pictures stored as JPEG2000 or JBIG2 could not be read."
+                "Method Reader could not unpack its picture decoders, so pictures stored as JPEG2000 or JBIG2 could not be read."
                     .to_owned(),
             );
         }

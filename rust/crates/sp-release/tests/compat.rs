@@ -1,4 +1,4 @@
-//! What the release files must be to the tools outside Screepub that read
+//! What the release files must be to the tools outside Method Reader that read
 //! them: tauri-cli's key format, tauri-plugin-updater's unpack, and the real
 //! dpkg-deb and rpm. Moved here from the xtask packaging tests when the
 //! release tools became one implementation (rust/PARITY.md, Decisions).
@@ -28,7 +28,7 @@ fn the_pinned_minisign_opens_tauri_cli_s_own_key_and_signs_as_it_did() {
     let sig = sign::sign(
         &sk,
         data,
-        "Screepub-macOS.app.tar.gz",
+        "Method-Reader-macOS.app.tar.gz",
         "0.12.0",
         1_758_470_000,
     )
@@ -36,11 +36,14 @@ fn the_pinned_minisign_opens_tauri_cli_s_own_key_and_signs_as_it_did() {
     let text = String::from_utf8(STANDARD.decode(&sig).unwrap()).unwrap();
     assert!(text.starts_with("untrusted comment: signature from tauri secret key\n"));
     assert!(text.contains(
-        "trusted comment: timestamp:1758470000\tfile:Screepub-macOS.app.tar.gz\tversion:0.12.0\n"
+        "trusted comment: timestamp:1758470000\tfile:Method-Reader-macOS.app.tar.gz\tversion:0.12.0\n"
     ));
     // What the readers take, and the key it names is the key's.
     let read = sp_release::boxes::parse_signature_box(&sig).unwrap();
-    assert_eq!(read.file_name.as_deref(), Some("Screepub-macOS.app.tar.gz"));
+    assert_eq!(
+        read.file_name.as_deref(),
+        Some("Method-Reader-macOS.app.tar.gz")
+    );
     assert_eq!(
         sp_release::boxes::parse_public_key_box(&pk).unwrap().key_id,
         read.key_id
@@ -55,10 +58,10 @@ fn the_window() -> Vec<u8> {
     (0..4096u32).map(|i| (i * 31 % 251) as u8).collect()
 }
 
-/// A laid-out Screepub.app, its window written WITHOUT the executable bit
+/// A laid-out Method Reader.app, its window written WITHOUT the executable bit
 /// (as a Windows host or a careless copy leaves it).
 fn app(dir: &Path) -> PathBuf {
-    let bin = dir.join("screepub-window");
+    let bin = dir.join("method-reader-app");
     std::fs::write(&bin, the_window()).unwrap();
     let icon = dir.join("icon.icns");
     std::fs::write(&icon, b"icns").unwrap();
@@ -81,7 +84,7 @@ fn app(dir: &Path) -> PathBuf {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let exe = bundle.join("Contents/MacOS/screepub-desktop");
+        let exe = bundle.join("Contents/MacOS/method-reader-app");
         std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).unwrap();
     }
     bundle
@@ -115,24 +118,26 @@ fn the_update_archive_unpacks_as_the_plugin_and_the_rust_app_unpack_it() {
             .find(|(n, _, _)| n == p)
             .unwrap_or_else(|| panic!("{p} is not in the archive"))
     };
-    let (_, mode, data) = file("Contents/MacOS/screepub-desktop");
+    let (_, mode, data) = file("Contents/MacOS/method-reader-app");
     assert_eq!(mode & 0o777, 0o755, "the window must run once installed");
     assert_eq!(*data, the_window());
     let (_, mode, plist) = file("Contents/Info.plist");
     assert_eq!(mode & 0o777, 0o644);
     let plist = String::from_utf8_lossy(plist);
     assert!(
-        plist.contains("<key>CFBundleIdentifier</key>\n\t<string>com.darkwell.screepub</string>")
+        plist
+            .contains("<key>CFBundleIdentifier</key>\n\t<string>com.methodreader.desktop</string>")
     );
     // One top folder, the app the updater replaces.
     let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(bytes.as_slice()));
     for e in tar.entries().unwrap() {
         let e = e.unwrap();
         let first = e.path().unwrap().iter().next().unwrap().to_owned();
-        assert_eq!(first, "Screepub.app");
+        assert_eq!(first, "Method Reader.app");
     }
 
-    // The Rust app's own unpack takes it too, and reads the identifier back.
+    // The Rust app's own unpack takes it too, and reads the identifier back,
+    // into the old bundle's place as the 0.12 updater installs it.
     let dest = dir.path().join("installed/Screepub.app");
     sp_update::install::unpack_app_archive(&bytes, &dest).unwrap();
     assert_eq!(
@@ -157,7 +162,7 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
         return;
     }
     let dir = tempfile::tempdir().unwrap();
-    let bin = dir.path().join("screepub-window");
+    let bin = dir.path().join("method-reader-app");
     std::fs::write(&bin, the_window()).unwrap();
     let png = dir.path().join("32x32.png");
     std::fs::write(&png, b"png").unwrap();
@@ -173,7 +178,7 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
         depends: "",
     };
     if have_dpkg {
-        let deb = dir.path().join("Screepub-linux-amd64.deb");
+        let deb = dir.path().join("Method-Reader-linux-amd64.deb");
         std::fs::write(&deb, linux::build_deb(&app, "amd64", 7).unwrap()).unwrap();
         let o = Command::new("dpkg-deb")
             .arg("--info")
@@ -187,7 +192,7 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
             .arg(&deb)
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/screepub-desktop"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/method-reader-app"));
         // dpkg itself reads the Depends: every run-time library's package.
         let o = Command::new("dpkg-deb")
             .args(["--field"])
@@ -206,7 +211,7 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
         eprintln!("skipped the dpkg-deb half: not installed");
     }
     if have_rpm {
-        let rpm = dir.path().join("Screepub-linux-x86_64.rpm");
+        let rpm = dir.path().join("Method-Reader-linux-x86_64.rpm");
         std::fs::write(&rpm, linux::build_rpm(&app, "x86_64", 7).unwrap()).unwrap();
         let o = Command::new("rpm")
             .args(["-qp", "--queryformat", "%{NAME} %{VERSION} %{ARCH}\\n"])
@@ -214,9 +219,9 @@ fn the_real_package_tools_accept_the_deb_and_the_rpm_where_installed() {
             .output()
             .unwrap();
         assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
-        assert!(String::from_utf8_lossy(&o.stdout).contains("screepub 0.12.0~rc1 x86_64"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("method-reader 0.12.0~rc1 x86_64"));
         let o = Command::new("rpm").arg("-qpl").arg(&rpm).output().unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/screepub-desktop"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/method-reader-app"));
         // rpm itself reads the Requires: the run-time libraries, by soname.
         let o = Command::new("rpm")
             .arg("-qp")

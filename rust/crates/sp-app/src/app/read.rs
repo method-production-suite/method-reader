@@ -94,7 +94,7 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end: 
     match reader_state(app.script.as_ref()) {
         ReaderState::Closed => {}
         ReaderState::Blank => {
-            widgets::slug(ui, &t, m::BLANK_SLUG);
+            widgets::title(ui, &t, m::BLANK_SLUG);
             ui.add_space(layout::SPACE[3]);
             widgets::prose(ui, &t, m::BLANK_LINE);
             ui.add_space(layout::SPACE[7]);
@@ -126,15 +126,15 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         ui.vertical(|ui| {
             widgets::heading(
                 ui,
-                &widgets::caps(&script.title),
-                theme::structure_bold(size::UI),
+                &script.title,
+                theme::chrome_strong(size::CAPTION),
                 t.ink,
             );
             if let Some(author) = &script.author {
                 widgets::text(
                     ui,
                     &format!("by {author}"),
-                    theme::structure(size::NOTE),
+                    theme::chrome(size::LABEL),
                     t.ink_muted,
                 );
             }
@@ -159,7 +159,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
     ui.painter().hline(
         ui.max_rect().x_range(),
         rule_y,
-        egui::Stroke::new(1.0, t.hole),
+        egui::Stroke::new(1.0, t.rule),
     );
     ui.add_space(layout::SPACE[3] + layout::SPACE[5]);
 
@@ -379,8 +379,8 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
         }
         widgets::text(
             ui,
-            &widgets::caps(&rail_count(entries.len())),
-            theme::structure(size::FINE),
+            &rail_count(entries.len()),
+            theme::chrome_strong(size::LABEL),
             t.ink_muted,
         );
         let mut walk: Option<usize> = None;
@@ -404,8 +404,10 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     let mut job = egui::text::LayoutJob::default();
                     job.wrap.max_width = ui.available_width() - 8.0;
                     let ink = if current { t.ink } else { t.ink_muted };
+                    // A scene's heading is the script's own words: its face
+                    // and its capitals, as the page sets them.
                     job.append(
-                        &widgets::caps(&entry.label.place),
+                        &entry.label.place.to_uppercase(),
                         0.0,
                         egui::TextFormat {
                             font_id: theme::structure(size::NOTE),
@@ -415,7 +417,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                     );
                     if let Some(time) = &entry.label.time {
                         job.append(
-                            &format!(" {} {}", m::SEPARATOR, widgets::caps(time)),
+                            &format!(" {} {}", m::SEPARATOR, time.to_uppercase()),
                             0.0,
                             egui::TextFormat {
                                 font_id: theme::structure(size::NOTE),
@@ -438,7 +440,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                         ui.ctx().accesskit_node_builder(r.id, |n| {
                             n.set_aria_current(accesskit::AriaCurrent::True)
                         });
-                        ui.painter().rect_filled(rect, theme::RADIUS_MARK, t.hole);
+                        ui.painter().rect_filled(rect, theme::RADIUS, t.brass_soft);
                     }
                     ui.painter()
                         .galley(rect.min + Vec2::new(6.4, 3.0), galley, ink);

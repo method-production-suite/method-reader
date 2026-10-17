@@ -31,9 +31,9 @@ use crate::html::{MobiMeta, mobi_art, tokens_to_mobi_html};
 use crate::writer::{MobiInput, build_mobi};
 
 /// The combined book's file.
-pub const MOBI_FILE: &str = "screepub-picture-probe.mobi";
+pub const MOBI_FILE: &str = "method-reader-picture-probe.mobi";
 /// The combined book as an EPUB, which the TypeScript tool writes too.
-pub const EPUB_FILE: &str = "screepub-picture-probe.epub";
+pub const EPUB_FILE: &str = "method-reader-picture-probe.epub";
 /// The build time every probe book records: 2026-10-01T00:00:00Z.
 pub const BUILT_AT: u32 = 1_790_812_800;
 
@@ -53,7 +53,7 @@ pub struct ProbePicture {
 
 /// The file the single book holding `picture` alone is written to.
 pub fn single_mobi_file(picture: &ProbePicture) -> String {
-    format!("screepub-picture-probe-{}.mobi", picture.nominal_file)
+    format!("method-reader-picture-probe-{}.mobi", picture.nominal_file)
 }
 
 /// The title of the single book holding `picture` alone.
@@ -249,7 +249,7 @@ fn is_png(bytes: &[u8]) -> bool {
 }
 
 /// The .mobi for one probe text, built as `convertFountain` builds a
-/// .fountain's MOBI with Screepub's defaults and the picture gate open
+/// .fountain's MOBI with Method Reader's defaults and the picture gate open
 /// (`mobiPictures: true`): this probe is the device test that decides
 /// whether the gate opens. `tokens` are fountain-js's tokens for `text`.
 pub fn probe_mobi(tokens: &[Token], pictures: &[ProbePicture]) -> Vec<u8> {

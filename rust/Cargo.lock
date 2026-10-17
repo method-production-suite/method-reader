@@ -613,7 +613,7 @@ dependencies = [
 [[package]]
 name = "blitz-dom"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "accesskit 0.25.1",
  "anyrender",
@@ -624,7 +624,7 @@ dependencies = [
  "color",
  "cssparser",
  "cursor-icon",
- "debug_timer 0.1.3 (git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0)",
+ "debug_timer 0.1.3 (git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7)",
  "euclid",
  "html-escape",
  "icu_casemap",
@@ -663,7 +663,7 @@ dependencies = [
 [[package]]
 name = "blitz-html"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "blitz-dom",
  "blitz-traits",
@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "blitz-paint"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "anyrender",
  "anyrender_svg",
@@ -696,7 +696,7 @@ dependencies = [
 [[package]]
 name = "blitz-traits"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "atomic_refcell",
  "bitflags 2.13.2",
@@ -1232,7 +1232,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a"
 dependencies = [
  "quote",
- "syn 3.0.8",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -1302,7 +1302,7 @@ checksum = "da220af51a1a335e9a930beaaef53d261e41ea9eecfb3d973a3ddae1a7284b9c"
 [[package]]
 name = "debug_timer"
 version = "0.1.3"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 
 [[package]]
 name = "deranged"
@@ -4916,9 +4916,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.45"
+version = "0.23.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634"
+checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
 dependencies = [
  "log",
  "once_cell",
@@ -5401,6 +5401,7 @@ dependencies = [
  "rfd",
  "serde_json",
  "sha2",
+ "skrifa",
  "sp-cli",
  "sp-device",
  "sp-fsutil",
@@ -5824,7 +5825,7 @@ dependencies = [
 [[package]]
 name = "stylo_taffy"
 version = "0.3.0-beta.2"
-source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b0#45496d9288b063719ebeae4e0761273f7881b3d7"
+source = "git+https://github.com/DioxusLabs/blitz?rev=45496d9288b063719ebeae4e0761273f7881b3d7#45496d9288b063719ebeae4e0761273f7881b3d7"
 dependencies = [
  "bitflags 2.13.2",
  "stylo",
@@ -5971,7 +5972,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.5",
  "windows-sys 0.61.2",
@@ -7870,9 +7871,9 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "9.0.2"
+version = "9.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e2fc56a6707efb066c40aead2409ebb1224e6dde24a074e9fbc78ced500507b"
+checksum = "c2d98561b612a84ae525331a7a094429ef8a5772514ed507ff6db5f54badc971"
 dependencies = [
  "crc32fast",
  "flate2",

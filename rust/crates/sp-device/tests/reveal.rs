@@ -15,7 +15,7 @@ use sp_device::{ErrorCode, Platform};
 fn darwin_open_r_names_the_file_itself() {
     let o = FakeOpener::ok();
     reveal_file(
-        "/Users/sam/Screepub/My Script/My Script.epub",
+        "/Users/ann/Method Reader/My Script/My Script.epub",
         Platform::Darwin,
         &o,
     )
@@ -25,7 +25,7 @@ fn darwin_open_r_names_the_file_itself() {
         [strings(&[
             "open",
             "-R",
-            "/Users/sam/Screepub/My Script/My Script.epub"
+            "/Users/ann/Method Reader/My Script/My Script.epub"
         ])]
     );
 }
@@ -34,24 +34,29 @@ fn darwin_open_r_names_the_file_itself() {
 fn win32_explorer_opens_the_folder_never_select() {
     let o = FakeOpener::ok();
     reveal_file(
-        r"C:\Users\Sam, O'Brien\My Scripts\Field Station.pdf",
+        r"C:\Users\Ann, O'Brien\My Scripts\Field Station.pdf",
         Platform::Win32,
         &o,
     )
     .unwrap();
     assert_eq!(
         o.calls(),
-        [strings(&["explorer", r"C:\Users\Sam, O'Brien\My Scripts"])]
+        [strings(&["explorer", r"C:\Users\Ann, O'Brien\My Scripts"])]
     );
 }
 
 #[test]
 fn linux_and_everything_else_xdg_open_on_the_folder() {
     let o = FakeOpener::ok();
-    reveal_file("/home/sam/Screepub/Script/Script.epub", Platform::Linux, &o).unwrap();
+    reveal_file(
+        "/home/ann/Method Reader/Script/Script.epub",
+        Platform::Linux,
+        &o,
+    )
+    .unwrap();
     assert_eq!(
         o.calls(),
-        [strings(&["xdg-open", "/home/sam/Screepub/Script"])]
+        [strings(&["xdg-open", "/home/ann/Method Reader/Script"])]
     );
 }
 
@@ -131,7 +136,7 @@ fn a_relative_path_is_usage_and_the_opener_sees_nothing() {
 
 #[test]
 fn a_missing_absolute_path_is_unreadable_and_the_opener_sees_nothing() {
-    let sc = scratch("screepub-cli-reveal-");
+    let sc = scratch("method-reader-cli-reveal-");
     let gone = s(&sc.path().join("gone.epub"));
     let o = FakeOpener::ok();
     let err = reveal_command(&gone, Platform::host(), &o).unwrap_err();
@@ -145,7 +150,7 @@ fn a_missing_absolute_path_is_unreadable_and_the_opener_sees_nothing() {
 
 #[test]
 fn a_directory_given_as_the_file_is_unreadable_too() {
-    let sc = scratch("screepub-cli-reveal-");
+    let sc = scratch("method-reader-cli-reveal-");
     let o = FakeOpener::ok();
     let err = reveal_command(&s(sc.path()), Platform::host(), &o).unwrap_err();
     assert_eq!(err.code, ErrorCode::Unreadable);
@@ -156,7 +161,7 @@ fn a_directory_given_as_the_file_is_unreadable_too() {
 
 #[test]
 fn an_existing_absolute_path_answers_revealed_and_calls_the_opener_once() {
-    let sc = scratch("screepub-cli-reveal-");
+    let sc = scratch("method-reader-cli-reveal-");
     let file = s(&sc.path().join("Script.epub"));
     std::fs::write(&file, "x").unwrap();
     let o = FakeOpener::ok();
@@ -174,7 +179,7 @@ fn an_existing_absolute_path_answers_revealed_and_calls_the_opener_once() {
 
 #[test]
 fn a_failing_opener_still_refuses_cleanly_from_the_command_level() {
-    let sc = scratch("screepub-cli-reveal-");
+    let sc = scratch("method-reader-cli-reveal-");
     let file = s(&sc.path().join("Script.epub"));
     std::fs::write(&file, "x").unwrap();
     let o = FakeOpener::new(Ok(OpenerOutput {

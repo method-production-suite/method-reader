@@ -1,4 +1,4 @@
-//! sp-pdf: what pdf.js gives Screepub's parser, in pure Rust.
+//! sp-pdf: what pdf.js gives Method Reader's parser, in pure Rust.
 //!
 //! The TypeScript engine reads a PDF through pdf.js: per page, the text
 //! items of `getTextContent`, the font names behind them, a handful of

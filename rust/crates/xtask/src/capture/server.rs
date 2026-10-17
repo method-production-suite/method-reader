@@ -5,7 +5,7 @@
 //! and nothing else:
 //!
 //! ```text
-//! site/  tools/capture/                   the hero, the frame, their faces
+//! site/  tools/capture/                   the before and after, the terminal, the frame, their faces
 //! /pass-one/<shot>-<theme>.png            this run's first-pass pictures
 //! ```
 //!

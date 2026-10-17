@@ -61,7 +61,23 @@ pub fn same_machine(home: Option<&std::path::Path>) -> bool {
 }
 
 fn decode(text: &str, root: &str) -> String {
-    text.replace("$ROOT", root)
+    renamed(&text.replace("$ROOT", root))
+}
+
+/// A frozen answer with the product's name as it is now. The TypeScript
+/// answered as Screepub; the app is Method Reader since 0.13, and that is
+/// the only thing a frozen answer is read differently for: the name in a
+/// message, the default folder's name, the sidecar's suffix, the command's
+/// name. The `builtBy` value "screepub" is a token of the --json contract,
+/// not a name, and is left as it was frozen.
+pub fn renamed(text: &str) -> String {
+    const KEEP: &str = "\u{0}builtBy\u{0}";
+    text.replace("\"builtBy\":\"screepub\"", KEEP)
+        .replace(".screepub.json", ".method-reader.json")
+        .replace("SCREEPUB_", "METHOD_READER_")
+        .replace("Screepub", "Method Reader")
+        .replace("screepub ", "method-reader ")
+        .replace(KEEP, "\"builtBy\":\"screepub\"")
 }
 
 /// One frozen run: what the TypeScript printed, and the files it left
@@ -107,7 +123,7 @@ pub fn answer(key: &str, root: &str, argv: &[&str]) -> Frozen {
             .iter()
             .map(|e| {
                 (
-                    e["path"].as_str().expect("path").to_owned(),
+                    renamed(e["path"].as_str().expect("path")),
                     bytes_of(e, root),
                 )
             })

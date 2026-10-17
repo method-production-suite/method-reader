@@ -1,7 +1,7 @@
 //! BETA, and off for users until hardware day (see [`mtp_enabled`]).
 //!
 //! Kindles that connect over MTP (every Kindle sold since October 2024),
-//! reached through the MTP helper `screepub-mtp` (crate sp-mtp). Ported from
+//! reached through the MTP helper `method-reader-mtp` (crate sp-mtp). Ported from
 //! branch mtp-kindle's src/device/mtp.ts. The helper prints one JSON object
 //! per run; this module finds it, runs it, and reads that object. It
 //! decides nothing about books or formats.
@@ -20,12 +20,12 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 /// The helper's file name, without `.exe`. sp-mtp's `[[bin]]` name.
-pub const MTP_HELPER_NAME: &str = "screepub-mtp";
+pub const MTP_HELPER_NAME: &str = "method-reader-mtp";
 
 /// Whether MTP Kindles have shipped. They have not: the route stays off for
 /// users until a 2024-or-newer Kindle has been tried (the hardware-day
 /// checklist on branch mtp-kindle). Until then MTP is on only when
-/// `SCREEPUB_MTP_HELPER` names a helper, which is how hardware day turns it
+/// `METHOD_READER_MTP_HELPER` names a helper, which is how hardware day turns it
 /// on and how no user ever meets it.
 pub const MTP_SHIPPED: bool = false;
 
@@ -38,9 +38,9 @@ pub const MTP_LIST_TIMEOUT: Duration = Duration::from_secs(3);
 pub const MTP_PUT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 
 /// Whether the engine looks for MTP Kindles at all: when they have shipped,
-/// or when `SCREEPUB_MTP_HELPER` is set (hardware day, and the tests).
+/// or when `METHOD_READER_MTP_HELPER` is set (hardware day, and the tests).
 pub fn mtp_enabled(env: &dyn Fn(&str) -> Option<String>) -> bool {
-    MTP_SHIPPED || env("SCREEPUB_MTP_HELPER").is_some_and(|v| !v.trim().is_empty())
+    MTP_SHIPPED || env("METHOD_READER_MTP_HELPER").is_some_and(|v| !v.trim().is_empty())
 }
 
 /// Where to look for the helper.
@@ -98,7 +98,7 @@ fn dev_target_dir() -> Option<PathBuf> {
 
 /// Where the helper is, or None when there is none to run.
 ///
-/// 1. `SCREEPUB_MTP_HELPER`, when set: hardware day, tests, and the test
+/// 1. `METHOD_READER_MTP_HELPER`, when set: hardware day, tests, and the test
 ///    guard. Used only if it is there, so a guard under /dev/null/ means none.
 /// 2. Beside the running program: the bundled app.
 /// 3. A dev checkout's own release build (`cargo build --release`).
@@ -111,7 +111,7 @@ pub fn mtp_helper_path(loc: &HelperLocation) -> Option<String> {
             ""
         }
     );
-    let over = (loc.env)("SCREEPUB_MTP_HELPER").unwrap_or_default();
+    let over = (loc.env)("METHOD_READER_MTP_HELPER").unwrap_or_default();
     let over = over.trim();
     if !over.is_empty() {
         return (loc.exists)(over).then(|| over.to_string());
@@ -307,7 +307,7 @@ pub fn put_to_mtp_kindle(
     let Some(helper) = helper else {
         return MtpPutAnswer::Failed {
             code: "helper-missing".into(),
-            message: "Screepub's MTP helper is not installed beside the engine, so it cannot copy to this Kindle".into(),
+            message: "Method Reader's MTP helper is not installed beside the engine, so it cannot copy to this Kindle".into(),
             holder: None,
         };
     };
@@ -331,7 +331,7 @@ pub fn put_to_mtp_kindle(
         Ok(out) => parse_put_answer(&out.stdout),
         Err(err) => MtpPutAnswer::Failed {
             code: "helper-missing".into(),
-            message: format!("Screepub's MTP helper could not be started: {err}"),
+            message: format!("Method Reader's MTP helper could not be started: {err}"),
             holder: None,
         },
     }

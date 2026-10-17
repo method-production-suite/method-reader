@@ -1,7 +1,7 @@
 //! The TypeScript CLI against this crate, answer for answer: `devices`,
 //! `eject` and `reveal` under --json, on fake volume roots
-//! (SCREEPUB_VOLUME_ROOTS) and a stand-in tablet
-//! (SCREEPUB_REMARKABLE_ENDPOINT), the overrides the TypeScript honored.
+//! (METHOD_READER_VOLUME_ROOTS) and a stand-in tablet
+//! (METHOD_READER_REMARKABLE_ENDPOINT), the overrides the TypeScript honored.
 //! The Rust side's envelope is built here the way sp-cli builds it:
 //! `{"ok":true,...answer}` or `{"ok":false,"error":{code,message}}`.
 //!
@@ -53,10 +53,14 @@ fn encode(text: &str, subs: &[(&str, &str)]) -> String {
         .fold(text.to_owned(), |t, (real, mark)| t.replace(real, mark))
 }
 
-/// `text` with each placeholder read as this run's value.
+/// `text` with each placeholder read as this run's value, and the
+/// product's name as it is now: the TypeScript answered as Screepub, the
+/// app is Method Reader since 0.13, and the name in a message is the only
+/// thing a frozen answer is read differently for.
 fn decode(text: &str, subs: &[(&str, &str)]) -> String {
     subs.iter()
         .fold(text.to_owned(), |t, (real, mark)| t.replace(mark, real))
+        .replace("Screepub", "Method Reader")
 }
 
 /// The TypeScript's frozen answer for `key`. `subs` pairs this run's values
@@ -109,7 +113,7 @@ struct Fixture {
 /// Two mount parents: every vendor, a plain drive, a loose file, a dotted
 /// name and a name with spaces, and a second parent holding one more reader.
 fn fixture() -> Fixture {
-    let sc = scratch("screepub-parity-devices-");
+    let sc = scratch("method-reader-parity-devices-");
     let base = sc.path().to_path_buf();
     let a = base.join("mounts-a");
     let b = base.join("mounts-b");

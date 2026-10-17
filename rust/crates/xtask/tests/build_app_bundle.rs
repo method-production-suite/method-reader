@@ -108,27 +108,27 @@ fn every_row_looks_in_the_bundler_subdirectory_its_own_id_names() {
 fn the_published_names_carry_no_version_and_say_which_machine_they_are_for() {
     assert_eq!(
         released_name(&kind("deb"), "0.6.0", BundleArch::X64),
-        "Screepub-linux-amd64.deb"
+        "Method-Reader-linux-amd64.deb"
     );
     assert_eq!(
         released_name(&kind("deb"), "0.6.0", BundleArch::Arm64),
-        "Screepub-linux-arm64.deb"
+        "Method-Reader-linux-arm64.deb"
     );
     assert_eq!(
         released_name(&kind("rpm"), "0.6.0", BundleArch::X64),
-        "Screepub-linux-x86_64.rpm"
+        "Method-Reader-linux-x86_64.rpm"
     );
     assert_eq!(
         released_name(&kind("rpm"), "0.6.0", BundleArch::Arm64),
-        "Screepub-linux-aarch64.rpm"
+        "Method-Reader-linux-aarch64.rpm"
     );
     assert_eq!(
         released_name(&kind("nsis"), "0.6.0", BundleArch::X64),
-        "Screepub-windows-x64-setup.exe"
+        "Method-Reader-windows-x64-setup.exe"
     );
     assert_eq!(
         released_name(&kind("dmg"), "0.6.0", BundleArch::Arm64),
-        "Screepub-macOS.dmg"
+        "Method-Reader-macOS.dmg"
     );
     assert_eq!(MAC_ARCH, BundleArch::Arm64);
 }
@@ -596,7 +596,10 @@ fn it_renames_to_the_published_names_and_writes_sha256sums_app() {
     .unwrap();
     assert_eq!(
         names_of(&made),
-        ["Screepub-linux-arm64.deb", "Screepub-linux-aarch64.rpm"]
+        [
+            "Method-Reader-linux-arm64.deb",
+            "Method-Reader-linux-aarch64.rpm"
+        ]
     );
     for p in &made {
         assert!(p.is_file());
@@ -609,7 +612,10 @@ fn it_renames_to_the_published_names_and_writes_sha256sums_app() {
     let sums = parse_checksums(&fs::read_to_string(out.join("SHA256SUMS-app")).unwrap());
     assert_eq!(
         sums.keys().collect::<Vec<_>>(),
-        ["Screepub-linux-aarch64.rpm", "Screepub-linux-arm64.deb"]
+        [
+            "Method-Reader-linux-aarch64.rpm",
+            "Method-Reader-linux-arm64.deb"
+        ]
     );
     for (name, digest) in &sums {
         assert_eq!(*digest, sha256_file(&out.join(name)).unwrap());
@@ -651,7 +657,10 @@ fn the_checksums_file_is_not_called_sha256sums_and_names_the_x64_build() {
     let sums = parse_checksums(&fs::read_to_string(out.join("SHA256SUMS-app")).unwrap());
     assert_eq!(
         sums.keys().collect::<Vec<_>>(),
-        ["Screepub-linux-amd64.deb", "Screepub-linux-x86_64.rpm"]
+        [
+            "Method-Reader-linux-amd64.deb",
+            "Method-Reader-linux-x86_64.rpm"
+        ]
     );
 }
 
@@ -688,7 +697,7 @@ fn a_cargo_that_exits_0_and_writes_nothing_still_fails() {
             &dirs,
             &no_env(),
         ),
-        "screepub-window",
+        "method-reader-app",
     );
     assert!(!out.join("SHA256SUMS-app").exists());
 }
@@ -710,7 +719,7 @@ fn a_truncated_artifact_fails_the_run_instead_of_being_published() {
         ),
         "floor",
     );
-    assert!(!out.join("Screepub-macOS.dmg").exists());
+    assert!(!out.join("Method-Reader-macOS.dmg").exists());
     assert!(!out.join("SHA256SUMS-app").exists());
 }
 
@@ -779,7 +788,7 @@ fn the_published_name_follows_the_image_s_and_it_serves_apple_silicon_only() {
     let k = app_tar();
     assert_eq!(
         released_name(&k, "0.6.0", MAC_ARCH),
-        "Screepub-macOS.app.tar.gz"
+        "Method-Reader-macOS.app.tar.gz"
     );
     assert_eq!(platform_keys(&k, MAC_ARCH), ["darwin-aarch64"]);
 }
@@ -792,16 +801,16 @@ fn the_published_name_can_be_read_back_to_its_arch() {
         Some(BundleArch::Arm64)
     );
     assert_eq!(
-        arch_of(&k, "Screepub-macOS.app.tar.gz"),
+        arch_of(&k, "Method-Reader-macOS.app.tar.gz"),
         Some(BundleArch::Arm64)
     );
     for not in [
-        "Screepub-macOS-x64.app.tar.gz",
-        "Screepub-macOS-arm64.app.tar.gz",
-        "Screepub-macOS.dmg",
-        "Screepub-macOS.app.tar.gz.sig",
-        "Screepub-macOS-riscv.app.tar.gz",
-        "Screepub-macOS-universal.app.tar.gz",
+        "Method-Reader-macOS-x64.app.tar.gz",
+        "Method-Reader-macOS-arm64.app.tar.gz",
+        "Method-Reader-macOS.dmg",
+        "Method-Reader-macOS.app.tar.gz.sig",
+        "Method-Reader-macOS-riscv.app.tar.gz",
+        "Method-Reader-macOS-universal.app.tar.gz",
         "Screepub-Desktop-macOS-universal.app.tar.gz",
     ] {
         assert_eq!(arch_of(&k, not), None, "{not}");
@@ -838,13 +847,16 @@ fn with_updater_the_archive_and_its_signature_come_out_under_the_published_names
     assert_eq!(
         names,
         [
-            "Screepub-macOS.app.tar.gz",
-            "Screepub-macOS.app.tar.gz.sig",
-            "Screepub-macOS.dmg"
+            "Method-Reader-macOS.app.tar.gz",
+            "Method-Reader-macOS.app.tar.gz.sig",
+            "Method-Reader-macOS.dmg"
         ]
     );
     let built = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir);
-    for name in ["Screepub-macOS.app.tar.gz", "Screepub-macOS.app.tar.gz.sig"] {
+    for name in [
+        "Method-Reader-macOS.app.tar.gz",
+        "Method-Reader-macOS.app.tar.gz.sig",
+    ] {
         assert_eq!(
             fs::read(out.join(name)).unwrap(),
             fs::read(built.join(name)).unwrap(),
@@ -853,7 +865,7 @@ fn with_updater_the_archive_and_its_signature_come_out_under_the_published_names
     }
     // The archive is proven by its signature, not listed in the checksums.
     let sums = parse_checksums(&fs::read_to_string(out.join("SHA256SUMS-app")).unwrap());
-    assert_eq!(sums.keys().collect::<Vec<_>>(), ["Screepub-macOS.dmg"]);
+    assert_eq!(sums.keys().collect::<Vec<_>>(), ["Method-Reader-macOS.dmg"]);
 }
 
 #[test]
@@ -869,8 +881,8 @@ fn without_updater_a_macos_run_publishes_no_archive_and_needs_no_key() {
         &no_env(),
     )
     .unwrap();
-    assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
-    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
+    assert_eq!(names_of(&made), ["Method-Reader-macOS.dmg"]);
+    assert!(!out.join("Method-Reader-macOS.app.tar.gz").exists());
 }
 
 #[test]
@@ -927,7 +939,7 @@ fn the_macos_run_builds_for_the_apple_silicon_triple() {
         assert!(call.iter().any(|a| a == want), "{want}");
     }
     assert!(binary_path(&dirs.rust_dir, Some(MAC_TARGET), BundleOs::Macos).is_file());
-    assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
+    assert_eq!(names_of(&made), ["Method-Reader-macOS.dmg"]);
 }
 
 #[test]

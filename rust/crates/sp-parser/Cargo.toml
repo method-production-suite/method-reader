@@ -1,6 +1,6 @@
 [package]
 name = "sp-parser"
-description = "Screepub's screenplay parser: what a PDF's pages say, as classified screenplay elements"
+description = "Method Reader's screenplay parser: what a PDF's pages say, as classified screenplay elements"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

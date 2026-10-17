@@ -1,22 +1,40 @@
-//! Whether there is a newer Screepub, and what to say about it:
+//! Whether there is a newer Method Reader, and what to say about it:
 //! was `desktop/ui/update.js`, `update-flow.js` and the Updates block's
 //! rules from `notes-surface.js`. The transport (download, signature, swap,
-//! restart) is wave 3's; everything decided here is injected-and-tested,
+//! restart) is sp-update's; everything decided here is injected-and-tested,
 //! as it was in JavaScript.
+//!
+//! From 0.13 the suite's standard (SUITE-STANDARDS.md, "Updates"): a quiet
+//! check two minutes after launch and every six hours after that, while
+//! "Check for Updates Automatically" is on. It is on by default, and stays
+//! off for anyone who answered no to the old once-a-day question (the
+//! `updateAsked`/`updateOptIn` pair the Tauri window and 0.12.x kept). A
+//! check a person asks for always runs.
 
 use std::collections::HashMap;
 
-use super::update_compare::{Pick, pick_update, should_check};
+use super::update_compare::{Pick, is_newer, pick_update};
 
 const OPT_IN: &str = "updateOptIn";
 const ASKED: &str = "updateAsked";
 const STAMP: &str = "updateLastChecked";
 const FOUND: &str = "updateFound";
+/// The switch, once a person (or 0.13's own default) has set it: "true" or
+/// "false". Absent, the old answer decides ([`automatic_checks`]).
+const AUTOMATIC: &str = "updateAutomatic";
+/// The version whose release notes were last shown (or, on a first run,
+/// that was running): What's New opens once for each newer one.
+const WHATS_NEW_SEEN: &str = "whatsNewSeen";
+
+/// The first quiet check, after launch.
+pub const FIRST_CHECK_AFTER_MS: f64 = 2.0 * 60.0 * 1000.0;
+/// Every quiet check after the first.
+pub const CHECK_EVERY_MS: f64 = 6.0 * 60.0 * 60.0 * 1000.0;
 
 /// How long a restart waits for quiet before it hands the choice over.
 pub const RESTART_WAIT_CAP_MS: f64 = 120_000.0;
 
-pub const INTEL_MAC_RETIRED: &str = "New versions of Screepub run only on Macs with Apple silicon, so this copy will not be offered updates. The version you have keeps working.";
+pub const INTEL_MAC_RETIRED: &str = "New versions of Method Reader run only on Macs with Apple silicon, so this copy will not be offered updates. The version you have keeps working.";
 
 /// The window's own string bucket (localStorage in the webview).
 pub trait Storage {
@@ -72,13 +90,86 @@ pub fn read_state(storage: &dyn Storage) -> State {
     }
 }
 
-pub fn remember_answer(storage: &mut dyn Storage, opted_in: bool) {
-    storage.set_item(ASKED, "true");
-    storage.set_item(OPT_IN, if opted_in { "true" } else { "false" });
+/// Whether "Check for Updates Automatically" is on: what the switch was
+/// last set to, else ON, unless the old question was answered no
+/// (`updateAsked` true and `updateOptIn` not true), which keeps it off.
+pub fn automatic_checks(storage: &dyn Storage) -> bool {
+    match storage.get_item(AUTOMATIC).as_deref() {
+        Some("true") => true,
+        Some("false") => false,
+        _ => {
+            // Never asked, or asked and said yes.
+            let old = read_state(storage);
+            !old.asked || old.opted_in
+        }
+    }
 }
 
-pub fn should_ask(usable: bool, storage: &dyn Storage) -> bool {
-    usable && !read_state(storage).asked
+/// The switch, set by a person.
+pub fn set_automatic(storage: &mut dyn Storage, on: bool) {
+    storage.set_item(AUTOMATIC, if on { "true" } else { "false" });
+}
+
+/// When the next quiet check is due, on the window's clock (milliseconds
+/// since it started). It lives with the window, not in storage: the first
+/// check of every launch waits its two minutes.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Schedule {
+    next: Option<f64>,
+}
+
+impl Schedule {
+    /// Armed at launch: the first check [`FIRST_CHECK_AFTER_MS`] from now.
+    pub fn starting(now: f64) -> Self {
+        Self {
+            next: Some(now + FIRST_CHECK_AFTER_MS),
+        }
+    }
+
+    /// When the window must wake for the next one; None when never armed.
+    pub fn next_due(&self) -> Option<f64> {
+        self.next
+    }
+
+    /// Whether a quiet check falls due at `now`. When one does, the next is
+    /// set [`CHECK_EVERY_MS`] on, whether or not the caller then checks (the
+    /// switch may be off): a missed check is not made up in a burst.
+    pub fn take_due(&mut self, now: f64) -> bool {
+        match self.next {
+            Some(at) if now >= at => {
+                self.next = Some(now + CHECK_EVERY_MS);
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// A check just ran (asked for, or the switch just turned on): the next
+    /// quiet one is a full interval away. Never arms an unarmed schedule.
+    pub fn checked(&mut self, now: f64) {
+        if self.next.is_some() {
+            self.next = Some(now + CHECK_EVERY_MS);
+        }
+    }
+}
+
+/// Whether What's New should open now, written down so it opens once:
+/// true when this copy is newer than the one whose notes were last shown,
+/// or, the first time 0.13 runs, when an earlier copy left its update
+/// values behind (it was updated, not freshly installed). A fresh install
+/// and a downgrade open nothing.
+pub fn whats_new_due(storage: &mut dyn Storage, running: &str) -> bool {
+    let seen = storage.get_item(WHATS_NEW_SEEN).filter(|s| !s.is_empty());
+    let due = match seen.as_deref() {
+        Some(seen) => seen != running && is_newer(running, seen),
+        None => [OPT_IN, ASKED, STAMP, FOUND]
+            .iter()
+            .any(|k| storage.get_item(k).is_some_and(|v| !v.is_empty())),
+    };
+    if seen.as_deref() != Some(running) {
+        storage.set_item(WHATS_NEW_SEEN, running);
+    }
+    due
 }
 
 pub fn remember_found(storage: &mut dyn Storage, version: &str) {
@@ -113,6 +204,12 @@ pub enum Phase {
         body: String,
         retrying: bool,
     },
+    /// A quiet check found it and it is downloaded and verified: a click
+    /// installs it and restarts.
+    Ready {
+        version: String,
+        body: String,
+    },
     Downloading {
         version: String,
         received: f64,
@@ -144,6 +241,7 @@ impl Phase {
     pub fn version(&self) -> Option<&str> {
         match self {
             Phase::Offer { version, .. }
+            | Phase::Ready { version, .. }
             | Phase::Downloading { version, .. }
             | Phase::Installing { version }
             | Phase::Waiting { version }
@@ -155,14 +253,20 @@ impl Phase {
     }
 }
 
+/// The label once an update is downloaded (the suite's wording).
+pub const READY_LABEL: &str = "Update ready, restart to update";
+/// The update sheet's button for a downloaded update.
+pub const READY_BUTTON: &str = "Restart to update";
+
 pub fn installed_line(version: &str) -> String {
-    format!("Update installed. Quit and reopen Screepub to use {version}.")
+    format!("Update installed. Quit and reopen Method Reader to use {version}.")
 }
 
 /// The words beside the stamp, or None.
 pub fn update_label(phase: Option<&Phase>) -> Option<String> {
     Some(match phase? {
         Phase::Offer { version, .. } => format!("Update to {version}"),
+        Phase::Ready { .. } => READY_LABEL.into(),
         Phase::Downloading {
             version,
             received,
@@ -185,7 +289,7 @@ pub fn update_label(phase: Option<&Phase>) -> Option<String> {
 pub fn label_actionable(phase: Option<&Phase>) -> bool {
     match phase {
         Some(Phase::Offer { retrying, .. }) => !retrying,
-        Some(Phase::Failed { .. } | Phase::Stalled { .. }) => true,
+        Some(Phase::Ready { .. } | Phase::Failed { .. } | Phase::Stalled { .. }) => true,
         _ => false,
     }
 }
@@ -206,7 +310,8 @@ pub enum CheckOutcome {
     Error { message: String },
 }
 
-/// Run a check, or decline to. The stamp is written BEFORE the request.
+/// Run a check, or decline to: a quiet one (`manual` false) only while the
+/// switch is on. The stamp is written BEFORE the request.
 pub fn run_check(
     manual: bool,
     storage: &mut dyn Storage,
@@ -221,9 +326,9 @@ pub fn run_check(
 
 /// [`run_check`]'s first half, on the window's thread: whether to ask at
 /// all, and if so the stamp, written before the request goes out.
+/// How often is the window's [`Schedule`], not this.
 pub fn begin_check(manual: bool, storage: &mut dyn Storage, now: f64) -> bool {
-    let state = read_state(storage);
-    if !manual && !should_check(state.opted_in, state.last_checked, now) {
+    if !manual && !automatic_checks(storage) {
         return false;
     }
     storage.set_item(STAMP, &now.to_string());
@@ -291,15 +396,25 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
         return NotesView {
             say: drawn
                 .drew_offer
-                .then(|| format!("Screepub {running} is the newest there is.")),
+                .then(|| format!("Method Reader {running} is the newest there is.")),
             body: None,
             install: None,
             check_disabled: false,
         };
     };
+    if let Phase::Ready { version, body } = phase {
+        return NotesView {
+            say: Some(format!(
+                "Method Reader {version} is downloaded and ready. Restarting installs it."
+            )),
+            body: (!body.is_empty()).then(|| body.clone()),
+            install: Some((READY_BUTTON.into(), false)),
+            check_disabled: false,
+        };
+    }
     if let Phase::Offer { version, body, .. } = phase {
         return NotesView {
-            say: Some(format!("Screepub {version} is available.")),
+            say: Some(format!("Method Reader {version} is available.")),
             body: (!body.is_empty()).then(|| body.clone()),
             install: Some((format!("Install {version}"), !label_actionable(Some(phase)))),
             check_disabled: false,
@@ -327,7 +442,7 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
     if let Phase::Stalled { .. } = phase {
         return NotesView {
             say: Some(format!(
-                "Screepub {version} is installed, but something is still running. Restart when you are ready."
+                "Method Reader {version} is installed, but something is still running. Restart when you are ready."
             )),
             body,
             install: Some((update_label(Some(phase)).unwrap_or_default(), false)),
@@ -345,12 +460,18 @@ pub fn notes_view(phase: Option<&Phase>, drawn: &Drawn, running: &str) -> NotesV
     }
 }
 
-pub const NOT_HERE: &str = "Screepub does not update itself here. New releases are at github.com/ssandweiss/screepub/releases.";
-pub const AUTO_LABEL: &str =
-    "Look for a new version once a day. Off by default; nothing is sent but the request itself.";
-pub const AUTO_ON: &str = "Screepub will look once a day, and only for this file.";
-pub const AUTO_OFF: &str = "Screepub will not look on its own.";
+pub const NOT_HERE: &str = "Method Reader does not update itself here. New releases are at github.com/method-production-suite/method-reader/releases.";
+/// The switch, in the Help menu and in the update sheet.
+pub const AUTO_LABEL: &str = "Check for Updates Automatically";
+/// What the switch does, said beside it.
+pub const AUTO_SAYS: &str = "Two minutes after it opens and every six hours after that, Method Reader fetches one small file from GitHub, latest.json, to see whether a newer version is out. The request carries the app's name and version and nothing else, nothing about you or your scripts; GitHub sees your internet address, as any website does.";
+pub const AUTO_ON: &str =
+    "Method Reader will check two minutes after it opens and every six hours.";
+pub const AUTO_OFF: &str =
+    "Method Reader will not check on its own. Check for Updates still checks once.";
 pub const CHECK_BUTTON: &str = "Check for updates";
+/// The Help menu's item.
+pub const CHECK_MENU: &str = "Check for Updates…";
 pub const LOOKING: &str = "Looking…";
 
 #[cfg(test)]
@@ -366,20 +487,24 @@ mod tests {
     }
 
     #[test]
-    fn the_question_is_asked_once_and_said_no_differs_from_never_asked() {
+    fn the_switch_is_on_by_default_and_off_for_whoever_said_no() {
         let mut s = MemoryStorage::default();
-        assert!(should_ask(true, &s));
-        assert!(!should_ask(false, &s));
-        remember_answer(&mut s, false);
-        assert!(!should_ask(true, &s));
-        assert_eq!(
-            read_state(&s),
-            State {
-                opted_in: false,
-                asked: true,
-                last_checked: None
-            }
-        );
+        assert!(automatic_checks(&s), "never asked: on");
+        // The old question, answered yes in 0.12.x or the Tauri window.
+        s.set_item(ASKED, "true");
+        s.set_item(OPT_IN, "true");
+        assert!(automatic_checks(&s));
+        // Answered no: kept off.
+        s.set_item(OPT_IN, "false");
+        assert!(!automatic_checks(&s));
+        // A person's own switch wins over the old answer, both ways.
+        set_automatic(&mut s, true);
+        assert!(automatic_checks(&s));
+        set_automatic(&mut s, false);
+        assert!(!automatic_checks(&s));
+        let mut fresh = MemoryStorage::default();
+        set_automatic(&mut fresh, false);
+        assert!(!automatic_checks(&fresh));
     }
 
     #[test]
@@ -394,7 +519,6 @@ mod tests {
     #[test]
     fn the_stamp_is_written_before_the_request_and_a_failure_is_a_message() {
         let mut s = MemoryStorage::default();
-        remember_answer(&mut s, true);
         let out = run_check(false, &mut s, 1000.0, || Err("offline".into()));
         assert_eq!(
             out,
@@ -403,10 +527,6 @@ mod tests {
             }
         );
         assert_eq!(read_state(&s).last_checked, Some(1000.0));
-        assert_eq!(
-            run_check(false, &mut s, 2000.0, || panic!("throttled")),
-            CheckOutcome::Skipped
-        );
         let manual = run_check(true, &mut s, 2000.0, || Ok(Some(found("0.12.0"))));
         assert_eq!(
             manual,
@@ -420,12 +540,77 @@ mod tests {
     }
 
     #[test]
-    fn not_opted_in_never_asks_on_its_own() {
+    fn with_the_switch_off_only_a_check_a_person_asks_for_runs() {
         let mut s = MemoryStorage::default();
+        set_automatic(&mut s, false);
         assert_eq!(
             run_check(false, &mut s, 1.0, || panic!("no")),
             CheckOutcome::Skipped
         );
+        assert_eq!(read_state(&s).last_checked, None, "no stamp either");
+        assert!(matches!(
+            run_check(true, &mut s, 2.0, || Ok(None)),
+            CheckOutcome::Current { .. }
+        ));
+    }
+
+    #[test]
+    fn the_schedule_is_two_minutes_after_launch_then_every_six_hours() {
+        assert_eq!(FIRST_CHECK_AFTER_MS, 120_000.0);
+        assert_eq!(CHECK_EVERY_MS, 21_600_000.0);
+        let mut never = Schedule::default();
+        assert!(!never.take_due(f64::MAX), "unarmed: never due");
+        never.checked(5.0);
+        assert_eq!(never.next_due(), None, "a check does not arm it");
+
+        let launch = 500.0;
+        let mut s = Schedule::starting(launch);
+        assert_eq!(s.next_due(), Some(launch + 120_000.0));
+        assert!(!s.take_due(launch + 119_999.0));
+        assert!(s.take_due(launch + 120_000.0));
+        assert!(!s.take_due(launch + 120_001.0), "once");
+        let second = launch + 120_000.0 + 21_600_000.0;
+        assert_eq!(s.next_due(), Some(second));
+        // Asleep for a day: one check on waking, not four.
+        assert!(s.take_due(second + 86_400_000.0));
+        assert!(!s.take_due(second + 86_400_001.0));
+        // A check a person asked for pushes the next quiet one back.
+        s.checked(1_000_000_000.0);
+        assert_eq!(s.next_due(), Some(1_000_000_000.0 + 21_600_000.0));
+    }
+
+    #[test]
+    fn whats_new_opens_once_after_an_update_and_never_on_a_fresh_install() {
+        let mut fresh = MemoryStorage::default();
+        assert!(!whats_new_due(&mut fresh, "0.13.0"), "a fresh install");
+        assert!(!whats_new_due(&mut fresh, "0.13.0"));
+        assert!(whats_new_due(&mut fresh, "0.13.1"), "updated");
+        assert!(!whats_new_due(&mut fresh, "0.13.1"), "once");
+        assert!(!whats_new_due(&mut fresh, "0.13.0"), "a downgrade");
+
+        // The first 0.13 to run on a computer an earlier copy used: its
+        // update values say it was updated.
+        let mut updated = MemoryStorage::default();
+        updated.set_item(ASKED, "true");
+        updated.set_item(OPT_IN, "false");
+        assert!(whats_new_due(&mut updated, "0.13.0"));
+        assert!(!whats_new_due(&mut updated, "0.13.0"));
+    }
+
+    #[test]
+    fn a_ready_update_says_so_and_a_click_installs_it() {
+        let ready = Phase::Ready {
+            version: "0.13.1".into(),
+            body: "b".into(),
+        };
+        assert_eq!(update_label(Some(&ready)).as_deref(), Some(READY_LABEL));
+        assert_eq!(READY_LABEL, "Update ready, restart to update");
+        assert!(label_actionable(Some(&ready)));
+        assert_eq!(ready.version(), Some("0.13.1"));
+        let view = notes_view(Some(&ready), &Drawn::default(), "0.13.0");
+        assert_eq!(view.install, Some((READY_BUTTON.into(), false)));
+        assert_eq!(view.body.as_deref(), Some("b"));
+        assert!(view.say.unwrap().contains("0.13.1 is downloaded and ready"));
     }
 
     #[test]
@@ -509,7 +694,7 @@ mod tests {
         assert!(label_actionable(Some(&Phase::Stalled { version: v() })));
         assert_eq!(
             update_label(Some(&Phase::Installed { version: v() })).as_deref(),
-            Some("Update installed. Quit and reopen Screepub to use 0.12.0.")
+            Some("Update installed. Quit and reopen Method Reader to use 0.12.0.")
         );
         assert_eq!(update_label(None), None);
     }
@@ -528,7 +713,7 @@ mod tests {
         );
         assert_eq!(
             after.say.as_deref(),
-            Some("Screepub 0.11.1 is the newest there is.")
+            Some("Method Reader 0.11.1 is the newest there is.")
         );
         let offer = Phase::Offer {
             version: "0.12.0".into(),

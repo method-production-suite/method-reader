@@ -37,8 +37,8 @@ fn win32_matches_node() {
     assert!(!win32::is_absolute("C:Users"));
     assert!(!win32::is_absolute("Users"));
     assert_eq!(
-        win32::join(&["C:\\Users\\Ada", "Documents", "Screepub"]),
-        "C:\\Users\\Ada\\Documents\\Screepub"
+        win32::join(&["C:\\Users\\Ada", "Documents", "Method Reader"]),
+        "C:\\Users\\Ada\\Documents\\Method Reader"
     );
     assert_eq!(win32::normalize("C:/a//b/../c"), "C:\\a\\c");
     assert_eq!(win32::resolve_from("/cwd", &["C:\\a\\..\\b"]), "C:\\b");

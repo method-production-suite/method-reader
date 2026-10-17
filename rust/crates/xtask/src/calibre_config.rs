@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 
 /// What root .env.test gives CALIBRE_CONFIG_DIRECTORY: a path under
 /// /dev/null, where Calibre can neither read nor make a folder.
-pub const CALIBRE_CONFIG_GUARD: &str = "/dev/null/screepub-test-calibre-guard";
+pub const CALIBRE_CONFIG_GUARD: &str = "/dev/null/method-reader-test-calibre-guard";
 
 /// The environment and platform [`real_calibre_config`] reads, so a test
 /// can ask about another machine.
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn the_copy_leaves_caches_behind_and_an_absent_folder_copies_as_empty() {
         // Removed when dropped, on a failing assertion's unwind too.
-        let work = crate::scratch::TempDir::new("screepub-calibre-config-").unwrap();
+        let work = crate::scratch::TempDir::new("method-reader-calibre-config-").unwrap();
         let root = work.path();
         let real = root.join("real");
         std::fs::create_dir_all(real.join("caches")).unwrap();

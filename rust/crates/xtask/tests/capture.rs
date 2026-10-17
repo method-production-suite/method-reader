@@ -14,7 +14,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use xtask::capture::backend::{
-    Browser, CaptureOptions, EguiWindow, PassOne, WindowBackend, window_args,
+    Browser, CaptureOptions, CommandLine, EguiWindow, Exchange, HEAD_LINES, PassOne, Terminal,
+    WindowBackend, terminal_query, transcript_of, window_args,
 };
 use xtask::capture::http::{Request, Response};
 #[cfg(unix)]
@@ -79,17 +80,28 @@ fn demo() -> PathBuf {
 // ---------------------------------------------------------------- shots
 
 #[test]
-fn shots_are_the_four_readme_pictures_with_light_and_dark_for_the_window() {
+fn shots_are_the_suites_four_in_its_order_every_one_light_and_dark() {
+    // SUITE-STANDARDS.md 7.1: (1) the hero, the main view; (2) the
+    // signature feature, the before and after; (3) open, with the result
+    // beside it; (4) the file you own, the command line.
     let names: Vec<&str> = SHOTS.iter().map(|s| s.name).collect();
-    assert_eq!(names, ["hero", "drop", "result", "read"]);
+    assert_eq!(names, ["read", "compare", "drop", "result", "cli"]);
+    let kinds: Vec<Kind> = SHOTS.iter().map(|s| s.kind).collect();
+    assert_eq!(
+        kinds,
+        [
+            Kind::Window,
+            Kind::Site,
+            Kind::Window,
+            Kind::Window,
+            Kind::Terminal
+        ]
+    );
     for s in SHOTS {
         let words: Vec<&str> = s.themes.iter().map(|t| t.word()).collect();
-        let want: &[&str] = if s.kind == Kind::Window {
-            &["light", "dark"]
-        } else {
-            &["light"]
-        };
-        assert_eq!(words, want);
+        assert_eq!(words, ["light", "dark"], "{}", s.name);
+        // The suite's one frame size, whatever is in it.
+        assert_eq!((s.width, s.height), (1280, 800), "{}", s.name);
     }
 }
 
@@ -105,20 +117,48 @@ fn window_shots_are_the_windows_own_size() {
 }
 
 #[test]
-fn readme_gets_every_picture_and_the_site_the_light_drop_and_result() {
+fn every_picture_goes_to_the_readme_and_to_the_site_alike() {
     let all = all_outputs(SHOTS);
-    assert_eq!(
-        all.iter()
-            .filter(|p| p.starts_with("assets/screens/"))
-            .count(),
-        7
+    let readme: Vec<&str> = all
+        .iter()
+        .filter_map(|p| p.strip_prefix("assets/screens/"))
+        .collect();
+    let site: Vec<&str> = all
+        .iter()
+        .filter_map(|p| p.strip_prefix("site/img/"))
+        .collect();
+    assert_eq!(readme.len(), 10);
+    assert_eq!(readme, site);
+    assert_eq!(all.len(), 20);
+}
+
+#[test]
+fn the_terminal_shows_the_command_and_the_files_it_wrote_read_off_the_library() {
+    let dir = Scratch::new("transcript");
+    let book = dir.path().join("Method Reader").join("field-station");
+    std::fs::create_dir_all(&book).unwrap();
+    let fountain: String = (1..=40).map(|i| format!("line {i}\n")).collect();
+    std::fs::write(book.join("field-station.fountain"), &fountain).unwrap();
+    std::fs::write(book.join("field-station.epub"), "book").unwrap();
+    std::fs::write(book.join(".hidden"), "").unwrap();
+    let t = transcript_of("field-station.pdf", "Field Station\n  wrote it\n", &book).unwrap();
+    assert_eq!(t[0].command, "method-reader field-station.pdf --library");
+    assert_eq!(t[0].output, "Field Station\n  wrote it");
+    assert_eq!(t[1].command, format!("ls -1 \"{}\"", book.display()));
+    assert_eq!(t[1].output, "field-station.epub\nfield-station.fountain");
+    assert!(
+        t[2].command
+            .starts_with(&format!("head -n {HEAD_LINES} \""))
     );
-    let mut site: Vec<&String> = all.iter().filter(|p| p.starts_with("site/img/")).collect();
-    site.sort();
-    assert_eq!(
-        site,
-        ["site/img/drop-light.png", "site/img/result-light.png"]
+    let want: Vec<String> = (1..=HEAD_LINES).map(|i| format!("line {i}")).collect();
+    assert_eq!(t[2].output, want.join("\n"));
+    // Into the page's query whole: JSON, nothing left unescaped.
+    let q = terminal_query(&t);
+    assert!(
+        q.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"-._~%".contains(&b))
     );
+    assert!(q.starts_with("%5B%7B%22c%22%3A%22method-reader"));
 }
 
 #[test]
@@ -317,7 +357,7 @@ fn the_window_program_is_told_one_shot_in_one_theme_at_the_shots_size() {
             "--width",
             "1280",
             "--height",
-            "800",
+            "772",
             "--demo",
             &s(&abs("repo/tests/fixtures/field-station.pdf")),
             "--out",
@@ -393,21 +433,22 @@ fn draw(
 #[test]
 fn the_window_programs_pixels_become_the_same_png_bytes_every_time() {
     let dir = Scratch::new("window-png");
-    // 2560 by 1600 pixels of one grey, written as raw RGBA. tr runs in
+    // 2560 by 1544 pixels of one grey (the window's content under the
+    // title bar frame.html draws), written as raw RGBA. tr runs in
     // the C locale: under a UTF-8 one (a CI runner's) it writes byte 128
     // as the two-byte character U+0080 and the picture comes out double.
     let script = format!(
         "{OUT}head -c {} /dev/zero | LC_ALL=C tr '\\0' '\\200' > \"$out\"",
-        2560 * 1600 * 4
+        2560 * 1544 * 4
     );
     let mut w = sh_window(&script);
     let a = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
     let b = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
     assert_eq!(a, b, "same pixels, same bytes");
-    assert_eq!(size(&a).unwrap(), (2560, 1600));
+    assert_eq!(size(&a).unwrap(), (2560, 1544));
     let rgba = decode(&a).unwrap();
     assert!(rgba.pixels.iter().all(|&p| p == 128));
-    assert_eq!(a, encode_rgba(2560, 1600, &rgba.pixels).unwrap());
+    assert_eq!(a, encode_rgba(2560, 1544, &rgba.pixels).unwrap());
     // The raw file does not outlive its picture.
     assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
 }
@@ -421,7 +462,7 @@ fn a_picture_of_the_wrong_size_fails_rather_than_being_framed() {
         1280 * 800 * 4
     ));
     let e = draw(&mut w, dir.path(), "drop", &no_failure).unwrap_err();
-    assert!(e.contains("2560 by 1600"), "{e}");
+    assert!(e.contains("2560 by 1544"), "{e}");
 }
 
 #[cfg(unix)]
@@ -522,8 +563,8 @@ fn the_real_window_program_refuses_to_run_without_a_scratch_library() {
     let out = dir.path().join("drop-light.rgba");
     let ran = std::process::Command::new(&program)
         .args(window_args(shot("drop"), Theme::Light, &demo(), &out))
-        .env_remove("SCREEPUB_LIBRARY")
-        .env_remove("SCREEPUB_CONFIG_DIR")
+        .env_remove("METHOD_READER_LIBRARY")
+        .env_remove("METHOD_READER_CONFIG_DIR")
         .output()
         .unwrap();
     assert_eq!(ran.status.code(), Some(2));
@@ -561,7 +602,7 @@ fn the_real_window_draws_the_drop_well_at_twice_its_size_where_wgpu_works() {
         }
         Err(e) => panic!("{e}"),
     };
-    assert_eq!(size(&png).unwrap(), (2560, 1600));
+    assert_eq!(size(&png).unwrap(), (2560, 1544));
     let rgba = decode(&png).unwrap();
     assert!(
         rgba.pixels.chunks_exact(4).any(|p| p != &rgba.pixels[..4]),
@@ -623,6 +664,25 @@ impl WindowBackend for FakeWindow {
     }
 }
 
+/// A command line that answers what the test says.
+type TranscriptFn = Box<dyn FnMut(&Terminal<'_>) -> Result<Vec<Exchange>, String>>;
+struct FakeCli(TranscriptFn);
+
+impl CommandLine for FakeCli {
+    fn transcript(&mut self, t: Terminal<'_>) -> Result<Vec<Exchange>, String> {
+        (self.0)(&t)
+    }
+}
+
+fn some_cli() -> Box<FakeCli> {
+    Box::new(FakeCli(Box::new(|_| {
+        Ok(vec![Exchange {
+            command: "method-reader field-station.pdf --library".into(),
+            output: "Field Station".into(),
+        }])
+    })))
+}
+
 fn png_window() -> Box<FakeWindow> {
     Box::new(FakeWindow(Box::new(|_| Ok(PNG.to_vec()))))
 }
@@ -666,6 +726,7 @@ impl RunScene {
             library: self.library.clone(),
             launch: Box::new(move || browser.map(|b| Box::new(b) as Box<dyn Browser>)),
             window: png_window(),
+            cli: some_cli(),
             out_dir: self.out.clone(),
             tmp: Some(self.tmp.clone()),
             calibre_config: Some(self.dir.path().join("no-calibre-here")),
@@ -772,19 +833,42 @@ fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() 
         assert_eq!(p.demo_pdf, demo());
         Ok(PNG.to_vec())
     })));
+    let (seen3, lib3) = (Arc::clone(&seen), s.library.clone());
+    o.cli = Box::new(FakeCli(Box::new(move |t| {
+        seen3.lock().unwrap().push(entries(&lib3));
+        assert_eq!(t.demo_pdf, demo());
+        assert_eq!(t.library, lib3);
+        Ok(vec![Exchange {
+            command: "method-reader field-station.pdf --library".into(),
+            output: "Field Station".into(),
+        }])
+    })));
     run_capture(o).unwrap();
     let seen = seen.lock().unwrap();
-    assert_eq!(seen.len(), 6);
+    // Six window pictures, and the command line once for both its themes.
+    assert_eq!(seen.len(), 7);
     for e in seen.iter() {
-        assert_eq!(e, &[".no-volumes", MARKER]);
+        let mut want = vec![".no-volumes".to_string(), MARKER.to_string()];
+        want.sort();
+        assert_eq!(e, &want);
     }
-    // Chrome drew the hero and framed each of the window's six pictures.
+    // Chrome framed each of the window's six pictures, drew the before and
+    // after twice, and drew the terminal then framed it, in each theme.
     let framed = framed.lock().unwrap();
-    assert_eq!(framed.len(), 7);
-    assert!(framed[0].ends_with("/tools/capture/hero.html"));
+    assert_eq!(framed.len(), 12);
     assert!(
-        framed[1].contains("/tools/capture/frame.html?img=/pass-one/drop-light.png&w=1280&h=800")
+        framed[0].contains("/tools/capture/frame.html?img=/pass-one/read-light.png&w=1280&h=800")
     );
+    assert!(framed[2].ends_with("/tools/capture/compare.html"));
+    assert!(framed[3].ends_with("/tools/capture/compare.html"));
+    assert!(
+        framed[4].contains("/tools/capture/frame.html?img=/pass-one/drop-light.png&w=1280&h=800")
+    );
+    assert!(framed[8].contains("/tools/capture/terminal.html?t=%5B%7B%22c%22"));
+    assert!(framed[9].contains(
+        "/tools/capture/frame.html?img=/pass-one/cli-light.png&w=1280&h=800&title=Terminal"
+    ));
+    assert!(framed[10].contains("/tools/capture/terminal.html?t="));
     let all = all_outputs(SHOTS);
     for out in &all {
         assert_eq!(std::fs::read(s.out.join(out)).unwrap(), PNG);
@@ -824,15 +908,18 @@ fn run_gives_the_window_the_scratch_environment_and_never_the_real_settings() {
     run_capture(o).unwrap();
     let got = got.lock().unwrap().clone();
     let var = |k: &str| got.iter().find(|(n, _)| n == k).unwrap().1.clone();
-    assert_eq!(var("SCREEPUB_LIBRARY"), s.library);
+    assert_eq!(var("METHOD_READER_LIBRARY"), s.library);
     // Under the run's own scratch library, cleared before every shot.
     assert_eq!(
-        var("SCREEPUB_CONFIG_DIR"),
+        var("METHOD_READER_CONFIG_DIR"),
         s.library.join(".capture-app-settings")
     );
-    assert_eq!(var("SCREEPUB_VOLUME_ROOTS"), s.library.join(".no-volumes"));
     assert_eq!(
-        var("SCREEPUB_REMARKABLE_ENDPOINT"),
+        var("METHOD_READER_VOLUME_ROOTS"),
+        s.library.join(".no-volumes")
+    );
+    assert_eq!(
+        var("METHOD_READER_REMARKABLE_ENDPOINT"),
         PathBuf::from("http://127.0.0.1:9")
     );
     // A scratch COPY of Calibre's settings, never the real folder.

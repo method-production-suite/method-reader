@@ -54,7 +54,7 @@ fn verb_hint(input: &str) -> String {
     {
         return String::new();
     }
-    format!(". Did you mean `screepub {input}`? The verb must come first")
+    format!(". Did you mean `method-reader {input}`? The verb must come first")
 }
 
 /// `checkOutputPath(flag, path)`: refuse a path that cannot be a file in a
@@ -194,7 +194,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
         if json {
             io.ok(serde_json::json!({ "version": version }));
         } else {
-            io.say(&format!("screepub {version}"));
+            io.say(&format!("method-reader {version} (Method Reader)"));
         }
         return Err(Stop::Exit(0));
     }
@@ -324,13 +324,13 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
         };
         let Some(s) = read.settings else {
             eprint_line(&format!(
-                "screepub: ignoring {}, which is not a settings object",
+                "method-reader: ignoring {}, which is not a settings object",
                 read.path
             ));
             continue;
         };
         eprint_line(&format!(
-            "screepub: using this script's saved settings in {}{}",
+            "method-reader: using this script's saved settings in {}{}",
             read.path,
             if format.as_ref().is_some_and(truthy) {
                 " (the options you passed override them)"
@@ -434,12 +434,12 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
 }
 
 /// `saveScriptSettings` for the pin. A debug build (the one the tests run)
-/// fails it on demand, with SCREEPUB_TEST_FAIL_PIN set, standing for the
+/// fails it on demand, with METHOD_READER_TEST_FAIL_PIN set, standing for the
 /// TypeScript test's preload that blocks only the sidecar's temp file: no
 /// filesystem trick fails that one write and not the book's. A release
 /// build has no such switch.
 fn save_pin(settings: &FormatOptions, stem: &str) -> Result<(), EngineError> {
-    if cfg!(debug_assertions) && std::env::var_os("SCREEPUB_TEST_FAIL_PIN").is_some() {
+    if cfg!(debug_assertions) && std::env::var_os("METHOD_READER_TEST_FAIL_PIN").is_some() {
         return Err(EngineError::plain("EACCES: permission denied (test)"));
     }
     save_script_settings(settings, stem)
@@ -580,7 +580,7 @@ fn finish(
             && let Err(e) = save_pin(&f.app_defaults, &input_stem)
         {
             eprint_line(&format!(
-                "screepub: could not save this script's settings to {pin}: {}",
+                "method-reader: could not save this script's settings to {pin}: {}",
                 e.message()
             ));
         }

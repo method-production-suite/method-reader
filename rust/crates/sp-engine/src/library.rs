@@ -11,8 +11,20 @@ use crate::fsx;
 use crate::jsjson;
 use crate::nodepath::{host, posix, win32};
 use crate::settings::app::{
-    absolute_env_folder, app_settings_path, home_folder, read_app_settings,
+    absolute_env_folder, app_settings_path, env_or_legacy, home_folder, read_app_settings,
 };
+
+/// The library's default folder name, under the person's Documents.
+pub const LIBRARY_FOLDER: &str = "Method Reader";
+/// The 0.12 app's name for it, Screepub's. Still known: a default library
+/// under the old name is used until it has moved
+/// ([`crate::legacy::move_legacy_folders`]).
+pub const LEGACY_LIBRARY_FOLDER: &str = "Screepub";
+
+/// The variable that puts the library anywhere.
+pub const LIBRARY_VAR: &str = "METHOD_READER_LIBRARY";
+/// Its 0.12 name, still read when [`LIBRARY_VAR`] is unset.
+pub const LEGACY_LIBRARY_VAR: &str = "SCREEPUB_LIBRARY";
 
 /// Names this folder's script. One file per script folder, and the one name
 /// a Library listing has to skip (or read, to show where a book came from).
@@ -68,10 +80,10 @@ fn xdg_documents(home: &str, env: &Env) -> Option<String> {
     as_documents(after)
 }
 
-/// `envLibraryOverride(env)`: SCREEPUB_LIBRARY, resolved, or `None` when
-/// unset, blank or relative.
+/// `envLibraryOverride(env)`: METHOD_READER_LIBRARY (or SCREEPUB_LIBRARY,
+/// when that is unset), resolved, or `None` when unset, blank or relative.
 pub fn env_library_override(env: &Env) -> Option<String> {
-    absolute_env_folder(env.get("SCREEPUB_LIBRARY"))
+    absolute_env_folder(env_or_legacy(env, LIBRARY_VAR, LEGACY_LIBRARY_VAR))
 }
 
 /// `resolvedIfAbsolute(platform, value)`: `value`, resolved, when it is
@@ -100,22 +112,45 @@ pub fn chosen_library_path(
     }
 }
 
-/// `platformLibraryDefault(platform, env)`: the library with no chosen
-/// folder and no SCREEPUB_LIBRARY.
-pub fn platform_library_default(platform: &str, env: &Env) -> String {
+/// The platform's Documents folder joined to `name`, by its path rules.
+fn documents_folder(platform: &str, env: &Env, name: &str) -> String {
     let home = home_folder(env);
     match platform {
-        "darwin" => posix::join(&[home.as_str(), "Documents", "Screepub"]),
-        "win32" => win32::join(&[home.as_str(), "Documents", "Screepub"]),
+        "darwin" => posix::join(&[home.as_str(), "Documents", name]),
+        "win32" => win32::join(&[home.as_str(), "Documents", name]),
         _ => {
             let documents = xdg_documents(&home, env)
                 .unwrap_or_else(|| posix::join(&[home.as_str(), "Documents"]));
-            posix::join(&[documents.as_str(), "Screepub"])
+            posix::join(&[documents.as_str(), name])
         }
     }
 }
 
-/// `libraryRoot(platform, env, settingsPath)`: SCREEPUB_LIBRARY, else the
+/// Method Reader's default library folder, whatever is on disk.
+pub fn library_default_folder(platform: &str, env: &Env) -> String {
+    documents_folder(platform, env, LIBRARY_FOLDER)
+}
+
+/// Screepub's default library folder, whatever is on disk.
+pub fn legacy_library_default_folder(platform: &str, env: &Env) -> String {
+    documents_folder(platform, env, LEGACY_LIBRARY_FOLDER)
+}
+
+/// `platformLibraryDefault(platform, env)`: the library with no chosen
+/// folder and no METHOD_READER_LIBRARY. Method Reader's folder; Screepub's
+/// while only that one is there (it had not moved yet, or could not be
+/// moved).
+pub fn platform_library_default(platform: &str, env: &Env) -> String {
+    let folder = library_default_folder(platform, env);
+    let legacy = legacy_library_default_folder(platform, env);
+    if !fsx::exists(&folder) && fsx::is_dir(&legacy) {
+        legacy
+    } else {
+        folder
+    }
+}
+
+/// `libraryRoot(platform, env, settingsPath)`: METHOD_READER_LIBRARY, else the
 /// folder chosen in the app, else the platform default.
 pub fn library_root(platform: &str, env: &Env, settings_path: Option<&str>) -> String {
     if let Some(over) = env_library_override(env) {
@@ -217,16 +252,29 @@ pub fn existing_library_output(input: &str, root: &str) -> Result<Option<String>
 /// `adoptSidecar(input, output)`: carry a sidecar from beside the PDF into
 /// the library on the first library conversion. Copied, never moved, and
 /// never over a sidecar already in the library.
+///
+/// The sidecar beside the PDF may carry the 0.12 name
+/// (`<Stem>.screepub.json`); it lands under the new one. One already in the
+/// library under either name is the script's tuning, and is kept.
 pub fn adopt_sidecar(input: &str, output: &str) -> Result<bool, EngineError> {
+    use crate::settings::sidecar::{LEGACY_SIDECAR_SUFFIX, SIDECAR_SUFFIX};
     let source = host::resolve(&[input]);
-    let existing = host::join(&[
-        host::dirname(&source),
-        format!("{}.screepub.json", stem_of(&source)),
-    ]);
-    let landing = format!("{output}.screepub.json");
-    if fsx::exists(&landing) || !fsx::exists(&existing) {
+    let beside = |suffix: &str| {
+        host::join(&[
+            host::dirname(&source),
+            format!("{}{suffix}", stem_of(&source)),
+        ])
+    };
+    let landing = format!("{output}{SIDECAR_SUFFIX}");
+    if fsx::exists(&landing) || fsx::exists(&format!("{output}{LEGACY_SIDECAR_SUFFIX}")) {
         return Ok(false);
     }
+    let existing = [beside(SIDECAR_SUFFIX), beside(LEGACY_SIDECAR_SUFFIX)]
+        .into_iter()
+        .find(|p| fsx::exists(p));
+    let Some(existing) = existing else {
+        return Ok(false);
+    };
     fsx::copy_atomic(&existing, &landing)?;
     Ok(true)
 }

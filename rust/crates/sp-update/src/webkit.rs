@@ -4,9 +4,11 @@
 //! (desktop/ui/update.js: `updateLastChecked`, `updateOptIn`,
 //! `updateAsked`, `updateFound`), and WebKit keeps that storage per bundle
 //! identifier, under `~/Library/WebKit/<identifier>/WebsiteData/`. The Rust
-//! app has the same identifier but no WebKit, so on its first run (when
-//! its own `window-storage.json` does not exist yet) it reads those four
-//! values from the window's file and starts from them. Someone who said
+//! app has no WebKit, so on its first run (when its own
+//! `window-storage.json` does not exist yet) it reads those four values
+//! from the window's file, under the identifier the window had (the app's
+//! caller names it: from 0.13 the app's own identifier differs), and
+//! starts from them. Someone who said
 //! yes stays opted in; someone who said no is not asked again.
 //!
 //! Two layouts are known: the older

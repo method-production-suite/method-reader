@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/ssandweiss/screepub/security/advisories/new
+    url: https://github.com/method-production-suite/method-reader/security/advisories/new
     about: Report privately, not as a public issue. See SECURITY.md.
   - name: Device support (Kobo, tolino, reMarkable)
-    url: https://github.com/ssandweiss/screepub/issues/new?labels=device&title=Device+report%3A+
+    url: https://github.com/method-production-suite/method-reader/issues/new?labels=device&title=Device+report%3A+
     about: These are written but have never run on real hardware. Reports either way are welcome.

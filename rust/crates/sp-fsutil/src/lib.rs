@@ -1,4 +1,4 @@
-//! Screepub's file rules, shared by sp-device and sp-engine.
+//! Method Reader's file rules, shared by sp-device and sp-engine.
 //!
 //! - [`atomic`]: write-then-rename for every file the engine keeps
 //!   (src/atomic-write.ts).

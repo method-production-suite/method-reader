@@ -175,7 +175,7 @@ fn every_file_the_readme_offers_is_one_the_release_uploads_with_its_count_stated
     }
     let table_rows = install()
         .lines()
-        .filter(|l| l.starts_with("| ") && l.contains("`Screepub"))
+        .filter(|l| l.starts_with("| ") && l.contains("`Method-Reader"))
         .count();
     assert_eq!(
         table_rows,
@@ -252,7 +252,11 @@ fn the_readme_tells_an_intel_mac_which_version_is_its_last_and_where_it_is() {
     let at = install.find("Intel Mac").expect("an Intel Mac sentence");
     let intel = &install[at..];
     assert!(intel.contains("0.9.0"));
-    assert!(intel.contains("https://github.com/ssandweiss/screepub/releases/tag/v0.9.0"));
+    assert!(
+        intel.contains(
+            "https://github.com/method-production-suite/method-reader/releases/tag/v0.9.0"
+        )
+    );
     assert!(intel.contains("keeps working"));
 }
 
@@ -266,7 +270,7 @@ fn the_download_page_carries_the_unsigned_windows_warning() {
 #[test]
 fn the_site_and_the_readme_offer_one_mac_download_the_apps_image() {
     let latest_mac = format!(
-        "https://github.com/ssandweiss/screepub/releases/latest/download/{}",
+        "https://github.com/method-production-suite/method-reader/releases/latest/download/{}",
         names::MAC_DMG
     );
     let site = read("site/index.html");
@@ -313,7 +317,7 @@ fn nothing_anywhere_promises_winget_the_aur_or_the_retired_cask() {
     for f in ["README.md", "docs/developers.md", "site/index.html"] {
         assert!(!read(f).contains("--cask"), "{f}");
     }
-    assert!(readme().contains("brew install --formula ssandweiss/tap/screepub"));
+    assert!(readme().contains("brew install --formula ssandweiss/tap/method-reader"));
 }
 
 // ---- docs/verification-ledger.md, the one ledger ----------------------
@@ -474,7 +478,7 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
         assert!(text.contains(meaning), "{f}");
         assert!(!text.contains('\u{2014}'), "{f}");
         for (what, re) in [
-            ("FDX", r"FDX[^.]{0,120}\(beta\)"),
+            ("FDX", r"(?i)fdx[^.]{0,120}\(beta\)"),
             ("pictures", r"[Pp]ictures[^.]{0,160}\(beta\)"),
             ("eject", r"[Ee]ject[^.]{0,160}\(beta on Windows and Linux\)"),
             ("requests", r"isn.t here[^.]{0,200}\(beta\)"),
@@ -483,4 +487,35 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
             assert!(Regex::new(re).unwrap().is_match(&text), "{f}: {what}");
         }
     }
+}
+
+#[test]
+fn the_readme_and_the_site_tell_a_screepub_user_about_the_new_name() {
+    // Someone arriving from an old link, a Homebrew warning or the 0.12
+    // app knows it as Screepub: both pages say once, plainly, that this is
+    // the same app under a new name and that updating keeps their things.
+    let readme = readme();
+    assert!(readme.contains("Method Reader is the new name for Screepub"));
+    assert!(readme.contains("keeps your settings and your library"));
+    let site = read("site/index.html");
+    assert!(site.contains("Screepub is now Method Reader."));
+    assert!(site.contains("keeps your settings and your library"));
+}
+
+#[test]
+fn the_readme_says_plainly_what_the_update_check_sends_and_how_to_turn_it_off() {
+    let section = flat(&section_of(
+        &readme(),
+        "## Your script stays on your machine",
+    ));
+    assert!(section.contains("no network except checking for updates, which you can turn off"));
+    assert!(section.contains("two minutes after the window opens and every six hours"));
+    assert!(section.contains("`latest.json`"));
+    assert!(section.contains("carries the app's name and version"));
+    assert!(section.contains("nothing about your scripts"));
+    assert!(section.contains("**Help > Check for Updates Automatically**"));
+    assert!(section.contains("old once-a-day question, they stay off"));
+    // The 0.12 wording, retired with the question.
+    assert!(!section.contains("only if you say yes"));
+    assert!(!section.contains("Method Reader reaches the network only when you ask"));
 }

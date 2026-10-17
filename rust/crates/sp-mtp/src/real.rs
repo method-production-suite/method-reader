@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn the_file_stream_yields_the_whole_file_in_chunks() {
-        let file = TempFile::new("screepub-mtp-stream");
+        let file = TempFile::new("method-reader-mtp-stream");
         let path = &file.0;
         let data: Vec<u8> = (0..(CHUNK * 2 + 17)).map(|i| (i % 251) as u8).collect();
         std::fs::write(path, &data).unwrap();

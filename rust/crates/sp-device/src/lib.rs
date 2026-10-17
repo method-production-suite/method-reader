@@ -1,4 +1,4 @@
-//! Screepub's readers, ported from src/device/, src/reveal.ts and the
+//! Method Reader's readers, ported from src/device/, src/reveal.ts and the
 //! device verbs' handlers (src/cli-devices.ts, src/cli-eject.ts,
 //! src/cli-reveal.ts).
 //!
@@ -12,7 +12,7 @@
 //!   Each returns a serde value whose JSON is the TypeScript's field for
 //!   field, or a [`error::CliError`] with the same code and words.
 //! - BETA and off until hardware day: [`mtp`] (Kindles that connect over
-//!   MTP, through the `screepub-mtp` helper in sp-mtp) and
+//!   MTP, through the `method-reader-mtp` helper in sp-mtp) and
 //!   [`camera_import`] (macOS's ptpcamerad, paused for one copy).
 //!
 //! Every child process goes through [`process::Runner`] or

@@ -4,7 +4,7 @@
 # why in the commit, and keep THIRD-PARTY-NOTICES.md in step.
 
 [graph]
-# Every platform Screepub ships for, and the Worker's wasm32: a crate only
+# Every platform Method Reader ships for, and the Worker's wasm32: a crate only
 # one of them pulls in is still a crate the release carries.
 targets = [
   "aarch64-apple-darwin",
@@ -17,13 +17,13 @@ all-features = true
 
 [advisories]
 # Every advisory is an error unless it is listed here, with its reason.
-# These three were known at the cutover (2026-10-12). None is a
+# The first three were known at the cutover (2026-10-12). None is a
 # vulnerability; each says a crate is no longer maintained.
 ignore = [
   # proc-macro-error 1.0.4: a build-time macro helper inside glib-macros,
   # which reaches the lock file only through GTK, through muda, which
   # sp-app builds for macOS alone (where muda does not use GTK). Nothing
-  # Screepub ships runs it. Goes when muda moves off gtk-rs 0.18.
+  # Method Reader ships runs it. Goes when muda moves off gtk-rs 0.18.
   { id = "RUSTSEC-2024-0370", reason = "build-time macro via muda's Linux-only GTK, which sp-app never builds on Linux" },
   # ttf-parser 0.25.1: read through ab_glyph by sctk-adwaita, the window
   # frame winit draws on Wayland. It parses only the fonts the system
@@ -33,6 +33,14 @@ ignore = [
   # unsafe-libyaml 0.2.11: serde_yaml, a dev-dependency of xtask that reads
   # the workflow files in its tests. It never ships.
   { id = "RUSTSEC-2024-0449", reason = "xtask's tests only (serde_yaml reads .github/workflows); never shipped" },
+  # zbus_names, zvariant and zvariant_derive 5.x (2026-10-16): folded into
+  # zbus 6 as its own modules, so the standalone crates are unmaintained.
+  # They reach the lock only through zbus 5, which AccessKit's Linux
+  # screen-reader bridge (accesskit_unix, via eframe) and mundy use. Not a
+  # vulnerability. Goes when AccessKit and mundy move to zbus 6.
+  { id = "RUSTSEC-2026-0370", reason = "zvariant: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
+  { id = "RUSTSEC-2026-0371", reason = "zbus_names: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
+  { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
 ]
 
 [licenses]
@@ -59,7 +67,8 @@ allow = [
   "Zlib",
 ]
 confidence-threshold = 0.9
-# Screepub's own crates (AGPL-3.0-or-later, never published).
+# Method Reader's own crates (MIT OR Apache-2.0, sp-azw3 GPL-3.0-only; never
+# published).
 private = { ignore = true }
 
 [bans]

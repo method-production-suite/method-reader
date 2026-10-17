@@ -1,28 +1,39 @@
-/* Screepub web identity. Every color mirrors brand/tokens.json, the source,
-   and rust/crates/xtask/tests/brand.rs enforces that. See brand/README.md before
-   editing.
-   var() and clamp() are correct here: this is the website, not the EPUB. */
+/* Method Reader's window identity, in the Method family palette. Every color
+   mirrors brand/tokens.json, the source, and rust/crates/xtask/tests/brand.rs
+   enforces that. The names are the window's own (brass is the accent role);
+   brand/README.md maps each to its site token. See it before editing.
+   var() and clamp() are correct here: this is not the EPUB. */
 
 :root {
-  --paper: #F7F2E6;
-  --panel: #FBF8F0;
-  --ink: #1D1B16;
-  --ink-soft: #4A453A;
-  --ink-muted: #6D6960;
+  --paper: #F7F6F2;
+  --panel: #FFFFFF;
+  --ink: #1C2228;
+  --ink-soft: #3A424C;
+  --ink-muted: #59626D;
   --present: #3E7D4A;
-  --brass: #E8A33D;
-  --ground: #23272F;
+  --brass: #7052BA;
+  --ground: #1C2228;
   --alarm: #AF3220;
-  --hole: rgba(29,27,22,0.10);
-  --ink-on-brass: #1D1B16;
+  --note: #8A5A00;
+  --hole: rgba(28,34,40,0.10);
+  --ink-on-brass: #FFFFFF;
+  --bar: #EFEDE7;
+  --rule: #DEDBD3;
+  --rule-strong: #8F897C;
+  --brass-soft: #ECE7F7;
 
-  --brass-specular: #FDF1CE;
-  --brass-highlight: #F6D486;
-  --brass-shadow: #BE7C1E;
-  --brass-rim: #8B5917;
-  --brass-edge: #7A5116;
-  --brass-bounce: #F7CE7E;
+  --brass-specular: #F3EFFB;
+  --brass-highlight: #7C5FC6;
+  --brass-shadow: #573E96;
+  --brass-rim: #3F2C6E;
+  --brass-edge: #33245A;
+  --brass-bounce: #CDBDF6;
 
+  /* The window's chrome (every control, label, tab, heading and message) is
+     the platform's own UI sans, as in Method Budget and Method Schedule; the
+     window loads it from the system and falls back to Inter (bundled, OFL).
+     Courier Prime and Literata set the script itself, nothing else. */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-structure: 'Courier Prime', 'Courier New', ui-monospace, monospace;
   --font-prose: 'Literata', Georgia, 'Times New Roman', serif;
 
@@ -42,11 +53,12 @@
   --text-title: 30px;     /* page title, narrow viewports */
   --text-display: 44px;   /* page title */
 
-  /* Radius. Three steps, all of them values the Swift Mac app's theme used.
-     shot-frame's stray 4px was the only disagreement and is now --well. */
-  --radius-mark: 2px;     /* toggle boxes, rubber stamps */
-  --radius: 3px;          /* buttons and controls */
-  --radius-well: 5px;     /* large containers: drop well, shot frame */
+  /* Radius. Three steps, in the family's proportions: Method Schedule's
+     controls are 5px, Method Budget's 6px, and both round a sheet or a
+     card more than a control. */
+  --radius-mark: 2px;     /* toggle boxes, the Beta badge, a code chip */
+  --radius: 5px;          /* buttons, fields, tabs, device cards */
+  --radius-well: 8px;     /* large containers: drop well, panels, sheets */
 
   /* Motion. The app animates presses at 0.1s and state changes at 0.2s;
      the web had 0.1s inline in one file and nothing anywhere else. */
@@ -71,14 +83,15 @@
   --space-9: 3rem;
   --space-10: 3.5rem;
 
-  /* The frame, in pixels of the WINDOW (layout pass, 2026-09-29). They were
-     percentages of a page capped at 1000px and centred, which pulled the
-     brads toward the middle of a wide window. Now the brads sit 44px from
-     the window's left edge, content starts at 100px, the right margin is
-     48px, and the content between is one block capped at 1180px. */
+  /* The frame, in pixels of the WINDOW (2026-10-16, the Method family's
+     layout): the tab strip under the system title bar, then the page with
+     32px either side (16px at 720px and under) and one content block
+     capped at 1180px, centred. --hole-center and --brad-size describe the
+     retired Screepub binding; only the brad.html and page-frame.html
+     previews still draw it, as history. */
   --block-max: 1180px;
-  --binding-margin: 100px;
-  --page-right: 48px;
+  --binding-margin: 32px;
+  --page-right: 32px;
   --hole-center: 44px;
   --brad-size: clamp(20px, 3.4%, 36px);
   --measure: 66ch;
@@ -87,14 +100,27 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #1E1C19;
-    --panel: #22201C;
-    --ink: #E8E2D3;
-    --ink-soft: #C4BDAC;
-    --ink-muted: #8F887C;
+    --paper: #111417;
+    --panel: #1B1F24;
+    --ink: #E4E8EC;
+    --ink-soft: #C3CAD2;
+    --ink-muted: #9AA3AD;
     --present: #6FBF7E;
-    --ground: #141517;
+    --brass: #B49CF0;
+    --ground: #0B0C0E;
     --alarm: #EA7A65;
+    --note: #E3B341;
     --hole: rgba(0,0,0,0.45);
+    --ink-on-brass: #160F26;
+    --bar: #22272E;
+    --rule: #2B3138;
+    --rule-strong: #67717D;
+    --brass-soft: #2A2140;
+    --brass-specular: #F5F1FD;
+    --brass-highlight: #CDBDF6;
+    --brass-shadow: #8F74D6;
+    --brass-rim: #6B51B2;
+    --brass-edge: #574096;
+    --brass-bounce: #E4DAFA;
   }
 }

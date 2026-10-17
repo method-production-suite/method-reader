@@ -1,5 +1,5 @@
 # The tests that run the real Calibre (Calibre's own reader opens
-# Screepub's AZW3 and lays our EPUB's dialogue column out with its margins,
+# Method Reader's AZW3 and lays our EPUB's dialogue column out with its margins,
 # KEPUB carries koboSpan markup, the KFX plugin listing and status probe,
 # the MOBI round trips) skip on a machine without Calibre, and no runner in
 # rust.yml has it. Weekly is the right cadence: they guard against CALIBRE
@@ -44,9 +44,9 @@ jobs:
         run: brew install --cask calibre
       # The Calibre tests skip without Calibre, so a Calibre the engine can
       # no longer FIND would leave this job green while testing nothing.
-      # SCREEPUB_REQUIRE_CALIBRE makes sp-engine's tests/calibre_found.rs
+      # METHOD_READER_REQUIRE_CALIBRE makes sp-engine's tests/calibre_found.rs
       # fail instead, by the engine's own discovery rule.
       - name: Every test, with Calibre installed
         env:
-          SCREEPUB_REQUIRE_CALIBRE: '1'
+          METHOD_READER_REQUIRE_CALIBRE: '1'
         run: cargo test --workspace --locked

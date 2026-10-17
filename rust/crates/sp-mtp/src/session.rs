@@ -44,7 +44,7 @@ impl DevError {
             DevError::NotFound => "it could not find that file or folder".into(),
             DevError::AccessDenied => "it refused to write there".into(),
             DevError::Exclusive => "another program is using it".into(),
-            DevError::Permission => "this computer did not allow Screepub to open it".into(),
+            DevError::Permission => "this computer did not allow Method Reader to open it".into(),
             DevError::Unsupported => "it does not support that".into(),
             DevError::StorageFull => "it is full".into(),
             DevError::Disconnected => "it was unplugged or stopped answering".into(),

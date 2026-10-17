@@ -12,7 +12,7 @@ fn reveal_help_describes_the_verb_and_exits_0() {
     let sb = Sandbox::new();
     let ran = sb.run(&["reveal", "--help"]);
     assert_eq!(ran.code, 0);
-    assert!(ran.stdout.contains("screepub reveal"));
+    assert!(ran.stdout.contains("method-reader reveal"));
     assert!(ran.stdout.contains("file manager"));
 }
 
@@ -63,7 +63,7 @@ fn the_top_level_help_usage_lists_reveal() {
     let sb = Sandbox::new();
     let ran = sb.run(&["--help"]);
     assert_eq!(ran.code, 0);
-    assert!(ran.stdout.contains("screepub reveal <file> [--json]"));
+    assert!(ran.stdout.contains("method-reader reveal <file> [--json]"));
     assert!(
         ran.stdout
             .contains("show a file in the system's file manager")

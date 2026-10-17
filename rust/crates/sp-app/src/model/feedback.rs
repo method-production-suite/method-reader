@@ -1,6 +1,7 @@
 //! A pre-filled bug report (was `desktop/ui/feedback.js`).
 
-pub const NEW_ISSUE_BASE: &str = "https://github.com/ssandweiss/screepub/issues/new";
+pub const NEW_ISSUE_BASE: &str =
+    "https://github.com/method-production-suite/method-reader/issues/new";
 /// About the longest body a report carries.
 pub const MAX_BODY: usize = 2000;
 
@@ -28,7 +29,10 @@ pub fn new_issue_url(
     home: Option<&str>,
 ) -> String {
     let head = "<!-- Describe the issue or suggestion. -->\n\n";
-    let foot = format!("\n---\nScreepub {app_version} · {os_version}\n");
+    let foot = format!(
+        "\n---\n{} {app_version} · {os_version}\n",
+        super::names::PRODUCT
+    );
     let mut block = String::new();
     if let Some(context) = context.filter(|c| !c.trim().is_empty()) {
         let open = "\n**What happened:**\n";
@@ -202,8 +206,10 @@ mod tests {
     #[test]
     fn the_report_carries_both_versions_and_the_context() {
         let url = new_issue_url("0.11.1", "MacIntel", Some("scanned: no text"), None);
-        assert!(url.starts_with("https://github.com/ssandweiss/screepub/issues/new?body="));
-        assert!(url.contains("Screepub+0.11.1+%C2%B7+MacIntel"));
+        assert!(url.starts_with(
+            "https://github.com/method-production-suite/method-reader/issues/new?body="
+        ));
+        assert!(url.contains("Method+Reader+0.11.1+%C2%B7+MacIntel"));
         assert!(url.contains("scanned%3A+no+text"));
         let none = new_issue_url("0.11.1", "x", Some("  "), None);
         assert!(!none.contains("What+happened"));
@@ -214,7 +220,7 @@ mod tests {
         let long = "x".repeat(5000);
         let url = new_issue_url("0.11.1", "Linux", Some(&long), None);
         assert!(url.contains("%E2%80%A6"), "an ellipsis where it was cut");
-        assert!(url.ends_with("Screepub+0.11.1+%C2%B7+Linux%0A"));
+        assert!(url.ends_with("Method+Reader+0.11.1+%C2%B7+Linux%0A"));
     }
 
     #[test]

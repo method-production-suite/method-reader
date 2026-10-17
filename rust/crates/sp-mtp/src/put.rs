@@ -313,8 +313,10 @@ mod tests {
     fn book(bytes: &[u8]) -> Book {
         static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let n = N.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let path =
-            std::env::temp_dir().join(format!("screepub-mtp-put-{}-{n}.kfx", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "method-reader-mtp-put-{}-{n}.kfx",
+            std::process::id()
+        ));
         std::fs::File::create(&path)
             .unwrap()
             .write_all(bytes)
@@ -352,8 +354,8 @@ mod tests {
                 .filter(|l| l.starts_with("upload") || l.starts_with("rename"))
                 .collect::<Vec<_>>(),
             vec![
-                "upload .Title.kfx.screepub-part",
-                "rename .Title.kfx.screepub-part -> Title.kfx"
+                "upload .Title.kfx.method-reader-part",
+                "rename .Title.kfx.method-reader-part -> Title.kfx"
             ]
         );
     }
@@ -411,7 +413,7 @@ mod tests {
     fn a_leftover_temp_file_from_a_crash_is_removed_first() {
         let mut s = FakeSession::kindle();
         let docs = s.add(None, "documents", true, &[]);
-        s.add(Some(docs), ".Title.kfx.screepub-part", false, b"half");
+        s.add(Some(docs), ".Title.kfx.method-reader-part", false, b"half");
         let b = book(b"NEW");
         put(&mut s, &b.path, b.size, &dest("documents/Title.kfx")).unwrap();
         assert_eq!(s.tree(), vec!["documents/", "documents/Title.kfx"]);
@@ -428,7 +430,7 @@ mod tests {
         assert_eq!(out.method, Method::Replace);
         assert_eq!(s.content("documents/Title.kfx").unwrap(), b"NEW");
         assert!(
-            !s.log.iter().any(|l| l.contains("screepub-part")),
+            !s.log.iter().any(|l| l.contains("method-reader-part")),
             "{:?}",
             s.log
         );

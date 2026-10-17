@@ -46,7 +46,7 @@ fn nothing_lands_beside_the_pdf_and_everything_lands_in_the_library() {
     let mut sb = Sandbox::new();
     let pdf = script(&sb, "Bright Angel.pdf");
     let root = sb.p("lib/not-yet-made");
-    sb.set("SCREEPUB_LIBRARY", root.clone());
+    sb.set("METHOD_READER_LIBRARY", root.clone());
     let scripts = sb.path("scripts");
     let before = names(&scripts);
 
@@ -69,13 +69,13 @@ fn nothing_lands_beside_the_pdf_and_everything_lands_in_the_library() {
     assert!(Path::new(answer["epubPath"].as_str().unwrap()).exists());
     assert!(Path::new(answer["fountainPath"].as_str().unwrap()).exists());
     // A library root that did not exist is made on demand; the
-    // .screepub.json is the pin.
+    // .method-reader.json is the pin.
     assert_eq!(
         names(Path::new(&folder)),
         [
             "Bright Angel.epub",
             "Bright Angel.fountain",
-            "Bright Angel.screepub.json",
+            "Bright Angel.method-reader.json",
             "source.json",
         ]
     );
@@ -98,7 +98,10 @@ fn a_sidecar_beside_the_pdf_survives_the_move_into_the_library() {
     let sb = Sandbox::new();
     let pdf = script(&sb, "Tuned.pdf");
     // 41 is not the default, so finding it proves the file travelled.
-    sb.write("scripts/Tuned.screepub.json", "{\"cueIndentPct\":41}\n");
+    sb.write(
+        "scripts/Tuned.method-reader.json",
+        "{\"cueIndentPct\":41}\n",
+    );
     let defaults: Value = serde_json::from_str(
         &std::fs::read_to_string(repo_root().join("format-defaults.json")).unwrap(),
     )
@@ -106,7 +109,7 @@ fn a_sidecar_beside_the_pdf_survives_the_move_into_the_library() {
     assert_ne!(defaults["cueIndentPct"], json!(41));
 
     let answer = ok(&sb, &[&pdf, "--library", "--json"]);
-    // Read back the way the window does: `screepub settings` on the library
+    // Read back the way the window does: `method-reader settings` on the library
     // .fountain the answer handed over.
     let said = ok(
         &sb,
@@ -119,7 +122,7 @@ fn a_sidecar_beside_the_pdf_survives_the_move_into_the_library() {
     assert_eq!(said["settings"]["cueIndentPct"], json!(41));
     assert_eq!(
         said["sidecar"],
-        json!(sb.p("library/Tuned/Tuned.screepub.json"))
+        json!(sb.p("library/Tuned/Tuned.method-reader.json"))
     );
 }
 
@@ -183,7 +186,7 @@ fn a_library_it_cannot_make_is_one_json_object_not_a_stack_trace() {
     let locked = sb.mkdir("locked");
     std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o500)).unwrap();
     let pdf = script(&sb, "NoRoom.pdf");
-    sb.set("SCREEPUB_LIBRARY", sb.p("locked/screepub"));
+    sb.set("METHOD_READER_LIBRARY", sb.p("locked/screepub"));
 
     let ran = sb.run(&[&pdf, "--library", "--json"]);
     // Unlocked again before anything can fail, so the scratch folder goes.

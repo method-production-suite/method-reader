@@ -5,12 +5,12 @@
 **Please do not open a public issue for a security problem.**
 
 Report it privately through GitHub:
-[**Report a vulnerability**](https://github.com/ssandweiss/screepub/security/advisories/new).
+[**Report a vulnerability**](https://github.com/method-production-suite/method-reader/security/advisories/new).
 That opens a draft advisory only you and the maintainer can see.
 
 Please include your operating system and its version (macOS, Windows or
-Linux), which Screepub (the app or the command line), the Screepub version
-(the version stamp at the foot of the app's window, or `screepub --version`),
+Linux), which Method Reader (the app or the command line), the Method Reader version
+(the version stamp at the foot of the app's window, or `method-reader --version`),
 and, if a specific file
 triggers it, how to build a PDF that reproduces the problem. **Don't attach a
 confidential script.** If a real one is the only reproducer, say so and we'll
@@ -23,9 +23,9 @@ be.
 ## What's in scope
 
 The interesting attack surface is **the PDF parser**, because that's the one
-place Screepub handles a file it didn't create. A screenplay arrives from a
-producer, an agency, or a stranger, and Screepub opens it. The PDF reader is
-Screepub's own, written in pure Rust (`rust/crates/sp-pdf`), and every crate
+place Method Reader handles a file it didn't create. A screenplay arrives from a
+producer, an agency, or a stranger, and Method Reader opens it. The PDF reader is
+Method Reader's own, written in pure Rust (`rust/crates/sp-pdf`), and every crate
 in the workspace forbids `unsafe` code.
 
 - **Malicious PDF leading to code execution, or reading or writing files
@@ -33,11 +33,13 @@ in the workspace forbids `unsafe` code.
 - **Malicious PDF making the engine hang or exhaust memory** on a file a
   reasonable person would call small.
 - **Anything that causes a script to leave the machine without you asking.**
-  Converting makes no network requests. Screepub reaches the network only
-  when you ask it to: uploading to a docked reMarkable over USB (plain HTTP
+  Converting makes no network requests. Method Reader uses no network except
+  checking for updates, which you can turn off (on a Mac it fetches the
+  release's `latest.json` from GitHub, carrying only the app's name and
+  version). Otherwise it reaches the network only when you ask it to: uploading to a docked reMarkable over USB (plain HTTP
   to the tablet's own web interface on the USB link), opening a
   page in your browser, installing the KFX plugin from Calibre's plugin
-  index, and checking for or installing an update if you switched that on.
+  index, and installing an update you chose.
   The [README](README.md#your-script-stays-on-your-machine) lists each one.
   A way to make it do anything else is a real finding.
 - **The update path.** The app installs an update only after checking its
@@ -54,20 +56,20 @@ in the workspace forbids `unsafe` code.
 ## What's out of scope
 
 - Bugs in [Calibre](https://calibre-ebook.com) or Amazon's Kindle Previewer,
-  which are optional and which Screepub runs only if you installed them
+  which are optional and which Method Reader runs only if you installed them
   yourself. Report those upstream.
 - What Amazon does with a document after you send it to your Kindle by email
   or through Send to Kindle. That's between you and Amazon.
 - The Windows downloads being unsigned. That is known and stated on the
   download pages.
 - Vulnerabilities in a dependency with no path to exploitation through
-  Screepub, though if you're unsure whether a path exists, ask.
+  Method Reader, though if you're unsure whether a path exists, ask.
 - A PDF that converts badly, produces garbled output, or crashes on
   malformed-but-harmless input. Those are ordinary bugs; please
-  [open an issue](https://github.com/ssandweiss/screepub/issues/new/choose).
+  [open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose).
 
 ## Supported versions
 
-The latest tagged release, only, on macOS, Windows and Linux. Screepub is a
+The latest tagged release, only, on macOS, Windows and Linux. Method Reader is a
 small project maintained by one person; there are no long-term support
 branches.

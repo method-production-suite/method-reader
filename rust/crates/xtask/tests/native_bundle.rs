@@ -39,24 +39,37 @@ fn names_of(paths: &[PathBuf]) -> Vec<String> {
 // ---- the handover: the native app is the Tauri app's successor ----
 
 #[test]
-fn the_native_app_keeps_the_tauri_window_s_identity() {
-    // What 0.11.1's desktop/src-tauri/tauri.conf.json said, recorded when
-    // the Rust cutover deleted it: the window that updates itself into this
-    // app must find the same app, so these never change.
-    assert_eq!(NATIVE_APP.identifier, "com.darkwell.screepub");
-    assert_eq!(NATIVE_APP.product_name, "Screepub");
-    assert_eq!(NATIVE_APP.publisher, "Darkwell Entertainment LLC");
+fn the_native_app_is_method_reader_s_own() {
+    // From 0.13 the identifier is Method Reader's own; up to 0.12.x it was
+    // what 0.11.1's desktop/src-tauri/tauri.conf.json said
+    // (sp_update::LEGACY_IDENTIFIER). The old updaters swap by folder and
+    // never compare it, and the app moves what the old one kept, once.
+    assert_eq!(NATIVE_APP.identifier, "com.methodreader.desktop");
+    assert_eq!(NATIVE_APP.identifier, sp_update::IDENTIFIER);
+    assert_eq!(NATIVE_APP.product_name, "Method Reader");
+    assert_eq!(
+        NATIVE_APP.publisher,
+        "Method Production Suite Team and the Method Reader contributors"
+    );
     assert_eq!(
         NATIVE_APP.short_description,
         "Turn a screenplay PDF into a reflowable e-book."
     );
     assert_eq!(
         NATIVE_APP.long_description,
-        "Screepub converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB."
+        "Method Reader converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB."
     );
     assert_eq!(NATIVE_APP.minimum_macos, "13.0");
     let resources: Vec<&str> = NATIVE_APP.resources.iter().map(|(_, n)| *n).collect();
-    assert_eq!(resources, ["LICENSE", "THIRD-PARTY-NOTICES.md"]);
+    assert_eq!(
+        resources,
+        [
+            "LICENSE-MIT",
+            "LICENSE-APACHE",
+            "LICENSE-GPL-3.0",
+            "THIRD-PARTY-NOTICES.md"
+        ]
+    );
     // And its updater key (plugins.updater.pubkey), whose one home is now
     // sp-update.
     assert_eq!(
@@ -171,20 +184,20 @@ fn the_cargo_build_is_the_window_crate_locked_and_targeted() {
             "--package",
             "sp-app",
             "--bin",
-            "screepub-window",
+            "method-reader-app",
             "--target",
             MAC_TARGET
         ]
     );
     let tools = NativeTools::from_env(&env_of(&[
-        ("SCREEPUB_HDIUTIL", "/fake/hdiutil"),
-        ("SCREEPUB_CARGO", "/x/cargo"),
+        ("METHOD_READER_HDIUTIL", "/fake/hdiutil"),
+        ("METHOD_READER_CARGO", "/x/cargo"),
     ]));
     assert_eq!(tools.hdiutil, "/fake/hdiutil");
     assert_eq!(cargo_argv(&tools, None)[0], "/x/cargo");
     assert!(
         binary_path(Path::new("r"), None, BundleOs::Windows)
-            .ends_with("target/release/screepub-window.exe")
+            .ends_with("target/release/method-reader-app.exe")
     );
 }
 
@@ -206,45 +219,50 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
     .unwrap();
     assert_eq!(
         names_of(&made),
-        ["Screepub-linux-amd64.deb", "Screepub-linux-x86_64.rpm"]
+        [
+            "Method-Reader-linux-amd64.deb",
+            "Method-Reader-linux-x86_64.rpm"
+        ]
     );
     assert_eq!(fake.tools(), ["cargo"]);
 
-    let deb = out.join("Screepub-linux-amd64.deb");
-    let rpm = out.join("Screepub-linux-x86_64.rpm");
+    let deb = out.join("Method-Reader-linux-amd64.deb");
+    let rpm = out.join("Method-Reader-linux-x86_64.rpm");
     for pkg in [&deb, &rpm] {
         let entries = bundle_entries(pkg).unwrap();
         // The Tauri window's executable name, so a launcher or script that
         // names it still works after the update (sp-release names.rs).
-        let bin = find_entry(&entries, "usr/bin/screepub-desktop").unwrap();
+        let bin = find_entry(&entries, "usr/bin/method-reader-app").unwrap();
         assert_eq!(bin.data, the_binary(), "{}", pkg.display());
         assert_eq!(bin.mode & 0o777, 0o755);
-        let desktop = find_entry(&entries, "usr/share/applications/Screepub.desktop").unwrap();
+        let desktop = find_entry(&entries, "usr/share/applications/method-reader.desktop").unwrap();
         let text = String::from_utf8_lossy(&desktop.data);
         assert!(
-            text.contains("Exec=screepub-desktop\n") && text.contains("Icon=screepub-desktop\n"),
+            text.contains("Exec=method-reader-app\n") && text.contains("Icon=method-reader-app\n"),
             "{text}"
         );
-        assert_eq!(
-            find_entry(&entries, "usr/lib/Screepub/LICENSE")
-                .unwrap()
-                .mode
-                & 0o111,
-            0
-        );
-        find_entry(&entries, "usr/lib/Screepub/THIRD-PARTY-NOTICES.md").unwrap();
+        for lic in ["LICENSE-MIT", "LICENSE-APACHE", "LICENSE-GPL-3.0"] {
+            assert_eq!(
+                find_entry(&entries, &format!("usr/lib/method-reader/{lic}"))
+                    .unwrap()
+                    .mode
+                    & 0o111,
+                0
+            );
+        }
+        find_entry(&entries, "usr/lib/method-reader/THIRD-PARTY-NOTICES.md").unwrap();
         for size in ["32x32", "128x128", "256x256@2"] {
             find_entry(
                 &entries,
-                &format!("usr/share/icons/hicolor/{size}/apps/screepub-desktop.png"),
+                &format!("usr/share/icons/hicolor/{size}/apps/method-reader-app.png"),
             )
             .unwrap();
         }
-        assert_eq!(entries.len(), 7);
+        assert_eq!(entries.len(), 9);
     }
     assert_eq!(
         deb_control_field(&deb, "Package").unwrap().as_deref(),
-        Some("screepub")
+        Some("method-reader")
     );
     assert_eq!(
         deb_control_field(&deb, "Version").unwrap().as_deref(),
@@ -257,7 +275,7 @@ fn a_native_linux_run_writes_a_deb_and_an_rpm_that_read_back_whole() {
     let rpm_bytes = fs::read(&rpm).unwrap();
     assert_eq!(
         rpm_header_string(&rpm_bytes, 1000).unwrap().as_deref(),
-        Some("screepub")
+        Some("method-reader")
     );
     assert_eq!(
         rpm_header_string(&rpm_bytes, 1001).unwrap().as_deref(),
@@ -297,7 +315,7 @@ fn the_rpm_s_signature_header_carries_the_main_header_s_digest_and_sizes() {
         &Env::new(),
     )
     .unwrap();
-    let b = fs::read(out.join("Screepub-linux-aarch64.rpm")).unwrap();
+    let b = fs::read(out.join("Method-Reader-linux-aarch64.rpm")).unwrap();
     let be = |at: usize| u32::from_be_bytes(b[at..at + 4].try_into().unwrap()) as usize;
     // The signature header and its 8-byte pad, then the main header.
     let sig_n = be(96 + 8);
@@ -365,33 +383,33 @@ fn the_real_package_tools_accept_them_where_installed() {
     if have_dpkg {
         let o = Command::new("dpkg-deb")
             .arg("--info")
-            .arg(out.join("Screepub-linux-amd64.deb"))
+            .arg(out.join("Method-Reader-linux-amd64.deb"))
             .output()
             .unwrap();
         assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
         let o = Command::new("dpkg-deb")
             .arg("--contents")
-            .arg(out.join("Screepub-linux-amd64.deb"))
+            .arg(out.join("Method-Reader-linux-amd64.deb"))
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/screepub-desktop"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("./usr/bin/method-reader-app"));
     } else {
         eprintln!("skipped the dpkg-deb half: not installed");
     }
     if have_rpm {
         let o = Command::new("rpm")
             .args(["-qp", "--queryformat", "%{NAME} %{VERSION} %{ARCH}\\n"])
-            .arg(out.join("Screepub-linux-x86_64.rpm"))
+            .arg(out.join("Method-Reader-linux-x86_64.rpm"))
             .output()
             .unwrap();
         assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
-        assert!(String::from_utf8_lossy(&o.stdout).contains("screepub 0.12.0 x86_64"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("method-reader 0.12.0 x86_64"));
         let o = Command::new("rpm")
             .arg("-qpl")
-            .arg(out.join("Screepub-linux-x86_64.rpm"))
+            .arg(out.join("Method-Reader-linux-x86_64.rpm"))
             .output()
             .unwrap();
-        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/screepub-desktop"));
+        assert!(String::from_utf8_lossy(&o.stdout).contains("/usr/bin/method-reader-app"));
     } else {
         eprintln!("skipped the rpm half: not installed");
     }
@@ -425,11 +443,11 @@ fn info_plist_says_what_the_tauri_app_said_about_itself() {
     let plist = info_plist(VERSION);
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),
-        Some("screepub-desktop")
+        Some("method-reader-app")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleShortVersionString").as_deref(),
@@ -463,9 +481,9 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
         &Env::new(),
     )
     .unwrap();
-    assert_eq!(names_of(&made), ["Screepub-macOS.dmg"]);
+    assert_eq!(names_of(&made), ["Method-Reader-macOS.dmg"]);
     assert_eq!(fake.tools(), ["cargo", "codesign", "hdiutil"]);
-    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Screepub.app");
+    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Method Reader.app");
     assert_eq!(
         fake.calls[1],
         ["codesign", "--force", "--sign", "-", app.to_str().unwrap()]
@@ -473,20 +491,28 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
     let hd = &fake.calls[2];
     assert_eq!(
         hd[..5],
-        ["hdiutil", "create", "-volname", "Screepub", "-srcfolder"]
+        [
+            "hdiutil",
+            "create",
+            "-volname",
+            "Method Reader",
+            "-srcfolder"
+        ]
     );
     assert!(hd.iter().any(|a| a == "UDZO"));
     let plist = fs::read_to_string(app.join("Contents/Info.plist")).unwrap();
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
-        fs::read(app.join("Contents/MacOS/screepub-desktop")).unwrap(),
+        fs::read(app.join("Contents/MacOS/method-reader-app")).unwrap(),
         the_binary()
     );
     assert!(app.join("Contents/Resources/icon.icns").is_file());
-    assert!(app.join("Contents/Resources/LICENSE").is_file());
+    for lic in ["LICENSE-MIT", "LICENSE-APACHE", "LICENSE-GPL-3.0"] {
+        assert!(app.join("Contents/Resources").join(lic).is_file(), "{lic}");
+    }
 }
 
 fn release_env() -> Env {
@@ -548,9 +574,9 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     assert_eq!(
         names,
         [
-            "Screepub-macOS.app.tar.gz",
-            "Screepub-macOS.app.tar.gz.sig",
-            "Screepub-macOS.dmg"
+            "Method-Reader-macOS.app.tar.gz",
+            "Method-Reader-macOS.app.tar.gz.sig",
+            "Method-Reader-macOS.dmg"
         ]
     );
     assert_eq!(
@@ -582,14 +608,14 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
 
     // The archive verifies against the key the shipped app trusts, and the
     // manifest builder takes it as the darwin-aarch64 entry.
-    let tar = out.join("Screepub-macOS.app.tar.gz");
-    let sig = fs::read_to_string(out.join("Screepub-macOS.app.tar.gz.sig")).unwrap();
+    let tar = out.join("Method-Reader-macOS.app.tar.gz");
+    let sig = fs::read_to_string(out.join("Method-Reader-macOS.app.tar.gz.sig")).unwrap();
     verify_file(&tar, &sig, &pubkey, VERSION).unwrap();
     let found = collect_signed_artifacts(&out).unwrap();
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].platform_keys, ["darwin-aarch64"]);
 
-    // What a 0.11.x window's updater lays over its own Screepub.app.
+    // What a 0.11.x window's updater lays over its own Method Reader.app.
     let unpacked = unpack_like_the_updater(&tar);
     let file = |p: &str| {
         unpacked
@@ -597,7 +623,7 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
             .find(|(n, _, _)| n == p)
             .unwrap_or_else(|| panic!("{p} not in the archive"))
     };
-    let (_, mode, data) = file("Contents/MacOS/screepub-desktop");
+    let (_, mode, data) = file("Contents/MacOS/method-reader-app");
     assert_eq!(mode & 0o777, 0o755);
     assert_eq!(*data, the_binary());
     let (_, mode, plist) = file("Contents/Info.plist");
@@ -605,11 +631,11 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     let plist = String::from_utf8_lossy(plist);
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),
-        Some("screepub-desktop")
+        Some("method-reader-app")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleShortVersionString").as_deref(),
@@ -628,7 +654,7 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
             .unwrap()
             .to_string_lossy()
             .into_owned();
-        assert_eq!(first, "Screepub.app");
+        assert_eq!(first, "Method Reader.app");
     }
 }
 
@@ -649,7 +675,7 @@ fn a_rejected_notarization_stops_the_run_before_any_image_is_made() {
         "Invalid",
     );
     assert!(!fake.tools().iter().any(|t| t == "hdiutil"));
-    assert!(!out.join("Screepub-macOS.dmg").exists());
+    assert!(!out.join("Method-Reader-macOS.dmg").exists());
 }
 
 #[test]
@@ -669,7 +695,7 @@ fn an_archive_the_shipped_app_s_key_would_not_verify_is_never_published() {
         ),
         "does not verify",
     );
-    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
+    assert!(!out.join("Method-Reader-macOS.app.tar.gz").exists());
 }
 
 #[test]
@@ -693,7 +719,7 @@ fn without_pubkey_the_archive_is_checked_against_the_key_the_shipped_app_trusts(
         build_bundles(&a, &mut |x, c| fake.run(x, c), &dirs, &release_env()),
         "does not verify",
     );
-    assert!(!out.join("Screepub-macOS.app.tar.gz").exists());
+    assert!(!out.join("Method-Reader-macOS.app.tar.gz").exists());
 }
 
 // ---- Windows: the NSIS installer ----
@@ -711,17 +737,19 @@ fn a_native_windows_run_scripts_a_per_user_installer_over_the_tauri_one() {
         &Env::new(),
     )
     .unwrap();
-    assert_eq!(names_of(&made), ["Screepub-windows-x64-setup.exe"]);
+    assert_eq!(names_of(&made), ["Method-Reader-windows-x64-setup.exe"]);
     assert_eq!(fake.tools(), ["cargo", "makensis"]);
     let script = fs::read_to_string(&fake.calls[1][1]).unwrap();
     for want in [
         "InstallDir \"$LOCALAPPDATA\\${PRODUCTNAME}\"",
         "RequestExecutionLevel user",
-        "!define PRODUCTNAME \"Screepub\"",
+        "!define PRODUCTNAME \"Method Reader\"",
         "!define VERSION \"0.12.0\"",
         "VIProductVersion \"0.12.0.0\"",
-        "!define MAINBINARYNAME \"screepub-desktop\"",
-        "Delete \"$INSTDIR\\screepub-engine.exe\"",
+        "!define MAINBINARYNAME \"method-reader-app\"",
+        "!define LEGACYNAME \"Screepub\"",
+        "Delete \"${LEGACYDIR}\\screepub-engine.exe\"",
+        "DeleteRegKey HKCU \"${LEGACYUNINSTKEY}\"",
         "WriteUninstaller",
         "DeleteRegKey HKCU \"${UNINSTKEY}\"",
     ] {
@@ -729,7 +757,7 @@ fn a_native_windows_run_scripts_a_per_user_installer_over_the_tauri_one() {
     }
     let stage = Path::new(&fake.calls[1][1]).parent().unwrap().to_path_buf();
     assert_eq!(
-        fs::read(stage.join("screepub-desktop.exe")).unwrap(),
+        fs::read(stage.join("method-reader-app.exe")).unwrap(),
         the_binary()
     );
     assert!(stage.join("icon.ico").is_file());

@@ -275,7 +275,7 @@ fn send_to_mtp_kindle(
     let ext = ext_of(&options.file);
     if !KINDLE_USB_TYPES.contains(&ext.as_str()) {
         let message = if ext == "epub" {
-            "a Kindle does not read an EPUB copied to it. Send the Kindle file instead: screepub export --for kindle makes it".to_string()
+            "a Kindle does not read an EPUB copied to it. Send the Kindle file instead: method-reader export --for kindle makes it".to_string()
         } else {
             format!(
                 "a Kindle cannot open .{ext} copied over USB. Send a KFX, AZW3, MOBI, PDF or TXT"

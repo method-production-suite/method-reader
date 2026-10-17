@@ -31,9 +31,15 @@ pub struct Target {
     pub format: BinaryFormat,
     pub packaging: Packaging,
     /// The name the binary has, cargo's and inside the archive alike, so
-    /// `tar -xzf` and `Expand-Archive` both drop a runnable `screepub` in
-    /// the current folder (what the Homebrew formula's `bin.install` wants).
+    /// `tar -xzf` and `Expand-Archive` both drop a runnable `method-reader`
+    /// in the current folder (what the Homebrew formula's `bin.install`
+    /// wants).
     pub binary_name: &'static str,
+    /// The old name, `screepub`: sp-cli's second binary, which says once on
+    /// stderr that the tool was renamed and then does exactly what
+    /// method-reader does. It rides in every archive beside the tool for a
+    /// few releases, so scripts that call `screepub` keep working.
+    pub alias_name: &'static str,
     pub archive_name: &'static str,
 }
 
@@ -44,8 +50,9 @@ pub const TARGETS: &[Target] = &[
         rust_triple: "x86_64-unknown-linux-gnu",
         format: BinaryFormat::ElfX8664,
         packaging: Packaging::TarGz,
-        binary_name: "screepub",
-        archive_name: "screepub-cli-linux-x64.tar.gz",
+        binary_name: "method-reader",
+        alias_name: "screepub",
+        archive_name: "method-reader-cli-linux-x64.tar.gz",
     },
     Target {
         // Asahi, Raspberry Pi, ARM servers.
@@ -53,16 +60,18 @@ pub const TARGETS: &[Target] = &[
         rust_triple: "aarch64-unknown-linux-gnu",
         format: BinaryFormat::ElfAarch64,
         packaging: Packaging::TarGz,
-        binary_name: "screepub",
-        archive_name: "screepub-cli-linux-arm64.tar.gz",
+        binary_name: "method-reader",
+        alias_name: "screepub",
+        archive_name: "method-reader-cli-linux-arm64.tar.gz",
     },
     Target {
         id: "windows-x64",
         rust_triple: "x86_64-pc-windows-msvc",
         format: BinaryFormat::PeX8664,
         packaging: Packaging::Zip,
-        binary_name: "screepub.exe",
-        archive_name: "screepub-cli-windows-x64.zip",
+        binary_name: "method-reader.exe",
+        alias_name: "screepub.exe",
+        archive_name: "method-reader-cli-windows-x64.zip",
     },
 ];
 
@@ -73,8 +82,9 @@ pub const MAC_TARGETS: &[Target] = &[Target {
     rust_triple: "aarch64-apple-darwin",
     format: BinaryFormat::MachoArm64,
     packaging: Packaging::TarGz,
-    binary_name: "screepub",
-    archive_name: "screepub-cli-macos-arm64.tar.gz",
+    binary_name: "method-reader",
+    alias_name: "screepub",
+    archive_name: "method-reader-cli-macos-arm64.tar.gz",
 }];
 
 /// Whether a target is in the Mac table.
@@ -88,7 +98,7 @@ pub fn find_target(id: &str) -> Option<&'static Target> {
 }
 
 /// Per-target build folder: every target would otherwise land on the same
-/// `screepub` and overwrite the others.
+/// `method-reader` and overwrite the others.
 pub fn build_dir(target: &Target, out_dir: &Path) -> PathBuf {
     out_dir.join(target.id)
 }
@@ -96,6 +106,11 @@ pub fn build_dir(target: &Target, out_dir: &Path) -> PathBuf {
 /// Where the built binary sits for packaging.
 pub fn binary_path(target: &Target, out_dir: &Path) -> PathBuf {
     build_dir(target, out_dir).join(target.binary_name)
+}
+
+/// Where the built alias (`screepub`) sits for packaging, beside it.
+pub fn alias_path(target: &Target, out_dir: &Path) -> PathBuf {
+    build_dir(target, out_dir).join(target.alias_name)
 }
 
 /// Archives sit flat in the output folder, so SHA256SUMS names them without

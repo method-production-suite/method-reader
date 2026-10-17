@@ -18,12 +18,12 @@ fn main() -> eframe::Result {
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Screepub demo")
+            .with_title("Method Reader demo")
             .with_inner_size([1280.0, 800.0]),
         ..Default::default()
     };
     eframe::run_native(
-        "Screepub demo",
+        "Method Reader demo",
         options,
         Box::new(move |cc| {
             let host = Host::native(Arc::new(AtomicBool::new(true)));

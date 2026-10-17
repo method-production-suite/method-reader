@@ -25,11 +25,11 @@
           "hasEOL": true
         },
         {
-          "str": "the Screepub project",
+          "str": "the Method Reader project",
           "dir": "ltr",
-          "width": 143.99999999999997,
+          "width": 179.99999999999991,
           "height": 12,
-          "transform": [12, 0, 0, 12, 234, 432],
+          "transform": [12, 0, 0, 12, 216, 432],
           "fontName": "g_d2_f1",
           "hasEOL": true
         },
@@ -66,7 +66,7 @@
         },
         {
           "op": "showText",
-          "text": "the Screepub project"
+          "text": "the Method Reader project"
         },
         {
           "op": "showText",

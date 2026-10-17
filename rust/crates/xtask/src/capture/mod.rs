@@ -5,9 +5,9 @@
 //!   site picture from the real window running the real engine on
 //!   tests/fixtures/field-station.pdf (spec
 //!   docs/superpowers/specs/2026-09-22-readme-site-screens-design.md, part
-//!   3), and writes assets/screens/<shot>-<theme>.png, copying the light drop
-//!   and result into site/img/. A file is rewritten only when its bytes
-//!   change. Prints Chrome's version, then one line per file: written or
+//!   3, and the Method suite's four shots, [`shots`]), and writes
+//!   assets/screens/<shot>-<theme>.png and the same file into site/img/. A
+//!   file is rewritten only when its bytes change. Prints Chrome's version, then one line per file: written or
 //!   unchanged. Nothing is written unless every picture was taken.
 //! - `cargo xtask review-screens --out <page.html> [--repo <dir>]`: which
 //!   pictures changed since the last commit, old beside new.
@@ -20,17 +20,21 @@
 //! command builds first and runs once per picture with the run's own
 //! scratch library and settings. Pass two is that picture in its frame
 //! and shadow, drawn by Chrome from tools/capture/frame.html; Chrome also
-//! draws the site's hero from tools/capture/hero.html. [`backend`] says
-//! what the window program does and does not do.
+//! draws the site's before and after from tools/capture/compare.html. The
+//! terminal shot is framed the same way: its pass one is
+//! tools/capture/terminal.html drawing what the real `method-reader` binary
+//! (sp-cli, built first too) printed converting the demo script into the
+//! scratch library. [`backend`] says what the window program and the
+//! command line do and do not do.
 //!
 //! The pieces: [`shots`] (the list and where each goes), [`backend`] (the
 //! window program and Chrome, behind two traits), [`server`] and [`http`]
-//! (the page server Chrome reads the frame, the hero and pass one from, on
+//! (the page server Chrome reads the frame, the before and after, the terminal and pass one from, on
 //! threads of its own), [`cdp`] (Chrome), [`run`] (one whole run and its
 //! cleanup), [`review`] and [`picture`].
 //!
 //! capture-screens needs Chrome at [`cdp::CHROME`], and macOS: the demo
-//! library is /Users/Shared/Documents/Screepub, because the result screen
+//! library is /Users/Shared/Documents/Method Reader, because the result screen
 //! prints the book's full path and that folder reads naturally with no
 //! username in it. The tool marks the library as its own, refuses to run if
 //! an unmarked one is already there, and removes it when done, along with
@@ -59,13 +63,13 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::time::Duration;
 
-use backend::{Browser, CaptureOptions, EguiWindow, Wait};
+use backend::{Browser, CaptureOptions, EguiWindow, RealCli, Wait};
 use run::{RunOptions, run_capture};
 use shots::{SHOTS, Theme};
 
 use crate::paths::{repo_root, workspace_root};
 
-const LIBRARY: &str = "/Users/Shared/Documents/Screepub";
+const LIBRARY: &str = "/Users/Shared/Documents/Method Reader";
 
 /// 32 hex digits no other process can guess: SipHash under the keys std
 /// seeds from the OS's randomness, over the time and a counter.
@@ -159,7 +163,7 @@ pub fn capture_main(args: &[String]) -> u8 {
         let _ = signal_hook::flag::register_usize(sig, Arc::clone(&signal), sig as usize);
     }
 
-    let window = match build_window() {
+    let (window, cli) = match build_window().and_then(|w| Ok((w, build_cli()?))) {
         Ok(w) => w,
         Err(e) => {
             eprintln!("capture: {e}");
@@ -176,6 +180,7 @@ pub fn capture_main(args: &[String]) -> u8 {
         library: PathBuf::from(LIBRARY),
         launch: Box::new(move || cdp::launch(&chrome).map(|c| Box::new(c) as Box<dyn Browser>)),
         window: Box::new(EguiWindow::new(&window)),
+        cli: Box::new(RealCli::new(&cli)),
         out_dir: repo.clone(),
         repo_dir: repo,
         tmp: None,
@@ -243,6 +248,34 @@ pub fn build_window() -> Result<PathBuf, String> {
         "capture"
     };
     Ok(release_dir().join("examples").join(exe))
+}
+
+/// Builds the `method-reader` command line in the release profile, the one
+/// it ships in, for the terminal shot, and answers where it is.
+pub fn build_cli() -> Result<PathBuf, String> {
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let status = std::process::Command::new(cargo)
+        .args([
+            "build",
+            "--quiet",
+            "--release",
+            "--package",
+            "sp-cli",
+            "--bin",
+            "method-reader",
+        ])
+        .current_dir(workspace_root())
+        .status()
+        .map_err(|e| format!("could not build the command line: {e}"))?;
+    if !status.success() {
+        return Err("the command line (sp-cli's method-reader) did not build".into());
+    }
+    let exe = if cfg!(windows) {
+        "method-reader.exe"
+    } else {
+        "method-reader"
+    };
+    Ok(release_dir().join(exe))
 }
 
 /// `cargo xtask review-screens`: its exit code.

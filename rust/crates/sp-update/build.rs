@@ -4,9 +4,9 @@
 //! someone's shell. src/lib.rs ignores them outside a rehearsal as well.
 
 const REHEARSAL_ONLY: [&str; 3] = [
-    "SCREEPUB_UPDATE_ENDPOINT",
-    "SCREEPUB_UPDATE_PUBKEY",
-    "SCREEPUB_UPDATE_INSECURE",
+    "METHOD_READER_UPDATE_ENDPOINT",
+    "METHOD_READER_UPDATE_PUBKEY",
+    "METHOD_READER_UPDATE_INSECURE",
 ];
 
 fn main() {

@@ -32,7 +32,7 @@ const PLATFORM: &str = "linux";
 #[cfg(not(windows))]
 const HOME: &str = "/home/ada";
 #[cfg(not(windows))]
-const HOME_LIBRARY: &str = "/home/ada/Documents/Screepub";
+const HOME_LIBRARY: &str = "/home/ada/Documents/Method Reader";
 #[cfg(not(windows))]
 const ENV_LIBRARY: &str = "/env/lib";
 #[cfg(windows)]
@@ -40,7 +40,7 @@ const PLATFORM: &str = "win32";
 #[cfg(windows)]
 const HOME: &str = r"C:\home\ada";
 #[cfg(windows)]
-const HOME_LIBRARY: &str = r"C:\home\ada\Documents\Screepub";
+const HOME_LIBRARY: &str = r"C:\home\ada\Documents\Method Reader";
 #[cfg(windows)]
 const ENV_LIBRARY: &str = r"C:\env\lib";
 
@@ -60,7 +60,7 @@ struct Scratch {
 impl Scratch {
     fn new() -> Scratch {
         let dir = tempfile::Builder::new()
-            .prefix("screepub-cli-app-settings-")
+            .prefix("method-reader-cli-app-settings-")
             .tempdir()
             .expect("a scratch folder");
         let root = common::canonical(dir.path());
@@ -568,7 +568,7 @@ fn both_keys_land_together_in_one_write_keeping_last_route() {
 // ---- fromEnv and chosen disagree on purpose ----
 
 #[test]
-fn screepub_library_overrides_path_but_chosen_still_names_the_stored_choice() {
+fn method_reader_library_overrides_path_but_chosen_still_names_the_stored_choice() {
     let sc = Scratch::new();
     let file = sc.settings_file();
     let chosen = sc.dir("env-chosen");
@@ -579,7 +579,7 @@ fn screepub_library_overrides_path_but_chosen_still_names_the_stored_choice() {
         &deps_on(
             &file,
             PLATFORM,
-            env_with(&[("SCREEPUB_LIBRARY", ENV_LIBRARY)]),
+            env_with(&[("METHOD_READER_LIBRARY", ENV_LIBRARY)]),
         ),
     )
     .unwrap();
@@ -589,12 +589,16 @@ fn screepub_library_overrides_path_but_chosen_still_names_the_stored_choice() {
 }
 
 #[test]
-fn a_blank_screepub_library_does_not_count_as_from_env() {
+fn a_blank_method_reader_library_does_not_count_as_from_env() {
     let sc = Scratch::new();
     let file = sc.settings_file();
     let result = run(
         None,
-        &deps_on(&file, "linux", env_with(&[("SCREEPUB_LIBRARY", "   ")])),
+        &deps_on(
+            &file,
+            "linux",
+            env_with(&[("METHOD_READER_LIBRARY", "   ")]),
+        ),
     )
     .unwrap();
     assert!(!result.library.from_env);
@@ -627,7 +631,7 @@ fn platform_default_is_correct_for_darwin_with_a_fake_home_independent_of_a_chos
     let result = run(None, &deps_on(&file, "darwin", env)).unwrap();
     assert_eq!(
         result.library.platform_default,
-        "/home/ada/Documents/Screepub"
+        "/home/ada/Documents/Method Reader"
     );
     // The chosen folder still wins for `path`.
     assert_eq!(result.library.path, chosen);
@@ -902,15 +906,15 @@ fn setting_one_key_keeps_every_other_key_in_the_file() {
     assert_eq!(on_disk["animatePage"], json!(false));
 }
 
-// ---- screepub app-settings (through the CLI) ----
+// ---- method-reader app-settings (through the CLI) ----
 
-/// A Sandbox with SCREEPUB_LIBRARY blank, so the DEFAULT library location
+/// A Sandbox with METHOD_READER_LIBRARY blank, so the DEFAULT library location
 /// is what is reported, and HOME in the scratch folder, so that default
 /// resolves there and never in a real home.
 fn cli_sandbox() -> Sandbox {
     let mut sb = Sandbox::new();
     let home = sb.mkdir("home");
-    sb.set("SCREEPUB_LIBRARY", "")
+    sb.set("METHOD_READER_LIBRARY", "")
         .set("HOME", home.to_string_lossy().into_owned())
         .set("USERPROFILE", home.to_string_lossy().into_owned());
     sb
@@ -959,7 +963,7 @@ fn cli_set_round_trips() {
 }
 
 #[test]
-fn human_output_names_the_folder_and_by_default_screepubs_own_defaults() {
+fn human_output_names_the_folder_and_by_default_method_readers_own_defaults() {
     let sb = cli_sandbox();
     let ran = sb.run(&["app-settings"]);
     assert_eq!(ran.code, 0);
@@ -968,7 +972,7 @@ fn human_output_names_the_folder_and_by_default_screepubs_own_defaults() {
     assert!(first.contains("default folder"), "{first}");
     assert_eq!(
         line(&ran.stdout, 1),
-        "new scripts start from: Screepub's defaults"
+        "new scripts start from: Method Reader's defaults"
     );
 }
 
@@ -1033,15 +1037,18 @@ fn human_output_says_the_folder_you_chose_once_one_is_stored() {
 }
 
 #[test]
-fn human_output_says_set_by_screepub_library_when_the_env_override_wins() {
+fn human_output_says_set_by_method_reader_library_when_the_env_override_wins() {
     let mut sb = cli_sandbox();
     let env_lib = sb.mkdir("env-lib-human");
-    sb.set("SCREEPUB_LIBRARY", env_lib.to_string_lossy().into_owned());
+    sb.set(
+        "METHOD_READER_LIBRARY",
+        env_lib.to_string_lossy().into_owned(),
+    );
     let ran = sb.run(&["app-settings"]);
     assert_eq!(ran.code, 0);
     let first = line(&ran.stdout, 0);
     assert!(first.contains("books are saved in"), "{first}");
-    assert!(first.contains("set by SCREEPUB_LIBRARY"), "{first}");
+    assert!(first.contains("set by METHOD_READER_LIBRARY"), "{first}");
 }
 
 #[test]
@@ -1054,14 +1061,14 @@ fn cli_refuses_a_stray_positional() {
 }
 
 #[test]
-fn help_describes_what_set_accepts_and_the_screepub_library_override() {
+fn help_describes_what_set_accepts_and_the_method_reader_library_override() {
     let ran = cli_sandbox().run(&["app-settings", "--help"]);
     assert_eq!(ran.code, 0);
     for want in [
-        "screepub app-settings",
+        "method-reader app-settings",
         "libraryPath",
         "formatDefaults",
-        "SCREEPUB_LIBRARY",
+        "METHOD_READER_LIBRARY",
     ] {
         assert!(ran.stdout.contains(want), "{want}");
     }
@@ -1087,7 +1094,7 @@ fn the_top_level_help_usage_lists_app_settings() {
     assert_eq!(ran.code, 0);
     assert!(
         ran.stdout
-            .contains("screepub app-settings [--set <json>] [--json]")
+            .contains("method-reader app-settings [--set <json>] [--json]")
     );
     assert!(
         ran.stdout

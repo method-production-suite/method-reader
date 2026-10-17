@@ -1,4 +1,4 @@
-# Every push: Screepub is one Cargo workspace (rust/), and this is its
+# Every push: Method Reader is one Cargo workspace (rust/), and this is its
 # check. It replaced ci.yml (the Bun engine) and desktop.yml (the Tauri
 # window) at the cutover. Least privilege by default; third-party actions
 # pinned to SHAs (pinact run).
@@ -112,7 +112,7 @@ jobs:
             rust/target
           key: cli-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
           restore-keys: cli-
-      - run: cargo build --release --locked -p sp-cli --bin screepub
+      - run: cargo build --release --locked -p sp-cli --bin method-reader --bin screepub
       # The three fixtures whose books carry figures (registry #19a): images.pdf
       # keeps two pictures, jpx.pdf one JPEG 2000 picture, torture.pdf the
       # four the device pass looks at. A scratch library and settings folder,
@@ -122,9 +122,12 @@ jobs:
           set -euo pipefail
           W="$RUNNER_TEMP/books"
           mkdir -p "$W"
-          export SCREEPUB_CONFIG_DIR="$W/config" SCREEPUB_LIBRARY="$W/library"
-          B=target/release/screepub
+          export METHOD_READER_CONFIG_DIR="$W/config" METHOD_READER_LIBRARY="$W/library"
+          B=target/release/method-reader
           "$B" --version
+          # The old name: one line on stderr, then the same answer.
+          target/release/screepub --version 2> "$W/alias.err" | grep -qx "$("$B" --version)"
+          test "$(wc -l < "$W/alias.err")" -eq 1
           "$B" ../tests/fixtures/screenplay.pdf --no-fountain \
             -o "$W/smoke.epub" --mobi --azw3 "$W/smoke.azw3" --json | tee "$W/smoke.json"
           grep -q '"ok":true' "$W/smoke.json"
@@ -140,6 +143,7 @@ jobs:
         run: |
           brew install epubcheck
           for b in smoke images jpx torture; do epubcheck "$RUNNER_TEMP/books/$b.epub"; done
+      - run: cargo xtask smoke-cli --binary target/release/method-reader
       - run: cargo xtask smoke-cli --binary target/release/screepub
 
   # The Worker as Cloudflare would build it: wasm32, workers-rs, clippy
@@ -172,6 +176,40 @@ jobs:
       - name: Install cargo-deny
         run: command -v cargo-deny >/dev/null || cargo install cargo-deny --version 0.20.2 --locked
       - run: cargo deny check
+
+  # The 14-day supply-chain cooldown (scripts/check-crate-ages.py, the suite's
+  # shared copy): a crates.io package this change adds or bumps must be at
+  # least 14 days old, unless scripts/crate-age-exceptions.txt names it as a
+  # security fix; a git package must come from an allowlisted repository at a
+  # pinned commit. Only what changed is checked, against main for a pull
+  # request or the pushed-over commit for a push, so the lock as it stands
+  # never blocks unrelated work.
+  cooldown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check crate ages
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = pull_request ]; then
+            base=origin/main
+          elif [ -n "${BEFORE:-}" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            base="$BEFORE"
+          elif [ "$GITHUB_REF" != refs/heads/main ]; then
+            base=origin/main
+          else
+            base=""
+          fi
+          if [ -n "$base" ]; then
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --only-changed "$base"
+          else
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
+          fi
 
   # Every installer, unsigned, built and opened on its own OS: the Mac app
   # and its update archive (signed with a THROWAWAY key, verified the way a
@@ -212,38 +250,45 @@ jobs:
           VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' rust/Cargo.toml)"
           SP=rust/target/release/sp-release
           ICONS_DIR=rust/crates/sp-app/icons
-          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          RES=(--resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md)
           W="$RUNNER_TEMP/bundles"
           mkdir -p "$W"
           case "$RUNNER_OS" in
             macOS)
-              "$SP" mac-app --version "$VERSION" --window rust/target/release/screepub-window \
+              "$SP" mac-app --version "$VERSION" --window rust/target/release/method-reader-app \
                 --icon "$ICONS_DIR/icon.icns" "${RES[@]}" --out "$W/app"
               # The window's headless mode, out of the bundle: its version,
               # then a conversion in a scratch library and settings folder.
-              EXE="$W/app/Screepub.app/Contents/MacOS/screepub-desktop"
+              EXE="$W/app/Method Reader.app/Contents/MacOS/method-reader-app"
               "$EXE" --version --json | tee "$W/version.json"
               grep -q "\"version\":\"$VERSION\"" "$W/version.json"
               mkdir -p "$W/smoke"
-              SCREEPUB_CONFIG_DIR="$W/smoke/config" SCREEPUB_LIBRARY="$W/smoke/library" \
+              METHOD_READER_CONFIG_DIR="$W/smoke/config" METHOD_READER_LIBRARY="$W/smoke/library" \
                 "$EXE" --smoke tests/fixtures/field-station.pdf --out "$W/smoke/book.epub" | tee "$W/smoke.json"
               grep -q '"ok":true' "$W/smoke.json"
               test -s "$W/smoke/book.epub"
-              "$SP" update-archive --app "$W/app/Screepub.app" --out "$W/site/Screepub-macOS.app.tar.gz"
+              "$SP" update-archive --app "$W/app/Method Reader.app" --out "$W/site/Method-Reader-macOS.app.tar.gz"
               "$SP" keygen --out "$W/keys/throwaway.key"
               TAURI_SIGNING_PRIVATE_KEY="$(cat "$W/keys/throwaway.key")" TAURI_SIGNING_PRIVATE_KEY_PASSWORD="" \
-                "$SP" sign-update --file "$W/site/Screepub-macOS.app.tar.gz" --version "$VERSION"
+                "$SP" sign-update --file "$W/site/Method-Reader-macOS.app.tar.gz" --version "$VERSION"
               "$SP" manifest --dir "$W/site" --version "$VERSION" --out "$W/site/latest.json"
               "$SP" verify-update --dir "$W/site" --manifest "$W/site/latest.json" \
                 --pubkey "$(cat "$W/keys/throwaway.key.pub")"
               mkdir -p "$W/dmg"
-              cp -R "$W/app/Screepub.app" "$W/dmg/"
+              cp -R "$W/app/Method Reader.app" "$W/dmg/"
               ln -s /Applications "$W/dmg/Applications"
-              hdiutil create -volname Screepub -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Screepub-macOS.dmg"
+              # hdiutil create fails now and then with "Resource busy" on a
+              # hosted runner (the system still scanning the new files):
+              # three tries, then fail by name.
+              for try in 1 2 3; do
+                hdiutil create -volname "Method Reader" -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Method-Reader-macOS.dmg" && break
+                [ "$try" = 3 ] && { echo "hdiutil create failed three times"; exit 1; }
+                sleep 15
+              done
               M="$(mktemp -d)"
-              hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Screepub-macOS.dmg"
-              [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Screepub.app/Contents/Info.plist")" = com.darkwell.screepub ]
-              test -x "$M/Screepub.app/Contents/MacOS/screepub-desktop"
+              hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Method-Reader-macOS.dmg"
+              [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Method Reader.app/Contents/Info.plist")" = com.methodreader.desktop ]
+              test -x "$M/Method Reader.app/Contents/MacOS/method-reader-app"
               hdiutil detach "$M"
               ;;
             Linux)
@@ -252,20 +297,20 @@ jobs:
                      --icon "256x256@2=$ICONS_DIR/128x128@2x.png")
               D="$RUNNER_TEMP/shlibdeps"
               mkdir -p "$D/debian"
-              printf 'Source: screepub\n\nPackage: screepub\nArchitecture: any\n' > "$D/debian/control"
-              DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/rust/target/release/screepub-window" | sed -n 's/^shlibs:Depends=//p')"
+              printf 'Source: method-reader\n\nPackage: method-reader\nArchitecture: any\n' > "$D/debian/control"
+              DEPENDS="$(cd "$D" && dpkg-shlibdeps -O "$GITHUB_WORKSPACE/rust/target/release/method-reader-app" | sed -n 's/^shlibs:Depends=//p')"
               echo "Depends: $DEPENDS"
-              "$SP" deb --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out "$W"
-              "$SP" rpm --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out "$W"
-              dpkg-deb --info "$W/Screepub-linux-amd64.deb"
+              "$SP" deb --version "$VERSION" --window rust/target/release/method-reader-app "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out "$W"
+              "$SP" rpm --version "$VERSION" --window rust/target/release/method-reader-app "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out "$W"
+              dpkg-deb --info "$W/Method-Reader-linux-amd64.deb"
               # apt, not dpkg -i: it installs what Depends names first, so
               # a name the archive does not know fails here, by name.
-              sudo apt-get install -y --no-install-recommends "$W/Screepub-linux-amd64.deb"
-              test -x /usr/bin/screepub-desktop
-              grep -q '^Categories=Office;' /usr/share/applications/Screepub.desktop
-              sudo dpkg -r screepub
-              rpm -qip "$W/Screepub-linux-x86_64.rpm"
-              rpm -qlp "$W/Screepub-linux-x86_64.rpm" | grep -qx /usr/bin/screepub-desktop
+              sudo apt-get install -y --no-install-recommends "$W/Method-Reader-linux-amd64.deb"
+              test -x /usr/bin/method-reader-app
+              grep -q '^Categories=Office;' /usr/share/applications/method-reader.desktop
+              sudo dpkg -r method-reader
+              rpm -qip "$W/Method-Reader-linux-x86_64.rpm"
+              rpm -qlp "$W/Method-Reader-linux-x86_64.rpm" | grep -qx /usr/bin/method-reader-app
               # What each package declares it needs at run time: the
               # libraries the binary links (measured: dpkg-shlibdeps for the
               # .deb, the binary's NEEDED list for the .rpm) and the ones the
@@ -273,23 +318,23 @@ jobs:
               # is a whole package name, as an entry or an alternative: ALSA
               # is measured here as libasound2t64, and older systems only
               # know libasound2, so both must be offered.
-              dpkg-deb --field "$W/Screepub-linux-amd64.deb" Depends | tee "$W/depends.txt"
+              dpkg-deb --field "$W/Method-Reader-linux-amd64.deb" Depends | tee "$W/depends.txt"
               for p in libasound2t64 libasound2 libfontconfig1 libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libx11-6 libegl1; do
                 grep -qE -- "(^|[,|] *)$p( |,|\$)" "$W/depends.txt"
               done
-              rpm -qp --requires "$W/Screepub-linux-x86_64.rpm" | tee "$W/requires.txt"
-              for s in $(objdump -p rust/target/release/screepub-window | awk '/NEEDED/ {print $2}') \
+              rpm -qp --requires "$W/Method-Reader-linux-x86_64.rpm" | tee "$W/requires.txt"
+              for s in $(objdump -p rust/target/release/method-reader-app | awk '/NEEDED/ {print $2}') \
                        libxkbcommon.so.0 libxkbcommon-x11.so.0 libwayland-client.so.0 libX11.so.6 libEGL.so.1; do
                 grep -qxF -- "$s()(64bit)" "$W/requires.txt"
               done
-              "$SP" appdir --version "$VERSION" --window rust/target/release/screepub-window "${ICONS[@]}" "${RES[@]}" --out "$W"
-              test -x "$W/Screepub.AppDir/AppRun"
+              "$SP" appdir --version "$VERSION" --window rust/target/release/method-reader-app "${ICONS[@]}" "${RES[@]}" --out "$W"
+              test -x "$W/method-reader.AppDir/AppRun"
               ;;
             Windows)
               STAGE="$W/nsis"
               mkdir -p "$STAGE"
-              cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-              cp LICENSE THIRD-PARTY-NOTICES.md "$ICONS_DIR/icon.ico" "$STAGE/"
+              cp rust/target/release/method-reader-app.exe "$STAGE/method-reader-app.exe"
+              cp LICENSE-MIT LICENSE-APACHE rust/crates/sp-azw3/LICENSE-GPL-3.0 THIRD-PARTY-NOTICES.md "$ICONS_DIR/icon.ico" "$STAGE/"
               # Chocolatey's feed times out now and then (a 504), and choco
               # still exits 0: try three times, then fail by name.
               export PATH="$PATH:/c/Program Files (x86)/NSIS"
@@ -300,10 +345,10 @@ jobs:
               done
               command -v makensis >/dev/null || { echo "makensis: NSIS did not install from Chocolatey"; exit 1; }
               "$SP.exe" nsis --version "$VERSION" --src "$(cygpath -w "$STAGE")" \
-                --setup "$(cygpath -w "$W/Screepub-windows-x64-setup.exe")" --script "$STAGE/screepub.nsi"
-              makensis -V3 "$(cygpath -w "$STAGE/screepub.nsi")"
-              "$W/Screepub-windows-x64-setup.exe" //S
-              test -f "$LOCALAPPDATA/Screepub/screepub-desktop.exe"
-              "$LOCALAPPDATA/Screepub/uninstall.exe" //S
+                --setup "$(cygpath -w "$W/Method-Reader-windows-x64-setup.exe")" --script "$STAGE/method-reader.nsi"
+              makensis -V3 "$(cygpath -w "$STAGE/method-reader.nsi")"
+              "$W/Method-Reader-windows-x64-setup.exe" //S
+              test -f "$LOCALAPPDATA/Method Reader/method-reader-app.exe"
+              "$LOCALAPPDATA/Method Reader/uninstall.exe" //S
               ;;
           esac

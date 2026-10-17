@@ -18,10 +18,14 @@ use std::path::Path;
 /// A bundle archive with `extra` (path, kind, link target or data) appended.
 fn archive_with(extra: &[(&str, tar::EntryType, &str)]) -> Vec<u8> {
     let build = tempfile::tempdir().unwrap();
-    make_bundle(&build.path().join("Built.app"), "Screepub", "0.12.0");
+    make_bundle(
+        &build.path().join("Built.app"),
+        "method-reader-app",
+        "0.13.0",
+    );
     let gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
     let mut b = tar::Builder::new(gz);
-    b.append_dir_all("Screepub.app", build.path().join("Built.app"))
+    b.append_dir_all("Method Reader.app", build.path().join("Built.app"))
         .unwrap();
     for (path, kind, what) in extra {
         let mut h = tar::Header::new_gnu();
@@ -51,12 +55,12 @@ fn a_link_out_of_the_bundle_is_refused_and_nothing_lands_outside() {
     let dest = tempfile::tempdir().unwrap();
     let bytes = archive_with(&[
         (
-            "Screepub.app/Contents/Escape",
+            "Method Reader.app/Contents/Escape",
             tar::EntryType::Symlink,
             outside.path().to_str().unwrap(),
         ),
         (
-            "Screepub.app/Contents/Escape/planted",
+            "Method Reader.app/Contents/Escape/planted",
             tar::EntryType::Regular,
             "x",
         ),
@@ -66,7 +70,7 @@ fn a_link_out_of_the_bundle_is_refused_and_nothing_lands_outside() {
     assert!(!outside.path().join("planted").exists());
 
     let climbing = archive_with(&[(
-        "Screepub.app/Contents/Up",
+        "Method Reader.app/Contents/Up",
         tar::EntryType::Symlink,
         "../../../..",
     )]);
@@ -79,15 +83,23 @@ fn chains_of_links_cannot_climb_out_either() {
     let dest = tempfile::tempdir().unwrap();
     // A file written through a link already unpacked.
     let through = archive_with(&[
-        ("Screepub.app/Contents/L", tar::EntryType::Symlink, "."),
-        ("Screepub.app/Contents/L/L/x", tar::EntryType::Regular, "x"),
+        ("Method Reader.app/Contents/L", tar::EntryType::Symlink, "."),
+        (
+            "Method Reader.app/Contents/L/L/x",
+            tar::EntryType::Regular,
+            "x",
+        ),
     ]);
     assert!(unpack_app_archive(&through, &dest.path().join("a")).is_err());
     // A `..` taken from where another link points.
     let after = archive_with(&[
-        ("Screepub.app/Contents/L", tar::EntryType::Symlink, ".."),
         (
-            "Screepub.app/Contents/X",
+            "Method Reader.app/Contents/L",
+            tar::EntryType::Symlink,
+            "..",
+        ),
+        (
+            "Method Reader.app/Contents/X",
             tar::EntryType::Symlink,
             "L/../..",
         ),
@@ -99,12 +111,12 @@ fn chains_of_links_cannot_climb_out_either() {
 fn hard_links_and_devices_are_refused() {
     let dest = tempfile::tempdir().unwrap();
     let hard = archive_with(&[(
-        "Screepub.app/Contents/Hard",
+        "Method Reader.app/Contents/Hard",
         tar::EntryType::Link,
         "/etc/hosts",
     )]);
     assert!(unpack_app_archive(&hard, &dest.path().join("a")).is_err());
-    let fifo = archive_with(&[("Screepub.app/Contents/Pipe", tar::EntryType::Fifo, "")]);
+    let fifo = archive_with(&[("Method Reader.app/Contents/Pipe", tar::EntryType::Fifo, "")]);
     assert!(unpack_app_archive(&fifo, &dest.path().join("b")).is_err());
 }
 
@@ -114,7 +126,7 @@ fn a_link_that_stays_inside_the_bundle_is_kept() {
     // frameworks is laid out; sp-release keeps symlinks as symlinks.
     let dest = tempfile::tempdir().unwrap();
     let bytes = archive_with(&[(
-        "Screepub.app/Contents/Current",
+        "Method Reader.app/Contents/Current",
         tar::EntryType::Symlink,
         "Resources",
     )]);
@@ -130,7 +142,7 @@ fn a_link_that_stays_inside_the_bundle_is_kept() {
 fn run_admin_shell(bundle: &Path, new: &Path) -> bool {
     std::process::Command::new("/bin/sh")
         .arg("-c")
-        .arg(sp_update::install::admin_swap_shell(bundle, new))
+        .arg(sp_update::install::admin_swap_shell(bundle, new, bundle))
         .status()
         .unwrap()
         .success()
@@ -141,8 +153,8 @@ fn the_administrator_swap_puts_the_old_app_back_when_the_move_fails() {
     // `rm -rf old && mv -f new old`: a move that failed after the remove
     // (another volume, a full disk) left no app at all.
     let apps = tempfile::tempdir().unwrap();
-    let bundle = apps.path().join("Screepub.app");
-    make_bundle(&bundle, "screepub-desktop", "0.11.1");
+    let bundle = apps.path().join("Method Reader.app");
+    make_bundle(&bundle, "method-reader-app", "0.13.0");
     let missing = apps.path().join("not-there.app");
     assert!(
         !run_admin_shell(&bundle, &missing),
@@ -159,21 +171,21 @@ fn the_administrator_swap_puts_the_old_app_back_when_the_move_fails() {
 #[test]
 fn the_administrator_swap_replaces_the_app_and_leaves_nothing_beside_it() {
     let apps = tempfile::tempdir().unwrap();
-    let bundle = apps.path().join("Sam's \"Screepub\".app");
-    make_bundle(&bundle, "screepub-desktop", "0.11.1");
+    let bundle = apps.path().join("Ann's \"Method Reader\".app");
+    make_bundle(&bundle, "method-reader-app", "0.13.0");
     let staged = tempfile::tempdir().unwrap();
-    let new = staged.path().join("Screepub.app");
-    make_bundle(&new, "Screepub", "0.12.0");
+    let new = staged.path().join("Method Reader.app");
+    make_bundle(&new, "method-reader-app", "0.13.1");
     assert!(run_admin_shell(&bundle, &new));
-    assert!(bundle.join("Contents/MacOS/Screepub").is_file());
+    assert!(bundle.join("Contents/MacOS/method-reader-app").is_file());
     let names: Vec<_> = std::fs::read_dir(apps.path()).unwrap().collect();
     assert_eq!(names.len(), 1, "no backup left beside it");
     // And with no app there yet (the first install).
     let fresh = apps.path().join("Fresh.app");
     let new2 = staged.path().join("Two.app");
-    make_bundle(&new2, "Screepub", "0.12.0");
+    make_bundle(&new2, "method-reader-app", "0.13.1");
     assert!(run_admin_shell(&fresh, &new2));
-    assert!(fresh.join("Contents/MacOS/Screepub").is_file());
+    assert!(fresh.join("Contents/MacOS/method-reader-app").is_file());
 }
 
 #[test]
@@ -181,18 +193,23 @@ fn the_administrator_path_stages_in_a_fresh_private_folder() {
     use std::os::unix::fs::PermissionsExt;
     // A bundle in a folder this account cannot write sends the swap to
     // the administrator path. Its copy used to sit at the predictable
-    // temp/screepub-update-<pid>, and an existing folder there was used
+    // temp/screepub-update-<pid> (now method-reader-update-), and an
+    // existing folder there was used
     // as found.
     let apps = tempfile::tempdir().unwrap();
-    let bundle = apps.path().join("Screepub.app");
-    make_bundle(&bundle, "screepub-desktop", "0.11.1");
+    let bundle = apps.path().join("Method Reader.app");
+    make_bundle(&bundle, "method-reader-app", "0.13.0");
     let archive = {
         let build = tempfile::tempdir().unwrap();
-        make_bundle(&build.path().join("Built.app"), "Screepub", "0.12.0");
+        make_bundle(
+            &build.path().join("Built.app"),
+            "method-reader-app",
+            "0.13.0",
+        );
         archive_bundle(&build.path().join("Built.app"))
     };
     std::fs::set_permissions(apps.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
-    let predictable = format!("screepub-update-{}", std::process::id());
+    let predictable = format!("method-reader-update-{}", std::process::id());
     let seen = std::cell::RefCell::new(None);
     let admin = |_: &Path, new: &Path| -> Result<(), InstallError> {
         let mode = std::fs::metadata(new.parent().unwrap())

@@ -1,43 +1,62 @@
 //! Every name a release publishes, in one place: the download pages, the
-//! README, the Homebrew formula, the frozen Swift updater (first `.dmg` on
-//! the page) and the Tauri windows (latest.json's keys) all depend on these
-//! staying exactly what tools/build-app-bundle.ts and tools/build-cli.ts
-//! called them.
+//! README, the Homebrew cask and formula and the apps' updater
+//! (latest.json's keys) all depend on these. Method Reader was called
+//! Screepub up to 0.12.x; the `LEGACY_*` names below are that release's,
+//! kept only where something must recognise or replace an old install.
 
 /// The product, the bundle folder and the window's installed executable.
-/// `screepub-desktop` is the name tauri-cli gave the Tauri window's binary
-/// (the cargo crate's binary; no `mainBinaryName` was set), kept so a
-/// Linux launcher, a Windows shortcut or a script that names it still
-/// works after the update. On a Mac nothing depends on it: the restart
-/// reads CFBundleExecutable from the NEW Info.plist.
-pub const PRODUCT: &str = "Screepub";
-pub const MAC_BUNDLE: &str = "Screepub.app";
-pub const WINDOW_EXE: &str = "screepub-desktop";
+/// On a Mac nothing depends on the executable's name: the restart reads
+/// CFBundleExecutable from the NEW Info.plist.
+pub const PRODUCT: &str = "Method Reader";
+pub const MAC_BUNDLE: &str = "Method Reader.app";
+pub const WINDOW_EXE: &str = "method-reader-app";
 /// The command-line tool's name inside every CLI archive and on PATH.
-pub const CLI_EXE: &str = "screepub";
-pub const REPO: &str = "ssandweiss/screepub";
-pub const PUBLISHER: &str = "Darkwell Entertainment LLC";
+pub const CLI_EXE: &str = "method-reader";
+/// The CLI's old name, shipped beside [`CLI_EXE`] in every CLI archive for
+/// a few releases: it says once on stderr that the tool is now called
+/// method-reader, then behaves exactly like it.
+pub const CLI_ALIAS_EXE: &str = "screepub";
+/// The Linux package, and the folder its notices install under.
+pub const PACKAGE: &str = "method-reader";
+pub const REPO: &str = "method-production-suite/method-reader";
+/// Who publishes it: installers, bundle metadata, package maintainer.
+pub const PUBLISHER: &str = "Method Production Suite Team and the Method Reader contributors";
+/// The copyright line, wherever a copyright is stated (LICENSE-MIT says
+/// the same).
+pub const COPYRIGHT: &str =
+    "Copyright (c) 2026 Method Production Suite Team and the Method Reader contributors";
 pub const SHORT_DESCRIPTION: &str = "Turn a screenplay PDF into a reflowable e-book.";
-pub const LONG_DESCRIPTION: &str = "Screepub converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB.";
+pub const LONG_DESCRIPTION: &str = "Method Reader converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB.";
 pub const MAC_MINIMUM: &str = "13.0";
+
+/// The 0.12.x names, for the places that must recognise an old install:
+/// the Mac bundle the 0.12 updater swaps the new build into, the Windows
+/// install (folder and uninstall key, both named after the product) the
+/// new installer removes, and the Linux package the new one replaces.
+pub const LEGACY_PRODUCT: &str = "Screepub";
+pub const LEGACY_MAC_BUNDLE: &str = "Screepub.app";
+pub const LEGACY_WINDOW_EXE: &str = "screepub-desktop";
+pub const LEGACY_PACKAGE: &str = "screepub";
+pub const LEGACY_REPO: &str = "ssandweiss/screepub";
 
 /// The installers. No version in a name, on purpose: pages link to
 /// releases/latest/download/<name>.
-pub const MAC_DMG: &str = "Screepub-macOS.dmg";
-pub const LINUX_DEB_AMD64: &str = "Screepub-linux-amd64.deb";
-pub const LINUX_RPM_X86_64: &str = "Screepub-linux-x86_64.rpm";
-/// New with the Rust app (the Bun engine made an AppImage impossible).
-pub const LINUX_APPIMAGE_X86_64: &str = "Screepub-linux-x86_64.AppImage";
-pub const WINDOWS_SETUP: &str = "Screepub-windows-x64-setup.exe";
+pub const MAC_DMG: &str = "Method-Reader-macOS.dmg";
+pub const LINUX_DEB_AMD64: &str = "Method-Reader-linux-amd64.deb";
+pub const LINUX_RPM_X86_64: &str = "Method-Reader-linux-x86_64.rpm";
+pub const LINUX_APPIMAGE_X86_64: &str = "Method-Reader-linux-x86_64.AppImage";
+pub const WINDOWS_SETUP: &str = "Method-Reader-windows-x64-setup.exe";
+/// What an installer for another architecture is called: `Method-Reader-linux-<arch>.<ext>`.
+pub const INSTALLER_STEM: &str = "Method-Reader";
 
 /// The command-line archives (the Homebrew formula serves the first).
-pub const CLI_MAC_ARM64: &str = "screepub-cli-macos-arm64.tar.gz";
-pub const CLI_LINUX_X64: &str = "screepub-cli-linux-x64.tar.gz";
-pub const CLI_LINUX_ARM64: &str = "screepub-cli-linux-arm64.tar.gz";
-pub const CLI_WINDOWS_X64: &str = "screepub-cli-windows-x64.zip";
+pub const CLI_MAC_ARM64: &str = "method-reader-cli-macos-arm64.tar.gz";
+pub const CLI_LINUX_X64: &str = "method-reader-cli-linux-x64.tar.gz";
+pub const CLI_LINUX_ARM64: &str = "method-reader-cli-linux-arm64.tar.gz";
+pub const CLI_WINDOWS_X64: &str = "method-reader-cli-windows-x64.zip";
 
 /// The update archive and its signature; latest.json points at these.
-pub const MAC_UPDATE: &str = "Screepub-macOS.app.tar.gz";
+pub const MAC_UPDATE: &str = "Method-Reader-macOS.app.tar.gz";
 pub const SIGNATURE_EXT: &str = ".sig";
 pub const MANIFEST: &str = "latest.json";
 
@@ -109,7 +128,7 @@ mod tests {
     fn urls() {
         assert_eq!(
             asset_url(REPO, "0.12.0", MAC_UPDATE),
-            "https://github.com/ssandweiss/screepub/releases/download/v0.12.0/Screepub-macOS.app.tar.gz"
+            "https://github.com/method-production-suite/method-reader/releases/download/v0.12.0/Method-Reader-macOS.app.tar.gz"
         );
     }
 }

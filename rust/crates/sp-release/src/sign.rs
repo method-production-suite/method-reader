@@ -89,7 +89,7 @@ mod tests {
         let (sk_text, pk) = keygen("").unwrap();
         let sk = load_secret_key(&sk_text, "").unwrap();
         let data = b"an update archive";
-        let sig = sign(&sk, data, "Screepub-macOS.app.tar.gz", "0.12.0", 1).unwrap();
+        let sig = sign(&sk, data, "Method-Reader-macOS.app.tar.gz", "0.12.0", 1).unwrap();
         // tauri-plugin-updater 2.12.0's rule set, requireSignedVersion off
         // (every Tauri window) and on (the Rust app).
         for required in [false, true] {
@@ -97,7 +97,7 @@ mod tests {
                 sp_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required).unwrap();
             assert_eq!(
                 trusted,
-                "timestamp:1\tfile:Screepub-macOS.app.tar.gz\tversion:0.12.0"
+                "timestamp:1\tfile:Method-Reader-macOS.app.tar.gz\tversion:0.12.0"
             );
         }
         assert!(sp_update::verify::verify_signature(data, &sig, &pk, "0.12.1", false).is_err());
@@ -119,7 +119,7 @@ mod tests {
     fn a_key_file_path_works_like_the_key_text() {
         let (sk_text, _) = keygen("").unwrap();
         let dir = tempfile::tempdir().unwrap();
-        let f = dir.path().join("screepub.key");
+        let f = dir.path().join("method-reader.key");
         std::fs::write(&f, &sk_text).unwrap();
         assert!(load_secret_key(f.to_str().unwrap(), "").is_ok());
     }

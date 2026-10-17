@@ -122,7 +122,7 @@ move too.
 | tests/png.test.ts | 24 | sp-parser | done | sp-parser/tests/png.rs (24); IDAT is miniz_oxide level 9, compared by decoded pixels (Decisions) |
 | tests/presets.test.ts | 7 | sp-model | done | sp-model/tests/presets.rs; the aliasing test has no Rust form (presets are returned by value) |
 | tests/release-app-step.test.ts | 23 | xtask | done | xtask/tests/release_steps.rs, the rewritten release.yml's steps run under bash against stub tools: the Mac app's sign, notarize, staple and validate order (4, was the notarization step's 4), the bundle check (5, was the smoke step's 5), the checksums (4) and latest.json (3). Retired (7): the sidecar step (4; no sidecar) and the build-app-bundle.ts step (3; sp-release builds each bundle). Running the bundle check found it reported an empty bundles/ as "unexpected file bundles/*"; release.yml now says NOTHING WAS CHECKED |
-| tests/release-artifacts.test.ts | 82 | xtask | done | the workflow half: xtask/tests/release_workflow.rs (22: the job graph, draft then publish, the uploads per job, the gates, the secrets) and the pin rule in xtask/tests/workflows.rs; the documentation half: xtask/tests/readme_and_docs.rs (24; the AppImage has its row in the README's install table since the final cutover integration). Retired: ci.yml's cross-cli block (3) and desktop.yml's (9), desktop/README.md's (2), the pubkey-from-config gate (tauri.conf.json is gone; the handover gate and verify-update stand in), the cross-builder and bump-tap.sh tables (cli_targets.rs and tap_tools.rs own them), the WebView2 note (the Rust installer fetches no WebView2), and the AppImage half of "nothing promises an AppImage" (the release ships one now) |
+| tests/release-artifacts.test.ts | 82 | xtask | done | the workflow half: xtask/tests/release_workflow.rs (22: the job graph, the draft that a person publishes, the uploads per job, the gates, the secrets) and the pin rule in xtask/tests/workflows.rs; the documentation half: xtask/tests/readme_and_docs.rs (24; the AppImage has its row in the README's install table since the final cutover integration). Retired: ci.yml's cross-cli block (3) and desktop.yml's (9), desktop/README.md's (2), the pubkey-from-config gate (tauri.conf.json is gone; the handover gate and verify-update stand in), the cross-builder and bump-tap.sh tables (cli_targets.rs and tap_tools.rs own them), the WebView2 note (the Rust installer fetches no WebView2), and the AppImage half of "nothing promises an AppImage" (the release ships one now) |
 | tests/release-notes-tool.test.ts | 26 | xtask | done | xtask/tests/release_notes_tool.rs (27), in throwaway repos |
 | tests/release-notes.test.ts | 6 | xtask | done | xtask/tests/release_notes_copy.rs (6) |
 | tests/release-version-gate.test.ts | 6 | xtask | done | xtask/tests/release_steps.rs: the checks job's notes-and-tag step against local git repos (5: a good tag, a ref that is no version, notes read from the TAGGED commit, empty or non-UTF-8 notes, a checksum in the notes) and its version step (2: sp-release handed the tagged rust/Cargo.toml and the bare version, a dirty working tree and a dependency's version ignored; no Cargo.toml at the tag stops before sp-release). The three version files are one now |
@@ -156,7 +156,7 @@ move too.
 | tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (18) runs the readers and the signer through `cargo xtask update-signature`'s module, and the tag-time gate over sp_update::PUBKEY or `--pubkey` (`--pubkey-from-config` went with tauri.conf.json) |
 | tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
 | tests/weekly-toolchain.test.ts | 5 | xtask | done | xtask/tests/workflows.rs (weekly_*, 3): the Calibre job on macOS in rust/, Calibre installed before `cargo test --workspace` with SCREEPUB_REQUIRE_CALIBRE=1 (the engine-finds-Calibre step is sp-engine/tests/calibre_found.rs now), and the same pins as rust.yml. Retired: the named bun test files and the bun version |
-| tests/workflow-shell.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (3): over every workflow, a bare `"${A[@]}"` only of an array its step fills with a literal list and never empties; the guarded spelling under the real /bin/bash, empty and not. release_steps.rs runs the draft and publish steps under that bash too |
+| tests/workflow-shell.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (3): over every workflow, a bare `"${A[@]}"` only of an array its step fills with a literal list and never empties; the guarded spelling under the real /bin/bash, empty and not. release_steps.rs runs the draft and draft-check steps under that bash too |
 | tests/workflows.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (with workflow-shell, weekly-toolchain and the pin rule: 15 in all): every workflow parsed, every needs: resolves, no Swift; added: no workflow runs bun, node or npm, every action pinned to a full SHA with its version comment and one pin per action, least-privilege permissions, bash on every step that can reach Windows, and tap-freshness watching the tap and the manifest |
 
 ### Branch mtp-kindle (BETA, not shipped)
@@ -1163,3 +1163,41 @@ names the check it affects.
     check. Capping it needs the decoder to report progress or take a
     deadline. Until then the budget bounds the number of such pictures, not
     the time one of them takes.
+- **Field Station's credit is "the Method Reader project" (decided by the
+  owner, 2026-10-16): a deliberate change to a frozen fixture.** The
+  product was renamed, and Field Station's title page is in the public
+  README and site pictures, so its credit line changed from "the Screepub
+  project" to "the Method Reader project"
+  (xtask/src/fixture/field_station_content.rs). Nothing else in the
+  fixture changed. tests/fixtures/field-station.pdf was regenerated with
+  `cargo xtask make-fixture demo` (it still reproduces byte for byte) and
+  its answers re-frozen. There is no TypeScript left to ask, so the new
+  answers are the Rust engine's for the new PDF, and before they were
+  written each was diffed against the old frozen answer: everything that
+  moved is the credit line or follows from it. In rust/oracle/field-station/:
+  pages.json, the line's text, its width (143.99999999999997 to
+  179.99999999999991) and its x (234 to 216, the line being centred);
+  lines.json, its text, indent (38 to 35) and character count (20 to 25);
+  elements.json, tokens.json, script.fountain and book.fdx, the text only;
+  convert.json, the author; book.epub, package.opf's dc:creator and
+  dc:identifier (the identifier is the .fountain's digest) and
+  titlepage.xhtml's author line, with every other entry kept as the
+  TypeScript compressed it (only those two entries' bytes are the Rust
+  writer's; the oracle compares inflated entries, Decisions above);
+  book.mobi and book.azw3, the Rust writers' bytes, whose differences
+  decode to the author (EXTH 100), the text five bytes longer, the unique
+  ids hashed from author, identifier and text length, the AZW3's EXTH 113
+  and 116, and every offset after the title page five bytes on (the AZW3
+  also loses Calibre's pad record, as the text records now end on four
+  bytes); book.preview.html, nothing; meta.json, the input's and each
+  file's size and sha256. The 24 field-station rows of
+  rust/oracle/parity/field-station.json that carry the author or a book
+  were moved with `cargo xtask parity --accept`, and every diff it showed
+  was the author, the input PDF, or a book's package.opf, title page,
+  header and records; the other fixtures' 144 runs of those rows matched.
+  sp-epub/tests/data/options-golden.json moved the same way: under each of
+  its option sets, field-station's package.opf and titlepage.xhtml digests
+  (39 entries, three distinct digests) and nothing else, no preview and no
+  other fixture; its pin in xtask/tests/generated_files.rs moved with it.
+  The window's fake engine (sp-app/src/engine.rs) and its Read screen test
+  (sp-app/tests/screens.rs) name the new credit.

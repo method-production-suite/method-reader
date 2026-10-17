@@ -60,7 +60,7 @@ fn c12_the_read_out_names_the_stage_while_the_call_is_out() {
     assert!(shows(&h, "reading the pages (30%)"));
     w.engine.release("convert");
     settle(&mut h);
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 #[test]
@@ -453,8 +453,11 @@ fn d2_no_book_on_disk_says_so_and_offers_to_convert_again() {
     a.as_object_mut().unwrap().remove("epubPath");
     w.engine.always("convert", Reply::ok(a));
     let h = panel(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Heading, "NO BOOK TO SEND");
-    assert!(shows(&h, "Screepub has no book on disk for this script"));
+    h.get_by_role_and_label(Role::Heading, "No book to send");
+    assert!(shows(
+        &h,
+        "Method Reader has no book on disk for this script"
+    ));
     h.get_by_role_and_label(Role::Button, "Convert it again");
 }
 
@@ -809,18 +812,21 @@ fn u3_u5_a_check_is_stamped_before_it_asks_and_a_version_found_is_remembered() {
     use sp_app::model::update::{Found, remembered_offer};
     let w = world();
     let mut h = harness(&w, Platform::Mac);
-    h.state_mut().host.updater = std::sync::Arc::new(FakeUpdater {
+    let updater = FakeUpdater {
         found: Ok(Some(Found {
             version: "0.12.0".into(),
             current_version: "0.11.1".into(),
             body: None,
         })),
         ..FakeUpdater::default()
-    });
+    };
+    let prepared = updater.prepared.clone();
+    h.state_mut().host.updater = std::sync::Arc::new(updater);
     w.fakes.clock.advance(5_000.0);
-    // Not opted in: the launch check never asks on its own.
+    // The switch off: a quiet check never asks.
     {
         let app = h.state_mut();
+        sp_app::model::update::set_automatic(app.host.storage.as_mut(), false);
         app.update.check(&mut app.host, false);
     }
     steps(&mut h);
@@ -831,14 +837,16 @@ fn u3_u5_a_check_is_stamped_before_it_asks_and_a_version_found_is_remembered() {
         "no request, so no stamp"
     );
     assert!(h.query_by_label_contains("Update to").is_none());
-    // Yes: the answer is the consent, and the check runs now.
+    // On again: the switch is the consent, and the check runs now, quietly,
+    // so the update is downloaded before anything is said.
     h.get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
         .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::CheckBox, sp_app::model::update::AUTO_LABEL)
         .click_accesskit();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Button, "Update to 0.12.0");
+    h.get_by_role_and_label(Role::Button, sp_app::model::update::READY_LABEL);
+    assert_eq!(prepared.load(std::sync::atomic::Ordering::SeqCst), 1);
     let app = h.state();
     assert_eq!(
         remembered_offer(app.host.storage.as_ref(), "0.11.1").as_deref(),
@@ -911,7 +919,7 @@ fn u6_each_moment_has_its_words() {
         ),
         (
             Phase::Installed { version: v() },
-            "Update installed. Quit and reopen Screepub to use 0.8.0.",
+            "Update installed. Quit and reopen Method Reader to use 0.8.0.",
         ),
     ] {
         h.state_mut().update.flow.during(phase);

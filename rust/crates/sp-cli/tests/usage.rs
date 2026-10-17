@@ -1,5 +1,6 @@
 //! The help texts are src/cli.ts's, word for word but for the lines in
-//! [`CHANGED_ON_PURPOSE`]: every verb's `--help` prints the text between
+//! [`CHANGED_ON_PURPOSE`] and the product's new name ([`renamed`]): every
+//! verb's `--help` prints the text between
 //! that constant's backticks. src/usage.rs was
 //! generated from it; the texts themselves were read out of src/cli.ts the
 //! day it was deleted (tests/data/typescript-usage.json, one per USAGE
@@ -53,6 +54,33 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[(
     // let through (PARITY.md, Decisions: "No pdf.js warnings").
 )];
 
+/// The TypeScript's text with the product's name as it is now: Screepub
+/// became Method Reader in 0.13, and the command `screepub` became
+/// `method-reader`, five characters longer, so a description written beside
+/// a command in the verb list moves five spaces back to keep its column.
+/// Nothing else is read differently. "builtBy: calibre or screepub" names
+/// a --json token, which kept its spelling, and is left alone.
+fn renamed(text: &str) -> String {
+    let text = text
+        .replace(".screepub.json", ".method-reader.json")
+        .replace("SCREEPUB_", "METHOD_READER_")
+        .replace("Screepub", "Method Reader")
+        .replace("screepub ", "method-reader ")
+        .replace("screepub:", "method-reader:");
+    text.split('\n')
+        .map(|line| {
+            let Some(rest) = line.strip_prefix("  method-reader ") else {
+                return line.to_owned();
+            };
+            match rest.find("       ") {
+                Some(at) => format!("  method-reader {}{}", &rest[..at], &rest[at + 5..]),
+                None => line.to_owned(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 #[test]
 fn every_help_text_is_the_typescripts_word_for_word() {
     let usages = typescript_usages();
@@ -62,7 +90,8 @@ fn every_help_text_is_the_typescripts_word_for_word() {
     }
     let usages: Vec<(String, String)> = usages
         .into_iter()
-        .map(|(name, mut text)| {
+        .map(|(name, text)| {
+            let mut text = renamed(&text);
             for (n, was, now) in CHANGED_ON_PURPOSE {
                 if *n == name {
                     text = text.replace(was, now);
@@ -93,13 +122,13 @@ fn help_in_json_mode_is_one_object() {
         v["usage"]
             .as_str()
             .unwrap()
-            .starts_with("screepub: screenplay PDF")
+            .starts_with("method-reader: screenplay PDF")
     );
     let v = sb.run(&["devices", "-h", "--json"]).json();
     assert!(
         v["usage"]
             .as_str()
             .unwrap()
-            .starts_with("screepub devices:")
+            .starts_with("method-reader devices:")
     );
 }

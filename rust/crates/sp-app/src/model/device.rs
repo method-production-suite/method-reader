@@ -57,7 +57,7 @@ pub const MISSING: Card = Card {
     name: "My device isn’t here",
     sub: None,
 };
-pub const MISSING_LINE: &str = "Screepub does not know it yet. Tell us which one and we will look at adding it. Until then, the EPUB works on most readers.";
+pub const MISSING_LINE: &str = "Method Reader does not know it yet. Tell us which one and we will look at adding it. Until then, the EPUB works on most readers.";
 
 pub fn kinds() -> impl Iterator<Item = &'static str> {
     DEVICES.iter().map(|d| d.kind)
@@ -149,7 +149,7 @@ pub fn cards_for(platform: Platform, devices: Option<&[Device]>) -> Vec<CardView
         .collect()
 }
 
-pub const WEB_LINE: &str = "Amazon’s Send to Kindle opens beside the book’s folder. Drag the book into it: Screepub cannot upload it for you.";
+pub const WEB_LINE: &str = "Amazon’s Send to Kindle opens beside the book’s folder. Drag the book into it: Method Reader cannot upload it for you.";
 pub const PLUG_KINDLE: &str = "Or plug the Kindle in over USB and copy it across.";
 pub const APPLE_ELSEWHERE: &str = "Then put it in iCloud Drive, or email it to yourself, and open it in Books on your iPhone or iPad.";
 
@@ -431,7 +431,7 @@ pub const SAVE_TYPES: [SaveType; 6] = [
     SaveType {
         kind: "azw3",
         label: "AZW3",
-        who: "Kindles over USB, made by Screepub with nothing else installed.",
+        who: "Kindles over USB, made by Method Reader with nothing else installed.",
         beta: true,
     },
     SaveType {

@@ -11,10 +11,10 @@ use crate::output::{Code, Failure};
 pub const MAX_NAME: usize = 254;
 
 /// What marks a copy still in flight. A Kindle indexes books by extension
-/// and skips dotfiles, so `.Title.kfx.screepub-part` is never shown as a book
+/// and skips dotfiles, so `.Title.kfx.method-reader-part` is never shown as a book
 /// even if a crash leaves it behind, and the next copy of the same book
 /// removes it.
-pub const TEMP_SUFFIX: &str = ".screepub-part";
+pub const TEMP_SUFFIX: &str = ".method-reader-part";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DevicePath {
@@ -135,7 +135,7 @@ mod tests {
             "documents/",
             "",
             "documents\\a.kfx",
-            "documents/.a.kfx.screepub-part",
+            "documents/.a.kfx.method-reader-part",
         ] {
             let err = parse_device_path(raw).unwrap_err();
             assert_eq!(err.code, Code::BadPath, "{raw}");
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn the_temp_name_hides_the_book_and_stays_within_the_limit() {
-        assert_eq!(temp_name("Title.kfx"), ".Title.kfx.screepub-part");
+        assert_eq!(temp_name("Title.kfx"), ".Title.kfx.method-reader-part");
         let long = "y".repeat(MAX_NAME);
         let t = temp_name(&long);
         assert_eq!(t.chars().count(), MAX_NAME);

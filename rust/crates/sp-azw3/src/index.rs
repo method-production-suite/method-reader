@@ -4,7 +4,7 @@
 //! Ported from Calibre 9.11.0's src/calibre/ebooks/mobi/writer8/index.py and
 //! the helpers it takes from src/calibre/ebooks/mobi/utils.py (encint,
 //! to_base, CNCX, align_block, utf8_text). Calibre is GPL-3, Copyright Kovid
-//! Goyal; this port is part of Screepub, AGPL-3.0-or-later (see
+//! Goyal; this port is licensed GPL-3.0-only (LICENSE-GPL-3.0) (see
 //! THIRD-PARTY-NOTICES.md). Ports src/azw3/index.ts.
 //!
 //! An index is a header record, then one or more records of entries, then

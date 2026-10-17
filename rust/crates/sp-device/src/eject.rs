@@ -189,7 +189,7 @@ pub fn eject_command(volume: &str, deps: &EjectDeps) -> Result<EjectResult, CliE
     else {
         return Err(CliError::new(
             ErrorCode::UnknownDevice,
-            format!("not a reader Screepub can see: {volume}"),
+            format!("not a reader Method Reader can see: {volume}"),
         ));
     };
 
@@ -239,7 +239,7 @@ pub fn eject_command(volume: &str, deps: &EjectDeps) -> Result<EjectResult, CliE
     match eject_commands(&listed, deps.platform) {
         EjectPlan::NotADriveRoot => Err(CliError::new(
             ErrorCode::UnknownDevice,
-            format!("not a whole drive Screepub can eject: {volume}"),
+            format!("not a whole drive Method Reader can eject: {volume}"),
         )),
         EjectPlan::NeedsDevice => {
             // findmnt exits 1 with nothing to say for a folder that is not a

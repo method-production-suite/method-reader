@@ -307,7 +307,7 @@ pub fn to_rgb(width: f64, height: f64, kind: u8, data: Option<&[u8]>) -> Option<
 /// to carry a 4000px lookbook scan at full size, which is the point, and it
 /// is comfortably over the width any figure is drawn at on the 6" class a
 /// script is usually read on (a Paperwhite panel is 1236 across). It does
-/// NOT clear every panel Screepub ships to; the trade is deliberate rather
+/// NOT clear every panel Method Reader ships to; the trade is deliberate rather
 /// than overlooked, because raising the edge costs every book that carries
 /// any picture at all, and past about 1670 the engine's own picture-folder
 /// reader stops accepting its output.

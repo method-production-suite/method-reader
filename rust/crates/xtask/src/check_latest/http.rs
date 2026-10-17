@@ -5,8 +5,8 @@
 //! Every address starts from a base the environment can move, so a test
 //! points the tools at a fake GitHub on 127.0.0.1:
 //!
-//! - `SCREEPUB_GITHUB_API`, default `https://api.github.com`;
-//! - `SCREEPUB_GITHUB_WEB`, default `https://github.com` (where the
+//! - `METHOD_READER_GITHUB_API`, default `https://api.github.com`;
+//! - `METHOD_READER_GITHUB_WEB`, default `https://github.com` (where the
 //!   updater's `releases/latest/download/latest.json` redirect lives).
 //!
 //! `GH_TOKEN` (else `GITHUB_TOKEN`) is sent to the API when set, as `gh`
@@ -43,7 +43,7 @@ impl Default for Bases {
 }
 
 impl Bases {
-    /// The defaults, moved by `SCREEPUB_GITHUB_API` / `SCREEPUB_GITHUB_WEB`.
+    /// The defaults, moved by `METHOD_READER_GITHUB_API` / `METHOD_READER_GITHUB_WEB`.
     pub fn from_env() -> Bases {
         let d = Bases::default();
         let pick = |name: &str, default: String| {
@@ -54,8 +54,8 @@ impl Bases {
                 .unwrap_or(default)
         };
         Bases {
-            api: pick("SCREEPUB_GITHUB_API", d.api),
-            web: pick("SCREEPUB_GITHUB_WEB", d.web),
+            api: pick("METHOD_READER_GITHUB_API", d.api),
+            web: pick("METHOD_READER_GITHUB_WEB", d.web),
         }
     }
 }
@@ -63,7 +63,7 @@ impl Bases {
 fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
         .http_status_as_error(false)
-        .user_agent("screepub-xtask")
+        .user_agent("method-reader-xtask")
         .build()
         .new_agent()
 }

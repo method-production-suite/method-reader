@@ -25,4 +25,4 @@ The Adobe Glyph List and the standard 14 fonts' metrics in src/tables.rs
 reach pdf.js from Adobe's published glyph list and AFM files, which Adobe
 licenses for this use (BSD-style license, Copyright Adobe Systems).
 
-sp-pdf as a whole is part of Screepub and is licensed AGPL-3.0-or-later.
+sp-pdf as a whole is part of Method Reader and is licensed MIT OR Apache-2.0.

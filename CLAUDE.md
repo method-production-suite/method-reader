@@ -1,10 +1,13 @@
-# Screepub
+# Method Reader
+
+Formerly Screepub (renamed 2026-10-16; the repo folder and the internal `sp-*`
+crate names still say so). Part of the Method Production Suite.
 
 Screenplay PDF → Fountain → reflowable EPUB3/MOBI/AZW3, with a native
 window (Mac, Windows and Linux) that converts and sends to e-readers
 (Kindle first; Kobo/tolino via USB volume signatures, reMarkable via its
 USB web interface: see `rust/crates/sp-device`). All of it is Rust, one
-Cargo workspace in `rust/`: the engine crates, the `screepub` CLI, the
+Cargo workspace in `rust/`: the engine crates, the `method-reader` CLI (with `screepub` kept as an alias), the
 egui window (which links the engine; there is no sidecar), the updater,
 the release tools, the device-request Worker and the developer tools
 (`cargo xtask`). The TypeScript engine, Bun and the Tauri window were
@@ -22,7 +25,7 @@ From `rust/` unless a line says otherwise:
 cargo test --workspace      # every crate's tests (fixtures: tests/fixtures/ at the repo root)
 cargo fmt --all --check     # formatting
 cargo clippy --workspace --all-targets -- -D warnings
-cargo run -p sp-cli --bin screepub -- <pdf>   # convert (see --help; --json is the app contract)
+cargo run -p sp-cli --bin method-reader -- <pdf>   # convert (see --help; --json is the app contract)
 cargo run -p sp-app         # the window (bundles: cargo xtask build-app-bundle)
 cargo xtask parity          # the release CLI against the TypeScript's frozen answers
 epubcheck <out.epub>        # validate output (brew-installed)
@@ -103,7 +106,7 @@ The crates, in the order a conversion passes through them (each one's
   reveal, the reMarkable client, the Kindle ladder's device half; atomic
   writes and node:path's algorithms (`sp-fsutil/src/nodepath.rs`, the one
   copy; sp-engine re-exports it); the MTP helper (off until hardware day).
-- `sp-cli`: the `screepub` binary: the same flags, verbs and `--json`
+- `sp-cli`: the `method-reader` binary (and the `screepub` alias): the same flags, verbs and `--json`
   contract the TypeScript CLI had.
 - `sp-app`: the window, drawn with egui, screen-reader accessible through
   AccessKit. **No logic lives there**: it calls the engine in-process
@@ -154,7 +157,7 @@ The crates, in the order a conversion passes through them (each one's
   `rust/crates/sp-engine/src/export/calibre.rs`) beats AZW3 whenever that
   toolchain is present. The renderer follows the FORMAT, not the delivery
   route; registry §8b has the full verdict. **2026-10-10: everywhere else
-  the AZW3 is Screepub's own** (sp-azw3, beta, registry #20), even where
+  the AZW3 is Method Reader's own** (sp-azw3, beta, registry #20), even where
   Calibre is installed; Calibre is for KFX only. The engine's MOBI is the
   file for the oldest Kindles, asked for by name, never the ladder's answer.
 - **sp-pdf reproduces pdf.js, it does not improve on it.** The parser's
@@ -234,5 +237,7 @@ The crates, in the order a conversion passes through them (each one's
 
 Built first for an older USB-mass-storage Kindle that is often offline, so
 USB is the primary route and everything works without a network. Public
-repo, AGPL-3.0-or-later, © Darkwell Entertainment LLC; releases are
+repo, MIT OR Apache-2.0 (sp-azw3 alone GPL-3.0-only, being a Calibre
+port; nothing else may take GPL code), © Method Production Suite Team and the Method Reader contributors;
+releases are
 notarized DMGs built by CI on `v*` tags.

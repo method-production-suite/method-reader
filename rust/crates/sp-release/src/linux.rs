@@ -2,32 +2,34 @@
 //! an .rpm through the pure-Rust `rpm` crate, and the AppDir appimagetool
 //! turns into an AppImage.
 //!
-//! All three install the same files the Tauri .deb and .rpm installed,
-//! under the same package name, so a package manager upgrades the Tauri
-//! window in place and drops its engine sidecar (`/usr/bin/screepub-engine`
-//! is simply not in the new file list):
+//! The packages are called `method-reader`. Up to 0.12.x they were
+//! `screepub` (the Tauri bundler's name, kept by the Rust 0.12 packages),
+//! so both formats say the new one takes the old one's place: the .deb
+//! `Replaces:`, `Conflicts:` and `Provides:` screepub, the .rpm
+//! `Obsoletes:` and `Provides:` it, each bounded below this version.
+//! Installing the new package then removes the old one (its window, its
+//! launcher, its notices, and the Tauri engine sidecar if it was that
+//! old) instead of leaving two apps side by side:
 //!
 //! ```text
-//! /usr/bin/screepub-desktop
-//! /usr/share/applications/Screepub.desktop      Categories=Office (row W9)
-//! /usr/share/icons/hicolor/<size>/apps/screepub-desktop.png
-//! /usr/lib/Screepub/LICENSE
-//! /usr/lib/Screepub/THIRD-PARTY-NOTICES.md
+//! /usr/bin/method-reader-app
+//! /usr/share/applications/method-reader.desktop      Categories=Office (row W9)
+//! /usr/share/icons/hicolor/<size>/apps/method-reader-app.png
+//! /usr/lib/method-reader/LICENSE-MIT ...
+//! /usr/lib/method-reader/THIRD-PARTY-NOTICES.md
 //! ```
 
 use std::path::{Path, PathBuf};
 
 use crate::archive::{Entry, gzip, tar};
+pub use crate::names::{LEGACY_PACKAGE, PACKAGE};
 use crate::names::{LONG_DESCRIPTION, PRODUCT, PUBLISHER, REPO, SHORT_DESCRIPTION, WINDOW_EXE};
-
-/// The package name the Tauri bundler derived from productName.
-pub const PACKAGE: &str = "screepub";
 
 /// What goes into a Linux package.
 pub struct LinuxApp<'a> {
     pub version: &'a str,
-    /// The built window binary (`screepub-window`), installed as
-    /// `/usr/bin/screepub-desktop`.
+    /// The built window binary (cargo's `method-reader-app`), installed as
+    /// `/usr/bin/method-reader-app`.
     pub window: &'a Path,
     /// (hicolor folder name, PNG): `32x32`, `128x128`, `256x256@2`.
     pub icons: &'a [(String, PathBuf)],
@@ -62,7 +64,7 @@ pub fn payload(app: &LinuxApp) -> std::io::Result<Vec<(String, Vec<u8>, bool)>> 
             true,
         ),
         (
-            format!("/usr/share/applications/{PRODUCT}.desktop"),
+            format!("/usr/share/applications/{PACKAGE}.desktop"),
             desktop_entry().into_bytes(),
             false,
         ),
@@ -77,7 +79,7 @@ pub fn payload(app: &LinuxApp) -> std::io::Result<Vec<(String, Vec<u8>, bool)>> 
     for r in app.resources {
         let name = r.file_name().unwrap_or_default().to_string_lossy();
         files.push((
-            format!("/usr/lib/{PRODUCT}/{name}"),
+            format!("/usr/lib/{PACKAGE}/{name}"),
             std::fs::read(r)?,
             false,
         ));
@@ -277,6 +279,11 @@ pub fn control(version: &str, arch: &str, installed_kib: u64, depends: &str) -> 
     if !depends.trim().is_empty() {
         c += &format!("Depends: {}\n", depends.trim());
     }
+    // The old package name: this one takes its place and its files.
+    let v = package_version(version);
+    c += &format!(
+        "Replaces: {LEGACY_PACKAGE} (<< {v})\nConflicts: {LEGACY_PACKAGE} (<< {v})\nProvides: {LEGACY_PACKAGE} (= {v})\n"
+    );
     c += &format!("Description: {SHORT_DESCRIPTION}\n {LONG_DESCRIPTION}\n");
     c
 }
@@ -334,7 +341,7 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
     let mut b = rpm::PackageBuilder::new(
         PACKAGE,
         &version,
-        "AGPL-3.0-or-later",
+        "(MIT OR Apache-2.0) AND GPL-3.0-only",
         arch,
         SHORT_DESCRIPTION,
     );
@@ -347,6 +354,9 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
     for req in rpm_requires(&window, arch) {
         b.requires(rpm::Dependency::any(req));
     }
+    // The old package name: an upgrade swaps it for this one.
+    b.obsoletes(rpm::Dependency::less(LEGACY_PACKAGE, &version));
+    b.provides(rpm::Dependency::eq(LEGACY_PACKAGE, &version));
     for (path, data, exe) in payload(app).map_err(|e| e.to_string())? {
         let mode = if exe { 0o755 } else { 0o644 };
         b.with_file_contents(data, rpm::FileOptions::new(path).permissions(mode))
@@ -364,7 +374,7 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
 /// what the binary loads must be on every desktop it claims (glibc, the
 /// GPU driver), which CI checks by running it.
 pub fn build_appdir(app: &LinuxApp, out: &Path) -> std::io::Result<PathBuf> {
-    let dir = out.join(format!("{PRODUCT}.AppDir"));
+    let dir = out.join(format!("{PACKAGE}.AppDir"));
     if dir.exists() {
         std::fs::remove_dir_all(&dir)?;
     }
@@ -408,7 +418,7 @@ mod tests {
     use super::*;
 
     fn app(dir: &Path) -> (PathBuf, Vec<(String, PathBuf)>, Vec<PathBuf>) {
-        let bin = dir.join("screepub-window");
+        let bin = dir.join("method-reader-app");
         std::fs::write(&bin, b"\x7fELF fake").unwrap();
         let png = dir.join("32x32.png");
         std::fs::write(&png, b"png").unwrap();
@@ -449,19 +459,26 @@ mod tests {
         assert_eq!(
             names,
             [
-                "./usr/bin/screepub-desktop",
-                "./usr/lib/Screepub/LICENSE",
-                "./usr/share/applications/Screepub.desktop",
-                "./usr/share/icons/hicolor/32x32/apps/screepub-desktop.png",
+                "./usr/bin/method-reader-app",
+                "./usr/lib/method-reader/LICENSE",
+                "./usr/share/applications/method-reader.desktop",
+                "./usr/share/icons/hicolor/32x32/apps/method-reader-app.png",
             ]
         );
     }
 
     #[test]
-    fn the_control_file_names_the_tauri_package() {
-        let c = control("0.12.0", "amd64", 9, "libc6");
-        assert!(c.starts_with("Package: screepub\nVersion: 0.12.0\nArchitecture: amd64\n"));
+    fn the_control_file_names_the_package_and_replaces_the_old_one() {
+        let c = control("0.13.0", "amd64", 9, "libc6");
+        assert!(c.starts_with("Package: method-reader\nVersion: 0.13.0\nArchitecture: amd64\n"));
         assert!(c.contains("Depends: libc6\n"));
+        assert!(c.contains("\nReplaces: screepub (<< 0.13.0)\n"), "{c}");
+        assert!(c.contains("\nConflicts: screepub (<< 0.13.0)\n"), "{c}");
+        assert!(c.contains("\nProvides: screepub (= 0.13.0)\n"), "{c}");
+        assert!(c.contains(
+            "Maintainer: Method Production Suite Team and the Method Reader contributors\n"
+        ));
+        assert!(c.contains("Homepage: https://github.com/method-production-suite/method-reader\n"));
         assert!(c.ends_with(&format!(" {LONG_DESCRIPTION}\n")));
     }
 
@@ -596,7 +613,7 @@ mod tests {
 
         let dir = tempfile::tempdir().unwrap();
         let (_, icons, res) = app(dir.path());
-        let window = dir.path().join("screepub-window");
+        let window = dir.path().join("method-reader-app");
         std::fs::write(&window, &bin).unwrap();
         let a = LinuxApp {
             version: "0.12.0",
@@ -622,7 +639,8 @@ mod tests {
     #[test]
     fn the_launcher_says_office() {
         assert!(desktop_entry().contains("\nCategories=Office;\n"));
-        assert!(desktop_entry().contains("\nExec=screepub-desktop\n"));
+        assert!(desktop_entry().contains("\nExec=method-reader-app\n"));
+        assert!(desktop_entry().contains("\nName=Method Reader\n"));
         // Row W9: no file association, and no path handed in by the launcher.
         assert!(!desktop_entry().contains("MimeType"));
         assert!(!desktop_entry().contains('%'));
@@ -641,6 +659,22 @@ mod tests {
         };
         let rpm = build_rpm(&a, "x86_64", 7).unwrap();
         assert_eq!(&rpm[..4], &[0xed, 0xab, 0xee, 0xdb]);
+        let pkg = rpm::Package::parse(&mut std::io::Cursor::new(rpm)).unwrap();
+        assert_eq!(pkg.metadata.get_name().unwrap(), "method-reader");
+        let obsoletes = pkg.metadata.get_obsoletes().unwrap();
+        assert!(
+            obsoletes
+                .iter()
+                .any(|d| d.name == "screepub" && d.version == "0.12.0"),
+            "{obsoletes:?}"
+        );
+        let provides = pkg.metadata.get_provides().unwrap();
+        assert!(
+            provides
+                .iter()
+                .any(|d| d.name == "screepub" && d.version == "0.12.0"),
+            "{provides:?}"
+        );
     }
 
     #[cfg(unix)]
@@ -658,9 +692,9 @@ mod tests {
         let d = build_appdir(&a, dir.path()).unwrap();
         for f in [
             "AppRun",
-            "screepub-desktop.desktop",
-            "screepub-desktop.png",
-            "usr/bin/screepub-desktop",
+            "method-reader-app.desktop",
+            "method-reader-app.png",
+            "usr/bin/method-reader-app",
         ] {
             assert!(d.join(f).exists(), "{f}");
         }

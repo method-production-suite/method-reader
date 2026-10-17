@@ -24,7 +24,7 @@ pub type Page = &'static [(&'static str, &'static str)];
 pub const TITLE: &[(f64, &str)] = &[
     (4.0, "FIELD STATION"),
     (4.5, "Written by"),
-    (5.0, "the Screepub project"),
+    (5.0, "the Method Reader project"),
 ];
 
 /// Every page, in order.

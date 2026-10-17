@@ -1,4 +1,4 @@
-//! `cargo xtask <command>`: Screepub's own tooling. The commands live in
+//! `cargo xtask <command>`: Method Reader's own tooling. The commands live in
 //! the library (src/lib.rs lists them); this only hands over the arguments.
 
 use std::process::ExitCode;

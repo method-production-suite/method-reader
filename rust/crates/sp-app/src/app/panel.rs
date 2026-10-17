@@ -1317,11 +1317,11 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     if let Some(blocked) = app.panel.blocked {
         widgets::heading(
             ui,
-            &widgets::caps("No book to send"),
-            theme::structure_bold(size::BODY),
+            "No book to send",
+            theme::chrome_strong(size::BODY),
             t.alarm,
         );
-        widgets::text(ui, blocked, theme::structure(size::UI), t.ink);
+        widgets::text(ui, blocked, theme::chrome(size::UI), t.ink);
         ui.add_space(layout::SPACE[6]);
         let b = widgets::button(ui, &t, Look::Outline, "Convert it again", true);
         app.stop(b.id, true);
@@ -1346,12 +1346,12 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         ui,
         Id::new("send-status"),
         &status.line,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         if status.bad { t.alarm } else { t.ink_muted },
     );
     if !app.panel.artifact.is_empty() {
         let artifact = app.panel.artifact.clone();
-        widgets::text(ui, &artifact, theme::structure(size::FINE), t.ink_muted);
+        widgets::text(ui, &artifact, theme::chrome(size::NOTE), t.ink_muted);
     }
 }
 
@@ -1380,17 +1380,18 @@ fn choose_intent(app: &mut App, intent: Intent) {
 /// over the state motion (at once with Reduce Motion).
 fn intent_switch(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
-    let font = theme::structure_bold(size::LABEL);
-    let pad = Vec2::new(18.0, 7.0);
+    let font = theme::chrome(size::UI);
+    let strong = theme::chrome_strong(size::UI);
+    let pad = Vec2::new(18.0, 0.0);
     let widest = [Intent::Read, Intent::Edit]
         .iter()
         .map(|i| {
             ui.painter()
-                .layout_no_wrap(widgets::caps(i.label()), font.clone(), t.ink)
+                .layout_no_wrap(i.label().to_string(), strong.clone(), t.ink)
                 .size()
         })
         .fold(Vec2::ZERO, |a, b| a.max(b));
-    let half = (widest + pad * 2.0).ceil();
+    let half = Vec2::new(widest.x + pad.x * 2.0, widgets::CONTROL_HEIGHT).ceil();
     let knob = app.ease(
         Id::new("panel-intent-knob"),
         app.panel.intent.knob(),
@@ -1400,13 +1401,23 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
     let bar = ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
         let (whole, _) = ui.allocate_exact_size(Vec2::new(half.x * 2.0, half.y), Sense::hover());
+        // The family's segmented control (Method Budget's Budget | Library):
+        // the second surface in a rule, the chosen half on the selection's
+        // ground in its own rule.
         let radius = egui::CornerRadius::same(theme::RADIUS as u8);
         let slot = |i: f32| Rect::from_min_size(whole.min + Vec2::new(half.x * i, 0.0), half);
-        ui.painter().rect_filled(slot(knob), radius, t.brass);
+        ui.painter().rect_filled(whole, radius, t.bar);
         ui.painter().rect_stroke(
             whole,
             radius,
-            egui::Stroke::new(1.2, t.ink),
+            egui::Stroke::new(1.0, t.rule),
+            egui::StrokeKind::Inside,
+        );
+        ui.painter().rect_filled(slot(knob), radius, t.brass_soft);
+        ui.painter().rect_stroke(
+            slot(knob),
+            radius,
+            egui::Stroke::new(1.0, t.brass.gamma_multiply(0.5)),
             egui::StrokeKind::Inside,
         );
         let mut moved = None;
@@ -1431,17 +1442,21 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
                 n.set_selected(selected);
                 n.clear_toggled();
             });
-            // The words over the knob read as ink on brass; the other as ink.
+            // The chosen half's words in ink at 600; the other's muted.
             let over = 1.0 - (knob - intent.knob()).abs();
-            let ink = super::bookview::mix(t.ink, t.ink_on_brass, over);
+            let ink = super::bookview::mix(t.ink_muted, t.ink, over);
             ui.painter().text(
                 rect.center(),
                 egui::Align2::CENTER_CENTER,
-                widgets::caps(intent.label()),
-                font.clone(),
+                intent.label(),
+                if selected {
+                    strong.clone()
+                } else {
+                    font.clone()
+                },
                 ink,
             );
-            widgets::focus_ring(ui, &t, &response, 3.0);
+            widgets::focus_ring(ui, &t, &response, 1.0);
             app.stop(id, selected);
             // Part of the panel for the keyboard's bookkeeping: the plan
             // parks a fresh result here, and the brass is owed it.
@@ -1495,7 +1510,7 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
 /// Save box and runs the same export Save a file does.
 fn draw_edit(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
-    widgets::text(ui, EDIT_LINE, theme::prose(size::CAPTION), t.ink_soft);
+    widgets::text(ui, EDIT_LINE, theme::chrome(size::UI), t.ink_soft);
     ui.add_space(layout::SPACE[4]);
     let gap = 12.8;
     let width = ((ui.available_width() - gap) / 2.0).floor().max(160.0);
@@ -1517,20 +1532,17 @@ fn draw_edit(app: &mut App, ui: &mut Ui) {
             ui.ctx()
                 .accesskit_node_builder(id, |n| n.set_description(card.sub));
             let hovered = live && resp.hovered();
-            ui.painter().rect_filled(
-                rect,
-                theme::RADIUS_WELL,
-                if hovered { t.hole } else { t.paper },
-            );
+            ui.painter()
+                .rect_filled(rect, theme::RADIUS, if hovered { t.bar } else { t.panel });
             ui.painter().rect_stroke(
                 rect,
-                theme::RADIUS_WELL,
-                egui::Stroke::new(1.0, if hovered { t.ink } else { t.ink_muted }),
+                theme::RADIUS,
+                egui::Stroke::new(1.0, if hovered { t.rule_strong } else { t.rule }),
                 egui::StrokeKind::Inside,
             );
             let name = ui.painter().layout(
                 card.name.to_string(),
-                theme::structure_bold(size::UI),
+                theme::chrome_strong(size::UI),
                 t.ink,
                 rect.width() - 40.0,
             );
@@ -1542,7 +1554,7 @@ fn draw_edit(app: &mut App, ui: &mut Ui) {
                 egui::pos2(rect.left() + 16.0, under),
                 egui::Align2::LEFT_TOP,
                 card.sub,
-                theme::structure(size::NOTE),
+                theme::chrome(size::LABEL),
                 t.ink_muted,
             );
             widgets::focus_ring(ui, &t, &resp, 2.0);
@@ -1583,18 +1595,13 @@ fn plugged_in_mark(ui: &mut Ui, t: &theme::Tokens) {
     ui.horizontal(|ui| {
         let (dot, _) = ui.allocate_exact_size(Vec2::splat(8.0), Sense::hover());
         ui.painter().circle_filled(dot.center(), 4.0, t.present);
-        widgets::text(ui, d::PLUGGED_IN, theme::structure(size::NOTE), t.ink_muted);
+        widgets::text(ui, d::PLUGGED_IN, theme::chrome(size::LABEL), t.ink_muted);
     });
 }
 
 fn draw_cards(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
-    widgets::heading(
-        ui,
-        &widgets::caps(d::QUESTION),
-        theme::structure_bold(size::UI),
-        t.ink,
-    );
+    widgets::heading(ui, d::QUESTION, theme::chrome_strong(size::CAPTION), t.ink);
     ui.add_space(layout::SPACE[4]);
     let cards = cards_for(app.host.platform, app.devices.as_deref());
     let columns = ((ui.available_width() + 12.8) / (176.0 + 12.8))
@@ -1617,32 +1624,31 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
                 let border = if card.here {
                     t.brass
                 } else if resp.hovered() {
-                    t.ink
+                    t.rule_strong
                 } else {
-                    t.ink_muted
+                    t.rule
                 };
                 ui.painter().rect_filled(
                     rect,
-                    theme::RADIUS_WELL,
-                    if resp.hovered() { t.hole } else { t.paper },
+                    theme::RADIUS,
+                    if card.here {
+                        t.brass_soft
+                    } else if resp.hovered() {
+                        t.bar
+                    } else {
+                        t.panel
+                    },
                 );
                 ui.painter().rect_stroke(
                     rect,
-                    theme::RADIUS_WELL,
+                    theme::RADIUS,
                     egui::Stroke::new(1.0, border),
                     egui::StrokeKind::Inside,
                 );
-                if card.here {
-                    ui.painter().rect_filled(
-                        Rect::from_min_size(rect.min, Vec2::new(3.0, rect.height())),
-                        0.0,
-                        t.brass,
-                    );
-                }
                 let mut y = rect.top() + 14.0;
                 let name_galley = ui.painter().layout(
                     card.name.to_string(),
-                    theme::structure_bold(size::UI),
+                    theme::chrome_strong(size::UI),
                     t.ink,
                     rect.width() - 40.0,
                 );
@@ -1657,7 +1663,7 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
                         egui::pos2(rect.left() + 16.0, y),
                         egui::Align2::LEFT_TOP,
                         sub,
-                        theme::structure(size::NOTE),
+                        theme::chrome(size::LABEL),
                         t.ink_muted,
                     );
                 }
@@ -1669,7 +1675,7 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
                         at + Vec2::new(8.0, 0.0),
                         egui::Align2::LEFT_TOP,
                         d::PLUGGED_IN,
-                        theme::structure(size::NOTE),
+                        theme::chrome(size::LABEL),
                         t.ink_muted,
                     );
                 }
@@ -1786,7 +1792,7 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             ui,
             Id::new("kindle-build"),
             build_line(build.extension.as_deref()),
-            theme::prose(size::CAPTION),
+            theme::chrome(size::LABEL),
             t.ink_muted,
         );
         let rect = widgets::track(ui, &t, 0.0);
@@ -1812,7 +1818,7 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
         app.moving();
     }
     if let Some(fault) = app.panel.routes_fault.clone() {
-        widgets::text(ui, &fault, theme::structure(size::UI), t.ink);
+        widgets::text(ui, &fault, theme::chrome(size::UI), t.ink);
     } else if let Some(o) = &offer {
         for line in &o.lines {
             widgets::caption(ui, &t, line, false);
@@ -1861,13 +1867,13 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
     ui.painter().hline(
         ui.max_rect().x_range(),
         ui.cursor().min.y,
-        egui::Stroke::new(1.0, t.hole),
+        egui::Stroke::new(1.0, t.rule),
     );
     ui.add_space(layout::SPACE[4]);
     widgets::heading(
         ui,
-        &widgets::caps(d::SEND_IT),
-        theme::structure(size::NOTE),
+        d::SEND_IT,
+        theme::chrome_strong(size::LABEL),
         t.ink_muted,
     );
     for item in fold_unplugged(&send_it_rows(app.panel.drawn.as_ref(), offer)) {
@@ -1876,28 +1882,30 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
             WayItem::Fold(fold) => {
                 ui.add_space(layout::SPACE[4]);
                 ui.horizontal_wrapped(|ui| {
+                    // The separators carry their own spaces.
+                    ui.spacing_mut().item_spacing.x = 0.0;
                     for (i, name) in fold.names.iter().enumerate() {
-                        widgets::text(ui, name, theme::structure(size::NOTE), t.ink_muted);
+                        widgets::text(ui, name, theme::chrome(size::LABEL), t.ink_muted);
                         if let Some(kind) = fold.kinds.get(i)
                             && d::unproven(kind, app.host.platform)
                         {
                             asterisk(app, ui, kind);
                         }
                         let sep = if i + 2 < fold.names.len() {
-                            ","
+                            ", "
                         } else if i + 2 == fold.names.len() {
-                            " and"
+                            " and "
                         } else {
                             ""
                         };
                         if !sep.is_empty() {
-                            widgets::text(ui, sep, theme::structure(size::NOTE), t.ink_muted);
+                            widgets::text(ui, sep, theme::chrome(size::LABEL), t.ink_muted);
                         }
                     }
                     widgets::text(
                         ui,
-                        fold.tail.trim_start_matches(':').trim(),
-                        theme::structure(size::NOTE),
+                        &format!(" {}", fold.tail.trim_start_matches(':').trim()),
+                        theme::chrome(size::LABEL),
                         t.ink_muted,
                     );
                 });
@@ -1908,8 +1916,8 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
     ui.add_space(layout::SPACE[6]);
     widgets::heading(
         ui,
-        &widgets::caps(d::SAVE_A_FILE),
-        theme::structure(size::NOTE),
+        d::SAVE_A_FILE,
+        theme::chrome_strong(size::LABEL),
         t.ink_muted,
     );
     for row in save_rows(app.script.as_ref(), app.panel.kindle.as_ref()) {
@@ -1920,14 +1928,14 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
                     widgets::text(
                         ui,
                         row.label,
-                        theme::structure_bold(size::UI),
+                        theme::chrome_strong(size::UI),
                         if row.available { t.ink } else { t.ink_muted },
                     );
                     if row.beta {
                         widgets::beta_badge(ui, &t);
                     }
                 });
-                widgets::text(ui, row.who, theme::structure(size::NOTE), t.ink_muted);
+                widgets::text(ui, row.who, theme::chrome(size::LABEL), t.ink_muted);
                 if let Some(fix) = row.fix {
                     widgets::caption(ui, &t, fix, false);
                 }
@@ -1969,7 +1977,7 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
                 widgets::text(
                     ui,
                     &lines.title,
-                    theme::structure_bold(size::UI),
+                    theme::chrome_strong(size::UI),
                     if route.available { t.ink } else { t.ink_muted },
                 );
                 if kindle_file_is_beta(route, app.panel.kindle.as_ref())
@@ -1983,9 +1991,9 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
                     asterisk(app, ui, kind);
                 }
             });
-            widgets::text(ui, &lines.detail, theme::structure(size::NOTE), t.ink_muted);
+            widgets::text(ui, &lines.detail, theme::chrome(size::LABEL), t.ink_muted);
             if let Some(where_) = &lines.where_ {
-                widgets::text(ui, where_, theme::structure(size::NOTE), t.ink_muted);
+                widgets::text(ui, where_, theme::chrome(size::LABEL), t.ink_muted);
             }
             if let Some(hint) = email_setup_hint(route) {
                 ui.horizontal_wrapped(|ui| {
@@ -2029,19 +2037,14 @@ fn draw_missing(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     widgets::prose(ui, &t, d::MISSING_LINE);
     ui.add_space(layout::SPACE[4]);
-    let label = widgets::text(
-        ui,
-        &widgets::caps(q::LABEL),
-        theme::structure_bold(size::NOTE),
-        t.ink_muted,
-    );
+    let label = widgets::text(ui, q::LABEL, theme::chrome_strong(size::LABEL), t.ink_muted);
     ui.horizontal_wrapped(|ui| {
         let busy = app.panel.request.busy;
         let field = ui.add_enabled(
             !busy,
             egui::TextEdit::singleline(&mut app.panel.request.draft)
                 .char_limit(q::MAX_DEVICE)
-                .font(theme::structure(size::LABEL))
+                .font(theme::chrome(size::UI))
                 .desired_width(220.0),
         );
         let field = field.labelled_by(label.id);
@@ -2072,7 +2075,7 @@ fn draw_missing(app: &mut App, ui: &mut Ui) {
         ui,
         Id::new("request-status"),
         &said,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         if bad { t.alarm } else { t.ink_muted },
     );
     ui.add_space(layout::SPACE[2]);
@@ -2106,7 +2109,7 @@ fn asterisk(app: &mut App, ui: &mut Ui, kind: &str) {
     let pinned = app.panel.pinned.contains(kind);
     let galley =
         ui.painter()
-            .layout_no_wrap("*".into(), theme::structure_bold(size::LEDE), t.ink_muted);
+            .layout_no_wrap("*".into(), theme::chrome_strong(size::CAPTION), t.ink_muted);
     let (rect, resp) = ui.allocate_exact_size(galley.size() + Vec2::new(6.0, 0.0), Sense::click());
     // One kind can wear two asterisks (the calm screen's and Other ways'
     // fold): each its own widget, by its place in the drawing order.
@@ -2159,12 +2162,12 @@ fn asterisk_notes(app: &mut App, ui: &mut Ui, kinds: Vec<String>) {
             continue;
         };
         egui::Frame::NONE
-            .fill(t.paper)
-            .stroke(egui::Stroke::new(1.0, t.hole))
-            .corner_radius(theme::RADIUS_WELL)
-            .inner_margin(egui::Margin::symmetric(13, 10))
+            .fill(t.bar)
+            .stroke(egui::Stroke::new(1.0, t.rule))
+            .corner_radius(theme::RADIUS)
+            .inner_margin(egui::Margin::symmetric(12, 8))
             .show(ui, |ui| {
-                widgets::text(ui, &note, theme::prose(size::CAPTION), t.ink_soft);
+                widgets::text(ui, &note, theme::chrome(size::UI), t.ink_soft);
                 if report_route(&kind, app.host.platform).is_some() {
                     let rep = app.panel.reports.get(&kind).cloned().unwrap_or_default();
                     ui.horizontal_wrapped(|ui| {
@@ -2203,7 +2206,7 @@ fn asterisk_notes(app: &mut App, ui: &mut Ui, kinds: Vec<String>) {
                             ui,
                             Id::new(("report-status", &kind)),
                             &said,
-                            theme::prose(size::CAPTION),
+                            theme::chrome(size::LABEL),
                             if bad { t.alarm } else { t.ink_muted },
                         );
                     });
@@ -2231,7 +2234,7 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
     ui.painter().hline(
         ui.max_rect().x_range(),
         ui.cursor().min.y,
-        egui::Stroke::new(1.0, t.hole),
+        egui::Stroke::new(1.0, t.rule),
     );
     ui.add_space(layout::SPACE[4]);
     let block = ui.scope(|ui| {
@@ -2240,15 +2243,10 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
         for step in &setup.steps {
             ui.add_space(layout::SPACE[4]);
             ui.horizontal_wrapped(|ui| {
-                widgets::text(ui, &step.name, theme::structure_bold(size::UI), t.ink);
+                widgets::text(ui, &step.name, theme::chrome_strong(size::UI), t.ink);
                 match control_for(step, busy) {
                     Control::Status(words) => {
-                        widgets::text(
-                            ui,
-                            &widgets::caps(&words),
-                            theme::structure(size::FINE),
-                            t.ink_muted,
-                        );
+                        widgets::text(ui, &words, theme::chrome(size::LABEL), t.ink_muted);
                     }
                     Control::Link { label, url } => {
                         let b = widgets::button(ui, &t, Look::Outline, &label, true);
@@ -2277,7 +2275,7 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
             ui,
             Id::new("kfx-status"),
             &status.line,
-            theme::prose(size::CAPTION),
+            theme::chrome(size::LABEL),
             if status.bad { t.alarm } else { t.ink_muted },
         );
     });

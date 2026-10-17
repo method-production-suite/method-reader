@@ -1,7 +1,7 @@
 //! CMaps, as pdf.js reads them.
 //!
 //! Ported from pdf.js `src/core/cmap.js` (Mozilla Foundation, Apache License
-//! 2.0). One deliberate absence, and it is pdf.js's own under Screepub's
+//! 2.0). One deliberate absence, and it is pdf.js's own under Method Reader's
 //! settings: the engine opens documents without `cMapUrl`, so every built-in
 //! CMap other than Identity-H/V fails to load. That failure is reproduced
 //! (`Err(BuiltInUnavailable)`) rather than fixed, because pdf.js turns it into

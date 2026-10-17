@@ -130,6 +130,11 @@ pub fn is_file(path: &str) -> bool {
     fs::metadata(path).is_ok_and(|m| m.is_file())
 }
 
+/// `statSync(path).isDirectory()`, false when it cannot be stat'ed.
+pub fn is_dir(path: &str) -> bool {
+    fs::metadata(path).is_ok_and(|m| m.is_dir())
+}
+
 /// `statSync(path).mtimeMs`, or `None` when it cannot be stat'ed.
 ///
 /// Node reports a fractional millisecond (`1760000000123.4567`); this is

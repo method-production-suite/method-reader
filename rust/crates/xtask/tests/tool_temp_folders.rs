@@ -63,7 +63,7 @@ fn smoke_cli_removes_its_work_folder_after_a_passing_smoke() {
     cli_build_common::write_script(
         &binary,
         r#"case "$1" in
-  --version) echo "screepub 9.9.9"; exit 0;;
+  --version) echo "method-reader 9.9.9 (Method Reader)"; exit 0;;
   devices) echo '{"ok":true,"devices":[]}'; exit 0;;
 esac
 input="$1"; out=""

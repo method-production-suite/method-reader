@@ -86,101 +86,54 @@ fn hex(c: &serde_json::Map<String, Value>, name: &str, mode: &str) -> String {
 
 /// (label, foreground token, fg, bg, floor): every pair the contrast test
 /// checks. The token name rides along so completeness can be asked of
-/// this table directly, not of a second hand-kept list.
-fn pairs() -> Vec<(&'static str, &'static str, String, String, f64)> {
+/// this table directly, not of a second hand-kept list. Floors are WCAG
+/// 2.x as docs/BRAND.md's table holds the site to them: 4.5:1 for text,
+/// raised to 7:1 for the window's headings and prose, which clear it.
+fn pairs() -> Vec<(String, &'static str, String, String, f64)> {
     let c = colours();
     let h = |n: &str, m: &str| hex(&c, n, m);
-    vec![
-        (
-            "ink on paper",
-            "ink",
-            h("ink", "light"),
-            h("paper", "light"),
-            7.0,
-        ),
-        (
-            "ink-soft on paper",
-            "ink-soft",
-            h("ink-soft", "light"),
-            h("paper", "light"),
-            7.0,
-        ),
-        (
-            "ink-muted on paper",
-            "ink-muted",
-            h("ink-muted", "light"),
-            h("paper", "light"),
-            4.5,
-        ),
-        // Both modes, because brass does not change and neither may its
-        // label. `ink` is deliberately NOT paired with brass: it flips to
-        // cream in dark mode and lands at 1.67:1, the bug ink-on-brass
-        // exists to prevent.
-        (
-            "ink-on-brass on brass",
-            "ink-on-brass",
-            h("ink-on-brass", "light"),
-            h("brass", "light"),
-            7.0,
-        ),
-        (
-            "ink-on-brass on brass, dark",
-            "ink-on-brass",
-            h("ink-on-brass", "dark"),
-            h("brass", "dark"),
-            7.0,
-        ),
-        // The brad button's hover ground: a lighter stop of the same ramp.
-        (
-            "ink-on-brass on brass-highlight",
-            "ink-on-brass",
-            h("ink-on-brass", "light"),
-            h("brass-highlight", "light"),
-            7.0,
-        ),
-        (
-            "alarm on paper",
-            "alarm",
-            h("alarm", "light"),
-            h("paper", "light"),
-            4.5,
-        ),
-        (
-            "ink on paper, dark",
-            "ink",
-            h("ink", "dark"),
-            h("paper", "dark"),
-            7.0,
-        ),
-        (
-            "ink-soft on paper, dark",
-            "ink-soft",
-            h("ink-soft", "dark"),
-            h("paper", "dark"),
-            7.0,
-        ),
-        (
-            "ink-muted on paper, dark",
-            "ink-muted",
-            h("ink-muted", "dark"),
-            h("paper", "dark"),
-            4.5,
-        ),
-        (
-            "brass on paper, dark",
-            "brass",
-            h("brass", "dark"),
-            h("paper", "dark"),
-            7.0,
-        ),
-        (
-            "alarm on paper, dark",
-            "alarm",
-            h("alarm", "dark"),
-            h("paper", "dark"),
-            4.5,
-        ),
-    ]
+    let mut out = Vec::new();
+    for mode in ["light", "dark"] {
+        let rows: [(&'static str, &'static str, &str, f64); 18] = [
+            ("ink on paper", "ink", "paper", 7.0),
+            ("ink on panel", "ink", "panel", 7.0),
+            ("ink-soft on paper", "ink-soft", "paper", 7.0),
+            ("ink-soft on panel", "ink-soft", "panel", 7.0),
+            ("ink-muted on paper", "ink-muted", "paper", 4.5),
+            ("ink-muted on panel", "ink-muted", "panel", 4.5),
+            ("brass on paper", "brass", "paper", 4.5),
+            ("brass on panel", "brass", "panel", 4.5),
+            // The accent's label is its own ink, never `ink`: ink on the
+            // violet is 2.75:1 light and 1.9:1 dark.
+            ("ink-on-brass on brass", "ink-on-brass", "brass", 4.5),
+            // The accent button's hover ground: a lighter stop of the ramp.
+            (
+                "ink-on-brass on brass-highlight",
+                "ink-on-brass",
+                "brass-highlight",
+                4.5,
+            ),
+            ("note on paper", "note", "paper", 4.5),
+            ("note on panel", "note", "panel", 4.5),
+            ("alarm on paper", "alarm", "paper", 4.5),
+            ("alarm on panel", "alarm", "panel", 4.5),
+            // The family layout's grounds: the tab strip and a hovered
+            // control (bar), and a selection (brass-soft).
+            ("ink on bar", "ink", "bar", 7.0),
+            ("ink-muted on bar", "ink-muted", "bar", 4.5),
+            ("ink on brass-soft", "ink", "brass-soft", 7.0),
+            ("ink-muted on brass-soft", "ink-muted", "brass-soft", 4.5),
+        ];
+        for (label, fg, bg, floor) in rows {
+            let label = if mode == "dark" {
+                format!("{label}, dark")
+            } else {
+                label.to_string()
+            };
+            out.push((label, fg, h(fg, mode), h(bg, mode), floor));
+        }
+    }
+    out
 }
 
 /// The `--name: value;` declarations in a flat block.
@@ -219,7 +172,7 @@ fn tokens_css_declares_every_token_in_tokens_json_in_both_modes() {
             "tokens.css :root and tokens.json disagree on --{name}"
         );
         // A token whose dark value is its light one is correctly absent
-        // from the dark block: brass is a material, not a hue.
+        // from the dark block.
         if d != l {
             assert_eq!(
                 dark.get(name).map(String::as_str),
@@ -264,12 +217,12 @@ fn the_contrast_table_covers_every_text_bearing_token() {
 
 #[test]
 fn the_measured_case_brand_readme_cites_ink_muted_clears_where_faint_ink_did_not() {
-    // brand/README.md: ink at 55% alpha blends to #7F7C74 on paper and
-    // lands at 3.73:1, which is why ink-muted exists.
+    // brand/README.md: ink at 55% alpha blends to #7F8183 on paper and
+    // lands at 3.62:1, which is why ink-muted exists.
     let c = colours();
     let paper = from_hex(&hex(&c, "paper", "light"));
-    let faint = contrast(from_hex("#7F7C74"), paper);
-    assert!((faint - 3.73).abs() < 0.005, "{faint}");
+    let faint = contrast(from_hex("#7F8183"), paper);
+    assert!((faint - 3.62).abs() < 0.005, "{faint}");
     assert!(contrast(from_hex(&hex(&c, "ink-muted", "light")), paper) >= 4.5);
 }
 
@@ -293,9 +246,10 @@ fn previews() -> Vec<(String, String)> {
 }
 
 #[test]
-fn nothing_sets_a_mode_flipping_ink_on_a_fixed_brass_ground() {
-    // How the brass button shipped at 1.67:1 in dark mode: --brass holds
-    // across modes, --ink does not, and buttons.html put one on the other.
+fn nothing_sets_ink_on_an_accent_ground() {
+    // How the brass button once shipped at 1.67:1 in dark mode: buttons.html
+    // put --ink on --brass. On the violet accent --ink is 2.75:1 light and
+    // 1.9:1 dark; the label is --ink-on-brass.
     let rule = Regex::new(r"\{[^{}]*background:\s*var\(--brass\)[^{}]*\}").unwrap();
     let ink = Regex::new(r"color:\s*var\(--ink\)").unwrap();
     let all = previews();
@@ -304,7 +258,7 @@ fn nothing_sets_a_mode_flipping_ink_on_a_fixed_brass_ground() {
         for r in rule.find_iter(&css) {
             assert!(
                 !ink.is_match(r.as_str()),
-                "{name}.html sets color:var(--ink) on a var(--brass) background. --ink flips to cream in dark mode and lands at 1.67:1 there. Use --ink-on-brass."
+                "{name}.html sets color:var(--ink) on a var(--brass) background, which lands under 3:1 in both modes. Use --ink-on-brass."
             );
         }
     }
@@ -442,7 +396,7 @@ fn no_preview_hardcodes_a_font_size_radius_or_easing() {
 
 #[test]
 fn previews_use_tokens_never_raw_brand_colours() {
-    // White and black carry opacity in the brass gradients; everything
+    // White and black carry opacity in the brad gradients; everything
     // else must be a token. SVG fragment ids (#dad, #face) and numeric
     // character references (&#8984;) are the same shape, so they go first.
     let carriers = ["#FFF", "#FFFFFF", "#000", "#000000"];

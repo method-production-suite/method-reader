@@ -18,6 +18,15 @@
 //!
 //! A backup that cannot be deleted afterwards is reported, not failed: the
 //! new bundle is in place (inventory row U7).
+//!
+//! One swap renames as well. Every 0.12.x copy (the Screepub name) updates
+//! in place, so the first Method Reader lands at `Screepub.app`. When the
+//! running bundle has that LEGACY name and no `Method Reader.app` sits
+//! beside it, the new version goes in as `Method Reader.app` instead: the
+//! old bundle moves aside to its hidden backup as always, the new one moves
+//! in under the new name, the backup is removed, and [`Installed::bundle`]
+//! names the new path for the restart. A failure puts the old bundle back
+//! under its old name. Nothing else ever renames a bundle.
 
 use std::io::Cursor;
 use std::path::{Component, Path, PathBuf};
@@ -27,7 +36,7 @@ use flate2::read::GzDecoder;
 #[derive(Debug)]
 pub enum InstallError {
     Io(String),
-    /// The archive is not a bundle Screepub would run.
+    /// The archive is not a bundle Method Reader would run.
     Archive(String),
     /// The bundle's folder is not writable and the person declined (or no
     /// administrator could be asked).
@@ -48,17 +57,43 @@ fn io(what: &str, path: &Path, e: std::io::Error) -> InstallError {
     InstallError::Io(format!("Could not {what} {}: {e}", path.display()))
 }
 
+/// The Mac bundle's name from 0.13 on.
+pub const BUNDLE_NAME: &str = "Method Reader.app";
+
+/// The name every bundle up to 0.12.x had, and the one the first Method
+/// Reader still runs under (its 0.12.x updater swapped it in place). Kept
+/// so the swap can rename it once and the sweep can find its leftovers.
+pub const LEGACY_BUNDLE_NAME: &str = "Screepub.app";
+
+/// Where an update of `bundle` goes: `Method Reader.app` beside it when
+/// `bundle` is the LEGACY `Screepub.app` and nothing (not even a link) has
+/// that name yet, else `bundle` itself. A bundle someone renamed by hand
+/// keeps its name.
+pub fn install_destination(bundle: &Path) -> PathBuf {
+    let renamed = bundle.with_file_name(BUNDLE_NAME);
+    if bundle.file_name() == Some(std::ffi::OsStr::new(LEGACY_BUNDLE_NAME))
+        && std::fs::symlink_metadata(&renamed).is_err()
+    {
+        renamed
+    } else {
+        bundle.to_path_buf()
+    }
+}
+
 /// What an install left behind.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Installed {
+    /// Where the new version now is: the bundle's own path, or
+    /// `Method Reader.app` beside it after the one-time rename. The restart
+    /// starts this path.
     pub bundle: PathBuf,
     /// The old bundle, when deleting it failed. The update still counts.
     pub leftover: Option<PathBuf>,
 }
 
 /// The `.app` a running executable lives in
-/// (`/Applications/Screepub.app/Contents/MacOS/screepub-desktop` gives
-/// `/Applications/Screepub.app`), or None outside a bundle, which is how a
+/// (`/Applications/Method Reader.app/Contents/MacOS/method-reader-app`
+/// gives `/Applications/Method Reader.app`), or None outside a bundle, which is how a
 /// development build knows it cannot update itself.
 pub fn bundle_of_exe(exe: &Path) -> Option<PathBuf> {
     let macos = exe.parent()?;
@@ -236,12 +271,12 @@ fn sibling(bundle: &Path, tag: &str) -> PathBuf {
     let name = bundle
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "Screepub.app".into());
+        .unwrap_or_else(|| BUNDLE_NAME.into());
     bundle.with_file_name(format!(".{name}.{tag}-{}", std::process::id()))
 }
 
-/// A hidden sibling's name taken apart: `.Screepub.app.old-123` is
-/// `("Screepub.app", "old", 123)`, and `.update-` the same.
+/// A hidden sibling's name taken apart: `.Method Reader.app.old-123` is
+/// `("Method Reader.app", "old", 123)`, and `.update-` the same.
 fn parse_sibling(file_name: &str) -> Option<(&str, &str, u32)> {
     let rest = file_name.strip_prefix('.')?;
     let (head, pid) = rest.rsplit_once('-')?;
@@ -264,29 +299,42 @@ pub struct Swept {
 /// another copy of the app, so it is left alone (a swap takes seconds).
 const LEFTOVER_AGE: std::time::Duration = std::time::Duration::from_secs(600);
 
+/// The names one bundle may have beside it: `Method Reader.app` and the
+/// LEGACY `Screepub.app` stand for each other, since the one-time rename
+/// leaves leftovers under both; any other name stands for itself.
+fn bundle_names(name: &str) -> Vec<&str> {
+    if name == BUNDLE_NAME || name == LEGACY_BUNDLE_NAME {
+        vec![BUNDLE_NAME, LEGACY_BUNDLE_NAME]
+    } else {
+        vec![name]
+    }
+}
+
 /// The leftovers of an interrupted swap beside `dir/name`
 /// (`.<name>.old-<pid>` and `.<name>.update-<pid>`, from any process but
-/// `own_pid`). A swap that died between its two renames leaves no bundle
-/// at all, only the hidden backup: then the newest backup that still holds
-/// a runnable bundle is moved back. Once the bundle is there, leftovers
-/// older than ten minutes are removed. With no bundle and no usable backup
-/// nothing is touched.
+/// `own_pid`; for either of `Method Reader.app` and `Screepub.app`, those of
+/// both). A swap that died between its two renames leaves no bundle at
+/// all, only the hidden backup: then the newest backup that still holds a
+/// runnable bundle is moved back under the name it had. Once a bundle is
+/// there, leftovers older than ten minutes are removed. With no bundle and
+/// no usable backup nothing is touched.
 pub fn sweep_beside(dir: &Path, name: &str, own_pid: u32) -> Swept {
     let mut swept = Swept::default();
-    let bundle = dir.join(name);
+    let names = bundle_names(name);
     let Ok(entries) = std::fs::read_dir(dir) else {
         return swept;
     };
-    let mut leftovers: Vec<(PathBuf, bool, std::time::SystemTime)> = entries
+    let mut leftovers: Vec<(PathBuf, String, bool, std::time::SystemTime)> = entries
         .filter_map(Result::ok)
         .filter_map(|e| {
             let file = e.file_name();
             let (n, tag, pid) = parse_sibling(file.to_str()?)?;
             // A real folder only: never follow a link out of the folder.
             let meta = std::fs::symlink_metadata(e.path()).ok()?;
-            (n == name && pid != own_pid && meta.is_dir()).then(|| {
+            (names.contains(&n) && pid != own_pid && meta.is_dir()).then(|| {
                 (
                     e.path(),
+                    n.to_string(),
                     tag == "old",
                     meta.modified().unwrap_or(std::time::UNIX_EPOCH),
                 )
@@ -294,22 +342,26 @@ pub fn sweep_beside(dir: &Path, name: &str, own_pid: u32) -> Swept {
         })
         .collect();
     // Newest first.
-    leftovers.sort_by_key(|l| std::cmp::Reverse(l.2));
-    if std::fs::symlink_metadata(&bundle).is_err() {
-        let back = leftovers.iter().position(|(p, old, _)| {
-            *old && bundle_executable(p).is_ok() && std::fs::rename(p, &bundle).is_ok()
+    leftovers.sort_by_key(|l| std::cmp::Reverse(l.3));
+    let present = names
+        .iter()
+        .any(|n| std::fs::symlink_metadata(dir.join(n)).is_ok());
+    if !present {
+        let back = leftovers.iter().position(|(p, n, old, _)| {
+            *old && bundle_executable(p).is_ok() && std::fs::rename(p, dir.join(n)).is_ok()
         });
         match back {
             Some(i) => {
-                leftovers.remove(i);
+                let (_, n, _, _) = leftovers.remove(i);
+                let bundle = dir.join(n);
                 touch(&bundle);
-                swept.restored = Some(bundle.clone());
+                swept.restored = Some(bundle);
             }
             None => return swept,
         }
     }
     let now = std::time::SystemTime::now();
-    for (path, _, modified) in leftovers {
+    for (path, _, _, modified) in leftovers {
         let age = now.duration_since(modified).unwrap_or_default();
         if age >= LEFTOVER_AGE && std::fs::remove_dir_all(&path).is_ok() {
             swept.removed.push(path);
@@ -322,7 +374,8 @@ pub fn sweep_beside(dir: &Path, name: &str, own_pid: u32) -> Swept {
 /// bundle it runs in, and the name that bundle should have. Started from a
 /// hidden backup (Launch Services follows a moved bundle, so the Dock can
 /// open `.Screepub.app.old-<pid>` when `Screepub.app` is gone), the backup
-/// is the one put back. Outside a bundle (a development build, Windows,
+/// is the one put back, unless the bundle it was renamed to is already
+/// there. Outside a bundle (a development build, Windows,
 /// Linux) nothing is done.
 pub fn sweep_at_startup(exe: &Path) -> Swept {
     let bundle = (|| {
@@ -351,16 +404,19 @@ fn permission(e: &std::io::Error) -> bool {
     e.kind() == std::io::ErrorKind::PermissionDenied
 }
 
-/// Swap `bundle` for the one in `bytes`. A folder the person cannot write
-/// (an /Applications owned by another account) needs an administrator:
-/// `admin` is asked to run the swap (on a Mac, [`admin_swap`] through
+/// Swap `bundle` for the one in `bytes`, at [`install_destination`]: the
+/// same path, or `Method Reader.app` beside a LEGACY `Screepub.app`. A
+/// folder the person cannot write (an /Applications owned by another
+/// account) needs an administrator: `admin` is asked to run the swap of
+/// `bundle` for the staged copy (on a Mac, [`admin_swap`] through
 /// osascript, as the plugin's AppleScript did).
 pub fn install_app(
     bytes: &[u8],
     bundle: &Path,
     admin: &dyn Fn(&Path, &Path) -> Result<(), InstallError>,
 ) -> Result<Installed, InstallError> {
-    let staging = sibling(bundle, "update");
+    let dest = install_destination(bundle);
+    let staging = sibling(&dest, "update");
     let _ = std::fs::remove_dir_all(&staging);
     match std::fs::create_dir(&staging) {
         Ok(()) => {}
@@ -386,17 +442,17 @@ pub fn install_app(
         }
         return Err(io("move aside", bundle, e));
     }
-    if let Err(e) = std::fs::rename(&staging, bundle) {
+    if let Err(e) = std::fs::rename(&staging, &dest) {
         if had_old {
             let _ = std::fs::rename(&backup, bundle);
         }
         let _ = std::fs::remove_dir_all(&staging);
-        return Err(io("move the new bundle into", bundle, e));
+        return Err(io("move the new bundle into", &dest, e));
     }
     let leftover = (had_old && std::fs::remove_dir_all(&backup).is_err()).then_some(backup);
-    touch(bundle);
+    touch(&dest);
     Ok(Installed {
-        bundle: bundle.to_path_buf(),
+        bundle: dest,
         leftover,
     })
 }
@@ -406,13 +462,14 @@ fn install_with_admin(
     bundle: &Path,
     admin: &dyn Fn(&Path, &Path) -> Result<(), InstallError>,
 ) -> Result<Installed, InstallError> {
+    let dest = install_destination(bundle);
     // The copy an administrator's shell moves into place is staged in a
     // folder made fresh for it, readable by this account alone: a
     // predictable name in a shared temp folder could be made first by
     // another account, and its contents swapped between the check below
     // and the root `mv`. (The plugin used tempfile's tempdir the same way.)
     let private = private_temp_dir()?;
-    let temp = private.join("Screepub.app");
+    let temp = private.join(BUNDLE_NAME);
     let result = (|| {
         unpack_app_archive(bytes, &temp)?;
         bundle_executable(&temp)?;
@@ -420,9 +477,16 @@ fn install_with_admin(
     })();
     let _ = std::fs::remove_dir_all(&private);
     result?;
-    touch(bundle);
+    // [`admin_swap`] renames exactly when `dest` differs; what is on disk
+    // says which happened.
+    let installed = if dest != bundle && dest.exists() && !bundle.exists() {
+        dest
+    } else {
+        bundle.to_path_buf()
+    };
+    touch(&installed);
     Ok(Installed {
-        bundle: bundle.to_path_buf(),
+        bundle: installed,
         leftover: None,
     })
 }
@@ -439,7 +503,7 @@ fn private_temp_dir() -> Result<PathBuf, InstallError> {
             .map(|d| d.subsec_nanos())
             .unwrap_or(0);
         let name = format!(
-            "screepub-update-{}-{}-{nanos:08x}",
+            "method-reader-update-{}-{}-{nanos:08x}",
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         );
@@ -476,16 +540,18 @@ pub fn touch(path: &Path) {
 }
 
 /// The shell command [`admin_swap_script`] hands an administrator: the old
-/// app moved aside, the new one moved in, and the old one put back if that
-/// move fails (the plugin's `rm -rf` first left no app at all when the move
-/// failed after it), then the old one removed.
-pub fn admin_swap_shell(bundle: &Path, new: &Path) -> String {
+/// app moved aside, the new one moved in at `dest` (the old app's own path,
+/// or `Method Reader.app` beside it: [`install_destination`]), and the old
+/// one put back if that move fails (the plugin's `rm -rf` first left no app
+/// at all when the move failed after it), then the old one removed.
+pub fn admin_swap_shell(bundle: &Path, new: &Path, dest: &Path) -> String {
     let src = shell_quote(&bundle.to_string_lossy());
     let bak = shell_quote(&sibling(bundle, "old").to_string_lossy());
     let new = shell_quote(&new.to_string_lossy());
+    let dst = shell_quote(&dest.to_string_lossy());
     format!(
         "rm -rf {bak} && {{ [ ! -e {src} ] || mv -f {src} {bak}; }} && \
-         {{ mv -f {new} {src} || {{ [ ! -e {bak} ] || mv -f {bak} {src}; false; }}; }} && \
+         {{ mv -f {new} {dst} || {{ [ ! -e {bak} ] || mv -f {bak} {src}; false; }}; }} && \
          rm -rf {bak}"
     )
 }
@@ -499,18 +565,19 @@ pub fn shell_quote(s: &str) -> String {
 /// administrator, with the paths quoted for the shell and then for
 /// AppleScript (the plugin quoted neither, so a name with an apostrophe
 /// broke it).
-pub fn admin_swap_script(bundle: &Path, new: &Path) -> String {
-    let shell = admin_swap_shell(bundle, new);
+pub fn admin_swap_script(bundle: &Path, new: &Path, dest: &Path) -> String {
+    let shell = admin_swap_shell(bundle, new, dest);
     let escaped = shell.replace('\\', "\\\\").replace('"', "\\\"");
     format!("do shell script \"{escaped}\" with administrator privileges")
 }
 
 /// Run [`admin_swap_script`] through /usr/bin/osascript: the system asks
-/// for an administrator's name and password, never this app.
+/// for an administrator's name and password, never this app. The new copy
+/// goes to [`install_destination`] of `bundle`.
 pub fn admin_swap(bundle: &Path, new: &Path) -> Result<(), InstallError> {
     let status = std::process::Command::new("/usr/bin/osascript")
         .arg("-e")
-        .arg(admin_swap_script(bundle, new))
+        .arg(admin_swap_script(bundle, new, &install_destination(bundle)))
         .status()
         .map_err(|e| {
             InstallError::NeedsAdmin(format!("Could not ask for an administrator: {e}"))
@@ -577,7 +644,7 @@ pub fn install_appimage(bytes: &[u8], appimage: &Path) -> Result<Installed, Inst
     })
 }
 
-/// The arguments Screepub's own NSIS installer takes for an update: silent,
+/// The arguments Method Reader's own NSIS installer takes for an update: silent,
 /// then relaunch (packaging/windows/screepub.nsi defines `/R`).
 pub fn nsis_update_args() -> [&'static str; 2] {
     ["/S", "/R"]
@@ -591,23 +658,30 @@ mod tests {
     fn the_bundle_is_found_from_its_executable() {
         assert_eq!(
             bundle_of_exe(Path::new(
+                "/Applications/Method Reader.app/Contents/MacOS/method-reader-app"
+            )),
+            Some(PathBuf::from("/Applications/Method Reader.app"))
+        );
+        // A 0.12.x bundle, as the first Method Reader still runs under.
+        assert_eq!(
+            bundle_of_exe(Path::new(
                 "/Applications/Screepub.app/Contents/MacOS/screepub-desktop"
             )),
             Some(PathBuf::from("/Applications/Screepub.app"))
         );
         assert_eq!(
-            bundle_of_exe(Path::new("/Users/x/rust/target/release/screepub-window")),
+            bundle_of_exe(Path::new("/Users/x/rust/target/release/method-reader-app")),
             None
         );
     }
 
     #[test]
     fn the_admin_script_survives_an_apostrophe_and_a_quote() {
-        let bundle = Path::new("/Applications/Sam's \"Screepub\".app");
-        let s = admin_swap_script(bundle, Path::new("/tmp/new"));
-        let shell = admin_swap_shell(bundle, Path::new("/tmp/new"));
+        let bundle = Path::new("/Applications/Ann's \"Method Reader\".app");
+        let s = admin_swap_script(bundle, Path::new("/tmp/new"), bundle);
+        let shell = admin_swap_shell(bundle, Path::new("/tmp/new"), bundle);
         assert!(
-            shell.contains(r#"'/Applications/Sam'\''s "Screepub".app'"#),
+            shell.contains(r#"'/Applications/Ann'\''s "Method Reader".app'"#),
             "{shell}"
         );
         assert_eq!(

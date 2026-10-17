@@ -15,7 +15,7 @@ use sp_engine::export::renderers::{Books, Renderers};
 use super::CALIBRE_GUARD;
 
 /// `TEST_SETTINGS_GUARD` (tests/isolate-app-settings.ts and .env.test).
-pub const SETTINGS_GUARD: &str = "/dev/null/screepub-test-guard";
+pub const SETTINGS_GUARD: &str = "/dev/null/method-reader-test-guard";
 
 /// The environment a test hands an engine handler called in process: PATH,
 /// so tools resolve as they would, and both guards. Nothing else from this
@@ -25,7 +25,7 @@ pub fn guarded_env() -> Env {
     if let Some(path) = std::env::var_os("PATH").and_then(|p| p.into_string().ok()) {
         env.set("PATH", path);
     }
-    env.set("SCREEPUB_CONFIG_DIR", SETTINGS_GUARD);
+    env.set("METHOD_READER_CONFIG_DIR", SETTINGS_GUARD);
     env.set("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD);
     env
 }
@@ -87,7 +87,7 @@ pub fn calibre_config_copy() -> &'static Path {
     &COPY
         .get_or_init(|| {
             let scratch = tempfile::Builder::new()
-                .prefix("screepub-calibre-config-")
+                .prefix("method-reader-calibre-config-")
                 .tempdir()
                 .expect("scratch");
             let copy = super::canonical(scratch.path()).join("calibre");
@@ -163,7 +163,7 @@ pub fn stamped_azw3(revision: Option<u32>) -> Vec<u8> {
     file
 }
 
-/// `stampedAzw3()`: [`stamped_azw3`] at the revision Screepub's own writer
+/// `stampedAzw3()`: [`stamped_azw3`] at the revision Method Reader's own writer
 /// stamps today.
 pub fn current_azw3() -> Vec<u8> {
     stamped_azw3(Some(Books.azw3_writer_revision()))

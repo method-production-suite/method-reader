@@ -1,6 +1,6 @@
 [package]
 name = "sp-epub"
-description = "Screepub's EPUB3 renderer: fountain-js tokens and FormatOptions to a book, and the reader preview"
+description = "Method Reader's EPUB3 renderer: fountain-js tokens and FormatOptions to a book, and the reader preview"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

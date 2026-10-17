@@ -2,7 +2,7 @@
 //!
 //! Ported from cpalmdoc_do_compress in Calibre's
 //! src/calibre/ebooks/compression/palmdoc.c (calibre 9.11.0, GPL-3,
-//! Copyright Kovid Goyal; this port is part of Screepub, AGPL-3.0-or-later,
+//! Copyright Kovid Goyal; this port is licensed GPL-3.0-only (LICENSE-GPL-3.0),
 //! see THIRD-PARTY-NOTICES.md), by way of src/azw3/palmdoc.ts. The output
 //! format is the classic one every MOBI and KF8 reader decodes: a byte
 //! 0x01-0x08 is a run of that many literal bytes; 0x00 and 0x09-0x7F stand

@@ -113,7 +113,7 @@ pub fn render(manifest: &[Row]) -> String {
         .iter()
         .filter(|r| !r.device_checks.is_empty())
         .collect();
-    // The picture entries (#19, #19a, #19b) and Screepub's own AZW3 (#20)
+    // The picture entries (#19, #19a, #19b) and Method Reader's own AZW3 (#20)
     // each get a section of their own: different questions about the same
     // book.
     let pictures: Vec<&Row> = checked
@@ -214,9 +214,9 @@ pub fn render(manifest: &[Row]) -> String {
 
     if !azw3.is_empty() {
         for line in [
-            "## Screepub's own AZW3 (beta)",
+            "## Method Reader's own AZW3 (beta)",
             "",
-            "The same book as an AZW3 that Screepub writes itself, with no",
+            "The same book as an AZW3 that Method Reader writes itself, with no",
             "Calibre: what a Kindle gets over USB wherever KFX is not set up. It",
             "has passed Calibre's own reader in the tests and has never been on a",
             "Kindle, so these come first on a device pass. The command that builds",

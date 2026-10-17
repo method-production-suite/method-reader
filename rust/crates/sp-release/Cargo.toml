@@ -1,6 +1,6 @@
 [package]
 name = "sp-release"
-description = "Screepub's release tools: the bundle layouts, the update archive, its minisign signature, latest.json, the Linux packages and the Windows installer script"
+description = "Method Reader's release tools: the bundle layouts, the update archive, its minisign signature, latest.json, the Linux packages and the Windows installer script"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

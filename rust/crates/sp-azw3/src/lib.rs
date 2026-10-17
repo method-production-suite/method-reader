@@ -1,8 +1,8 @@
-//! Screepub's own AZW3 (KF8) writer: the EPUB's own bytes in, a Kindle
+//! Method Reader's own AZW3 (KF8) writer: the EPUB's own bytes in, a Kindle
 //! book out, with no Calibre. A port of Calibre 9.11.0's KF8 writer
 //! (src/calibre/ebooks/mobi/writer8/, GPL-3, Copyright Kovid Goyal),
-//! credited in each module and in THIRD-PARTY-NOTICES.md; this port is part
-//! of Screepub, AGPL-3.0-or-later. BETA until a Kindle has opened one
+//! credited in each module and in THIRD-PARTY-NOTICES.md; this port is licensed
+//! GPL-3.0-only, the one crate not MIT OR Apache-2.0 (LICENSE-GPL-3.0). BETA until a Kindle has opened one
 //! (registry #20).
 //!
 //! | Module | Ports |

@@ -1,5 +1,5 @@
 //! Port of `src/settings/app-defaults.ts`: the app-wide format defaults,
-//! the base every script starts from. One layer OVER Screepub's shipped
+//! the base every script starts from. One layer OVER Method Reader's shipped
 //! defaults and one layer UNDER a script's own sidecar: explicit flags >
 //! the script's sidecar > these > `DEFAULT_FORMAT_OPTIONS`, through the one
 //! merge `resolve_format_options` already is.
@@ -28,7 +28,7 @@ pub fn app_default_options(settings_path: &str) -> FormatOptions {
 }
 
 /// `appDefaultsCustomized(settingsPath)`: true once the defaults have moved
-/// away from Screepub's own, knob by knob.
+/// away from Method Reader's own, knob by knob.
 pub fn app_defaults_customized(settings_path: &str) -> bool {
     app_default_options(settings_path) != DEFAULT_FORMAT_OPTIONS
 }

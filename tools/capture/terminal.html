@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- Pass one of the terminal shot (shot 4, cli): a terminal's content at
+     the shot's width and its height less the title bar, which frame.html
+     then draws around it like any window. ?t= is the transcript the capture
+     tool read off the real command line (backend.rs RealCli): a JSON list
+     of {c: what was typed, o: what it printed}. Nothing here is invented:
+     this page only sets the words in type. Colors are the site's own tokens,
+     light or dark as the capture asks. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/site/assets/tokens.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--bg); }
+  body { overflow: hidden; }
+  pre {
+    margin: 0; padding: 22px 28px; box-sizing: border-box; height: 100%;
+    font: 15px/1.5 var(--mono); color: var(--ink-soft);
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .p { color: var(--accent); font-weight: 600; }
+  .c { color: var(--ink); font-weight: 600; }
+  .gap { display: block; height: 10px; }
+  .cursor { display: inline-block; width: 0.6em; height: 1.15em; vertical-align: -0.2em; background: var(--ink-soft); }
+</style>
+</head>
+<body>
+<pre id="t"></pre>
+<script>
+  window.__captureState = 'working';
+  const fail = (m) => { window.__captureState = 'failed'; window.__captureError = m; };
+  try {
+    const t = JSON.parse(new URLSearchParams(location.search).get('t') || 'null');
+    if (!Array.isArray(t) || t.length === 0) throw new Error('no transcript in ?t=');
+    const pre = document.getElementById('t');
+    const span = (cls, text) => {
+      const s = document.createElement('span');
+      s.className = cls;
+      s.textContent = text;
+      return s;
+    };
+    const prompt = () => pre.append(span('p', '% '));
+    t.forEach((e, i) => {
+      if (i > 0) pre.append(span('gap', ''));
+      prompt();
+      pre.append(span('c', e.c), '\n');
+      if (e.o) pre.append(e.o, '\n');
+    });
+    pre.append(span('gap', ''));
+    prompt();
+    pre.append(span('cursor', ''));
+    document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (pre.scrollHeight > pre.clientHeight + 1) {
+        return fail('the transcript is taller than the terminal: show fewer lines (backend.rs HEAD_LINES)');
+      }
+      window.__captureState = 'ready';
+    })));
+  } catch (e) { fail(String(e && e.message || e)); }
+</script>
+</body>
+</html>

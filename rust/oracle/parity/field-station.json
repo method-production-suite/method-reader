@@ -14,7 +14,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -61,7 +61,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -76,7 +76,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -91,62 +91,61 @@
         ]
       },
       "out/book.mobi": {
-        "header": "e806bba6071b006b",
+        "header": "75b427b36063f0e4",
         "records": [
-          "117cc075adba2f59",
-          "3b8e1a5444f249df",
-          "3a339c2bdca295a2",
-          "6cb52350d12880d9",
-          "a24257ae84562ce2",
-          "b8a0dc25b011ec02",
+          "cb825a01b45bbdd4",
+          "62e9174b0b08fef2",
+          "e94ad4c6b67f0432",
+          "4047b84fe1eb9850",
+          "1850487599b814b4",
+          "ce176795f86a9db3",
           "17d828b58581e73e",
-          "6560b53fd57773a8",
+          "5573d85c2e39dc46",
           "3712d3408f89530c"
         ]
       },
       "out/book.azw3": {
-        "header": "4bf3e6adbebc07e8",
+        "header": "294239965e0d4bd0",
         "records": [
-          "3f846e87885ca237",
-          "bffbcfcb6100967d",
-          "d29cb62a843b6f1a",
-          "14b9116545213b47",
-          "379d76fa97162efc",
-          "e652e98212388b9c",
-          "ea60e104c6cf79bc",
-          "6b0f17fc8357cfc9",
-          "f22784fafae47747",
-          "b147710a0980cc48",
-          "6e8cc96f3bff8d6b",
-          "709e80c88487a241",
-          "af13e550b9333da5",
-          "9c3f117e068ebb2e",
+          "d92a972eec9c6414",
+          "78f1cd12ab4dbc74",
+          "f831c348f283ac4a",
+          "0de5cd61fedadeaa",
+          "bd51a7a36c9a700a",
+          "cfd561d93e44db9b",
+          "660d60e0dafc31d1",
+          "84cc5ddcdbcc31ed",
+          "67e96ee823cb83a8",
+          "ad1ddf8c33be0d65",
+          "89b66e371dc1c4cd",
+          "a8f53c8d001cd6ff",
+          "a704f469ec1ac356",
           "540cc8e9015de791",
           "4cab30ce69cb85ee",
-          "15efdee7298565ca",
+          "632fe4d9584bdce8",
           "84d739f61f80a9c4",
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "921610efd72bf52a",
-          "5bf29eb78b608d91",
+          "0c49aa4ae4e812de",
           "751fc1bc832c9c15",
-          "272a85262cb7e2d9",
+          "15d4c0423a8d0abf",
           "17d828b58581e73e",
-          "cb392e70e4800ace",
+          "6181e306b08c757e",
           "3712d3408f89530c"
         ]
       },
       "out/book.fdx": {
-        "text": "a9861239458314d4"
+        "text": "edacf0ebb1992831"
       },
       "out/book.preview.html": {
         "html": "0cfeb6df36eebc7f"
       },
       "out/book.elements.json": {
-        "json": "de910209e2f47e1a"
+        "json": "c4ef3d1640b34db5"
       },
       "out/script.fountain": {
-        "text": "67ef4c4435776b51"
+        "text": "5ade078f417dc3b1"
       },
       "out/script.images": null
     }
@@ -156,7 +155,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -203,7 +202,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -218,7 +217,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -233,68 +232,69 @@
         ]
       },
       "out/book.mobi": {
-        "header": "e806bba6071b006b",
+        "header": "75b427b36063f0e4",
         "records": [
-          "117cc075adba2f59",
-          "3b8e1a5444f249df",
-          "3a339c2bdca295a2",
-          "6cb52350d12880d9",
-          "a24257ae84562ce2",
-          "b8a0dc25b011ec02",
+          "cb825a01b45bbdd4",
+          "62e9174b0b08fef2",
+          "e94ad4c6b67f0432",
+          "4047b84fe1eb9850",
+          "1850487599b814b4",
+          "ce176795f86a9db3",
           "17d828b58581e73e",
-          "6560b53fd57773a8",
+          "5573d85c2e39dc46",
           "3712d3408f89530c"
         ]
       },
       "out/book.azw3": {
-        "header": "4bf3e6adbebc07e8",
+        "header": "294239965e0d4bd0",
         "records": [
-          "5fdbee471b13ed6d",
-          "bffbcfcb6100967d",
-          "d29cb62a843b6f1a",
-          "14b9116545213b47",
-          "379d76fa97162efc",
-          "e652e98212388b9c",
-          "ea60e104c6cf79bc",
-          "6b0f17fc8357cfc9",
-          "f22784fafae47747",
-          "2999b59b5dc75427",
-          "6e8cc96f3bff8d6b",
-          "af13e550b9333da5",
-          "9c3f117e068ebb2e",
+          "331cae73e9482bd8",
+          "78f1cd12ab4dbc74",
+          "f831c348f283ac4a",
+          "0de5cd61fedadeaa",
+          "bd51a7a36c9a700a",
+          "cfd561d93e44db9b",
+          "660d60e0dafc31d1",
+          "84cc5ddcdbcc31ed",
+          "67e96ee823cb83a8",
+          "7c47a34183d2fae6",
+          "89b66e371dc1c4cd",
+          "6e340b9cffb37a98",
+          "a8f53c8d001cd6ff",
+          "a704f469ec1ac356",
           "540cc8e9015de791",
           "4cab30ce69cb85ee",
-          "15efdee7298565ca",
+          "632fe4d9584bdce8",
           "84d739f61f80a9c4",
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "921610efd72bf52a",
-          "5bf29eb78b608d91",
+          "0c49aa4ae4e812de",
           "751fc1bc832c9c15",
-          "272a85262cb7e2d9",
+          "15d4c0423a8d0abf",
           "17d828b58581e73e",
-          "cb392e70e4800ace",
+          "6181e306b08c757e",
           "3712d3408f89530c"
         ]
       },
       "out/book.fdx": {
-        "text": "a9861239458314d4"
+        "text": "edacf0ebb1992831"
       },
       "out/book.preview.html": {
         "html": "81ca3b94dfc9efa4"
       },
       "out/book.elements.json": {
-        "json": "de910209e2f47e1a"
+        "json": "c4ef3d1640b34db5"
       },
       "out/script.fountain": {
-        "text": "67ef4c4435776b51"
+        "text": "5ade078f417dc3b1"
       },
       "out/script.images": null
     }
   },
   "convert-human": {
     "exit": 0,
-    "stdout": "<not JSON> Field Station, by the Screepub project\n  19 pages · 11 scenes · 4 speaking characters (DELACROIX, MARA, TEO, IVERSEN…)\n  wrote $WORK/out/book.epub\n  wrote $WORK/out/book.mobi\n  wrote $WORK/out/book.fountain\n",
+    "stdout": "<not JSON> Field Station, by the Method Reader project\n  19 pages · 11 scenes · 4 speaking characters (DELACROIX, MARA, TEO, IVERSEN…)\n  wrote $WORK/out/book.epub\n  wrote $WORK/out/book.mobi\n  wrote $WORK/out/book.fountain\n",
     "stderr": "",
     "outputs": {
       "out/book.epub": {
@@ -322,7 +322,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -337,7 +337,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -352,21 +352,21 @@
         ]
       },
       "out/book.mobi": {
-        "header": "e806bba6071b006b",
+        "header": "75b427b36063f0e4",
         "records": [
-          "117cc075adba2f59",
-          "3b8e1a5444f249df",
-          "3a339c2bdca295a2",
-          "6cb52350d12880d9",
-          "a24257ae84562ce2",
-          "b8a0dc25b011ec02",
+          "cb825a01b45bbdd4",
+          "62e9174b0b08fef2",
+          "e94ad4c6b67f0432",
+          "4047b84fe1eb9850",
+          "1850487599b814b4",
+          "ce176795f86a9db3",
           "17d828b58581e73e",
-          "6560b53fd57773a8",
+          "5573d85c2e39dc46",
           "3712d3408f89530c"
         ]
       },
       "out/book.fountain": {
-        "text": "67ef4c4435776b51"
+        "text": "5ade078f417dc3b1"
       },
       "out/book.images": null
     }
@@ -376,7 +376,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -398,7 +398,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -421,7 +421,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -466,7 +466,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -481,7 +481,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -496,24 +496,24 @@
             ]
           },
           "field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           },
           "field-station.mobi": {
-            "header": "e806bba6071b006b",
+            "header": "75b427b36063f0e4",
             "records": [
-              "117cc075adba2f59",
-              "3b8e1a5444f249df",
-              "3a339c2bdca295a2",
-              "6cb52350d12880d9",
-              "a24257ae84562ce2",
-              "b8a0dc25b011ec02",
+              "cb825a01b45bbdd4",
+              "62e9174b0b08fef2",
+              "e94ad4c6b67f0432",
+              "4047b84fe1eb9850",
+              "1850487599b814b4",
+              "ce176795f86a9db3",
               "17d828b58581e73e",
-              "6560b53fd57773a8",
+              "5573d85c2e39dc46",
               "3712d3408f89530c"
             ]
           },
           "field-station.pdf": {
-            "text": "4de31ef2e0f1aed2"
+            "text": "7b743e27ca1609f8"
           }
         }
       }
@@ -524,7 +524,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -568,7 +568,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -583,7 +583,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -598,9 +598,9 @@
             ]
           },
           "field-station/field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "577898c1941870e6"
           },
           "field-station/source.json": {
@@ -615,7 +615,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -630,9 +630,9 @@
       "epubPath": "$WORK/library/field-station/field-station.epub",
       "mobiPath": "$WORK/library/field-station/field-station.mobi",
       "fountainPath": "$WORK/library/field-station/field-station.fountain",
-      "settingsPath": "$WORK/library/field-station/field-station.screepub.json"
+      "settingsPath": "$WORK/library/field-station/field-station.method-reader.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/library/field-station/field-station.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/library/field-station/field-station.method-reader.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -661,7 +661,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -676,7 +676,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -691,24 +691,24 @@
             ]
           },
           "field-station/field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
+          },
+          "field-station/field-station.method-reader.json": {
+            "json": "577898c1941870e6"
           },
           "field-station/field-station.mobi": {
-            "header": "e806bba6071b006b",
+            "header": "75b427b36063f0e4",
             "records": [
-              "117cc075adba2f59",
-              "3b8e1a5444f249df",
-              "3a339c2bdca295a2",
-              "6cb52350d12880d9",
-              "a24257ae84562ce2",
-              "b8a0dc25b011ec02",
+              "cb825a01b45bbdd4",
+              "62e9174b0b08fef2",
+              "e94ad4c6b67f0432",
+              "4047b84fe1eb9850",
+              "1850487599b814b4",
+              "ce176795f86a9db3",
               "17d828b58581e73e",
-              "6560b53fd57773a8",
+              "5573d85c2e39dc46",
               "3712d3408f89530c"
             ]
-          },
-          "field-station/field-station.screepub.json": {
-            "json": "577898c1941870e6"
           },
           "field-station/source.json": {
             "json": "90bab57cff00934d"
@@ -722,7 +722,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -738,7 +738,7 @@
       "fountainPath": "$WORK/library/field-station/field-station.fountain",
       "settingsPath": "$WORK/in/field-station.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/field-station.screepub.json\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/field-station.screepub.json\n",
     "outputs": {
       "library": {
         "tree": {
@@ -767,7 +767,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -782,7 +782,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -797,9 +797,9 @@
             ]
           },
           "field-station/field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "6e968ac32fc6651e"
           },
           "field-station/source.json": {
@@ -817,7 +817,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -833,7 +833,7 @@
       "fountainPath": "$WORK/out/book.fountain",
       "settingsPath": "$WORK/in/field-station.screepub.json"
     },
-    "stderr": "screepub: using this script's saved settings in $WORK/in/field-station.screepub.json (the options you passed override them)\n",
+    "stderr": "method-reader: using this script's saved settings in $WORK/in/field-station.screepub.json (the options you passed override them)\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -860,7 +860,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -875,7 +875,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -896,7 +896,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -911,7 +911,7 @@
       "epubPath": "$WORK/out/book.epub",
       "fountainPath": "$WORK/out/book.fountain"
     },
-    "stderr": "screepub: ignoring $WORK/in/field-station.screepub.json, which is not a settings object\n",
+    "stderr": "method-reader: ignoring $WORK/in/field-station.screepub.json, which is not a settings object\n",
     "outputs": {
       "out/book.epub": {
         "zip": [
@@ -938,7 +938,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -953,7 +953,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -974,7 +974,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -1018,7 +1018,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1033,7 +1033,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -1048,9 +1048,9 @@
             ]
           },
           "field-station/field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           },
-          "field-station/field-station.screepub.json": {
+          "field-station/field-station.method-reader.json": {
             "json": "5052154e6f36ffad"
           },
           "field-station/source.json": {
@@ -1072,7 +1072,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -1116,7 +1116,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1131,7 +1131,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -1146,7 +1146,7 @@
             ]
           },
           "field-station/field-station.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           },
           "field-station/source.json": {
             "json": "90bab57cff00934d"
@@ -1160,7 +1160,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -1202,7 +1202,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "a7ced8d88f42269f"
+            "content": "0156d07d6fa3df00"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1227,7 +1227,7 @@
         ]
       },
       "out/book.fountain": {
-        "text": "67ef4c4435776b51"
+        "text": "5ade078f417dc3b1"
       }
     }
   },
@@ -1332,7 +1332,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -1373,7 +1373,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1388,7 +1388,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -1409,7 +1409,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "pages": 19,
       "scenes": 11,
       "characters": 4,
@@ -1453,7 +1453,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1468,7 +1468,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -1483,7 +1483,7 @@
             ]
           },
           "book.fountain": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           }
         }
       }
@@ -1494,7 +1494,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "topCharacters": [],
       "warnings": [],
       "spacingRepairs": 0,
@@ -1531,7 +1531,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "589a2bb8b0bd9aa3"
+            "content": "eafc99053d295fb3"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1546,7 +1546,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -1561,53 +1561,52 @@
         ]
       },
       "out/f.mobi": {
-        "header": "e806bba6071b006b",
+        "header": "75b427b36063f0e4",
         "records": [
-          "117cc075adba2f59",
-          "3b8e1a5444f249df",
-          "3a339c2bdca295a2",
-          "6cb52350d12880d9",
-          "a24257ae84562ce2",
-          "b8a0dc25b011ec02",
+          "cb825a01b45bbdd4",
+          "62e9174b0b08fef2",
+          "e94ad4c6b67f0432",
+          "4047b84fe1eb9850",
+          "1850487599b814b4",
+          "ce176795f86a9db3",
           "17d828b58581e73e",
-          "6560b53fd57773a8",
+          "5573d85c2e39dc46",
           "3712d3408f89530c"
         ]
       },
       "out/f.azw3": {
-        "header": "4bf3e6adbebc07e8",
+        "header": "294239965e0d4bd0",
         "records": [
-          "3f846e87885ca237",
-          "bffbcfcb6100967d",
-          "d29cb62a843b6f1a",
-          "14b9116545213b47",
-          "379d76fa97162efc",
-          "e652e98212388b9c",
-          "ea60e104c6cf79bc",
-          "6b0f17fc8357cfc9",
-          "f22784fafae47747",
-          "b147710a0980cc48",
-          "6e8cc96f3bff8d6b",
-          "709e80c88487a241",
-          "af13e550b9333da5",
-          "9c3f117e068ebb2e",
+          "d92a972eec9c6414",
+          "78f1cd12ab4dbc74",
+          "f831c348f283ac4a",
+          "0de5cd61fedadeaa",
+          "bd51a7a36c9a700a",
+          "cfd561d93e44db9b",
+          "660d60e0dafc31d1",
+          "84cc5ddcdbcc31ed",
+          "67e96ee823cb83a8",
+          "ad1ddf8c33be0d65",
+          "89b66e371dc1c4cd",
+          "a8f53c8d001cd6ff",
+          "a704f469ec1ac356",
           "540cc8e9015de791",
           "4cab30ce69cb85ee",
-          "15efdee7298565ca",
+          "632fe4d9584bdce8",
           "84d739f61f80a9c4",
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "921610efd72bf52a",
-          "5bf29eb78b608d91",
+          "0c49aa4ae4e812de",
           "751fc1bc832c9c15",
-          "272a85262cb7e2d9",
+          "15d4c0423a8d0abf",
           "17d828b58581e73e",
-          "cb392e70e4800ace",
+          "6181e306b08c757e",
           "3712d3408f89530c"
         ]
       },
       "out/f.fdx": {
-        "text": "a9861239458314d4"
+        "text": "edacf0ebb1992831"
       },
       "out/f.html": {
         "html": "0cfeb6df36eebc7f"
@@ -1619,7 +1618,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "topCharacters": [],
       "warnings": [
         "This book still shows (CONT'D): it is written into the script the book was made from. Removing it takes effect when you convert the script's PDF."
@@ -1654,7 +1653,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "290fe00bfd18f6c7"
+            "content": "f2b6671f98b2ff51"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1669,7 +1668,7 @@
           {
             "name": "OEBPS/titlepage.xhtml",
             "stored": false,
-            "content": "0ad7eae73a53e3c5"
+            "content": "4c402756b60f8bb7"
           },
           {
             "name": "OEBPS/text/",
@@ -1690,7 +1689,7 @@
     "stdout": {
       "ok": true,
       "title": "Field Station",
-      "author": "the Screepub project",
+      "author": "the Method Reader project",
       "topCharacters": [],
       "warnings": [],
       "spacingRepairs": 0,
@@ -1725,7 +1724,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1740,7 +1739,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -1779,7 +1778,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1794,7 +1793,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -1809,7 +1808,7 @@
             ]
           },
           "script.txt": {
-            "text": "67ef4c4435776b51"
+            "text": "5ade078f417dc3b1"
           }
         }
       }
@@ -1855,7 +1854,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "589a2bb8b0bd9aa3"
+                "content": "eafc99053d295fb3"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1870,7 +1869,7 @@
               {
                 "name": "OEBPS/titlepage.xhtml",
                 "stored": false,
-                "content": "0ad7eae73a53e3c5"
+                "content": "4c402756b60f8bb7"
               },
               {
                 "name": "OEBPS/text/",
@@ -2020,7 +2019,7 @@
           }
         }
       ],
-      "sidecar": "$WORK/out/script.screepub.json",
+      "sidecar": "$WORK/out/script.method-reader.json",
       "keepScriptSettings": true
     },
     "stderr": "",
@@ -2050,7 +2049,7 @@
       "path": "$WORK/out/copy.azw3",
       "format": "azw3",
       "extension": "azw3",
-      "label": "AZW3 (beta): for Kindles over USB, made by Screepub with nothing else installed",
+      "label": "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed",
       "available": [
         "epub",
         "kindle"
@@ -2063,66 +2062,64 @@
     "stderr": "",
     "outputs": {
       "out/book.azw3": {
-        "header": "4bf3e6adbebc07e8",
+        "header": "294239965e0d4bd0",
         "records": [
-          "3f846e87885ca237",
-          "bffbcfcb6100967d",
-          "d29cb62a843b6f1a",
-          "14b9116545213b47",
-          "379d76fa97162efc",
-          "e652e98212388b9c",
-          "ea60e104c6cf79bc",
-          "6b0f17fc8357cfc9",
-          "f22784fafae47747",
-          "b147710a0980cc48",
-          "6e8cc96f3bff8d6b",
-          "709e80c88487a241",
-          "af13e550b9333da5",
-          "9c3f117e068ebb2e",
+          "d92a972eec9c6414",
+          "78f1cd12ab4dbc74",
+          "f831c348f283ac4a",
+          "0de5cd61fedadeaa",
+          "bd51a7a36c9a700a",
+          "cfd561d93e44db9b",
+          "660d60e0dafc31d1",
+          "84cc5ddcdbcc31ed",
+          "67e96ee823cb83a8",
+          "ad1ddf8c33be0d65",
+          "89b66e371dc1c4cd",
+          "a8f53c8d001cd6ff",
+          "a704f469ec1ac356",
           "540cc8e9015de791",
           "4cab30ce69cb85ee",
-          "15efdee7298565ca",
+          "632fe4d9584bdce8",
           "84d739f61f80a9c4",
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "921610efd72bf52a",
-          "5bf29eb78b608d91",
+          "0c49aa4ae4e812de",
           "751fc1bc832c9c15",
-          "272a85262cb7e2d9",
+          "15d4c0423a8d0abf",
           "17d828b58581e73e",
-          "cb392e70e4800ace",
+          "6181e306b08c757e",
           "3712d3408f89530c"
         ]
       },
       "out/copy.azw3": {
-        "header": "4bf3e6adbebc07e8",
+        "header": "294239965e0d4bd0",
         "records": [
-          "3f846e87885ca237",
-          "bffbcfcb6100967d",
-          "d29cb62a843b6f1a",
-          "14b9116545213b47",
-          "379d76fa97162efc",
-          "e652e98212388b9c",
-          "ea60e104c6cf79bc",
-          "6b0f17fc8357cfc9",
-          "f22784fafae47747",
-          "b147710a0980cc48",
-          "6e8cc96f3bff8d6b",
-          "709e80c88487a241",
-          "af13e550b9333da5",
-          "9c3f117e068ebb2e",
+          "d92a972eec9c6414",
+          "78f1cd12ab4dbc74",
+          "f831c348f283ac4a",
+          "0de5cd61fedadeaa",
+          "bd51a7a36c9a700a",
+          "cfd561d93e44db9b",
+          "660d60e0dafc31d1",
+          "84cc5ddcdbcc31ed",
+          "67e96ee823cb83a8",
+          "ad1ddf8c33be0d65",
+          "89b66e371dc1c4cd",
+          "a8f53c8d001cd6ff",
+          "a704f469ec1ac356",
           "540cc8e9015de791",
           "4cab30ce69cb85ee",
-          "15efdee7298565ca",
+          "632fe4d9584bdce8",
           "84d739f61f80a9c4",
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "921610efd72bf52a",
-          "5bf29eb78b608d91",
+          "0c49aa4ae4e812de",
           "751fc1bc832c9c15",
-          "272a85262cb7e2d9",
+          "15d4c0423a8d0abf",
           "17d828b58581e73e",
-          "cb392e70e4800ace",
+          "6181e306b08c757e",
           "3712d3408f89530c"
         ]
       }
@@ -2147,16 +2144,16 @@
     "stderr": "",
     "outputs": {
       "out/book.mobi": {
-        "header": "e806bba6071b006b",
+        "header": "75b427b36063f0e4",
         "records": [
-          "117cc075adba2f59",
-          "3b8e1a5444f249df",
-          "3a339c2bdca295a2",
-          "6cb52350d12880d9",
-          "a24257ae84562ce2",
-          "b8a0dc25b011ec02",
+          "cb825a01b45bbdd4",
+          "62e9174b0b08fef2",
+          "e94ad4c6b67f0432",
+          "4047b84fe1eb9850",
+          "1850487599b814b4",
+          "ce176795f86a9db3",
           "17d828b58581e73e",
-          "6560b53fd57773a8",
+          "5573d85c2e39dc46",
           "3712d3408f89530c"
         ]
       }
@@ -2179,7 +2176,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fountain": {
-        "text": "67ef4c4435776b51"
+        "text": "5ade078f417dc3b1"
       }
     }
   },
@@ -2201,7 +2198,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fdx": {
-        "text": "a9861239458314d4"
+        "text": "edacf0ebb1992831"
       }
     }
   }
