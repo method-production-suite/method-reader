@@ -67,6 +67,17 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
   </picture>
 </p>
 
+## Yours to keep
+
+- **Free, for good, and open source** (MIT OR Apache-2.0; the AZW3 writer is
+  GPL v3, [see below](#license)). No account and no subscription.
+- **Nothing is uploaded.** Converting happens on your computer and works
+  offline; [your script stays on your machine](#your-script-stays-on-your-machine).
+- **Plain files you can open anywhere, in 20 years:** an EPUB 3 book
+  ([the standard](https://www.w3.org/TR/epub-33/)), and the script as
+  [Fountain](https://fountain.io/syntax) text or as .fdx for screenwriting apps.
+  Nothing writes your script for you: every word in the book is the PDF's own.
+
 ## Which readers?
 
 | Device | How it's sent | Status |
@@ -152,6 +163,24 @@ not update itself: download each new version by hand.
 There is also a command-line converter for macOS, Linux and Windows:
 [for developers](docs/developers.md#install-the-command-line-converter). On a
 Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandweiss/tap/method-reader`.
+
+## Help build it
+
+**If you read or make films:** the most useful thing is a report from a
+reader nobody here owns (a Kobo, a tolino, a reMarkable, or a reader that is
+not on the list yet; [see above](#which-readers)), or a script whose layout
+comes out wrong. Describe the problem in
+[an issue](https://github.com/method-production-suite/method-reader/issues/new/choose)
+and never attach or quote a real script: an invented page that shows the same
+problem is enough, and the issue form says how to make one.
+
+**If you write code:** start with an issue labelled
+[good first issue](https://github.com/method-production-suite/method-reader/labels/good%20first%20issue).
+`cd rust && cargo test --workspace` checks everything, and
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the rest.
+
+Method Reader is part of the [Method Production Suite](https://methodproduction.com):
+free, open tools for making films, from the first draft to the last shoot day.
 
 ## Your script stays on your machine
 
