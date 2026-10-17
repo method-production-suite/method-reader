@@ -139,6 +139,9 @@ pub fn pick_update(candidate: Option<(&str, &str)>) -> Pick {
     Pick::Offer(version.into())
 }
 
+/// The Tauri window's once-a-day throttle, kept with its recorded answers.
+/// From 0.13 the window schedules its own quiet checks
+/// (`update::Schedule`: two minutes after launch, then every six hours).
 pub fn should_check(opted_in: bool, last_checked: Option<f64>, now: f64) -> bool {
     if !opted_in {
         return false;

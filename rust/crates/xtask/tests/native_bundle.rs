@@ -39,14 +39,18 @@ fn names_of(paths: &[PathBuf]) -> Vec<String> {
 // ---- the handover: the native app is the Tauri app's successor ----
 
 #[test]
-fn the_native_app_keeps_the_tauri_window_s_identity() {
-    // The identifier is what 0.11.1's desktop/src-tauri/tauri.conf.json
-    // said, recorded when the Rust cutover deleted it: the window that
-    // updates itself into this app must find the same app, so it never
-    // changes. The names are Method Reader's since the rename.
-    assert_eq!(NATIVE_APP.identifier, "com.darkwell.screepub");
+fn the_native_app_is_method_reader_s_own() {
+    // From 0.13 the identifier is Method Reader's own; up to 0.12.x it was
+    // what 0.11.1's desktop/src-tauri/tauri.conf.json said
+    // (sp_update::LEGACY_IDENTIFIER). The old updaters swap by folder and
+    // never compare it, and the app moves what the old one kept, once.
+    assert_eq!(NATIVE_APP.identifier, "com.methodreader.desktop");
+    assert_eq!(NATIVE_APP.identifier, sp_update::IDENTIFIER);
     assert_eq!(NATIVE_APP.product_name, "Method Reader");
-    assert_eq!(NATIVE_APP.publisher, "The Method Reader contributors");
+    assert_eq!(
+        NATIVE_APP.publisher,
+        "Method Production Suite Team and the Method Reader contributors"
+    );
     assert_eq!(
         NATIVE_APP.short_description,
         "Turn a screenplay PDF into a reflowable e-book."
@@ -439,7 +443,7 @@ fn info_plist_says_what_the_tauri_app_said_about_itself() {
     let plist = info_plist(VERSION);
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),
@@ -499,7 +503,7 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
     let plist = fs::read_to_string(app.join("Contents/Info.plist")).unwrap();
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
         fs::read(app.join("Contents/MacOS/method-reader-app")).unwrap(),
@@ -627,7 +631,7 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     let plist = String::from_utf8_lossy(plist);
     assert_eq!(
         plist_string(&plist, "CFBundleIdentifier").as_deref(),
-        Some("com.darkwell.screepub")
+        Some("com.methodreader.desktop")
     );
     assert_eq!(
         plist_string(&plist, "CFBundleExecutable").as_deref(),

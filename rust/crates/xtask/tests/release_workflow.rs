@@ -292,9 +292,13 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
     // Each is run on its own OS before it is packaged: the version, two
     // conversions, the device listing.
     let text = run_text(cli);
-    assert!(text.contains(r#""$BIN" --version | grep -qx "method-reader $VERSION""#));
+    assert!(
+        text.contains(r#""$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)""#)
+    );
     // The old name rides beside it, and behaves the same.
-    assert!(text.contains(r#""$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION""#));
+    assert!(text.contains(
+        r#""$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)""#
+    ));
     assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS""#));
     assert!(text.contains("for f in screenplay jpx; do"));
     let upload = (steps(cli).into_iter())

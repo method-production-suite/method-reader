@@ -24,7 +24,10 @@ fn version_under_the_old_name() {
     let sb = Sandbox::new();
     assert_eq!(
         sb.run(&["--version"]).stdout,
-        format!("method-reader {}\n", env!("CARGO_PKG_VERSION"))
+        format!(
+            "method-reader {} (Method Reader)\n",
+            env!("CARGO_PKG_VERSION")
+        )
     );
 }
 

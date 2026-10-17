@@ -104,6 +104,28 @@ impl Flow {
         self.set_phase(phase);
     }
 
+    /// A quiet check's update, downloaded and verified ahead of the click:
+    /// the phase is "Update ready" unless a run is under way (then it waits,
+    /// as [`Flow::offer_found`]'s offer does). A click runs it as any offer.
+    pub fn ready_found(&mut self, offer: Offer) {
+        let phase = if self.running {
+            self.phase.clone()
+        } else {
+            Some(Phase::Ready {
+                version: offer.version.clone(),
+                body: offer.body.clone(),
+            })
+        };
+        self.offer = Some(offer);
+        self.offer_seq += 1;
+        self.set_phase(phase);
+    }
+
+    /// Whether the update `version` is already downloaded and waiting.
+    pub fn is_ready(&self, version: &str) -> bool {
+        matches!(&self.phase, Some(Phase::Ready { version: v, .. }) if v == version)
+    }
+
     /// The one door both the launch check and the notes' button use.
     /// Skipped and errors say nothing here.
     pub fn check_answered(&mut self, outcome: &CheckOutcome) {
@@ -404,6 +426,26 @@ mod tests {
         f.check_answered(&found("0.8.0"));
         assert!(!f.boot(Some("0.7.5".into())), "never again");
         assert_eq!(f.current_offer(), Some(&offer("0.8.0")));
+    }
+
+    #[test]
+    fn a_ready_update_is_one_click_from_its_run_and_waits_behind_a_run() {
+        let mut f = Flow::default();
+        f.ready_found(offer("0.8.0"));
+        assert!(f.is_ready("0.8.0"));
+        assert!(!f.is_ready("0.9.0"));
+        assert_eq!(f.start(), Start::Run(offer("0.8.0")));
+        f.during(Phase::Installing {
+            version: "0.8.0".into(),
+        });
+        f.ready_found(offer("0.9.0"));
+        assert_eq!(
+            f.phase(),
+            Some(&Phase::Installing {
+                version: "0.8.0".into()
+            }),
+            "the run's phase stays"
+        );
     }
 
     #[test]

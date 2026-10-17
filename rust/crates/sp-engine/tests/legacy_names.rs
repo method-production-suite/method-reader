@@ -14,7 +14,9 @@ use sp_engine::library::{
     adopt_sidecar, env_library_override, library_output, library_root, platform_library_default,
 };
 use sp_engine::nodepath::posix;
-use sp_engine::settings::app::{app_settings_path, read_app_settings, write_app_settings};
+use sp_engine::settings::app::{
+    app_data_path, app_settings_path, read_app_settings, write_app_settings,
+};
 
 fn j(parts: &[&str]) -> String {
     posix::join(parts)
@@ -84,11 +86,60 @@ fn an_old_settings_folder_is_used_until_it_has_moved() {
         app_settings_path("darwin", &env),
         j(&[&old, "settings.json"])
     );
-    let new = j(&[&home, "Library", "Application Support", "Method Reader"]);
+    let new = j(&[
+        &home,
+        "Library",
+        "Application Support",
+        "com.methodreader.desktop",
+    ]);
     std::fs::create_dir_all(&new).unwrap();
     assert_eq!(
         app_settings_path("darwin", &env),
         j(&[&new, "settings.json"])
+    );
+}
+
+#[test]
+fn an_old_settings_file_is_used_while_the_new_folder_has_none() {
+    // The new folder can be there without a settings.json (the window's
+    // storage moved, the settings folder could not): the old file is still
+    // the person's settings.
+    let s = Scratch::new("legacy");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old = j(&[&home, ".config", "screepub", "settings.json"]);
+    let new = j(&[
+        &home,
+        ".config",
+        "com.methodreader.desktop",
+        "settings.json",
+    ]);
+    write(&old, "{\"old\": true}\n");
+    std::fs::create_dir_all(posix::dirname(&new)).unwrap();
+    assert_eq!(app_settings_path("linux", &env), old);
+    write(&new, "{\"new\": true}\n");
+    assert_eq!(app_settings_path("linux", &env), new);
+}
+
+#[test]
+fn the_window_storage_is_read_where_0_12_left_it_until_it_has_moved() {
+    let s = Scratch::new("legacy");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let support = j(&[&home, "Library", "Application Support"]);
+    let new = j(&[&support, "com.methodreader.desktop", "window-storage.json"]);
+    assert_eq!(app_data_path("darwin", &env, "window-storage.json"), new);
+    let old = j(&[&support, "com.darkwell.screepub", "window-storage.json"]);
+    write(&old, "{}");
+    assert_eq!(app_data_path("darwin", &env, "window-storage.json"), old);
+    write(&new, "{}");
+    assert_eq!(app_data_path("darwin", &env, "window-storage.json"), new);
+    // A run pointed at its own folder reads nothing of the person's.
+    let own = s.dir("own");
+    let env = env_of(&[("HOME", &home), ("METHOD_READER_CONFIG_DIR", &own)]);
+    assert_eq!(
+        app_data_path("darwin", &env, "window-storage.json"),
+        j(&[&own, "window-storage.json"])
     );
 }
 
@@ -138,12 +189,13 @@ fn both_folders_move_once_and_paths_inside_follow() {
     write(&outside, "{\n  \"source\": \"/elsewhere/Other.pdf\"\n}\n");
 
     let moved = move_legacy_folders("linux", &env);
-    let new_settings = j(&[&home, ".config", "method-reader"]);
+    let new_settings = j(&[&home, ".config", "com.methodreader.desktop"]);
     let new_library = j(&[&home, "Documents", "Method Reader"]);
     assert_eq!(
         moved,
         LegacyMove {
             settings: Some((old_settings.clone(), new_settings.clone())),
+            app_data: Vec::new(),
             library: Some((old_library.clone(), new_library.clone())),
         }
     );
@@ -175,7 +227,12 @@ fn nothing_moves_over_a_folder_already_there() {
     let home = s.dir("home");
     let env = env_of(&[("HOME", &home)]);
     let old = j(&[&home, "Library", "Application Support", "Screepub"]);
-    let new = j(&[&home, "Library", "Application Support", "Method Reader"]);
+    let new = j(&[
+        &home,
+        "Library",
+        "Application Support",
+        "com.methodreader.desktop",
+    ]);
     write(&j(&[&old, "settings.json"]), "{\"old\": true}\n");
     write(&j(&[&new, "settings.json"]), "{\"new\": true}\n");
     let old_lib = j(&[&home, "Documents", "Screepub"]);
@@ -222,13 +279,16 @@ fn a_run_pointed_at_its_own_folders_moves_nothing() {
     let s = Scratch::new("legacy");
     let home = s.dir("home");
     let old = j(&[&home, ".config", "screepub"]);
+    let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
     let old_lib = j(&[&home, "Documents", "Screepub"]);
     std::fs::create_dir_all(&old).unwrap();
+    write(&j(&[&old_id, "window-storage.json"]), "{}");
     std::fs::create_dir_all(&old_lib).unwrap();
     for var in ["METHOD_READER_CONFIG_DIR", "SCREEPUB_CONFIG_DIR"] {
         let env = env_of(&[("HOME", &home), (var, SETTINGS_GUARD)]);
         assert_eq!(move_legacy_folders("linux", &env), LegacyMove::default());
     }
+    assert!(exists(&j(&[&old_id, "window-storage.json"])));
     for var in ["METHOD_READER_LIBRARY", "SCREEPUB_LIBRARY"] {
         let lib = s.dir("override");
         let env = env_of(&[("HOME", &home), (var, &lib)]);
@@ -236,6 +296,79 @@ fn a_run_pointed_at_its_own_folders_moves_nothing() {
         assert_eq!(moved.library, None);
     }
     assert!(exists(&old_lib));
+}
+
+// ---- what the 0.12 window kept under its identifier ----
+
+#[test]
+fn the_old_identifier_s_folder_joins_the_moved_settings_folder() {
+    let s = Scratch::new("legacy");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let support = j(&[&home, "Library", "Application Support"]);
+    let old_settings = j(&[&support, "Screepub"]);
+    let old_id = j(&[&support, "com.darkwell.screepub"]);
+    let new = j(&[&support, "com.methodreader.desktop"]);
+    write(
+        &j(&[&old_settings, "settings.json"]),
+        "{\"lastRoute\": \"books\"}\n",
+    );
+    let consent = r#"{"updateAsked":"true","updateOptIn":"false"}"#;
+    write(&j(&[&old_id, "window-storage.json"]), consent);
+
+    let moved = move_legacy_folders("darwin", &env);
+    assert_eq!(moved.settings, Some((old_settings.clone(), new.clone())));
+    assert_eq!(
+        moved.app_data,
+        vec![(
+            j(&[&old_id, "window-storage.json"]),
+            j(&[&new, "window-storage.json"])
+        )]
+    );
+    assert_eq!(
+        read_app_settings(&app_settings_path("darwin", &env))["lastRoute"],
+        json!("books")
+    );
+    let storage = app_data_path("darwin", &env, "window-storage.json");
+    assert_eq!(storage, j(&[&new, "window-storage.json"]));
+    assert_eq!(std::fs::read_to_string(&storage).unwrap(), consent);
+    // Never a delete: the emptied folder stays.
+    assert!(exists(&old_id) && !exists(&old_settings));
+    assert_eq!(move_legacy_folders("darwin", &env), LegacyMove::default());
+}
+
+#[test]
+fn the_old_identifier_s_folder_moves_whole_when_there_is_no_settings_folder() {
+    let s = Scratch::new("legacy");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
+    let new = j(&[&home, ".config", "com.methodreader.desktop"]);
+    write(&j(&[&old_id, "window-storage.json"]), "{}");
+    let moved = move_legacy_folders("linux", &env);
+    assert_eq!(moved.settings, None);
+    assert_eq!(moved.app_data, vec![(old_id.clone(), new.clone())]);
+    assert!(!exists(&old_id) && exists(&j(&[&new, "window-storage.json"])));
+}
+
+#[test]
+fn an_entry_already_in_the_new_folder_is_never_overwritten() {
+    let s = Scratch::new("legacy");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
+    let new = j(&[&home, ".config", "com.methodreader.desktop"]);
+    write(&j(&[&old_id, "window-storage.json"]), "old");
+    write(&j(&[&old_id, "other.json"]), "other");
+    write(&j(&[&new, "window-storage.json"]), "new");
+    let moved = move_legacy_folders("linux", &env);
+    assert_eq!(
+        moved.app_data,
+        vec![(j(&[&old_id, "other.json"]), j(&[&new, "other.json"]))]
+    );
+    let read = |p: &str| std::fs::read_to_string(p).unwrap();
+    assert_eq!(read(&j(&[&new, "window-storage.json"])), "new");
+    assert_eq!(read(&j(&[&old_id, "window-storage.json"])), "old");
 }
 
 // ---- the old-named sidecar beside a PDF ----

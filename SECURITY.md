@@ -33,11 +33,13 @@ in the workspace forbids `unsafe` code.
 - **Malicious PDF making the engine hang or exhaust memory** on a file a
   reasonable person would call small.
 - **Anything that causes a script to leave the machine without you asking.**
-  Converting makes no network requests. Method Reader reaches the network only
-  when you ask it to: uploading to a docked reMarkable over USB (plain HTTP
+  Converting makes no network requests. Method Reader uses no network except
+  checking for updates, which you can turn off (on a Mac it fetches the
+  release's `latest.json` from GitHub, carrying only the app's name and
+  version). Otherwise it reaches the network only when you ask it to: uploading to a docked reMarkable over USB (plain HTTP
   to the tablet's own web interface on the USB link), opening a
   page in your browser, installing the KFX plugin from Calibre's plugin
-  index, and checking for or installing an update if you switched that on.
+  index, and installing an update you chose.
   The [README](README.md#your-script-stays-on-your-machine) lists each one.
   A way to make it do anything else is a real finding.
 - **The update path.** The app installs an update only after checking its

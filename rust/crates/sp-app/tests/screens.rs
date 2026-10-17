@@ -84,18 +84,19 @@ fn read_and_settings_are_absent_until_a_script_is_open() {
     h.get_by_role_and_label(Role::TabList, "Method Reader");
 }
 
-// desktop-ui.test.ts: "the Convert page asks once whether to look for new versions"
+// 0.13 retired the Convert page's once-a-day question: checking is on by
+// default, with its switch in the Help menu (SUITE-STANDARDS.md, Updates).
 #[test]
-fn the_update_question_is_asked_on_a_mac_once_and_never_elsewhere() {
-    let w = world();
-    let mut h = harness(&w, Platform::Mac);
-    assert!(has_value(&h, "Check for new versions once a day?"));
-    h.get_by_role_and_label(Role::Button, "No thanks").click();
-    steps(&mut h);
-    assert!(!has_value(&h, "Check for new versions once a day?"));
-    let linux = harness(&world(), Platform::Linux);
-    assert!(!has_value(&linux, "Check for new versions once a day?"));
-    linux.get_by_role_and_label(Role::Button, "Choose PDF…  Ctrl+O");
+fn the_convert_page_asks_nothing_about_updates_anywhere() {
+    for platform in [Platform::Mac, Platform::Linux, Platform::Windows] {
+        let h = harness(&world(), platform);
+        assert!(!has_value(&h, "Check for new versions once a day?"));
+        assert!(
+            h.query_by_role_and_label(Role::Button, "No thanks")
+                .is_none()
+        );
+        assert!(h.query_by_role_and_label(Role::Button, "Turn on").is_none());
+    }
 }
 
 // desktop-ui.test.ts: "what the Convert surface decides" (driven end to end)

@@ -185,13 +185,16 @@ fn an_accepted_version_row_is_written_back_at_the_frozen_version() {
     let this = env!("CARGO_PKG_VERSION");
     let run = serde_json::json!({
         "exit": 0,
-        "stdout": format!("method-reader {this}\n"),
+        "stdout": format!("method-reader {this} (Method Reader)\n"),
         "stderr": "",
     });
     let frozen = xtask::parity::at_frozen_version("version", &run);
     assert_eq!(
         frozen["stdout"],
-        format!("method-reader {}\n", xtask::parity::FROZEN_VERSION)
+        format!(
+            "method-reader {} (Method Reader)\n",
+            xtask::parity::FROZEN_VERSION
+        )
     );
     // Every other row is written exactly as it ran.
     assert_eq!(xtask::parity::at_frozen_version("help", &run), run);

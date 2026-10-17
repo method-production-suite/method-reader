@@ -1,10 +1,13 @@
 //! The macOS app bundle: `Method Reader.app` laid out the way tauri-bundler
-//! 2.9.4 laid out the Tauri window's (macos/app.rs), under the identifier
-//! the app has always had (com.darkwell.screepub), so everything outside
-//! the app that knew the old bundle (Launch Services, the Dock, a TCC
-//! grant keyed to the identifier and the team) sees the same app. Only the
-//! folder and the executable were renamed with the product (from
-//! `Screepub.app` and `screepub-desktop`, [`crate::names::LEGACY_MAC_BUNDLE`]).
+//! 2.9.4 laid out the Tauri window's (macos/app.rs). From 0.13 it carries
+//! Method Reader's own identifier, com.methodreader.desktop
+//! ([`sp_update::IDENTIFIER`]), where up to 0.12.x it was
+//! com.darkwell.screepub ([`sp_update::LEGACY_IDENTIFIER`]): macOS sees a
+//! new app, so its permission grants (removable volumes, Automation),
+//! which are keyed to the identifier and the team, are asked for again
+//! once. The folder and the executable were renamed with the product too
+//! (from `Screepub.app` and `screepub-desktop`,
+//! [`crate::names::LEGACY_MAC_BUNDLE`]).
 //!
 //! ```text
 //! Method Reader.app/Contents/Info.plist
@@ -127,7 +130,7 @@ mod tests {
 
     #[test]
     fn the_plist_reads_back_with_the_keys_the_updater_and_finder_use() {
-        let text = info_plist("0.12.0", "com.darkwell.screepub");
+        let text = info_plist("0.13.0", sp_update::IDENTIFIER);
         let dir = tempfile::tempdir().unwrap();
         // Read back the way the swap and the restart read it.
         let app = dir.path().join("X.app/Contents");
@@ -135,13 +138,13 @@ mod tests {
         std::fs::write(app.join("Info.plist"), &text).unwrap();
         assert_eq!(
             sp_update::install::bundle_identifier(&dir.path().join("X.app")).as_deref(),
-            Some("com.darkwell.screepub")
+            Some("com.methodreader.desktop")
         );
         assert!(
             text.contains("<key>CFBundleExecutable</key>\n\t<string>method-reader-app</string>")
         );
         assert!(text.contains("<key>CFBundleName</key>\n\t<string>Method Reader</string>"));
         assert!(text.contains("<key>LSMinimumSystemVersion</key>\n\t<string>13.0</string>"));
-        assert!(text.contains("<key>CFBundleShortVersionString</key>\n\t<string>0.12.0</string>"));
+        assert!(text.contains("<key>CFBundleShortVersionString</key>\n\t<string>0.13.0</string>"));
     }
 }

@@ -2098,7 +2098,7 @@
   },
   "version": {
     "exit": 0,
-    "stdout": "<not JSON> method-reader 0.11.1\n",
+    "stdout": "<not JSON> method-reader 0.11.1 (Method Reader)\n",
     "stderr": "",
     "outputs": {}
   },

@@ -47,7 +47,7 @@ fn a_fake_home_that_is_real_and_writable_is_exactly_the_hole() {
         &home,
         "Library",
         "Application Support",
-        "Method Reader",
+        "com.methodreader.desktop",
         "settings.json",
     ]);
     store(&settings, &[("libraryPath", json!("/poisoned"))]);
@@ -452,7 +452,7 @@ fn production_shape_darwin_derives_the_settings_path_from_home() {
             &home,
             "Library",
             "Application Support",
-            "Method Reader",
+            "com.methodreader.desktop",
             "settings.json",
         ]),
         &[("libraryPath", json!("/chosen/via-home"))],

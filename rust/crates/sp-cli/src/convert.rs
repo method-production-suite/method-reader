@@ -194,7 +194,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
         if json {
             io.ok(serde_json::json!({ "version": version }));
         } else {
-            io.say(&format!("method-reader {version}"));
+            io.say(&format!("method-reader {version} (Method Reader)"));
         }
         return Err(Stop::Exit(0));
     }

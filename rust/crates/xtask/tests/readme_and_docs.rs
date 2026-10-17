@@ -501,3 +501,21 @@ fn the_readme_and_the_site_tell_a_screepub_user_about_the_new_name() {
     assert!(site.contains("Screepub is now Method Reader."));
     assert!(site.contains("keeps your settings and your library"));
 }
+
+#[test]
+fn the_readme_says_plainly_what_the_update_check_sends_and_how_to_turn_it_off() {
+    let section = flat(&section_of(
+        &readme(),
+        "## Your script stays on your machine",
+    ));
+    assert!(section.contains("no network except checking for updates, which you can turn off"));
+    assert!(section.contains("two minutes after the window opens and every six hours"));
+    assert!(section.contains("`latest.json`"));
+    assert!(section.contains("carries the app's name and version"));
+    assert!(section.contains("nothing about your scripts"));
+    assert!(section.contains("**Help > Check for Updates Automatically**"));
+    assert!(section.contains("old once-a-day question, they stay off"));
+    // The 0.12 wording, retired with the question.
+    assert!(!section.contains("only if you say yes"));
+    assert!(!section.contains("Method Reader reaches the network only when you ask"));
+}

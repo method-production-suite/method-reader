@@ -44,6 +44,36 @@ pub fn move_legacy_folders() {
     );
 }
 
+/// The app-data folder's name: the bundle identifier, which the window's
+/// tests hold to sp_update::IDENTIFIER.
+pub use sp_engine::settings::app::APP_DATA_FOLDER;
+
+/// The file `name` in the app's data folder, for this process's own
+/// environment (sp_engine::settings::app::app_data_path): the override
+/// folder when one is set, else Method Reader's folder, or a 0.12 folder
+/// while only that one holds the file. The window keeps its own storage
+/// there.
+pub fn app_data_file(name: &str) -> std::path::PathBuf {
+    sp_engine::settings::app::app_data_path(
+        sp_engine::env::host_platform(),
+        &sp_engine::env::Env::process(),
+        name,
+    )
+    .into()
+}
+
+/// The platform's app-data folder called `name` (an identifier), for this
+/// process's environment: where a copy built under another identifier (a
+/// handover rehearsal) keeps its own storage.
+pub fn app_data_folder_named(name: &str) -> std::path::PathBuf {
+    sp_engine::settings::app::app_data_folder_named(
+        sp_engine::env::host_platform(),
+        &sp_engine::env::Env::process(),
+        name,
+    )
+    .into()
+}
+
 /// Run one command line, writing to `sink`; the exit code.
 pub fn run(argv: &[String], sink: Box<dyn Sink>) -> u8 {
     // --json is the app's only channel, so the mode is pre-scanned from the

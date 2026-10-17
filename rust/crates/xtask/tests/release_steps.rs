@@ -363,7 +363,7 @@ fn mac_step(
     tool(
         sc,
         "bin/codesign",
-        "[ \"$1\" = -d ] && echo 'designated => identifier \"com.darkwell.screepub\" and anchor apple generic' >&2",
+        "[ \"$1\" = -d ] && echo 'designated => identifier \"com.methodreader.desktop\" and anchor apple generic' >&2",
     );
     tool(
         sc,

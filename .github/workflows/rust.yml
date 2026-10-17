@@ -177,6 +177,40 @@ jobs:
         run: command -v cargo-deny >/dev/null || cargo install cargo-deny --version 0.20.2 --locked
       - run: cargo deny check
 
+  # The 14-day supply-chain cooldown (scripts/check-crate-ages.py, the suite's
+  # shared copy): a crates.io package this change adds or bumps must be at
+  # least 14 days old, unless scripts/crate-age-exceptions.txt names it as a
+  # security fix; a git package must come from an allowlisted repository at a
+  # pinned commit. Only what changed is checked, against main for a pull
+  # request or the pushed-over commit for a push, so the lock as it stands
+  # never blocks unrelated work.
+  cooldown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check crate ages
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = pull_request ]; then
+            base=origin/main
+          elif [ -n "${BEFORE:-}" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            base="$BEFORE"
+          elif [ "$GITHUB_REF" != refs/heads/main ]; then
+            base=origin/main
+          else
+            base=""
+          fi
+          if [ -n "$base" ]; then
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --only-changed "$base"
+          else
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
+          fi
+
   # Every installer, unsigned, built and opened on its own OS: the Mac app
   # and its update archive (signed with a THROWAWAY key, verified the way a
   # Tauri window and the Rust app verify it), the image; the .deb installed
@@ -246,7 +280,7 @@ jobs:
               hdiutil create -volname "Method Reader" -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Method-Reader-macOS.dmg"
               M="$(mktemp -d)"
               hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Method-Reader-macOS.dmg"
-              [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Method Reader.app/Contents/Info.plist")" = com.darkwell.screepub ]
+              [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Method Reader.app/Contents/Info.plist")" = com.methodreader.desktop ]
               test -x "$M/Method Reader.app/Contents/MacOS/method-reader-app"
               hdiutil detach "$M"
               ;;

@@ -53,8 +53,15 @@ impl TestKey {
     }
 }
 
-/// An Info.plist with the keys the swap and the restart read.
+/// An Info.plist with the keys the swap and the restart read, under the
+/// identifier a bundle running `exe` shipped with: the 0.12.x one for the
+/// old executables, Method Reader's own otherwise.
 pub fn info_plist(exe: &str, version: &str) -> String {
+    let id = if matches!(exe, "screepub-desktop" | "Screepub") {
+        sp_update::LEGACY_IDENTIFIER
+    } else {
+        sp_update::IDENTIFIER
+    };
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -63,7 +70,7 @@ pub fn info_plist(exe: &str, version: &str) -> String {
   <key>CFBundleExecutable</key>
   <string>{exe}</string>
   <key>CFBundleIdentifier</key>
-  <string>com.darkwell.screepub</string>
+  <string>{id}</string>
   <key>CFBundleShortVersionString</key>
   <string>{version}</string>
 </dict>

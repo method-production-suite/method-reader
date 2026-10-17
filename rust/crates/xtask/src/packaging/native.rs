@@ -15,7 +15,9 @@
 //! The names live in sp-release's names.rs: the product name, the .app's
 //! name, the executable name (`method-reader-app`), the Linux package name
 //! and the Windows install folder, each with the 0.12.x (Screepub) name it
-//! replaces beside it. The bundle identifier is unchanged. A 0.11.x or
+//! replaces beside it. The bundle identifier is Method Reader's own from
+//! 0.13 (com.methodreader.desktop; it was com.darkwell.screepub), which
+//! no updater compares. A 0.11.x or
 //! 0.12.x app's updater downloads `Method-Reader-macOS.app.tar.gz`, checks
 //! its signature against the key it was built with, strips the archive's
 //! first path component and moves what is left over its own

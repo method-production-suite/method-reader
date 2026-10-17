@@ -294,3 +294,13 @@ fn the_page_and_the_share_card_carry_no_em_dash_in_any_spelling() {
         assert!(!dash.is_match(&read(f)), "{f}");
     }
 }
+
+#[test]
+fn the_download_page_says_what_the_update_check_sends_and_how_to_turn_it_off() {
+    let page = flat(&site());
+    assert!(page.contains("check for updates, and you can turn that off"));
+    assert!(page.contains("every six hours"));
+    assert!(page.contains("<code>latest.json</code>"));
+    assert!(page.contains("nothing about your scripts"));
+    assert!(page.contains("Help &gt; Check for Updates Automatically"));
+}

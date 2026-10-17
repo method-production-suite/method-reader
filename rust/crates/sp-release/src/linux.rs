@@ -475,7 +475,9 @@ mod tests {
         assert!(c.contains("\nReplaces: screepub (<< 0.13.0)\n"), "{c}");
         assert!(c.contains("\nConflicts: screepub (<< 0.13.0)\n"), "{c}");
         assert!(c.contains("\nProvides: screepub (= 0.13.0)\n"), "{c}");
-        assert!(c.contains("Maintainer: The Method Reader contributors\n"));
+        assert!(c.contains(
+            "Maintainer: Method Production Suite Team and the Method Reader contributors\n"
+        ));
         assert!(c.contains("Homepage: https://github.com/method-production-suite/method-reader\n"));
         assert!(c.ends_with(&format!(" {LONG_DESCRIPTION}\n")));
     }

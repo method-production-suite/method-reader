@@ -49,7 +49,8 @@ fn version_prints_a_semver_and_exits_0() {
     let out = ran.stdout.trim();
     let v = out
         .strip_prefix("method-reader ")
-        .expect("starts with method-reader");
+        .and_then(|v| v.strip_suffix(" (Method Reader)"))
+        .expect("method-reader X (Method Reader)");
     let parts: Vec<&str> = v.split(['.', '-', '+']).take(3).collect();
     assert_eq!(parts.len(), 3, "{out}");
     for p in parts {
@@ -64,7 +65,10 @@ fn version_matches_the_workspace_version() {
     let ran = Sandbox::new().run(&["--version"]);
     assert_eq!(
         ran.stdout.trim(),
-        format!("method-reader {}", env!("CARGO_PKG_VERSION"))
+        format!(
+            "method-reader {} (Method Reader)",
+            env!("CARGO_PKG_VERSION")
+        )
     );
 }
 

@@ -17,8 +17,11 @@
 //!   storage, caches and the Rust app's own storage stay away from the real
 //!   app's), the updater's public key (a throwaway one) and its endpoint
 //!   (http://127.0.0.1);
-//! - the Rust app from this checkout, as version 0.12.0, with the same
-//!   identifier and its updater baked with the same throwaway key and
+//! - the Rust app from this checkout, as version 0.12.0, under the
+//!   rehearsal form of Method Reader's own identifier
+//!   (com.methodreader.desktop.rehearsal: the shipped one changed from the
+//!   Tauri window's at 0.13, and the app finds the old one's storage by
+//!   that same rule), its updater baked with the same throwaway key and
 //!   endpoint (`METHOD_READER_UPDATE_*` at compile time, read only because
 //!   it builds with `--features rehearsal`);
 //! - Method-Reader-macOS.app.tar.gz of it, signed with the throwaway key by
@@ -56,7 +59,10 @@ use std::time::{Duration, Instant};
 
 use crate::paths;
 
-const ID: &str = "com.darkwell.screepub.rehearsal";
+/// The Tauri window's identifier, as rehearsed: the 0.12.x one's.
+const OLD_ID: &str = "com.darkwell.screepub.rehearsal";
+/// The Rust app's: Method Reader's own, as rehearsed.
+const NEW_ID: &str = "com.methodreader.desktop.rehearsal";
 /// Where the old app is installed, and so where the update lands.
 const OLD_BUNDLE: &str = sp_release::names::LEGACY_MAC_BUNDLE;
 const OLD_EXE: &str = sp_release::names::LEGACY_WINDOW_EXE;
@@ -244,7 +250,7 @@ fn prepare() -> Result<(), String> {
     let tauri_src = w.join("tauri-src");
     unpack(TAG, &tauri_src)?;
     let overlay = serde_json::json!({
-        "identifier": ID,
+        "identifier": OLD_ID,
         "plugins": { "updater": {
             "pubkey": public,
             "endpoints": [endpoint],
@@ -293,7 +299,14 @@ fn prepare() -> Result<(), String> {
         .env("METHOD_READER_UPDATE_INSECURE", "1")
         .current_dir(rust_src.join("rust")))?;
     sh(Command::new(&sp)
-        .args(["mac-app", "--version", NEW, "--identifier", ID, "--window"])
+        .args([
+            "mac-app",
+            "--version",
+            NEW,
+            "--identifier",
+            NEW_ID,
+            "--window",
+        ])
         .arg(rust_src.join("rust/target/release").join(NEW_EXE))
         .arg("--icon")
         .arg(rust_src.join("rust/crates/sp-app/icons/icon.icns"))
@@ -522,8 +535,8 @@ fn verify(w: &Path) -> Result<(), String> {
         plist_get(&app, "CFBundleShortVersionString") == NEW,
     );
     check(
-        "with the same identifier",
-        plist_get(&app, "CFBundleIdentifier") == ID,
+        "with Method Reader's identifier",
+        plist_get(&app, "CFBundleIdentifier") == NEW_ID,
     );
     check(
         &format!("and runs {NEW_EXE}, the Rust window"),
@@ -557,10 +570,18 @@ fn verify(w: &Path) -> Result<(), String> {
         .status()
         .is_ok_and(|s| s.success());
     check("the Rust app is running from the bundle", running);
+    // In the work folder's settings folder when the restart kept the
+    // overrides, else in the rehearsal identifier's own app-data folder.
     let home = std::env::home_dir().unwrap_or_default();
-    let store = home.join(format!(
-        "Library/Application Support/{ID}/window-storage.json"
-    ));
+    let store = [
+        w.join("config/window-storage.json"),
+        home.join(format!(
+            "Library/Application Support/{NEW_ID}/window-storage.json"
+        )),
+    ]
+    .into_iter()
+    .find(|p| p.exists())
+    .unwrap_or_else(|| w.join("config/window-storage.json"));
     match std::fs::read_to_string(&store) {
         Ok(text) => {
             println!("  ok   the Rust app wrote its storage: {}", text.trim());
@@ -597,18 +618,23 @@ fn clean(w: &Path) -> Result<(), String> {
                 .join("Contents/MacOS/"),
         )
         .status();
-    // Only the rehearsal identifier's folders, never com.darkwell.screepub's.
+    // Only the rehearsal identifiers' folders, never the real app's.
     let home = std::env::home_dir().unwrap_or_default();
-    for p in [
-        format!("Library/WebKit/{ID}"),
-        format!("Library/Caches/{ID}"),
-        format!("Library/Application Support/{ID}"),
-        format!("Library/Saved Application State/{ID}.savedState"),
-    ] {
-        let _ = std::fs::remove_dir_all(home.join(p));
+    for id in [OLD_ID, NEW_ID] {
+        for p in [
+            format!("Library/WebKit/{id}"),
+            format!("Library/Caches/{id}"),
+            format!("Library/Application Support/{id}"),
+            format!("Library/Saved Application State/{id}.savedState"),
+        ] {
+            let _ = std::fs::remove_dir_all(home.join(p));
+        }
     }
     let _ = std::fs::remove_dir_all(w);
-    println!("removed {} and the {ID} folders", w.display());
+    println!(
+        "removed {} and the {OLD_ID} and {NEW_ID} folders",
+        w.display()
+    );
     let _ = std::io::stdout().flush();
     Ok(())
 }

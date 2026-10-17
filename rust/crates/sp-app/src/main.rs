@@ -78,6 +78,11 @@ fn main() -> ExitCode {
             let host = Host::native(reduce_motion_flag());
             let mut app = App::new(engine, Mode::Threads, host);
             app.set_repaint(cc.egui_ctx.clone());
+            // The quiet update checks: only the shipped window arms them
+            // (two minutes from now, then every six hours, while the switch
+            // is on), so no test, capture or headless run ever checks.
+            let now = app.now();
+            app.update.start_schedule(now);
             #[cfg(target_os = "macos")]
             {
                 app.menus = sp_app::app::menu::Menus::install();

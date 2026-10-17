@@ -38,11 +38,6 @@ pub const WELL_CALL: &str = "Drop a screenplay PDF";
 pub const WELL_OR: &str = "or";
 pub const WELL_LIMITS: &str = "Needs selectable text, not a scan.";
 
-/// The one-time update question under the well.
-pub const ASK_QUESTION: &str = "Check for new versions once a day?";
-pub const ASK_YES: &str = "Turn on";
-pub const ASK_NO: &str = "No thanks";
-
 /// The one guard a reader can meaningfully overrule.
 pub const OVERRIDABLE: &str = "not-screenplay";
 /// The flag the override button stands for (app.js FORCE_FLAG).

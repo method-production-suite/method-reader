@@ -1418,12 +1418,12 @@ fn o5_the_switch_is_read_again_each_time_the_sheet_opens() {
             == Some(egui::accesskit::Toggled::True)
     };
     open(&mut h);
-    assert!(!on(&h));
+    assert!(on(&h), "on by default");
     h.key_press(Key::Escape);
     steps(&mut h);
-    sp_app::model::update::remember_answer(h.state_mut().host.storage.as_mut(), true);
+    sp_app::model::update::set_automatic(h.state_mut().host.storage.as_mut(), false);
     open(&mut h);
-    assert!(on(&h), "what was stored meanwhile");
+    assert!(!on(&h), "what was stored meanwhile");
 }
 
 /// A Beta badge on the same line as `rect`, just after it.

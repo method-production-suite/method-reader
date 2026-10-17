@@ -11,8 +11,9 @@
 //! Start-menu shortcut and its two registry keys), so Apps & Features
 //! shows one Method Reader and not two apps. Settings and the library are
 //! the engine's (it moves the old `%APPDATA%\Screepub` and
-//! `Documents\Screepub` once itself) and are never touched here, by
-//! install or uninstall.
+//! `%APPDATA%\com.darkwell.screepub` into `%APPDATA%\com.methodreader.desktop`,
+//! and `Documents\Screepub` to `Documents\Method Reader`, once itself)
+//! and are never touched here, by install or uninstall.
 //!
 //! Unsigned, as the Tauri installer was: SmartScreen warns until a
 //! code-signing certificate exists (a decision for the owner; signtool
@@ -22,7 +23,7 @@
 //! which is how an in-app update would hand over on Windows
 //! (`sp_update::install::nsis_update_args`).
 
-use crate::names::{LEGACY_PRODUCT, LEGACY_WINDOW_EXE, PRODUCT, PUBLISHER, WINDOW_EXE};
+use crate::names::{COPYRIGHT, LEGACY_PRODUCT, LEGACY_WINDOW_EXE, PRODUCT, PUBLISHER, WINDOW_EXE};
 
 /// The script, for `version` (numeric dotted, as VIProductVersion needs),
 /// packing the files in `src_dir` (the window, the three LICENSE- files,
@@ -47,6 +48,7 @@ RequestExecutionLevel user
 !define VERSION "{version}"
 !define MAINBINARYNAME "{WINDOW_EXE}"
 !define MANUFACTURER "{PUBLISHER}"
+!define COPYRIGHT "{COPYRIGHT}"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${{PRODUCTNAME}}"
 !define MANUPRODUCTKEY "Software\${{MANUFACTURER}}\${{PRODUCTNAME}}"
 !define SRC "{src_dir}"
@@ -67,7 +69,7 @@ VIProductVersion "{numeric}.0"
 VIAddVersionKey "ProductName" "${{PRODUCTNAME}}"
 VIAddVersionKey "FileDescription" "${{PRODUCTNAME}}"
 VIAddVersionKey "CompanyName" "${{MANUFACTURER}}"
-VIAddVersionKey "LegalCopyright" "${{MANUFACTURER}}"
+VIAddVersionKey "LegalCopyright" "${{COPYRIGHT}}"
 VIAddVersionKey "FileVersion" "${{VERSION}}"
 VIAddVersionKey "ProductVersion" "${{VERSION}}"
 
@@ -193,7 +195,13 @@ mod tests {
         assert!(s.contains("InstallDir \"$LOCALAPPDATA\\${PRODUCTNAME}\""));
         assert!(s.contains("!define UNINSTKEY \"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${PRODUCTNAME}\""));
         assert!(s.contains("!define MAINBINARYNAME \"method-reader-app\""));
-        assert!(s.contains("!define MANUFACTURER \"The Method Reader contributors\""));
+        assert!(s.contains(
+            "!define MANUFACTURER \"Method Production Suite Team and the Method Reader contributors\""
+        ));
+        assert!(s.contains(
+            "!define COPYRIGHT \"Copyright (c) 2026 Method Production Suite Team and the Method Reader contributors\""
+        ));
+        assert!(s.contains("VIAddVersionKey \"LegalCopyright\" \"${COPYRIGHT}\""));
         assert!(s.contains("VIProductVersion \"0.13.0.0\""));
         assert!(s.contains("OutFile \"C:\\out\\Method-Reader-windows-x64-setup.exe\""));
     }

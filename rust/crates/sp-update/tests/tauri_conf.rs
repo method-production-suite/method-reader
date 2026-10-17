@@ -1,5 +1,6 @@
 //! The Rust app must trust the key every Tauri window was built with, and
-//! keep its identifier, or the first Rust release strands one side. The
+//! know their identifier (now [`sp_update::LEGACY_IDENTIFIER`]: 0.13 took
+//! its own and moves what the old one kept), or one side is stranded. The
 //! endpoint those windows ask is [`sp_update::LEGACY_ENDPOINT`]: the
 //! repository moved, GitHub redirects it, and Method Reader asks the new
 //! one itself. The values
@@ -18,7 +19,8 @@ const TAURI_ENDPOINTS: &[&str] =
 
 #[test]
 fn the_constants_are_the_tauri_window_s() {
-    assert_eq!(sp_update::IDENTIFIER, TAURI_IDENTIFIER);
+    assert_eq!(sp_update::LEGACY_IDENTIFIER, TAURI_IDENTIFIER);
+    assert_eq!(sp_update::IDENTIFIER, "com.methodreader.desktop");
     assert_eq!(sp_update::PUBKEY, TAURI_PUBKEY);
     assert_eq!(&[sp_update::LEGACY_ENDPOINT], TAURI_ENDPOINTS);
     assert_ne!(sp_update::ENDPOINT, sp_update::LEGACY_ENDPOINT);

@@ -644,7 +644,7 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
                 fs::write(contents.join("MacOS/method-reader-app"), "BIN").unwrap();
                 fs::write(
                     contents.join("Info.plist"),
-                    info_plist(version).replace("com.darkwell.screepub", identifier),
+                    info_plist(version).replace(sp_update::IDENTIFIER, identifier),
                 )
                 .unwrap();
             }
@@ -658,7 +658,7 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         &fixture(),
         &work,
         V,
-        &mut plist_for(V, "com.darkwell.screepub"),
+        &mut plist_for(V, "com.methodreader.desktop"),
         &mut window_run(&mut calls, V, Some(&ZIP), 18),
     )
     .unwrap();
@@ -667,8 +667,10 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         Path::new(&calls[0].0[0]).ends_with("Method Reader.app/Contents/MacOS/method-reader-app")
     );
     for (version, identifier, said) in [
-        ("0.11.9", "com.darkwell.screepub", "0.11.9"),
-        (V, "com.example.other", "com.darkwell.screepub"),
+        ("0.11.9", "com.methodreader.desktop", "0.11.9"),
+        (V, "com.example.other", "com.methodreader.desktop"),
+        // The 0.12.x identifier is another app's now.
+        (V, "com.darkwell.screepub", "com.methodreader.desktop"),
     ] {
         let mut calls = vec![];
         err_contains(

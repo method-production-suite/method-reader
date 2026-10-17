@@ -48,6 +48,12 @@ pub trait Updater: Send + Sync {
     /// Whether this build can update itself at all.
     fn ready(&self) -> bool;
     fn check(&self) -> Result<Option<Found>, String>;
+    /// Download and verify, ahead of any click, the update the last check
+    /// found, and keep it for [`Updater::install`], so "Update ready" means
+    /// what it says. The version kept, or why not. On a worker thread.
+    fn prepare(&self) -> Result<String, String> {
+        Err("this build cannot update itself".into())
+    }
     /// update.js installAndRestart, on a worker thread: download, verify,
     /// swap the bundle, retire `gate`, wait for 500 ms of quiet (at most
     /// 120 s), restart. `live`: the offer still holds the update its check
@@ -98,9 +104,13 @@ pub fn run_outcome(outcome: Outcome) -> RunOutcome {
 }
 
 /// The pages the window may open, and nothing else (capabilities/
-/// default.json's opener scope).
+/// default.json's opener scope, and the Help menu's two websites).
 pub fn allowed_url(url: &str) -> bool {
+    use crate::model::help::{SUITE, WEBSITE};
     url.starts_with("https://github.com/method-production-suite/method-reader/")
+        || url.starts_with("https://github.com/method-production-suite/method-reader#")
+        || url == WEBSITE
+        || url == SUITE
         || matches!(
             url,
             "https://calibre-ebook.com/download_osx"
@@ -226,33 +236,32 @@ impl FileStorage {
         storage
     }
 
-    /// Where the window keeps it: the platform's per-user config folder,
-    /// or METHOD_READER_CONFIG_DIR (else the LEGACY SCREEPUB_CONFIG_DIR)
-    /// when that is set (the engine's own override
-    /// for its settings, which tests and scratch runs point elsewhere, so
-    /// the window's storage goes with them).
+    /// Where the window keeps it: beside the engine's settings.json, in
+    /// the app-data folder named after the bundle identifier, or in
+    /// METHOD_READER_CONFIG_DIR (else the LEGACY SCREEPUB_CONFIG_DIR) when
+    /// that is set (the engine's own override, which tests and scratch runs
+    /// point elsewhere, so the window's storage goes with them). Until the
+    /// one-time move has carried it over (sp_engine::legacy), the 0.12
+    /// window's own file, under com.darkwell.screepub, is used where it is,
+    /// so the update answer stays the person's. A copy built under another
+    /// identifier (a rehearsal) keeps to that identifier's folder.
     pub fn default_path() -> Option<std::path::PathBuf> {
+        const FILE: &str = "window-storage.json";
         if let Some(dir) = config_override() {
-            return Some(dir.join("window-storage.json"));
+            return Some(dir.join(FILE));
         }
-        let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
-        let home = std::path::PathBuf::from(home);
-        let base = if cfg!(target_os = "macos") {
-            home.join("Library/Application Support")
-        } else if cfg!(target_os = "windows") {
-            std::env::var_os("APPDATA").map(Into::into).unwrap_or(home)
+        let running = running_identifier();
+        if running == sp_update::IDENTIFIER {
+            Some(sp_cli::app_data_file(FILE))
         } else {
-            std::env::var_os("XDG_CONFIG_HOME")
-                .map(Into::into)
-                .unwrap_or(home.join(".config"))
-        };
-        Some(base.join(running_identifier()).join("window-storage.json"))
+            Some(sp_cli::app_data_folder_named(&running).join(FILE))
+        }
     }
 }
 
 /// The bundle identifier this copy runs under: its own Info.plist's inside
 /// a Mac bundle (so a rehearsal built under another identifier keeps to
-/// its own storage), else the shipped `com.darkwell.screepub`.
+/// its own storage), else the shipped one, [`sp_update::IDENTIFIER`].
 pub fn running_identifier() -> String {
     std::env::current_exe()
         .ok()
@@ -261,7 +270,6 @@ pub fn running_identifier() -> String {
         .unwrap_or_else(|| sp_update::IDENTIFIER.to_string())
 }
 
-/// The Tauri window's WebKit data for this identifier, on a Mac.
 /// METHOD_READER_CONFIG_DIR, or the LEGACY SCREEPUB_CONFIG_DIR when the
 /// new one is unset, when set to something: the engine's own rule.
 fn config_override() -> Option<std::path::PathBuf> {
@@ -272,6 +280,7 @@ fn config_override() -> Option<std::path::PathBuf> {
         .map(Into::into)
 }
 
+/// The Tauri window's WebKit data for this copy, on a Mac.
 fn tauri_website_data() -> Option<std::path::PathBuf> {
     // A scratch run reads nothing of the real Tauri window's.
     if !cfg!(target_os = "macos") || config_override().is_some() {
@@ -279,18 +288,27 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
     }
     let home = std::env::var_os("HOME")?;
     let home = std::path::Path::new(&home);
-    let running = running_identifier();
-    // A 0.7.x window (identifier com.darkwell.screepub.desktop) that skipped
-    // every release since updates straight to the Rust app; its answer is
-    // under its old identifier.
-    let mut candidates = vec![running.clone()];
-    if running == sp_update::IDENTIFIER {
-        candidates.push(format!("{}.desktop", sp_update::IDENTIFIER));
-    }
-    candidates
+    webkit_identifiers(&running_identifier())
         .iter()
         .map(|id| sp_update::webkit::website_data(home, id))
         .find(|dir| dir.is_dir())
+}
+
+/// Whose WebKit storage may hold this copy's update answer, first found
+/// first: its own identifier's; then, for Method Reader's identifier (or a
+/// rehearsal's, which extends it), the same under the 0.12.x identifier
+/// the Tauri windows had, and for the shipped identifier the 0.7.x
+/// window's too, since a copy that skipped every release since updates
+/// straight to this one.
+pub fn webkit_identifiers(running: &str) -> Vec<String> {
+    let mut ids = vec![running.to_owned()];
+    if let Some(rest) = running.strip_prefix(sp_update::IDENTIFIER) {
+        ids.push(format!("{}{rest}", sp_update::LEGACY_IDENTIFIER));
+        if rest.is_empty() {
+            ids.push(sp_update::LEGACY_TAURI_IDENTIFIER.to_owned());
+        }
+    }
+    ids
 }
 
 /// The updater: latest.json through sp-update, with the key every Tauri
@@ -307,6 +325,10 @@ pub struct ManifestUpdater {
     installed: Mutex<Option<std::path::PathBuf>>,
     /// The update the last check returned: the offer's live handle.
     last: Mutex<Option<sp_update::Update>>,
+    /// The update [`Updater::prepare`] downloaded and verified: its version
+    /// and its bytes, which the next install of that version uses instead
+    /// of downloading again.
+    prepared: Mutex<Option<(String, Vec<u8>)>>,
 }
 
 /// latest.json, asked now: a newer release for this copy, or None.
@@ -326,6 +348,8 @@ struct RealSteps<'a> {
     /// (`Installed::bundle`), which the restart starts.
     bundle: std::path::PathBuf,
     gate: &'a EngineGate,
+    /// What a quiet check already downloaded and verified, if anything.
+    prepared: Option<(String, Vec<u8>)>,
 }
 
 impl Steps for RealSteps<'_> {
@@ -338,6 +362,14 @@ impl Steps for RealSteps<'_> {
         progress: &mut dyn FnMut(usize, Option<u64>),
         finished: &mut dyn FnMut(),
     ) -> Result<Vec<u8>, String> {
+        if let Some((version, bytes)) = self.prepared.take()
+            && version == update.version
+        {
+            // Verified when it was downloaded; nothing to fetch again.
+            progress(bytes.len(), Some(bytes.len() as u64));
+            finished();
+            return Ok(bytes);
+        }
         sp_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
     }
     fn install(&mut self, _update: &sp_update::Update, bytes: &[u8]) -> Result<(), String> {
@@ -378,6 +410,7 @@ impl ManifestUpdater {
             bundle,
             installed: Mutex::new(None),
             last: Mutex::new(None),
+            prepared: Mutex::new(None),
         }
     }
 
@@ -405,6 +438,30 @@ impl Updater for ManifestUpdater {
             body: u.body,
         }))
     }
+    fn prepare(&self) -> Result<String, String> {
+        if self.current_bundle().is_none() {
+            return Err("this copy of Method Reader cannot update itself".into());
+        }
+        let update = self
+            .last
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
+            .ok_or("no update to download")?;
+        let held = self
+            .prepared
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+            .is_some_and(|(v, _)| *v == update.version);
+        if !held {
+            let bytes = sp_update::download(&config(), &update, |_, _| {}, || {})
+                .map_err(|e| e.to_string())?;
+            *self.prepared.lock().unwrap_or_else(|e| e.into_inner()) =
+                Some((update.version.clone(), bytes));
+        }
+        Ok(update.version)
+    }
     fn install(
         &self,
         live: bool,
@@ -426,6 +483,11 @@ impl Updater for ManifestUpdater {
         let mut steps = RealSteps {
             bundle: bundle.clone(),
             gate,
+            prepared: self
+                .prepared
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .take(),
         };
         let outcome = sp_update::flow::install_and_restart(update, &mut steps, emit);
         if steps.bundle != bundle {
@@ -441,6 +503,7 @@ impl Updater for ManifestUpdater {
         let mut steps = RealSteps {
             bundle,
             gate: &gate,
+            prepared: None,
         };
         sp_update::flow::restart_installed(version, &mut steps, emit)
             == sp_update::flow::RestartOutcome::Restarting
@@ -616,6 +679,10 @@ pub struct FakeUpdater {
     pub cap: std::time::Duration,
     /// How many times the new copy was started.
     pub restarted: Arc<std::sync::atomic::AtomicUsize>,
+    /// How many times an update was downloaded ahead of the click, and
+    /// what that download answers (None: the found version, kept).
+    pub prepared: Arc<std::sync::atomic::AtomicUsize>,
+    pub prepare_fails: Option<String>,
 }
 
 impl Default for FakeUpdater {
@@ -627,6 +694,8 @@ impl Default for FakeUpdater {
             quiet: ENGINE_QUIET,
             cap: RESTART_WAIT_CAP,
             restarted: Arc::default(),
+            prepared: Arc::default(),
+            prepare_fails: None,
         }
     }
 }
@@ -693,6 +762,17 @@ impl Updater for FakeUpdater {
     }
     fn check(&self) -> Result<Option<Found>, String> {
         self.found.clone()
+    }
+    fn prepare(&self) -> Result<String, String> {
+        self.prepared
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        if let Some(message) = &self.prepare_fails {
+            return Err(message.clone());
+        }
+        match self.found.clone()? {
+            Some(f) => Ok(f.version),
+            None => Err("no update to download".into()),
+        }
     }
     fn install(
         &self,
@@ -794,6 +874,12 @@ mod tests {
             "https://github.com/ssandweiss/screepub/issues/new?body=x"
         ));
         assert!(!allowed_url("https://calibre-ebook.com/download_linux"));
+        // The Help menu's pages.
+        assert!(allowed_url("https://methodreader.com"));
+        assert!(allowed_url("https://methodproduction.com"));
+        assert!(allowed_url(crate::model::help::USER_GUIDE));
+        assert!(allowed_url(crate::model::help::RELEASES));
+        assert!(!allowed_url("https://methodreader.com.example.net"));
         assert!(!allowed_url("file:///etc/passwd"));
     }
 

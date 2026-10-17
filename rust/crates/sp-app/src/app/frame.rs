@@ -20,15 +20,15 @@ use crate::model::motion;
 use crate::model::notes::{RELEASE, visible_sections};
 use crate::model::send_routes::Device;
 use crate::model::update::{
-    self as u, CheckOutcome, Drawn, Phase, begin_check, finish_check, label_actionable, notes_view,
-    read_state, remember_answer, remembered_offer, update_label, updates_possible,
+    self as u, CheckOutcome, Drawn, Phase, Schedule, automatic_checks, begin_check, finish_check,
+    label_actionable, notes_view, remembered_offer, set_automatic, update_label, updates_possible,
 };
 use std::sync::mpsc::{Receiver, TryRecvError, channel};
 
 use sp_update::flow::Event as UpdateEvent;
 use sp_update::gate::EngineGate;
 
-use crate::model::update_flow::{Flow, RunOutcome, Start};
+use crate::model::update_flow::{Flow, Offer, RunOutcome, Start};
 use crate::theme::{self, Tokens, size};
 
 pub fn tab_id(s: Surface) -> Id {
@@ -58,6 +58,9 @@ const CHECK_STOPPED: &str = "The update check stopped unexpectedly.";
 
 /// What the updater's check answers.
 type CheckAnswer = Result<Option<u::Found>, String>;
+
+/// What the download ahead of the click answers: the version kept.
+type PrepareAnswer = Result<String, String>;
 
 /// An update event as the label and the notes draw it.
 pub fn phase_of(event: UpdateEvent) -> Option<Phase> {
@@ -98,6 +101,14 @@ pub struct UpdateState {
     /// The check on its thread, while it is out, and whether a person
     /// asked for it.
     checking: Option<(Receiver<CheckAnswer>, bool)>,
+    /// A quiet check's update downloading ahead of the click, with the
+    /// offer it will become ("Update ready", or "Update to" if it fails).
+    preparing: Option<(Receiver<PrepareAnswer>, Offer)>,
+    /// When the next quiet check is due. Armed only by
+    /// [`UpdateState::start_schedule`], which the shipped window calls
+    /// (main.rs): a test, a capture or a headless run never checks on its
+    /// own.
+    pub schedule: Schedule,
     /// Run the check at once on the window's thread (tests, as the engine
     /// runtime's Inline mode).
     pub inline_checks: bool,
@@ -114,7 +125,8 @@ impl UpdateState {
         self.flow.phase()
     }
 
-    /// At launch, once: what an earlier check found, then today's check.
+    /// At launch, once: what an earlier check found. The first quiet
+    /// check waits for the schedule (two minutes).
     pub fn boot(&mut self, host: &mut super::Host) {
         if !self.usable(host) {
             return;
@@ -125,20 +137,49 @@ impl UpdateState {
         }
         if self.flow.boot(remembered) {
             self.heard();
-            self.check(host, false);
         }
     }
 
-    pub fn answer(&mut self, host: &mut super::Host, on: bool) {
-        remember_answer(host.storage.as_mut(), on);
+    /// The quiet checks from now on: the first two minutes away, then every
+    /// six hours, each only while the switch is on.
+    pub fn start_schedule(&mut self, now: f64) {
+        self.schedule = Schedule::starting(now);
+    }
+
+    /// Whether "Check for Updates Automatically" is on.
+    pub fn automatic(&self, host: &super::Host) -> bool {
+        automatic_checks(host.storage.as_ref())
+    }
+
+    /// The switch, set by a person. Turning it on checks at once (the
+    /// consent is fresh); the next quiet check is then six hours away.
+    pub fn set_automatic(&mut self, host: &mut super::Host, on: bool) {
+        set_automatic(host.storage.as_mut(), on);
         if on && self.usable(host) {
             self.check(host, false);
         }
     }
 
+    /// The schedule's turn, from the window's timers: a quiet check when one
+    /// is due, the switch is on, and nothing about an update is under way.
+    pub fn tick(&mut self, host: &mut super::Host, now: f64) {
+        if !self.schedule.take_due(now) {
+            return;
+        }
+        let idle = self.checking.is_none() && self.preparing.is_none() && !self.flow.running();
+        if idle && self.usable(host) && self.automatic(host) {
+            self.check(host, false);
+        }
+    }
+
+    /// When the window must wake for the schedule.
+    pub fn next_due(&self) -> Option<f64> {
+        self.schedule.next_due()
+    }
+
     /// Asks for latest.json. The request runs on its own thread (a stalled
-    /// network held the window for up to the transport's ten minutes, and
-    /// the launch check runs before the first frame); its answer arrives
+    /// network held the window for up to the transport's ten minutes); its
+    /// answer arrives
     /// through [`UpdateState::pump`]. In tests (`inline_checks`) it runs at
     /// once, as the engine runtime's Inline mode does. A check already out
     /// is not doubled.
@@ -148,13 +189,15 @@ impl UpdateState {
         }
         let now = (host.clock)();
         if !begin_check(manual, host.storage.as_mut(), now) {
-            self.answered(CheckOutcome::Skipped, manual);
+            self.answered(host, CheckOutcome::Skipped, manual);
             return;
         }
+        // Whoever asked, the next quiet check is a full interval away.
+        self.schedule.checked(now);
         if self.inline_checks {
             let answer = host.updater.check();
             let outcome = finish_check(host.storage.as_mut(), answer);
-            self.answered(outcome, manual);
+            self.answered(host, outcome, manual);
             return;
         }
         let (tx, rx) = channel();
@@ -171,13 +214,84 @@ impl UpdateState {
         self.checking = Some((rx, manual));
     }
 
-    fn answered(&mut self, outcome: CheckOutcome, manual: bool) {
-        self.flow.check_answered(&outcome);
+    fn answered(&mut self, host: &super::Host, outcome: CheckOutcome, manual: bool) {
+        match &outcome {
+            // Already downloaded and waiting: it stays ready. Said again, so
+            // the update sheet's line answers the person who asked.
+            CheckOutcome::Offer { version, .. } if self.flow.is_ready(version) => {
+                let phase = self.flow.phase().cloned();
+                self.flow.set_phase(phase);
+            }
+            // A quiet check's find is downloaded before anything is said,
+            // so what appears is "Update ready", a click from installing.
+            CheckOutcome::Offer { version, body } if !manual && !self.flow.running() => {
+                self.prepare(
+                    host,
+                    Offer {
+                        version: version.clone(),
+                        body: body.clone(),
+                        live: true,
+                    },
+                );
+            }
+            _ => self.flow.check_answered(&outcome),
+        }
         self.heard();
         if let CheckOutcome::Error { message } = &outcome
             && manual
         {
             self.notes_line = Some(message.clone());
+        }
+    }
+
+    /// Download `offer` ahead of the click, on its own thread (at once in
+    /// tests). Nothing is drawn while it downloads.
+    fn prepare(&mut self, host: &super::Host, offer: Offer) {
+        if self.preparing.is_some() {
+            return;
+        }
+        if self.inline_checks {
+            let answer = host.updater.prepare();
+            self.prepared(answer, offer);
+            return;
+        }
+        let (tx, rx) = channel();
+        let updater = host.updater.clone();
+        let repaint = self.repaint.clone();
+        std::thread::spawn(move || {
+            let answer =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| updater.prepare()))
+                    .unwrap_or_else(|_| Err(CHECK_STOPPED.to_string()));
+            let _ = tx.send(answer);
+            if let Some(ctx) = &repaint {
+                ctx.request_repaint();
+            }
+        });
+        self.preparing = Some((rx, offer));
+    }
+
+    /// The download ahead of the click is done: "Update ready", or, if it
+    /// failed, the offer as a check a person asked for shows it (the click
+    /// then downloads it, with its progress, and says what went wrong).
+    fn prepared(&mut self, answer: PrepareAnswer, offer: Offer) {
+        match answer {
+            Ok(version) if version == offer.version => self.flow.ready_found(offer),
+            _ => self.flow.offer_found(offer),
+        }
+        self.heard();
+    }
+
+    fn pump_prepare(&mut self) {
+        let Some((rx, _)) = &self.preparing else {
+            return;
+        };
+        let answer = match rx.try_recv() {
+            Ok(answer) => answer,
+            Err(TryRecvError::Empty) => return,
+            Err(TryRecvError::Disconnected) => Err(CHECK_STOPPED.to_string()),
+        };
+        if let Some((_, offer)) = self.preparing.take() {
+            self.prepared(answer, offer);
         }
     }
 
@@ -194,7 +308,7 @@ impl UpdateState {
         };
         self.checking = None;
         let outcome = finish_check(host.storage.as_mut(), answer);
-        self.answered(outcome, manual);
+        self.answered(host, outcome, manual);
     }
 
     /// A click on the label or the notes' button: the one run, or "Restart
@@ -254,6 +368,7 @@ impl UpdateState {
     /// started and this window should close.
     pub fn pump(&mut self, host: &mut super::Host) -> bool {
         self.pump_check(host);
+        self.pump_prepare();
         let Some(rx) = &self.run else {
             return false;
         };
@@ -313,7 +428,10 @@ impl UpdateState {
             if let Some(v) = p.version() {
                 self.drawn.version = Some(v.to_string());
             }
-            if let Phase::Offer { body, .. } | Phase::Downloading { body, .. } = p {
+            if let Phase::Offer { body, .. }
+            | Phase::Ready { body, .. }
+            | Phase::Downloading { body, .. } = p
+            {
                 self.drawn.body = body.clone();
             }
         }
@@ -461,6 +579,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         });
     paint_rail(ui, &t, window);
     notes_sheet(app, ui);
+    super::help::draw(app, ui);
 }
 
 fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
@@ -515,8 +634,11 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
         } else {
             let stamp = stamp_button(ui, &t, &rev_label(RELEASE.version));
             if stamp.clicked() {
+                app.help.sheet = None;
                 app.notes_open = true;
             }
+            // Windows and Linux: the Help menu, beside the stamp.
+            super::help::menu(app, ui, &t);
         }
         if let Some(words) = update_label(app.update.phase()) {
             let actionable = label_actionable(app.update.phase());
@@ -890,17 +1012,22 @@ fn notes_sheet(app: &mut App, ui: &mut Ui) {
     }
 }
 
-fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
+/// The Updates block: in the release notes, and the whole of the sheet
+/// Help > Check for Updates… opens. False when this copy cannot update
+/// itself (and the block said where releases are instead).
+pub(super) fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
     ui.add_space(layout::SPACE[6]);
     if !app.update.usable(&app.host) {
         widgets::caption(ui, t, u::NOT_HERE, false);
-        return;
+        return false;
     }
     widgets::state_label(ui, t, "Updates");
-    let mut on = read_state(app.host.storage.as_ref()).opted_in;
+    let mut on = app.update.automatic(&app.host);
     let box_ = ui.checkbox(&mut on, u::AUTO_LABEL);
+    let says = widgets::caption(ui, t, u::AUTO_SAYS, false);
+    widgets::described_by(ui, box_.id, says.id);
     if box_.changed() {
-        app.update.answer(&mut app.host, on);
+        app.update.set_automatic(&mut app.host, on);
         app.update.notes_line = Some(if on { u::AUTO_ON } else { u::AUTO_OFF }.into());
     }
     let view = notes_view(app.update.phase(), &app.update.drawn, RELEASE.version);
@@ -934,6 +1061,7 @@ fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) {
             app.update.start(&app.host, gate);
         }
     }
+    true
 }
 
 // --------------------------------------------------------------- the rail

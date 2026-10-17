@@ -48,10 +48,19 @@ pub const LEGACY_ENDPOINT: &str =
 /// lines. Its key id is E4D0668D54F6EB34.
 pub const PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU0RDA2NjhENTRGNkVCMzQKUldRMDYvWlVqV2JRNUQzRkpQMmVJZlQ4bTdaT2M5cmN2V05oVTJGdURUY0NwRDBRbEQ1c013UnYK";
 
-/// The bundle identifier the Tauri window has had since 0.8.0, and the
-/// Rust app keeps under the Method Reader name: settings, permissions and
-/// updates key off it.
-pub const IDENTIFIER: &str = "com.darkwell.screepub";
+/// Method Reader's bundle identifier, from 0.13. The app's data folder is
+/// named after it on every platform (Application Support, %APPDATA%,
+/// $XDG_CONFIG_HOME), and macOS keys its permission grants to it.
+pub const IDENTIFIER: &str = "com.methodreader.desktop";
+
+/// The identifier every copy up to 0.12.x had, the Tauri windows from 0.8.0
+/// and the first Rust app: their data and their WebKit storage sit under
+/// it. Still known, so 0.13 can find what they kept and move it once.
+pub const LEGACY_IDENTIFIER: &str = "com.darkwell.screepub";
+
+/// The 0.7.x Tauri window's identifier: a copy that skipped every release
+/// since keeps its update answer under it.
+pub const LEGACY_TAURI_IDENTIFIER: &str = "com.darkwell.screepub.desktop";
 
 /// Whether this is a handover-rehearsal build (`--features rehearsal`,
 /// which only `cargo xtask rehearse-handover prepare` passes). Only such a

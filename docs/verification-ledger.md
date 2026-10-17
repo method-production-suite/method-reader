@@ -86,6 +86,11 @@ its own updater, where it is switched on, installs the window in its place.
   verified: the 0.7.3 pass converted a script dropped on the window.
 - The window restarting itself after an update, from 0.7.3 on: written and
   tested in code, not yet recorded by a person.
+- The 0.13 update behaviour on a real Mac: the quiet check two minutes
+  after launch and every six hours, the update downloaded before **Update
+  ready, restart to update** appears, the Help menu's switch, a previous no
+  kept off, and What's New opening once after the update. Written and
+  tested in code against a fake updater, not yet seen by a person.
 - The move to one Mac app, by a person: the older Mac app updating itself
   into the window, and a *Screepub Desktop* install updating into Method Reader.
   Both are written and tested in code.

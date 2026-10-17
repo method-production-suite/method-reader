@@ -159,10 +159,11 @@ fn a_tauri_window_s_bundle_becomes_method_reader_under_its_new_name() {
     // sidecar are gone.
     assert!(!w.bundle().exists());
     assert_eq!(w.exe_names(), ["method-reader-app"]);
-    // The identifier does not change with the name.
+    // The bundle carries the new build's identifier, not the old one's:
+    // the swap takes the archive's Info.plist whole.
     assert_eq!(
         sp_update::install::bundle_identifier(&w.renamed()).as_deref(),
-        Some("com.darkwell.screepub")
+        Some(sp_update::IDENTIFIER)
     );
     // Nothing left beside it.
     let beside: Vec<_> = std::fs::read_dir(w.apps.path()).unwrap().collect();

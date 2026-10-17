@@ -30,7 +30,7 @@ fn set(pairs: &[(&str, Value)]) -> sp_engine::settings::app::Patch {
 fn darwin_under_application_support() {
     assert_eq!(
         app_settings_path("darwin", &env_of(&[("HOME", HOME)])),
-        "/home/ada/Library/Application Support/Method Reader/settings.json"
+        "/home/ada/Library/Application Support/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -41,7 +41,7 @@ fn win32_under_appdata_when_set() {
             "win32",
             &env_of(&[("APPDATA", "C:\\Users\\a\\AppData\\Roaming")])
         ),
-        "C:\\Users\\a\\AppData\\Roaming\\Method Reader\\settings.json"
+        "C:\\Users\\a\\AppData\\Roaming\\com.methodreader.desktop\\settings.json"
     );
 }
 
@@ -49,7 +49,7 @@ fn win32_under_appdata_when_set() {
 fn win32_falls_back_to_userprofile_appdata_roaming() {
     assert_eq!(
         app_settings_path("win32", &env_of(&[("USERPROFILE", "C:\\Users\\a")])),
-        "C:\\Users\\a\\AppData\\Roaming\\Method Reader\\settings.json"
+        "C:\\Users\\a\\AppData\\Roaming\\com.methodreader.desktop\\settings.json"
     );
 }
 
@@ -60,7 +60,7 @@ fn win32_blank_appdata_is_ignored() {
             "win32",
             &env_of(&[("USERPROFILE", "C:\\Users\\a"), ("APPDATA", "   ")])
         ),
-        "C:\\Users\\a\\AppData\\Roaming\\Method Reader\\settings.json"
+        "C:\\Users\\a\\AppData\\Roaming\\com.methodreader.desktop\\settings.json"
     );
 }
 
@@ -71,7 +71,7 @@ fn linux_absolute_xdg_config_home_is_honoured() {
             "linux",
             &env_of(&[("HOME", HOME), ("XDG_CONFIG_HOME", "/home/ada/.xdgconfig")])
         ),
-        "/home/ada/.xdgconfig/method-reader/settings.json"
+        "/home/ada/.xdgconfig/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -82,7 +82,7 @@ fn linux_relative_xdg_config_home_is_ignored() {
             "linux",
             &env_of(&[("HOME", HOME), ("XDG_CONFIG_HOME", "not/absolute")])
         ),
-        "/home/ada/.config/method-reader/settings.json"
+        "/home/ada/.config/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -90,7 +90,7 @@ fn linux_relative_xdg_config_home_is_ignored() {
 fn linux_no_xdg_config_home_falls_back_to_dot_config() {
     assert_eq!(
         app_settings_path("linux", &env_of(&[("HOME", HOME)])),
-        "/home/ada/.config/method-reader/settings.json"
+        "/home/ada/.config/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -118,7 +118,7 @@ fn whitespace_only_config_dir_is_ignored() {
             "linux",
             &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", "   ")])
         ),
-        "/home/ada/.config/method-reader/settings.json"
+        "/home/ada/.config/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -130,7 +130,7 @@ fn relative_config_dir_is_ignored_not_resolved() {
                 "linux",
                 &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", relative)])
             ),
-            "/home/ada/.config/method-reader/settings.json"
+            "/home/ada/.config/com.methodreader.desktop/settings.json"
         );
     }
 }
@@ -142,7 +142,7 @@ fn empty_config_dir_is_ignored() {
             "linux",
             &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", "")])
         ),
-        "/home/ada/.config/method-reader/settings.json"
+        "/home/ada/.config/com.methodreader.desktop/settings.json"
     );
 }
 

@@ -1,11 +1,23 @@
-//! The app was called Screepub until 0.13. Its settings folder
-//! (Application Support/Screepub, %APPDATA%\Screepub, ~/.config/screepub)
-//! and its default library (Documents/Screepub) move to Method Reader's
-//! names ONCE, here: on first use, when the new folder is not there and the
-//! old one is, the old one is renamed. Never over a folder already there,
-//! never a delete, and a move that fails changes nothing: the path rules
-//! (`app_settings_path`, `platform_library_default`) keep using an old
-//! folder for as long as it is the only one.
+//! The app was called Screepub until 0.13, under the bundle identifier
+//! com.darkwell.screepub. What it kept moves to Method Reader's places
+//! ONCE, here, on first use:
+//!
+//! - its settings folder (Application Support/Screepub, %APPDATA%\Screepub,
+//!   ~/.config/screepub) becomes the app-data folder named after the new
+//!   identifier, `com.methodreader.desktop`, in the same parent;
+//! - what it kept under the old identifier's folder beside that
+//!   (`com.darkwell.screepub`: the window's own storage, the update answer
+//!   among it) joins it, entry by entry;
+//! - its default library (Documents/Screepub) becomes Documents/Method
+//!   Reader: a person's documents, not app data.
+//!
+//! A folder moves whole when the new one is not there; into a new folder
+//! already there, each entry moves only when the new folder has none of
+//! that name. Never over anything already there, never a delete (an old
+//! folder emptied by the move stays, empty), and a move that fails changes
+//! nothing: the path rules (`app_settings_path`, `app_data_path`,
+//! `platform_library_default`) keep using what is still in an old folder
+//! for as long as the new one lacks it.
 //!
 //! A run pointed at its own settings folder (METHOD_READER_CONFIG_DIR, or
 //! the 0.12 SCREEPUB_CONFIG_DIR) moves nothing: that is every test, the
@@ -26,14 +38,18 @@ use crate::library::{
 };
 use crate::nodepath::host;
 use crate::settings::app::{
-    LEGACY_CONFIG_DIR_VAR, Patch, app_settings_path, legacy_settings_folder, read_app_settings,
-    settings_folder, write_app_settings,
+    LEGACY_CONFIG_DIR_VAR, Patch, app_settings_path, legacy_app_data_folder,
+    legacy_settings_folder, read_app_settings, settings_folder, write_app_settings,
 };
 
 /// What [`move_legacy_folders`] moved, each as (from, to).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LegacyMove {
+    /// The settings folder, moved whole.
     pub settings: Option<(String, String)>,
+    /// What the old identifier's folder held: the folder itself when it
+    /// moved whole, else each entry that moved into the new folder.
+    pub app_data: Vec<(String, String)>,
     pub library: Option<(String, String)>,
 }
 
@@ -49,8 +65,9 @@ pub fn move_legacy_folders(platform: &str, env: &Env) -> LegacyMove {
     let from = legacy_settings_folder(platform, env);
     let to = settings_folder(platform, env);
     if move_folder(&from, &to) {
-        moved.settings = Some((from, to));
+        moved.settings = Some((from, to.clone()));
     }
+    moved.app_data = merge_folder(platform, &legacy_app_data_folder(platform, env), &to);
     if env.get(LIBRARY_VAR).is_some() || env.get(LEGACY_LIBRARY_VAR).is_some() {
         return moved;
     }
@@ -78,6 +95,42 @@ fn move_folder(from: &str, to: &str) -> bool {
         return false;
     }
     std::fs::rename(from, to).is_ok()
+}
+
+/// `from` into `to`: the whole folder when `to` is not there, else each
+/// entry of `from` that `to` has none of. What moved, as (from, to).
+fn merge_folder(platform: &str, from: &str, to: &str) -> Vec<(String, String)> {
+    if !fsx::is_dir(from) {
+        return Vec::new();
+    }
+    if move_folder(from, to) {
+        return vec![(from.to_owned(), to.to_owned())];
+    }
+    if !fsx::is_dir(to) {
+        return Vec::new();
+    }
+    let Ok(entries) = std::fs::read_dir(from) else {
+        return Vec::new();
+    };
+    let mut names: Vec<String> = entries
+        .flatten()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    let join = |dir: &str, name: &str| {
+        if platform == "win32" {
+            crate::nodepath::win32::join(&[dir, name])
+        } else {
+            crate::nodepath::posix::join(&[dir, name])
+        }
+    };
+    names
+        .into_iter()
+        .filter_map(|name| {
+            let (old, new) = (join(from, &name), join(to, &name));
+            (!fsx::exists(&new) && std::fs::rename(&old, &new).is_ok()).then_some((old, new))
+        })
+        .collect()
 }
 
 /// `path` with the folder `from` at its head swapped for `to`, by the

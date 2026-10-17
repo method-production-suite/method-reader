@@ -170,7 +170,7 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
     );
     assert_eq!(
         sp_update::install::bundle_identifier(&installed.bundle).as_deref(),
-        Some("com.darkwell.screepub")
+        Some(sp_update::IDENTIFIER)
     );
     assert_eq!(
         std::fs::read_to_string(installed.bundle.join("Contents/Resources/LICENSE")).unwrap(),

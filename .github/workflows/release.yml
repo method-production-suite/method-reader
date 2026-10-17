@@ -141,9 +141,9 @@ jobs:
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
           # A bare Mach-O cannot be stapled; Gatekeeper looks its ticket up
           # online the first time. The same was true of the Bun binary.
-          "$BIN" --version | grep -qx "method-reader $VERSION" \
+          "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" \
             || { echo "::error::method-reader --version does not say $VERSION"; exit 1; }
-          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION" \
+          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" \
             || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
           target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
       - name: Publish the draft release
@@ -235,8 +235,8 @@ jobs:
           cargo build --release --locked -p sp-release --bin sp-release
           BIN="target/release/${{ matrix.exe }}"
           ALIAS="target/release/${{ matrix.alias }}"
-          "$BIN" --version | grep -qx "method-reader $VERSION" || { echo "::error::method-reader --version does not say method-reader $VERSION"; exit 1; }
-          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION" || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
+          "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" || { echo "::error::method-reader --version does not say method-reader $VERSION (Method Reader)"; exit 1; }
+          "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
           # Convert the committed fixtures, the JPEG 2000 one included, as
           # cargo xtask smoke-cli does, in a scratch folder with empty settings.
           W="$(mktemp -d)"
@@ -357,11 +357,13 @@ jobs:
           done
           codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
-          # The designated requirement the frozen Swift updater and TCC
-          # compare: the identifier and the team, as before (the rename
-          # changed the bundle's folder and executable, never its identifier).
+          # The designated requirement TCC compares: the identifier and the
+          # team. From 0.13 the identifier is Method Reader's own
+          # (com.methodreader.desktop; 0.12.x was com.darkwell.screepub), so
+          # macOS asks for its permissions again once. The 0.12 updater swaps
+          # by folder and never compares it.
           codesign -d -r- "$APP" 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
-          grep -q 'identifier "com.darkwell.screepub"' "$RUNNER_TEMP/requirement.txt"
+          grep -q 'identifier "com.methodreader.desktop"' "$RUNNER_TEMP/requirement.txt"
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/app-notarize.zip"
           xcrun notarytool submit "$RUNNER_TEMP/app-notarize.zip" \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
@@ -462,7 +464,7 @@ jobs:
                 hdiutil attach -nobrowse -readonly -mountpoint "$M" "$B"
                 PL="$M/Method Reader.app/Contents/Info.plist"
                 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PL")" = "$VERSION" ]
-                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.darkwell.screepub ]
+                [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.methodreader.desktop ]
                 codesign --verify --deep --strict "$M/Method Reader.app"
                 hdiutil detach "$M"
                 ;;

@@ -238,5 +238,6 @@ The crates, in the order a conversion passes through them (each one's
 Built first for an older USB-mass-storage Kindle that is often offline, so
 USB is the primary route and everything works without a network. Public
 repo, MIT OR Apache-2.0 (sp-azw3 alone GPL-3.0-only, being a Calibre
-port; nothing else may take GPL code), © the Method Reader contributors; releases are
+port; nothing else may take GPL code), © Method Production Suite Team and the Method Reader contributors;
+releases are
 notarized DMGs built by CI on `v*` tags.

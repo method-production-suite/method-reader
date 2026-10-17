@@ -19,7 +19,12 @@ pub const CLI_ALIAS_EXE: &str = "screepub";
 /// The Linux package, and the folder its notices install under.
 pub const PACKAGE: &str = "method-reader";
 pub const REPO: &str = "method-production-suite/method-reader";
-pub const PUBLISHER: &str = "The Method Reader contributors";
+/// Who publishes it: installers, bundle metadata, package maintainer.
+pub const PUBLISHER: &str = "Method Production Suite Team and the Method Reader contributors";
+/// The copyright line, wherever a copyright is stated (LICENSE-MIT says
+/// the same).
+pub const COPYRIGHT: &str =
+    "Copyright (c) 2026 Method Production Suite Team and the Method Reader contributors";
 pub const SHORT_DESCRIPTION: &str = "Turn a screenplay PDF into a reflowable e-book.";
 pub const LONG_DESCRIPTION: &str = "Method Reader converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB.";
 pub const MAC_MINIMUM: &str = "13.0";

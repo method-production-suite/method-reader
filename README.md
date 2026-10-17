@@ -164,13 +164,28 @@ Scripts are confidential. Method Reader is built accordingly.
 - **No accounts, no telemetry, no analytics.** Nothing tracks usage or reports
   crashes.
 
-Method Reader reaches the network only when you ask it to:
+Method Reader uses no network except checking for updates, which you can
+turn off. On a Mac, two minutes after the window opens and every six hours
+after that, it fetches one small file, `latest.json`, from Method Reader's
+releases on GitHub. The request carries the app's name and version
+(`method-reader-update/` and the version number) and nothing else: no
+account, no identifier, nothing about your scripts. GitHub sees your
+internet address, as any website's host does. When a newer version is
+there, the window downloads it, checks its signature, and says **Update
+ready, restart to update**; nothing is replaced until you restart. To turn
+the checks off, uncheck **Help > Check for Updates Automatically**;
+**Help > Check for Updates…** still checks once when you ask. If you said no
+to the old once-a-day question, they stay off. On Windows and Linux the
+window neither checks nor updates itself.
+
+Otherwise it reaches the network only when you ask it to:
 
 - **A docked reMarkable**: the upload goes over USB to your own tablet, not
   the internet.
-- **Pages it opens in your browser**: GitHub for **Report a bug**, Amazon's
-  Send to Kindle page and its Kindle settings page, and the Calibre and
-  Kindle Previewer download pages.
+- **Pages it opens in your browser**: GitHub for **Report a Bug** and the
+  User Guide, methodreader.com and methodproduction.com from the Help menu,
+  Amazon's Send to Kindle page and its Kindle settings page, and the Calibre
+  and Kindle Previewer download pages.
 - **Installing the KFX plugin**: fetched from Calibre's own plugin index.
 - **Method Reader's request service**, only when you press **Send** in **My device
   isn't here** or answer **It worked** or **It did not work** beside an
@@ -179,10 +194,6 @@ Method Reader reaches the network only when you ask it to:
   only counts and the day: never your address or anything made from it.
   Cloudflare, which runs it, sees your address as any website's host does,
   and uses it to allow five requests a minute.
-- **Updates, only if you say yes.** The window asks once; with your yes, it
-  checks GitHub at most once a day, and **Check for updates** checks once.
-  An update downloads only when you choose to install it, and its signature
-  is checked before anything is replaced. Self-update is Mac only.
 
 On a Mac the result screen can also hand a book to another app and stop there:
 Amazon's Send to Kindle app, Apple Books (which syncs through iCloud if you
@@ -226,4 +237,4 @@ Bundled third-party components are listed in
 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md), which also ships inside
 the apps.
 
-Copyright © 2026 the Method Reader contributors.
+Copyright © 2026 Method Production Suite Team and the Method Reader contributors.

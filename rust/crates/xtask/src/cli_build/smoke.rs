@@ -53,7 +53,8 @@ pub fn sole_json(stdout: &str, what: &str) -> Result<Value, String> {
     })
 }
 
-/// `method-reader --version` must print exactly `method-reader <expected>`
+/// `method-reader --version` must print exactly
+/// `method-reader <expected> (Method Reader)`
 /// (the `screepub` alias prints the same: it behaves exactly like the tool).
 pub fn check_version(result: &RunResult, expected: &str) -> Result<(), String> {
     if result.exit_code != 0 {
@@ -64,9 +65,10 @@ pub fn check_version(result: &RunResult, expected: &str) -> Result<(), String> {
         ));
     }
     let line = result.stdout.trim();
-    if line != format!("method-reader {expected}") {
+    let want = format!("method-reader {expected} (Method Reader)");
+    if line != want {
         return Err(format!(
-            "smoke: --version printed \"{line}\", expected \"method-reader {expected}\""
+            "smoke: --version printed \"{line}\", expected \"{want}\""
         ));
     }
     Ok(())

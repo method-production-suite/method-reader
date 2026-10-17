@@ -18,7 +18,6 @@ use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::notes::RELEASE;
 use crate::model::page_show::{can_show, page_paragraphs, page_switches_from};
-use crate::model::update::should_ask;
 use crate::theme::{self, size};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -455,37 +454,6 @@ fn draw_idle(app: &mut App, ui: &mut Ui, window: Vec2) {
     let rect = inner.response.rect;
     let color = if targeted { t.brass } else { t.ink_muted };
     dashed_round_rect(ui, rect, 5.0, Stroke::new(1.5, color));
-
-    // The one-time update question.
-    let usable = app.update.usable(&app.host);
-    if should_ask(usable, app.host.storage.as_ref()) {
-        ui.add_space(layout::SPACE[6]);
-        ui.horizontal_wrapped(|ui| {
-            widgets::text(
-                ui,
-                m::ASK_QUESTION,
-                theme::structure(size::NOTE),
-                t.ink_muted,
-            );
-            let yes = widgets::button(ui, &t, Look::Quiet, m::ASK_YES, true);
-            let no = widgets::button(ui, &t, Look::Quiet, m::ASK_NO, true);
-            app.stop(yes.id, true);
-            app.stop(no.id, true);
-            let answer = if yes.clicked() {
-                Some(true)
-            } else if no.clicked() {
-                Some(false)
-            } else {
-                None
-            };
-            if let Some(on) = answer {
-                if should_ask(usable, app.host.storage.as_ref()) {
-                    app.update.answer(&mut app.host, on);
-                }
-                app.restore_focus = true;
-            }
-        });
-    }
 
     // The library slot: the line, its buttons and the line under it. Not
     // drawn for the README pictures, where it would name the capture's own

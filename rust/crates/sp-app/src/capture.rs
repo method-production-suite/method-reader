@@ -383,7 +383,7 @@ impl Engine for Guard {
 }
 
 /// A computer that answers nothing of its own: no dialog, no browser, no
-/// network, no updater (so no update question and no update label, as the
+/// network, no updater (so no quiet checks and no update label, as the
 /// old capture's window, which had no updater, drew it), no sound, a
 /// storage that starts empty and is never written to disk, and the real
 /// clock, so the window's motion runs and settles as it would.

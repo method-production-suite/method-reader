@@ -11,6 +11,7 @@ pub mod book;
 pub mod bookview;
 pub mod convert;
 pub mod frame;
+pub mod help;
 pub mod host;
 pub mod menu;
 pub mod panel;
@@ -117,6 +118,10 @@ pub struct App {
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
+    /// The Help menu's sheets (help.rs).
+    pub help: help::State,
+    /// Help menu items chosen in the Mac menu bar, applied next frame.
+    pub help_chosen: Vec<crate::model::help::HelpItem>,
     /// The book as each place shows it (bookview.rs).
     pub views: bookview::Views,
     /// METHOD_READER_FRAME_LOG's recorder (framelog.rs), when it is set.
@@ -174,6 +179,8 @@ impl App {
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
+            help: help::State::default(),
+            help_chosen: Vec::new(),
             views: bookview::Views::new(mode == Mode::Threads),
             frame_log: crate::framelog::FrameLog::from_env(),
             wakes: crate::model::motion::Wakes::default(),
@@ -190,6 +197,13 @@ impl App {
             std::thread::spawn(book::warm_fonts);
         }
         app.update.boot(&mut app.host);
+        // What's New, once after an update (never on a fresh install).
+        if crate::model::update::whats_new_due(
+            app.host.storage.as_mut(),
+            crate::model::notes::RELEASE.version,
+        ) {
+            app.notes_open = true;
+        }
         convert::draw_well(&mut app);
         app
     }
@@ -385,6 +399,7 @@ impl App {
         tune::tick(self, now);
         frame::heads_up_tick(self, now);
         panel::tick(self, now);
+        self.update.tick(&mut self.host, now);
     }
 
     /// The timers above, as they stand once the frame has drawn (a knob
@@ -396,6 +411,7 @@ impl App {
             self.tune.deadline,
             self.heads_up.until,
             panel::next_due(self),
+            self.update.next_due(),
         ];
         for at in due.into_iter().flatten() {
             self.wakes.at(at);
@@ -512,7 +528,15 @@ impl App {
     pub fn frame(&mut self, ui: &mut Ui) {
         #[cfg(target_os = "macos")]
         if let Some(menus) = &self.menus {
-            menus.pump(ui.ctx());
+            let chosen = menus.pump(ui.ctx());
+            self.help_chosen.extend(chosen);
+            menus.sync(
+                self.update.usable(&self.host),
+                self.update.automatic(&self.host),
+            );
+        }
+        for item in std::mem::take(&mut self.help_chosen) {
+            help::choose(self, item);
         }
         if !self.fonts_set {
             self.fonts_set = true;

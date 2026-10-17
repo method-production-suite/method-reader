@@ -125,7 +125,8 @@ fn the_update_archive_unpacks_as_the_plugin_and_the_rust_app_unpack_it() {
     assert_eq!(mode & 0o777, 0o644);
     let plist = String::from_utf8_lossy(plist);
     assert!(
-        plist.contains("<key>CFBundleIdentifier</key>\n\t<string>com.darkwell.screepub</string>")
+        plist
+            .contains("<key>CFBundleIdentifier</key>\n\t<string>com.methodreader.desktop</string>")
     );
     // One top folder, the app the updater replaces.
     let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(bytes.as_slice()));
