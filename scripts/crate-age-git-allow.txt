@@ -1,0 +1,5 @@
+# Git repositories whose packages may come from git rather than crates.io, read by
+# scripts/check-crate-ages.py. A package passes only when Cargo.lock pins it to a full
+# commit. Add a repository here only after reviewing it, with the reason beside it.
+https://github.com/DioxusLabs/blitz   # the book preview's HTML/CSS renderer (sp-app), unreleased fixes
+https://github.com/DioxusLabs/taffy   # the layout engine that blitz revision needs
