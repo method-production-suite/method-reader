@@ -4,7 +4,8 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 ![macOS, Windows, Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-black)
 
-**Read screenplays on your e-reader the way they're meant to be read.**
+**Turn a screenplay PDF into an e-book for your Kindle or other e-reader,
+or into a script you can edit again (Fountain or .fdx).**
 
 <p align="center">
   <a href="https://github.com/ssandweiss/screepub/releases/latest/download/Screepub-macOS.dmg"><strong>Download for Mac</strong></a>
@@ -22,7 +23,8 @@ You get scripts as PDFs, and an ordinary PDF-to-ebook converter wrecks them:
 dialogue collapses into paragraphs and character names drift away from their
 lines. Screepub reads how the scenes, cues and dialogue actually sit on the
 page and rebuilds a real e-book from that structure, so it reflows at any text
-size and still holds its shape.
+size and still holds its shape. From the same structure it writes the script
+back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
 
 ## What it does
 
@@ -40,7 +42,7 @@ size and still holds its shape.
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
 - **Get the script back to edit.** The same PDF also comes out as a script
-  you can keep writing in: Fountain, or Final Draft's FDX (beta), which most
+  you can keep writing in: Fountain, or .fdx (beta), which most
   screenwriting apps open. It is rebuilt from the page, so revision colors
   and the exact page breaks stay behind.
 - **Pictures from the script (beta).** Storyboard panels, photos and a
