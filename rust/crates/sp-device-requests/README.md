@@ -93,9 +93,9 @@ own `_cf_KV`, if it shows one), and no `rate_limits`.
 
 ## Set up from nothing (once, for a fresh account)
 
-Done on 2026-10-02 for the owner's account: the Worker answers at
-`https://screepub-device-requests.samuelsandweiss.workers.dev`, the address
-the window posts to. After a change to `src/lib.rs` or `src/glue.rs`, only
+Done on 2026-10-02 for the owner's account. Since 0.13 the window posts to
+the Worker's custom domain, `https://requests.methodreader.com`; the
+Worker's workers.dev address still answers for 0.12 and earlier. After a change to `src/lib.rs` or `src/glue.rs`, only
 step 4 is needed again; after a change to `schema.sql`, step 3 (every
 statement in it is safe to run twice), or a new file in `migrations/` for a
 live database.
@@ -124,9 +124,10 @@ live database.
 
    It prints the address, `https://screepub-device-requests.<your-subdomain>.workers.dev`.
 
-5. Put `<your-subdomain>` into the window, then rebuild it: `SUBDOMAIN` and
-   `REQUEST_URL` in `rust/crates/sp-app/src/model/requests.rs`. A test in
-   that file fails if the two disagree.
+5. Give the Worker a custom domain on a zone the account holds (Workers >
+   the Worker > Settings > Domains & Routes > Custom domain), put that
+   address into `REQUEST_URL` in `rust/crates/sp-app/src/model/requests.rs`,
+   and rebuild the window.
 
 ## Read the list
 

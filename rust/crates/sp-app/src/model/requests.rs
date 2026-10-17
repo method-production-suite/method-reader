@@ -5,9 +5,9 @@ use serde_json::{Value, json};
 
 use super::convert::Platform;
 
-pub const SUBDOMAIN: &str = "samuelsandweiss";
-pub const REQUEST_URL: &str =
-    "https://screepub-device-requests.samuelsandweiss.workers.dev/request";
+/// The service's suite address, a custom domain on the same Worker. 0.12
+/// and earlier post to its workers.dev address, which still answers.
+pub const REQUEST_URL: &str = "https://requests.methodreader.com/request";
 pub const MAX_DEVICE: usize = 80;
 pub const TIMEOUT_MS: u64 = 15_000;
 
@@ -111,8 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn the_address_is_the_one_the_worker_was_deployed_to() {
-        assert!(REQUEST_URL.contains(SUBDOMAIN));
-        assert!(REQUEST_URL.starts_with("https://"));
+    fn the_address_is_the_suite_s_own_and_names_no_person() {
+        assert_eq!(REQUEST_URL, "https://requests.methodreader.com/request");
+        assert!(!REQUEST_URL.contains("workers.dev"));
     }
 }
