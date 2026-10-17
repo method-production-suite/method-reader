@@ -533,8 +533,10 @@ fn take(
                     let (w, h) = framed_size(shot);
                     let mut opts = CaptureOptions::page(
                         format!(
-                            "{base}/tools/capture/frame.html?img=/pass-one/{name}&w={}&h={}",
-                            shot.width, shot.height
+                            "{base}/tools/capture/frame.html?img=/pass-one/{name}&w={}&h={}&title={}",
+                            shot.width,
+                            shot.height,
+                            shot.title.replace(' ', "%20")
                         ),
                         w,
                         h,

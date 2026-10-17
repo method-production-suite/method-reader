@@ -60,7 +60,7 @@ fn c12_the_read_out_names_the_stage_while_the_call_is_out() {
     assert!(shows(&h, "reading the pages (30%)"));
     w.engine.release("convert");
     settle(&mut h);
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 #[test]
@@ -453,7 +453,7 @@ fn d2_no_book_on_disk_says_so_and_offers_to_convert_again() {
     a.as_object_mut().unwrap().remove("epubPath");
     w.engine.always("convert", Reply::ok(a));
     let h = panel(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Heading, "NO BOOK TO SEND");
+    h.get_by_role_and_label(Role::Heading, "No book to send");
     assert!(shows(
         &h,
         "Method Reader has no book on disk for this script"

@@ -207,13 +207,8 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span) {
         Vec2::new(geometry.side.width, 200.0),
     );
     let side = ui.scope_builder(egui::UiBuilder::new().max_rect(side_rect), |ui| {
-        widgets::heading(
-            ui,
-            &widgets::caps(HEADING),
-            theme::structure_bold(size::BODY),
-            t.ink,
-        );
-        widgets::text(ui, &show.name, theme::structure(size::UI), t.ink_muted);
+        widgets::heading(ui, HEADING, theme::chrome_strong(size::BODY), t.ink);
+        widgets::text(ui, &show.name, theme::chrome(size::UI), t.ink_muted);
         // The page's words, whole, for a screen reader: the typing is for eyes.
         for (i, words) in show.words().iter().enumerate() {
             let r = ui.interact(
@@ -246,7 +241,7 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span) {
                 ui,
                 Id::new("page-show-line"),
                 &words,
-                theme::structure(size::NOTE),
+                theme::chrome(size::LABEL),
                 t.ink_muted,
             );
         });

@@ -8,7 +8,7 @@ the mark and the name, and an accent of its own. The site's tokens live in
 [scripts/make-brand.py](../scripts/make-brand.py).
 
 Method Reader is the new name for Screepub. This file covers the website, the app icon,
-and the palette the window shares with them. The window's own colors are this palette
+the palette the window shares with them, and the window's type and layout. The window's own colors are this palette
 under the window's token names ([brand/](../brand/README.md), held to `sp-app`'s
 `theme.rs` by tests); brand/README.md maps each one to the site token below.
 
@@ -138,6 +138,39 @@ The page uses the system's own faces, like the rest of the family. The script it
 demo, the sluglines that head each section, the share card's e-reader) is set in the faces
 the app ships, Courier Prime and Literata, self-hosted in `site/fonts/` and held
 byte-identical to the app's copies by `xtask/tests/brand_tokens.rs`.
+
+## The window
+
+The window is a sibling of Method Budget's and Method Schedule's: dense, calm and
+tool-like, with the script as the only thing set like a script.
+
+- **Type.** Every control, label, tab, heading and message is the computer's own
+  interface sans, read from the system at start: San Francisco on a Mac, Segoe UI on
+  Windows, the usual sans on Linux (Cantarell, Noto Sans, Ubuntu, DejaVu Sans or
+  Liberation Sans). Nothing of Apple's or Microsoft's is shipped. Where no system face
+  loads, Inter (SIL OFL 1.1, bundled unmodified in `rust/crates/sp-app/fonts-ui/`)
+  stands in. Two weights: regular for text and controls, 600 for headings, the primary
+  button and the selected tab. Body and controls are 13 points, as in the siblings.
+  Courier Prime and Literata set the screenplay only: the book preview, the scene index
+  and the Settings preview.
+- **Case.** Sentence case everywhere in the chrome. No capitals for emphasis.
+- **Frame.** The system's own title bar, naming the app, or the script and then the app
+  ("Field Station - Method Reader"), as Method Budget does. Under it a tab strip on the
+  second surface with a rule beneath; the open tab takes the page's ground. No brads, no
+  wordmark on the page.
+- **Controls.** Method Budget's proportions: 28 points tall, a one-point rule border, a
+  5-point radius, 12 points of side padding. The accent fills only the primary action;
+  it also marks links, the keyboard's focus ring (2 points) and selection (the accent's
+  soft ground). Cards and panels are the surface in a rule with an 8-point radius;
+  sheets (Help, Licenses, About, the release notes) add a soft shadow, a title at the
+  left, Close at the right and a rule under them.
+- **Start page.** The drop well alone: a dashed rule around the surface, the call
+  ("Drop a screenplay PDF"), the one primary button, and the one guard.
+
+The window's colors are this palette under the window's token names; brand/README.md
+lists them, including the four the window added for this layout (`bar`, `rule`,
+`rule-strong`, `brass-soft`, the site's `--surface-2`, `--rule`, `--rule-strong` and
+`--accent-soft`).
 
 ## Imagery
 

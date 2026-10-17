@@ -449,7 +449,7 @@ fn the_picture_hides_the_stamp_and_the_library_slot_and_nothing_else() {
         w.0.output()
             .shapes
             .iter()
-            .any(|c| shape_says(&c.shape, "REV"));
+            .any(|c| shape_says(&c.shape, "rev "));
     assert!(!painted, "the stamp is painted");
     // The well itself is still there.
     assert!(has(&w.0, "Needs selectable text, not a scan."));

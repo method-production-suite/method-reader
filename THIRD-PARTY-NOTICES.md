@@ -193,7 +193,20 @@ Copyright (c) 2017 Type Together, commissioned by Google.
 <https://github.com/googlefonts/literata>
 
 Bundled as WOFF2 subsets in `site/fonts/` and in `rust/crates/sp-app/fonts/`,
-for the window's running prose.
+for the script's prose in the window (the book preview).
+
+### Inter 4.1 (font version 4.001): SIL Open Font License 1.1
+
+Copyright (c) 2016 The Inter Project Authors.
+<https://github.com/rsms/inter>
+
+Bundled as two unmodified TrueType files (Regular and SemiBold) in
+`rust/crates/sp-app/fonts-ui/`, with the licence beside them as
+`fonts-ui/OFL.txt`. The window sets its controls, labels and messages in
+the computer's own interface typeface, read from the system at start (San
+Francisco on a Mac, Segoe UI on Windows, the usual sans on Linux); none of
+those is shipped. Inter is the stand-in where no system face loads, and the
+fallback for any letter the system face lacks.
 
 The OFL requires that the fonts be redistributed under the same licence, that
 this notice travel with them, and that they not be sold on their own. It also
@@ -2017,7 +2030,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### SIL Open Font License 1.1
 
-For Courier Prime, Literata and Noto Emoji. Quoted from
+For Courier Prime, Literata, Inter and Noto Emoji. Quoted from
 epaint_default_fonts 0.36.2's `fonts/OFL.txt`:
 
 ```text

@@ -523,14 +523,14 @@ fn head(app: &mut App, ui: &mut Ui, title: Option<&str>) {
     ui.horizontal_wrapped(|ui| {
         match title {
             Some(title) => {
-                widgets::slug(ui, &t, title);
+                widgets::title(ui, &t, title);
             }
             None => {
                 widgets::caption(ui, &t, m::READING, false);
             }
         }
-        ui.add_space(layout::SPACE[5]);
-        let b = widgets::button(ui, &t, Look::Quiet, crate::model::device::SEND_BOOK, true);
+        ui.add_space(layout::SPACE[3]);
+        let b = widgets::button(ui, &t, Look::Outline, crate::model::device::SEND_BOOK, true);
         app.stop(b.id, true);
         if b.clicked() {
             send(app);
@@ -650,6 +650,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
         ui.add_space(layout::SPACE[6]);
         widgets::state_label(ui, &t, m::PRESET_LABEL);
         ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing.x = layout::SPACE[1];
             for preset in app.tune.presets.clone() {
                 let on = !preset.id.is_empty() && Some(&preset.id) == app.tune.on_preset.as_ref();
                 let b = widgets::button(ui, &t, Look::Small, &preset.display_name, !on);
@@ -660,7 +661,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
                     ui.painter().rect_stroke(
                         b.rect,
                         theme::RADIUS,
-                        egui::Stroke::new(1.5, t.brass),
+                        egui::Stroke::new(1.0, t.brass),
                         egui::StrokeKind::Inside,
                     );
                 }
@@ -677,13 +678,15 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
         widgets::panel_frame(&t).show(ui, |ui| {
             ui.set_width(ui.available_width());
             let open = app.tune.open.get(gi).copied().unwrap_or(false);
-            let title = widgets::caps(group.title);
-            let font = theme::structure_bold(size::CAPTION);
-            // The brass triangle, then the title a space-2 after it.
-            let triangle = ui
-                .painter()
-                .layout_no_wrap("\u{25B8}".into(), font.clone(), t.brass);
-            let words = ui.painter().layout_no_wrap(title, font, t.ink_muted);
+            let title = group.title.to_string();
+            let font = theme::chrome_strong(size::UI);
+            // The disclosure triangle, then the title a space-2 after it.
+            let triangle = ui.painter().layout_no_wrap(
+                "\u{25B8}".into(),
+                theme::chrome(size::LABEL),
+                t.ink_muted,
+            );
+            let words = ui.painter().layout_no_wrap(title, font, t.ink);
             let gap = layout::SPACE[2];
             let size = Vec2::new(
                 triangle.size().x + gap + words.size().x,
@@ -711,12 +714,14 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
             let half = triangle.size() / 2.0;
             let angle = turn * std::f32::consts::FRAC_PI_2;
             let at = rect.min + half - egui::emath::Rot2::from_angle(angle) * half;
-            ui.painter()
-                .add(egui::epaint::TextShape::new(at, triangle.clone(), t.brass).with_angle(angle));
+            let at = at + Vec2::new(0.0, (size.y - triangle.size().y) / 2.0);
+            ui.painter().add(
+                egui::epaint::TextShape::new(at, triangle.clone(), t.ink_muted).with_angle(angle),
+            );
             ui.painter().galley_with_override_text_color(
                 rect.min + Vec2::new(triangle.size().x + gap, 0.0),
                 words,
-                super::bookview::mix(t.ink_muted, t.ink, lit),
+                super::bookview::mix(t.ink_soft, t.ink, lit),
             );
             widgets::focus_ring(ui, &t, &r, 3.0);
             app.stop(r.id, true);
@@ -742,7 +747,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
         ui,
         Id::new("tune-status"),
         &status.line,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         if status.bad { t.alarm } else { t.ink_muted },
     );
     let warnings = app.tune.warnings.join("\n");
@@ -750,7 +755,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
         ui,
         Id::new("tune-warnings"),
         &warnings,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         t.ink_muted,
     );
     ui.add_space(layout::SPACE[6]);
@@ -772,7 +777,7 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
     let mut control_id = None;
     ui.add_space(layout::SPACE[3]);
     ui.horizontal(|ui| {
-        let label = widgets::text(ui, knob.label, theme::structure(size::UI), label_ink);
+        let label = widgets::text(ui, knob.label, theme::chrome(size::UI), label_ink);
         if knob.beta {
             widgets::beta_badge(ui, &t);
         }
@@ -821,7 +826,7 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
                     widgets::text(
                         ui,
                         &display_value(knob, value.as_ref()),
-                        theme::structure(size::NOTE),
+                        theme::chrome(size::LABEL),
                         t.ink_muted,
                     );
                 }
@@ -857,7 +862,7 @@ fn draw_knob(app: &mut App, ui: &mut Ui, knob: &Knob) {
     }
     let y = ui.cursor().min.y + layout::SPACE[1];
     ui.painter()
-        .hline(ui.max_rect().x_range(), y, egui::Stroke::new(1.0, t.hole));
+        .hline(ui.max_rect().x_range(), y, egui::Stroke::new(1.0, t.rule));
     ui.add_space(layout::SPACE[2]);
     if let Some(raw) = moved {
         change(app, knob, raw);
@@ -894,7 +899,7 @@ fn draw_defaults_foot(app: &mut App, ui: &mut Ui) {
         ui,
         Id::new("defaults-note"),
         &note,
-        theme::prose(size::CAPTION),
+        theme::chrome(size::LABEL),
         t.ink_muted,
     );
 }
@@ -912,7 +917,7 @@ fn draw_keep_choice(app: &mut App, ui: &mut Ui) {
             let r = ui.radio(
                 checked,
                 egui::RichText::new(option.label)
-                    .font(theme::structure(size::UI))
+                    .font(theme::chrome(size::UI))
                     .color(t.ink),
             );
             app.stop(r.id, true);
@@ -927,7 +932,7 @@ fn draw_keep_choice(app: &mut App, ui: &mut Ui) {
             ui,
             Id::new("keep-note"),
             &note,
-            theme::prose(size::CAPTION),
+            theme::chrome(size::LABEL),
             t.ink_muted,
         );
     });
@@ -965,7 +970,7 @@ fn draw_page_switches(app: &mut App, ui: &mut Ui) {
                 egui::Checkbox::new(
                     &mut on,
                     egui::RichText::new(option.label)
-                        .font(theme::structure(size::UI))
+                        .font(theme::chrome(size::UI))
                         .color(t.ink),
                 ),
             );
@@ -984,7 +989,7 @@ fn draw_page_switches(app: &mut App, ui: &mut Ui) {
             ui,
             Id::new("switch-note"),
             &note,
-            theme::prose(size::CAPTION),
+            theme::chrome(size::LABEL),
             t.ink_muted,
         );
     });

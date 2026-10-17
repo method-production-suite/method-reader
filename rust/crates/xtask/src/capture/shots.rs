@@ -41,6 +41,26 @@ pub struct Shot {
     pub themes: &'static [Theme],
     /// Copied into site/img/ as well, light only.
     pub site: bool,
+    /// What the window's title bar says in this shot (a window shot only):
+    /// the app's name, or the script's before it, as sp-app's
+    /// `window_title` puts it.
+    pub title: &'static str,
+}
+
+/// The macOS title bar pass two draws above a window picture, in CSS
+/// pixels; tools/capture/frame.html draws it this tall. The window's
+/// picture is its content under it, so the framed window is still
+/// `width` by `height` in all.
+pub const TITLE_BAR: u32 = 28;
+
+impl Shot {
+    /// How tall the window's own drawing is: the shot, less the title bar.
+    pub fn content_height(&self) -> u32 {
+        match self.kind {
+            Kind::Window => self.height - TITLE_BAR,
+            Kind::Site => self.height,
+        }
+    }
 }
 
 const BOTH: &[Theme] = &[Theme::Light, Theme::Dark];
@@ -53,6 +73,7 @@ pub const SHOTS: &[Shot] = &[
         height: 760,
         themes: &[Theme::Light],
         site: false,
+        title: "",
     },
     Shot {
         name: "drop",
@@ -61,6 +82,7 @@ pub const SHOTS: &[Shot] = &[
         height: 800,
         themes: BOTH,
         site: true,
+        title: "Method Reader",
     },
     Shot {
         name: "result",
@@ -69,6 +91,7 @@ pub const SHOTS: &[Shot] = &[
         height: 800,
         themes: BOTH,
         site: true,
+        title: "Field Station - Method Reader",
     },
     Shot {
         name: "read",
@@ -77,6 +100,7 @@ pub const SHOTS: &[Shot] = &[
         height: 800,
         themes: BOTH,
         site: false,
+        title: "Field Station - Method Reader",
     },
 ];
 

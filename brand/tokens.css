@@ -17,6 +17,10 @@
   --note: #8A5A00;
   --hole: rgba(28,34,40,0.10);
   --ink-on-brass: #FFFFFF;
+  --bar: #EFEDE7;
+  --rule: #DEDBD3;
+  --rule-strong: #8F897C;
+  --brass-soft: #ECE7F7;
 
   --brass-specular: #F3EFFB;
   --brass-highlight: #7C5FC6;
@@ -25,6 +29,11 @@
   --brass-edge: #33245A;
   --brass-bounce: #CDBDF6;
 
+  /* The window's chrome (every control, label, tab, heading and message) is
+     the platform's own UI sans, as in Method Budget and Method Schedule; the
+     window loads it from the system and falls back to Inter (bundled, OFL).
+     Courier Prime and Literata set the script itself, nothing else. */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-structure: 'Courier Prime', 'Courier New', ui-monospace, monospace;
   --font-prose: 'Literata', Georgia, 'Times New Roman', serif;
 
@@ -44,11 +53,12 @@
   --text-title: 30px;     /* page title, narrow viewports */
   --text-display: 44px;   /* page title */
 
-  /* Radius. Three steps, all of them values the Swift Mac app's theme used.
-     shot-frame's stray 4px was the only disagreement and is now --well. */
-  --radius-mark: 2px;     /* toggle boxes, rubber stamps */
-  --radius: 3px;          /* buttons and controls */
-  --radius-well: 5px;     /* large containers: drop well, shot frame */
+  /* Radius. Three steps, in the family's proportions: Method Schedule's
+     controls are 5px, Method Budget's 6px, and both round a sheet or a
+     card more than a control. */
+  --radius-mark: 2px;     /* toggle boxes, the Beta badge, a code chip */
+  --radius: 5px;          /* buttons, fields, tabs, device cards */
+  --radius-well: 8px;     /* large containers: drop well, panels, sheets */
 
   /* Motion. The app animates presses at 0.1s and state changes at 0.2s;
      the web had 0.1s inline in one file and nothing anywhere else. */
@@ -73,14 +83,15 @@
   --space-9: 3rem;
   --space-10: 3.5rem;
 
-  /* The frame, in pixels of the WINDOW (layout pass, 2026-09-29). They were
-     percentages of a page capped at 1000px and centred, which pulled the
-     brads toward the middle of a wide window. Now the brads sit 44px from
-     the window's left edge, content starts at 100px, the right margin is
-     48px, and the content between is one block capped at 1180px. */
+  /* The frame, in pixels of the WINDOW (2026-10-16, the Method family's
+     layout): the tab strip under the system title bar, then the page with
+     32px either side (16px at 720px and under) and one content block
+     capped at 1180px, centred. --hole-center and --brad-size describe the
+     retired Screepub binding; only the brad.html and page-frame.html
+     previews still draw it, as history. */
   --block-max: 1180px;
-  --binding-margin: 100px;
-  --page-right: 48px;
+  --binding-margin: 32px;
+  --page-right: 32px;
   --hole-center: 44px;
   --brad-size: clamp(20px, 3.4%, 36px);
   --measure: 66ch;
@@ -101,6 +112,10 @@
     --note: #E3B341;
     --hole: rgba(0,0,0,0.45);
     --ink-on-brass: #160F26;
+    --bar: #22272E;
+    --rule: #2B3138;
+    --rule-strong: #67717D;
+    --brass-soft: #2A2140;
     --brass-specular: #F5F1FD;
     --brass-highlight: #CDBDF6;
     --brass-shadow: #8F74D6;

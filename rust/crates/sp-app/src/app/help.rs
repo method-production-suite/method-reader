@@ -6,7 +6,7 @@
 //! here. What the menu holds is model/help.rs.
 
 use egui::accesskit;
-use egui::{Align, Color32, CornerRadius, Id, Layout, Sense, Ui, Vec2, WidgetInfo, WidgetType};
+use egui::{Id, Sense, Ui, Vec2, WidgetInfo, WidgetType};
 
 use super::widgets::{self, Look};
 use super::{App, frame};
@@ -107,10 +107,10 @@ pub fn menu(app: &mut App, ui: &mut Ui, t: &Tokens) {
         return;
     }
     let words = "Help";
-    let font = theme::structure(size::FINE);
+    let font = theme::chrome(size::NOTE);
     let galley = ui
         .painter()
-        .layout_no_wrap(widgets::caps(words), font, t.ink_muted);
+        .layout_no_wrap(words.to_string(), font, t.ink_muted);
     let (rect, button) = ui.allocate_exact_size(galley.size(), Sense::click());
     button.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, words));
     ui.ctx().accesskit_node_builder(button.id, |n| {
@@ -181,13 +181,8 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     );
     let modal = egui::Modal::new(modal_id)
         .area(area)
-        .frame(
-            egui::Frame::NONE
-                .fill(t.paper.gamma_multiply(k))
-                .corner_radius(CornerRadius::same(theme::RADIUS_WELL as u8))
-                .inner_margin(egui::Margin::symmetric(32, 19)),
-        )
-        .backdrop_color(Color32::from_black_alpha(107))
+        .frame(frame::sheet_frame(&t, k))
+        .backdrop_color(frame::sheet_backdrop(&t))
         .show(&ctx, |ui| {
             ui.multiply_opacity(k);
             let width = (44.0 * 16.0f32).min(ctx.content_rect().width() * 0.88);
@@ -197,10 +192,13 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                 n.set_role(accesskit::Role::Dialog);
                 n.set_label(title.as_str());
             });
-            let mut close = false;
-            ui.with_layout(Layout::top_down(Align::Max), |ui| {
-                close = widgets::button(ui, &t, Look::Quiet, "Close", true).clicked();
-            });
+            let head = match sheet {
+                Sheet::About => format!("{PRODUCT} {}", RELEASE.version),
+                Sheet::Shortcuts => HelpItem::Shortcuts.label(),
+                Sheet::Licenses => HelpItem::Licenses.label(),
+                Sheet::Updates => "Updates".to_string(),
+            };
+            let close = frame::sheet_head(ui, &t, &head);
             egui::ScrollArea::vertical()
                 .id_salt("help-sheet-scroll")
                 .max_height(ctx.content_rect().height() * 0.82 - 80.0)
@@ -221,44 +219,35 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     }
 }
 
-fn heading(ui: &mut Ui, t: &Tokens, words: &str) {
-    let r = widgets::slug(ui, t, words);
-    ui.ctx()
-        .accesskit_node_builder(r.id, |n| n.set_role(accesskit::Role::Heading));
-}
-
 fn about(app: &mut App, ui: &mut Ui, t: &Tokens) {
-    heading(ui, t, &format!("{PRODUCT} {}", RELEASE.version));
     widgets::prose(ui, t, ABOUT_LINE);
-    ui.add_space(layout::SPACE[4]);
-    if widgets::button(ui, t, Look::Quiet, WEBSITE_WORDS, true).clicked() {
+    ui.add_space(layout::SPACE[3]);
+    if widgets::button(ui, t, Look::Outline, WEBSITE_WORDS, true).clicked() {
         app.host.open(WEBSITE);
     }
     ui.add_space(layout::SPACE[4]);
     widgets::prose(ui, t, LICENCE_LINE);
     widgets::caption(ui, t, COPYRIGHT, false);
-    ui.add_space(layout::SPACE[4]);
-    if widgets::button(ui, t, Look::Small, &HelpItem::Licenses.label(), true).clicked() {
+    ui.add_space(layout::SPACE[3]);
+    if widgets::button(ui, t, Look::Outline, &HelpItem::Licenses.label(), true).clicked() {
         open(app, Sheet::Licenses);
     }
 }
 
 fn keys(app: &mut App, ui: &mut Ui, t: &Tokens) {
-    heading(ui, t, &HelpItem::Shortcuts.label());
     egui::Grid::new("shortcuts")
         .num_columns(2)
-        .spacing([layout::SPACE[5], layout::SPACE[3]])
+        .spacing([layout::SPACE[5], layout::SPACE[2]])
         .show(ui, |ui| {
             for (keys, what) in shortcuts(app.host.platform) {
-                widgets::text(ui, &keys, theme::structure_bold(size::NOTE), t.ink);
-                widgets::text(ui, what, theme::prose(size::BODY), t.ink_soft);
+                widgets::text(ui, &keys, theme::chrome_strong(size::UI), t.ink);
+                widgets::text(ui, what, theme::chrome(size::UI), t.ink_soft);
                 ui.end_row();
             }
         });
 }
 
 fn licences(app: &mut App, ui: &mut Ui, t: &Tokens) {
-    heading(ui, t, &HelpItem::Licenses.label());
     widgets::prose(ui, t, LICENCE_LINE);
     ui.add_space(layout::SPACE[4]);
     let row = ui.horizontal_wrapped(|ui| {
@@ -284,7 +273,7 @@ fn licences(app: &mut App, ui: &mut Ui, t: &Tokens) {
     let r = ui.add(
         egui::TextEdit::multiline(&mut text)
             .id_salt(("notice", notice.title))
-            .font(theme::structure(size::NOTE))
+            .font(theme::chrome(size::LABEL))
             .desired_width(f32::INFINITY)
             .desired_rows(24),
     );
@@ -295,10 +284,9 @@ fn licences(app: &mut App, ui: &mut Ui, t: &Tokens) {
 }
 
 fn updates(app: &mut App, ui: &mut Ui, t: &Tokens) {
-    heading(ui, t, "Updates");
     widgets::prose(ui, t, &format!("This is {PRODUCT} {}.", RELEASE.version));
     if !frame::updates_block(app, ui, t)
-        && widgets::button(ui, t, Look::Small, "Open the releases page", true).clicked()
+        && widgets::button(ui, t, Look::Outline, "Open the releases page", true).clicked()
     {
         app.host.open(RELEASES);
     }

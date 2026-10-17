@@ -317,7 +317,7 @@ fn the_window_program_is_told_one_shot_in_one_theme_at_the_shots_size() {
             "--width",
             "1280",
             "--height",
-            "800",
+            "772",
             "--demo",
             &s(&abs("repo/tests/fixtures/field-station.pdf")),
             "--out",
@@ -393,21 +393,22 @@ fn draw(
 #[test]
 fn the_window_programs_pixels_become_the_same_png_bytes_every_time() {
     let dir = Scratch::new("window-png");
-    // 2560 by 1600 pixels of one grey, written as raw RGBA. tr runs in
+    // 2560 by 1544 pixels of one grey (the window's content under the
+    // title bar frame.html draws), written as raw RGBA. tr runs in
     // the C locale: under a UTF-8 one (a CI runner's) it writes byte 128
     // as the two-byte character U+0080 and the picture comes out double.
     let script = format!(
         "{OUT}head -c {} /dev/zero | LC_ALL=C tr '\\0' '\\200' > \"$out\"",
-        2560 * 1600 * 4
+        2560 * 1544 * 4
     );
     let mut w = sh_window(&script);
     let a = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
     let b = draw(&mut w, dir.path(), "drop", &no_failure).unwrap();
     assert_eq!(a, b, "same pixels, same bytes");
-    assert_eq!(size(&a).unwrap(), (2560, 1600));
+    assert_eq!(size(&a).unwrap(), (2560, 1544));
     let rgba = decode(&a).unwrap();
     assert!(rgba.pixels.iter().all(|&p| p == 128));
-    assert_eq!(a, encode_rgba(2560, 1600, &rgba.pixels).unwrap());
+    assert_eq!(a, encode_rgba(2560, 1544, &rgba.pixels).unwrap());
     // The raw file does not outlive its picture.
     assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
 }
@@ -421,7 +422,7 @@ fn a_picture_of_the_wrong_size_fails_rather_than_being_framed() {
         1280 * 800 * 4
     ));
     let e = draw(&mut w, dir.path(), "drop", &no_failure).unwrap_err();
-    assert!(e.contains("2560 by 1600"), "{e}");
+    assert!(e.contains("2560 by 1544"), "{e}");
 }
 
 #[cfg(unix)]
@@ -561,7 +562,7 @@ fn the_real_window_draws_the_drop_well_at_twice_its_size_where_wgpu_works() {
         }
         Err(e) => panic!("{e}"),
     };
-    assert_eq!(size(&png).unwrap(), (2560, 1600));
+    assert_eq!(size(&png).unwrap(), (2560, 1544));
     let rgba = decode(&png).unwrap();
     assert!(
         rgba.pixels.chunks_exact(4).any(|p| p != &rgba.pixels[..4]),

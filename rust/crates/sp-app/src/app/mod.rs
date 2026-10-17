@@ -96,6 +96,8 @@ pub struct App {
     pub drag_hover: bool,
     pub dark: bool,
     fonts_set: bool,
+    /// The title the title bar was last told.
+    pub title_shown: Option<String>,
     /// The Mac menu bar (menu.rs), when this window installed one.
     #[cfg(target_os = "macos")]
     pub menus: Option<menu::Menus>,
@@ -166,6 +168,7 @@ impl App {
             drag_hover: false,
             dark: false,
             fonts_set: false,
+            title_shown: None,
             #[cfg(target_os = "macos")]
             menus: None,
             window_focused: true,
@@ -541,6 +544,7 @@ impl App {
         if !self.fonts_set {
             self.fonts_set = true;
             ui.ctx().set_fonts(crate::fonts::definitions());
+            theme::apply_style(ui.ctx());
             // The window's spacing is the stylesheet's rem scale (6.4, 12.8,
             // 19.2 points), which lands between pixels as a browser's does;
             // egui's debug-build "Unaligned" overlay would paint over it.
@@ -569,6 +573,15 @@ impl App {
             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
         }
         self.tick();
+        // The title bar names the script, then the app (Method Budget's
+        // "Name - Method Budget"); told only when it changes.
+        let title =
+            crate::model::convert::window_title(self.script.as_ref().map(|s| s.title.as_str()));
+        if self.title_shown.as_deref() != Some(title.as_str()) {
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
+            self.title_shown = Some(title);
+        }
         frame::input(self, ui);
         self.stops.clear();
         frame::draw(self, ui);
@@ -647,18 +660,19 @@ impl App {
     }
 }
 
-/// The window as tauri.conf.json described it, under the product's name:
-/// 1280 by 800, a 640 by 480 floor, and on a Mac no title bar of its own
-/// (the paper runs under the traffic lights).
+/// The window under the product's name: 1280 by 800, a 640 by 480 floor,
+/// and the system's own title bar showing the app's name (and the
+/// script's, once there is one), as Method Budget's and Method Schedule's
+/// windows do. The page starts under it; the traffic lights sit in it.
 pub fn viewport() -> egui::ViewportBuilder {
     egui::ViewportBuilder::default()
         .with_title(crate::model::names::PRODUCT)
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([640.0, 480.0])
         .with_resizable(true)
-        .with_fullsize_content_view(true)
-        .with_title_shown(false)
-        .with_titlebar_shown(false)
+        .with_fullsize_content_view(false)
+        .with_title_shown(true)
+        .with_titlebar_shown(true)
 }
 
 /// How the window is opened: [`viewport`], presented on vsync (eframe's

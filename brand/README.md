@@ -5,10 +5,13 @@ are Method Reader's part of the Method family palette: the site's tokens
 ([site/assets/tokens.css](../site/assets/tokens.css)) and their rules
 ([docs/BRAND.md](../docs/BRAND.md)) are the reference, and this folder is
 the window's copy of them under the window's own token names. The original
-design decisions and their reasoning live in
-[the spec](../docs/superpowers/specs/2026-07-30-visual-identity-design.md)
-(written for the Screepub look this replaced; the frame, the brads and the
-type scale it describes are unchanged).
+design decisions live in
+[the spec](../docs/superpowers/specs/2026-07-30-visual-identity-design.md),
+written for the Screepub look. Since 2026-10-16 the window's type and
+layout are the Method family's instead (docs/BRAND.md, "The window"): the
+system's own UI sans for all chrome, sentence case, a title bar and a tab
+strip, Method Budget's control proportions, no brads. The type scale is
+unchanged; the radii grew to the family's.
 
 ## What's here
 
@@ -45,17 +48,29 @@ role, as it was when the accent was a brass yellow.
 | `ground` | `--ink` / the dark `--device` | `#1C2228` | `#0B0C0E` |
 | `alarm` | none | `#AF3220` | `#EA7A65` |
 | `present` | none | `#3E7D4A` | `#6FBF7E` |
+| `bar` | `--surface-2` | `#EFEDE7` | `#22272E` |
+| `rule` | `--rule` | `#DEDBD3` | `#2B3138` |
+| `rule-strong` | `--rule-strong` | `#8F897C` | `#67717D` |
+| `brass-soft` | `--accent-soft` | `#ECE7F7` | `#2A2140` |
 
 `alarm` (errors only) and `present` (the dot on a reader the computer can
 see) have no family token because the site has no error state and no
 device list; they kept their values. `note` is the family's caution amber
 and colors the Beta badge only: never an accent, never decoration.
 
-The six `brass-*` tokens are the accent's ramp, which shades the brads and
-lights the accent button on hover: `brass-specular`, `brass-highlight`
-(also the hover ground, so it holds the button's label at 4.5:1 or
-better), `brass-shadow`, `brass-rim`, `brass-edge` and `brass-bounce`. They
-follow the accent, so they change with the mode as it does.
+`bar` is the tab strip under the title bar and a code chip's ground;
+`rule` every hairline (controls, cards, sheets, the tab strip's foot);
+`rule-strong` a border that carries meaning (the drop well's dashes, a
+hovered control); `brass-soft` a selection's ground (the chosen half of
+Read it | Edit it, the current scene, a plugged-in device's card). None of
+them sets text.
+
+The six `brass-*` ramp tokens are the accent's ramp. Only `brass-highlight`
+is still painted (the primary button's hover, which holds its label at
+4.5:1 or better); the others shaded the brads the window no longer draws
+and are kept for the brad.html preview: `brass-specular`, `brass-shadow`,
+`brass-rim`, `brass-edge` and `brass-bounce`. They follow the accent, so
+they change with the mode as it does.
 
 Two rules carried over from the brass theme still hold:
 
@@ -115,9 +130,15 @@ files.
 
 ## Fonts
 
-Courier Prime for structure, Literata for prose. The previews pull both from
-Google Fonts for convenience. The site self-hosts them; both are open licensed,
-which is what makes that legal.
+The window's chrome is the system's own UI sans (`--font-ui` in
+`tokens.css`: San Francisco, Segoe UI, the Linux desktop's sans), loaded
+from the system at start by `rust/crates/sp-app/src/fonts.rs`, with Inter
+(SIL OFL 1.1, unmodified, `rust/crates/sp-app/fonts-ui/`) bundled as the
+fallback. Courier Prime and Literata set the script only. The previews in
+`components/` were drawn for the Screepub look and still show Courier
+chrome; the window is the reference now. They pull Courier Prime and
+Literata from Google Fonts for convenience. The site self-hosts them; both
+are open licensed, which is what makes that legal.
 
 ## Pushing to Claude Design
 

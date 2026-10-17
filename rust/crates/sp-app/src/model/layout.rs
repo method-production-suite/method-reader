@@ -3,19 +3,18 @@
 //! the way tests/desktop-layout-measured.test.ts measured the webview at
 //! 900, 1280 and 1800 wide. All values are logical points (CSS pixels).
 
-/// The binding margin, the right margin, and the content block's cap.
-pub const BINDING: f32 = 100.0;
-pub const PAGE_RIGHT: f32 = 48.0;
+/// The page's side margins (the same either side, as in the family's other
+/// windows; there is no binding any more), and the content block's cap.
+pub const PAGE_SIDE: f32 = 32.0;
 pub const BLOCK_MAX: f32 = 1180.0;
 /// Under this block width Read, Settings and the result fold to one column.
 pub const FOLD: f32 = 880.0;
-/// At or under this window width the binding narrows.
+/// At or under this window width the margins narrow.
 pub const NARROW: f32 = 720.0;
-/// At or under this window height there is one brad.
-pub const SHORT_RAIL: f32 = 560.0;
+/// At or under this window height the script's frame takes a larger share.
+pub const SHORT_WINDOW: f32 = 560.0;
 /// At or under this window height the wordmark shrinks.
 pub const SHORT_PAGE: f32 = 620.0;
-pub const HOLE_CENTER: f32 = 44.0;
 pub const GAP: f32 = 32.0;
 pub const CONVERT_COLUMN: f32 = 820.0;
 pub const RESULT_PAGE: f32 = 400.0;
@@ -44,9 +43,9 @@ impl Span {
 /// The page's two side margins.
 pub fn margins(window_w: f32) -> (f32, f32) {
     if window_w <= NARROW {
-        (window_w * 0.11, SPACE[4])
+        (SPACE[4], SPACE[4])
     } else {
-        (BINDING, PAGE_RIGHT)
+        (PAGE_SIDE, PAGE_SIDE)
     }
 }
 
@@ -63,59 +62,6 @@ pub fn block(window_w: f32) -> Span {
 
 pub fn folded(block_w: f32) -> bool {
     block_w < FOLD
-}
-
-/// A brad or the punched hole: its centre and size.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Fastener {
-    pub x: f32,
-    pub y: f32,
-    pub size: f32,
-    pub punch: bool,
-}
-
-/// The rail: brad, hole, brad at 30.7%, 50%, 69.3%; one brad in a short
-/// window.
-pub fn rail(window_w: f32, window_h: f32) -> Vec<Fastener> {
-    let narrow = window_w <= NARROW;
-    let x = if narrow {
-        window_w * 0.055
-    } else {
-        HOLE_CENTER
-    };
-    let size = if narrow {
-        20.0
-    } else {
-        (window_w * 0.034).clamp(20.0, 36.0)
-    };
-    if window_h <= SHORT_RAIL {
-        return vec![Fastener {
-            x,
-            y: window_h * 0.5,
-            size,
-            punch: false,
-        }];
-    }
-    vec![
-        Fastener {
-            x,
-            y: window_h * 0.307,
-            size,
-            punch: false,
-        },
-        Fastener {
-            x,
-            y: window_h * 0.5,
-            size,
-            punch: true,
-        },
-        Fastener {
-            x,
-            y: window_h * 0.693,
-            size,
-            punch: false,
-        },
-    ]
 }
 
 /// The result: the book's first page and the side, centred as a pair; or,
@@ -221,7 +167,7 @@ pub fn settings(block: Span) -> SettingsLayout {
 /// The script's frame height: 68% of the window (58% narrow, 62% short),
 /// at least 300.
 pub fn script_height(window_w: f32, window_h: f32) -> f32 {
-    let share = if window_h <= SHORT_RAIL {
+    let share = if window_h <= SHORT_WINDOW {
         0.62
     } else if window_w <= NARROW {
         0.58
@@ -257,35 +203,21 @@ mod tests {
     #[test]
     fn at_1280_the_block_fills_the_space() {
         let b = block(1280.0);
-        assert!(close(b.left, 100.0) && close(b.width, 1132.0));
+        assert!(close(b.left, 50.0) && close(b.width, 1180.0));
         assert!(!folded(b.width));
     }
 
     #[test]
     fn at_1800_the_block_is_capped_and_centred() {
         let b = block(1800.0);
-        assert!(close(b.left, 336.0) && close(b.width, 1180.0));
+        assert!(close(b.left, 310.0) && close(b.width, 1180.0));
     }
 
     #[test]
     fn at_900_the_block_is_under_the_fold() {
         let b = block(900.0);
-        assert!(close(b.left, 100.0) && close(b.width, 752.0));
+        assert!(close(b.left, 32.0) && close(b.width, 836.0));
         assert!(folded(b.width));
-    }
-
-    #[test]
-    fn the_brads_sit_44_from_the_left_at_every_size_over_720() {
-        for (w, h) in [(900.0, 800.0), (1280.0, 800.0), (1800.0, 1000.0)] {
-            let r = rail(w, h);
-            assert_eq!(r.len(), 3);
-            assert!(r.iter().all(|f| close(f.x, 44.0)));
-            assert!(r[1].punch && !r[0].punch);
-        }
-        assert_eq!(rail(1280.0, 500.0).len(), 1, "one brad in a short window");
-        let narrow = rail(600.0, 800.0);
-        assert!(close(narrow[0].x, 33.0) && narrow[0].size == 20.0);
-        assert_eq!(rail(1800.0, 1000.0)[0].size, 36.0);
     }
 
     #[test]
@@ -330,9 +262,9 @@ mod tests {
     }
 
     #[test]
-    fn narrow_windows_narrow_the_binding() {
-        assert_eq!(margins(700.0), (77.0, 16.0));
-        assert_eq!(margins(721.0), (100.0, 48.0));
+    fn narrow_windows_narrow_the_margins() {
+        assert_eq!(margins(700.0), (16.0, 16.0));
+        assert_eq!(margins(721.0), (32.0, 32.0));
         assert_eq!(script_height(1280.0, 800.0), 544.0);
         assert_eq!(script_height(600.0, 800.0), 464.0);
         assert_eq!(script_height(1280.0, 480.0), 300.0);

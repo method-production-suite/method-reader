@@ -29,13 +29,24 @@ pub fn heading_for(code: &str) -> Option<&'static str> {
     HEADINGS.iter().find(|(c, _)| *c == code).map(|(_, h)| *h)
 }
 
-/// The window's own name: on the idle screen the only place it says what
-/// it is.
+/// The window's own name, as its title bar shows it (the idle screen no
+/// longer sets it as a wordmark: the title bar says what the window is).
 pub const WORDMARK: &str = super::names::PRODUCT;
+
+/// The window's title: the script's name before the app's, as Method
+/// Budget's "Name - Method Budget", or the app's alone with no script.
+pub fn window_title(script: Option<&str>) -> String {
+    match script.map(str::trim).filter(|s| !s.is_empty()) {
+        Some(name) => format!("{name} - {WORDMARK}"),
+        None => WORDMARK.to_string(),
+    }
+}
 
 /// The drop well's words.
 pub const WELL_CALL: &str = "Drop a screenplay PDF";
 pub const WELL_OR: &str = "or";
+/// The well's one button: the page's primary action.
+pub const CHOOSE: &str = "Choose PDF…";
 pub const WELL_LIMITS: &str = "Needs selectable text, not a scan.";
 
 /// The one guard a reader can meaningfully overrule.

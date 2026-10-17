@@ -19,7 +19,8 @@
 //! library, scratch app settings, no volumes, a reMarkable address nothing
 //! listens on, a scratch COPY of Calibre's settings). The program:
 //!
-//! - draws `shot.width` by `shot.height` points at two pixels a point;
+//! - draws `shot.width` by `shot.content_height()` points (the shot less
+//!   the title bar frame.html draws above it) at two pixels a point;
 //! - forces light or dark, whatever the OS says;
 //! - reaches the shot as a person would: `drop` is the idle well; `result`
 //!   is the demo PDF dropped on it and converted into the scratch library,
@@ -136,7 +137,7 @@ pub fn window_args(shot: &Shot, theme: Theme, demo: &Path, out: &Path) -> Vec<St
         "--width".into(),
         shot.width.to_string(),
         "--height".into(),
-        shot.height.to_string(),
+        shot.content_height().to_string(),
         "--demo".into(),
         demo.to_string_lossy().into_owned(),
         "--out".into(),
@@ -234,7 +235,7 @@ impl WindowBackend for EguiWindow {
         let pixels =
             std::fs::read(&out).map_err(|e| format!("capture: {what} wrote no picture: {e}"))?;
         let _ = std::fs::remove_file(&out);
-        let (w, h) = (p.shot.width * SCALE, p.shot.height * SCALE);
+        let (w, h) = (p.shot.width * SCALE, p.shot.content_height() * SCALE);
         encode_rgba(w, h, &pixels).map_err(|e| format!("capture: {what}: {e}"))
     }
 }

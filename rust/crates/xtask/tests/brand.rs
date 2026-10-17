@@ -94,7 +94,7 @@ fn pairs() -> Vec<(String, &'static str, String, String, f64)> {
     let h = |n: &str, m: &str| hex(&c, n, m);
     let mut out = Vec::new();
     for mode in ["light", "dark"] {
-        let rows: [(&'static str, &'static str, &str, f64); 14] = [
+        let rows: [(&'static str, &'static str, &str, f64); 18] = [
             ("ink on paper", "ink", "paper", 7.0),
             ("ink on panel", "ink", "panel", 7.0),
             ("ink-soft on paper", "ink-soft", "paper", 7.0),
@@ -117,6 +117,12 @@ fn pairs() -> Vec<(String, &'static str, String, String, f64)> {
             ("note on panel", "note", "panel", 4.5),
             ("alarm on paper", "alarm", "paper", 4.5),
             ("alarm on panel", "alarm", "panel", 4.5),
+            // The family layout's grounds: the tab strip and a hovered
+            // control (bar), and a selection (brass-soft).
+            ("ink on bar", "ink", "bar", 7.0),
+            ("ink-muted on bar", "ink-muted", "bar", 4.5),
+            ("ink on brass-soft", "ink", "brass-soft", 7.0),
+            ("ink-muted on brass-soft", "ink-muted", "brass-soft", 4.5),
         ];
         for (label, fg, bg, floor) in rows {
             let label = if mode == "dark" {

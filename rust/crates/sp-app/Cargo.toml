@@ -28,6 +28,10 @@ egui = "0.36.2"
 # The fonts ship as the same WOFF2 subsets the website serves; this decodes
 # them to the TrueType bytes egui's font stack reads, once, at start.
 wuff = "0.2.9"
+# The system's UI face is read from disk at start (src/fonts.rs); this is
+# the reader egui itself parses fonts with, asked first so a face egui
+# could not parse is never handed to it.
+skrifa = "0.44"
 # The engine's answers keep the CLI's --json shape (see src/engine.rs).
 serde_json = "1"
 # Native file dialogs: open a screenplay, pick a folder, save a copy.

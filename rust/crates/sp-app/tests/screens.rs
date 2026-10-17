@@ -58,8 +58,14 @@ fn convert(w: &World, h: &mut Harness<'static, App>) {
 fn the_idle_screen_names_the_app_and_asks_for_a_pdf() {
     let w = world();
     let h = harness(&w, Platform::Mac);
-    h.get_by_role_and_label(Role::Heading, "Method Reader");
-    h.get_by_role_and_label(Role::Button, "Choose PDF…  ⌘O");
+    // The app's name is the title bar's (behaviors.rs w2); the page asks.
+    assert_eq!(h.state().title_shown.as_deref(), Some("Method Reader"));
+    h.get_by_role_and_label(Role::Heading, "Drop a screenplay PDF");
+    let choose = h.get_by_role_and_label(Role::Button, "Choose PDF…");
+    assert_eq!(
+        choose.accesskit_node().data().keyboard_shortcut(),
+        Some("⌘O")
+    );
     assert!(has_value(&h, "Needs selectable text, not a scan."));
     assert!(has_value(&h, "Books are saved in ~/Method Reader."));
     h.get_by_role_and_label(Role::Button, "Change…");
@@ -116,9 +122,9 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
             "--library"
         ]
     );
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
     assert!(has_value(&h, "19 pages, 11 scenes"));
-    h.get_by_role_and_label(Role::Heading, "WHAT DO YOU READ ON?");
+    h.get_by_role_and_label(Role::Heading, "What do you read on?");
     for name in [
         "Kindle",
         "iPhone, iPad or Mac",
@@ -176,7 +182,7 @@ fn a_refusal_names_its_cause_and_only_not_a_screenplay_can_be_overruled() {
         "message": "No scene headings and no dialogue found: this does not look like a screenplay. Pass --force to convert it anyway."}})));
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Heading, "NOT A SCREENPLAY");
+    h.get_by_role_and_label(Role::Heading, "Not a screenplay");
     assert!(has_value(
         &h,
         "No scene headings and no dialogue found: this does not look like a screenplay."
@@ -194,7 +200,7 @@ fn a_refusal_names_its_cause_and_only_not_a_screenplay_can_be_overruled() {
             .argv()
             .contains(&"--force".to_string())
     );
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 #[test]
@@ -208,14 +214,14 @@ fn a_scan_has_no_override_and_back_to_one_returns_to_the_well() {
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Heading, "SCANNED PDF, NO TEXT");
+    h.get_by_role_and_label(Role::Heading, "Scanned PDF, no text");
     assert!(
         h.query_by_role_and_label(Role::Button, "Convert anyway")
             .is_none()
     );
     h.get_by_role_and_label(Role::Button, "Back to one").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "Method Reader");
+    h.get_by_role_and_label(Role::Heading, "Drop a screenplay PDF");
 }
 
 // desktop-ui.test.ts: "a refused file is no longer a dead end" (Report a bug)
@@ -251,7 +257,7 @@ fn an_engine_that_cannot_run_is_a_refusal_with_its_sentence() {
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Heading, "THE ENGINE DID NOT ANSWER");
+    h.get_by_role_and_label(Role::Heading, "The engine did not answer");
     assert!(has_value(&h, "could not start the Method Reader engine"));
 }
 
@@ -312,8 +318,8 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     assert_eq!(ways.accesskit_node().data().is_expanded(), Some(false));
     ways.click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "SEND IT");
-    h.get_by_role_and_label(Role::Heading, "SAVE A FILE");
+    h.get_by_role_and_label(Role::Heading, "Send it");
+    h.get_by_role_and_label(Role::Heading, "Save a file");
     h.get_by_role_and_label(Role::Button, "Open in Books");
     h.get_by_role_and_label(Role::Button, "Save AZW3…");
     assert!(has_value(
@@ -328,7 +334,7 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     h.get_by_role_and_label(Role::Button, "Different device")
         .click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "WHAT DO YOU READ ON?");
+    h.get_by_role_and_label(Role::Heading, "What do you read on?");
 }
 
 fn kindle_plugged_in(w: &World) {
@@ -438,12 +444,12 @@ fn read_shows_the_script_with_its_scene_index() {
     convert(&w, &mut h);
     h.get_by_role_and_label(Role::Tab, "Read").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION");
+    h.get_by_role_and_label(Role::Heading, "Field Station");
     assert!(has_value(&h, "by the Screepub project"));
     let toggle = h.get_by_role_and_label(Role::Button, "Hide scenes");
     assert_eq!(toggle.accesskit_node().data().is_expanded(), Some(true));
     h.get_by_role_and_label(Role::Navigation, "Scenes");
-    assert!(has_value(&h, "11 SCENES"));
+    assert!(has_value(&h, "11 scenes"));
     h.get_by_role_and_label(Role::Button, "EXT. RIDGE ROAD – DAY");
     h.get_by_role_and_label(
         Role::Button,
@@ -487,7 +493,7 @@ fn a_book_with_no_pages_says_so_and_offers_the_ways_on() {
     h.get_by_role_and_label(Role::Button, "Convert it again");
     h.get_by_role_and_label(Role::Button, "Send").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 // desktop-ui.test.ts: "the Tune surface", "the Settings page, mounted"
@@ -596,7 +602,7 @@ fn the_page_writes_itself_unless_motion_is_reduced() {
     let mut h = harness(&still, Platform::Mac);
     convert(&still, &mut h);
     assert!(h.state().show.is_none());
-    h.get_by_role_and_label(Role::Heading, "FIELD STATION IS READY");
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
 
 // desktop-ui.test.ts: "the Kindle heads-up, mounted on its own"
@@ -628,7 +634,7 @@ fn after_a_cancelled_dialog_the_keyboard_lands_on_the_first_control() {
     let focused = h.get_by(|n| n.is_focused());
     assert_eq!(
         focused.accesskit_node().label().as_deref(),
-        Some("Choose PDF…  ⌘O")
+        Some("Choose PDF…")
     );
     assert!(w.engine.calls_of("convert").is_empty());
 }
