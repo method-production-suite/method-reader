@@ -1163,3 +1163,41 @@ names the check it affects.
     check. Capping it needs the decoder to report progress or take a
     deadline. Until then the budget bounds the number of such pictures, not
     the time one of them takes.
+- **Field Station's credit is "the Method Reader project" (decided by the
+  owner, 2026-10-16): a deliberate change to a frozen fixture.** The
+  product was renamed, and Field Station's title page is in the public
+  README and site pictures, so its credit line changed from "the Screepub
+  project" to "the Method Reader project"
+  (xtask/src/fixture/field_station_content.rs). Nothing else in the
+  fixture changed. tests/fixtures/field-station.pdf was regenerated with
+  `cargo xtask make-fixture demo` (it still reproduces byte for byte) and
+  its answers re-frozen. There is no TypeScript left to ask, so the new
+  answers are the Rust engine's for the new PDF, and before they were
+  written each was diffed against the old frozen answer: everything that
+  moved is the credit line or follows from it. In rust/oracle/field-station/:
+  pages.json, the line's text, its width (143.99999999999997 to
+  179.99999999999991) and its x (234 to 216, the line being centred);
+  lines.json, its text, indent (38 to 35) and character count (20 to 25);
+  elements.json, tokens.json, script.fountain and book.fdx, the text only;
+  convert.json, the author; book.epub, package.opf's dc:creator and
+  dc:identifier (the identifier is the .fountain's digest) and
+  titlepage.xhtml's author line, with every other entry kept as the
+  TypeScript compressed it (only those two entries' bytes are the Rust
+  writer's; the oracle compares inflated entries, Decisions above);
+  book.mobi and book.azw3, the Rust writers' bytes, whose differences
+  decode to the author (EXTH 100), the text five bytes longer, the unique
+  ids hashed from author, identifier and text length, the AZW3's EXTH 113
+  and 116, and every offset after the title page five bytes on (the AZW3
+  also loses Calibre's pad record, as the text records now end on four
+  bytes); book.preview.html, nothing; meta.json, the input's and each
+  file's size and sha256. The 24 field-station rows of
+  rust/oracle/parity/field-station.json that carry the author or a book
+  were moved with `cargo xtask parity --accept`, and every diff it showed
+  was the author, the input PDF, or a book's package.opf, title page,
+  header and records; the other fixtures' 144 runs of those rows matched.
+  sp-epub/tests/data/options-golden.json moved the same way: under each of
+  its option sets, field-station's package.opf and titlepage.xhtml digests
+  (39 entries, three distinct digests) and nothing else, no preview and no
+  other fixture; its pin in xtask/tests/generated_files.rs moved with it.
+  The window's fake engine (sp-app/src/engine.rs) and its Read screen test
+  (sp-app/tests/screens.rs) name the new credit.

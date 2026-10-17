@@ -1,7 +1,7 @@
 {
   "oracleFormat": 1,
   "input": "field-station.pdf",
-  "inputSha256": "4de31ef2e0f1aed2c6a3231f4725549f2d3feedfa13ace8943e52b5e67995dfc",
+  "inputSha256": "7b743e27ca1609f89f758d1acebf2f5fc742f3f489db640c2856f8b7788ae28b",
   "options": null,
   "sourceDateEpoch": 1767225600,
   "exitCode": 0,
@@ -13,48 +13,48 @@
   },
   "files": {
     "book.azw3": {
-      "bytes": 29451,
-      "sha256": "ad1d80627436d6cfde08abf51af90b80fa4519729f446ad07c6fd04256644fb5"
+      "bytes": 29461,
+      "sha256": "ddc71a7c3fc711dfee44faabc177e54df1439e5c71483375e4376271e8146784"
     },
     "book.epub": {
-      "bytes": 11631,
-      "sha256": "c6c6a3fdbde50e58437cef26640680794d55735df44e3282ea62a98d5e494595"
+      "bytes": 11642,
+      "sha256": "41387b8cc3d1c0c6534f85bab66d5b67acc7d5ffd6aa3923fd36d83d594031db"
     },
     "book.fdx": {
-      "bytes": 33754,
-      "sha256": "a9861239458314d4d7f9a3a80857349aabd6040e49af074603bfbb7a03c30edc"
+      "bytes": 33759,
+      "sha256": "edacf0ebb1992831345c5fc320fba39cb81bb6ba963f39964e6e7c5c59ab6a1a"
     },
     "book.mobi": {
-      "bytes": 20182,
-      "sha256": "39295f58850b7a75febc5bb995258af88f89db55d9e68e3410002ac08cdb2f98"
+      "bytes": 20191,
+      "sha256": "b3fb6349441f2fa53a07426ebbc3add24c640292412232239e7ab95f85acd028"
     },
     "book.preview.html": {
       "bytes": 33362,
       "sha256": "0cfeb6df36eebc7f52543463e188330e5c417eadd901ab397cc49b3e8a100c58"
     },
     "convert.json": {
-      "bytes": 544,
-      "sha256": "f4dd7b125b530dfefc02774093e0c5fef5dcfd46e2fb67bd28199916350bfce1"
+      "bytes": 549,
+      "sha256": "6ccf4cea44588b791c4b1447a3d649a76def47128192575c9fe2840995e4cdc9"
     },
     "elements.json": {
-      "bytes": 84063,
-      "sha256": "be75f50395126a6b5d8992fa668382fac37cd55095de0932d315e5a7bf9a636f"
+      "bytes": 84068,
+      "sha256": "ad27213c9a263ba00b93a1747223315b3d5b3a2066c99a83071b93dc48cfa5c9"
     },
     "lines.json": {
-      "bytes": 113687,
-      "sha256": "9a58019aca0ceb4eedba752de6a1bc35010d37988fe02df18c500079b8ed7521"
+      "bytes": 113692,
+      "sha256": "71d5ef3078bf02d7407e629b5309f1013db3d3e65320dd744b0b23c62dc983b1"
     },
     "pages.json": {
-      "bytes": 202898,
-      "sha256": "e2b611cc3ceadf66b8ce2c2da0ddaabea315abb9068f0b07eb21a4f76b44cba6"
+      "bytes": 202908,
+      "sha256": "06c940dacef5c908ebfa069bf5214b3912ca4a6cef99bfdc8ca7e87aa720c147"
     },
     "script.fountain": {
-      "bytes": 14276,
-      "sha256": "67ef4c4435776b51abcdfa48f95ee979c681297b3982a7570a37ea630d69bd33"
+      "bytes": 14281,
+      "sha256": "5ade078f417dc3b1aa18a8bf6e415f5f1927713253c36cf1f7283fb6389998c0"
     },
     "tokens.json": {
-      "bytes": 37914,
-      "sha256": "9292d5c84d2f39866d0dff979bb88768ec9960c7b7454b6b54c45551e83ee878"
+      "bytes": 37919,
+      "sha256": "8b31866602a1b4a3cff942627c156529cf244a17d16e916fdc65f8951408f74f"
     }
   }
 }

@@ -445,7 +445,7 @@ fn read_shows_the_script_with_its_scene_index() {
     h.get_by_role_and_label(Role::Tab, "Read").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Heading, "Field Station");
-    assert!(has_value(&h, "by the Screepub project"));
+    assert!(has_value(&h, "by the Method Reader project"));
     let toggle = h.get_by_role_and_label(Role::Button, "Hide scenes");
     assert_eq!(toggle.accesskit_node().data().is_expanded(), Some(true));
     h.get_by_role_and_label(Role::Navigation, "Scenes");

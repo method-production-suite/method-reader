@@ -292,7 +292,7 @@ pub fn default_answer(request: &Request) -> Value {
     match request {
         Request::Version => json!({"ok": true, "version": "0.11.1"}),
         Request::Convert { path, .. } => json!({
-            "ok": true, "title": "Field Station", "author": "the Screepub project", "pages": 19, "scenes": 11,
+            "ok": true, "title": "Field Station", "author": "the Method Reader project", "pages": 19, "scenes": 11,
             "warnings": [], "epubPath": "/library/Field Station/Field Station.epub",
             "fountainPath": "/library/Field Station/Field Station.fountain", "source": path,
             "previewHtml": SAMPLE_PREVIEW,
