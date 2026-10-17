@@ -4,7 +4,7 @@
 //! Ported from Calibre 9.11.0's src/calibre/ebooks/mobi/writer8/main.py
 //! (the markup passes: resource links, CSS flows, link placeholders, aid
 //! attributes) and writer8/skeleton.py (the Chunker). Calibre is GPL-3,
-//! Copyright Kovid Goyal; this port is part of Screepub, AGPL-3.0-or-later
+//! Copyright Kovid Goyal; this port is licensed GPL-3.0-only (LICENSE-GPL-3.0)
 //! (see THIRD-PARTY-NOTICES.md). Ports src/azw3/chunk.ts.
 //!
 //! How KF8 stores a document: each XHTML file becomes a SKELETON (the file

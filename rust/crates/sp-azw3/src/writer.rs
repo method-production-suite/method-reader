@@ -5,8 +5,8 @@
 //! Ported from Calibre 9.11.0's src/calibre/ebooks/mobi/writer8/ (main.py's
 //! text records, FDST, indices and guide; mobi.py's record 0 and record
 //! layout; exth.py), with writer2/resources.py's resource records. Calibre
-//! is GPL-3, Copyright Kovid Goyal; this port is part of Screepub,
-//! AGPL-3.0-or-later (see THIRD-PARTY-NOTICES.md). Ports src/azw3/writer.ts.
+//! is GPL-3, Copyright Kovid Goyal; this port is licensed
+//! GPL-3.0-only (LICENSE-GPL-3.0) (see THIRD-PARTY-NOTICES.md). Ports src/azw3/writer.ts.
 //!
 //! The file, record by record:
 //!   0                 the PalmDOC header, the 264-byte MOBI header (version

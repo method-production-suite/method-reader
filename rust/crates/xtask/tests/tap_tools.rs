@@ -527,10 +527,14 @@ end
 fn the_formula_is_byte_for_byte_the_one_the_shell_script_wrote() {
     // Was checked against the script itself while it existed; its last
     // output is the pin now, so the tap sees no diff the shell would not
-    // have made.
+    // have made. The one deliberate change since is the licence line
+    // (AGPL to MIT OR Apache-2.0, with the GPL-3.0 AZW3 writer).
     assert_eq!(
         xtask::bump_tap::formula("ssandweiss/screepub", "0.8.0", &sha('a')),
-        SHELL_FORMULA_0_8_0.replace("SHA_A", &sha('a'))
+        SHELL_FORMULA_0_8_0.replace("SHA_A", &sha('a')).replace(
+            "  license \"AGPL-3.0-or-later\"",
+            "  license all_of: [{ any_of: [\"MIT\", \"Apache-2.0\"] }, \"GPL-3.0-only\"]"
+        )
     );
 }
 

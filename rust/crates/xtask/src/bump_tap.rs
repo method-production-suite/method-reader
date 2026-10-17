@@ -110,7 +110,7 @@ pub fn formula(repo: &str, version: &str, arm_sha: &str) -> String {
   # after 0.9.0; Intel Macs are no longer supported.
   url "https://github.com/{repo}/releases/download/v{version}/screepub-cli-macos-arm64.tar.gz"
   sha256 "{arm_sha}"
-  license "AGPL-3.0-or-later"
+  license all_of: [{{ any_of: ["MIT", "Apache-2.0"] }}, "GPL-3.0-only"]
 
   livecheck do
     url "https://github.com/{repo}/releases/latest"

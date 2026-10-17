@@ -212,7 +212,7 @@ jobs:
           VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' rust/Cargo.toml)"
           SP=rust/target/release/sp-release
           ICONS_DIR=rust/crates/sp-app/icons
-          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          RES=(--resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md)
           W="$RUNNER_TEMP/bundles"
           mkdir -p "$W"
           case "$RUNNER_OS" in
@@ -289,7 +289,7 @@ jobs:
               STAGE="$W/nsis"
               mkdir -p "$STAGE"
               cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-              cp LICENSE THIRD-PARTY-NOTICES.md "$ICONS_DIR/icon.ico" "$STAGE/"
+              cp LICENSE-MIT LICENSE-APACHE rust/crates/sp-azw3/LICENSE-GPL-3.0 THIRD-PARTY-NOTICES.md "$ICONS_DIR/icon.ico" "$STAGE/"
               # Chocolatey's feed times out now and then (a 504), and choco
               # still exits 0: try three times, then fail by name.
               export PATH="$PATH:/c/Program Files (x86)/NSIS"

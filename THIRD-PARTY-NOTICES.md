@@ -1,7 +1,14 @@
 # Third-party notices
 
-Screepub itself is licensed under the GNU Affero General Public License
-v3.0 or later: see [`LICENSE`](LICENSE).
+Screepub's own code is licensed under the MIT License or the Apache
+License 2.0, at your option: see [`LICENSE-MIT`](LICENSE-MIT) and
+[`LICENSE-APACHE`](LICENSE-APACHE). The one exception is the AZW3 writer,
+`rust/crates/sp-azw3`, which is ported from calibre and so is licensed under
+the GNU General Public License version 3
+([`LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)). The command line
+and the app both contain that writer, so each program as a whole is
+distributed under GPL-3.0; every other crate can be used on its own under
+MIT or Apache-2.0. All three licence files travel inside each app bundle.
 
 ## What ships, and what it carries
 
@@ -153,11 +160,12 @@ ports parts of calibre's reader (`src/calibre/ebooks/mobi/reader/index.py`,
 PalmDOC decoder (`tests/common/palmdoc_decode.rs`) is a port of
 cpalmdoc_decompress; neither test file is in any download.
 
-calibre is licensed under the GNU General Public License, version 3. The
-ported code is distributed as part of Screepub under the GNU Affero General
-Public License, version 3 or later (full text in [`LICENSE`](LICENSE));
-section 13 of each licence permits combining code under the two in one
-work.
+calibre is licensed under the GNU General Public License, version 3, and
+so is the port: sp-azw3 is GPL-3.0-only (full text in
+[`rust/crates/sp-azw3/LICENSE-GPL-3.0`](rust/crates/sp-azw3/LICENSE-GPL-3.0)).
+The rest of Screepub is MIT OR Apache-2.0, which GPL-3.0 code may be
+combined with; the programs that contain sp-azw3 are distributed under
+GPL-3.0 as a whole.
 
 The script `rust/crates/sp-engine/src/export/kfx_install.py`, which
 `screepub kfx-install` hands to your own calibre's `calibre-debug`, is

@@ -3,7 +3,7 @@ name = "handover-proof"
 description = "Runs tauri-plugin-updater 2.12.0, the exact code in every Tauri window, against a Rust release's update files, headless"
 version = "0.0.0"
 edition = "2024"
-license = "AGPL-3.0-or-later"
+license = "MIT OR Apache-2.0"
 publish = false
 
 # Its own workspace: this is the one place the port still compiles Tauri,

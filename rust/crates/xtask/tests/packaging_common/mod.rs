@@ -274,10 +274,17 @@ use xtask::packaging::util::RunResult;
 pub const NATIVE_VERSION: &str = "0.12.0";
 
 /// A repository with what build-app-bundle reads: the workspace version,
-/// sp-app inheriting it, the icons and the two resources. No desktop/.
+/// sp-app inheriting it, the icons and the resources. No desktop/.
 pub fn native_repo(s: &Scratch, version: &str) -> BundleDirs {
     let repo = s.fresh("repo");
-    fs::write(repo.join("LICENSE"), "GNU AFFERO GENERAL PUBLIC LICENSE").unwrap();
+    fs::write(repo.join("LICENSE-MIT"), "MIT License").unwrap();
+    fs::write(repo.join("LICENSE-APACHE"), "Apache License").unwrap();
+    fs::create_dir_all(repo.join("rust/crates/sp-azw3")).unwrap();
+    fs::write(
+        repo.join("rust/crates/sp-azw3/LICENSE-GPL-3.0"),
+        "GNU GENERAL PUBLIC LICENSE",
+    )
+    .unwrap();
     fs::write(repo.join("THIRD-PARTY-NOTICES.md"), "# Notices").unwrap();
     let rust = repo.join("rust");
     fs::create_dir_all(rust.join("crates/sp-app/icons")).unwrap();

@@ -132,7 +132,9 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 
 ## Licensing of contributions
 
-Screepub is AGPL-3.0-or-later. By opening a pull request you agree your
-contribution ships under that license, and you confirm you have the right to
+Screepub is MIT OR Apache-2.0, except `rust/crates/sp-azw3`, which is
+GPL-3.0-only. By opening a pull request you agree your contribution ships
+under the licence of the code it changes (both MIT and Apache-2.0, for
+everything outside sp-azw3), and you confirm you have the right to
 contribute it: the [Developer Certificate of Origin](https://developercertificate.org).
 Add a `Signed-off-by:` line to your commits (`git commit -s`) to certify it.

@@ -527,8 +527,8 @@ signed binary in the bundle and no dylibs, built for Apple silicon only, as
 the engine is.
 
 **Kindle behavior to copy, from GPL-3 tools** (behavior reference;
-Screepub's AGPL-3.0-or-later can use GPL-3 code, but a clean reading is
-enough):
+Screepub is MIT OR Apache-2.0 outside sp-azw3, so code from these must not
+be copied anywhere else; a clean reading of their behavior is enough):
 
 - **sync2kindle** (github.com/rupor-github/sync2kindle, Go, Kindle-only
   sideloading). Added Mac MTP on 2026-08-01, tested by its author on a

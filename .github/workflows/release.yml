@@ -327,7 +327,7 @@ jobs:
           mkdir -p bundles
           "$SP" mac-app --version "$VERSION" --window "$WIN" \
             --icon rust/crates/sp-app/icons/icon.icns \
-            --resource LICENSE --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
+            --resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
           APP="$RUNNER_TEMP/app/Screepub.app"
           # Inside out, never --deep: every executable in Contents/MacOS,
           # then the bundle. Hardened runtime, timestamp, no entitlements.
@@ -380,7 +380,7 @@ jobs:
           ICONS=(--icon "32x32=rust/crates/sp-app/icons/32x32.png"
                  --icon "128x128=rust/crates/sp-app/icons/128x128.png"
                  --icon "256x256@2=rust/crates/sp-app/icons/128x128@2x.png")
-          RES=(--resource LICENSE --resource THIRD-PARTY-NOTICES.md)
+          RES=(--resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md)
           mkdir -p bundles
           "$SP" deb --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch amd64 --depends "$DEPENDS" --out bundles
           "$SP" rpm --version "$VERSION" --window "$WIN" "${ICONS[@]}" "${RES[@]}" --arch x86_64 --out bundles
@@ -407,7 +407,7 @@ jobs:
           STAGE="$RUNNER_TEMP/nsis"
           mkdir -p "$STAGE" bundles
           cp rust/target/release/screepub-window.exe "$STAGE/screepub-desktop.exe"
-          cp LICENSE THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
+          cp LICENSE-MIT LICENSE-APACHE rust/crates/sp-azw3/LICENSE-GPL-3.0 THIRD-PARTY-NOTICES.md rust/crates/sp-app/icons/icon.ico "$STAGE/"
           # Chocolatey's feed times out now and then (a 504), and choco
           # still exits 0: try three times, then fail by name.
           export PATH="$PATH:/c/Program Files (x86)/NSIS"

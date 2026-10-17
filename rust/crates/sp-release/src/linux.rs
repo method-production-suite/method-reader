@@ -334,7 +334,7 @@ pub fn build_rpm(app: &LinuxApp, arch: &str, mtime: u32) -> Result<Vec<u8>, Stri
     let mut b = rpm::PackageBuilder::new(
         PACKAGE,
         &version,
-        "AGPL-3.0-or-later",
+        "(MIT OR Apache-2.0) AND GPL-3.0-only",
         arch,
         SHORT_DESCRIPTION,
     );
