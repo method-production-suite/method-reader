@@ -11,7 +11,7 @@ use common::{archive_bundle, make_bundle, tar_gz};
 use sp_update::install::{
     BUNDLE_NAME, InstallError, LEGACY_BUNDLE_NAME, install_app, install_destination,
 };
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 fn no_admin(_: &Path, _: &Path) -> Result<(), InstallError> {
     panic!("no administrator should be needed in a temp folder")
@@ -147,7 +147,7 @@ fn an_old_bundle_that_cannot_be_deleted_is_left_over_beside_the_new_one() {
 
     let installed = install_app(&new_archive("0.13.1"), &old, &no_admin).unwrap();
     assert_eq!(installed.bundle, apps.path().join("Method Reader.app"));
-    let leftover: PathBuf = installed.leftover.expect("the old bundle stays behind");
+    let leftover: std::path::PathBuf = installed.leftover.expect("the old bundle stays behind");
     // Hidden, so the startup sweep finds it and nothing launches it by name.
     assert_eq!(
         leftover.file_name().unwrap().to_string_lossy(),

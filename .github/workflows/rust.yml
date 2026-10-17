@@ -277,7 +277,14 @@ jobs:
               mkdir -p "$W/dmg"
               cp -R "$W/app/Method Reader.app" "$W/dmg/"
               ln -s /Applications "$W/dmg/Applications"
-              hdiutil create -volname "Method Reader" -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Method-Reader-macOS.dmg"
+              # hdiutil create fails now and then with "Resource busy" on a
+              # hosted runner (the system still scanning the new files):
+              # three tries, then fail by name.
+              for try in 1 2 3; do
+                hdiutil create -volname "Method Reader" -srcfolder "$W/dmg" -fs HFS+ -format UDZO -ov "$W/Method-Reader-macOS.dmg" && break
+                [ "$try" = 3 ] && { echo "hdiutil create failed three times"; exit 1; }
+                sleep 15
+              done
               M="$(mktemp -d)"
               hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Method-Reader-macOS.dmg"
               [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Method Reader.app/Contents/Info.plist")" = com.methodreader.desktop ]
