@@ -1,4 +1,4 @@
-# Every push: Method Reader is one Cargo workspace (rust/), and this is its
+# Every pull request and every push to main: Method Reader is one Cargo workspace (rust/), and this is its
 # check. It replaced ci.yml (the Bun engine) and desktop.yml (the Tauri
 # window) at the cutover. Least privilege by default; third-party actions
 # pinned to SHAs (pinact run).
