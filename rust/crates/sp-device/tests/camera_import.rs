@@ -458,7 +458,7 @@ fn off_a_mac_a_marker_is_never_acted_on() {
 fn the_words_the_window_shows_while_a_copy_pauses_camera_import() {
     assert!(CAMERA_IMPORT_NOTE.contains("Photos and Image Capture"));
     assert!(CAMERA_IMPORT_NOTE.contains("turns that back on"));
-    // Sam's rule for copy Claude writes: no em dashes.
+    // The suite rule for copy: no em dashes.
     assert!(!CAMERA_IMPORT_NOTE.contains('\u{2014}'));
     assert_eq!(
         CAMERA_IMPORT_NOTE,

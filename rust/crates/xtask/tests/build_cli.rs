@@ -1275,7 +1275,7 @@ fn mac_target_id_for_host_names_the_mac_this_is_and_nothing_else() {
     assert_eq!(target_id_for_host("macos", "aarch64"), None);
 }
 
-const ID: &str = "Developer ID Application: Darkwell Entertainment LLC (XSRB3D643J)";
+const ID: &str = "Developer ID Application: Example Studio LLC (XSRB3D643J)";
 
 fn mac_args(extra: &[&str]) -> Result<BuildArgs, String> {
     let mut a = args(&["--version", "0.6.0", "--out", "/tmp/x"]);

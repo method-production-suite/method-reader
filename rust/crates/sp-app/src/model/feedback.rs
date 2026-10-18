@@ -246,7 +246,7 @@ mod tests {
             "home is ~"
         );
         assert_eq!(
-            redact("in /data/sam/x.pdf", Some("/data/sam")),
+            redact("in /data/ann/x.pdf", Some("/data/ann")),
             "in <path>.pdf"
         );
     }

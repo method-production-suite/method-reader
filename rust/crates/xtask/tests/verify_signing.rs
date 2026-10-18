@@ -196,8 +196,9 @@ fn output_with_no_identifier_line_answers_none_rather_than_guessing() {
     );
 }
 
-// Real output, captured from the v0.6.0 artifacts on 2026-09-21, on stderr.
-const NOTARIZED: &str = "/tmp/Screepub-macOS.dmg: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Clockwork Post Production, LLC (XSRB3D643J)";
+// Real output, captured from the v0.6.0 artifacts on 2026-09-21, on stderr
+// (the certificate's company name replaced with an invented one).
+const NOTARIZED: &str = "/tmp/Screepub-macOS.dmg: accepted\nsource=Notarized Developer ID\norigin=Developer ID Application: Example Studio, LLC (XSRB3D643J)";
 const UNNOTARIZED: &str = "/tmp/Screepub-macOS.dmg: rejected\nsource=Unnotarized Developer ID";
 
 #[test]

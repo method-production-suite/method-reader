@@ -4,8 +4,8 @@ The `release` workflow (`.github/workflows/release.yml`) needs these repo
 **Actions secrets** — GitHub → repo **Settings → Secrets and variables →
 Actions → New repository secret**. Instructions only; never commit the values.
 
-The signing identity is **Clockwork Post Production LLC** (the Apple
-Developer account). Until every secret below exists, the release job fails
+The signing identity is the company on the Apple Developer account (team
+`XSRB3D643J`). Until every secret below exists, the release job fails
 loudly and normal CI is unaffected.
 
 The release steps themselves, from the notes to the person who publishes
@@ -18,9 +18,9 @@ Homebrew tap and the read-back checks run from
 You need a **Developer ID Application** certificate (not "Apple
 Development"). If you don't have one yet: Xcode → Settings → Accounts →
 your team → Manage Certificates → **+** → Developer ID Application. Then in
-**Keychain Access**, find "Developer ID Application: Clockwork Post
-Production LLC …", right-click → **Export** → save a `.p12` and set an
-export password.
+**Keychain Access**, find "Developer ID Application: <the account's
+company> (XSRB3D643J)", right-click → **Export** → save a `.p12` and set
+an export password.
 
 ```bash
 base64 -i Certificates.p12 | pbcopy    # paste as DEVELOPER_ID_CERT_P12_BASE64
