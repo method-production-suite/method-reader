@@ -27,12 +27,21 @@
 #
 # Not path-filtered: the tests read brand/ (the window's colours), site/
 # (the fonts it shares with the window) and docs/releases/ (the window's
-# notes) as well as rust/. No check here is a required status.
+# notes) as well as rust/. main's ruleset requires these jobs to pass.
+#
+# Once per change (SUITE-STANDARDS.md section 6): the suite's runners are
+# shared, so a branch runs only through its pull request, and a newer push
+# to it cancels the run it replaces. main runs on every push and is never
+# cancelled. A tag needs nothing here: release.yml runs its own checks.
 name: rust
 on:
   workflow_dispatch:
   push:
+    branches: [main]
   pull_request:
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 permissions:
   contents: read
 jobs:

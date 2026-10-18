@@ -522,3 +522,40 @@ fn the_standing_tap_check_watches_the_manifest_as_well_as_the_tap() {
     let on = serde_yaml::to_string(wf.get("on").expect("an on: table")).unwrap();
     assert!(!on.contains("release"), "{on}");
 }
+
+#[test]
+fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
+    // The suite's runners are shared (SUITE-STANDARDS.md section 6): a
+    // branch with a pull request must not run twice, once for the push and
+    // once for the pull request, and a new push to a pull request cancels
+    // the run it replaces. main is never cancelled, so every commit on it
+    // keeps a full result. release.yml runs its own checks on the tag and
+    // never cancels; it is not this workflow.
+    let wf = workflow("rust.yml");
+    let on = &wf["on"];
+    let push_branches: Vec<&str> = on["push"]["branches"]
+        .as_sequence()
+        .expect("push is limited to named branches")
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    assert_eq!(push_branches, ["main"]);
+    assert!(on["push"].get("tags").is_none(), "a tag's checks are release.yml's");
+    assert!(on.get("pull_request").is_some());
+    assert!(on.get("workflow_dispatch").is_some());
+    let c = &wf["concurrency"];
+    assert_eq!(
+        c["group"].as_str(),
+        Some("ci-${{ github.workflow }}-${{ github.ref }}")
+    );
+    assert_eq!(
+        c["cancel-in-progress"].as_str(),
+        Some("${{ github.ref != 'refs/heads/main' }}")
+    );
+    let release = workflow("release.yml");
+    assert_ne!(
+        release["concurrency"]["cancel-in-progress"].as_bool(),
+        Some(true),
+        "a release run is never cancelled"
+    );
+}
