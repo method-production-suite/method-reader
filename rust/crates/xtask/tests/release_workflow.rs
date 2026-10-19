@@ -959,3 +959,40 @@ fn a_rehearsal_still_runs_every_build_and_signature() {
         }
     }
 }
+
+#[cfg(unix)]
+#[test]
+fn a_rehearsal_refuses_any_ref_but_main() {
+    // The real signing secrets are in a rehearsal, so the keys meet only
+    // reviewed code. The guard is the first step of checks, which every
+    // other job needs.
+    let wf = rel();
+    let all = steps(job(&wf, "checks"));
+    let i = all
+        .iter()
+        .position(|st| s(st, "name") == "A rehearsal runs only from main")
+        .expect("the main-only guard");
+    assert!(i <= 1, "the guard comes right after checkout");
+    assert_eq!(s(all[i], "if"), "${{ inputs.rehearse_version }}");
+    for (name, j) in jobs(&wf) {
+        if name != "checks" {
+            assert!(
+                needs(j).iter().any(|n| n == "checks") || !needs(j).is_empty(),
+                "{name} runs without waiting for the checks"
+            );
+        }
+    }
+    let dir = Scratch::new("rehearse-ref");
+    let run = |r: &str| {
+        bash(
+            s(all[i], "run"),
+            dir.path(),
+            &[("REF", r), ("PATH", "/usr/bin:/bin")],
+        )
+        .status
+        .success()
+    };
+    assert!(run("refs/heads/main"));
+    assert!(!run("refs/heads/feature"));
+    assert!(!run("refs/tags/v9.9.9"));
+}

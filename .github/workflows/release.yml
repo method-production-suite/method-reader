@@ -71,6 +71,16 @@ jobs:
       # its 14 days, but no release ships one; a listed security fix (a
       # RUSTSEC id in its reason) may. First, before anything is built or
       # signed.
+      # The rehearsal runs with the real signing secrets, so only from main:
+      # the keys meet reviewed code only. Every other job needs this one.
+      - name: A rehearsal runs only from main
+        if: ${{ inputs.rehearse_version }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          [ "$REF" = refs/heads/main ] || {
+            echo "::error::A rehearsal runs only from main, with reviewed code beside the signing keys. This run is on $REF."; exit 1; }
       - name: Every locked crate is at least 14 days old, apart from security fixes
         env:
           REHEARSE: ${{ inputs.rehearse_version }}
