@@ -60,6 +60,23 @@ fn orders(demo: &Path) -> Vec<String> {
 // ------------------------------------------------------------------ orders
 
 #[test]
+fn a_picture_never_opens_the_sample() {
+    // The capture's computer has no sample folder, so neither the first
+    // launch nor Open Sample has anywhere to put it; and a sample
+    // conversion that got through anyway would be refused, failing the
+    // picture.
+    assert!(capture_host().sample_dir.is_none());
+    let sample = Request::ConvertTo {
+        path: "/data/Sample/Field Station.pdf".into(),
+        out: "/data/Sample/Field Station.epub".into(),
+    };
+    assert_eq!(
+        verdict(&sample, &demo(), Path::new("/library")),
+        Verdict::Refuse
+    );
+}
+
+#[test]
 fn the_panel_half_is_optional_and_named() {
     use sp_app::model::intent::Intent;
     let d = demo();

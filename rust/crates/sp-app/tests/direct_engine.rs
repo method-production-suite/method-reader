@@ -106,3 +106,90 @@ fn child_converts() {
     assert_eq!(recent.as_array().map(Vec::len), Some(1), "{recent}");
     assert_eq!(recent[0]["path"], pdf.to_string_lossy().as_ref());
 }
+
+const SAMPLE_CHILD: &str = "SP_APP_DIRECT_ENGINE_SAMPLE_CHILD";
+
+/// The sample, as the window converts it (src/app/sample.rs): the built-in
+/// PDF into a folder of its own with `-o`, then remade from its
+/// `.fountain`, and the library left empty.
+#[test]
+fn the_sample_converts_into_its_own_folder_and_reopens_from_its_fountain() {
+    let scratch = tempfile::tempdir().expect("scratch");
+    let config = scratch.path().join("config");
+    let library = scratch.path().join("library");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(&library).unwrap();
+    let out = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "child_converts_the_sample", "--nocapture"])
+        .env(SAMPLE_CHILD, "1")
+        .env("METHOD_READER_CONFIG_DIR", &config)
+        .env("METHOD_READER_LIBRARY", &library)
+        .env("SCREEPUB_CONFIG_DIR", &config)
+        .env("SCREEPUB_LIBRARY", &library)
+        .env(
+            "CALIBRE_CONFIG_DIRECTORY",
+            "/dev/null/method-reader-test-guard",
+        )
+        .output()
+        .expect("the child runs");
+    let said =
+        String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{said}");
+    assert!(said.contains("1 passed"), "the child really ran: {said}");
+    assert_eq!(
+        std::fs::read_dir(&library).unwrap().count(),
+        0,
+        "nothing in the library"
+    );
+}
+
+#[test]
+fn child_converts_the_sample() {
+    if std::env::var(SAMPLE_CHILD).is_err() {
+        return;
+    }
+    use sp_app::model::sample::{FOLDER, PDF, Paths};
+    let config = std::env::var("METHOD_READER_CONFIG_DIR").unwrap();
+    let p = Paths::in_folder(&std::path::Path::new(&config).join(FOLDER));
+    std::fs::create_dir_all(&p.dir).unwrap();
+    std::fs::write(&p.pdf, PDF).unwrap();
+    let engine = sp_app::direct::DirectEngine::new();
+    let mut lines: Vec<Value> = vec![];
+    let answer = engine
+        .run(
+            &Request::ConvertTo {
+                path: p.pdf.clone(),
+                out: p.epub.clone(),
+            },
+            &mut |line| lines.push(line),
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(answer["ok"], true, "{answer}");
+    assert_eq!(answer["title"], "Field Station");
+    assert_eq!(answer["epubPath"], p.epub.as_str());
+    assert_eq!(answer["fountainPath"], p.fountain.as_str());
+    assert!(answer["pages"].as_u64().is_some());
+    assert!(
+        answer["previewHtml"]
+            .as_str()
+            .unwrap()
+            .contains("scene-heading")
+    );
+    assert!(lines.iter().any(|l| l["stage"] == "render"));
+    assert!(std::path::Path::new(&p.fountain).is_file());
+
+    let again = engine
+        .run(
+            &Request::ConvertTo {
+                path: p.fountain.clone(),
+                out: p.epub.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(again["ok"], true, "{again}");
+    assert_eq!(again["epubPath"], p.epub.as_str());
+    assert_eq!(again["previewHtml"], answer["previewHtml"], "the same book");
+}

@@ -110,7 +110,8 @@ fn an_old_settings_file_is_used_while_the_new_folder_has_none() {
     let old = j(&[&home, ".config", "screepub", "settings.json"]);
     let new = j(&[
         &home,
-        ".config",
+        ".local",
+        "share",
         "com.methodreader.desktop",
         "settings.json",
     ]);
@@ -189,11 +190,12 @@ fn both_folders_move_once_and_paths_inside_follow() {
     write(&outside, "{\n  \"source\": \"/elsewhere/Other.pdf\"\n}\n");
 
     let moved = move_legacy_folders("linux", &env);
-    let new_settings = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new_settings = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
     let new_library = j(&[&home, "Documents", "Method Reader"]);
     assert_eq!(
         moved,
         LegacyMove {
+            config_folder: None,
             settings: Some((old_settings.clone(), new_settings.clone())),
             app_data: Vec::new(),
             library: Some((old_library.clone(), new_library.clone())),
@@ -230,7 +232,7 @@ fn a_library_whose_new_path_cannot_be_saved_stays_where_the_settings_say() {
     let s = Scratch::new("legacy-locked");
     let home = s.dir("home");
     let env = env_of(&[("HOME", &home)]);
-    let settings_dir = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let settings_dir = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
     let old_library = j(&[&home, "Documents", "Screepub"]);
     write_app_settings(
         &vec![("libraryPath".into(), Some(json!(old_library)))],
@@ -381,7 +383,7 @@ fn the_old_identifier_s_folder_moves_whole_when_there_is_no_settings_folder() {
     let home = s.dir("home");
     let env = env_of(&[("HOME", &home)]);
     let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
-    let new = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
     write(&j(&[&old_id, "window-storage.json"]), "{}");
     let moved = move_legacy_folders("linux", &env);
     assert_eq!(moved.settings, None);
@@ -395,7 +397,7 @@ fn an_entry_already_in_the_new_folder_is_never_overwritten() {
     let home = s.dir("home");
     let env = env_of(&[("HOME", &home)]);
     let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
-    let new = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
     write(&j(&[&old_id, "window-storage.json"]), "old");
     write(&j(&[&old_id, "other.json"]), "other");
     write(&j(&[&new, "window-storage.json"]), "new");
@@ -407,6 +409,203 @@ fn an_entry_already_in_the_new_folder_is_never_overwritten() {
     let read = |p: &str| std::fs::read_to_string(p).unwrap();
     assert_eq!(read(&j(&[&new, "window-storage.json"])), "new");
     assert_eq!(read(&j(&[&old_id, "window-storage.json"])), "old");
+}
+
+// ---- Linux: from 0.13's ~/.config folder to ~/.local/share ----
+
+#[test]
+fn linux_0_13_folder_is_used_until_it_has_moved() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
+    assert_eq!(
+        app_settings_path("linux", &env),
+        j(&[&new, "settings.json"])
+    );
+    std::fs::create_dir_all(&old).unwrap();
+    assert_eq!(
+        app_settings_path("linux", &env),
+        j(&[&old, "settings.json"])
+    );
+    write(&j(&[&old, "window-storage.json"]), "{}");
+    assert_eq!(
+        app_data_path("linux", &env, "window-storage.json"),
+        j(&[&old, "window-storage.json"])
+    );
+    // The new folder there, without the file: the old file is still used.
+    std::fs::create_dir_all(&new).unwrap();
+    assert_eq!(
+        app_data_path("linux", &env, "window-storage.json"),
+        j(&[&old, "window-storage.json"])
+    );
+    write(&j(&[&new, "window-storage.json"]), "{}");
+    assert_eq!(
+        app_data_path("linux", &env, "window-storage.json"),
+        j(&[&new, "window-storage.json"])
+    );
+}
+
+#[test]
+fn linux_0_13_folder_moves_once_to_local_share() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
+    write(&j(&[&old, "settings.json"]), "{\"lastRoute\": \"books\"}\n");
+    write(&j(&[&old, "window-storage.json"]), "storage");
+
+    let moved = move_legacy_folders("linux", &env);
+    assert_eq!(
+        moved,
+        LegacyMove {
+            config_folder: Some((old.clone(), new.clone())),
+            ..LegacyMove::default()
+        }
+    );
+    assert!(!exists(&old));
+    assert_eq!(
+        app_settings_path("linux", &env),
+        j(&[&new, "settings.json"])
+    );
+    assert_eq!(
+        read_app_settings(&app_settings_path("linux", &env))["lastRoute"],
+        json!("books")
+    );
+    assert_eq!(
+        std::fs::read_to_string(app_data_path("linux", &env, "window-storage.json")).unwrap(),
+        "storage"
+    );
+    assert_eq!(move_legacy_folders("linux", &env), LegacyMove::default());
+}
+
+#[test]
+fn linux_xdg_homes_are_honoured_by_the_move() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let config = s.dir("cfg");
+    let data = j(&[&s.str(), "data"]);
+    let env = env_of(&[
+        ("HOME", &home),
+        ("XDG_CONFIG_HOME", &config),
+        ("XDG_DATA_HOME", &data),
+    ]);
+    let old = j(&[&config, "com.methodreader.desktop"]);
+    let new = j(&[&data, "com.methodreader.desktop"]);
+    write(&j(&[&old, "settings.json"]), "{}\n");
+    let moved = move_legacy_folders("linux", &env);
+    assert_eq!(moved.config_folder, Some((old.clone(), new.clone())));
+    assert!(exists(&j(&[&new, "settings.json"])));
+    assert!(!exists(&j(&[&home, ".local"])));
+}
+
+#[test]
+fn linux_0_12_folders_move_straight_to_local_share() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old_settings = j(&[&home, ".config", "screepub"]);
+    let old_id = j(&[&home, ".config", "com.darkwell.screepub"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
+    write(&j(&[&old_settings, "settings.json"]), "{\"old\": true}\n");
+    write(&j(&[&old_id, "window-storage.json"]), "storage");
+
+    let moved = move_legacy_folders("linux", &env);
+    assert_eq!(moved.config_folder, None);
+    assert_eq!(moved.settings, Some((old_settings.clone(), new.clone())));
+    assert_eq!(
+        moved.app_data,
+        vec![(
+            j(&[&old_id, "window-storage.json"]),
+            j(&[&new, "window-storage.json"])
+        )]
+    );
+    assert!(!exists(&j(&[&home, ".config", "com.methodreader.desktop"])));
+    assert_eq!(
+        read_json(&app_settings_path("linux", &env)),
+        json!({ "old": true })
+    );
+    assert_eq!(
+        app_data_path("linux", &env, "window-storage.json"),
+        j(&[&new, "window-storage.json"])
+    );
+}
+
+#[test]
+fn linux_nothing_moves_over_the_new_folder() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let new = j(&[&home, ".local", "share", "com.methodreader.desktop"]);
+    write(&j(&[&old, "settings.json"]), "{\"old\": true}\n");
+    write(&j(&[&new, "settings.json"]), "{\"new\": true}\n");
+    assert_eq!(move_legacy_folders("linux", &env), LegacyMove::default());
+    assert_eq!(
+        read_json(&j(&[&old, "settings.json"])),
+        json!({ "old": true })
+    );
+    assert_eq!(
+        read_json(&app_settings_path("linux", &env)),
+        json!({ "new": true })
+    );
+}
+
+#[test]
+fn linux_a_0_13_folder_that_cannot_move_stays_in_use() {
+    use std::os::unix::fs::PermissionsExt;
+    if common::is_root() {
+        return; // root writes through the locked folder
+    }
+    let s = Scratch::new("legacy-xdg-locked");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let old = j(&[&home, ".config", "com.methodreader.desktop"]);
+    let share = j(&[&home, ".local", "share"]);
+    write(&j(&[&old, "settings.json"]), "{\"old\": true}\n");
+    std::fs::create_dir_all(&share).unwrap();
+    let lock = |mode| std::fs::set_permissions(&share, std::fs::Permissions::from_mode(mode));
+    lock(0o555).unwrap();
+    let moved = move_legacy_folders("linux", &env);
+    lock(0o755).unwrap();
+    assert_eq!(moved, LegacyMove::default());
+    assert_eq!(
+        app_settings_path("linux", &env),
+        j(&[&old, "settings.json"])
+    );
+}
+
+#[test]
+fn linux_a_run_pointed_at_its_own_folder_moves_no_0_13_folder() {
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let old = j(&[&home, ".config", "com.methodreader.desktop"]);
+    write(&j(&[&old, "settings.json"]), "{}\n");
+    for var in ["METHOD_READER_CONFIG_DIR", "SCREEPUB_CONFIG_DIR"] {
+        let env = env_of(&[("HOME", &home), (var, SETTINGS_GUARD)]);
+        assert_eq!(move_legacy_folders("linux", &env), LegacyMove::default());
+    }
+    assert!(exists(&j(&[&old, "settings.json"])));
+    assert!(!exists(&j(&[&home, ".local"])));
+}
+
+#[test]
+fn macos_has_no_0_13_folder_to_move() {
+    // Application Support was already the standard place in 0.13.
+    let s = Scratch::new("legacy-xdg");
+    let home = s.dir("home");
+    let env = env_of(&[("HOME", &home)]);
+    let folder = j(&[
+        &home,
+        "Library",
+        "Application Support",
+        "com.methodreader.desktop",
+    ]);
+    write(&j(&[&folder, "settings.json"]), "{}\n");
+    assert_eq!(move_legacy_folders("darwin", &env), LegacyMove::default());
+    assert!(exists(&j(&[&folder, "settings.json"])));
 }
 
 // ---- the old-named sidecar beside a PDF ----

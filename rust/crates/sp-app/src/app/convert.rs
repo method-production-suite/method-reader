@@ -61,6 +61,12 @@ pub enum Purpose {
     Convert {
         path: String,
     },
+    /// The sample (sample.rs): `path` is its PDF; `stamp` is set when the
+    /// book is remade from the `.fountain` already there.
+    Sample {
+        path: String,
+        stamp: Option<Value>,
+    },
     Reveal {
         book: String,
     },
@@ -109,6 +115,11 @@ pub fn convert_path(app: &mut App, path: &str, force: bool) {
     if app.convert.converting {
         return;
     }
+    // The sample is converted again into its own folder, never the library.
+    if super::sample::is_sample_path(app, path) {
+        super::sample::convert_again(app);
+        return;
+    }
     app.convert.converting = true;
     super::show::stop(app);
     app.go_to(Surface::Convert);
@@ -136,6 +147,43 @@ pub fn convert_path(app: &mut App, path: &str, force: bool) {
     }
 }
 
+/// The sample's conversion (sample.rs): the bar, then Preview. No page
+/// show: the window has only just opened, or a person asked for the
+/// sample from the Help menu, and the book is the point.
+pub fn convert_sample(
+    app: &mut App,
+    request: Request,
+    pdf: String,
+    epub: String,
+    stamp: Option<Value>,
+) {
+    if app.convert.converting {
+        return;
+    }
+    app.convert.converting = true;
+    super::show::stop(app);
+    // Working before the Convert page shows, so a result already there
+    // does not wake its send panel on the way past.
+    app.convert.view = View::Working;
+    app.go_to(Surface::Convert);
+    let ahead = app.queue.holders(&epub);
+    super::panel::hidden(app);
+    let c = &mut app.convert;
+    c.path = pdf.clone();
+    c.progress = Progress::start();
+    c.waiting = m::waiting_label(&ahead);
+    app.restore_focus = true;
+    let purpose = AppPurpose::Convert(Purpose::Sample { path: pdf, stamp });
+    app.on_book(&epub, "convert", request, purpose);
+}
+
+/// The sample could not even be put in its folder.
+pub fn sample_failed(app: &mut App, message: &str, path: &str) {
+    super::show::stop(app);
+    app.go_to(Surface::Convert);
+    draw_failure(app, internal_failure(message), path);
+}
+
 /// The conversion's turn has come: the read-out stops naming the wait.
 pub fn started(app: &mut App) {
     app.convert.waiting = None;
@@ -148,6 +196,15 @@ const FILL: &str = "progress-fill";
 
 /// One progress line from the engine.
 pub fn progress(app: &mut App, purpose: &Purpose, line: &Value) {
+    if let Purpose::Sample { .. } = purpose {
+        if app.convert.waiting.is_some() {
+            started(app);
+        }
+        if let Some(next) = m::next_progress(&app.convert.progress, line) {
+            app.convert.progress = next;
+        }
+        return;
+    }
     let Purpose::Convert { path } = purpose else {
         return;
     };
@@ -228,6 +285,33 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     super::show::stop(app);
                     draw_failure(app, failure_for(answer.get("error")), &path);
                 }
+            }
+        }
+        Purpose::Sample { path, stamp } => {
+            app.convert.converting = false;
+            match reply.answer {
+                Err(message) => draw_failure(app, internal_failure(&message), &path),
+                Ok(answer) if crate::model::json::ok(&answer) => {
+                    let answer = match (&stamp, super::sample::paths(app)) {
+                        (Some(stamp), Some(p)) => {
+                            crate::model::sample::reopened(&answer, stamp, &p.fountain)
+                        }
+                        _ => {
+                            super::sample::converted(app, &answer);
+                            answer
+                        }
+                    };
+                    if let Some(epub) = answer.get("epubPath").and_then(Value::as_str) {
+                        app.convert.landed.insert(path.clone(), epub.into());
+                    }
+                    // Preview first, as a person's Preview button reaches
+                    // it, so the result is drawn behind it: the Convert
+                    // page's panel (the Kindle file checked and built ahead)
+                    // starts only when a person goes there.
+                    app.go_to(Surface::Read);
+                    draw_result(app, &path, &answer);
+                }
+                Ok(answer) => draw_failure(app, failure_for(answer.get("error")), &path),
             }
         }
         Purpose::Reveal { book } => {
@@ -611,6 +695,9 @@ fn draw_done(app: &mut App, ui: &mut Ui, block: layout::Span) {
                 .unwrap_or_default();
             if !counts.is_empty() {
                 widgets::text(ui, &counts, theme::chrome(size::UI), t.ink_muted);
+            }
+            if super::sample::is_open(app) {
+                widgets::caption(ui, &t, crate::model::sample::NOTE, false);
             }
             for w in script
                 .as_ref()

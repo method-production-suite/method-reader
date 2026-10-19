@@ -158,6 +158,10 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
             send(app);
         }
     });
+    if super::sample::is_open(app) {
+        ui.add_space(layout::SPACE[1]);
+        widgets::caption(ui, &t, crate::model::sample::NOTE, false);
+    }
     let rule_y = ui.cursor().min.y + layout::SPACE[3];
     ui.painter().hline(
         ui.max_rect().x_range(),

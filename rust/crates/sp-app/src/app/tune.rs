@@ -766,6 +766,37 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
         draw_defaults_foot(app, ui);
         draw_keep_choice(app, ui);
         draw_page_switches(app, ui);
+        draw_sample_switch(app, ui);
+    });
+}
+
+/// The first launch's sample (model/sample.rs): a switch kept in the
+/// window's own storage, beside Check for Updates Automatically's, and
+/// set at once.
+fn draw_sample_switch(app: &mut App, ui: &mut Ui) {
+    use crate::model::sample;
+    let t = app.tokens();
+    ui.add_space(layout::SPACE[6]);
+    let group = ui.scope(|ui| {
+        widgets::state_label(ui, &t, sample::SWITCH_LEGEND);
+        let mut on = sample::first_launch_on(app.host.storage.as_ref());
+        let r = ui.add(egui::Checkbox::new(
+            &mut on,
+            egui::RichText::new(sample::SWITCH_LABEL)
+                .font(theme::chrome(size::UI))
+                .color(t.ink),
+        ));
+        app.stop(r.id, true);
+        let line = widgets::caption(ui, &t, sample::SWITCH_LINE, false);
+        widgets::described_by(ui, r.id, line.id);
+        if r.changed() {
+            sample::set_first_launch(app.host.storage.as_mut(), on);
+        }
+    });
+    ui.ctx().accesskit_node_builder(group.response.id, |n| {
+        n.set_role(accesskit::Role::Group);
+        n.set_bounds(widgets::bounds(group.response.rect));
+        n.set_label(sample::SWITCH_LEGEND);
     });
 }
 

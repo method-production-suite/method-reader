@@ -13,6 +13,8 @@ use super::names::PRODUCT;
 pub enum HelpItem {
     About,
     UserGuide,
+    /// Field Station, the invented sample (model/sample.rs).
+    OpenSample,
     Shortcuts,
     WhatsNew,
     CheckForUpdates,
@@ -29,6 +31,7 @@ impl HelpItem {
         match self {
             HelpItem::About => format!("About {PRODUCT}"),
             HelpItem::UserGuide => "User Guide".into(),
+            HelpItem::OpenSample => super::sample::MENU_LABEL.into(),
             HelpItem::Shortcuts => "Keyboard Shortcuts".into(),
             HelpItem::WhatsNew => "What's New".into(),
             HelpItem::CheckForUpdates => super::update::CHECK_MENU.into(),
@@ -44,7 +47,7 @@ impl HelpItem {
 /// Mac, About is in the app menu instead, where macOS puts it.
 pub fn groups(platform: Platform) -> Vec<Vec<HelpItem>> {
     use HelpItem::*;
-    let mut first = vec![UserGuide, Shortcuts, WhatsNew];
+    let mut first = vec![UserGuide, OpenSample, Shortcuts, WhatsNew];
     if platform != Platform::Mac {
         first.insert(0, About);
     }
@@ -54,6 +57,28 @@ pub fn groups(platform: Platform) -> Vec<Vec<HelpItem>> {
         vec![ReportBug, Licenses],
         vec![Suite],
     ]
+}
+
+/// The window binary's launch flags (SUITE-STANDARDS.md, for the suite's
+/// launcher): each one does what its Help item does, once the window has
+/// opened. Not headless (src/headless.rs is): the window opens, then acts.
+pub const LAUNCH_FLAGS: [(&str, HelpItem); 2] = [
+    ("--open-sample", HelpItem::OpenSample),
+    ("--check-for-updates", HelpItem::CheckForUpdates),
+];
+
+/// The Help items the launch asked for, in the order the flags came, each
+/// once. Any other argument is left alone (as before these flags).
+pub fn launch_items(args: &[String]) -> Vec<HelpItem> {
+    let mut items = Vec::new();
+    for arg in args {
+        if let Some((_, item)) = LAUNCH_FLAGS.iter().find(|(flag, _)| flag == arg)
+            && !items.contains(item)
+        {
+            items.push(*item);
+        }
+    }
+    items
 }
 
 /// Method Reader's website.
@@ -180,6 +205,7 @@ mod tests {
             mac,
             [
                 HelpItem::UserGuide,
+                HelpItem::OpenSample,
                 HelpItem::Shortcuts,
                 HelpItem::WhatsNew,
                 HelpItem::CheckForUpdates,
@@ -192,6 +218,28 @@ mod tests {
     }
 
     #[test]
+    fn the_launch_flags_stand_for_their_help_items() {
+        let a = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert_eq!(launch_items(&a(&[])), []);
+        assert_eq!(launch_items(&a(&["--open-sample"])), [HelpItem::OpenSample]);
+        assert_eq!(
+            launch_items(&a(&["--check-for-updates"])),
+            [HelpItem::CheckForUpdates]
+        );
+        assert_eq!(
+            launch_items(&a(&[
+                "-psn_0_1234",
+                "--check-for-updates",
+                "--open-sample",
+                "--open-sample",
+                "--whatever"
+            ])),
+            [HelpItem::CheckForUpdates, HelpItem::OpenSample],
+            "in order, once each, the rest ignored"
+        );
+    }
+
+    #[test]
     fn the_labels_are_the_suite_s() {
         assert_eq!(HelpItem::About.label(), "About Method Reader");
         assert_eq!(HelpItem::CheckForUpdates.label(), "Check for Updates…");
@@ -200,6 +248,7 @@ mod tests {
             "Check for Updates Automatically"
         );
         assert_eq!(HelpItem::Licenses.label(), "Licenses and Notices");
+        assert_eq!(HelpItem::OpenSample.label(), "Open Sample");
         assert_eq!(HelpItem::Suite.label(), "Method Production Suite");
     }
 

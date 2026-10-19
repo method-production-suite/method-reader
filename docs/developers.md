@@ -184,12 +184,26 @@ script follows the app defaults until it is tuned.
 
 `method-reader reveal <file>` shows a converted file in the system's file manager.
 
-The app settings live in one small file outside the library:
-`~/Library/Application Support/Method Reader/settings.json` on macOS,
-`%APPDATA%\Method Reader\settings.json` on Windows, and
-`$XDG_CONFIG_HOME/method-reader/settings.json` on Linux
-(`~/.config/method-reader/settings.json` by default). `METHOD_READER_CONFIG_DIR`
+The app settings live in one small file outside the library, in the app's
+data folder, which is named after the bundle identifier
+(`com.methodreader.desktop`) and also holds the window's own storage:
+`~/Library/Application Support/com.methodreader.desktop/settings.json` on
+macOS, `%APPDATA%\com.methodreader.desktop\settings.json` on Windows, and
+`$XDG_DATA_HOME/com.methodreader.desktop/settings.json` on Linux
+(`~/.local/share/com.methodreader.desktop/settings.json` when
+`XDG_DATA_HOME` is unset or not an absolute path). `METHOD_READER_CONFIG_DIR`
 overrides that folder everywhere.
+
+On Linux, 0.13 kept that folder in `$XDG_CONFIG_HOME` (`~/.config`). The
+window moves it once, on first launch, to the place above, and carries the
+0.12 folders (`~/.config/screepub`, `~/.config/com.darkwell.screepub`) straight
+there too. A folder moves only when the new one is not there yet; nothing is
+overwritten or deleted, and when a move cannot happen (another disk, a
+locked folder) the old folder stays in use where it is. After a failed move
+the move is not tried again: the first file the app writes in the new layout
+creates the new folder, and from then on it reads each file from whichever
+folder holds it. Nothing is lost, and the failure is logged on stderr.
+Nothing moves when `METHOD_READER_CONFIG_DIR` or `SCREEPUB_CONFIG_DIR` is set.
 
 The same data folder holds `recent.json`, the scripts you opened, newest
 first, for the Method suite's launcher:
@@ -279,6 +293,23 @@ tolino and reMarkable are tested against injected mounts and a stub tablet;
 no reader has been connected on Linux or Windows. See
 [the verification ledger](verification-ledger.md).
 
+## Starting the window
+
+The window's own program, `method-reader-app`, takes two flags for the
+suite's launcher. The window opens as usual and then does what the Help item
+of the same name does:
+
+- `--open-sample` opens Field Station, the invented sample, as Help > Open
+  Sample does: on any launch, whatever the "Open the sample the first time"
+  switch says. The sample keeps to its own folder, `Sample`, in the app-data
+  folder beside the window's storage, never in the library.
+- `--check-for-updates` checks for updates, as Help > Check for Updates…
+  does. Where the app does not update itself (Windows and Linux), it gives
+  the same answer that menu item gives.
+
+Any other argument is ignored, as before. `--version` and `--smoke` still
+run without a window.
+
 ## Architecture
 
 One Cargo workspace, `rust/`, with a crate per stage:
@@ -330,3 +361,15 @@ the Tauri window that came before it. Before changing
 layout code, read
 [screenplay-format-reference.md](screenplay-format-reference.md): it records
 print geometry and what each e-reader's renderer honours.
+
+## Continuous integration
+
+Every pull request runs the tests, formatting, lints and dependency checks.
+The installers (the bundles job) are built and smoke-tested only when a
+pull request changes packaging: the release tools, the updater, xtask's
+bundle code, the window's manifest, icons or headless mode, the licence
+files, the workspace manifest, the lock file, the toolchain or the
+workflows. A pull request that changes only app code skips them, so the
+bundled headless smoke does not run on it; the push to main runs every
+installer and catches anything it missed. Only main saves a build cache;
+a pull request restores main's.
