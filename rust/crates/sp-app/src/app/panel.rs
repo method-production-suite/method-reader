@@ -1098,8 +1098,10 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 }
                 Ok(_) => {
                     let (line, eject) = copied_state(&title, &device, &sent);
+                    let copied = book(app);
                     let eject = eject.map(|e| Eject {
                         line: line.clone(),
+                        book: copied,
                         ..e
                     });
                     let has_eject = eject.is_some();
@@ -1746,15 +1748,22 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
     );
     app.panel.labelled_with = app.panel.kindle.as_ref().map(|k| k.extension.clone());
     let eject = app.send_result.as_ref().and_then(|s| s.eject.clone());
-    let brass = if eject.is_none() {
-        offer.as_ref().and_then(|o| o.brass.clone())
-    } else {
+    // Eject is the next step only for the book that was just copied. A
+    // reader still waiting from an earlier book stays on hand, but this
+    // book's own copy is the main button (the owner, 2026-10-19: several
+    // scripts in a row stuck on Eject and could not be sent).
+    let just_copied = eject
+        .as_ref()
+        .is_some_and(|e| e.book.is_some() && e.book == book(app));
+    let brass = if just_copied {
         None
+    } else {
+        offer.as_ref().and_then(|o| o.brass.clone())
     };
     let live = enabled(app);
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = layout::SPACE[3];
-        if let Some(e) = &eject {
+        if just_copied && let Some(e) = &eject {
             let b = keyed(app, ui, Look::Brass, &eject_label(e), live, "eject", true);
             if b.clicked() {
                 eject_now(app);
@@ -1776,6 +1785,16 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             }
             // A Kindle over MTP wears the badge beside its brass button.
             if r::is_beta_device(act.route.device.as_ref()) {
+                widgets::beta_badge(ui, &t);
+            }
+        }
+        // An earlier book's reader, still waiting: Eject beside the copy.
+        if !just_copied && let Some(e) = &eject {
+            let b = keyed(app, ui, Look::Outline, &eject_label(e), live, "eject", true);
+            if b.clicked() {
+                eject_now(app);
+            }
+            if eject_is_beta(app.host.platform) {
                 widgets::beta_badge(ui, &t);
             }
         }

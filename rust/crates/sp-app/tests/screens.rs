@@ -404,6 +404,47 @@ fn a_copy_to_a_kindle_ends_with_eject_and_eject_lets_it_go() {
     );
 }
 
+// The owner, 2026-10-19: converting several scripts in a row and copying
+// each to the Kindle, the second one only offered "Eject Kindle". A Kindle
+// still waiting to be ejected stays on hand, but the next book's own Copy is
+// the main button again.
+#[test]
+fn after_a_copy_the_next_script_can_be_copied_too() {
+    let w = world();
+    kindle_plugged_in(&w);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Kindle, plugged in")
+        .click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+        .click();
+    steps(&mut h);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Eject Kindle");
+    // The next script: its own book in the library.
+    let mut second = sp_app::engine::default_answer(&Request::Convert {
+        path: "/scripts/second-script.pdf".into(),
+        force: false,
+        options: None,
+    });
+    second["title"] = json!("Second Script");
+    second["epubPath"] = json!("/library/Second Script/Second Script.epub");
+    second["fountainPath"] = json!("/library/Second Script/Second Script.fountain");
+    w.engine.always("convert", Reply::ok(second));
+    w.fakes.answer_dialog(Some("/scripts/second-script.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    steps(&mut h);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+        .click();
+    steps(&mut h);
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("send").len(), 2, "both books were copied");
+    // And the Kindle can still be ejected.
+    h.get_by_role_and_label(Role::Button, "Eject Kindle");
+}
+
 // send-panel-ui.test.ts: "My device isn’t here"
 #[test]
 fn my_device_isnt_here_sends_the_name_and_nothing_else() {
