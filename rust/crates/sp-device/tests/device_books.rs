@@ -270,3 +270,37 @@ fn a_remarkable_has_no_volume_to_read() {
     .unwrap_err();
     assert_eq!(err.code, ErrorCode::UnknownDevice);
 }
+
+#[cfg(unix)]
+#[test]
+fn a_kindle_whose_notes_folder_will_not_go_says_the_book_already_went() {
+    // The book goes first, then its .sdr. If the reader stops answering in
+    // between (unplugged, say), the answer must not hide that the book is
+    // gone: it names it as removed and the notes folder as left behind.
+    use std::os::unix::fs::PermissionsExt;
+    let tmp = scratch("books");
+    let vol = volume(tmp.path(), "Kindle", &["documents"]);
+    let book = write(&vol, "documents/Field Station.azw3", b"a");
+    write(&vol, "documents/Field Station.sdr/Field Station.apnx", b"x");
+    let sdr = Path::new(&vol).join("documents/Field Station.sdr");
+    std::fs::set_permissions(&sdr, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let devices = listed(DeviceKind::Kindle, &vol);
+    let list = move || devices.clone();
+    let err = device_remove_command(
+        &vol,
+        &book,
+        &BooksDeps {
+            devices: Some(&list),
+        },
+    );
+    std::fs::set_permissions(&sdr, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let err = err.unwrap_err();
+    assert_eq!(err.code, ErrorCode::RemoveFailed);
+    assert!(!Path::new(&book).exists());
+    assert!(
+        err.message.contains(&format!("removed {book}")),
+        "{}",
+        err.message
+    );
+    assert!(err.message.contains("Field Station.sdr"), "{}", err.message);
+}

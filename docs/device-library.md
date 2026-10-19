@@ -59,7 +59,10 @@ What else goes with the book:
 - **Kindle:** the book's `<name>.sdr` folder beside it, which holds its
   reading position, highlights and notes. The Kindle's own delete removes it
   too, so this matches what a person expects; the answer lists it, and the
-  window's question says the notes go with the book.
+  window's question says the notes go with the book. The book goes first, so
+  a failure never leaves a book without its notes; if the notes folder then
+  will not go (the reader unplugged in between, say), the answer is
+  `remove-failed` and says the book was already removed.
 - **Kobo:** nothing else. Its database (`.kobo/KoboReader.sqlite`) is never
   written by Method Reader; the Kobo drops a missing book's entry itself when
   it next processes its content, after the reader is unplugged.

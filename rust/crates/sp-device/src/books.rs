@@ -258,7 +258,18 @@ pub fn device_remove_command(
         let sdr = at.with_file_name(format!("{stem}.sdr"));
         if std::fs::symlink_metadata(&sdr).is_ok_and(|m| m.is_dir()) {
             let sdr_text = sdr.to_string_lossy().into_owned();
-            std::fs::remove_dir_all(&sdr).map_err(|e| failed(&sdr_text, e))?;
+            // The book is already gone by now (it goes first, so a failure
+            // never leaves a book without its notes). Say so: a reader
+            // unplugged in between must not read as nothing having happened.
+            if let Err(e) = std::fs::remove_dir_all(&sdr) {
+                return Err(CliError::new(
+                    ErrorCode::RemoveFailed,
+                    format!(
+                        "removed {}, but the reader would not let its notes folder {sdr_text} go: {e}",
+                        removed[0]
+                    ),
+                ));
+            }
             removed.push(sdr_text);
         }
     }
