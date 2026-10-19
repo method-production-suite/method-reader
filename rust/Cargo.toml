@@ -26,7 +26,7 @@ regex = "1"
 # String.prototype.normalize('NFC') for the KF8 index strings.
 unicode-normalization = "0.1"
 # Pure-Rust deflate, for the PNGs the MOBI picture probe draws.
-miniz_oxide = "0.8"
+miniz_oxide = "0.9"
 # SHA-256 for the tests that pin a book by its digest.
 sha2 = "0.10"
 sp-fdx = { path = "crates/sp-fdx" }

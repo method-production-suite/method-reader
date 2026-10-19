@@ -5537,7 +5537,7 @@ dependencies = [
 name = "sp-mobi"
 version = "0.13.0"
 dependencies = [
- "miniz_oxide 0.8.9",
+ "miniz_oxide 0.9.1",
  "regex",
  "serde",
  "serde_json",
@@ -5571,7 +5571,7 @@ name = "sp-parser"
 version = "0.13.0"
 dependencies = [
  "flate2",
- "miniz_oxide 0.8.9",
+ "miniz_oxide 0.9.1",
  "regex",
  "serde",
  "serde_json",
@@ -5585,7 +5585,7 @@ version = "0.13.0"
 dependencies = [
  "hayro-jpeg2000",
  "hayro-syntax",
- "miniz_oxide 0.8.9",
+ "miniz_oxide 0.9.1",
  "serde",
  "serde_json",
  "sha2",
@@ -7627,7 +7627,7 @@ dependencies = [
  "fancy-regex",
  "flate2",
  "minisign",
- "miniz_oxide 0.8.9",
+ "miniz_oxide 0.9.1",
  "nix",
  "png",
  "regex",
