@@ -1,17 +1,20 @@
 # Exact versions allowed under the 14-day cooldown, read by scripts/check-crate-ages.py.
-# Two kinds only: a security fix that cannot wait, and a version that was already in the
-# lock when the whole-lock check began (2026-10-19) and has no older compatible release
-# to move back to. One "name version" per line, with the reason and the date it turns 14
-# days old. Remove a line once that date has passed.
-rustls 0.23.46   # RUSTSEC-2026-0346 to 0349 (2026-10-14)
-zip 9.0.3        # every zip 9.0.0 to 9.0.2 is yanked for extraction safety fixes; 9.0.3 is the oldest left (2026-10-13)
-# Already in the lock when the whole-lock check began; no older compatible release:
-fontique 0.12.0      # with parley 0.12, the book preview's text layout; 14 days on 2026-10-23
-parley 0.12.0        # sp-app's direct dependency, the book preview's text layout; 2026-10-23
-parley_data 0.12.0   # part of parley 0.12; 2026-10-23
-parley_emoji 0.12.0  # part of parley 0.12; 2026-10-23
-parley_engine 0.12.0 # part of parley 0.12; 2026-10-23
-parlance 0.1.1       # required by parley 0.12; 2026-10-23
-objc2 0.6.5          # required by parley 0.12 on macOS; 2026-10-19
-mtp-rs 0.33.0        # the MTP helper's exact pin; off and shipped to nobody; 2026-10-21
-rpm 0.30.2           # the release tool's Linux packaging, CI only; 2026-10-21
+# One "name version  # reason" per line, and the reason says its kind (SUITE-STANDARDS.md
+# section 6); the script refuses a line that says neither:
+#   - a security fix that cannot wait: the reason names its RUSTSEC id (RUSTSEC-YYYY-NNNN).
+#     The release workflow (--release) honours these.
+#   - a version already in the lock, waiting out its cooldown: the reason starts
+#     "ages-out YYYY-MM-DD" (the day it turns 14 days old). A release ignores these, so it
+#     cannot be tagged until that day.
+# Remove a line once the version is 14 days old.
+rustls 0.23.46       # RUSTSEC-2026-0346 to 0349 (2026-10-14)
+zip 9.0.3            # RUSTSEC-2026-0367, RUSTSEC-2026-0368 and RUSTSEC-2026-0369 (zip 9 is the fix; every release before 9.0.0 is vulnerable and 9.0.0 to 9.0.2 are yanked)
+fontique 0.12.0      # ages-out 2026-10-23: with parley 0.12, the book preview's text layout
+parley 0.12.0        # ages-out 2026-10-23: sp-app's direct dependency, the book preview's text layout
+parley_data 0.12.0   # ages-out 2026-10-23: part of parley 0.12
+parley_emoji 0.12.0  # ages-out 2026-10-23: part of parley 0.12
+parley_engine 0.12.0 # ages-out 2026-10-23: part of parley 0.12
+parlance 0.1.1       # ages-out 2026-10-23: required by parley 0.12
+objc2 0.6.5          # ages-out 2026-10-19: required by parley 0.12 on macOS
+mtp-rs 0.33.0        # ages-out 2026-10-21: the MTP helper's exact pin; off and shipped to nobody
+rpm 0.30.2           # ages-out 2026-10-21: the release tool's Linux packaging, CI only

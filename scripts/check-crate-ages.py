@@ -43,18 +43,50 @@ PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 
 
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
+SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}")
+AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
 
 
-def excepted():
-    """{(name, version)} allowed under the cooldown, each listed with a reason."""
-    if not EXCEPTIONS.exists():
-        return set()
-    out = set()
-    for line in EXCEPTIONS.read_text().splitlines():
-        words = line.split("#", 1)[0].split()
-        if len(words) == 2:
-            out.add((words[0], words[1]))
+class BadExceptions(Exception):
+    pass
+
+
+def parse_exceptions(text):
+    """{(name, version): "security" | "ages-out"}, or BadExceptions naming each bad line.
+
+    A comment-only or blank line is skipped. Every other line is "name version  # reason",
+    and the reason says its kind: a RUSTSEC id makes it a security exception (whatever
+    else it says), a leading "ages-out YYYY-MM-DD" an ages-out one.
+    """
+    out, bad = {}, []
+    for n, line in enumerate(text.splitlines(), 1):
+        entry, _, reason = line.partition("#")
+        words = entry.split()
+        if not words:
+            continue
+        reason = reason.strip()
+        if len(words) != 2:
+            bad.append(f"line {n}: not \"name version  # reason\": {line.strip()}")
+        elif SECURITY.search(reason):
+            out[(words[0], words[1])] = "security"
+        elif AGES_OUT.match(reason):
+            out[(words[0], words[1])] = "ages-out"
+        else:
+            bad.append(
+                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC id nor "
+                f"\"ages-out YYYY-MM-DD\": {line.strip()}"
+            )
+    if bad:
+        raise BadExceptions("\n".join(bad))
     return out
+
+
+def excepted(path, release):
+    """{(name, version)} allowed under the cooldown: under --release, security ones only."""
+    if not path.exists():
+        return set()
+    kinds = parse_exceptions(path.read_text())
+    return {k for k, kind in kinds.items() if kind == "security" or not release}
 
 
 def git_allowed(source):
@@ -132,7 +164,28 @@ def main():
     ap.add_argument("--days", type=int, default=14)
     ap.add_argument("--lock", default="Cargo.lock")
     ap.add_argument("--only-changed", metavar="REF")
+    ap.add_argument(
+        "--release",
+        action="store_true",
+        help="honour only security (RUSTSEC) exceptions; a young ages-out crate fails",
+    )
+    ap.add_argument("--exceptions", type=pathlib.Path, default=EXCEPTIONS)
+    ap.add_argument(
+        "--print-exceptions",
+        action="store_true",
+        help="print the exceptions this mode honours, then exit (no network)",
+    )
     args = ap.parse_args()
+
+    try:
+        allowed_young = excepted(args.exceptions, args.release)
+    except BadExceptions as e:
+        print(f"{args.exceptions}: every exception needs a kind\n{e}", file=sys.stderr)
+        sys.exit(2)
+    if args.print_exceptions:
+        for name, version in sorted(allowed_young):
+            print(f"{name} {version}")
+        return
 
     with open(args.lock) as f:
         pkgs = external_packages(f.read())
@@ -152,7 +205,6 @@ def main():
         bad.append(f"{name} {version} ({source})")
     pkgs = {(name, version) for name, version, source in pkgs if source == CRATES_IO}
 
-    allowed_young = excepted()
     stale = []
     now = dt.datetime.now(dt.timezone.utc)
     for name, version in sorted(pkgs):

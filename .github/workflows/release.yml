@@ -10,6 +10,7 @@
 # docs/RELEASING.md): a tag builds a DRAFT, and a PERSON publishes it after
 # checking the .dmg on an Apple silicon Mac. Nothing here makes the release
 # public. The order is the draft, every upload, latest.json last, then
+# `checksums` (one SHA256SUMS over every file the draft serves), then
 # `draft-check`, which reads the draft back and fails loudly unless every
 # file is there. Publishing starts release-published.yml: the check that
 # reads the published release back. That trigger fires
@@ -53,6 +54,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # SUITE-STANDARDS.md section 6: the WHOLE lock, not only what changed.
+      # main may carry a young crate listed as "ages-out" while it waits out
+      # its 14 days, but no release ships one; a listed security fix (a
+      # RUSTSEC id in its reason) may. First, before anything is built or
+      # signed.
+      - name: Every locked crate is at least 14 days old, apart from security fixes
+        run: |
+          set -euo pipefail
+          # tomllib: Python 3.11 or later (the runner's python3 is newer).
+          python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || {
+            echo "::error::$(python3 --version) is too old for the crate-age check (3.11 or later)"; exit 1; }
+          python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
       - name: Release notes and tag are publishable
         env:
           TAG: ${{ github.ref_name }}
@@ -71,8 +84,9 @@ jobs:
             echo "::error file=$F::$F is empty or exceeds the 60000-byte body limit ($BYTES bytes)"; exit 1; }
           git cat-file blob "$GITHUB_SHA:$F" | iconv -f UTF-8 -t UTF-8 >/dev/null || {
             echo "::error file=$F::$F is not valid UTF-8"; exit 1; }
-          # The workflow appends the real checksums; two on one page both
-          # look official. Process substitution, not a pipe: see the
+          # The release's one SHA256SUMS file holds every download's real
+          # checksum; a second one in the notes could disagree and would
+          # look just as official. Process substitution, not a pipe: see the
           # Tauri-era comment in git history (pipefail and SIGPIPE).
           if HITS="$(grep -niE -m 3 'sha-?256|[0-9a-f]{64}' < <(git cat-file blob "$GITHUB_SHA:$F"))"; then
             echo "::error file=$F::$F contains a checksum. The workflow appends the real ones. Offending line(s):"
@@ -169,11 +183,8 @@ jobs:
           cp "docs/releases/$VERSION.md" "$NOTES"
           {
             printf '\n\n---\n\n'
-            printf '%s\n\n' "**Mac:** download \`Method-Reader-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Method Reader to Applications, and double-click. Its SHA-256 is in \`SHA256SUMS-app\`."
-            printf '%s\n' "Command-line tool for macOS, SHA-256:"
-            printf '\n```\n'
-            ( cd "$RUNNER_TEMP/cli-mac" && shasum -a 256 method-reader-cli-macos-arm64.tar.gz )
-            printf '```\n'
+            printf '%s\n\n' "**Mac:** download \`Method-Reader-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Method Reader to Applications, and double-click."
+            printf '%s\n' "The SHA-256 of every download is in \`SHA256SUMS\`: in a folder holding the downloads, \`sha256sum -c SHA256SUMS --ignore-missing\` (or \`shasum -a 256 -c SHA256SUMS --ignore-missing\` on a Mac) checks them."
           } >> "$NOTES"
           # Draft first, so /releases/latest never answers with a release
           # whose files are still arriving. Idempotent under dispatch.
@@ -262,7 +273,9 @@ jobs:
           pattern: cli-*
           merge-multiple: true
           path: cli
-      - name: Checksum, check the count, upload
+      # Their checksums are the checksums job's: it hashes what the draft
+      # serves, after every upload.
+      - name: Upload the three archives
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -270,10 +283,8 @@ jobs:
         run: |
           set -euo pipefail
           cd cli
-          sha256sum method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip > SHA256SUMS
-          sha256sum -c SHA256SUMS
           gh release upload "$TAG" method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz \
-            method-reader-cli-windows-x64.zip SHA256SUMS --clobber
+            method-reader-cli-windows-x64.zip --clobber
 
   # The installable apps: ONE signed and notarized DMG (Apple silicon), the
   # signed update archive the Tauri windows and the Rust app install, a
@@ -598,20 +609,19 @@ jobs:
           pattern: app-bundles-*
           merge-multiple: true
           path: arrivals
-      - name: Checksums from what arrived, then the count
+      # The checksums are the checksums job's, over what the draft serves.
+      - name: Exactly the five installers arrived
         run: |
           set -euo pipefail
           cd arrivals
-          rm -f SHA256SUMS-app
-          # Bare names on purpose: they are what SHA256SUMS-app lists, and
-          # every one starts with "Method-Reader-", never a dash.
+          # Every name starts with "Method-Reader-", never a dash. A glob
+          # that matches nothing makes ls fail, naming it.
           # shellcheck disable=SC2035
-          sha256sum *.deb *.rpm *.AppImage *.dmg *.exe > SHA256SUMS-app
+          FOUND="$(ls -1 *.deb *.rpm *.AppImage *.dmg *.exe)"
           # One .deb, one .rpm, one AppImage, ONE .dmg (the frozen Swift
           # updater takes the first on the page) and one .exe.
-          LINES="$(wc -l < SHA256SUMS-app)"
-          [ "$LINES" -eq 5 ] || { echo "::error::expected 5 app bundles, got $LINES:"; cat SHA256SUMS-app; exit 1; }
-          sha256sum -c SHA256SUMS-app
+          LINES="$(wc -l <<<"$FOUND")"
+          [ "$LINES" -eq 5 ] || { echo "::error::expected 5 app bundles, got $LINES:"; printf '%s\n' "$FOUND"; exit 1; }
       - name: Upload the bundles
         env:
           GH_TOKEN: ${{ github.token }}
@@ -622,7 +632,7 @@ jobs:
           cd arrivals
           # shellcheck disable=SC2035
           gh release upload "$TAG" *.deb *.rpm *.AppImage *.dmg *.exe \
-            Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig SHA256SUMS-app --clobber
+            Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig --clobber
       - name: Build latest.json from what arrived, verify it, publish it last
         working-directory: rust
         env:
@@ -644,6 +654,59 @@ jobs:
           target/release/sp-release verify-update --dir ../arrivals --manifest ../arrivals/latest.json
           gh release upload "$TAG" ../arrivals/latest.json --clobber
 
+  # ONE SHA256SUMS for the whole release (SUITE-STANDARDS.md section 3; the
+  # suite's launcher reads it): every download, read back from the draft
+  # after every upload, so it hashes what people get, not what a runner
+  # built. It never lists itself. A run before this job existed left a
+  # SHA256SUMS-app beside it; that file goes.
+  checksums:
+    needs: [release, cli-upload, app-upload, handover-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: One SHA256SUMS over every download on the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          # Every downloadable file; latest.json only for a release, as
+          # app-upload publishes none for a prerelease.
+          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
+          [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
+          # Read into a variable, not piped into grep -q: under pipefail an
+          # early grep exit can fail the pipe (SIGPIPE) and hide the match.
+          ASSETS="$(gh release view "$TAG" --json assets -q '.assets[].name')"
+          if grep -qxF SHA256SUMS-app <<<"$ASSETS"; then
+            gh release delete-asset "$TAG" SHA256SUMS-app --yes
+          fi
+          mkdir downloads
+          cd downloads
+          gh release download "$TAG" --dir .
+          # The old file and this one are not downloads they describe.
+          rm -f SHA256SUMS SHA256SUMS-app
+          # What the draft serves must be exactly the list: a missing file
+          # or an unexpected one would make SHA256SUMS describe a release
+          # nobody meant to publish.
+          HAVE="$(ls -1A | LC_ALL=C sort)"
+          LIST="$(printf '%s\n' "${WANT[@]}" | LC_ALL=C sort)"
+          MISSING="$(LC_ALL=C comm -13 <(printf '%s\n' "$HAVE") <(printf '%s\n' "$LIST") | tr '\n' ' ')"
+          EXTRA="$(LC_ALL=C comm -23 <(printf '%s\n' "$HAVE") <(printf '%s\n' "$LIST") | tr '\n' ' ')"
+          [ -z "$MISSING" ] || { echo "::error::$TAG is missing: $MISSING. SHA256SUMS was not written."; exit 1; }
+          [ -z "$EXTRA" ] || { echo "::error::$TAG carries files the release does not name: $EXTRA. SHA256SUMS was not written."; exit 1; }
+          # Bare names, sorted, in sha256sum's own format, so checking the
+          # file with sha256sum -c works in a folder of the downloads.
+          while IFS= read -r f; do sha256sum -- "$f"; done <<<"$LIST" > SHA256SUMS
+          LINES="$(wc -l < SHA256SUMS)"
+          [ "$LINES" -eq "${#WANT[@]}" ] || { echo "::error::SHA256SUMS has $LINES lines, not ${#WANT[@]}"; exit 1; }
+          sha256sum -c SHA256SUMS
+          cat SHA256SUMS
+          gh release upload "$TAG" SHA256SUMS --clobber
+
   # LAST: read the draft back and say whether it is complete. A person
   # publishes it (docs/RELEASING.md), and this is what they read first: a
   # draft missing its Mac image or its latest.json, once public, breaks the
@@ -652,7 +715,7 @@ jobs:
   # says in one place what is missing. It changes nothing; write access is
   # only because GitHub shows a draft to no token that cannot write.
   draft-check:
-    needs: [release, cli-upload, app-upload, handover-gate]
+    needs: [release, cli-upload, app-upload, handover-gate, checksums]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -665,10 +728,11 @@ jobs:
           CLI_UPLOAD: ${{ needs.cli-upload.result }}
           APP_UPLOAD: ${{ needs.app-upload.result }}
           HANDOVER_GATE: ${{ needs.handover-gate.result }}
+          CHECKSUMS: ${{ needs.checksums.result }}
         run: |
           set -euo pipefail
           BAD=""
-          for pair in "release=$RELEASE" "cli-upload=$CLI_UPLOAD" "app-upload=$APP_UPLOAD" "handover-gate=$HANDOVER_GATE"; do
+          for pair in "release=$RELEASE" "cli-upload=$CLI_UPLOAD" "app-upload=$APP_UPLOAD" "handover-gate=$HANDOVER_GATE" "checksums=$CHECKSUMS"; do
             [ "${pair#*=}" = success ] || BAD="$BAD ${pair%%=*} (${pair#*=})"
           done
           [ -z "$BAD" ] || {
@@ -694,7 +758,7 @@ jobs:
           # Every file the jobs above upload. latest.json only for a
           # release: app-upload publishes none for a prerelease, because
           # releases/latest never resolves to one.
-          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig SHA256SUMS-app)
+          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
           [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
           MISSING=""
           for f in "${WANT[@]}"; do
@@ -702,6 +766,11 @@ jobs:
           done
           [ -z "$MISSING" ] || {
             echo "::error::$TAG is missing:$MISSING. Do not publish it. Re-run the failed jobs."; exit 1; }
+          # One checksums file, and only the one: the checksums job deletes
+          # the SHA256SUMS-app an older run left.
+          if grep -qxF SHA256SUMS-app <<<"$ASSETS"; then
+            echo "::error::$TAG still carries SHA256SUMS-app. Do not publish it. Re-run the checksums job, which removes it."; exit 1
+          fi
           # The backticks are Markdown for the summary, not a substitution.
           # shellcheck disable=SC2016
           {

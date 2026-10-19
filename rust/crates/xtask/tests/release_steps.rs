@@ -325,7 +325,7 @@ fn draft_step_marks_a_prerelease_and_edits_an_existing_draft() {
 }
 
 #[test]
-fn draft_step_appends_the_cli_checksum_to_the_notes() {
+fn draft_step_points_the_notes_at_the_one_checksums_file() {
     let sc = Scratch::new("draft-notes");
     sc.write("docs/releases/0.12.0.md", "# Notes\n");
     sc.write(&format!("temp/cli-mac/{}", names::CLI_MAC_ARM64), "tarball");
@@ -341,8 +341,13 @@ fn draft_step_appends_the_cli_checksum_to_the_notes() {
     let notes = std::fs::read_to_string(sc.join("temp/notes.md")).unwrap();
     assert!(notes.starts_with("# Notes\n"));
     assert!(notes.contains(names::MAC_DMG));
-    assert!(notes.contains(&format!("  {}", names::CLI_MAC_ARM64)));
-    assert!(regex::Regex::new(r"[0-9a-f]{64}").unwrap().is_match(&notes));
+    // Every checksum is in SHA256SUMS; the notes carry none of their own.
+    assert!(
+        notes.contains(&format!("`{}`", names::CHECKSUMS)),
+        "{notes}"
+    );
+    assert!(!notes.contains(names::RETIRED_APP_CHECKSUMS), "{notes}");
+    assert!(!regex::Regex::new(r"[0-9a-f]{64}").unwrap().is_match(&notes));
 }
 
 // ---- app-bundles: the Mac app, signed, notarized, stapled, in order ----
@@ -598,7 +603,7 @@ fn check_step_installs_and_uninstalls_the_windows_installer() {
     assert!(!check_step(&sc, &[]).status.success());
 }
 
-// ---- app-upload: the checksums, from what arrived ----------------------
+// ---- app-upload: exactly the five installers arrived ------------------
 
 fn has_sha256sum() -> bool {
     [
@@ -611,19 +616,17 @@ fn has_sha256sum() -> bool {
     .any(|p| Path::new(p).exists())
 }
 
-fn sums_step(sc: &Scratch, files: &[&str], script: Option<String>) -> Output {
+fn count_step(sc: &Scratch, files: &[&str]) -> Output {
+    std::fs::create_dir_all(sc.join("arrivals")).unwrap();
     for f in files {
         sc.write(&format!("arrivals/{f}"), format!("contents of {f}"));
     }
-    let script = script.unwrap_or_else(|| {
-        step_named(
+    bash(
+        &step_named(
             &release(),
             "app-upload",
-            "Checksums from what arrived, then the count",
-        )
-    });
-    bash(
-        &script,
+            "Exactly the five installers arrived",
+        ),
         sc.path(),
         &[("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")],
     )
@@ -640,86 +643,46 @@ fn five() -> Vec<&'static str> {
 }
 
 #[test]
-fn sums_step_rebuilds_the_checksums_over_what_arrived_and_verifies_them() {
-    if !has_sha256sum() {
-        eprintln!("skipped: no sha256sum on this machine");
-        return;
-    }
-    // Including over a stale per-leg file merge-multiple kept.
-    let sc = Scratch::new("sums-ok");
+fn count_step_passes_the_five_installers_and_the_update_archive_beside_them() {
+    let sc = Scratch::new("count-ok");
     let mut files = five();
-    files.push("SHA256SUMS-app");
-    let out = sums_step(&sc, &files, None);
+    files.push(names::MAC_UPDATE);
+    let out = count_step(&sc, &files);
     assert!(out.status.success(), "{}", said(&out));
-    let sums = std::fs::read_to_string(sc.join("arrivals/SHA256SUMS-app")).unwrap();
-    for n in five() {
-        assert!(sums.contains(n), "{n}");
-    }
-    // Bare names, so `sha256sum -c` works in any download folder.
-    assert!(!sums.contains('/'));
-    assert_eq!(sums.trim().lines().count(), 5);
+    // It writes no checksums: those are the checksums job's.
+    assert!(!sc.join(format!("arrivals/{}", names::CHECKSUMS)).exists());
+    assert!(
+        !sc.join(format!("arrivals/{}", names::RETIRED_APP_CHECKSUMS))
+            .exists()
+    );
 }
 
 #[test]
-fn sums_step_fails_a_leg_that_did_not_arrive() {
-    if !has_sha256sum() {
-        eprintln!("skipped: no sha256sum on this machine");
-        return;
-    }
-    let sc = Scratch::new("sums-short");
+fn count_step_fails_a_leg_that_did_not_arrive() {
+    let sc = Scratch::new("count-short");
     let files: Vec<&str> = five()
         .into_iter()
         .filter(|n| !n.ends_with(".exe"))
         .collect();
-    let out = sums_step(&sc, &files, None);
+    let out = count_step(&sc, &files);
     assert!(!out.status.success());
     assert!(said(&out).contains(".exe"), "{}", said(&out));
 }
 
 #[test]
-fn sums_step_fails_a_second_mac_image() {
-    // Every glob matches and sha256sum succeeds, but the frozen Swift
-    // updater takes the FIRST .dmg on a release and cannot choose.
-    if !has_sha256sum() {
-        eprintln!("skipped: no sha256sum on this machine");
-        return;
-    }
-    let sc = Scratch::new("sums-two-dmg");
+fn count_step_fails_a_second_mac_image() {
+    // Every glob matches, but the frozen Swift updater takes the FIRST .dmg
+    // on a release and cannot choose.
+    let sc = Scratch::new("count-two-dmg");
     let mut files = five();
     files.push("Method-Reader-macOS-x64.dmg");
-    let out = sums_step(&sc, &files, None);
+    let out = count_step(&sc, &files);
     assert!(!out.status.success());
     assert!(
         said(&out).contains("expected 5 app bundles"),
         "{}",
         said(&out)
     );
-}
-
-#[test]
-fn sums_step_fails_a_file_changed_after_it_was_hashed() {
-    // Proof the -c pass is not a tautology: change a file between the two.
-    if !has_sha256sum() {
-        eprintln!("skipped: no sha256sum on this machine");
-        return;
-    }
-    let sc = Scratch::new("sums-corrupt");
-    let step = step_named(
-        &release(),
-        "app-upload",
-        "Checksums from what arrived, then the count",
-    );
-    let script = step.replace(
-        "sha256sum -c SHA256SUMS-app",
-        &format!(
-            "echo tampered > {}\nsha256sum -c SHA256SUMS-app",
-            names::WINDOWS_SETUP
-        ),
-    );
-    assert!(script.contains("echo tampered"));
-    let out = sums_step(&sc, &five(), Some(script));
-    assert!(!out.status.success());
-    assert!(said(&out).contains("FAILED"), "{}", said(&out));
 }
 
 // ---- app-upload: latest.json, built, verified, published last ----------
@@ -807,7 +770,6 @@ fn complete_assets(with_manifest: bool) -> String {
         names::WINDOWS_SETUP.to_string(),
         names::MAC_UPDATE.to_string(),
         format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
-        "SHA256SUMS-app".to_string(),
     ];
     if with_manifest {
         v.push(names::MANIFEST.to_string());
@@ -930,16 +892,239 @@ fn draft_check_says_which_job_did_not_succeed() {
         ("CLI_UPLOAD", "success"),
         ("APP_UPLOAD", "success"),
         ("HANDOVER_GATE", "success"),
+        ("CHECKSUMS", "success"),
     ];
     let out = bash(&text, sc.path(), &ok);
     assert!(out.status.success(), "{}", said(&out));
     let mut bad = ok;
     bad[3] = ("APP_UPLOAD", "failure");
     bad[4] = ("HANDOVER_GATE", "skipped");
+    bad[5] = ("CHECKSUMS", "skipped");
     let out = bash(&text, sc.path(), &bad);
     assert!(!out.status.success());
     let s = said(&out);
     assert!(s.contains("app-upload (failure)"), "{s}");
     assert!(s.contains("handover-gate (skipped)"), "{s}");
+    assert!(s.contains("checksums (skipped)"), "{s}");
     assert!(!s.contains("cli-upload"), "{s}");
+}
+
+#[test]
+fn draft_check_fails_a_draft_that_still_carries_the_retired_checksums_file() {
+    let assets = format!(
+        "{}\n{}",
+        complete_assets(true),
+        names::RETIRED_APP_CHECKSUMS
+    );
+    let (out, calls, _) = draft_check("v0.13.0", names::MAC_DMG, &assets);
+    assert!(!out.status.success());
+    assert!(
+        said(&out).contains(names::RETIRED_APP_CHECKSUMS),
+        "{}",
+        said(&out)
+    );
+    assert!(!changes_the_release(&calls));
+}
+
+// ---- checksums: ONE SHA256SUMS over every download on the draft ---------
+
+/// The checksums step against a fake draft whose assets are `assets`: gh
+/// `view` lists them, `download --dir` writes each, `upload` keeps a copy
+/// of what it was handed in `uploaded/`, `delete-asset` is only logged.
+/// `script` replaces the step text when given.
+fn checksums_step(
+    tag: &str,
+    assets: &[String],
+    script: Option<String>,
+) -> (Output, Vec<String>, Scratch) {
+    let sc = Scratch::new("checksums");
+    let up = sc.join("uploaded");
+    std::fs::create_dir_all(&up).unwrap();
+    tool(
+        &sc,
+        "bin/gh",
+        &format!(
+            r#"case "$2" in
+  view) printf '%s\n' "$FAKE_ASSETS" ;;
+  download)
+    d=.
+    while [ $# -gt 0 ]; do [ "$1" = --dir ] && d="$2"; shift; done
+    printf '%s\n' "$FAKE_ASSETS" | while IFS= read -r n; do [ -n "$n" ] && printf 'bytes of %s\n' "$n" > "$d/$n"; done ;;
+  upload) cp "$4" '{}/' ;;
+esac"#,
+            up.display()
+        ),
+    );
+    let path = path_with(&sc.join("bin"));
+    let joined = assets.join("\n");
+    let script = script.unwrap_or_else(|| {
+        step_named(
+            &release(),
+            "checksums",
+            "One SHA256SUMS over every download on the draft",
+        )
+    });
+    let out = bash(
+        &script,
+        sc.path(),
+        &[
+            ("PATH", &path),
+            ("TAG", tag),
+            ("GH_TOKEN", "t"),
+            ("GH_REPO", "o/r"),
+            ("FAKE_ASSETS", &joined),
+        ],
+    );
+    let calls = log(&sc);
+    (out, calls, sc)
+}
+
+/// The draft as the uploads leave it: every download, and the checksums
+/// files `extra` names.
+fn draft_assets(prerelease: bool, extra: &[&str]) -> Vec<String> {
+    let mut v = names::downloads(prerelease);
+    v.extend(extra.iter().map(|s| s.to_string()));
+    v
+}
+
+/// The `name -> digest` lines of an uploaded SHA256SUMS, in file order.
+fn sums_names(text: &str) -> Vec<String> {
+    text.lines()
+        .map(|l| {
+            let (digest, name) = l.split_once("  ").expect("two spaces");
+            assert_eq!(digest.len(), 64, "{l}");
+            assert!(digest.bytes().all(|b| b.is_ascii_hexdigit()), "{l}");
+            name.to_string()
+        })
+        .collect()
+}
+
+#[test]
+fn checksums_step_lists_every_download_sorted_bare_and_never_itself() {
+    if !has_sha256sum() {
+        eprintln!("skipped: no sha256sum on this machine");
+        return;
+    }
+    // Including over the SHA256SUMS an earlier run uploaded.
+    let (out, calls, sc) =
+        checksums_step("v0.13.0", &draft_assets(false, &[names::CHECKSUMS]), None);
+    assert!(out.status.success(), "{}", said(&out));
+    let text = std::fs::read_to_string(sc.join(format!("uploaded/{}", names::CHECKSUMS))).unwrap();
+    let listed = sums_names(&text);
+    let mut want = names::downloads(false);
+    want.sort();
+    assert_eq!(listed, want, "sorted, every download, once");
+    assert!(!listed.contains(&names::CHECKSUMS.to_string()));
+    assert!(!text.contains('/'), "bare names: {text}");
+    // `sha256sum -c` passes in a folder holding the downloads.
+    let check = Command::new(if Path::new("/usr/bin/sha256sum").exists() {
+        "/usr/bin/sha256sum"
+    } else {
+        "sha256sum"
+    })
+    .args(["-c", names::CHECKSUMS])
+    .current_dir(sc.join("downloads"))
+    .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+    .output()
+    .unwrap();
+    assert!(check.status.success(), "{}", said(&check));
+    // Uploaded once, with --clobber, and nothing deleted.
+    let uploads: Vec<&String> = calls
+        .iter()
+        .filter(|c| c.starts_with("gh	release	upload"))
+        .collect();
+    assert_eq!(
+        uploads,
+        vec![&format!(
+            "gh	release	upload	v0.13.0	{}	--clobber",
+            names::CHECKSUMS
+        )]
+    );
+    assert!(
+        !calls.iter().any(|c| c.contains("delete-asset")),
+        "{calls:#?}"
+    );
+}
+
+#[test]
+fn checksums_step_lists_no_update_manifest_for_a_prerelease() {
+    if !has_sha256sum() {
+        eprintln!("skipped: no sha256sum on this machine");
+        return;
+    }
+    let (out, _, sc) = checksums_step("v0.13.0-rc1", &draft_assets(true, &[]), None);
+    assert!(out.status.success(), "{}", said(&out));
+    let text = std::fs::read_to_string(sc.join(format!("uploaded/{}", names::CHECKSUMS))).unwrap();
+    let listed = sums_names(&text);
+    assert_eq!(listed.len(), 11);
+    assert!(!listed.contains(&names::MANIFEST.to_string()));
+}
+
+#[test]
+fn checksums_step_deletes_a_stale_sha256sums_app_and_never_lists_it() {
+    if !has_sha256sum() {
+        eprintln!("skipped: no sha256sum on this machine");
+        return;
+    }
+    let (out, calls, sc) = checksums_step(
+        "v0.13.0",
+        &draft_assets(false, &[names::CHECKSUMS, names::RETIRED_APP_CHECKSUMS]),
+        None,
+    );
+    assert!(out.status.success(), "{}", said(&out));
+    let delete = at(
+        &calls,
+        &format!(
+            "gh	release	delete-asset	v0.13.0	{}	--yes",
+            names::RETIRED_APP_CHECKSUMS
+        ),
+    );
+    assert!(delete < at(&calls, "gh	release	upload"));
+    let text = std::fs::read_to_string(sc.join(format!("uploaded/{}", names::CHECKSUMS))).unwrap();
+    assert!(!text.contains(names::RETIRED_APP_CHECKSUMS), "{text}");
+    assert_eq!(sums_names(&text).len(), 12);
+}
+
+#[test]
+fn checksums_step_writes_nothing_when_a_download_is_missing_or_unexpected() {
+    // Missing: the update manifest of a full release.
+    let assets = draft_assets(true, &[]);
+    let (out, calls, _) = checksums_step("v0.13.0", &assets, None);
+    assert!(!out.status.success());
+    assert!(said(&out).contains(names::MANIFEST), "{}", said(&out));
+    assert!(!calls.iter().any(|c| c.starts_with("gh	release	upload")));
+    // Unexpected: a file no job uploads.
+    let assets = draft_assets(false, &["Method-Reader-macOS-x64.dmg"]);
+    let (out, calls, _) = checksums_step("v0.13.0", &assets, None);
+    assert!(!out.status.success());
+    let s = said(&out);
+    assert!(s.contains("Method-Reader-macOS-x64.dmg"), "{s}");
+    assert!(s.contains("does not name"), "{s}");
+    assert!(!calls.iter().any(|c| c.starts_with("gh	release	upload")));
+}
+
+#[test]
+fn checksums_step_fails_a_file_changed_after_it_was_hashed() {
+    // Proof the -c pass is not a tautology: change a file between the two.
+    if !has_sha256sum() {
+        eprintln!("skipped: no sha256sum on this machine");
+        return;
+    }
+    let step = step_named(
+        &release(),
+        "checksums",
+        "One SHA256SUMS over every download on the draft",
+    );
+    let script = step.replace(
+        "sha256sum -c SHA256SUMS",
+        &format!(
+            "echo tampered > {}\nsha256sum -c SHA256SUMS",
+            names::WINDOWS_SETUP
+        ),
+    );
+    assert!(script.contains("echo tampered"));
+    let (out, calls, _) = checksums_step("v0.13.0", &draft_assets(false, &[]), Some(script));
+    assert!(!out.status.success());
+    assert!(said(&out).contains("FAILED"), "{}", said(&out));
+    assert!(!calls.iter().any(|c| c.starts_with("gh	release	upload")));
 }
