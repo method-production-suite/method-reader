@@ -449,7 +449,7 @@ fn contributing_says_an_intel_mac_cannot_run_the_window_where_it_says_to_open_it
 #[test]
 fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
     let meaning = "works in our tests, but has not been tried widely on real devices or apps yet";
-    for f in ["README.md", "site/index.html"] {
+    for f in ["README.md"] {
         let text = flat(&read(f));
         assert!(text.contains(meaning), "{f}");
         assert!(!text.contains('\u{2014}'), "{f}");
@@ -463,6 +463,32 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
             assert!(Regex::new(re).unwrap().is_match(&text), "{f}: {what}");
         }
     }
+}
+
+#[test]
+fn the_site_lists_the_five_beta_features_under_one_label() {
+    // The site names the five in one list already labelled beta, without a
+    // "(beta)" after each (the 2026-10-19 site audit, R1), and says what beta
+    // means right after it.
+    let text = flat(&read("site/index.html"));
+    assert!(!text.contains('\u{2014}'));
+    let at = text
+        .find("Also marked beta: ")
+        .expect("the site's beta list");
+    let end = text[at..]
+        .find("A beta feature works in our tests but hasn't been tried widely on real devices or apps yet")
+        .expect("what beta means, right after the list");
+    let list = &text[at..at + end];
+    for (what, needle) in [
+        ("AZW3", "AZW3"),
+        ("pictures", "pictures"),
+        ("FDX", ".fdx"),
+        ("eject", "eject on Windows and Linux"),
+        ("requests", "isn't here"),
+    ] {
+        assert!(list.contains(needle), "{what}: {list}");
+    }
+    assert!(!list.contains("(beta"), "{list}");
 }
 
 #[test]

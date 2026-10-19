@@ -63,8 +63,8 @@ p { margin: 0 0 14px; }
 
 /* ------------------------------------------------------------------ hero */
 .hero { padding: 56px 0 40px; }
-.hero h1 { margin: 0 0 26px; }
-.hero h1 img { height: clamp(30px, 5.6vw, 58px); width: auto; }
+.hero .brand { margin: 0 0 26px; }
+.hero .brand img { height: clamp(30px, 5.6vw, 58px); width: auto; }
 .pitch { font-size: clamp(28px, 4.8vw, 48px); line-height: 1.12; letter-spacing: -.025em; font-weight: 650; margin: 0 0 18px; max-width: 17em; }
 .pitch .answer { display: block; color: var(--accent); }
 .lede { font-size: clamp(17px, 2vw, 19px); color: var(--ink-soft); max-width: 36em; margin: 0 0 26px; }
@@ -85,6 +85,11 @@ p { margin: 0 0 14px; }
    demonstrate themselves on a timer. The text column (.phase) sits where .wrap's text
    does, and the script measures it, so the devices stay inside the page's measure. */
 .act { position: relative; border-top: 1px solid var(--rule); }
+/* The page opens on the problem (the owner, 2026-10-19), so the first act has
+   no rule above it and its heading is the page's h1. */
+.act.lead-in { border-top: 0; }
+.phase h1 { font-size: clamp(30px, 5vw, 54px); line-height: 1.08; letter-spacing: -.025em; font-weight: 700; margin: 0 0 14px; max-width: 14em; }
+.phase .lead { max-width: 30em; }
 .act.two { height: 210vh; }
 /* Pinned under the sticky header, so the header never covers a device. */
 .stick { position: sticky; top: var(--head); height: calc(100vh - var(--head)); overflow: hidden; }
