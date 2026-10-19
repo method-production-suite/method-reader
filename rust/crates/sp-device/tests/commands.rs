@@ -24,11 +24,11 @@ fn kobo() -> ConnectedDevice {
     ConnectedDevice::mounted(
         DeviceKind::Kobo,
         "KOBOeReader",
-        "/run/media/sam/KOBOeReader",
+        "/run/media/ann/KOBOeReader",
     )
 }
 fn kindle() -> ConnectedDevice {
-    ConnectedDevice::mounted(DeviceKind::Kindle, "Kindle", "/run/media/sam/Kindle")
+    ConnectedDevice::mounted(DeviceKind::Kindle, "Kindle", "/run/media/ann/Kindle")
 }
 
 // devicesCommand
@@ -49,7 +49,7 @@ fn devices_command_reports_each_device_with_the_id_send_accepts() {
     assert_eq!(
         serde_json::to_value(&result).unwrap(),
         json!({ "devices": [
-            { "id": "/run/media/sam/KOBOeReader", "kind": "kobo", "name": "KOBOeReader", "volume": "/run/media/sam/KOBOeReader" },
+            { "id": "/run/media/ann/KOBOeReader", "kind": "kobo", "name": "KOBOeReader", "volume": "/run/media/ann/KOBOeReader" },
             { "id": "remarkable", "kind": "remarkable", "name": "reMarkable", "volume": null },
         ]})
     );
@@ -107,7 +107,7 @@ fn one_device_connected_and_no_id_picks_it() {
 #[test]
 fn an_explicit_id_picks_that_device_even_when_several_are_connected() {
     assert_eq!(
-        select_device(&[kobo(), kindle()], Some("/run/media/sam/Kindle")).unwrap(),
+        select_device(&[kobo(), kindle()], Some("/run/media/ann/Kindle")).unwrap(),
         kindle()
     );
     let tablet = ConnectedDevice::remarkable();
@@ -123,13 +123,13 @@ fn several_connected_and_no_id_is_ambiguous_listing_the_ids() {
     assert_eq!(err.code, ErrorCode::AmbiguousDevice);
     assert_eq!(
         err.message,
-        "several readers are connected. Pick one with --device: /run/media/sam/KOBOeReader, /run/media/sam/Kindle"
+        "several readers are connected. Pick one with --device: /run/media/ann/KOBOeReader, /run/media/ann/Kindle"
     );
 }
 
 #[test]
 fn nothing_connected_is_no_devices_even_when_an_id_was_given() {
-    let err = select_device(&[], Some("/run/media/sam/Kindle")).unwrap_err();
+    let err = select_device(&[], Some("/run/media/ann/Kindle")).unwrap_err();
     assert_eq!(err.code, ErrorCode::NoDevices);
     assert_eq!(
         err.message,
@@ -147,18 +147,18 @@ fn nothing_connected_and_no_id_is_also_no_devices() {
 
 #[test]
 fn an_id_that_matches_nothing_is_unknown_device_listing_what_is() {
-    let err = select_device(&[kobo(), kindle()], Some("/run/media/sam/Nope")).unwrap_err();
+    let err = select_device(&[kobo(), kindle()], Some("/run/media/ann/Nope")).unwrap_err();
     assert_eq!(err.code, ErrorCode::UnknownDevice);
     assert_eq!(
         err.message,
-        "no connected reader has the id \"/run/media/sam/Nope\". Connected: /run/media/sam/KOBOeReader, /run/media/sam/Kindle"
+        "no connected reader has the id \"/run/media/ann/Nope\". Connected: /run/media/ann/KOBOeReader, /run/media/ann/Kindle"
     );
 }
 
 #[test]
 fn selection_matches_on_the_id_never_a_prefix_or_the_name() {
     assert_eq!(
-        select_device(&[kindle()], Some("/run/media/sam"))
+        select_device(&[kindle()], Some("/run/media/ann"))
             .unwrap_err()
             .code,
         ErrorCode::UnknownDevice

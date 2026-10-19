@@ -60,7 +60,7 @@ fn current_git_user_name(cwd: &Path) -> Option<String> {
 }
 
 /// The commits since `since_tag`, oldest first. `owner` defaults to the
-/// repo's configured user.name, then the literal "Sam Sandweiss".
+/// repo's configured user.name, then the suite's commit name, "Method Production Suite".
 pub fn collect_commits(
     cwd: &Path,
     since_tag: &str,
@@ -68,7 +68,7 @@ pub fn collect_commits(
 ) -> Result<Vec<CommitFact>, String> {
     let owner = match owner {
         Some(o) => o.to_string(),
-        None => current_git_user_name(cwd).unwrap_or_else(|| "Sam Sandweiss".to_string()),
+        None => current_git_user_name(cwd).unwrap_or_else(|| "Method Production Suite".to_string()),
     };
     // %x1F separates fields, %x1E separates records: neither can appear in
     // a commit subject.

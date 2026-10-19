@@ -89,10 +89,10 @@ Two people share this page.
 - **Claude** runs every item marked **[claude]**: tests, the engine from the
   command line, and the window's own page in a browser. All of it runs
   against scratch folders, never your real library or settings.
-- **Sam** runs every item marked **[hands]**: the real window, a real
+- **The owner** runs every item marked **[hands]**: the real window, a real
   Kindle, Apple Books, Mail, Calibre, and the update from 0.7.2.
 
-The order: Claude's part first (it builds the app Sam tests), then Sam's
+The order: Claude's part first (it builds the app the owner tests), then the owner's
 pass in one sitting, then the update from 0.7.2 last, once 0.7.3 is
 published.
 
@@ -137,7 +137,7 @@ it passes. When one fails, note the words on screen and carry on.
 
 ### Before you start
 
-- **Claude builds the candidate first** (Part 1). Sam's pass runs on that
+- **Claude builds the candidate first** (Part 1). The owner's pass runs on that
   build, opened from where Claude put it. Leave 0.7.2 in `/Applications`:
   Part 3 updates it.
 - **The candidate may still say rev 0.7.2** until the release is cut. That
@@ -172,7 +172,7 @@ it passes. When one fails, note the words on screen and carry on.
 - [x] **[claude] Build the candidate window** (passed 2026-09-24)
   - Do: `bun tools/build-sidecar.ts --host`, then in `desktop/src-tauri`:
     `cargo tauri build --bundles app --config tauri.transition.conf.json`.
-    Give Sam the path to `Screepub Desktop.app`. It lands at
+    Give the owner the path to `Screepub Desktop.app`. It lands at
     `desktop/src-tauri/target/release/bundle/macos/Screepub Desktop.app`
     inside the worktree it was built in. For this pass Claude built it at
     `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/qa-run/desktop/src-tauri/target/release/bundle/macos/Screepub Desktop.app`.
@@ -331,7 +331,7 @@ it passes. When one fails, note the words on screen and carry on.
     renamed "KFX Output (…)" copy; the companion "Set KFX metadata" plugin
     alone does not.
   - Fail: the scratch run still sees the real plugin. Then the protection
-    in Part 2 does not work, and Sam should skip the install.
+    in Part 2 does not work, and the owner should skip the install.
 - [x] **[claude] The links, and the installer's refusals** (passed
   2026-09-24)
   - Do: `bun test tests/export-kfx-setup.test.ts tests/cli-kfx.test.ts`;
@@ -382,7 +382,7 @@ it passes. When one fails, note the words on screen and carry on.
 
 ---
 
-### Part 2: Sam's pass (hands, one sitting)
+### Part 2: the owner's pass (hands, one sitting)
 
 Work top to bottom. Kindle unplugged until the Send section says so.
 

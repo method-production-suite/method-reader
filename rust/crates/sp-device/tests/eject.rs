@@ -21,7 +21,7 @@ fn linux_kobo() -> ConnectedDevice {
     ConnectedDevice::mounted(
         DeviceKind::Kobo,
         "KOBOeReader",
-        "/run/media/sam/KOBOeReader",
+        "/run/media/ann/KOBOeReader",
     )
 }
 fn win_kindle() -> ConnectedDevice {
@@ -157,7 +157,7 @@ fn findmnt_then(rest: impl Fn(&[String]) -> RunOutput + Send + Sync + 'static) -
 fn linux_asks_findmnt_then_unmounts_then_powers_off_in_that_order() {
     let run = findmnt_then(|_| exit(0, "", ""));
     let result = eject(
-        "/run/media/sam/KOBOeReader",
+        "/run/media/ann/KOBOeReader",
         Platform::Linux,
         vec![linux_kobo()],
         run.clone(),
@@ -172,20 +172,20 @@ fn linux_asks_findmnt_then_unmounts_then_powers_off_in_that_order() {
                 "-o",
                 "SOURCE",
                 "--mountpoint",
-                "/run/media/sam/KOBOeReader"
+                "/run/media/ann/KOBOeReader"
             ]),
             strings(&["udisksctl", "unmount", "-b", "/dev/sdb1"]),
             strings(&["udisksctl", "power-off", "-b", "/dev/sdb1"]),
         ]
     );
-    assert_eq!(result, ejected("/run/media/sam/KOBOeReader"));
+    assert_eq!(result, ejected("/run/media/ann/KOBOeReader"));
 }
 
 #[test]
 fn linux_a_failed_unmount_stops_there_and_power_off_never_runs() {
     let run = findmnt_then(|_| exit(1, "", "Error unmounting /dev/sdb1: target is busy\n"));
     let err = eject(
-        "/run/media/sam/KOBOeReader",
+        "/run/media/ann/KOBOeReader",
         Platform::Linux,
         vec![linux_kobo()],
         run.clone(),
@@ -216,13 +216,13 @@ fn linux_unmounted_but_power_off_refused_is_still_ejected() {
             }
         });
         let result = eject(
-            "/run/media/sam/KOBOeReader",
+            "/run/media/ann/KOBOeReader",
             Platform::Linux,
             vec![linux_kobo()],
             run.clone(),
         )
         .unwrap();
-        assert_eq!(result, ejected("/run/media/sam/KOBOeReader"));
+        assert_eq!(result, ejected("/run/media/ann/KOBOeReader"));
         assert_eq!(
             run.calls().iter().map(|a| a[1].clone()).collect::<Vec<_>>(),
             ["-n", "unmount", "power-off"]
@@ -234,7 +234,7 @@ fn linux_unmounted_but_power_off_refused_is_still_ejected() {
 fn linux_findmnt_naming_no_device_is_eject_failed_and_udisksctl_never_runs() {
     let run = Recording::new(|_| Ok(exit(0, "\n", "")));
     let err = eject(
-        "/run/media/sam/KOBOeReader",
+        "/run/media/ann/KOBOeReader",
         Platform::Linux,
         vec![linux_kobo()],
         run.clone(),
@@ -250,7 +250,7 @@ fn linux_a_source_that_is_not_a_dev_block_device_is_eject_failed() {
         let out = format!("{source}\n");
         let run = Recording::new(move |_| Ok(exit(0, &out, "")));
         let err = eject(
-            "/run/media/sam/KOBOeReader",
+            "/run/media/ann/KOBOeReader",
             Platform::Linux,
             vec![linux_kobo()],
             run.clone(),
@@ -264,7 +264,7 @@ fn linux_a_source_that_is_not_a_dev_block_device_is_eject_failed() {
 
 #[test]
 fn linux_a_reader_that_is_a_plain_folder_never_reaches_the_disk_it_sits_on() {
-    let tolino = ConnectedDevice::mounted(DeviceKind::Tolino, "tolino", "/home/sam/tolino");
+    let tolino = ConnectedDevice::mounted(DeviceKind::Tolino, "tolino", "/home/ann/tolino");
     let run = Recording::new(|argv| {
         Ok(if argv.iter().any(|a| a == "--target") {
             exit(0, "/dev/sda2\n", "")
@@ -273,7 +273,7 @@ fn linux_a_reader_that_is_a_plain_folder_never_reaches_the_disk_it_sits_on() {
         })
     });
     let err = eject(
-        "/home/sam/tolino",
+        "/home/ann/tolino",
         Platform::Linux,
         vec![tolino],
         run.clone(),
@@ -282,7 +282,7 @@ fn linux_a_reader_that_is_a_plain_folder_never_reaches_the_disk_it_sits_on() {
     assert_eq!(err.code, ErrorCode::EjectFailed);
     assert_eq!(
         err.message,
-        "could not eject /home/sam/tolino: could not find the device behind it"
+        "could not eject /home/ann/tolino: could not find the device behind it"
     );
     assert_eq!(
         run.calls(),
@@ -292,7 +292,7 @@ fn linux_a_reader_that_is_a_plain_folder_never_reaches_the_disk_it_sits_on() {
             "-o",
             "SOURCE",
             "--mountpoint",
-            "/home/sam/tolino"
+            "/home/ann/tolino"
         ])]
     );
 }
@@ -399,7 +399,7 @@ fn eject_commands_is_pure_linux_needs_the_device_first() {
         EjectPlan::Commands(vec![strings(&["diskutil", "eject", "/Volumes/Kindle"])])
     );
     assert_eq!(
-        eject_commands("/run/media/sam/KOBOeReader", Platform::Linux),
+        eject_commands("/run/media/ann/KOBOeReader", Platform::Linux),
         EjectPlan::NeedsDevice
     );
 }

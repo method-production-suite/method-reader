@@ -747,7 +747,7 @@ and the suite will say so if you forget.
   so this cannot recur for the next keep.
 - **Device verdict 2026-08-04: HOLDS, and no rendering failure.** Sideloaded
   KFX on the Kindle, torture fixture with the option ON, read against the
-  0.5.1 engine. Speeches held together and Sam reported nothing wrong. The
+  0.5.1 engine. Speeches held together and the owner reported nothing wrong. The
   longest speech in the set (the MORE-ANCHOR block, taller than one page)
   rendered without the blank-page push the 2016 Previewer reports warned
   about, which was the specific risk this slot named.
@@ -762,7 +762,7 @@ and the suite will say so if you forget.
   above names is now closed. Both arms went on the device as one A/B, the two
   builds differing in exactly one CSS rule (`.dialogue-block` gaining
   `page-break-inside: avoid`, `break-inside: avoid` and the column spelling),
-  and titled distinctly so they could be told apart in the library. Sam read
+  and titled distinctly so they could be told apart in the library. The owner read
   both and preferred the OFF arm on overall reading quality. No defect in the
   ON arm: it holds, as the 08-04 pass found, and this is taste rather than a
   failure. Still not a MEASUREMENT: nobody counted unused page height, so the
