@@ -82,10 +82,10 @@ fn read_and_settings_are_absent_until_a_script_is_open() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     h.get_by_role_and_label(Role::Tab, "Convert");
-    assert!(h.query_by_role_and_label(Role::Tab, "Read").is_none());
+    assert!(h.query_by_role_and_label(Role::Tab, "Preview").is_none());
     assert!(h.query_by_role_and_label(Role::Tab, "Settings").is_none());
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read");
+    h.get_by_role_and_label(Role::Tab, "Preview");
     h.get_by_role_and_label(Role::Tab, "Settings");
     h.get_by_role_and_label(Role::TabList, "Method Reader");
 }
@@ -141,7 +141,7 @@ fn a_conversion_ends_on_the_result_with_its_counts_and_the_device_cards() {
             .is_none(),
         "a Kindle on a Mac is proven"
     );
-    for link in ["Open in Read", "Settings", "Convert another"] {
+    for link in ["Preview", "Settings", "Convert another"] {
         h.get_by_role_and_label(Role::Button, link);
     }
 }
@@ -442,7 +442,7 @@ fn read_shows_the_script_with_its_scene_index() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Heading, "Field Station");
     assert!(has_value(&h, "by the Method Reader project"));
@@ -487,11 +487,12 @@ fn a_book_with_no_pages_says_so_and_offers_the_ways_on() {
     );
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Heading, "No pages came back");
     h.get_by_role_and_label(Role::Button, "Convert it again");
-    h.get_by_role_and_label(Role::Button, "Send").click();
+    h.get_by_role_and_label(Role::Button, "Send to e-reader")
+        .click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Heading, "Field Station is ready");
 }
@@ -611,7 +612,7 @@ fn a_kindle_plugged_in_while_reading_gets_a_heads_up() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     kindle_plugged_in(&w);
     w.fakes.clock.advance(2001.0);

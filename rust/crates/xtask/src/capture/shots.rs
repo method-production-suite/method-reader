@@ -3,7 +3,7 @@
 //!
 //! The Method suite's four shots, in its order (SUITE-STANDARDS.md section
 //! 7.1): (1) the hero, the main view with real content: `read`, the book on
-//! the Read tab; (2) the signature feature, the before and after:
+//! the Preview tab; (2) the signature feature, the before and after:
 //! `compare`, the site's own two-reader section held still; (3) open:
 //! `drop`, with `result` beside it, the same window once the script is in;
 //! (4) the file you own: `cli`, a terminal running the real command line

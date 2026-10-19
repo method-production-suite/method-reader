@@ -1,4 +1,5 @@
-//! Read it | Edit it: what the send panel leads with. New behavior in the
+//! Send to e-reader | Get an editable script: what the send panel leads
+//! with (`Intent::Read` and `Intent::Edit` inside). New behavior in the
 //! Rust window, not parity: the script-for-editing files (FDX, Fountain)
 //! were only reachable under Other ways > Save a file, after a reader was
 //! chosen. The choice is remembered app-wide (`panelIntent` in app
@@ -36,7 +37,8 @@ impl Intent {
         }
     }
 
-    /// Where the brass knob rests: 0 under Read it, 1 under Edit it.
+    /// Where the brass knob rests: 0 under the e-reader half, 1 under the
+    /// editable script.
     pub fn knob(self) -> f32 {
         match self {
             Intent::Read => 0.0,
@@ -45,13 +47,13 @@ impl Intent {
     }
 }
 
-pub const READ_IT: &str = "Read it";
-pub const EDIT_IT: &str = "Edit it";
+pub const READ_IT: &str = "Send to e-reader";
+pub const EDIT_IT: &str = "Get an editable script";
 /// The control's accessible name.
-pub const CHOICE_LABEL: &str = "Read it or edit it";
+pub const CHOICE_LABEL: &str = "What to do with the book";
 pub const EDIT_LINE: &str = "Get the script back to edit, rebuilt from the PDF’s pages.";
 
-/// One of Edit it's two cards: the file type it saves, its name and the
+/// One of the editable script's two cards: the file type it saves, its name and the
 /// line under it, and whether it wears the Beta badge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EditCard {
@@ -64,19 +66,20 @@ pub struct EditCard {
 pub const EDIT_CARDS: [EditCard; 2] = [
     EditCard {
         kind: "fdx",
-        name: "Final Draft",
-        sub: "FDX, also for most screenwriting apps",
+        name: ".fdx",
+        sub: "Opens in most screenwriting apps",
         beta: true,
     },
     EditCard {
         kind: "fountain",
-        name: "Highland, Fade In and others",
-        sub: "Fountain, plain text",
+        name: "Fountain",
+        sub: "Plain text, opens in many screenwriting apps",
         beta: false,
     },
 ];
 
-/// The stored choice in an app-settings answer; anything else is Read it.
+/// The stored choice in an app-settings answer; anything else is the
+/// e-reader half.
 pub fn intent_from(answer: &Value) -> Intent {
     if !super::json::ok(answer) {
         return Intent::Read;
@@ -88,7 +91,7 @@ pub fn intent_from(answer: &Value) -> Intent {
 }
 
 /// The keys that move the choice: Left/Right (and Up/Down) flip it, Home
-/// picks Read it, End picks Edit it. None: the key does nothing.
+/// picks the e-reader half, End the editable script. None: the key does nothing.
 pub fn step(current: Intent, key: egui::Key) -> Option<Intent> {
     use egui::Key::*;
     let next = match key {

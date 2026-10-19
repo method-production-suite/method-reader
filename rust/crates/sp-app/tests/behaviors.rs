@@ -95,7 +95,7 @@ fn n4_only_the_selected_tab_is_a_tab_stop() {
             .supports_action(Action::Focus)
     };
     assert!(focusable(&h, "Convert"));
-    assert!(!focusable(&h, "Read"));
+    assert!(!focusable(&h, "Preview"));
     assert!(!focusable(&h, "Settings"));
 }
 
@@ -135,7 +135,7 @@ fn n6_n19_closing_the_script_takes_the_tabs_away_and_returns_to_convert() {
         h.state().watcher.running(),
         "the devices poll runs while a book is open"
     );
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     {
         let app = h.state_mut();
@@ -144,7 +144,7 @@ fn n6_n19_closing_the_script_takes_the_tabs_away_and_returns_to_convert() {
     }
     steps(&mut h);
     assert_eq!(h.state().surface, Surface::Convert);
-    assert!(h.query_by_role_and_label(Role::Tab, "Read").is_none());
+    assert!(h.query_by_role_and_label(Role::Tab, "Preview").is_none());
     assert!(!h.state().watcher.running());
 }
 
@@ -188,7 +188,7 @@ fn a_script_at_rest_wakes_only_for_the_devices_poll() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    for surface in ["Read", "Settings", "Convert"] {
+    for surface in ["Preview", "Settings", "Convert"] {
         h.get_by_role_and_label(Role::Tab, surface).click();
         let_everything_settle(&w, &mut h);
         match h.state().wake {
@@ -206,7 +206,7 @@ fn an_animation_asks_for_the_very_next_frame_until_it_ends() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     let_everything_settle(&w, &mut h);
     h.get_by_role_and_label(Role::Button, "Hide scenes").click();
     h.run_steps(1);
@@ -402,9 +402,10 @@ fn c22_d28_the_last_send_and_its_eject_come_back_with_the_result() {
     h.get_by_role_and_label(Role::Button, "Convert another")
         .click_accesskit();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Button, "Send").click();
+    h.get_by_role_and_label(Role::Button, "Send to e-reader")
+        .click();
     steps(&mut h);
     assert!(has(&h, line), "the line comes back with the result");
     h.get_by_role_and_label(Role::Button, "Eject Kindle");
@@ -433,7 +434,7 @@ fn c29_convert_it_again_converts_the_open_scripts_source() {
     w.engine.once("convert", Reply::ok(blank));
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Convert it again")
         .click();
@@ -518,7 +519,7 @@ fn r3_under_the_fold_the_index_sits_above_the_script() {
     let w = world();
     let mut h = harness_sized(&w, Platform::Mac, [900.0, 800.0]);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     let rail = h.get_by_role_and_label(Role::Navigation, "Scenes").rect();
     let stage = h
@@ -564,7 +565,7 @@ fn n9_the_rev_stamp_is_whole_inside_the_window_on_read() {
         }
         let mut h = harness_sized(&w, Platform::Mac, [width, height]);
         convert(&w, &mut h);
-        h.get_by_role_and_label(Role::Tab, "Read").click();
+        h.get_by_role_and_label(Role::Tab, "Preview").click();
         steps(&mut h);
         let stamp = h
             .get_by_role_and_label(Role::Button, concat!("rev ", env!("CARGO_PKG_VERSION")))
@@ -624,7 +625,7 @@ fn r9_r10_pressing_a_scene_scrolls_to_it_and_marks_it() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "EXT. RIDGE – NIGHT")
         .click();
@@ -656,7 +657,7 @@ fn r9_with_reduce_motion_a_scene_is_there_at_once() {
         .store(true, std::sync::atomic::Ordering::Relaxed);
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "EXT. RIDGE – NIGHT")
         .click();
@@ -669,7 +670,7 @@ fn r15_a_settings_save_rebuilds_what_read_shows_and_keeps_the_place() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "EXT. RIDGE – NIGHT")
         .click();
@@ -685,7 +686,7 @@ fn r15_a_settings_save_rebuilds_what_read_shows_and_keeps_the_place() {
     steps(&mut h);
     steps(&mut h);
     assert_eq!(w.engine.calls_of("reconvert").len(), 1);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     assert_eq!(
         h.state().read.marked.as_deref(),
@@ -714,7 +715,7 @@ fn s2_while_the_answer_is_out_it_says_it_is_reading_never_the_fault() {
     }
     steps(&mut h);
     assert!(has(&h, "Reading this script’s settings…"));
-    h.get_by_role_and_label(Role::Button, "Send");
+    h.get_by_role_and_label(Role::Button, "Send to e-reader");
     assert!(!has(&h, "Settings out of reach"));
 }
 
@@ -728,7 +729,7 @@ fn s7_s8_every_group_opens_and_every_knob_is_named() {
         "Dialogue",
         "The text",
         "What the book carries",
-        "Read from the PDF",
+        "Taken from the PDF",
     ] {
         h.get_by_role_and_label(Role::Button, group)
             .click_accesskit();
@@ -1154,7 +1155,7 @@ fn h5_h6_the_heads_up_goes_by_itself_and_copy_it_copies() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     plug_in_a_kindle(&w);
     w.fakes.clock.advance(2001.0);
@@ -1170,7 +1171,7 @@ fn h5_h6_the_heads_up_goes_by_itself_and_copy_it_copies() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     plug_in_a_kindle(&w);
     w.fakes.clock.advance(2001.0);
@@ -1292,7 +1293,7 @@ fn w4_w5_the_page_never_moves_the_window_and_a_tab_is_still_a_tab() {
         !moves_the_window(&mut h, egui::pos2(900.0, 10.0)),
         "the tab strip"
     );
-    let read = h.get_by_role_and_label(Role::Tab, "Read").rect();
+    let read = h.get_by_role_and_label(Role::Tab, "Preview").rect();
     let settings = h.get_by_role_and_label(Role::Tab, "Settings").rect();
     let between = egui::pos2((read.right() + settings.left()) / 2.0, read.center().y);
     assert!(!moves_the_window(&mut h, between), "a gap between tabs");
@@ -1324,7 +1325,7 @@ fn n8_the_open_tab_takes_the_pages_ground_in_a_rule() {
             .any(|r| r.stroke == egui::Stroke::new(1.0, t.rule)),
         "{rects:?}"
     );
-    let read = h.get_by_role_and_label(Role::Tab, "Read").rect();
+    let read = h.get_by_role_and_label(Role::Tab, "Preview").rect();
     assert!(
         !shapes.iter().any(|s| matches!(s,
             egui::Shape::Rect(r) if r.rect.contains(read.center())
@@ -1600,7 +1601,7 @@ fn r16_the_book_is_dressed_again_when_the_os_theme_changes() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     let dressed = |h: &H| h.state().views.peek(Place::Read).map(|v| v.dark());
     assert_eq!(dressed(&h), Some(false));

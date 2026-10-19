@@ -23,7 +23,7 @@ fn field_station_sends_page_2_opening_on_its_first_scene_heading_in_plain_words_
     // Page 1 is the title page; the first page after it is page 2.
     assert_eq!(first["page"], 2);
 
-    // The scene heading the Read page shows first is the .fountain's first.
+    // The scene heading the Preview page shows first is the .fountain's first.
     let mut answer = with.json();
     let fountain =
         std::fs::read_to_string(answer["fountainPath"].as_str().unwrap()).expect("the .fountain");

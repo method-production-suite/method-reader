@@ -8,6 +8,15 @@ This is a small project maintained by one person, so treat dates as absent
 rather than optimistic. Things move up the list when people ask for them:
 see [Influencing this list](#influencing-this-list).
 
+## Waiting on the owner
+
+Decided:
+
+- Window vocabulary (decided 2026-10-18): Preview for the in-app book, Send
+  to e-reader for sending, Get an editable script for Fountain and .fdx,
+  Taken from the PDF for the settings group; format cards named .fdx and
+  Fountain. Built in this PR.
+
 ## Now
 
 - **Method Reader's own AZW3 on a real Kindle.** Over USB, a Kindle now gets an

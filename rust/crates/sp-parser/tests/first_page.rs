@@ -264,7 +264,7 @@ mod progress_sends_the_first_real_page_once {
         // Page 1 is the title page; the first page after it is page 2.
         assert_eq!(first_page, 2);
 
-        // The scene heading the Read page shows first is the .fountain's first one.
+        // The scene heading the Preview page shows first is the .fountain's first one.
         let fountain =
             std::fs::read_to_string(common::oracle("field-station").join("script.fountain"))
                 .expect("oracle script.fountain");

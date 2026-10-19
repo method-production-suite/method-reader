@@ -91,7 +91,7 @@ fn shots_in(cls: &str) -> Vec<String> {
 
 #[test]
 fn each_capture_sits_where_the_suite_order_puts_it() {
-    // (1) the hero, the Read page; (2) the before and after is the site's
+    // (1) the hero, the Preview page; (2) the before and after is the site's
     // own live section, so its still is the README's; (3) drop and result
     // under "Drag and drop"; (4) the command line under "Yours to keep".
     assert_eq!(shots_in("hero"), ["read"]);

@@ -15,7 +15,7 @@ pub const OTHER_WAYS: &str = "Other ways";
 pub const DIFFERENT: &str = "Different device";
 pub const SEND_IT: &str = "Send it";
 pub const SAVE_A_FILE: &str = "Save a file";
-pub const SEND_BOOK: &str = "Send";
+pub const SEND_BOOK: &str = "Send to e-reader";
 pub const PLUGGED_IN: &str = "Plugged in";
 
 pub struct Card {
@@ -449,7 +449,7 @@ pub const SAVE_TYPES: [SaveType; 6] = [
     SaveType {
         kind: "fdx",
         label: "FDX",
-        who: "The script for Final Draft and most screenwriting apps, to edit.",
+        who: "The script for most screenwriting apps, to edit.",
         beta: true,
     },
 ];

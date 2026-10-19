@@ -510,7 +510,9 @@ fn next_switch(app: &mut App) {
     }
 }
 
+/// Send to e-reader, as the Preview page's button does.
 fn send(app: &mut App) {
+    super::panel::choose_intent(app, crate::model::intent::Intent::Read);
     convert::show_result(app);
     app.go_to(crate::model::frame::Surface::Convert);
     app.restore_focus = true;

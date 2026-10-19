@@ -1101,7 +1101,7 @@ eighteen of them (it never gained `includeImages` or `promoteCoverImage`);
 that app is retired, no longer published, and since piece F3 gone from this
 repository. The Tune surface keeps the same four
 groups (the page, dialogue, the text, what the book carries), plus the four
-`Read from the PDF` knobs. The window owns no formatting rule of its own: it
+`Taken from the PDF` knobs. The window owns no formatting rule of its own: it
 reaches every option through the CLI, `method-reader settings <fountain> --set`
 to read and store the per-script sidecar and `--options-json` to re-render
 from the cached `.fountain`, so the engine remains the only thing that
@@ -1121,7 +1121,7 @@ when the PDF is read and neither can move a preview that re-renders from
 that cached `.fountain`. The Swift rail filed them under `Content` and
 `Dialogue`, where they read as live knobs. The window's Settings page
 (`groups()` in `rust/crates/sp-app/src/model/tune.rs`) groups all
-four together under `Read from the PDF` with the caveat, and nothing in the
+four together under `Taken from the PDF` with the caveat, and nothing in the
 engine needs to change.
 
 - All knobs above funnel into two seams: **CSS generation**

@@ -179,7 +179,7 @@ pub fn groups() -> Vec<Group> {
         },
         Group {
             id: "pdf",
-            title: "Read from the PDF",
+            title: "Taken from the PDF",
             note: Some("These four are decided while the PDF is being read. Everything else re-renders from the script Method Reader already read, so changing one here saves it for the next time you convert this PDF. It will not change what you see now."),
             knobs: vec![
                 knob("rejoinSplitDialogue", "Rejoin speeches split across pages", Kind::Toggle)

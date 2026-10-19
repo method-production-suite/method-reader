@@ -28,7 +28,7 @@
 //! - reaches the shot as a person would: `drop` is the idle well; `result`
 //!   is the demo PDF dropped on it and converted into the scratch library,
 //!   the send panel's device cards beside the book's first page; `read` is
-//!   the same book on the Read tab, its scene index and script drawn;
+//!   the same book on the Preview tab, its scene index and script drawn;
 //! - waits until nothing moves, then draws with the version stamp and the
 //!   library line hidden, so a picture changes only when the window's look
 //!   does;
