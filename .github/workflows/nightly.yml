@@ -1,0 +1,63 @@
+# Once a night, the whole check on every system (SUITE-STANDARDS.md
+# section 6, Lean CI): each change runs on Linux alone (rust.yml), so this
+# is where macOS and Windows build and test, parity runs against the Mac's
+# frozen answers, the release CLI is smoked on a Mac, and every installer
+# is built and opened. It is rust.yml itself, called with full: true, so
+# the two cannot drift apart.
+#
+# A scheduled run skips itself when main's commit is the last green
+# nightly's: nothing changed, so nothing new can fail. A manual run
+# (workflow_dispatch) always runs, which is how to answer "is this commit
+# green everywhere" before a tag. On main, rust.yml saves each system's
+# cache, so the macOS and Windows caches are kept fresh here, and
+# weekly-toolchain.yml borrows them.
+name: nightly
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+# Not ci-...: rust.yml, called from here, evaluates its own group with this
+# workflow's name, and the two must differ or the call waits on itself.
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - name: Has main changed since the last green nightly
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" != schedule ]; then
+            echo "A $EVENT run always runs."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          last="$(gh api "repos/$REPO/actions/workflows/nightly.yml/runs?branch=main&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // ""')"
+          if [ "$last" = "$SHA" ]; then
+            echo "main is still $SHA, the last green nightly's commit: nothing to run."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "main is $SHA; the last green nightly ran ${last:-nothing yet}."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+  full:
+    needs: check
+    if: needs.check.outputs.run == 'true'
+    uses: ./.github/workflows/rust.yml
+    with:
+      full: true

@@ -1,19 +1,23 @@
-# Every pull request and every push to main: Method Reader is one Cargo workspace (rust/), and this is its
-# check. It replaced ci.yml (the Bun engine) and desktop.yml (the Tauri
+# Every pull request and every push to main, on Linux; and, called by
+# nightly.yml with full: true, every system once a night (SUITE-STANDARDS
+# section 6, Lean CI: the sessions run the whole suite on a Mac before a
+# pull request is marked ready). Method Reader is one Cargo workspace
+# (rust/), and this is its check. It replaced ci.yml (the Bun engine) and desktop.yml (the Tauri
 # window) at the cutover. Least privilege by default; third-party actions
 # pinned to SHAs (pinact run).
 #
 # - rust: formatting, clippy with warnings as errors, and every crate's
-#   tests on macOS, Windows and Linux, on the committed invented fixtures
+#   tests (Linux per change; nightly adds macOS and Windows), on the committed invented fixtures
 #   in tests/fixtures/. The real scripts in root fixtures/ are private and
 #   never reach CI. No runner here has Calibre, so the tests that run the
 #   real Calibre skip; weekly-toolchain.yml runs them with Calibre.
 # - parity: the release CLI against the TypeScript engine's frozen answers
 #   for every committed fixture (cargo xtask parity --committed-only). The
-#   answers are a Mac's, so it runs on macOS.
+#   answers are a Mac's, so it runs on macOS, in the nightly only.
 # - cli: the release CLI converting the fixtures, epubcheck on its books
 #   (the project's stated validity gate), and cargo xtask smoke-cli; and
-#   the release notes for the workspace version exist.
+#   the release notes for the workspace version exist. Linux per change;
+#   nightly adds the Mac.
 # - worker: the device-request Worker built for wasm32, clippy clean.
 # - deny: cargo deny check against rust/deny.toml: every advisory is an
 #   error unless deny.toml lists it with a reason, only the licenses the
@@ -23,6 +27,7 @@
 # - bundles: every installer built unsigned, opened and checked on its own
 #   OS, with the window's headless smoke run out of the Mac app. On a pull
 #   request only when packaging changed (the job's own comment says how).
+#   Linux per change; nightly builds all three.
 #
 # The toolchain comes from rust/rust-toolchain.toml, which rustup on every
 # hosted runner installs on first use (with clippy and rustfmt), so no
@@ -36,7 +41,8 @@
 # brand/ (the window's colours), site/ (the fonts it shares with the window,
 # and the Field Station scene) and docs/releases/ (the window's notes), and
 # the window and every installer carry the licences and
-# THIRD-PARTY-NOTICES.md. main's ruleset requires these jobs to pass.
+# THIRD-PARTY-NOTICES.md. main's ruleset requires rust (ubuntu-latest),
+# worker and deny.
 #
 # Once per change (SUITE-STANDARDS.md section 6): the suite's runners are
 # shared, so a branch runs only through its pull request, and a newer push
@@ -45,6 +51,14 @@
 name: rust
 on:
   workflow_dispatch:
+  # nightly.yml calls this with full: true, for every system; each change
+  # (a pull request, a push to main) runs on Linux alone.
+  workflow_call:
+    inputs:
+      full:
+        description: run macOS and Windows too, and the Mac-only jobs
+        type: boolean
+        default: false
   push:
     branches: [main]
   # ready_for_review: a draft builds nothing (the changes job below is
@@ -151,7 +165,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15, windows-latest]
+        os: ${{ fromJSON(inputs.full && '["ubuntu-latest","macos-15","windows-latest"]' || '["ubuntu-latest"]') }}
     needs: changes
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 75 || 50 }}
@@ -196,9 +210,10 @@ jobs:
             rust/target
           key: rust-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
+  # The answers are a Mac's, so parity runs on macOS, which is nightly's.
   parity:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: inputs.full && needs.changes.outputs.code == 'true'
     runs-on: macos-15
     timeout-minutes: 15
     defaults:
@@ -231,10 +246,15 @@ jobs:
             rust/target
           key: parity-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
+  # Linux per change; nightly adds the Mac, where the release CLI ships signed.
   cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.full && '["ubuntu-latest","macos-15"]' || '["ubuntu-latest"]') }}
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: macos-15
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     defaults:
       run:
@@ -259,8 +279,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: cli-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
-          restore-keys: cli-
+          key: cli-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          restore-keys: cli-${{ matrix.os }}-
       - run: cargo build --release --locked -p sp-cli --bin method-reader --bin screepub
       # The three fixtures whose books carry figures (registry #19a): images.pdf
       # keeps two pictures, jpx.pdf one JPEG 2000 picture, torture.pdf the
@@ -290,7 +310,7 @@ jobs:
           grep -q '"imageCount":4' "$W/torture.json"
       - name: epubcheck the books
         run: |
-          brew install epubcheck
+          if [ "$RUNNER_OS" = macOS ]; then brew install epubcheck; else sudo apt-get update && sudo apt-get install -y epubcheck; fi
           for b in smoke images jpx torture; do epubcheck "$RUNNER_TEMP/books/$b.epub"; done
       - run: cargo xtask smoke-cli --binary target/release/method-reader
       - run: cargo xtask smoke-cli --binary target/release/screepub
@@ -304,7 +324,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: cli-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+          key: cli-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
   # The Worker as Cloudflare would build it: wasm32, workers-rs, clippy
   # clean. Built, never deployed from here (no Cloudflare credential exists
@@ -399,7 +419,7 @@ jobs:
   # Only when packaging can have changed. Building every installer on three
   # OSes is most of this repository's runner time, and most pull requests
   # cannot change what the installers hold. So the expensive steps run on
-  # every push to main, on workflow_dispatch, and on a pull request that
+  # every push to main and every nightly, on workflow_dispatch, and on a pull request that
   # touches the packaging (the list in the decide step); release.yml builds
   # its own installers on every tag whatever this job does. The job-level
   # `if:` is only the changes job's (drafts and documentation); the
@@ -410,7 +430,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15, windows-latest]
+        os: ${{ fromJSON(inputs.full && '["ubuntu-latest","macos-15","windows-latest"]' || '["ubuntu-latest"]') }}
     needs: changes
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20

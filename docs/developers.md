@@ -321,12 +321,21 @@ file, or anything under `docs/`) runs the docs tests alone, on Linux. Two
 exceptions count as code, because the build reads them: THIRD-PARTY-NOTICES.md
 and `docs/releases/`. So do the licence files, `site/` and `brand/`.
 
-Every other pull request runs the tests, formatting, lints and dependency checks.
-The installers (the bundles job) are built and smoke-tested only when a
-pull request changes packaging: the release tools, the updater, xtask's
-bundle code, the window's manifest, icons or headless mode, the licence
-files, the workspace manifest, the lock file, the toolchain or the
-workflows. A pull request that changes only app code skips them, so the
-bundled headless smoke does not run on it; the push to main runs every
-installer and catches anything it missed. Only main saves a build cache;
-a pull request restores main's.
+Each change (a pull request, a push to main) runs on Linux only: the
+tests, formatting, lints, dependency checks and the release CLI. So run the
+whole suite on a Mac (`cargo test --workspace` and `cargo xtask parity`)
+before marking a pull request ready. The nightly workflow runs everything on
+macOS, Windows and Linux against main, including parity against the Mac's
+frozen answers. It skips itself when main hasn't changed since the last
+green nightly. Run it by hand (Actions, nightly, Run workflow) to check a
+commit before tagging it. release.yml builds and tests every system on each
+tag, as before.
+
+The Linux installers (the bundles job) are built and checked on a pull
+request only when it changes packaging: the release tools, the updater,
+xtask's bundle code, the window's manifest, icons or headless mode, the
+licence files, the workspace manifest, the lock file, the toolchain or the
+workflows. Every push to main builds them. The Mac and Windows installers,
+and the window's headless smoke run out of the Mac app, are built only by
+the nightly and by release.yml. Only main saves a build cache, and a pull
+request restores main's.

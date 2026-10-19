@@ -262,6 +262,14 @@ fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
 
 /// A job that reads the release while it is still a DRAFT, which GitHub
 /// shows only to a token that can write: release.yml's draft-check.
+/// nightly.yml's check job: it reads the workflow's own past runs, which
+/// needs actions: read and nothing else.
+fn reads_its_runs(file: &str, name: &str, job: &Value) -> bool {
+    file == "nightly.yml"
+        && name == "check"
+        && commands(&run_text(job)).contains("actions/workflows/nightly.yml/runs")
+}
+
 fn reads_the_draft(file: &str, name: &str, job: &Value) -> bool {
     file == "release.yml"
         && name == "draft-check"
@@ -291,6 +299,7 @@ fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
                 )),
                 None => {}
                 Some(p) if p == map(&[("contents", "write")]) && writes => {}
+                Some(p) if p == map(&[("actions", "read")]) && reads_its_runs(&f, &name, job) => {}
                 Some(p) => wrong.push(format!(
                     "{f}: {name} asks for {p:?} but {}",
                     if writes {
@@ -750,8 +759,11 @@ fn a_draft_builds_nothing_and_marking_it_ready_starts_the_run() {
         assert_eq!(s(j, "needs"), "changes", "{name} needs the changes job");
         let want = match name.as_str() {
             "docs" => "needs.changes.outputs.code == 'false'",
-            // Matrix jobs: see the next test.
-            _ if MATRIX_JOBS.contains(&name.as_str()) => "",
+            // The Mac-only job: nightly's alone (the next tests).
+            "parity" => "inputs.full && needs.changes.outputs.code == 'true'",
+            // Matrix jobs a ruleset has required: see the next test. (cli
+            // is required by none, so it is skipped like any other job.)
+            "rust" | "bundles" => "",
             _ => CODE_GUARD,
         };
         assert_eq!(job_if(j), want, "{name}");
@@ -759,7 +771,7 @@ fn a_draft_builds_nothing_and_marking_it_ready_starts_the_run() {
 }
 
 /// The required checks that come from a matrix ("rust (ubuntu-latest)").
-const MATRIX_JOBS: [&str; 2] = ["rust", "bundles"];
+const MATRIX_JOBS: [&str; 3] = ["rust", "cli", "bundles"];
 
 #[test]
 fn a_matrix_job_is_skipped_step_by_step_so_its_required_checks_report() {
@@ -775,6 +787,7 @@ fn a_matrix_job_is_skipped_step_by_step_so_its_required_checks_report() {
             "{name} is a matrix job"
         );
     }
+    // cli is required by no ruleset, so a job-level skip is harmless there.
     let unguarded: Vec<String> = steps(job(&wf, "rust"))
         .into_iter()
         .filter(|st| !s(st, "if").starts_with(CODE_GUARD))
@@ -842,4 +855,121 @@ fn documentation_alone_skips_the_build_but_not_what_the_build_reads() {
             "{f}"
         );
     }
+}
+
+/// The matrix's `os:` expression: `fromJSON(inputs.full && FULL || '["ubuntu-latest"]')`.
+fn os_lists(wf: &Value, name: &str) -> (Vec<String>, Vec<String>) {
+    let os = s(&job(wf, name)["strategy"]["matrix"], "os").to_string();
+    let re =
+        Regex::new(r"^\$\{\{ fromJSON\(inputs\.full && '(\[[^']*\])' \|\| '(\[[^']*\])'\) \}\}$")
+            .unwrap();
+    let c = re
+        .captures(&os)
+        .unwrap_or_else(|| panic!("{name}: os is not the full-or-Linux expression: {os}"));
+    let list = |i: usize| -> Vec<String> {
+        serde_json::from_str(&c[i]).unwrap_or_else(|e| panic!("{name}: {e}"))
+    };
+    (list(1), list(2))
+}
+
+#[test]
+fn each_change_runs_on_linux_alone_and_the_nightly_on_every_system() {
+    // SUITE-STANDARDS.md section 6, Lean CI: a pull request and a push to
+    // main run Linux only; nightly.yml calls this workflow with full: true
+    // for macOS and Windows too. main's ruleset requires rust
+    // (ubuntu-latest), worker and deny, which every change still reports.
+    let wf = workflow("rust.yml");
+    let every = ["ubuntu-latest", "macos-15", "windows-latest"];
+    for name in ["rust", "bundles"] {
+        let (full, change) = os_lists(&wf, name);
+        assert_eq!(full, every, "{name}");
+        assert_eq!(change, ["ubuntu-latest"], "{name}");
+    }
+    let (full, change) = os_lists(&wf, "cli");
+    assert_eq!(full, ["ubuntu-latest", "macos-15"]);
+    assert_eq!(change, ["ubuntu-latest"]);
+    // Every other job is on Linux, except parity, which only nightly runs.
+    for (name, j) in jobs(&wf) {
+        let on = s(j, "runs-on");
+        if MATRIX_JOBS.contains(&name.as_str()) {
+            assert_eq!(on, "${{ matrix.os }}", "{name}");
+        } else if name == "parity" {
+            assert!(job_if(j).starts_with("inputs.full && "), "{name}");
+        } else {
+            assert_eq!(on, "ubuntu-latest", "{name}");
+        }
+    }
+    let input = &wf["on"]["workflow_call"]["inputs"]["full"];
+    assert_eq!(s(input, "type"), "boolean");
+    assert_eq!(input["default"].as_bool(), Some(false));
+}
+
+#[test]
+fn the_nightly_is_rust_yml_in_full_on_main() {
+    let wf = workflow("nightly.yml");
+    let on = &wf["on"];
+    assert!(on["schedule"].as_sequence().is_some_and(|s| s.len() == 1));
+    assert!(on.get("workflow_dispatch").is_some());
+    assert!(on.get("push").is_none() && on.get("pull_request").is_none());
+    let full = job(&wf, "full");
+    assert_eq!(s(full, "uses"), "./.github/workflows/rust.yml");
+    assert_eq!(full["with"]["full"].as_bool(), Some(true));
+    assert_eq!(s(full, "needs"), "check");
+    assert_eq!(job_if(full), "needs.check.outputs.run == 'true'");
+    // rust.yml's own group is ci-<this workflow's name>-<ref>: this one must
+    // differ, or the call would wait on itself.
+    let group = s(&wf["concurrency"], "group");
+    assert!(!group.starts_with("ci-"), "{group}");
+    assert_ne!(
+        wf["concurrency"]["cancel-in-progress"].as_bool(),
+        Some(true)
+    );
+}
+
+/// Run nightly's check step with a `gh` stub that answers `last` as the
+/// last green nightly's commit; what it wrote to GITHUB_OUTPUT.
+#[cfg(unix)]
+fn nightly_check(event: &str, sha: &str, last: &str) -> String {
+    let wf = workflow("nightly.yml");
+    let all = steps(job(&wf, "check"));
+    let st = all
+        .iter()
+        .find(|st| s(st, "id") == "check")
+        .expect("check has a step with id: check");
+    let dir = Scratch::new("nightly");
+    dir.script(
+        "bin/gh",
+        &format!(
+            "case \"$1 $2\" in \"api repos/o/r/actions/workflows/nightly.yml/runs?branch=main&status=success&per_page=1\") echo '{last}' ;; *) exit 9 ;; esac\n"
+        ),
+    );
+    let out_file = dir.join("output.txt");
+    let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
+    let out = bash(
+        s(st, "run"),
+        dir.path(),
+        &[
+            ("PATH", path.as_str()),
+            ("EVENT", event),
+            ("REPO", "o/r"),
+            ("SHA", sha),
+            ("GITHUB_OUTPUT", out_file.to_str().expect("a UTF-8 path")),
+        ],
+    );
+    assert!(out.status.success(), "{}", said(&out));
+    std::fs::read_to_string(out_file).unwrap_or_default()
+}
+
+#[cfg(unix)]
+#[test]
+fn the_nightly_skips_itself_only_when_main_is_the_last_green_commit() {
+    assert_eq!(nightly_check("schedule", "abc", "abc"), "run=false\n");
+    assert_eq!(nightly_check("schedule", "abc", "def"), "run=true\n");
+    // No green nightly yet.
+    assert_eq!(nightly_check("schedule", "abc", ""), "run=true\n");
+    // A manual run always runs, even on the same commit.
+    assert_eq!(
+        nightly_check("workflow_dispatch", "abc", "abc"),
+        "run=true\n"
+    );
 }
