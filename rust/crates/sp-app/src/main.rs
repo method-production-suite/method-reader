@@ -83,6 +83,13 @@ fn main() -> ExitCode {
             // is on), so no test, capture or headless run ever checks.
             let now = app.now();
             app.update.start_schedule(now);
+            // The sample, on a fresh install's first launch with nothing
+            // open (and the switch on): only the shipped window opens it,
+            // so no test, capture or headless run converts it unasked.
+            // --open-sample and --check-for-updates (the suite's
+            // launcher): their Help items, chosen on the first frame.
+            app.launched_with(&args);
+            sp_app::app::sample::first_launch(&mut app);
             #[cfg(target_os = "macos")]
             {
                 app.menus = sp_app::app::menu::Menus::install();

@@ -16,6 +16,7 @@ pub mod host;
 pub mod menu;
 pub mod panel;
 pub mod read;
+pub mod sample;
 pub mod show;
 pub mod sound;
 pub mod tune;
@@ -122,6 +123,8 @@ pub struct App {
     pub update: frame::UpdateState,
     /// The Help menu's sheets (help.rs).
     pub help: help::State,
+    /// The sample's first launch (sample.rs).
+    pub sample: sample::State,
     /// Help menu items chosen in the Mac menu bar, applied next frame.
     pub help_chosen: Vec<crate::model::help::HelpItem>,
     /// The book as each place shows it (bookview.rs).
@@ -183,6 +186,7 @@ impl App {
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
             help: help::State::default(),
+            sample: sample::State::default(),
             help_chosen: Vec::new(),
             views: bookview::Views::new(mode == Mode::Threads),
             frame_log: crate::framelog::FrameLog::from_env(),
@@ -199,6 +203,9 @@ impl App {
             // frame the first book arrives (mid page show).
             std::thread::spawn(book::warm_fonts);
         }
+        // Whether this is the first launch, read before What's New marks
+        // this one as seen (model/sample.rs); acted on by main.rs alone.
+        app.sample.first_launch = crate::model::sample::first_launch_due(app.host.storage.as_mut());
         app.update.boot(&mut app.host);
         // What's New, once after an update (never on a fresh install).
         if crate::model::update::whats_new_due(
@@ -209,6 +216,18 @@ impl App {
         }
         convert::draw_well(&mut app);
         app
+    }
+
+    /// The launch flags (model/help.rs `launch_items`), from main.rs once
+    /// the window is made: each is its Help item, chosen as the menu
+    /// chooses it, on the first frame. `--open-sample` stands in for the
+    /// first launch's sample, which it would otherwise repeat.
+    pub fn launched_with(&mut self, args: &[String]) {
+        let items = crate::model::help::launch_items(args);
+        if items.contains(&crate::model::help::HelpItem::OpenSample) {
+            self.sample.first_launch = false;
+        }
+        self.help_chosen.extend(items);
     }
 
     /// Wake egui when a worker answers.

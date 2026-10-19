@@ -125,6 +125,9 @@ mod tests {
             })
         );
         assert!(matches!(parse(&a(&["--smoke"])), Some(Headless::Usage(_))));
+        // The launch flags open the window (model/help.rs launch_items).
+        assert_eq!(parse(&a(&["--open-sample"])), None);
+        assert_eq!(parse(&a(&["--check-for-updates"])), None);
     }
 
     #[test]

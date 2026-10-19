@@ -33,6 +33,14 @@ pub enum Request {
         epub: String,
         options: String,
     },
+    /// The bundled sample (src/model/sample.rs), converted into its own
+    /// folder outside the library: `path` (the PDF, or its `.fountain` to
+    /// reopen it) to the book at `out`, with progress and the pages inline.
+    /// Not one of app.js's: the Tauri window had no sample.
+    ConvertTo {
+        path: String,
+        out: String,
+    },
     Devices {
         quick: bool,
     },
@@ -87,6 +95,7 @@ impl Request {
             Self::Version => Call::Version,
             Self::Convert { .. } => Call::Convert,
             Self::Reconvert { .. } => Call::Reconvert,
+            Self::ConvertTo { .. } => Call::Convert,
             Self::Devices { .. } => Call::Devices,
             Self::Eject { .. } => Call::Eject,
             Self::Send { .. } => Call::Send,
@@ -144,6 +153,14 @@ impl Request {
                 Some(epub),
                 Some("--options-json"),
                 Some(options),
+            ]),
+            Self::ConvertTo { path, out } => v(&[
+                Some(path),
+                Some("--json"),
+                Some("--progress"),
+                Some("--preview-inline"),
+                Some("-o"),
+                Some(out),
             ]),
             Self::Devices { quick } => {
                 v(&[Some("devices"), Some("--json"), flag(*quick, "--quick")])
@@ -234,6 +251,7 @@ impl Request {
             Self::Version => "version",
             Self::Convert { .. } => "convert",
             Self::Reconvert { .. } => "reconvert",
+            Self::ConvertTo { .. } => "convert-to",
             Self::Devices { .. } => "devices",
             Self::Eject { .. } => "eject",
             Self::Send { .. } => "send",
@@ -299,6 +317,20 @@ pub fn default_answer(request: &Request) -> Value {
         }),
         Request::Reconvert { .. } => {
             json!({"ok": true, "warnings": [], "previewHtml": SAMPLE_PREVIEW})
+        }
+        Request::ConvertTo { path, out } => {
+            let from_pdf = path.to_lowercase().ends_with(".pdf");
+            let mut answer = json!({
+                "ok": true, "title": "Field Station", "warnings": [], "epubPath": out,
+                "source": path, "previewHtml": SAMPLE_PREVIEW,
+            });
+            if from_pdf {
+                answer["author"] = json!("the Method Reader project");
+                answer["pages"] = json!(19);
+                answer["scenes"] = json!(11);
+                answer["fountainPath"] = json!(out.replace(".epub", ".fountain"));
+            }
+            answer
         }
         Request::Devices { .. } => json!({"ok": true, "devices": []}),
         Request::Eject { .. } => json!({"ok": true}),
@@ -457,7 +489,7 @@ impl FakeEngine {
 impl Engine for FakeEngine {
     fn run(&self, request: &Request, progress: &mut dyn FnMut(Value)) -> Reply {
         self.calls.lock().expect("fake").push(request.clone());
-        if matches!(request, Request::Convert { .. }) {
+        if matches!(request, Request::Convert { .. } | Request::ConvertTo { .. }) {
             for line in self.progress.lock().expect("fake").iter() {
                 progress(line.clone());
             }
@@ -538,6 +570,21 @@ mod tests {
                 "/a.epub",
                 "--options-json",
                 "{}"
+            ]
+        );
+        assert_eq!(
+            Request::ConvertTo {
+                path: "/s/Field Station.pdf".into(),
+                out: "/s/Field Station.epub".into()
+            }
+            .argv(),
+            [
+                "/s/Field Station.pdf",
+                "--json",
+                "--progress",
+                "--preview-inline",
+                "-o",
+                "/s/Field Station.epub"
             ]
         );
         assert_eq!(

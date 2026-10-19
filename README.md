@@ -43,6 +43,12 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
 ## What it does
 
 - **Drop a PDF, get a clean e-book.** Nothing to set up first.
+- **A book to look at from the start.** The first time it opens, Method
+  Reader shows Field Station, an invented sample script, as a book, so you
+  can see what it makes before you convert your own. Open Sample in the Help
+  menu brings it back any time, and a switch on the Settings page turns the
+  first-launch sample off. The sample keeps to a folder of its own, outside
+  your library.
 - **Send it to your reader, straight from the result.** Say once what you
   read on, and one button does the rest: plug in a Kindle and it copies over
   in the right format, then offers to eject it (beta on Windows and Linux).
