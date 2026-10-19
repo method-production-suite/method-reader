@@ -311,3 +311,15 @@ the Tauri window that came before it. Before changing
 layout code, read
 [screenplay-format-reference.md](screenplay-format-reference.md): it records
 print geometry and what each e-reader's renderer honours.
+
+## Continuous integration
+
+Every pull request runs the tests, formatting, lints and dependency checks.
+The installers (the bundles job) are built and smoke-tested only when a
+pull request changes packaging: the release tools, the updater, xtask's
+bundle code, the window's manifest, icons or headless mode, the licence
+files, the workspace manifest, the lock file, the toolchain or the
+workflows. A pull request that changes only app code skips them, so the
+bundled headless smoke does not run on it; the push to main runs every
+installer and catches anything it missed. Only main saves a build cache;
+a pull request restores main's.
