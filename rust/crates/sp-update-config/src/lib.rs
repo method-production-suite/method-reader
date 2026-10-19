@@ -62,6 +62,66 @@ pub const BUNDLE_NAME: &str = "Method Reader.app";
 /// so the swap can rename it once and the sweep can find its leftovers.
 pub const LEGACY_BUNDLE_NAME: &str = "Screepub.app";
 
+/// Every name a Method Reader bundle carried before 0.13: `Screepub.app`,
+/// and `Screepub Desktop.app`, the Tauri window's Mac name, which every
+/// 0.12.x and 0.13.0 update kept because each swapped the bundle in place.
+/// [`rename_old_bundle`] moves either to [`BUNDLE_NAME`] once.
+pub const OLD_BUNDLE_NAMES: [&str; 2] = [LEGACY_BUNDLE_NAME, "Screepub Desktop.app"];
+
+/// What [`rename_old_bundle`] did: the bundle's old and new folders, and the
+/// running executable's path inside the new one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Renamed {
+    pub from: std::path::PathBuf,
+    pub to: std::path::PathBuf,
+    pub exe: std::path::PathBuf,
+}
+
+/// The bundle `exe` runs from, renamed to [`BUNDLE_NAME`] in the same
+/// folder when it still has one of the [`OLD_BUNDLE_NAMES`]. Only then, and
+/// only when nothing is called `Method Reader.app` there yet and macOS has
+/// not translocated the app (a quarantined app run where it was
+/// downloaded). Any other name is the person's own choice and stays. A
+/// rename the folder refuses (read-only, a disk image) changes nothing.
+///
+/// macOS keeps answering the launch path for this process's executable, so
+/// the caller re-launches from [`Renamed::exe`] before anything reads its
+/// resources, and puts the folder back with [`undo_rename`] if it cannot.
+pub fn rename_old_bundle(exe: &std::path::Path) -> Option<Renamed> {
+    let macos = exe.parent()?;
+    let contents = macos.parent()?;
+    let from = contents.parent()?;
+    if macos.file_name()? != "MacOS" || contents.file_name()? != "Contents" {
+        return None;
+    }
+    let name = from.file_name()?.to_str()?;
+    if !OLD_BUNDLE_NAMES.contains(&name) {
+        return None;
+    }
+    if from
+        .components()
+        .any(|c| c.as_os_str() == "AppTranslocation")
+    {
+        return None;
+    }
+    let to = from.parent()?.join(BUNDLE_NAME);
+    if std::fs::symlink_metadata(&to).is_ok() {
+        return None;
+    }
+    let inside = exe.strip_prefix(from).ok()?.to_path_buf();
+    std::fs::rename(from, &to).ok()?;
+    Some(Renamed {
+        from: from.to_path_buf(),
+        exe: to.join(inside),
+        to,
+    })
+}
+
+/// Puts a [`rename_old_bundle`] back, for when the re-launch failed.
+pub fn undo_rename(renamed: &Renamed) -> std::io::Result<()> {
+    std::fs::rename(&renamed.to, &renamed.from)
+}
+
 /// What every request says is asking.
 pub const USER_AGENT: &str = concat!("method-reader-update/", env!("CARGO_PKG_VERSION"));
 

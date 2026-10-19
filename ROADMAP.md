@@ -57,6 +57,11 @@ Tests that need a device (hands only; everything else is automated):
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
      either way (issues #26, #27, #28).
+   - **The Mac after 0.13.1 arrives:** the app in Applications should be
+     called Method Reader (it renames itself the first time 0.13.1 opens,
+     from Screepub Desktop or Screepub). Check that Finder, Spotlight and
+     Launchpad show the new name, and whether a Dock icon you kept still
+     opens the app or shows a question mark.
    - **Linux:** the owner's Arch check (AppImage, converting, USB detection,
      copy and eject on Hyprland, the command line); findings arrive as an
      issue.

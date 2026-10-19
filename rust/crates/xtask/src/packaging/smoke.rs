@@ -362,6 +362,62 @@ fn ends(path: &Path, ext: &str) -> bool {
 
 /// Smoke one bundle: the window is in it and declares the expected version,
 /// then it runs headless (see [`smoke_window`]).
+/// The app, copied off the image as `Screepub Desktop.app` (the name a
+/// Tauri-era install still has, since every update until 0.13.0 swapped it
+/// in place), renames itself `Method Reader.app` the first time it starts,
+/// starts again from there, and answers `--version --json`
+/// (sp_update_config::rename_old_bundle, sp-app's main.rs).
+pub fn old_name_moves_once(
+    app: &Path,
+    work: &Path,
+    run: &mut Runner<'_>,
+    run_window: &mut WindowRunner<'_>,
+) -> Result<(), String> {
+    let apps = work.join("old-name");
+    let _ = std::fs::remove_dir_all(&apps);
+    std::fs::create_dir_all(&apps).map_err(|e| format!("smoke-bundle: {e}"))?;
+    let old = apps.join("Screepub Desktop.app");
+    let copied = run(
+        &[
+            "ditto".into(),
+            app.display().to_string(),
+            old.display().to_string(),
+        ],
+        None,
+    );
+    if copied.exit_code != 0 {
+        return Err(format!(
+            "smoke-bundle: ditto could not copy {}",
+            app.display()
+        ));
+    }
+    let exe = old.join("Contents/MacOS").join(NATIVE_APP.mac_executable);
+    let env = window_env(work)?;
+    let said = run_window(
+        &[
+            exe.display().to_string(),
+            "--version".into(),
+            "--json".into(),
+        ],
+        &env,
+    );
+    let new = apps.join("Method Reader.app");
+    if said.exit_code != 0 || !said.stdout.contains("\"ok\":true") {
+        return Err(format!(
+            "smoke-bundle: started as Screepub Desktop.app, the window answered {:?} (exit {})",
+            trimmed(&said.stdout, 300),
+            said.exit_code
+        ));
+    }
+    if old.exists() || !new.is_dir() {
+        return Err(format!(
+            "smoke-bundle: started as Screepub Desktop.app, the bundle was not renamed Method Reader.app: {}",
+            listing(&apps)
+        ));
+    }
+    Ok(())
+}
+
 pub fn smoke_bundle(
     bundle: &Path,
     fixture: &Path,
@@ -423,7 +479,8 @@ pub fn smoke_bundle(
                 expected,
                 "Info.plist",
             )?;
-            smoke_window(&exe, fixture, work, expected, run_window)
+            smoke_window(&exe, fixture, work, expected, run_window)?;
+            old_name_moves_once(&m.app_path, work, run, run_window)
         })();
         detach(&m, run);
         result
