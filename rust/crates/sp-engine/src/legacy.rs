@@ -4,7 +4,13 @@
 //!
 //! - its settings folder (Application Support/Screepub, %APPDATA%\Screepub,
 //!   ~/.config/screepub) becomes the app-data folder named after the new
-//!   identifier, `com.methodreader.desktop`, in the same parent;
+//!   identifier, `com.methodreader.desktop`: in the same parent on macOS
+//!   and Windows, and on Linux in $XDG_DATA_HOME (else ~/.local/share),
+//!   the suite standard;
+//! - on Linux, 0.13's own app-data folder,
+//!   ~/.config/com.methodreader.desktop ($XDG_CONFIG_HOME), moves first,
+//!   whole, to that same new place, so a 0.12 copy and a 0.13 copy both
+//!   land there directly;
 //! - what it kept under the old identifier's folder beside that
 //!   (`com.darkwell.screepub`: the window's own storage, the update answer
 //!   among it) joins it, entry by entry;
@@ -39,13 +45,16 @@ use crate::library::{
 use crate::nodepath::host;
 use crate::settings::app::{
     LEGACY_CONFIG_DIR_VAR, Patch, app_settings_path, legacy_app_data_folder,
-    legacy_settings_folder, read_app_settings, settings_folder, write_app_settings,
+    legacy_settings_folder, previous_app_data_folder, read_app_settings, settings_folder,
+    write_app_settings,
 };
 
 /// What [`move_legacy_folders`] moved, each as (from, to).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LegacyMove {
-    /// The settings folder, moved whole.
+    /// 0.13's app-data folder under ~/.config (Linux only), moved whole.
+    pub config_folder: Option<(String, String)>,
+    /// The 0.12 settings folder, moved whole.
     pub settings: Option<(String, String)>,
     /// What the old identifier's folder held: the folder itself when it
     /// moved whole, else each entry that moved into the new folder.
@@ -62,8 +71,13 @@ pub fn move_legacy_folders(platform: &str, env: &Env) -> LegacyMove {
     {
         return moved;
     }
-    let from = legacy_settings_folder(platform, env);
     let to = settings_folder(platform, env);
+    if let Some(from) = previous_app_data_folder(platform, env)
+        && move_folder(&from, &to)
+    {
+        moved.config_folder = Some((from, to.clone()));
+    }
+    let from = legacy_settings_folder(platform, env);
     if move_folder(&from, &to) {
         moved.settings = Some((from, to.clone()));
     }
@@ -94,9 +108,17 @@ pub fn move_legacy_folders(platform: &str, env: &Env) -> LegacyMove {
     moved
 }
 
-/// Rename `from` to `to` when `to` is not there and `from` is a folder.
+/// Rename `from` to `to` when `to` is not there and `from` is a folder,
+/// making `to`'s parent first if need be (on Linux the new folder's parent,
+/// ~/.local/share, is not the old one's and may not exist yet). A parent
+/// made for a move that then fails is left: it is empty, and the new
+/// folder's own place.
 fn move_folder(from: &str, to: &str) -> bool {
     if fsx::exists(to) || !fsx::is_dir(from) {
+        return false;
+    }
+    let parent = host::dirname(to);
+    if !fsx::exists(&parent) && fsx::mkdir_all(&parent).is_err() {
         return false;
     }
     std::fs::rename(from, to).is_ok()

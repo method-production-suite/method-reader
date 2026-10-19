@@ -46,7 +46,8 @@ fn main() -> ExitCode {
         return ExitCode::from(sp_app::headless::run(what));
     }
     // A Screepub install's settings and library folders take the new name
-    // once, before anything reads them (sp_engine::legacy; a no-op when a
+    // once, and on Linux 0.13's ~/.config folder moves to ~/.local/share,
+    // before anything reads them (sp_engine::legacy; a no-op when a
     // settings-folder override is set, which every test and capture sets).
     sp_cli::move_legacy_folders();
     sp_cli::recover_camera_import();
