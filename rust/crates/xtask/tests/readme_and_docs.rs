@@ -109,11 +109,12 @@ fn the_developer_page_names_every_command_line_archive_and_the_readme_links_to_i
 }
 
 #[test]
-fn the_developer_page_offers_no_intel_mac_download_and_says_homebrew_is_apple_silicon_only() {
+fn the_developer_page_offers_no_intel_mac_download_and_tells_a_brew_user_to_switch() {
     let install = section_of(&developers(), "## Install the command-line converter");
     assert!(!install.contains("screepub-cli-macos-x64.tar.gz"));
     assert!(!install.contains("| Mac, Intel |"));
-    assert!(flat(&install).contains("On a Mac with Apple silicon, Homebrew installs"));
+    assert!(flat(&install).contains("brew uninstall method-reader"));
+    assert!(!Regex::new(r"\bbrew install\b").unwrap().is_match(&install));
     assert!(install.contains("The Mac archive is signed and notarized"));
 }
 
@@ -317,7 +318,13 @@ fn nothing_anywhere_promises_winget_the_aur_or_the_retired_cask() {
     for f in ["README.md", "docs/developers.md", "site/index.html"] {
         assert!(!read(f).contains("--cask"), "{f}");
     }
-    assert!(readme().contains("brew install --formula ssandweiss/tap/method-reader"));
+    // The tap is retired (2026-10-18): nothing offers a brew install, and a
+    // person who used one is told how to switch to the downloads.
+    let brew_install = Regex::new(r"\bbrew install\b").unwrap();
+    for f in ["README.md", "docs/developers.md", "site/index.html"] {
+        assert!(!brew_install.is_match(&read(f)), "{f}");
+    }
+    assert!(flat(&readme()).contains("brew uninstall method-reader"));
 }
 
 // ---- docs/verification-ledger.md, the one ledger ----------------------
@@ -422,16 +429,6 @@ fn contributing_and_the_device_map_no_longer_speak_of_a_universal_mac_build() {
 }
 
 #[test]
-fn contributing_and_the_ledger_describe_the_retired_cask_the_same_way() {
-    let words = "retired (deprecated, and disabled from the release after 0.9.0)";
-    for f in ["CONTRIBUTING.md", "docs/verification-ledger.md"] {
-        let text = flat(&read(f));
-        assert!(text.contains(words), "{f}");
-        assert!(!text.contains("cask still says it is deprecated"), "{f}");
-    }
-}
-
-#[test]
 fn contributing_says_an_intel_mac_cannot_run_the_window_where_it_says_to_open_it() {
     let c = read("CONTRIBUTING.md");
     let at = c
@@ -442,30 +439,6 @@ fn contributing_says_an_intel_mac_cannot_run_the_window_where_it_says_to_open_it
         after.contains("On an Intel Mac** the window is not offered"),
         "{after}"
     );
-}
-
-#[test]
-fn the_release_runbook_counts_one_mac_cli_tarball_and_one_sha() {
-    let runbook = flat(&read("docs/release-secrets.md"));
-    for gone in [
-        "Two SHAs are needed",
-        "two urls, two SHAs",
-        "rewrites the formula's two urls and two SHAs",
-        "after the full universal build",
-        "`screepub-cli-macos-x64.tar.gz` from the `release` job",
-        "that day's date",
-    ] {
-        assert!(!runbook.contains(gone), "{gone}");
-    }
-    for want in [
-        "One SHA is needed",
-        "depends_on arch: :arm64",
-        "if/else on the CPU",
-        "disable!",
-        "keeping its date",
-    ] {
-        assert!(runbook.contains(want), "{want}");
-    }
 }
 
 // ---- beta, in the README and on the site ------------------------------
@@ -491,7 +464,7 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
 
 #[test]
 fn the_readme_and_the_site_tell_a_screepub_user_about_the_new_name() {
-    // Someone arriving from an old link, a Homebrew warning or the 0.12
+    // Someone arriving from an old link, an old install or the 0.12
     // app knows it as Screepub: both pages say once, plainly, that this is
     // the same app under a new name and that updating keeps their things.
     let readme = readme();

@@ -171,8 +171,12 @@ gives a drive no name to recognise it by. On Windows and Linux the window does
 not update itself: download each new version by hand.
 
 There is also a command-line converter for macOS, Linux and Windows:
-[for developers](docs/developers.md#install-the-command-line-converter). On a
-Mac with Apple silicon, Homebrew installs it too: `brew install --formula ssandweiss/tap/method-reader`.
+[for developers](docs/developers.md#install-the-command-line-converter).
+
+**If you installed with Homebrew:** Method Reader is no longer offered
+through Homebrew. The app keeps updating itself. The command-line converter
+Homebrew installed does not, so run `brew uninstall method-reader` (or
+`brew uninstall screepub`) and use the downloads above.
 
 ## Help build it
 

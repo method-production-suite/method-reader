@@ -4,8 +4,8 @@ A release is a version tag, `vX.Y.Z`, on `main`. Pushing it starts
 `.github/workflows/release.yml`, which checks the tagged commit, builds and
 signs every download, and leaves a DRAFT release on GitHub. Nothing is
 public until a person has checked the Mac image and published the draft.
-Publishing starts `.github/workflows/release-published.yml`, which bumps the
-Homebrew tap and reads the published release back.
+Publishing starts `.github/workflows/release-published.yml`, which reads the
+published release back.
 
 Every Method app releases the same way. The suite's checklist is
 [RELEASE-CHECKLIST.md](https://github.com/method-production-suite/.github/blob/main/RELEASE-CHECKLIST.md)
@@ -102,24 +102,17 @@ Only a person publishes. No workflow does it, and that is also why the next
 step runs: GitHub starts no workflow from a release that a workflow's own
 token published.
 
-## 7. The Homebrew tap
+## 7. The published read-back
 
-Publishing runs `release-published.yml`: `tap` bumps
-`ssandweiss/homebrew-tap` (with the `TAP_TOKEN` secret), `tap-check` reads
-the tap back from GitHub, and `latest-check` reads the update manifest back
-from the address every installed copy reads. Prereleases are skipped. A red
-job there means the release is public and that part does not serve it yet.
+Publishing runs `release-published.yml`: `latest-check` reads the update
+manifest back from the address every installed copy reads. Prereleases are
+skipped. A red job there means the release is public and updates cannot use
+it yet. `manifest-freshness.yml` repeats the check weekly.
 
-To do the tap by hand (no `TAP_TOKEN`, or a failed bump; the release run's
-summary carries a crib sheet):
+There is no package-manager step: the Homebrew tap was retired on
+2026-10-18, and people install from the release's own downloads.
 
-```bash
-cargo xtask bump-tap 0.13.1 /path/to/homebrew-tap-checkout   # then commit and push there
-cargo xtask check-tap                                       # does the tap serve the newest release
-```
-
-[release-secrets.md](release-secrets.md) has every secret and the tap's
-history.
+[release-secrets.md](release-secrets.md) has every secret.
 
 ## 8. The website and the README
 

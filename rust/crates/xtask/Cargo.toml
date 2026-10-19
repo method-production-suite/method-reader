@@ -38,7 +38,7 @@ sp-model.workspace = true
 sp-fountain.workspace = true
 sp-mobi.workspace = true
 sp-epub = { path = "../sp-epub" }
-# The release tools' GitHub reads (bump-tap, check-tap, check-latest): the
+# check-latest's GitHub reads: the
 # same ureq, rustls and ring sp-release and sp-update use (one TLS stack for
 # the port; rust/PARITY.md, Decisions).
 ureq = "3"
@@ -47,7 +47,7 @@ ureq = "3"
 # The packaging and release commands here are thin callers of it.
 sp-release.workspace = true
 sp-update.workspace = true
-# The contents API, the minisign boxes, the updater signature and the capture's screenshots are base64.
+# The minisign boxes, the updater signature and the capture's screenshots are base64.
 base64.workspace = true
 # The capture tool (src/capture/): Chrome's DevTools protocol over a plain
 # ws://127.0.0.1 socket (no TLS feature), reading and diffing PNGs, and

@@ -199,8 +199,8 @@ pub fn app_archive(bundle: &Path, mtime: u64) -> std::io::Result<Vec<u8>> {
     tar_gz(&entries, mtime)
 }
 
-/// A command-line tarball: the executable `method-reader`, as the Homebrew
-/// formula's `bin.install "method-reader"` expects, and beside it, when
+/// A command-line tarball: the executable `method-reader` at the top, so
+/// `tar -xzf` drops a runnable tool in the current folder, and beside it, when
 /// given, the old name `screepub` (the alias binary, which says once that
 /// the tool was renamed and then does exactly what method-reader does).
 pub fn cli_tarball(binary: &Path, alias: Option<&Path>, mtime: u64) -> std::io::Result<Vec<u8>> {

@@ -14,12 +14,10 @@ pub mod paths;
 pub mod table;
 
 pub mod brand;
-pub mod bump_tap;
 pub mod bump_version;
 pub mod calibre_config;
 pub mod capture;
 pub mod check_latest;
-pub mod check_tap;
 pub mod cli_build;
 pub mod desktop_notes;
 pub mod device_checklist;
@@ -169,23 +167,6 @@ pub const COMMANDS: &[Command] = &[
              exits 2 (blocked) when it would create a release tag whose\n\
              docs/releases/<version>.md is not in HEAD. Anything else exits 0.\n",
         ),
-    },
-    Command {
-        name: "bump-tap",
-        help: "write the Homebrew tap's formula for a release",
-        main: bump_tap::main,
-        usage: Usage::Text(
-            "usage: cargo xtask bump-tap <version> <tap-checkout>\n\n\
-             Writes the Homebrew formula for release <version> into a checkout of\n\
-             the tap, from the release's own checksums, and retires the cask.\n\
-             METHOD_READER_REPO names the release repository.\n",
-        ),
-    },
-    Command {
-        name: "check-tap",
-        help: "does the Homebrew tap serve the latest release",
-        main: check_tap::main,
-        usage: Usage::Own,
     },
     Command {
         name: "check-latest",

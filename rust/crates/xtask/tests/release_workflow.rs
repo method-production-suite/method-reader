@@ -10,7 +10,7 @@
 //!
 //! The suite's release standard (2026-10-16): a tag builds a DRAFT, a
 //! person checks the .dmg and publishes it, and only then does
-//! release-published.yml bump the Homebrew tap and read the release back.
+//! release-published.yml read the release back.
 //! Nothing in any workflow makes the draft public.
 
 mod repo_common;
@@ -152,8 +152,8 @@ fn the_release_job_leaves_a_draft_and_nothing_in_any_workflow_makes_it_public() 
     // The suite's standard: a person publishes, after checking the .dmg on
     // an Apple silicon Mac. It is also what makes release-published.yml
     // fire at all: GitHub starts no run from an event raised with the
-    // default token, so a workflow that published would leave the tap
-    // un-bumped and nothing red (tap-freshness.yml's old trigger, v0.5.3).
+    // default token, so a workflow that published would leave the
+    // read-back unrun and nothing red (a weekly guard's old trigger, v0.5.3).
     let rel = rel();
     let release = run_text(job(&rel, "release"));
     assert!(release.contains("--draft"));
@@ -309,7 +309,7 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     let notarize = text.find("xcrun notarytool submit").unwrap();
     let package = text.find("cli-archive").unwrap();
     assert!(sign < notarize && notarize < package);
-    // The notes' checksum, the upload and the crib sheet read one folder.
+    // The notes' checksum and the upload read one folder.
     let out = "$RUNNER_TEMP/cli-mac";
     assert!(text.contains(&format!(
         r#"cd "{out}" && shasum -a 256 {}"#,
@@ -318,7 +318,7 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     assert!(
         text.matches(&format!("{out}/{}", names::CLI_MAC_ARM64))
             .count()
-            >= 2
+            >= 1
     );
 }
 
@@ -646,13 +646,6 @@ fn the_handover_gate_installs_this_release_with_the_shipped_window_before_anythi
     assert!(text.contains("latest.json is NOT published"));
 }
 
-#[test]
-fn the_release_run_leaves_a_crib_sheet_for_bumping_the_tap_by_hand() {
-    let crib = step_named(&rel(), "release", "Tap bump crib sheet");
-    assert!(crib.contains("cargo xtask bump-tap"));
-    assert!(crib.contains(names::CLI_MAC_ARM64));
-}
-
 // ---- release-published.yml: what runs once a person publishes ----------
 
 fn published() -> Value {
@@ -682,52 +675,30 @@ fn the_published_workflow_runs_when_a_release_is_published_and_at_no_other_time(
 }
 
 #[test]
-fn the_tap_and_the_read_back_checks_moved_out_of_the_tag_run() {
+fn the_read_back_check_moved_out_of_the_tag_run() {
     let rel = rel();
-    for gone in ["tap", "tap-check", "latest-check"] {
-        assert!(!has_job(&rel, gone), "release.yml still has {gone}");
-    }
-    let wf = published();
-    let graph: Vec<(&str, Vec<&str>)> = vec![
-        ("tap", vec![]),
-        ("tap-check", vec!["tap"]),
-        ("latest-check", vec![]),
-    ];
-    let names: Vec<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
-    assert_eq!(
-        sorted(names),
-        sorted(graph.iter().map(|(n, _)| n.to_string()).collect())
+    assert!(
+        !has_job(&rel, "latest-check"),
+        "release.yml still has latest-check"
     );
-    for (name, wants) in graph {
-        assert_eq!(
-            sorted(needs(job(&wf, name))),
-            strs(&wants),
-            "{name} waits for the wrong jobs"
-        );
-    }
-}
-
-#[test]
-fn no_prerelease_reaches_the_tap_or_the_manifest_check() {
-    // A hyphen in the tag must never become what `brew install` hands out,
-    // and releases/latest never resolves to a prerelease.
     let wf = published();
-    for name in ["tap", "tap-check", "latest-check"] {
-        let cond = job_if(job(&wf, name));
-        assert!(cond.contains("!contains(github.ref_name, '-')"), "{name}");
-        assert!(cond.contains("!github.event.release.prerelease"), "{name}");
-    }
-    // A job-level `if` with no status function gets an implicit success()
-    // that also looks further up the chain; tap-check names its own.
-    let cond = job_if(job(&wf, "tap-check"));
-    assert!(cond.contains("!cancelled()"));
-    assert!(cond.contains("needs.tap.result == 'success'"));
+    let names: Vec<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
+    assert_eq!(names, strs(&["latest-check"]));
+    assert_eq!(needs(job(&wf, "latest-check")), Vec::<String>::new());
 }
 
 #[test]
-fn the_published_workflow_writes_nothing_to_this_repository() {
-    // The tap is pushed with TAP_TOKEN, which can reach the tap and nothing
-    // else; every job here only reads this repository.
+fn no_prerelease_reaches_the_manifest_check() {
+    // releases/latest never resolves to a prerelease.
+    let wf = published();
+    let cond = job_if(job(&wf, "latest-check"));
+    assert!(cond.contains("!contains(github.ref_name, '-')"));
+    assert!(cond.contains("!github.event.release.prerelease"));
+}
+
+#[test]
+fn the_published_workflow_writes_nothing_and_holds_no_secret() {
+    // Every job here only reads this repository.
     let wf = published();
     for (name, job) in jobs(&wf) {
         assert!(job.get("permissions").is_none(), "{name} asks for more");
@@ -736,44 +707,11 @@ fn the_published_workflow_writes_nothing_to_this_repository() {
             "{name} changes a release"
         );
     }
-}
-
-#[test]
-fn the_tap_token_reaches_only_the_tap_step() {
     let text = read(".github/workflows/release-published.yml");
-    let mut declared: Vec<String> = Regex::new(r"secrets\.[A-Z0-9_]+")
-        .unwrap()
-        .find_iter(&text)
-        .map(|m| m.as_str().to_string())
-        .collect();
-    declared.sort();
-    declared.dedup();
-    assert_eq!(declared, strs(&["secrets.TAP_TOKEN"]));
-    let wf = published();
-    let mut given = 0;
-    for (name, job) in jobs(&wf) {
-        for st in steps(job) {
-            if serde_yaml::to_string(st).unwrap().contains("${{ secrets.") {
-                given += 1;
-                assert_eq!(
-                    (name.as_str(), s(st, "name")),
-                    ("tap", "Bump the Homebrew tap")
-                );
-            }
-        }
-    }
-    assert_eq!(given, 1);
-}
-
-#[test]
-fn the_tap_is_bumped_by_the_xtask_and_checked_after() {
-    let wf = published();
-    let tap = run_text(job(&wf, "tap"));
-    assert!(tap.contains("cargo xtask bump-tap \"$V\""));
-    // A missing token is a notice, not a failure: the crib sheet and the
-    // hand path stay.
-    assert!(tap.contains("TAP_TOKEN is not set"));
-    assert!(run_text(job(&wf, "tap-check")).contains("xtask check-tap"));
+    assert!(
+        !Regex::new(r"secrets\.[A-Z]").unwrap().is_match(&text),
+        "a secret reached it"
+    );
 }
 
 #[test]

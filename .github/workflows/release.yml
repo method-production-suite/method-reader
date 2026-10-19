@@ -11,8 +11,8 @@
 # checking the .dmg on an Apple silicon Mac. Nothing here makes the release
 # public. The order is the draft, every upload, latest.json last, then
 # `draft-check`, which reads the draft back and fails loudly unless every
-# file is there. Publishing starts release-published.yml: the Homebrew tap,
-# then the checks that read the published release back. That trigger fires
+# file is there. Publishing starts release-published.yml: the check that
+# reads the published release back. That trigger fires
 # because a person publishes; GitHub starts no run from an event raised with
 # this workflow's default token.
 #
@@ -20,7 +20,6 @@
 #   DEVELOPER_ID_CERT_P12_BASE64, CERT_PASSWORD, KEYCHAIN_PASSWORD,
 #   AC_API_KEY_P8_BASE64, AC_API_KEY_ID, AC_API_ISSUER_ID,
 #   TAURI_SIGNING_PRIVATE_KEY (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD if set).
-#   TAP_TOKEN (optional) is release-published.yml's.
 #
 # The Rust toolchain comes from rust/rust-toolchain.toml (rustup on every
 # hosted runner installs it on first use). Release builds are uncached on
@@ -182,21 +181,6 @@ jobs:
             gh release edit "$TAG" --title "Method Reader $VERSION" --notes-file "$NOTES"
           fi
           gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/method-reader-cli-macos-arm64.tar.gz" --clobber
-      - name: Tap bump crib sheet
-        env:
-          VERSION: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          V="${VERSION#v}"
-          ARM="$(shasum -a 256 "$RUNNER_TEMP/cli-mac/method-reader-cli-macos-arm64.tar.gz" | cut -d' ' -f1)"
-          # The backticks are Markdown for the summary, not a substitution.
-          # shellcheck disable=SC2016
-          {
-            printf '## Bump ssandweiss/homebrew-tap to %s\n\n' "$V"
-            printf 'The tap bumps itself once the release is published (release-published.yml). By hand: run `cargo xtask bump-tap %s <tap-checkout>` from rust/: it writes `Formula/method-reader.rb` whole (and renames a tap still on screepub.rb).\n\n```ruby\n' "$V"
-            printf '  url ".../download/v%s/method-reader-cli-macos-arm64.tar.gz"\n  sha256 "%s"\n' "$V" "$ARM"
-            printf '```\n'
-          } >> "$GITHUB_STEP_SUMMARY"
 
   # The other command-line tools, each built AND run on its own OS: Rust
   # does not cross-compile a whole OS's worth of libraries the way Bun did,
@@ -714,5 +698,5 @@ jobs:
           # shellcheck disable=SC2016
           {
             printf '## Method Reader %s is a complete draft\n\n' "$VERSION"
-            printf 'Before you publish it: download `Method-Reader-macOS.dmg` from the draft on an Apple silicon Mac, open it, drag Method Reader to Applications, and open the app once (it must open without a warning). Then publish the draft on https://github.com/%s/releases. Publishing bumps the Homebrew tap (release-published.yml). The steps are in docs/RELEASING.md.\n' "$GH_REPO"
+            printf 'Before you publish it: download `Method-Reader-macOS.dmg` from the draft on an Apple silicon Mac, open it, drag Method Reader to Applications, and open the app once (it must open without a warning). Then publish the draft on https://github.com/%s/releases. Publishing starts release-published.yml, which reads the published latest.json back. The steps are in docs/RELEASING.md.\n' "$GH_REPO"
           } >> "$GITHUB_STEP_SUMMARY"

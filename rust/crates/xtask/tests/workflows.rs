@@ -33,10 +33,10 @@ fn every_workflow_is_found_and_parsed() {
     // below pass over an empty list.
     let names = workflow_files();
     for f in [
+        "manifest-freshness.yml",
         "release-published.yml",
         "release.yml",
         "rust.yml",
-        "tap-freshness.yml",
         "weekly-toolchain.yml",
     ] {
         assert!(names.contains(&f.to_string()), "{f} is missing: {names:?}");
@@ -506,10 +506,9 @@ fn weekly_pins_the_same_actions_rust_yml_does() {
 }
 
 #[test]
-fn the_standing_tap_check_watches_the_manifest_as_well_as_the_tap() {
-    let wf = workflow("tap-freshness.yml");
+fn the_standing_check_watches_the_updater_manifest() {
+    let wf = workflow("manifest-freshness.yml");
     let texts: Vec<String> = jobs(&wf).into_iter().map(|(_, j)| run_text(j)).collect();
-    assert!(texts.iter().any(|t| t.contains("cargo xtask check-tap")));
     assert!(
         texts
             .iter()
