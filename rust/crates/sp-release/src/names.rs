@@ -60,6 +60,41 @@ pub const MAC_UPDATE: &str = "Method-Reader-macOS.app.tar.gz";
 pub const SIGNATURE_EXT: &str = ".sig";
 pub const MANIFEST: &str = "latest.json";
 
+/// The release's one checksums file (SUITE-STANDARDS.md section 3; the
+/// suite's launcher reads it): every download in [`downloads`], bare
+/// names, sorted, in `sha256sum` format. It never lists itself.
+pub const CHECKSUMS: &str = "SHA256SUMS";
+/// The installers' own checksums file up to 0.13.0, folded into
+/// [`CHECKSUMS`]: release.yml deletes it from a draft that still has one.
+pub const RETIRED_APP_CHECKSUMS: &str = "SHA256SUMS-app";
+
+/// Every file a person or an updater downloads from a release, the
+/// checksums file aside: the five installers, the four command-line
+/// archives, the update archive and its signature, and [`MANIFEST`] for a
+/// release (a prerelease has none: releases/latest never resolves to one).
+pub fn downloads(prerelease: bool) -> Vec<String> {
+    let mut v: Vec<String> = [
+        MAC_DMG,
+        LINUX_DEB_AMD64,
+        LINUX_RPM_X86_64,
+        LINUX_APPIMAGE_X86_64,
+        WINDOWS_SETUP,
+        CLI_MAC_ARM64,
+        CLI_LINUX_X64,
+        CLI_LINUX_ARM64,
+        CLI_WINDOWS_X64,
+        MAC_UPDATE,
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    v.push(format!("{MAC_UPDATE}{SIGNATURE_EXT}"));
+    if !prerelease {
+        v.push(MANIFEST.to_string());
+    }
+    v
+}
+
 /// One signed update artifact and the `platforms` keys it answers.
 #[derive(Clone, Copy, Debug)]
 pub struct UpdaterKind {
@@ -121,6 +156,24 @@ mod tests {
             "",
         ] {
             assert!(!is_release_version(bad), "{bad}");
+        }
+    }
+
+    #[test]
+    fn the_downloads_are_twelve_for_a_release_and_eleven_for_a_prerelease() {
+        let full = downloads(false);
+        assert_eq!(full.len(), 12);
+        assert!(full.contains(&MANIFEST.to_string()));
+        let pre = downloads(true);
+        assert_eq!(pre.len(), 11);
+        assert!(!pre.contains(&MANIFEST.to_string()));
+        for list in [&full, &pre] {
+            assert!(!list.contains(&CHECKSUMS.to_string()));
+            assert!(!list.contains(&RETIRED_APP_CHECKSUMS.to_string()));
+            let mut d = list.clone();
+            d.sort();
+            d.dedup();
+            assert_eq!(d.len(), list.len(), "a name twice");
         }
     }
 

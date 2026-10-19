@@ -80,11 +80,15 @@ with the next patch version.
 
 ## 5. Wait for the draft
 
-The release run takes 15 to 25 minutes. Its last job, `draft-check`, reads
+The release run takes 15 to 25 minutes. Its `checksums` job reads every
+download back from the draft and writes ONE `SHA256SUMS` over them (the
+suite standard: bare names, sorted, never listing itself), and removes the
+`SHA256SUMS-app` an older run left. Its last job, `draft-check`, reads
 the draft back and fails loudly, naming what is missing, unless the draft
 carries every file: exactly one `Method-Reader-macOS.dmg`, the update
 archive and its signature, `latest.json` (not for a prerelease), every
-other installer and every command-line archive. A red `draft-check` means
+other installer, every command-line archive and `SHA256SUMS`, and no
+`SHA256SUMS-app`. A red `draft-check` means
 do not publish: re-run the failed jobs from the run's page
 (`gh run rerun <id> --failed`), or run the whole workflow again against the
 tag (`gh workflow run release.yml --ref v0.13.1`); every upload replaces

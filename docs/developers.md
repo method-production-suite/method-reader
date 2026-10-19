@@ -37,7 +37,7 @@ offered through Homebrew, and that copy will not be updated. Run
 archives above; the app keeps updating itself.
 
 The Mac archive is signed and notarized. `SHA256SUMS` on the release page
-covers the Linux and Windows archives. The Windows build is unsigned, so
+covers every archive, and every other download there. The Windows build is unsigned, so
 SmartScreen warns the first time it runs: choose **More info**, then **Run
 anyway**.
 

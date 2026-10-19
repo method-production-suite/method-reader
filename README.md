@@ -155,8 +155,9 @@ To install it, download `Screepub-macOS.dmg` from
 | Linux: any other, 64-bit | `Method-Reader-linux-x86_64.AppImage` | Built and checked automatically. Never run by a person yet |
 
 Every file is on the [latest release](https://github.com/method-production-suite/method-reader/releases/latest).
-`SHA256SUMS-app` there covers these five files, and `SHA256SUMS`
-covers the command-line downloads. Reports from Windows and Linux are welcome:
+`SHA256SUMS` there covers these five files and every other download on
+the page (`sha256sum -c SHA256SUMS --ignore-missing` in your downloads
+folder checks the ones you have). Reports from Windows and Linux are welcome:
 [open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose).
 Who has checked what, in full: [the verification ledger](docs/verification-ledger.md).
 
