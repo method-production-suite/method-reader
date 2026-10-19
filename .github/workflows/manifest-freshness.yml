@@ -15,7 +15,7 @@
 # any workflow publishes (xtask/tests/release_workflow.rs holds that). This
 # file stays the weekly guard for drift between releases.
 #
-# Least privilege + pinned actions, matching rust.yml.
+# Least privilege + pinned actions, matching full.yml.
 name: manifest-freshness
 on:
   schedule:

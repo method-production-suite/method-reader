@@ -70,7 +70,7 @@ move too.
 | tests/css-rules.test.ts | 11 | sp-epub | done | sp-epub/tests/css_rules.rs (11) |
 | tests/css-rules.ts | 0 | sp-epub | done | test helper (selector-exact rule extractor): `rule_for`, `each_rule` in sp-epub/tests/common/mod.rs |
 | tests/cue-text.test.ts | 4 | sp-parser | done | sp-parser/tests/cue_text.rs (the 17 table rows as 17 tests) |
-| tests/desktop-bundle-step.test.ts | 7 | xtask | retired | ran desktop.yml's two bash steps (the per-OS `cargo tauri build --bundles` list and the smoke step reading package.json): desktop.yml, tauri-bundler, package.json and smoke-bundle.ts are gone. rust.yml's bundles job calls sp-release, whose writers are tested in sp-release; release.yml's bundle steps are executed in xtask/tests/release_steps.rs |
+| tests/desktop-bundle-step.test.ts | 7 | xtask | retired | ran desktop.yml's two bash steps (the per-OS `cargo tauri build --bundles` list and the smoke step reading package.json): desktop.yml, tauri-bundler, package.json and smoke-bundle.ts are gone. full.yml's bundles job calls sp-release, whose writers are tested in sp-release; release.yml's bundle steps are executed in xtask/tests/release_steps.rs |
 | tests/desktop-layout-measured.test.ts | 16 | sp-app | done | the geometry at 900, 1280 and 1800 in m/layout.rs; the drawn rects measured in behaviors.rs (C3 and the L rows, 10 tests) |
 | tests/desktop-layout.test.ts | 26 | sp-app | done | the geometry in m/layout.rs (9); retired: the pins that read desktop/ui's CSS as text, whose subject went with desktop/ui |
 | tests/desktop-notes.test.ts | 14 | xtask | done | xtask/tests/desktop_notes.rs (13): the generator writes sp-app's notes_release.rs (notes.js and the notes-surface.js check went with the Tauri window); the window's half is sp-app's (Window test files) |
@@ -155,7 +155,7 @@ move too.
 | tests/update-compare.test.ts | 34 | sp-engine | done | sp-engine/tests/update_compare.rs |
 | tests/update-signature.test.ts | 14 | sp-release | done | the readers are sp-release/src/boxes.rs and the signer sign.rs (sp-release/tests/compat.rs opens tauri-cli's own key with the pinned minisign); verify is sp-update/src/verify.rs; xtask/tests/update_signature.rs (18) runs the readers and the signer through `cargo xtask update-signature`'s module, and the tag-time gate over sp_update::PUBKEY or `--pubkey` (`--pubkey-from-config` went with tauri.conf.json) |
 | tests/verify-signing.test.ts | 32 | xtask | done | xtask/tests/verify_signing.rs (34), on a fake runner |
-| tests/weekly-toolchain.test.ts | 5 | xtask | done | xtask/tests/workflows.rs (weekly_*, 3): the Calibre job on macOS in rust/, Calibre installed before `cargo test --workspace` with SCREEPUB_REQUIRE_CALIBRE=1 (the engine-finds-Calibre step is sp-engine/tests/calibre_found.rs now), and the same pins as rust.yml. Retired: the named bun test files and the bun version |
+| tests/weekly-toolchain.test.ts | 5 | xtask | done | xtask/tests/workflows.rs (weekly_*, 3): the Calibre job on macOS in rust/, Calibre installed before `cargo test --workspace` with SCREEPUB_REQUIRE_CALIBRE=1 (the engine-finds-Calibre step is sp-engine/tests/calibre_found.rs now), and the same pins as full.yml. Retired: the named bun test files and the bun version |
 | tests/workflow-shell.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (3): over every workflow, a bare `"${A[@]}"` only of an array its step fills with a literal list and never empties; the guarded spelling under the real /bin/bash, empty and not. release_steps.rs runs the draft and draft-check steps under that bash too |
 | tests/workflows.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (with workflow-shell, weekly-toolchain and the pin rule: 15 in all): every workflow parsed, every needs: resolves, no Swift; added: no workflow runs bun, node or npm, every action pinned to a full SHA with its version comment and one pin per action, least-privilege permissions, bash on every step that can reach Windows, and tap-freshness watching the tap and the manifest |
 
@@ -238,7 +238,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | W5 | The gaps in the tab bar also move the window; a tab click is still a tab | ui/frame.js (data-tauri-drag-region on the tablist) | done |
 | W6 | Identifier `com.darkwell.screepub`, product name Screepub, version 0.11.1 | tauri/tauri.conf.json | done (sp_update::IDENTIFIER; sp-release mac.rs writes it into Info.plist, its test reads it back; the version is the workspace's, checked by `sp-release version-check` in release.yml) |
 | W7 | macOS minimum 13.0; Apple-silicon-only Mac build | tauri/tauri.conf.json, desktop/README.md | done (sp-release mac.rs: LSMinimumSystemVersion 13.0, its test; build-app-bundle refuses an Intel bundle, xtask/tests/build_app_bundle.rs) |
-| W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | done (sp-release mac.rs and linux.rs lay them out; rust.yml and release.yml pass both as --resource; sp-release/tests/pipeline.rs and xtask/tests/native_bundle.rs find them in the bundles) |
+| W8 | Bundle carries LICENSE and THIRD-PARTY-NOTICES.md as resources | tauri/tauri.conf.json | done (sp-release mac.rs and linux.rs lay them out; full.yml and release.yml pass both as --resource; sp-release/tests/pipeline.rs and xtask/tests/native_bundle.rs find them in the bundles) |
 | W9 | Linux launcher entry Categories=Office; no PDF file association; no path read from the command line | desktop/README.md | done (sp-release linux.rs `desktop_entry`: Categories=Office, no MimeType, Exec with no %f; its test `the_launcher_says_office`) |
 | W10 | macOS default app menu (Tauri's `enable_macos_default_menu`, on by default): About, Hide, Quit (Cmd-Q), Edit menu (Undo, Cut, Copy, Paste, Select All, so Cmd-C/V work in the device-request field), Window menu | tauri/src/main.rs (no menu set) | done (muda: app, Edit and Window menus; Edit items passed on to egui, menu.rs test) |
 | W11 | Boot check: the engine is asked `--version --json`; a failure puts the engine's sentence on its own alarm-coloured line above the stamp (the stamp stays) | ui/main.js, ui/frame.js engineFailed | done |
@@ -1106,7 +1106,7 @@ names the check it affects.
     and the .rpm declares `Requires:` for the first time: the binary's own
     DT_NEEDED list read out of the ELF, plus the same libraries by soname.
     GTK3 is not declared: nothing on Linux loads it (the file dialog asks
-    the XDG portal). rust.yml's bundle job and release.yml's check read both
+    the XDG portal). full.yml's bundle job and release.yml's check read both
     lists back.
   - **O5, an interrupted swap.** `sp_update::install::sweep_at_startup`
     puts back a bundle a crash left hidden as `.Screepub.app.old-<pid>`, and

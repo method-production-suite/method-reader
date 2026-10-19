@@ -1,5 +1,5 @@
 # Dependabot version updates (SUITE-STANDARDS.md section 6): one grouped
-# pull request a week per ecosystem, never for releases younger than the
+# pull request a month per ecosystem (on the 1st), never for releases younger than the
 # 14-day crate cooldown that CI's crate-age check holds every change to.
 #
 # Security updates are GitHub's own and stay separate, one pull request
@@ -24,8 +24,7 @@ updates:
   - package-ecosystem: cargo
     directory: /rust
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 2
     commit-message:
       prefix: "deps"
@@ -36,6 +35,6 @@ updates:
       default-days: 14
       semver-major-days: 30
     groups:
-      cargo-weekly:
+      cargo-monthly:
         applies-to: version-updates
         patterns: ["*"]

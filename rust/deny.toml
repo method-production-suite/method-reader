@@ -1,6 +1,6 @@
 # cargo-deny: what the workspace may depend on. Run from rust/:
 #   cargo deny check
-# rust.yml runs it on every push. Changing a list here is a decision: say
+# checks.yml runs it on every pull request and push, full.yml weekly. Changing a list here is a decision: say
 # why in the commit, and keep THIRD-PARTY-NOTICES.md in step.
 
 [graph]
