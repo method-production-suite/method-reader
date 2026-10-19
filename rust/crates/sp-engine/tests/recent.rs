@@ -167,23 +167,24 @@ fn the_write_is_atomic_and_leaves_no_temp_file() {
     assert_eq!(names, ["recent.json"]);
 }
 
+// Unix only: a read-only folder is how this makes the write fail, and
+// Windows has no mode bits to set (the compiled test also failed there on
+// an unused variable once, in the weekly full build).
+#[cfg(unix)]
 #[test]
 fn a_write_that_fails_leaves_the_old_file_whole() {
+    use std::os::unix::fs::PermissionsExt;
     let s = Scratch::new("recent");
     let file = s.join("recent.json");
     record_opened(&file, "/s/A.pdf", "2026-10-18T09:00:00Z").unwrap();
     let before = std::fs::read(&file).unwrap();
     // A folder where the temp file would go cannot be written through.
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let dir = s.path.clone();
-        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
-        let failed = record_opened(&file, "/s/B.pdf", "2026-10-18T09:01:00Z");
-        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
-        assert!(failed.is_err());
-        assert_eq!(std::fs::read(&file).unwrap(), before);
-    }
+    let dir = s.path.clone();
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let failed = record_opened(&file, "/s/B.pdf", "2026-10-18T09:01:00Z");
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(failed.is_err());
+    assert_eq!(std::fs::read(&file).unwrap(), before);
 }
 
 #[test]
