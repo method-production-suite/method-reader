@@ -14,7 +14,9 @@ use std::path::PathBuf;
 
 use serde_json::{Value, json};
 
-use super::protocol::{Incoming, LEGACY, MODERN, Scripted, Server, parse_line, read_line, run};
+use super::protocol::{
+    Called, Incoming, LEGACY, MODERN, Scripted, Server, call_log_line, parse_line, read_line, run,
+};
 use super::{Config, limits, schema};
 
 /// A fresh folder of its own, removed when dropped.
@@ -783,4 +785,22 @@ fn mcp_is_a_subcommand_only_where_a_verb_would_be() {
     assert_eq!(super::command(&argv(&["script.pdf", "mcp"])), None);
     assert_eq!(super::command(&argv(&["--json", "mcp"])), None);
     assert_eq!(super::command(&argv(&[])), None);
+}
+
+/// Every tools/call writes one stderr line, however it ended: a tool that
+/// panics included (method-budget #55; it used to return before the line).
+#[test]
+fn every_call_ending_has_its_log_line() {
+    assert_eq!(
+        call_log_line("inspect_script", Called::Ok, 12),
+        "method-reader mcp: inspect_script ok (12 ms)"
+    );
+    assert_eq!(
+        call_log_line("make_ebook", Called::Refused("invalid"), 3),
+        "method-reader mcp: make_ebook refused: invalid (3 ms)"
+    );
+    assert_eq!(
+        call_log_line("preview_page", Called::Panicked, 7),
+        "method-reader mcp: preview_page panicked (7 ms)"
+    );
 }

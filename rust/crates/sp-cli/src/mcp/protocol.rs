@@ -448,22 +448,52 @@ impl Server {
             Ok(()) => {
                 let run = tool.run;
                 let ctx = &mut self.ctx;
-                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| run(ctx, &Args(args))))
-                    .map_err(|_| {
-                        RpcError::new(INTERNAL_ERROR, format!("Internal error in {name}"))
-                    })?
+                match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    run(ctx, &Args(args))
+                })) {
+                    Ok(outcome) => outcome,
+                    Err(_) => {
+                        let ms = started.elapsed().as_millis();
+                        eprintln!("{}", call_log_line(name, Called::Panicked, ms));
+                        return Err(RpcError::new(
+                            INTERNAL_ERROR,
+                            format!("Internal error in {name}"),
+                        ));
+                    }
+                }
             }
         };
+        let how = match &outcome {
+            Ok(_) => Called::Ok,
+            Err(e) => Called::Refused(e.kind),
+        };
         eprintln!(
-            "method-reader mcp: {name} {} ({} ms)",
-            match &outcome {
-                Ok(_) => "ok".to_string(),
-                Err(e) => format!("refused: {}", e.kind),
-            },
-            started.elapsed().as_millis()
+            "{}",
+            call_log_line(name, how, started.elapsed().as_millis())
         );
         Ok(tool_result(outcome, era.structured()))
     }
+}
+
+/// How a tools/call ended, for its stderr line (method-budget #55).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Called<'a> {
+    Ok,
+    /// A tool error, by its kind.
+    Refused(&'a str),
+    /// The tool panicked (the caller gets an internal error).
+    Panicked,
+}
+
+/// The one stderr line every tools/call writes, however it ended: a tool
+/// that panics included (it used to return before the line was written).
+pub fn call_log_line(name: &str, how: Called, ms: u128) -> String {
+    let what = match how {
+        Called::Ok => "ok".to_string(),
+        Called::Refused(kind) => format!("refused: {kind}"),
+        Called::Panicked => "panicked".to_string(),
+    };
+    format!("method-reader mcp: {name} {what} ({ms} ms)")
 }
 
 /// What the server offers, as `initialize` and `server/discover` say it.
