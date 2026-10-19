@@ -36,11 +36,15 @@ fn every_workflow_is_found_and_parsed() {
         "manifest-freshness.yml",
         "release-published.yml",
         "release.yml",
-        "rust.yml",
+        "checks.yml",
+        "full.yml",
         "weekly-toolchain.yml",
     ] {
         assert!(names.contains(&f.to_string()), "{f} is missing: {names:?}");
     }
+    // rust.yml built and tested every change; checks.yml and full.yml
+    // replaced it (SUITE-STANDARDS section 6, CI ArtCraft-style).
+    assert!(!names.contains(&"rust.yml".to_string()));
     for (f, wf) in all() {
         assert!(!jobs(&wf).is_empty(), "{f} has no jobs");
     }
@@ -263,6 +267,14 @@ fn map(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
 
 /// A job that reads the release while it is still a DRAFT, which GitHub
 /// shows only to a token that can write: release.yml's draft-check.
+/// full.yml's check job: it reads the workflow's own past runs, which needs
+/// actions: read and nothing else.
+fn reads_its_runs(file: &str, name: &str, job: &Value) -> bool {
+    file == "full.yml"
+        && name == "check"
+        && commands(&run_text(job)).contains("actions/workflows/full.yml/runs")
+}
+
 fn reads_the_draft(file: &str, name: &str, job: &Value) -> bool {
     file == "release.yml"
         && name == "draft-check"
@@ -292,6 +304,7 @@ fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
                 )),
                 None => {}
                 Some(p) if p == map(&[("contents", "write")]) && writes => {}
+                Some(p) if p == map(&[("actions", "read")]) && reads_its_runs(&f, &name, job) => {}
                 Some(p) => wrong.push(format!(
                     "{f}: {name} asks for {p:?} but {}",
                     if writes {
@@ -487,7 +500,7 @@ fn weekly_installs_calibre_then_tests_with_calibre_required() {
 }
 
 #[test]
-fn weekly_pins_the_same_actions_rust_yml_does() {
+fn weekly_pins_the_same_actions_full_yml_does() {
     let pins = |f: &str| -> BTreeSet<String> {
         let wf = workflow(f);
         jobs(&wf)
@@ -497,11 +510,11 @@ fn weekly_pins_the_same_actions_rust_yml_does() {
             .filter(|u| !u.is_empty())
             .collect()
     };
-    let rust = pins("rust.yml");
+    let full = pins("full.yml");
     for u in pins("weekly-toolchain.yml") {
         assert!(
-            u.contains('@') && rust.contains(&u),
-            "{u} differs from rust.yml"
+            u.contains('@') && full.contains(&u),
+            "{u} differs from full.yml"
         );
     }
 }
@@ -523,15 +536,17 @@ fn the_standing_check_watches_the_updater_manifest() {
     assert!(!on.contains("release"), "{on}");
 }
 
+const DRAFT_GUARD: &str = "github.event_name != 'pull_request' || !github.event.pull_request.draft";
+
 #[test]
-fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
-    // The suite's runners are shared (SUITE-STANDARDS.md section 6): a
-    // branch with a pull request must not run twice, once for the push and
-    // once for the pull request, and a new push to a pull request cancels
-    // the run it replaces. main is never cancelled, so every commit on it
-    // keeps a full result. release.yml runs its own checks on the tag and
-    // never cancels; it is not this workflow.
-    let wf = workflow("rust.yml");
+fn each_change_runs_only_the_quick_dependency_checks() {
+    // SUITE-STANDARDS.md section 6, CI ArtCraft-style: a pull request and a
+    // push to main run cargo deny and the crate-age check, and nothing that
+    // builds or tests; main's ruleset requires exactly those two. A draft
+    // runs neither, and ready_for_review starts the run. A newer push
+    // cancels the run it replaces, on main too (Sam, 2026-10-19). release.yml
+    // runs its own checks on the tag and never cancels.
+    let wf = workflow("checks.yml");
     let on = &wf["on"];
     let push_branches: Vec<&str> = on["push"]["branches"]
         .as_sequence()
@@ -544,23 +559,161 @@ fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
         on["push"].get("tags").is_none(),
         "a tag's checks are release.yml's"
     );
-    assert!(on.get("pull_request").is_some());
+    let types: Vec<&str> = on["pull_request"]["types"]
+        .as_sequence()
+        .expect("pull_request lists its types")
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    assert_eq!(
+        types,
+        ["opened", "synchronize", "reopened", "ready_for_review"]
+    );
     assert!(on.get("workflow_dispatch").is_some());
     let c = &wf["concurrency"];
-    assert_eq!(
-        c["group"].as_str(),
-        Some("ci-${{ github.workflow }}-${{ github.ref }}")
-    );
-    assert_eq!(
-        c["cancel-in-progress"].as_str(),
-        Some("${{ github.ref != 'refs/heads/main' }}")
-    );
+    assert_eq!(c["group"].as_str(), Some("checks-${{ github.ref }}"));
+    assert_eq!(c["cancel-in-progress"].as_bool(), Some(true));
+    let names: Vec<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
+    assert_eq!(names, ["deny", "cooldown"]);
+    let builds = Regex::new(r"cargo (build|test|clippy|xtask|run)\b").unwrap();
+    for (name, j) in jobs(&wf) {
+        assert_eq!(job_if(j), DRAFT_GUARD, "{name}");
+        assert_eq!(s(j, "runs-on"), "ubuntu-latest", "{name}");
+        let run = commands(&run_text(j));
+        assert!(!builds.is_match(&run), "{name} builds or tests: {run}");
+    }
     let release = workflow("release.yml");
     assert_ne!(
         release["concurrency"]["cancel-in-progress"].as_bool(),
         Some(true),
         "a release run is never cancelled"
     );
+}
+
+#[test]
+fn the_weekly_full_build_runs_everything_on_every_system() {
+    let wf = workflow("full.yml");
+    let on = &wf["on"];
+    let cron: Vec<&str> = on["schedule"]
+        .as_sequence()
+        .expect("a schedule")
+        .iter()
+        .filter_map(|c| c["cron"].as_str())
+        .collect();
+    assert_eq!(cron.len(), 1);
+    assert!(cron[0].ends_with(" * * 1"), "Mondays: {}", cron[0]);
+    assert!(on.get("workflow_dispatch").is_some());
+    assert!(on.get("push").is_none() && on.get("pull_request").is_none());
+    assert_ne!(
+        wf["concurrency"]["cancel-in-progress"].as_bool(),
+        Some(true)
+    );
+    let names: BTreeSet<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
+    let want: BTreeSet<String> = [
+        "check", "rust", "parity", "cli", "worker", "deny", "bundles",
+    ]
+    .map(String::from)
+    .into();
+    assert_eq!(names, want);
+    for (name, j) in jobs(&wf) {
+        if name == "check" {
+            assert_eq!(job_if(j), "");
+            continue;
+        }
+        assert_eq!(s(j, "needs"), "check", "{name}");
+        assert_eq!(job_if(j), "needs.check.outputs.run == 'true'", "{name}");
+    }
+    let every: Vec<String> = ["ubuntu-latest", "macos-15", "windows-latest"]
+        .map(String::from)
+        .into();
+    for name in ["rust", "bundles"] {
+        let os: Vec<String> = job(&wf, name)["strategy"]["matrix"]["os"]
+            .as_sequence()
+            .unwrap_or_else(|| panic!("{name} has an os matrix"))
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect();
+        assert_eq!(os, every, "{name}");
+    }
+    // The frozen answers are a Mac's.
+    assert_eq!(s(job(&wf, "parity"), "runs-on"), "macos-15");
+    // Every installer is built: no step waits on a packaging answer.
+    for st in steps(job(&wf, "bundles")) {
+        assert!(!s(st, "if").contains("decide"), "{}", s(st, "name"));
+    }
+}
+
+#[test]
+fn only_the_weekly_full_build_saves_a_cache() {
+    // checks.yml restores (cargo-deny's) and never saves, so each change adds
+    // nothing to the repository's 10 GB; full.yml saves every cache, on main.
+    for f in workflow_files() {
+        let wf = workflow(&f);
+        for (name, j) in jobs(&wf) {
+            for st in steps(j) {
+                if s(st, "uses").starts_with("actions/cache/save@") {
+                    assert!(
+                        f == "full.yml" || f == "release.yml",
+                        "{f}: {name} saves a cache"
+                    );
+                }
+            }
+        }
+    }
+    let wf = workflow("full.yml");
+    for name in ["rust", "parity", "cli", "deny", "bundles"] {
+        assert!(
+            steps(job(&wf, name))
+                .iter()
+                .any(|st| s(st, "uses").starts_with("actions/cache/save@")),
+            "full.yml: {name} saves no cache"
+        );
+    }
+}
+
+/// Run full.yml's check step with a `gh` stub that answers `last` as the
+/// last green run's commit; what it wrote to GITHUB_OUTPUT.
+#[cfg(unix)]
+fn full_check(event: &str, sha: &str, last: &str) -> String {
+    let wf = workflow("full.yml");
+    let all = steps(job(&wf, "check"));
+    let st = all
+        .iter()
+        .find(|st| s(st, "id") == "check")
+        .expect("check has a step with id: check");
+    let dir = Scratch::new("full-check");
+    dir.script(
+        "bin/gh",
+        &format!(
+            "case \"$1 $2\" in \"api repos/o/r/actions/workflows/full.yml/runs?branch=main&status=success&per_page=1\") echo '{last}' ;; *) exit 9 ;; esac\n"
+        ),
+    );
+    let out_file = dir.join("output.txt");
+    let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
+    let out = bash(
+        s(st, "run"),
+        dir.path(),
+        &[
+            ("PATH", path.as_str()),
+            ("EVENT", event),
+            ("REPO", "o/r"),
+            ("SHA", sha),
+            ("GITHUB_OUTPUT", out_file.to_str().expect("a UTF-8 path")),
+        ],
+    );
+    assert!(out.status.success(), "{}", said(&out));
+    std::fs::read_to_string(out_file).unwrap_or_default()
+}
+
+#[cfg(unix)]
+#[test]
+fn the_full_build_skips_itself_only_when_main_is_the_last_green_commit() {
+    assert_eq!(full_check("schedule", "abc", "abc"), "run=false\n");
+    assert_eq!(full_check("schedule", "abc", "def"), "run=true\n");
+    // No green run yet.
+    assert_eq!(full_check("schedule", "abc", ""), "run=true\n");
+    // A manual run always runs, even on the same commit: the pre-tag check.
+    assert_eq!(full_check("workflow_dispatch", "abc", "abc"), "run=true\n");
 }
 
 #[test]
@@ -595,7 +748,7 @@ fn the_whole_lock_is_checked_for_crate_age_on_main_and_weekly() {
             .unwrap_or_else(|| panic!("{file}: {job} runs no crate-age check"))
             .to_owned()
     };
-    let rust = run_of("rust.yml", "cooldown");
+    let rust = run_of("checks.yml", "cooldown");
     let main_branch = rust
         .split("elif")
         .find(|b| b.contains("\"$GITHUB_REF\" = refs/heads/main"))
@@ -604,144 +757,4 @@ fn the_whole_lock_is_checked_for_crate_age_on_main_and_weekly() {
     let weekly = run_of("weekly-toolchain.yml", "crate-ages");
     assert!(weekly.contains("--lock rust/Cargo.lock"));
     assert!(!weekly.contains("--only-changed"));
-}
-
-#[test]
-fn only_main_saves_a_cache() {
-    // GitHub keeps 10 GB of caches per repository and evicts the rest; with
-    // every pull request saving its own copy, main's caches never survived
-    // and most runs rebuilt from nothing (SUITE-STANDARDS section 6). So no
-    // step uses the save-on-exit actions/cache, and every actions/cache/save
-    // runs only on main. release.yml is exempt: it runs on tags, untouched.
-    for f in workflow_files() {
-        if f == "release.yml" {
-            continue;
-        }
-        let wf = workflow(&f);
-        for (name, job) in jobs(&wf) {
-            for st in steps(job) {
-                let uses = s(st, "uses");
-                assert!(
-                    !uses.starts_with("actions/cache@"),
-                    "{f}: {name} uses actions/cache, which saves on every ref"
-                );
-                if uses.starts_with("actions/cache/save@") {
-                    assert!(
-                        s(st, "if").contains("github.ref == 'refs/heads/main'"),
-                        "{f}: {name} saves a cache off main"
-                    );
-                }
-            }
-        }
-    }
-}
-
-/// The bundles job's steps, and the index of its decide step.
-fn bundles_decide() -> (Vec<Value>, usize) {
-    let wf = workflow("rust.yml");
-    let all: Vec<Value> = steps(job(&wf, "bundles")).into_iter().cloned().collect();
-    let i = all
-        .iter()
-        .position(|st| s(st, "id") == "decide")
-        .expect("bundles has a step with id: decide");
-    (all, i)
-}
-
-const PACKAGING_GUARD: &str = "steps.decide.outputs.packaging == 'true'";
-
-#[test]
-fn bundles_decides_first_and_guards_every_later_step() {
-    // The bundles checks are required by main's ruleset, so the job always
-    // runs and finishes green; only its expensive steps wait on the answer.
-    // Checkout comes first because the answer is a git diff, and it must
-    // reach main (the merge commit's first parent).
-    let wf = workflow("rust.yml");
-    assert!(
-        job_if(job(&wf, "bundles")).is_empty(),
-        "bundles must not be skipped at the job level: its checks are required"
-    );
-    let (all, i) = bundles_decide();
-    assert_eq!(i, 1, "the decide step runs right after checkout");
-    assert!(s(&all[0], "uses").starts_with("actions/checkout@"));
-    assert_eq!(all[0]["with"]["fetch-depth"].as_u64(), Some(2));
-    assert!(s(&all[0], "if").is_empty() && s(&all[i], "if").is_empty());
-    let unguarded: Vec<String> = all[i + 1..]
-        .iter()
-        .filter(|st| !s(st, "if").contains(PACKAGING_GUARD))
-        .map(|st| format!("{}{}", s(st, "name"), s(st, "uses")))
-        .collect();
-    assert_eq!(unguarded, Vec::<String>::new());
-    assert!(all.len() > i + 2, "the guarded steps are still there");
-}
-
-/// Run the decide step's own bash for `event`, with a `git` stub on PATH
-/// that answers `diff` with `changed`, and return what it wrote to
-/// GITHUB_OUTPUT.
-#[cfg(unix)]
-fn decide(event: &str, changed: &[&str]) -> String {
-    let (all, i) = bundles_decide();
-    let script = s(&all[i], "run").to_string();
-    let dir = Scratch::new("decide");
-    let list = dir.write("changed.txt", changed.join("\n") + "\n");
-    dir.script(
-        "bin/git",
-        &format!(
-            "case \"$1\" in rev-parse) exit 0 ;; diff) cat '{}' ;; *) exit 9 ;; esac\n",
-            list.display()
-        ),
-    );
-    let out_file = dir.join("output.txt");
-    let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
-    let out = bash(
-        &script,
-        dir.path(),
-        &[
-            ("PATH", path.as_str()),
-            ("EVENT", event),
-            ("GITHUB_OUTPUT", out_file.to_str().expect("a UTF-8 path")),
-        ],
-    );
-    assert!(out.status.success(), "{}", said(&out));
-    std::fs::read_to_string(out_file).unwrap_or_default()
-}
-
-#[cfg(unix)]
-#[test]
-fn bundles_always_builds_on_main_and_on_a_manual_run() {
-    for event in ["push", "workflow_dispatch"] {
-        assert_eq!(decide(event, &["README.md"]), "packaging=true\n", "{event}");
-    }
-}
-
-#[cfg(unix)]
-#[test]
-fn bundles_builds_a_pull_request_only_when_packaging_changed() {
-    for f in [
-        "rust/crates/sp-release/src/nsis.rs",
-        "rust/crates/sp-release/Cargo.toml",
-        "rust/crates/xtask/src/packaging/native.rs",
-        "rust/crates/xtask/src/dmg.rs",
-        "rust/crates/sp-app/Cargo.toml",
-        "rust/crates/sp-app/icons/icon.icns",
-        "rust/Cargo.lock",
-        ".github/workflows/release.yml",
-        ".github/workflows/rust.yml",
-    ] {
-        assert_eq!(
-            decide("pull_request", &["README.md", f]),
-            "packaging=true\n",
-            "{f}"
-        );
-    }
-    for f in [
-        "README.md",
-        "rust/crates/sp-parser/src/classify.rs",
-        "rust/crates/sp-app/src/app/mod.rs",
-        "docs/ROADMAP.md",
-        // Near misses: a prefix is not the folder.
-        "rust/crates/sp-release-notes/x.rs",
-        "rust/crates/xtask/src/packaging.rs",
-    ] {
-        assert_eq!(decide("pull_request", &[f]), "packaging=false\n", "{f}");
-    }
 }

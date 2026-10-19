@@ -1,0 +1,87 @@
+# Every pull request and every push to main (SUITE-STANDARDS.md section 6,
+# CI ArtCraft-style): the quick dependency checks, and nothing else. No
+# build and no tests run here. The session runs the full local check on a
+# Mac before marking a pull request ready, and pastes it under "Tested
+# locally"; full.yml builds and tests every system weekly, and release.yml
+# on every tag. main's ruleset requires exactly these two checks.
+#
+# - deny: cargo deny check against rust/deny.toml: every advisory is an
+#   error unless deny.toml lists it with a reason, only the licenses the
+#   notices name, crates.io and the pinned git sources only.
+# - cooldown: the 14-day crate-age check, as its own comment says.
+#
+# A draft runs neither (its jobs are skipped, which counts as passing), so
+# `gh pr ready` starts the run. A newer push cancels an older run, on main
+# too: only the newest commit's answer matters, and full.yml checks main
+# itself.
+name: checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  deny:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-deny
+          key: cargo-deny-0.20.2-${{ runner.os }}
+      # Built from crates.io at a pinned version with its own lock file,
+      # rather than through a third-party action.
+      - name: Install cargo-deny
+        run: command -v cargo-deny >/dev/null || cargo install cargo-deny --version 0.20.2 --locked
+      - run: cargo deny check
+
+  # The 14-day supply-chain cooldown (scripts/check-crate-ages.py, the suite's
+  # shared copy): a crates.io package this change adds or bumps must be at
+  # least 14 days old, unless scripts/crate-age-exceptions.txt names it as a
+  # security fix; a git package must come from an allowlisted repository at a
+  # pinned commit. A pull request checks only what it changed, against
+  # main; a push to main checks the whole lock.
+  cooldown:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check crate ages
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          # A pull request checks only what it adds or bumps. main checks
+          # the whole lock on every push (and weekly-toolchain.yml does
+          # every Monday), so a crate that slipped in young is caught
+          # instead of trusted forever.
+          if [ "$EVENT" = pull_request ]; then
+            base=origin/main
+          elif [ "$GITHUB_REF" = refs/heads/main ]; then
+            base=""
+          elif [ -n "${BEFORE:-}" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            base="$BEFORE"
+          else
+            base=origin/main
+          fi
+          if [ -n "$base" ]; then
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --only-changed "$base"
+          else
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
+          fi

@@ -188,6 +188,7 @@ fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
             "build",
             "--quiet",
             "--release",
+            "--locked",
             "--package",
             "sp-cli",
             "--bin",

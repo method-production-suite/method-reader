@@ -46,7 +46,8 @@ its own updater, where it is switched on, installs the window in its place.
 
 **Verified only by CI, and only as far as CI can reach**
 
-- `rust.yml`, on every push: formatting, lints and every crate's tests on
+- `full.yml`, every Monday against main (each change runs only `checks.yml`'s
+  dependency checks on GitHub, after the full check on a Mac): formatting, lints and every crate's tests on
   macOS, Windows and Linux; the release command line converting the
   fixtures on a Mac, checked with epubcheck; and every installer built
   unsigned and opened on its own system (the `.deb` installed and removed,
@@ -59,7 +60,7 @@ its own updater, where it is switched on, installs the window in its place.
   has built and signed the Mac window, and since 0.7.0 it has notarized it.
   Every bundle is opened and checked for the files and the version it
   claims before anything is uploaded (until the Rust cutover, its engine was
-  run too; `rust.yml` runs the Mac app's headless conversion), and once a
+  run too; `full.yml` runs the Mac app's headless conversion), and once a
   person publishes the draft, `release-published.yml` reads the update
   manifest (`latest.json`, Mac only) back from GitHub. The Mac `.dmg` is built for Apple silicon only, the
   runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the

@@ -43,7 +43,7 @@ cargo run -p sp-app                                    # open the window
 The window links the engine in, so there is nothing else to build first.
 
 **On Linux** the window needs the windowing and sound headers. CI installs
-them with apt; the list is in `.github/workflows/rust.yml` (the "Linux tools
+them with apt; the list is in `.github/workflows/full.yml` (the "Linux tools
 and headers" step), and today it is:
 
 ```bash
@@ -115,12 +115,20 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 
 ## What CI runs
 
-- **Every pull request, and every push to main** (`rust.yml`; a newer push to a pull request cancels the older run): formatting, clippy with warnings as errors,
-  and every test on macOS, Windows and Linux; the parity check against the
-  TypeScript engine's frozen answers, on macOS; the release command line
-  converting the fixtures, with `epubcheck` on its books; the device-request
-  service built for wasm32; and every installer built, opened and checked on
-  its own system.
+- **Every pull request, and every push to main** (`checks.yml`; a newer
+  push cancels the older run): only the quick dependency checks, cargo deny
+  and the 14-day crate-age check. A draft runs nothing. Nothing is built or
+  tested here, so run the full check above on your own machine before you
+  mark a pull request ready, and paste the command and its result under
+  "Tested locally" in the description.
+- **Every Monday, and by hand** (`full.yml`, against main): formatting,
+  clippy with warnings as errors, and every test on macOS, Windows and
+  Linux; the parity check against the TypeScript engine's frozen answers, on
+  macOS; the release command line converting the fixtures, with `epubcheck`
+  on its books; the device-request service built for wasm32; and every
+  installer built, opened and checked on its own system. It skips itself
+  when main hasn't changed since its last green run. Before a release it is
+  run by hand on the release commit.
 - **Every `v*` tag** (`release.yml`): a draft release. It signs and
   notarizes the Mac downloads, builds every bundle and archive, checks each
   one before uploading, attaches the window's update manifest, and checks
