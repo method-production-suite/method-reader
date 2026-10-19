@@ -655,7 +655,9 @@ fn the_formula_is_byte_for_byte_the_one_the_shell_script_wrote() {
             .replace("SHA_A", &sha('a'))
             .replace(
                 "  license \"AGPL-3.0-or-later\"",
-                "  license all_of: [{ any_of: [\"MIT\", \"Apache-2.0\"] }, \"GPL-3.0-only\"]"
+                // Split over lines: brew style's FormulaAudit/Licenses
+                // refuses a nested licence on one line (the 0.13.0 tap job).
+                "  license all_of: [\n    { any_of: [\"MIT\", \"Apache-2.0\"] },\n    \"GPL-3.0-only\",\n  ]"
             )
             .replace("class Screepub < Formula", "class MethodReader < Formula")
             .replace(

@@ -136,7 +136,10 @@ pub fn formula(repo: &str, version: &str, arm_sha: &str) -> String {
   # screepub up to 0.12.x (formula_renames.json carries installs across).
   url "https://github.com/{repo}/releases/download/v{version}/{ARM}"
   sha256 "{arm_sha}"
-  license all_of: [{{ any_of: ["MIT", "Apache-2.0"] }}, "GPL-3.0-only"]
+  license all_of: [
+    {{ any_of: ["MIT", "Apache-2.0"] }},
+    "GPL-3.0-only",
+  ]
 
   livecheck do
     url "https://github.com/{repo}/releases/latest"
