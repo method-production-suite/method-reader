@@ -184,12 +184,26 @@ script follows the app defaults until it is tuned.
 
 `method-reader reveal <file>` shows a converted file in the system's file manager.
 
-The app settings live in one small file outside the library:
-`~/Library/Application Support/Method Reader/settings.json` on macOS,
-`%APPDATA%\Method Reader\settings.json` on Windows, and
-`$XDG_CONFIG_HOME/method-reader/settings.json` on Linux
-(`~/.config/method-reader/settings.json` by default). `METHOD_READER_CONFIG_DIR`
+The app settings live in one small file outside the library, in the app's
+data folder, which is named after the bundle identifier
+(`com.methodreader.desktop`) and also holds the window's own storage:
+`~/Library/Application Support/com.methodreader.desktop/settings.json` on
+macOS, `%APPDATA%\com.methodreader.desktop\settings.json` on Windows, and
+`$XDG_DATA_HOME/com.methodreader.desktop/settings.json` on Linux
+(`~/.local/share/com.methodreader.desktop/settings.json` when
+`XDG_DATA_HOME` is unset or not an absolute path). `METHOD_READER_CONFIG_DIR`
 overrides that folder everywhere.
+
+On Linux, 0.13 kept that folder in `$XDG_CONFIG_HOME` (`~/.config`). The
+window moves it once, on first launch, to the place above, and carries the
+0.12 folders (`~/.config/screepub`, `~/.config/com.darkwell.screepub`) straight
+there too. A folder moves only when the new one is not there yet; nothing is
+overwritten or deleted, and when a move cannot happen (another disk, a
+locked folder) the old folder stays in use where it is. After a failed move
+the move is not tried again: the first file the app writes in the new layout
+creates the new folder, and from then on it reads each file from whichever
+folder holds it. Nothing is lost, and the failure is logged on stderr.
+Nothing moves when `METHOD_READER_CONFIG_DIR` or `SCREEPUB_CONFIG_DIR` is set.
 
 ## Devices and routes
 

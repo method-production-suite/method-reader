@@ -50,8 +50,9 @@ pub use sp_engine::settings::app::APP_DATA_FOLDER;
 
 /// The file `name` in the app's data folder, for this process's own
 /// environment (sp_engine::settings::app::app_data_path): the override
-/// folder when one is set, else Method Reader's folder, or a 0.12 folder
-/// while only that one holds the file. The window keeps its own storage
+/// folder when one is set, else Method Reader's folder, or an older one
+/// (0.13's ~/.config folder on Linux, a 0.12 folder) while only that one
+/// holds the file. The window keeps its own storage
 /// there.
 pub fn app_data_file(name: &str) -> std::path::PathBuf {
     sp_engine::settings::app::app_data_path(
