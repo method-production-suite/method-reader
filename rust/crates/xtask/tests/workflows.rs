@@ -563,12 +563,12 @@ fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
 }
 
 #[test]
-fn every_ci_and_release_job_has_a_time_limit() {
+fn every_job_in_every_workflow_has_a_time_limit() {
     // A stuck job holds one of the suite's shared runners until GitHub's
     // six-hour default. Each limit is about twice the job's normal time
     // (Windows tests run about 37 minutes, so they get 75).
-    for f in ["rust.yml", "release.yml"] {
-        let wf = workflow(f);
+    for f in workflow_files() {
+        let wf = workflow(&f);
         for (name, job) in jobs(&wf) {
             assert!(
                 job.get("timeout-minutes").is_some(),
@@ -576,4 +576,31 @@ fn every_ci_and_release_job_has_a_time_limit() {
             );
         }
     }
+}
+
+#[test]
+fn the_whole_lock_is_checked_for_crate_age_on_main_and_weekly() {
+    // A pull request checks only what it adds or bumps, so a crate that
+    // slipped in young would otherwise be trusted forever: main checks the
+    // whole lock on every push, and weekly-toolchain.yml every Monday.
+    let run_of = |file: &str, job: &str| -> String {
+        let wf = workflow(file);
+        wf["jobs"][job]["steps"]
+            .as_sequence()
+            .unwrap()
+            .iter()
+            .filter_map(|s| s["run"].as_str())
+            .find(|r| r.contains("check-crate-ages.py"))
+            .unwrap_or_else(|| panic!("{file}: {job} runs no crate-age check"))
+            .to_owned()
+    };
+    let rust = run_of("rust.yml", "cooldown");
+    let main_branch = rust
+        .split("elif")
+        .find(|b| b.contains("\"$GITHUB_REF\" = refs/heads/main"))
+        .expect("a branch for a push to main");
+    assert!(main_branch.contains("base=\"\""), "{main_branch}");
+    let weekly = run_of("weekly-toolchain.yml", "crate-ages");
+    assert!(weekly.contains("--lock rust/Cargo.lock"));
+    assert!(!weekly.contains("--only-changed"));
 }

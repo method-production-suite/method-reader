@@ -3,8 +3,9 @@
 
 Usage: python3 scripts/check-crate-ages.py [--days 14] [--lock Cargo.lock] [--only-changed REF]
 
-Looks up each locked crates.io version's publish date (one request per second, per
-crates.io's crawler policy) and lists any younger than the cooldown. A package from
+Looks up each locked crates.io version's publish date in crates.io's sparse index (the
+CDN cargo reads; one file per crate, every version with its pubtime) and lists any
+younger than the cooldown. A package from
 anywhere else (a git repository, another registry) has no publish date to check, so it
 fails the check too: fail closed. With --only-changed REF, only packages added or bumped
 since that git ref are checked. Stdlib only, so it runs anywhere Python 3 does.
@@ -27,6 +28,7 @@ import subprocess
 import sys
 import time
 import tomllib
+import urllib.error
 import urllib.request
 
 UA = "method-reader cooldown check (https://github.com/method-production-suite/method-reader)"
@@ -75,12 +77,53 @@ def external_packages(lock_text):
     }
 
 
+def index_path(name):
+    """A crate's file in crates.io's sparse index (the layout cargo reads)."""
+    n = name.lower()
+    if len(n) <= 2:
+        return f"{len(n)}/{n}"
+    if len(n) == 3:
+        return f"3/{n[0]}/{n}"
+    return f"{n[:2]}/{n[2:4]}/{n}"
+
+
+INDEX = {}
+
+
+def fetch(url, tries=6):
+    """GET with patience: a 429 or a server error waits (honouring
+    Retry-After) and asks again; anything else fails at once."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    wait = 5
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.read().decode()
+        except urllib.error.HTTPError as e:
+            if e.code != 429 and e.code < 500 or attempt == tries - 1:
+                raise
+            after = e.headers.get("Retry-After", "")
+            time.sleep(int(after) if after.isdigit() else wait)
+            wait = min(wait * 2, 120)
+
+
 def published(name, version):
-    req = urllib.request.Request(
-        f"https://crates.io/api/v1/crates/{name}/{version}", headers={"User-Agent": UA}
-    )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        v = json.load(r)["version"]
+    """The version's publish time and yanked flag. Read from crates.io's sparse
+    index (index.crates.io, the CDN cargo itself uses; one file per crate
+    holds every version with its pubtime), which a full-lock check cannot
+    exhaust the way one API call per version did. A version the index gives
+    no pubtime falls back to the API."""
+    if name not in INDEX:
+        entries = {}
+        for line in fetch(f"https://index.crates.io/{index_path(name)}").splitlines():
+            if line.strip():
+                e = json.loads(line)
+                entries[e["vers"]] = e
+        INDEX[name] = entries
+    e = INDEX[name].get(version)
+    if e and e.get("pubtime"):
+        return dt.datetime.fromisoformat(e["pubtime"].replace("Z", "+00:00")), e["yanked"]
+    v = json.loads(fetch(f"https://crates.io/api/v1/crates/{name}/{version}"))["version"]
     return dt.datetime.fromisoformat(v["created_at"].replace("Z", "+00:00")), v["yanked"]
 
 
@@ -111,9 +154,7 @@ def main():
 
     allowed_young = excepted()
     now = dt.datetime.now(dt.timezone.utc)
-    for i, (name, version) in enumerate(sorted(pkgs)):
-        if i:
-            time.sleep(1)
+    for name, version in sorted(pkgs):
         when, yanked = published(name, version)
         age = (now - when).days
         flag = ""
