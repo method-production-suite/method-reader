@@ -345,12 +345,29 @@ print geometry and what each e-reader's renderer honours.
 
 ## Continuous integration
 
-Every pull request runs the tests, formatting, lints and dependency checks.
-The installers (the bundles job) are built and smoke-tested only when a
-pull request changes packaging: the release tools, the updater, xtask's
-bundle code, the window's manifest, icons or headless mode, the licence
-files, the workspace manifest, the lock file, the toolchain or the
-workflows. A pull request that changes only app code skips them, so the
-bundled headless smoke does not run on it; the push to main runs every
-installer and catches anything it missed. Only main saves a build cache;
-a pull request restores main's.
+GitHub builds and tests nothing on a pull request. Each pull request and
+each push to main runs only the quick dependency checks
+(`.github/workflows/checks.yml`): cargo deny, and the 14-day crate-age
+check (only what changed on a pull request, the whole lock on main). So
+test on your own machine.
+
+1. Open the pull request as a draft (`gh pr create --draft`). A draft runs
+   nothing.
+2. When the work is finished, run the full local check from `rust/`:
+
+   ```bash
+   cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked --no-fail-fast && cargo xtask parity --committed-only && cargo deny check
+   ```
+
+3. Paste that command and its result under "Tested locally" in the pull
+   request's description, naming the commit it ran on. Then run
+   `gh pr ready`.
+
+The weekly full build (`.github/workflows/full.yml`) runs every Monday
+against main: every test on macOS, Windows and Linux, parity on macOS, the
+release command line with epubcheck, the device-request Worker, and every
+installer built and opened on its own system. It skips itself when main
+hasn't changed since its last green run, and it is the only workflow that
+saves build caches. Before tagging a release, run it by hand on the release
+commit (Actions, full, Run workflow) and wait for green. release.yml then
+builds and tests every system again on the tag.
