@@ -117,6 +117,17 @@ pub fn rename_old_bundle(exe: &std::path::Path) -> Option<Renamed> {
     })
 }
 
+/// Replaces this process with the program at [`Renamed::exe`], given the
+/// same arguments (exec: same process, the new path). Returns only when
+/// that failed, with the reason.
+#[cfg(unix)]
+pub fn relaunch(renamed: &Renamed) -> std::io::Error {
+    use std::os::unix::process::CommandExt;
+    std::process::Command::new(&renamed.exe)
+        .args(std::env::args_os().skip(1))
+        .exec()
+}
+
 /// Puts a [`rename_old_bundle`] back, for when the re-launch failed.
 pub fn undo_rename(renamed: &Renamed) -> std::io::Result<()> {
     std::fs::rename(&renamed.to, &renamed.from)

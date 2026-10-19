@@ -46,16 +46,13 @@ fn reduce_motion_flag() -> Arc<AtomicBool> {
 /// went back.
 #[cfg(target_os = "macos")]
 fn relaunch_under_the_new_name() {
-    use std::os::unix::process::CommandExt;
     let Ok(exe) = std::env::current_exe() else {
         return;
     };
     let Some(renamed) = sp_update_config::rename_old_bundle(&exe) else {
         return;
     };
-    let err = sp_device::process::quiet_command(&renamed.exe)
-        .args(std::env::args_os().skip(1))
-        .exec();
+    let err = sp_update_config::relaunch(&renamed);
     eprintln!(
         "method-reader-app: could not start again as {}: {err}",
         renamed.exe.display()
