@@ -44,6 +44,13 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 permissions:
   contents: read
+# Smaller builds to cache: incremental data is useless on a fresh runner,
+# and line tables keep backtraces readable without full debug info, which
+# was most of target/ on Windows.
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+  CARGO_PROFILE_TEST_DEBUG: line-tables-only
 jobs:
   rust:
     strategy:
@@ -57,7 +64,8 @@ jobs:
         working-directory: rust
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -75,6 +83,17 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked --no-fail-fast
+      # Only main saves (SUITE-STANDARDS section 6): a pull request restores
+      # main's cache and never writes its own, so the repository stays under
+      # GitHub's 10 GB and main's cache is not evicted.
+      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: rust-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
   parity:
     runs-on: macos-15
@@ -84,7 +103,8 @@ jobs:
         working-directory: rust
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -96,6 +116,17 @@ jobs:
       # apps a route can use) are reported as skipped on a runner that is
       # not the machine they were frozen on; every other row must match.
       - run: cargo xtask parity --committed-only
+      # Only main saves (SUITE-STANDARDS section 6): a pull request restores
+      # main's cache and never writes its own, so the repository stays under
+      # GitHub's 10 GB and main's cache is not evicted.
+      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: parity-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
   cli:
     runs-on: macos-15
@@ -116,7 +147,8 @@ jobs:
             echo "::error file=rust/Cargo.toml::rust/Cargo.toml says $V but docs/releases/$V.md is missing or empty. Every version ships notes: add that file, or revert the bump."
             exit 1
           }
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -157,6 +189,17 @@ jobs:
           for b in smoke images jpx torture; do epubcheck "$RUNNER_TEMP/books/$b.epub"; done
       - run: cargo xtask smoke-cli --binary target/release/method-reader
       - run: cargo xtask smoke-cli --binary target/release/screepub
+      # Only main saves (SUITE-STANDARDS section 6): a pull request restores
+      # main's cache and never writes its own, so the repository stays under
+      # GitHub's 10 GB and main's cache is not evicted.
+      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: cli-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
 
   # The Worker as Cloudflare would build it: wasm32, workers-rs, clippy
   # clean. Built, never deployed from here (no Cloudflare credential exists
@@ -181,7 +224,8 @@ jobs:
         working-directory: rust
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cargo/bin/cargo-deny
           key: cargo-deny-0.20.2-${{ runner.os }}
@@ -190,6 +234,14 @@ jobs:
       - name: Install cargo-deny
         run: command -v cargo-deny >/dev/null || cargo install cargo-deny --version 0.20.2 --locked
       - run: cargo deny check
+      # Only main saves (SUITE-STANDARDS section 6): a pull request restores
+      # main's cache and never writes its own, so the repository stays under
+      # GitHub's 10 GB and main's cache is not evicted.
+      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-deny
+          key: cargo-deny-0.20.2-${{ runner.os }}
 
   # The 14-day supply-chain cooldown (scripts/check-crate-ages.py, the suite's
   # shared copy): a crates.io package this change adds or bumps must be at
@@ -244,7 +296,8 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -368,3 +421,14 @@ jobs:
               "$LOCALAPPDATA/Method Reader/uninstall.exe" //S
               ;;
           esac
+      # Only main saves (SUITE-STANDARDS section 6): a pull request restores
+      # main's cache and never writes its own, so the repository stays under
+      # GitHub's 10 GB and main's cache is not evicted.
+      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: bundles-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}

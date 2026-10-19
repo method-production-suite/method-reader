@@ -577,3 +577,33 @@ fn every_ci_and_release_job_has_a_time_limit() {
         }
     }
 }
+
+#[test]
+fn only_main_saves_a_cache() {
+    // GitHub keeps 10 GB of caches per repository and evicts the rest; with
+    // every pull request saving its own copy, main's caches never survived
+    // and most runs rebuilt from nothing (SUITE-STANDARDS section 6). So no
+    // step uses the save-on-exit actions/cache, and every actions/cache/save
+    // runs only on main. release.yml is exempt: it runs on tags, untouched.
+    for f in workflow_files() {
+        if f == "release.yml" {
+            continue;
+        }
+        let wf = workflow(&f);
+        for (name, job) in jobs(&wf) {
+            for st in steps(job) {
+                let uses = s(st, "uses");
+                assert!(
+                    !uses.starts_with("actions/cache@"),
+                    "{f}: {name} uses actions/cache, which saves on every ref"
+                );
+                if uses.starts_with("actions/cache/save@") {
+                    assert!(
+                        s(st, "if").contains("github.ref == 'refs/heads/main'"),
+                        "{f}: {name} saves a cache off main"
+                    );
+                }
+            }
+        }
+    }
+}
