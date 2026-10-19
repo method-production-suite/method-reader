@@ -75,9 +75,16 @@ Neither makes a tag or a release.
    It runs every check, build, signature, notarization and staple, every
    bundle check and the old window's update into the new build. It skips
    every step that would write to a release: the draft, the uploads, the
-   checksums, `latest.json` and the draft check. The bundles stay on the
-   run as artifacts. A rehearsal honours the crate-age list's age-out
-   entries, as main does; the real tag run does not.
+   checksums, `latest.json` and the draft check. A rehearsal honours the
+   crate-age list's age-out entries, as main does; the real tag run does
+   not. It runs only from main, since it uses the real signing keys.
+3. Delete the rehearsal's artifacts as soon as it is green. They are signed
+   builds that are not a release, and GitHub would otherwise keep them for
+   a day (`RUN` is the rehearsal's run id):
+
+   ```bash
+   for id in $(gh api repos/method-production-suite/method-reader/actions/runs/RUN/artifacts --jq '.artifacts[].id'); do gh api -X DELETE repos/method-production-suite/method-reader/actions/artifacts/$id; done
+   ```
 
 Tag only when both are green.
 
