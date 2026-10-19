@@ -54,8 +54,11 @@ pub fn absolute_env_folder(raw: Option<&str>) -> Option<String> {
 /// The app's data folder, where settings.json and the window's own
 /// storage live: named after the bundle identifier (sp_update::IDENTIFIER,
 /// which sp-app's tests hold it to), as a Tauri app's is, under Application
-/// Support (macOS), %APPDATA% (Windows) and $XDG_CONFIG_HOME (everywhere
-/// else).
+/// Support (macOS), %APPDATA% (Windows) and $XDG_DATA_HOME, else
+/// ~/.local/share (everywhere else), the suite standard (SUITE-STANDARDS.md
+/// section 2). 0.13 kept it under $XDG_CONFIG_HOME on Linux: that folder
+/// ([`previous_app_data_folder`]) moves once into this one
+/// ([`crate::legacy::move_legacy_folders`]) and is used until it has.
 pub const APP_DATA_FOLDER: &str = "com.methodreader.desktop";
 /// Where 0.12 and earlier kept settings.json: `Screepub` under Application
 /// Support and %APPDATA%, `screepub` under $XDG_CONFIG_HOME. Still known:
@@ -86,9 +89,31 @@ pub fn config_dir_override(env: &Env) -> Option<String> {
     absolute_env_folder(env_or_legacy(env, CONFIG_DIR_VAR, LEGACY_CONFIG_DIR_VAR))
 }
 
-/// The platform's settings folder, named `name` (`xdg_name` on the
-/// freedesktop systems), by that platform's path rules.
-fn platform_settings_folder(platform: &str, env: &Env, name: &str, xdg_name: &str) -> String {
+/// `$<var>` when it is an absolute path, else `<home>/<fallback>`: the
+/// freedesktop rule for XDG_CONFIG_HOME and XDG_DATA_HOME.
+fn xdg_home(env: &Env, home: &str, var: &str, fallback: &[&str]) -> String {
+    let xdg = js_trim(env.get(var).unwrap_or(""));
+    if posix::is_absolute(xdg) {
+        xdg.to_owned()
+    } else {
+        let mut parts = vec![home];
+        parts.extend_from_slice(fallback);
+        posix::join(&parts)
+    }
+}
+
+/// The platform's per-user folder named `name` (`xdg_name` on the
+/// freedesktop systems), by that platform's path rules: Application Support
+/// and %APPDATA% on macOS and Windows; elsewhere under `$<xdg_var>`, else
+/// `<home>/<xdg_fallback>`.
+fn platform_folder(
+    platform: &str,
+    env: &Env,
+    name: &str,
+    xdg_name: &str,
+    xdg_var: &str,
+    xdg_fallback: &[&str],
+) -> String {
     let home = home_folder(env);
     match platform {
         "darwin" => posix::join(&[home.as_str(), "Library", "Application Support", name]),
@@ -102,15 +127,28 @@ fn platform_settings_folder(platform: &str, env: &Env, name: &str, xdg_name: &st
             win32::join(&[base.as_str(), name])
         }
         _ => {
-            let xdg = js_trim(env.get("XDG_CONFIG_HOME").unwrap_or(""));
-            let config_home = if posix::is_absolute(xdg) {
-                xdg.to_owned()
-            } else {
-                posix::join(&[home.as_str(), ".config"])
-            };
-            posix::join(&[config_home.as_str(), xdg_name])
+            let base = xdg_home(env, &home, xdg_var, xdg_fallback);
+            posix::join(&[base.as_str(), xdg_name])
         }
     }
+}
+
+/// The folder named `name` where 0.12 and 0.13 kept app data: on the
+/// freedesktop systems under $XDG_CONFIG_HOME (else ~/.config).
+fn platform_config_folder(platform: &str, env: &Env, name: &str, xdg_name: &str) -> String {
+    platform_folder(
+        platform,
+        env,
+        name,
+        xdg_name,
+        "XDG_CONFIG_HOME",
+        &[".config"],
+    )
+}
+
+/// True on the platforms whose app data follows the freedesktop rules.
+fn is_freedesktop(platform: &str) -> bool {
+    platform != "darwin" && platform != "win32"
 }
 
 /// `path` joined to `name` by the platform's rules.
@@ -123,9 +161,18 @@ fn platform_join(platform: &str, path: &str, name: &str) -> String {
 }
 
 /// The platform's app-data folder called `name` (by identifier, so the
-/// same name everywhere), whatever is on disk.
+/// same name everywhere), whatever is on disk: on the freedesktop systems
+/// under $XDG_DATA_HOME when that is an absolute path, else
+/// ~/.local/share.
 pub fn app_data_folder_named(platform: &str, env: &Env, name: &str) -> String {
-    platform_settings_folder(platform, env, name, name)
+    platform_folder(
+        platform,
+        env,
+        name,
+        name,
+        "XDG_DATA_HOME",
+        &[".local", "share"],
+    )
 }
 
 /// Method Reader's app-data folder on this platform, whatever is on disk.
@@ -135,7 +182,7 @@ pub fn settings_folder(platform: &str, env: &Env) -> String {
 
 /// Screepub's settings folder on this platform, whatever is on disk.
 pub fn legacy_settings_folder(platform: &str, env: &Env) -> String {
-    platform_settings_folder(
+    platform_config_folder(
         platform,
         env,
         LEGACY_SETTINGS_FOLDER,
@@ -145,13 +192,29 @@ pub fn legacy_settings_folder(platform: &str, env: &Env) -> String {
 
 /// The 0.12 identifier's app-data folder, whatever is on disk.
 pub fn legacy_app_data_folder(platform: &str, env: &Env) -> String {
-    app_data_folder_named(platform, env, LEGACY_APP_DATA_FOLDER)
+    platform_config_folder(
+        platform,
+        env,
+        LEGACY_APP_DATA_FOLDER,
+        LEGACY_APP_DATA_FOLDER,
+    )
+}
+
+/// Where 0.13 kept Method Reader's app-data folder when that is not where
+/// it belongs now: on the freedesktop systems
+/// $XDG_CONFIG_HOME/com.methodreader.desktop (else ~/.config/...). `None`
+/// on macOS and Windows, where the folder has not moved. Whatever is on
+/// disk.
+pub fn previous_app_data_folder(platform: &str, env: &Env) -> Option<String> {
+    is_freedesktop(platform)
+        .then(|| platform_config_folder(platform, env, APP_DATA_FOLDER, APP_DATA_FOLDER))
 }
 
 /// The file `name` in the app's data folder: in METHOD_READER_CONFIG_DIR
 /// when that is an absolute path; otherwise Method Reader's own, unless it
-/// is not there yet and a 0.12 folder still holds one (the move had not
-/// happened, or could not), which is then used where it is.
+/// is not there yet and an older folder still holds one (0.13's on Linux,
+/// then the two 0.12 folders: the move had not happened, or could not),
+/// which is then used where it is.
 pub fn app_data_path(platform: &str, env: &Env, name: &str) -> String {
     if let Some(dir) = config_dir_override(env) {
         return host::join(&[dir.as_str(), name]);
@@ -161,27 +224,33 @@ pub fn app_data_path(platform: &str, env: &Env, name: &str) -> String {
     if fsx::exists(&new) {
         return new;
     }
-    [
-        legacy_settings_folder(platform, env),
-        legacy_app_data_folder(platform, env),
-    ]
-    .iter()
-    .map(|old| platform_join(platform, old, name))
-    .find(|old| fsx::exists(old))
-    .unwrap_or(new)
+    previous_app_data_folder(platform, env)
+        .into_iter()
+        .chain([
+            legacy_settings_folder(platform, env),
+            legacy_app_data_folder(platform, env),
+        ])
+        .map(|old| platform_join(platform, &old, name))
+        .find(|old| fsx::exists(old))
+        .unwrap_or(new)
 }
 
 /// `appSettingsPath(platform, env)`: folder + `settings.json`.
 /// METHOD_READER_CONFIG_DIR wins everywhere, when it is an absolute path.
-/// Otherwise Method Reader's app-data folder; Screepub's while only that
-/// one is there, or while only it holds a settings.json (it had not moved
-/// yet, or could not be moved).
+/// Otherwise Method Reader's app-data folder; an older one (0.13's on
+/// Linux, then Screepub's) while only that one is there, or while only it
+/// holds a settings.json (it had not moved yet, or could not be moved).
 pub fn app_settings_path(platform: &str, env: &Env) -> String {
     if config_dir_override(env).is_none() {
         let folder = settings_folder(platform, env);
-        let legacy = legacy_settings_folder(platform, env);
-        if !fsx::exists(&folder) && fsx::is_dir(&legacy) {
-            return platform_join(platform, &legacy, "settings.json");
+        if !fsx::exists(&folder) {
+            let older = previous_app_data_folder(platform, env)
+                .into_iter()
+                .chain([legacy_settings_folder(platform, env)])
+                .find(|old| fsx::is_dir(old));
+            if let Some(old) = older {
+                return platform_join(platform, &old, "settings.json");
+            }
         }
     }
     app_data_path(platform, env, "settings.json")

@@ -65,32 +65,45 @@ fn win32_blank_appdata_is_ignored() {
 }
 
 #[test]
-fn linux_absolute_xdg_config_home_is_honoured() {
+fn linux_absolute_xdg_data_home_is_honoured() {
+    assert_eq!(
+        app_settings_path(
+            "linux",
+            &env_of(&[("HOME", HOME), ("XDG_DATA_HOME", "/home/ada/.xdgdata")])
+        ),
+        "/home/ada/.xdgdata/com.methodreader.desktop/settings.json"
+    );
+}
+
+#[test]
+fn linux_relative_xdg_data_home_is_ignored() {
+    assert_eq!(
+        app_settings_path(
+            "linux",
+            &env_of(&[("HOME", HOME), ("XDG_DATA_HOME", "not/absolute")])
+        ),
+        "/home/ada/.local/share/com.methodreader.desktop/settings.json"
+    );
+}
+
+#[test]
+fn linux_no_xdg_data_home_falls_back_to_dot_local_share() {
+    assert_eq!(
+        app_settings_path("linux", &env_of(&[("HOME", HOME)])),
+        "/home/ada/.local/share/com.methodreader.desktop/settings.json"
+    );
+}
+
+#[test]
+fn linux_xdg_config_home_no_longer_places_the_app_data() {
+    // 0.13 kept it under $XDG_CONFIG_HOME; the suite standard is
+    // $XDG_DATA_HOME (SUITE-STANDARDS.md section 2).
     assert_eq!(
         app_settings_path(
             "linux",
             &env_of(&[("HOME", HOME), ("XDG_CONFIG_HOME", "/home/ada/.xdgconfig")])
         ),
-        "/home/ada/.xdgconfig/com.methodreader.desktop/settings.json"
-    );
-}
-
-#[test]
-fn linux_relative_xdg_config_home_is_ignored() {
-    assert_eq!(
-        app_settings_path(
-            "linux",
-            &env_of(&[("HOME", HOME), ("XDG_CONFIG_HOME", "not/absolute")])
-        ),
-        "/home/ada/.config/com.methodreader.desktop/settings.json"
-    );
-}
-
-#[test]
-fn linux_no_xdg_config_home_falls_back_to_dot_config() {
-    assert_eq!(
-        app_settings_path("linux", &env_of(&[("HOME", HOME)])),
-        "/home/ada/.config/com.methodreader.desktop/settings.json"
+        "/home/ada/.local/share/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -118,7 +131,7 @@ fn whitespace_only_config_dir_is_ignored() {
             "linux",
             &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", "   ")])
         ),
-        "/home/ada/.config/com.methodreader.desktop/settings.json"
+        "/home/ada/.local/share/com.methodreader.desktop/settings.json"
     );
 }
 
@@ -130,7 +143,7 @@ fn relative_config_dir_is_ignored_not_resolved() {
                 "linux",
                 &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", relative)])
             ),
-            "/home/ada/.config/com.methodreader.desktop/settings.json"
+            "/home/ada/.local/share/com.methodreader.desktop/settings.json"
         );
     }
 }
@@ -142,7 +155,7 @@ fn empty_config_dir_is_ignored() {
             "linux",
             &env_of(&[("HOME", HOME), ("METHOD_READER_CONFIG_DIR", "")])
         ),
-        "/home/ada/.config/com.methodreader.desktop/settings.json"
+        "/home/ada/.local/share/com.methodreader.desktop/settings.json"
     );
 }
 

@@ -399,6 +399,9 @@ pub fn capture_host() -> Host {
         reduced_motion: Arc::new(AtomicBool::new(false)),
         updater: Arc::new(NoUpdater),
         speaker: Box::new(FakeSpeaker::default()),
+        // No sample: the first launch's sample is the shipped window's
+        // (main.rs), and a picture shows only the scripts it drives.
+        sample_dir: None,
     }
 }
 
