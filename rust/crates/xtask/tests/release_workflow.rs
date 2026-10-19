@@ -861,3 +861,43 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
         }
     }
 }
+
+/// A step that brings a secret into the job: a `secrets.` value anywhere in
+/// it, the token GitHub hands every job aside.
+fn carries_a_secret(step: &Value) -> bool {
+    let text = serde_yaml::to_string(step).expect("a step");
+    text.replace("secrets.GITHUB_TOKEN", "")
+        .contains("secrets.")
+}
+
+/// A step that compiles or runs code a build can pull in: cargo's build,
+/// run, test, clippy and xtask (a crate's build script runs in each).
+fn builds(step: &Value) -> bool {
+    let re = Regex::new(r"\bcargo (build|run|test|clippy|xtask|install)\b").unwrap();
+    re.is_match(&commands(s(step, "run")))
+}
+
+#[test]
+fn no_build_runs_after_a_signing_secret_is_in_the_job() {
+    // A build script, or any crate a build pulls in, runs arbitrary code.
+    // So in every job the builds come first, and a secret (the Developer ID
+    // certificate, the notary key, the update key) enters only after the
+    // last of them.
+    let wf = rel();
+    let mut with_secrets = 0;
+    for (name, job) in jobs(&wf) {
+        let all = steps(job);
+        let Some(first) = all.iter().position(|st| carries_a_secret(st)) else {
+            continue;
+        };
+        with_secrets += 1;
+        let late: Vec<String> = all[first..]
+            .iter()
+            .filter(|st| builds(st))
+            .map(|st| s(st, "name").to_string())
+            .collect();
+        assert_eq!(late, Vec::<String>::new(), "{name} builds after a secret");
+    }
+    // The CLI's notarization and the window's signing, at least.
+    assert!(with_secrets >= 2, "{with_secrets}");
+}
