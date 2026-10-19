@@ -36,7 +36,19 @@ on:
   # Re-run entry point: a transient notarization failure used to mean
   # deleting and re-pushing the tag. Dispatch runs against the chosen ref;
   # the version comes from the tag that ref carries.
+  #
+  # The rehearsal: dispatched on main with rehearse_version set to the
+  # workspace version (rust/Cargo.toml), it runs every build, signature,
+  # notarization and staple and every bundle check, and creates, edits and
+  # uploads to no release (each step and job that would is skipped). No tag
+  # is made or needed. That is how a change to this file is proved before a
+  # real tag. Its bundles stay on the run as artifacts.
   workflow_dispatch:
+    inputs:
+      rehearse_version:
+        description: "Rehearse without a release: the workspace version, e.g. 0.13.0. Empty for a real release run."
+        type: string
+        default: ""
 permissions:
   contents: read
 concurrency:
@@ -59,16 +71,35 @@ jobs:
       # its 14 days, but no release ships one; a listed security fix (a
       # RUSTSEC id in its reason) may. First, before anything is built or
       # signed.
+      # The rehearsal runs with the real signing secrets, so only from main:
+      # the keys meet reviewed code only. Every other job needs this one.
+      - name: A rehearsal runs only from main
+        if: ${{ inputs.rehearse_version }}
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          [ "$REF" = refs/heads/main ] || {
+            echo "::error::A rehearsal runs only from main, with reviewed code beside the signing keys. This run is on $REF."; exit 1; }
       - name: Every locked crate is at least 14 days old, apart from security fixes
+        env:
+          REHEARSE: ${{ inputs.rehearse_version }}
         run: |
           set -euo pipefail
           # tomllib: Python 3.11 or later (the runner's python3 is newer).
           python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || {
             echo "::error::$(python3 --version) is too old for the crate-age check (3.11 or later)"; exit 1; }
-          python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
+          # A rehearsal ships nothing, so it honours the age-out entries
+          # (main's own rule); a real release never does.
+          if [ -n "$REHEARSE" ]; then
+            echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
+          else
+            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
+          fi
       - name: Release notes and tag are publishable
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -103,7 +134,7 @@ jobs:
       - name: The workspace version is the tag's
         working-directory: rust
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           git cat-file blob "$GITHUB_SHA:rust/Cargo.toml" > "$RUNNER_TEMP/Cargo.toml"
@@ -147,7 +178,7 @@ jobs:
       - name: Sign, notarize and package the macOS command-line tool
         working-directory: rust
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
           AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
         run: |
@@ -177,9 +208,10 @@ jobs:
             || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
           target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
       - name: Write the draft release
+        if: ${{ !inputs.rehearse_version }}
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -236,7 +268,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build, run and package
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -269,6 +301,7 @@ jobs:
 
   cli-upload:
     needs: [release, cli]
+    if: ${{ !inputs.rehearse_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -285,7 +318,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           cd cli
@@ -348,7 +381,7 @@ jobs:
       - name: macOS app, update archive and image
         if: runner.os == 'macOS'
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
           AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
           AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -406,7 +439,7 @@ jobs:
       - name: Linux packages
         if: runner.os == 'Linux'
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -441,7 +474,7 @@ jobs:
       - name: Windows installer
         if: runner.os == 'Windows'
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -466,7 +499,7 @@ jobs:
       # built it and checked for the files and the version it claims.
       - name: Check each bundle
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -568,7 +601,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -606,6 +639,7 @@ jobs:
   # describe files not there yet).
   app-upload:
     needs: [release, app-bundles, handover-gate]
+    if: ${{ !inputs.rehearse_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -634,7 +668,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           cd arrivals
@@ -646,7 +680,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -669,6 +703,7 @@ jobs:
   # SHA256SUMS-app beside it; that file goes.
   checksums:
     needs: [release, cli-upload, app-upload, handover-gate]
+    if: ${{ !inputs.rehearse_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -678,7 +713,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
@@ -724,7 +759,7 @@ jobs:
   # only because GitHub shows a draft to no token that cannot write.
   draft-check:
     needs: [release, cli-upload, app-upload, handover-gate, checksums]
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !inputs.rehearse_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -749,7 +784,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"

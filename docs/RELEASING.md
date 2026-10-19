@@ -57,6 +57,37 @@ for the README and to `site/img/` for the site.
 Every picture must match the build being released. Commit the changed ones
 with the release.
 
+## Before the tag: the full build and a rehearsal
+
+The release commit is already on main, so two runs on main come first.
+Neither makes a tag or a release.
+
+1. The weekly full build, by hand: Actions, **full**, Run workflow, on
+   `main`. Wait for green.
+2. A rehearsal of the release itself: Actions, **release**, Run workflow, on
+   `main`, with `rehearse_version` set to the workspace version in
+   `rust/Cargo.toml`. Or from a terminal:
+
+   ```bash
+   gh workflow run release.yml --ref main -f rehearse_version=0.13.1
+   ```
+
+   It runs every check, build, signature, notarization and staple, every
+   bundle check and the old window's update into the new build. It skips
+   every step that would write to a release: the draft, the uploads, the
+   checksums, `latest.json` and the draft check. A rehearsal honours the
+   crate-age list's age-out entries, as main does; the real tag run does
+   not. It runs only from main, since it uses the real signing keys.
+3. Delete the rehearsal's artifacts as soon as it is green. They are signed
+   builds that are not a release, and GitHub would otherwise keep them for
+   a day (`RUN` is the rehearsal's run id):
+
+   ```bash
+   for id in $(gh api repos/method-production-suite/method-reader/actions/runs/RUN/artifacts --jq '.artifacts[].id'); do gh api -X DELETE repos/method-production-suite/method-reader/actions/artifacts/$id; done
+   ```
+
+Tag only when both are green.
+
 ## 4. Checks, commit, tag, push
 
 ```bash

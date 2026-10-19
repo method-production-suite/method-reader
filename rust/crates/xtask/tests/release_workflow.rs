@@ -901,3 +901,98 @@ fn no_build_runs_after_a_signing_secret_is_in_the_job() {
     // The CLI's notarization and the window's signing, at least.
     assert!(with_secrets >= 2, "{with_secrets}");
 }
+
+const NOT_REHEARSAL: &str = "!inputs.rehearse_version";
+
+#[test]
+fn a_rehearsal_writes_to_no_release_and_makes_no_tag() {
+    // Dispatched with rehearse_version, release.yml builds, signs,
+    // notarizes, staples and checks everything, and every step or job that
+    // would create, edit or upload to a release is skipped. A real tag run
+    // leaves the input empty and is unchanged.
+    let wf = rel();
+    let input = &wf["on"]["workflow_dispatch"]["inputs"]["rehearse_version"];
+    assert_eq!(s(input, "type"), "string");
+    assert_eq!(s(input, "default"), "");
+    let writes =
+        Regex::new(r"\bgh release (create|edit|upload|delete)\b|\bgit (tag|push)\b").unwrap();
+    let mut guarded = 0;
+    for (name, job) in jobs(&wf) {
+        let job_skips = job_if(job).contains(NOT_REHEARSAL);
+        for st in steps(job) {
+            let run = commands(s(st, "run"));
+            if writes.is_match(&run) {
+                assert!(
+                    job_skips || s(st, "if").contains(NOT_REHEARSAL),
+                    "{name}: {} writes to a release in a rehearsal",
+                    s(st, "name")
+                );
+                guarded += 1;
+            }
+        }
+    }
+    assert!(guarded >= 4, "the scan found only {guarded} release writes");
+    // One spelling of the tag everywhere: the rehearsal's version, or the
+    // ref a real run was started from.
+    let tag = "${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}";
+    let text = read(".github/workflows/release.yml");
+    assert!(!text.contains("TAG: ${{ github.ref_name }}"));
+    assert!(text.matches(tag).count() >= 10);
+}
+
+#[test]
+fn a_rehearsal_still_runs_every_build_and_signature() {
+    let wf = rel();
+    for name in ["checks", "release", "cli", "app-bundles", "handover-gate"] {
+        assert!(
+            !job_if(job(&wf, name)).contains("rehearse_version"),
+            "{name} must run in a rehearsal"
+        );
+        for st in steps(job(&wf, name)) {
+            if s(st, "if").contains(NOT_REHEARSAL) {
+                assert_eq!(
+                    (name, s(st, "name")),
+                    ("release", "Write the draft release"),
+                    "only the draft is skipped inside the building jobs"
+                );
+            }
+        }
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn a_rehearsal_refuses_any_ref_but_main() {
+    // The real signing secrets are in a rehearsal, so the keys meet only
+    // reviewed code. The guard is the first step of checks, which every
+    // other job needs.
+    let wf = rel();
+    let all = steps(job(&wf, "checks"));
+    let i = all
+        .iter()
+        .position(|st| s(st, "name") == "A rehearsal runs only from main")
+        .expect("the main-only guard");
+    assert!(i <= 1, "the guard comes right after checkout");
+    assert_eq!(s(all[i], "if"), "${{ inputs.rehearse_version }}");
+    for (name, j) in jobs(&wf) {
+        if name != "checks" {
+            assert!(
+                needs(j).iter().any(|n| n == "checks") || !needs(j).is_empty(),
+                "{name} runs without waiting for the checks"
+            );
+        }
+    }
+    let dir = Scratch::new("rehearse-ref");
+    let run = |r: &str| {
+        bash(
+            s(all[i], "run"),
+            dir.path(),
+            &[("REF", r), ("PATH", "/usr/bin:/bin")],
+        )
+        .status
+        .success()
+    };
+    assert!(run("refs/heads/main"));
+    assert!(!run("refs/heads/feature"));
+    assert!(!run("refs/tags/v9.9.9"));
+}
