@@ -1,26 +1,21 @@
-# Dependabot version updates.
+# Dependabot version updates (SUITE-STANDARDS.md section 6): one grouped
+# pull request a week per ecosystem, never for releases younger than the
+# 14-day crate cooldown that CI's crate-age check holds every change to.
 #
-# Security ALERTS are separate and need no config — enable them in
-# Settings, then Code security. They're the higher-value half and cover
-# the PDF stack even if the PRs below prove fiddly.
+# Security updates are GitHub's own and stay separate, one pull request
+# each, so a fix is never held up by a batch: the group below applies to
+# version updates only. Security ALERTS need no config here; they are
+# enabled in Settings, then Code security.
+#
+# GitHub Actions are left out on purpose: they stay pinned to the suite's
+# shared SHAs, which MOrg moves for every repository at once, so the repos
+# never drift apart (a security alert on an action still reaches MOrg).
+#
+# rust/handover-proof is left out too: its own lock pins Tauri exactly as
+# the shipped Tauri windows have it, which is the point of the proof, and
+# a version bump there would test code no window runs.
 version: 2
 updates:
-  # GitHub Actions are a supply-chain surface: a compromised action runs
-  # with our release secrets. We pin to SHAs; Dependabot bumps the hash
-  # and keeps the trailing version comment honest, which hand-pinning
-  # never does reliably. (checkout sat three majors behind on v4 until
-  # a Node 20 deprecation warning surfaced it.)
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "ci"
-    groups:
-      actions:
-        patterns: ["*"]
-
   # The Rust workspace. The crates that read UNTRUSTED input matter most:
   # the PDF stack under sp-pdf (the whole point of this app is opening
   # PDFs other people made), the zip and image decoders, and the TLS stack
@@ -30,18 +25,17 @@ updates:
     directory: /rust
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "deps"
     # Majors wait longer: they carry breaking-change risk on top of
     # supply-chain risk, and the parity checks ride on the PDF stack's
     # behaviour staying put.
     cooldown:
-      default-days: 1
+      default-days: 14
       semver-major-days: 30
     groups:
-      # One PR for routine bumps; security fixes still arrive separately
-      # and immediately via Dependabot alerts.
-      dependencies:
+      cargo-weekly:
+        applies-to: version-updates
         patterns: ["*"]
-        update-types: ["minor", "patch"]

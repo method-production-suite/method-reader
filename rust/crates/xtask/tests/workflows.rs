@@ -206,7 +206,8 @@ fn uses_lines() -> Vec<(String, String)> {
 #[test]
 fn every_action_is_pinned_to_a_full_sha_with_its_version_beside_it() {
     // A tag can be moved; a commit cannot. The comment is what pinact and
-    // Dependabot keep honest, and what a reader checks the SHA against.
+    // the suite-wide pin moves keep honest, and what a reader checks the
+    // SHA against.
     let pinned = Regex::new(r"^[\w.-]+/[\w./-]+@[0-9a-f]{40} # v\d+(\.\d+)*$").unwrap();
     let all = uses_lines();
     assert!(all.len() > 10, "found only {} uses: lines", all.len());
