@@ -540,7 +540,10 @@ fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
         .filter_map(Value::as_str)
         .collect();
     assert_eq!(push_branches, ["main"]);
-    assert!(on["push"].get("tags").is_none(), "a tag's checks are release.yml's");
+    assert!(
+        on["push"].get("tags").is_none(),
+        "a tag's checks are release.yml's"
+    );
     assert!(on.get("pull_request").is_some());
     assert!(on.get("workflow_dispatch").is_some());
     let c = &wf["concurrency"];
