@@ -561,7 +561,9 @@ fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
         Some(true),
         "a release run is never cancelled"
     );
+}
 
+#[test]
 fn every_ci_and_release_job_has_a_time_limit() {
     // A stuck job holds one of the suite's shared runners until GitHub's
     // six-hour default. Each limit is about twice the job's normal time
