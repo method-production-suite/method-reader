@@ -136,9 +136,10 @@ pub struct State {
     give_back: Option<(String, u64)>,
     /// The brass button is owed the keyboard.
     pub brass_owed: Option<Owed<Id>>,
-    /// Read it | Edit it, remembered app-wide (app settings `panelIntent`).
+    /// Send to e-reader | Get an editable script, remembered app-wide (app settings `panelIntent`).
     pub intent: Intent,
-    /// Where the brass knob was drawn last: 0 under Read it, 1 under Edit it.
+    /// Where the brass knob was drawn last: 0 under the e-reader half, 1
+    /// under the editable script.
     pub knob: f32,
     /// An arrow moved the choice: the keyboard follows it next frame, once
     /// the new half is the Tab stop.
@@ -1355,14 +1356,14 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     }
 }
 
-// ------------------------------------------------------- Read it | Edit it
+// ------------------------------- Send to e-reader | Get an editable script
 
 pub fn intent_id(intent: Intent) -> Id {
     Id::new(("panel-intent", intent.stored()))
 }
 
 /// The choice changed: drawn at once, remembered app-wide.
-fn choose_intent(app: &mut App, intent: Intent) {
+pub(crate) fn choose_intent(app: &mut App, intent: Intent) {
     if app.panel.intent == intent {
         return;
     }
@@ -1375,7 +1376,7 @@ fn choose_intent(app: &mut App, intent: Intent) {
     );
 }
 
-/// Read it | Edit it: a segmented control, one Tab stop (the chosen half),
+/// Send to e-reader | Get an editable script: a segmented control, one Tab stop (the chosen half),
 /// the arrows between the two, a brass knob that slides under the choice
 /// over the state motion (at once with Reduce Motion).
 fn intent_switch(app: &mut App, ui: &mut Ui) {
@@ -1506,7 +1507,7 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
     }
 }
 
-/// Edit it: a line, then Final Draft and Fountain as cards. Each opens the
+/// The editable script: a line, then .fdx and Fountain as cards. Each opens the
 /// Save box and runs the same export Save a file does.
 fn draw_edit(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();

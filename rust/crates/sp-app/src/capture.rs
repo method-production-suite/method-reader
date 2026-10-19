@@ -25,7 +25,7 @@
 //! no updater, no sound and no storage file, so nothing on the screen
 //! depends on this machine's own state, and [`reach`] drives the window
 //! into the shot the way a person would (a file dropped on the well, the
-//! Read tab), waits for it to settle, and says what went wrong if it never
+//! Preview tab), waits for it to settle, and says what went wrong if it never
 //! does.
 
 use std::path::{Component, Path, PathBuf};
@@ -119,7 +119,7 @@ pub struct Args {
     /// may be read from.
     pub library: PathBuf,
     /// `--panel read|edit` (optional, read): which half of the send
-    /// panel's Read it | Edit it the result shows.
+    /// panel's Send to e-reader | Get an editable script the result shows.
     pub panel: Intent,
 }
 

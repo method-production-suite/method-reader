@@ -1,9 +1,11 @@
-//! Read it | Edit it at the top of the send panel: new behavior in the Rust
-//! window, not parity (rust/PARITY.md rows X1 to X6). The choice shows on
-//! the cards and on the calm screen, is one Tab stop with the arrows
-//! between its halves, leads Edit it to two cards that save the editing
-//! files through the same export Save a file uses, is remembered app-wide,
-//! and slides its knob over the state motion unless Reduce Motion is on.
+//! Send to e-reader | Get an editable script at the top of the send panel:
+//! new behavior in the Rust window, not parity (rust/PARITY.md rows X1 to
+//! X6). The choice shows on the cards and on the calm screen, is one Tab
+//! stop with the arrows between its halves, leads the editable script to
+//! two cards that save the editing files through the same export Save a
+//! file uses, is remembered app-wide, and slides its knob over the state
+//! motion unless Reduce Motion is on. The Preview page's Send to e-reader
+//! lands on the e-reader half, whatever was chosen last.
 
 mod common;
 
@@ -36,7 +38,7 @@ fn selected(h: &H) -> String {
     h.query_all_by_role(Role::Tab)
         .filter(|t| t.accesskit_node().is_selected() == Some(true))
         .filter_map(|t| t.accesskit_node().label())
-        .find(|l| l == "Read it" || l == "Edit it")
+        .find(|l| l == "Send to e-reader" || l == "Get an editable script")
         .expect("one half chosen")
 }
 
@@ -52,7 +54,7 @@ fn x1_the_choice_heads_the_cards_and_the_calm_screen() {
     let w = world();
     let h = result(&w);
     h.get_by_role_and_label(Role::TabList, CHOICE_LABEL);
-    assert_eq!(selected(&h), "Read it");
+    assert_eq!(selected(&h), "Send to e-reader");
     h.get_by_role_and_label(Role::Heading, "What do you read on?");
     let choice = h.get_by_role_and_label(Role::TabList, CHOICE_LABEL).rect();
     let cards = h
@@ -71,41 +73,46 @@ fn x1_the_choice_heads_the_cards_and_the_calm_screen() {
 fn x2_one_tab_stop_and_the_arrows_move_between_the_halves() {
     let w = world();
     let mut h = result(&w);
-    assert!(tab_stop(&h, "Read it"));
-    assert!(!tab_stop(&h, "Edit it"), "only the chosen half is a stop");
-    h.get_by_role_and_label(Role::Tab, "Read it").focus();
+    assert!(tab_stop(&h, "Send to e-reader"));
+    assert!(
+        !tab_stop(&h, "Get an editable script"),
+        "only the chosen half is a stop"
+    );
+    h.get_by_role_and_label(Role::Tab, "Send to e-reader")
+        .focus();
     steps(&mut h);
     h.key_press(Key::ArrowRight);
     steps(&mut h);
-    assert_eq!(selected(&h), "Edit it");
+    assert_eq!(selected(&h), "Get an editable script");
     assert!(
-        h.get_by_role_and_label(Role::Tab, "Edit it").is_focused(),
+        h.get_by_role_and_label(Role::Tab, "Get an editable script")
+            .is_focused(),
         "the keyboard goes with the choice"
     );
     assert!(has(&h, EDIT_LINE));
     assert!(!has(&h, "What do you read on?"));
     h.key_press(Key::Home);
     steps(&mut h);
-    assert_eq!(selected(&h), "Read it");
+    assert_eq!(selected(&h), "Send to e-reader");
     h.key_press(Key::End);
     steps(&mut h);
-    assert_eq!(selected(&h), "Edit it");
+    assert_eq!(selected(&h), "Get an editable script");
     h.key_press(Key::ArrowLeft);
     steps(&mut h);
-    assert_eq!(selected(&h), "Read it");
+    assert_eq!(selected(&h), "Send to e-reader");
 }
 
 #[test]
 fn x3_edit_its_cards_save_through_the_same_export_with_the_types_filter() {
     for (card, kind, filter, out) in [
         (
-            "Final Draft",
+            ".fdx",
             "fdx",
             ("FDX", "fdx"),
             "/Users/reader/Desktop/Field Station.fdx",
         ),
         (
-            "Highland, Fade In and others",
+            "Fountain",
             "fountain",
             ("Fountain", "fountain"),
             "/Users/reader/Desktop/Field Station.fountain",
@@ -138,14 +145,14 @@ fn x3_edit_its_cards_save_through_the_same_export_with_the_types_filter() {
 }
 
 #[test]
-fn x3_final_draft_wears_the_beta_badge_and_says_what_it_is() {
+fn x3_fdx_wears_the_beta_badge_and_says_what_it_is() {
     let w = world();
     settings_with(&w, |a| a["panelIntent"] = json!("edit"));
     let h = result(&w);
-    let fdx = h.get_by_role_and_label(Role::Button, "Final Draft");
+    let fdx = h.get_by_role_and_label(Role::Button, ".fdx");
     assert_eq!(
         fdx.accesskit_node().description().as_deref(),
-        Some("FDX, also for most screenwriting apps")
+        Some("Opens in most screenwriting apps")
     );
     let rect = fdx.rect();
     assert!(
@@ -153,9 +160,7 @@ fn x3_final_draft_wears_the_beta_badge_and_says_what_it_is() {
             .any(|b| rect.contains_rect(b.rect())),
         "the badge sits on the card"
     );
-    let fountain = h
-        .get_by_role_and_label(Role::Button, "Highland, Fade In and others")
-        .rect();
+    let fountain = h.get_by_role_and_label(Role::Button, "Fountain").rect();
     assert!(
         !h.query_all_by_label("Beta")
             .any(|b| fountain.contains_rect(b.rect()))
@@ -174,7 +179,7 @@ fn x3_a_book_without_a_fountain_refuses_with_the_save_rows_words() {
     a.as_object_mut().unwrap().remove("fountainPath");
     w.engine.always("convert", Reply::ok(a));
     let mut h = result(&w);
-    h.get_by_role_and_label(Role::Button, "Final Draft")
+    h.get_by_role_and_label(Role::Button, ".fdx")
         .click_accesskit();
     steps(&mut h);
     h.get_by_role_and_label(Role::Status, NO_FOUNTAIN);
@@ -195,7 +200,8 @@ fn x3_a_book_without_a_fountain_refuses_with_the_save_rows_words() {
 fn x4_the_choice_is_remembered_app_wide() {
     let w = world();
     let mut h = result(&w);
-    h.get_by_role_and_label(Role::Tab, "Edit it").click();
+    h.get_by_role_and_label(Role::Tab, "Get an editable script")
+        .click();
     steps(&mut h);
     let set = w.engine.calls_of("app-settings-set");
     assert_eq!(
@@ -207,13 +213,13 @@ fn x4_the_choice_is_remembered_app_wide() {
         .click_accesskit();
     steps(&mut h);
     convert(&w, &mut h);
-    assert_eq!(selected(&h), "Edit it");
+    assert_eq!(selected(&h), "Get an editable script");
 
     // And a new window reads it back.
     let w = world();
     settings_with(&w, |a| a["panelIntent"] = json!("edit"));
     let h = result(&w);
-    assert_eq!(selected(&h), "Edit it");
+    assert_eq!(selected(&h), "Get an editable script");
     assert!(has(&h, EDIT_LINE));
 }
 
@@ -221,7 +227,8 @@ fn x4_the_choice_is_remembered_app_wide() {
 fn x5_the_knob_slides_over_the_state_motion_unless_motion_is_reduced() {
     let w = world();
     let mut h = result(&w);
-    h.get_by_role_and_label(Role::Tab, "Edit it").click();
+    h.get_by_role_and_label(Role::Tab, "Get an editable script")
+        .click();
     steps(&mut h);
     let start = h.state().panel.knob;
     assert!(start < 0.5, "it has only just left: {start}");
@@ -236,7 +243,8 @@ fn x5_the_knob_slides_over_the_state_motion_unless_motion_is_reduced() {
     let w = world();
     w.fakes.reduced_motion.store(true, Ordering::Relaxed);
     let mut h = result(&w);
-    h.get_by_role_and_label(Role::Tab, "Edit it").click();
+    h.get_by_role_and_label(Role::Tab, "Get an editable script")
+        .click();
     steps(&mut h);
     assert_eq!(h.state().panel.knob, 1.0, "at once");
 }
@@ -251,4 +259,24 @@ fn x6_save_a_file_keeps_its_fdx_and_fountain_rows() {
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Save FDX…");
     h.get_by_role_and_label(Role::Button, "Save Fountain…");
+}
+
+#[test]
+fn x7_the_preview_pages_send_to_e_reader_lands_on_the_e_reader_half() {
+    let w = world();
+    settings_with(&w, |a| a["panelIntent"] = json!("edit"));
+    let mut h = result(&w);
+    assert_eq!(selected(&h), "Get an editable script");
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Send to e-reader")
+        .click();
+    steps(&mut h);
+    assert_eq!(selected(&h), "Send to e-reader");
+    h.get_by_role_and_label(Role::Heading, "What do you read on?");
+    let set = w.engine.calls_of("app-settings-set");
+    assert_eq!(
+        set.last().unwrap().argv().last().unwrap(),
+        r#"{"panelIntent":"read"}"#
+    );
 }

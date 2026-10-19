@@ -78,7 +78,10 @@ pub fn rerendered(app: &mut App) {
     app.read.restore = app.read.place.is_some();
 }
 
+/// Send to e-reader: the result, on its e-reader half whatever was chosen
+/// there last, so the button lands where its words say.
 fn send(app: &mut App) {
+    super::panel::choose_intent(app, crate::model::intent::Intent::Read);
     convert::show_result(app);
     if app.surface == crate::model::frame::Surface::Convert {
         app.restore_focus = true;

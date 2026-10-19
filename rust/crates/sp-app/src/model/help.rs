@@ -128,7 +128,7 @@ pub fn shortcuts(platform: Platform) -> Vec<(String, &'static str)> {
         ),
         (
             "Left, Right, Home, End".into(),
-            "On the tabs: move between Convert, Read and Settings",
+            "On the tabs: move between Convert, Preview and Settings",
         ),
         (
             "Arrows, Home, End".into(),
@@ -136,11 +136,11 @@ pub fn shortcuts(platform: Platform) -> Vec<(String, &'static str)> {
         ),
         (
             "Up, Down, Page Up, Page Down, Space, Home, End".into(),
-            "On the Read page's book: scroll it",
+            "On the Preview page's book: scroll it",
         ),
         (
             "Up, Down, Home, End".into(),
-            "In the Read page's list of scenes: move between scenes",
+            "In the Preview page's list of scenes: move between scenes",
         ),
         ("Escape".into(), "Close the sheet or the menu that is open"),
     ];

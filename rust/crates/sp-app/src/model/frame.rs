@@ -11,11 +11,12 @@ pub enum Surface {
 impl Surface {
     pub const ALL: [Surface; 3] = [Surface::Convert, Surface::Read, Surface::Tune];
 
-    /// What the tab says. The id stays `tune`; the label is Settings.
+    /// What the tab says. The ids stay `read` and `tune`; the labels are
+    /// Preview and Settings.
     pub fn label(self) -> &'static str {
         match self {
             Self::Convert => "Convert",
-            Self::Read => "Read",
+            Self::Read => "Preview",
             Self::Tune => "Settings",
         }
     }
@@ -84,9 +85,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_bar_is_convert_read_settings() {
+    fn the_bar_is_convert_preview_settings() {
         let labels: Vec<_> = Surface::ALL.iter().map(|s| s.label()).collect();
-        assert_eq!(labels, vec!["Convert", "Read", "Settings"]);
+        assert_eq!(labels, vec!["Convert", "Preview", "Settings"]);
         assert!(!Surface::Convert.needs_script());
         assert!(Surface::Read.needs_script() && Surface::Tune.needs_script());
     }

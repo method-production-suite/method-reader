@@ -22,7 +22,7 @@ app, same books: updating from Screepub keeps your settings and your library.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/screens/read-dark.png">
-    <img src="assets/screens/read-light.png" alt="The Method Reader window's Read page: Field Station, an invented script, reflowed as an e-book, with its eleven scenes listed in a column beside it" width="92%">
+    <img src="assets/screens/read-light.png" alt="The Method Reader window's Preview page: Field Station, an invented script, reflowed as an e-book, with its eleven scenes listed in a column beside it" width="92%">
   </picture>
 </p>
 

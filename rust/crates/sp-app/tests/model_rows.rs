@@ -177,7 +177,7 @@ fn p8_typed_paragraphs_pair_with_the_books_own_blocks() {
 fn read(w: &World) -> H {
     let mut h = harness(w, Platform::Mac);
     convert(w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     h
 }
@@ -315,7 +315,7 @@ fn r14_the_place_survives_a_resize_and_a_scene_that_is_gone_goes_to_the_top() {
     w.fakes.clock.advance(301.0);
     steps(&mut h);
     steps(&mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     steps(&mut h);
     assert_eq!(offset(&h), 0.0, "at the top");
@@ -754,7 +754,7 @@ fn h2_a_reader_with_no_name_is_named_for_its_kind() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    h.get_by_role_and_label(Role::Tab, "Read").click();
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
     steps(&mut h);
     plug_in(&w, "kindle", "");
     w.fakes.clock.advance(2001.0);

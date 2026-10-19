@@ -773,7 +773,7 @@ fn a_device_is_stored_reported_back_and_removed_by_null() {
     assert!(!read_app_settings(&file).contains_key("readerDevice"));
 }
 
-// ---- panelIntent (the Rust window's Read it | Edit it; new, not parity) ----
+// ---- panelIntent (the Rust window's Send to e-reader | Get an editable script; new, not parity) ----
 
 #[test]
 fn the_panel_intent_defaults_to_read_is_stored_and_reset_by_null() {
