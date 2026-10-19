@@ -3,8 +3,9 @@
 
 Usage: python3 scripts/check-crate-ages.py [--days 14] [--lock Cargo.lock] [--only-changed REF]
 
-Looks up each locked crates.io version's publish date (one request per second, per
-crates.io's crawler policy) and lists any younger than the cooldown. A package from
+Looks up each locked crates.io version's publish date in crates.io's sparse index (the
+CDN cargo reads; one file per crate, every version with its pubtime) and lists any
+younger than the cooldown. A package from
 anywhere else (a git repository, another registry) has no publish date to check, so it
 fails the check too: fail closed. With --only-changed REF, only packages added or bumped
 since that git ref are checked. Stdlib only, so it runs anywhere Python 3 does.
@@ -27,6 +28,7 @@ import subprocess
 import sys
 import time
 import tomllib
+import urllib.error
 import urllib.request
 
 UA = "method-reader cooldown check (https://github.com/method-production-suite/method-reader)"
@@ -41,18 +43,50 @@ PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 
 
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
+SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}")
+AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
 
 
-def excepted():
-    """{(name, version)} allowed under the cooldown, each listed with a reason."""
-    if not EXCEPTIONS.exists():
-        return set()
-    out = set()
-    for line in EXCEPTIONS.read_text().splitlines():
-        words = line.split("#", 1)[0].split()
-        if len(words) == 2:
-            out.add((words[0], words[1]))
+class BadExceptions(Exception):
+    pass
+
+
+def parse_exceptions(text):
+    """{(name, version): "security" | "ages-out"}, or BadExceptions naming each bad line.
+
+    A comment-only or blank line is skipped. Every other line is "name version  # reason",
+    and the reason says its kind: a RUSTSEC id makes it a security exception (whatever
+    else it says), a leading "ages-out YYYY-MM-DD" an ages-out one.
+    """
+    out, bad = {}, []
+    for n, line in enumerate(text.splitlines(), 1):
+        entry, _, reason = line.partition("#")
+        words = entry.split()
+        if not words:
+            continue
+        reason = reason.strip()
+        if len(words) != 2:
+            bad.append(f"line {n}: not \"name version  # reason\": {line.strip()}")
+        elif SECURITY.search(reason):
+            out[(words[0], words[1])] = "security"
+        elif AGES_OUT.match(reason):
+            out[(words[0], words[1])] = "ages-out"
+        else:
+            bad.append(
+                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC id nor "
+                f"\"ages-out YYYY-MM-DD\": {line.strip()}"
+            )
+    if bad:
+        raise BadExceptions("\n".join(bad))
     return out
+
+
+def excepted(path, release):
+    """{(name, version)} allowed under the cooldown: under --release, security ones only."""
+    if not path.exists():
+        return set()
+    kinds = parse_exceptions(path.read_text())
+    return {k for k, kind in kinds.items() if kind == "security" or not release}
 
 
 def git_allowed(source):
@@ -75,12 +109,53 @@ def external_packages(lock_text):
     }
 
 
+def index_path(name):
+    """A crate's file in crates.io's sparse index (the layout cargo reads)."""
+    n = name.lower()
+    if len(n) <= 2:
+        return f"{len(n)}/{n}"
+    if len(n) == 3:
+        return f"3/{n[0]}/{n}"
+    return f"{n[:2]}/{n[2:4]}/{n}"
+
+
+INDEX = {}
+
+
+def fetch(url, tries=6):
+    """GET with patience: a 429 or a server error waits (honouring
+    Retry-After) and asks again; anything else fails at once."""
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    wait = 5
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.read().decode()
+        except urllib.error.HTTPError as e:
+            if e.code != 429 and e.code < 500 or attempt == tries - 1:
+                raise
+            after = e.headers.get("Retry-After", "")
+            time.sleep(int(after) if after.isdigit() else wait)
+            wait = min(wait * 2, 120)
+
+
 def published(name, version):
-    req = urllib.request.Request(
-        f"https://crates.io/api/v1/crates/{name}/{version}", headers={"User-Agent": UA}
-    )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        v = json.load(r)["version"]
+    """The version's publish time and yanked flag. Read from crates.io's sparse
+    index (index.crates.io, the CDN cargo itself uses; one file per crate
+    holds every version with its pubtime), which a full-lock check cannot
+    exhaust the way one API call per version did. A version the index gives
+    no pubtime falls back to the API."""
+    if name not in INDEX:
+        entries = {}
+        for line in fetch(f"https://index.crates.io/{index_path(name)}").splitlines():
+            if line.strip():
+                e = json.loads(line)
+                entries[e["vers"]] = e
+        INDEX[name] = entries
+    e = INDEX[name].get(version)
+    if e and e.get("pubtime"):
+        return dt.datetime.fromisoformat(e["pubtime"].replace("Z", "+00:00")), e["yanked"]
+    v = json.loads(fetch(f"https://crates.io/api/v1/crates/{name}/{version}"))["version"]
     return dt.datetime.fromisoformat(v["created_at"].replace("Z", "+00:00")), v["yanked"]
 
 
@@ -89,7 +164,28 @@ def main():
     ap.add_argument("--days", type=int, default=14)
     ap.add_argument("--lock", default="Cargo.lock")
     ap.add_argument("--only-changed", metavar="REF")
+    ap.add_argument(
+        "--release",
+        action="store_true",
+        help="honour only security (RUSTSEC) exceptions; a young ages-out crate fails",
+    )
+    ap.add_argument("--exceptions", type=pathlib.Path, default=EXCEPTIONS)
+    ap.add_argument(
+        "--print-exceptions",
+        action="store_true",
+        help="print the exceptions this mode honours, then exit (no network)",
+    )
     args = ap.parse_args()
+
+    try:
+        allowed_young = excepted(args.exceptions, args.release)
+    except BadExceptions as e:
+        print(f"{args.exceptions}: every exception needs a kind\n{e}", file=sys.stderr)
+        sys.exit(2)
+    if args.print_exceptions:
+        for name, version in sorted(allowed_young):
+            print(f"{name} {version}")
+        return
 
     with open(args.lock) as f:
         pkgs = external_packages(f.read())
@@ -109,16 +205,17 @@ def main():
         bad.append(f"{name} {version} ({source})")
     pkgs = {(name, version) for name, version, source in pkgs if source == CRATES_IO}
 
-    allowed_young = excepted()
+    stale = []
     now = dt.datetime.now(dt.timezone.utc)
-    for i, (name, version) in enumerate(sorted(pkgs)):
-        if i:
-            time.sleep(1)
+    for name, version in sorted(pkgs):
         when, yanked = published(name, version)
         age = (now - when).days
         flag = ""
         if age < args.days and (name, version) in allowed_young:
             flag = "  young, listed as an exception"
+        elif (name, version) in allowed_young:
+            flag = "  listed as an exception but old enough now"
+            stale.append(f"{name} {version}")
         elif age < args.days:
             flag = f"  TOO NEW (< {args.days} days)"
             bad.append(f"{name} {version}")
@@ -128,6 +225,11 @@ def main():
         print(f"{name:40} {version:16} {age:5} days{flag}")
 
     print(f"\nchecked {len(pkgs)} crates.io crates; {len(bad)} problem(s)")
+    # Not a failure: a listed version that has aged past the cooldown only
+    # needs its line removed. A warning, so the list stays honest.
+    for entry in stale:
+        print(f"::warning::{entry} is {args.days}+ days old now: remove its line from "
+              f"scripts/crate-age-exceptions.txt")
     if bad:
         print("downgrade with: cargo update -p NAME --precise VERSION")
         sys.exit(1)

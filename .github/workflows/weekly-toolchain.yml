@@ -2,9 +2,9 @@
 # Method Reader's AZW3 and lays our EPUB's dialogue column out with its margins,
 # KEPUB carries koboSpan markup, the KFX plugin listing and status probe,
 # the MOBI round trips) skip on a machine without Calibre, and no runner in
-# rust.yml has it. Weekly is the right cadence: they guard against CALIBRE
+# full.yml has it. Weekly is the right cadence: they guard against CALIBRE
 # behaviour changes, which arrive on Calibre's schedule, not this repo's.
-# Least privilege and pinned actions, matching rust.yml.
+# Least privilege and pinned actions, matching full.yml.
 name: weekly-toolchain
 on:
   schedule:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-# The same build settings as rust.yml, so its cache fits.
+# The same build settings as full.yml, so its cache fits.
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
@@ -38,7 +38,7 @@ jobs:
         working-directory: rust
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # Borrows rust.yml's macOS cache and never saves one of its own, so
+      # Borrows full.yml's macOS cache and never saves one of its own, so
       # a weekly run adds nothing to the repository's 10 GB.
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -58,3 +58,15 @@ jobs:
         env:
           METHOD_READER_REQUIRE_CALIBRE: '1'
         run: cargo test --workspace --locked
+
+  # The whole lock against the 14-day rule, every Monday: a crate that was
+  # young when it slipped in, or one yanked since, goes red within a week.
+  crate-ages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check every crate in the lock
+        run: python3 scripts/check-crate-ages.py --lock rust/Cargo.lock

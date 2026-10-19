@@ -67,8 +67,18 @@ fn every_job_is_there_and_waits_for_what_it_must() {
             vec!["app-bundles", "handover-gate", "release"],
         ),
         (
-            "draft-check",
+            "checksums",
             vec!["app-upload", "cli-upload", "handover-gate", "release"],
+        ),
+        (
+            "draft-check",
+            vec![
+                "app-upload",
+                "checksums",
+                "cli-upload",
+                "handover-gate",
+                "release",
+            ],
         ),
     ];
     let names: Vec<String> = jobs(&rel).into_iter().map(|(n, _)| n).collect();
@@ -97,6 +107,30 @@ fn everything_that_signs_or_builds_waits_for_the_checks() {
     let checks = serde_yaml::to_string(job(&rel, "checks")).unwrap();
     assert!(!checks.contains("import-developer-id"));
     assert!(!checks.contains("secrets."));
+}
+
+#[test]
+fn the_checks_run_the_release_crate_age_check_over_the_whole_lock_before_any_build() {
+    // SUITE-STANDARDS.md section 6: no release ships a young crate unless it
+    // is a listed security fix. --release, and never --only-changed: the
+    // question is the whole lock the release builds from.
+    let rel = rel();
+    let checks = job(&rel, "checks");
+    let ages = step_index(checks, |st| {
+        s(st, "run")
+            .contains("python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release")
+    })
+    .expect("the crate-age step");
+    assert!(!s(steps(checks)[ages], "run").contains("--only-changed"));
+    let first_build = step_index(checks, |st| s(st, "run").contains("cargo ")).unwrap();
+    assert!(
+        ages < first_build,
+        "the crate-age check runs after a cargo step"
+    );
+    // Everything that builds or signs waits for the checks (and so for it).
+    for name in ["release", "cli", "app-bundles"] {
+        assert_eq!(needs(job(&rel, name)), vec!["checks".to_string()], "{name}");
+    }
 }
 
 #[test]
@@ -225,26 +259,26 @@ fn the_draft_check_refuses_any_image_list_but_exactly_the_one_mac_image() {
     );
 }
 
-/// Every file a complete release carries, from sp_release::names.
+/// Every file a complete release carries, from sp_release::names: the
+/// downloads and the one checksums file.
 fn every_release_file() -> Vec<String> {
-    let mut all: Vec<String> = [
-        names::CLI_MAC_ARM64,
-        names::CLI_LINUX_X64,
-        names::CLI_LINUX_ARM64,
-        names::CLI_WINDOWS_X64,
-        "SHA256SUMS",
-    ]
-    .iter()
-    .map(|n| n.to_string())
-    .collect();
-    all.extend(app_bundles().iter().map(|n| n.to_string()));
-    all.extend([
-        names::MAC_UPDATE.to_string(),
-        format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
-        "SHA256SUMS-app".to_string(),
-        names::MANIFEST.to_string(),
-    ]);
+    let mut all = names::downloads(false);
+    all.push(names::CHECKSUMS.to_string());
     sorted(all)
+}
+
+/// The names on a step's `WANT=(` line.
+fn want_line(text: &str) -> Vec<String> {
+    let line = text
+        .lines()
+        .find(|l| l.trim_start().starts_with("WANT=("))
+        .expect("a WANT=( line");
+    line.trim()
+        .trim_start_matches("WANT=(")
+        .trim_end_matches(')')
+        .split_whitespace()
+        .map(str::to_string)
+        .collect()
 }
 
 #[test]
@@ -258,17 +292,7 @@ fn the_draft_check_wants_every_file_the_uploads_put_there() {
         "draft-check",
         "The draft carries every file the release names",
     );
-    let line = text
-        .lines()
-        .find(|l| l.trim_start().starts_with("WANT=("))
-        .expect("a WANT=( line");
-    let mut want: Vec<String> = line
-        .trim()
-        .trim_start_matches("WANT=(")
-        .trim_end_matches(')')
-        .split_whitespace()
-        .map(str::to_string)
-        .collect();
+    let mut want = want_line(&text);
     // latest.json is added for a release, never for a prerelease.
     assert!(text.contains(&format!(
         r#"[[ "$VERSION" == *-* ]] || WANT+=({})"#,
@@ -278,7 +302,7 @@ fn the_draft_check_wants_every_file_the_uploads_put_there() {
     assert_eq!(sorted(want), every_release_file());
     // And each of those is uploaded by some job (the globs by extension).
     let mut uploaded = vec![];
-    for name in ["release", "cli-upload", "app-upload"] {
+    for name in ["release", "cli-upload", "app-upload", "checksums"] {
         uploaded.extend(uploaded_by(job(&rel, name)));
     }
     for f in every_release_file() {
@@ -309,17 +333,14 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     let notarize = text.find("xcrun notarytool submit").unwrap();
     let package = text.find("cli-archive").unwrap();
     assert!(sign < notarize && notarize < package);
-    // The notes' checksum and the upload read one folder.
+    // The tarball goes up from the folder cli-archive wrote. Its checksum
+    // is in SHA256SUMS, with every other download's, and no longer in the
+    // notes: the Homebrew tap that read it there is retired.
     let out = "$RUNNER_TEMP/cli-mac";
-    assert!(text.contains(&format!(
-        r#"cd "{out}" && shasum -a 256 {}"#,
-        names::CLI_MAC_ARM64
-    )));
-    assert!(
-        text.matches(&format!("{out}/{}", names::CLI_MAC_ARM64))
-            .count()
-            >= 1
-    );
+    assert!(text.contains(&format!("{out}/{}", names::CLI_MAC_ARM64)));
+    // (The notes name the tools in a printf; nothing here RUNS one.)
+    let runs_a_hash = Regex::new(r"(?m)^\s*(\(\s*cd [^)]*&&\s*)?(shasum|sha256sum)\b").unwrap();
+    assert!(!runs_a_hash.is_match(&commands(&text)), "{text}");
 }
 
 #[test]
@@ -395,16 +416,13 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
         .find(|st| s(st, "uses").contains("upload-artifact"))
         .expect("an upload-artifact step");
     assert_eq!(s(upload.get("with").unwrap(), "if-no-files-found"), "error");
-    // And all three arrive on the page with their checksums, verified after
-    // the artifact round trip and before the upload.
+    // And all three arrive on the page. Their checksums are the checksums
+    // job's, so cli-upload writes none.
     let up = job(&rel, "cli-upload");
-    let mut want = others.clone();
-    want.push("SHA256SUMS".into());
-    assert_eq!(sorted(uploaded_by(up)), sorted(want));
+    assert_eq!(sorted(uploaded_by(up)), others);
     let run = run_text(up);
-    let verify = run.find("sha256sum -c SHA256SUMS").expect("a -c pass");
-    let gh = run.find("gh release upload").unwrap();
-    assert!(verify < gh);
+    assert!(!commands(&run).contains("sha256sum"), "{run}");
+    assert!(!commands(&run).contains(names::CHECKSUMS), "{run}");
     assert!(run.contains("cd cli"));
     // No checkout in that job, so gh is told the repository.
     assert!(serde_yaml::to_string(up).unwrap().contains("GH_REPO"));
@@ -545,21 +563,17 @@ fn the_windows_leg_is_deliberately_unsigned() {
     assert!(!yml.contains("signtool"));
 }
 
-/// The bundle names app-upload's checksum line globs, as extensions.
-fn summed_extensions() -> Vec<String> {
+/// The bundle names app-upload's count globs, as extensions.
+fn counted_extensions() -> Vec<String> {
     let rel = rel();
-    let sums = step_named(
-        &rel,
-        "app-upload",
-        "Checksums from what arrived, then the count",
-    );
-    let line = sums
+    let count = step_named(&rel, "app-upload", "Exactly the five installers arrived");
+    let line = count
         .lines()
-        .find(|l| l.contains("> SHA256SUMS-app"))
-        .expect("the sha256sum line");
+        .find(|l| l.contains("FOUND=\"$(ls -1 "))
+        .expect("the ls line");
     line.split_whitespace()
         .filter_map(|w| w.strip_prefix('*'))
-        .map(str::to_string)
+        .map(|w| w.trim_end_matches(['"', ')']).to_string())
         .collect()
 }
 
@@ -575,7 +589,7 @@ pub fn app_bundles() -> Vec<&'static str> {
 }
 
 #[test]
-fn app_upload_sums_exactly_the_installers_the_release_names() {
+fn app_upload_counts_exactly_the_installers_the_release_names() {
     // One glob per installer, and the count app-upload demands is their
     // number: a sixth that arrives (a second .dmg the frozen Swift updater
     // would pick from) fails there.
@@ -585,18 +599,14 @@ fn app_upload_sums_exactly_the_installers_the_release_names() {
         .map(|e| format!(".{e}"))
         .collect();
     exts.sort();
-    assert_eq!(sorted(summed_extensions()), exts);
+    assert_eq!(sorted(counted_extensions()), exts);
     let rel = rel();
-    let sums = step_named(
-        &rel,
-        "app-upload",
-        "Checksums from what arrived, then the count",
-    );
-    assert!(sums.contains(&format!(r#"[ "$LINES" -eq {} ]"#, app_bundles().len())));
+    let count = step_named(&rel, "app-upload", "Exactly the five installers arrived");
+    assert!(count.contains(&format!(r#"[ "$LINES" -eq {} ]"#, app_bundles().len())));
 }
 
 #[test]
-fn app_upload_verifies_then_uploads_then_publishes_latest_json_last() {
+fn app_upload_counts_then_uploads_then_publishes_latest_json_last() {
     let rel = rel();
     let job = job(&rel, "app-upload");
     let download = steps(job)
@@ -604,14 +614,14 @@ fn app_upload_verifies_then_uploads_then_publishes_latest_json_last() {
         .find(|st| s(st, "uses").contains("download-artifact"))
         .unwrap();
     assert_eq!(s(download.get("with").unwrap(), "path"), "arrivals");
-    let verify = step_index(job, |st| {
-        s(st, "run").contains("sha256sum -c SHA256SUMS-app")
+    let count = step_index(job, |st| {
+        s(st, "name") == "Exactly the five installers arrived"
     })
     .unwrap();
     let upload = step_index(job, |st| s(st, "name") == "Upload the bundles").unwrap();
     let manifest = step_index(job, |st| s(st, "run").contains("sp-release manifest")).unwrap();
-    assert!(verify < upload && upload < manifest);
-    assert!(s(steps(job)[verify], "run").contains("cd arrivals"));
+    assert!(count < upload && upload < manifest);
+    assert!(s(steps(job)[count], "run").contains("cd arrivals"));
     let mut up = app_bundles()
         .iter()
         .map(|n| format!("*.{}", n.rsplit_once('.').unwrap().1))
@@ -619,7 +629,6 @@ fn app_upload_verifies_then_uploads_then_publishes_latest_json_last() {
     up.extend([
         names::MAC_UPDATE.to_string(),
         format!("{}{}", names::MAC_UPDATE, names::SIGNATURE_EXT),
-        "SHA256SUMS-app".to_string(),
         names::MANIFEST.to_string(),
     ]);
     assert_eq!(sorted(uploaded_by(job)), sorted(up));
@@ -629,10 +638,97 @@ fn app_upload_verifies_then_uploads_then_publishes_latest_json_last() {
     let published = m.find("gh release upload").unwrap();
     assert!(verified < published);
     assert!(m.contains(r#"[[ "$VERSION" == *-* ]]"#));
-    // Its checksums file is its own: SHA256SUMS is the CLI's.
-    let text = run_text(job);
-    assert!(text.contains("SHA256SUMS-app"));
-    assert!(!Regex::new(r"SHA256SUMS($|[^-])").unwrap().is_match(&text));
+    // It writes no checksums file: the checksums job writes the one.
+    let text = commands(&run_text(job));
+    assert!(!text.contains("SHA256SUMS"), "{text}");
+    assert!(!text.contains("sha256sum"), "{text}");
+}
+
+// ---- checksums: ONE SHA256SUMS over every download ----------------------
+
+#[test]
+fn the_checksums_job_runs_after_every_upload_and_before_the_draft_check() {
+    // It hashes what the draft serves, so it must wait for every upload,
+    // latest.json included; draft-check then reads its result.
+    let rel = rel();
+    let sums = job(&rel, "checksums");
+    assert_eq!(s(sums, "runs-on"), "ubuntu-latest");
+    for upload in ["release", "cli-upload", "app-upload"] {
+        assert!(needs(sums).contains(&upload.to_string()), "{upload}");
+    }
+    assert!(needs(job(&rel, "draft-check")).contains(&"checksums".to_string()));
+    // No checkout: gh is told the repository.
+    assert!(serde_yaml::to_string(sums).unwrap().contains("GH_REPO"));
+    assert!(
+        !steps(sums)
+            .iter()
+            .any(|st| s(st, "uses").contains("checkout"))
+    );
+}
+
+#[test]
+fn the_checksums_job_lists_every_download_and_uploads_only_sha256sums() {
+    let rel = rel();
+    let text = step_named(
+        &rel,
+        "checksums",
+        "One SHA256SUMS over every download on the draft",
+    );
+    let mut want = want_line(&text);
+    assert!(text.contains(&format!(
+        r#"[[ "$VERSION" == *-* ]] || WANT+=({})"#,
+        names::MANIFEST
+    )));
+    assert_eq!(sorted(want.clone()), sorted(names::downloads(true)));
+    want.push(names::MANIFEST.to_string());
+    assert_eq!(sorted(want), sorted(names::downloads(false)));
+    assert_eq!(
+        uploaded_by(job(&rel, "checksums")),
+        vec![names::CHECKSUMS.to_string()]
+    );
+    // Read from the draft, verified, then uploaded.
+    let download = text.find("gh release download").unwrap();
+    let verify = text.find("sha256sum -c SHA256SUMS").unwrap();
+    let upload = text.find("gh release upload").unwrap();
+    assert!(download < verify && verify < upload);
+}
+
+#[test]
+fn only_the_checksums_job_writes_a_checksums_file_and_none_writes_the_retired_one() {
+    let rel = rel();
+    for (name, job) in jobs(&rel) {
+        let code = commands(&run_text(job));
+        if name != "checksums" {
+            assert!(
+                !uploaded_by(job).contains(&names::CHECKSUMS.to_string()),
+                "{name} uploads {}",
+                names::CHECKSUMS
+            );
+            assert!(!code.contains("> SHA256SUMS"), "{name}");
+        }
+        assert!(
+            !uploaded_by(job).contains(&names::RETIRED_APP_CHECKSUMS.to_string()),
+            "{name} uploads {}",
+            names::RETIRED_APP_CHECKSUMS
+        );
+        assert!(!code.contains("> SHA256SUMS-app"), "{name}");
+    }
+    // The checksums job deletes an old run's; draft-check refuses one.
+    let sums = step_named(
+        &rel,
+        "checksums",
+        "One SHA256SUMS over every download on the draft",
+    );
+    assert!(sums.contains(&format!(
+        r#"gh release delete-asset "$TAG" {} --yes"#,
+        names::RETIRED_APP_CHECKSUMS
+    )));
+    let check = step_named(
+        &rel,
+        "draft-check",
+        "The draft carries every file the release names",
+    );
+    assert!(check.contains(&format!("still carries {}", names::RETIRED_APP_CHECKSUMS)));
 }
 
 #[test]
@@ -764,4 +860,44 @@ fn no_release_build_carries_the_handover_rehearsals_updater_values() {
             assert!(said(&out).contains(v), "{}", said(&out));
         }
     }
+}
+
+/// A step that brings a secret into the job: a `secrets.` value anywhere in
+/// it, the token GitHub hands every job aside.
+fn carries_a_secret(step: &Value) -> bool {
+    let text = serde_yaml::to_string(step).expect("a step");
+    text.replace("secrets.GITHUB_TOKEN", "")
+        .contains("secrets.")
+}
+
+/// A step that compiles or runs code a build can pull in: cargo's build,
+/// run, test, clippy and xtask (a crate's build script runs in each).
+fn builds(step: &Value) -> bool {
+    let re = Regex::new(r"\bcargo (build|run|test|clippy|xtask|install)\b").unwrap();
+    re.is_match(&commands(s(step, "run")))
+}
+
+#[test]
+fn no_build_runs_after_a_signing_secret_is_in_the_job() {
+    // A build script, or any crate a build pulls in, runs arbitrary code.
+    // So in every job the builds come first, and a secret (the Developer ID
+    // certificate, the notary key, the update key) enters only after the
+    // last of them.
+    let wf = rel();
+    let mut with_secrets = 0;
+    for (name, job) in jobs(&wf) {
+        let all = steps(job);
+        let Some(first) = all.iter().position(|st| carries_a_secret(st)) else {
+            continue;
+        };
+        with_secrets += 1;
+        let late: Vec<String> = all[first..]
+            .iter()
+            .filter(|st| builds(st))
+            .map(|st| s(st, "name").to_string())
+            .collect();
+        assert_eq!(late, Vec::<String>::new(), "{name} builds after a secret");
+    }
+    // The CLI's notarization and the window's signing, at least.
+    assert!(with_secrets >= 2, "{with_secrets}");
 }

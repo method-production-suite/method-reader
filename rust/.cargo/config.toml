@@ -1,3 +1,6 @@
 # `cargo xtask <command>`: the project's own tooling, in Rust (crates/xtask).
+# --locked, like every build xtask runs itself: no pull request builds on
+# GitHub, so a stale or crossed Cargo.lock has to fail here, on the Mac
+# (SUITE-STANDARDS section 6; xtask/tests/locked.rs holds it).
 [alias]
-xtask = "run --quiet --package xtask --"
+xtask = "run --quiet --locked --package xtask --"

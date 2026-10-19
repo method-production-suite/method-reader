@@ -1,7 +1,7 @@
 //! The two statements and the migration against REAL SQLite (D1 is
 //! SQLite), with the live service's own services/device-requests/schema.sql
 //! and migrations, through the sqlite3 command-line tool. Unix only: macOS
-//! ships sqlite3 and rust.yml installs it on Linux; a missing tool fails
+//! ships sqlite3 and full.yml installs it on Linux; a missing tool fails
 //! here rather than skipping, so green means the SQL ran.
 #![cfg(unix)]
 

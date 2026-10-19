@@ -15,9 +15,19 @@ recommendation are built on the recommendation and marked so here.
 
 Release go-aheads:
 
-- **0.13.1.** The clearer window wording, Homebrew retired, and CI and
-  release-workflow fixes. Ready to tag once those pull requests are merged;
-  the tag goes to the owner through MOrg.
+- **0.13.1.** The clearer window wording, the Field Station sample on first
+  launch, Linux app data moved to `~/.local/share`, Homebrew retired, one
+  `SHA256SUMS` for every download, the shared updater, and the list of
+  recent scripts for the suite's launcher. Three things before the tag:
+  1. No young crate is left in the exception list. The earliest that holds
+     is 2026-10-23, and the release workflow refuses an earlier tag on its
+     own.
+  2. The update is rehearsed from 0.13.0, headless, because 0.13.0's own
+     updater is what installs 0.13.1.
+  3. The weekly full build is run by hand on the release commit and comes
+     back green.
+
+  Then the tag goes to the owner through MOrg.
 
 Open decisions:
 
@@ -27,6 +37,12 @@ Open decisions:
   and neither is ever built: `cargo tree` shows no `glib` in the app or the
   command line on Linux, macOS or Windows, and the rehearsal is built on
   macOS only. Dismissing changes a repository setting, so it waits for a yes.
+
+Built on the recommendation (reversible):
+
+- **What counts as a recent script** for the launcher's list: a conversion
+  into the library, recorded under the file you chose. Opening a book that is
+  already in the library, without converting it, does not count yet.
 
 Tests that need a device (hands only; everything else is automated):
 
@@ -54,6 +70,10 @@ Decided:
 - **Scripts as input** (2026-10-18): the window accepts .osf and .fountain as
   well as PDFs, in the same drop area, with the button renamed Choose a
   script.
+- **CI** (2026-10-19): each change runs only the quick dependency checks on
+  GitHub, after the full check on a Mac; everything is built and tested on
+  macOS, Windows and Linux every Monday and before every release.
+  Dependabot comes monthly, security fixes at once.
 - **Homebrew** (2026-10-18): retired for good. Installs come from the
   downloads; the app updates itself.
 - **Scene lengths in the .fdx** (2026-10-17, for 0.14): measured from the PDF
@@ -66,18 +86,18 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **The Field Station showcase.** Ship the invented sample script inside the
-  app, show it ready to convert the first time the window opens with nothing
-  else, add Help > Open Sample, and a setting that turns the first-launch
-  sample off.
-- **Moving onto the shared updater.** Replace `sp-update` with
-  `method-update` from method-libs, pinned to a full commit and allowlisted
-  for the crate-age check, so all four apps share one updater.
+- **Rehearsing the update from 0.13.0.** The rehearsal starts from the old
+  0.11.1 window today. 0.13.1 is installed by 0.13.0's own updater, so the
+  rehearsal gains a 0.13.0 starting point, run with no window.
+- **Moving onto the shared updater.** Built, in review: `method-update` from
+  method-libs replaces `sp-update`, so all four apps share one updater.
 - **Secrets only where they are needed.** In the release workflow, set up
   Apple's signing keys after the build steps, not before, so no build script
   can reach them.
-- **The release docs' signing-key path.** `docs/release-secrets.md` still
-  names the update-signing key's old file name.
+- **Three small fixes to the recent list.** A damaged `recent.json` is
+  replaced without a word; the window and the command line converting at the
+  same moment can drop one entry; and on Windows the same file spelled with
+  different capitals is listed twice.
 - **Scene pages, lengths and numbers in the .fdx** (0.14). Built; its pull
   request opens after 0.13.1.
 - **OSF out.** A third editable script beside Fountain and .fdx, written from
@@ -85,8 +105,6 @@ In order. Each is one small pull request.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
   .fountain, so a script from Method Storyteller becomes an e-book without a
   PDF.
-- **Faster Windows checks.** The Windows test job takes about 37 minutes,
-  half again the other platforms; most of it is building.
 - **A way to report problems without a GitHub account.** Asking for a device
   and saying whether a reader worked need none now: the window sends both.
   Telling us a script converted badly still means opening an issue, which

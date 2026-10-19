@@ -236,7 +236,7 @@ fn prepare() -> Result<(), String> {
 
     // 1. The release tools, from this checkout.
     sh(Command::new("cargo")
-        .args(["build", "--release", "-p", "sp-release"])
+        .args(["build", "--release", "--locked", "-p", "sp-release"])
         .current_dir(paths::workspace_root()))?;
     let sp = sp_release();
     sh(Command::new(&sp)
@@ -285,6 +285,8 @@ fn prepare() -> Result<(), String> {
     let rust_src = w.join("rust-src");
     unpack("HEAD", &rust_src)?;
     set_workspace_version(&rust_src.join("rust/Cargo.toml"), NEW)?;
+    // not --locked: this is a scratch copy whose workspace version was just
+    // rewritten, so its Cargo.lock's own entries must follow.
     sh(Command::new("cargo")
         .args([
             "build",

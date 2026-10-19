@@ -1,5 +1,5 @@
 //! .github/dependabot.yml, read as the YAML Dependabot reads
-//! (SUITE-STANDARDS.md section 6): one grouped pull request a week for the
+//! (SUITE-STANDARDS.md section 6): one grouped pull request a month for the
 //! Rust workspace, held to the same 14-day cooldown as CI's crate-age
 //! check, security updates left separate, and no GitHub Actions entry,
 //! since MOrg moves the suite's pinned action SHAs for every repository at
@@ -38,15 +38,14 @@ fn only_the_rust_workspace_is_updated() {
 }
 
 #[test]
-fn cargo_comes_weekly_on_monday_as_one_group_after_14_days() {
+fn cargo_comes_monthly_as_one_group_after_14_days() {
     let all = updates();
     let cargo = &all[0];
-    assert_eq!(cargo["schedule"]["interval"].as_str(), Some("weekly"));
-    assert_eq!(cargo["schedule"]["day"].as_str(), Some("monday"));
+    assert_eq!(cargo["schedule"]["interval"].as_str(), Some("monthly"));
     assert_eq!(cargo["cooldown"]["default-days"].as_u64(), Some(14));
     assert!(cargo["cooldown"]["semver-major-days"].as_u64() >= Some(14));
     let groups = cargo["groups"].as_mapping().expect("a groups: table");
-    assert_eq!(groups.len(), 1, "one group, so one pull request a week");
+    assert_eq!(groups.len(), 1, "one group, so one pull request a month");
     let (_, group) = groups.iter().next().expect("the group");
     // Version updates only: a security update stays its own pull request.
     assert_eq!(group["applies-to"].as_str(), Some("version-updates"));

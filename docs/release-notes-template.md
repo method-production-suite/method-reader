@@ -38,9 +38,11 @@ this, in this order:
 *<optional italic closer>*
 ```
 
-No date line. No version-bump commentary. No checksum: the release workflow
-(`.github/workflows/release.yml`) appends the real one when it writes the
-draft release, and two SHAs on one page both look official. The steps
+No date line. No version-bump commentary. No checksum: every download's
+real one is in the release's `SHA256SUMS`, which the release workflow
+(`.github/workflows/release.yml`) writes and the notes' footer points to,
+and a second one on the page could disagree while looking just as
+official. The steps
 around the notes (the version bump, the pictures, the tag, the person who
 checks the draft and publishes it) are in [RELEASING.md](RELEASING.md).
 
