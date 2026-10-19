@@ -69,9 +69,14 @@ fn the_licenses_allowed_are_named_in_the_notices() {
 }
 
 #[test]
-fn rust_yml_runs_cargo_deny_on_every_push() {
-    let wf = workflow("rust.yml");
-    let deny = job(&wf, "deny");
-    assert!(run_text(deny).contains("cargo deny check"));
-    assert!(run_text(deny).contains("cargo install cargo-deny --version"));
+fn cargo_deny_runs_on_every_change_and_in_the_weekly_build() {
+    for file in ["checks.yml", "full.yml"] {
+        let wf = workflow(file);
+        let deny = job(&wf, "deny");
+        assert!(run_text(deny).contains("cargo deny check"), "{file}");
+        assert!(
+            run_text(deny).contains("cargo install cargo-deny --version"),
+            "{file}"
+        );
+    }
 }

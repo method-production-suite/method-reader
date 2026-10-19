@@ -78,8 +78,8 @@ fn header_installs() -> Vec<(String, String)> {
     let mut out = Vec::new();
     for (file, text) in [
         (
-            ".github/workflows/rust.yml",
-            read(".github/workflows/rust.yml"),
+            ".github/workflows/full.yml",
+            read(".github/workflows/full.yml"),
         ),
         (
             ".github/workflows/release.yml",
@@ -99,7 +99,7 @@ fn header_installs() -> Vec<(String, String)> {
 #[test]
 fn every_linux_header_install_names_what_pkg_config_looks_for() {
     let lines = header_installs();
-    // rust.yml's test and bundle jobs, release.yml's build, CONTRIBUTING.
+    // full.yml's test and bundle jobs, release.yml's build, CONTRIBUTING.
     assert!(lines.len() >= 4, "{lines:?}");
     for (file, line) in &lines {
         for (_, pkg) in SYS_CRATES {
@@ -120,9 +120,9 @@ fn contributing_lists_what_ci_installs() {
         .lines()
         .find(|l| l.starts_with("sudo apt-get install"))
         .expect("CONTRIBUTING's apt line");
-    let rust_yml = read(".github/workflows/rust.yml");
+    let full_yml = read(".github/workflows/full.yml");
     assert!(
-        rust_yml.lines().any(|l| l.trim() == line.trim()),
-        "CONTRIBUTING says {line:?}; rust.yml's test job must install the same"
+        full_yml.lines().any(|l| l.trim() == line.trim()),
+        "CONTRIBUTING says {line:?}; full.yml's test job must install the same"
     );
 }

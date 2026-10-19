@@ -205,6 +205,25 @@ creates the new folder, and from then on it reads each file from whichever
 folder holds it. Nothing is lost, and the failure is logged on stderr.
 Nothing moves when `METHOD_READER_CONFIG_DIR` or `SCREEPUB_CONFIG_DIR` is set.
 
+The same data folder holds `recent.json`, the scripts you opened, newest
+first, for the Method suite's launcher:
+
+```json
+[{"path": "/Users/you/Scripts/Field Notes.pdf", "opened": "2026-10-18T09:34:05Z"}]
+```
+
+`path` is the file you chose or dropped (never the library's copy), and
+`opened` is an RFC 3339 time in UTC. A `--library` conversion records an
+entry, which is every Convert in the window; a conversion with `-o` or
+beside its input does not, and neither does anything inside the data
+folder itself, so the built-in sample is never listed. The list keeps at
+most 20 entries, one per path: a script opened again moves to the top. An
+entry stays when its file is gone (the launcher shows it greyed), and keys
+another program added to an entry are kept. A missing or damaged
+`recent.json` reads as empty and is replaced on the next write, which goes
+through a temp file and a rename. A write that fails never fails the
+conversion: it is noted on stderr and the book is made as usual.
+
 ## Devices and routes
 
 ```bash
@@ -345,12 +364,29 @@ print geometry and what each e-reader's renderer honours.
 
 ## Continuous integration
 
-Every pull request runs the tests, formatting, lints and dependency checks.
-The installers (the bundles job) are built and smoke-tested only when a
-pull request changes packaging: the release tools, the updater, xtask's
-bundle code, the window's manifest, icons or headless mode, the licence
-files, the workspace manifest, the lock file, the toolchain or the
-workflows. A pull request that changes only app code skips them, so the
-bundled headless smoke does not run on it; the push to main runs every
-installer and catches anything it missed. Only main saves a build cache;
-a pull request restores main's.
+GitHub builds and tests nothing on a pull request. Each pull request and
+each push to main runs only the quick dependency checks
+(`.github/workflows/checks.yml`): cargo deny, and the 14-day crate-age
+check (only what changed on a pull request, the whole lock on main). So
+test on your own machine.
+
+1. Open the pull request as a draft (`gh pr create --draft`). A draft runs
+   nothing.
+2. When the work is finished, run the full local check from `rust/`:
+
+   ```bash
+   cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked --no-fail-fast && cargo xtask parity --committed-only && cargo deny check
+   ```
+
+3. Paste that command and its result under "Tested locally" in the pull
+   request's description, naming the commit it ran on. Then run
+   `gh pr ready`.
+
+The weekly full build (`.github/workflows/full.yml`) runs every Monday
+against main: every test on macOS, Windows and Linux, parity on macOS, the
+release command line with epubcheck, the device-request Worker, and every
+installer built and opened on its own system. It skips itself when main
+hasn't changed since its last green run, and it is the only workflow that
+saves build caches. Before tagging a release, run it by hand on the release
+commit (Actions, full, Run workflow) and wait for green. release.yml then
+builds and tests every system again on the tag.

@@ -1446,7 +1446,7 @@ engine needs to change.
   `tests/fixtures/jpx.pdf` is the guard: `rust/crates/sp-pdf/tests/jpx.rs`
   decodes its picture pixel for pixel, and `cargo xtask smoke-cli` converts
   it with the CLI it smokes and requires `imageCount` 1 (the release CLI on
-  every push, in rust.yml).
+  the weekly full build, in full.yml).
 - **Provenance of the numbers.** Every threshold was chosen by eye from the
   August design on 2026-08-06, against no real script, then **audited against
   the private corpus on 2026-08-12 (commit `1337863`), and none moved.** Seven
