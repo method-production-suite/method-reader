@@ -314,7 +314,14 @@ print geometry and what each e-reader's renderer honours.
 
 ## Continuous integration
 
-Every pull request runs the tests, formatting, lints and dependency checks.
+Open a pull request as a draft (`gh pr create --draft`): a draft builds
+nothing. When the work is finished and passes locally, `gh pr ready` starts
+the full run. A pull request that changes only documentation (any `.md`
+file, or anything under `docs/`) runs the docs tests alone, on Linux. Two
+exceptions count as code, because the build reads them: THIRD-PARTY-NOTICES.md
+and `docs/releases/`. So do the licence files, `site/` and `brand/`.
+
+Every other pull request runs the tests, formatting, lints and dependency checks.
 The installers (the bundles job) are built and smoke-tested only when a
 pull request changes packaging: the release tools, the updater, xtask's
 bundle code, the window's manifest, icons or headless mode, the licence

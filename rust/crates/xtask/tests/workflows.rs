@@ -623,15 +623,12 @@ const PACKAGING_GUARD: &str = "steps.decide.outputs.packaging == 'true'";
 
 #[test]
 fn bundles_decides_first_and_guards_every_later_step() {
-    // The bundles checks are required by main's ruleset, so the job always
-    // runs and finishes green; only its expensive steps wait on the answer.
-    // Checkout comes first because the answer is a git diff, and it must
-    // reach main (the merge commit's first parent).
+    // The job is skipped only as every job is (a draft, or documentation
+    // alone); the packaging answer is a step, and only the expensive steps
+    // wait on it. Checkout comes first because the answer is a git diff,
+    // and it must reach main (the merge commit's first parent).
     let wf = workflow("rust.yml");
-    assert!(
-        job_if(job(&wf, "bundles")).is_empty(),
-        "bundles must not be skipped at the job level: its checks are required"
-    );
+    assert_eq!(job_if(job(&wf, "bundles")), "");
     let (all, i) = bundles_decide();
     assert_eq!(i, 1, "the decide step runs right after checkout");
     assert!(s(&all[0], "uses").starts_with("actions/checkout@"));
@@ -652,7 +649,13 @@ fn bundles_decides_first_and_guards_every_later_step() {
 #[cfg(unix)]
 fn decide(event: &str, changed: &[&str]) -> String {
     let (all, i) = bundles_decide();
-    let script = s(&all[i], "run").to_string();
+    run_decision(s(&all[i], "run"), event, changed)
+}
+
+/// Run a decide step's bash for `event`, with a `git` stub on PATH that
+/// answers `diff` with `changed`; what it wrote to GITHUB_OUTPUT.
+#[cfg(unix)]
+fn run_decision(script: &str, event: &str, changed: &[&str]) -> String {
     let dir = Scratch::new("decide");
     let list = dir.write("changed.txt", changed.join("\n") + "\n");
     dir.script(
@@ -665,7 +668,7 @@ fn decide(event: &str, changed: &[&str]) -> String {
     let out_file = dir.join("output.txt");
     let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
     let out = bash(
-        &script,
+        script,
         dir.path(),
         &[
             ("PATH", path.as_str()),
@@ -715,5 +718,128 @@ fn bundles_builds_a_pull_request_only_when_packaging_changed() {
         "rust/crates/xtask/src/packaging.rs",
     ] {
         assert_eq!(decide("pull_request", &[f]), "packaging=false\n", "{f}");
+    }
+}
+
+const CODE_GUARD: &str = "needs.changes.outputs.code == 'true'";
+const DRAFT_GUARD: &str = "github.event_name != 'pull_request' || !github.event.pull_request.draft";
+
+#[test]
+fn a_draft_builds_nothing_and_marking_it_ready_starts_the_run() {
+    // SUITE-STANDARDS.md section 6: a draft pull request runs no job, and
+    // ready_for_review is among the triggers, so marking it ready starts the
+    // full run. The changes job carries the draft test and every other job
+    // needs it, so a skipped changes job skips them all (and a skipped job
+    // still counts as passing for main's required checks).
+    let wf = workflow("rust.yml");
+    let types: Vec<&str> = wf["on"]["pull_request"]["types"]
+        .as_sequence()
+        .expect("pull_request lists its types")
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    assert_eq!(
+        types,
+        ["opened", "synchronize", "reopened", "ready_for_review"]
+    );
+    assert_eq!(job_if(job(&wf, "changes")), DRAFT_GUARD);
+    for (name, j) in jobs(&wf) {
+        if name == "changes" {
+            continue;
+        }
+        assert_eq!(s(j, "needs"), "changes", "{name} needs the changes job");
+        let want = match name.as_str() {
+            "docs" => "needs.changes.outputs.code == 'false'",
+            // Matrix jobs: see the next test.
+            _ if MATRIX_JOBS.contains(&name.as_str()) => "",
+            _ => CODE_GUARD,
+        };
+        assert_eq!(job_if(j), want, "{name}");
+    }
+}
+
+/// The required checks that come from a matrix ("rust (ubuntu-latest)").
+const MATRIX_JOBS: [&str; 2] = ["rust", "bundles"];
+
+#[test]
+fn a_matrix_job_is_skipped_step_by_step_so_its_required_checks_report() {
+    // A matrix job skipped at the job level reports one check under its bare
+    // name, and main's ruleset waits for "rust (ubuntu-latest)" and the
+    // rest. So rust is never skipped at the job level for documentation:
+    // every step is. (bundles' steps wait on its packaging answer, which
+    // documentation never changes; the test above holds that.)
+    let wf = workflow("rust.yml");
+    for name in MATRIX_JOBS {
+        assert!(
+            !job(&wf, name)["strategy"]["matrix"].is_null(),
+            "{name} is a matrix job"
+        );
+    }
+    let unguarded: Vec<String> = steps(job(&wf, "rust"))
+        .into_iter()
+        .filter(|st| !s(st, "if").starts_with(CODE_GUARD))
+        .map(|st| format!("{}{}{}", s(st, "name"), s(st, "uses"), s(st, "run")))
+        .collect();
+    assert_eq!(unguarded, Vec::<String>::new());
+    for (name, j) in jobs(&wf) {
+        if !MATRIX_JOBS.contains(&name.as_str()) {
+            assert!(
+                j["strategy"]["matrix"].is_null(),
+                "{name} has a matrix: skip it step by step, like rust"
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+fn changes(event: &str, changed: &[&str]) -> String {
+    let wf = workflow("rust.yml");
+    let all = steps(job(&wf, "changes"));
+    let st = all
+        .iter()
+        .find(|st| s(st, "id") == "decide")
+        .expect("changes has a step with id: decide");
+    run_decision(s(st, "run"), event, changed)
+}
+
+#[cfg(unix)]
+#[test]
+fn main_and_a_manual_run_check_everything() {
+    for event in ["push", "workflow_dispatch"] {
+        assert_eq!(changes(event, &["README.md"]), "code=true\n", "{event}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn documentation_alone_skips_the_build_but_not_what_the_build_reads() {
+    assert_eq!(
+        changes(
+            "pull_request",
+            &[
+                "README.md",
+                "docs/device-map.md",
+                "rust/PARITY.md",
+                "docs/img/x.png"
+            ]
+        ),
+        "code=false\n"
+    );
+    for f in [
+        // Compiled into the window, or carried by every installer.
+        "THIRD-PARTY-NOTICES.md",
+        "docs/releases/0.13.1.md",
+        "LICENSE-MIT",
+        // Read by the tests: the window's colours, the fonts and the scene.
+        "brand/tokens.css",
+        "site/index.html",
+        "rust/crates/sp-app/src/app/mod.rs",
+        ".github/workflows/rust.yml",
+    ] {
+        assert_eq!(
+            changes("pull_request", &["README.md", f]),
+            "code=true\n",
+            "{f}"
+        );
     }
 }
