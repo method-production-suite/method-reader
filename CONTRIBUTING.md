@@ -115,7 +115,7 @@ screenshot.** Some tests skip themselves when it's absent; that's expected.
 
 ## What CI runs
 
-- **Every push** (`rust.yml`): formatting, clippy with warnings as errors,
+- **Every pull request, and every push to main** (`rust.yml`; a newer push to a pull request cancels the older run): formatting, clippy with warnings as errors,
   and every test on macOS, Windows and Linux; the parity check against the
   TypeScript engine's frozen answers, on macOS; the release command line
   converting the fixtures, with `epubcheck` on its books; the device-request
