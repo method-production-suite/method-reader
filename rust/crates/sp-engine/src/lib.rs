@@ -16,6 +16,7 @@
 
 pub mod commands;
 pub mod convert;
+pub mod device_library;
 pub mod env;
 pub mod errors;
 pub mod export;

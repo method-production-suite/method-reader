@@ -71,7 +71,12 @@ Tests that need a device (hands only; everything else is automated):
      called Method Reader (it renames itself the first time 0.13.1 opens,
      from Screepub Desktop or Screepub). Check that Finder, Spotlight and
      Launchpad show the new name, and whether a Dock icon you kept still
-     opens the app or shows a question mark.
+     opens the app or shows a question mark. And with 0.13.1 open, the
+     Dock shows Method Reader's icon, not a default one.
+   - **What's on a reader** (for 1.0.0, once its window page exists): with a
+     Kindle, a Kobo and a tolino, list the books, remove one Method Reader
+     made, and check on the reader that it is gone, and on the Kindle that
+     its notes went with it.
    - **Linux:** the owner's Arch check (AppImage, converting, USB detection,
      copy and eject on Hyprland, the command line); findings arrive as an
      issue.
@@ -115,6 +120,10 @@ In order. Each is one small pull request.
   different capitals is listed twice.
 - **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built; its pull
   request opens after 0.13.1.
+- **What's on a reader** (1.0.0). See and manage the books on a connected
+  Kindle, Kobo or tolino: which ones Method Reader made, replace one, take
+  one off. The engine half is built (`device-books`, `device-remove`,
+  docs/device-library.md); the window's page comes next.
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
   a page, get an editable script, make an e-book, all on local files. Built
   and in review; it merges after 0.13.1.

@@ -22,6 +22,7 @@ use sp_engine::export::kfx_setup::kfx_possible;
 use sp_engine::export::renderers::Books;
 use sp_engine::export::route_facts::{RouteProbes, route_facts};
 use sp_engine::jsjson;
+use sp_engine::library::library_root;
 use sp_engine::nodepath::host;
 use sp_engine::settings::app::app_settings_path;
 use sp_engine::update::{update_decision_command, update_should_check_command};
@@ -31,7 +32,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 13] = [
+pub const VERBS: [&str; 15] = [
     "devices",
     "send",
     "settings",
@@ -45,6 +46,8 @@ pub const VERBS: [&str; 13] = [
     "routes",
     "route",
     "eject",
+    "device-books",
+    "device-remove",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -147,6 +150,8 @@ fn verb_usage(verb: &str) -> &'static str {
         "app-settings" => APP_SETTINGS_USAGE,
         "reveal" => REVEAL_USAGE,
         "eject" => EJECT_USAGE,
+        "device-books" => DEVICE_BOOKS_USAGE,
+        "device-remove" => DEVICE_REMOVE_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -444,6 +449,61 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                     "Ejected {}. It is safe to unplug.",
                     result.ejected
                 ));
+            }
+            Ok(())
+        }
+        "device-books" => {
+            if pos.len() != 1 {
+                return Err(Stop::usage(
+                    "expected exactly one reader volume (see --help)",
+                ));
+            }
+            let list = || sp_device::list_devices(&device_seams(true));
+            let deps = sp_device::books::BooksDeps {
+                devices: Some(&list),
+            };
+            let mut result =
+                sp_device::books::device_books_command(&pos[0], &deps).map_err(device)?;
+            // Which are Method Reader's: the library, byte for byte.
+            let platform = host_platform();
+            let env = Env::process();
+            let settings_file = app_settings_path(platform, &env);
+            let root = library_root(platform, &env, Some(&settings_file));
+            sp_engine::device_library::mark_library_books(&mut result.books, &root);
+            if io.json {
+                io.ok(value(&result));
+            } else if result.books.is_empty() {
+                io.say(&format!("no books in {}", result.folder));
+            } else {
+                for b in &result.books {
+                    let ours = b
+                        .library
+                        .as_deref()
+                        .map(|l| format!("  (from {l})"))
+                        .unwrap_or_default();
+                    io.say(&format!("{}  {} bytes{ours}", b.name, b.size));
+                }
+            }
+            Ok(())
+        }
+        "device-remove" => {
+            if pos.len() != 2 {
+                return Err(Stop::usage(
+                    "expected a reader volume and one book on it (see --help)",
+                ));
+            }
+            let list = || sp_device::list_devices(&device_seams(true));
+            let deps = sp_device::books::BooksDeps {
+                devices: Some(&list),
+            };
+            let result =
+                sp_device::books::device_remove_command(&pos[0], &pos[1], &deps).map_err(device)?;
+            if io.json {
+                io.ok(value(&result));
+            } else {
+                for gone in &result.removed {
+                    io.say(&format!("removed {gone}"));
+                }
             }
             Ok(())
         }
