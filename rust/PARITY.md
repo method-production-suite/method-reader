@@ -1235,3 +1235,35 @@ names the check it affects.
   well-formed: an array of objects, each a `path` inside that run's
   scratch folder and an RFC 3339 `opened`. A malformed one stays, and the
   row differs on it. The `--json` answer is unchanged.
+- **A tall dual exchange stays two speeches (2026-10-19, branch
+  fix/long-dual-boundary): a TypeScript bug, fixed, its answers moved.**
+  torture.pdf's sheet 9 carries a second dual exchange (ODILE left, WREN
+  right) whose left column's lines run long. `deinterleaveDualDialogue`
+  opened its column boundary at the right cue's x less 13% of the page
+  (309.4 there) and refined it only leftward, so the first body line's
+  clean split (right column at 367) could not move it. On the second body
+  line the left column's own text ends at 317, past boundary + 6, and the
+  straddle test read it as a full-width line and ended the region: each
+  speech kept one line, and the rest of both columns became one action
+  paragraph interleaving them row by row. The TypeScript did exactly this,
+  so the frozen answers held it. Now the straddle test, once any body line
+  has split cleanly, asks whether an item runs past the right column's
+  shown text edge (the leftmost right-column start among the clean
+  splits) rather than past the guessed boundary; before a clean split the
+  guess still decides. The boundary itself, and so which column each item
+  joins, is unchanged and still moves only left (sp-parser/src/extract.rs;
+  sp-parser/tests/torture.rs `the_tall_dual_exchange_is_two_whole_speeches`
+  and the widened `no_element_mixes_text_from_both_dual_columns`). The 24
+  torture rows of rust/oracle/parity/torture.json that carry a book, a
+  .fountain or an FDX were moved with `cargo xtask parity --accept`; every
+  output that moved was diffed against the old build's, and each
+  difference is this exchange: the two whole speeches in place of the
+  stubs and the interleaved action (the EPUB's body and its identifier,
+  the .fountain's digest; the preview, the FDX, the MOBI and AZW3 records;
+  in the sequential-mode row, the same speeches as two blocks; in the
+  debug elements, one element fewer and the later scenes' indexes one
+  lower). The other fixtures' runs of those rows matched. OPEN: the
+  stage answers in rust/oracle/torture/ (lines.json, elements.json,
+  tokens.json, script.fountain and the books) still hold the TypeScript's
+  output, so sp-parser's and sp-pdf's oracle tests fail on torture until
+  they are re-frozen from the engine as Field Station's were.
