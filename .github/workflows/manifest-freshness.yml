@@ -29,8 +29,11 @@ jobs:
   # signature, and the key that made them.
   manifest-matches-newest-release:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # sp-release check-latest, with --deep:
       # it also downloads each archive and verifies it the way the Rust app
       # will, which every Tauri window's looser check then passes too.
