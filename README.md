@@ -261,6 +261,31 @@ The [source is right here](rust/crates/) to check any of this.
 - **Not a PDF viewer.** It makes an e-book you read on a device built for
   reading.
 
+## Coding agents
+
+`method-reader mcp` is an MCP server, so coding agents and other MCP clients
+can work with your scripts through typed tools: look inside a screenplay PDF
+(pages, scenes, speaking characters), read one page as plain text, write it
+out as a `.fountain` and a `.fdx` to keep editing, and make an EPUB, AZW3 or
+MOBI. Every tool runs the same conversion as the app and the command line.
+It only touches files inside the folders you give it, takes absolute paths
+only, and never replaces a file unless asked. Nothing is sent anywhere.
+
+It comes with the [command-line converter](docs/developers.md#install-the-command-line-converter).
+Claude Code:
+
+```bash
+claude mcp add method-reader -- method-reader mcp --root ~/Scripts
+```
+
+Claude Desktop, in `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "method-reader": { "command": "/path/to/method-reader", "args": ["mcp", "--root", "/Users/you/Scripts"] } } }
+```
+
+Every tool and the safety rules: [docs/mcp.md](docs/mcp.md).
+
 ## For developers
 
 Method Reader is a PDF to Fountain to EPUB3 pipeline written in Rust, as one
