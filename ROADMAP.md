@@ -17,8 +17,12 @@ Release go-aheads:
 
 - **0.13.1.** The clearer window wording, the Field Station sample on first
   launch, Linux app data moved to `~/.local/share`, Homebrew retired, one
-  `SHA256SUMS` for every download, the shared updater, and the list of
-  recent scripts for the suite's launcher. Three things before the tag:
+  `SHA256SUMS` for every download, the shared updater, the list of recent
+  scripts for the suite's launcher, and on a Mac the app renaming itself
+  Method Reader where an older install still calls it Screepub Desktop or
+  Screepub. The new release order (every build before any signing key) was
+  proved on 2026-10-19 by a full build and a rehearsal of the release on
+  main, with no tag. Three things before the tag:
   1. No young crate is left in the exception list. The earliest that holds
      is 2026-10-23, and the release workflow refuses an earlier tag on its
      own.
@@ -28,6 +32,12 @@ Release go-aheads:
      back green.
 
   Then the tag goes to the owner through MOrg.
+- **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
+  is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
+  command line's MCP server, and what else is merged by then. Checked
+  ahead: every updater out there (0.12.x, 0.13.x) offers 1.0.0 as newer,
+  the release tools and the version check take it, and the site's download
+  links name no version.
 
 Open decisions:
 
@@ -81,7 +91,7 @@ Decided:
   Dependabot comes monthly, security fixes at once.
 - **Homebrew** (2026-10-18): retired for good. Installs come from the
   downloads; the app updates itself.
-- **Scene lengths in the .fdx** (2026-10-17, for 0.14): measured from the PDF
+- **Scene lengths in the .fdx** (2026-10-17, for 1.0.0): measured from the PDF
   when converting and kept beside the script, not in the .fountain. The
   rounding (nearest eighth, never under one eighth) is common practice and
   a best guess at Final Draft's own; nobody has compared the two on one
@@ -103,8 +113,11 @@ In order. Each is one small pull request.
   replaced without a word; the window and the command line converting at the
   same moment can drop one entry; and on Windows the same file spelled with
   different capitals is listed twice.
-- **Scene pages, lengths and numbers in the .fdx** (0.14). Built; its pull
+- **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built; its pull
   request opens after 0.13.1.
+- **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
+  a page, get an editable script, make an e-book, all on local files. Built
+  and in review; it merges after 0.13.1.
 - **OSF out.** A third editable script beside Fountain and .fdx, written from
   the same structure, and `method-reader export --for osf`.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
