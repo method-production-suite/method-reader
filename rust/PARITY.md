@@ -1201,3 +1201,15 @@ names the check it affects.
   other fixture; its pin in xtask/tests/generated_files.rs moved with it.
   The window's fake engine (sp-app/src/engine.rs) and its Read screen test
   (sp-app/tests/screens.rs) name the new credit.
+- **recent.json is Rust's alone (2026-10-18, the suite standard §2).** A
+  `--library` conversion now records its input in `recent.json` in the
+  data folder, for the suite's launcher (`sp-engine/src/recent.rs`). The
+  TypeScript never wrote that file, and an entry's `opened` is the moment
+  of the run, so no frozen answer can hold it: the `convert-app-defaults`
+  row, on each of the five fixtures it runs on, found it "only in Rust" in
+  its config tree. Nothing frozen was edited. The harness
+  (`set_aside_recent` in `xtask/src/parity.rs`) takes a run's
+  `config/recent.json` out of the compared tree only when it is
+  well-formed: an array of objects, each a `path` inside that run's
+  scratch folder and an RFC 3339 `opened`. A malformed one stays, and the
+  row differs on it. The `--json` answer is unchanged.

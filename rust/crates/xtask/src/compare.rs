@@ -23,7 +23,8 @@ pub fn normalize_json(v: &Value, work: &Path) -> Value {
     normalize(v, &roots, None)
 }
 
-fn path_spellings(work: &Path) -> Vec<String> {
+/// Every way `work` may be spelled in what a run wrote, longest first.
+pub fn path_spellings(work: &Path) -> Vec<String> {
     let s = work.to_string_lossy().into_owned();
     let mut out = vec![s.clone(), s.replace('\\', "/"), s.replace('/', "\\")];
     // macOS hands out /var/... temp paths whose real path is /private/var/...

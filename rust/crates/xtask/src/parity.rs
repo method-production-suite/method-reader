@@ -342,6 +342,7 @@ fn run_side(
         run(&step(&inv))?;
     }
     let output = run(&(row.args)(&inv))?;
+    set_aside_recent(work);
     let stdout = String::from_utf8_lossy(&output.stdout);
     let answer = match serde_json::from_str::<Value>(stdout.trim()) {
         Ok(v) if stdout.trim().lines().count() == 1 => compare::normalize_json(&v, work),
@@ -353,6 +354,38 @@ fn run_side(
         answer,
         stderr: normalize_text(&String::from_utf8_lossy(&output.stderr), work),
     })
+}
+
+/// The suite launcher's recent.json is Method Reader's alone (2026-10-18;
+/// PARITY.md, Decisions): the TypeScript never wrote one, and its `opened`
+/// is the moment of the run, so no frozen answer could hold it. A run's
+/// `config/recent.json` is taken out of the compared tree only when it is
+/// what the engine should have written there: an array of objects, each a
+/// `path` inside this run's scratch folder and an `opened` RFC 3339 time.
+/// Anything else stays, and the row differs on it.
+fn set_aside_recent(work: &Path) {
+    let file = work.join("config").join("recent.json");
+    let Ok(text) = std::fs::read_to_string(&file) else {
+        return;
+    };
+    let Ok(Value::Array(entries)) = serde_json::from_str::<Value>(&text) else {
+        return;
+    };
+    let spellings = compare::path_spellings(work);
+    let well_formed = !entries.is_empty()
+        && entries.iter().all(|e| {
+            let path = e["path"].as_str().unwrap_or_default();
+            let opened = e["opened"].as_str().unwrap_or_default();
+            spellings
+                .iter()
+                .any(|w| !w.is_empty() && path.starts_with(w.as_str()))
+                && opened.len() == "2026-10-18T09:34:05Z".len()
+                && opened.ends_with('Z')
+                && opened.as_bytes().get(10) == Some(&b'T')
+        });
+    if well_formed {
+        let _ = std::fs::remove_file(&file);
+    }
 }
 
 /// The version the TypeScript reported when its answers were frozen (the
