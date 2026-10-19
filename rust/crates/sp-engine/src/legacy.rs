@@ -118,10 +118,22 @@ fn move_folder(from: &str, to: &str) -> bool {
         return false;
     }
     let parent = host::dirname(to);
-    if !fsx::exists(&parent) && fsx::mkdir_all(&parent).is_err() {
+    if let Err(e) = (!fsx::exists(&parent))
+        .then(|| fsx::mkdir_all(&parent))
+        .transpose()
+    {
+        eprintln!("method-reader: could not make {parent} to move {from} into: {e}");
         return false;
     }
-    std::fs::rename(from, to).is_ok()
+    match std::fs::rename(from, to) {
+        Ok(()) => true,
+        // The old folder stays in use (the path functions fall back to it);
+        // said on stderr, which the --json contract never reads.
+        Err(e) => {
+            eprintln!("method-reader: could not move {from} to {to}: {e}");
+            false
+        }
+    }
 }
 
 /// `from` into `to`: the whole folder when `to` is not there, else each

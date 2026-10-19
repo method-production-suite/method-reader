@@ -199,8 +199,11 @@ window moves it once, on first launch, to the place above, and carries the
 0.12 folders (`~/.config/screepub`, `~/.config/com.darkwell.screepub`) straight
 there too. A folder moves only when the new one is not there yet; nothing is
 overwritten or deleted, and when a move cannot happen (another disk, a
-locked folder) the old folder stays in use where it is. Nothing moves when
-`METHOD_READER_CONFIG_DIR` or `SCREEPUB_CONFIG_DIR` is set.
+locked folder) the old folder stays in use where it is. After a failed move
+the move is not tried again: the first file the app writes in the new layout
+creates the new folder, and from then on it reads each file from whichever
+folder holds it. Nothing is lost, and the failure is logged on stderr.
+Nothing moves when `METHOD_READER_CONFIG_DIR` or `SCREEPUB_CONFIG_DIR` is set.
 
 ## Devices and routes
 
