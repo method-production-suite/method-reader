@@ -20,6 +20,7 @@ pub mod page_show;
 pub mod page_timing;
 pub mod read;
 pub mod requests;
+pub mod sample;
 pub mod send_routes;
 pub mod tune;
 pub mod typewriter;

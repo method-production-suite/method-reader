@@ -206,7 +206,8 @@ fn uses_lines() -> Vec<(String, String)> {
 #[test]
 fn every_action_is_pinned_to_a_full_sha_with_its_version_beside_it() {
     // A tag can be moved; a commit cannot. The comment is what pinact and
-    // Dependabot keep honest, and what a reader checks the SHA against.
+    // the suite-wide pin moves keep honest, and what a reader checks the
+    // SHA against.
     let pinned = Regex::new(r"^[\w.-]+/[\w./-]+@[0-9a-f]{40} # v\d+(\.\d+)*$").unwrap();
     let all = uses_lines();
     assert!(all.len() > 10, "found only {} uses: lines", all.len());
@@ -603,4 +604,144 @@ fn the_whole_lock_is_checked_for_crate_age_on_main_and_weekly() {
     let weekly = run_of("weekly-toolchain.yml", "crate-ages");
     assert!(weekly.contains("--lock rust/Cargo.lock"));
     assert!(!weekly.contains("--only-changed"));
+}
+
+#[test]
+fn only_main_saves_a_cache() {
+    // GitHub keeps 10 GB of caches per repository and evicts the rest; with
+    // every pull request saving its own copy, main's caches never survived
+    // and most runs rebuilt from nothing (SUITE-STANDARDS section 6). So no
+    // step uses the save-on-exit actions/cache, and every actions/cache/save
+    // runs only on main. release.yml is exempt: it runs on tags, untouched.
+    for f in workflow_files() {
+        if f == "release.yml" {
+            continue;
+        }
+        let wf = workflow(&f);
+        for (name, job) in jobs(&wf) {
+            for st in steps(job) {
+                let uses = s(st, "uses");
+                assert!(
+                    !uses.starts_with("actions/cache@"),
+                    "{f}: {name} uses actions/cache, which saves on every ref"
+                );
+                if uses.starts_with("actions/cache/save@") {
+                    assert!(
+                        s(st, "if").contains("github.ref == 'refs/heads/main'"),
+                        "{f}: {name} saves a cache off main"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// The bundles job's steps, and the index of its decide step.
+fn bundles_decide() -> (Vec<Value>, usize) {
+    let wf = workflow("rust.yml");
+    let all: Vec<Value> = steps(job(&wf, "bundles")).into_iter().cloned().collect();
+    let i = all
+        .iter()
+        .position(|st| s(st, "id") == "decide")
+        .expect("bundles has a step with id: decide");
+    (all, i)
+}
+
+const PACKAGING_GUARD: &str = "steps.decide.outputs.packaging == 'true'";
+
+#[test]
+fn bundles_decides_first_and_guards_every_later_step() {
+    // The bundles checks are required by main's ruleset, so the job always
+    // runs and finishes green; only its expensive steps wait on the answer.
+    // Checkout comes first because the answer is a git diff, and it must
+    // reach main (the merge commit's first parent).
+    let wf = workflow("rust.yml");
+    assert!(
+        job_if(job(&wf, "bundles")).is_empty(),
+        "bundles must not be skipped at the job level: its checks are required"
+    );
+    let (all, i) = bundles_decide();
+    assert_eq!(i, 1, "the decide step runs right after checkout");
+    assert!(s(&all[0], "uses").starts_with("actions/checkout@"));
+    assert_eq!(all[0]["with"]["fetch-depth"].as_u64(), Some(2));
+    assert!(s(&all[0], "if").is_empty() && s(&all[i], "if").is_empty());
+    let unguarded: Vec<String> = all[i + 1..]
+        .iter()
+        .filter(|st| !s(st, "if").contains(PACKAGING_GUARD))
+        .map(|st| format!("{}{}", s(st, "name"), s(st, "uses")))
+        .collect();
+    assert_eq!(unguarded, Vec::<String>::new());
+    assert!(all.len() > i + 2, "the guarded steps are still there");
+}
+
+/// Run the decide step's own bash for `event`, with a `git` stub on PATH
+/// that answers `diff` with `changed`, and return what it wrote to
+/// GITHUB_OUTPUT.
+#[cfg(unix)]
+fn decide(event: &str, changed: &[&str]) -> String {
+    let (all, i) = bundles_decide();
+    let script = s(&all[i], "run").to_string();
+    let dir = Scratch::new("decide");
+    let list = dir.write("changed.txt", changed.join("\n") + "\n");
+    dir.script(
+        "bin/git",
+        &format!(
+            "case \"$1\" in rev-parse) exit 0 ;; diff) cat '{}' ;; *) exit 9 ;; esac\n",
+            list.display()
+        ),
+    );
+    let out_file = dir.join("output.txt");
+    let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
+    let out = bash(
+        &script,
+        dir.path(),
+        &[
+            ("PATH", path.as_str()),
+            ("EVENT", event),
+            ("GITHUB_OUTPUT", out_file.to_str().expect("a UTF-8 path")),
+        ],
+    );
+    assert!(out.status.success(), "{}", said(&out));
+    std::fs::read_to_string(out_file).unwrap_or_default()
+}
+
+#[cfg(unix)]
+#[test]
+fn bundles_always_builds_on_main_and_on_a_manual_run() {
+    for event in ["push", "workflow_dispatch"] {
+        assert_eq!(decide(event, &["README.md"]), "packaging=true\n", "{event}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn bundles_builds_a_pull_request_only_when_packaging_changed() {
+    for f in [
+        "rust/crates/sp-release/src/nsis.rs",
+        "rust/crates/sp-release/Cargo.toml",
+        "rust/crates/xtask/src/packaging/native.rs",
+        "rust/crates/xtask/src/dmg.rs",
+        "rust/crates/sp-app/Cargo.toml",
+        "rust/crates/sp-app/icons/icon.icns",
+        "rust/Cargo.lock",
+        ".github/workflows/release.yml",
+        ".github/workflows/rust.yml",
+    ] {
+        assert_eq!(
+            decide("pull_request", &["README.md", f]),
+            "packaging=true\n",
+            "{f}"
+        );
+    }
+    for f in [
+        "README.md",
+        "rust/crates/sp-parser/src/classify.rs",
+        "rust/crates/sp-app/src/app/mod.rs",
+        "docs/ROADMAP.md",
+        // Near misses: a prefix is not the folder.
+        "rust/crates/sp-release-notes/x.rs",
+        "rust/crates/xtask/src/packaging.rs",
+    ] {
+        assert_eq!(decide("pull_request", &[f]), "packaging=false\n", "{f}");
+    }
 }

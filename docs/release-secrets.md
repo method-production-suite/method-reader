@@ -77,24 +77,28 @@ cargo install tauri-cli --version 2.11.4 --locked
 ```
 
 ```bash
-cargo tauri signer generate -w ~/.tauri/screepub.key
+cargo tauri signer generate -w ~/.tauri/method-reader-updater.key
 ```
 
-It asked for a password (optional; recommended), wrote the private key to
-`~/.tauri/screepub.key` and the public key beside it as
-`~/.tauri/screepub.key.pub`, and printed only the two paths.
+It asked for a password (optional; recommended), wrote the private key and
+the public key beside it, and printed only the two paths. On the release
+Mac they now live at `~/.tauri/method-reader-updater.key` and
+`~/.tauri/method-reader-updater.key.pub` (mode 600; renamed from
+`screepub.key` on 2026-10-18, contents unchanged, key ID E4D0668D54F6EB34),
+and the pair is kept in the team's password manager as "Method Reader -
+Update signing key".
 
 The three pieces:
 
-- **`TAURI_SIGNING_PRIVATE_KEY`**: the CONTENTS of `~/.tauri/screepub.key`
-  (`pbcopy < ~/.tauri/screepub.key`), pasted as a repo secret. It is one
+- **`TAURI_SIGNING_PRIVATE_KEY`**: the CONTENTS of `~/.tauri/method-reader-updater.key`
+  (`pbcopy < ~/.tauri/method-reader-updater.key`), pasted as a repo secret. It is one
   line of base64 and the release tools accept it as is.
 - **`TAURI_SIGNING_PRIVATE_KEY_PASSWORD`**: the password, if you set one.
   Leave this secret out if you did not: the workflow then passes an empty
   string, which is what a password-less key expects.
 - **The public key** has one home: the `PUBKEY` constant in
   `rust/crates/sp-update/src/lib.rs` (the contents of
-  `~/.tauri/screepub.key.pub` as base64, one line, committed). It is safe
+  `~/.tauri/method-reader-updater.key.pub` as base64, one line, committed). It is safe
   to share and safe to commit. The app is built with it, and the release
   tools check against it by default.
 
