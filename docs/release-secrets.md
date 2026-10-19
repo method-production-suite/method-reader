@@ -54,7 +54,8 @@ around it are kept so links to them still work.
 ## 4. `TAURI_SIGNING_PRIVATE_KEY`: the updater's signing key
 
 Added 2026-09-21 for piece A of the parity plan. The app updates itself
-through its updater (`rust/crates/sp-update`, which reads the same
+through its updater (the suite's `method-update`, set up by
+`rust/crates/sp-update-config`, which reads the same
 `latest.json` and the same minisign signatures the Tauri windows' updater
 plugin read), and every download is checked against a minisign signature.
 The release signs the updater archive with a private key only CI holds, and
@@ -97,7 +98,7 @@ The three pieces:
   Leave this secret out if you did not: the workflow then passes an empty
   string, which is what a password-less key expects.
 - **The public key** has one home: the `PUBKEY` constant in
-  `rust/crates/sp-update/src/lib.rs` (the contents of
+  `rust/crates/sp-update-config/src/lib.rs` (the contents of
   `~/.tauri/method-reader-updater.key.pub` as base64, one line, committed). It is safe
   to share and safe to commit. The app is built with it, and the release
   tools check against it by default.

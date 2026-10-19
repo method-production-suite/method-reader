@@ -83,8 +83,11 @@ unknown-registry = "deny"
 unknown-git = "deny"
 # Blitz, the book preview's HTML renderer, pinned to one revision in
 # sp-app's Cargo.toml (no crates.io release has what the preview needs),
-# and the taffy revision that blitz revision pins in turn.
+# and the taffy revision that blitz revision pins in turn. method-libs is
+# the suite's own shared crates (method-update, the updater), pinned to one
+# full commit in rust/Cargo.toml.
 allow-git = [
   "https://github.com/DioxusLabs/blitz",
   "https://github.com/DioxusLabs/taffy",
+  "https://github.com/method-production-suite/method-libs",
 ]

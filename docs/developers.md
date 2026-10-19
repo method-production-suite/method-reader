@@ -340,8 +340,9 @@ rust/crates/
                       KFX, the send routes and update decisions
   sp-cli              the method-reader command, and its --json contract
   sp-app              the window (egui, with AccessKit for screen readers)
-  sp-update           the window's updater: latest.json, the minisign check,
-                      the bundle swap and the restart
+  sp-update-config    what the window hands the suite's updater (method-update,
+                      from method-libs: latest.json, the minisign check,
+                      the bundle swap and the restart): endpoint, key, names
   sp-release          the release tools: bundle layouts, update archive and
                       signature, latest.json, Linux packages, the Windows
                       installer script

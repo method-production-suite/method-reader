@@ -42,10 +42,10 @@ fn names_of(paths: &[PathBuf]) -> Vec<String> {
 fn the_native_app_is_method_reader_s_own() {
     // From 0.13 the identifier is Method Reader's own; up to 0.12.x it was
     // what 0.11.1's desktop/src-tauri/tauri.conf.json said
-    // (sp_update::LEGACY_IDENTIFIER). The old updaters swap by folder and
+    // (sp_update_config::LEGACY_IDENTIFIER). The old updaters swap by folder and
     // never compare it, and the app moves what the old one kept, once.
     assert_eq!(NATIVE_APP.identifier, "com.methodreader.desktop");
-    assert_eq!(NATIVE_APP.identifier, sp_update::IDENTIFIER);
+    assert_eq!(NATIVE_APP.identifier, sp_update_config::IDENTIFIER);
     assert_eq!(NATIVE_APP.product_name, "Method Reader");
     assert_eq!(
         NATIVE_APP.publisher,
@@ -71,9 +71,9 @@ fn the_native_app_is_method_reader_s_own() {
         ]
     );
     // And its updater key (plugins.updater.pubkey), whose one home is now
-    // sp-update.
+    // sp-update-config.
     assert_eq!(
-        sp_update::PUBKEY,
+        sp_update_config::PUBKEY,
         "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU0RDA2NjhENTRGNkVCMzQKUldRMDYvWlVqV2JRNUQzRkpQMmVJZlQ4bTdaT2M5cmN2V05oVTJGdURUY0NwRDBRbEQ1c013UnYK"
     );
 }
@@ -700,10 +700,10 @@ fn an_archive_the_shipped_app_s_key_would_not_verify_is_never_published() {
 
 #[test]
 fn without_pubkey_the_archive_is_checked_against_the_key_the_shipped_app_trusts() {
-    // The default is sp_update::PUBKEY (was: tauri.conf.json's). The test
+    // The default is sp_update_config::PUBKEY (was: tauri.conf.json's). The test
     // key signs, the shipped key does not verify it, so nothing is published.
     let mut a = BundleArgs::new(VERSION, Path::new("o"), BundleOs::Macos, BundleArch::Arm64);
-    assert_eq!(trusted_pubkey(&a).unwrap(), sp_update::PUBKEY);
+    assert_eq!(trusted_pubkey(&a).unwrap(), sp_update_config::PUBKEY);
     a.pubkey = Some(tauri_test_public_key());
     assert_eq!(trusted_pubkey(&a).unwrap(), tauri_test_public_key());
 

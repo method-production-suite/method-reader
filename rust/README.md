@@ -32,7 +32,8 @@ rust/
     sp-engine/          conversion, library, settings, update decisions, export, routes
     sp-cli/             the `method-reader` binary and its --json contract
     sp-app/             the window (egui and AccessKit), its fonts and icons
-    sp-update/          the updater: latest.json, minisign, the bundle swap, the restart
+    sp-update-config/   what Method Reader hands the suite's updater (method-update, from
+                        method-libs): endpoint, key, bundle names, identifiers
     sp-release/         the release tools (binary sp-release): layouts, update archive, latest.json
     sp-device-requests/ the device-request Worker (workers-rs, wasm32), its schema and wrangler.toml
     xtask/              the developer tools (`cargo xtask --help`)

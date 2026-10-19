@@ -29,8 +29,11 @@ base64.workspace = true
 # The .rpm, pure Rust: gzip payload, no signature support compiled in
 # (the Tauri .rpm was never signed either).
 rpm = { version = "0.30", default-features = false, features = ["payload", "gzip-compression"] }
-sp-update.workspace = true
-# GitHub's API for `check-latest`, over the same TLS stack as sp-update.
+# The suite updater's verifier, manifest reader and swap (what an installed
+# copy runs), and Method Reader's identifier and key.
+method-update.workspace = true
+sp-update-config.workspace = true
+# GitHub's API for `check-latest`, over the same TLS stack as method-update.
 ureq = "3"
 
 [dev-dependencies]

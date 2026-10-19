@@ -62,7 +62,7 @@ pub struct NativeApp {
 
 pub const NATIVE_APP: NativeApp = NativeApp {
     product_name: names::PRODUCT,
-    identifier: sp_update::IDENTIFIER,
+    identifier: sp_update_config::IDENTIFIER,
     package: sp_release::linux::PACKAGE,
     crate_name: "sp-app",
     binary: names::WINDOW_EXE,
@@ -310,7 +310,7 @@ fn write_file(path: &Path, bytes: &[u8], executable: bool) -> Result<(), String>
 }
 
 /// The public key the archive must verify against: `--pubkey` (a path or
-/// the text), else [`sp_update::PUBKEY`], the one home of the key the
+/// the text), else [`sp_update_config::PUBKEY`], the one home of the key the
 /// shipped app trusts.
 pub fn trusted_pubkey(args: &BundleArgs) -> Result<String, String> {
     super::signature::trusted_pubkey(args.pubkey.as_deref()).map(|t| t.trim().to_string())

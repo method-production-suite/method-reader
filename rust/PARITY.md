@@ -1201,6 +1201,28 @@ names the check it affects.
   other fixture; its pin in xtask/tests/generated_files.rs moved with it.
   The window's fake engine (sp-app/src/engine.rs) and its Read screen test
   (sp-app/tests/screens.rs) name the new credit.
+- **The updater is the suite's method-update (2026-10-18, branch
+  feat/method-update).** sp-update is gone. Its work (latest.json,
+  minisign, the swap, the sweep, the restart, the engine gate) is
+  method-update's, from method-libs at a pinned full commit; that crate is
+  sp-update as of 0.13.0 with Reader's names lifted into an `AppConfig`,
+  plus a host rule on every request and redirect, a sweep that never
+  removes the bundle it runs from, and an owner-only settings file. Where
+  the rows above say `sp_update::IDENTIFIER`, `LEGACY_IDENTIFIER`,
+  `PUBKEY`, `ENDPOINT` or `LEGACY_ENDPOINT`, read
+  `sp_update_config::` (rust/crates/sp-update-config, which also builds
+  `update_config()` and keeps the rehearsal's build.rs guard, so O10 holds
+  as written with METHOD_READER_UPDATE_*); where they say sp-update's
+  install, verify, flow, gate, manifest or transport, read method-update's.
+  webkit.rs and sqlite.rs (the Tauri window's update answer) moved to
+  sp-app's `legacy` module with their tests and data. method-update's own
+  tests cover the swap, the sweep, hostile archives and the local-server
+  runs under invented names; sp-update-config/tests/reader.rs holds the
+  same machinery to Reader's names (Screepub.app to Method Reader.app),
+  sentences and transport. Not taken: method-update's `policy::Updater`,
+  since the window's own model/update.rs already keeps the suite's
+  schedule and switch, and the Windows and Linux installers' hand-off,
+  which method-update dropped (the window only ever updated on a Mac).
 - **recent.json is Rust's alone (2026-10-18, the suite standard §2).** A
   `--library` conversion now records its input in `recent.json` in the
   data folder, for the suite's launcher (`sp-engine/src/recent.rs`). The

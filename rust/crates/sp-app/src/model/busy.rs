@@ -4,10 +4,10 @@
 //!
 //! The count lives on the window's thread; an update's run waits for quiet
 //! on its own thread. So every counted call and every hold is mirrored into
-//! sp-update's [`EngineGate`] as a ticket, and the gate is what the run
+//! method-update's [`EngineGate`] as a ticket, and the gate is what the run
 //! retires and waits on: the two can never disagree about who is busy.
 
-use sp_update::gate::{EngineGate, Ticket};
+use method_update::gate::{EngineGate, Ticket};
 
 /// Idle means nothing counted has run for this long.
 pub const ENGINE_QUIET_MS: f64 = 500.0;
@@ -81,7 +81,7 @@ impl Default for Busy {
             next_hold: 0,
             holds: Vec::new(),
             calls: Vec::new(),
-            gate: EngineGate::new(),
+            gate: EngineGate::new(UPDATED_MESSAGE),
         }
     }
 }

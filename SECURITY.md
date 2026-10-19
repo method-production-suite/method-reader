@@ -44,8 +44,9 @@ in the workspace forbids `unsafe` code.
   A way to make it do anything else is a real finding.
 - **The update path.** The app installs an update only after checking its
   minisign signature, and the version that signature names, against a key
-  built into the app (`rust/crates/sp-update`). It fetches over HTTPS with
-  rustls on the ring crypto provider. The older Mac app, retired but
+  built into the app (`rust/crates/sp-update-config`, handed to the suite's
+  updater, `method-update`). It fetches over HTTPS with rustls on the ring
+  crypto provider, and only from GitHub's release hosts. The older Mac app, retired but
   still on some Macs, checks the Apple Developer ID signature and the version
   before it replaces itself with the current app. A way to get either to
   install something else is a real finding.

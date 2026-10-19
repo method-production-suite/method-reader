@@ -127,7 +127,7 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
                 a.many("resource").into_iter().map(PathBuf::from).collect();
             let identifier = a
                 .opt("identifier")
-                .unwrap_or_else(|| sp_update::IDENTIFIER.into());
+                .unwrap_or_else(|| sp_update_config::IDENTIFIER.into());
             let bundle = mac::build_app(
                 &mac::MacApp {
                     version: &v,
@@ -200,11 +200,13 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
         "verify-update" => {
             let text = std::fs::read_to_string(a.path("manifest")?).map_err(|e| e.to_string())?;
             let m: serde_json::Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
-            let pubkey = a.opt("pubkey").unwrap_or_else(|| sp_update::PUBKEY.into());
+            let pubkey = a
+                .opt("pubkey")
+                .unwrap_or_else(|| sp_update_config::PUBKEY.into());
             let ok = manifest::verify_dir(&m, &a.path("dir")?, &pubkey)?;
             println!(
                 "every platform verifies with key {}: {}",
-                sp_update::verify::key_id(&pubkey).map_err(|e| e.to_string())?,
+                method_update::verify::key_id(&pubkey).map_err(|e| e.to_string())?,
                 ok.join(", ")
             );
             Ok(())
@@ -272,7 +274,9 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
         }
         "check-latest" => {
             let repo = a.opt("repo").unwrap_or_else(|| names::REPO.into());
-            let pubkey = a.opt("pubkey").unwrap_or_else(|| sp_update::PUBKEY.into());
+            let pubkey = a
+                .opt("pubkey")
+                .unwrap_or_else(|| sp_update_config::PUBKEY.into());
             let deep = a.flags.iter().any(|f| f == "deep");
             match check_latest::check_latest(&repo, &pubkey, a.opt("version").as_deref(), deep) {
                 Ok((v, platforms)) => {

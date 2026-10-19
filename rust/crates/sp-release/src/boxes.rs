@@ -2,7 +2,7 @@
 //! cryptography: was the reading half of tools/update-signature.ts. The
 //! bundle tool, the manifest builder, check-latest and the tag-time gate
 //! only need to know "is this the container it claims to be, and which key
-//! does it name?"; checking a signature is [`sp_update::verify`]'s.
+//! does it name?"; checking a signature is [`method_update::verify`]'s.
 //!
 //! Shapes, from minisign's own format:
 //!

@@ -3196,6 +3196,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "method-update"
+version = "0.1.0"
+source = "git+https://github.com/method-production-suite/method-libs?rev=37a9c8b9801bfcdedb9d79565a62f84fcdfb9a4a#37a9c8b9801bfcdedb9d79565a62f84fcdfb9a4a"
+dependencies = [
+ "base64",
+ "flate2",
+ "minisign-verify",
+ "plist",
+ "semver",
+ "serde",
+ "serde_json",
+ "tar",
+ "ureq",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5395,6 +5411,7 @@ dependencies = [
  "eframe",
  "egui",
  "egui_kittest",
+ "method-update",
  "muda",
  "mundy",
  "parley",
@@ -5405,7 +5422,7 @@ dependencies = [
  "sp-cli",
  "sp-device",
  "sp-fsutil",
- "sp-update",
+ "sp-update-config",
  "tempfile",
  "unicode-general-category",
  "unicode-normalization",
@@ -5599,12 +5616,13 @@ version = "0.13.0"
 dependencies = [
  "base64",
  "flate2",
+ "method-update",
  "minisign",
  "rpm",
  "serde",
  "serde_json",
  "sha2",
- "sp-update",
+ "sp-update-config",
  "tar",
  "tempfile",
  "ureq",
@@ -5612,20 +5630,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp-update"
+name = "sp-update-config"
 version = "0.13.0"
 dependencies = [
- "base64",
  "flate2",
- "minisign",
- "minisign-verify",
- "plist",
- "semver",
- "serde",
- "serde_json",
+ "method-update",
  "tar",
  "tempfile",
- "ureq",
 ]
 
 [[package]]
@@ -7626,6 +7637,7 @@ dependencies = [
  "base64",
  "fancy-regex",
  "flate2",
+ "method-update",
  "minisign",
  "miniz_oxide 0.8.9",
  "nix",
@@ -7640,7 +7652,7 @@ dependencies = [
  "sp-mobi",
  "sp-model",
  "sp-release",
- "sp-update",
+ "sp-update-config",
  "tar",
  "tungstenite",
  "ureq",

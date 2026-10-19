@@ -1,8 +1,8 @@
 //! The macOS app bundle: `Method Reader.app` laid out the way tauri-bundler
 //! 2.9.4 laid out the Tauri window's (macos/app.rs). From 0.13 it carries
 //! Method Reader's own identifier, com.methodreader.desktop
-//! ([`sp_update::IDENTIFIER`]), where up to 0.12.x it was
-//! com.darkwell.screepub ([`sp_update::LEGACY_IDENTIFIER`]): macOS sees a
+//! ([`sp_update_config::IDENTIFIER`]), where up to 0.12.x it was
+//! com.darkwell.screepub ([`sp_update_config::LEGACY_IDENTIFIER`]): macOS sees a
 //! new app, so its permission grants (removable volumes, Automation),
 //! which are keyed to the identifier and the team, are asked for again
 //! once. The folder and the executable were renamed with the product too
@@ -130,14 +130,14 @@ mod tests {
 
     #[test]
     fn the_plist_reads_back_with_the_keys_the_updater_and_finder_use() {
-        let text = info_plist("0.13.0", sp_update::IDENTIFIER);
+        let text = info_plist("0.13.0", sp_update_config::IDENTIFIER);
         let dir = tempfile::tempdir().unwrap();
         // Read back the way the swap and the restart read it.
         let app = dir.path().join("X.app/Contents");
         std::fs::create_dir_all(&app).unwrap();
         std::fs::write(app.join("Info.plist"), &text).unwrap();
         assert_eq!(
-            sp_update::install::bundle_identifier(&dir.path().join("X.app")).as_deref(),
+            method_update::install::bundle_identifier(&dir.path().join("X.app")).as_deref(),
             Some("com.methodreader.desktop")
         );
         assert!(

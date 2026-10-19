@@ -9,16 +9,27 @@ use sp_app::app::host::{FileStorage, webkit_identifiers};
 use sp_app::model::update::{Storage, read_state};
 
 #[test]
+fn the_window_and_the_updater_say_the_same_sentence_once_updated() {
+    // busy.rs refuses an engine call with its own copy, and the gate the
+    // update run retires answers with method-update's, built from Method
+    // Reader's name: the two must never drift apart.
+    assert_eq!(
+        sp_app::model::busy::UPDATED_MESSAGE,
+        sp_update_config::update_config().messages.updated
+    );
+}
+
+#[test]
 fn the_app_data_folder_is_named_after_the_bundle_identifier() {
-    assert_eq!(sp_update::IDENTIFIER, "com.methodreader.desktop");
-    assert_eq!(sp_cli::APP_DATA_FOLDER, sp_update::IDENTIFIER);
-    assert_eq!(sp_update::LEGACY_IDENTIFIER, "com.darkwell.screepub");
+    assert_eq!(sp_update_config::IDENTIFIER, "com.methodreader.desktop");
+    assert_eq!(sp_cli::APP_DATA_FOLDER, sp_update_config::IDENTIFIER);
+    assert_eq!(sp_update_config::LEGACY_IDENTIFIER, "com.darkwell.screepub");
 }
 
 #[test]
 fn the_tauri_windows_webkit_storage_is_looked_for_under_their_identifiers() {
     assert_eq!(
-        webkit_identifiers(sp_update::IDENTIFIER),
+        webkit_identifiers(sp_update_config::IDENTIFIER),
         [
             "com.methodreader.desktop",
             "com.darkwell.screepub",
@@ -57,8 +68,7 @@ fn someone_who_said_no_in_0_12_still_has_said_no() {
     said_no(&path);
     // A file is there, so the Tauri window's WebKit answer (a yes, here) is
     // not read over it.
-    let tauri_said_yes =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../sp-update/tests/data/webkit-legacy");
+    let tauri_said_yes = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/webkit-legacy");
     let s = FileStorage::open_or_import(path, Some(&tauri_said_yes));
     let state = read_state(&s);
     assert!(state.asked);

@@ -53,9 +53,11 @@ fn main() -> ExitCode {
     sp_cli::recover_camera_import();
     // An update swap that died between its renames left the bundle hidden
     // beside its own name, or left a backup behind: put it back, or clear
-    // it (sp_update::install::sweep_at_startup; nothing outside a bundle).
+    // it (method_update::install::sweep_at_startup, under both of Method
+    // Reader's bundle names; nothing outside a bundle).
     if let Ok(exe) = std::env::current_exe() {
-        let swept = sp_update::install::sweep_at_startup(&exe);
+        let swept =
+            method_update::install::sweep_at_startup(&exe, &sp_update_config::bundle_names());
         if let Some(back) = &swept.restored {
             eprintln!(
                 "method-reader-app: put {} back after an interrupted update",

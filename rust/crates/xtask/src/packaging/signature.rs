@@ -3,9 +3,9 @@
 //! Nothing here is a second implementation. The two minisign containers are
 //! read by [`sp_release::boxes`] (re-exported below), the archive is signed
 //! by [`sp_release::sign`], the one signer release.yml uses, and a
-//! signature is checked by [`sp_update::verify`], the check the app itself
+//! signature is checked by [`method_update::verify`], the check the app itself
 //! runs. What stays here is the tag-time gate `cargo xtask
-//! update-signature`, over [`sp_update::PUBKEY`], the one home of the key
+//! update-signature`, over [`sp_update_config::PUBKEY`], the one home of the key
 //! the shipped app trusts. (Until the Rust cutover the gate read
 //! `plugins.updater.pubkey` out of the Tauri window's tauri.conf.json,
 //! `--pubkey-from-config`; that file went with the window.)
@@ -58,7 +58,7 @@ pub fn verify_file(
     version: &str,
 ) -> Result<(), String> {
     let data = std::fs::read(file).map_err(|e| format!("cannot read {}: {e}", file.display()))?;
-    sp_update::verify::verify_signature(&data, signature, public_key, version, true)
+    method_update::verify::verify_signature(&data, signature, public_key, version, true)
         .map(|_| ())
         .map_err(|e| {
             format!(
@@ -69,11 +69,11 @@ pub fn verify_file(
 }
 
 /// The key the gate checks: `--pubkey` (a path, or the key text itself),
-/// else [`sp_update::PUBKEY`].
+/// else [`sp_update_config::PUBKEY`].
 pub fn trusted_pubkey(explicit: Option<&str>) -> Result<String, String> {
     match explicit {
         Some(value) => private_key_text(value),
-        None => Ok(sp_update::PUBKEY.to_string()),
+        None => Ok(sp_update_config::PUBKEY.to_string()),
     }
 }
 
@@ -83,8 +83,8 @@ pub fn trusted_pubkey(explicit: Option<&str>) -> Result<String, String> {
 pub fn main(args: &[String]) -> u8 {
     use super::util::{FlagSpec, parse_flags};
     let usage = "usage: cargo xtask update-signature [--pubkey <key or file>]\n\n\
-                 Checks the updater public key the app trusts: sp_update::PUBKEY \
-                 (rust/crates/sp-update/src/lib.rs), or the one --pubkey names.";
+                 Checks the updater public key the app trusts: sp_update_config::PUBKEY \
+                 (rust/crates/sp-update-config/src/lib.rs), or the one --pubkey names.";
     if super::util::wants_help(args, usage) {
         return 0;
     }
@@ -111,7 +111,7 @@ pub fn main(args: &[String]) -> u8 {
         Err(e) => {
             eprintln!("::error::{e}");
             eprintln!(
-                "::error::A tag cannot ship an updater that trusts no key. Generate the pair, add the secrets, and paste the PUBLIC key into PUBKEY in rust/crates/sp-update/src/lib.rs: docs/release-secrets.md §4."
+                "::error::A tag cannot ship an updater that trusts no key. Generate the pair, add the secrets, and paste the PUBLIC key into PUBKEY in rust/crates/sp-update-config/src/lib.rs: docs/release-secrets.md §4."
             );
             1
         }

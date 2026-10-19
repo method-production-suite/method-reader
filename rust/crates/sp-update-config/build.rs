@@ -1,7 +1,9 @@
 //! A build that is not a handover rehearsal refuses the rehearsal's
 //! compile-time values (review item O10): a throwaway key, a local endpoint
 //! or plain HTTP must never reach a release because a variable was left in
-//! someone's shell. src/lib.rs ignores them outside a rehearsal as well.
+//! someone's shell. src/lib.rs ignores them outside a rehearsal as well
+//! (method-update's `baked!`, which expands in this crate, so these are the
+//! variables and the feature it reads).
 
 const REHEARSAL_ONLY: [&str; 3] = [
     "METHOD_READER_UPDATE_ENDPOINT",

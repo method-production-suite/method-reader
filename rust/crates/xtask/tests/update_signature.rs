@@ -131,12 +131,14 @@ fn a_key_of_the_wrong_length_is_refused() {
 
 #[test]
 fn the_tag_time_gate_checks_the_key_the_app_trusts_and_says_yes() {
-    // With no flag the gate reads sp_update::PUBKEY, the one home of the
+    // With no flag the gate reads sp_update_config::PUBKEY, the one home of the
     // key the shipped app trusts (was: plugins.updater.pubkey of the Tauri
     // window's tauri.conf.json, read with --pubkey-from-config).
     let (code, out, err) = xtask(&["update-signature"]);
     assert_eq!(code, 0, "{err}");
-    let id = parse_public_key_box(sp_update::PUBKEY).unwrap().key_id;
+    let id = parse_public_key_box(sp_update_config::PUBKEY)
+        .unwrap()
+        .key_id;
     assert_eq!(id, "E4D0668D54F6EB34");
     assert!(out.contains(&id), "{out}");
 }
@@ -163,7 +165,7 @@ fn the_tag_time_gate_checks_an_explicit_key_and_says_yes_or_no() {
     assert_eq!(code, 1);
     assert!(err.to_lowercase().contains("empty"), "{err}");
     assert!(err.contains("release-secrets"), "{err}");
-    assert!(err.contains("sp-update"), "{err}");
+    assert!(err.contains("sp-update-config"), "{err}");
 
     let (code, _, _) = xtask(&["update-signature", "--pubkey", "bm90IGEga2V5"]);
     assert_eq!(code, 1);

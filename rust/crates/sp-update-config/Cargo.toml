@@ -1,0 +1,31 @@
+[package]
+name = "sp-update-config"
+description = "Method Reader's side of the suite updater: its identifiers, endpoint, key and bundle names, and the AppConfig it hands method-update"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[features]
+# The handover rehearsal's build: reads METHOD_READER_UPDATE_ENDPOINT,
+# METHOD_READER_UPDATE_PUBKEY and METHOD_READER_UPDATE_INSECURE at compile
+# time (through method-update's `baked!`, which expands HERE, so the values
+# and the feature are this crate's).
+# Without it those values are refused (build.rs) and ignored (src/lib.rs).
+# Only `cargo xtask rehearse-handover prepare` turns it on (through
+# sp-app's own `rehearsal`); release.yml never does, and xtask's
+# tests/release_workflow.rs holds that.
+rehearsal = []
+
+[dependencies]
+# The suite's updater: latest.json, minisign, the bundle swap, the restart.
+method-update.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+flate2.workspace = true
+tar.workspace = true

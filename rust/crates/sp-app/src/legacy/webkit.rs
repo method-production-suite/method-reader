@@ -23,7 +23,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::sqlite::{Database, Value, utf16};
+use super::sqlite::{Database, Value, utf16};
 
 /// The four keys desktop/ui/update.js stores, and nothing else.
 pub const UPDATE_KEYS: [&str; 4] = [

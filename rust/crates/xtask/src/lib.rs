@@ -176,7 +176,7 @@ pub const COMMANDS: &[Command] = &[
             "usage: cargo xtask check-latest [--version vX.Y.Z] [--repo owner/name]\n\n\
              Does the PUBLISHED latest.json name the newest release (or\n\
              --version), point every platform at an asset it carries, and carry\n\
-             signatures from the key the app trusts (sp_update::PUBKEY)? Exits 0\n\
+             signatures from the key the app trusts (sp_update_config::PUBKEY)? Exits 0\n\
              when it does, 1 with every problem said when it does not.\n",
         ),
     },
@@ -233,7 +233,7 @@ pub const COMMANDS: &[Command] = &[
     },
     Command {
         name: "update-signature",
-        help: "the tag-time gate: does the app trust a real updater key (sp_update::PUBKEY)",
+        help: "the tag-time gate: does the app trust a real updater key (sp_update_config::PUBKEY)",
         main: packaging::update_signature_main,
         usage: Usage::Own,
     },

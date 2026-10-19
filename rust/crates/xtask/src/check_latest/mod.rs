@@ -6,7 +6,7 @@
 //! ([`sp_release::check_latest`]), the one implementation `sp-release
 //! check-latest` runs in release-published.yml and manifest-freshness.yml. This command
 //! keeps the old name and flags for the /release skill, checks against the
-//! key the shipped app trusts ([`sp_update::PUBKEY`]; until the Rust cutover
+//! key the shipped app trusts ([`sp_update_config::PUBKEY`]; until the Rust cutover
 //! it read the Tauri window's tauri.conf.json), and fetches through
 //! [`http`], whose bases the environment can move so tests point it at a
 //! fake GitHub.
@@ -95,10 +95,10 @@ pub fn check_latest(
     .into()
 }
 
-/// What the shipped app trusts: [`sp_update::PUBKEY`], the one home of
+/// What the shipped app trusts: [`sp_update_config::PUBKEY`], the one home of
 /// the updater's public key.
 pub fn trusted_pubkey() -> &'static str {
-    sp_update::PUBKEY
+    sp_update_config::PUBKEY
 }
 
 fn parse_args(args: &[String]) -> Result<(Option<String>, String), String> {

@@ -141,7 +141,7 @@ pub fn to_text(manifest: &Value) -> String {
 /// signature verifies with `pubkey`, for the manifest's own version, as
 /// the Rust app will check it (signed version required).
 pub fn verify_dir(manifest: &Value, dir: &Path, pubkey: &str) -> Result<Vec<String>, String> {
-    let release = sp_update::Release::from_value(manifest.clone())?;
+    let release = method_update::Release::from_value(manifest.clone())?;
     let version = release.version.to_string();
     let Some(platforms) = manifest["platforms"].as_object() else {
         return Err("the manifest has no platforms".into());
@@ -153,7 +153,7 @@ pub fn verify_dir(manifest: &Value, dir: &Path, pubkey: &str) -> Result<Vec<Stri
         let bytes = std::fs::read(dir.join(name))
             .map_err(|e| format!("{key}: {name} is not in {}: {e}", dir.display()))?;
         let sig = p["signature"].as_str().unwrap_or_default();
-        sp_update::verify::verify_signature(&bytes, sig, pubkey, &version, true)
+        method_update::verify::verify_signature(&bytes, sig, pubkey, &version, true)
             .map_err(|e| format!("{key}: {name}: {e}"))?;
         ok.push(key.clone());
     }
