@@ -562,3 +562,19 @@ fn ci_runs_once_per_change_and_a_newer_push_replaces_an_older_run() {
         "a release run is never cancelled"
     );
 }
+
+#[test]
+fn every_ci_and_release_job_has_a_time_limit() {
+    // A stuck job holds one of the suite's shared runners until GitHub's
+    // six-hour default. Each limit is about twice the job's normal time
+    // (Windows tests run about 37 minutes, so they get 75).
+    for f in ["rust.yml", "release.yml"] {
+        let wf = workflow(f);
+        for (name, job) in jobs(&wf) {
+            assert!(
+                job.get("timeout-minutes").is_some(),
+                "{f}: job {name} has no timeout-minutes"
+            );
+        }
+    }
+}
