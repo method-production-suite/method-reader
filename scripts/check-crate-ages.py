@@ -153,6 +153,7 @@ def main():
     pkgs = {(name, version) for name, version, source in pkgs if source == CRATES_IO}
 
     allowed_young = excepted()
+    stale = []
     now = dt.datetime.now(dt.timezone.utc)
     for name, version in sorted(pkgs):
         when, yanked = published(name, version)
@@ -160,6 +161,9 @@ def main():
         flag = ""
         if age < args.days and (name, version) in allowed_young:
             flag = "  young, listed as an exception"
+        elif (name, version) in allowed_young:
+            flag = "  listed as an exception but old enough now"
+            stale.append(f"{name} {version}")
         elif age < args.days:
             flag = f"  TOO NEW (< {args.days} days)"
             bad.append(f"{name} {version}")
@@ -169,6 +173,11 @@ def main():
         print(f"{name:40} {version:16} {age:5} days{flag}")
 
     print(f"\nchecked {len(pkgs)} crates.io crates; {len(bad)} problem(s)")
+    # Not a failure: a listed version that has aged past the cooldown only
+    # needs its line removed. A warning, so the list stays honest.
+    for entry in stale:
+        print(f"::warning::{entry} is {args.days}+ days old now: remove its line from "
+              f"scripts/crate-age-exceptions.txt")
     if bad:
         print("downgrade with: cargo update -p NAME --precise VERSION")
         sys.exit(1)
