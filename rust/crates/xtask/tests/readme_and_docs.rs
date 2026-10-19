@@ -158,7 +158,10 @@ fn the_readme_install_table_has_a_row_for_every_file_the_release_uploads() {
     for f in released() {
         row(f);
     }
-    assert!(install().contains("SHA256SUMS-app"));
+    // ONE checksums file covers every download (SUITE-STANDARDS.md
+    // section 3); the installers' own file is retired.
+    assert!(install().contains(&format!("`{}`", names::CHECKSUMS)));
+    assert!(!install().contains(names::RETIRED_APP_CHECKSUMS));
     let words = ["no", "one", "two", "three", "four", "five", "six"];
     assert!(install().contains(&format!("covers these {} files", words[released().len()])));
 }

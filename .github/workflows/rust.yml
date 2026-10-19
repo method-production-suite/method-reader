@@ -248,9 +248,8 @@ jobs:
   # shared copy): a crates.io package this change adds or bumps must be at
   # least 14 days old, unless scripts/crate-age-exceptions.txt names it as a
   # security fix; a git package must come from an allowlisted repository at a
-  # pinned commit. Only what changed is checked, against main for a pull
-  # request or the pushed-over commit for a push, so the lock as it stands
-  # never blocks unrelated work.
+  # pinned commit. A pull request checks only what it changed, against
+  # main; a push to main checks the whole lock.
   cooldown:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -264,14 +263,18 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
+          # A pull request checks only what it adds or bumps. main checks
+          # the whole lock on every push (and weekly-toolchain.yml does
+          # every Monday), so a crate that slipped in young is caught
+          # instead of trusted forever.
           if [ "$EVENT" = pull_request ]; then
             base=origin/main
+          elif [ "$GITHUB_REF" = refs/heads/main ]; then
+            base=""
           elif [ -n "${BEFORE:-}" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
             base="$BEFORE"
-          elif [ "$GITHUB_REF" != refs/heads/main ]; then
-            base=origin/main
           else
-            base=""
+            base=origin/main
           fi
           if [ -n "$base" ]; then
             python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --only-changed "$base"
