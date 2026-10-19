@@ -1881,7 +1881,7 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
         match item {
             WayItem::Row(route) => route_row(app, ui, &route),
             WayItem::Fold(fold) => {
-                ui.add_space(layout::SPACE[4]);
+                ui.add_space(layout::SPACE[1]);
                 ui.horizontal_wrapped(|ui| {
                     // The separators carry their own spaces.
                     ui.spacing_mut().item_spacing.x = 0.0;
@@ -1914,7 +1914,7 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
             }
         }
     }
-    ui.add_space(layout::SPACE[6]);
+    ui.add_space(layout::SPACE[5]);
     widgets::heading(
         ui,
         d::SAVE_A_FILE,
@@ -1922,9 +1922,14 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
         t.ink_muted,
     );
     for row in save_rows(app.script.as_ref(), app.panel.kindle.as_ref()) {
-        ui.add_space(layout::SPACE[4]);
-        ui.horizontal_wrapped(|ui| {
-            ui.vertical(|ui| {
+        let live = enabled(app);
+        let mut setup = false;
+        let mut save = false;
+        let app_cell = std::cell::RefCell::new(&mut *app);
+        way_row(
+            ui,
+            |ui| {
+                let mut app = app_cell.borrow_mut();
                 ui.horizontal(|ui| {
                     widgets::text(
                         ui,
@@ -1942,24 +1947,28 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
                 }
                 if row.setup {
                     let key = format!("setup-{}", row.kind);
-                    let b = keyed(app, ui, Look::Quiet, d::SET_IT_UP, true, &key, false);
-                    if b.clicked() {
-                        open_kfx(app);
-                    }
+                    let b = keyed(&mut app, ui, Look::Quiet, d::SET_IT_UP, true, &key, false);
+                    setup = b.clicked();
                 }
-            });
-            if row.available {
-                let live = enabled(app);
-                let key = format!("save-file-{}", row.kind);
-                let save = keyed(app, ui, Look::Outline, "Save…", live, &key, true);
-                ui.ctx().accesskit_node_builder(save.id, |n| {
-                    n.set_label(format!("Save {}…", row.label))
-                });
-                if save.clicked() {
-                    save_file(app, row.kind);
+            },
+            |ui| {
+                if row.available {
+                    let mut app = app_cell.borrow_mut();
+                    let key = format!("save-file-{}", row.kind);
+                    let b = keyed(&mut app, ui, Look::Outline, "Save…", live, &key, true);
+                    ui.ctx().accesskit_node_builder(b.id, |n| {
+                        n.set_label(format!("Save {}…", row.label))
+                    });
+                    save = b.clicked();
                 }
-            }
-        });
+            },
+        );
+        if setup {
+            open_kfx(app);
+        }
+        if save {
+            save_file(app, row.kind);
+        }
     }
     if app.panel.kfx_open {
         draw_kfx(app, ui);
@@ -1967,13 +1976,53 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
     convert::draw_reveal_foot(app, ui);
 }
 
+/// The width Other ways keeps for its action buttons, at the right edge:
+/// room for its longest label ("Send to Kindle web") at UI size.
+const ACTION_COLUMN: f32 = 150.0;
+
+/// One Other ways row, laid out as a table (the owner, 2026-10-19: "denser
+/// and easier to read"): the words on the left, wrapping in a fixed column,
+/// and the action on the right, so every row's button ends at the same
+/// edge whatever its words are. Rows sit egui's own item gap apart, and
+/// nothing more.
+fn way_row(ui: &mut Ui, words: impl FnOnce(&mut Ui), action: impl FnOnce(&mut Ui)) {
+    let full = ui.available_width();
+    let words_w = (full - ACTION_COLUMN - layout::SPACE[3]).max(160.0);
+    ui.horizontal_top(|ui| {
+        ui.allocate_ui_with_layout(
+            egui::vec2(words_w, 0.0),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_width(words_w);
+                ui.spacing_mut().item_spacing.y = 2.0;
+                words(ui);
+            },
+        );
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), action);
+    });
+}
+
 fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
     let t = app.tokens();
     let lines = route_lines(route);
     let kind = d::kind_of_route(route);
-    ui.add_space(layout::SPACE[4]);
-    ui.horizontal_wrapped(|ui| {
-        ui.vertical(|ui| {
+    let mut chosen = false;
+    let mut setup = false;
+    let live = enabled(app);
+    let words = button_label(route, app.panel.kindle.as_ref());
+    let beta = kindle_file_is_beta(route, app.panel.kindle.as_ref())
+        || r::is_beta_device(route.device.as_ref());
+    let unproven = kind
+        .as_ref()
+        .is_some_and(|k| d::unproven(k, app.host.platform));
+    let hint = email_setup_hint(route);
+    // The words, then the action; both need app, so each half borrows it in
+    // turn and the clicks are acted on after the row is drawn.
+    let app_cell = std::cell::RefCell::new(&mut *app);
+    way_row(
+        ui,
+        |ui| {
+            let mut app = app_cell.borrow_mut();
             ui.horizontal(|ui| {
                 widgets::text(
                     ui,
@@ -1981,54 +2030,50 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
                     theme::chrome_strong(size::UI),
                     if route.available { t.ink } else { t.ink_muted },
                 );
-                if kindle_file_is_beta(route, app.panel.kindle.as_ref())
-                    || r::is_beta_device(route.device.as_ref())
-                {
+                if beta {
                     widgets::beta_badge(ui, &t);
                 }
-                if let Some(kind) = &kind
-                    && d::unproven(kind, app.host.platform)
-                {
-                    asterisk(app, ui, kind);
+                if unproven && let Some(kind) = &kind {
+                    asterisk(&mut app, ui, kind);
                 }
             });
             widgets::text(ui, &lines.detail, theme::chrome(size::LABEL), t.ink_muted);
             if let Some(where_) = &lines.where_ {
                 widgets::text(ui, where_, theme::chrome(size::LABEL), t.ink_muted);
             }
-            if let Some(hint) = email_setup_hint(route) {
-                ui.horizontal_wrapped(|ui| {
-                    widgets::caption(ui, &t, hint, false);
-                    let live = enabled(app);
-                    let b = keyed(
-                        app,
-                        ui,
-                        Look::Quiet,
-                        r::SETUP_BUTTON,
-                        live,
-                        r::EMAIL_SETUP,
-                        true,
-                    );
-                    if b.clicked() {
-                        perform(
-                            app,
-                            r::EMAIL_SETUP.into(),
-                            r::SETUP_TITLE.into(),
-                            Performer::Setup,
-                        );
-                    }
-                });
+            if let Some(hint) = hint {
+                widgets::caption(ui, &t, hint, false);
+                let b = keyed(
+                    &mut app,
+                    ui,
+                    Look::Quiet,
+                    r::SETUP_BUTTON,
+                    live,
+                    r::EMAIL_SETUP,
+                    true,
+                );
+                setup = b.clicked();
             }
-        });
-        if route.available {
-            let live = enabled(app);
-            let words = button_label(route, app.panel.kindle.as_ref());
-            let b = keyed(app, ui, Look::Outline, &words, live, &route.id, true);
-            if b.clicked() {
-                choose_route(app, route);
+        },
+        |ui| {
+            if route.available {
+                let mut app = app_cell.borrow_mut();
+                let b = keyed(&mut app, ui, Look::Outline, &words, live, &route.id, true);
+                chosen = b.clicked();
             }
-        }
-    });
+        },
+    );
+    if setup {
+        perform(
+            app,
+            r::EMAIL_SETUP.into(),
+            r::SETUP_TITLE.into(),
+            Performer::Setup,
+        );
+    }
+    if chosen {
+        choose_route(app, route);
+    }
     if let Some(kind) = kind {
         asterisk_notes(app, ui, vec![kind]);
     }

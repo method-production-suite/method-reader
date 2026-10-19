@@ -337,6 +337,43 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     h.get_by_role_and_label(Role::Heading, "What do you read on?");
 }
 
+// Other ways reads as a table: every action button ends at the same right
+// edge, whatever its row's words are, and the rows sit close (the owner,
+// 2026-10-19: "denser and easier to read").
+#[test]
+fn other_ways_buttons_share_one_right_edge_and_the_rows_are_dense() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Kobo").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Other ways").click();
+    steps(&mut h);
+    let mut rights = Vec::new();
+    for label in ["Open in Books", "Save EPUB…", "Save AZW3…", "Save MOBI…"] {
+        let r = h.get_by_role_and_label(Role::Button, label).rect();
+        rights.push((label, r.right()));
+    }
+    let first = rights[0].1;
+    for (label, right) in &rights {
+        assert!(
+            (right - first).abs() < 0.5,
+            "{label} ends at {right}, not {first}"
+        );
+    }
+    // Two one-line neighbouring rows, MOBI then Fountain: at most 52 points
+    // apart (the old layout put them about 70 apart).
+    let mobi = h
+        .get_by_role_and_label(Role::Button, "Save MOBI…")
+        .rect()
+        .top();
+    let fountain = h
+        .get_by_role_and_label(Role::Button, "Save Fountain…")
+        .rect()
+        .top();
+    assert!(fountain - mobi <= 52.0, "rows {} apart", fountain - mobi);
+}
+
 fn kindle_plugged_in(w: &World) {
     let mut routes = sp_app::engine::default_answer(&Request::Routes {
         epub: String::new(),
