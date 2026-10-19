@@ -40,7 +40,39 @@ fn reduce_motion_flag() -> Arc<AtomicBool> {
     flag
 }
 
+/// Renames an old-named bundle (sp_update_config::rename_old_bundle) and
+/// replaces this process with the same program from the new path. Returns
+/// only when nothing was renamed, or the new start failed and the folder
+/// went back.
+#[cfg(target_os = "macos")]
+fn relaunch_under_the_new_name() {
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let Some(renamed) = sp_update_config::rename_old_bundle(&exe) else {
+        return;
+    };
+    let err = sp_update_config::relaunch(&renamed);
+    eprintln!(
+        "method-reader-app: could not start again as {}: {err}",
+        renamed.exe.display()
+    );
+    if let Err(e) = sp_update_config::undo_rename(&renamed) {
+        eprintln!(
+            "method-reader-app: could not put {} back: {e}",
+            renamed.from.display()
+        );
+    }
+}
+
 fn main() -> ExitCode {
+    // A bundle still called Screepub.app or Screepub Desktop.app (every
+    // update up to 0.13.0 swapped it in place) takes the new name once, and
+    // the app starts again from there before anything reads its resources
+    // (before the headless modes too, so `--version` proves it offscreen):
+    // macOS keeps answering the launch path for this process's executable.
+    #[cfg(target_os = "macos")]
+    relaunch_under_the_new_name();
     let args: Vec<String> = std::env::args().skip(1).collect();
     if let Some(what) = sp_app::headless::parse(&args) {
         return ExitCode::from(sp_app::headless::run(what));

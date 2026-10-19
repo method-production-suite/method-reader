@@ -224,7 +224,14 @@ fn record_conversion_writes_the_absolute_source_path() {
     let s = Scratch::new("recent");
     let env = env_in(&s);
     let platform = sp_engine::env::host_platform();
-    let script = s.join("scripts/One.pdf");
+    // Built with the platform's own separator: the engine records the path
+    // as the platform spells it (backslashes on Windows).
+    let script = s
+        .path
+        .join("scripts")
+        .join("One.pdf")
+        .to_string_lossy()
+        .into_owned();
     assert!(record_conversion(platform, &env, &script, true, 1_792_281_600).unwrap());
     let file = recent_path(platform, &env);
     assert_eq!(
