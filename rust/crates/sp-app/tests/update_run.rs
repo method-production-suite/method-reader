@@ -1,5 +1,5 @@
 //! The update's one run, from the window (inventory rows U6, U7, U9): the
-//! click on "Update to …", sp-update's real flow over fake side effects
+//! click on "Update to …", method-update's real flow over fake side effects
 //! (FakeUpdater: the download and the swap succeed at once), the real
 //! engine gate the window's busy count mirrors into, the wait for quiet,
 //! "Restart now" when it does not come, and every engine call refused once
@@ -190,8 +190,8 @@ impl sp_app::app::host::Updater for Awkward {
     fn install(
         &self,
         live: bool,
-        gate: &sp_update::gate::EngineGate,
-        emit: &mut dyn FnMut(sp_update::flow::Event),
+        gate: &method_update::gate::EngineGate,
+        emit: &mut dyn FnMut(method_update::flow::Event),
     ) -> sp_app::model::update_flow::RunOutcome {
         assert!(!self.install_panics, "the download hit a bug");
         FakeUpdater {

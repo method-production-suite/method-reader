@@ -49,7 +49,7 @@ fn the_pinned_minisign_opens_tauri_cli_s_own_key_and_signs_as_it_did() {
         read.key_id
     );
     for required in [false, true] {
-        sp_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required).unwrap();
+        method_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required).unwrap();
     }
     assert!(sign::load_secret_key(TAURI_TEST_KEY, "not the password").is_err());
 }
@@ -72,7 +72,7 @@ fn app(dir: &Path) -> PathBuf {
     let bundle = mac::build_app(
         &mac::MacApp {
             version: "0.12.0",
-            identifier: sp_update::IDENTIFIER,
+            identifier: sp_update_config::IDENTIFIER,
             window: &bin,
             helpers: &[],
             icon: &icon,
@@ -139,10 +139,10 @@ fn the_update_archive_unpacks_as_the_plugin_and_the_rust_app_unpack_it() {
     // The Rust app's own unpack takes it too, and reads the identifier back,
     // into the old bundle's place as the 0.12 updater installs it.
     let dest = dir.path().join("installed/Screepub.app");
-    sp_update::install::unpack_app_archive(&bytes, &dest).unwrap();
+    method_update::install::unpack_app_archive(&bytes, &dest).unwrap();
     assert_eq!(
-        sp_update::install::bundle_identifier(&dest).as_deref(),
-        Some(sp_update::IDENTIFIER)
+        method_update::install::bundle_identifier(&dest).as_deref(),
+        Some(sp_update_config::IDENTIFIER)
     );
 }
 

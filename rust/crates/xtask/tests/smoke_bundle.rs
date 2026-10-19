@@ -644,7 +644,7 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
                 fs::write(contents.join("MacOS/method-reader-app"), "BIN").unwrap();
                 fs::write(
                     contents.join("Info.plist"),
-                    info_plist(version).replace(sp_update::IDENTIFIER, identifier),
+                    info_plist(version).replace(sp_update_config::IDENTIFIER, identifier),
                 )
                 .unwrap();
             }

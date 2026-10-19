@@ -25,8 +25,8 @@ use crate::model::update::{
 };
 use std::sync::mpsc::{Receiver, TryRecvError, channel};
 
-use sp_update::flow::Event as UpdateEvent;
-use sp_update::gate::EngineGate;
+use method_update::flow::Event as UpdateEvent;
+use method_update::gate::EngineGate;
 
 use crate::model::update_flow::{Flow, Offer, RunOutcome, Start};
 use crate::theme::{self, Tokens, size};

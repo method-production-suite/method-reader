@@ -9,8 +9,8 @@ use std::sync::{Arc, Mutex};
 
 use serde_json::Value;
 
-use sp_update::flow::{Event as UpdateEvent, Outcome, Steps};
-use sp_update::gate::{ENGINE_QUIET, EngineGate, RESTART_WAIT_CAP};
+use method_update::flow::{Event as UpdateEvent, Outcome, Steps};
+use method_update::gate::{ENGINE_QUIET, EngineGate, RESTART_WAIT_CAP};
 
 use crate::model::convert::Platform;
 use crate::model::update::{Found, MemoryStorage, Storage};
@@ -81,9 +81,9 @@ pub trait Updater: Send + Sync {
     }
 }
 
-/// sp-update's outcome as the flow reads it.
+/// method-update's outcome as the flow reads it.
 pub fn run_outcome(outcome: Outcome) -> RunOutcome {
-    let offer = |u: sp_update::Update| Offer {
+    let offer = |u: method_update::Update| Offer {
         version: u.version,
         body: u.body.unwrap_or_default(),
         live: true,
@@ -218,7 +218,7 @@ impl FileStorage {
 
     /// The first run after the handover: no storage file yet, so start from
     /// the update consent the Tauri window kept in WebKit's localStorage
-    /// (sp_update::webkit), and write it down so this happens once.
+    /// (crate::legacy::webkit), and write it down so this happens once.
     pub fn open_or_import(
         path: std::path::PathBuf,
         website_data: Option<&std::path::Path>,
@@ -226,7 +226,7 @@ impl FileStorage {
         let first_run = !path.exists();
         let mut storage = Self::open(path);
         if first_run && let Some(dir) = website_data {
-            let imported = sp_update::webkit::import_update_consent(dir);
+            let imported = crate::legacy::webkit::import_update_consent(dir);
             let mut keys: Vec<_> = imported.into_iter().collect();
             keys.sort();
             for (k, v) in keys {
@@ -251,7 +251,7 @@ impl FileStorage {
             return Some(dir.join(FILE));
         }
         let running = running_identifier();
-        if running == sp_update::IDENTIFIER {
+        if running == sp_update_config::IDENTIFIER {
             Some(sp_cli::app_data_file(FILE))
         } else {
             Some(sp_cli::app_data_folder_named(&running).join(FILE))
@@ -261,13 +261,13 @@ impl FileStorage {
 
 /// The bundle identifier this copy runs under: its own Info.plist's inside
 /// a Mac bundle (so a rehearsal built under another identifier keeps to
-/// its own storage), else the shipped one, [`sp_update::IDENTIFIER`].
+/// its own storage), else the shipped one, [`sp_update_config::IDENTIFIER`].
 pub fn running_identifier() -> String {
     std::env::current_exe()
         .ok()
-        .and_then(|exe| sp_update::install::bundle_of_exe(&exe))
-        .and_then(|b| sp_update::install::bundle_identifier(&b))
-        .unwrap_or_else(|| sp_update::IDENTIFIER.to_string())
+        .and_then(|exe| method_update::install::bundle_of_exe(&exe))
+        .and_then(|b| method_update::install::bundle_identifier(&b))
+        .unwrap_or_else(|| sp_update_config::IDENTIFIER.to_string())
 }
 
 /// METHOD_READER_CONFIG_DIR, or the LEGACY SCREEPUB_CONFIG_DIR when the
@@ -290,7 +290,7 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
     let home = std::path::Path::new(&home);
     webkit_identifiers(&running_identifier())
         .iter()
-        .map(|id| sp_update::webkit::website_data(home, id))
+        .map(|id| crate::legacy::webkit::website_data(home, id))
         .find(|dir| dir.is_dir())
 }
 
@@ -302,16 +302,16 @@ fn tauri_website_data() -> Option<std::path::PathBuf> {
 /// straight to this one.
 pub fn webkit_identifiers(running: &str) -> Vec<String> {
     let mut ids = vec![running.to_owned()];
-    if let Some(rest) = running.strip_prefix(sp_update::IDENTIFIER) {
-        ids.push(format!("{}{rest}", sp_update::LEGACY_IDENTIFIER));
+    if let Some(rest) = running.strip_prefix(sp_update_config::IDENTIFIER) {
+        ids.push(format!("{}{rest}", sp_update_config::LEGACY_IDENTIFIER));
         if rest.is_empty() {
-            ids.push(sp_update::LEGACY_TAURI_IDENTIFIER.to_owned());
+            ids.push(sp_update_config::LEGACY_TAURI_IDENTIFIER.to_owned());
         }
     }
     ids
 }
 
-/// The updater: latest.json through sp-update, with the key every Tauri
+/// The updater: latest.json through method-update, with the key every Tauri
 /// window trusts. Ready only in a Mac app bundle (inventory row U1: the
 /// manifest lists darwin only, and a development build has no bundle to
 /// swap).
@@ -324,7 +324,7 @@ pub struct ManifestUpdater {
     /// since the old path may be gone.
     installed: Mutex<Option<std::path::PathBuf>>,
     /// The update the last check returned: the offer's live handle.
-    last: Mutex<Option<sp_update::Update>>,
+    last: Mutex<Option<method_update::Update>>,
     /// The update [`Updater::prepare`] downloaded and verified: its version
     /// and its bytes, which the next install of that version uses instead
     /// of downloading again.
@@ -332,16 +332,16 @@ pub struct ManifestUpdater {
 }
 
 /// latest.json, asked now: a newer release for this copy, or None.
-fn check_now() -> Result<Option<sp_update::Update>, String> {
-    let current = sp_update::manifest::parse_version(env!("CARGO_PKG_VERSION"))?;
-    sp_update::check(&config(), &current).map_err(|e| e.to_string())
+fn check_now() -> Result<Option<method_update::Update>, String> {
+    let current = method_update::manifest::parse_version(env!("CARGO_PKG_VERSION"))?;
+    method_update::check(&config(), &current).map_err(|e| e.to_string())
 }
 
-fn config() -> sp_update::Config {
-    sp_update::Config::method_reader(Some(sp_update::Installer::App))
+fn config() -> method_update::Config {
+    sp_update_config::update_config().transport(Some(method_update::Installer::App))
 }
 
-/// The run's side effects, for real: sp-update's transport, its swap, and
+/// The run's side effects, for real: method-update's transport, its swap, and
 /// the gate the window's busy count mirrors into.
 struct RealSteps<'a> {
     /// The bundle to swap, and after the swap the one it reported
@@ -353,12 +353,12 @@ struct RealSteps<'a> {
 }
 
 impl Steps for RealSteps<'_> {
-    fn fresh_check(&mut self) -> Result<Option<sp_update::Update>, String> {
+    fn fresh_check(&mut self) -> Result<Option<method_update::Update>, String> {
         check_now()
     }
     fn download(
         &mut self,
-        update: &sp_update::Update,
+        update: &method_update::Update,
         progress: &mut dyn FnMut(usize, Option<u64>),
         finished: &mut dyn FnMut(),
     ) -> Result<Vec<u8>, String> {
@@ -370,13 +370,15 @@ impl Steps for RealSteps<'_> {
             finished();
             return Ok(bytes);
         }
-        sp_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
+        method_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
     }
-    fn install(&mut self, _update: &sp_update::Update, bytes: &[u8]) -> Result<(), String> {
-        let installed = sp_update::install::install_app(bytes, &self.bundle, &|bundle, new| {
-            sp_update::install::admin_swap(bundle, new)
-        })
-        .map_err(|e| e.to_string())?;
+    fn install(&mut self, _update: &method_update::Update, bytes: &[u8]) -> Result<(), String> {
+        let names = sp_update_config::bundle_names();
+        let installed =
+            method_update::install::install_app(bytes, &self.bundle, &names, &|bundle, new| {
+                method_update::install::admin_swap(bundle, new, &names)
+            })
+            .map_err(|e| e.to_string())?;
         self.bundle = installed.bundle;
         Ok(())
     }
@@ -384,7 +386,7 @@ impl Steps for RealSteps<'_> {
         self.gate.retire();
     }
     fn restart_ready(&self) -> bool {
-        sp_update::install::bundle_executable(&self.bundle).is_ok()
+        method_update::install::bundle_executable(&self.bundle).is_ok()
     }
     fn busy(&self) -> bool {
         self.gate.busy()
@@ -393,7 +395,7 @@ impl Steps for RealSteps<'_> {
         self.gate.wait_quiet(ENGINE_QUIET, RESTART_WAIT_CAP)
     }
     fn restart(&mut self) -> Result<(), String> {
-        sp_update::restart::relaunch(&self.bundle).map_err(|e| e.to_string())
+        method_update::restart::relaunch(&self.bundle).map_err(|e| e.to_string())
     }
 }
 
@@ -402,7 +404,7 @@ impl ManifestUpdater {
         let bundle = if cfg!(target_os = "macos") {
             std::env::current_exe()
                 .ok()
-                .and_then(|exe| sp_update::install::bundle_of_exe(&exe))
+                .and_then(|exe| method_update::install::bundle_of_exe(&exe))
         } else {
             None
         };
@@ -455,7 +457,7 @@ impl Updater for ManifestUpdater {
             .as_ref()
             .is_some_and(|(v, _)| *v == update.version);
         if !held {
-            let bytes = sp_update::download(&config(), &update, |_, _| {}, || {})
+            let bytes = method_update::download(&config(), &update, |_, _| {}, || {})
                 .map_err(|e| e.to_string())?;
             *self.prepared.lock().unwrap_or_else(|e| e.into_inner()) =
                 Some((update.version.clone(), bytes));
@@ -489,7 +491,7 @@ impl Updater for ManifestUpdater {
                 .unwrap_or_else(|e| e.into_inner())
                 .take(),
         };
-        let outcome = sp_update::flow::install_and_restart(update, &mut steps, emit);
+        let outcome = method_update::flow::install_and_restart(update, &mut steps, emit);
         if steps.bundle != bundle {
             *self.installed.lock().unwrap_or_else(|e| e.into_inner()) = Some(steps.bundle);
         }
@@ -499,14 +501,14 @@ impl Updater for ManifestUpdater {
         let Some(bundle) = self.current_bundle() else {
             return false;
         };
-        let gate = EngineGate::new();
+        let gate = EngineGate::new(crate::model::busy::UPDATED_MESSAGE);
         let mut steps = RealSteps {
             bundle,
             gate: &gate,
             prepared: None,
         };
-        sp_update::flow::restart_installed(version, &mut steps, emit)
-            == sp_update::flow::RestartOutcome::Restarting
+        method_update::flow::restart_installed(version, &mut steps, emit)
+            == method_update::flow::RestartOutcome::Restarting
     }
 }
 
@@ -668,7 +670,7 @@ impl Poster for FakePoster {
     }
 }
 
-/// An updater whose run is sp-update's real flow over fake side effects:
+/// An updater whose run is method-update's real flow over fake side effects:
 /// the download and the swap succeed at once, and the wait for quiet is
 /// the real gate's, with a cap a test can shorten.
 pub struct FakeUpdater {
@@ -706,12 +708,12 @@ struct FakeSteps<'a> {
 }
 
 impl Steps for FakeSteps<'_> {
-    fn fresh_check(&mut self) -> Result<Option<sp_update::Update>, String> {
+    fn fresh_check(&mut self) -> Result<Option<method_update::Update>, String> {
         Ok(self.fake.found.clone()?.map(fake_update))
     }
     fn download(
         &mut self,
-        _update: &sp_update::Update,
+        _update: &method_update::Update,
         progress: &mut dyn FnMut(usize, Option<u64>),
         finished: &mut dyn FnMut(),
     ) -> Result<Vec<u8>, String> {
@@ -720,7 +722,7 @@ impl Steps for FakeSteps<'_> {
         finished();
         Ok(vec![0; 100])
     }
-    fn install(&mut self, _update: &sp_update::Update, _bytes: &[u8]) -> Result<(), String> {
+    fn install(&mut self, _update: &method_update::Update, _bytes: &[u8]) -> Result<(), String> {
         Ok(())
     }
     fn retire(&mut self) {
@@ -743,8 +745,8 @@ impl Steps for FakeSteps<'_> {
     }
 }
 
-fn fake_update(f: Found) -> sp_update::Update {
-    sp_update::Update {
+fn fake_update(f: Found) -> method_update::Update {
+    method_update::Update {
         current_version: f.current_version,
         version: f.version,
         body: f.body,
@@ -786,18 +788,18 @@ impl Updater for FakeUpdater {
             None
         };
         let mut steps = FakeSteps { fake: self, gate };
-        run_outcome(sp_update::flow::install_and_restart(
+        run_outcome(method_update::flow::install_and_restart(
             update, &mut steps, emit,
         ))
     }
     fn restart(&self, version: &str, emit: &mut dyn FnMut(UpdateEvent)) -> bool {
-        let gate = EngineGate::new();
+        let gate = EngineGate::new(crate::model::busy::UPDATED_MESSAGE);
         let mut steps = FakeSteps {
             fake: self,
             gate: &gate,
         };
-        sp_update::flow::restart_installed(version, &mut steps, emit)
-            == sp_update::flow::RestartOutcome::Restarting
+        method_update::flow::restart_installed(version, &mut steps, emit)
+            == method_update::flow::RestartOutcome::Restarting
     }
 }
 

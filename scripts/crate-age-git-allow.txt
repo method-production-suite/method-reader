@@ -3,3 +3,4 @@
 # commit. Add a repository here only after reviewing it, with the reason beside it.
 https://github.com/DioxusLabs/blitz   # the book preview's HTML/CSS renderer (sp-app), unreleased fixes
 https://github.com/DioxusLabs/taffy   # the layout engine that blitz revision needs
+https://github.com/method-production-suite/method-libs   # the suite's shared crates (method-update, the updater); pinned by full commit in rust/Cargo.toml

@@ -136,10 +136,10 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
     // whatever the archive's top folder is called.
     let manifest: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&manifest_path).unwrap()).unwrap();
-    let release = sp_update::Release::from_value(manifest).unwrap();
+    let release = method_update::Release::from_value(manifest).unwrap();
     let entry = release.platform("darwin-aarch64").unwrap();
     let bytes = std::fs::read(&archive).unwrap();
-    sp_update::verify::verify_signature(&bytes, &entry.signature, &pubkey, "0.12.0", false)
+    method_update::verify::verify_signature(&bytes, &entry.signature, &pubkey, "0.12.0", false)
         .unwrap();
 
     let apps = t.join("Applications");
@@ -147,16 +147,19 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
     std::fs::create_dir_all(&old).unwrap();
     std::fs::write(old.join("screepub-desktop"), "tauri").unwrap();
     std::fs::write(old.join("screepub-engine"), "bun").unwrap();
-    let installed = sp_update::install::install_app(&bytes, &apps.join("Screepub.app"), &|_, _| {
-        panic!("no admin")
-    })
+    let installed = method_update::install::install_app(
+        &bytes,
+        &apps.join("Screepub.app"),
+        &sp_update_config::bundle_names(),
+        &|_, _| panic!("no admin"),
+    )
     .unwrap();
     assert_eq!(installed.leftover, None);
     // A 0.12.x install named Screepub.app: the Rust updater installs the
     // new version beside it as Method Reader.app and removes the old one.
     assert_eq!(installed.bundle, apps.join("Method Reader.app"));
     assert!(!apps.join("Screepub.app").exists());
-    let exe = sp_update::install::bundle_executable(&installed.bundle).unwrap();
+    let exe = method_update::install::bundle_executable(&installed.bundle).unwrap();
     assert!(exe.ends_with("Contents/MacOS/method-reader-app"), "{exe:?}");
     assert_eq!(
         std::fs::read_to_string(exe).unwrap(),
@@ -169,8 +172,8 @@ fn a_release_s_update_files_install_over_a_tauri_bundle() {
             .exists()
     );
     assert_eq!(
-        sp_update::install::bundle_identifier(&installed.bundle).as_deref(),
-        Some(sp_update::IDENTIFIER)
+        method_update::install::bundle_identifier(&installed.bundle).as_deref(),
+        Some(sp_update_config::IDENTIFIER)
     );
     assert_eq!(
         std::fs::read_to_string(installed.bundle.join("Contents/Resources/LICENSE")).unwrap(),

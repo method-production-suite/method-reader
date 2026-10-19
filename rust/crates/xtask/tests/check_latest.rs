@@ -399,8 +399,8 @@ fn an_api_answer_that_is_not_a_release_is_a_problem_not_a_crash() {
 
 #[test]
 fn the_key_checked_is_the_one_the_shipped_app_trusts() {
-    // sp_update::PUBKEY (was: tauri.conf.json's plugins.updater.pubkey).
-    assert_eq!(trusted_pubkey(), sp_update::PUBKEY);
+    // sp_update_config::PUBKEY (was: tauri.conf.json's plugins.updater.pubkey).
+    assert_eq!(trusted_pubkey(), sp_update_config::PUBKEY);
     assert_eq!(
         parse_public_key_box(trusted_pubkey()).unwrap(),
         "E4D0668D54F6EB34"

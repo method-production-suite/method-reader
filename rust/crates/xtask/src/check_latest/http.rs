@@ -12,7 +12,7 @@
 //! `GH_TOKEN` (else `GITHUB_TOKEN`) is sent to the API when set, as `gh`
 //! did, for the rate limit; it is never sent anywhere else.
 //!
-//! TLS is ureq's rustls with the ring provider, the stack sp-update and
+//! TLS is ureq's rustls with the ring provider, the stack method-update and
 //! sp-release use (one TLS stack for the port; rust/PARITY.md, Decisions).
 
 /// What one GET answered.

@@ -69,9 +69,9 @@ fn one() -> SignedArtifact {
 
 #[test]
 fn the_endpoint_is_the_one_url_the_app_is_configured_with() {
-    // The app's one endpoint lives in sp-update (it was tauri.conf.json's
+    // The app's one endpoint lives in sp-update-config (it was tauri.conf.json's
     // plugins.updater.endpoints until the Rust cutover).
-    assert_eq!(manifest_endpoint(RELEASE_REPO), sp_update::ENDPOINT);
+    assert_eq!(manifest_endpoint(RELEASE_REPO), sp_update_config::ENDPOINT);
     assert_eq!(
         manifest_endpoint(RELEASE_REPO),
         "https://github.com/method-production-suite/method-reader/releases/latest/download/latest.json"
@@ -82,7 +82,7 @@ fn the_endpoint_is_the_one_url_the_app_is_configured_with() {
     // repository is moved: the same file name under the old repository.
     assert_eq!(
         manifest_endpoint(sp_release::names::LEGACY_REPO),
-        sp_update::LEGACY_ENDPOINT
+        sp_update_config::LEGACY_ENDPOINT
     );
 }
 

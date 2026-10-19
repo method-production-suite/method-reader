@@ -115,10 +115,16 @@ The crates, in the order a conversion passes through them (each one's
   tests/argv_contract.rs), and draws the answers. The book preview is the
   engine's own XHTML and css.rs rendered by Blitz, so the window and the
   book cannot disagree. Design: docs/superpowers/specs/2026-10-11-sp-app-design.md.
-- `sp-update` + `sp-release`: the updater (latest.json, minisign, the
-  bundle swap) and the release pipeline's library (bundle layouts, update
-  archive, latest.json, the signer). `sp_update::PUBKEY` is the one home of
-  the updater's public key.
+- `sp-update-config` + `sp-release`: what Method Reader hands the suite's
+  updater, `method-update` (method-libs, pinned to a full commit: latest.json,
+  minisign, the bundle swap, the restart, the engine gate), and the release
+  pipeline's library (bundle layouts, update archive, latest.json, the
+  signer). sp-update-config holds Reader's endpoint, bundle names and
+  identifiers and builds its `AppConfig` (`update_config()`), and its
+  build.rs refuses the rehearsal's values outside a rehearsal build.
+  `sp_update_config::PUBKEY` is the one home of the updater's public key.
+  The one-time import of the Tauri window's update answer (WebKit storage,
+  read without SQLite) is sp-app's `legacy` module.
 - `sp-device-requests`: the "My device isn't here" service, a Cloudflare
   Worker (workers-rs, wasm32) with D1; its schema, migrations and
   wrangler.toml sit beside it.

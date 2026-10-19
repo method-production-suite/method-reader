@@ -20,8 +20,9 @@
 //! would sign this file and the window binary in release.yml).
 //!
 //! `/S` is NSIS's own silent switch; `/R` (ours) starts Method Reader when done,
-//! which is how an in-app update would hand over on Windows
-//! (`sp_update::install::nsis_update_args`).
+//! which is how an in-app update would hand over on Windows (the old
+//! sp-update's `nsis_update_args`; the suite's method-update updates
+//! Apple silicon Macs only, so nothing in the app passes it today).
 
 use crate::names::{COPYRIGHT, LEGACY_PRODUCT, LEGACY_WINDOW_EXE, PRODUCT, PUBLISHER, WINDOW_EXE};
 

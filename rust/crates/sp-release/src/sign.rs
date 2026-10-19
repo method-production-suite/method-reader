@@ -94,14 +94,17 @@ mod tests {
         // (every Tauri window) and on (the Rust app).
         for required in [false, true] {
             let trusted =
-                sp_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required).unwrap();
+                method_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required)
+                    .unwrap();
             assert_eq!(
                 trusted,
                 "timestamp:1\tfile:Method-Reader-macOS.app.tar.gz\tversion:0.12.0"
             );
         }
-        assert!(sp_update::verify::verify_signature(data, &sig, &pk, "0.12.1", false).is_err());
-        assert!(sp_update::verify::verify_signature(b"other", &sig, &pk, "0.12.0", false).is_err());
+        assert!(method_update::verify::verify_signature(data, &sig, &pk, "0.12.1", false).is_err());
+        assert!(
+            method_update::verify::verify_signature(b"other", &sig, &pk, "0.12.0", false).is_err()
+        );
     }
 
     #[test]

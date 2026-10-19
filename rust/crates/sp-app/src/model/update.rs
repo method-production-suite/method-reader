@@ -1,7 +1,7 @@
 //! Whether there is a newer Method Reader, and what to say about it:
 //! was `desktop/ui/update.js`, `update-flow.js` and the Updates block's
 //! rules from `notes-surface.js`. The transport (download, signature, swap,
-//! restart) is sp-update's; everything decided here is injected-and-tested,
+//! restart) is method-update's; everything decided here is injected-and-tested,
 //! as it was in JavaScript.
 //!
 //! From 0.13 the suite's standard (SUITE-STANDARDS.md, "Updates"): a quiet

@@ -4,7 +4,7 @@
 //! It exists for one job: the Tauri window kept the update consent in
 //! WebKit's localStorage, which is an SQLite file, and the Rust app reads
 //! those four values once, on its first run after the handover
-//! (`crate::webkit`). Read-only, never locks, never writes: the file is the
+//! (`super::webkit`). Read-only, never locks, never writes: the file is the
 //! old window's, and it may still be open while this runs, so the newest
 //! rows can sit in the `-wal` file beside it, which is read too, up to its
 //! last valid commit.

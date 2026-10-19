@@ -11,9 +11,9 @@ publish = false
 workspace = true
 
 [features]
-# A handover-rehearsal window (sp-update's `rehearsal`): built only by
-# `cargo xtask rehearse-handover prepare`, never released.
-rehearsal = ["sp-update/rehearsal"]
+# A handover-rehearsal window (sp-update-config's `rehearsal`): built only
+# by `cargo xtask rehearse-handover prepare`, never released.
+rehearsal = ["sp-update-config/rehearsal"]
 
 [[bin]]
 name = "method-reader-app"
@@ -50,8 +50,10 @@ anyrender_vello_cpu = "0.18"
 parley = "0.12"
 data-url = "0.3"
 cpal = "0.18"
-# The updater transport and the consent carried from the Tauri window.
-sp-update = { path = "../sp-update" }
+# The suite's updater (transport, swap, restart, engine gate), and what
+# Method Reader hands it (its endpoint, key, names and identifiers).
+method-update.workspace = true
+sp-update-config.workspace = true
 # The engine, in-process: the same run() the method-reader binary is.
 sp-cli = { path = "../sp-cli" }
 # The window's own state file is written whole or not at all, as the

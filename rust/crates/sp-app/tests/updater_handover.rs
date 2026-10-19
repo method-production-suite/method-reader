@@ -8,7 +8,7 @@ use sp_app::app::host::{FileStorage, ManifestUpdater, Updater};
 use sp_app::model::update::{Storage, read_state};
 
 fn legacy() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../sp-update/tests/data/webkit-legacy")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/webkit-legacy")
 }
 
 #[test]

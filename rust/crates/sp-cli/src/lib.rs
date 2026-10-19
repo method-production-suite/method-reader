@@ -45,7 +45,7 @@ pub fn move_legacy_folders() {
 }
 
 /// The app-data folder's name: the bundle identifier, which the window's
-/// tests hold to sp_update::IDENTIFIER.
+/// tests hold to sp_update_config::IDENTIFIER.
 pub use sp_engine::settings::app::APP_DATA_FOLDER;
 
 /// The file `name` in the app's data folder, for this process's own

@@ -39,14 +39,17 @@ sp-fountain.workspace = true
 sp-mobi.workspace = true
 sp-epub = { path = "../sp-epub" }
 # check-latest's GitHub reads: the
-# same ureq, rustls and ring sp-release and sp-update use (one TLS stack for
+# same ureq, rustls and ring sp-release and method-update use (one TLS stack for
 # the port; rust/PARITY.md, Decisions).
 ureq = "3"
 # The release pipeline's library: the one signer, latest.json writer,
 # archive, .deb, .rpm, .app and NSIS writers, and check-latest's judgement.
 # The packaging and release commands here are thin callers of it.
 sp-release.workspace = true
-sp-update.workspace = true
+# The suite updater's verifier, manifest reader and swap (what an installed
+# copy runs), and Method Reader's identifier and key.
+method-update.workspace = true
+sp-update-config.workspace = true
 # The minisign boxes, the updater signature and the capture's screenshots are base64.
 base64.workspace = true
 # The capture tool (src/capture/): Chrome's DevTools protocol over a plain

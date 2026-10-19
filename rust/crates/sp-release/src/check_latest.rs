@@ -331,7 +331,7 @@ pub fn check_with(
                 let url = p["url"].as_str().unwrap_or("");
                 match fetch(url) {
                     Ok((200, bytes)) => {
-                        if let Err(e) = sp_update::verify::verify_signature(
+                        if let Err(e) = method_update::verify::verify_signature(
                             &bytes,
                             p["signature"].as_str().unwrap_or(""),
                             pubkey,
@@ -419,7 +419,7 @@ mod tests {
             "{problems:?}"
         );
         // The shipped key reads.
-        assert!(parse_public_key_box(sp_update::PUBKEY).is_ok());
+        assert!(parse_public_key_box(sp_update_config::PUBKEY).is_ok());
     }
 
     #[test]
@@ -430,7 +430,7 @@ mod tests {
             r#"{"version":"0.11.1","platforms":{}}"#,
             &r,
             &sigs,
-            sp_update::PUBKEY,
+            sp_update_config::PUBKEY,
         )
         .unwrap_err();
         assert_eq!(
@@ -442,7 +442,7 @@ mod tests {
             ]
         );
         assert!(
-            judge_manifest("<html>", &r, &sigs, sp_update::PUBKEY).unwrap_err()[0]
+            judge_manifest("<html>", &r, &sigs, sp_update_config::PUBKEY).unwrap_err()[0]
                 .contains("is not JSON")
         );
     }

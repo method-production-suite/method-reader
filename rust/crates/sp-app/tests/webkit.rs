@@ -5,8 +5,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use sp_update::sqlite::{Database, Value, utf16};
-use sp_update::webkit::{find_storage, import_update_consent, read_update_keys, website_data};
+use sp_app::legacy::sqlite::{Database, Value, utf16};
+use sp_app::legacy::webkit::{find_storage, import_update_consent, read_update_keys, website_data};
 
 fn data(p: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))

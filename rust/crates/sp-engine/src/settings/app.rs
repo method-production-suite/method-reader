@@ -52,7 +52,7 @@ pub fn absolute_env_folder(raw: Option<&str>) -> Option<String> {
 }
 
 /// The app's data folder, where settings.json and the window's own
-/// storage live: named after the bundle identifier (sp_update::IDENTIFIER,
+/// storage live: named after the bundle identifier (sp_update_config::IDENTIFIER,
 /// which sp-app's tests hold it to), as a Tauri app's is, under Application
 /// Support (macOS), %APPDATA% (Windows) and $XDG_CONFIG_HOME (everywhere
 /// else).

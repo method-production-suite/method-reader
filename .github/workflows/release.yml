@@ -311,7 +311,7 @@ jobs:
         run: |
           set -euo pipefail
           # The handover rehearsal's updater values (a local endpoint, a
-          # throwaway key, plain HTTP) never reach a release: sp-update's
+          # throwaway key, plain HTTP) never reach a release: sp-update-config's
           # build.rs refuses them without its rehearsal feature, and this
           # says so before cargo starts.
           for v in METHOD_READER_UPDATE_ENDPOINT METHOD_READER_UPDATE_PUBKEY METHOD_READER_UPDATE_INSECURE; do

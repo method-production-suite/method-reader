@@ -26,7 +26,8 @@ carries is listed in this file.
   `method-reader-app`), ships as the app: the Mac `.dmg`, the Windows
   installer, and the Linux `.deb`, `.rpm` and AppImage. It has the whole
   engine built in, so it carries everything the command line does, plus the
-  updater (crate `sp-update`), the window's own crates (egui and eframe,
+  updater (crate `method-update`, the suite's own, MIT OR Apache-2.0,
+  set up by `sp-update-config`), the window's own crates (egui and eframe,
   blitz and stylo for the preview, rustls and ring for HTTPS, and the rest
   marked "app" in the tables) and the two typefaces below. This file travels
   inside each bundle beside `LICENSE`.

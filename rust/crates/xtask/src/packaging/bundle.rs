@@ -45,7 +45,7 @@ pub struct BundleArgs {
     /// Also produce the updater archive and its signature.
     pub updater: bool,
     /// The public key the updater archive must verify against (a path or
-    /// the base64 text); defaults to [`sp_update::PUBKEY`], the key the
+    /// the base64 text); defaults to [`sp_update_config::PUBKEY`], the key the
     /// shipped app trusts.
     pub pubkey: Option<String>,
 }
@@ -372,7 +372,7 @@ pub fn build_bundles(
 pub fn main(argv: &[String]) -> u8 {
     if super::util::wants_help(
         argv,
-        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--updater] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set), checked against the key the shipped app trusts (sp_update::PUBKEY) unless --pubkey names another.\nThe outside tools can be redirected with METHOD_READER_CARGO, METHOD_READER_CODESIGN, METHOD_READER_DITTO, METHOD_READER_XCRUN, METHOD_READER_HDIUTIL and METHOD_READER_MAKENSIS.",
+        "usage: cargo xtask build-app-bundle --version <x.y.z> --out <dir> [--arch x64|arm64] [--target <triple>] [--updater] [--pubkey <file or base64>]\n\n--updater also makes the signed updater archive (TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD must be set), checked against the key the shipped app trusts (sp_update_config::PUBKEY) unless --pubkey names another.\nThe outside tools can be redirected with METHOD_READER_CARGO, METHOD_READER_CODESIGN, METHOD_READER_DITTO, METHOD_READER_XCRUN, METHOD_READER_HDIUTIL and METHOD_READER_MAKENSIS.",
     ) {
         return 0;
     }

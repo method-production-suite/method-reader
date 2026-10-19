@@ -12,6 +12,7 @@ pub mod engine;
 pub mod fonts;
 pub mod framelog;
 pub mod headless;
+pub mod legacy;
 pub mod model;
 pub mod runtime;
 pub mod theme;
