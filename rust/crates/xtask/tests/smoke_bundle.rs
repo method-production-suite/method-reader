@@ -412,6 +412,38 @@ fn window_run<'a>(
     }
 }
 
+/// A window stub that, like the real one, renames an old-named bundle it
+/// runs from (when `renames`), then answers as `inner` does.
+fn renaming<'a>(
+    mut inner: impl FnMut(&[String], &[(String, String)]) -> RunResult + 'a,
+    renames: bool,
+) -> impl FnMut(&[String], &[(String, String)]) -> RunResult + 'a {
+    move |argv: &[String], env: &[(String, String)]| {
+        let exe = Path::new(&argv[0]);
+        if renames
+            && let Some(bundle) = exe
+                .ancestors()
+                .find(|p| p.ends_with("Screepub Desktop.app"))
+        {
+            fs::rename(bundle, bundle.with_file_name("Method Reader.app")).unwrap();
+        }
+        inner(argv, env)
+    }
+}
+
+fn copy_tree(from: &Path, to: &Path) {
+    fs::create_dir_all(to).unwrap();
+    for e in fs::read_dir(from).unwrap() {
+        let e = e.unwrap();
+        let dest = to.join(e.file_name());
+        if e.path().is_dir() {
+            copy_tree(&e.path(), &dest);
+        } else {
+            fs::copy(e.path(), dest).unwrap();
+        }
+    }
+}
+
 fn no_tools() -> impl FnMut(&[String], Option<&Path>) -> RunResult {
     |_: &[String], _: Option<&Path>| ok("")
 }
@@ -648,6 +680,9 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
                 )
                 .unwrap();
             }
+            if argv[0] == "ditto" {
+                copy_tree(Path::new(&argv[1]), Path::new(&argv[2]));
+            }
             ok("")
         }
     };
@@ -659,12 +694,30 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         &work,
         V,
         &mut plist_for(V, "com.methodreader.desktop"),
-        &mut window_run(&mut calls, V, Some(&ZIP), 18),
+        &mut renaming(window_run(&mut calls, V, Some(&ZIP), 18), true),
     )
     .unwrap();
-    assert_eq!(calls.len(), 2);
+    assert_eq!(calls.len(), 3);
     assert!(
         Path::new(&calls[0].0[0]).ends_with("Method Reader.app/Contents/MacOS/method-reader-app")
+    );
+    // Then the copy under the old name, which must rename itself.
+    assert!(
+        Path::new(&calls[2].0[0])
+            .ends_with("Screepub Desktop.app/Contents/MacOS/method-reader-app")
+    );
+    assert!(work.join("old-name/Method Reader.app").is_dir());
+    let mut calls = vec![];
+    err_contains(
+        smoke_bundle(
+            &dmg,
+            &fixture(),
+            &s.fresh("c"),
+            V,
+            &mut plist_for(V, "com.methodreader.desktop"),
+            &mut renaming(window_run(&mut calls, V, Some(&ZIP), 18), false),
+        ),
+        "was not renamed Method Reader.app",
     );
     for (version, identifier, said) in [
         ("0.11.9", "com.methodreader.desktop", "0.11.9"),

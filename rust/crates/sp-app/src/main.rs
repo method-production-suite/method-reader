@@ -53,7 +53,7 @@ fn relaunch_under_the_new_name() {
     let Some(renamed) = sp_update_config::rename_old_bundle(&exe) else {
         return;
     };
-    let err = std::process::Command::new(&renamed.exe)
+    let err = sp_device::process::quiet_command(&renamed.exe)
         .args(std::env::args_os().skip(1))
         .exec();
     eprintln!(
