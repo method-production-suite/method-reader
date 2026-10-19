@@ -274,6 +274,23 @@ tolino and reMarkable are tested against injected mounts and a stub tablet;
 no reader has been connected on Linux or Windows. See
 [the verification ledger](verification-ledger.md).
 
+## Starting the window
+
+The window's own program, `method-reader-app`, takes two flags for the
+suite's launcher. The window opens as usual and then does what the Help item
+of the same name does:
+
+- `--open-sample` opens Field Station, the invented sample, as Help > Open
+  Sample does: on any launch, whatever the "Open the sample the first time"
+  switch says. The sample keeps to its own folder, `Sample`, in the app-data
+  folder beside the window's storage, never in the library.
+- `--check-for-updates` checks for updates, as Help > Check for Updates…
+  does. Where the app does not update itself (Windows and Linux), it gives
+  the same answer that menu item gives.
+
+Any other argument is ignored, as before. `--version` and `--smoke` still
+run without a window.
+
 ## Architecture
 
 One Cargo workspace, `rust/`, with a crate per stage:

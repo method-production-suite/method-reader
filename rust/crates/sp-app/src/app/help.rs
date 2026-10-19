@@ -64,6 +64,11 @@ pub fn choose(app: &mut App, item: HelpItem) {
         HelpItem::UserGuide => {
             app.host.open(USER_GUIDE);
         }
+        HelpItem::OpenSample => {
+            app.help.sheet = None;
+            app.notes_open = false;
+            super::sample::open(app);
+        }
         HelpItem::Shortcuts => open(app, Sheet::Shortcuts),
         HelpItem::WhatsNew => {
             app.help.sheet = None;
