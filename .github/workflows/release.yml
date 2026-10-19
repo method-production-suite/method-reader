@@ -54,6 +54,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # SUITE-STANDARDS.md section 6: the WHOLE lock, not only what changed.
+      # main may carry a young crate listed as "ages-out" while it waits out
+      # its 14 days, but no release ships one; a listed security fix (a
+      # RUSTSEC id in its reason) may. First, before anything is built or
+      # signed.
+      - name: Every locked crate is at least 14 days old, apart from security fixes
+        run: |
+          set -euo pipefail
+          # tomllib: Python 3.11 or later (the runner's python3 is newer).
+          python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || {
+            echo "::error::$(python3 --version) is too old for the crate-age check (3.11 or later)"; exit 1; }
+          python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
       - name: Release notes and tag are publishable
         env:
           TAG: ${{ github.ref_name }}

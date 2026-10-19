@@ -110,6 +110,30 @@ fn everything_that_signs_or_builds_waits_for_the_checks() {
 }
 
 #[test]
+fn the_checks_run_the_release_crate_age_check_over_the_whole_lock_before_any_build() {
+    // SUITE-STANDARDS.md section 6: no release ships a young crate unless it
+    // is a listed security fix. --release, and never --only-changed: the
+    // question is the whole lock the release builds from.
+    let rel = rel();
+    let checks = job(&rel, "checks");
+    let ages = step_index(checks, |st| {
+        s(st, "run")
+            .contains("python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release")
+    })
+    .expect("the crate-age step");
+    assert!(!s(steps(checks)[ages], "run").contains("--only-changed"));
+    let first_build = step_index(checks, |st| s(st, "run").contains("cargo ")).unwrap();
+    assert!(
+        ages < first_build,
+        "the crate-age check runs after a cargo step"
+    );
+    // Everything that builds or signs waits for the checks (and so for it).
+    for name in ["release", "cli", "app-bundles"] {
+        assert_eq!(needs(job(&rel, name)), vec!["checks".to_string()], "{name}");
+    }
+}
+
+#[test]
 fn the_checks_read_the_version_and_the_notes_from_the_tagged_commit() {
     let rel = rel();
     let text = run_text(job(&rel, "checks"));
