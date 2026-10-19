@@ -130,13 +130,21 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Built before any secret is in the job: no build script, and no crate
+      # a build pulls in, ever runs beside the signing keys.
+      - name: Build the macOS command-line tool and the release tools
+        working-directory: rust
+        run: |
+          set -euo pipefail
+          cargo build --release --locked -p sp-cli --bin method-reader --bin screepub --target aarch64-apple-darwin
+          cargo build --release --locked -p sp-release
       - uses: ./.github/actions/import-developer-id
         with:
           cert-b64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
           cert-password: ${{ secrets.CERT_PASSWORD }}
           keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
           ac-key-b64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
-      - name: Build, sign, notarize and package the macOS command-line tool
+      - name: Sign, notarize and package the macOS command-line tool
         working-directory: rust
         env:
           TAG: ${{ github.ref_name }}
@@ -145,8 +153,6 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          cargo build --release --locked -p sp-cli --bin method-reader --bin screepub --target aarch64-apple-darwin
-          cargo build --release --locked -p sp-release
           BIN="target/aarch64-apple-darwin/release/method-reader"
           ALIAS="target/aarch64-apple-darwin/release/screepub"
           STAGE="$RUNNER_TEMP/cli-notarize"
@@ -305,13 +311,6 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/import-developer-id
-        if: runner.os == 'macOS'
-        with:
-          cert-b64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
-          cert-password: ${{ secrets.CERT_PASSWORD }}
-          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
-          ac-key-b64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
       - name: Linux build and packaging tools
         if: runner.os == 'Linux'
         run: |
@@ -337,6 +336,15 @@ jobs:
             cargo build --release --locked -p sp-app
           fi
           cargo build --release --locked -p sp-release
+      # Only now, after every build: no build script, and no crate a build
+      # pulls in, ever runs beside the signing keys.
+      - uses: ./.github/actions/import-developer-id
+        if: runner.os == 'macOS'
+        with:
+          cert-b64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
+          cert-password: ${{ secrets.CERT_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+          ac-key-b64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
       - name: macOS app, update archive and image
         if: runner.os == 'macOS'
         env:
