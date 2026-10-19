@@ -607,3 +607,113 @@ fn only_main_saves_a_cache() {
         }
     }
 }
+
+/// The bundles job's steps, and the index of its decide step.
+fn bundles_decide() -> (Vec<Value>, usize) {
+    let wf = workflow("rust.yml");
+    let all: Vec<Value> = steps(job(&wf, "bundles")).into_iter().cloned().collect();
+    let i = all
+        .iter()
+        .position(|st| s(st, "id") == "decide")
+        .expect("bundles has a step with id: decide");
+    (all, i)
+}
+
+const PACKAGING_GUARD: &str = "steps.decide.outputs.packaging == 'true'";
+
+#[test]
+fn bundles_decides_first_and_guards_every_later_step() {
+    // The bundles checks are required by main's ruleset, so the job always
+    // runs and finishes green; only its expensive steps wait on the answer.
+    // Checkout comes first because the answer is a git diff, and it must
+    // reach main (the merge commit's first parent).
+    let wf = workflow("rust.yml");
+    assert!(
+        job_if(job(&wf, "bundles")).is_empty(),
+        "bundles must not be skipped at the job level: its checks are required"
+    );
+    let (all, i) = bundles_decide();
+    assert_eq!(i, 1, "the decide step runs right after checkout");
+    assert!(s(&all[0], "uses").starts_with("actions/checkout@"));
+    assert_eq!(all[0]["with"]["fetch-depth"].as_u64(), Some(2));
+    assert!(s(&all[0], "if").is_empty() && s(&all[i], "if").is_empty());
+    let unguarded: Vec<String> = all[i + 1..]
+        .iter()
+        .filter(|st| !s(st, "if").contains(PACKAGING_GUARD))
+        .map(|st| format!("{}{}", s(st, "name"), s(st, "uses")))
+        .collect();
+    assert_eq!(unguarded, Vec::<String>::new());
+    assert!(all.len() > i + 2, "the guarded steps are still there");
+}
+
+/// Run the decide step's own bash for `event`, with a `git` stub on PATH
+/// that answers `diff` with `changed`, and return what it wrote to
+/// GITHUB_OUTPUT.
+#[cfg(unix)]
+fn decide(event: &str, changed: &[&str]) -> String {
+    let (all, i) = bundles_decide();
+    let script = s(&all[i], "run").to_string();
+    let dir = Scratch::new("decide");
+    let list = dir.write("changed.txt", changed.join("\n") + "\n");
+    dir.script(
+        "bin/git",
+        &format!(
+            "case \"$1\" in rev-parse) exit 0 ;; diff) cat '{}' ;; *) exit 9 ;; esac\n",
+            list.display()
+        ),
+    );
+    let out_file = dir.join("output.txt");
+    let path = format!("{}:/usr/bin:/bin", dir.join("bin").display());
+    let out = bash(
+        &script,
+        dir.path(),
+        &[
+            ("PATH", path.as_str()),
+            ("EVENT", event),
+            ("GITHUB_OUTPUT", out_file.to_str().expect("a UTF-8 path")),
+        ],
+    );
+    assert!(out.status.success(), "{}", said(&out));
+    std::fs::read_to_string(out_file).unwrap_or_default()
+}
+
+#[cfg(unix)]
+#[test]
+fn bundles_always_builds_on_main_and_on_a_manual_run() {
+    for event in ["push", "workflow_dispatch"] {
+        assert_eq!(decide(event, &["README.md"]), "packaging=true\n", "{event}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn bundles_builds_a_pull_request_only_when_packaging_changed() {
+    for f in [
+        "rust/crates/sp-release/src/nsis.rs",
+        "rust/crates/sp-release/Cargo.toml",
+        "rust/crates/xtask/src/packaging/native.rs",
+        "rust/crates/xtask/src/dmg.rs",
+        "rust/crates/sp-app/Cargo.toml",
+        "rust/crates/sp-app/icons/icon.icns",
+        "rust/Cargo.lock",
+        ".github/workflows/release.yml",
+        ".github/workflows/rust.yml",
+    ] {
+        assert_eq!(
+            decide("pull_request", &["README.md", f]),
+            "packaging=true\n",
+            "{f}"
+        );
+    }
+    for f in [
+        "README.md",
+        "rust/crates/sp-parser/src/classify.rs",
+        "rust/crates/sp-app/src/app/mod.rs",
+        "docs/ROADMAP.md",
+        // Near misses: a prefix is not the folder.
+        "rust/crates/sp-release-notes/x.rs",
+        "rust/crates/xtask/src/packaging.rs",
+    ] {
+        assert_eq!(decide("pull_request", &[f]), "packaging=false\n", "{f}");
+    }
+}

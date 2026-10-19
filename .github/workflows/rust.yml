@@ -19,13 +19,14 @@
 #   error unless deny.toml lists it with a reason, only the licenses the
 #   notices name, crates.io and the two pinned git sources only.
 # - bundles: every installer built unsigned, opened and checked on its own
-#   OS, with the window's headless smoke run out of the Mac app.
+#   OS, with the window's headless smoke run out of the Mac app. On a pull
+#   request only when packaging changed (the job's own comment says how).
 #
 # The toolchain comes from rust/rust-toolchain.toml, which rustup on every
 # hosted runner installs on first use (with clippy and rustfmt), so no
 # setup action is needed and the version lives in one place.
 #
-# Not path-filtered: the tests read brand/ (the window's colours), site/
+# Not path-filtered (bundles alone decides inside the job): the tests read brand/ (the window's colours), site/
 # (the fonts it shares with the window) and docs/releases/ (the window's
 # notes) as well as rust/. main's ruleset requires these jobs to pass.
 #
@@ -284,6 +285,19 @@ jobs:
   # and removed, the .rpm listed, the AppImage unpacked; the NSIS installer
   # run silently and uninstalled. Signing, notarization and the real key
   # are release.yml's.
+  #
+  # Only when packaging can have changed. Building every installer on three
+  # OSes is most of this repository's runner time, and most pull requests
+  # cannot change what the installers hold. So the expensive steps run on
+  # every push to main, on workflow_dispatch, and on a pull request that
+  # touches the packaging (the list in the decide step); release.yml builds
+  # its own installers on every tag whatever this job does. The job itself
+  # always runs: these checks are required by main's ruleset, and a job
+  # skipped by a job-level `if:` reports "skipped", which does not count as
+  # passing everywhere a required check is read. Instead the first step
+  # after checkout decides, with git alone (no third-party action), and
+  # every later step is guarded by its answer, so a pull request that
+  # changes no packaging finishes green in seconds.
   bundles:
     strategy:
       fail-fast: false
@@ -295,8 +309,57 @@ jobs:
       run:
         shell: bash
     steps:
+      # Depth 2: a pull request's run checks out GitHub's merge commit, whose
+      # first parent is main, so HEAD^1..HEAD is exactly what the pull
+      # request changes.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      # Packaging, for this decision: the release tools and the updater they
+      # sign for, xtask's bundle code, the window's manifest, icons and
+      # headless mode (the smoke below runs it out of the bundle), the files
+      # every installer carries, the workspace manifest (its version is the
+      # installers'), the toolchain, both workflows that build installers and
+      # the repository's own actions. And Cargo.lock: a lock change can change
+      # what the Linux binary links, which the .deb and .rpm Depends checks
+      # read, and Dependabot brings one grouped lock change a week.
+      - name: Decide whether packaging changed
+        id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" != pull_request ]; then
+            echo "A $EVENT run builds every installer."
+            echo "packaging=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git rev-parse --verify --quiet 'HEAD^1' >/dev/null; then
+            echo "No parent to compare with: building every installer."
+            echo "packaging=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          packaging=false
+          while IFS= read -r f; do
+            case "$f" in
+              rust/crates/sp-release/* | rust/crates/sp-update/* | \
+              rust/crates/xtask/src/packaging/* | rust/crates/xtask/src/dmg.rs | \
+              rust/crates/sp-app/Cargo.toml | rust/crates/sp-app/icons/* | rust/crates/sp-app/src/headless.rs | \
+              rust/Cargo.toml | rust/Cargo.lock | rust/rust-toolchain.toml | \
+              LICENSE-MIT | LICENSE-APACHE | rust/crates/sp-azw3/LICENSE-GPL-3.0 | THIRD-PARTY-NOTICES.md | \
+              tests/fixtures/field-station.pdf | \
+              .github/workflows/rust.yml | .github/workflows/release.yml | .github/actions/*)
+                echo "Packaging changed: $f"
+                packaging=true
+                ;;
+            esac
+          done <<< "$(git diff --name-only 'HEAD^1' HEAD)"
+          if [ "$packaging" = false ]; then
+            echo "No packaging file changed: the installers are not built for this pull request."
+          fi
+          echo "packaging=$packaging" >> "$GITHUB_OUTPUT"
       - id: cache
+        if: steps.decide.outputs.packaging == 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -306,14 +369,16 @@ jobs:
           key: bundles-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
           restore-keys: bundles-${{ matrix.os }}-
       - name: Linux packaging tools and headers
-        if: runner.os == 'Linux'
+        if: steps.decide.outputs.packaging == 'true' && runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev rpm libasound2-dev libfontconfig1-dev libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
       - name: Build the window and the release tools
+        if: steps.decide.outputs.packaging == 'true'
         working-directory: rust
         run: cargo build --release --locked -p sp-app -p sp-release
       - name: Lay out, package and check
+        if: steps.decide.outputs.packaging == 'true'
         run: |
           set -euo pipefail
           VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' rust/Cargo.toml)"
@@ -424,7 +489,7 @@ jobs:
       # Only main saves (SUITE-STANDARDS section 6): a pull request restores
       # main's cache and never writes its own, so the repository stays under
       # GitHub's 10 GB and main's cache is not evicted.
-      - if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+      - if: steps.decide.outputs.packaging == 'true' && github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
