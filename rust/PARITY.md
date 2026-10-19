@@ -1262,8 +1262,18 @@ names the check it affects.
   the .fountain's digest; the preview, the FDX, the MOBI and AZW3 records;
   in the sequential-mode row, the same speeches as two blocks; in the
   debug elements, one element fewer and the later scenes' indexes one
-  lower). The other fixtures' runs of those rows matched. OPEN: the
-  stage answers in rust/oracle/torture/ (lines.json, elements.json,
-  tokens.json, script.fountain and the books) still hold the TypeScript's
-  output, so sp-parser's and sp-pdf's oracle tests fail on torture until
-  they are re-frozen from the engine as Field Station's were.
+  lower). The other fixtures' runs of those rows matched. The stage
+  answers in rust/oracle/torture/ were re-frozen with the owner's approval
+  (2026-10-19), the same way as Field Station's: there is no TypeScript
+  left to ask, so the new answers are the Rust engine's, each diffed
+  against the old frozen answer first. lines.json, the region's lines
+  (each column's own lines at the dual indents, in place of joined rows
+  and the lines the early end left behind); elements.json, the two whole
+  speeches, one action element fewer, the ids after it renumbered and the
+  last three scenes' indexes one lower; tokens.json, script.fountain,
+  book.fdx and book.preview.html, the two speeches and no action
+  paragraph; book.epub, package.opf's identifier and body001.xhtml from
+  the Rust writer, every other entry kept as the TypeScript compressed it;
+  book.mobi and book.azw3, the Rust writers' bytes (the AZW3 built from the
+  new book.epub); meta.json, those files' sizes and digests. Nothing else
+  in the dump moved.
