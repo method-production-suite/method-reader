@@ -49,6 +49,7 @@ jobs:
   # ship from a commit whose checks fail. Same checks, gating everything.
   checks:
     runs-on: macos-15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -111,6 +112,7 @@ jobs:
   release:
     needs: checks
     runs-on: macos-15
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -224,6 +226,7 @@ jobs:
             exe: method-reader.exe
             alias: screepub.exe
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -266,6 +269,7 @@ jobs:
   cli-upload:
     needs: [release, cli]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
@@ -300,6 +304,7 @@ jobs:
           - os: ubuntu-latest
           - os: windows-latest
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -547,6 +552,7 @@ jobs:
   handover-gate:
     needs: app-bundles
     runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -598,6 +604,7 @@ jobs:
   app-upload:
     needs: [release, app-bundles, handover-gate]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -664,6 +671,7 @@ jobs:
     needs: [release, cli-upload, app-upload, handover-gate]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
