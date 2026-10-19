@@ -38,7 +38,7 @@ pub const PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IE
 
 /// Method Reader's bundle identifier, from 0.13. The app's data folder is
 /// named after it on every platform (Application Support, %APPDATA%,
-/// $XDG_CONFIG_HOME), and macOS keys its permission grants to it. The
+/// $XDG_DATA_HOME), and macOS keys its permission grants to it. The
 /// updater never reads it; the window does, to find its own data.
 pub const IDENTIFIER: &str = "com.methodreader.desktop";
 

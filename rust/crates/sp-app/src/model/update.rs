@@ -162,14 +162,29 @@ pub fn whats_new_due(storage: &mut dyn Storage, running: &str) -> bool {
     let seen = storage.get_item(WHATS_NEW_SEEN).filter(|s| !s.is_empty());
     let due = match seen.as_deref() {
         Some(seen) => seen != running && is_newer(running, seen),
-        None => [OPT_IN, ASKED, STAMP, FOUND]
-            .iter()
-            .any(|k| storage.get_item(k).is_some_and(|v| !v.is_empty())),
+        None => earlier_update_values(storage),
     };
     if seen.as_deref() != Some(running) {
         storage.set_item(WHATS_NEW_SEEN, running);
     }
     due
+}
+
+/// Whether a copy before 0.13 left its update values here.
+fn earlier_update_values(storage: &dyn Storage) -> bool {
+    [OPT_IN, ASKED, STAMP, FOUND]
+        .iter()
+        .any(|k| storage.get_item(k).is_some_and(|v| !v.is_empty()))
+}
+
+/// Whether a copy of the window has run here before, read before
+/// [`whats_new_due`] writes its mark: the version it last noted, or a
+/// pre-0.13 copy's update values. A fresh install has neither.
+pub fn ran_before(storage: &dyn Storage) -> bool {
+    storage
+        .get_item(WHATS_NEW_SEEN)
+        .is_some_and(|s| !s.is_empty())
+        || earlier_update_values(storage)
 }
 
 pub fn remember_found(storage: &mut dyn Storage, version: &str) {

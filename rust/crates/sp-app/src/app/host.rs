@@ -129,6 +129,10 @@ pub struct Host {
     pub reduced_motion: Arc<AtomicBool>,
     pub updater: Arc<dyn Updater>,
     pub speaker: Box<dyn Speaker>,
+    /// The sample's own folder (model/sample.rs), in the app-data folder
+    /// and never in the library; None where there is no sample to open
+    /// (the README pictures, and every test that does not give it one).
+    pub sample_dir: Option<std::path::PathBuf>,
 }
 
 impl Host {
@@ -257,6 +261,16 @@ impl FileStorage {
             Some(sp_cli::app_data_folder_named(&running).join(FILE))
         }
     }
+}
+
+/// Where the window keeps the sample: a folder beside its storage file,
+/// so the same override that moves the storage (every scratch run's)
+/// moves the sample with it.
+pub fn default_sample_dir() -> Option<std::path::PathBuf> {
+    FileStorage::default_path().and_then(|file| {
+        file.parent()
+            .map(|dir| dir.join(crate::model::sample::FOLDER))
+    })
 }
 
 /// The bundle identifier this copy runs under: its own Info.plist's inside
@@ -561,6 +575,7 @@ impl Host {
             reduced_motion,
             updater: Arc::new(ManifestUpdater::for_this_copy()),
             speaker: Box::new(Typewriter::default()),
+            sample_dir: default_sample_dir(),
         }
     }
 }
@@ -843,6 +858,7 @@ impl Fakes {
                 ..FakeUpdater::default()
             }),
             speaker: Box::new(self.speaker.clone()),
+            sample_dir: None,
         }
     }
 

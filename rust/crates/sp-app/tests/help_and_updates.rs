@@ -268,6 +268,7 @@ fn on_windows_and_linux_the_help_menu_is_at_the_foot_of_the_page() {
         for item in [
             HelpItem::About,
             HelpItem::UserGuide,
+            HelpItem::OpenSample,
             HelpItem::Shortcuts,
             HelpItem::WhatsNew,
             HelpItem::CheckForUpdates,
@@ -395,6 +396,41 @@ fn check_for_updates_answers_on_a_mac_and_says_where_releases_are_elsewhere() {
         .click();
     steps(&mut linux);
     assert_eq!(w.fakes.opener.opened.lock().unwrap().as_slice(), [RELEASES]);
+}
+
+#[test]
+fn the_check_for_updates_flag_is_the_menu_item_at_launch() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.state_mut()
+        .launched_with(&["--check-for-updates".to_string()]);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Dialog, "Updates");
+    h.get_by_role_and_label(
+        Role::Status,
+        concat!(
+            "Method Reader ",
+            env!("CARGO_PKG_VERSION"),
+            " is the newest there is."
+        ),
+    );
+    // Where the app cannot update itself, the same answer the menu gives.
+    let w = world();
+    let mut linux = harness(&w, Platform::Linux);
+    linux
+        .state_mut()
+        .launched_with(&["--check-for-updates".to_string()]);
+    steps(&mut linux);
+    linux.get_by_role_and_label(Role::Dialog, "Updates");
+    assert!(has(&linux, u::NOT_HERE));
+    // An argument it does not know changes nothing.
+    let w = world();
+    let mut plain = harness(&w, Platform::Mac);
+    plain
+        .state_mut()
+        .launched_with(&["--frobnicate".to_string()]);
+    steps(&mut plain);
+    assert!(plain.state().help.sheet.is_none());
 }
 
 #[test]
