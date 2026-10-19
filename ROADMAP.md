@@ -10,41 +10,97 @@ see [Influencing this list](#influencing-this-list).
 
 ## Waiting on the owner
 
+Kept current for the Monday digest. Reversible decisions with a clear
+recommendation are built on the recommendation and marked so here.
+
+Release go-aheads:
+
+- **0.13.1.** The clearer window wording, Homebrew retired, and CI and
+  release-workflow fixes. Ready to tag once those pull requests are merged;
+  the tag goes to the owner through MOrg.
+
+Open decisions:
+
+- **Two Dependabot alerts for `glib`.** Recommendation: dismiss both as
+  "vulnerable code not used". `glib` reaches the lock files only through the
+  Mac menu library's Linux branch and the handover rehearsal's Linux branch,
+  and neither is ever built: `cargo tree` shows no `glib` in the app or the
+  command line on Linux, macOS or Windows, and the rehearsal is built on
+  macOS only. Dismissing changes a repository setting, so it waits for a yes.
+
+Tests that need a device (hands only; everything else is automated):
+
+1. Rebuild the proof sheet first: `cargo xtask make-fixture torture
+   ../tests/fixtures/torture.pdf` (from `rust/`). A stale build once put an
+   already-fixed defect in front of a reviewer.
+2. Print the full list: `cargo xtask device-checklist` (from `rust/`). It
+   says which file to build, which folder it goes in, and what to look for,
+   item by item.
+3. In order of what each answers:
+   - **A Kindle that mounts as a drive:** Method Reader's own AZW3 (beta)
+     and the pictures in a .mobi (the `mobi-picture-probe` books).
+   - **A Kobo, a tolino, a reMarkable:** send Field Station and report
+     either way (issues #26, #27, #28).
+   - **Linux:** the owner's Arch check (AppImage, converting, USB detection,
+     copy and eject on Hyprland, the command line); findings arrive as an
+     issue.
+
 Decided:
 
-- Window vocabulary (decided 2026-10-18): Preview for the in-app book, Send
-  to e-reader for sending, Get an editable script for Fountain and .fdx,
-  Taken from the PDF for the settings group; format cards named .fdx and
-  Fountain. Built in this PR.
+- **Window vocabulary** (2026-10-18): Preview for the in-app book, Send to
+  e-reader for sending, Get an editable script for Fountain and .fdx, Taken
+  from the PDF for the settings group; format cards named .fdx and Fountain.
+  Merged.
+- **Scripts as input** (2026-10-18): the window accepts .osf and .fountain as
+  well as PDFs, in the same drop area, with the button renamed Choose a
+  script.
+- **Homebrew** (2026-10-18): retired for good. Installs come from the
+  downloads; the app updates itself.
+- **Scene lengths in the .fdx** (2026-10-17, for 0.14): measured from the PDF
+  when converting and kept beside the script, not in the .fountain. The
+  rounding (nearest eighth, never under one eighth) is common practice and
+  a best guess at Final Draft's own; nobody has compared the two on one
+  script yet.
 
 ## Now
 
-- **Method Reader's own AZW3 on a real Kindle.** Over USB, a Kindle now gets an
-  AZW3 that Method Reader writes itself (beta), with nothing else installed, so
-  the Kindle file takes milliseconds instead of a Calibre conversion. It
-  opens whole in Calibre's own reader every time in our tests, but it has
-  not yet been on a Kindle. The first device pass decides whether it stays
-  beta: the checks are printed by `cargo xtask device-checklist`.
-- **Pictures on the oldest Kindles.** Pictures from the script now reach
-  the e-book (beta), and a designed title card becomes its cover. The one
-  file that leaves them out is the MOBI, the file for the oldest Kindles:
-  no one has opened one with pictures in it on a real device yet, and a
-  failure there could stop the book opening at all. It gets them once a
-  test book has been tried on one.
-- **Copying to new Kindles over USB.** Every Kindle sold since late 2024
-  connects the way a phone does (MTP) instead of showing up as a drive, so
-  Method Reader cannot see one, and its owners are sent to email. Email cannot
-  carry the Kindle file with the best layout, so a new Kindle never gets
-  it today. The plan is a small helper that talks to the Kindle directly,
-  on Mac, Windows and Linux. On a Mac it has to pause the system's photo
-  import service for the length of the copy. A new Kindle is on order for
-  testing.
+In order. Each is one small pull request.
+
+- **The Field Station showcase.** Ship the invented sample script inside the
+  app, show it ready to convert the first time the window opens with nothing
+  else, add Help > Open Sample, and a setting that turns the first-launch
+  sample off.
+- **Moving onto the shared updater.** Replace `sp-update` with
+  `method-update` from method-libs, pinned to a full commit and allowlisted
+  for the crate-age check, so all four apps share one updater.
+- **Secrets only where they are needed.** In the release workflow, set up
+  Apple's signing keys after the build steps, not before, so no build script
+  can reach them.
+- **The release docs' signing-key path.** `docs/release-secrets.md` still
+  names the update-signing key's old file name.
+- **Scene pages, lengths and numbers in the .fdx** (0.14). Built; its pull
+  request opens after 0.13.1.
+- **OSF out.** A third editable script beside Fountain and .fdx, written from
+  the same structure, and `method-reader export --for osf`.
+- **OSF and Fountain in.** The drop area and Choose a script accept .osf and
+  .fountain, so a script from Method Storyteller becomes an e-book without a
+  PDF.
+- **Faster Windows checks.** The Windows test job takes about 37 minutes,
+  half again the other platforms; most of it is building.
 - **A way to report problems without a GitHub account.** Asking for a device
   and saying whether a reader worked need none now: the window sends both.
   Telling us a script converted badly still means opening an issue, which
   excludes most of the people Method Reader is built for.
-- **Keeping `pdfjs-dist` current.** It parses untrusted PDFs, so it is the
-  dependency that matters most.
+- **Copying to new Kindles over USB.** Every Kindle sold since late 2024
+  connects the way a phone does (MTP) instead of showing up as a drive, so
+  Method Reader cannot see one, and its owners are sent to email. Email
+  cannot carry the Kindle file with the best layout. The plan is a small
+  helper that talks to the Kindle directly; it needs a new Kindle to test
+  on.
+- **Keeping the PDF reader's dependencies current.** The parser follows
+  pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
+  on, but the libraries that read untrusted PDFs and images are kept current
+  under the 14-day crate-age check and `cargo deny`.
 
 ## Next
 
@@ -56,7 +112,7 @@ page.
 
 **A library: seeing the books you have made.** The window writes every
 conversion into the library folder and offers no way to look at what is in
-there: its tabs are Convert, Read and Settings. A library view would
+there: its tabs are Convert, Preview and Settings. A library view would
 list your books, reopen one without converting its PDF again, and be the
 obvious home for each script's settings.
 
