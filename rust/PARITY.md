@@ -1276,4 +1276,12 @@ names the check it affects.
   the Rust writer, every other entry kept as the TypeScript compressed it;
   book.mobi and book.azw3, the Rust writers' bytes (the AZW3 built from the
   new book.epub); meta.json, those files' sizes and digests. Nothing else
-  in the dump moved.
+  in the dump moved. Three pinned fingerprints of torture's output moved
+  with them, also with the owner's approval:
+  sp-epub/tests/data/options-golden.json, torture's package.opf,
+  body001.xhtml and preview digests under each of its 20 option sets (60
+  values, nothing for any other fixture); its pin in
+  xtask/tests/generated_files.rs; and in sp-mobi/tests/pictures.rs the
+  torture book's digest with the picture gate open, now what the engine
+  builds from the re-frozen tokens (its comment, "computed with bun",
+  now holds for the images and jpx digests only).
