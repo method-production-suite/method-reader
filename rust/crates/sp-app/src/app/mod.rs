@@ -692,6 +692,10 @@ pub fn viewport() -> egui::ViewportBuilder {
         .with_fullsize_content_view(false)
         .with_title_shown(true)
         .with_titlebar_shown(true)
+        // An empty icon, on purpose: given none, eframe puts egui's logo in
+        // the Dock while the window runs, over the bundle's own icon.icns.
+        // Empty is eframe's documented way to leave the bundle's in place.
+        .with_icon(egui::IconData::default())
 }
 
 /// How the window is opened: [`viewport`], presented on vsync (eframe's
