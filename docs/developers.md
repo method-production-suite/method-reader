@@ -31,12 +31,10 @@ tar -xzf method-reader-cli-linux-x64.tar.gz
 There is no build for Intel Macs: Method Reader supports Macs with Apple
 silicon only.
 
-On a Mac with Apple silicon, Homebrew installs the same converter and keeps
-it current:
-
-```bash
-brew install --formula ssandweiss/tap/method-reader
-```
+If you installed the converter with Homebrew: Method Reader is no longer
+offered through Homebrew, and that copy will not be updated. Run
+`brew uninstall method-reader` (or `brew uninstall screepub`) and use the
+archives above; the app keeps updating itself.
 
 The Mac archive is signed and notarized. `SHA256SUMS` on the release page
 covers the Linux and Windows archives. The Windows build is unsigned, so

@@ -3,7 +3,7 @@
 //! sidecar).
 //!
 //! Two tables, never mixed. [`TARGETS`] is the Linux and Windows set.
-//! [`MAC_TARGETS`] is the Apple silicon tarball the Homebrew formula serves,
+//! [`MAC_TARGETS`] is the Apple silicon tarball,
 //! reachable ONLY with `--mac`, which also demands `--sign` or an explicit
 //! `--unsigned`: an unsigned Mach-O is a Gatekeeper warning for everyone
 //! who downloads it, so a build that never passes `--mac` cannot produce one
@@ -32,8 +32,7 @@ pub struct Target {
     pub packaging: Packaging,
     /// The name the binary has, cargo's and inside the archive alike, so
     /// `tar -xzf` and `Expand-Archive` both drop a runnable `method-reader`
-    /// in the current folder (what the Homebrew formula's `bin.install`
-    /// wants).
+    /// in the current folder.
     pub binary_name: &'static str,
     /// The old name, `screepub`: sp-cli's second binary, which says once on
     /// stderr that the tool was renamed and then does exactly what
@@ -75,8 +74,8 @@ pub const TARGETS: &[Target] = &[
     },
 ];
 
-/// The Homebrew formula's one download: Apple silicon. The archive name is
-/// the tap's (tools/bump-tap.sh), not ours to choose.
+/// The Mac's one command-line download: Apple silicon. The archive name is
+/// sp-release's (`names::CLI_MAC_ARM64`).
 pub const MAC_TARGETS: &[Target] = &[Target {
     id: "macos-arm64",
     rust_triple: "aarch64-apple-darwin",

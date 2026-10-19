@@ -27,6 +27,7 @@ jobs:
   # real KFX conversion skips; the KFX tests that run use Calibre alone.
   engine-calibre:
     runs-on: macos-15
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: rust

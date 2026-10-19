@@ -1237,10 +1237,9 @@ fn the_mac_table_is_exactly_one_row_apple_silicon_in_the_formulas_own_name() {
         )
     );
     assert_eq!(m.packaging, xtask::cli_build::targets::Packaging::TarGz);
-    // The name is the tap's: its bump tool (the bump_tap module, which
-    // was tools/bump-tap.sh) writes it into the formula.
-    assert_eq!(xtask::check_tap::ARM, m.archive_name);
-    assert!(xtask::bump_tap::formula("o/r", "1.0.0", &"a".repeat(64)).contains(m.archive_name));
+    // The name is the release's: release.yml uploads it and the README
+    // links it, both through sp-release's names.
+    assert_eq!(sp_release::names::CLI_MAC_ARM64, m.archive_name);
 }
 
 #[test]

@@ -64,9 +64,7 @@ its own updater, where it is switched on, installs the window in its place.
   manifest (`latest.json`, Mac only) back from GitHub. The Mac `.dmg` is built for Apple silicon only, the
   runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
   last, only the ARM half ran.
-- Weekly: the Homebrew formula and the update manifest still match the
-  newest release, the retired Homebrew cask still says it is retired
-  (deprecated, and disabled from the release after 0.9.0), and
+- Weekly: the update manifest still matches the newest release, and
   the Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
   own reader opening Method Reader's AZW3) still pass against Calibre's newest
   version.

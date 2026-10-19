@@ -4,7 +4,7 @@
 //!
 //! The judgement and the fetching order are sp-release's
 //! ([`sp_release::check_latest`]), the one implementation `sp-release
-//! check-latest` runs in release.yml and tap-freshness.yml. This command
+//! check-latest` runs in release-published.yml and manifest-freshness.yml. This command
 //! keeps the old name and flags for the /release skill, checks against the
 //! key the shipped app trusts ([`sp_update::PUBKEY`]; until the Rust cutover
 //! it read the Tauri window's tauri.conf.json), and fetches through

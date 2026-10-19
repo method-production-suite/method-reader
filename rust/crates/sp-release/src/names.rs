@@ -1,5 +1,5 @@
 //! Every name a release publishes, in one place: the download pages, the
-//! README, the Homebrew cask and formula and the apps' updater
+//! README, the site and the apps' updater
 //! (latest.json's keys) all depend on these. Method Reader was called
 //! Screepub up to 0.12.x; the `LEGACY_*` names below are that release's,
 //! kept only where something must recognise or replace an old install.
@@ -49,7 +49,7 @@ pub const WINDOWS_SETUP: &str = "Method-Reader-windows-x64-setup.exe";
 /// What an installer for another architecture is called: `Method-Reader-linux-<arch>.<ext>`.
 pub const INSTALLER_STEM: &str = "Method-Reader";
 
-/// The command-line archives (the Homebrew formula serves the first).
+/// The command-line archives.
 pub const CLI_MAC_ARM64: &str = "method-reader-cli-macos-arm64.tar.gz";
 pub const CLI_LINUX_X64: &str = "method-reader-cli-linux-x64.tar.gz";
 pub const CLI_LINUX_ARM64: &str = "method-reader-cli-linux-arm64.tar.gz";

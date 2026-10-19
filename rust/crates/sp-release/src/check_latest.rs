@@ -1,11 +1,13 @@
 //! Does the PUBLISHED latest.json describe the newest release? Was
-//! tools/check-latest.ts, same judgement, same words. Run by release.yml's
-//! latest-check job (per release) and tap-freshness.yml (weekly) through
+//! tools/check-latest.ts, same judgement, same words. Run by
+//! release-published.yml's latest-check job (per release) and
+//! manifest-freshness.yml (weekly) through
 //! `sp-release check-latest`, and by `cargo xtask check-latest`, both on
 //! this one implementation. The manifest is read from the exact address
 //! the apps read, GitHub's redirect included, never from a checkout or a
-//! versioned url: the Homebrew tap served 0.3.0 for five releases because
-//! nothing compared the published file to the newest release.
+//! versioned url: a published install channel once served 0.3.0 for five
+//! releases because nothing compared the published file to the newest
+//! release.
 //!
 //! The verdict is good when the manifest names the newest release, points
 //! every platform at an asset that release carries, pastes the exact

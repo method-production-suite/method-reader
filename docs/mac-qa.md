@@ -13,8 +13,10 @@ are gone. For the next QA pass, the same steps are, from `rust/`:
 | `bun src/cli.ts <args>` | `cargo run -p sp-cli --bin screepub -- <args>` |
 | `bun tools/build-sidecar.ts --host`, then `cargo run` in `desktop/src-tauri` | `cargo run -p sp-app` (the engine is linked in; there is no sidecar) |
 | `bun tools/verify-signing.ts --dmg <dmg> --expect <coexist or handover>` | `cargo xtask verify-signing --dmg <dmg> --expect <coexist or handover>` |
-| `tools/check-tap.sh` | `cargo xtask check-tap` |
 | `bun tools/capture-screens.ts` | `cargo xtask capture-screens` |
+
+The tap steps below have no replacement: the tap was retired on
+2026-10-18, and people install from the release's own downloads.
 
 The window's update memory moved too: the Rust window keeps it in its own
 storage, and on its first run copies it once from the Tauri window's WebKit

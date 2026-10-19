@@ -1,5 +1,5 @@
 //! Every `cargo xtask` command answers `--help` and `-h` with its own usage
-//! and exits 0, and nothing else runs: once check-tap took `--help` for a
+//! and exits 0, and nothing else runs: once a command took `--help` for a
 //! version, and capture-screens, mobi-picture-probe, bump-version and
 //! release-notes each did something other than print their usage.
 
@@ -66,7 +66,7 @@ fn help_anywhere_in_the_arguments_still_only_prints_the_usage() {
         vec!["bump-version", "9.9.9", "--repo", repo, "--help"],
         vec!["release-notes", "v0.0.1", "-h"],
         vec!["mobi-picture-probe", "--out", repo, "--help"],
-        vec!["check-tap", "0.11.1", "--help"],
+        vec!["check-latest", "--version", "v0.11.1", "--help"],
         vec!["capture-screens", "--only", "drop", "-h"],
     ] {
         let out = xtask(&args, sb.path());
@@ -78,17 +78,6 @@ fn help_anywhere_in_the_arguments_still_only_prints_the_usage() {
         );
     }
     assert_eq!(std::fs::read_dir(sb.path()).unwrap().count(), 0);
-}
-
-#[test]
-fn check_tap_takes_no_flag_for_a_version() {
-    // Called directly, not through `cargo xtask`'s own --help handling.
-    assert_eq!(xtask::check_tap::main(&["--help".to_string()]), 0);
-    assert_eq!(xtask::check_tap::main(&["--verbose".to_string()]), 2);
-    assert_eq!(
-        xtask::check_tap::main(&["0.11.1".to_string(), "0.11.0".to_string()]),
-        2
-    );
 }
 
 #[test]
