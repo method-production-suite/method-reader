@@ -46,13 +46,22 @@ fn verb_of(name: &str) -> Option<&'static str> {
 /// The help lines changed on purpose since the TypeScript, as (the
 /// TypeScript's line, the line now), each with its reason. The parity
 /// table's help rows were moved with `cargo xtask parity --accept`.
-const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[(
-    "USAGE",
-    "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
-    "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
-    // There is no pdf.js in the Rust reader, so --debug has no warnings to
-    // let through (PARITY.md, Decisions: "No pdf.js warnings").
-)];
+const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
+    (
+        "USAGE",
+        "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
+        "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
+        // There is no pdf.js in the Rust reader, so --debug has no warnings to
+        // let through (PARITY.md, Decisions: "No pdf.js warnings").
+    ),
+    (
+        "USAGE",
+        " (offline)\n\nA verb is only a verb when no file of that name exists",
+        " (offline)\n  method-reader mcp [--root <dir>]... [--read-only]\n                                            these tools for an MCP client, over stdio\n\nA verb is only a verb when no file of that name exists",
+        // The MCP server is Rust's alone (PARITY.md, Decisions: "method-reader
+        // mcp"): the TypeScript had none to list.
+    ),
+];
 
 /// The TypeScript's text with the product's name as it is now: Screepub
 /// became Method Reader in 0.13, and the command `screepub` became
