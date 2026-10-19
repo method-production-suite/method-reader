@@ -94,4 +94,15 @@ fn child_converts() {
         engine.in_flight().load(std::sync::atomic::Ordering::SeqCst),
         0
     );
+
+    // The window's Convert is a script opened: the engine put the PDF the
+    // person chose (not the library copy) on the suite launcher's list.
+    let config = std::env::var("METHOD_READER_CONFIG_DIR").unwrap();
+    let recent: Value = serde_json::from_str(
+        &std::fs::read_to_string(std::path::Path::new(&config).join("recent.json"))
+            .expect("a recent.json in the data folder"),
+    )
+    .unwrap();
+    assert_eq!(recent.as_array().map(Vec::len), Some(1), "{recent}");
+    assert_eq!(recent[0]["path"], pdf.to_string_lossy().as_ref());
 }

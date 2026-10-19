@@ -586,6 +586,22 @@ fn finish(
         }
     }
 
+    // The suite launcher's recent list (sp_engine::recent decides what
+    // counts): after every write, and never a reason to fail.
+    if let Err(e) = sp_engine::recent::record_conversion(
+        host_platform(),
+        &Env::process(),
+        input,
+        f.library,
+        sp_engine::recent::now_seconds(),
+    ) {
+        eprint_line(&format!(
+            "method-reader: could not add this script to {}: {}",
+            sp_engine::recent::RECENT_FILE,
+            e.message()
+        ));
+    }
+
     let sp = result.screenplay.as_ref();
     if io.json {
         let mut m = Map::new();

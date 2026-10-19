@@ -191,6 +191,25 @@ The app settings live in one small file outside the library:
 (`~/.config/method-reader/settings.json` by default). `METHOD_READER_CONFIG_DIR`
 overrides that folder everywhere.
 
+The same data folder holds `recent.json`, the scripts you opened, newest
+first, for the Method suite's launcher:
+
+```json
+[{"path": "/Users/you/Scripts/Field Notes.pdf", "opened": "2026-10-18T09:34:05Z"}]
+```
+
+`path` is the file you chose or dropped (never the library's copy), and
+`opened` is an RFC 3339 time in UTC. A `--library` conversion records an
+entry, which is every Convert in the window; a conversion with `-o` or
+beside its input does not, and neither does anything inside the data
+folder itself, so the built-in sample is never listed. The list keeps at
+most 20 entries, one per path: a script opened again moves to the top. An
+entry stays when its file is gone (the launcher shows it greyed), and keys
+another program added to an entry are kept. A missing or damaged
+`recent.json` reads as empty and is replaced on the next write, which goes
+through a temp file and a rename. A write that fails never fails the
+conversion: it is noted on stderr and the book is made as usual.
+
 ## Devices and routes
 
 ```bash
