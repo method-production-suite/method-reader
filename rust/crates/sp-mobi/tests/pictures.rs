@@ -75,7 +75,7 @@ fn with_the_gate_open_each_picture_book_is_the_typescripts_byte_for_byte() {
         ),
         (
             "torture",
-            "a719de4da097a2c86a4a8752ef6f8574da8e7206480c9736d12c2c59a2df6800",
+            "36ac0a9bfb637b478a8d636d2c35e0b42cc407a75e988b552cdfb76e7277a493",
         ),
     ] {
         assert_eq!(sha256_hex(&open_book(name).0), want, "{name}");

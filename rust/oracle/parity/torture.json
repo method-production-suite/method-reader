@@ -64,7 +64,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -89,7 +89,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -119,33 +119,33 @@
         ]
       },
       "out/book.mobi": {
-        "header": "2546b199f548cea3",
+        "header": "33517282b8061077",
         "records": [
-          "e421e60c167dd360",
+          "27421f3938c23413",
           "e16098d1061df484",
-          "4fc0d12de14f2001",
-          "fc8d90e10ec8cc83",
-          "e70b2414f09af5a3",
+          "83939595007fe4d1",
+          "d8fb1bad92bbceac",
+          "642e187dd93bb461",
           "17d828b58581e73e",
-          "388d49981251f903",
+          "b807cd03ab164377",
           "3712d3408f89530c"
         ]
       },
       "out/book.azw3": {
-        "header": "47a9c5befcfdf4ce",
+        "header": "9044678b615d8d63",
         "records": [
-          "c4228e9ce87d1e67",
+          "f9d0c20ff147f2b0",
           "c174cb108d9e0d73",
           "bded72393b46efe3",
-          "460cd0a897d4bfff",
-          "095cb2b00641d309",
-          "2e94006b8fe0e6b3",
-          "e99f3735270082e1",
-          "472bfb108acafd0c",
-          "e0f00f530659ba36",
-          "96a296d224f285c6",
-          "dcbd73ca23e78c54",
-          "10ca3165c96295f6",
+          "a390a35c57e27621",
+          "3b4b1e63082a9bcc",
+          "5d75fd9fcc844648",
+          "27ed1bb92f5acb8e",
+          "9e60908e4173c3b6",
+          "9c4b5cf869841dcf",
+          "709e80c88487a241",
+          "0e3ffb9d08ec9ff7",
+          "9a788052bb8c3fb1",
           "9373d659d6fcfe62",
           "4cab30ce69cb85ee",
           "52784115a67f9585",
@@ -153,29 +153,29 @@
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "e16ee937fa88ea07",
-          "8a6bcdf8c624a418",
+          "c758c4184db2be70",
           "d9d81ce90c7496a8",
           "px:4372fb4294d510ac",
           "px:9a2cf91793017313",
           "px:09632483eff5dadc",
           "px:4d6c10f020813edf",
-          "663224d1071da31d",
+          "9681c727c1b4ba6d",
           "17d828b58581e73e",
-          "5cb2d624b9923ee3",
+          "f9e324e7c5b68d74",
           "3712d3408f89530c"
         ]
       },
       "out/book.fdx": {
-        "text": "1714d9b0d2f9c8a1"
+        "text": "e90feb589dd81ae4"
       },
       "out/book.preview.html": {
-        "html": "1602ee852c6953e2"
+        "html": "5b8912c0354ba1b3"
       },
       "out/book.elements.json": {
-        "json": "543fe3ca66815c0d"
+        "json": "ca8aea0a27984fe7"
       },
       "out/script.fountain": {
-        "text": "afdbe6681fc5cfd2"
+        "text": "49b64bc396df343b"
       },
       "out/script.images": {
         "folder": {
@@ -242,7 +242,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "5e1f46bf173755f3"
+            "content": "a39908d7b84c94a5"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -267,7 +267,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "3ded3ba70d75f8f9"
+            "content": "1b2bf7ba8110cda9"
           },
           {
             "name": "OEBPS/images/",
@@ -297,33 +297,32 @@
         ]
       },
       "out/book.mobi": {
-        "header": "bada489056489b6f",
+        "header": "19f3752508d4df09",
         "records": [
-          "05d7c575bb99ceb3",
+          "9e61181a51bafb59",
           "e16098d1061df484",
-          "2074bebebdad41ac",
-          "7f6883292182890a",
-          "ad8c686bc1979abd",
+          "529a74b8f863427c",
+          "85e1bf7304a1e6ed",
+          "ba236bf14a96d712",
           "17d828b58581e73e",
-          "cfe48d769e1ea9ad",
+          "daf927a6daed902e",
           "3712d3408f89530c"
         ]
       },
       "out/book.azw3": {
-        "header": "36751328ed7d7ee6",
+        "header": "da3d89a08e9d4057",
         "records": [
-          "d9d5875cb3914685",
+          "ec81c78cee951982",
           "c174cb108d9e0d73",
           "bded72393b46efe3",
-          "ff43acb9e9501247",
-          "67ef1342515bc221",
-          "bd9a332aac1cc712",
-          "57da226d068ffbd8",
-          "8935beb25e3b28d1",
-          "9ba2ae92630d17d2",
-          "96a296d224f285c6",
-          "ba9566ba8bcb6a40",
-          "1b5880591ed0f65a",
+          "a1fb4a46d03389a6",
+          "a1abaccb493b4b82",
+          "591630d78cf3ce4a",
+          "1886910413bdbaa6",
+          "7a880419cb338d19",
+          "97555d507448708e",
+          "8aa6a9dde830c990",
+          "96d7438cf4d4b844",
           "9373d659d6fcfe62",
           "4cab30ce69cb85ee",
           "52784115a67f9585",
@@ -331,29 +330,29 @@
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "e16ee937fa88ea07",
-          "74309aa63434e05e",
+          "5716dd2ca4b41668",
           "d9d81ce90c7496a8",
           "px:4372fb4294d510ac",
           "px:9a2cf91793017313",
           "px:09632483eff5dadc",
           "px:4d6c10f020813edf",
-          "c213a6efa1e54aa9",
+          "e12333260daabb20",
           "17d828b58581e73e",
-          "aafcd415fb41e92a",
+          "729b699d6fd8fd79",
           "3712d3408f89530c"
         ]
       },
       "out/book.fdx": {
-        "text": "d4efd67594d910ef"
+        "text": "4a7dd5b5efa8f818"
       },
       "out/book.preview.html": {
-        "html": "25efb322c3438620"
+        "html": "e2da6cbd0154be79"
       },
       "out/book.elements.json": {
-        "json": "543fe3ca66815c0d"
+        "json": "ca8aea0a27984fe7"
       },
       "out/script.fountain": {
-        "text": "8f8ec9af720a5f84"
+        "text": "6c35f02a09ea3cdf"
       },
       "out/script.images": {
         "folder": {
@@ -395,7 +394,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -420,7 +419,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -450,20 +449,20 @@
         ]
       },
       "out/book.mobi": {
-        "header": "2546b199f548cea3",
+        "header": "33517282b8061077",
         "records": [
-          "e421e60c167dd360",
+          "27421f3938c23413",
           "e16098d1061df484",
-          "4fc0d12de14f2001",
-          "fc8d90e10ec8cc83",
-          "e70b2414f09af5a3",
+          "83939595007fe4d1",
+          "d8fb1bad92bbceac",
+          "642e187dd93bb461",
           "17d828b58581e73e",
-          "388d49981251f903",
+          "b807cd03ab164377",
           "3712d3408f89530c"
         ]
       },
       "out/book.fountain": {
-        "text": "afdbe6681fc5cfd2"
+        "text": "49b64bc396df343b"
       },
       "out/book.images": {
         "folder": {
@@ -519,7 +518,7 @@
       "spacingRepairs": 0,
       "epubPath": "$WORK/out/book.epub",
       "imageCount": 4,
-      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. ARCHIVE BASEMENT - NIGHT</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* A picture carried out of the source PDF (registry #19). These rules are\n   only in a book that shows one. No keep, on purpose: this box holds one\n   line box, so there is nothing inside it to keep together. The reasons in\n   full are in src/epub/css.ts, above screenplayCss; this file is generated\n   from it, so that header is not here. */\n.figure {\n  margin: 1em 0;\n  text-align: center;\n}\n\n/* Only the width is authored, so the height follows the aspect ratio. A\n   defensive restatement of the initial value, against a reading system\n   whose own stylesheet sets a height on images. */\n.figure img {\n  height: auto;\n}\n\n/* The width the picture had on the printed page, as a share of the text\n   column to the nearest five. A class rather than an inline style, which\n   the reader preview refuses. */\np.w5 img { width: 5%; }\np.w10 img { width: 10%; }\np.w15 img { width: 15%; }\np.w20 img { width: 20%; }\np.w25 img { width: 25%; }\np.w30 img { width: 30%; }\np.w35 img { width: 35%; }\np.w40 img { width: 40%; }\np.w45 img { width: 45%; }\np.w50 img { width: 50%; }\np.w55 img { width: 55%; }\np.w60 img { width: 60%; }\np.w65 img { width: 65%; }\np.w70 img { width: 70%; }\np.w75 img { width: 75%; }\np.w80 img { width: 80%; }\np.w85 img { width: 85%; }\np.w90 img { width: 90%; }\np.w95 img { width: 95%; }\np.w100 img { width: 100%; }\n\n/* A plate that filled its printed page gets a page here too: before puts it\n   at the top of one, after stops the next paragraph sharing what is left.\n   No margin: the plate owns its page, and a top margin kept after the break\n   is what pushes a page-tall plate onto the next page and leaves a blank\n   one in front of it. */\np.figure-full {\n  margin: 0;\n  page-break-before: always;\n  page-break-after: always;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">Steel shelving to the ceiling. A single bulb, swinging.</p>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\">EXT. LOADING DOCK - CONTINUOUS</h2>\n<p class=\"action\">Rain on corrugated tin, loud enough to argue over.</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\">INT./EXT. DELIVERY VAN - MOVING - LATER</h2>\n<p class=\"action\">The wipers lose.</p>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\">INT. ARCHIVE BASEMENT - RESHELVING - DAY</h2>\n<p class=\"action\">A dual-margin scene number, the shooting-script shape: the same number printed at both margins.</p>\n</section>\n<section class=\"scene\" id=\"sc-005\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">ODILE sets down a box that is heavier than it looks.</p>\n<p class=\"mini-slug\">INDEX CARDS</p>\n<p class=\"action\">Handwriting from four decades, none of it consistent.</p>\n<p class=\"mini-slug\">LEDGER, LATER</p>\n<p class=\"action\">One column, ruled in pencil, never once balanced.</p>\n<p class=\"transition\">CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-006\">\n<h2 class=\"scene-heading\">INT. STAIRWELL - CONTINUOUS</h2>\n<p class=\"action\">Footsteps going down two at a time.</p>\n<p class=\"transition\">DISSOLVE TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-007\">\n<h2 class=\"scene-heading\">EXT. ARCHIVE - NIGHT</h2>\n<p class=\"action\">The building keeps its lights on for nobody.</p>\n<p class=\"transition\">SMASH CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-008\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">Nobody is where their voice says they are.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">The period-full spelling, the one the manuals print.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"parenthetical\">(V.O)</p>\n<p class=\"dialogue\">And the one writers actually type, missing its period.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"parenthetical\">(O.C)</p>\n<p class=\"dialogue\">Off camera, also missing its period.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">A continued cue, carrying its extension.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DR. E. T. MARCHETTI</p>\n<p class=\"dialogue\">Dotted abbreviations sitting inside a character name.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY (V.O.)</p>\n<p class=\"dialogue\">A hybrid: name and extension on one cue line.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-009\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">The box is open now. It was not worth the trip.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"parenthetical\">(quietly)</p>\n<p class=\"dialogue\">A leading parenthetical, before a word is spoken.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">A line, and then a beat in the middle of it.</p>\n<p class=\"parenthetical\">(reconsidering)</p>\n<p class=\"dialogue\">And then the rest of it, after the beat.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"parenthetical\">(standing)</p>\n<p class=\"parenthetical\">(then, to WREN)</p>\n<p class=\"dialogue\">Two stacked parentheticals before any dialogue at all.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Short.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-010\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg5\" title=\"5\" class=\"page-marker\">5.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">They have been at this for six hours.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">No.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Yes.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">No.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">MORE-ANCHOR. This speech begins near the foot of the page on purpose, so that it runs over the break and has to be put back together on the other side. It keeps going well past the boundary so the rejoin has something substantial to work with, and so that the same speech doubles as the long-dialogue case the coverage table asks for, rather than spending two constructions on what is really one shape.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-011\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg7\" title=\"7\" class=\"page-marker\">7.</span>INT. CONSERVATION BENCH - DAY</h2>\n<p class=\"action\">The label reads <strong>DO NOT LAMINATE</strong>, twice.</p>\n<p class=\"action\">She says it <em>again</em>, and this time somebody writes it down.</p>\n<p class=\"action\">The stamp is <strong><em>both bold and italic</em></strong> at once.</p>\n<p class=\"action\">A styled run that <strong>crosses the wrap boundary because it keeps</strong> <strong>going for long enough to need a second line</strong>, and then stops.</p>\n<p class=\"action\">Punctuation only, styled by itself.</p>\n<p class=\"action\">This word is <span class=\"underline\">underlined</span> with drawn vector art.</p>\n<p class=\"action\">This phrase is struck through, above the baseline.</p>\n<p class=\"action\">A table rules a border below this cell, further down.</p>\n<p class=\"action\">A page-wide rule crosses this whole line of text.</p>\n<p class=\"action fmt-sans\">CHYRON: EVERY NAME HERE IS INVENTED.</p>\n<p class=\"action fmt-minus1\">A footnote, set smaller than the body.</p>\n<p class=\"action fmt-plus1\">The index card, enlarged for the reader.</p>\n<p class=\"action fmt-plus2\">A SIGN, VERY LARGE INDEED</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue fmt-sans\">A text message, in the phone’s own face.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Dialogue can be <strong>bold</strong> too.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">And <em>italic</em>, which is the common one.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-012\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg8\" title=\"8\" class=\"page-marker\">8.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">They speak over each other.</p>\n<table class=\"dual-dialogue\">\n<tr>\n<td>\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">LEFTMARK. Short, on the left.</p>\n</td>\n<td>\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">RIGHTMARK. Short, on the right.</p>\n</td>\n</tr>\n</table>\n<p class=\"action\">And again, at length.</p>\n<table class=\"dual-dialogue\">\n<tr>\n<td>\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">This column runs long</p>\n</td>\n<td>\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">And this one answers at</p>\n</td>\n</tr>\n</table>\n<p class=\"action\">enough that the taller of similar length so neither the two passes twelve column is trivially short, estimated rendered lines, because the fallback which is the threshold measures the taller of the where the side-by-side pair and a stub would table gives up and both never reach it. speeches become ordinary sequential dialogue instead.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg9\" title=\"9\" class=\"page-marker\">9.</span>BUNNY</p>\n<p class=\"dialogue\">Speech one. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech five. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech nine. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech ten. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg10\" title=\"10\" class=\"page-marker\">10.</span>ODILE</p>\n<p class=\"dialogue\">Speech eleven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twelve. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirteen. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech fourteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech fifteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech sixteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech seventeen. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech eighteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg11\" title=\"11\" class=\"page-marker\">11.</span>WREN</p>\n<p class=\"dialogue\">Speech twenty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech twenty-one. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech twenty-two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech twenty-three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twenty-four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech twenty-five. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech twenty-six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech twenty-seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twenty-eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg12\" title=\"12\" class=\"page-marker\">12.</span>BUNNY</p>\n<p class=\"dialogue\">Speech twenty-nine. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech thirty. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-one. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech thirty-two. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirty-three. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech thirty-four. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-five. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech thirty-six. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirty-seven. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg13\" title=\"13\" class=\"page-marker\">13.</span>CASSIUS</p>\n<p class=\"dialogue\">Speech thirty-eight. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-013\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg14\" title=\"14\" class=\"page-marker\">14.</span>INT. ART DEPARTMENT - DAY</h2>\n<p class=\"figure w40\"><img src=\"data:image/png;base64,<pixels 3bc24c163335c1ae>\" alt=\"Illustration\"/></p>\n<p class=\"action\">WREN pins a storyboard panel to the wall, printed small.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Under half a column wide, and not a thumbnail.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-014\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg15\" title=\"15\" class=\"page-marker\">15.</span>INT. MAP ROOM - NIGHT</h2>\n<p class=\"figure w100 figure-full\"><img src=\"data:image/png;base64,<pixels b609daedae08b5d2>\" alt=\"Illustration\"/></p>\n</section>\n<section class=\"scene\" id=\"sc-015\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg16\" title=\"16\" class=\"page-marker\">16.</span>INT. FIRE STAIRS - CONTINUOUS</h2>\n<p class=\"action\">A production still, printed tall.</p>\n<p class=\"figure w55\"><img src=\"data:image/png;base64,<pixels af74e7b478d23b67>\" alt=\"Illustration\"/></p>\n</section>\n</body>\n</html>\n"
+      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. ARCHIVE BASEMENT - NIGHT</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* A picture carried out of the source PDF (registry #19). These rules are\n   only in a book that shows one. No keep, on purpose: this box holds one\n   line box, so there is nothing inside it to keep together. The reasons in\n   full are in src/epub/css.ts, above screenplayCss; this file is generated\n   from it, so that header is not here. */\n.figure {\n  margin: 1em 0;\n  text-align: center;\n}\n\n/* Only the width is authored, so the height follows the aspect ratio. A\n   defensive restatement of the initial value, against a reading system\n   whose own stylesheet sets a height on images. */\n.figure img {\n  height: auto;\n}\n\n/* The width the picture had on the printed page, as a share of the text\n   column to the nearest five. A class rather than an inline style, which\n   the reader preview refuses. */\np.w5 img { width: 5%; }\np.w10 img { width: 10%; }\np.w15 img { width: 15%; }\np.w20 img { width: 20%; }\np.w25 img { width: 25%; }\np.w30 img { width: 30%; }\np.w35 img { width: 35%; }\np.w40 img { width: 40%; }\np.w45 img { width: 45%; }\np.w50 img { width: 50%; }\np.w55 img { width: 55%; }\np.w60 img { width: 60%; }\np.w65 img { width: 65%; }\np.w70 img { width: 70%; }\np.w75 img { width: 75%; }\np.w80 img { width: 80%; }\np.w85 img { width: 85%; }\np.w90 img { width: 90%; }\np.w95 img { width: 95%; }\np.w100 img { width: 100%; }\n\n/* A plate that filled its printed page gets a page here too: before puts it\n   at the top of one, after stops the next paragraph sharing what is left.\n   No margin: the plate owns its page, and a top margin kept after the break\n   is what pushes a page-tall plate onto the next page and leaves a blank\n   one in front of it. */\np.figure-full {\n  margin: 0;\n  page-break-before: always;\n  page-break-after: always;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">Steel shelving to the ceiling. A single bulb, swinging.</p>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\">EXT. LOADING DOCK - CONTINUOUS</h2>\n<p class=\"action\">Rain on corrugated tin, loud enough to argue over.</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\">INT./EXT. DELIVERY VAN - MOVING - LATER</h2>\n<p class=\"action\">The wipers lose.</p>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\">INT. ARCHIVE BASEMENT - RESHELVING - DAY</h2>\n<p class=\"action\">A dual-margin scene number, the shooting-script shape: the same number printed at both margins.</p>\n</section>\n<section class=\"scene\" id=\"sc-005\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">ODILE sets down a box that is heavier than it looks.</p>\n<p class=\"mini-slug\">INDEX CARDS</p>\n<p class=\"action\">Handwriting from four decades, none of it consistent.</p>\n<p class=\"mini-slug\">LEDGER, LATER</p>\n<p class=\"action\">One column, ruled in pencil, never once balanced.</p>\n<p class=\"transition\">CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-006\">\n<h2 class=\"scene-heading\">INT. STAIRWELL - CONTINUOUS</h2>\n<p class=\"action\">Footsteps going down two at a time.</p>\n<p class=\"transition\">DISSOLVE TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-007\">\n<h2 class=\"scene-heading\">EXT. ARCHIVE - NIGHT</h2>\n<p class=\"action\">The building keeps its lights on for nobody.</p>\n<p class=\"transition\">SMASH CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-008\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">Nobody is where their voice says they are.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">The period-full spelling, the one the manuals print.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"parenthetical\">(V.O)</p>\n<p class=\"dialogue\">And the one writers actually type, missing its period.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"parenthetical\">(O.C)</p>\n<p class=\"dialogue\">Off camera, also missing its period.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">A continued cue, carrying its extension.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DR. E. T. MARCHETTI</p>\n<p class=\"dialogue\">Dotted abbreviations sitting inside a character name.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY (V.O.)</p>\n<p class=\"dialogue\">A hybrid: name and extension on one cue line.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-009\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">The box is open now. It was not worth the trip.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"parenthetical\">(quietly)</p>\n<p class=\"dialogue\">A leading parenthetical, before a word is spoken.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">A line, and then a beat in the middle of it.</p>\n<p class=\"parenthetical\">(reconsidering)</p>\n<p class=\"dialogue\">And then the rest of it, after the beat.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"parenthetical\">(standing)</p>\n<p class=\"parenthetical\">(then, to WREN)</p>\n<p class=\"dialogue\">Two stacked parentheticals before any dialogue at all.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Short.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-010\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg5\" title=\"5\" class=\"page-marker\">5.</span>INT. ARCHIVE BASEMENT - NIGHT</h2>\n<p class=\"action\">They have been at this for six hours.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">No.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Yes.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">No.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">MORE-ANCHOR. This speech begins near the foot of the page on purpose, so that it runs over the break and has to be put back together on the other side. It keeps going well past the boundary so the rejoin has something substantial to work with, and so that the same speech doubles as the long-dialogue case the coverage table asks for, rather than spending two constructions on what is really one shape.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-011\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg7\" title=\"7\" class=\"page-marker\">7.</span>INT. CONSERVATION BENCH - DAY</h2>\n<p class=\"action\">The label reads <strong>DO NOT LAMINATE</strong>, twice.</p>\n<p class=\"action\">She says it <em>again</em>, and this time somebody writes it down.</p>\n<p class=\"action\">The stamp is <strong><em>both bold and italic</em></strong> at once.</p>\n<p class=\"action\">A styled run that <strong>crosses the wrap boundary because it keeps</strong> <strong>going for long enough to need a second line</strong>, and then stops.</p>\n<p class=\"action\">Punctuation only, styled by itself.</p>\n<p class=\"action\">This word is <span class=\"underline\">underlined</span> with drawn vector art.</p>\n<p class=\"action\">This phrase is struck through, above the baseline.</p>\n<p class=\"action\">A table rules a border below this cell, further down.</p>\n<p class=\"action\">A page-wide rule crosses this whole line of text.</p>\n<p class=\"action fmt-sans\">CHYRON: EVERY NAME HERE IS INVENTED.</p>\n<p class=\"action fmt-minus1\">A footnote, set smaller than the body.</p>\n<p class=\"action fmt-plus1\">The index card, enlarged for the reader.</p>\n<p class=\"action fmt-plus2\">A SIGN, VERY LARGE INDEED</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue fmt-sans\">A text message, in the phone’s own face.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Dialogue can be <strong>bold</strong> too.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">And <em>italic</em>, which is the common one.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-012\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg8\" title=\"8\" class=\"page-marker\">8.</span>INT. READING ROOM - DAY</h2>\n<p class=\"action\">They speak over each other.</p>\n<table class=\"dual-dialogue\">\n<tr>\n<td>\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">LEFTMARK. Short, on the left.</p>\n</td>\n<td>\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">RIGHTMARK. Short, on the right.</p>\n</td>\n</tr>\n</table>\n<p class=\"action\">And again, at length.</p>\n<table class=\"dual-dialogue\">\n<tr>\n<td>\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">This column runs long enough that the taller of the two passes twelve estimated rendered lines, which is the threshold where the side-by-side table gives up and both speeches become ordinary sequential dialogue instead.</p>\n</td>\n<td>\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">And this one answers at similar length so neither column is trivially short, because the fallback measures the taller of the pair and a stub would never reach it.</p>\n</td>\n</tr>\n</table>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg9\" title=\"9\" class=\"page-marker\">9.</span>BUNNY</p>\n<p class=\"dialogue\">Speech one. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech five. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech nine. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech ten. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg10\" title=\"10\" class=\"page-marker\">10.</span>ODILE</p>\n<p class=\"dialogue\">Speech eleven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twelve. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirteen. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech fourteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech fifteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech sixteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech seventeen. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech eighteen. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg11\" title=\"11\" class=\"page-marker\">11.</span>WREN</p>\n<p class=\"dialogue\">Speech twenty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech twenty-one. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech twenty-two. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech twenty-three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twenty-four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech twenty-five. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech twenty-six. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech twenty-seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech twenty-eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg12\" title=\"12\" class=\"page-marker\">12.</span>BUNNY</p>\n<p class=\"dialogue\">Speech twenty-nine. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech thirty. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-one. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech thirty-two. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirty-three. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">CASSIUS</p>\n<p class=\"dialogue\">Speech thirty-four. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-five. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech thirty-six. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">BUNNY</p>\n<p class=\"dialogue\">Speech thirty-seven. Short.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg13\" title=\"13\" class=\"page-marker\">13.</span>CASSIUS</p>\n<p class=\"dialogue\">Speech thirty-eight. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">ODILE</p>\n<p class=\"dialogue\">Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-013\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg14\" title=\"14\" class=\"page-marker\">14.</span>INT. ART DEPARTMENT - DAY</h2>\n<p class=\"figure w40\"><img src=\"data:image/png;base64,<pixels 3bc24c163335c1ae>\" alt=\"Illustration\"/></p>\n<p class=\"action\">WREN pins a storyboard panel to the wall, printed small.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Under half a column wide, and not a thumbnail.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-014\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg15\" title=\"15\" class=\"page-marker\">15.</span>INT. MAP ROOM - NIGHT</h2>\n<p class=\"figure w100 figure-full\"><img src=\"data:image/png;base64,<pixels b609daedae08b5d2>\" alt=\"Illustration\"/></p>\n</section>\n<section class=\"scene\" id=\"sc-015\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg16\" title=\"16\" class=\"page-marker\">16.</span>INT. FIRE STAIRS - CONTINUOUS</h2>\n<p class=\"action\">A production still, printed tall.</p>\n<p class=\"figure w55\"><img src=\"data:image/png;base64,<pixels af74e7b478d23b67>\" alt=\"Illustration\"/></p>\n</section>\n</body>\n</html>\n"
     },
     "stderr": "",
     "outputs": {}
@@ -577,7 +576,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -602,7 +601,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -632,7 +631,7 @@
             ]
           },
           "torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -647,15 +646,15 @@
             "file": "px:4d6c10f020813edf"
           },
           "torture.mobi": {
-            "header": "2546b199f548cea3",
+            "header": "33517282b8061077",
             "records": [
-              "e421e60c167dd360",
+              "27421f3938c23413",
               "e16098d1061df484",
-              "4fc0d12de14f2001",
-              "fc8d90e10ec8cc83",
-              "e70b2414f09af5a3",
+              "83939595007fe4d1",
+              "d8fb1bad92bbceac",
+              "642e187dd93bb461",
               "17d828b58581e73e",
-              "388d49981251f903",
+              "b807cd03ab164377",
               "3712d3408f89530c"
             ]
           },
@@ -721,7 +720,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -746,7 +745,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -776,7 +775,7 @@
             ]
           },
           "torture/torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture/torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -854,7 +853,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -879,7 +878,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -909,7 +908,7 @@
             ]
           },
           "torture/torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture/torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -927,15 +926,15 @@
             "json": "577898c1941870e6"
           },
           "torture/torture.mobi": {
-            "header": "2546b199f548cea3",
+            "header": "33517282b8061077",
             "records": [
-              "e421e60c167dd360",
+              "27421f3938c23413",
               "e16098d1061df484",
-              "4fc0d12de14f2001",
-              "fc8d90e10ec8cc83",
-              "e70b2414f09af5a3",
+              "83939595007fe4d1",
+              "d8fb1bad92bbceac",
+              "642e187dd93bb461",
               "17d828b58581e73e",
-              "388d49981251f903",
+              "b807cd03ab164377",
               "3712d3408f89530c"
             ]
           }
@@ -999,7 +998,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1024,7 +1023,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -1054,7 +1053,7 @@
             ]
           },
           "torture/torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture/torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -1129,7 +1128,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1154,7 +1153,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -1235,7 +1234,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1260,7 +1259,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -1346,7 +1345,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1371,7 +1370,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -1401,7 +1400,7 @@
             ]
           },
           "torture/torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture/torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -1484,7 +1483,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1509,7 +1508,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -1539,7 +1538,7 @@
             ]
           },
           "torture/torture.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "torture/torture.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -1607,7 +1606,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "780babaf973208c7"
+            "content": "4517f6258bf13354"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1627,7 +1626,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "ad01965636e3a74a"
+            "content": "3d0fd0a3393ec5a3"
           },
           {
             "name": "OEBPS/images/",
@@ -1657,7 +1656,7 @@
         ]
       },
       "out/book.fountain": {
-        "text": "afdbe6681fc5cfd2"
+        "text": "49b64bc396df343b"
       }
     }
   },
@@ -1712,7 +1711,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "ad6a7c0c49144f57"
+            "content": "a3602ffd2118bcc6"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1737,7 +1736,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -1767,20 +1766,20 @@
         ]
       },
       "out/book.mobi": {
-        "header": "391058eb9829c1b2",
+        "header": "60f959fb73f8f16b",
         "records": [
-          "a49d4cbb2e796837",
+          "22fd199799df7dfb",
           "f57e9c6ae645111a",
-          "625abe89a5c3783e",
-          "1da1cfe2033c63e4",
-          "9876af68e135f560",
+          "dbc444066edb6e8e",
+          "bc7ce264b89cf42b",
+          "94890602ad60d166",
           "17d828b58581e73e",
-          "69fe86e273393d59",
+          "cd70f5f91a365085",
           "3712d3408f89530c"
         ]
       },
       "out/book.fountain": {
-        "text": "6009a18c1879561d"
+        "text": "2558296f77977263"
       }
     }
   },
@@ -1832,7 +1831,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -1857,7 +1856,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -1940,7 +1939,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "d13f1848dbb252bc"
+                "content": "8d82146c23e6111a"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -1965,12 +1964,12 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "1602f85eea9c0567"
+                "content": "ab37fcb1594cc1cb"
               }
             ]
           },
           "book.fountain": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           },
           "book.images/p001-01.png": {
             "file": "px:4372fb4294d510ac"
@@ -2030,7 +2029,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "12b53fc7b32ff6c3"
+            "content": "a6718d0fcbedc11c"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -2055,7 +2054,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "4bfa3160d99a3bf6"
+            "content": "0ad02d543a30c5f8"
           },
           {
             "name": "OEBPS/images/",
@@ -2085,33 +2084,33 @@
         ]
       },
       "out/f.mobi": {
-        "header": "2546b199f548cea3",
+        "header": "33517282b8061077",
         "records": [
-          "e421e60c167dd360",
+          "27421f3938c23413",
           "e16098d1061df484",
-          "4fc0d12de14f2001",
-          "fc8d90e10ec8cc83",
-          "e70b2414f09af5a3",
+          "83939595007fe4d1",
+          "d8fb1bad92bbceac",
+          "642e187dd93bb461",
           "17d828b58581e73e",
-          "388d49981251f903",
+          "b807cd03ab164377",
           "3712d3408f89530c"
         ]
       },
       "out/f.azw3": {
-        "header": "47a9c5befcfdf4ce",
+        "header": "9044678b615d8d63",
         "records": [
-          "c4228e9ce87d1e67",
+          "f9d0c20ff147f2b0",
           "c174cb108d9e0d73",
           "bded72393b46efe3",
-          "460cd0a897d4bfff",
-          "095cb2b00641d309",
-          "2e94006b8fe0e6b3",
-          "e99f3735270082e1",
-          "472bfb108acafd0c",
-          "e0f00f530659ba36",
-          "96a296d224f285c6",
-          "dcbd73ca23e78c54",
-          "10ca3165c96295f6",
+          "a390a35c57e27621",
+          "3b4b1e63082a9bcc",
+          "5d75fd9fcc844648",
+          "27ed1bb92f5acb8e",
+          "9e60908e4173c3b6",
+          "9c4b5cf869841dcf",
+          "709e80c88487a241",
+          "0e3ffb9d08ec9ff7",
+          "9a788052bb8c3fb1",
           "9373d659d6fcfe62",
           "4cab30ce69cb85ee",
           "52784115a67f9585",
@@ -2119,23 +2118,23 @@
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "e16ee937fa88ea07",
-          "8a6bcdf8c624a418",
+          "c758c4184db2be70",
           "d9d81ce90c7496a8",
           "px:4372fb4294d510ac",
           "px:9a2cf91793017313",
           "px:09632483eff5dadc",
           "px:4d6c10f020813edf",
-          "663224d1071da31d",
+          "9681c727c1b4ba6d",
           "17d828b58581e73e",
-          "5cb2d624b9923ee3",
+          "f9e324e7c5b68d74",
           "3712d3408f89530c"
         ]
       },
       "out/f.fdx": {
-        "text": "1714d9b0d2f9c8a1"
+        "text": "e90feb589dd81ae4"
       },
       "out/f.html": {
-        "html": "1602ee852c6953e2"
+        "html": "5b8912c0354ba1b3"
       }
     }
   },
@@ -2179,7 +2178,7 @@
           {
             "name": "OEBPS/package.opf",
             "stored": false,
-            "content": "54decabc6decbccd"
+            "content": "bbbc840fe9e41e49"
           },
           {
             "name": "OEBPS/nav.xhtml",
@@ -2204,7 +2203,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "a33540e5e12bf965"
+            "content": "1b18e7a4592085f5"
           }
         ]
       }
@@ -2250,7 +2249,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -2275,7 +2274,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -2329,7 +2328,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -2354,7 +2353,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -2396,7 +2395,7 @@
             "file": "px:4d6c10f020813edf"
           },
           "script.txt": {
-            "text": "afdbe6681fc5cfd2"
+            "text": "49b64bc396df343b"
           }
         }
       }
@@ -2442,7 +2441,7 @@
               {
                 "name": "OEBPS/package.opf",
                 "stored": false,
-                "content": "12b53fc7b32ff6c3"
+                "content": "a6718d0fcbedc11c"
               },
               {
                 "name": "OEBPS/nav.xhtml",
@@ -2467,7 +2466,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "4bfa3160d99a3bf6"
+                "content": "0ad02d543a30c5f8"
               },
               {
                 "name": "OEBPS/images/",
@@ -2675,20 +2674,20 @@
     "stderr": "",
     "outputs": {
       "out/book.azw3": {
-        "header": "47a9c5befcfdf4ce",
+        "header": "9044678b615d8d63",
         "records": [
-          "c4228e9ce87d1e67",
+          "f9d0c20ff147f2b0",
           "c174cb108d9e0d73",
           "bded72393b46efe3",
-          "460cd0a897d4bfff",
-          "095cb2b00641d309",
-          "2e94006b8fe0e6b3",
-          "e99f3735270082e1",
-          "472bfb108acafd0c",
-          "e0f00f530659ba36",
-          "96a296d224f285c6",
-          "dcbd73ca23e78c54",
-          "10ca3165c96295f6",
+          "a390a35c57e27621",
+          "3b4b1e63082a9bcc",
+          "5d75fd9fcc844648",
+          "27ed1bb92f5acb8e",
+          "9e60908e4173c3b6",
+          "9c4b5cf869841dcf",
+          "709e80c88487a241",
+          "0e3ffb9d08ec9ff7",
+          "9a788052bb8c3fb1",
           "9373d659d6fcfe62",
           "4cab30ce69cb85ee",
           "52784115a67f9585",
@@ -2696,33 +2695,33 @@
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "e16ee937fa88ea07",
-          "8a6bcdf8c624a418",
+          "c758c4184db2be70",
           "d9d81ce90c7496a8",
           "px:4372fb4294d510ac",
           "px:9a2cf91793017313",
           "px:09632483eff5dadc",
           "px:4d6c10f020813edf",
-          "663224d1071da31d",
+          "9681c727c1b4ba6d",
           "17d828b58581e73e",
-          "5cb2d624b9923ee3",
+          "f9e324e7c5b68d74",
           "3712d3408f89530c"
         ]
       },
       "out/copy.azw3": {
-        "header": "47a9c5befcfdf4ce",
+        "header": "9044678b615d8d63",
         "records": [
-          "c4228e9ce87d1e67",
+          "f9d0c20ff147f2b0",
           "c174cb108d9e0d73",
           "bded72393b46efe3",
-          "460cd0a897d4bfff",
-          "095cb2b00641d309",
-          "2e94006b8fe0e6b3",
-          "e99f3735270082e1",
-          "472bfb108acafd0c",
-          "e0f00f530659ba36",
-          "96a296d224f285c6",
-          "dcbd73ca23e78c54",
-          "10ca3165c96295f6",
+          "a390a35c57e27621",
+          "3b4b1e63082a9bcc",
+          "5d75fd9fcc844648",
+          "27ed1bb92f5acb8e",
+          "9e60908e4173c3b6",
+          "9c4b5cf869841dcf",
+          "709e80c88487a241",
+          "0e3ffb9d08ec9ff7",
+          "9a788052bb8c3fb1",
           "9373d659d6fcfe62",
           "4cab30ce69cb85ee",
           "52784115a67f9585",
@@ -2730,15 +2729,15 @@
           "38bb1ffddcf2a4ec",
           "8772cc799ca70378",
           "e16ee937fa88ea07",
-          "8a6bcdf8c624a418",
+          "c758c4184db2be70",
           "d9d81ce90c7496a8",
           "px:4372fb4294d510ac",
           "px:9a2cf91793017313",
           "px:09632483eff5dadc",
           "px:4d6c10f020813edf",
-          "663224d1071da31d",
+          "9681c727c1b4ba6d",
           "17d828b58581e73e",
-          "5cb2d624b9923ee3",
+          "f9e324e7c5b68d74",
           "3712d3408f89530c"
         ]
       }
@@ -2763,15 +2762,15 @@
     "stderr": "",
     "outputs": {
       "out/book.mobi": {
-        "header": "2546b199f548cea3",
+        "header": "33517282b8061077",
         "records": [
-          "e421e60c167dd360",
+          "27421f3938c23413",
           "e16098d1061df484",
-          "4fc0d12de14f2001",
-          "fc8d90e10ec8cc83",
-          "e70b2414f09af5a3",
+          "83939595007fe4d1",
+          "d8fb1bad92bbceac",
+          "642e187dd93bb461",
           "17d828b58581e73e",
-          "388d49981251f903",
+          "b807cd03ab164377",
           "3712d3408f89530c"
         ]
       }
@@ -2794,7 +2793,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fountain": {
-        "text": "9a72b937acd76ee8"
+        "text": "dfa7a83cfd4bf1e1"
       }
     }
   },
@@ -2816,7 +2815,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fdx": {
-        "text": "1714d9b0d2f9c8a1"
+        "text": "e90feb589dd81ae4"
       }
     }
   }

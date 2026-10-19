@@ -99,14 +99,64 @@ mod the_proof_sheet_parses {
         assert!(doc().elements.iter().any(|e| e.dual_right == Some(true)));
     }
 
+    // Sheet 9's second exchange (ODILE left, WREN right): the tall one, there
+    // to reach the renderer's sequential fallback (registry #10b). Each
+    // column's full speech as printed, its lines joined.
+    const TALL_LEFT: &str = "This column runs long enough that the taller of the two passes \
+        twelve estimated rendered lines, which is the threshold where the side-by-side table \
+        gives up and both speeches become ordinary sequential dialogue instead.";
+    const TALL_RIGHT: &str = "And this one answers at similar length so neither column is \
+        trivially short, because the fallback measures the taller of the pair and a stub \
+        would never reach it.";
+
     #[test]
     fn no_element_mixes_text_from_both_dual_columns() {
+        // The first exchange carries explicit markers. The second carries
+        // none, so it is held by words that each sit in one column only.
         let mixed: Vec<&ScreenplayElement> = doc()
             .elements
             .iter()
-            .filter(|e| e.text.contains("LEFTMARK") && e.text.contains("RIGHTMARK"))
+            .filter(|e| {
+                (e.text.contains("LEFTMARK") && e.text.contains("RIGHTMARK"))
+                    || (["column runs long", "speeches become ordinary"]
+                        .iter()
+                        .any(|w| e.text.contains(w))
+                        && ["answers at", "a stub would"]
+                            .iter()
+                            .any(|w| e.text.contains(w)))
+            })
             .collect();
         assert_eq!(mixed, Vec::<&ScreenplayElement>::new());
+    }
+
+    #[test]
+    fn the_tall_dual_exchange_is_two_whole_speeches() {
+        let els = &doc().elements;
+        let at = els
+            .iter()
+            .position(|e| e.text.starts_with("This column runs long"))
+            .expect("the tall exchange's left speech");
+        let kinds: Vec<(ElementType, &str, Option<bool>)> = els[at - 1..at + 3]
+            .iter()
+            .map(|e| (e.kind, e.text.as_str(), e.dual_right))
+            .collect();
+        assert_eq!(
+            kinds,
+            vec![
+                (ElementType::Character, "ODILE", None),
+                (ElementType::Dialogue, TALL_LEFT, None),
+                (ElementType::Character, "WREN", Some(true)),
+                (ElementType::Dialogue, TALL_RIGHT, None),
+            ]
+        );
+        // Nothing of the exchange is left over as action before the next
+        // scene heading (the page break and the keep-test speeches follow).
+        let stray: Vec<&ScreenplayElement> = els[at + 3..]
+            .iter()
+            .take_while(|e| e.kind != ElementType::Scene)
+            .filter(|e| e.kind == ElementType::Action)
+            .collect();
+        assert_eq!(stray, Vec::<&ScreenplayElement>::new());
     }
 
     #[test]
