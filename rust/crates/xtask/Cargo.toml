@@ -26,7 +26,7 @@ doc = false
 
 [dependencies]
 # Look-behind, for Python textwrap's word separator (src/fixture/textwrap.rs).
-fancy-regex = "0.16"
+fancy-regex = "0.19"
 # zlib-rs at level 9 deflates make-fixture's pictures byte for byte as zlib 1.2.12 does.
 flate2.workspace = true
 regex.workspace = true
