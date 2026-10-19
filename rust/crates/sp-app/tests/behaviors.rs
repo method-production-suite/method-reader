@@ -47,6 +47,18 @@ fn w1_w2_w3_the_window_opens_at_1280_by_800_with_a_floor_and_a_title_bar() {
     assert_eq!(v.fullsize_content_view, Some(false));
 }
 
+// The Dock shows the bundle's own icon while the window runs. eframe puts
+// egui's logo there unless the window hands it an icon, and an EMPTY one
+// is how eframe's docs say to keep the bundle's (it then sets nothing).
+// Without this the 0.13.0 window showed egui's logo in the Dock.
+#[test]
+fn the_dock_keeps_the_bundles_own_icon() {
+    let v = sp_app::app::viewport();
+    let icon = v.icon.as_deref().expect("an icon is handed to eframe");
+    assert_eq!(icon, &egui::IconData::default());
+    assert!(icon.rgba.is_empty());
+}
+
 #[test]
 fn w4_the_tab_strip_is_the_top_of_the_window() {
     let w = world();
