@@ -185,11 +185,14 @@ mod tests {
 
     #[test]
     fn the_files_sit_in_the_sample_folder_under_the_script_s_name() {
-        let p = Paths::in_folder(Path::new("/data/Sample"));
-        assert_eq!(p.pdf, "/data/Sample/Field Station.pdf");
-        assert_eq!(p.epub, "/data/Sample/Field Station.epub");
-        assert_eq!(p.fountain, "/data/Sample/Field Station.fountain");
-        assert_eq!(p.stamp, "/data/Sample/Field Station.sample.json");
+        let folder = Path::new("/data/Sample");
+        let p = Paths::in_folder(folder);
+        // Built the way the app builds them, so Windows's separator counts.
+        let at = |name: &str| folder.join(name).to_string_lossy().into_owned();
+        assert_eq!(p.pdf, at("Field Station.pdf"));
+        assert_eq!(p.epub, at("Field Station.epub"));
+        assert_eq!(p.fountain, at("Field Station.fountain"));
+        assert_eq!(p.stamp, at("Field Station.sample.json"));
     }
 
     #[test]
