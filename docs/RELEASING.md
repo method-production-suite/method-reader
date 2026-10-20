@@ -149,7 +149,7 @@ Report the result to MOrg, then publish, unless the owner has said stop:
 gh release edit v0.13.1 --draft=false
 ```
 
-Publish with a person's token (the ssandweiss account's), never a
+Publish with a person's token (the suite's own gh account), never a
 workflow's: GitHub starts no workflow from a release a workflow's own token
 published, and step 7 has to run. A failed check stops here: fix it, or
 re-run the failed jobs, and check again.
