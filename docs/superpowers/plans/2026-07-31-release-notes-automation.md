@@ -328,7 +328,7 @@ function sanitize(subject: string): string {
   return stripped.length > MAX_SUBJECT ? stripped.slice(0, MAX_SUBJECT) : stripped;
 }
 
-export function collectCommits(cwd: string, sinceTag: string, owner = 'Sam Sandweiss'): CommitFact[] {
+export function collectCommits(cwd: string, sinceTag: string, owner = 'the owner'): CommitFact[] {
   const out = git(cwd, `log --no-merges --format=%s%x1f%an%x1e ${sinceTag}..HEAD`);
   return out
     .split('\x1E')

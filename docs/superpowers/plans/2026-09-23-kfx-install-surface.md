@@ -968,7 +968,7 @@ In `tests/desktop-shell.test.ts`, replace the whole test `'the opener may reach 
     // so an exact string is the only grant that means one page.
     const exact = new Set<string>(KFX_LINKS);
     for (const entry of opener.allow) {
-      const ok = entry.url.startsWith('https://github.com/ssandweiss/screepub/') || exact.has(entry.url);
+      const ok = entry.url.startsWith('https://github.com/method-production-suite/method-reader/') || exact.has(entry.url);
       expect(`${entry.url} allowed: ${ok}`).toBe(`${entry.url} allowed: true`);
     }
     // And the other way round: every link the engine can put on the Send
@@ -992,7 +992,7 @@ In `desktop/src-tauri/capabilities/default.json`, the `opener:allow-open-url` en
     {
       "identifier": "opener:allow-open-url",
       "allow": [
-        { "url": "https://github.com/ssandweiss/screepub/*" },
+        { "url": "https://github.com/method-production-suite/method-reader/*" },
         { "url": "https://calibre-ebook.com/download_osx" },
         { "url": "https://calibre-ebook.com/download_windows" },
         { "url": "https://kdp.amazon.com/en_US/help/topic/G202131170" }

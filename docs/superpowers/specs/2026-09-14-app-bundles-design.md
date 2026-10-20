@@ -182,7 +182,7 @@ Three reasons, in order of weight:
    pointing at a stable installer URL and hash. Neither is engineering, and
    neither can be exercised from this session.
 3. **The one channel that already exists must not be touched.**
-   `ssandweiss/homebrew-tap` serves the *SwiftUI* app's cask and the macOS
+   `<owner>/homebrew-tap` serves the *SwiftUI* app's cask and the macOS
    CLI formula, `tools/bump-tap.sh` hardcodes their filenames, and
    `tap-freshness.yml` alarms if they drift. E2 changes none of them. The
    Tauri app gets a cask when it becomes *the* Mac app, which is piece F's

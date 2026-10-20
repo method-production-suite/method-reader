@@ -4020,7 +4020,7 @@ The page currently offers only `DOWNLOAD FOR MACOS`, three times. Add one sectio
             <code>Screepub-Desktop-macOS-x64.dmg</code></li>
           <li>Windows: <code>Screepub-0.6.0-setup.exe</code></li>
           <li>Command line, any platform: see the
-            <a href="https://github.com/ssandweiss/screepub#readme">README</a></li>
+            <a href="https://github.com/method-production-suite/method-reader#readme">README</a></li>
         </ul>
         <p>
           <strong>Windows will warn you.</strong> Screepub for Windows is
@@ -4036,7 +4036,7 @@ The page currently offers only `DOWNLOAD FOR MACOS`, three times. Add one sectio
           automation builds each one and runs the converter out of it before
           publishing; no one has run an installer on a real machine.
         </p>
-        <p><a href="https://github.com/ssandweiss/screepub/releases/latest">All files on the latest release &rarr;</a></p>
+        <p><a href="https://github.com/method-production-suite/method-reader/releases/latest">All files on the latest release &rarr;</a></p>
       </section>
 ```
 

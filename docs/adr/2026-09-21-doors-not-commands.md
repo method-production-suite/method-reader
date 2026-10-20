@@ -3,7 +3,7 @@
 Date: 2026-09-21 · Status: accepted (user-approved)
 Refines: [ADR 2026-09-12](2026-09-12-cross-platform-tauri.md)'s governing rule
 Amends: [the handover plan](../superpowers/plans/2026-09-20-swift-to-tauri-handover.md)'s v0.6.1
-Follows from: [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md)
+Follows from: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md)
 
 ## Two decisions
 

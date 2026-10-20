@@ -127,7 +127,7 @@ then packaged.
 Every Tauri window that can update (0.7.1 through 0.11.1; each tag's
 `desktop/src-tauri/Cargo.lock` and `tauri.conf.json` were read: all ship
 tauri 2.11.5 and tauri-plugin-updater 2.12.0, all check
-`https://github.com/ssandweiss/screepub/releases/latest/download/latest.json`,
+`https://github.com/method-production-suite/method-reader/releases/latest/download/latest.json`,
 all trust minisign key `E4D0668D54F6EB34`, none sets
 `requireSignedVersion` or `dangerousInsecureTransportProtocol`) is handed
 over by a release delivered in exactly that format. A 0.7.0 window trusts

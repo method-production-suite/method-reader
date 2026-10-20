@@ -9,7 +9,7 @@ interface-pass session's, against the contract sent the same day.
 Decision it serves: [ADR 2026-09-21](../../adr/2026-09-21-doors-not-commands.md),
 which says v0.6.1 waits for this.
 Piece A of [the parity plan](../plans/2026-09-21-parity.md).
-Evidence: [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md).
+Evidence: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md).
 
 ## The question
 
