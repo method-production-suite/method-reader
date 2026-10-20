@@ -137,7 +137,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "c02b9c66687c15aa"
+        "text": "b890961c28328dce"
       },
       "out/book.preview.html": {
         "html": "d5ab7a1850693b15"
@@ -283,7 +283,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "c02b9c66687c15aa"
+        "text": "b890961c28328dce"
       },
       "out/book.preview.html": {
         "html": "550b3000f9e6db44"
@@ -643,7 +643,7 @@
             "json": "577898c1941870e6"
           },
           "jpx/source.json": {
-            "json": "70383e02915a1ab9"
+            "json": "56bcb781b5795cc3"
           }
         }
       }
@@ -759,7 +759,7 @@
             ]
           },
           "jpx/source.json": {
-            "json": "70383e02915a1ab9"
+            "json": "56bcb781b5795cc3"
           }
         }
       }
@@ -864,7 +864,7 @@
             "json": "6e968ac32fc6651e"
           },
           "jpx/source.json": {
-            "json": "70383e02915a1ab9"
+            "json": "56bcb781b5795cc3"
           }
         }
       },
@@ -1148,7 +1148,7 @@
             "json": "5052154e6f36ffad"
           },
           "jpx/source.json": {
-            "json": "70383e02915a1ab9"
+            "json": "56bcb781b5795cc3"
           }
         }
       },
@@ -1256,7 +1256,7 @@
             "file": "px:7d593ed429f44ea1"
           },
           "jpx/source.json": {
-            "json": "70383e02915a1ab9"
+            "json": "56bcb781b5795cc3"
           }
         }
       }

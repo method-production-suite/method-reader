@@ -87,7 +87,7 @@ impl Case {
 }
 
 fn fdx_of(fountain: &str) -> String {
-    Books.fountain_to_fdx(fountain).expect("an FDX")
+    Books.fountain_to_fdx(fountain, None).expect("an FDX")
 }
 
 fn read(path: &str) -> String {
@@ -346,7 +346,24 @@ fn a_pdf_conversion_writes_the_fdx_of_the_fountain_it_wrote_and_names_it_in_json
     let answer = r.json();
     assert_eq!(answer["fdxPath"], Value::String(fdx.clone()));
     let fountain = read(answer["fountainPath"].as_str().expect("a fountainPath"));
-    assert_eq!(read(&fdx), fdx_of(&fountain));
+    // The FDX of that .fountain, plus each scene's length the PDF measured
+    // (which the .fountain alone cannot say).
+    let written = read(&fdx);
+    assert!(written.contains(" Length=\""), "{written}");
+    assert_eq!(without_lengths(&written), fdx_of(&fountain));
+}
+
+/// `fdx` with every SceneProperties `Length="..."` attribute taken out.
+fn without_lengths(fdx: &str) -> String {
+    let mut out = String::with_capacity(fdx.len());
+    let mut rest = fdx;
+    while let Some(at) = rest.find(" Length=\"") {
+        out.push_str(&rest[..at]);
+        let value = &rest[at + " Length=\"".len()..];
+        rest = &value[value.find('"').expect("a closed value") + 1..];
+    }
+    out.push_str(rest);
+    out
 }
 
 #[test]
