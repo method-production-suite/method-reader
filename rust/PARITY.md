@@ -501,7 +501,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | O1 | "Screepub 0.11.1", the headline, each section with its items (a bold lead or plain prose), compiled from docs/releases/<version>.md, offline | ui/notes-surface.js, ui/notes.js | done |
 | O2 | No heading with nothing under it | ui/notes-surface.js visibleSections | done |
 | O3 | Updates block where updates are possible: the once-a-day switch with its words, Check for updates, a live line, the new version's notes, Install <version> | ui/notes-surface.js updateBlock, notesView | done |
-| O4 | Elsewhere: "Screepub does not update itself here. New releases are at github.com/ssandweiss/screepub/releases." | ui/notes-surface.js | done |
+| O4 | Elsewhere: "Screepub does not update itself here. New releases are at github.com/method-production-suite/method-reader/releases." | ui/notes-surface.js | done |
 | O5 | The switch is resynced each time the sheet opens | ui/notes-surface.js show | done |
 | O6 | Check for updates: "Looking…", then the flow's words; disabled while a run is busy | ui/notes-surface.js | done |
 
@@ -513,7 +513,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | B2 | Every absolute path in it becomes `<path>` plus its extension; the home folder becomes ~ | ui/feedback.js redact | done |
 | B3 | The Beta badge: "Beta", in a hairline box, beside (never inside) what it qualifies, read out with its line, described as "New: works in our tests, not yet tried widely on real devices or apps." | ui/beta.js | done |
 | B4 | Where it is worn: the FDX and AZW3 save rows, our own AZW3 on Copy to Kindle, the two picture switches, Eject off a Mac, the device-request Send, the report answers, the My device isn’t here card | ui/beta.js, callers | done |
-| B5 | The request service: POST JSON to https://screepub-device-requests.samuelsandweiss.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
+| B5 | The request service: POST JSON to https://screepub-device-requests.<the old workers.dev account>.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
 | B6 | The window's network allow-list (CSP connect-src): only that address; the opener allow-list: only the four pages in K6 | tauri/tauri.conf.json, capabilities | done |
 
 ### L. Layout, measured (tests/desktop-layout-measured.test.ts)

@@ -117,11 +117,19 @@ fn the_checks_run_the_release_crate_age_check_over_the_whole_lock_before_any_bui
     let rel = rel();
     let checks = job(&rel, "checks");
     let ages = step_index(checks, |st| {
-        s(st, "run")
-            .contains("python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release")
+        s(st, "run").contains(r#"python3 scripts/check-crate-ages.py --lock "$lock" --release"#)
     })
     .expect("the crate-age step");
-    assert!(!s(steps(checks)[ages], "run").contains("--only-changed"));
+    let run = s(steps(checks)[ages], "run");
+    assert!(!run.contains("--only-changed"));
+    // Every lock the release compiles from: the workspace, and the two
+    // update proofs the handover gate builds in their own workspaces.
+    assert!(
+        run.contains(
+            "for lock in rust/Cargo.lock rust/handover-proof/Cargo.lock rust/update-proof-0.13/Cargo.lock"
+        ),
+        "{run}"
+    );
     let first_build = step_index(checks, |st| s(st, "run").contains("cargo ")).unwrap();
     assert!(
         ages < first_build,
@@ -995,4 +1003,38 @@ fn a_rehearsal_refuses_any_ref_but_main() {
     assert!(run("refs/heads/main"));
     assert!(!run("refs/heads/feature"));
     assert!(!run("refs/tags/v9.9.9"));
+}
+
+#[test]
+fn the_v0_13_0_apps_own_updater_must_install_every_release() {
+    // Every Mac on 0.13.0 gets the next release from 0.13.0's own updater.
+    // The handover gate runs that updater, built from the v0.13.0 commit,
+    // with its REAL key (no --pubkey: the throwaway-key flag is for a run on
+    // a developer's Mac), on an old copy named Screepub Desktop.app, and
+    // then the new build must rename itself on its first start.
+    let wf = rel();
+    let step = step_named(
+        &wf,
+        "handover-gate",
+        "The v0.13.0 app's own updater installs this release",
+    );
+    let run = commands(&step);
+    assert!(run.contains("update-proof-0-13"), "{run}");
+    assert!(
+        !run.contains("--pubkey"),
+        "the release always uses 0.13.0's real key"
+    );
+    assert!(run.contains("--current 0.13.0"));
+    assert!(run.contains("Screepub Desktop.app"));
+    assert!(run.contains(r#"test -d "old013/Applications/Method Reader.app""#));
+    let manifest = read("rust/update-proof-0.13/Cargo.toml");
+    let rev = Regex::new(r#"sp-update = \{ git = "https://github.com/method-production-suite/method-reader", rev = "([0-9a-f]{40})" \}"#)
+        .unwrap()
+        .captures(&manifest)
+        .expect("sp-update pinned to a full commit of this repository")[1]
+        .to_string();
+    assert_eq!(
+        rev, "0b0544e1804b703de59554190fe245936f8fc02c",
+        "the v0.13.0 tag's commit"
+    );
 }

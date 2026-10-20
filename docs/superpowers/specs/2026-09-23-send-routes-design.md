@@ -4,7 +4,7 @@ Date: 2026-09-23 · Status: accepted. The owner answered both questions at
 the end on 2026-09-23: "yes go for it" (the save dialog permission, and the
 engine opening Books, Amazon and Mail).
 Piece B of [the parity plan](../plans/2026-09-21-parity.md).
-Evidence: [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md), "The route catalog".
+Evidence: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md), "The route catalog".
 Contract: decision 25 of [the UI pass spec](2026-09-20-desktop-ui-pass-design.md).
 
 ## The problem

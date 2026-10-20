@@ -3,9 +3,12 @@
 A release is a version tag, `vX.Y.Z`, on `main`. Pushing it starts
 `.github/workflows/release.yml`, which checks the tagged commit, builds and
 signs every download, and leaves a DRAFT release on GitHub. Nothing is
-public until a person has checked the Mac image and published the draft.
-Publishing starts `.github/workflows/release-published.yml`, which reads the
-published release back.
+public until the draft has been checked and published. The owner's one yes
+covers both the tag and the publish (2026-10-19): the session that asked
+checks the draft, reports to MOrg and publishes it, unless the owner has
+said stop, and a failed check stops it there. Publishing starts
+`.github/workflows/release-published.yml`, which reads the published
+release back.
 
 Every Method app releases the same way. The suite's checklist is
 [RELEASE-CHECKLIST.md](https://github.com/method-production-suite/.github/blob/main/RELEASE-CHECKLIST.md)
@@ -57,14 +60,28 @@ for the README and to `site/img/` for the site.
 Every picture must match the build being released. Commit the changed ones
 with the release.
 
-## Before the tag: the full build and a rehearsal
+## 4. The release PR, then the tag
 
-The release commit is already on main, so two runs on main come first.
-Neither makes a tag or a release.
+The notes, the version bump and any changed pictures go to main as one
+pull request, opened ready with its "Tested locally" note, and reviewed by
+MReview before merge (a release is on its pre-merge list). Then the
+rehearsal runs on the merge commit (below), and once it is green and the
+owner has said yes, the tag goes on that commit:
 
-1. The weekly full build, by hand: Actions, **full**, Run workflow, on
-   `main`. Wait for green.
-2. A rehearsal of the release itself: Actions, **release**, Run workflow, on
+```bash
+git fetch origin
+git tag -a v0.13.1 <merge commit> -m "Method Reader 0.13.1"
+git push origin v0.13.1
+```
+
+The tag is made under the neutral identity, like every public commit.
+
+## Before the tag: the rehearsal
+
+The release commit is on main now, so the rehearsal runs there first. It is the only full build before a release (2026-10-19); the weekly
+build is not run by hand as well. It makes no tag and no release.
+
+1. A rehearsal of the release itself: Actions, **release**, Run workflow, on
    `main`, with `rehearse_version` set to the workspace version in
    `rust/Cargo.toml`. Or from a terminal:
 
@@ -78,7 +95,7 @@ Neither makes a tag or a release.
    checksums, `latest.json` and the draft check. A rehearsal honours the
    crate-age list's age-out entries, as main does; the real tag run does
    not. It runs only from main, since it uses the real signing keys.
-3. Delete the rehearsal's artifacts as soon as it is green. They are signed
+2. Delete the rehearsal's artifacts as soon as it is green. They are signed
    builds that are not a release, and GitHub would otherwise keep them for
    a day (`RUN` is the rehearsal's run id):
 
@@ -86,24 +103,8 @@ Neither makes a tag or a release.
    for id in $(gh api repos/method-production-suite/method-reader/actions/runs/RUN/artifacts --jq '.artifacts[].id'); do gh api -X DELETE repos/method-production-suite/method-reader/actions/artifacts/$id; done
    ```
 
-Tag only when both are green.
-
-## 4. Checks, commit, tag, push
-
-```bash
-cargo fmt --all --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-git add rust/Cargo.toml rust/Cargo.lock rust/crates/sp-app/src/model/notes_release.rs \
-  docs/releases/0.13.1.md assets/screens site/img
-git commit -m "Method Reader 0.13.1"
-git tag -a v0.13.1 -m "Method Reader 0.13.1"
-git push --atomic origin main v0.13.1
-```
-
-Commit and tag in two commands: the `require-release-notes` hook refuses a
-tag whose notes are not committed yet. `--atomic` pushes `main` and the tag
-together or not at all.
+Ask for the tag only when the rehearsal is green, naming the version, the
+commit and the green run.
 
 **A pushed tag is permanent.** People download from it and the workflow has
 built from it. Never move, delete or force-push a public tag; fix a problem
@@ -125,17 +126,33 @@ do not publish: re-run the failed jobs from the run's page
 tag (`gh workflow run release.yml --ref v0.13.1`); every upload replaces
 what is there.
 
-## 6. A person checks the draft and publishes it
+## 6. Check the draft, then publish it
 
-On a Mac with Apple silicon: download `Method-Reader-macOS.dmg` from the
-draft, open it, drag Method Reader to Applications and open it. It must
-open without a warning (signed, notarized, stapled). Open the sample script
-and convert it once. Then publish the draft on the repository's Releases
-page.
+The session that asked for the tag checks the draft from the command line,
+with nothing opened on screen:
 
-Only a person publishes. No workflow does it, and that is also why the next
-step runs: GitHub starts no workflow from a release that a workflow's own
-token published.
+- the Mac image: `gh release download v0.13.1 --pattern Method-Reader-macOS.dmg`,
+  then `hdiutil attach -nobrowse -readonly`, `spctl --assess --type execute -vv`
+  on the app inside (Gatekeeper must accept it), `codesign --verify --deep
+  --strict`, `xcrun stapler validate` on the image and the app, and
+  `hdiutil detach`;
+- the Mac command line: `codesign --verify --strict` on both binaries in
+  `method-reader-cli-macos-arm64.tar.gz`;
+- every download against `SHA256SUMS`, and every size against the run's own
+  artifacts (none empty);
+- `latest.json`: `sp-release verify-update` against the update archive and
+  its signature.
+
+Report the result to MOrg, then publish, unless the owner has said stop:
+
+```bash
+gh release edit v0.13.1 --draft=false
+```
+
+Publish with a person's token (the suite's own gh account), never a
+workflow's: GitHub starts no workflow from a release a workflow's own token
+published, and step 7 has to run. A failed check stops here: fix it, or
+re-run the failed jobs, and check again.
 
 ## 7. The published read-back
 

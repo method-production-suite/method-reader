@@ -14,7 +14,7 @@
 
 ## Ground rules for every task
 
-- Worktree `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/epic-neumann-254843`, branch `parity-b-routes`. Absolute paths.
+- Worktree `<repo>/.claude/worktrees/epic-neumann-254843`, branch `parity-b-routes`. Absolute paths.
 - TDD with bun:test. `bunx tsc --noEmit` and the full `bun test` green before each commit.
 - No em dash (`—`) in any string you add to the window, docs or tests' fixtures a person reads.
 - `desktop/ui/app.js` is the only file that touches `window.__TAURI__` or knows an engine flag. Every other file imports from it.

@@ -36,6 +36,9 @@ __pycache__/
 
 # The Rust workspace builds here.
 rust/target/
+# The two update proofs build in their own workspaces.
+rust/handover-proof/target/
+rust/update-proof-0.13/target/
 
 # Oracle dumps of the real scripts in root fixtures/: never committed.
 rust/oracle-real/

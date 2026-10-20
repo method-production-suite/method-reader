@@ -337,6 +337,43 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     h.get_by_role_and_label(Role::Heading, "What do you read on?");
 }
 
+// Other ways reads as a table: every action button ends at the same right
+// edge, whatever its row's words are, and the rows sit close (the owner,
+// 2026-10-19: "denser and easier to read").
+#[test]
+fn other_ways_buttons_share_one_right_edge_and_the_rows_are_dense() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Kobo").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Other ways").click();
+    steps(&mut h);
+    let mut rights = Vec::new();
+    for label in ["Open in Books", "Save EPUB…", "Save AZW3…", "Save MOBI…"] {
+        let r = h.get_by_role_and_label(Role::Button, label).rect();
+        rights.push((label, r.right()));
+    }
+    let first = rights[0].1;
+    for (label, right) in &rights {
+        assert!(
+            (right - first).abs() < 0.5,
+            "{label} ends at {right}, not {first}"
+        );
+    }
+    // Two one-line neighbouring rows, MOBI then Fountain: at most 52 points
+    // apart (the old layout put them about 70 apart).
+    let mobi = h
+        .get_by_role_and_label(Role::Button, "Save MOBI…")
+        .rect()
+        .top();
+    let fountain = h
+        .get_by_role_and_label(Role::Button, "Save Fountain…")
+        .rect()
+        .top();
+    assert!(fountain - mobi <= 52.0, "rows {} apart", fountain - mobi);
+}
+
 fn kindle_plugged_in(w: &World) {
     let mut routes = sp_app::engine::default_answer(&Request::Routes {
         epub: String::new(),
@@ -402,6 +439,47 @@ fn a_copy_to_a_kindle_ends_with_eject_and_eject_lets_it_go() {
         h.query_by_role_and_label(Role::Button, "Eject Kindle")
             .is_none()
     );
+}
+
+// The owner, 2026-10-19: converting several scripts in a row and copying
+// each to the Kindle, the second one only offered "Eject Kindle". A Kindle
+// still waiting to be ejected stays on hand, but the next book's own Copy is
+// the main button again.
+#[test]
+fn after_a_copy_the_next_script_can_be_copied_too() {
+    let w = world();
+    kindle_plugged_in(&w);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Kindle, plugged in")
+        .click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+        .click();
+    steps(&mut h);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Eject Kindle");
+    // The next script: its own book in the library.
+    let mut second = sp_app::engine::default_answer(&Request::Convert {
+        path: "/scripts/second-script.pdf".into(),
+        force: false,
+        options: None,
+    });
+    second["title"] = json!("Second Script");
+    second["epubPath"] = json!("/library/Second Script/Second Script.epub");
+    second["fountainPath"] = json!("/library/Second Script/Second Script.fountain");
+    w.engine.always("convert", Reply::ok(second));
+    w.fakes.answer_dialog(Some("/scripts/second-script.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    steps(&mut h);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+        .click();
+    steps(&mut h);
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("send").len(), 2, "both books were copied");
+    // And the Kindle can still be ejected.
+    h.get_by_role_and_label(Role::Button, "Eject Kindle");
 }
 
 // send-panel-ui.test.ts: "My device isn’t here"

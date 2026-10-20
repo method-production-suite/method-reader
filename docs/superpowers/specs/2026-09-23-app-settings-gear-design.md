@@ -4,7 +4,7 @@ Date: 2026-09-23 · Status: accepted. The owner answered both questions at
 the end on 2026-09-23: "yes go for it" (the folder picker permission, and
 the engine revealing files). Built in parallel with piece B.
 Piece C of [the parity plan](../plans/2026-09-21-parity.md).
-Evidence: [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md), "The gear is three
+Evidence: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md), "The gear is three
 things". Shares its settings file with piece B:
 [2026-09-23-send-routes-design.md](2026-09-23-send-routes-design.md).
 

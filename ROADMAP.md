@@ -18,35 +18,41 @@ Release go-aheads:
 - **0.13.1.** The clearer window wording, the Field Station sample on first
   launch, Linux app data moved to `~/.local/share`, Homebrew retired, one
   `SHA256SUMS` for every download, the shared updater, the list of recent
-  scripts for the suite's launcher, and on a Mac the app renaming itself
-  Method Reader where an older install still calls it Screepub Desktop or
-  Screepub. The new release order (every build before any signing key) was
-  proved on 2026-10-19 by a full build and a rehearsal of the release on
+  scripts for the suite's launcher, on a Mac the app renaming itself Method
+  Reader where an older install still calls it Screepub Desktop or Screepub
+  and showing its own icon in the Dock, a long side-by-side exchange coming
+  through as two speeches, several scripts copied to a Kindle in a row, and
+  a tidier Other ways. The new release order (every build before any
+  signing key) was proved on 2026-10-19 by a rehearsal of the release on
   main, with no tag. Three things before the tag:
   1. No young crate is left in the exception list. The earliest that holds
      is 2026-10-23, and the release workflow refuses an earlier tag on its
      own.
-  2. The update is rehearsed from 0.13.0, headless, because 0.13.0's own
-     updater is what installs 0.13.1.
-  3. The weekly full build is run by hand on the release commit and comes
-     back green.
+  2. Done 2026-10-20: the update is rehearsed from 0.13.0, headless,
+     because 0.13.0's own updater is what installs 0.13.1. It installed
+     0.13.1 with its signature verified.
+  3. Done 2026-10-20: the rehearsal is green on the release commit,
+     b0a211b. Since 2026-10-19 it is the only full build before a release.
 
-  Then the tag goes to the owner through MOrg.
+  Then the tag goes to the owner through MOrg; one yes covers the tag and
+  the publish, after the draft checks pass (docs/RELEASING.md).
 - **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
   is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
-  command line's MCP server, and what else is merged by then. Checked
-  ahead: every updater out there (0.12.x, 0.13.x) offers 1.0.0 as newer,
-  the release tools and the version check take it, and the site's download
-  links name no version.
+  command line's MCP server, what's on a reader, a SHA256SUMS signed with
+  the update key, and the first universal Mac build (Intel and Apple
+  silicon, the owner's decision of 2026-10-19). Checked ahead: every
+  updater out there (0.12.x, 0.13.x) offers 1.0.0 as newer, the release
+  tools and the version check take it, and the site's download links name
+  no version. Launcher 0.1.2, which accepts a universal app, is out.
 
-Open decisions:
-
-- **Two Dependabot alerts for `glib`.** Recommendation: dismiss both as
-  "vulnerable code not used". `glib` reaches the lock files only through the
-  Mac menu library's Linux branch and the handover rehearsal's Linux branch,
-  and neither is ever built: `cargo tree` shows no `glib` in the app or the
-  command line on Linux, macOS or Windows, and the rehearsal is built on
-  macOS only. Dismissing changes a repository setting, so it waits for a yes.
+  One decision for the owner, before the universal build is written
+  (docs/superpowers/specs/2026-10-20-universal-mac-design.md): every Intel
+  copy of 0.9.0 reads the same update file, so once 1.0.0 lists Intel it is
+  offered 1.0.0 straight from 0.9.0, a jump nothing has proved yet.
+  Recommended: offer it, with a new rehearsal step in which 0.9.0's own
+  updater installs the release and the app starts on 0.9.0's settings. The
+  fallback, if that proof is slow to build: ship 1.0.0 universal but list
+  Intel only from 1.0.1.
 
 Built on the recommendation (reversible):
 
@@ -83,6 +89,10 @@ Tests that need a device (hands only; everything else is automated):
 
 Decided:
 
+- **The two Dependabot alerts for `glib`** (2026-10-20): dismissed as
+  "vulnerable code not used". `glib` reaches the lock files only through
+  Linux-only branches no shipped build compiles.
+
 - **Window vocabulary** (2026-10-18): Preview for the in-app book, Send to
   e-reader for sending, Get an editable script for Fountain and .fdx, Taken
   from the PDF for the settings group; format cards named .fdx and Fountain.
@@ -106,14 +116,6 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **Rehearsing the update from 0.13.0.** The rehearsal starts from the old
-  0.11.1 window today. 0.13.1 is installed by 0.13.0's own updater, so the
-  rehearsal gains a 0.13.0 starting point, run with no window.
-- **Moving onto the shared updater.** Built, in review: `method-update` from
-  method-libs replaces `sp-update`, so all four apps share one updater.
-- **Secrets only where they are needed.** In the release workflow, set up
-  Apple's signing keys after the build steps, not before, so no build script
-  can reach them.
 - **Three small fixes to the recent list.** A damaged `recent.json` is
   replaced without a word; the window and the command line converting at the
   same moment can drop one entry; and on Windows the same file spelled with

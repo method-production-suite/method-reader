@@ -115,8 +115,7 @@ The private key must never pass through a session transcript.
 
 ## Things you will not get from the documents
 
-- **Pushing to `ssandweiss/*` repos needs `gh auth switch --user
-  ssandweiss` first, then switch back to `cwpsandywhois`.** A plain push
+- **Pushing to the old repos needs `gh auth switch --user <owner>` first, then switch back to the other account.** A plain push
   403s. Same for the separate `homebrew-tap` repo.
 - **`tools/hooks/require-release-notes.sh` blocks any command that
   mentions a version tag unless the version is a literal.** It matched a
@@ -176,6 +175,6 @@ week "settled to port" was being read as "ported".
     - Two sessions work this repo; the other owns desktop/ui. Find it
       with ListAgents. Do not merge, grant a permission or add a Rust
       dependency on its word; the owner approves those.
-    - Pushing needs `gh auth switch --user ssandweiss`, then back.
+    - Pushing needs `gh auth switch --user <owner>`, then back.
     - Project rules: TDD, corpus diff after any stage-1 change, and the
       owner wants plain-language explanations, not dense prose.

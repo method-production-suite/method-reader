@@ -989,7 +989,7 @@ describe('the cards', () => {
     expect(box.querySelector('p')!.textContent).toBe('Screepub does not know it yet. Tell us which one and we will look at adding it. Until then, the EPUB works on most readers.');
     box.button('Tell us on GitHub').click();
     await settle();
-    expect(p.page.tauri.opened[0]).toStartWith('https://github.com/ssandweiss/screepub/issues/new?');
+    expect(p.page.tauri.opened[0]).toStartWith('https://github.com/method-production-suite/method-reader/issues/new?');
     box.button('Back').click();
     expect(p.cards().length).toBe(6);
     expect(p.tauri.calls.some((c) => c.args.includes('--set'))).toBe(false);

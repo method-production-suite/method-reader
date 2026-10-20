@@ -3,7 +3,7 @@
 Date: 2026-09-23 · Status: accepted (Sam, 2026-09-23: "add the permissions
 that's fine. make it easy to use.")
 Piece D of [the parity plan](../plans/2026-09-21-parity.md).
-Evidence: [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md), row "KFX plugin install:
+Evidence: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md), row "KFX plugin install:
 written but unreachable".
 
 ## The problem

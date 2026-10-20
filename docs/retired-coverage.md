@@ -55,7 +55,7 @@ Where a decision is `port`, the ADR's rule holds: **the port lands in
 2026-09-21 a parity audit found every `port` row at zero lines; the send
 routes, Apple Books and the feedback link have been built since, and
 `update-error-descriptions` was re-audited on 2026-10-01 and is built in
-kind (its row says what carried over and what the plugin replaced). See [the parity audit](https://github.com/ssandweiss/screepub/blob/7eb40e5/docs/parity-audit.md) (since emptied and deleted), which also
+kind (its row says what carried over and what the plugin replaced). See [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md) (since emptied and deleted), which also
 names four features this table does not: the feedback and Report-a-Bug
 links, Show in Finder, the KFX plugin installer, and the gear's three
 settings. The installer was written but unreachable until 2026-09-23, when

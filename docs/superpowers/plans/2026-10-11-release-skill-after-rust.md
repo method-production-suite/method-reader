@@ -534,7 +534,7 @@ Committed and tagged locally. Nothing is on GitHub yet.
 
 Push it?
 
-  gh auth switch --user ssandweiss && git push --atomic origin release-0.5.0:main v0.5.0; gh auth switch --user cwpsandywhois
+  gh auth switch --user <owner> && git push --atomic origin release-0.5.0:main v0.5.0; gh auth switch --user <other account>
 
 The first part switches GitHub to the account that owns the repository
 (the everyday account gets a 403), and the part after the semicolon
@@ -562,7 +562,7 @@ Find the run. It appears a few seconds after the push; if the answer is
 empty, wait ten seconds and ask again, up to three times:
 
 ```bash
-gh run list --repo ssandweiss/screepub --workflow release.yml --branch v<version> --limit 1 --json databaseId --jq '.[0].databaseId'
+gh run list --repo method-production-suite/method-reader --workflow release.yml --branch v<version> --limit 1 --json databaseId --jq '.[0].databaseId'
 ```
 
 Then start ONE background command that ends when the run does (Bash with
@@ -570,13 +570,13 @@ Then start ONE background command that ends when the run does (Bash with
 is running and you will report when it finishes:
 
 ```bash
-gh run watch <id> --repo ssandweiss/screepub --exit-status --interval 60 > /dev/null
+gh run watch <id> --repo method-production-suite/method-reader --exit-status --interval 60 > /dev/null
 ```
 
 When it ends:
 
 ```bash
-gh run view <id> --repo ssandweiss/screepub --json conclusion,url,jobs --jq '"run: \(.conclusion) \(.url)", (.jobs[] | select(.name == "tap-check" or .name == "latest-check") | "\(.name): \(.conclusion)")'
+gh run view <id> --repo method-production-suite/method-reader --json conclusion,url,jobs --jq '"run: \(.conclusion) \(.url)", (.jobs[] | select(.name == "tap-check" or .name == "latest-check") | "\(.name): \(.conclusion)")'
 ```
 
 All green is one line: `v0.5.0 is out. Homebrew serves it, and the
@@ -590,8 +590,8 @@ so plainly with the run's URL and the job's error line, and stop there:
 the fallback is by hand and pushes to a second repository, so it waits for
 the user's word. It is
 `(cd rust && cargo xtask bump-tap <version> <absolute path of a tap checkout>)`,
-then a commit and push in that checkout as ssandweiss, then
-`gh run rerun <id> --failed --repo ssandweiss/screepub`. The run's summary
+then a commit and push in that checkout as the owner's account, then
+`gh run rerun <id> --failed --repo method-production-suite/method-reader`. The run's summary
 also carries a crib sheet for this.
 
 `latest-check` is the window's updater manifest (`sp-release check-latest
@@ -686,7 +686,7 @@ The commit is harmless: it is the notes, the version bump and any
 retaken pictures, and it can ride along with your next push. When you do
 want to release, this is the command, and only this one:
 
-  gh auth switch --user ssandweiss && git push --atomic origin release-0.5.0:main v0.5.0; gh auth switch --user cwpsandywhois
+  gh auth switch --user <owner> && git push --atomic origin release-0.5.0:main v0.5.0; gh auth switch --user <other account>
 
 The build takes 15 to 25 minutes.
 ```

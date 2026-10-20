@@ -512,6 +512,9 @@ pub struct Eject {
     pub name: String,
     pub volume: String,
     pub line: String,
+    /// The book that was copied, when the panel knows it: for that book
+    /// Eject is the next step, and for any other book the copy is.
+    pub book: Option<String>,
 }
 
 /// What the panel says after a copy the engine called done.
@@ -543,6 +546,7 @@ pub fn copied_state(title: &str, device: &Device, sent: &Value) -> (String, Opti
                     name: device.name.clone(),
                     volume: volume.into(),
                     line,
+                    book: None,
                 }),
             )
         }
