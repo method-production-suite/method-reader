@@ -171,7 +171,16 @@ jobs:
         working-directory: rust
         run: |
           set -euo pipefail
-          cargo build --release --locked -p sp-cli --bin method-reader --bin screepub --target aarch64-apple-darwin
+          # Universal since 1.0.0: both slices, joined by lipo below.
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          for t in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --locked -p sp-cli --bin method-reader --bin screepub --target "$t"
+          done
+          mkdir -p target/universal-apple-darwin/release
+          for b in method-reader screepub; do
+            lipo -create -output "target/universal-apple-darwin/release/$b" \
+              "target/aarch64-apple-darwin/release/$b" "target/x86_64-apple-darwin/release/$b"
+          done
           cargo build --release --locked -p sp-release
       - uses: ./.github/actions/import-developer-id
         with:
@@ -188,15 +197,19 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG#v}"
-          BIN="target/aarch64-apple-darwin/release/method-reader"
-          ALIAS="target/aarch64-apple-darwin/release/screepub"
+          BIN="target/universal-apple-darwin/release/method-reader"
+          ALIAS="target/universal-apple-darwin/release/screepub"
           STAGE="$RUNNER_TEMP/cli-notarize"
           mkdir -p "$STAGE"
           # Each under its own identifier: the tool's new one, and the one
-          # the CLI was signed with up to 0.12.x on its old name.
+          # the CLI was signed with up to 0.12.x on its old name. The
+          # identifiers keep their -arm64 ending from the Apple-silicon-only
+          # years: a signing identity, not a description of the file.
           for pair in "$BIN:method-reader-cli-arm64" "$ALIAS:screepub-cli-arm64"; do
             B="${pair%%:*}"
-            [ "$(lipo -archs "$B")" = arm64 ] || { echo "::error::$B is not arm64 only"; exit 1; }
+            # Exactly both slices, in lipo's order: anything else is a build
+            # an Intel Mac or an Apple silicon Mac cannot run natively.
+            [ "$(lipo -archs "$B")" = "x86_64 arm64" ] || { echo "::error::$B is not universal (x86_64 arm64): $(lipo -archs "$B")"; exit 1; }
             codesign --force --options runtime --timestamp --identifier "${pair##*:}" --sign "$SIGN_IDENTITY" "$B"
             codesign --verify --strict --verbose=2 "$B"
             cp "$B" "$STAGE/"
@@ -208,9 +221,13 @@ jobs:
           # online the first time. The same was true of the Bun binary.
           "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" \
             || { echo "::error::method-reader --version does not say $VERSION"; exit 1; }
+          # The Intel slice, under Rosetta: a slice that cannot start fails
+          # here, not on an Intel Mac.
+          arch -x86_64 "$BIN" --version | grep -qx "method-reader $VERSION (Method Reader)" \
+            || { echo "::error::the Intel slice of method-reader does not run"; exit 1; }
           "$ALIAS" --version 2>/dev/null | grep -qx "method-reader $VERSION (Method Reader)" \
             || { echo "::error::the screepub alias does not behave like method-reader"; exit 1; }
-          target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64 --out "$RUNNER_TEMP/cli-mac"
+          target/release/sp-release cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos --out "$RUNNER_TEMP/cli-mac"
       - name: Write the draft release
         if: ${{ !inputs.rehearse_version }}
         env:
@@ -225,7 +242,7 @@ jobs:
           cp "docs/releases/$VERSION.md" "$NOTES"
           {
             printf '\n\n---\n\n'
-            printf '%s\n\n' "**Mac:** download \`Method-Reader-macOS.dmg\` (notarized, for Macs with Apple silicon, macOS 13 or later), open it, drag Method Reader to Applications, and double-click."
+            printf '%s\n\n' "**Mac:** download \`Method-Reader-macOS.dmg\` (notarized, for Macs with Apple silicon or Intel, macOS 13 or later), open it, drag Method Reader to Applications, and double-click."
             printf '%s\n' "The SHA-256 of every download is in \`SHA256SUMS\`: in a folder holding the downloads, \`sha256sum -c SHA256SUMS --ignore-missing\` (or \`shasum -a 256 -c SHA256SUMS --ignore-missing\` on a Mac) checks them."
           } >> "$NOTES"
           # Draft first, so /releases/latest never answers with a release
@@ -235,7 +252,7 @@ jobs:
           else
             gh release edit "$TAG" --title "Method Reader $VERSION" --notes-file "$NOTES"
           fi
-          gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/method-reader-cli-macos-arm64.tar.gz" --clobber
+          gh release upload "$TAG" "$RUNNER_TEMP/cli-mac/method-reader-cli-macos.tar.gz" --clobber
 
   # The other command-line tools, each built AND run on its own OS: Rust
   # does not cross-compile a whole OS's worth of libraries the way Bun did,
@@ -368,7 +385,14 @@ jobs:
             fi
           done
           if [ "$RUNNER_OS" = macOS ]; then
-            cargo build --release --locked -p sp-app --target aarch64-apple-darwin
+            # Universal since 1.0.0: both slices, joined by lipo.
+            rustup target add aarch64-apple-darwin x86_64-apple-darwin
+            for t in aarch64-apple-darwin x86_64-apple-darwin; do
+              cargo build --release --locked -p sp-app --target "$t"
+            done
+            mkdir -p target/universal-apple-darwin/release
+            lipo -create -output target/universal-apple-darwin/release/method-reader-app \
+              target/aarch64-apple-darwin/release/method-reader-app target/x86_64-apple-darwin/release/method-reader-app
           else
             cargo build --release --locked -p sp-app
           fi
@@ -397,8 +421,17 @@ jobs:
           # sign its update is the one ADR 2026-09-21 forbids.
           [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] || { echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set"; exit 1; }
           SP=rust/target/release/sp-release
-          WIN=rust/target/aarch64-apple-darwin/release/method-reader-app
-          [ "$(lipo -archs "$WIN")" = arm64 ] || { echo "::error::the window is not arm64 only"; exit 1; }
+          # The checksums job signs SHA256SUMS with this key after the
+          # draft is complete, which a rehearsal never reaches: prove here,
+          # every run, that the key signs a .minisig the app's key checks.
+          printf 'probe\n' > "$RUNNER_TEMP/minisig-probe"
+          "$SP" sign-file --file "$RUNNER_TEMP/minisig-probe"
+          "$SP" verify-file --file "$RUNNER_TEMP/minisig-probe"
+          WIN=rust/target/universal-apple-darwin/release/method-reader-app
+          [ "$(lipo -archs "$WIN")" = "x86_64 arm64" ] || { echo "::error::the window is not universal (x86_64 arm64): $(lipo -archs "$WIN")"; exit 1; }
+          # Both slices start, headless, before anything is signed.
+          "$WIN" --version >/dev/null
+          arch -x86_64 "$WIN" --version >/dev/null || { echo "::error::the Intel slice of the window does not start"; exit 1; }
           mkdir -p bundles
           "$SP" mac-app --version "$VERSION" --window "$WIN" \
             --icon rust/crates/sp-app/icons/icon.icns \
@@ -592,7 +625,7 @@ jobs:
   handover-gate:
     needs: app-bundles
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45  # three proofs, one of them a Tauri build for Intel
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -683,6 +716,58 @@ jobs:
             "$INSTALLED/Contents/MacOS/method-reader-app" --version | grep -q "\"version\":\"$VERSION\""
           test -d "old013/Applications/Method Reader.app"
           test ! -e "old013/Applications/Screepub Desktop.app"
+      # Every Intel Mac still on 0.9.0, the last Intel release before
+      # 1.0.0, reads this release's latest.json too, and from 1.0.0 it finds
+      # darwin-x86_64 there. Its updater is tauri-plugin-updater 2.12.0 with
+      # 0.11.1's key (the same lock and key as every window since 0.7.1), so
+      # handover-proof IS that updater; built for Intel and run under
+      # Rosetta it asks for the Intel key, as a real Intel 0.9.0 does. Then
+      # the installed app's Intel slice starts, headless, and renames
+      # Screepub.app to Method Reader.app.
+      - name: The v0.9.0 window on an Intel Mac installs this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          OLD=v0.9.0
+          arch -x86_64 /usr/bin/true || { echo "::error::this runner has no Rosetta"; exit 1; }
+          rm -rf old090 site090
+          mkdir -p old090/Applications site090
+          gh release download "$OLD" --pattern Screepub-macOS.app.tar.gz --dir old090
+          tar -xzf old090/Screepub-macOS.app.tar.gz -C old090/Applications
+          test -d old090/Applications/Screepub.app
+          PUB="$(git show "$OLD:desktop/src-tauri/tauri.conf.json" | plutil -extract plugins.updater.pubkey raw -o - -)"
+          (cd rust && cargo build --release --locked -p sp-release)
+          (cd rust/handover-proof && rustup target add x86_64-apple-darwin && cargo build --release --locked --target x86_64-apple-darwin)
+          cp new/Method-Reader-macOS.app.tar.gz new/Method-Reader-macOS.app.tar.gz.sig site090/
+          rust/target/release/sp-release serve --dir site090 --port 0 > serve090.out 2> serve090.log &
+          SERVE=$!
+          n=0
+          until grep -q 'http://' serve090.out 2>/dev/null; do
+            n=$((n + 1)); [ "$n" -lt 50 ] || { echo "::error::the local server did not start"; exit 1; }; sleep 0.1
+          done
+          BASE="$(sed -n 's/.* at \(http:[^ ]*\)$/\1/p' serve090.out)"
+          rust/target/release/sp-release manifest --dir site090 --version "$VERSION" --out site090/latest.json --asset-base "$BASE"
+          grep -q '"darwin-x86_64"' site090/latest.json || { echo "::error::latest.json has no darwin-x86_64 entry"; exit 1; }
+          STATUS=0
+          arch -x86_64 rust/handover-proof/target/x86_64-apple-darwin/release/handover-proof \
+            --bundle old090/Applications/Screepub.app \
+            --endpoint "$BASE/latest.json" --pubkey "$PUB" --current 0.9.0 > proof090.out || STATUS=$?
+          kill "$SERVE" || true
+          cat proof090.out serve090.log
+          [ "$STATUS" = 0 ] || { echo "::error::the v0.9.0 window's updater on an Intel Mac could not install this release; latest.json is NOT published"; exit 1; }
+          grep -q ' for darwin-x86_64 from ' proof090.out || { echo "::error::the proof did not ask for the Intel key"; exit 1; }
+          INSTALLED=old090/Applications/Screepub.app
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INSTALLED/Contents/Info.plist")" = "$VERSION" ]
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$INSTALLED/Contents/Info.plist")" = method-reader-app ]
+          codesign --verify --deep --strict "$INSTALLED"
+          METHOD_READER_CONFIG_DIR="$RUNNER_TEMP/proof090-config" METHOD_READER_LIBRARY="$RUNNER_TEMP/proof090-library" \
+            arch -x86_64 "$INSTALLED/Contents/MacOS/method-reader-app" --version | grep -q "\"version\":\"$VERSION\""
+          test -d "old090/Applications/Method Reader.app"
+          test ! -e old090/Applications/Screepub.app
 
   # The bundles onto the draft, then latest.json LAST, built from what
   # arrived and verified against the key every copy of the app trusts before it
@@ -760,6 +845,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Built before the update key is in any step: no build script, and
+      # no crate a build pulls in, ever runs beside it.
+      - name: Build the release tools
+        working-directory: rust
+        run: cargo build --release --locked -p sp-release
       - name: One SHA256SUMS over every download on the draft
         env:
           GH_TOKEN: ${{ github.token }}
@@ -770,7 +861,7 @@ jobs:
           VERSION="${TAG#v}"
           # Every downloadable file; latest.json only for a release, as
           # app-upload publishes none for a prerelease.
-          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
+          WANT=(method-reader-cli-macos.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
           [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
           # Read into a variable, not piped into grep -q: under pipefail an
           # early grep exit can fail the pipe (SIGPIPE) and hide the match.
@@ -781,8 +872,9 @@ jobs:
           mkdir downloads
           cd downloads
           gh release download "$TAG" --dir .
-          # The old file and this one are not downloads they describe.
-          rm -f SHA256SUMS SHA256SUMS-app
+          # The old file, this one and its signature are not downloads
+          # they describe.
+          rm -f SHA256SUMS SHA256SUMS-app SHA256SUMS.minisig
           # What the draft serves must be exactly the list: a missing file
           # or an unexpected one would make SHA256SUMS describe a release
           # nobody meant to publish.
@@ -800,6 +892,23 @@ jobs:
           sha256sum -c SHA256SUMS
           cat SHA256SUMS
           gh release upload "$TAG" SHA256SUMS --clobber
+      # SHA256SUMS.minisig: the checksums signed with the update key
+      # (SUITE-STANDARDS.md section 3), refused unless the key is the one
+      # the app checks with, and checked again before it goes up. Anyone
+      # can check it: minisign -Vm SHA256SUMS -P <the public key>.
+      - name: Sign SHA256SUMS with the update key
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] || { echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set"; exit 1; }
+          rust/target/release/sp-release sign-file --file downloads/SHA256SUMS
+          rust/target/release/sp-release verify-file --file downloads/SHA256SUMS
+          gh release upload "$TAG" downloads/SHA256SUMS.minisig --clobber
 
   # LAST: read the draft back and say whether it is complete. A person
   # publishes it (docs/RELEASING.md), and this is what they read first: a
@@ -852,7 +961,7 @@ jobs:
           # Every file the jobs above upload. latest.json only for a
           # release: app-upload publishes none for a prerelease, because
           # releases/latest never resolves to one.
-          WANT=(method-reader-cli-macos-arm64.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
+          WANT=(method-reader-cli-macos.tar.gz method-reader-cli-linux-x64.tar.gz method-reader-cli-linux-arm64.tar.gz method-reader-cli-windows-x64.zip SHA256SUMS SHA256SUMS.minisig Method-Reader-linux-amd64.deb Method-Reader-linux-x86_64.rpm Method-Reader-linux-x86_64.AppImage Method-Reader-macOS.dmg Method-Reader-windows-x64-setup.exe Method-Reader-macOS.app.tar.gz Method-Reader-macOS.app.tar.gz.sig)
           [[ "$VERSION" == *-* ]] || WANT+=(latest.json)
           MISSING=""
           for f in "${WANT[@]}"; do

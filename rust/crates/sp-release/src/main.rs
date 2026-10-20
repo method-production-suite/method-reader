@@ -13,11 +13,15 @@ const USAGE: &str = "sp-release: Method Reader's release tools
   update-archive  --app \"Method Reader.app\" --out Method-Reader-macOS.app.tar.gz
   sign-update     --file F --version V      (key: TAURI_SIGNING_PRIVATE_KEY, its password:
                                              TAURI_SIGNING_PRIVATE_KEY_PASSWORD; writes F.sig)
+  sign-file       --file F [--pubkey BASE64]   (the same key; writes F.minisig, a plain
+                                             minisign signature; refuses a key that is
+                                             not the app's)
+  verify-file     --file F [--pubkey BASE64]   (checks F.minisig)
   keygen          --out KEYFILE [--password P]   (THROWAWAY keys: rehearsals and tests)
   manifest        --dir ARRIVALS --version V --out latest.json [--repo OWNER/NAME]
                   [--asset-base URL]   (rehearsal only: files served from URL/<name>)
   verify-update   --dir ARRIVALS --manifest latest.json [--pubkey BASE64]
-  cli-archive     --binary BIN [--alias BIN] --kind macos-arm64|linux-x64|linux-arm64|windows-x64
+  cli-archive     --binary BIN [--alias BIN] --kind macos|linux-x64|linux-arm64|windows-x64
                   --out DIR   (--alias: the `screepub` binary, packed beside method-reader)
   deb | rpm       --version V --window BIN --icon SIZE=PNG... --resource FILE... --arch A
                   [--depends LINE] --out DIR
@@ -169,6 +173,41 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
             out.push(names::SIGNATURE_EXT);
             write(Path::new(&out), sig.as_bytes())
         }
+        "sign-file" => {
+            let file = a.path("file")?;
+            let pubkey = a
+                .opt("pubkey")
+                .unwrap_or_else(|| sp_update_config::PUBKEY.into());
+            let key = std::env::var("TAURI_SIGNING_PRIVATE_KEY").map_err(|_| {
+                "TAURI_SIGNING_PRIVATE_KEY is not set: nothing can be signed".to_string()
+            })?;
+            let password = std::env::var("TAURI_SIGNING_PRIVATE_KEY_PASSWORD").unwrap_or_default();
+            let sk = sign::load_secret_key(&key, &password)?;
+            let data = std::fs::read(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let name = file
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            let sig = sign::sign_plain(&sk, &pubkey, &data, &name)?;
+            sign::verify_plain(&pubkey, &data, &sig)?;
+            let mut out = file.into_os_string();
+            out.push(".minisig");
+            write(Path::new(&out), sig.as_bytes())
+        }
+        "verify-file" => {
+            let file = a.path("file")?;
+            let pubkey = a
+                .opt("pubkey")
+                .unwrap_or_else(|| sp_update_config::PUBKEY.into());
+            let data = std::fs::read(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let mut sig_path = file.clone().into_os_string();
+            sig_path.push(".minisig");
+            let sig = std::fs::read_to_string(&sig_path)
+                .map_err(|e| format!("{}: {e}", Path::new(&sig_path).display()))?;
+            let trusted = sign::verify_plain(&pubkey, &data, &sig)?;
+            println!("{} verifies ({trusted})", file.display());
+            Ok(())
+        }
         "keygen" => {
             let out = a.path("out")?;
             let mut pub_path = out.clone().into_os_string();
@@ -218,7 +257,7 @@ fn run(cmd: &str, a: &Args) -> Result<(), String> {
             let out = a.path("out")?;
             let tarball = || archive::cli_tarball(&bin, alias, mtime);
             let (name, bytes) = match a.one("kind")?.as_str() {
-                "macos-arm64" => (names::CLI_MAC_ARM64, tarball()),
+                "macos" => (names::CLI_MAC, tarball()),
                 "linux-x64" => (names::CLI_LINUX_X64, tarball()),
                 "linux-arm64" => (names::CLI_LINUX_ARM64, tarball()),
                 "windows-x64" => (names::CLI_WINDOWS_X64, archive::cli_zip(&bin, alias)),

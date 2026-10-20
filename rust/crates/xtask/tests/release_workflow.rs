@@ -272,6 +272,7 @@ fn the_draft_check_refuses_any_image_list_but_exactly_the_one_mac_image() {
 fn every_release_file() -> Vec<String> {
     let mut all = names::downloads(false);
     all.push(names::CHECKSUMS.to_string());
+    all.push(names::CHECKSUMS_SIGNATURE.to_string());
     sorted(all)
 }
 
@@ -326,15 +327,21 @@ fn the_draft_check_wants_every_file_the_uploads_put_there() {
 fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     let rel = rel();
     let release = job(&rel, "release");
-    assert_eq!(uploaded_by(release), vec![names::CLI_MAC_ARM64.to_string()]);
+    assert_eq!(uploaded_by(release), vec![names::CLI_MAC.to_string()]);
     let text = run_text(release);
-    assert!(text.contains("--target aarch64-apple-darwin"));
+    // Both slices, joined into one universal file before anything is signed.
+    assert!(text.contains("for t in aarch64-apple-darwin x86_64-apple-darwin; do"));
+    assert!(text.contains("--bin method-reader --bin screepub --target \"$t\""));
+    assert!(text.contains("lipo -create -output \"target/universal-apple-darwin/release/$b\""));
+    assert!(text.find("lipo -create").unwrap() < text.find("codesign --force").unwrap());
+    // The Intel slice runs, under Rosetta, before the archive is made.
+    assert!(text.contains(r#"arch -x86_64 "$BIN" --version"#));
     // The tool and its old name, each under its own identifier.
     assert!(text.contains(
         r#"codesign --force --options runtime --timestamp --identifier "${pair##*:}" --sign "$SIGN_IDENTITY" "$B""#
     ));
     assert!(text.contains(r#""$BIN:method-reader-cli-arm64" "$ALIAS:screepub-cli-arm64""#));
-    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos-arm64"#));
+    assert!(text.contains(r#"cli-archive --binary "$BIN" --alias "$ALIAS" --kind macos"#));
     assert!(text.contains("xcrun notarytool submit"));
     // Signed and notarized, THEN packaged, so the tarball holds the signed bytes.
     let sign = text.find("codesign --force").unwrap();
@@ -345,14 +352,14 @@ fn the_mac_release_job_uploads_exactly_the_one_cli_tarball_and_no_image() {
     // is in SHA256SUMS, with every other download's, and no longer in the
     // notes: the Homebrew tap that read it there is retired.
     let out = "$RUNNER_TEMP/cli-mac";
-    assert!(text.contains(&format!("{out}/{}", names::CLI_MAC_ARM64)));
+    assert!(text.contains(&format!("{out}/{}", names::CLI_MAC)));
     // (The notes name the tools in a printf; nothing here RUNS one.)
     let runs_a_hash = Regex::new(r"(?m)^\s*(\(\s*cd [^)]*&&\s*)?(shasum|sha256sum)\b").unwrap();
     assert!(!runs_a_hash.is_match(&commands(&text)), "{text}");
 }
 
 #[test]
-fn the_install_line_the_release_job_writes_says_apple_silicon() {
+fn the_install_line_the_release_job_writes_says_apple_silicon_or_intel() {
     let rel = rel();
     let text = run_text(job(&rel, "release"));
     let mac = text
@@ -360,27 +367,34 @@ fn the_install_line_the_release_job_writes_says_apple_silicon() {
         .find(|l| l.contains("**Mac:**"))
         .expect("a Mac line");
     assert!(mac.contains(names::MAC_DMG));
-    assert!(mac.contains("Apple silicon"));
+    assert!(mac.contains("Apple silicon or Intel"));
     assert!(mac.contains("macOS 13 or later"));
     assert_eq!(names::MAC_MINIMUM, "13.0");
-    assert!(!Regex::new(r"(?i)universal|intel").unwrap().is_match(mac));
 }
 
 #[test]
-fn nothing_builds_hashes_or_uploads_an_intel_or_universal_mac_build() {
+fn every_mac_binary_is_universal_and_checked_to_be_exactly_both_slices() {
     let yml = read(".github/workflows/release.yml");
+    // 0.9.0's Intel tarball is history; 1.0.0's universal one replaces it.
     assert!(!yml.contains("screepub-cli-macos-x64.tar.gz"));
+    assert!(!yml.contains(names::CLI_MAC_ARM64));
     let code = commands(&yml);
-    for gone in [
-        "x86_64-apple-darwin",
-        "universal-apple-darwin",
-        "--universal",
-        "lipo -create",
-    ] {
-        assert!(!code.contains(gone), "{gone}");
-    }
-    // Each Mac binary is checked to be arm64 alone before it is signed.
-    assert_eq!(code.matches(r#"lipo -archs"#).count(), 2);
+    // The command-line tool and the window, each from both slices.
+    assert_eq!(code.matches("lipo -create").count(), 2);
+    assert_eq!(
+        code.matches("rustup target add aarch64-apple-darwin x86_64-apple-darwin")
+            .count(),
+        2
+    );
+    // Each is checked to be exactly both, in lipo's order, before it is signed.
+    let exact = code.matches(r#"= "x86_64 arm64" ]"#).count();
+    assert_eq!(exact, 2, "{code}");
+    assert_eq!(
+        code.matches("lipo -archs").count(),
+        4,
+        "the check and its error message, twice"
+    );
+    assert!(!code.contains(r#"= arm64 ]"#));
 }
 
 #[test]
@@ -435,7 +449,7 @@ fn the_cli_legs_build_the_three_other_archives_and_cli_upload_ships_them() {
     // No checkout in that job, so gh is told the repository.
     assert!(serde_yaml::to_string(up).unwrap().contains("GH_REPO"));
     // It never touches the Mac downloads the release job owns.
-    for mac in [names::CLI_MAC_ARM64, names::MAC_DMG] {
+    for mac in [names::CLI_MAC, names::MAC_DMG] {
         assert!(!run.contains(mac));
     }
 }
@@ -459,9 +473,13 @@ fn app_bundles_builds_on_all_three_runners_after_the_checks() {
     );
     let text = run_text(job);
     assert!(text.contains(r#"VERSION="${TAG#v}""#));
+    assert!(text.contains("cargo build --release --locked -p sp-app --target \"$t\""));
     assert!(
-        text.contains("cargo build --release --locked -p sp-app --target aarch64-apple-darwin")
+        text.contains(
+            "lipo -create -output target/universal-apple-darwin/release/method-reader-app"
+        )
     );
+    assert!(text.contains(r#"arch -x86_64 "$WIN" --version"#));
     let upload = steps(job)
         .into_iter()
         .find(|st| s(st, "uses").contains("upload-artifact"))
@@ -547,15 +565,19 @@ fn the_release_uses_only_the_secrets_the_repository_already_has() {
             "secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD",
         ])
     );
-    // The update key reaches the Mac step only.
+    // The update key reaches two steps only: the Mac step, which signs the
+    // update archive, and the step that signs SHA256SUMS once the draft is
+    // complete.
     let rel = rel();
     for (name, job) in jobs(&rel) {
         for st in steps(job) {
             let text = serde_yaml::to_string(st).unwrap();
             if text.contains("secrets.TAURI_SIGNING_PRIVATE_KEY") {
-                assert_eq!(
-                    (name.as_str(), s(st, "name")),
-                    ("app-bundles", "macOS app, update archive and image")
+                let at = (name.as_str(), s(st, "name"));
+                assert!(
+                    at == ("app-bundles", "macOS app, update archive and image")
+                        || at == ("checksums", "Sign SHA256SUMS with the update key"),
+                    "{at:?}"
                 );
             }
         }
@@ -665,13 +687,9 @@ fn the_checksums_job_runs_after_every_upload_and_before_the_draft_check() {
         assert!(needs(sums).contains(&upload.to_string()), "{upload}");
     }
     assert!(needs(job(&rel, "draft-check")).contains(&"checksums".to_string()));
-    // No checkout: gh is told the repository.
+    // gh is told the repository. The checkout is for building sp-release,
+    // which signs SHA256SUMS.
     assert!(serde_yaml::to_string(sums).unwrap().contains("GH_REPO"));
-    assert!(
-        !steps(sums)
-            .iter()
-            .any(|st| s(st, "uses").contains("checkout"))
-    );
 }
 
 #[test]
@@ -692,7 +710,10 @@ fn the_checksums_job_lists_every_download_and_uploads_only_sha256sums() {
     assert_eq!(sorted(want), sorted(names::downloads(false)));
     assert_eq!(
         uploaded_by(job(&rel, "checksums")),
-        vec![names::CHECKSUMS.to_string()]
+        vec![
+            names::CHECKSUMS.to_string(),
+            names::CHECKSUMS_SIGNATURE.to_string()
+        ]
     );
     // Read from the draft, verified, then uploaded.
     let download = text.find("gh release download").unwrap();
@@ -1037,4 +1058,71 @@ fn the_v0_13_0_apps_own_updater_must_install_every_release() {
         rev, "0b0544e1804b703de59554190fe245936f8fc02c",
         "the v0.13.0 tag's commit"
     );
+}
+
+#[test]
+fn the_checksums_are_signed_with_the_update_key_only_after_the_tools_are_built() {
+    let rel = rel();
+    let sums = job(&rel, "checksums");
+    let all = steps(sums);
+    let build = all
+        .iter()
+        .position(|st| s(st, "name") == "Build the release tools")
+        .expect("a build step");
+    let sign = all
+        .iter()
+        .position(|st| s(st, "name") == "Sign SHA256SUMS with the update key")
+        .expect("a signing step");
+    assert!(build < sign);
+    // The key is in the signing step alone, never the job.
+    assert!(sums.get("env").is_none());
+    for (i, st) in all.iter().enumerate() {
+        let has_key = serde_yaml::to_string(st)
+            .unwrap()
+            .contains("TAURI_SIGNING_PRIVATE_KEY:");
+        assert_eq!(has_key, i == sign, "step {i}");
+    }
+    let text = s(all[sign], "run").to_string();
+    assert!(text.contains("sp-release sign-file --file downloads/SHA256SUMS"));
+    assert!(text.contains("sp-release verify-file --file downloads/SHA256SUMS"));
+    assert!(text.contains("gh release upload \"$TAG\" downloads/SHA256SUMS.minisig --clobber"));
+    // A re-run starts from the downloads alone.
+    assert!(run_text(sums).contains("rm -f SHA256SUMS SHA256SUMS-app SHA256SUMS.minisig"));
+    // And the draft is not complete without it.
+    assert!(run_text(job(&rel, "draft-check")).contains(" SHA256SUMS SHA256SUMS.minisig "));
+    // Every rehearsal proves the key makes one, in the leg that holds it.
+    let mac = run_text(job(&rel, "app-bundles"));
+    assert!(mac.contains(r#""$SP" sign-file --file "$RUNNER_TEMP/minisig-probe""#));
+}
+
+#[test]
+fn an_intel_mac_on_0_9_0_is_proved_to_take_the_release_before_anything_is_published() {
+    let rel = rel();
+    let gate = job(&rel, "handover-gate");
+    let proof = steps(gate)
+        .into_iter()
+        .find(|st| s(st, "name") == "The v0.9.0 window on an Intel Mac installs this release")
+        .expect("the 0.9.0 proof");
+    let text = s(proof, "run").to_string();
+    // 0.9.0's own update file and key, and its updater built for Intel.
+    assert!(text.contains("OLD=v0.9.0"));
+    assert!(text.contains("--pattern Screepub-macOS.app.tar.gz"));
+    assert!(text.contains(r#"git show "$OLD:desktop/src-tauri/tauri.conf.json""#));
+    assert!(text.contains("cargo build --release --locked --target x86_64-apple-darwin"));
+    // Run under Rosetta, so it asks for the Intel key as a real Intel Mac does.
+    assert!(text.contains(
+        "arch -x86_64 rust/handover-proof/target/x86_64-apple-darwin/release/handover-proof"
+    ));
+    assert!(text.contains("--current 0.9.0"));
+    assert!(text.contains("grep -q ' for darwin-x86_64 from ' proof090.out"));
+    // The installed app's Intel slice starts and renames the old bundle.
+    assert!(
+        text.contains(r#"arch -x86_64 "$INSTALLED/Contents/MacOS/method-reader-app" --version"#)
+    );
+    assert!(text.contains(r#"test -d "old090/Applications/Method Reader.app""#));
+    // Nothing is published unless the gate passes.
+    for later in ["app-upload", "checksums"] {
+        let needs = serde_yaml::to_string(job(&rel, later).get("needs").unwrap()).unwrap();
+        assert!(needs.contains("handover-gate"), "{later}");
+    }
 }

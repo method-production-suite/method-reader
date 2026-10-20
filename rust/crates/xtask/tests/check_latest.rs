@@ -293,7 +293,9 @@ fn the_same_holds_for_darwin_x86_64_app_which_the_plugin_tries_first() {
     let mut assets = DEFAULT_ASSETS.to_vec();
     assets.push(INTEL_CLI);
     let era = release_with("0.6.1", &assets);
-    assert!(judge_manifest(&app_key, &era, &sigs(&sig()), &pubkey()).is_ok());
+    // In a universal release the Intel key may share the one archive.
+    let t = judge_manifest(&app_key, &era, &sigs(&sig()), &pubkey()).text();
+    assert!(!t.contains("points at"), "{t}");
 }
 
 #[test]

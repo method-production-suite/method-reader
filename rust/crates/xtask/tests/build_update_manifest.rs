@@ -61,7 +61,7 @@ fn one() -> SignedArtifact {
     SignedArtifact {
         name: TAR.into(),
         signature: fake_signature_box("Screepub.app.tar.gz", FAKE_KEY_ID),
-        platform_keys: vec!["darwin-aarch64".into()],
+        platform_keys: vec!["darwin-aarch64".into(), "darwin-x86_64".into()],
     }
 }
 
@@ -99,7 +99,7 @@ fn an_asset_url_names_the_tag_and_the_published_filename_over_tls() {
 // ---- collecting what arrived ----
 
 #[test]
-fn the_signed_archive_becomes_one_artifact_for_apple_silicon_with_its_signature_verbatim() {
+fn the_signed_archive_becomes_one_artifact_for_both_chips_with_its_signature_verbatim() {
     let s = Scratch::new("manifest");
     let found = collect_signed_artifacts(&arrivals(&s, "ok", Arrivals::default())).unwrap();
     assert_eq!(found, vec![one()]);
@@ -204,7 +204,11 @@ fn it_is_the_shape_the_plugin_reads_version_notes_pub_date_platforms() {
     assert_eq!(m["version"], "0.6.1");
     assert_eq!(m["pub_date"], "2026-09-21T18:00:00.000Z");
     let keys: Vec<&String> = m["platforms"].as_object().unwrap().keys().collect();
-    assert_eq!(keys, vec!["darwin-aarch64"]);
+    assert_eq!(keys, vec!["darwin-aarch64", "darwin-x86_64"]);
+    assert_eq!(
+        m["platforms"]["darwin-x86_64"],
+        m["platforms"]["darwin-aarch64"]
+    );
     assert_eq!(
         m["platforms"]["darwin-aarch64"],
         serde_json::json!({
@@ -341,8 +345,11 @@ fn it_writes_latest_json_describing_the_signed_archive_that_arrived() {
     let m: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert_eq!(m["version"], "0.6.1");
     let keys: Vec<&String> = m["platforms"].as_object().unwrap().keys().collect();
-    assert_eq!(keys, vec!["darwin-aarch64"]);
-    assert!(m["platforms"].get("darwin-x86_64").is_none());
+    assert_eq!(keys, vec!["darwin-aarch64", "darwin-x86_64"]);
+    assert_eq!(
+        m["platforms"]["darwin-x86_64"],
+        m["platforms"]["darwin-aarch64"]
+    );
     assert_eq!(
         m["platforms"]["darwin-aarch64"]["signature"],
         fake_signature_box("Screepub.app.tar.gz", FAKE_KEY_ID)
