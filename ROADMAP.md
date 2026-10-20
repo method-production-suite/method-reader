@@ -27,7 +27,7 @@ Release go-aheads:
      is 2026-10-23, and the release workflow refuses an earlier tag on its
      own.
   2. The update is rehearsed from 0.13.0, headless, because 0.13.0's own
-     updater is what installs 0.13.1.
+     updater is what installs 0.13.1. Built into the release rehearsal.
   3. The weekly full build is run by hand on the release commit and comes
      back green.
 
@@ -101,9 +101,10 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **Rehearsing the update from 0.13.0.** The rehearsal starts from the old
-  0.11.1 window today. 0.13.1 is installed by 0.13.0's own updater, so the
-  rehearsal gains a 0.13.0 starting point, run with no window.
+- **Rehearsing the update from 0.13.0.** Built: the release workflow's
+  handover gate now also runs 0.13.0's own updater, built from its tag,
+  with its real key against the release's real signed file, on a copy
+  named Screepub Desktop, and checks the new build then renames itself.
 - **Moving onto the shared updater.** Built, in review: `method-update` from
   method-libs replaces `sp-update`, so all four apps share one updater.
 - **Secrets only where they are needed.** In the release workflow, set up
