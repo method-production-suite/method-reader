@@ -14,7 +14,7 @@
 
 ## Ground rules for every task
 
-- Worktree: `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/epic-neumann-254843`, branch `parity-b-routes`. Absolute paths; never `cd` to the main checkout.
+- Worktree: `<repo>/.claude/worktrees/epic-neumann-254843`, branch `parity-b-routes`. Absolute paths; never `cd` to the main checkout.
 - TDD: failing test first, see it fail for the stated reason, implement, see it pass. `bunx tsc --noEmit` clean before each commit.
 - **No em dash (`—`) in any string a person reads** that you add (engine messages, CLI output, route titles/details/buttons, docs). Colons, periods, commas.
 - **No test may touch the real machine's state:** no test writes the real app-settings file (always set `SCREEPUB_CONFIG_DIR` or pass a path into SCRATCH), opens an app, opens a URL, or reads the real mail handler (inject the probe). No test may launch Books, a browser or Mail. Spawned-CLI tests pass `SCREEPUB_CONFIG_DIR`, `SCREEPUB_LIBRARY` and `SCREEPUB_VOLUME_ROOTS` pointing into SCRATCH, and use `SCREEPUB_REMARKABLE_ENDPOINT=http://127.0.0.1:9` so the reMarkable probe fails fast.

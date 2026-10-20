@@ -14,7 +14,7 @@
 
 ## Ground rules for every task
 
-- Worktree: `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/epic-neumann-254843`, branch `parity-d-kfx-install`. Use absolute paths. Never `cd` to the main checkout.
+- Worktree: `<repo>/.claude/worktrees/epic-neumann-254843`, branch `parity-d-kfx-install`. Use absolute paths. Never `cd` to the main checkout.
 - TDD: write the failing test, run it, see it fail for the stated reason, then implement.
 - **No em dashes (`—`) in any string a person reads** that this plan adds: engine messages, CLI output, window copy, docs you write. Use colons, periods or commas. Existing copy keeps its style.
 - **Nothing in the test suite may reach the real installer on the machine running it.** It fetches from the network and writes into the user's Calibre. Handler tests inject a fake installer. Spawned-CLI tests of `kfx-install` run with `CALIBRE_CONFIG_DIRECTORY` pointed into the test file's scratch folder, so even a regression lands in a throwaway Calibre config, not the real one (verified 2026-09-23: with that variable set, `kfxStatus()` reads the scratch config and the real one is untouched).

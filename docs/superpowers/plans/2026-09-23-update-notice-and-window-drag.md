@@ -23,7 +23,7 @@
 
 ## Working rules for every task
 
-- Work in the worktree `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/update-notice` (branch `update-notice`). Use absolute paths. Do not push, merge or rebase.
+- Work in the worktree `<repo>/.claude/worktrees/update-notice` (branch `update-notice`). Use absolute paths. Do not push, merge or rebase.
 - TDD: write the test, run it and watch it fail, then implement.
 - Run the named test file after each step; run the full `bun test` and `bunx tsc --noEmit` before each commit.
 - **No em dashes** in any text a person sees (UI copy, README). Use colons or periods. Code comments may keep the file's existing style.
@@ -58,7 +58,7 @@
 - [ ] **Step 1: Create the worktree from local main**
 
 ```bash
-cd /Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub
+cd <repo>
 git worktree add .claude/worktrees/update-notice -b update-notice main
 ```
 
@@ -67,7 +67,7 @@ Expected: `Preparing worktree (new branch 'update-notice')`.
 - [ ] **Step 2: Build the host sidecar in the worktree** (cargo will not compile the shell without it)
 
 ```bash
-cd /Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/update-notice
+cd <repo>/.claude/worktrees/update-notice
 bun install --frozen-lockfile
 bun tools/build-sidecar.ts --host
 ```
@@ -837,7 +837,7 @@ tauri-plugin-process = "2.3.1"
 Resolve the lockfile and prove it compiles (the sidecar from Task 0 must exist):
 
 ```bash
-cd /Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/update-notice/desktop/src-tauri
+cd <repo>/.claude/worktrees/update-notice/desktop/src-tauri
 cargo check
 git diff --stat Cargo.lock
 ```
@@ -859,7 +859,7 @@ Expected: `cargo check` finishes with `Finished`; the lockfile diff adds `tauri-
 - [ ] **Step 4: Run the tests**
 
 ```bash
-cd /Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/update-notice
+cd <repo>/.claude/worktrees/update-notice
 bun test tests/desktop-shell.test.ts
 ```
 
@@ -1782,7 +1782,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - [ ] **Step 1: Pictures unchanged**
 
 ```bash
-cd /Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/update-notice
+cd <repo>/.claude/worktrees/update-notice
 bun tools/capture-screens.ts
 ```
 

@@ -1913,7 +1913,7 @@ epubcheck 0 errors. The `fmt-*` rules are plain CSS 2.1 and draw no warning.
 - [ ] **Step 4: real-PDF sweep, by generator.**
 
 ```bash
-R=/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/fixtures
+R=<repo>/fixtures
 for f in "$R"/final-draft.pdf "$R"/highland.pdf "$R"/celtx.pdf "$R"/fade-in.pdf "$R"/chromium.pdf; do bun src/cli.ts "$f" --out /tmp/p2-real; done
 grep -c 'fmt:' /tmp/p2-real/*.fountain
 ```

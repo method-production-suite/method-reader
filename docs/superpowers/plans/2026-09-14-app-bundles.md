@@ -36,7 +36,7 @@ These re-check the spec's measurements on 2026-09-14, aarch64-unknown-linux-gnu,
 2. The `.deb` is an `ar` archive (magic `!<arch>\n`) holding exactly `debian-binary`, `control.tar.gz`, `data.tar.gz`. Tar member names carry **no** `./` prefix: `usr/bin/screepub-engine`.
 3. The `.rpm` magic is `ed ab ee db`; its payload is **cpio compressed with gzip** (`PAYLOADCOMPRESSOR: gzip`, `PAYLOADFORMAT: cpio`). Its cpio entry names **do** carry a `./` prefix.
 4. `./usr/bin/screepub-engine --version --json` extracted from the `.deb` prints `{"ok":true,"version":"0.5.4"}` — the version split, still live.
-5. Setting `bundle.publisher`, `bundle.category`, `bundle.shortDescription`, `bundle.longDescription`, `bundle.resources` and `bundle.fileAssociations` fixes all four Linux defects in one config edit. Observed `control`: `Maintainer: Darkwell Entertainment LLC`, human `Description:` with the long description as its continuation line. Observed `Screepub.desktop`: `Categories=Office;`, `Comment=…`, `MimeType=application/pdf`. Observed data listing gained `usr/lib/Screepub/LICENSE` and `usr/lib/Screepub/THIRD-PARTY-NOTICES.md`.
+5. Setting `bundle.publisher`, `bundle.category`, `bundle.shortDescription`, `bundle.longDescription`, `bundle.resources` and `bundle.fileAssociations` fixes all four Linux defects in one config edit. Observed `control`: `Maintainer: <publisher>`, human `Description:` with the long description as its continuation line. Observed `Screepub.desktop`: `Categories=Office;`, `Comment=…`, `MimeType=application/pdf`. Observed data listing gained `usr/lib/Screepub/LICENSE` and `usr/lib/Screepub/THIRD-PARTY-NOTICES.md`.
 6. **`Categories=Office;Publishing;` is not reachable.** `bundle.category` is a fixed enum; `Productivity` maps to the literal `"Office;"` (`tauri-bundler-2.9.4/src/bundle/category.rs:183`). Only a custom `linux.deb.desktopTemplate` could add `Publishing;`. This plan does not add one — see Task 2.
 7. **`cargo tauri build` rewrites `Cargo.toml`, and the expanded spelling is a fixed point.** After the first run left `tauri-build = { version = "2", features = [] }`, a second run left the file byte-identical. So committing the expanded spelling really does make the rewrite a no-op — the spec offered that as an untested option.
 8. `cargo tauri icon assets/icon.svg` works from the SVG with no extra tooling and writes `icon.ico` (13,673 B, six sizes) and `icon.icns` (74,938 B), plus `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png` that this project does not use, and it **overwrites `icon.png`** (12,738 B, 512×512, replacing the committed 17,419 B one).
@@ -243,7 +243,7 @@ Claude-Session: https://claude.ai/code/session_01EwcqvziTDJLjcRbJF8ppbe"
 
 **Interfaces:**
 - Consumes: Task 1's `bundle.icon` array.
-- Produces: in `tauri.conf.json`, `bundle.publisher = "Darkwell Entertainment LLC"`, `bundle.category = "Productivity"`, `bundle.shortDescription`, `bundle.longDescription`, `bundle.resources` as the object `{"../../LICENSE": "LICENSE", "../../THIRD-PARTY-NOTICES.md": "THIRD-PARTY-NOTICES.md"}`, and `bundle.fileAssociations` as a one-element array. Task 6's e2e test asserts these reach the built package.
+- Produces: in `tauri.conf.json`, `bundle.publisher = "<publisher>"`, `bundle.category = "Productivity"`, `bundle.shortDescription`, `bundle.longDescription`, `bundle.resources` as the object `{"../../LICENSE": "LICENSE", "../../THIRD-PARTY-NOTICES.md": "THIRD-PARTY-NOTICES.md"}`, and `bundle.fileAssociations` as a one-element array. Task 6's e2e test asserts these reach the built package.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -254,8 +254,8 @@ describe('what the Linux package tells a user about itself', () => {
   test('the publisher is the company, not a slice of the bundle identifier', () => {
     // Absent this, tauri-bundler derives Maintainer: from the SECOND segment
     // of com.darkwell.screepub.desktop and the .deb says "Maintainer:
-    // darkwell". Observed, before this change, in a real build's control file.
-    expect(CONFIG.bundle.publisher).toBe('Darkwell Entertainment LLC');
+    // <org>". Observed, before this change, in a real build's control file.
+    expect(CONFIG.bundle.publisher).toBe('<publisher>');
   });
 
   test('the descriptions are written for a user, not for a contributor', () => {
@@ -333,7 +333,7 @@ In `desktop/src-tauri/tauri.conf.json`, replace the whole `bundle` object with:
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "publisher": "Darkwell Entertainment LLC",
+    "publisher": "<publisher>",
     "category": "Productivity",
     "shortDescription": "Turn a screenplay PDF into a reflowable e-book.",
     "longDescription": "Screepub converts a screenplay PDF into an EPUB or MOBI that reflows properly on an e-reader, keeping cues with their dialogue and scenes with their headings, and copies the finished book onto a connected reader over USB.",
@@ -387,7 +387,7 @@ git checkout desktop/src-tauri/Cargo.toml
 Expected, all four, on this machine (Linux with `ar` and GNU `tar`; a machine without them should skip this step and rely on Task 6's e2e test):
 
 ```
-Maintainer: Darkwell Entertainment LLC
+Maintainer: <publisher>
 Description: Turn a screenplay PDF into a reflowable e-book.
  Screepub converts a screenplay PDF into an EPUB or MOBI that reflows properly ...
 Categories=Office;
@@ -407,7 +407,7 @@ git add desktop/src-tauri/tauri.conf.json tests/desktop-shell.test.ts desktop/RE
 git commit -m "Say who made the Linux package, what it does, and ship its licence
 
 Four defects the stock bundle had, all fixed in config: Maintainer: read
-'darkwell' (a slice of the bundle identifier), Description: was the crate's
+'<org>' (a slice of the bundle identifier), Description: was the crate's
 note to the next maintainer with '(none)' beneath it, no licence travelled
 with a binary that embeds Apache-2.0 and MIT code, and the launcher entry
 declared neither a category nor a MIME type. Verified against a real .deb.
