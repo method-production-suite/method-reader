@@ -560,6 +560,44 @@ fn the_old_name_serves_too_and_says_nothing_extra() {
     assert!(!stderr.contains("screepub is now called"), "{stderr}");
 }
 
+/// The main help lists `mcp` in its verb list as it lists every other verb:
+/// the command and its flags on one line, then one line saying what it does,
+/// in the description column, before the note that closes the list.
+#[test]
+fn the_main_help_lists_mcp_with_one_line() {
+    let sb = Sandbox::new();
+    let help = sb.run(&["--help"]);
+    assert_eq!(help.code, 0);
+    let lines: Vec<&str> = help.stdout.lines().collect();
+    let at = lines
+        .iter()
+        .position(|l| *l == "  method-reader mcp [--root <dir>]... [--read-only]")
+        .expect("the main help lists method-reader mcp");
+    let indent = |l: &str| l.len() - l.trim_start().len();
+    let above = lines
+        .iter()
+        .position(|l| l.starts_with("  method-reader update-should-check "))
+        .expect("the verb listed before mcp");
+    let column = indent(lines[above + 1]);
+    let description = lines[at + 1];
+    assert_eq!(
+        description.trim_start(),
+        "these tools for an MCP client, over stdio"
+    );
+    assert_eq!(indent(description), column);
+    assert_eq!(
+        lines[at + 2],
+        "",
+        "one description line, then the list ends"
+    );
+    // The flags it lists are the ones `mcp --help` documents.
+    let own = sb.run(&["mcp", "--help"]);
+    assert!(
+        own.stdout
+            .contains("method-reader mcp [--root DIR]... [--read-only]")
+    );
+}
+
 #[test]
 fn bad_command_lines_are_refused() {
     let sb = Sandbox::new();
