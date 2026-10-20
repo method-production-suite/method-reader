@@ -28,10 +28,11 @@ Release go-aheads:
   1. No young crate is left in the exception list. The earliest that holds
      is 2026-10-23, and the release workflow refuses an earlier tag on its
      own.
-  2. The update is rehearsed from 0.13.0, headless, because 0.13.0's own
-     updater is what installs 0.13.1. Built into the release rehearsal (#70).
-  3. The rehearsal is green on the release commit: since 2026-10-19 it is
-     the only full build before a release.
+  2. Done 2026-10-20: the update is rehearsed from 0.13.0, headless,
+     because 0.13.0's own updater is what installs 0.13.1. It installed
+     0.13.1 with its signature verified.
+  3. Done 2026-10-20: the rehearsal is green on the release commit,
+     b0a211b. Since 2026-10-19 it is the only full build before a release.
 
   Then the tag goes to the owner through MOrg; one yes covers the tag and
   the publish, after the draft checks pass (docs/RELEASING.md).
@@ -43,6 +44,15 @@ Release go-aheads:
   updater out there (0.12.x, 0.13.x) offers 1.0.0 as newer, the release
   tools and the version check take it, and the site's download links name
   no version. Launcher 0.1.2, which accepts a universal app, is out.
+
+  One decision for the owner, before the universal build is written
+  (docs/superpowers/specs/2026-10-20-universal-mac-design.md): every Intel
+  copy of 0.9.0 reads the same update file, so once 1.0.0 lists Intel it is
+  offered 1.0.0 straight from 0.9.0, a jump nothing has proved yet.
+  Recommended: offer it, with a new rehearsal step in which 0.9.0's own
+  updater installs the release and the app starts on 0.9.0's settings. The
+  fallback, if that proof is slow to build: ship 1.0.0 universal but list
+  Intel only from 1.0.1.
 
 Built on the recommendation (reversible):
 
