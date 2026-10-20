@@ -9,6 +9,8 @@
 # Remove a line once the version is 14 days old.
 rustls 0.23.46       # RUSTSEC-2026-0346 to 0349 (2026-10-14)
 zip 9.0.3            # RUSTSEC-2026-0367, RUSTSEC-2026-0368 and RUSTSEC-2026-0369 (zip 9 is the fix; every release before 9.0.0 is vulnerable and 9.0.0 to 9.0.2 are yanked)
+rustls-webpki 0.103.16   # RUSTSEC-2026-0382 (2026-10-20): rejects certificate paths through the distrusted emSign intermediates
+webpki-roots 1.0.10      # RUSTSEC-2026-0381 (2026-10-20): drops the emSign ECC Root CA - G3 those intermediates chain to
 fontique 0.12.0      # ages-out 2026-10-23: with parley 0.12, the book preview's text layout
 parley 0.12.0        # ages-out 2026-10-23: sp-app's direct dependency, the book preview's text layout
 parley_data 0.12.0   # ages-out 2026-10-23: part of parley 0.12
