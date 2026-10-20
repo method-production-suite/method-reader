@@ -324,6 +324,6 @@ mod tests {
             )
         );
         let other = json!({"ok": true, "removed": ["/elsewhere"]});
-        assert_eq!(removed_line(&other, book, &kindle()).1, true);
+        assert!(removed_line(&other, book, &kindle()).1);
     }
 }

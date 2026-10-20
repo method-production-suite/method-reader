@@ -38,8 +38,11 @@ pub struct State {
 
 #[derive(Clone, Debug)]
 pub enum Purpose {
-    Books { ask: u64 },
-    Remove { book: Book, device: Device },
+    Books {
+        ask: u64,
+    },
+    /// Boxed: a book and its reader are many times a list's ask.
+    Remove(Box<(Book, Device)>),
 }
 
 fn p(purpose: Purpose) -> AppPurpose {
@@ -99,7 +102,7 @@ fn remove(app: &mut App, book: Book) {
             volume,
             file: book.path.clone(),
         },
-        p(Purpose::Remove { book, device }),
+        p(Purpose::Remove(Box::new((book, device)))),
     );
 }
 
@@ -128,7 +131,8 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 }
             }
         }
-        Purpose::Remove { book, device } => {
+        Purpose::Remove(removal) => {
+            let (book, device) = *removal;
             app.shelf.removing = None;
             let (line, bad) = removed_line(&answer, &book, &device);
             app.shelf.said = Some((line, bad));
