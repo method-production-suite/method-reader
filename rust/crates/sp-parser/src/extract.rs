@@ -1159,6 +1159,10 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
         // soon as a body line splits cleanly on its own gap.
         let mut boundary = split.right_items[0].t(4) - page_width * 0.13;
         let mut left_body_min_x: Option<f64> = None;
+        // The right column's text edge as body lines have shown it: the
+        // leftmost right-column start among the lines that split cleanly on
+        // their own gap. None until one has.
+        let mut right_body_min_x: Option<f64> = None;
 
         let mut ys: Vec<f64> = vec![lines[i].y];
         let mut left: Vec<String> = vec![split.left_text];
@@ -1191,12 +1195,24 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
             // line that splits cleanly into two columns is by definition not
             // full-width, so the split gets to speak first.
             if let Some(gap_split) = cluster_split(&items, page_width) {
-                boundary = boundary.min(gap_split.right_items[0].t(4) - 6.0);
+                let x = gap_split.right_items[0].t(4);
+                boundary = boundary.min(x - 6.0);
+                right_body_min_x = Some(right_body_min_x.map_or(x, |m| m.min(x)));
             }
 
+            // A line is full-width when one item runs from the left column
+            // INTO the right one. Once a clean split has shown where the
+            // right column's text starts, that edge is the test: the guessed
+            // boundary can sit well left of it (it only moves left, and only
+            // as far as the leftmost split says), so a long left-column line
+            // ending past the guess but short of the right column used to
+            // read as full-width and end the region on its second body line,
+            // turning the rest of both columns into one interleaved action.
+            // Until a split has spoken, the guess is all there is.
+            let straddle_edge = right_body_min_x.unwrap_or(boundary + 6.0);
             let straddles = items
                 .iter()
-                .any(|it| it.t(4) < boundary - 6.0 && end_x(it) > boundary + 6.0);
+                .any(|it| it.t(4) < boundary - 6.0 && end_x(it) > straddle_edge);
             if straddles {
                 break; // full-width line — region over
             }

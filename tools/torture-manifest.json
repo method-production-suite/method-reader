@@ -104,8 +104,8 @@
     "how": "a short exchange with both cues sharing one Y, asserted to de-interleave into left speech then right with no element mixing the columns" },
 
   { "entry": "10b", "title": "Tall dual exchanges degrade to sequential",
-    "covered": true, "page": 7, "side": "both",
-    "how": "a second exchange whose taller column passes the 12-line threshold, so the table falls back to sequential speeches" },
+    "covered": false,
+    "why": "sheet 9's second exchange was written for this, but its taller column estimates 9 lines (the flip is at about 330 characters, past 12), so it renders as the table. Until 2026-10-19 the parser never even delivered it as two speeches. sp-parser/tests/torture.rs now asserts it reaches the renderer as two whole speeches, and sp-epub/tests/epub.rs pins the flip itself. Covering it here needs a longer left column and a rebuilt torture.pdf" },
 
   { "entry": "11", "title": "Generated title page",
     "covered": true, "page": 0, "side": "both",

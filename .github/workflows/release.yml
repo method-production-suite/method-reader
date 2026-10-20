@@ -90,13 +90,17 @@ jobs:
           python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || {
             echo "::error::$(python3 --version) is too old for the crate-age check (3.11 or later)"; exit 1; }
           # A rehearsal ships nothing, so it honours the age-out entries
-          # (main's own rule); a real release never does.
-          if [ -n "$REHEARSE" ]; then
-            echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
-            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
-          else
-            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
-          fi
+          # (main's own rule); a real release never does. Three locks: the
+          # workspace, and the two update proofs the handover gate compiles
+          # and runs in this same release (their own workspaces).
+          for lock in rust/Cargo.lock rust/handover-proof/Cargo.lock rust/update-proof-0.13/Cargo.lock; do
+            if [ -n "$REHEARSE" ]; then
+              echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
+              python3 scripts/check-crate-ages.py --lock "$lock"
+            else
+              python3 scripts/check-crate-ages.py --lock "$lock" --release
+            fi
+          done
       - name: Release notes and tag are publishable
         env:
           TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
@@ -588,7 +592,7 @@ jobs:
   handover-gate:
     needs: app-bundles
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -632,6 +636,53 @@ jobs:
           [ ! -e old/Applications/Screepub.app/Contents/MacOS/screepub-engine ]
           [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' old/Applications/Screepub.app/Contents/Info.plist)" = method-reader-app ]
           codesign --verify --deep --strict old/Applications/Screepub.app
+      # Every Mac on 0.13.0 gets this release from 0.13.0's OWN updater
+      # (sp-update as tagged), not the 0.11.1 window's: rust/update-proof-0.13
+      # builds that updater from the v0.13.0 commit and runs it, with 0.13.0's
+      # real public key, against this release's real signed archive. The old
+      # copy is named Screepub Desktop.app, as every Tauri-era install still
+      # is; 0.13.0 installs in place, and the new build must then rename
+      # itself Method Reader.app when it first starts (headless here).
+      - name: The v0.13.0 app's own updater installs this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          OLD=v0.13.0
+          rm -rf old013 site013
+          mkdir -p old013/Applications site013 old013/unpack
+          gh release download "$OLD" --pattern Method-Reader-macOS.app.tar.gz --dir old013
+          tar -xzf old013/Method-Reader-macOS.app.tar.gz -C old013/unpack
+          mv "old013/unpack/Method Reader.app" "old013/Applications/Screepub Desktop.app"
+          (cd rust && cargo build --release --locked -p sp-release)
+          (cd rust/update-proof-0.13 && cargo build --release --locked)
+          cp new/Method-Reader-macOS.app.tar.gz new/Method-Reader-macOS.app.tar.gz.sig site013/
+          rust/target/release/sp-release serve --dir site013 --port 0 > serve013.out 2> serve013.log &
+          SERVE=$!
+          n=0
+          until grep -q 'http://' serve013.out 2>/dev/null; do
+            n=$((n + 1)); [ "$n" -lt 50 ] || { echo "::error::the local server did not start"; exit 1; }; sleep 0.1
+          done
+          BASE="$(sed -n 's/.* at \(http:[^ ]*\)$/\1/p' serve013.out)"
+          rust/target/release/sp-release manifest --dir site013 --version "$VERSION" --out site013/latest.json --asset-base "$BASE"
+          STATUS=0
+          rust/update-proof-0.13/target/release/update-proof-0-13 \
+            --bundle "old013/Applications/Screepub Desktop.app" \
+            --endpoint "$BASE/latest.json" --current 0.13.0 || STATUS=$?
+          kill "$SERVE" || true
+          cat serve013.log
+          [ "$STATUS" = 0 ] || { echo "::error::the v0.13.0 app's updater could not install this release; latest.json is NOT published"; exit 1; }
+          INSTALLED="old013/Applications/Screepub Desktop.app"
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INSTALLED/Contents/Info.plist")" = "$VERSION" ]
+          codesign --verify --deep --strict "$INSTALLED"
+          # First start, headless, with scratch settings: the old name goes.
+          METHOD_READER_CONFIG_DIR="$RUNNER_TEMP/proof013-config" METHOD_READER_LIBRARY="$RUNNER_TEMP/proof013-library" \
+            "$INSTALLED/Contents/MacOS/method-reader-app" --version | grep -q "\"version\":\"$VERSION\""
+          test -d "old013/Applications/Method Reader.app"
+          test ! -e "old013/Applications/Screepub Desktop.app"
 
   # The bundles onto the draft, then latest.json LAST, built from what
   # arrived and verified against the key every copy of the app trusts before it

@@ -13,32 +13,32 @@
   },
   "files": {
     "book.azw3": {
-      "bytes": 27250,
-      "sha256": "1fbe8a105b54dc5bfa73eaa82f4ce4405bb29634f8b2fa7d2106f78df9c1a8b0"
+      "bytes": 27228,
+      "sha256": "f0805ea4dc075cb7dc48e0d1791e269949e5bf2505163a86552eb45269bd26c1"
     },
     "book.epub": {
-      "bytes": 12583,
-      "sha256": "8ea776173b311536482e8f7c0199eb865d83e204e020d0855f96d7bb1621f404"
+      "bytes": 12595,
+      "sha256": "af370f9a40867fa8ddbbade2d938cdf11e1f26fde8cd5ebed025e2ebb157b091"
     },
     "book.fdx": {
-      "bytes": 21601,
-      "sha256": "1714d9b0d2f9c8a17093460aef58fde573b3b3a8b87e94de8d71a91c06484131"
+      "bytes": 21547,
+      "sha256": "e90feb589dd81ae41a6ad6eb3bf812c63c7a1a4762e5c3d0cf8ab3a41192e952"
     },
     "book.mobi": {
-      "bytes": 13800,
-      "sha256": "cd2d4060668dcfb5073914729a33ec3f8af9542621845a5e8224f62189916164"
+      "bytes": 13793,
+      "sha256": "ae004a3574761f589b97e4219277db7020508205ad2c500964a041c98a54d9ed"
     },
     "book.preview.html": {
-      "bytes": 29239,
-      "sha256": "48b7fe54ab12a6f59c1a8b2db12a56236e8cd3ad8ee09fc4012d91e4943018a9"
+      "bytes": 29217,
+      "sha256": "050243b8f9ec110bbd70cda1b050512bd7cf627fe054c4da200e79cf792f4554"
     },
     "convert.json": {
       "bytes": 630,
       "sha256": "ff3fd37fce4877c0df48ebfbd33abeaf24a81a74873321c150cc96dc3f20c3e8"
     },
     "elements.json": {
-      "bytes": 53832,
-      "sha256": "758bad45882488fe4abea9dedb0c3b87332b4e8a3cab73e31743780405fd82cc"
+      "bytes": 53666,
+      "sha256": "48c36b763a7f6b6b18ff9d0aa0c00823f09c1d690d96df5ea8b7fbe8d94fd74a"
     },
     "images/p001-01.png": {
       "bytes": 816,
@@ -57,8 +57,8 @@
       "sha256": "8cff2a4441c656e081bdc1c4a6e5112ea2338899bc630426f82930cce75ede84"
     },
     "lines.json": {
-      "bytes": 84536,
-      "sha256": "cf64e42fb657000cae6c7ecdcc2ab91e77bb8189360f0c466b63949c5026c161"
+      "bytes": 83985,
+      "sha256": "9abdfcbc25b029bebd525b12bfd2493757099833d0eb37d11b4f3461482131e5"
     },
     "pages.json": {
       "bytes": 167041,
@@ -85,12 +85,12 @@
       "sha256": "d1003ca688da4b3537dabe1fe2e8c22b7de76309179e2323b51312e5b9ad46b5"
     },
     "script.fountain": {
-      "bytes": 9799,
-      "sha256": "afdbe6681fc5cfd2e6eefe09f3abad23559df5dd4c9c3a9e3163c3b0f72651f1"
+      "bytes": 9798,
+      "sha256": "49b64bc396df343beaac8b97a08444e825a2578c77140f239af101d59dd5d58f"
     },
     "tokens.json": {
-      "bytes": 24112,
-      "sha256": "9d88c58bf7add74d6d2bf2c9f9278053175b939c19b4b0e4baddd3d11c76af51"
+      "bytes": 24067,
+      "sha256": "cc51996285d21cb6e30e874051f6e1cb0955135c8b9d4b682b4fb359642d56b5"
     }
   }
 }

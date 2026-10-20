@@ -3,7 +3,7 @@
     {
       "type": "image",
       "text": "p001-01.png",
-      "id": "elem205",
+      "id": "elem204",
       "pageNum": 1,
       "y": 747,
       "isTitlePage": false,
@@ -1037,7 +1037,7 @@
     {
       "id": "elem104",
       "type": "dialogue",
-      "text": "This column runs long",
+      "text": "This column runs long enough that the taller of the two passes twelve estimated rendered lines, which is the threshold where the side-by-side table gives up and both speeches become ordinary sequential dialogue instead.",
       "pageNum": 9,
       "y": 588,
       "isTitlePage": false,
@@ -1059,7 +1059,7 @@
     {
       "id": "elem106",
       "type": "dialogue",
-      "text": "And this one answers at",
+      "text": "And this one answers at similar length so neither column is trivially short, because the fallback measures the taller of the pair and a stub would never reach it.",
       "pageNum": 9,
       "y": 588,
       "isTitlePage": false,
@@ -1068,15 +1068,6 @@
     },
     {
       "id": "elem107",
-      "type": "action",
-      "text": "enough that the taller of similar length so neither the two passes twelve column is trivially short, estimated rendered lines, because the fallback which is the threshold measures the taller of the where the side-by-side pair and a stub would table gives up and both never reach it. speeches become ordinary sequential dialogue instead.",
-      "pageNum": 9,
-      "y": 576,
-      "isTitlePage": false,
-      "isReadable": true
-    },
-    {
-      "id": "elem108",
       "type": "page-number",
       "text": "9.",
       "pageNum": 10,
@@ -1085,7 +1076,7 @@
       "isReadable": true
     },
     {
-      "id": "elem109",
+      "id": "elem108",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 10,
@@ -1096,7 +1087,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem110",
+      "id": "elem109",
       "type": "dialogue",
       "text": "Speech one. Short.",
       "pageNum": 10,
@@ -1106,7 +1097,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem111",
+      "id": "elem110",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 10,
@@ -1117,7 +1108,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem112",
+      "id": "elem111",
       "type": "dialogue",
       "text": "Speech two. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1127,7 +1118,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem113",
+      "id": "elem112",
       "type": "character",
       "text": "ODILE",
       "pageNum": 10,
@@ -1138,7 +1129,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem114",
+      "id": "elem113",
       "type": "dialogue",
       "text": "Speech three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1148,7 +1139,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem115",
+      "id": "elem114",
       "type": "character",
       "text": "WREN",
       "pageNum": 10,
@@ -1159,7 +1150,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem116",
+      "id": "elem115",
       "type": "dialogue",
       "text": "Speech four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1169,7 +1160,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem117",
+      "id": "elem116",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 10,
@@ -1180,7 +1171,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem118",
+      "id": "elem117",
       "type": "dialogue",
       "text": "Speech five. Short.",
       "pageNum": 10,
@@ -1190,7 +1181,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem119",
+      "id": "elem118",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 10,
@@ -1201,7 +1192,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem120",
+      "id": "elem119",
       "type": "dialogue",
       "text": "Speech six. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1211,7 +1202,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem121",
+      "id": "elem120",
       "type": "character",
       "text": "ODILE",
       "pageNum": 10,
@@ -1222,7 +1213,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem122",
+      "id": "elem121",
       "type": "dialogue",
       "text": "Speech seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1232,7 +1223,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem123",
+      "id": "elem122",
       "type": "character",
       "text": "WREN",
       "pageNum": 10,
@@ -1243,7 +1234,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem124",
+      "id": "elem123",
       "type": "dialogue",
       "text": "Speech eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1253,7 +1244,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem125",
+      "id": "elem124",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 10,
@@ -1264,7 +1255,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem126",
+      "id": "elem125",
       "type": "dialogue",
       "text": "Speech nine. Short.",
       "pageNum": 10,
@@ -1274,7 +1265,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem127",
+      "id": "elem126",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 10,
@@ -1285,7 +1276,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem128",
+      "id": "elem127",
       "type": "dialogue",
       "text": "Speech ten. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 10,
@@ -1295,7 +1286,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem129",
+      "id": "elem128",
       "type": "page-number",
       "text": "10.",
       "pageNum": 11,
@@ -1304,7 +1295,7 @@
       "isReadable": true
     },
     {
-      "id": "elem130",
+      "id": "elem129",
       "type": "character",
       "text": "ODILE",
       "pageNum": 11,
@@ -1315,7 +1306,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem131",
+      "id": "elem130",
       "type": "dialogue",
       "text": "Speech eleven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1325,7 +1316,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem132",
+      "id": "elem131",
       "type": "character",
       "text": "WREN",
       "pageNum": 11,
@@ -1336,7 +1327,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem133",
+      "id": "elem132",
       "type": "dialogue",
       "text": "Speech twelve. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1346,7 +1337,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem134",
+      "id": "elem133",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 11,
@@ -1357,7 +1348,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem135",
+      "id": "elem134",
       "type": "dialogue",
       "text": "Speech thirteen. Short.",
       "pageNum": 11,
@@ -1367,7 +1358,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem136",
+      "id": "elem135",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 11,
@@ -1378,7 +1369,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem137",
+      "id": "elem136",
       "type": "dialogue",
       "text": "Speech fourteen. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1388,7 +1379,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem138",
+      "id": "elem137",
       "type": "character",
       "text": "ODILE",
       "pageNum": 11,
@@ -1399,7 +1390,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem139",
+      "id": "elem138",
       "type": "dialogue",
       "text": "Speech fifteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1409,7 +1400,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem140",
+      "id": "elem139",
       "type": "character",
       "text": "WREN",
       "pageNum": 11,
@@ -1420,7 +1411,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem141",
+      "id": "elem140",
       "type": "dialogue",
       "text": "Speech sixteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1430,7 +1421,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem142",
+      "id": "elem141",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 11,
@@ -1441,7 +1432,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem143",
+      "id": "elem142",
       "type": "dialogue",
       "text": "Speech seventeen. Short.",
       "pageNum": 11,
@@ -1451,7 +1442,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem144",
+      "id": "elem143",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 11,
@@ -1462,7 +1453,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem145",
+      "id": "elem144",
       "type": "dialogue",
       "text": "Speech eighteen. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1472,7 +1463,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem146",
+      "id": "elem145",
       "type": "character",
       "text": "ODILE",
       "pageNum": 11,
@@ -1483,7 +1474,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem147",
+      "id": "elem146",
       "type": "dialogue",
       "text": "Speech nineteen. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 11,
@@ -1493,7 +1484,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem148",
+      "id": "elem147",
       "type": "page-number",
       "text": "11.",
       "pageNum": 12,
@@ -1502,7 +1493,7 @@
       "isReadable": true
     },
     {
-      "id": "elem150",
+      "id": "elem149",
       "type": "character",
       "text": "WREN",
       "pageNum": 12,
@@ -1513,7 +1504,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem151",
+      "id": "elem150",
       "type": "dialogue",
       "text": "Speech twenty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1523,7 +1514,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem152",
+      "id": "elem151",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 12,
@@ -1534,7 +1525,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem153",
+      "id": "elem152",
       "type": "dialogue",
       "text": "Speech twenty-one. Short.",
       "pageNum": 12,
@@ -1544,7 +1535,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem154",
+      "id": "elem153",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 12,
@@ -1555,7 +1546,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem155",
+      "id": "elem154",
       "type": "dialogue",
       "text": "Speech twenty-two. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1565,7 +1556,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem156",
+      "id": "elem155",
       "type": "character",
       "text": "ODILE",
       "pageNum": 12,
@@ -1576,7 +1567,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem157",
+      "id": "elem156",
       "type": "dialogue",
       "text": "Speech twenty-three. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1586,7 +1577,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem158",
+      "id": "elem157",
       "type": "character",
       "text": "WREN",
       "pageNum": 12,
@@ -1597,7 +1588,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem159",
+      "id": "elem158",
       "type": "dialogue",
       "text": "Speech twenty-four. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1607,7 +1598,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem160",
+      "id": "elem159",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 12,
@@ -1618,7 +1609,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem161",
+      "id": "elem160",
       "type": "dialogue",
       "text": "Speech twenty-five. Short.",
       "pageNum": 12,
@@ -1628,7 +1619,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem162",
+      "id": "elem161",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 12,
@@ -1639,7 +1630,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem163",
+      "id": "elem162",
       "type": "dialogue",
       "text": "Speech twenty-six. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1649,7 +1640,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem164",
+      "id": "elem163",
       "type": "character",
       "text": "ODILE",
       "pageNum": 12,
@@ -1660,7 +1651,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem165",
+      "id": "elem164",
       "type": "dialogue",
       "text": "Speech twenty-seven. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1670,7 +1661,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem166",
+      "id": "elem165",
       "type": "character",
       "text": "WREN",
       "pageNum": 12,
@@ -1681,7 +1672,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem167",
+      "id": "elem166",
       "type": "dialogue",
       "text": "Speech twenty-eight. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 12,
@@ -1691,7 +1682,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem168",
+      "id": "elem167",
       "type": "page-number",
       "text": "12.",
       "pageNum": 13,
@@ -1700,7 +1691,7 @@
       "isReadable": true
     },
     {
-      "id": "elem170",
+      "id": "elem169",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 13,
@@ -1711,7 +1702,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem171",
+      "id": "elem170",
       "type": "dialogue",
       "text": "Speech twenty-nine. Short.",
       "pageNum": 13,
@@ -1721,7 +1712,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem172",
+      "id": "elem171",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 13,
@@ -1732,7 +1723,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem173",
+      "id": "elem172",
       "type": "dialogue",
       "text": "Speech thirty. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1742,7 +1733,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem174",
+      "id": "elem173",
       "type": "character",
       "text": "ODILE",
       "pageNum": 13,
@@ -1753,7 +1744,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem175",
+      "id": "elem174",
       "type": "dialogue",
       "text": "Speech thirty-one. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1763,7 +1754,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem176",
+      "id": "elem175",
       "type": "character",
       "text": "WREN",
       "pageNum": 13,
@@ -1774,7 +1765,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem177",
+      "id": "elem176",
       "type": "dialogue",
       "text": "Speech thirty-two. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1784,7 +1775,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem178",
+      "id": "elem177",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 13,
@@ -1795,7 +1786,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem179",
+      "id": "elem178",
       "type": "dialogue",
       "text": "Speech thirty-three. Short.",
       "pageNum": 13,
@@ -1805,7 +1796,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem180",
+      "id": "elem179",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 13,
@@ -1816,7 +1807,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem181",
+      "id": "elem180",
       "type": "dialogue",
       "text": "Speech thirty-four. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1826,7 +1817,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem182",
+      "id": "elem181",
       "type": "character",
       "text": "ODILE",
       "pageNum": 13,
@@ -1837,7 +1828,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem183",
+      "id": "elem182",
       "type": "dialogue",
       "text": "Speech thirty-five. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1847,7 +1838,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem184",
+      "id": "elem183",
       "type": "character",
       "text": "WREN",
       "pageNum": 13,
@@ -1858,7 +1849,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem185",
+      "id": "elem184",
       "type": "dialogue",
       "text": "Speech thirty-six. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 13,
@@ -1868,7 +1859,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem186",
+      "id": "elem185",
       "type": "character",
       "text": "BUNNY",
       "pageNum": 13,
@@ -1879,7 +1870,7 @@
       "baseCharacter": "BUNNY"
     },
     {
-      "id": "elem187",
+      "id": "elem186",
       "type": "page-number",
       "text": "13.",
       "pageNum": 14,
@@ -1888,7 +1879,7 @@
       "isReadable": true
     },
     {
-      "id": "elem188",
+      "id": "elem187",
       "type": "dialogue",
       "text": "Speech thirty-seven. Short.",
       "pageNum": 14,
@@ -1898,7 +1889,7 @@
       "character": "BUNNY"
     },
     {
-      "id": "elem189",
+      "id": "elem188",
       "type": "character",
       "text": "CASSIUS",
       "pageNum": 14,
@@ -1909,7 +1900,7 @@
       "baseCharacter": "CASSIUS"
     },
     {
-      "id": "elem190",
+      "id": "elem189",
       "type": "dialogue",
       "text": "Speech thirty-eight. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 14,
@@ -1919,7 +1910,7 @@
       "character": "CASSIUS"
     },
     {
-      "id": "elem191",
+      "id": "elem190",
       "type": "character",
       "text": "ODILE",
       "pageNum": 14,
@@ -1930,7 +1921,7 @@
       "baseCharacter": "ODILE"
     },
     {
-      "id": "elem192",
+      "id": "elem191",
       "type": "dialogue",
       "text": "Speech thirty-nine. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 14,
@@ -1940,7 +1931,7 @@
       "character": "ODILE"
     },
     {
-      "id": "elem193",
+      "id": "elem192",
       "type": "character",
       "text": "WREN",
       "pageNum": 14,
@@ -1951,7 +1942,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem194",
+      "id": "elem193",
       "type": "dialogue",
       "text": "Speech forty. If this line sits alone at the top or the bottom of a page, the keep failed. If this line sits alone at the top or the bottom of a page, the keep failed.",
       "pageNum": 14,
@@ -1961,7 +1952,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem195",
+      "id": "elem194",
       "type": "page-number",
       "text": "14.",
       "pageNum": 15,
@@ -1970,7 +1961,7 @@
       "isReadable": true
     },
     {
-      "id": "elem196",
+      "id": "elem195",
       "type": "scene",
       "text": "INT. ART DEPARTMENT - DAY",
       "pageNum": 15,
@@ -1981,7 +1972,7 @@
     {
       "type": "image",
       "text": "p015-01.png",
-      "id": "elem206",
+      "id": "elem205",
       "pageNum": 15,
       "y": 705,
       "isTitlePage": false,
@@ -1993,7 +1984,7 @@
       }
     },
     {
-      "id": "elem197",
+      "id": "elem196",
       "type": "action",
       "text": "WREN pins a storyboard panel to the wall, printed small.",
       "pageNum": 15,
@@ -2002,7 +1993,7 @@
       "isReadable": true
     },
     {
-      "id": "elem198",
+      "id": "elem197",
       "type": "character",
       "text": "WREN",
       "pageNum": 15,
@@ -2013,7 +2004,7 @@
       "baseCharacter": "WREN"
     },
     {
-      "id": "elem199",
+      "id": "elem198",
       "type": "dialogue",
       "text": "Under half a column wide, and not a thumbnail.",
       "pageNum": 15,
@@ -2023,7 +2014,7 @@
       "character": "WREN"
     },
     {
-      "id": "elem200",
+      "id": "elem199",
       "type": "page-number",
       "text": "15.",
       "pageNum": 16,
@@ -2032,7 +2023,7 @@
       "isReadable": true
     },
     {
-      "id": "elem201",
+      "id": "elem200",
       "type": "scene",
       "text": "INT. MAP ROOM - NIGHT",
       "pageNum": 16,
@@ -2043,7 +2034,7 @@
     {
       "type": "image",
       "text": "p016-01.png",
-      "id": "elem207",
+      "id": "elem206",
       "pageNum": 16,
       "y": 702,
       "isTitlePage": false,
@@ -2055,7 +2046,7 @@
       }
     },
     {
-      "id": "elem202",
+      "id": "elem201",
       "type": "page-number",
       "text": "16.",
       "pageNum": 17,
@@ -2064,7 +2055,7 @@
       "isReadable": true
     },
     {
-      "id": "elem203",
+      "id": "elem202",
       "type": "scene",
       "text": "INT. FIRE STAIRS - CONTINUOUS",
       "pageNum": 17,
@@ -2073,7 +2064,7 @@
       "isReadable": true
     },
     {
-      "id": "elem204",
+      "id": "elem203",
       "type": "action",
       "text": "A production still, printed tall.",
       "pageNum": 17,
@@ -2084,7 +2075,7 @@
     {
       "type": "image",
       "text": "p017-01.png",
-      "id": "elem208",
+      "id": "elem207",
       "pageNum": 17,
       "y": 672,
       "isTitlePage": false,
@@ -2204,19 +2195,19 @@
     {
       "heading": "INT. ART DEPARTMENT - DAY",
       "sceneNumber": 13,
-      "elementIndex": 194,
+      "elementIndex": 193,
       "pageNum": 15
     },
     {
       "heading": "INT. MAP ROOM - NIGHT",
       "sceneNumber": 14,
-      "elementIndex": 200,
+      "elementIndex": 199,
       "pageNum": 16
     },
     {
       "heading": "INT. FIRE STAIRS - CONTINUOUS",
       "sceneNumber": 15,
-      "elementIndex": 203,
+      "elementIndex": 202,
       "pageNum": 17
     }
   ],

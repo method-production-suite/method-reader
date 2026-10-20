@@ -501,7 +501,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | O1 | "Screepub 0.11.1", the headline, each section with its items (a bold lead or plain prose), compiled from docs/releases/<version>.md, offline | ui/notes-surface.js, ui/notes.js | done |
 | O2 | No heading with nothing under it | ui/notes-surface.js visibleSections | done |
 | O3 | Updates block where updates are possible: the once-a-day switch with its words, Check for updates, a live line, the new version's notes, Install <version> | ui/notes-surface.js updateBlock, notesView | done |
-| O4 | Elsewhere: "Screepub does not update itself here. New releases are at github.com/ssandweiss/screepub/releases." | ui/notes-surface.js | done |
+| O4 | Elsewhere: "Screepub does not update itself here. New releases are at github.com/method-production-suite/method-reader/releases." | ui/notes-surface.js | done |
 | O5 | The switch is resynced each time the sheet opens | ui/notes-surface.js show | done |
 | O6 | Check for updates: "Looking…", then the flow's words; disabled while a run is busy | ui/notes-surface.js | done |
 
@@ -513,7 +513,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | B2 | Every absolute path in it becomes `<path>` plus its extension; the home folder becomes ~ | ui/feedback.js redact | done |
 | B3 | The Beta badge: "Beta", in a hairline box, beside (never inside) what it qualifies, read out with its line, described as "New: works in our tests, not yet tried widely on real devices or apps." | ui/beta.js | done |
 | B4 | Where it is worn: the FDX and AZW3 save rows, our own AZW3 on Copy to Kindle, the two picture switches, Eject off a Mac, the device-request Send, the report answers, the My device isn’t here card | ui/beta.js, callers | done |
-| B5 | The request service: POST JSON to https://screepub-device-requests.samuelsandweiss.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
+| B5 | The request service: POST JSON to https://screepub-device-requests.<the old workers.dev account>.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
 | B6 | The window's network allow-list (CSP connect-src): only that address; the opener allow-list: only the four pages in K6 | tauri/tauri.conf.json, capabilities | done |
 
 ### L. Layout, measured (tests/desktop-layout-measured.test.ts)
@@ -1244,3 +1244,53 @@ names the check it affects.
   well-formed: an array of objects, each a `path` inside that run's
   scratch folder and an RFC 3339 `opened`. A malformed one stays, and the
   row differs on it. The `--json` answer is unchanged.
+- **A tall dual exchange stays two speeches (2026-10-19, branch
+  fix/long-dual-boundary): a TypeScript bug, fixed, its answers moved.**
+  torture.pdf's sheet 9 carries a second dual exchange (ODILE left, WREN
+  right) whose left column's lines run long. `deinterleaveDualDialogue`
+  opened its column boundary at the right cue's x less 13% of the page
+  (309.4 there) and refined it only leftward, so the first body line's
+  clean split (right column at 367) could not move it. On the second body
+  line the left column's own text ends at 317, past boundary + 6, and the
+  straddle test read it as a full-width line and ended the region: each
+  speech kept one line, and the rest of both columns became one action
+  paragraph interleaving them row by row. The TypeScript did exactly this,
+  so the frozen answers held it. Now the straddle test, once any body line
+  has split cleanly, asks whether an item runs past the right column's
+  shown text edge (the leftmost right-column start among the clean
+  splits) rather than past the guessed boundary; before a clean split the
+  guess still decides. The boundary itself, and so which column each item
+  joins, is unchanged and still moves only left (sp-parser/src/extract.rs;
+  sp-parser/tests/torture.rs `the_tall_dual_exchange_is_two_whole_speeches`
+  and the widened `no_element_mixes_text_from_both_dual_columns`). The 24
+  torture rows of rust/oracle/parity/torture.json that carry a book, a
+  .fountain or an FDX were moved with `cargo xtask parity --accept`; every
+  output that moved was diffed against the old build's, and each
+  difference is this exchange: the two whole speeches in place of the
+  stubs and the interleaved action (the EPUB's body and its identifier,
+  the .fountain's digest; the preview, the FDX, the MOBI and AZW3 records;
+  in the sequential-mode row, the same speeches as two blocks; in the
+  debug elements, one element fewer and the later scenes' indexes one
+  lower). The other fixtures' runs of those rows matched. The stage
+  answers in rust/oracle/torture/ were re-frozen with the owner's approval
+  (2026-10-19), the same way as Field Station's: there is no TypeScript
+  left to ask, so the new answers are the Rust engine's, each diffed
+  against the old frozen answer first. lines.json, the region's lines
+  (each column's own lines at the dual indents, in place of joined rows
+  and the lines the early end left behind); elements.json, the two whole
+  speeches, one action element fewer, the ids after it renumbered and the
+  last three scenes' indexes one lower; tokens.json, script.fountain,
+  book.fdx and book.preview.html, the two speeches and no action
+  paragraph; book.epub, package.opf's identifier and body001.xhtml from
+  the Rust writer, every other entry kept as the TypeScript compressed it;
+  book.mobi and book.azw3, the Rust writers' bytes (the AZW3 built from the
+  new book.epub); meta.json, those files' sizes and digests. Nothing else
+  in the dump moved. Three pinned fingerprints of torture's output moved
+  with them, also with the owner's approval:
+  sp-epub/tests/data/options-golden.json, torture's package.opf,
+  body001.xhtml and preview digests under each of its 20 option sets (60
+  values, nothing for any other fixture); its pin in
+  xtask/tests/generated_files.rs; and in sp-mobi/tests/pictures.rs the
+  torture book's digest with the picture gate open, now what the engine
+  builds from the re-frozen tokens (its comment, "computed with bun",
+  now holds for the images and jpx digests only).

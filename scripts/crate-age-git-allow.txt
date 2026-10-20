@@ -4,3 +4,4 @@
 https://github.com/DioxusLabs/blitz   # the book preview's HTML/CSS renderer (sp-app), unreleased fixes
 https://github.com/DioxusLabs/taffy   # the layout engine that blitz revision needs
 https://github.com/method-production-suite/method-libs   # the suite's shared crates (method-update, the updater); pinned by full commit in rust/Cargo.toml
+https://github.com/method-production-suite/method-reader   # this repository: rust/update-proof-0.13 builds the v0.13.0 tag's own updater (sp-update) to prove every release installs from 0.13.0; pinned by full commit

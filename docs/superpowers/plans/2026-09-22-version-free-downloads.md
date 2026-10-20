@@ -419,7 +419,7 @@ GitHub renders the README from `main` the moment it lands, so between this push 
 Run:
 
 ```bash
-gh release view v0.7.2 --repo ssandweiss/screepub --json assets -q '.assets[].name' | sort
+gh release view v0.7.2 --repo method-production-suite/method-reader --json assets -q '.assets[].name' | sort
 ```
 
 Expected: the list includes `Screepub-linux-amd64.deb`, `Screepub-linux-x86_64.rpm` and `Screepub-windows-x64-setup.exe`, and no asset name contains `0.7.2`. The CLI archives and the DMGs were already version-free.
@@ -427,7 +427,7 @@ Expected: the list includes `Screepub-linux-amd64.deb`, `Screepub-linux-x86_64.r
 Run:
 
 ```bash
-curl -sIL https://github.com/ssandweiss/screepub/releases/latest/download/Screepub-linux-amd64.deb | grep -i '^HTTP' | tail -1
+curl -sIL https://github.com/method-production-suite/method-reader/releases/latest/download/Screepub-linux-amd64.deb | grep -i '^HTTP' | tail -1
 ```
 
 Expected: `HTTP/2 200`. That is the property the whole change exists for.

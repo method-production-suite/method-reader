@@ -182,7 +182,7 @@ Three reasons, in order of weight:
    pointing at a stable installer URL and hash. Neither is engineering, and
    neither can be exercised from this session.
 3. **The one channel that already exists must not be touched.**
-   `ssandweiss/homebrew-tap` serves the *SwiftUI* app's cask and the macOS
+   `<owner>/homebrew-tap` serves the *SwiftUI* app's cask and the macOS
    CLI formula, `tools/bump-tap.sh` hardcodes their filenames, and
    `tap-freshness.yml` alarms if they drift. E2 changes none of them. The
    Tauri app gets a cask when it becomes *the* Mac app, which is piece F's
@@ -234,9 +234,9 @@ set the precedent of shipping arm64 and being honest about what CI touched.
 
 Four things the stock bundle gets wrong and E2 fixes in `tauri.conf.json`:
 
-- **`Maintainer: darkwell`.** Derived from the second segment of the bundle
+- **`Maintainer: <org>`.** Derived from the second segment of the bundle
   identifier because nothing better was configured. Set `bundle.publisher` to
-  `Darkwell Entertainment LLC`.
+  `<publisher>`.
 - **`Description:` is the crate's developer-facing line** — "Screepub desktop
   shell. A window around the engine; no logic lives here." — and the long
   description is literally `(none)`. Both reach `apt show`. Set

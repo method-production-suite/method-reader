@@ -295,7 +295,14 @@ fn a_real_spawn_of_a_fake_helper_script() {
     )
     .unwrap();
     std::fs::set_permissions(&helper, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let devices = list_mtp_kindles(Some(&common::s(&helper)), &SpawnRunner, MTP_LIST_TIMEOUT);
+    // A generous limit: this test proves the real spawn and the parsing,
+    // not the 3-second budget (the fakes above hold that), and under the
+    // whole suite's parallel load a process start alone can pass 3 seconds.
+    let devices = list_mtp_kindles(
+        Some(&common::s(&helper)),
+        &SpawnRunner,
+        std::time::Duration::from_secs(60),
+    );
     assert_eq!(
         devices.iter().map(device_id).collect::<Vec<_>>(),
         ["mtp:G000INVENTED01"]

@@ -1703,6 +1703,60 @@
       "pageNum": 9
     },
     {
+      "text": "enough that the taller of",
+      "indent": 30,
+      "y": 576,
+      "pageNum": 9
+    },
+    {
+      "text": "the two passes twelve",
+      "indent": 30,
+      "y": 564,
+      "pageNum": 9
+    },
+    {
+      "text": "estimated rendered lines,",
+      "indent": 30,
+      "y": 552,
+      "pageNum": 9
+    },
+    {
+      "text": "which is the threshold",
+      "indent": 30,
+      "y": 540,
+      "pageNum": 9
+    },
+    {
+      "text": "where the side-by-side",
+      "indent": 30,
+      "y": 528,
+      "pageNum": 9
+    },
+    {
+      "text": "table gives up and both",
+      "indent": 30,
+      "y": 516,
+      "pageNum": 9
+    },
+    {
+      "text": "speeches become ordinary",
+      "indent": 30,
+      "y": 504,
+      "pageNum": 9
+    },
+    {
+      "text": "sequential dialogue",
+      "indent": 30,
+      "y": 492,
+      "pageNum": 9
+    },
+    {
+      "text": "instead.",
+      "indent": 30,
+      "y": 480,
+      "pageNum": 9
+    },
+    {
       "text": "WREN",
       "indent": 40,
       "y": 600,
@@ -1716,121 +1770,40 @@
       "pageNum": 9
     },
     {
-      "text": "enough that the taller of similar length so neither",
-      "indent": 22,
+      "text": "similar length so neither",
+      "indent": 30,
       "y": 576,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 50
-        }
-      ]
+      "pageNum": 9
     },
     {
-      "text": "the two passes twelve column is trivially short,",
-      "indent": 22,
+      "text": "column is trivially short,",
+      "indent": 30,
       "y": 564,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 47
-        }
-      ]
+      "pageNum": 9
     },
     {
-      "text": "estimated rendered lines, because the fallback",
-      "indent": 22,
+      "text": "because the fallback",
+      "indent": 30,
       "y": 552,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 45
-        }
-      ]
+      "pageNum": 9
     },
     {
-      "text": "which is the threshold measures the taller of the",
-      "indent": 22,
+      "text": "measures the taller of the",
+      "indent": 30,
       "y": 540,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 47
-        }
-      ]
+      "pageNum": 9
     },
     {
-      "text": "where the side-by-side pair and a stub would",
-      "indent": 22,
+      "text": "pair and a stub would",
+      "indent": 30,
       "y": 528,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 43
-        }
-      ]
+      "pageNum": 9
     },
     {
-      "text": "table gives up and both never reach it.",
-      "indent": 22,
+      "text": "never reach it.",
+      "indent": 30,
       "y": 516,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 38
-        }
-      ]
-    },
-    {
-      "text": "speeches become ordinary",
-      "indent": 22,
-      "y": 504,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 24
-        }
-      ]
-    },
-    {
-      "text": "sequential dialogue",
-      "indent": 22,
-      "y": 492,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 19
-        }
-      ]
-    },
-    {
-      "text": "instead.",
-      "indent": 22,
-      "y": 480,
-      "pageNum": 9,
-      "fonts": [
-        {
-          "bucket": "mono",
-          "size": 12,
-          "chars": 8
-        }
-      ]
+      "pageNum": 9
     },
     {
       "text": "9.",

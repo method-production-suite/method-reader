@@ -1,0 +1,16 @@
+[package]
+name = "update-proof-0-13"
+description = "Runs Method Reader 0.13.0's own updater (sp-update at the v0.13.0 tag) against a release's update files, headless"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# Its own workspace, like ../handover-proof: it compiles the updater every
+# 0.13.0 install runs, exactly as tagged, and must not pull an old sp-update
+# into rust/'s lockfile. Pinned to the full commit v0.13.0 names.
+[workspace]
+
+[dependencies]
+sp-update = { git = "https://github.com/method-production-suite/method-reader", rev = "0b0544e1804b703de59554190fe245936f8fc02c" }
+semver = "1"

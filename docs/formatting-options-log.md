@@ -936,6 +936,15 @@ and the suite will say so if you forget.
   full-width (straddling) line, a cue-shaped left-only line, text left of
   the learned column edge, or a new dual-cue pair. Columns emit as left
   speech then right speech — the standard reflowable treatment.
+- **Fixed 2026-10-19: a long left column no longer ends the region.** The
+  full-width test used to compare against the guessed boundary, which can
+  sit well left of the right column's real text edge (it only moves left).
+  A left-column line ending past the guess but short of the right column
+  read as full-width, so the region ended on its second body line and the
+  rest of both columns became one interleaved action paragraph (torture
+  sheet 9's second exchange). Once a body line has split cleanly, the test
+  is now whether an item runs past the right column's shown text edge.
+  The boundary that assigns items to columns is unchanged.
 - **Default:** de-interleaving always on (correctness); rendering mode
   `dualDialogue: 'sideBySide'` (default) | `'sequential'`. Side-by-side:
   the right cue serializes with Fountain's `^`, and the renderer emits a
@@ -996,6 +1005,14 @@ and the suite will say so if you forget.
   **Still open:** whether 12 is the RIGHT cut. This pass proves the
   threshold fires, not that it fires in the right place, since only one
   exchange either side of it was tried. Apple Books untested.
+  **Correction 2026-10-19: that verdict did not see the fallback.** The
+  "tall" exchange never reached the renderer as two speeches: the parser
+  cut each to one line and left the rest as an action paragraph (fixed in
+  #10, same date), so what read as sequential was a table of two stubs
+  followed by action. Delivered whole, that exchange estimates 9 lines,
+  under the threshold, so it renders as a table too. The fallback is
+  pinned by sp-epub's tests but has had no device pass; the torture row
+  says what covering it needs.
 - **Code:** `rust/crates/sp-epub/src/html.rs` (`DUAL_SEQUENTIAL_LINE_THRESHOLD`,
   `EST_CHARS_PER_DUAL_LINE`, `dual_dialogue_end`).
 
