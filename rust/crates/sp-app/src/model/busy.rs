@@ -16,8 +16,8 @@ pub const ENGINE_QUIET_MS: f64 = 500.0;
 pub const UPDATED_MESSAGE: &str = "Method Reader has been updated. Restart it to keep going.";
 
 /// Which calls count toward busy. The read-only ones do not: the devices
-/// poll, the KFX probe, the route list, reading app settings, the Kindle
-/// file check and reveal.
+/// poll, the list of books on a reader, the KFX probe, the route list,
+/// reading app settings, the Kindle file check and reveal.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Call {
     Version,
@@ -25,6 +25,8 @@ pub enum Call {
     Reconvert,
     Devices,
     Eject,
+    DeviceBooks,
+    DeviceRemove,
     Send,
     Settings,
     Export,
@@ -43,6 +45,7 @@ pub fn counts_toward_busy(call: Call) -> bool {
     !matches!(
         call,
         Call::Devices
+            | Call::DeviceBooks
             | Call::KfxStatus
             | Call::Routes
             | Call::AppSettingsRead

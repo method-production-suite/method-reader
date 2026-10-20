@@ -1,8 +1,9 @@
 # What's on the reader: the device library
 
 The owner asked (2026-10-19) whether Method Reader could show what is on a
-connected e-reader and let him add, remove and manage it. This is the design;
-the engine half ships first, the window draws it next. Target: 1.0.0.
+connected e-reader and let him add, remove and manage it. This is the design
+of both halves: the engine's two commands and the window's list. Target:
+1.0.0.
 
 ## What each reader allows
 
@@ -70,9 +71,12 @@ What else goes with the book:
 
 ## Adding and replacing
 
-Adding is `send`, unchanged: it already replaces a same-named copy. The
-window's device page offers "Send a book from the library" there, so a book
-can be replaced after converting it again.
+Adding is `send`, unchanged: it already replaces a same-named copy. In the
+window, replacing is the send panel's own copy button for the script on
+screen (convert it again, then copy it), and an open list looks again after
+every send, so the new copy shows. A button that sends any book in the
+library from the list is not built: the window has no library list to pick
+from yet. Built on that recommendation, reversible.
 
 ## The commands
 
@@ -85,6 +89,32 @@ can be replaced after converting it again.
 Both hold to the CLI's `--json` contract and its error shape. New error
 codes: `not-a-book` (the file is outside the books folder, a link, or not a
 book) and `remove-failed` (the reader refused).
+
+## The window
+
+The send panel (`rust/crates/sp-app/src/app/device_library.rs`, its rules
+and words in `src/model/device_library.rs`) offers "Books on your Kindle"
+(or Kobo, or tolino) beside Other ways whenever such a reader is plugged in
+as a drive, and under the cards when no reader is chosen yet. It wears the
+Beta badge until the hands-on pass. Pressed, it opens the list under the
+row (a disclosure: its expanded state is told to a screen reader):
+
+- **Your scripts:** the books Method Reader made, each with its format, its
+  size and the library folder it came from.
+- **Other books:** everything else in the books folder.
+
+Each book has "Remove…". It asks first, under the book: "Remove Field
+Station.azw3 from your Kindle?", and on a Kindle adds that its reading
+place, highlights and notes go with it. Remove sends `device-remove`; Cancel
+takes nothing. The answer is said in a status line a screen reader hears,
+and the list looks again. A reader unplugged takes its list with it. While a
+book is going, the panel's copy buttons wait, and while a copy runs, the
+Remove buttons wait.
+
+The window calls the engine through its one `Engine` trait:
+`Request::DeviceBooks` and `Request::DeviceRemove` stand for exactly the
+argv above (`tests/argv_contract.rs`), and `tests/direct_engine.rs` runs
+both through the real engine on a scratch Kindle.
 
 ## Tests, and what needs hands
 

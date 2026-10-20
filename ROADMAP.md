@@ -59,6 +59,9 @@ Built on the recommendation (reversible):
 - **What counts as a recent script** for the launcher's list: a conversion
   into the library, recorded under the file you chose. Opening a book that is
   already in the library, without converting it, does not count yet.
+- **Replacing a book on a reader** is the send panel's own copy, after
+  converting again; the list of what is on a reader has no button that sends
+  some other library book (the window has no library list to pick from).
 
 Tests that need a device (hands only; everything else is automated):
 
@@ -79,7 +82,7 @@ Tests that need a device (hands only; everything else is automated):
      Launchpad show the new name, and whether a Dock icon you kept still
      opens the app or shows a question mark. And with 0.13.1 open, the
      Dock shows Method Reader's icon, not a default one.
-   - **What's on a reader** (for 1.0.0, once its window page exists): with a
+   - **What's on a reader** (for 1.0.0): with a
      Kindle, a Kobo and a tolino, list the books, remove one Method Reader
      made, and check on the reader that it is gone, and on the Kindle that
      its notes went with it.
@@ -124,8 +127,9 @@ In order. Each is one small pull request.
   request opens after 0.13.1.
 - **What's on a reader** (1.0.0). See and manage the books on a connected
   Kindle, Kobo or tolino: which ones Method Reader made, replace one, take
-  one off. The engine half is built (`device-books`, `device-remove`,
-  docs/device-library.md); the window's page comes next.
+  one off. Built, both halves (`device-books`, `device-remove`, and the
+  send panel's "Books on your Kindle", docs/device-library.md); it merges
+  after 0.13.1.
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
   a page, get an editable script, make an e-book, all on local files. Built
   and in review; it merges after 0.13.1.
