@@ -158,7 +158,7 @@ words, for `docs/releases/<version>.md`; whoever cuts F2 uses these):
    untouched.
 5. The Homebrew cask is retired: download the DMG instead. The
    command-line converter stays on Homebrew as a formula
-   (`brew install --formula ssandweiss/tap/screepub`).
+   (`brew install --formula <owner>/tap/screepub`).
 - **The CLI move** on `cli-move`, stacked on F2.
 - **F3** not started: it waits for the other session's second batch
   (which edits retired-coverage, app-references and weekly-toolchain) to

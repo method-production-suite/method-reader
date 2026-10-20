@@ -46,7 +46,7 @@ been produced or opened by this project."
 
 Meanwhile `app/` is the shipping product. It is what `README.md` links at the
 top of the page, what `site/index.html` puts on three DOWNLOAD FOR MACOS
-buttons, what `brew install --cask ssandweiss/tap/screepub` installs, and
+buttons, what `brew install --cask <owner>/tap/screepub` installs, and
 what `app/release.sh` signs and notarizes on every tag. Deleting it before
 its replacement has run once on the platform would leave every Mac user with
 a dead cask, a dead download button, and an app that still works only until
@@ -440,7 +440,7 @@ This must be implemented and tested against `SCREEPUB_LIBRARY` **before F2**,
 because F2 is when Mac users start using the Tauri app in earnest. Doing it
 at F3 is too late.
 
-**7. What `brew` does when a cask disappears.** `ssandweiss/homebrew-tap`
+**7. What `brew` does when a cask disappears.** `<owner>/homebrew-tap`
 carries `Casks/screepub.rb` (the Swift app, keyed to `Screepub-macOS.dmg`)
 *and* `Formula/screepub.rb` (the macOS CLI, two per-arch tarballs) —
 `tools/bump-tap.sh` edits both and `tools/check-tap.sh` verifies both. So:

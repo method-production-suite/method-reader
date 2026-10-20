@@ -1635,7 +1635,7 @@ function updateBlock() {
     // rather than leave someone guessing.
     return el('p', { class: 'caption' },
       'Screepub does not update itself here. New releases are at '
-      + 'github.com/ssandweiss/screepub/releases.');
+      + 'github.com/method-production-suite/method-reader/releases.');
   }
 
   const say = el('p', { class: 'caption update-status', role: 'status' }, '');

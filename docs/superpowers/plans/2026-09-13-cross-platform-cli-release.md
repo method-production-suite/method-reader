@@ -2935,7 +2935,7 @@ Then in `README.md`, after the `**Requirements:** macOS 14 (Sonoma) or later…`
 
 There is no window to open yet on Linux or Windows: what ships is the
 converter itself, run from a terminal. Download the file for your machine
-from the [latest release](https://github.com/ssandweiss/screepub/releases/latest),
+from the [latest release](https://github.com/method-production-suite/method-reader/releases/latest),
 unpack it, and run it.
 
 | Machine | File |
