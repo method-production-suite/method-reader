@@ -115,8 +115,9 @@ In order. Each is one small pull request.
   replaced without a word; the window and the command line converting at the
   same moment can drop one entry; and on Windows the same file spelled with
   different capitals is listed twice.
-- **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built; its pull
-  request opens after 0.13.1.
+- **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built and
+  brought up to date with main; its draft pull request is open and merges
+  after 0.13.1.
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
   a page, get an editable script, make an e-book, all on local files. Built
   and in review; it merges after 0.13.1.
