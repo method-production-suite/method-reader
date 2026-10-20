@@ -90,13 +90,17 @@ jobs:
           python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' || {
             echo "::error::$(python3 --version) is too old for the crate-age check (3.11 or later)"; exit 1; }
           # A rehearsal ships nothing, so it honours the age-out entries
-          # (main's own rule); a real release never does.
-          if [ -n "$REHEARSE" ]; then
-            echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
-            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock
-          else
-            python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release
-          fi
+          # (main's own rule); a real release never does. Three locks: the
+          # workspace, and the two update proofs the handover gate compiles
+          # and runs in this same release (their own workspaces).
+          for lock in rust/Cargo.lock rust/handover-proof/Cargo.lock rust/update-proof-0.13/Cargo.lock; do
+            if [ -n "$REHEARSE" ]; then
+              echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
+              python3 scripts/check-crate-ages.py --lock "$lock"
+            else
+              python3 scripts/check-crate-ages.py --lock "$lock" --release
+            fi
+          done
       - name: Release notes and tag are publishable
         env:
           TAG: ${{ inputs.rehearse_version && format('v{0}', inputs.rehearse_version) || github.ref_name }}

@@ -117,11 +117,19 @@ fn the_checks_run_the_release_crate_age_check_over_the_whole_lock_before_any_bui
     let rel = rel();
     let checks = job(&rel, "checks");
     let ages = step_index(checks, |st| {
-        s(st, "run")
-            .contains("python3 scripts/check-crate-ages.py --lock rust/Cargo.lock --release")
+        s(st, "run").contains(r#"python3 scripts/check-crate-ages.py --lock "$lock" --release"#)
     })
     .expect("the crate-age step");
-    assert!(!s(steps(checks)[ages], "run").contains("--only-changed"));
+    let run = s(steps(checks)[ages], "run");
+    assert!(!run.contains("--only-changed"));
+    // Every lock the release compiles from: the workspace, and the two
+    // update proofs the handover gate builds in their own workspaces.
+    assert!(
+        run.contains(
+            "for lock in rust/Cargo.lock rust/handover-proof/Cargo.lock rust/update-proof-0.13/Cargo.lock"
+        ),
+        "{run}"
+    );
     let first_build = step_index(checks, |st| s(st, "run").contains("cargo ")).unwrap();
     assert!(
         ages < first_build,
