@@ -1076,7 +1076,7 @@ temporarily swapping in the pre-Phase-1 parser, then diff the `.fountain`s —
 the corpus diff is this repo's tool for "does this actually matter?".
 
 ```bash
-R=/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/fixtures
+R=<repo>/fixtures
 cp src/parser/extract.ts /tmp/extract.new.ts
 git show eed4174:src/parser/extract.ts > src/parser/extract.ts
 for f in final-draft highland celtx fade-in chromium; do bun src/cli.ts "$R/$f.pdf" -o /tmp/base/$f.epub --fountain /tmp/base/$f.fountain; done

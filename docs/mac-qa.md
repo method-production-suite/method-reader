@@ -177,7 +177,7 @@ it passes. When one fails, note the words on screen and carry on.
     Give the owner the path to `Screepub Desktop.app`. It lands at
     `desktop/src-tauri/target/release/bundle/macos/Screepub Desktop.app`
     inside the worktree it was built in. For this pass Claude built it at
-    `/Users/CWP_MBP_SGS2/Documents/CODING_PROJECTS/Projects/02_Darkwell/Screepub/.claude/worktrees/qa-run/desktop/src-tauri/target/release/bundle/macos/Screepub Desktop.app`.
+    `<repo>/.claude/worktrees/qa-run/desktop/src-tauri/target/release/bundle/macos/Screepub Desktop.app`.
   - See: it builds; the engine inside answers `--version --json`; `git
     status` is clean afterwards.
   - Fail: the build fails, or it rewrote a tracked file.
