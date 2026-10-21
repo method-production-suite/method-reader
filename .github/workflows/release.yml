@@ -752,6 +752,13 @@ jobs:
           BASE="$(sed -n 's/.* at \(http:[^ ]*\)$/\1/p' serve090.out)"
           rust/target/release/sp-release manifest --dir site090 --version "$VERSION" --out site090/latest.json --asset-base "$BASE"
           grep -q '"darwin-x86_64"' site090/latest.json || { echo "::error::latest.json has no darwin-x86_64 entry"; exit 1; }
+          # The updater reports only "darwin" as its target, and both keys
+          # point at the one archive, so a success would not say which key
+          # it read. This copy lists the Intel key alone: finding an update
+          # in it proves the updater asked for darwin-x86_64.
+          jq '.platforms |= with_entries(select(.key | startswith("darwin-x86_64")))' site090/latest.json > site090/intel.json
+          mv site090/intel.json site090/latest.json
+          [ "$(jq -r '.platforms | keys | join(" ")' site090/latest.json)" = darwin-x86_64 ]
           STATUS=0
           arch -x86_64 rust/handover-proof/target/x86_64-apple-darwin/release/handover-proof \
             --bundle old090/Applications/Screepub.app \
@@ -759,7 +766,6 @@ jobs:
           kill "$SERVE" || true
           cat proof090.out serve090.log
           [ "$STATUS" = 0 ] || { echo "::error::the v0.9.0 window's updater on an Intel Mac could not install this release; latest.json is NOT published"; exit 1; }
-          grep -q ' for darwin-x86_64 from ' proof090.out || { echo "::error::the proof did not ask for the Intel key"; exit 1; }
           INSTALLED=old090/Applications/Screepub.app
           [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INSTALLED/Contents/Info.plist")" = "$VERSION" ]
           [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$INSTALLED/Contents/Info.plist")" = method-reader-app ]

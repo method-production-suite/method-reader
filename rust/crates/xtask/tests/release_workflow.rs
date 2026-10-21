@@ -1114,7 +1114,10 @@ fn an_intel_mac_on_0_9_0_is_proved_to_take_the_release_before_anything_is_publis
         "arch -x86_64 rust/handover-proof/target/x86_64-apple-darwin/release/handover-proof"
     ));
     assert!(text.contains("--current 0.9.0"));
-    assert!(text.contains("grep -q ' for darwin-x86_64 from ' proof090.out"));
+    // Its update file lists the Intel key alone, so success proves the lookup.
+    assert!(text.contains(
+        r#"[ "$(jq -r '.platforms | keys | join(" ")' site090/latest.json)" = darwin-x86_64 ]"#
+    ));
     // The installed app's Intel slice starts and renames the old bundle.
     assert!(
         text.contains(r#"arch -x86_64 "$INSTALLED/Contents/MacOS/method-reader-app" --version"#)
