@@ -2,7 +2,7 @@
 //! new behavior in the Rust window, not parity (rust/PARITY.md rows X1 to
 //! X6). The choice shows on the cards and on the calm screen, is one Tab
 //! stop with the arrows between its halves, leads the editable script to
-//! two cards that save the editing files through the same export Save a
+//! three cards that save the editing files through the same export Save a
 //! file uses, is remembered app-wide, and slides its knob over the state
 //! motion unless Reduce Motion is on. The Preview page's Send to e-reader
 //! lands on the e-reader half, whatever was chosen last.
@@ -112,6 +112,12 @@ fn x3_edit_its_cards_save_through_the_same_export_with_the_types_filter() {
             "/Users/reader/Desktop/Field Station.fdx",
         ),
         (
+            ".osf",
+            "osf",
+            ("OSF", "osf"),
+            "/Users/reader/Desktop/Field Station.osf",
+        ),
+        (
             "Fountain",
             "fountain",
             ("Fountain", "fountain"),
@@ -165,6 +171,28 @@ fn x3_fdx_wears_the_beta_badge_and_says_what_it_is() {
         !h.query_all_by_label("Beta")
             .any(|b| fountain.contains_rect(b.rect()))
     );
+}
+
+#[test]
+fn x3_osf_wears_the_beta_badge_too_and_sits_between_fdx_and_fountain() {
+    let w = world();
+    settings_with(&w, |a| a["panelIntent"] = json!("edit"));
+    let h = result(&w);
+    let osf = h.get_by_role_and_label(Role::Button, ".osf");
+    assert_eq!(
+        osf.accesskit_node().description().as_deref(),
+        Some("Open format, for screenwriting apps that read it")
+    );
+    let rect = osf.rect();
+    assert!(
+        h.query_all_by_label("Beta")
+            .any(|b| rect.contains_rect(b.rect())),
+        "the badge sits on the card"
+    );
+    let fdx = h.get_by_role_and_label(Role::Button, ".fdx").rect();
+    let fountain = h.get_by_role_and_label(Role::Button, "Fountain").rect();
+    let order = |r: egui::Rect| (r.top() as i32, r.left() as i32);
+    assert!(order(fdx) < order(rect) && order(rect) < order(fountain));
 }
 
 #[test]
@@ -250,7 +278,7 @@ fn x5_the_knob_slides_over_the_state_motion_unless_motion_is_reduced() {
 }
 
 #[test]
-fn x6_save_a_file_keeps_its_fdx_and_fountain_rows() {
+fn x6_save_a_file_keeps_its_fdx_osf_and_fountain_rows() {
     let w = world();
     settings_with(&w, |a| a["readerDevice"] = json!("kobo"));
     let mut h = result(&w);
@@ -258,6 +286,7 @@ fn x6_save_a_file_keeps_its_fdx_and_fountain_rows() {
         .click_accesskit();
     steps(&mut h);
     h.get_by_role_and_label(Role::Button, "Save FDX…");
+    h.get_by_role_and_label(Role::Button, "Save OSF…");
     h.get_by_role_and_label(Role::Button, "Save Fountain…");
 }
 

@@ -34,4 +34,5 @@ sp-engine.workspace = true
 tempfile = "3"
 sp-engine.workspace = true
 sp-parser.workspace = true
+sp-osf.workspace = true
 zip.workspace = true

@@ -1509,7 +1509,7 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
     }
 }
 
-/// The editable script: a line, then .fdx and Fountain as cards. Each opens the
+/// The editable script: a line, then .fdx, .osf and Fountain as cards. Each opens the
 /// Save box and runs the same export Save a file does.
 fn draw_edit(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();

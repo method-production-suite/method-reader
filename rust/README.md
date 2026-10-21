@@ -26,6 +26,7 @@ rust/
     sp-mobi/            tokens to MOBI 6, and the PalmDB container
     sp-azw3/            the EPUB to AZW3 (KF8), ported from Calibre's writer (beta)
     sp-fdx/             tokens to Final Draft (beta)
+    sp-osf/             tokens to the Open Screenplay Format (beta)
     sp-fsutil/          atomic writes, file replacement, node:path's algorithms
     sp-device/          readers on USB, the reMarkable, eject, reveal, the MTP route (off)
     sp-mtp/             the MTP helper binary (method-reader-mtp; off until hardware day)

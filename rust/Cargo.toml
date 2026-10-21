@@ -30,6 +30,7 @@ miniz_oxide = "0.8"
 # SHA-256 for the tests that pin a book by its digest.
 sha2 = "0.10"
 sp-fdx = { path = "crates/sp-fdx" }
+sp-osf = { path = "crates/sp-osf" }
 sp-parser = { path = "crates/sp-parser" }
 sp-epub = { path = "crates/sp-epub" }
 sp-azw3 = { path = "crates/sp-azw3" }

@@ -65,6 +65,14 @@ fn export_for_fdx_says_beta() {
 }
 
 #[test]
+fn export_for_osf_says_beta() {
+    let text = help(&["export", "--help"]);
+    assert!(help_entry(&text, "method-reader export <file.epub> --for osf").contains("(beta)"));
+    assert!(flat(&text).contains("osf (beta) is the same script"));
+    assert!(help_entry(&text, "--for <type>").contains("osf (beta)"));
+}
+
+#[test]
 fn eject_says_beta_on_windows_and_linux_only() {
     assert!(
         help_entry(&help(&["--help"]), "method-reader eject <volume>")
@@ -78,8 +86,8 @@ fn beta_is_said_exactly_where_it_belongs_and_nowhere_else() {
     let count = |t: &str| t.to_lowercase().matches("beta").count();
     // Pictures, --fdx, --azw3 and eject in the conversion help.
     assert_eq!(count(&help(&["--help"])), 4);
-    // The fdx usage line, its paragraph, the AZW3 in the kindle paragraph,
-    // and azw3 and fdx in the --for list.
-    assert_eq!(count(&help(&["export", "--help"])), 5);
+    // The fdx and osf usage lines and their paragraphs, the AZW3 in the
+    // kindle paragraph, and azw3, fdx and osf in the --for list.
+    assert_eq!(count(&help(&["export", "--help"])), 8);
     assert_eq!(count(&help(&["eject", "--help"])), 1);
 }

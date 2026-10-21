@@ -16,6 +16,7 @@ serde_json.workspace = true
 sp-model.workspace = true
 sp-fountain.workspace = true
 sp-fdx.workspace = true
+sp-osf.workspace = true
 sp-parser.workspace = true
 sp-epub.workspace = true
 sp-mobi.workspace = true
@@ -32,5 +33,6 @@ regex.workspace = true
 rustix = { version = "1", default-features = false, features = ["std", "process", "fs"] }
 
 [dev-dependencies]
+roxmltree.workspace = true
 tempfile = "3"
 zip.workspace = true

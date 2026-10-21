@@ -1,6 +1,6 @@
 //! The licence split: every crate is MIT OR Apache-2.0 except sp-azw3, the
 //! calibre port, which is GPL-3.0-only. The crates other projects take on
-//! their own (the PDF reader, the parser, Fountain and Final Draft) must
+//! their own (the PDF reader, the parser, Fountain, Final Draft and OSF) must
 //! never come to depend on it, or they would carry the GPL with them.
 
 mod repo_common;
@@ -10,7 +10,14 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::process::Command;
 
 /// The crates that turn a PDF into an editable script.
-const IMPORT_CRATES: [&str; 5] = ["sp-model", "sp-pdf", "sp-parser", "sp-fountain", "sp-fdx"];
+const IMPORT_CRATES: [&str; 6] = [
+    "sp-model",
+    "sp-pdf",
+    "sp-parser",
+    "sp-fountain",
+    "sp-fdx",
+    "sp-osf",
+];
 
 /// The whole graph, every platform's packages included: not `--offline`,
 /// because a fresh CI runner has fetched only its own platform's crates and
