@@ -34,8 +34,9 @@ Release go-aheads:
   3. Done 2026-10-20: the rehearsal is green on the release commit,
      b0a211b. Since 2026-10-19 it is the only full build before a release.
 
-  Then the tag goes to the owner through MOrg; one yes covers the tag and
-  the publish, after the draft checks pass (docs/RELEASING.md).
+  **Waiting on:** the owner's yes for the tag on b0a211b, on or after
+  2026-10-23, through MOrg. One yes covers the tag and the publish, after
+  the draft checks pass (docs/RELEASING.md).
 - **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
   is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
   command line's MCP server, what's on a reader, a SHA256SUMS signed with
@@ -45,16 +46,34 @@ Release go-aheads:
   tools and the version check take it, and the site's download links name
   no version. Launcher 0.1.2, which accepts a universal app, is out.
 
-  One decision for the owner, before the universal build is written
-  (docs/superpowers/specs/2026-10-20-universal-mac-design.md): every Intel
-  copy of 0.9.0 reads the same update file, so once 1.0.0 lists Intel it is
-  offered 1.0.0 straight from 0.9.0, a jump nothing has proved yet.
-  Recommended: offer it, with a new rehearsal step in which 0.9.0's own
-  updater installs the release and the app starts on 0.9.0's settings. The
-  fallback, if that proof is slow to build: ship 1.0.0 universal but list
-  Intel only from 1.0.1.
+  Built and on main: the universal Mac build, its 0.9.0 Intel proof and
+  the signed SHA256SUMS (#78, #79). The four features are finished as
+  draft pull requests that merge after the 0.13.1 tag: the MCP server
+  (#62), what's on a reader (#67), the .fdx scene pages (#76) and OSF out
+  (#77). Then the public text, the notes and a rehearsal, and 1.0.0 goes
+  to the owner like 0.13.1.
+
+Decisions:
+
+- **How to report a problem without a GitHub account**
+  (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
+  Recommended: a report opens a pre-filled email to the suite's address,
+  edited and sent by the person, carrying what they typed, the version, and
+  for a failed conversion the app's own message. Script text is never
+  included, and counts of the script's shape are added only if they tick a
+  box. GitHub stays as a second link. The alternative, a form stored by the
+  device-request service, would be the first free text that service keeps,
+  and nobody could be answered. Not built until the owner says, because it
+  decides where people's reports and email addresses go.
 
 Built on the recommendation (reversible):
+
+- **Intel Macs on 0.9.0 are offered 1.0.0** (2026-10-20). Every Intel
+  copy of 0.9.0 reads the same update file, so the release now proves,
+  before anything is published, that 0.9.0's own updater installs it under
+  Rosetta from the Intel entry and that the app then starts and renames
+  itself. Proved on this Mac with a throwaway key. The fallback, listing
+  Intel only from 1.0.1, is a small change in the release tools.
 
 - **What counts as a recent script** for the launcher's list: a conversion
   into the library, recorded under the file you chose. Opening a book that is
