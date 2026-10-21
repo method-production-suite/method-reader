@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Every release ships notes a screenwriter can read, drafted by Claude, reviewed by Sam, and carried into the GitHub release automatically, with the "tagged a release with no notes" failure made unreachable rather than merely detected.
+**Goal:** Every release ships notes a screenwriter can read, drafted by Claude, reviewed by the owner, and carried into the GitHub release automatically, with the "tagged a release with no notes" failure made unreachable rather than merely detected.
 
-**Architecture:** Facts by machine, voice by model, enforcement in CI. A committed `tools/release-notes.ts` gathers what must not be guessed (registry verdict diffs across two refs, changed registry entries, commit subjects as sanitized data). A local `/release` skill turns that into prose against a committed template, stops for Sam, then commits and tags in that order so a tag cannot exist without notes. `release.yml` validates at the tagged commit before doing anything expensive, and publishes the release as a draft until its assets are uploaded.
+**Architecture:** Facts by machine, voice by model, enforcement in CI. A committed `tools/release-notes.ts` gathers what must not be guessed (registry verdict diffs across two refs, changed registry entries, commit subjects as sanitized data). A local `/release` skill turns that into prose against a committed template, stops for the owner, then commits and tags in that order so a tag cannot exist without notes. `release.yml` validates at the tagged commit before doing anything expensive, and publishes the release as a draft until its assets are uploaded.
 
 **Tech Stack:** Bun/TypeScript (bun:test), GitHub Actions, `gh` CLI, bash. No new dependencies.
 
@@ -1031,14 +1031,14 @@ git commit -m "Hook body: blocks tagging without notes, never blocks recovery"
 
 Create `.claude/skills/release/SKILL.md` implementing the flow in spec deliverable 3, exactly in this order:
 
-1. Start `bun test`, `bunx tsc --noEmit`, `swift build -c release` and `kit-check` in the BACKGROUND. Do not wait: nothing is written yet, so drafting first is free, and waiting puts minutes of dead air in front of the only screen Sam cares about.
+1. Start `bun test`, `bunx tsc --noEmit`, `swift build -c release` and `kit-check` in the BACKGROUND. Do not wait: nothing is written yet, so drafting first is free, and waiting puts minutes of dead air in front of the only screen the owner cares about.
 2. `git fetch --tags --prune`. A tag existing ON ORIGIN is the hard stop, not a local tag, which lies in both directions. A local notes file for an unreleased version is a RESUME path: reopen it for review, do not refuse.
 3. Run `bun tools/release-notes.ts <last tag>` and read its JSON.
-4. If `userVisible` is false: STOP. Write nothing. Print the range summary and say there is nothing to tell a reader. If Sam is releasing anyway, he states the reason and the note is written from his words. Do NOT offer to write a maintenance note unprompted; that is the placeholder the spec rejects.
+4. If `userVisible` is false: STOP. Write nothing. Print the range summary and say there is nothing to tell a reader. If the owner is releasing anyway, they state the reason and the note is written from his words. Do NOT offer to write a maintenance note unprompted; that is the placeholder the spec rejects.
 5. Read `docs/release-notes-template.md` and the two most recent files in `docs/releases/`.
 6. Draft `docs/releases/<version>.md`.
 7. Print the header block, THEN the file. The block carries: proposed version and its one-line reason; the claims you are least sure about with their evidence, or one line saying there are none; verdicts settled this cycle; pending ones deliberately omitted; and a count of commits that earned no bullet. When nothing is uncertain the whole block collapses to one line, so a routine release looks visibly different from an exceptional one.
-8. Wait. Approval is Sam editing the file or typing `ship`. Re-loops print ONLY the changed bullets, never the whole file again.
+8. Wait. Approval is the owner editing the file or typing `ship`. Re-loops print ONLY the changed bullets, never the whole file again.
 9. On `ship`: wait for the background suite; re-read the notes file from disk in case he edited it; re-derive the version from `package.json` and assert the matching notes file is staged; commit notes plus the version bump together; create the ANNOTATED tag on that commit.
 10. Ask once whether to push, showing `git push --atomic origin main v<version>` and noting the build takes 15 to 25 minutes. Named refs and `--atomic`, never `--tags`. If declined, print `git tag -d v<version>` so backing out is one paste.
 

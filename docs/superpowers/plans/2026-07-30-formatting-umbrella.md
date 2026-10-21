@@ -644,7 +644,7 @@ serialization. So registry #18 is exercised by the invented fixture only. That
 is a fact about this corpus, not about the feature — but it means the device
 pass below is the first time a font shift will be looked at on hardware.
 
-## Phase D: the combined device pass (Sam-owned, one sideload session)
+## Phase D: the combined device pass (owned by the owner, one sideload session)
 
 One KFX build + one Apple Books handoff of a real script carrying: a MULTI-paragraph speech and a long action block near page seams, the set's longest speech, a CUT TO: near a seam, a dual-dialogue exchange, an underlined phrase (post-B), and a font-shifted insert (post-C). Verdicts to land, each in its registry slot:
 
