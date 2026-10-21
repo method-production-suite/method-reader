@@ -193,9 +193,11 @@ pub fn updater_kinds_for_os(os: BundleOs) -> Vec<Kind> {
         .collect()
 }
 
-/// `<root>/target/[<triple>/]release/bundle/<dir>`, root being rust/.
+/// `<target dir>/[<triple>/]release/bundle/<dir>`, root being rust/ and the
+/// target dir cargo metadata's (`<root>/target` for a tree with no
+/// Cargo.toml, as the tests' are).
 pub fn bundle_dir_for(dir: &str, target: Option<&str>, root: &Path) -> PathBuf {
-    let mut p = root.join("target");
+    let mut p = crate::paths::target_dir_of(root);
     if let Some(t) = target {
         p.push(t);
     }

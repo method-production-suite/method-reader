@@ -211,15 +211,10 @@ pub fn capture_main(args: &[String]) -> u8 {
     }
 }
 
-/// Where cargo puts this workspace's release builds: CARGO_TARGET_DIR when
-/// it is set (relative to the workspace, as cargo reads it), rust/target
-/// otherwise.
+/// Where cargo puts this workspace's release builds (cargo metadata's
+/// target directory, so CARGO_TARGET_DIR and the suite's shared folder hold).
 pub fn release_dir() -> PathBuf {
-    let ws = workspace_root();
-    let target = std::env::var_os("CARGO_TARGET_DIR")
-        .filter(|t| !t.is_empty())
-        .map_or_else(|| ws.join("target"), |t| ws.join(t));
-    target.join("release")
+    crate::paths::target_dir().join("release")
 }
 
 /// Builds sp-app's capture program in the release profile, the one the
