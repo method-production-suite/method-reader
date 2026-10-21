@@ -770,6 +770,183 @@ fn h2_a_reader_with_no_name_is_named_for_its_kind() {
     assert!(shows(&h, "Field Station is on your Kindle."));
 }
 
+// ---------------------------------------------- the device library (Rust's)
+//
+// docs/device-library.md: not one of the inventory's rows (the Tauri window
+// had no device library), so these name the design note instead.
+
+fn open_shelf(h: &mut H) {
+    h.get_by_role_and_label(Role::Button, "Books on your Kindle")
+        .click_accesskit();
+    steps(h);
+}
+
+#[test]
+fn library_a_plugged_in_kindle_shows_its_books_your_scripts_first() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in(&w, "kindle", "Kindle");
+    let mut h = panel(&w, Platform::Mac);
+    let open = h.get_by_role_and_label(Role::Button, "Books on your Kindle");
+    assert_eq!(open.accesskit_node().data().is_expanded(), Some(false));
+    assert!(
+        w.engine.calls_of("device-books").is_empty(),
+        "asked on press"
+    );
+    open_shelf(&mut h);
+    assert_eq!(
+        w.engine.calls_of("device-books"),
+        [Request::DeviceBooks {
+            volume: "/Volumes/kindle".into()
+        }]
+    );
+    let open = h.get_by_role_and_label(Role::Button, "Books on your Kindle");
+    assert_eq!(open.accesskit_node().data().is_expanded(), Some(true));
+    h.get_by_role_and_label(Role::Heading, "On your Kindle");
+    let ours = h
+        .get_by_role_and_label(Role::Heading, "Your scripts")
+        .rect();
+    let others = h.get_by_role_and_label(Role::Heading, "Other books").rect();
+    assert!(ours.top() < others.top(), "your scripts come first");
+    assert!(shows(&h, "AZW3, 240 KB, from Field Station"));
+    assert!(shows(&h, "PDF, 2.3 MB"));
+    h.get_by_role_and_label(Role::Button, "Remove Field Station.azw3…");
+    h.get_by_role_and_label(Role::Button, "Remove Reading list.pdf…");
+    // Pressed again, the list closes.
+    open_shelf(&mut h);
+    assert!(!shows(&h, "On your Kindle"));
+}
+
+#[test]
+fn library_a_book_goes_only_after_the_question_and_the_list_looks_again() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in(&w, "kindle", "Kindle");
+    let mut h = panel(&w, Platform::Mac);
+    open_shelf(&mut h);
+    h.get_by_role_and_label(Role::Button, "Remove Field Station.azw3…")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(shows(&h, "Remove Field Station.azw3 from your Kindle?"));
+    assert!(shows(&h, sp_app::model::device_library::KINDLE_NOTES));
+    assert!(w.engine.calls_of("device-remove").is_empty(), "not yet");
+    // Cancel takes nothing.
+    h.get_by_role_and_label(Role::Button, "Cancel")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(!shows(&h, "from your Kindle?"));
+    assert!(w.engine.calls_of("device-remove").is_empty());
+    // Asked again and answered, the one book goes.
+    h.get_by_role_and_label(Role::Button, "Remove Field Station.azw3…")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Remove Field Station.azw3")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("device-remove"),
+        [Request::DeviceRemove {
+            volume: "/Volumes/kindle".into(),
+            file: "/Volumes/kindle/documents/Field Station.azw3".into(),
+        }]
+    );
+    assert!(shows(&h, "Removed Field Station.azw3 from your Kindle."));
+    assert_eq!(w.engine.calls_of("device-books").len(), 2, "looked again");
+}
+
+#[test]
+fn library_a_refusal_says_the_engines_sentence() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in(&w, "kindle", "Kindle");
+    w.engine.always(
+        "device-remove",
+        Reply::ok(json!({"ok": false, "error": {"code": "remove-failed",
+            "message": "The Kindle would not let the book go."}})),
+    );
+    let mut h = panel(&w, Platform::Mac);
+    open_shelf(&mut h);
+    h.get_by_role_and_label(Role::Button, "Remove Reading list.pdf…")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Remove Reading list.pdf")
+        .click_accesskit();
+    steps(&mut h);
+    // Said where a screen reader hears it, and the book is still listed.
+    h.get_by_role_and_label(Role::Status, "The Kindle would not let the book go.");
+    h.get_by_role_and_label(Role::Button, "Remove Reading list.pdf…");
+
+    // A list that cannot be read says so, and offers nothing to remove.
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in(&w, "kindle", "Kindle");
+    w.engine.always(
+        "device-books",
+        Reply::ok(json!({"ok": false, "error": {"code": "unknown-device",
+            "message": "That reader is not connected."}})),
+    );
+    let mut h = panel(&w, Platform::Mac);
+    open_shelf(&mut h);
+    assert!(shows(&h, "That reader is not connected."));
+    assert!(!shows(&h, "Remove "));
+}
+
+#[test]
+fn library_is_offered_only_for_a_reader_that_keeps_its_books_in_a_folder() {
+    // Nothing plugged in: no list to offer.
+    let w = world();
+    calm_as(&w, "kindle");
+    let h = panel(&w, Platform::Mac);
+    assert!(!shows(&h, "Books on your"));
+
+    // A reMarkable's interface has no delete.
+    let w = world();
+    calm_as(&w, "remarkable");
+    w.engine.always(
+        "devices",
+        Reply::ok(json!({"ok": true, "devices": [
+            {"id": "r1", "kind": "remarkable", "name": "reMarkable", "volume": "/Volumes/remarkable"}
+        ]})),
+    );
+    let mut h = panel(&w, Platform::Mac);
+    w.fakes.clock.advance(2001.0);
+    steps(&mut h);
+    assert!(!shows(&h, "Books on your"));
+
+    // On the cards, a plugged-in Kobo offers its own.
+    let w = world();
+    plug_in(&w, "kobo", "Kobo");
+    let mut h = panel(&w, Platform::Mac);
+    w.fakes.clock.advance(2001.0);
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Books on your Kobo")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Heading, "On your Kobo");
+    h.get_by_role_and_label(Role::Button, "Remove Reading list.pdf…")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(shows(&h, "Remove Reading list.pdf from your Kobo?"));
+    assert!(!shows(&h, sp_app::model::device_library::KINDLE_NOTES));
+}
+
+#[test]
+fn library_a_reader_unplugged_takes_its_list_with_it() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in(&w, "kindle", "Kindle");
+    let mut h = panel(&w, Platform::Mac);
+    open_shelf(&mut h);
+    h.get_by_role_and_label(Role::Heading, "On your Kindle");
+    w.engine
+        .always("devices", Reply::ok(json!({"ok": true, "devices": []})));
+    w.fakes.clock.advance(2001.0);
+    steps(&mut h);
+    steps(&mut h);
+    assert!(!shows(&h, "On your Kindle"));
+    assert!(h.state().shelf.open.is_none());
+}
+
 // ---------------------------------------------------------------- updates
 
 fn offer(h: &mut H, version: &str) {
