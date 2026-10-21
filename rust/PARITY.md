@@ -1234,7 +1234,10 @@ names the check it affects.
   `config/recent.json` out of the compared tree only when it is
   well-formed: an array of objects, each a `path` inside that run's
   scratch folder and an RFC 3339 `opened`. A malformed one stays, and the
-  row differs on it. The `--json` answer is unchanged.
+  row differs on it. The `--json` answer is unchanged. Since 2026-10-21
+  (branch fix/recent-list) every record also leaves an empty
+  `recent.json.lock` beside it, the cross-process lock; the harness takes
+  that out too, only while it is empty.
 - **A tall dual exchange stays two speeches (2026-10-19, branch
   fix/long-dual-boundary): a TypeScript bug, fixed, its answers moved.**
   torture.pdf's sheet 9 carries a second dual exchange (ODILE left, WREN

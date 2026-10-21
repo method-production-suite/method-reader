@@ -587,19 +587,27 @@ fn finish(
     }
 
     // The suite launcher's recent list (sp_engine::recent decides what
-    // counts): after every write, and never a reason to fail.
-    if let Err(e) = sp_engine::recent::record_conversion(
+    // counts): after every write, and never a reason to fail. A damaged
+    // file set aside is said here, once, by the run that set it aside.
+    match sp_engine::recent::record_conversion(
         host_platform(),
         &Env::process(),
         input,
         f.library,
         sp_engine::recent::now_seconds(),
     ) {
-        eprint_line(&format!(
+        Ok(Some(sp_engine::recent::Recorded {
+            damaged: Some(aside),
+        })) => eprint_line(&format!(
+            "method-reader: {} was damaged, so it was kept as {aside} and a new list was started",
+            sp_engine::recent::RECENT_FILE
+        )),
+        Ok(_) => {}
+        Err(e) => eprint_line(&format!(
             "method-reader: could not add this script to {}: {}",
             sp_engine::recent::RECENT_FILE,
             e.message()
-        ));
+        )),
     }
 
     let sp = result.screenplay.as_ref();

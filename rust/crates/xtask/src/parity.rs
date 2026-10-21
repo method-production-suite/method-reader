@@ -363,8 +363,14 @@ fn run_side(
 /// `config/recent.json` is taken out of the compared tree only when it is
 /// what the engine should have written there: an array of objects, each a
 /// `path` inside this run's scratch folder and an `opened` RFC 3339 time.
-/// Anything else stays, and the row differs on it.
+/// Anything else stays, and the row differs on it. The lock file every
+/// record leaves beside it (`recent.json.lock`, always empty) goes too,
+/// but only while it is empty.
 fn set_aside_recent(work: &Path) {
+    let lock = work.join("config").join("recent.json.lock");
+    if std::fs::metadata(&lock).is_ok_and(|m| m.is_file() && m.len() == 0) {
+        let _ = std::fs::remove_file(&lock);
+    }
     let file = work.join("config").join("recent.json");
     let Ok(text) = std::fs::read_to_string(&file) else {
         return;
