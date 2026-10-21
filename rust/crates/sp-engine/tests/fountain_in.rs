@@ -11,6 +11,24 @@ mod common;
 use std::collections::BTreeMap;
 
 use common::epub::{body_of, image_entries, opf, read_zip, toc_of};
+
+/// A book's entries with the one clock-dependent value blanked:
+/// `<meta property="dcterms:modified">...</meta>` in the package document.
+fn book_without_clock(epub: &[u8]) -> Vec<(String, Vec<u8>)> {
+    let stamp = regex::bytes::Regex::new(r#"(<meta property="dcterms:modified">)[^<]*(</meta>)"#)
+        .expect("a pattern");
+    read_zip(epub)
+        .into_iter()
+        .map(|e| {
+            let data = if e.name.ends_with(".opf") {
+                stamp.replace_all(&e.data, &b"${1}${2}"[..]).into_owned()
+            } else {
+                e.data
+            };
+            (e.name, data)
+        })
+        .collect()
+}
 use sp_engine::convert::{
     ConvertError, ConvertOptions, convert_chosen_fountain, convert_pdf, fountain_guards,
     fountain_text,
@@ -208,8 +226,14 @@ fn field_station_pdf_to_fountain_and_back_gives_the_same_epub_bytes() {
         "{:?}",
         from_fountain.warnings
     );
-    assert!(
-        from_fountain.epub == from_pdf.epub,
+    // Every entry, byte for byte. The one thing allowed to differ is the
+    // clock: each conversion stamps now into dcterms:modified and the zip's
+    // entry dates, and two conversions can fall either side of a second.
+    // (SOURCE_DATE_EPOCH would fix the clock, but it is process-wide and
+    // would leak into every test running beside this one.)
+    assert_eq!(
+        book_without_clock(&from_fountain.epub),
+        book_without_clock(&from_pdf.epub),
         "the round trip changed the EPUB"
     );
     assert_eq!(from_fountain.preview_html, from_pdf.preview_html);

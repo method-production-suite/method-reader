@@ -17,6 +17,47 @@ pub fn workspace_root() -> PathBuf {
     repo_root().join("rust")
 }
 
+/// Where cargo writes this workspace's builds: cargo metadata's
+/// `target_directory`, which follows `CARGO_TARGET_DIR` and any cargo config
+/// (the suite builds every checkout into one shared folder outside the
+/// repo). Never assume `rust/target`.
+pub fn target_dir() -> PathBuf {
+    target_dir_of(&workspace_root())
+}
+
+/// [`target_dir`] for another workspace (a second checkout, or a proof
+/// crate with its own Cargo.toml). A folder with no Cargo.toml, as the tests'
+/// scratch trees are, or one cargo cannot read, answers `<workspace>/target`.
+pub fn target_dir_of(workspace: &Path) -> PathBuf {
+    let fallback = workspace.join("target");
+    let manifest = workspace.join("Cargo.toml");
+    if !manifest.is_file() {
+        return fallback;
+    }
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let Ok(out) = Command::new(cargo)
+        .args([
+            "metadata",
+            "--format-version",
+            "1",
+            "--no-deps",
+            "--offline",
+        ])
+        .arg("--manifest-path")
+        .arg(&manifest)
+        .output()
+    else {
+        return fallback;
+    };
+    if !out.status.success() {
+        return fallback;
+    }
+    serde_json::from_slice::<serde_json::Value>(&out.stdout)
+        .ok()
+        .and_then(|v| v["target_directory"].as_str().map(PathBuf::from))
+        .unwrap_or(fallback)
+}
+
 /// The committed, invented fixtures: tests/fixtures/*.pdf, sorted.
 pub fn committed_fixtures() -> Vec<PathBuf> {
     inputs_in(&repo_root().join("tests/fixtures"), &["pdf"])

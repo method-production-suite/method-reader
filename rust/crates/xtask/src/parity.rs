@@ -205,7 +205,7 @@ fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
         sp_release::names::CLI_EXE,
         std::env::consts::EXE_SUFFIX
     );
-    Ok(Some(ws.join("target/release").join(exe)))
+    Ok(Some(paths::target_dir_of(&ws).join("release").join(exe)))
 }
 
 /// One side's run of one row.
