@@ -78,9 +78,14 @@ Tests that need a device (hands only; everything else is automated):
      from Screepub Desktop or Screepub). Check that Finder, Spotlight and
      Launchpad show the new name, and whether a Dock icon you kept still
      opens the app or shows a question mark.
-   - **Linux:** the owner's Arch check (AppImage, converting, USB detection,
-     copy and eject on Hyprland, the command line); findings arrive as an
-     issue.
+   - **Linux, eventually:** the owner's Arch check (AppImage, converting,
+     USB detection, copy and eject on Hyprland, the command line); findings
+     arrive as an issue. Nothing waits on it.
+
+Deferred (the owner, 2026-10-20): **hands-on tests on Windows**, with no
+date. The Windows build is still built and tested automatically on every
+release and every Monday, and its notes keep saying it has not been
+installed by a person yet.
 
 Decided:
 
