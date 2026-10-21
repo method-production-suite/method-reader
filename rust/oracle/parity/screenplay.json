@@ -126,7 +126,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "83b32b98fe7ef567"
+        "text": "c2e64b9221adc61b"
       },
       "out/book.preview.html": {
         "html": "e9474276a31cc91e"
@@ -257,7 +257,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "83b32b98fe7ef567"
+        "text": "c2e64b9221adc61b"
       },
       "out/book.preview.html": {
         "html": "c486e3951d0eab72"
@@ -571,7 +571,7 @@
             "json": "577898c1941870e6"
           },
           "screenplay/source.json": {
-            "json": "790bfd3741d724e6"
+            "json": "767a8694d96160ff"
           }
         }
       }
@@ -673,7 +673,7 @@
             ]
           },
           "screenplay/source.json": {
-            "json": "790bfd3741d724e6"
+            "json": "767a8694d96160ff"
           }
         }
       }
@@ -764,7 +764,7 @@
             "json": "6e968ac32fc6651e"
           },
           "screenplay/source.json": {
-            "json": "790bfd3741d724e6"
+            "json": "767a8694d96160ff"
           }
         }
       },
@@ -1012,7 +1012,7 @@
             "json": "5052154e6f36ffad"
           },
           "screenplay/source.json": {
-            "json": "790bfd3741d724e6"
+            "json": "767a8694d96160ff"
           }
         }
       },
@@ -1106,7 +1106,7 @@
             "text": "f9a64937e48b0b66"
           },
           "screenplay/source.json": {
-            "json": "790bfd3741d724e6"
+            "json": "767a8694d96160ff"
           }
         }
       }
@@ -1546,7 +1546,7 @@
         ]
       },
       "out/f.fdx": {
-        "text": "83b32b98fe7ef567"
+        "text": "2d20bcee09bb0514"
       },
       "out/f.html": {
         "html": "e9474276a31cc91e"
@@ -3566,7 +3566,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fdx": {
-        "text": "83b32b98fe7ef567"
+        "text": "2d20bcee09bb0514"
       }
     }
   },

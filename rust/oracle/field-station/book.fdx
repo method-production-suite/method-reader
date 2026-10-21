@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <FinalDraft DocumentType="Script" Template="No" Version="2">
   <Content>
-    <Paragraph Type="Scene Heading"><Text>EXT. RIDGE ROAD - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>EXT. RIDGE ROAD - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>Wind comes down off the ridge in long flat gusts, pushing the grass one way and then, for no reason, the other.</Text></Paragraph>
     <Paragraph Type="Action"><Text>A road climbs the ridge in switchbacks. Nobody has driven it since the washout, and the grass is taking it back.</Text></Paragraph>
     <Paragraph Type="Action"><Text>MARA, 40s, walks it with a pack on and four days in her legs. She has the face of someone who fixes things and is never thanked.</Text></Paragraph>
@@ -25,7 +25,7 @@
     <Paragraph Type="Action"><Text>The road ends at the washout, a bite taken out of the mountain. Mara stops where the road stops, then goes round it on the rock.</Text></Paragraph>
     <Paragraph Type="Character"><Text>DELACROIX (CONT'D)</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Thirty-eight.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. FIELD STATION - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>EXT. FIELD STATION - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>MARA and DELACROIX come up the last of the slope, packs on, bent into the wind. Below them the road they walked is a thin grey line, going all the way down.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The station: a prefab hut bolted to the rock, a radio mast guyed four ways, a fuel drum, a generator crouched under a tarp. Everything that can rattle, rattles.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The hut door opens before they reach it.</Text></Paragraph>
@@ -73,7 +73,7 @@
     <Paragraph Type="Character"><Text>MARA</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>I believe you.</Text></Paragraph>
     <Paragraph Type="Action"><Text>Teo nods too many times and goes inside. The wind shuts the door behind him, hard.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIELD STATION - DAY</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="4"/><Text>INT. FIELD STATION - DAY</Text></Paragraph>
     <Paragraph Type="Action"><Text>One room. A cot, a table, one chair. A tarp lashed over a gap in the north wall where a panel used to be. It breathes with the weather.</Text></Paragraph>
     <Paragraph Type="Action"><Text>On the wall above the radio, a map of the valley. Four pins in it, running down the line to the lowest station.</Text></Paragraph>
     <Paragraph Type="Character"><Text>DELACROIX</Text></Paragraph>
@@ -97,7 +97,7 @@
     <Paragraph Type="Character"><Text>TEO</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>One for every station on the line. We’re the top one.</Text></Paragraph>
     <Paragraph Type="Action"><Text>He touches the lowest pin, then takes his finger away as if it were warm.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. RADIO MAST - DUSK</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="5"/><Text>EXT. RADIO MAST - DUSK</Text></Paragraph>
     <Paragraph Type="Action"><Text>The light goes early up here. What is left of it is the colour of weak tea.</Text></Paragraph>
     <Paragraph Type="Action"><Text>MARA climbs the mast, harness clipped to the ladder, a spanner through her belt. The wind pulls at her like it wants her for something.</Text></Paragraph>
     <Paragraph Type="Action"><Text>DELACROIX stands at the foot, the safety line paid out through his gloves.</Text></Paragraph>
@@ -133,7 +133,7 @@
     <Paragraph Type="Character"><Text>MARA</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Coming down.</Text></Paragraph>
     <Paragraph Type="Action"><Text>She unclips and starts down, rung by rung. She does not mention it. She will not mention it for some time.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIELD STATION - EVENING</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="7"/><Text>INT. FIELD STATION - EVENING</Text></Paragraph>
     <Paragraph Type="Action"><Text>Three of them round a table built for one. Tins on a camping stove. The tarp on the north wall breathes in, out.</Text></Paragraph>
     <Paragraph Type="Action"><Text>TEO eats fast, like the food might be taken back.</Text></Paragraph>
     <Paragraph Type="Character"><Text>DELACROIX</Text></Paragraph>
@@ -159,7 +159,7 @@
     <Paragraph Type="Dialogue"><Text>Iversen answered today.</Text></Paragraph>
     <Paragraph Type="Character"><Text>TEO</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Iversen answered you.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. RIDGE - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="8"/><Text>EXT. RIDGE - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>Wind, and under the wind a cold that means business.</Text></Paragraph>
     <Paragraph Type="Action"><Text>DELACROIX walks the ridge with a torch, the beam no use against anything further off than his own boots.</Text></Paragraph>
     <Paragraph Type="Action"><Text>He finds the marker cairn where the map says it will be: a chest-high stack of flat stones, sighted down the valley toward the fourth station. In clear weather you could see its lamp from here.</Text></Paragraph>
@@ -182,7 +182,7 @@
     <Paragraph Type="Action"><Text>He switches the torch off and stands in it for a moment, to see what his eyes will do.</Text></Paragraph>
     <Paragraph Type="Action"><Text>Nothing out there changes. Nothing out there has changed for nine days.</Text></Paragraph>
     <Paragraph Type="Action"><Text>He turns the torch back on and walks back toward the hut, faster than he came.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIELD STATION - LATER</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="10"/><Text>INT. FIELD STATION - LATER</Text></Paragraph>
     <Paragraph Type="Action"><Text>Mara is asleep on the cot in her boots. Teo is not asleep, and not pretending to be.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The radio crackles. Delacroix comes in with the cold still on him and goes straight to the handset.</Text></Paragraph>
     <Paragraph Type="Character"><Text>IVERSEN (V.O.)</Text></Paragraph>
@@ -205,7 +205,7 @@
     <Paragraph Type="Dialogue"><Text>Was that him? Was that really him?</Text></Paragraph>
     <Paragraph Type="Character"><Text>DELACROIX</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Go to sleep, Teo.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. FIELD STATION - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="11"/><Text>EXT. FIELD STATION - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>The wind has found a new direction and does not like that one either.</Text></Paragraph>
     <Paragraph Type="Action"><Text>TEO wheels the quad bike out of the lean-to. Headlamp on. A jerrycan strapped across the back, and a second map, the survey copy, rolled under his arm.</Text></Paragraph>
     <Paragraph Type="Action"><Text>MARA comes out after him, pulling on her coat.</Text></Paragraph>
@@ -243,7 +243,7 @@
     <Paragraph Type="Action"><Text>Once. A dry, small sound, like someone clearing their throat before bad news. Then it runs on, even and ordinary, as if nothing happened.</Text></Paragraph>
     <Paragraph Type="Action"><Text>Neither of them says anything. Delacroix looks at his watch and does not say the time.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. LOWER STATION - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="13"/><Text>EXT. LOWER STATION - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>A hut like theirs, lower and older, in a fold of the valley where the wind cannot quite reach and so sulks instead.</Text></Paragraph>
     <Paragraph Type="Action"><Text>A headlamp comes down the track and stops. TEO kills the engine. The silence is enormous.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The door of the hut is open. Not blown open. Propped, with a stone.</Text></Paragraph>
@@ -257,7 +257,7 @@
     <Paragraph Type="Action"><Text>Someone has been listening. Every night. And never once said a word.</Text></Paragraph>
     <Paragraph Type="Action"><Text>Teo picks up the handset. His thumb finds the key.</Text></Paragraph>
     <Paragraph Type="Action"><Text>He holds it down.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIELD STATION - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="14"/><Text>INT. FIELD STATION - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>The generator coughs once and dies. MARA works by the light of her phone, hands steady, and does not look up.</Text></Paragraph>
     <Paragraph Type="Character"><Text>MARA</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Give it a minute. It always comes back.</Text></Paragraph>
@@ -307,7 +307,7 @@
     <Paragraph Type="Dialogue"><Text>Get some sleep. I’ll take the radio.</Text></Paragraph>
     <Paragraph Type="Action"><Text>She doesn’t argue, which frightens him more than the dark did.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. FIELD STATION - DAWN</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="16"/><Text>INT. FIELD STATION - DAWN</Text></Paragraph>
     <Paragraph Type="Action"><Text>Grey light. The tarp is down. The map is gone from the wall.</Text></Paragraph>
     <Paragraph Type="Action"><Text>DELACROIX sits exactly where he sat, the handset still in his fist, asleep with his eyes open the way soldiers learn.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The radio speaks. One word, clipped, in a voice neither of them has heard.</Text></Paragraph>
