@@ -46,13 +46,42 @@ fn verb_of(name: &str) -> Option<&'static str> {
 /// The help lines changed on purpose since the TypeScript, as (the
 /// TypeScript's line, the line now), each with its reason. The parity
 /// table's help rows were moved with `cargo xtask parity --accept`.
-const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[(
-    "USAGE",
-    "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
-    "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
-    // There is no pdf.js in the Rust reader, so --debug has no warnings to
-    // let through (PARITY.md, Decisions: "No pdf.js warnings").
-)];
+const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
+    (
+        "USAGE",
+        "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
+        "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
+        // There is no pdf.js in the Rust reader, so --debug has no warnings to
+        // let through (PARITY.md, Decisions: "No pdf.js warnings").
+    ),
+    // The OSF, a third editable script (2026-10-20, PARITY.md Decisions:
+    // "OSF out"): export --for osf, in the verb list and the export help.
+    (
+        "USAGE",
+        "|mobi|fountain|fdx] [--json]",
+        "|mobi|fountain|fdx|osf] [--json]",
+    ),
+    (
+        "EXPORT_USAGE",
+        " --for fdx --fountain <f> [--out <path>] [--json]   (beta)\n",
+        " --for fdx --fountain <f> [--out <path>] [--json]   (beta)\n  method-reader export <file.epub> --for osf --fountain <f> [--out <path>] [--json]   (beta)\n",
+    ),
+    (
+        "EXPORT_USAGE",
+        "the exact page breaks, do not carry over.\n\nOptions:",
+        "the exact page breaks, do not carry over.\n\nosf (beta) is the same script in the Open Screenplay Format, an open\nformat that screenwriting apps can read. It is built and rebuilt the same\nway as fdx, and leaves the same things behind.\n\nOptions:",
+    ),
+    (
+        "EXPORT_USAGE",
+        "mobi, fountain or fdx (beta)\n  --fountain <file>      the script's .fountain: required by mobi, fountain\n                         and fdx\n",
+        "mobi, fountain, fdx (beta) or\n                         osf (beta)\n  --fountain <file>      the script's .fountain: required by mobi, fountain,\n                         fdx and osf\n",
+    ),
+    (
+        "EXPORT_USAGE",
+        "An FDX\n                         is written only there, not beside the book\n",
+        "An FDX\n                         or an OSF is written only there, not beside the\n                         book\n",
+    ),
+];
 
 /// The TypeScript's text with the product's name as it is now: Screepub
 /// became Method Reader in 0.13, and the command `screepub` became

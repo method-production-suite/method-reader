@@ -415,7 +415,7 @@ pub struct SaveType {
     pub beta: bool,
 }
 
-pub const SAVE_TYPES: [SaveType; 6] = [
+pub const SAVE_TYPES: [SaveType; 7] = [
     SaveType {
         kind: "epub",
         label: "EPUB",
@@ -452,6 +452,12 @@ pub const SAVE_TYPES: [SaveType; 6] = [
         who: "The script for most screenwriting apps, to edit.",
         beta: true,
     },
+    SaveType {
+        kind: "osf",
+        label: "OSF",
+        who: "The script in an open format, to edit.",
+        beta: true,
+    },
 ];
 pub const NEEDS_TOOLS: &str = "This computer cannot make one yet.";
 pub const SET_IT_UP: &str = "Set it up";
@@ -485,7 +491,7 @@ pub fn save_rows(script: Option<&Script>, kindle: Option<&KindleFile>) -> Vec<Sa
                 fix,
                 setup,
             };
-            if matches!(t.kind, "mobi" | "fountain" | "fdx") && !fountain {
+            if matches!(t.kind, "mobi" | "fountain" | "fdx" | "osf") && !fountain {
                 return row(false, Some(NO_FOUNTAIN), false);
             }
             if t.kind == "kfx" && kindle.is_some_and(|k| k.extension != "kfx") {
@@ -815,8 +821,8 @@ mod tests {
         use crate::model::convert::script_from;
         let no_fountain = script_from("/a.pdf", &json!({"epubPath": "/a.epub"}));
         let rows = save_rows(Some(&no_fountain), None);
-        assert_eq!(rows.len(), 6);
-        for kind in ["mobi", "fountain", "fdx"] {
+        assert_eq!(rows.len(), 7);
+        for kind in ["mobi", "fountain", "fdx", "osf"] {
             let r = rows.iter().find(|r| r.kind == kind).unwrap();
             assert_eq!(r.fix, Some(NO_FOUNTAIN));
         }
@@ -832,12 +838,13 @@ mod tests {
         assert!(!kfx.available && kfx.setup && kfx.fix == Some(NEEDS_TOOLS));
         assert_eq!(save_turn("kfx"), "kindle");
         assert_eq!(save_turn("fdx"), "copy");
+        assert_eq!(save_turn("osf"), "copy");
         let betas: Vec<_> = SAVE_TYPES
             .iter()
             .filter(|t| t.beta)
             .map(|t| t.kind)
             .collect();
-        assert_eq!(betas, vec!["azw3", "fdx"]);
+        assert_eq!(betas, vec!["azw3", "fdx", "osf"]);
     }
 
     #[test]

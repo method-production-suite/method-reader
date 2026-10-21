@@ -6,7 +6,9 @@ mod common;
 use std::time::{Duration, SystemTime};
 
 use common::Scratch;
-use sp_engine::export::formats::{ExportFormat, ToolchainState, file_extension, format_label};
+use sp_engine::export::formats::{
+    EXPORT_FORMATS, ExportFormat, ToolchainState, file_extension, format_label, is_beta_file,
+};
 use sp_engine::export::freshness::needs_regeneration;
 use sp_engine::export::kfx::KfxStatus;
 use sp_engine::export::kfx_setup::{KFX_LINKS, KfxFix, KfxSetup, KfxStep, kfx_possible, kfx_setup};
@@ -68,12 +70,26 @@ fn a_named_file_type_is_its_own_extension_and_label() {
         (ExportFormat::Azw3, "azw3", "AZW3 (beta)"),
         (ExportFormat::Mobi, "mobi", "MOBI"),
         (ExportFormat::Fountain, "fountain", "Fountain"),
+        (ExportFormat::Fdx, "fdx", "FDX"),
+        (ExportFormat::Osf, "osf", "OSF"),
     ];
     for (format, ext, name) in names {
         for state in [st(false, false), st(true, true)] {
             assert_eq!(file_extension(format, state), ext);
             assert!(format_label(format, state).starts_with(&format!("{name}:")));
         }
+    }
+}
+
+#[test]
+fn the_osf_is_the_last_value_for_takes_and_is_beta_like_the_fdx() {
+    assert_eq!(EXPORT_FORMATS.last(), Some(&ExportFormat::Osf));
+    assert_eq!(ExportFormat::parse("osf"), Some(ExportFormat::Osf));
+    for ext in ["azw3", "fdx", "osf"] {
+        assert!(is_beta_file(ext), "{ext}");
+    }
+    for ext in ["epub", "kfx", "mobi", "fountain"] {
+        assert!(!is_beta_file(ext), "{ext}");
     }
 }
 

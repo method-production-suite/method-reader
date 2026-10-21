@@ -16,10 +16,11 @@ pub enum ExportFormat {
     Mobi,
     Fountain,
     Fdx,
+    Osf,
 }
 
 /// Every value `export --for` takes, in the order its help lists them.
-pub const EXPORT_FORMATS: [ExportFormat; 7] = [
+pub const EXPORT_FORMATS: [ExportFormat; 8] = [
     ExportFormat::Epub,
     ExportFormat::Kindle,
     ExportFormat::Kfx,
@@ -27,6 +28,7 @@ pub const EXPORT_FORMATS: [ExportFormat; 7] = [
     ExportFormat::Mobi,
     ExportFormat::Fountain,
     ExportFormat::Fdx,
+    ExportFormat::Osf,
 ];
 
 impl ExportFormat {
@@ -39,6 +41,7 @@ impl ExportFormat {
             ExportFormat::Mobi => "mobi",
             ExportFormat::Fountain => "fountain",
             ExportFormat::Fdx => "fdx",
+            ExportFormat::Osf => "osf",
         }
     }
 
@@ -117,6 +120,9 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
         ExportFormat::Fdx => {
             "FDX: the script to keep editing, in Final Draft and most screenwriting apps".into()
         }
+        ExportFormat::Osf => {
+            "OSF: the script to keep editing, in an open format for screenwriting apps".into()
+        }
         ExportFormat::Kindle => {
             let ext = file_extension(format, state).to_uppercase();
             let hint = if state.kfx_ready {
@@ -130,7 +136,8 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
     }
 }
 
-/// `isBetaFile(extension)`: the AZW3 Method Reader writes itself, and the FDX.
+/// `isBetaFile(extension)`: the AZW3 Method Reader writes itself, the FDX,
+/// and the OSF.
 pub fn is_beta_file(extension: &str) -> bool {
-    extension == "azw3" || extension == "fdx"
+    matches!(extension, "azw3" | "fdx" | "osf")
 }

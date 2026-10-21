@@ -5456,6 +5456,7 @@ dependencies = [
  "sp-fdx",
  "sp-fountain",
  "sp-model",
+ "sp-osf",
  "sp-parser",
  "tempfile",
  "zip",
@@ -5487,6 +5488,7 @@ name = "sp-engine"
 version = "0.13.1"
 dependencies = [
  "regex",
+ "roxmltree 0.20.0",
  "rustix 1.1.5",
  "serde",
  "serde_json",
@@ -5499,6 +5501,7 @@ dependencies = [
  "sp-fsutil",
  "sp-mobi",
  "sp-model",
+ "sp-osf",
  "sp-parser",
  "sp-pdf",
  "tempfile",
@@ -5581,6 +5584,17 @@ dependencies = [
  "mtp-rs",
  "nusb",
  "serde_json",
+]
+
+[[package]]
+name = "sp-osf"
+version = "0.13.1"
+dependencies = [
+ "roxmltree 0.20.0",
+ "serde_json",
+ "sp-fdx",
+ "sp-fountain",
+ "sp-model",
 ]
 
 [[package]]

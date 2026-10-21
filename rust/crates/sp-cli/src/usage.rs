@@ -80,7 +80,7 @@ Commands:
                                             send an existing file to one
   method-reader settings <file.fountain> [--set <json>] [--json]
                                             read/write a script's own settings
-  method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx] [--json]
+  method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx|osf] [--json]
                                             the file you would put on a reader,
                                             or the script to keep editing
   method-reader app-settings [--set <json>] [--json]
@@ -156,6 +156,7 @@ pub const EXPORT_USAGE: &str = r#"method-reader export: the file you would put o
 Usage:
   method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain] [--fountain <f>] [--out <path>] [--json]
   method-reader export <file.epub> --for fdx --fountain <f> [--out <path>] [--json]   (beta)
+  method-reader export <file.epub> --for osf --fountain <f> [--out <path>] [--json]   (beta)
   method-reader export <file.epub> --for <type> --check [--json]
 
 export never sends: it produces (or reuses) the right file, and
@@ -173,15 +174,21 @@ from the .fountain, so --fountain is required, and it is rebuilt on every
 call. It is a reconstruction from the PDF: revision colors and marks, and
 the exact page breaks, do not carry over.
 
+osf (beta) is the same script in the Open Screenplay Format, an open
+format that screenwriting apps can read. It is built and rebuilt the same
+way as fdx, and leaves the same things behind.
+
 Options:
   --for <type>           which file you want (default epub): epub, kindle,
-                         kfx, azw3 (beta), mobi, fountain or fdx (beta)
-  --fountain <file>      the script's .fountain: required by mobi, fountain
-                         and fdx
+                         kfx, azw3 (beta), mobi, fountain, fdx (beta) or
+                         osf (beta)
+  --fountain <file>      the script's .fountain: required by mobi, fountain,
+                         fdx and osf
   --options-json <json>  this script's settings, so a rebuild keeps them
   --out <path>           also copy the result to this absolute path (its
                          extension must match the file produced). An FDX
-                         is written only there, not beside the book
+                         or an OSF is written only there, not beside the
+                         book
   --check                build nothing: say which file this computer makes,
                          whether the one beside the book is current, what
                          builds it (builtBy: calibre or screepub), and when

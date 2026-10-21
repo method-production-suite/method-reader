@@ -105,3 +105,50 @@ fn every_request_is_the_argv_app_js_built() {
     // Every builder app.js exported was asked at least once.
     assert_eq!(seen.len(), 19, "{seen:?}");
 }
+
+/// The .osf postdates app.js, so no frozen call asks for it. It is the
+/// .fdx's export with one word changed, so its argv must be the frozen
+/// .fdx argv with that word, and nothing else, changed.
+#[test]
+fn the_osf_export_is_the_fdx_exports_argv_with_osf_for_fdx() {
+    let frozen: Vec<Value> =
+        serde_json::from_str(include_str!("data/app-js-argv.json")).expect("JSON");
+    let fdx = frozen
+        .iter()
+        .find(|c| c["name"] == "export" && c["args"][1]["forFormat"] == "fdx")
+        .expect("app.js asked for an FDX export");
+    let mut args = fdx["args"].as_array().unwrap().clone();
+    args[1]["forFormat"] = json!("osf");
+    let want: Vec<String> = serde_json::from_value::<Vec<String>>(fdx["argv"].clone())
+        .unwrap()
+        .into_iter()
+        .map(|a| if a == "fdx" { "osf".to_owned() } else { a })
+        .collect();
+    assert_eq!(request("export", &args).argv(), want);
+    assert!(want.windows(2).any(|p| p == ["--for", "osf"]));
+
+    // And with --out, as the window's Save box sends it.
+    let saved = Request::Export {
+        epub: "/e.epub".into(),
+        for_format: "osf".into(),
+        fountain: Some("/f".into()),
+        options: Some("{}".into()),
+        out: Some("/o.osf".into()),
+    };
+    assert_eq!(
+        saved.argv(),
+        [
+            "export",
+            "/e.epub",
+            "--json",
+            "--for",
+            "osf",
+            "--fountain",
+            "/f",
+            "--options-json",
+            "{}",
+            "--out",
+            "/o.osf"
+        ]
+    );
+}

@@ -1,6 +1,6 @@
 //! Send to e-reader | Get an editable script: what the send panel leads
 //! with (`Intent::Read` and `Intent::Edit` inside). New behavior in the
-//! Rust window, not parity: the script-for-editing files (FDX, Fountain)
+//! Rust window, not parity: the script-for-editing files (FDX, OSF, Fountain)
 //! were only reachable under Other ways > Save a file, after a reader was
 //! chosen. The choice is remembered app-wide (`panelIntent` in app
 //! settings), like the reader device.
@@ -53,7 +53,7 @@ pub const EDIT_IT: &str = "Get an editable script";
 pub const CHOICE_LABEL: &str = "What to do with the book";
 pub const EDIT_LINE: &str = "Get the script back to edit, rebuilt from the PDF’s pages.";
 
-/// One of the editable script's two cards: the file type it saves, its name and the
+/// One of the editable script's three cards: the file type it saves, its name and the
 /// line under it, and whether it wears the Beta badge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct EditCard {
@@ -63,11 +63,17 @@ pub struct EditCard {
     pub beta: bool,
 }
 
-pub const EDIT_CARDS: [EditCard; 2] = [
+pub const EDIT_CARDS: [EditCard; 3] = [
     EditCard {
         kind: "fdx",
         name: ".fdx",
         sub: "Opens in most screenwriting apps",
+        beta: true,
+    },
+    EditCard {
+        kind: "osf",
+        name: ".osf",
+        sub: "Open format, for screenwriting apps that read it",
         beta: true,
     },
     EditCard {
@@ -139,6 +145,6 @@ mod tests {
 
     #[test]
     fn the_cards_are_the_editing_types() {
-        assert_eq!(EDIT_CARDS.map(|c| c.kind), ["fdx", "fountain"]);
+        assert_eq!(EDIT_CARDS.map(|c| c.kind), ["fdx", "osf", "fountain"]);
     }
 }

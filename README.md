@@ -5,7 +5,7 @@
 ![macOS, Windows, Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-black)
 
 **Turn a screenplay PDF into an e-book for your Kindle or other e-reader,
-or into a script you can edit again (Fountain or .fdx).**
+or into a script you can edit again (Fountain, .fdx or .osf).**
 
 Method Reader is the new name for Screepub, and it is part of the
 [Method Production Suite](https://github.com/method-production-suite). Same
@@ -31,7 +31,8 @@ dialogue collapses into paragraphs and character names drift away from their
 lines. Method Reader reads how the scenes, cues and dialogue actually sit on the
 page and rebuilds a real e-book from that structure, so it reflows at any text
 size and still holds its shape. From the same structure it writes the script
-back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
+back out as a file you can edit: Fountain, or .fdx and .osf for screenwriting
+apps.
 
 <p align="center">
   <picture>
@@ -62,8 +63,9 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
 - **Get the script back to edit.** The same PDF also comes out as a script
-  you can keep writing in: Fountain, or .fdx (beta), which most
-  screenwriting apps open. It is rebuilt from the page, so revision colors
+  you can keep writing in: Fountain; .fdx (beta), which most
+  screenwriting apps open; or .osf (beta), an open script format some of
+  them read. It is rebuilt from the page, so revision colors
   and the exact page breaks stay behind.
 - **Pictures from the script (beta).** Storyboard panels, photos and a
   designed title card come across into the e-book where they sat, and a
@@ -91,7 +93,8 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
   offline; [your script stays on your machine](#your-script-stays-on-your-machine).
 - **Plain files you can open anywhere, in 20 years:** an EPUB 3 book
   ([the standard](https://www.w3.org/TR/epub-33/)), and the script as
-  [Fountain](https://fountain.io/syntax) text or as .fdx for screenwriting apps.
+  [Fountain](https://fountain.io/syntax) text, or as .fdx or .osf for
+  screenwriting apps.
   Nothing writes your script for you: every word in the book is the PDF's own.
 
 <p align="center">
