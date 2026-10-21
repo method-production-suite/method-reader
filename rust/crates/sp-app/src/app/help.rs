@@ -1,6 +1,7 @@
 //! The Help menu's half in the window: what each item does
 //! ([`choose`]), the sheets it opens (About, Keyboard Shortcuts, Licenses
-//! and Notices, Check for Updates…), and on Windows and Linux the menu
+//! and Notices, Check for Updates…, and the problem report that a failed
+//! conversion's Report a bug opens too), and on Windows and Linux the menu
 //! itself, at the foot of the page beside the version stamp ([`menu`]).
 //! On a Mac the menu is the menu bar's (menu.rs), which hands its choices
 //! here. What the menu holds is model/help.rs.
@@ -9,9 +10,10 @@ use egui::accesskit;
 use egui::{Id, Sense, Ui, Vec2, WidgetInfo, WidgetType};
 
 use super::widgets::{self, Look};
-use super::{App, frame};
+use super::{App, Purpose, frame};
+use crate::engine::{Reply, Request};
 use crate::model::convert::Platform;
-use crate::model::feedback::{new_issue_url, os_label};
+use crate::model::feedback::{REPORT_ADDRESS, ReportDraft, Shape, os_label};
 use crate::model::help::{
     ABOUT_LINE, COPYRIGHT, HelpItem, LICENCE_LINE, NOTICES, RELEASES, SUITE, USER_GUIDE, WEBSITE,
     WEBSITE_WORDS, groups, shortcuts,
@@ -29,6 +31,8 @@ pub enum Sheet {
     Shortcuts,
     Licenses,
     Updates,
+    /// Report a problem: by email, or as a GitHub issue.
+    Report,
 }
 
 impl Sheet {
@@ -39,6 +43,7 @@ impl Sheet {
             Sheet::Shortcuts => HelpItem::Shortcuts.label(),
             Sheet::Licenses => HelpItem::Licenses.label(),
             Sheet::Updates => "Updates".into(),
+            Sheet::Report => HelpItem::ReportBug.label(),
         }
     }
 }
@@ -49,6 +54,8 @@ pub struct State {
     pub sheet: Option<Sheet>,
     /// Which licence or notice the Licenses sheet shows.
     pub notice: usize,
+    /// The report sheet's draft, while it is open.
+    pub report: ReportDraft,
 }
 
 /// Open `sheet`, closing the release notes: one sheet at a time.
@@ -87,20 +94,44 @@ pub fn choose(app: &mut App, item: HelpItem) {
                 app.update.set_automatic(&mut app.host, on);
             }
         }
-        HelpItem::ReportBug => {
-            let url = new_issue_url(
-                RELEASE.version,
-                &os_label(app.host.platform.word()),
-                None,
-                None,
-            );
-            app.host.open(&url);
-        }
+        HelpItem::ReportBug => open_report(app, None),
         HelpItem::Licenses => open(app, Sheet::Licenses),
         HelpItem::Suite => {
             app.host.open(SUITE);
         }
     }
+}
+
+/// Open the report sheet: from Help (`None`), or from a failed
+/// conversion with its code and message. For a converted script the
+/// engine is asked for its shape, which the sheet offers as a box, off.
+pub fn open_report(app: &mut App, refusal: Option<(&str, &str)>) {
+    use super::convert::View;
+    let fountain = app
+        .script
+        .as_ref()
+        .and_then(|s| s.fountain_path.clone())
+        .filter(|_| refusal.is_none() && app.convert.view != View::Failed);
+    app.help.report = ReportDraft::new(refusal, app.convert.known_home.as_deref());
+    open(app, Sheet::Report);
+    if let Some(fountain) = fountain {
+        app.help.report.asked = Some(fountain.clone());
+        app.call(
+            Request::Shape {
+                fountain: fountain.clone(),
+            },
+            Purpose::Shape { fountain },
+        );
+    }
+}
+
+/// The engine counted the script: the sheet can offer the box, if it is
+/// still the sheet that asked.
+pub fn shape_answered(app: &mut App, fountain: &str, reply: &Reply) {
+    if app.help.report.asked.as_deref() != Some(fountain) {
+        return;
+    }
+    app.help.report.shape = reply.answer.as_ref().ok().and_then(Shape::from_answer);
 }
 
 // ------------------------------------------------------------------ menu
@@ -190,7 +221,8 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         .backdrop_color(frame::sheet_backdrop(&t))
         .show(&ctx, |ui| {
             ui.multiply_opacity(k);
-            let width = (44.0 * 16.0f32).min(ctx.content_rect().width() * 0.88);
+            let rem = if sheet == Sheet::Report { 34.0 } else { 44.0 };
+            let width = (rem * 16.0f32).min(ctx.content_rect().width() * 0.88);
             ui.set_width(width);
             let title = sheet.title();
             ui.ctx().accesskit_node_builder(ui.id(), |n| {
@@ -202,18 +234,32 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                 Sheet::Shortcuts => HelpItem::Shortcuts.label(),
                 Sheet::Licenses => HelpItem::Licenses.label(),
                 Sheet::Updates => "Updates".to_string(),
+                Sheet::Report => HelpItem::ReportBug.label(),
             };
             let close = frame::sheet_head(ui, &t, &head);
-            egui::ScrollArea::vertical()
+            let done = egui::ScrollArea::vertical()
                 .id_salt("help-sheet-scroll")
                 .max_height(ctx.content_rect().height() * 0.82 - 80.0)
                 .show(ui, |ui| match sheet {
-                    Sheet::About => about(app, ui, &t),
-                    Sheet::Shortcuts => keys(app, ui, &t),
-                    Sheet::Licenses => licences(app, ui, &t),
-                    Sheet::Updates => updates(app, ui, &t),
+                    Sheet::About => {
+                        about(app, ui, &t);
+                        false
+                    }
+                    Sheet::Shortcuts => {
+                        keys(app, ui, &t);
+                        false
+                    }
+                    Sheet::Licenses => {
+                        licences(app, ui, &t);
+                        false
+                    }
+                    Sheet::Updates => {
+                        updates(app, ui, &t);
+                        false
+                    }
+                    Sheet::Report => report(app, ui, &t),
                 });
-            close
+            close || done.inner
         });
     if modal.inner || modal.should_close() {
         // A button inside may have opened another sheet; only this one goes.
@@ -222,6 +268,138 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         }
         app.restore_focus = true;
     }
+}
+
+/// The report sheet's words (also read by the tests).
+pub mod words {
+    pub const INTRO: &str = "Say what went wrong. It goes to the people who make Method Reader. No words from your script are sent.";
+    pub const WHAT_HAPPENED: &str = "What happened?";
+    pub const ADD_SHAPE: &str = "Add counts of the script's shape (no words from it)";
+    pub const SHOW_SENT: &str = "Show what's sent";
+    pub const HIDE_SENT: &str = "Hide what's sent";
+    pub const SENT: &str = "What's sent";
+    pub const SEND: &str = "Send by email";
+    pub const COPY: &str = "Copy the address";
+    pub const GITHUB: &str = "or open an issue on GitHub";
+    pub const CANCEL: &str = "Cancel";
+    pub const NO_MAIL: &str = "No mail app opened. Copy the address and write from any email account.";
+}
+
+/// The sheet: the text box, the counts box for a converted script, what is
+/// sent, and the ways to send it. What it sends is the model's
+/// (model/feedback.rs); this draws it. True when Cancel was chosen or a
+/// report went.
+fn report(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
+    let mut done = false;
+    widgets::prose(ui, t, words::INTRO);
+    ui.add_space(layout::SPACE[3]);
+    let label = widgets::text(
+        ui,
+        words::WHAT_HAPPENED,
+        theme::chrome_strong(size::LABEL),
+        t.ink,
+    );
+    let typed = ui.add(
+        egui::TextEdit::multiline(&mut app.help.report.typed)
+            .id_salt("report-typed")
+            .char_limit(crate::model::feedback::MAX_TYPED)
+            .font(theme::chrome(size::UI))
+            .desired_width(f32::INFINITY)
+            .desired_rows(5),
+    );
+    ui.ctx().accesskit_node_builder(typed.id, |n| {
+        n.set_label(words::WHAT_HAPPENED);
+        n.push_labelled_by(label.id.accesskit_id());
+    });
+    if app.help.report.shape.is_some() {
+        ui.add_space(layout::SPACE[2]);
+        ui.checkbox(&mut app.help.report.add_shape, words::ADD_SHAPE);
+    }
+    let sent = app
+        .help
+        .report
+        .report(RELEASE.version, &os_label(app.host.platform.word()));
+    ui.add_space(layout::SPACE[2]);
+    let open = app.help.report.show_sent;
+    let toggle = widgets::button(
+        ui,
+        t,
+        Look::Quiet,
+        if open { words::HIDE_SENT } else { words::SHOW_SENT },
+        true,
+    );
+    ui.ctx()
+        .accesskit_node_builder(toggle.id, |n| n.set_expanded(open));
+    if toggle.clicked() {
+        app.help.report.show_sent = !open;
+    }
+    if app.help.report.show_sent {
+        let mut body = format!(
+            "To: {REPORT_ADDRESS}\nSubject: {}\n\n{}",
+            sent.subject(),
+            sent.body()
+        );
+        // Its own scroll, so the buttons below stay in view.
+        egui::ScrollArea::vertical()
+            .id_salt("report-sent-scroll")
+            .max_height(10.0 * size::LABEL * 1.4)
+            .show(ui, |ui| {
+                let r = ui.add(
+                    egui::TextEdit::multiline(&mut body)
+                        .id_salt("report-sent")
+                        .font(theme::chrome(size::LABEL))
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(6),
+                );
+                ui.ctx().accesskit_node_builder(r.id, |n| {
+                    n.set_label(words::SENT);
+                    n.set_read_only();
+                });
+            });
+    }
+    ui.add_space(layout::SPACE[3]);
+    ui.horizontal_wrapped(|ui| {
+        if widgets::button(ui, t, Look::Brass, words::SEND, sent.can_send()).clicked() {
+            if app.host.open(&sent.mailto_url()) {
+                done = true;
+            } else {
+                app.help.report.mail_failed = true;
+            }
+        }
+        if widgets::button(ui, t, Look::Outline, words::COPY, true).clicked() {
+            ui.ctx().copy_text(REPORT_ADDRESS.to_string());
+            app.help.report.copied = true;
+        }
+        if widgets::button(ui, t, Look::Quiet, words::CANCEL, true).clicked() {
+            done = true;
+        }
+    });
+    let said = if app.help.report.copied {
+        format!("Copied {REPORT_ADDRESS}.")
+    } else if app.help.report.mail_failed {
+        words::NO_MAIL.to_string()
+    } else {
+        format!("The address is {REPORT_ADDRESS}.")
+    };
+    widgets::live(
+        ui,
+        Id::new("report-said"),
+        &said,
+        theme::chrome(size::LABEL),
+        if app.help.report.mail_failed && !app.help.report.copied {
+            t.alarm
+        } else {
+            t.ink_muted
+        },
+    );
+    ui.add_space(layout::SPACE[2]);
+    let link = ui.link(words::GITHUB);
+    ui.ctx().accesskit_node_builder(link.id, |n| n.set_role(accesskit::Role::Link));
+    if link.clicked() {
+        app.host.open(&sent.issue_url());
+        done = true;
+    }
+    done
 }
 
 fn about(app: &mut App, ui: &mut Ui, t: &Tokens) {

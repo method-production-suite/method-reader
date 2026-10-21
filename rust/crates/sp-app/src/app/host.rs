@@ -104,12 +104,17 @@ pub fn run_outcome(outcome: Outcome) -> RunOutcome {
 }
 
 /// The pages the window may open, and nothing else (capabilities/
-/// default.json's opener scope, and the Help menu's two websites).
+/// default.json's opener scope, the Help menu's two websites, and a
+/// problem report's message to the suite's address).
 pub fn allowed_url(url: &str) -> bool {
     use crate::model::help::{SUITE, WEBSITE};
     url.starts_with("https://github.com/method-production-suite/method-reader/")
         || url.starts_with("https://github.com/method-production-suite/method-reader#")
         || url == WEBSITE
+        || url.starts_with(&format!(
+            "mailto:{}?",
+            crate::model::feedback::REPORT_ADDRESS
+        ))
         || url == SUITE
         || matches!(
             url,
@@ -661,10 +666,16 @@ impl Dialogs for FakeDialogs {
 #[derive(Clone, Default)]
 pub struct FakeOpener {
     pub opened: Arc<Mutex<Vec<String>>>,
+    /// Set, every open fails, as on a computer with nothing to open a
+    /// `mailto:` link with; nothing is recorded as opened.
+    pub refuses: Arc<AtomicBool>,
 }
 
 impl Opener for FakeOpener {
     fn open_url(&self, url: &str) -> bool {
+        if self.refuses.load(Ordering::Relaxed) {
+            return false;
+        }
         self.opened.lock().expect("fake").push(url.into());
         true
     }

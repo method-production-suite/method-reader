@@ -17,7 +17,7 @@ pub const UPDATED_MESSAGE: &str = "Method Reader has been updated. Restart it to
 
 /// Which calls count toward busy. The read-only ones do not: the devices
 /// poll, the KFX probe, the route list, reading app settings, the Kindle
-/// file check and reveal.
+/// file check, reveal and a script's shape.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Call {
     Version,
@@ -37,6 +37,7 @@ pub enum Call {
     Routes,
     Route,
     EmailSetup,
+    Shape,
 }
 
 pub fn counts_toward_busy(call: Call) -> bool {
@@ -48,6 +49,7 @@ pub fn counts_toward_busy(call: Call) -> bool {
             | Call::AppSettingsRead
             | Call::KindleCheck
             | Call::Reveal
+            | Call::Shape
     )
 }
 

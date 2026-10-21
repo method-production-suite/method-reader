@@ -304,11 +304,15 @@ fn each_page_the_help_menu_opens_is_one_the_window_may_open() {
         help::choose(h.state_mut(), item);
     }
     let opened = w.fakes.opener.opened.lock().unwrap().clone();
-    assert_eq!(opened.len(), 3, "{opened:?}");
+    assert_eq!(opened.len(), 2, "{opened:?}");
     assert_eq!(opened[0], USER_GUIDE);
-    assert!(opened[1].starts_with(sp_app::model::feedback::NEW_ISSUE_BASE));
-    assert!(opened[1].contains(env!("CARGO_PKG_VERSION")));
-    assert_eq!(opened[2], SUITE);
+    assert_eq!(opened[1], SUITE);
+    // Report a Bug opens a sheet; its two ways out are both allowed.
+    assert_eq!(h.state().help.sheet, Some(help::Sheet::Report));
+    let report = h.state().help.report.report(env!("CARGO_PKG_VERSION"), "macOS");
+    assert!(sp_app::app::host::allowed_url(&report.mailto_url()));
+    assert!(report.issue_url().starts_with(sp_app::model::feedback::NEW_ISSUE_BASE));
+    assert!(sp_app::app::host::allowed_url(&report.issue_url()));
 }
 
 #[test]

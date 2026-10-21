@@ -86,6 +86,11 @@ pub enum Request {
         options: Option<String>,
     },
     EmailSetup,
+    /// A script's shape as counts, for a problem report (`shape`, new:
+    /// not one of app.js's).
+    Shape {
+        fountain: String,
+    },
 }
 
 impl Request {
@@ -110,6 +115,7 @@ impl Request {
             Self::Routes { .. } => Call::Routes,
             Self::Route { .. } => Call::Route,
             Self::EmailSetup => Call::EmailSetup,
+            Self::Shape { .. } => Call::Shape,
         }
     }
 
@@ -242,6 +248,7 @@ impl Request {
                 options.as_deref(),
             ]),
             Self::EmailSetup => v(&[Some("route"), Some("kindle-email-setup"), Some("--json")]),
+            Self::Shape { fountain } => v(&[Some("shape"), Some(fountain), Some("--json")]),
         }
     }
 
@@ -267,6 +274,7 @@ impl Request {
             Self::Routes { .. } => "routes",
             Self::Route { .. } => "route",
             Self::EmailSetup => "email-setup",
+            Self::Shape { .. } => "shape",
         }
     }
 }
@@ -406,6 +414,11 @@ pub fn default_answer(request: &Request) -> Value {
         Request::EmailSetup => {
             json!({"ok": true, "note": "Opened Amazon’s Personal Document Settings."})
         }
+        // What the engine answers for the demo script's .fountain.
+        Request::Shape { .. } => json!({
+            "ok": true, "pages": 18, "sceneHeadings": 11, "cues": 103,
+            "dialogueBlocks": 103, "dualExchanges": 0, "pictures": 0, "transitions": 3,
+        }),
     }
 }
 

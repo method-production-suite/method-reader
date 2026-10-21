@@ -16,6 +16,7 @@ use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
 use sp_engine::commands::settings::{SettingsOptions, settings_command};
+use sp_engine::commands::shape::shape_command;
 use sp_engine::env::{Env, host_platform};
 use sp_engine::errors::EngineError;
 use sp_engine::export::kfx_setup::kfx_possible;
@@ -31,7 +32,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 13] = [
+pub const VERBS: [&str; 14] = [
     "devices",
     "send",
     "settings",
@@ -45,6 +46,7 @@ pub const VERBS: [&str; 13] = [
     "routes",
     "route",
     "eject",
+    "shape",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -147,6 +149,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "app-settings" => APP_SETTINGS_USAGE,
         "reveal" => REVEAL_USAGE,
         "eject" => EJECT_USAGE,
+        "shape" => SHAPE_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -485,6 +488,26 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&answer));
             } else {
                 io.say(&answer.note);
+            }
+            Ok(())
+        }
+        "shape" => {
+            if pos.len() != 1 {
+                return Err(Stop::usage("expected exactly one .fountain (see --help)"));
+            }
+            let shape = shape_command(&pos[0]).map_err(engine)?;
+            if io.json {
+                io.ok(value(&shape));
+            } else {
+                if let Some(pages) = shape.pages {
+                    io.say(&format!("pages: {pages}"));
+                }
+                io.say(&format!("scene headings: {}", shape.scene_headings));
+                io.say(&format!("cues: {}", shape.cues));
+                io.say(&format!("dialogue blocks: {}", shape.dialogue_blocks));
+                io.say(&format!("dual exchanges: {}", shape.dual_exchanges));
+                io.say(&format!("pictures: {}", shape.pictures));
+                io.say(&format!("transitions: {}", shape.transitions));
             }
             Ok(())
         }

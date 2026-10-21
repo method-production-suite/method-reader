@@ -62,6 +62,7 @@ const VERB_SHAPE: &[(&str, &[&str], &[&str])] = &[
         &["save-kindle", "/nowhere/x.epub"],
     ),
     ("eject", &[], &["/nowhere/Kindle"]),
+    ("shape", &[], &["/nowhere/x.fountain"]),
 ];
 
 /// sp-cli's verbs.rs, whose VERBS and VERB_SPECS lists are read below.

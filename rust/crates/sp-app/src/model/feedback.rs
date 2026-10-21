@@ -1,4 +1,5 @@
-//! A pre-filled bug report (was `desktop/ui/feedback.js`).
+//! A pre-filled bug report (was `desktop/ui/feedback.js`), as a GitHub
+//! issue or, for people without an account, an email ([`ProblemReport`]).
 
 pub const NEW_ISSUE_BASE: &str =
     "https://github.com/method-production-suite/method-reader/issues/new";
@@ -192,6 +193,258 @@ pub fn os_label(platform: &str) -> String {
     }
 }
 
+// ---------------------------------------------------------- by email
+
+/// Where a report by email goes.
+pub const REPORT_ADDRESS: &str = "hello@methodproduction.com";
+
+/// Every report's subject starts with this, the product's name and a
+/// space. A FILTER DEPENDS ON IT: the suite's inbox sorts Method Reader's
+/// reports by this exact prefix (trailing space included), so changing it
+/// sends every report somewhere nobody reads. The whole subject is
+/// "Method Reader <version>: <code>", or "...: a problem" with no code.
+pub const SUBJECT_PREFIX: &str = "Method Reader ";
+
+/// What a subject says when there is no refusal code.
+pub const NO_CODE: &str = "a problem";
+
+/// The most a person may type: as much as the issue body holds.
+pub const MAX_TYPED: usize = MAX_BODY;
+
+/// The longest `mailto:` URL the window hands the mail app, in bytes.
+/// Mail apps differ on how much they take; this much they all do.
+pub const MAX_MAILTO: usize = 2000;
+
+/// A script's shape as counts, from the engine's `shape` verb: integers
+/// only, so no word of the script can ride in it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Shape {
+    /// Absent when the script carries no page markers.
+    pub pages: Option<u64>,
+    pub scene_headings: u64,
+    pub cues: u64,
+    pub dialogue_blocks: u64,
+    pub dual_exchanges: u64,
+    pub pictures: u64,
+    pub transitions: u64,
+}
+
+impl Shape {
+    /// The `shape --json` answer, if it is one. Anything but integers
+    /// where the counts belong is no shape at all.
+    pub fn from_answer(answer: &serde_json::Value) -> Option<Shape> {
+        if answer.get("ok").and_then(|v| v.as_bool()) != Some(true) {
+            return None;
+        }
+        let n = |key: &str| answer.get(key).and_then(|v| v.as_u64());
+        let pages = match answer.get("pages") {
+            None => None,
+            Some(v) => Some(v.as_u64()?),
+        };
+        Some(Shape {
+            pages,
+            scene_headings: n("sceneHeadings")?,
+            cues: n("cues")?,
+            dialogue_blocks: n("dialogueBlocks")?,
+            dual_exchanges: n("dualExchanges")?,
+            pictures: n("pictures")?,
+            transitions: n("transitions")?,
+        })
+    }
+
+    /// One line a count, as the report carries them.
+    pub fn lines(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        if let Some(pages) = self.pages {
+            out.push(format!("pages: {pages}"));
+        }
+        out.push(format!("scene headings: {}", self.scene_headings));
+        out.push(format!("cues: {}", self.cues));
+        out.push(format!("dialogue blocks: {}", self.dialogue_blocks));
+        out.push(format!("dual-dialogue exchanges: {}", self.dual_exchanges));
+        out.push(format!("pictures: {}", self.pictures));
+        out.push(format!("transitions: {}", self.transitions));
+        out
+    }
+}
+
+/// A problem report: what the person wrote, and only what the window
+/// already knows (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ProblemReport {
+    /// What the person wrote. Required; at most [`MAX_TYPED`] characters.
+    pub typed: String,
+    pub app_version: String,
+    /// [`os_label`]'s answer.
+    pub os: String,
+    /// A failed conversion's code and message: the app's own words, with
+    /// paths already redacted.
+    pub refusal: Option<(String, String)>,
+    /// The script's shape, when the person ticked the box.
+    pub shape: Option<Shape>,
+}
+
+/// RFC 6068: UTF-8, every byte but the unreserved ones percent-encoded,
+/// and every line break as CRLF (`%0D%0A`), whatever the text used.
+pub fn mailto_encode(value: &str) -> String {
+    let text = value.replace("\r\n", "\n").replace('\r', "\n");
+    let mut out = String::new();
+    for b in text.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                out.push(b as char)
+            }
+            b'\n' => out.push_str("%0D%0A"),
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
+impl ProblemReport {
+    pub fn new(typed: &str, app_version: &str, os: &str) -> Self {
+        ProblemReport {
+            typed: typed.chars().take(MAX_TYPED).collect(),
+            app_version: app_version.into(),
+            os: os.into(),
+            refusal: None,
+            shape: None,
+        }
+    }
+
+    /// Whether there is anything to send: the person has to say something.
+    pub fn can_send(&self) -> bool {
+        !self.typed.trim().is_empty()
+    }
+
+    /// "Method Reader <version>: <code>", or "...: a problem".
+    pub fn subject(&self) -> String {
+        let code = self
+            .refusal
+            .as_ref()
+            .map(|(code, _)| code.as_str())
+            .filter(|c| !c.trim().is_empty())
+            .unwrap_or(NO_CODE);
+        format!("{SUBJECT_PREFIX}{}: {code}", self.app_version)
+    }
+
+    /// Everything after what the person wrote: never cut.
+    fn footer(&self) -> String {
+        let mut lines = vec![
+            "---".to_string(),
+            format!("{} {} · {}", super::names::PRODUCT, self.app_version, self.os),
+        ];
+        if let Some((code, message)) = &self.refusal {
+            lines.push(format!("What the app said: {code}: {message}"));
+        }
+        if let Some(shape) = &self.shape {
+            lines.push("Counts of the script's shape (no words from it):".into());
+            lines.extend(shape.lines());
+        }
+        lines.join("\n")
+    }
+
+    fn body_with(&self, typed: &str) -> String {
+        format!("{}\n\n{}\n", typed.trim_end(), self.footer())
+    }
+
+    fn url_with(&self, typed: &str) -> String {
+        format!(
+            "mailto:{REPORT_ADDRESS}?subject={}&body={}",
+            mailto_encode(&self.subject()),
+            mailto_encode(&self.body_with(typed))
+        )
+    }
+
+    /// What the person wrote, cut (with an ellipsis) until the whole URL
+    /// fits in [`MAX_MAILTO`] bytes. The versions and counts never are.
+    fn fitted_typed(&self) -> String {
+        let typed = self.typed.trim_end();
+        if self.url_with(typed).len() <= MAX_MAILTO {
+            return typed.to_string();
+        }
+        let chars: Vec<char> = typed.chars().collect();
+        let cut = |n: usize| format!("{}…", chars[..n].iter().collect::<String>());
+        // The longest prefix that fits: the URL grows with every character.
+        let (mut lo, mut hi) = (0usize, chars.len());
+        while lo < hi {
+            let mid = (lo + hi).div_ceil(2);
+            if self.url_with(&cut(mid)).len() <= MAX_MAILTO {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        cut(lo)
+    }
+
+    /// The body exactly as the mail will carry it, cut and all: what
+    /// "Show what's sent" shows.
+    pub fn body(&self) -> String {
+        self.body_with(&self.fitted_typed())
+    }
+
+    /// The pre-filled message to [`REPORT_ADDRESS`].
+    pub fn mailto_url(&self) -> String {
+        self.url_with(&self.fitted_typed())
+    }
+
+    /// The same report as a pre-filled GitHub issue, for people with an
+    /// account: what the person wrote, then the app's words and counts.
+    pub fn issue_url(&self) -> String {
+        let mut parts: Vec<String> = Vec::new();
+        if !self.typed.trim().is_empty() {
+            parts.push(self.typed.trim_end().to_string());
+        }
+        if let Some((code, message)) = &self.refusal {
+            parts.push(format!("{code}: {message}"));
+        }
+        if let Some(shape) = &self.shape {
+            parts.push(shape.lines().join("\n"));
+        }
+        let context = parts.join("\n\n");
+        new_issue_url(&self.app_version, &self.os, Some(&context), None)
+    }
+}
+
+/// The report sheet as the person has it so far.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ReportDraft {
+    pub typed: String,
+    /// A failed conversion's code and redacted message.
+    pub refusal: Option<(String, String)>,
+    /// The `.fountain` whose shape was asked for, if any.
+    pub asked: Option<String>,
+    /// Its counts, once the engine has answered.
+    pub shape: Option<Shape>,
+    /// The box: off until the person ticks it.
+    pub add_shape: bool,
+    pub show_sent: bool,
+    /// The mail app did not open.
+    pub mail_failed: bool,
+    pub copied: bool,
+}
+
+impl ReportDraft {
+    /// A draft for a failed conversion (its code and message, redacted
+    /// with `home`), or for Help's menu (`None`).
+    pub fn new(refusal: Option<(&str, &str)>, home: Option<&str>) -> Self {
+        ReportDraft {
+            refusal: refusal.map(|(code, message)| (code.to_string(), redact(message, home))),
+            ..Default::default()
+        }
+    }
+
+    /// The report this draft makes: the counts only when the box is ticked.
+    pub fn report(&self, app_version: &str, os: &str) -> ProblemReport {
+        ProblemReport {
+            refusal: self.refusal.clone(),
+            shape: self.shape.filter(|_| self.add_shape),
+            ..ProblemReport::new(&self.typed, app_version, os)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,5 +508,143 @@ mod tests {
     fn an_unknown_platform_says_so() {
         assert_eq!(os_label("  "), "unknown platform");
         assert_eq!(os_label("macOS"), "macOS");
+    }
+    // ------------------------------------------------------ by email
+
+    fn report(typed: &str) -> ProblemReport {
+        ProblemReport::new(typed, "0.14.0", "macOS")
+    }
+
+    fn field_station() -> Shape {
+        Shape {
+            pages: Some(18),
+            scene_headings: 11,
+            cues: 103,
+            dialogue_blocks: 103,
+            dual_exchanges: 0,
+            pictures: 0,
+            transitions: 3,
+        }
+    }
+
+    #[test]
+    fn the_subject_is_the_contract_the_inbox_filters_on() {
+        assert_eq!(SUBJECT_PREFIX, format!("{} ", crate::model::names::PRODUCT));
+        let plain = report("x");
+        assert_eq!(plain.subject(), "Method Reader 0.14.0: a problem");
+        let refused = ProblemReport {
+            refusal: Some(("scanned".into(), "This PDF is a scan.".into())),
+            ..report("x")
+        };
+        assert_eq!(refused.subject(), "Method Reader 0.14.0: scanned");
+        for r in [plain, refused] {
+            assert!(r.subject().starts_with("Method Reader "), "{}", r.subject());
+            assert!(r.subject().starts_with(SUBJECT_PREFIX));
+            let url = r.mailto_url();
+            assert!(url.contains("?subject=Method%20Reader%200.14.0%3A%20"), "{url}");
+        }
+    }
+
+    #[test]
+    fn the_mailto_encoding_is_rfc_6068() {
+        assert_eq!(mailto_encode("a b+c&d=e?"), "a%20b%2Bc%26d%3De%3F");
+        assert_eq!(mailto_encode("a-b_c.d~"), "a-b_c.d~");
+        assert_eq!(mailto_encode("one\ntwo\r\nthree\rfour"), "one%0D%0Atwo%0D%0Athree%0D%0Afour");
+        assert_eq!(mailto_encode("é·"), "%C3%A9%C2%B7");
+        let url = report("It stopped.").mailto_url();
+        assert!(url.starts_with("mailto:hello@methodproduction.com?subject="));
+        assert!(url.contains("&body=It%20stopped.%0D%0A%0D%0A---%0D%0AMethod%20Reader%200.14.0%20%C2%B7%20macOS%0D%0A"), "{url}");
+    }
+
+    #[test]
+    fn non_ascii_and_line_breaks_survive_as_utf_8() {
+        let r = report("Página dos\r\nline two ñ 字");
+        let url = r.mailto_url();
+        assert!(url.contains("P%C3%A1gina%20dos%0D%0Aline%20two%20%C3%B1%20%E5%AD%97"), "{url}");
+        assert!(!url.contains('\n') && !url.contains('\r') && !url.contains(' '));
+        assert!(url.is_ascii());
+    }
+
+    #[test]
+    fn a_long_report_is_cut_in_the_typed_text_never_the_versions() {
+        let r = ProblemReport {
+            shape: Some(field_station()),
+            refusal: Some(("unreadable".into(), "cannot read <path>.pdf".into())),
+            ..report(&"é".repeat(1500))
+        };
+        let url = r.mailto_url();
+        assert!(url.len() <= MAX_MAILTO, "{}", url.len());
+        assert!(url.len() > MAX_MAILTO - 12, "cut no more than it has to");
+        assert!(url.contains("%E2%80%A6%0D%0A%0D%0A---"), "an ellipsis where it was cut");
+        assert!(url.contains("Method%20Reader%200.14.0%20%C2%B7%20macOS"));
+        assert!(url.contains("unreadable%3A%20cannot%20read%20%3Cpath%3E.pdf"));
+        assert!(url.ends_with("transitions%3A%203%0D%0A"));
+        assert!(r.body().contains("…\n\n---\n"));
+        // A short report is not cut at all.
+        assert!(!report("short").mailto_url().contains("%E2%80%A6"));
+    }
+
+    #[test]
+    fn the_typed_text_is_held_to_two_thousand_characters() {
+        let r = report(&"x".repeat(5000));
+        assert_eq!(r.typed.chars().count(), MAX_TYPED);
+        assert!(!report("   \n ").can_send());
+        assert!(report("it broke").can_send());
+    }
+
+    #[test]
+    fn the_counts_ride_only_when_the_box_is_ticked() {
+        let mut draft = ReportDraft {
+            typed: "Cues went missing.".into(),
+            shape: Some(field_station()),
+            ..ReportDraft::default()
+        };
+        let off = draft.report("0.14.0", "macOS");
+        assert_eq!(off.shape, None);
+        assert!(!off.body().contains("cues:"));
+        draft.add_shape = true;
+        let on = draft.report("0.14.0", "macOS");
+        assert!(on.body().contains("Counts of the script's shape (no words from it):\npages: 18\nscene headings: 11\ncues: 103\n"));
+        assert!(on.issue_url().contains("cues%3A+103"));
+    }
+
+    #[test]
+    fn a_refusal_s_paths_are_gone_before_the_report_is_built() {
+        let draft = ReportDraft::new(
+            Some(("unreadable", "cannot read /Users/ann/Secret Title.pdf")),
+            Some("/Users/ann"),
+        );
+        let r = draft.report("0.14.0", "macOS");
+        assert!(!r.body().contains("Secret"));
+        assert!(r.body().contains("What the app said: unreadable: cannot read <path>.pdf"));
+        assert!(!r.issue_url().contains("Secret"));
+    }
+
+    #[test]
+    fn the_issue_link_is_today_s_when_nothing_was_typed() {
+        let r = ProblemReport {
+            refusal: Some(("scanned".into(), "no text".into())),
+            ..report("")
+        };
+        assert_eq!(
+            r.issue_url(),
+            new_issue_url("0.14.0", "macOS", Some("scanned: no text"), None)
+        );
+        assert_eq!(report("").issue_url(), new_issue_url("0.14.0", "macOS", None, None));
+        assert!(report("It froze.").issue_url().contains("It+froze."));
+    }
+
+    #[test]
+    fn a_shape_is_integers_or_nothing() {
+        let v = serde_json::json!({"ok": true, "pages": 18, "sceneHeadings": 11, "cues": 103,
+            "dialogueBlocks": 103, "dualExchanges": 0, "pictures": 0, "transitions": 3});
+        assert_eq!(Shape::from_answer(&v), Some(field_station()));
+        let mut no_pages = v.clone();
+        no_pages.as_object_mut().unwrap().remove("pages");
+        assert_eq!(Shape::from_answer(&no_pages).unwrap().pages, None);
+        let mut words = v.clone();
+        words["cues"] = serde_json::json!("DELACROIX");
+        assert_eq!(Shape::from_answer(&words), None);
+        assert_eq!(Shape::from_answer(&serde_json::json!({"ok": false})), None);
     }
 }
