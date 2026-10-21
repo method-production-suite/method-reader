@@ -217,12 +217,17 @@ first, for the Method suite's launcher:
 entry, which is every Convert in the window; a conversion with `-o` or
 beside its input does not, and neither does anything inside the data
 folder itself, so the built-in sample is never listed. The list keeps at
-most 20 entries, one per path: a script opened again moves to the top. An
+most 20 entries, one per file: a script opened again moves to the top, and
+on Windows the same file spelled with different capitals is one entry. An
 entry stays when its file is gone (the launcher shows it greyed), and keys
-another program added to an entry are kept. A missing or damaged
-`recent.json` reads as empty and is replaced on the next write, which goes
-through a temp file and a rename. A write that fails never fails the
-conversion: it is noted on stderr and the book is made as usual.
+another program added to an entry are kept. A missing `recent.json` starts
+a new list. A damaged one (not JSON, or not a list) is first kept as
+`recent.json.damaged` beside it, replacing any older damaged copy, and the
+conversion says so once on stderr. Each write holds a lock on
+`recent.json.lock` beside the file, so the window and the command line
+converting at the same moment both get their entry, and goes through a temp
+file and a rename. A write that fails never fails the conversion: it is
+noted on stderr and the book is made as usual.
 
 ## Devices and routes
 

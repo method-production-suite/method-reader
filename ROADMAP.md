@@ -116,10 +116,6 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **Three small fixes to the recent list.** A damaged `recent.json` is
-  replaced without a word; the window and the command line converting at the
-  same moment can drop one entry; and on Windows the same file spelled with
-  different capitals is listed twice.
 - **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built; its pull
   request opens after 0.13.1.
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
