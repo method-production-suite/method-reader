@@ -22,9 +22,11 @@ history, as are those that edit the SwiftUI Mac app deleted at piece F3
 From `rust/` unless a line says otherwise:
 
 Every cargo and xtask command runs with
-`CARGO_TARGET_DIR="$HOME/.cache/method-target/screepub"` (the suite's one
-shared build folder; the tools find it through `cargo metadata`, never by
-assuming `rust/target`).
+`CARGO_TARGET_DIR="$HOME/.cache/method-target/screepub/<checkout>"`, the
+checkout being `main` for the main checkout or the worktree's folder name
+(one build folder per checkout: two checkouts sharing one can each take
+the other's build for current). The tools find it through `cargo
+metadata`, never by assuming `rust/target`.
 
 ```bash
 cargo test --workspace      # every crate's tests (fixtures: tests/fixtures/ at the repo root)
