@@ -116,7 +116,10 @@ The release run takes 15 to 25 minutes. Its `checksums` job reads every
 download back from the draft and writes ONE `SHA256SUMS` over them (the
 suite standard: bare names, sorted, never listing itself), signs it with the
 update key as `SHA256SUMS.minisig` (from 1.0.0), and removes the
-`SHA256SUMS-app` an older run left. Its last job, `draft-check`, reads
+`SHA256SUMS-app` an older run left. A rehearsal never reaches the `checksums` job,
+so the first real signing of `SHA256SUMS` is 1.0.0's tag: watch that job
+on that run (the rehearsal's probe signature in the Mac step only proves
+the key). Its last job, `draft-check`, reads
 the draft back and fails loudly, naming what is missing, unless the draft
 carries every file: exactly one `Method-Reader-macOS.dmg`, the update
 archive and its signature, `latest.json` (not for a prerelease), every

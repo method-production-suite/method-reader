@@ -1086,6 +1086,25 @@ fn the_checksums_are_signed_with_the_update_key_only_after_the_tools_are_built()
     assert!(text.contains("sp-release sign-file --file downloads/SHA256SUMS"));
     assert!(text.contains("sp-release verify-file --file downloads/SHA256SUMS"));
     assert!(text.contains("gh release upload \"$TAG\" downloads/SHA256SUMS.minisig --clobber"));
+    // The signer and the checker fall back to the key the app ships
+    // (sp_update_config::PUBKEY). A --pubkey here could point them at
+    // another key, and the signature would no longer be one the app checks.
+    let mac_step = s(
+        steps(job(&rel, "app-bundles"))
+            .into_iter()
+            .find(|st| s(st, "name") == "macOS app, update archive and image")
+            .expect("the Mac step"),
+        "run",
+    )
+    .to_string();
+    for (where_, run) in [("checksums", &text), ("app-bundles", &mac_step)] {
+        for line in run
+            .lines()
+            .filter(|l| l.contains("sign-file") || l.contains("verify-file"))
+        {
+            assert!(!line.contains("--pubkey"), "{where_}: {line}");
+        }
+    }
     // A re-run starts from the downloads alone.
     assert!(run_text(sums).contains("rm -f SHA256SUMS SHA256SUMS-app SHA256SUMS.minisig"));
     // And the draft is not complete without it.
