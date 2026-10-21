@@ -60,13 +60,13 @@ fn the_idle_screen_names_the_app_and_asks_for_a_pdf() {
     let h = harness(&w, Platform::Mac);
     // The app's name is the title bar's (behaviors.rs w2); the page asks.
     assert_eq!(h.state().title_shown.as_deref(), Some("Method Reader"));
-    h.get_by_role_and_label(Role::Heading, "Drop a screenplay PDF");
-    let choose = h.get_by_role_and_label(Role::Button, "Choose PDF…");
+    h.get_by_role_and_label(Role::Heading, "Drop a script");
+    let choose = h.get_by_role_and_label(Role::Button, "Choose a script…");
     assert_eq!(
         choose.accesskit_node().data().keyboard_shortcut(),
         Some("⌘O")
     );
-    assert!(has_value(&h, "Needs selectable text, not a scan."));
+    assert!(has_value(&h, "A PDF with selectable text, or a .fountain."));
     assert!(has_value(&h, "Books are saved in ~/Method Reader."));
     h.get_by_role_and_label(Role::Button, "Change…");
     assert!(
@@ -221,7 +221,7 @@ fn a_scan_has_no_override_and_back_to_one_returns_to_the_well() {
     );
     h.get_by_role_and_label(Role::Button, "Back to one").click();
     steps(&mut h);
-    h.get_by_role_and_label(Role::Heading, "Drop a screenplay PDF");
+    h.get_by_role_and_label(Role::Heading, "Drop a script");
 }
 
 // desktop-ui.test.ts: "a refused file is no longer a dead end" (Report a bug)
@@ -713,7 +713,7 @@ fn after_a_cancelled_dialog_the_keyboard_lands_on_the_first_control() {
     let focused = h.get_by(|n| n.is_focused());
     assert_eq!(
         focused.accesskit_node().label().as_deref(),
-        Some("Choose PDF…")
+        Some("Choose a script…")
     );
     assert!(w.engine.calls_of("convert").is_empty());
 }

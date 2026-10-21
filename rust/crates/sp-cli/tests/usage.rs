@@ -46,13 +46,29 @@ fn verb_of(name: &str) -> Option<&'static str> {
 /// The help lines changed on purpose since the TypeScript, as (the
 /// TypeScript's line, the line now), each with its reason. The parity
 /// table's help rows were moved with `cargo xtask parity --accept`.
-const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[(
-    "USAGE",
-    "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
-    "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
-    // There is no pdf.js in the Rust reader, so --debug has no warnings to
-    // let through (PARITY.md, Decisions: "No pdf.js warnings").
-)];
+const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
+    (
+        "USAGE",
+        "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",
+        "  --debug                also write the classified elements beside the book,\n                         as <book>.elements.json",
+        // There is no pdf.js in the Rust reader, so --debug has no warnings to
+        // let through (PARITY.md, Decisions: "No pdf.js warnings").
+    ),
+    (
+        "USAGE",
+        "effect here (asking to strip (CONT'D) warns rather than failing silently),\nand the scanned-PDF and not-a-screenplay guards are PDF-only. See\ndocs/fountain-input.md.",
+        "effect here (asking to strip (CONT'D) warns rather than failing silently).\nA .fountain must be UTF-8 text with something in it, and one with no scene\nheading and no dialogue is refused as a PDF would be (--force overrules\nthat); the scanned-PDF guard is PDF-only. Under --library a .fountain is\ncopied into its library folder beside the book. See docs/fountain-input.md.",
+        // A .fountain someone chose has guards of its own, and a library
+        // conversion keeps a copy of it (PARITY.md, Decisions: "Fountain
+        // in").
+    ),
+    (
+        "USAGE",
+        "settings command. The first --library conversion of a PDF with none saves\nthe settings it started from as the script's own, so a later change to the\napp defaults reaches only new scripts. Turn that off with",
+        "settings command. The first --library conversion of a script (PDF or\n.fountain) with none saves the settings it started from as its own, so a\nlater change to the app defaults reaches only new scripts. Turn that off with",
+        // The pin reaches a .fountain's library copy too (the same Decision).
+    ),
+];
 
 /// The TypeScript's text with the product's name as it is now: Screepub
 /// became Method Reader in 0.13, and the command `screepub` became

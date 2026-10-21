@@ -1285,3 +1285,28 @@ names the check it affects.
   torture book's digest with the picture gate open, now what the engine
   builds from the re-frozen tokens (its comment, "computed with bun",
   now holds for the images and jpx digests only).
+- **Fountain in (2026-10-21).** A `.fountain` someone chose is held to
+  guards of its own (`sp_engine::convert::fountain_guards`): bytes that are
+  not UTF-8 are refused as `unreadable` instead of being read lossily, an
+  empty file is refused as `unreadable` even with `--force`, and a file with
+  no scene heading and no dialogue gets the PDF's `not-screenplay` refusal,
+  which `--force` overrules (one with dialogue but no scene heading gets the
+  PDF's no-scene-navigation warning). The TypeScript took every `.fountain`
+  on trust; with the window accepting one by drop, a stray text file would
+  otherwise become a book. A `.fountain` in a script folder the library
+  made (`sp_engine::library::in_script_folder`) is not checked again, so the
+  window's re-render of a script converted with `--force` still works.
+  Under `--library` a `.fountain` input now gets a copy in its script
+  folder, with the pictures its notes name, and the answer gains
+  `fountainPath` (and `imagesPath`); the first library conversion pins the
+  script's settings beside that copy, as a PDF's does. The TypeScript wrote
+  neither, and `sp-cli/tests/conversion_settings.rs` says so where its test
+  changed. No frozen conversion row moved: every committed fixture's
+  `.fountain` rows run on scripts with scenes, and none passes `--library`.
+  Four rows moved with the help text that describes all this (`help`,
+  `help-short`, `help-json`, `refuse-no-input`), accepted with
+  `cargo xtask parity --accept`; sp-cli/tests/usage.rs lists the two
+  changed paragraphs in `CHANGED_ON_PURPOSE`. The window's drop well now
+  reads "Drop a script", "Choose a script…" and "A PDF with selectable
+  text, or a .fountain." (ROADMAP.md, Decisions: "Scripts as input"), in
+  place of row C2's words.

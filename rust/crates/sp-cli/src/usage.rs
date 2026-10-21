@@ -10,17 +10,19 @@ Usage:
 
 PDF is the primary path. .fountain input is PARTIALLY SUPPORTED: contdMode
 and rejoinSplitDialogue are applied when a PDF is read, so they do not take
-effect here (asking to strip (CONT'D) warns rather than failing silently),
-and the scanned-PDF and not-a-screenplay guards are PDF-only. See
-docs/fountain-input.md.
+effect here (asking to strip (CONT'D) warns rather than failing silently).
+A .fountain must be UTF-8 text with something in it, and one with no scene
+heading and no dialogue is refused as a PDF would be (--force overrules
+that); the scanned-PDF guard is PDF-only. Under --library a .fountain is
+copied into its library folder beside the book. See docs/fountain-input.md.
 
 A script's saved settings are used by the conversion that finds them: if
 <script>.method-reader.json sits beside the input (or in the script's library
 folder, under --library), this run renders with it and says so on stderr.
 --options/--options-json override it knob by knob. Write one with the
-settings command. The first --library conversion of a PDF with none saves
-the settings it started from as the script's own, so a later change to the
-app defaults reaches only new scripts. Turn that off with
+settings command. The first --library conversion of a script (PDF or
+.fountain) with none saves the settings it started from as its own, so a
+later change to the app defaults reaches only new scripts. Turn that off with
 app-settings --set '{"keepScriptSettings":false}': scripts converted from
 then on follow the app defaults until they are tuned, and a script that
 already has saved settings keeps them.
