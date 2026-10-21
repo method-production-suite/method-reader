@@ -450,6 +450,29 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
             }
             Ok(())
         }
+        "shape" => {
+            if pos.len() != 1 {
+                return Err(Stop::usage("expected exactly one .fountain (see --help)"));
+            }
+            let shape = shape_command(&pos[0]).map_err(engine)?;
+            if io.json {
+                io.ok(value(&shape));
+            } else {
+                if let Some(pages) = shape.pages {
+                    io.say(&format!("pages: {pages}"));
+                }
+                io.say(&format!("scene headings: {}", shape.scene_headings));
+                io.say(&format!("cues: {}", shape.cues));
+                io.say(&format!("dialogue blocks: {}", shape.dialogue_blocks));
+                io.say(&format!(
+                    "dual-dialogue exchanges: {}",
+                    shape.dual_exchanges
+                ));
+                io.say(&format!("pictures: {}", shape.pictures));
+                io.say(&format!("transitions: {}", shape.transitions));
+            }
+            Ok(())
+        }
         "routes" => {
             if pos.len() != 1 {
                 return Err(Stop::usage("expected exactly one .epub (see --help)"));
@@ -488,26 +511,6 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&answer));
             } else {
                 io.say(&answer.note);
-            }
-            Ok(())
-        }
-        "shape" => {
-            if pos.len() != 1 {
-                return Err(Stop::usage("expected exactly one .fountain (see --help)"));
-            }
-            let shape = shape_command(&pos[0]).map_err(engine)?;
-            if io.json {
-                io.ok(value(&shape));
-            } else {
-                if let Some(pages) = shape.pages {
-                    io.say(&format!("pages: {pages}"));
-                }
-                io.say(&format!("scene headings: {}", shape.scene_headings));
-                io.say(&format!("cues: {}", shape.cues));
-                io.say(&format!("dialogue blocks: {}", shape.dialogue_blocks));
-                io.say(&format!("dual exchanges: {}", shape.dual_exchanges));
-                io.say(&format!("pictures: {}", shape.pictures));
-                io.say(&format!("transitions: {}", shape.transitions));
             }
             Ok(())
         }

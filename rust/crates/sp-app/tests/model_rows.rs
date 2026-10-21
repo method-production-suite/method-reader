@@ -937,6 +937,14 @@ mod report {
     use sp_app::app::help::{self, Sheet, words};
     use sp_app::model::help::HelpItem;
 
+    /// The sheet rises over a few hundred milliseconds of a clock that a
+    /// test never moves: with reduced motion it is simply there.
+    fn calm_world() -> World {
+        let w = world();
+        w.fakes.reduced_motion.store(true, Ordering::Relaxed);
+        w
+    }
+
     fn open_from_help(h: &mut H) {
         help::choose(h.state_mut(), HelpItem::ReportBug);
         steps(h);
@@ -960,7 +968,7 @@ mod report {
 
     #[test]
     fn b7_help_opens_the_sheet_and_send_waits_for_words() {
-        let w = world();
+        let w = calm_world();
         let mut h = harness(&w, Platform::Mac);
         open_from_help(&mut h);
         assert!(send(&h).accesskit_node().is_disabled(), "nothing typed yet");
@@ -973,26 +981,35 @@ mod report {
         steps(&mut h);
         let opened = opened(&w);
         assert_eq!(opened.len(), 1, "{opened:?}");
-        assert!(opened[0].starts_with("mailto:hello@methodproduction.com?subject=Method%20Reader%20"));
+        assert!(
+            opened[0].starts_with("mailto:hello@methodproduction.com?subject=Method%20Reader%20")
+        );
         assert!(opened[0].contains("%3A%20a%20problem&body=The%20cues%20went%20missing."));
-        assert_eq!(h.state().help.sheet, None, "the sheet goes once the mail is open");
+        assert_eq!(
+            h.state().help.sheet,
+            None,
+            "the sheet goes once the mail is open"
+        );
     }
 
     #[test]
     fn b7_a_failed_conversion_opens_the_same_sheet_with_its_code() {
-        let w = world();
+        let w = calm_world();
         w.engine.once("convert", Reply::ok(json!({"ok": false, "error": {"code": "scanned", "message": "This PDF is a scan."}})));
         let mut h = harness(&w, Platform::Mac);
         convert(&w, &mut h);
-        h.get_by_role_and_label(Role::Button, "Report a bug").click();
+        h.get_by_role_and_label(Role::Button, "Report a bug")
+            .click();
         steps(&mut h);
         h.get_by_role_and_label(Role::Dialog, "Report a Bug");
         assert!(
-            h.query_by_role_and_label(Role::CheckBox, words::ADD_SHAPE).is_none(),
+            h.query_by_role_and_label(Role::CheckBox, words::ADD_SHAPE)
+                .is_none(),
             "a failed PDF has no .fountain to count"
         );
         assert!(w.engine.calls_of("shape").is_empty());
-        h.get_by_role_and_label(Role::Button, words::SHOW_SENT).click();
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
         steps(&mut h);
         assert!(shows(&h, "What the app said: scanned: This PDF is a scan."));
         assert!(shows(&h, "Subject: Method Reader "));
@@ -1006,7 +1023,7 @@ mod report {
 
     #[test]
     fn b7_the_counts_box_is_off_and_nothing_is_counted_in_the_body_until_ticked() {
-        let w = world();
+        let w = calm_world();
         let mut h = harness(&w, Platform::Mac);
         convert(&w, &mut h);
         open_from_help(&mut h);
@@ -1014,11 +1031,17 @@ mod report {
         let asked = w.engine.calls_of("shape");
         assert_eq!(
             asked,
-            [Request::Shape { fountain: "/library/Field Station/Field Station.fountain".into() }]
+            [Request::Shape {
+                fountain: "/library/Field Station/Field Station.fountain".into()
+            }]
         );
         let tick = h.get_by_role_and_label(Role::CheckBox, words::ADD_SHAPE);
-        assert_eq!(tick.accesskit_node().toggled(), Some(egui::accesskit::Toggled::False));
-        h.get_by_role_and_label(Role::Button, words::SHOW_SENT).click();
+        assert_eq!(
+            tick.accesskit_node().toggled(),
+            Some(egui::accesskit::Toggled::False)
+        );
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
         steps(&mut h);
         h.get_by_role_and_label(Role::MultilineTextInput, words::SENT);
         assert!(!shows(&h, "cues: 103"), "no counts while the box is off");
@@ -1032,19 +1055,27 @@ mod report {
 
     #[test]
     fn b7_ticked_the_counts_are_in_what_is_shown_and_what_is_sent() {
-        let w = world();
+        let w = calm_world();
         let mut h = harness(&w, Platform::Mac);
         convert(&w, &mut h);
         open_from_help(&mut h);
         steps(&mut h);
-        h.get_by_role_and_label(Role::CheckBox, words::ADD_SHAPE).click();
+        h.get_by_role_and_label(Role::CheckBox, words::ADD_SHAPE)
+            .click();
         steps(&mut h);
-        h.get_by_role_and_label(Role::Button, words::SHOW_SENT).click();
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
         steps(&mut h);
         let shown = h.get_by_role_and_label(Role::MultilineTextInput, words::SENT);
         let body = shown.value().unwrap_or_default();
-        assert!(body.contains("Counts of the script's shape (no words from it):"), "{body}");
-        assert!(body.contains("pages: 18\nscene headings: 11\ncues: 103"), "{body}");
+        assert!(
+            body.contains("Counts of the script's shape (no words from it):"),
+            "{body}"
+        );
+        assert!(
+            body.contains("pages: 18\nscene headings: 11\ncues: 103"),
+            "{body}"
+        );
         h.get_by_role_and_label(Role::Button, words::HIDE_SENT);
         type_in(&mut h, "Odd breaks.");
         send(&h).click();
@@ -1056,7 +1087,7 @@ mod report {
 
     #[test]
     fn b7_no_mail_app_says_so_and_offers_the_address() {
-        let w = world();
+        let w = calm_world();
         w.fakes.opener.refuses.store(true, Ordering::Relaxed);
         let mut h = harness(&w, Platform::Linux);
         open_from_help(&mut h);
@@ -1073,7 +1104,7 @@ mod report {
 
     #[test]
     fn b7_the_github_link_is_still_there_and_carries_what_was_typed() {
-        let w = world();
+        let w = calm_world();
         let mut h = harness(&w, Platform::Mac);
         open_from_help(&mut h);
         type_in(&mut h, "Wrong order.");
@@ -1087,7 +1118,7 @@ mod report {
 
     #[test]
     fn b7_cancel_and_escape_close_it_and_nothing_is_sent() {
-        let w = world();
+        let w = calm_world();
         let mut h = harness(&w, Platform::Mac);
         open_from_help(&mut h);
         h.get_by_role_and_label(Role::Button, words::CANCEL).click();

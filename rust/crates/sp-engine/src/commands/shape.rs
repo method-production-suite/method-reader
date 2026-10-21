@@ -86,7 +86,11 @@ pub fn shape_of(tokens: &[Token]) -> ShapeResult {
 /// in it.
 pub fn shape_command(fountain: &str) -> Result<ShapeResult, EngineError> {
     let unreadable = |why: &str| -> EngineError {
-        CliError::new(ErrorCode::Unreadable, format!("cannot read the script: {why}")).into()
+        CliError::new(
+            ErrorCode::Unreadable,
+            format!("cannot read the script: {why}"),
+        )
+        .into()
     };
     if !fsx::is_file(fountain) {
         return Err(unreadable("there is no file there"));
@@ -112,7 +116,10 @@ mod tests {
         assert!(!is_page_marker(&marker("pg")));
         assert!(!is_page_marker(&marker("pg 2 3")));
         assert!(!is_page_marker(&marker("pages 2")));
-        assert!(!is_page_marker(&Token::with_text(TokenType::Action, "pg 2")));
+        assert!(!is_page_marker(&Token::with_text(
+            TokenType::Action,
+            "pg 2"
+        )));
     }
 
     #[test]

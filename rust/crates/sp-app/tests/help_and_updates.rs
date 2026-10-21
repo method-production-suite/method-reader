@@ -309,9 +309,17 @@ fn each_page_the_help_menu_opens_is_one_the_window_may_open() {
     assert_eq!(opened[1], SUITE);
     // Report a Bug opens a sheet; its two ways out are both allowed.
     assert_eq!(h.state().help.sheet, Some(help::Sheet::Report));
-    let report = h.state().help.report.report(env!("CARGO_PKG_VERSION"), "macOS");
+    let report = h
+        .state()
+        .help
+        .report
+        .report(env!("CARGO_PKG_VERSION"), "macOS");
     assert!(sp_app::app::host::allowed_url(&report.mailto_url()));
-    assert!(report.issue_url().starts_with(sp_app::model::feedback::NEW_ISSUE_BASE));
+    assert!(
+        report
+            .issue_url()
+            .starts_with(sp_app::model::feedback::NEW_ISSUE_BASE)
+    );
     assert!(sp_app::app::host::allowed_url(&report.issue_url()));
 }
 

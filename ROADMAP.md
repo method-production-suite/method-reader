@@ -53,19 +53,6 @@ Release go-aheads:
   (#77). Then the public text, the notes and a rehearsal, and 1.0.0 goes
   to the owner like 0.13.1.
 
-Decisions:
-
-- **How to report a problem without a GitHub account**
-  (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
-  Recommended: a report opens a pre-filled email to the suite's address,
-  edited and sent by the person, carrying what they typed, the version, and
-  for a failed conversion the app's own message. Script text is never
-  included, and counts of the script's shape are added only if they tick a
-  box. GitHub stays as a second link. The alternative, a form stored by the
-  device-request service, would be the first free text that service keeps,
-  and nobody could be answered. Not built until the owner says, because it
-  decides where people's reports and email addresses go.
-
 Built on the recommendation (reversible):
 
 - **Intel Macs on 0.9.0 are offered 1.0.0** (2026-10-20). Every Intel
@@ -115,6 +102,14 @@ installed by a person yet.
 
 Decided:
 
+- **Reporting a problem without a GitHub account** (the owner,
+  2026-10-21: option 1). Help > Report a Bug, and Report a bug on a failed
+  conversion, open a sheet that sends a pre-filled email to
+  hello@methodproduction.com: what the person typed, the version, and for a
+  failed conversion the app's own message. No words from the script; counts
+  of its shape only if they tick a box. GitHub stays as a second link.
+  Built (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
+
 - **The two Dependabot alerts for `glib`** (2026-10-20): dismissed as
   "vulnerable code not used". `glib` reaches the lock files only through
   Linux-only branches no shipped build compiles.
@@ -155,10 +150,6 @@ In order. Each is one small pull request.
   the command line the way a PDF does, and the library keeps a copy of it
   beside its book. The OSF half is still to come; it waits for the OSF
   reader.
-- **A way to report problems without a GitHub account.** Asking for a device
-  and saying whether a reader worked need none now: the window sends both.
-  Telling us a script converted badly still means opening an issue, which
-  excludes most of the people Method Reader is built for.
 - **Copying to new Kindles over USB.** Every Kindle sold since late 2024
   connects the way a phone does (MTP) instead of showing up as a drive, so
   Method Reader cannot see one, and its owners are sent to email. Email

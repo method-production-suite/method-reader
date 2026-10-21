@@ -199,6 +199,20 @@ script follows the app defaults until it is tuned.
 
 `method-reader reveal <file>` shows a converted file in the system's file manager.
 
+`method-reader shape <file.fountain> [--json]` counts a script's shape for a
+problem report, reading the `.fountain` the way every book is made from it:
+
+```json
+{"ok":true,"pages":18,"sceneHeadings":11,"cues":103,"dialogueBlocks":103,"dualExchanges":0,"pictures":0,"transitions":3}
+```
+
+The answer is integers only: no name, no word and no file name from the
+script, and a refusal names neither. `pages` is one more than the script's
+`= pg N` page markers, and is left out when it has none (a one-page script,
+`showPageMarkers` off, or a `.fountain` written by hand). `pictures` counts
+the `[[img: ...]]` notes that name a picture. The window's report sheet adds
+these counts to an email only when the person ticks the box.
+
 The app settings live in one small file outside the library, in the app's
 data folder, which is named after the bundle identifier
 (`com.methodreader.desktop`) and also holds the window's own storage:

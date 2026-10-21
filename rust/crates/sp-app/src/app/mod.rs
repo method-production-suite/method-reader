@@ -48,9 +48,13 @@ pub enum Purpose {
     Convert(convert::Purpose),
     Tune(tune::Purpose),
     Panel(panel::Purpose),
-    DevicesPoll { era: u64 },
+    DevicesPoll {
+        era: u64,
+    },
     /// A script's shape, for the report sheet (help.rs).
-    Shape { fountain: String },
+    Shape {
+        fountain: String,
+    },
 }
 
 struct Job {

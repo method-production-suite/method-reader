@@ -14,7 +14,10 @@ fn shape_help_describes_the_verb_and_exits_0() {
     assert!(ran.stdout.starts_with("method-reader shape:"));
     assert!(ran.stdout.contains("numbers only"));
     let main = sb.run(&["--help"]);
-    assert!(main.stdout.contains("  method-reader shape <file.fountain> [--json]"));
+    assert!(
+        main.stdout
+            .contains("  method-reader shape <file.fountain> [--json]")
+    );
 }
 
 #[test]
@@ -45,7 +48,14 @@ fn no_word_from_the_script_reaches_the_line_printed() {
     assert_eq!(ran.code, 0);
     let human = sb.run(&["shape", &path]);
     for out in [ran.stdout.to_lowercase(), human.stdout.to_lowercase()] {
-        for word in ["gribblefen", "womblecastle", "narwhalio", "octarine", "sprockets", "smash"] {
+        for word in [
+            "gribblefen",
+            "womblecastle",
+            "narwhalio",
+            "octarine",
+            "sprockets",
+            "smash",
+        ] {
             assert!(!out.contains(word), "{word} in {out}");
         }
     }

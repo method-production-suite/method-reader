@@ -332,7 +332,12 @@ impl ProblemReport {
     fn footer(&self) -> String {
         let mut lines = vec![
             "---".to_string(),
-            format!("{} {} · {}", super::names::PRODUCT, self.app_version, self.os),
+            format!(
+                "{} {} · {}",
+                super::names::PRODUCT,
+                self.app_version,
+                self.os
+            ),
         ];
         if let Some((code, message)) = &self.refusal {
             lines.push(format!("What the app said: {code}: {message}"));
@@ -541,7 +546,10 @@ mod tests {
             assert!(r.subject().starts_with("Method Reader "), "{}", r.subject());
             assert!(r.subject().starts_with(SUBJECT_PREFIX));
             let url = r.mailto_url();
-            assert!(url.contains("?subject=Method%20Reader%200.14.0%3A%20"), "{url}");
+            assert!(
+                url.contains("?subject=Method%20Reader%200.14.0%3A%20"),
+                "{url}"
+            );
         }
     }
 
@@ -549,7 +557,10 @@ mod tests {
     fn the_mailto_encoding_is_rfc_6068() {
         assert_eq!(mailto_encode("a b+c&d=e?"), "a%20b%2Bc%26d%3De%3F");
         assert_eq!(mailto_encode("a-b_c.d~"), "a-b_c.d~");
-        assert_eq!(mailto_encode("one\ntwo\r\nthree\rfour"), "one%0D%0Atwo%0D%0Athree%0D%0Afour");
+        assert_eq!(
+            mailto_encode("one\ntwo\r\nthree\rfour"),
+            "one%0D%0Atwo%0D%0Athree%0D%0Afour"
+        );
         assert_eq!(mailto_encode("é·"), "%C3%A9%C2%B7");
         let url = report("It stopped.").mailto_url();
         assert!(url.starts_with("mailto:hello@methodproduction.com?subject="));
@@ -560,7 +571,10 @@ mod tests {
     fn non_ascii_and_line_breaks_survive_as_utf_8() {
         let r = report("Página dos\r\nline two ñ 字");
         let url = r.mailto_url();
-        assert!(url.contains("P%C3%A1gina%20dos%0D%0Aline%20two%20%C3%B1%20%E5%AD%97"), "{url}");
+        assert!(
+            url.contains("P%C3%A1gina%20dos%0D%0Aline%20two%20%C3%B1%20%E5%AD%97"),
+            "{url}"
+        );
         assert!(!url.contains('\n') && !url.contains('\r') && !url.contains(' '));
         assert!(url.is_ascii());
     }
@@ -575,7 +589,10 @@ mod tests {
         let url = r.mailto_url();
         assert!(url.len() <= MAX_MAILTO, "{}", url.len());
         assert!(url.len() > MAX_MAILTO - 12, "cut no more than it has to");
-        assert!(url.contains("%E2%80%A6%0D%0A%0D%0A---"), "an ellipsis where it was cut");
+        assert!(
+            url.contains("%E2%80%A6%0D%0A%0D%0A---"),
+            "an ellipsis where it was cut"
+        );
         assert!(url.contains("Method%20Reader%200.14.0%20%C2%B7%20macOS"));
         assert!(url.contains("unreadable%3A%20cannot%20read%20%3Cpath%3E.pdf"));
         assert!(url.ends_with("transitions%3A%203%0D%0A"));
@@ -616,7 +633,10 @@ mod tests {
         );
         let r = draft.report("0.14.0", "macOS");
         assert!(!r.body().contains("Secret"));
-        assert!(r.body().contains("What the app said: unreadable: cannot read <path>.pdf"));
+        assert!(
+            r.body()
+                .contains("What the app said: unreadable: cannot read <path>.pdf")
+        );
         assert!(!r.issue_url().contains("Secret"));
     }
 
@@ -630,7 +650,10 @@ mod tests {
             r.issue_url(),
             new_issue_url("0.14.0", "macOS", Some("scanned: no text"), None)
         );
-        assert_eq!(report("").issue_url(), new_issue_url("0.14.0", "macOS", None, None));
+        assert_eq!(
+            report("").issue_url(),
+            new_issue_url("0.14.0", "macOS", None, None)
+        );
         assert!(report("It froze.").issue_url().contains("It+froze."));
     }
 

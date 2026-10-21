@@ -237,6 +237,11 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                 Sheet::Report => HelpItem::ReportBug.label(),
             };
             let close = frame::sheet_head(ui, &t, &head);
+            // The report keeps its long part (what is sent) in a scroll of
+            // its own, so its buttons are never scrolled away.
+            if sheet == Sheet::Report {
+                return report(app, ui, &t) || close;
+            }
             let done = egui::ScrollArea::vertical()
                 .id_salt("help-sheet-scroll")
                 .max_height(ctx.content_rect().height() * 0.82 - 80.0)
@@ -257,7 +262,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
                         updates(app, ui, &t);
                         false
                     }
-                    Sheet::Report => report(app, ui, &t),
+                    Sheet::Report => unreachable!("drawn above"),
                 });
             close || done.inner
         });
@@ -282,7 +287,8 @@ pub mod words {
     pub const COPY: &str = "Copy the address";
     pub const GITHUB: &str = "or open an issue on GitHub";
     pub const CANCEL: &str = "Cancel";
-    pub const NO_MAIL: &str = "No mail app opened. Copy the address and write from any email account.";
+    pub const NO_MAIL: &str =
+        "No mail app opened. Copy the address and write from any email account.";
 }
 
 /// The sheet: the text box, the counts box for a converted script, what is
@@ -313,7 +319,12 @@ fn report(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
     });
     if app.help.report.shape.is_some() {
         ui.add_space(layout::SPACE[2]);
-        ui.checkbox(&mut app.help.report.add_shape, words::ADD_SHAPE);
+        ui.add(egui::Checkbox::new(
+            &mut app.help.report.add_shape,
+            egui::RichText::new(words::ADD_SHAPE)
+                .font(theme::chrome(size::UI))
+                .color(t.ink),
+        ));
     }
     let sent = app
         .help
@@ -325,7 +336,11 @@ fn report(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
         ui,
         t,
         Look::Quiet,
-        if open { words::HIDE_SENT } else { words::SHOW_SENT },
+        if open {
+            words::HIDE_SENT
+        } else {
+            words::SHOW_SENT
+        },
         true,
     );
     ui.ctx()
@@ -394,7 +409,8 @@ fn report(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
     );
     ui.add_space(layout::SPACE[2]);
     let link = ui.link(words::GITHUB);
-    ui.ctx().accesskit_node_builder(link.id, |n| n.set_role(accesskit::Role::Link));
+    ui.ctx()
+        .accesskit_node_builder(link.id, |n| n.set_role(accesskit::Role::Link));
     if link.clicked() {
         app.host.open(&sent.issue_url());
         done = true;

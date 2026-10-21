@@ -126,7 +126,10 @@ fn the_field_station_shape() {
 fn a_refusal_names_neither_the_file_nor_its_text() {
     let dir = Scratch::new("shape-refuse");
     let missing = dir.join("Zephyrquill.fountain");
-    let err = shape_command(&missing).unwrap_err().to_string().to_lowercase();
+    let err = shape_command(&missing)
+        .unwrap_err()
+        .to_string()
+        .to_lowercase();
     assert!(!err.contains("zephyrquill"), "{err}");
     let bad = dir.join("Quokkaflux.fountain");
     std::fs::write(&bad, [0xff, 0xfe, 0x00, 0x51]).unwrap();
