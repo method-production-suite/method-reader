@@ -17,7 +17,7 @@ use crate::model::update::{Found, MemoryStorage, Storage};
 use crate::model::update_flow::{Offer, RunOutcome};
 
 pub trait Dialogs {
-    /// The open dialog, filtered to screenplays (pdf, fountain, txt).
+    /// The open dialog, filtered to scripts (model::convert::SCRIPT_FILTER).
     fn pick_screenplay(&self) -> Option<String>;
     fn pick_folder(&self, start: &str) -> Option<String>;
     fn save(&self, name: &str, filter: &(String, Vec<String>)) -> Option<String>;
@@ -152,8 +152,9 @@ pub struct NativeDialogs;
 
 impl Dialogs for NativeDialogs {
     fn pick_screenplay(&self) -> Option<String> {
+        let (name, extensions) = crate::model::convert::SCRIPT_FILTER;
         rfd::FileDialog::new()
-            .add_filter("Screenplay", &["pdf", "fountain", "txt"])
+            .add_filter(name, extensions)
             .pick_file()
             .map(|p| p.to_string_lossy().into_owned())
     }

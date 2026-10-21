@@ -165,7 +165,7 @@ tool-like, with the script as the only thing set like a script.
   sheets (Help, Licenses, About, the release notes) add a soft shadow, a title at the
   left, Close at the right and a rule under them.
 - **Start page.** The drop well alone: a dashed rule around the surface, the call
-  ("Drop a screenplay PDF"), the one primary button, and the one guard.
+  ("Drop a script"), the one primary button, and the one guard.
 
 The window's colors are this palette under the window's token names; brand/README.md
 lists them, including the four the window added for this layout (`bar`, `rule`,

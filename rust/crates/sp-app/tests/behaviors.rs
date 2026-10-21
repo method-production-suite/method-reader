@@ -253,6 +253,44 @@ fn n15_a_file_dragged_over_turns_the_well_and_a_drop_converts() {
 }
 
 #[test]
+fn n16_a_dropped_fountain_is_the_same_convert_request_a_pdf_is() {
+    // ROADMAP.md, Decisions: "Scripts as input". The window decides
+    // nothing about the kind of file: the engine does.
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    convert::drop_paths(h.state_mut(), &["/x/Weather Log.fountain".into()]);
+    steps(&mut h);
+    let call = w.engine.calls_of("convert");
+    assert_eq!(call.len(), 1);
+    assert_eq!(
+        call[0],
+        Request::Convert {
+            path: "/x/Weather Log.fountain".into(),
+            force: false,
+            options: None,
+        }
+    );
+    h.get_by_role_and_label(Role::Heading, "Field Station is ready");
+}
+
+#[test]
+fn n16_choose_a_script_converts_a_fountain_it_picks() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    w.fakes
+        .answer_dialog(Some("/Users/reader/Scripts/Weather Log.fountain"));
+    h.get_by_role_and_label(Role::Button, "Choose a script…")
+        .click();
+    steps(&mut h);
+    let call = w.engine.calls_of("convert");
+    assert_eq!(call.len(), 1);
+    assert_eq!(
+        call[0].argv()[0],
+        "/Users/reader/Scripts/Weather Log.fountain"
+    );
+}
+
+#[test]
 fn n17_a_drop_while_converting_is_ignored() {
     let w = world();
     let mut h = harness(&w, Platform::Mac);
@@ -269,12 +307,12 @@ fn c3_the_well_keeps_its_820_column() {
     let w = world();
     let h = harness(&w, Platform::Mac);
     let call = h
-        .query_all_by_value("Needs selectable text, not a scan.")
+        .query_all_by_value("A PDF with selectable text, or a .fountain.")
         .next()
         .unwrap()
         .rect();
     let heading = h
-        .get_by_role_and_label(Role::Heading, "Drop a screenplay PDF")
+        .get_by_role_and_label(Role::Heading, "Drop a script")
         .rect();
     // The block is 50..1230 at 1280: an 820 column centred in it, so on
     // the window's centre line. The harness frames the window in a few

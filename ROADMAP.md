@@ -78,6 +78,13 @@ Built on the recommendation (reversible):
 - **What counts as a recent script** for the launcher's list: a conversion
   into the library, recorded under the file you chose. Opening a book that is
   already in the library, without converting it, does not count yet.
+- **The checks a .fountain you bring has to pass** (Fountain in): it must be
+  UTF-8 text, it must not be empty, and one with no scene heading and no
+  dialogue is refused as not a screenplay, the same refusal a PDF gets, with
+  the same Convert anyway. Until now a .fountain was taken on trust; with
+  the window accepting one by drop, a stray text file would otherwise become
+  a book. A .fountain the library made itself is still taken on trust, so
+  tuning a script that was converted anyway keeps working.
 
 Tests that need a device (hands only; everything else is automated):
 
@@ -144,7 +151,10 @@ In order. Each is one small pull request.
   the same structure, and `method-reader export --for osf`.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
   .fountain, so a script from Method Storyteller becomes an e-book without a
-  PDF.
+  PDF. The Fountain half is built: a .fountain converts in the window and on
+  the command line the way a PDF does, and the library keeps a copy of it
+  beside its book. The OSF half is still to come; it waits for the OSF
+  reader.
 - **A way to report problems without a GitHub account.** Asking for a device
   and saying whether a reader worked need none now: the window sends both.
   Telling us a script converted badly still means opening an issue, which

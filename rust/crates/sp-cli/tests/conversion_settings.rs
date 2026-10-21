@@ -382,9 +382,13 @@ fn a_flag_used_on_the_very_first_library_conversion_is_not_pinned_what_gets_save
     assert_eq!(pinned["dialogueSideMarginPct"], json!(APP_MARGIN));
 }
 
+// Changed on purpose from the TypeScript's "a library conversion of a
+// fountain input saves nothing: there is no library fountain to attach it
+// to". Since Fountain in (PARITY.md, Decisions), a library conversion of a
+// .fountain keeps a copy of it in the script's folder, so the pin has
+// somewhere to go and goes there, as it does for a PDF.
 #[test]
-fn a_library_conversion_of_a_fountain_input_saves_nothing_there_is_no_library_fountain_to_attach_it_to()
- {
+fn a_library_conversion_of_a_fountain_input_pins_beside_its_library_copy() {
     let sb = Sandbox::new();
     let input = sb.write(
         "scripts/Loose.fountain",
@@ -392,7 +396,13 @@ fn a_library_conversion_of_a_fountain_input_saves_nothing_there_is_no_library_fo
     );
     let (answer, _) = ok(&sb, &[&input.to_string_lossy(), "--library", "--json"]);
     assert_eq!(answer["ok"], json!(true));
-    assert!(!Path::new(&lib(&sb, "Loose/Loose.method-reader.json")).exists());
+    assert_eq!(
+        answer["fountainPath"],
+        json!(lib(&sb, "Loose/Loose.fountain"))
+    );
+    assert!(Path::new(&lib(&sb, "Loose/Loose.method-reader.json")).exists());
+    // Nothing is written beside the script that was chosen.
+    assert!(!sb.path("scripts/Loose.method-reader.json").exists());
 }
 
 // Not ported: "a sidecar write that fails does not fail the conversion, and

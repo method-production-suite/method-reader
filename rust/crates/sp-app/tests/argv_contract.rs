@@ -105,3 +105,43 @@ fn every_request_is_the_argv_app_js_built() {
     // Every builder app.js exported was asked at least once.
     assert_eq!(seen.len(), 19, "{seen:?}");
 }
+
+/// Fountain in: a .fountain the window converts (dropped, or picked with
+/// Choose a script) is the same Convert request a PDF is, so its argv is
+/// the PDF's with the path swapped, flag for flag. app.js never sent one,
+/// so there is no frozen answer to hold it to; the CLI's side of the same
+/// argv runs in sp-cli/tests/fountain_in.rs
+/// (`the_window_s_convert_argv_works_on_a_fountain`).
+#[test]
+fn a_fountain_converts_with_the_argv_a_pdf_does() {
+    for (force, options) in [(false, None), (true, Some(r#"{"cueIndentPct":41}"#))] {
+        let request = |path: &str| Request::Convert {
+            path: path.into(),
+            force,
+            options: options.map(str::to_owned),
+        };
+        let pdf = request("/s/Weather Log.pdf").argv();
+        let fountain = request("/s/Weather Log.fountain").argv();
+        assert_eq!(fountain[0], "/s/Weather Log.fountain");
+        assert_eq!(
+            fountain[1..],
+            pdf[1..],
+            "force {force}, options {options:?}"
+        );
+    }
+    assert_eq!(
+        Request::Convert {
+            path: "/s/Weather Log.fountain".into(),
+            force: false,
+            options: None,
+        }
+        .argv(),
+        [
+            "/s/Weather Log.fountain",
+            "--json",
+            "--progress",
+            "--preview-inline",
+            "--library"
+        ]
+    );
+}

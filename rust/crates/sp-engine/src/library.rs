@@ -186,6 +186,14 @@ fn recorded_source(folder: &str) -> Option<String> {
     }
 }
 
+/// Whether `path` sits in a script folder this engine made (one holding a
+/// source.json that names its source): a library `.fountain`, which the
+/// window renders again on every tune, as opposed to a script someone
+/// chose. Reads nothing but that marker.
+pub fn in_script_folder(path: &str) -> bool {
+    recorded_source(&host::dirname(&host::resolve(&[path]))).is_some()
+}
+
 /// `folderFor(source, root)`: the folder this input owns inside `root`,
 /// free or already its own, hashed off the absolute path when the plain
 /// name belongs to another script.

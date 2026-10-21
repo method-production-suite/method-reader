@@ -42,12 +42,17 @@ pub fn window_title(script: Option<&str>) -> String {
     }
 }
 
-/// The drop well's words.
-pub const WELL_CALL: &str = "Drop a screenplay PDF";
+/// The drop well's words. A script is a PDF or a .fountain (ROADMAP.md,
+/// Decisions: "Scripts as input"); the engine decides what it takes, so
+/// these only say so.
+pub const WELL_CALL: &str = "Drop a script";
 pub const WELL_OR: &str = "or";
 /// The well's one button: the page's primary action.
-pub const CHOOSE: &str = "Choose PDF…";
-pub const WELL_LIMITS: &str = "Needs selectable text, not a scan.";
+pub const CHOOSE: &str = "Choose a script…";
+pub const WELL_LIMITS: &str = "A PDF with selectable text, or a .fountain.";
+/// What Choose a script's open box shows: the kinds of file the engine
+/// converts (its `unsupported-type` refusal names the same three).
+pub const SCRIPT_FILTER: (&str, &[&str]) = ("Script", &["pdf", "fountain", "txt"]);
 
 /// The one guard a reader can meaningfully overrule.
 pub const OVERRIDABLE: &str = "not-screenplay";
@@ -717,6 +722,22 @@ mod tests {
     fn the_ready_line_names_the_book() {
         assert_eq!(ready_line("Field Station"), "Field Station is ready");
         assert_eq!(ready_line("  "), "The book is ready");
+    }
+
+    #[test]
+    fn a_script_is_a_pdf_or_a_fountain_in_the_well_and_the_open_box() {
+        // ROADMAP.md, Decisions: "Scripts as input".
+        assert_eq!(CHOOSE, "Choose a script…");
+        let (name, extensions) = SCRIPT_FILTER;
+        assert_eq!(name, "Script");
+        for ext in ["pdf", "fountain"] {
+            assert!(extensions.contains(&ext), "{ext}");
+        }
+        // A dropped .fountain is taken like a dropped PDF.
+        assert_eq!(
+            dropped_path(&["".into(), "/x/Weather Log.fountain".into()]).as_deref(),
+            Some("/x/Weather Log.fountain")
+        );
     }
 
     #[test]

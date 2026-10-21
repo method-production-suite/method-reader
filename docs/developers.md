@@ -130,9 +130,24 @@ older Final Draft refuses the file.
 
 ### Fountain input
 
-`.fountain` input is partly supported: 18 of the 20 formatting options apply,
-and one piece of syntax renders differently than another tool would render it.
-See [Fountain input](fountain-input.md).
+A `.fountain` converts like a PDF, in the window (drop it, or Choose a
+script) and on the command line (`method-reader script.fountain`, the same
+flags and the same `--json` answer, less the counts only a PDF's pages give:
+`pages`, `scenes`, `characters`). It skips the first half of the pipeline
+and goes through the same second half a PDF does: a PDF converted to its
+`.fountain`, and that `.fountain` converted again, gives the same EPUB bytes
+(`sp-engine/tests/fountain_in.rs`).
+
+A `.fountain` you choose has to be UTF-8 text with something in it, and one
+with no scene heading and no dialogue is refused as not a screenplay, the PDF
+refusal, which `--force` overrules. A `.fountain` in a library folder (one the
+library made) is not checked again. Under `--library` the script's folder
+keeps a copy of the `.fountain` and the pictures its notes name, the way it
+keeps a PDF's, and the answer's `fountainPath` names that copy.
+
+18 of the 20 formatting options apply, and one piece of syntax renders
+differently than another tool would render it. See
+[Fountain input](fountain-input.md).
 
 ## The library
 

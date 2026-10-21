@@ -5,7 +5,8 @@
 //! The two refusals (a scan, and a document with no scene heading and no
 //! dialogue) are decided by the text alone, before any picture is decoded,
 //! so a document that is turned away never pays for its pictures and puts
-//! nothing on the caller's disk.
+//! nothing on the caller's disk. A `.fountain` someone chose has guards of
+//! its own ([`fountain_guards`]); one the library made has none.
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
@@ -19,7 +20,9 @@ use sp_mobi::{
     MOBI_CARRIES_PICTURES, MobiError, MobiInput, MobiMeta, build_mobi, mobi_art,
     tokens_to_mobi_html,
 };
-use sp_model::{ContdMode, ElementType, FormatOptions, ParsedScreenplay, RawImage, RawLine, Token};
+use sp_model::{
+    ContdMode, ElementType, FormatOptions, ParsedScreenplay, RawImage, RawLine, Token, TokenType,
+};
 use sp_parser::extract::extract_text;
 use sp_parser::facts::DocumentFacts;
 use sp_parser::first_page::{is_first_real_page, page_paragraphs};
@@ -113,6 +116,10 @@ pub enum ConvertError {
     Password,
     /// pdf.js's `InvalidPDFException`: not a PDF the reader can open.
     InvalidPdf,
+    /// A `.fountain` whose bytes are not UTF-8 text.
+    NotUtf8,
+    /// A `.fountain` with nothing in it but white space.
+    EmptyScript,
     /// fountain-js's one throw.
     Fountain(String),
     /// A book maker refused (a bug of ours: the callers keep these out of
@@ -134,6 +141,12 @@ impl fmt::Display for ConvertError {
             ),
             ConvertError::Password => f.write_str("No password given"),
             ConvertError::InvalidPdf => f.write_str("Invalid PDF structure."),
+            ConvertError::NotUtf8 => f.write_str(
+                "this script is not UTF-8 text. Save it as UTF-8 plain text and try again",
+            ),
+            ConvertError::EmptyScript => {
+                f.write_str("this script is empty: there is nothing in it to make a book from")
+            }
             ConvertError::Fountain(m) | ConvertError::Book(m) => f.write_str(m),
         }
     }
@@ -536,15 +549,7 @@ pub fn convert_fountain(
     };
     let format = opts.format;
     let (title, author) = resolve_meta(&detected, &opts);
-    let images: Vec<BookImage> = images
-        .into_iter()
-        .flatten()
-        .filter(|(name, bytes)| is_safe_image_file(name) && is_png(bytes))
-        .map(|(name, bytes)| BookImage {
-            name: name.clone(),
-            bytes: bytes.clone(),
-        })
-        .collect();
+    let images = carried_pictures(images);
     let books = render_books(
         fountain_text,
         &title,
@@ -566,6 +571,82 @@ pub fn convert_fountain(
         spacing_repairs: 0,
         images: Vec::new(),
     })
+}
+
+/// The pictures in a `.fountain`'s picture folder that a book may carry:
+/// safe file names holding PNG bytes, in name order. The rest are left
+/// out, as they always were.
+pub fn carried_pictures(images: Option<&BTreeMap<String, Vec<u8>>>) -> Vec<BookImage> {
+    images
+        .into_iter()
+        .flatten()
+        .filter(|(name, bytes)| is_safe_image_file(name) && is_png(bytes))
+        .map(|(name, bytes)| BookImage {
+            name: name.clone(),
+            bytes: bytes.clone(),
+        })
+        .collect()
+}
+
+/// A `.fountain`'s bytes as its text: UTF-8 or nothing. A file in another
+/// encoding would otherwise turn into a book of replacement characters.
+/// A UTF-8 byte order mark is kept, as a JavaScript read kept it; the
+/// tokenizer treats it as white space.
+pub fn fountain_text(bytes: Vec<u8>) -> Result<String, ConvertError> {
+    String::from_utf8(bytes).map_err(|_| ConvertError::NotUtf8)
+}
+
+/// The guards a `.fountain` someone chose passes before it becomes a book
+/// (docs/fountain-input.md, "The guards"), and the warning a PDF would
+/// have had. The scanned-PDF guard has nothing to test in a text file.
+///
+/// - Nothing but white space: refused, `--force` or not. There is no book
+///   to make.
+/// - No scene heading and no dialogue: refused as not a screenplay, the
+///   PDF's own refusal in the PDF's own words, which `--force` overrules.
+/// - Dialogue but no scene heading: converted, with the PDF's warning that
+///   the book has no scene navigation.
+pub fn fountain_guards(fountain_text: &str, force: bool) -> Result<Vec<String>, ConvertError> {
+    if fountain_text
+        .chars()
+        .all(|c| c.is_whitespace() || c == '\u{feff}')
+    {
+        return Err(ConvertError::EmptyScript);
+    }
+    let tokens = sp_fountain::tokenize(fountain_text)?;
+    let scenes = tokens
+        .iter()
+        .filter(|t| t.kind == TokenType::SceneHeading)
+        .count();
+    let dialogue = tokens
+        .iter()
+        .filter(|t| t.kind == TokenType::Dialogue)
+        .count();
+    if scenes == 0 && dialogue == 0 && !force {
+        return Err(ConvertError::NotAScreenplay);
+    }
+    Ok(if scenes == 0 {
+        vec!["No scene headings detected: the EPUB will have no scene navigation.".to_owned()]
+    } else {
+        Vec::new()
+    })
+}
+
+/// A `.fountain` someone chose (its text, from [`fountain_text`]) to its
+/// books: held to [`fountain_guards`], then [`convert_fountain`] with the
+/// same renderers a PDF's `.fountain` goes through. A `.fountain` the
+/// library made itself goes straight to [`convert_fountain`]: it passed
+/// the guards (or was forced past them) when its script came in.
+pub fn convert_chosen_fountain(
+    text: &str,
+    opts: ConvertOptions,
+    images: Option<&BTreeMap<String, Vec<u8>>>,
+) -> Result<ConvertResult, ConvertError> {
+    let mut warnings = fountain_guards(text, opts.force)?;
+    let mut result = convert_fountain(text, opts, images)?;
+    warnings.append(&mut result.warnings);
+    result.warnings = warnings;
+    Ok(result)
 }
 
 #[cfg(test)]
