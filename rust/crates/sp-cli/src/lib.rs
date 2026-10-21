@@ -10,6 +10,7 @@
 
 mod args;
 mod convert;
+mod mcp;
 mod out;
 mod usage;
 mod verbs;
@@ -21,16 +22,33 @@ pub const OLD_NAME_NOTICE: &str =
     "screepub is now called method-reader. This old name will stop working in a later release.";
 
 /// A binary's whole run on this process's argv and streams: the one-time
-/// move of the 0.12 folders, the camera-import recovery, then [`run`].
-/// Both command names call this.
+/// move of the 0.12 folders, the camera-import recovery, then [`run`], or
+/// the MCP server for `method-reader mcp`. Both command names call this.
 pub fn main() -> u8 {
-    let argv: Vec<String> = std::env::args_os()
-        .skip(1)
-        .map(|a| a.to_string_lossy().into_owned())
-        .collect();
+    let argv = process_argv();
     move_legacy_folders();
     recover_camera_import();
+    // Not one of run's verbs: the window never serves MCP, and the server
+    // owns stdout for as long as it runs (its tools call run themselves).
+    if let Some(rest) = mcp::command(&argv) {
+        return mcp::run_command(rest);
+    }
     run(&argv, Box::new(Std))
+}
+
+fn process_argv() -> Vec<String> {
+    std::env::args_os()
+        .skip(1)
+        .map(|a| a.to_string_lossy().into_owned())
+        .collect()
+}
+
+/// Whether the old name should say [`OLD_NAME_NOTICE`] for this process's
+/// argv: not for `mcp`, which an MCP client's config starts and whose
+/// stderr is that client's log (Method Budget's old name is quiet there
+/// too).
+pub fn old_name_notice_wanted() -> bool {
+    mcp::command(&process_argv()).is_none()
 }
 
 /// Move Screepub's settings and library folders to Method Reader's, once

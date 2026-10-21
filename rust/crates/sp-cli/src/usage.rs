@@ -98,6 +98,8 @@ Commands:
                                             should this update be offered? (offline)
   method-reader update-should-check [--opted-in] [--last-checked <ms>] [--json]
                                             may a check be made now? (offline)
+  method-reader mcp [--root <dir>]... [--read-only]
+                                            these tools for an MCP client, over stdio
 
 A verb is only a verb when no file of that name exists: a script saved as
 "devices" still converts, and "./devices" always means the file.
