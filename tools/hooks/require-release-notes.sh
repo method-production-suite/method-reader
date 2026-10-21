@@ -4,15 +4,19 @@
 # `cargo xtask require-release-notes` (rust/crates/xtask/src/release_hook.rs,
 # tested by rust/crates/xtask/tests/release_hook.rs); this shim exists only
 # because a hook is a command line. It runs the xtask binary already built
-# in the suite's shared build folder (CARGO_TARGET_DIR, else
-# ~/.cache/method-target/screepub), and builds it first when there is none.
-# The payload
-# arrives on stdin and goes straight through; exit 2 blocks the call.
+# in this checkout's build folder (CARGO_TARGET_DIR, else
+# ~/.cache/method-target/screepub/<checkout>: main, or the worktree's folder
+# name), and builds it first when there is none. The payload arrives on
+# stdin and goes straight through; exit 2 blocks the call.
 #
 # An ergonomics guard, not a security boundary: the release workflow's
 # checks job gates every tag however it was made.
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
-target="${CARGO_TARGET_DIR:-$HOME/.cache/method-target/screepub}"
+case "$repo" in
+  */.claude/worktrees/*) checkout="${repo##*/}" ;;
+  *) checkout=main ;;
+esac
+target="${CARGO_TARGET_DIR:-$HOME/.cache/method-target/screepub/$checkout}"
 bin="$target/debug/xtask"
 if [ ! -x "$bin" ] && ! CARGO_TARGET_DIR="$target" cargo build --quiet --manifest-path "$repo/rust/Cargo.toml" -p xtask >&2; then
   # No check to run. Block only what could touch a tag, as the check would.
