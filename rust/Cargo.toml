@@ -55,7 +55,7 @@ sp-release = { path = "crates/sp-release" }
 sp-update-config = { path = "crates/sp-update-config" }
 # The suite's updater (method-libs), pinned to one full commit. Its README
 # has Reader's migration notes; sp-update-config is what Reader hands it.
-method-update = { git = "https://github.com/method-production-suite/method-libs", rev = "37a9c8b9801bfcdedb9d79565a62f84fcdfb9a4a" }
+method-update = { git = "https://github.com/method-production-suite/method-libs", rev = "25c80f8cfcc2e5222de4c5b79413a9de488196af" }
 
 # The picture budget (sp-parser's IMAGE_BUDGET_MS) is wall-clock, and an
 # unoptimized build spends it on pixel work: a picture-heavy script that a

@@ -883,7 +883,7 @@ fn u4_a_failed_check_is_a_message_and_an_intel_mac_is_told_why() {
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();
     steps(&mut h);
-    assert!(shows(&h, sp_app::model::update::INTEL_MAC_RETIRED));
+    assert!(shows(&h, sp_app::model::update::NO_UPDATE_FOR_THIS_MAC));
 }
 
 #[test]

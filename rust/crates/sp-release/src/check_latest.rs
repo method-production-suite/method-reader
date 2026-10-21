@@ -24,7 +24,7 @@ use std::collections::BTreeMap;
 use serde_json::Value;
 
 use crate::boxes::{SignatureBox, parse_public_key_box, parse_signature_box};
-use crate::names::{MANIFEST as MANIFEST_NAME, SIGNATURE_EXT, UPDATER_KINDS};
+use crate::names::{CLI_MAC, MANIFEST as MANIFEST_NAME, SIGNATURE_EXT, UPDATER_KINDS};
 
 /// The Intel command-line tarball. The identifier release is the last to
 /// carry it, and the last whose window archive is universal: the two were
@@ -49,8 +49,8 @@ pub struct Release {
 }
 
 /// Every platform the macOS build must answer for (REQUIRED, not
-/// exhaustive): the keys of [`UPDATER_KINDS`], darwin-aarch64 alone since
-/// the release after 0.9.0 (Apple silicon only).
+/// exhaustive): the keys of [`UPDATER_KINDS`], Apple silicon and Intel
+/// since 1.0.0 (darwin-aarch64 alone from 0.10.0 to 0.13.x).
 pub fn required_platforms() -> Vec<&'static str> {
     UPDATER_KINDS
         .iter()
@@ -126,7 +126,18 @@ pub fn judge_manifest(
     if keys.is_empty() {
         problems.push(format!("{MANIFEST_NAME} lists no platforms at all"));
     }
-    for required in required_platforms() {
+    // A release carrying a universal command-line archive (0.9.0's Intel
+    // one, or 1.0.0's universal one) made a universal window too; from
+    // 0.10.0 to 0.13.x the window was Apple silicon only, and Intel is not
+    // asked of those.
+    let intel_era = release
+        .assets
+        .iter()
+        .any(|a| a.name == INTEL_CLI_ASSET || a.name == CLI_MAC);
+    for required in required_platforms()
+        .into_iter()
+        .filter(|k| intel_era || !k.contains("x86_64"))
+    {
         if !keys.iter().any(|k| k == required) {
             problems.push(format!(
                 "{MANIFEST_NAME} has no entry for {required}, which the macOS build must serve"
@@ -144,11 +155,10 @@ pub fn judge_manifest(
         }
     };
 
-    // After Intel was dropped the one window archive is Apple silicon
-    // only: an Intel row pointing at it would hand an Intel copy a build
-    // it cannot run. Both Intel keys, because the updater plugin tries
-    // `<os>-<arch>-app` before `<os>-<arch>`.
-    let intel_era = release.assets.iter().any(|a| a.name == INTEL_CLI_ASSET);
+    // In an Apple-silicon-only release an Intel row pointing at the one
+    // window archive would hand an Intel copy a build it cannot run. Both
+    // Intel keys, because the updater tries `<os>-<arch>-app` before
+    // `<os>-<arch>`.
     if !intel_era {
         let arm_urls: Vec<&str> = ["darwin-aarch64", "darwin-aarch64-app"]
             .iter()
@@ -160,7 +170,7 @@ pub fn judge_manifest(
             {
                 problems.push(format!(
                     "{key} points at {u}, the same archive as darwin-aarch64, and release {} is \
-                     Apple silicon only (it carries no {INTEL_CLI_ASSET}): an Intel copy would \
+                     Apple silicon only (it carries no {CLI_MAC}): an Intel copy would \
                      install a build it cannot run",
                     release.tag_name
                 ));
@@ -444,6 +454,62 @@ mod tests {
         assert!(
             judge_manifest("<html>", &r, &sigs, sp_update_config::PUBKEY).unwrap_err()[0]
                 .contains("is not JSON")
+        );
+    }
+
+    #[test]
+    fn a_universal_release_must_serve_intel_too() {
+        let r = release(&[CLI_MAC]);
+        let p = judge_manifest(
+            r#"{"version":"0.12.0","platforms":{}}"#,
+            &r,
+            &BTreeMap::new(),
+            sp_update_config::PUBKEY,
+        )
+        .unwrap_err();
+        assert!(
+            p.contains(
+                &"latest.json has no entry for darwin-x86_64, which the macOS build must serve"
+                    .to_string()
+            ),
+            "{p:?}"
+        );
+    }
+
+    #[test]
+    fn an_intel_key_on_the_one_archive_is_refused_only_when_it_is_apple_silicon_only() {
+        let (sk_text, pk) = crate::sign::keygen("").unwrap();
+        let sk = crate::sign::load_secret_key(&sk_text, "").unwrap();
+        let sig =
+            crate::sign::sign(&sk, b"x", "Method-Reader-macOS.app.tar.gz", "0.12.0", 1).unwrap();
+        let m = crate::manifest::render_manifest(
+            "0.12.0",
+            &[crate::manifest::SignedArtifact {
+                name: "Method-Reader-macOS.app.tar.gz".into(),
+                signature: sig.clone(),
+                platform_keys: vec!["darwin-aarch64".into(), "darwin-x86_64".into()],
+            }],
+            "method-production-suite/method-reader",
+            "2026-10-12T00:00:00.000Z",
+        )
+        .unwrap()
+        .to_string();
+        let mut sigs = BTreeMap::new();
+        sigs.insert("Method-Reader-macOS.app.tar.gz.sig".to_string(), sig);
+        let arm_only = release(&[
+            "Method-Reader-macOS.app.tar.gz",
+            "Method-Reader-macOS.app.tar.gz.sig",
+        ]);
+        let p = judge_manifest(&m, &arm_only, &sigs, &pk).unwrap_err();
+        assert!(p.iter().any(|x| x.contains("an Intel copy would")), "{p:?}");
+        let universal = release(&[
+            "Method-Reader-macOS.app.tar.gz",
+            "Method-Reader-macOS.app.tar.gz.sig",
+            CLI_MAC,
+        ]);
+        assert_eq!(
+            judge_manifest(&m, &universal, &sigs, &pk).unwrap().1,
+            vec!["darwin-aarch64".to_string(), "darwin-x86_64".to_string()]
         );
     }
 }

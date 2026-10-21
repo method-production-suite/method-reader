@@ -49,7 +49,12 @@ pub const WINDOWS_SETUP: &str = "Method-Reader-windows-x64-setup.exe";
 /// What an installer for another architecture is called: `Method-Reader-linux-<arch>.<ext>`.
 pub const INSTALLER_STEM: &str = "Method-Reader";
 
-/// The command-line archives.
+/// The command-line archives. The Mac's is universal (Apple silicon and
+/// Intel) since 1.0.0, the release that brought Intel Macs back.
+pub const CLI_MAC: &str = "method-reader-cli-macos.tar.gz";
+/// The Mac archive up to 0.13.x, Apple silicon only. A release no longer
+/// makes it; `cargo xtask build-cli --mac`, the local fallback, still
+/// builds this Mac's own architecture under this name.
 pub const CLI_MAC_ARM64: &str = "method-reader-cli-macos-arm64.tar.gz";
 pub const CLI_LINUX_X64: &str = "method-reader-cli-linux-x64.tar.gz";
 pub const CLI_LINUX_ARM64: &str = "method-reader-cli-linux-arm64.tar.gz";
@@ -64,6 +69,10 @@ pub const MANIFEST: &str = "latest.json";
 /// suite's launcher reads it): every download in [`downloads`], bare
 /// names, sorted, in `sha256sum` format. It never lists itself.
 pub const CHECKSUMS: &str = "SHA256SUMS";
+/// [`CHECKSUMS`] signed with the update key (`sp-release sign-file`), since
+/// 1.0.0: a plain minisign signature anyone can check with
+/// `minisign -Vm SHA256SUMS -P <the public key>`.
+pub const CHECKSUMS_SIGNATURE: &str = "SHA256SUMS.minisig";
 /// The installers' own checksums file up to 0.13.0, folded into
 /// [`CHECKSUMS`]: release.yml deletes it from a draft that still has one.
 pub const RETIRED_APP_CHECKSUMS: &str = "SHA256SUMS-app";
@@ -79,7 +88,7 @@ pub fn downloads(prerelease: bool) -> Vec<String> {
         LINUX_RPM_X86_64,
         LINUX_APPIMAGE_X86_64,
         WINDOWS_SETUP,
-        CLI_MAC_ARM64,
+        CLI_MAC,
         CLI_LINUX_X64,
         CLI_LINUX_ARM64,
         CLI_WINDOWS_X64,
@@ -102,13 +111,14 @@ pub struct UpdaterKind {
     pub platform_keys: &'static [&'static str],
 }
 
-/// Apple silicon only, as since 0.10.0: an Intel Mac finds no key and is
-/// told why (sp-app, `is_intel_mac_retired`). Linux and Windows are not
+/// Universal since 1.0.0: the one archive answers Apple silicon and Intel
+/// (0.10.0 to 0.13.x were Apple silicon only). method-update asks for the
+/// key of the chip it runs on. Linux and Windows are not
 /// offered updates (inventory row U1); adding one is a row here and a
 /// signing step on that leg.
 pub const UPDATER_KINDS: &[UpdaterKind] = &[UpdaterKind {
     name: MAC_UPDATE,
-    platform_keys: &["darwin-aarch64"],
+    platform_keys: &["darwin-aarch64", "darwin-x86_64"],
 }];
 
 /// A release asset's stable address.

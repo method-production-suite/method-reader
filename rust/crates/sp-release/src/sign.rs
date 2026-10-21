@@ -80,9 +80,91 @@ pub fn sign(
     Ok(b64(&sig.to_string()))
 }
 
+/// The untrusted comment of a [`sign_plain`] signature.
+pub const PLAIN_COMMENT: &str = "signature from the Method Reader update key";
+
+/// A plain minisign signature (the `.minisig` text, not base64) of `data`,
+/// published as `file_name`, with `file:<name>` as its trusted comment:
+/// what `minisign -Vm <file> -P <key>` checks. SUITE-STANDARDS.md section 3
+/// signs each release's `SHA256SUMS` this way, as Method Storyteller does.
+/// Refuses a key whose public half is not `expected_pubkey` (base64 of a
+/// minisign public-key box, as [`sp_update_config::PUBKEY`] is), so a
+/// release can never carry a signature its own key does not check.
+pub fn sign_plain(
+    sk: &minisign::SecretKey,
+    expected_pubkey: &str,
+    data: &[u8],
+    file_name: &str,
+) -> Result<String, String> {
+    let public = minisign::PublicKey::from_secret_key(sk)
+        .map_err(|e| format!("the update key's public half: {e}"))?;
+    let expected = public_key(expected_pubkey)?;
+    if public.to_base64() != expected.to_base64() {
+        return Err(
+            "the update key is not the one Method Reader checks with (sp_update_config::PUBKEY)"
+                .into(),
+        );
+    }
+    let sig = minisign::sign(
+        Some(&public),
+        sk,
+        std::io::Cursor::new(data),
+        Some(&format!("file:{file_name}")),
+        Some(PLAIN_COMMENT),
+    )
+    .map_err(|e| format!("signing {file_name}: {e}"))?;
+    Ok(sig.to_string())
+}
+
+/// Whether `signature` (a `.minisig` text) is `pubkey`'s signature of
+/// `data`. Returns the trusted comment.
+pub fn verify_plain(pubkey: &str, data: &[u8], signature: &str) -> Result<String, String> {
+    let pk = public_key(pubkey)?;
+    let boxed = minisign::SignatureBox::from_string(signature)
+        .map_err(|e| format!("not a minisign signature: {e}"))?;
+    let trusted = boxed
+        .trusted_comment()
+        .map_err(|e| format!("no trusted comment: {e}"))?;
+    minisign::verify(&pk, &boxed, std::io::Cursor::new(data), true, false, false)
+        .map_err(|e| format!("the signature does not verify: {e}"))?;
+    Ok(trusted)
+}
+
+fn public_key(b64_box: &str) -> Result<minisign::PublicKey, String> {
+    minisign::PublicKeyBox::from_string(&unb64(b64_box)?)
+        .and_then(|b| b.into_public_key())
+        .map_err(|e| format!("the public key: {e}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_plain_signature_is_minisign_text_that_checks_against_the_key_and_only_the_key() {
+        let (sk_text, pk) = keygen("").unwrap();
+        let sk = load_secret_key(&sk_text, "").unwrap();
+        let data = b"abc  Method-Reader-macOS.dmg\n";
+        let sig = sign_plain(&sk, &pk, data, "SHA256SUMS").unwrap();
+        // The .minisig text itself, as minisign writes it: four lines.
+        assert!(
+            sig.starts_with("untrusted comment: signature from the Method Reader update key\n")
+        );
+        assert!(sig.contains("\ntrusted comment: file:SHA256SUMS\n"));
+        assert_eq!(sig.lines().count(), 4);
+        assert_eq!(verify_plain(&pk, data, &sig).unwrap(), "file:SHA256SUMS");
+        assert!(verify_plain(&pk, b"changed", &sig).is_err());
+        let other = keygen("").unwrap().1;
+        assert!(verify_plain(&other, data, &sig).is_err());
+        // A key that is not the app's signs nothing.
+        let err = sign_plain(&sk, &other, data, "SHA256SUMS").unwrap_err();
+        assert!(
+            err.contains("not the one Method Reader checks with"),
+            "{err}"
+        );
+        // The shipped key reads as one.
+        assert!(public_key(sp_update_config::PUBKEY).is_ok());
+    }
 
     #[test]
     fn a_signature_made_here_passes_the_plugin_s_check_and_the_rust_app_s() {
