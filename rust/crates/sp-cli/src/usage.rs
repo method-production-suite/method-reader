@@ -100,6 +100,8 @@ Commands:
                                             should this update be offered? (offline)
   method-reader update-should-check [--opted-in] [--last-checked <ms>] [--json]
                                             may a check be made now? (offline)
+  method-reader shape <file.fountain> [--json]
+                                            a script's shape as counts, no words from it
 
 A verb is only a verb when no file of that name exists: a script saved as
 "devices" still converts, and "./devices" always means the file.
@@ -381,4 +383,21 @@ Options:
   --last-checked <ms>      when a check last ran, in epoch milliseconds
   --json                   machine-readable result on stdout (for the app)
   -h, --help               show this help
+"#;
+
+pub const SHAPE_USAGE: &str = r#"method-reader shape: a script's shape as counts, no words from it
+
+Usage:
+  method-reader shape <file.fountain> [--json]
+
+Counts what the .fountain holds, read the way every book is made from it:
+scene headings, cues, dialogue blocks, dual-dialogue exchanges, pictures and
+transitions, and pages when the script carries page markers (one more than
+its "= pg N" lines; left out when it has none). The answer is numbers only:
+no name, no word and no file name from the script. A problem report can
+carry it when the person reporting chooses to add it.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
 "#;

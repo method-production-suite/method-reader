@@ -1,7 +1,9 @@
 # Reporting a problem without a GitHub account
 
-Status: design, 2026-10-21. Nothing here is built yet. One decision belongs to the
-owner (below).
+Status: Decided: option 1 (the owner, 2026-10-21); built. Reports go by
+pre-filled email to hello@methodproduction.com, with GitHub kept as a second
+link. What was built differs from the plan below in two places, both
+recorded under "As built" at the end.
 
 ## The problem
 
@@ -112,3 +114,37 @@ The engine owns the words; the window only draws them.
    knows what's real and who reads it.
 2. The subject line: is the version enough to sort reports, or should it carry
    the platform too?
+
+## As built (2026-10-21)
+
+- **The counts come from a verb of their own, not the convert answer.**
+  `method-reader shape <file.fountain> [--json]` tokenizes the script's
+  `.fountain` and answers integers only: `pages`, `sceneHeadings`, `cues`,
+  `dialogueBlocks`, `dualExchanges`, `pictures`, `transitions`. Two
+  reasons. Adding a `shape` object to the convert answer would have moved
+  every frozen convert row in the parity harness; a new verb moves only
+  the four rows of the main help, which gains its line. And the script
+  someone reports after a bad conversion still has its `.fountain`, which
+  is what the book was made from, so the verb can count it at the moment
+  the report is written. The window asks for it when the report sheet
+  opens on a converted script; a failed PDF has no `.fountain`, so its
+  report offers no counts.
+- **Pages** are one more than the `= pg N` markers the `.fountain`
+  carries, so the title page is not counted, and a page holding nothing but
+  page furniture has no marker. With no marker at all the count is left
+  out rather than guessed.
+- **No warning codes.** The parser's warnings are sentences, not codes,
+  and a library folder's `source.json` records only where the script came
+  from, so the counts carry none.
+- **No mail app.** The engine's route facts can name the app that handles
+  `mailto:` links, but on a Mac there always is one (Mail, set up or not),
+  so they cannot say "no mail app". The sheet says so when opening the
+  message fails, which is what happens on Windows and Linux with nothing to
+  open it, and the address and its Copy button are always on the sheet.
+- **The address** is hello@methodproduction.com (open question 1). The
+  subject is "Method Reader <version>: <code>", or "...: a problem", and
+  the suite's inbox filters on the prefix "Method Reader " (open question
+  2: the version is enough; the platform is in the body).
+- **The URL** is held to 2000 bytes, cut in what the person typed and never
+  in the versions or counts, and "Show what's sent" shows the body exactly
+  as it will be sent, cut and all.

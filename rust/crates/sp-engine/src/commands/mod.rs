@@ -8,3 +8,4 @@ pub mod export;
 pub mod kfx;
 pub mod routes;
 pub mod settings;
+pub mod shape;

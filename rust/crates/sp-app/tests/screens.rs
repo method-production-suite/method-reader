@@ -224,7 +224,8 @@ fn a_scan_has_no_override_and_back_to_one_returns_to_the_well() {
     h.get_by_role_and_label(Role::Heading, "Drop a script");
 }
 
-// desktop-ui.test.ts: "a refused file is no longer a dead end" (Report a bug)
+// desktop-ui.test.ts: "a refused file is no longer a dead end" (Report a
+// bug). It opens the report sheet now; its GitHub link is the old issue.
 #[test]
 fn report_a_bug_opens_the_issue_tracker_with_the_code_and_no_paths() {
     let w = world();
@@ -232,6 +233,11 @@ fn report_a_bug_opens_the_issue_tracker_with_the_code_and_no_paths() {
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
     h.get_by_role_and_label(Role::Button, "Report a bug")
+        .click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Dialog, "Report a Bug");
+    assert!(w.fakes.opener.opened.lock().unwrap().is_empty());
+    h.get_by_role_and_label(Role::Link, "or open an issue on GitHub")
         .click();
     steps(&mut h);
     let opened = w.fakes.opener.opened.lock().unwrap().clone();

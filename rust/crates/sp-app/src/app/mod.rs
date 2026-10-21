@@ -48,7 +48,13 @@ pub enum Purpose {
     Convert(convert::Purpose),
     Tune(tune::Purpose),
     Panel(panel::Purpose),
-    DevicesPoll { era: u64 },
+    DevicesPoll {
+        era: u64,
+    },
+    /// A script's shape, for the report sheet (help.rs).
+    Shape {
+        fountain: String,
+    },
 }
 
 struct Job {
@@ -387,6 +393,7 @@ impl App {
             Purpose::Convert(p) => convert::answered(self, p, reply),
             Purpose::Tune(p) => tune::answered(self, p, reply),
             Purpose::Panel(p) => panel::answered(self, p, reply),
+            Purpose::Shape { fountain } => help::shape_answered(self, &fountain, &reply),
             Purpose::DevicesPoll { era } => {
                 let answer = reply.answer.ok();
                 if let Some(list) = self.watcher.answered(era, answer.as_ref()) {

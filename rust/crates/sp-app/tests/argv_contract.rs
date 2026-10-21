@@ -145,3 +145,32 @@ fn a_fountain_converts_with_the_argv_a_pdf_does() {
         ]
     );
 }
+
+/// The report sheet's counts: `shape <fountain> --json`, a verb app.js
+/// never had, so it is held here to the CLI's own argv and run through the
+/// direct engine (src/direct.rs), which answers integers only. The CLI's
+/// side is sp-cli/tests/cli_shape.rs.
+#[test]
+fn the_shape_request_is_the_cli_s_shape_verb() {
+    use sp_app::engine::Engine;
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../oracle/field-station/script.fountain")
+        .to_string_lossy()
+        .into_owned();
+    let request = Request::Shape {
+        fountain: path.clone(),
+    };
+    assert_eq!(request.argv(), ["shape", path.as_str(), "--json"]);
+    assert_eq!(request.kind(), "shape");
+    let reply = sp_app::direct::DirectEngine::new().run(&request, &mut |_| {});
+    let answer = reply.answer.expect("an answer");
+    assert_eq!(answer["ok"], true);
+    for (key, value) in answer.as_object().unwrap() {
+        assert!(key == "ok" || value.is_u64(), "{key} is {value}");
+    }
+    let shape = sp_app::model::feedback::Shape::from_answer(&answer).expect("a shape");
+    assert_eq!(shape.pages, Some(18));
+    assert_eq!(shape.scene_headings, 11);
+    // The fake answers what the real engine does for the demo script.
+    assert_eq!(answer, sp_app::engine::default_answer(&request));
+}

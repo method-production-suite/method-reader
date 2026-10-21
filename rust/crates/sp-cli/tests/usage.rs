@@ -68,6 +68,13 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
         "settings command. The first --library conversion of a script (PDF or\n.fountain) with none saves the settings it started from as its own, so a\nlater change to the app defaults reaches only new scripts. Turn that off with",
         // The pin reaches a .fountain's library copy too (the same Decision).
     ),
+    (
+        "USAGE",
+        "                                            may a check be made now? (offline)\n\nA verb",
+        "                                            may a check be made now? (offline)\n  method-reader shape <file.fountain> [--json]\n                                            a script's shape as counts, no words from it\n\nA verb",
+        // A problem report's counts (PARITY.md, Decisions: "The shape verb").
+        // The TypeScript's line said screepub; renamed() moves it first.
+    ),
 ];
 
 /// The TypeScript's text with the product's name as it is now: Screepub

@@ -138,6 +138,14 @@ one, or
 to say more. A reader that is not on the list goes in **My device isn't
 here** on the same screen (beta).
 
+**Something came out wrong?** You don't need a GitHub account to say so.
+Choose **Help > Report a Bug**, or **Report a bug** on a conversion that
+failed, write what happened, and press **Send by email**: your mail app opens
+a message to hello@methodproduction.com that you can read and change before
+it goes. No words from your script are sent. A box, off unless you tick it,
+adds counts of the script's shape (pages, scenes, cues), and the same window
+can open an issue on GitHub instead.
+
 **What beta means here.** A feature marked (beta) works in our tests, but
 has not been tried widely on real devices or apps yet: tell us how it goes.
 
