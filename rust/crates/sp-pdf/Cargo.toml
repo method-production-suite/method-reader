@@ -10,7 +10,7 @@ publish = false
 [dependencies]
 hayro-syntax = "0.8.0"
 hayro-jpeg2000 = "0.4.1"
-miniz_oxide = "0.8"
+miniz_oxide = "0.9"
 serde.workspace = true
 sha2.workspace = true
 sp-parser = { path = "../sp-parser" }
