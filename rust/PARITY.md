@@ -1225,6 +1225,15 @@ names the check it affects.
   since the window's own model/update.rs already keeps the suite's
   schedule and switch, and the Windows and Linux installers' hand-off,
   which method-update dropped (the window only ever updated on a Mac).
+- **method-reader mcp is Rust's alone (2026-10-19, the owner's ask).** An
+  MCP server over stdio (`sp-cli/src/mcp/`): its tools run the CLI's own
+  `run()` in-process, so every answer is a CLI answer, and
+  `sp-cli/tests/mcp.rs` holds each to the CLI's own for the same input. The
+  TypeScript had no such verb, so the main help gained one line in the verb
+  list (`tests/usage.rs`, CHANGED_ON_PURPOSE). The four parity rows that
+  print the main help (`help`, `help-short`, `help-json`,
+  `refuse-no-input`) were moved with `cargo xtask parity --accept`, and each
+  frozen answer differs from the old one by exactly that line.
 - **recent.json is Rust's alone (2026-10-18, the suite standard §2).** A
   `--library` conversion now records its input in `recent.json` in the
   data folder, for the suite's launcher (`sp-engine/src/recent.rs`). The

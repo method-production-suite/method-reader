@@ -102,6 +102,8 @@ Commands:
                                             may a check be made now? (offline)
   method-reader shape <file.fountain> [--json]
                                             a script's shape as counts, no words from it
+  method-reader mcp [--root <dir>]... [--read-only]
+                                            these tools for an MCP client, over stdio
 
 A verb is only a verb when no file of that name exists: a script saved as
 "devices" still converts, and "./devices" always means the file.
