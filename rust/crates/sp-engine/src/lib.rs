@@ -26,6 +26,7 @@ pub mod legacy;
 pub mod library;
 pub mod library_images;
 pub mod recent;
+pub mod scene_lengths;
 /// node:path's functions: sp-fsutil's, the one copy (re-exported so the
 /// engine's callers keep their paths).
 pub use sp_fsutil::nodepath;

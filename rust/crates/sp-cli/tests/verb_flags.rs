@@ -68,6 +68,7 @@ const VERB_SHAPE: &[(&str, &[&str], &[&str])] = &[
         &[],
         &["/nowhere/Kindle", "/nowhere/Kindle/documents/x.azw3"],
     ),
+    ("shape", &[], &["/nowhere/x.fountain"]),
 ];
 
 /// sp-cli's verbs.rs, whose VERBS and VERB_SPECS lists are read below.

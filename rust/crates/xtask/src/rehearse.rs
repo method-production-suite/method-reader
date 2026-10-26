@@ -134,7 +134,7 @@ fn need(tool: &str, hint: &str) -> Result<(), String> {
 }
 
 fn sp_release() -> PathBuf {
-    paths::workspace_root().join("target/release/sp-release")
+    paths::target_dir().join("release/sp-release")
 }
 
 fn read(p: &Path) -> Result<String, String> {
@@ -309,7 +309,11 @@ fn prepare() -> Result<(), String> {
             NEW_ID,
             "--window",
         ])
-        .arg(rust_src.join("rust/target/release").join(NEW_EXE))
+        .arg(
+            paths::target_dir_of(&rust_src.join("rust"))
+                .join("release")
+                .join(NEW_EXE),
+        )
         .arg("--icon")
         .arg(rust_src.join("rust/crates/sp-app/icons/icon.icns"))
         .arg("--resource")
@@ -475,7 +479,7 @@ fn prove(w: &Path) -> Result<(), String> {
             .arg(site.join("latest.json"))
             .args(["--asset-base", &base]))?;
         sh(
-            Command::new(proof_dir.join("target/release/handover-proof"))
+            Command::new(paths::target_dir_of(&proof_dir).join("release/handover-proof"))
                 .arg("--bundle")
                 .arg(proof.join(OLD_BUNDLE))
                 .args(["--endpoint", &format!("{base}/latest.json")])

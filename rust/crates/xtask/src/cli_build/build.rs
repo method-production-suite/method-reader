@@ -291,11 +291,7 @@ impl BuildEnv<'static> {
     /// The real tools, this checkout, the production floors.
     pub fn real() -> Self {
         let workspace = paths::workspace_root();
-        let cargo_target_dir = match std::env::var_os("CARGO_TARGET_DIR") {
-            Some(d) if Path::new(&d).is_absolute() => PathBuf::from(d),
-            Some(d) => workspace.join(d),
-            None => workspace.join("target"),
-        };
+        let cargo_target_dir = paths::target_dir_of(&workspace);
         Self {
             workspace,
             cargo_target_dir,

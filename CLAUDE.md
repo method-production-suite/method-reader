@@ -21,6 +21,13 @@ history, as are those that edit the SwiftUI Mac app deleted at piece F3
 
 From `rust/` unless a line says otherwise:
 
+Every cargo and xtask command runs with
+`CARGO_TARGET_DIR="$HOME/.cache/method-target/screepub/<checkout>"`, the
+checkout being `main` for the main checkout or the worktree's folder name
+(one build folder per checkout: two checkouts sharing one can each take
+the other's build for current). The tools find it through `cargo
+metadata`, never by assuming `rust/target`.
+
 ```bash
 cargo test --workspace      # every crate's tests (fixtures: tests/fixtures/ at the repo root)
 cargo fmt --all --check     # formatting
@@ -90,7 +97,12 @@ The crates, in the order a conversion passes through them (each one's
   it strips notes via sp-fountain's notes.rs and asks its slug.rs, so a
   mini-slug becomes a Shot, not a numbered Scene Heading.
   Format-option-free; the version it declares is one constant,
-  `FDX_VERSION`.
+  `FDX_VERSION`. Each Scene Heading carries SceneProperties (registry
+  #13b): its page from the .fountain's `= pg N` markers (sp-fountain's
+  pages.rs), and its length in eighths, which the .fountain cannot carry:
+  sp-engine's scene_lengths.rs measures it from the PDF at convert time
+  and a library conversion keeps it in the script folder's source.json,
+  bound to the .fountain's digest.
 - `sp-model`: the parser's types, the token shape, and FormatOptions
   (`src/options.rs`), the single knob surface: CLI `--options file.json` ↔
   the window's Settings page. Defaults are pinned to root

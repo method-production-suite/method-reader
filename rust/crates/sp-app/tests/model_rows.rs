@@ -1060,7 +1060,7 @@ fn u4_a_failed_check_is_a_message_and_an_intel_mac_is_told_why() {
     h.get_by_role_and_label(Role::Button, "Check for updates")
         .click_accesskit();
     steps(&mut h);
-    assert!(shows(&h, sp_app::model::update::INTEL_MAC_RETIRED));
+    assert!(shows(&h, sp_app::model::update::NO_UPDATE_FOR_THIS_MAC));
 }
 
 #[test]
@@ -1102,5 +1102,212 @@ fn u6_each_moment_has_its_words() {
         h.state_mut().update.flow.during(phase);
         steps(&mut h);
         h.get_by_role_and_label(Role::Button, words);
+    }
+}
+
+// ------------------------------------------------------- report a problem
+// PARITY.md row B7: Report a Bug opens a sheet, from Help and from a failed
+// conversion, that sends by email or opens the GitHub issue.
+
+mod report {
+    use super::*;
+    use sp_app::app::help::{self, Sheet, words};
+    use sp_app::model::help::HelpItem;
+
+    /// The sheet rises over a few hundred milliseconds of a clock that a
+    /// test never moves: with reduced motion it is simply there.
+    fn calm_world() -> World {
+        let w = world();
+        w.fakes.reduced_motion.store(true, Ordering::Relaxed);
+        w
+    }
+
+    fn open_from_help(h: &mut H) {
+        help::choose(h.state_mut(), HelpItem::ReportBug);
+        steps(h);
+        h.get_by_role_and_label(Role::Dialog, "Report a Bug");
+    }
+
+    fn type_in(h: &mut H, text: &str) {
+        let field = h.get_by_role_and_label(Role::MultilineTextInput, words::WHAT_HAPPENED);
+        field.focus();
+        field.type_text(text);
+        steps(h);
+    }
+
+    fn send(h: &H) -> egui_kittest::Node<'_> {
+        h.get_by_role_and_label(Role::Button, words::SEND)
+    }
+
+    fn opened(w: &World) -> Vec<String> {
+        w.fakes.opener.opened.lock().unwrap().clone()
+    }
+
+    #[test]
+    fn b7_help_opens_the_sheet_and_send_waits_for_words() {
+        let w = calm_world();
+        let mut h = harness(&w, Platform::Mac);
+        open_from_help(&mut h);
+        assert!(send(&h).accesskit_node().is_disabled(), "nothing typed yet");
+        h.get_by_role_and_label(Role::Button, words::COPY);
+        h.get_by_role_and_label(Role::Link, words::GITHUB);
+        assert!(shows(&h, "hello@methodproduction.com"));
+        type_in(&mut h, "The cues went missing.");
+        assert!(!send(&h).accesskit_node().is_disabled());
+        send(&h).click();
+        steps(&mut h);
+        let opened = opened(&w);
+        assert_eq!(opened.len(), 1, "{opened:?}");
+        assert!(
+            opened[0].starts_with("mailto:hello@methodproduction.com?subject=Method%20Reader%20")
+        );
+        assert!(opened[0].contains("%3A%20a%20problem&body=The%20cues%20went%20missing."));
+        assert_eq!(
+            h.state().help.sheet,
+            None,
+            "the sheet goes once the mail is open"
+        );
+    }
+
+    #[test]
+    fn b7_a_failed_conversion_opens_the_same_sheet_with_its_code() {
+        let w = calm_world();
+        w.engine.once("convert", Reply::ok(json!({"ok": false, "error": {"code": "scanned", "message": "This PDF is a scan."}})));
+        let mut h = harness(&w, Platform::Mac);
+        convert(&w, &mut h);
+        h.get_by_role_and_label(Role::Button, "Report a bug")
+            .click();
+        steps(&mut h);
+        h.get_by_role_and_label(Role::Dialog, "Report a Bug");
+        assert!(
+            h.query_by_role_and_label(Role::CheckBox, words::ADD_SHAPE)
+                .is_none(),
+            "a failed PDF has no .fountain to count"
+        );
+        assert!(w.engine.calls_of("shape").is_empty());
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
+        steps(&mut h);
+        assert!(shows(&h, "What the app said: scanned: This PDF is a scan."));
+        assert!(shows(&h, "Subject: Method Reader "));
+        type_in(&mut h, "It is not a scan.");
+        send(&h).click();
+        steps(&mut h);
+        let opened = opened(&w);
+        assert!(opened[0].contains("subject=Method%20Reader%20"));
+        assert!(opened[0].contains("%3A%20scanned&body="), "{}", opened[0]);
+    }
+
+    #[test]
+    fn b7_the_counts_box_is_off_and_nothing_is_counted_in_the_body_until_ticked() {
+        let w = calm_world();
+        let mut h = harness(&w, Platform::Mac);
+        convert(&w, &mut h);
+        open_from_help(&mut h);
+        steps(&mut h);
+        let asked = w.engine.calls_of("shape");
+        assert_eq!(
+            asked,
+            [Request::Shape {
+                fountain: "/library/Field Station/Field Station.fountain".into()
+            }]
+        );
+        let tick = h.get_by_role_and_label(Role::CheckBox, words::ADD_SHAPE);
+        assert_eq!(
+            tick.accesskit_node().toggled(),
+            Some(egui::accesskit::Toggled::False)
+        );
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
+        steps(&mut h);
+        h.get_by_role_and_label(Role::MultilineTextInput, words::SENT);
+        assert!(!shows(&h, "cues: 103"), "no counts while the box is off");
+        type_in(&mut h, "Odd breaks.");
+        send(&h).click();
+        steps(&mut h);
+        let url = opened(&w).pop().unwrap();
+        assert!(!url.contains("cues"), "{url}");
+        assert!(!url.contains("Field%20Station"), "no title, no path");
+    }
+
+    #[test]
+    fn b7_ticked_the_counts_are_in_what_is_shown_and_what_is_sent() {
+        let w = calm_world();
+        let mut h = harness(&w, Platform::Mac);
+        convert(&w, &mut h);
+        open_from_help(&mut h);
+        steps(&mut h);
+        h.get_by_role_and_label(Role::CheckBox, words::ADD_SHAPE)
+            .click();
+        steps(&mut h);
+        h.get_by_role_and_label(Role::Button, words::SHOW_SENT)
+            .click();
+        steps(&mut h);
+        let shown = h.get_by_role_and_label(Role::MultilineTextInput, words::SENT);
+        let body = shown.value().unwrap_or_default();
+        assert!(
+            body.contains("Counts of the script's shape (no words from it):"),
+            "{body}"
+        );
+        assert!(
+            body.contains("pages: 18\nscene headings: 11\ncues: 103"),
+            "{body}"
+        );
+        h.get_by_role_and_label(Role::Button, words::HIDE_SENT);
+        type_in(&mut h, "Odd breaks.");
+        send(&h).click();
+        steps(&mut h);
+        let url = opened(&w).pop().unwrap();
+        assert!(url.contains("cues%3A%20103"), "{url}");
+        assert!(!url.contains("Field%20Station"));
+    }
+
+    #[test]
+    fn b7_no_mail_app_says_so_and_offers_the_address() {
+        let w = calm_world();
+        w.fakes.opener.refuses.store(true, Ordering::Relaxed);
+        let mut h = harness(&w, Platform::Linux);
+        open_from_help(&mut h);
+        type_in(&mut h, "Nothing happens.");
+        send(&h).click();
+        steps(&mut h);
+        assert_eq!(h.state().help.sheet, Some(Sheet::Report), "the sheet stays");
+        assert!(shows(&h, words::NO_MAIL));
+        h.get_by_role_and_label(Role::Button, words::COPY).click();
+        steps(&mut h);
+        assert!(h.state().help.report.copied);
+        assert!(shows(&h, "Copied hello@methodproduction.com."));
+    }
+
+    #[test]
+    fn b7_the_github_link_is_still_there_and_carries_what_was_typed() {
+        let w = calm_world();
+        let mut h = harness(&w, Platform::Mac);
+        open_from_help(&mut h);
+        type_in(&mut h, "Wrong order.");
+        h.get_by_role_and_label(Role::Link, words::GITHUB).click();
+        steps(&mut h);
+        let url = opened(&w).pop().unwrap();
+        assert!(url.starts_with(sp_app::model::feedback::NEW_ISSUE_BASE));
+        assert!(url.contains("Wrong+order."));
+        assert_eq!(h.state().help.sheet, None);
+    }
+
+    #[test]
+    fn b7_cancel_and_escape_close_it_and_nothing_is_sent() {
+        let w = calm_world();
+        let mut h = harness(&w, Platform::Mac);
+        open_from_help(&mut h);
+        h.get_by_role_and_label(Role::Button, words::CANCEL).click();
+        steps(&mut h);
+        assert_eq!(h.state().help.sheet, None);
+        open_from_help(&mut h);
+        type_in(&mut h, "Half a thought");
+        h.key_press(Key::Escape);
+        steps(&mut h);
+        h.key_press(Key::Escape);
+        steps(&mut h);
+        assert_eq!(h.state().help.sheet, None);
+        assert!(opened(&w).is_empty());
     }
 }

@@ -1,6 +1,6 @@
 # Autonomous run — 2026-09-13
 
-Sam is away. Instruction: *"progress through all phases without stopping…
+The owner is away. Instruction: *"progress through all phases without stopping…
 do your best attempt at everything and I can review when I return. Skip the
 windows code signing for now."*
 

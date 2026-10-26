@@ -170,3 +170,72 @@ fn the_device_library_requests_are_the_clis_verbs() {
         assert!(said.contains(shape), "{verb} --help: {said}");
     }
 }
+
+/// Fountain in: a .fountain the window converts (dropped, or picked with
+/// Choose a script) is the same Convert request a PDF is, so its argv is
+/// the PDF's with the path swapped, flag for flag. app.js never sent one,
+/// so there is no frozen answer to hold it to; the CLI's side of the same
+/// argv runs in sp-cli/tests/fountain_in.rs
+/// (`the_window_s_convert_argv_works_on_a_fountain`).
+#[test]
+fn a_fountain_converts_with_the_argv_a_pdf_does() {
+    for (force, options) in [(false, None), (true, Some(r#"{"cueIndentPct":41}"#))] {
+        let request = |path: &str| Request::Convert {
+            path: path.into(),
+            force,
+            options: options.map(str::to_owned),
+        };
+        let pdf = request("/s/Weather Log.pdf").argv();
+        let fountain = request("/s/Weather Log.fountain").argv();
+        assert_eq!(fountain[0], "/s/Weather Log.fountain");
+        assert_eq!(
+            fountain[1..],
+            pdf[1..],
+            "force {force}, options {options:?}"
+        );
+    }
+    assert_eq!(
+        Request::Convert {
+            path: "/s/Weather Log.fountain".into(),
+            force: false,
+            options: None,
+        }
+        .argv(),
+        [
+            "/s/Weather Log.fountain",
+            "--json",
+            "--progress",
+            "--preview-inline",
+            "--library"
+        ]
+    );
+}
+
+/// The report sheet's counts: `shape <fountain> --json`, a verb app.js
+/// never had, so it is held here to the CLI's own argv and run through the
+/// direct engine (src/direct.rs), which answers integers only. The CLI's
+/// side is sp-cli/tests/cli_shape.rs.
+#[test]
+fn the_shape_request_is_the_cli_s_shape_verb() {
+    use sp_app::engine::Engine;
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../oracle/field-station/script.fountain")
+        .to_string_lossy()
+        .into_owned();
+    let request = Request::Shape {
+        fountain: path.clone(),
+    };
+    assert_eq!(request.argv(), ["shape", path.as_str(), "--json"]);
+    assert_eq!(request.kind(), "shape");
+    let reply = sp_app::direct::DirectEngine::new().run(&request, &mut |_| {});
+    let answer = reply.answer.expect("an answer");
+    assert_eq!(answer["ok"], true);
+    for (key, value) in answer.as_object().unwrap() {
+        assert!(key == "ok" || value.is_u64(), "{key} is {value}");
+    }
+    let shape = sp_app::model::feedback::Shape::from_answer(&answer).expect("a shape");
+    assert_eq!(shape.pages, Some(18));
+    assert_eq!(shape.scene_headings, 11);
+    // The fake answers what the real engine does for the demo script.
+    assert_eq!(answer, sp_app::engine::default_answer(&request));
+}

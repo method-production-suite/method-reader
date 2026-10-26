@@ -607,13 +607,13 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     assert!(fake.calls[6].last().unwrap().ends_with(".dmg"));
 
     // The archive verifies against the key the shipped app trusts, and the
-    // manifest builder takes it as the darwin-aarch64 entry.
+    // manifest builder takes it for both chips.
     let tar = out.join("Method-Reader-macOS.app.tar.gz");
     let sig = fs::read_to_string(out.join("Method-Reader-macOS.app.tar.gz.sig")).unwrap();
     verify_file(&tar, &sig, &pubkey, VERSION).unwrap();
     let found = collect_signed_artifacts(&out).unwrap();
     assert_eq!(found.len(), 1);
-    assert_eq!(found[0].platform_keys, ["darwin-aarch64"]);
+    assert_eq!(found[0].platform_keys, ["darwin-aarch64", "darwin-x86_64"]);
 
     // What a 0.11.x window's updater lays over its own Method Reader.app.
     let unpacked = unpack_like_the_updater(&tar);

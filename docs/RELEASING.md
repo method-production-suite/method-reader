@@ -114,12 +114,16 @@ with the next patch version.
 
 The release run takes 15 to 25 minutes. Its `checksums` job reads every
 download back from the draft and writes ONE `SHA256SUMS` over them (the
-suite standard: bare names, sorted, never listing itself), and removes the
-`SHA256SUMS-app` an older run left. Its last job, `draft-check`, reads
+suite standard: bare names, sorted, never listing itself), signs it with the
+update key as `SHA256SUMS.minisig` (from 1.0.0), and removes the
+`SHA256SUMS-app` an older run left. A rehearsal never reaches the `checksums` job,
+so the first real signing of `SHA256SUMS` is 1.0.0's tag: watch that job
+on that run (the rehearsal's probe signature in the Mac step only proves
+the key). Its last job, `draft-check`, reads
 the draft back and fails loudly, naming what is missing, unless the draft
 carries every file: exactly one `Method-Reader-macOS.dmg`, the update
 archive and its signature, `latest.json` (not for a prerelease), every
-other installer, every command-line archive and `SHA256SUMS`, and no
+other installer, every command-line archive, `SHA256SUMS` and `SHA256SUMS.minisig`, and no
 `SHA256SUMS-app`. A red `draft-check` means
 do not publish: re-run the failed jobs from the run's page
 (`gh run rerun <id> --failed`), or run the whole workflow again against the
@@ -135,11 +139,14 @@ with nothing opened on screen:
   then `hdiutil attach -nobrowse -readonly`, `spctl --assess --type execute -vv`
   on the app inside (Gatekeeper must accept it), `codesign --verify --deep
   --strict`, `xcrun stapler validate` on the image and the app, and
-  `hdiutil detach`;
+  `hdiutil detach`; and from 1.0.0, `lipo -archs` on the app's
+  `Contents/MacOS/method-reader-app` says `x86_64 arm64`;
 - the Mac command line: `codesign --verify --strict` on both binaries in
-  `method-reader-cli-macos-arm64.tar.gz`;
+  `method-reader-cli-macos.tar.gz`, and `lipo -archs` on each says `x86_64 arm64`;
 - every download against `SHA256SUMS`, and every size against the run's own
   artifacts (none empty);
+- `SHA256SUMS.minisig` (from 1.0.0): `sp-release verify-file --file SHA256SUMS`
+  from `rust/`, or `minisign -Vm SHA256SUMS -P <the public key>`;
 - `latest.json`: `sp-release verify-update` against the update archive and
   its signature.
 
