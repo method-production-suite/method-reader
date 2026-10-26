@@ -4,6 +4,7 @@ pub mod book_queue;
 pub mod busy;
 pub mod convert;
 pub mod device;
+pub mod device_library;
 pub mod device_watch;
 pub mod feedback;
 pub mod focus;

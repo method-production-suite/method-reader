@@ -52,7 +52,7 @@ interface and appears only when that answers.
 Human output is one line per device. `--json`:
 
 ```json
-{"ok":true,"devices":[{"id":"/run/media/sam/KOBOeReader","kind":"kobo","name":"KOBOeReader","volume":"/run/media/sam/KOBOeReader"},
+{"ok":true,"devices":[{"id":"/run/media/you/KOBOeReader","kind":"kobo","name":"KOBOeReader","volume":"/run/media/you/KOBOeReader"},
                       {"id":"remarkable","kind":"remarkable","name":"reMarkable","volume":null}]}
 ```
 
@@ -79,7 +79,7 @@ the conversion pipeline untouched.
 `--json` on success:
 
 ```json
-{"ok":true,"device":{"id":"...","kind":"kindle","name":"Kindle"},"destination":"/run/media/sam/Kindle/documents/Script.epub"}
+{"ok":true,"device":{"id":"...","kind":"kindle","name":"Kindle"},"destination":"/run/media/you/Kindle/documents/Script.epub"}
 ```
 
 For reMarkable there is no destination path, so the field is omitted and

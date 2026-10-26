@@ -784,13 +784,17 @@ fn the_updater_archive_is_a_macos_kind_only_gzip_at_the_head_floor_like_the_rest
 }
 
 #[test]
-fn the_published_name_follows_the_image_s_and_it_serves_apple_silicon_only() {
+fn the_published_name_follows_the_image_s_and_it_serves_both_chips() {
     let k = app_tar();
     assert_eq!(
         released_name(&k, "0.6.0", MAC_ARCH),
         "Method-Reader-macOS.app.tar.gz"
     );
-    assert_eq!(platform_keys(&k, MAC_ARCH), ["darwin-aarch64"]);
+    // One universal archive since 1.0.0, under both keys.
+    assert_eq!(
+        platform_keys(&k, MAC_ARCH),
+        ["darwin-aarch64", "darwin-x86_64"]
+    );
 }
 
 #[test]

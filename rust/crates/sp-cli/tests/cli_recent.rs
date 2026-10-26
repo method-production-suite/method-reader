@@ -117,6 +117,35 @@ fn a_recent_json_it_cannot_write_never_fails_the_conversion() {
 }
 
 #[test]
+fn a_damaged_recent_json_is_kept_aside_and_said_once_on_stderr() {
+    let sb = Sandbox::new();
+    std::fs::write(sb.path("config/recent.json"), "{ not the list").unwrap();
+    let one = script(&sb, "scripts/One.pdf");
+    let ran = sb.run(&[&one, "--library", "--json"]);
+    assert_eq!(ran.code, 0, "{}\n{}", ran.stdout, ran.stderr);
+    let aside = sb.p("config/recent.json.damaged");
+    assert_eq!(std::fs::read_to_string(&aside).unwrap(), "{ not the list");
+    let said: Vec<&str> = ran
+        .stderr
+        .lines()
+        .filter(|l| l.contains("recent.json"))
+        .collect();
+    assert_eq!(
+        said,
+        [format!(
+            "method-reader: recent.json was damaged, so it was kept as {aside} and a new list was started"
+        )]
+    );
+    assert_eq!(recent_paths(&sb), std::slice::from_ref(&one));
+    // The next run finds a whole file and says nothing.
+    let two = script(&sb, "scripts/Two.pdf");
+    let ran = sb.run(&[&two, "--library", "--json"]);
+    assert_eq!(ran.code, 0, "{}\n{}", ran.stdout, ran.stderr);
+    assert!(!ran.stderr.contains("recent.json"), "{}", ran.stderr);
+    assert_eq!(recent_paths(&sb), [two, one]);
+}
+
+#[test]
 fn the_json_answer_is_the_same_with_or_without_the_record() {
     // The same first conversion in two sandboxes, recording made to fail
     // in the second: the answer has the same keys, and no key about it.

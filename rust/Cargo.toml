@@ -26,7 +26,7 @@ regex = "1"
 # String.prototype.normalize('NFC') for the KF8 index strings.
 unicode-normalization = "0.1"
 # Pure-Rust deflate, for the PNGs the MOBI picture probe draws.
-miniz_oxide = "0.8"
+miniz_oxide = "0.9"
 # SHA-256 for the tests that pin a book by its digest.
 sha2 = "0.10"
 sp-fdx = { path = "crates/sp-fdx" }
@@ -56,15 +56,22 @@ sp-release = { path = "crates/sp-release" }
 sp-update-config = { path = "crates/sp-update-config" }
 # The suite's updater (method-libs), pinned to one full commit. Its README
 # has Reader's migration notes; sp-update-config is what Reader hands it.
-method-update = { git = "https://github.com/method-production-suite/method-libs", rev = "37a9c8b9801bfcdedb9d79565a62f84fcdfb9a4a" }
+method-update = { git = "https://github.com/method-production-suite/method-libs", rev = "25c80f8cfcc2e5222de4c5b79413a9de488196af" }
 
 # The picture budget (sp-parser's IMAGE_BUDGET_MS) is wall-clock, and an
 # unoptimized build spends it on pixel work: a picture-heavy script that a
 # release build reads in 7 s ran out of its 20 s in a debug test. Optimizing
 # the pixel crates and every dependency in dev and test builds keeps the
 # tests' answers the shipped program's, without loosening the budget.
+# Smaller dev builds (the suite's disk rule, 2026-10-21): line tables only
+# for the workspace's own crates, so backtraces still name lines, and no
+# debug info at all for dependencies.
+[profile.dev]
+debug = "line-tables-only"
+
 [profile.dev.package."*"]
 opt-level = 3
+debug = false
 
 [profile.dev.package.sp-parser]
 opt-level = 3

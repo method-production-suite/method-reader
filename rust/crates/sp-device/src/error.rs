@@ -19,6 +19,11 @@ pub enum ErrorCode {
     UnsupportedFile,
     RevealFailed,
     EjectFailed,
+    /// device-remove: the file is outside the reader's books folder, reached
+    /// through a link, or not a book (docs/device-library.md).
+    NotABook,
+    /// device-remove: the reader refused the removal.
+    RemoveFailed,
 }
 
 impl ErrorCode {
@@ -33,6 +38,8 @@ impl ErrorCode {
             ErrorCode::UnsupportedFile => "unsupported-file",
             ErrorCode::RevealFailed => "reveal-failed",
             ErrorCode::EjectFailed => "eject-failed",
+            ErrorCode::NotABook => "not-a-book",
+            ErrorCode::RemoveFailed => "remove-failed",
         }
     }
 }

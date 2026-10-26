@@ -276,7 +276,7 @@ fn run_draft_step(tag: &str, exists: bool) -> (Output, Vec<String>) {
     let sc = Scratch::new("draft");
     let version = tag.trim_start_matches('v');
     sc.write(&format!("docs/releases/{version}.md"), "# Notes\n");
-    sc.write(&format!("temp/cli-mac/{}", names::CLI_MAC_ARM64), "tarball");
+    sc.write(&format!("temp/cli-mac/{}", names::CLI_MAC), "tarball");
     tool(
         &sc,
         "bin/gh",
@@ -309,7 +309,7 @@ fn draft_step_creates_a_draft_with_no_prerelease_flag_for_an_ordinary_tag() {
     assert!(!create.contains("--prerelease"), "{create}");
     assert!(create.contains("\tMethod Reader 0.12.0\t"), "{create}");
     let upload = at(&calls, "gh\trelease\tupload");
-    assert!(calls[upload].contains(names::CLI_MAC_ARM64));
+    assert!(calls[upload].contains(names::CLI_MAC));
     assert!(at(&calls, "gh\trelease\tcreate") < upload);
 }
 
@@ -328,7 +328,7 @@ fn draft_step_marks_a_prerelease_and_edits_an_existing_draft() {
 fn draft_step_points_the_notes_at_the_one_checksums_file() {
     let sc = Scratch::new("draft-notes");
     sc.write("docs/releases/0.12.0.md", "# Notes\n");
-    sc.write(&format!("temp/cli-mac/{}", names::CLI_MAC_ARM64), "tarball");
+    sc.write(&format!("temp/cli-mac/{}", names::CLI_MAC), "tarball");
     tool(&sc, "bin/gh", "[ \"$2\" = view ] && exit 1");
     let path = path_with(&sc.join("bin"));
     let temp = sc.join("temp").display().to_string();
@@ -365,6 +365,12 @@ fn mac_step(
         "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Method Reader.app/Contents/MacOS\" && : > \"$2/Method Reader.app/Contents/MacOS/method-reader-app\"; shift; done; fi",
     );
     tool(sc, "bin/lipo", &format!("echo '{archs}'"));
+    // The joined window, and Rosetta: both start and say nothing here.
+    sc.script(
+        "rust/target/universal-apple-darwin/release/method-reader-app",
+        "exit 0\n",
+    );
+    sc.script("bin/arch", "shift\nexec \"$@\"\n");
     tool(
         sc,
         "bin/codesign",
@@ -414,18 +420,18 @@ fn mac_step_refuses_to_start_without_the_update_key() {
 }
 
 #[test]
-fn mac_step_refuses_a_window_that_is_not_apple_silicon_alone() {
-    let sc = Scratch::new("mac-fat");
-    let (out, calls) = mac_step(&sc, true, "x86_64 arm64", "none");
+fn mac_step_refuses_a_window_that_is_not_universal() {
+    let sc = Scratch::new("mac-thin");
+    let (out, calls) = mac_step(&sc, true, "arm64", "none");
     assert!(!out.status.success());
-    assert!(said(&out).contains("not arm64 only"));
+    assert!(said(&out).contains("not universal (x86_64 arm64): arm64"));
     assert!(!calls.iter().any(|c| c.starts_with("sp-release\tmac-app")));
 }
 
 #[test]
 fn mac_step_signs_inside_out_notarizes_staples_and_validates_app_then_image() {
     let sc = Scratch::new("mac-ok");
-    let (out, calls) = mac_step(&sc, true, "arm64", "none");
+    let (out, calls) = mac_step(&sc, true, "x86_64 arm64", "none");
     assert!(out.status.success(), "{}", said(&out));
     let app = sc.join("temp/app/Method Reader.app").display().to_string();
     let exe = format!("{app}/Contents/MacOS/method-reader-app");
@@ -475,12 +481,12 @@ fn mac_step_fails_when_a_staple_leaves_no_ticket() {
     // `stapler staple` can exit 0 and leave nothing: v0.6.0 shipped an
     // image Gatekeeper rejects. The validate is asserted, not trusted.
     let sc = Scratch::new("mac-dmg-ticket");
-    let (out, calls) = mac_step(&sc, true, "arm64", "bundles/Method-Reader-macOS.dmg");
+    let (out, calls) = mac_step(&sc, true, "x86_64 arm64", "bundles/Method-Reader-macOS.dmg");
     assert!(!out.status.success());
     assert!(!calls.iter().any(|c| c.starts_with("spctl\t-a\t-t\topen")));
     let sc = Scratch::new("mac-app-ticket");
     let app = sc.join("temp/app/Method Reader.app").display().to_string();
-    let (out, calls) = mac_step(&sc, true, "arm64", &app);
+    let (out, calls) = mac_step(&sc, true, "x86_64 arm64", &app);
     assert!(!out.status.success());
     assert!(
         !calls
@@ -758,11 +764,12 @@ fn manifest_step_uploads_nothing_when_the_manifest_or_its_check_refuses() {
 /// release's asset list answers it.
 fn complete_assets(with_manifest: bool) -> String {
     let mut v = vec![
-        names::CLI_MAC_ARM64.to_string(),
+        names::CLI_MAC.to_string(),
         names::CLI_LINUX_X64.to_string(),
         names::CLI_LINUX_ARM64.to_string(),
         names::CLI_WINDOWS_X64.to_string(),
         "SHA256SUMS".to_string(),
+        "SHA256SUMS.minisig".to_string(),
         names::LINUX_DEB_AMD64.to_string(),
         names::LINUX_RPM_X86_64.to_string(),
         names::LINUX_APPIMAGE_X86_64.to_string(),

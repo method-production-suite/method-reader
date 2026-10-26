@@ -1,7 +1,7 @@
 # Release notes: draft, review, publish — design (v2)
 
 Date: 2026-07-31
-Status: revised after a five-persona review; awaiting Sam's approval
+Status: revised after a five-persona review; awaiting the owner's approval
 Branch: release-notes-automation (off main)
 
 v1 of this spec was reviewed by a release engineer, a DX designer, a
@@ -13,7 +13,7 @@ re-verified here before adoption.
 ## Goal
 
 Every release ships notes a screenwriter can read, in a fixed voice,
-reviewed by Sam before anything publishes, carried into the GitHub release
+reviewed by the owner before anything publishes, carried into the GitHub release
 automatically. Make the failure states unreachable, not merely detected.
 
 Today `release.yml` hardcodes a five-line body. Four releases shipped that
@@ -55,7 +55,7 @@ command makes both." That proves notes exist at the tagged commit. It does
 NOT prove the tagged commit is the commit being released.
 
 Defeat sequence, two keystrokes a solo maintainer types daily: `/release`
-commits and tags at A; Sam fixes a typo with `git commit --amend`, making
+commits and tags at A; the owner fixes a typo with `git commit --amend`, making
 B; he pushes. The tag points at A, orphaned and not on main. All four v1
 layers pass. The build ships from A.
 
@@ -119,8 +119,8 @@ to "offer a one-line maintenance note" when nothing is user-visible. That
 is the placeholder, re-entering with Claude's endorsement.
 
 **Fix:** hard stop. Claude reports the range is not user-visible and writes
-nothing. If Sam is releasing anyway (a rebuild, a signing fix), he states
-the reason and the note is written from his words.
+nothing. If the owner is releasing anyway (a rebuild, a signing fix), they state
+the reason and the note is written from their words.
 
 ## Deliverables
 
@@ -183,7 +183,7 @@ with corrected fields:
 - `optionChanges`: secondary.
 - `commits`: subjects as DATA, truncated to 200 chars, control characters
   and ANSI stripped, each flagged with whether the author is the repo
-  owner. Today Sam authors every commit; `CONTRIBUTING.md` solicits
+  owner. Today the owner authors every commit; `CONTRIBUTING.md` solicits
   patches, and a squash merge puts a contributor's PR title into the
   subject line.
 - `previousRelease`: `{ version, wordCount, bulletCount }`, so "shorter
@@ -220,7 +220,7 @@ Two human moments. Everything else is silent.
 
 1. **`/release`** (or `/release 0.5.1`). Preflight starts in the
    background; git reading and drafting happen in the foreground. v1 put
-   several minutes of `swift build` in front of the only screen Sam cares
+   several minutes of `swift build` in front of the only screen the owner cares
    about, for no safety benefit, since nothing is written yet.
    Preflight begins `git fetch --tags --prune`, and a tag existing **on
    origin** is the hard stop, not a local tag, which lies in both

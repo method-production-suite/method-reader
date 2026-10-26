@@ -43,7 +43,8 @@ apps.
 
 ## What it does
 
-- **Drop a PDF, get a clean e-book.** Nothing to set up first.
+- **Drop a PDF, get a clean e-book.** Nothing to set up first. A Fountain
+  script (.fountain) works the same way, no PDF needed.
 - **A book to look at from the start.** The first time it opens, Method
   Reader shows Field Station, an invented sample script, as a book, so you
   can see what it makes before you convert your own. Open Sample in the Help
@@ -139,6 +140,14 @@ one, or
 [open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose)
 to say more. A reader that is not on the list goes in **My device isn't
 here** on the same screen (beta).
+
+**Something came out wrong?** You don't need a GitHub account to say so.
+Choose **Help > Report a Bug**, or **Report a bug** on a conversion that
+failed, write what happened, and press **Send by email**: your mail app opens
+a message to hello@methodproduction.com that you can read and change before
+it goes. No words from your script are sent. A box, off unless you tick it,
+adds counts of the script's shape (pages, scenes, cues), and the same window
+can open an issue on GitHub instead.
 
 **What beta means here.** A feature marked (beta) works in our tests, but
 has not been tried widely on real devices or apps yet: tell us how it goes.
@@ -263,6 +272,31 @@ The [source is right here](rust/crates/) to check any of this.
 - **Not a coverage or analysis tool.** No summaries, no notes, no AI.
 - **Not a PDF viewer.** It makes an e-book you read on a device built for
   reading.
+
+## Coding agents
+
+`method-reader mcp` is an MCP server, so coding agents and other MCP clients
+can work with your scripts through typed tools: look inside a screenplay PDF
+(pages, scenes, speaking characters), read one page as plain text, write it
+out as a `.fountain` and a `.fdx` to keep editing, and make an EPUB, AZW3 or
+MOBI. Every tool runs the same conversion as the app and the command line.
+It only touches files inside the folders you give it, takes absolute paths
+only, and never replaces a file unless asked. Nothing is sent anywhere.
+
+It comes with the [command-line converter](docs/developers.md#install-the-command-line-converter).
+Claude Code:
+
+```bash
+claude mcp add method-reader -- method-reader mcp --root ~/Scripts
+```
+
+Claude Desktop, in `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "method-reader": { "command": "/path/to/method-reader", "args": ["mcp", "--root", "/Users/you/Scripts"] } } }
+```
+
+Every tool and the safety rules: [docs/mcp.md](docs/mcp.md).
 
 ## For developers
 

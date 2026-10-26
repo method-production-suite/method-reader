@@ -166,7 +166,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "e90feb589dd81ae4"
+        "text": "10bb991f53e856f5"
       },
       "out/book.preview.html": {
         "html": "5b8912c0354ba1b3"
@@ -343,7 +343,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "4a7dd5b5efa8f818"
+        "text": "86828913e5f29b49"
       },
       "out/book.preview.html": {
         "html": "e2da6cbd0154be79"
@@ -693,7 +693,7 @@
       "library": {
         "tree": {
           "torture/source.json": {
-            "json": "b46a4ad9d4abdf3f"
+            "json": "9c23287b00f18f92"
           },
           "torture/torture.epub": {
             "zip": [
@@ -826,7 +826,7 @@
       "library": {
         "tree": {
           "torture/source.json": {
-            "json": "b46a4ad9d4abdf3f"
+            "json": "9c23287b00f18f92"
           },
           "torture/torture.epub": {
             "zip": [
@@ -971,7 +971,7 @@
       "library": {
         "tree": {
           "torture/source.json": {
-            "json": "b46a4ad9d4abdf3f"
+            "json": "9c23287b00f18f92"
           },
           "torture/torture.epub": {
             "zip": [
@@ -1318,7 +1318,7 @@
       "library": {
         "tree": {
           "torture/source.json": {
-            "json": "b46a4ad9d4abdf3f"
+            "json": "9c23287b00f18f92"
           },
           "torture/torture.epub": {
             "zip": [
@@ -1456,7 +1456,7 @@
       "library": {
         "tree": {
           "torture/source.json": {
-            "json": "b46a4ad9d4abdf3f"
+            "json": "9c23287b00f18f92"
           },
           "torture/torture.epub": {
             "zip": [
@@ -2131,7 +2131,7 @@
         ]
       },
       "out/f.fdx": {
-        "text": "e90feb589dd81ae4"
+        "text": "fa1a5a17b6126de4"
       },
       "out/f.html": {
         "html": "5b8912c0354ba1b3"
@@ -2815,7 +2815,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fdx": {
-        "text": "e90feb589dd81ae4"
+        "text": "fa1a5a17b6126de4"
       }
     }
   }

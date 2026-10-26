@@ -600,6 +600,9 @@ fn begin(app: &mut App) -> bool {
 
 fn finish(app: &mut App, worked: bool, era: u64) {
     app.panel.sending = false;
+    if worked {
+        super::device_library::sent(app);
+    }
     let stale = era != app.panel.era;
     if app.panel.owed {
         app.panel.owed = false;
@@ -1223,7 +1226,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
 /// return. `flow`: pressed from the keyboard, it starts a flow that kills
 /// every button, and the keyboard comes back here after (keepFocus).
 #[allow(clippy::too_many_arguments)]
-fn keyed(
+pub(super) fn keyed(
     app: &mut App,
     ui: &mut Ui,
     look: Look,
@@ -1591,7 +1594,7 @@ fn draw_edit(app: &mut App, ui: &mut Ui) {
 }
 
 fn enabled(app: &App) -> bool {
-    !app.panel.sending && !app.panel.kfx.installing
+    !app.panel.sending && !app.panel.kfx.installing && super::device_library::idle(app)
 }
 
 fn plugged_in_mark(ui: &mut Ui, t: &theme::Tokens) {
@@ -1735,6 +1738,14 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
             .map(|c| c.kind.to_string())
             .collect(),
     );
+    // What is on a reader that is plugged in.
+    if !super::device_library::offered(app).is_empty() {
+        ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing.x = layout::SPACE[4];
+            super::device_library::entry(app, ui);
+        });
+        super::device_library::draw(app, ui);
+    }
 }
 
 fn draw_calm(app: &mut App, ui: &mut Ui) {
@@ -1868,7 +1879,9 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
         if different.clicked() {
             app.panel.mode = Some(Mode::Cards);
         }
+        super::device_library::entry(app, ui);
     });
+    super::device_library::draw(app, ui);
     if app.panel.ways_open {
         let offer = offer.map(|o| {
             if eject.is_some() {
@@ -2004,7 +2017,7 @@ const ACTION_COLUMN: f32 = 150.0;
 /// and the action on the right, so every row's button ends at the same
 /// edge whatever its words are. Rows sit egui's own item gap apart, and
 /// nothing more.
-fn way_row(ui: &mut Ui, words: impl FnOnce(&mut Ui), action: impl FnOnce(&mut Ui)) {
+pub(super) fn way_row(ui: &mut Ui, words: impl FnOnce(&mut Ui), action: impl FnOnce(&mut Ui)) {
     let full = ui.available_width();
     let words_w = (full - ACTION_COLUMN - layout::SPACE[3]).max(160.0);
     ui.horizontal_top(|ui| {

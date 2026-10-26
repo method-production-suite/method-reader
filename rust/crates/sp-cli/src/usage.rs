@@ -10,17 +10,19 @@ Usage:
 
 PDF is the primary path. .fountain input is PARTIALLY SUPPORTED: contdMode
 and rejoinSplitDialogue are applied when a PDF is read, so they do not take
-effect here (asking to strip (CONT'D) warns rather than failing silently),
-and the scanned-PDF and not-a-screenplay guards are PDF-only. See
-docs/fountain-input.md.
+effect here (asking to strip (CONT'D) warns rather than failing silently).
+A .fountain must be UTF-8 text with something in it, and one with no scene
+heading and no dialogue is refused as a PDF would be (--force overrules
+that); the scanned-PDF guard is PDF-only. Under --library a .fountain is
+copied into its library folder beside the book. See docs/fountain-input.md.
 
 A script's saved settings are used by the conversion that finds them: if
 <script>.method-reader.json sits beside the input (or in the script's library
 folder, under --library), this run renders with it and says so on stderr.
 --options/--options-json override it knob by knob. Write one with the
-settings command. The first --library conversion of a PDF with none saves
-the settings it started from as the script's own, so a later change to the
-app defaults reaches only new scripts. Turn that off with
+settings command. The first --library conversion of a script (PDF or
+.fountain) with none saves the settings it started from as its own, so a
+later change to the app defaults reaches only new scripts. Turn that off with
 app-settings --set '{"keepScriptSettings":false}': scripts converted from
 then on follow the app defaults until they are tuned, and a script that
 already has saved settings keeps them.
@@ -98,6 +100,10 @@ Commands:
                                             should this update be offered? (offline)
   method-reader update-should-check [--opted-in] [--last-checked <ms>] [--json]
                                             may a check be made now? (offline)
+  method-reader shape <file.fountain> [--json]
+                                            a script's shape as counts, no words from it
+  method-reader mcp [--root <dir>]... [--read-only]
+                                            these tools for an MCP client, over stdio
 
 A verb is only a verb when no file of that name exists: a script saved as
 "devices" still converts, and "./devices" always means the file.
@@ -237,6 +243,39 @@ Usage:
 <file> must be a full path to a file that already exists. On macOS, Finder
 opens with the file itself selected. On Windows and Linux, the file's
 folder opens instead.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
+pub const DEVICE_BOOKS_USAGE: &str = r#"method-reader device-books: the books on a connected reader
+
+Usage:
+  method-reader device-books <volume> [--json]
+
+<volume> must be the full path of a reader that `method-reader devices` lists
+right now. Lists every book in the folder the reader keeps them in (a
+Kindle's documents folder, a Kobo's whole volume, a tolino's Books folder),
+with its size and format, and names the library folder of each one Method
+Reader made: the same size and the same bytes. Links are never followed.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
+pub const DEVICE_REMOVE_USAGE: &str = r#"method-reader device-remove: take one book off a connected reader
+
+Usage:
+  method-reader device-remove <volume> <book> [--json]
+
+<volume> must be a reader `method-reader devices` lists right now, and <book>
+the full path of a book in that reader's books folder, as device-books
+lists it. Anything else is refused before anything is touched. On a Kindle,
+the book's .sdr folder (its reading position, highlights and notes) goes
+with it, as it does when the Kindle itself deletes a book. It does not ask
+first.
 
 Options:
   --json                 machine-readable result on stdout (for the app)
@@ -386,4 +425,21 @@ Options:
   --last-checked <ms>      when a check last ran, in epoch milliseconds
   --json                   machine-readable result on stdout (for the app)
   -h, --help               show this help
+"#;
+
+pub const SHAPE_USAGE: &str = r#"method-reader shape: a script's shape as counts, no words from it
+
+Usage:
+  method-reader shape <file.fountain> [--json]
+
+Counts what the .fountain holds, read the way every book is made from it:
+scene headings, cues, dialogue blocks, dual-dialogue exchanges, pictures and
+transitions, and pages when the script carries page markers (one more than
+its "= pg N" lines; left out when it has none). The answer is numbers only:
+no name, no word and no file name from the script. A problem report can
+carry it when the person reporting chooses to add it.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
 "#;

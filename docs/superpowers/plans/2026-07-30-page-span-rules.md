@@ -568,7 +568,7 @@ Expected: `No errors or warnings detected` (check `--help` first if `--out` diff
 
 - [ ] **Step 3: Real-PDF sweep (only if root `fixtures/` exists on this machine).** Convert one real script with defaults and one with `--options` `{"keepSpeechesWhole": true}`; diff nothing — just confirm both convert cleanly and epubcheck passes.
 
-- [ ] **Step 4: Device-truth check (manual, flag for Sam).** With the KFX toolchain ready, convert a script whose first scene opens with a long speech; open in Kindle Previewer and verify: (a) headings do not strand at page bottoms (`break-after: avoid` binds — the spec's named risk; if it does NOT bind, the fallback is a wrapper holding heading + first element only, and the registry gets the verdict), (b) pages fill markedly better than before, (c) with the toggle on, speeches move whole. Quick Apple Books pass for the same three.
+- [ ] **Step 4: Device-truth check (manual, flag for the owner).** With the KFX toolchain ready, convert a script whose first scene opens with a long speech; open in Kindle Previewer and verify: (a) headings do not strand at page bottoms (`break-after: avoid` binds — the spec's named risk; if it does NOT bind, the fallback is a wrapper holding heading + first element only, and the registry gets the verdict), (b) pages fill markedly better than before, (c) with the toggle on, speeches move whole. Quick Apple Books pass for the same three.
 
 - [ ] **Step 5: Final commit if verification touched anything, then report.** Summarize: what changed, suite results, epubcheck result, and the two manual checks awaiting device eyes.
 

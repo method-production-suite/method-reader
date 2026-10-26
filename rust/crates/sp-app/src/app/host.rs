@@ -17,7 +17,7 @@ use crate::model::update::{Found, MemoryStorage, Storage};
 use crate::model::update_flow::{Offer, RunOutcome};
 
 pub trait Dialogs {
-    /// The open dialog, filtered to screenplays (pdf, fountain, txt).
+    /// The open dialog, filtered to scripts (model::convert::SCRIPT_FILTER).
     fn pick_screenplay(&self) -> Option<String>;
     fn pick_folder(&self, start: &str) -> Option<String>;
     fn save(&self, name: &str, filter: &(String, Vec<String>)) -> Option<String>;
@@ -104,12 +104,17 @@ pub fn run_outcome(outcome: Outcome) -> RunOutcome {
 }
 
 /// The pages the window may open, and nothing else (capabilities/
-/// default.json's opener scope, and the Help menu's two websites).
+/// default.json's opener scope, the Help menu's two websites, and a
+/// problem report's message to the suite's address).
 pub fn allowed_url(url: &str) -> bool {
     use crate::model::help::{SUITE, WEBSITE};
     url.starts_with("https://github.com/method-production-suite/method-reader/")
         || url.starts_with("https://github.com/method-production-suite/method-reader#")
         || url == WEBSITE
+        || url.starts_with(&format!(
+            "mailto:{}?",
+            crate::model::feedback::REPORT_ADDRESS
+        ))
         || url == SUITE
         || matches!(
             url,
@@ -152,8 +157,9 @@ pub struct NativeDialogs;
 
 impl Dialogs for NativeDialogs {
     fn pick_screenplay(&self) -> Option<String> {
+        let (name, extensions) = crate::model::convert::SCRIPT_FILTER;
         rfd::FileDialog::new()
-            .add_filter("Screenplay", &["pdf", "fountain", "txt"])
+            .add_filter(name, extensions)
             .pick_file()
             .map(|p| p.to_string_lossy().into_owned())
     }
@@ -660,10 +666,16 @@ impl Dialogs for FakeDialogs {
 #[derive(Clone, Default)]
 pub struct FakeOpener {
     pub opened: Arc<Mutex<Vec<String>>>,
+    /// Set, every open fails, as on a computer with nothing to open a
+    /// `mailto:` link with; nothing is recorded as opened.
+    pub refuses: Arc<AtomicBool>,
 }
 
 impl Opener for FakeOpener {
     fn open_url(&self, url: &str) -> bool {
+        if self.refuses.load(Ordering::Relaxed) {
+            return false;
+        }
         self.opened.lock().expect("fake").push(url.into());
         true
     }

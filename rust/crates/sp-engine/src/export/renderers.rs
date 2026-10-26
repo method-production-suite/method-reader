@@ -10,6 +10,7 @@
 
 use std::collections::BTreeMap;
 
+use sp_fdx::SceneMeasure;
 use sp_model::FormatOptions;
 
 use crate::convert::{ConvertOptions, convert_fountain};
@@ -29,10 +30,16 @@ pub trait Renderers {
         images: Option<&BTreeMap<String, Vec<u8>>>,
     ) -> Result<Option<Vec<u8>>, String>;
 
-    /// `fountainToFdx(text)`: fountain-js's tokens, then sp-fdx.
-    fn fountain_to_fdx(&self, fountain: &str) -> Result<String, String> {
+    /// `fountainToFdx(text)`: fountain-js's tokens, then sp-fdx, with the
+    /// scene lengths measured when the script was converted, if any were
+    /// kept for this very text.
+    fn fountain_to_fdx(
+        &self,
+        fountain: &str,
+        measures: Option<&[SceneMeasure]>,
+    ) -> Result<String, String> {
         let tokens = sp_fountain::tokenize(fountain).map_err(|e| e.to_string())?;
-        Ok(sp_fdx::tokens_to_fdx(&tokens))
+        Ok(sp_fdx::tokens_to_fdx_measured(&tokens, measures))
     }
 
     /// The Open Screenplay Format document: fountain-js's tokens, then

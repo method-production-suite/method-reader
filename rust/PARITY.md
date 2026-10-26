@@ -313,6 +313,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E26 | Folder picker starts at the current library; save box starts at `<book stem>.<ext>` with one filter named by the file's label | ui/app.js pickFolder, saveDialog; ui/send-routes.js | | done |
 | E27 | Book queue: one queue per library EPUB; readers side by side, a writer alone, arrival order kept, a failure never stops the queue; turns save/convert write, kindle/send/copy/check read; a settle still counting down is cut short before any turn (its save goes first) | ui/book-queue.js | | done |
 | E28 | Kindle line: Kindle-file exports of one book one at a time, before their book turn | ui/send-panel.js inKindleLine | | done |
+| E29 | `shape <fountain> --json` (a problem report's counts; new, not app.js's) | `shape(fountain)` | no | done |
 
 ### C. Convert
 
@@ -515,6 +516,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | B4 | Where it is worn: the FDX and AZW3 save rows, our own AZW3 on Copy to Kindle, the two picture switches, Eject off a Mac, the device-request Send, the report answers, the My device isn’t here card | ui/beta.js, callers | done |
 | B5 | The request service: POST JSON to https://screepub-device-requests.<the old workers.dev account>.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
 | B6 | The window's network allow-list (CSP connect-src): only that address; the opener allow-list: only the four pages in K6 | tauri/tauri.conf.json, capabilities | done |
+| B7 | Report a problem opens a sheet: what happened (required), Send by email to the suite's address or open a GitHub issue, and for a converted script the shape's counts, off by default (Decisions: "The shape verb") | new (2026-10-21) | done |
 
 ### L. Layout, measured (tests/desktop-layout-measured.test.ts)
 
@@ -1223,6 +1225,15 @@ names the check it affects.
   since the window's own model/update.rs already keeps the suite's
   schedule and switch, and the Windows and Linux installers' hand-off,
   which method-update dropped (the window only ever updated on a Mac).
+- **method-reader mcp is Rust's alone (2026-10-19, the owner's ask).** An
+  MCP server over stdio (`sp-cli/src/mcp/`): its tools run the CLI's own
+  `run()` in-process, so every answer is a CLI answer, and
+  `sp-cli/tests/mcp.rs` holds each to the CLI's own for the same input. The
+  TypeScript had no such verb, so the main help gained one line in the verb
+  list (`tests/usage.rs`, CHANGED_ON_PURPOSE). The four parity rows that
+  print the main help (`help`, `help-short`, `help-json`,
+  `refuse-no-input`) were moved with `cargo xtask parity --accept`, and each
+  frozen answer differs from the old one by exactly that line.
 - **recent.json is Rust's alone (2026-10-18, the suite standard §2).** A
   `--library` conversion now records its input in `recent.json` in the
   data folder, for the suite's launcher (`sp-engine/src/recent.rs`). The
@@ -1234,7 +1245,10 @@ names the check it affects.
   `config/recent.json` out of the compared tree only when it is
   well-formed: an array of objects, each a `path` inside that run's
   scratch folder and an RFC 3339 `opened`. A malformed one stays, and the
-  row differs on it. The `--json` answer is unchanged.
+  row differs on it. The `--json` answer is unchanged. Since 2026-10-21
+  (branch fix/recent-list) every record also leaves an empty
+  `recent.json.lock` beside it, the cross-process lock; the harness takes
+  that out too, only while it is empty.
 - **A tall dual exchange stays two speeches (2026-10-19, branch
   fix/long-dual-boundary): a TypeScript bug, fixed, its answers moved.**
   torture.pdf's sheet 9 carries a second dual exchange (ODILE left, WREN
@@ -1300,3 +1314,82 @@ names the check it affects.
   (tests/data/parity-cli.json) are left as frozen: its common/frozen.rs
   reads the refusal's one sentence as it is now, the same way it reads the
   product's new name.
+- **The FDX gives each scene heading its page, length and number (decided
+  by the owner, 2026-10-16, for 1.0.0): a deliberate output change, FDX
+  only.** Each Scene Heading paragraph gains Final Draft's
+  `<SceneProperties Length="..." Page="..."/>` ahead of its text (registry
+  #13b). Page comes from the .fountain's `= pg N` markers; Length is
+  measured from the PDF at convert time (sp-engine's scene_lengths.rs) and
+  is written only when those measurements are at hand: the conversion's
+  own `--fdx`, or `export --for fdx` of a library .fountain whose digest
+  matches the lengths kept in its folder's source.json. Number was
+  already written from the .fountain's `#n#`. The EPUB, MOBI, AZW3,
+  preview and .fountain do not change for any fixture, and no `--json`
+  answer changes. What was re-frozen, each diffed first:
+  - rust/oracle/{field-station,images,screenplay,torture}/book.fdx (the
+    stage answer, tokens.json to FDX, so pages only): every difference is
+    an inserted `<SceneProperties Page="..."/>`, 11, 4, 5 and 15 of them;
+    with those taken out each file is its old bytes exactly. jpx's has no
+    markers and did not move.
+  - 43 parity rows, accepted with `cargo xtask parity --accept convert
+    convert-phone convert-library convert-library-again convert-sidecar
+    convert-app-defaults convert-follow-defaults convert-fountain
+    export-fdx` (20 more runs of those rows already matched): the hash of
+    an `.fdx` (convert and convert-phone, with Length and Page;
+    convert-fountain and export-fdx, Page only) or of the library's
+    source.json (the five library rows, which gain `"scenes"` beside
+    `"source"`), and nothing else. The kept scratch folders were checked
+    the same way: each new .fdx is the old frozen FDX plus SceneProperties
+    only, and each source.json holds exactly `"source"` and `"scenes"`.
+  - sp-fdx's recorded TypeScript answers (tests/data/fountain-tokens.json)
+    stay frozen: tests/against_typescript.rs now compares with
+    SceneProperties taken out, and fails unless the one recorded source
+    with a page marker is the only one whose FDX gained any.
+  - Brought up to date with main on 2026-10-20 (branch
+    feat/fdx-scene-pages, after torture's tall dual exchange above was
+    re-frozen): the four stage FDXs are main's bytes plus the same 11, 4,
+    5 and 15 SceneProperties, and the same 43 rows were accepted again
+    against main's answers with the same command. Each of the 43 differed
+    in exactly one value, an `.fdx` hash or a library source.json hash;
+    the other 404 committed runs matched untouched.
+- **Fountain in (2026-10-21).** A `.fountain` someone chose is held to
+  guards of its own (`sp_engine::convert::fountain_guards`): bytes that are
+  not UTF-8 are refused as `unreadable` instead of being read lossily, an
+  empty file is refused as `unreadable` even with `--force`, and a file with
+  no scene heading and no dialogue gets the PDF's `not-screenplay` refusal,
+  which `--force` overrules (one with dialogue but no scene heading gets the
+  PDF's no-scene-navigation warning). The TypeScript took every `.fountain`
+  on trust; with the window accepting one by drop, a stray text file would
+  otherwise become a book. A `.fountain` in a script folder the library
+  made (`sp_engine::library::in_script_folder`) is not checked again, so the
+  window's re-render of a script converted with `--force` still works.
+  Under `--library` a `.fountain` input now gets a copy in its script
+  folder, with the pictures its notes name, and the answer gains
+  `fountainPath` (and `imagesPath`); the first library conversion pins the
+  script's settings beside that copy, as a PDF's does. The TypeScript wrote
+  neither, and `sp-cli/tests/conversion_settings.rs` says so where its test
+  changed. No frozen conversion row moved: every committed fixture's
+  `.fountain` rows run on scripts with scenes, and none passes `--library`.
+  Four rows moved with the help text that describes all this (`help`,
+  `help-short`, `help-json`, `refuse-no-input`), accepted with
+  `cargo xtask parity --accept`; sp-cli/tests/usage.rs lists the two
+  changed paragraphs in `CHANGED_ON_PURPOSE`. The window's drop well now
+  reads "Drop a script", "Choose a script…" and "A PDF with selectable
+  text, or a .fountain." (ROADMAP.md, Decisions: "Scripts as input"), in
+  place of row C2's words.
+- **The shape verb (2026-10-21).** `method-reader shape <file.fountain>
+  [--json]` is new: not one of the TypeScript's verbs. It tokenizes the
+  `.fountain` with sp-fountain and answers counts only (`pages`,
+  `sceneHeadings`, `cues`, `dialogueBlocks`, `dualExchanges`, `pictures`,
+  `transitions`), for the window's problem report
+  (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
+  `pages` is one more than the script's `= pg N` markers and is left out
+  when it has none. The spec put these counts in the convert `--json`
+  answer instead; a verb of its own was chosen because then no frozen
+  convert row moves, and because the script someone reports after a bad
+  conversion still has its `.fountain`, which the verb reads. Four rows
+  moved with the main help's new verb line (`help`, `help-short`,
+  `help-json`, `refuse-no-input`), accepted with
+  `cargo xtask parity --accept`; sp-cli/tests/usage.rs lists the line in
+  `CHANGED_ON_PURPOSE`. The parity table's own verb list
+  (xtask/src/table.rs) is the TypeScript's and stays without it.

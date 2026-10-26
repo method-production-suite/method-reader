@@ -12,6 +12,7 @@ pub mod cover;
 pub mod js;
 pub mod jsre;
 pub mod notes;
+pub mod pages;
 pub mod serialize;
 pub mod slug;
 pub mod tokenizer;
@@ -21,6 +22,9 @@ pub use notes::{
     ImageSet, fmt_classes, fmt_size_step, image_note_files, is_safe_image_file, parse_img_note,
     renders_image, strip_notes, strip_screepub_notes,
 };
-pub use serialize::{TitleMeta, disarm_boneyard, extract_title_meta, to_fountain};
+pub use pages::page_marker_label;
+pub use serialize::{
+    TitleMeta, disarm_boneyard, extract_title_meta, is_body, printed_page_offset, to_fountain,
+};
 pub use slug::{PRIMARY_SLUG_SOURCE, is_mini_slug, is_primary_slug};
 pub use tokenizer::{FountainError, tokenize};

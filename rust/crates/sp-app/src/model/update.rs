@@ -34,7 +34,11 @@ pub const CHECK_EVERY_MS: f64 = 6.0 * 60.0 * 60.0 * 1000.0;
 /// How long a restart waits for quiet before it hands the choice over.
 pub const RESTART_WAIT_CAP_MS: f64 = 120_000.0;
 
-pub const INTEL_MAC_RETIRED: &str = "New versions of Method Reader run only on Macs with Apple silicon, so this copy will not be offered updates. The version you have keeps working.";
+/// A release that has no update for this Mac's chip. Since 1.0.0 every
+/// release serves Apple silicon and Intel, so this means a release went
+/// out wrong; the version you have keeps working.
+pub const NO_UPDATE_FOR_THIS_MAC: &str =
+    "The newest release has no update for this Mac yet. The version you have keeps working.";
 
 /// The window's own string bucket (localStorage in the webview).
 pub trait Storage {
@@ -54,16 +58,10 @@ impl Storage for MemoryStorage {
     }
 }
 
-/// Whether a check's rejection is the manifest having nothing for an
-/// Intel Mac.
-pub fn is_intel_mac_retired(message: &str) -> bool {
-    message.contains("`platforms` object")
-        && message.match_indices("darwin-x86_64").any(|(i, _)| {
-            let before = message[..i].chars().next_back();
-            let after = message[i + "darwin-x86_64".len()..].chars().next();
-            !before.is_some_and(|c| c.is_alphanumeric() || c == '_')
-                && !after.is_some_and(|c| c.is_alphanumeric() || c == '_')
-        })
+/// Whether a check's rejection is the manifest having nothing for this
+/// Mac's chip (the format's `TargetsNotFound` words).
+pub fn is_no_update_for_this_mac(message: &str) -> bool {
+    message.contains("`platforms` object") && message.contains("`[\"darwin-")
 }
 
 /// Only on a Mac: the manifest lists darwin only.
@@ -359,10 +357,10 @@ pub fn finish_check(
     let found = match answer {
         Ok(found) => found,
         Err(message) => {
-            if is_intel_mac_retired(&message) {
+            if is_no_update_for_this_mac(&message) {
                 forget_found(storage);
                 return CheckOutcome::Error {
-                    message: INTEL_MAC_RETIRED.into(),
+                    message: NO_UPDATE_FOR_THIS_MAC.into(),
                 };
             }
             return CheckOutcome::Error { message };
@@ -640,21 +638,22 @@ mod tests {
     }
 
     #[test]
-    fn an_intel_mac_is_told_in_plain_words() {
+    fn a_release_with_no_key_for_this_mac_is_told_in_plain_words() {
         let mut s = MemoryStorage::default();
         remember_found(&mut s, "0.12.0");
         let msg = "None of the fallback platforms `[\"darwin-x86_64-app\", \"darwin-x86_64\"]` were found in the response `platforms` object";
-        assert!(is_intel_mac_retired(msg));
+        assert!(is_no_update_for_this_mac(msg));
+        assert!(is_no_update_for_this_mac(
+            "None of the fallback platforms `[\"darwin-aarch64-app\", \"darwin-aarch64\"]` were found in the response `platforms` object"
+        ));
         assert_eq!(
             run_check(true, &mut s, 1.0, || Err(msg.into())),
             CheckOutcome::Error {
-                message: INTEL_MAC_RETIRED.into()
+                message: NO_UPDATE_FOR_THIS_MAC.into()
             }
         );
         assert_eq!(remembered_offer(&s, "0.11.1"), None);
-        assert!(!is_intel_mac_retired(
-            "darwin-aarch64 missing from `platforms` object"
-        ));
+        assert!(!is_no_update_for_this_mac("the network is down"));
     }
 
     #[test]

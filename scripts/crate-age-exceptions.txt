@@ -11,12 +11,4 @@ rustls 0.23.46       # RUSTSEC-2026-0346 to 0349 (2026-10-14)
 zip 9.0.3            # RUSTSEC-2026-0367, RUSTSEC-2026-0368 and RUSTSEC-2026-0369 (zip 9 is the fix; every release before 9.0.0 is vulnerable and 9.0.0 to 9.0.2 are yanked)
 rustls-webpki 0.103.16   # RUSTSEC-2026-0382 (2026-10-20): rejects certificate paths through the distrusted emSign intermediates
 webpki-roots 1.0.10      # RUSTSEC-2026-0381 (2026-10-20): drops the emSign ECC Root CA - G3 those intermediates chain to
-fontique 0.12.0      # ages-out 2026-10-23: with parley 0.12, the book preview's text layout
-parley 0.12.0        # ages-out 2026-10-23: sp-app's direct dependency, the book preview's text layout
-parley_data 0.12.0   # ages-out 2026-10-23: part of parley 0.12
-parley_emoji 0.12.0  # ages-out 2026-10-23: part of parley 0.12
-parley_engine 0.12.0 # ages-out 2026-10-23: part of parley 0.12
-parlance 0.1.1       # ages-out 2026-10-23: required by parley 0.12
-objc2 0.6.5          # ages-out 2026-10-19: required by parley 0.12 on macOS
-mtp-rs 0.33.0        # ages-out 2026-10-21: the MTP helper's exact pin; off and shipped to nobody
-rpm 0.30.2           # ages-out 2026-10-21: the release tool's Linux packaging, CI only
+clipboard-win 5.4.3  # ages-out 2026-11-06: the Windows clipboard (arboard, through the window's toolkit); every release up to 5.4.1 was yanked on 2026-10-23 with no reason given, and the owner chose 5.4.3 (2026-10-26). 1.0.0 releases after this date unless the owner approves an override

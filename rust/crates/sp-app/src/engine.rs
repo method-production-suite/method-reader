@@ -47,6 +47,16 @@ pub enum Request {
     Eject {
         volume: String,
     },
+    /// The books on a connected reader (docs/device-library.md). Not one
+    /// of app.js's: the Tauri window had no device library.
+    DeviceBooks {
+        volume: String,
+    },
+    /// One book off a connected reader, and what goes with it.
+    DeviceRemove {
+        volume: String,
+        file: String,
+    },
     Send {
         file: String,
         device: Option<String>,
@@ -86,6 +96,11 @@ pub enum Request {
         options: Option<String>,
     },
     EmailSetup,
+    /// A script's shape as counts, for a problem report (`shape`, new:
+    /// not one of app.js's).
+    Shape {
+        fountain: String,
+    },
 }
 
 impl Request {
@@ -98,6 +113,8 @@ impl Request {
             Self::ConvertTo { .. } => Call::Convert,
             Self::Devices { .. } => Call::Devices,
             Self::Eject { .. } => Call::Eject,
+            Self::DeviceBooks { .. } => Call::DeviceBooks,
+            Self::DeviceRemove { .. } => Call::DeviceRemove,
             Self::Send { .. } => Call::Send,
             Self::Settings { .. } => Call::Settings,
             Self::Export { .. } => Call::Export,
@@ -110,6 +127,7 @@ impl Request {
             Self::Routes { .. } => Call::Routes,
             Self::Route { .. } => Call::Route,
             Self::EmailSetup => Call::EmailSetup,
+            Self::Shape { .. } => Call::Shape,
         }
     }
 
@@ -166,6 +184,15 @@ impl Request {
                 v(&[Some("devices"), Some("--json"), flag(*quick, "--quick")])
             }
             Self::Eject { volume } => v(&[Some("eject"), Some(volume), Some("--json")]),
+            Self::DeviceBooks { volume } => {
+                v(&[Some("device-books"), Some(volume), Some("--json")])
+            }
+            Self::DeviceRemove { volume, file } => v(&[
+                Some("device-remove"),
+                Some(volume),
+                Some(file),
+                Some("--json"),
+            ]),
             Self::Send { file, device } => v(&[
                 Some("send"),
                 Some(file),
@@ -242,6 +269,7 @@ impl Request {
                 options.as_deref(),
             ]),
             Self::EmailSetup => v(&[Some("route"), Some("kindle-email-setup"), Some("--json")]),
+            Self::Shape { fountain } => v(&[Some("shape"), Some(fountain), Some("--json")]),
         }
     }
 
@@ -254,6 +282,8 @@ impl Request {
             Self::ConvertTo { .. } => "convert-to",
             Self::Devices { .. } => "devices",
             Self::Eject { .. } => "eject",
+            Self::DeviceBooks { .. } => "device-books",
+            Self::DeviceRemove { .. } => "device-remove",
             Self::Send { .. } => "send",
             Self::Settings { set: None, .. } => "settings",
             Self::Settings { set: Some(_), .. } => "settings-set",
@@ -267,6 +297,7 @@ impl Request {
             Self::Routes { .. } => "routes",
             Self::Route { .. } => "route",
             Self::EmailSetup => "email-setup",
+            Self::Shape { .. } => "shape",
         }
     }
 }
@@ -334,6 +365,25 @@ pub fn default_answer(request: &Request) -> Value {
         }
         Request::Devices { .. } => json!({"ok": true, "devices": []}),
         Request::Eject { .. } => json!({"ok": true}),
+        Request::DeviceBooks { volume } => {
+            let kind = if volume.to_lowercase().contains("kobo") {
+                "kobo"
+            } else {
+                "kindle"
+            };
+            let folder = if kind == "kindle" {
+                format!("{volume}/documents")
+            } else {
+                volume.clone()
+            };
+            json!({"ok": true, "volume": volume, "kind": kind, "folder": folder, "books": [
+                {"path": format!("{folder}/Field Station.azw3"), "name": "Field Station.azw3",
+                 "size": 245_760, "format": "azw3", "library": "Field Station"},
+                {"path": format!("{folder}/Reading list.pdf"), "name": "Reading list.pdf",
+                 "size": 2_400_000, "format": "pdf"},
+            ]})
+        }
+        Request::DeviceRemove { file, .. } => json!({"ok": true, "removed": [file]}),
         Request::Send { .. } => {
             json!({"ok": true, "destination": "/Volumes/Kindle/documents/Field Station.kfx"})
         }
@@ -406,6 +456,11 @@ pub fn default_answer(request: &Request) -> Value {
         Request::EmailSetup => {
             json!({"ok": true, "note": "Opened Amazon’s Personal Document Settings."})
         }
+        // What the engine answers for the demo script's .fountain.
+        Request::Shape { .. } => json!({
+            "ok": true, "pages": 18, "sceneHeadings": 11, "cues": 103,
+            "dialogueBlocks": 103, "dualExchanges": 0, "pictures": 0, "transitions": 3,
+        }),
     }
 }
 

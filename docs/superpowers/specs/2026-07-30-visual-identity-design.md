@@ -6,7 +6,7 @@ Branch: visual-identity
 
 ## Goal
 
-Give screepub.com an identity before Sam starts posting about the
+Give screepub.com an identity before the owner starts posting about the
 project, and put that identity somewhere Claude Design can build
 against.
 
@@ -263,7 +263,7 @@ trigger the DMG release pipeline. If the site later grows a blog and
 its own release rhythm, extracting a static folder into its own repo is
 an afternoon. Splitting now buys nothing and costs a sync step.
 
-The site's marketing copy is not program code. If Sam wants it under
+The site's marketing copy is not program code. If the owner wants it under
 different terms than AGPL-3.0-or-later, a `site/LICENSE` note is the
 place to say so. Flagged, not decided, and it blocks nothing.
 
@@ -279,7 +279,7 @@ place to say so. Flagged, not decided, and it blocks nothing.
    components.
 
 Steps 1 through 3 are the identity work and are the subject of the
-implementation plan that follows this spec. Steps 4 and 5 are Sam
+implementation plan that follows this spec. Steps 4 and 5 are the owner
 driving Claude Design.
 
 ## Non-goals

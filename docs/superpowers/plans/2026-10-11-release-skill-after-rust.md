@@ -552,7 +552,7 @@ also redeploys screepub.com, because every push to main that changes
 `site/` does.
 
 On yes, run exactly that command. **Never add `exit` or `exit $rc` after
-it**, in any form: run in Sam's terminal panel, it closes his tab.
+it**, in any form: run in the owner's terminal panel, it closes their tab.
 
 If declined, print the decline message so backing out is one paste.
 

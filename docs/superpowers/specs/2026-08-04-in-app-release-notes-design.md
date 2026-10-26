@@ -1,7 +1,7 @@
 # In-app release notes: design
 
 Date: 2026-08-04
-Status: approved by Sam in brainstorming; awaiting spec review
+Status: approved by the owner in brainstorming; awaiting spec review
 Branch: worktree-release-notes-in-app (off design-system-parity, because both
 change `ContentView.swift` and this one builds on `Theme.inkMuted`)
 

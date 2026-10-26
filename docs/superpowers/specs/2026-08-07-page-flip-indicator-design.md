@@ -1,7 +1,7 @@
 # The page-flip indicator: design
 
 Date: 2026-08-07
-Status: awaiting Sam's review
+Status: awaiting the owner's review
 Branch: main
 
 ## Goal
