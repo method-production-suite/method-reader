@@ -20,6 +20,7 @@ use crate::export::kfx::{KfxStatus, kfx_missing, kfx_status};
 use crate::export::renderers::Renderers;
 use crate::fsx;
 use crate::jsjson;
+use crate::library::read_scene_measures;
 use crate::nodepath::host;
 use crate::settings::app::app_settings_path;
 use crate::settings::app_defaults::app_default_options;
@@ -329,8 +330,10 @@ fn export_fdx(
         return Ok(base);
     }
 
+    // A library script's lengths, measured from its PDF, kept beside it.
+    let measures = read_scene_measures(fountain_path, &fountain_text);
     let written = renderers
-        .fountain_to_fdx(&fountain_text)
+        .fountain_to_fdx(&fountain_text, measures.as_deref())
         .map_err(EngineError::plain)
         .and_then(|fdx| {
             fsx::mkdir_all(&host::dirname(&path))?;

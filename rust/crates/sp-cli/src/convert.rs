@@ -586,6 +586,21 @@ fn finish(
             images_path = Some(dir);
         }
         write_output(&fp, result.fountain_text.as_bytes())?;
+        // The scene lengths the PDF measured, kept in the script folder's
+        // source.json for a later FDX export (nothing is kept outside the
+        // library). Best effort: the book is already made.
+        if f.library
+            && let Err(e) = sp_engine::library::save_scene_measures(
+                &fp,
+                &result.fountain_text,
+                result.scene_measures.as_deref(),
+            )
+        {
+            eprint_line(&format!(
+                "method-reader: could not keep the scene lengths beside {fp}: {}",
+                e.message()
+            ));
+        }
         fountain_path = Some(fp);
     }
     let mut preview_path = None;
@@ -597,7 +612,8 @@ fn finish(
     if let Some(p) = f.fdx {
         let tokens = sp_fountain::tokenize(&result.fountain_text)
             .map_err(|e| Stop::Internal(format!("TypeError: {e}")))?;
-        write_output(p, sp_fdx::tokens_to_fdx(&tokens).as_bytes())?;
+        let fdx = sp_fdx::tokens_to_fdx_measured(&tokens, result.scene_measures.as_deref());
+        write_output(p, fdx.as_bytes())?;
         fdx_path = Some(p.to_owned());
     }
     let mut debug_path = None;

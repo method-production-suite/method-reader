@@ -143,7 +143,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "077c9dd2500835dd"
+        "text": "758645e3fdc33cbe"
       },
       "out/book.preview.html": {
         "html": "f6371806cfa18fd6"
@@ -296,7 +296,7 @@
         ]
       },
       "out/book.fdx": {
-        "text": "077c9dd2500835dd"
+        "text": "758645e3fdc33cbe"
       },
       "out/book.preview.html": {
         "html": "75f5538c177c1352"
@@ -679,7 +679,7 @@
             "json": "577898c1941870e6"
           },
           "images/source.json": {
-            "json": "5b9eb9694fcb9a33"
+            "json": "a56f199ffdacf83d"
           }
         }
       }
@@ -803,7 +803,7 @@
             ]
           },
           "images/source.json": {
-            "json": "5b9eb9694fcb9a33"
+            "json": "a56f199ffdacf83d"
           }
         }
       }
@@ -916,7 +916,7 @@
             "json": "6e968ac32fc6651e"
           },
           "images/source.json": {
-            "json": "5b9eb9694fcb9a33"
+            "json": "a56f199ffdacf83d"
           }
         }
       },
@@ -1218,7 +1218,7 @@
             "json": "5052154e6f36ffad"
           },
           "images/source.json": {
-            "json": "5b9eb9694fcb9a33"
+            "json": "a56f199ffdacf83d"
           }
         }
       },
@@ -1334,7 +1334,7 @@
             "file": "px:9a2cf91793017313"
           },
           "images/source.json": {
-            "json": "5b9eb9694fcb9a33"
+            "json": "a56f199ffdacf83d"
           }
         }
       }
@@ -1844,7 +1844,7 @@
         ]
       },
       "out/f.fdx": {
-        "text": "077c9dd2500835dd"
+        "text": "b2052128c4349d27"
       },
       "out/f.html": {
         "html": "f6371806cfa18fd6"
@@ -2473,7 +2473,7 @@
     "stderr": "",
     "outputs": {
       "out/copy.fdx": {
-        "text": "077c9dd2500835dd"
+        "text": "b2052128c4349d27"
       }
     }
   }

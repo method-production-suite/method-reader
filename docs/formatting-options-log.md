@@ -1096,6 +1096,50 @@ and the suite will say so if you forget.
   `rust/crates/sp-epub/src/html.rs` + `rust/crates/sp-mobi/src/html.rs` (synopsis case),
   `rust/crates/sp-epub/src/css.rs` (`span.page-marker`), `rust/crates/sp-epub/src/build.rs` (page-list).
 
+### 13b. Scene page, length and number in the FDX (always on, no option; 2026-10-16)
+- **What:** each Scene Heading in the `.fdx` carries Final Draft's
+  `<SceneProperties Length="1 2/8" Page="14"/>`, placed before the
+  heading's text as Final Draft writes it, and `Number="42"` when the PDF
+  printed scene numbers (the `#42#` the `.fountain` already carries, see
+  13). A Shot (a mini-slug, 5b) has none. No top-level pagination block:
+  Final Draft files have none. Only the FDX changes; the EPUB, MOBI, AZW3
+  and `.fountain` are untouched.
+- **Page:** the page the heading sits on, as PRINTED when the PDF numbers
+  its pages (13a's offset), else the sheet. Read from the `.fountain`'s own
+  `= pg N` markers: the last marker before the heading, and for a heading
+  before the first marker, the page before that marker. A `.fountain` with
+  no markers at all (13a switched off, or a one-page script) names no page,
+  because it cannot tell which, unless lengths were saved (below), which
+  carry the page too.
+- **Length:** eighths of a page, measured from the PDF at convert time
+  (`scene_lengths.rs`): a page is 8 eighths of the text area, from the top
+  of a typical page's first line down to a one-inch bottom margin (lower
+  when the script's fullest pages run lower); a scene runs from the top of
+  its first line on a page to the next heading, or to the page's last line
+  of text, summed over its pages (pictures by the room they are drawn in;
+  page furniture is not text). Rounded to the nearest eighth, halves up,
+  never below 1/8; an omitted scene ("OMITTED") is 0/8. Written "6/8",
+  "1 2/8", "2". The rounding is the common practice of assistant directors
+  and breakdown tools ("less than an eighth still counts as one"), a best
+  guess at Final Draft's, which measures its own reflowed pages and so can
+  differ by an eighth here and there. Checked on the real corpus: each
+  script's lengths sum to its page count less its title page and the
+  white space after its last line.
+- **Where the lengths live:** NOT in the `.fountain`, which is the script
+  people export and edit. The `--fdx` of a conversion uses them directly.
+  A `--library` conversion keeps them in the script folder's `source.json`
+  under `"scenes"` (`{ "fountainSha256", "measured": [{ "eighths", "page"
+  }] }`, beside `"source"`, which is all an older version reads), and
+  `export --for fdx` reads them back only when the `.fountain` is the very
+  text they were measured with. An edited `.fountain`, one outside the
+  library, or one converted from a `.fountain` gives an FDX with Page and
+  Number but no Length.
+- **Code:** `rust/crates/sp-fdx/src/lib.rs` (`scene_properties`,
+  `eighths_label`, `is_omitted_heading`), `rust/crates/sp-fountain/src/pages.rs`
+  (`page_marker_label`), `rust/crates/sp-engine/src/scene_lengths.rs`,
+  `rust/crates/sp-engine/src/library.rs` (`save_scene_measures`,
+  `read_scene_measures`).
+
 ## Guards (behavior, not formatting — app should surface as dialogs)
 
 ### 14. Scanned-PDF bail-out

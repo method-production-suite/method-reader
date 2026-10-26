@@ -123,6 +123,10 @@
     "covered": true, "page": 2, "side": "source",
     "how": "printed page numbers on every sheet are the furniture this option re-surfaces when enabled" },
 
+  { "entry": "13b", "title": "Scene page, length and number in the FDX",
+    "covered": true, "page": 1, "side": "source",
+    "how": "the 15 scene headings carry their printed pages (1 to 16; none starts on page 6), the one dual-margin number 42, and lengths measured from each sheet, from four one-eighth scenes on page 1 to one scene running pages 8 to 13 (sp-fdx/tests/scene_properties.rs, sp-engine/tests/scene_lengths_fixtures.rs)" },
+
   { "entry": "14", "title": "Scanned-PDF bail-out",
     "covered": false,
     "why": "a screenplay fixture cannot also be a page with no text layer. blank-pages.pdf owns this" },

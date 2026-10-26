@@ -1290,6 +1290,44 @@ names the check it affects.
   torture book's digest with the picture gate open, now what the engine
   builds from the re-frozen tokens (its comment, "computed with bun",
   now holds for the images and jpx digests only).
+- **The FDX gives each scene heading its page, length and number (decided
+  by the owner, 2026-10-16, for 1.0.0): a deliberate output change, FDX
+  only.** Each Scene Heading paragraph gains Final Draft's
+  `<SceneProperties Length="..." Page="..."/>` ahead of its text (registry
+  #13b). Page comes from the .fountain's `= pg N` markers; Length is
+  measured from the PDF at convert time (sp-engine's scene_lengths.rs) and
+  is written only when those measurements are at hand: the conversion's
+  own `--fdx`, or `export --for fdx` of a library .fountain whose digest
+  matches the lengths kept in its folder's source.json. Number was
+  already written from the .fountain's `#n#`. The EPUB, MOBI, AZW3,
+  preview and .fountain do not change for any fixture, and no `--json`
+  answer changes. What was re-frozen, each diffed first:
+  - rust/oracle/{field-station,images,screenplay,torture}/book.fdx (the
+    stage answer, tokens.json to FDX, so pages only): every difference is
+    an inserted `<SceneProperties Page="..."/>`, 11, 4, 5 and 15 of them;
+    with those taken out each file is its old bytes exactly. jpx's has no
+    markers and did not move.
+  - 43 parity rows, accepted with `cargo xtask parity --accept convert
+    convert-phone convert-library convert-library-again convert-sidecar
+    convert-app-defaults convert-follow-defaults convert-fountain
+    export-fdx` (20 more runs of those rows already matched): the hash of
+    an `.fdx` (convert and convert-phone, with Length and Page;
+    convert-fountain and export-fdx, Page only) or of the library's
+    source.json (the five library rows, which gain `"scenes"` beside
+    `"source"`), and nothing else. The kept scratch folders were checked
+    the same way: each new .fdx is the old frozen FDX plus SceneProperties
+    only, and each source.json holds exactly `"source"` and `"scenes"`.
+  - sp-fdx's recorded TypeScript answers (tests/data/fountain-tokens.json)
+    stay frozen: tests/against_typescript.rs now compares with
+    SceneProperties taken out, and fails unless the one recorded source
+    with a page marker is the only one whose FDX gained any.
+  - Brought up to date with main on 2026-10-20 (branch
+    feat/fdx-scene-pages, after torture's tall dual exchange above was
+    re-frozen): the four stage FDXs are main's bytes plus the same 11, 4,
+    5 and 15 SceneProperties, and the same 43 rows were accepted again
+    against main's answers with the same command. Each of the 43 differed
+    in exactly one value, an `.fdx` hash or a library source.json hash;
+    the other 404 committed runs matched untouched.
 - **Fountain in (2026-10-21).** A `.fountain` someone chose is held to
   guards of its own (`sp_engine::convert::fountain_guards`): bytes that are
   not UTF-8 are refused as `unreadable` instead of being read lossily, an

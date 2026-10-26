@@ -4,6 +4,7 @@
 
 use serde_json::Value;
 use sha2::{Digest, Sha256};
+use sp_fdx::SceneMeasure;
 
 use crate::env::{Env, js_trim, js_trim_start};
 use crate::errors::EngineError;
@@ -255,6 +256,106 @@ pub fn existing_library_output(input: &str, root: &str) -> Result<Option<String>
     let source = host::resolve(&[input]);
     let folder = folder_for(&source, root)?;
     Ok(fsx::exists(&folder).then(|| host::join(&[folder, stem_of(&source)])))
+}
+
+/// source.json's key for the scene lengths a conversion measured
+/// (crate::scene_lengths). Added in 0.14 beside `"source"`, which is all an
+/// older version reads, so the marker stays readable both ways:
+///
+/// ```json
+/// {
+///   "scenes": {
+///     "fountainSha256": "<sha256 of the .fountain they were measured with>",
+///     "measured": [{ "eighths": 7, "page": "1" }, { "eighths": 14, "page": "2" }]
+///   },
+///   "source": "/path/to/Script.pdf"
+/// }
+/// ```
+///
+/// One entry per Scene Heading the FDX writes, in order; `page` is absent
+/// when the page could not be told. The lengths live here and not in the
+/// .fountain, which is the script people export and edit: an edited
+/// .fountain no longer matches the digest, and its FDX then carries no
+/// lengths rather than wrong ones.
+pub const SCENES_KEY: &str = "scenes";
+
+/// The marker beside a library .fountain: its folder's source.json.
+fn marker_beside(fountain_path: &str) -> String {
+    host::join(&[host::dirname(fountain_path), SOURCE_FILE.to_owned()])
+}
+
+/// Keep `measures` (measured with `fountain_text`) in the source.json
+/// beside `fountain_path`, or clear what is kept there when `None`. Only a
+/// library script folder has that marker: anywhere else nothing is written.
+pub fn save_scene_measures(
+    fountain_path: &str,
+    fountain_text: &str,
+    measures: Option<&[SceneMeasure]>,
+) -> Result<(), EngineError> {
+    let path = marker_beside(fountain_path);
+    let Ok(text) = fsx::read_text(&path) else {
+        return Ok(());
+    };
+    let Some(Value::Object(mut marker)) = jsjson::parse(&text) else {
+        return Ok(());
+    };
+    let before = marker.get(SCENES_KEY).cloned();
+    match measures {
+        Some(measures) => {
+            let measured: Vec<Value> = measures
+                .iter()
+                .map(|m| {
+                    let mut entry = serde_json::Map::new();
+                    entry.insert("eighths".into(), Value::from(m.eighths));
+                    if let Some(page) = &m.page {
+                        entry.insert("page".into(), Value::String(page.clone()));
+                    }
+                    Value::Object(entry)
+                })
+                .collect();
+            let mut scenes = serde_json::Map::new();
+            scenes.insert(
+                "fountainSha256".into(),
+                Value::String(sha256_hex(fountain_text)),
+            );
+            scenes.insert("measured".into(), Value::Array(measured));
+            marker.insert(SCENES_KEY.into(), Value::Object(scenes));
+        }
+        None => {
+            marker.remove(SCENES_KEY);
+        }
+    }
+    if marker.get(SCENES_KEY) == before.as_ref() {
+        return Ok(());
+    }
+    let text = format!("{}\n", jsjson::stringify_pretty(&Value::Object(marker)));
+    fsx::write_atomic(&path, text.as_bytes())
+}
+
+/// The scene lengths kept beside `fountain_path`, when they were measured
+/// with exactly `fountain_text`; `None` otherwise (no marker, an older
+/// marker, another text, or an entry this version cannot read).
+pub fn read_scene_measures(fountain_path: &str, fountain_text: &str) -> Option<Vec<SceneMeasure>> {
+    let text = fsx::read_text(&marker_beside(fountain_path)).ok()?;
+    let marker = jsjson::parse(&text)?;
+    let scenes = marker.get(SCENES_KEY)?;
+    if scenes.get("fountainSha256")?.as_str()? != sha256_hex(fountain_text) {
+        return None;
+    }
+    scenes
+        .get("measured")?
+        .as_array()?
+        .iter()
+        .map(|entry| {
+            let eighths = u32::try_from(entry.get("eighths")?.as_u64()?).ok()?;
+            let page = match entry.get("page") {
+                None => None,
+                Some(Value::String(p)) => Some(p.clone()),
+                Some(_) => return None,
+            };
+            Some(SceneMeasure { page, eighths })
+        })
+        .collect()
 }
 
 /// `adoptSidecar(input, output)`: carry a sidecar from beside the PDF into

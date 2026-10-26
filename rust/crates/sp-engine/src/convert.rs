@@ -15,6 +15,7 @@ use sp_epub::{
     BodyOptions, BookImage, BookMeta, EpubError, build_epub, content_identifier, source_date_epoch,
     tokens_to_body, tokens_to_preview_html,
 };
+use sp_fdx::{SceneMeasure, scene_heading_count};
 use sp_fountain::{FountainError, TitleMeta, extract_title_meta, is_safe_image_file, to_fountain};
 use sp_mobi::{
     MOBI_CARRIES_PICTURES, MobiError, MobiInput, MobiMeta, build_mobi, mobi_art,
@@ -29,6 +30,8 @@ use sp_parser::first_page::{is_first_real_page, page_paragraphs};
 use sp_parser::images::{FetchImage, ImageStats};
 use sp_parser::parse_lines;
 use sp_parser::png::is_png;
+
+use crate::scene_lengths::measure_scenes;
 
 /// Below this many text lines per page, the PDF has no usable text layer.
 const MIN_LINES_PER_PAGE: usize = 3;
@@ -103,6 +106,11 @@ pub struct ConvertResult {
     /// The pictures a PDF conversion carried, for the caller's picture
     /// folder. Always empty on Fountain input.
     pub images: Vec<BookImage>,
+    /// Each scene heading's page and length in eighths, measured from the
+    /// PDF (crate::scene_lengths), one per Scene Heading the FDX of
+    /// `fountain_text` writes. `None` on Fountain input, and whenever the
+    /// script could not be measured.
+    pub scene_measures: Option<Vec<SceneMeasure>>,
 }
 
 /// What a conversion refuses or fails on.
@@ -451,6 +459,19 @@ fn convert_read(
         }),
         &format,
     );
+    // Measured against the .fountain just written: a count that does not
+    // match its scene headings would put lengths on the wrong scenes.
+    let page_height = |page: u32| {
+        facts
+            .pages
+            .iter()
+            .find(|p| p.page_num == page)
+            .map(|p| p.height)
+    };
+    let scene_measures =
+        measure_scenes(lines, &raw_images, &page_height, &screenplay).filter(|m| {
+            sp_fountain::tokenize(&fountain_text).is_ok_and(|t| scene_heading_count(&t) == m.len())
+        });
     tick(&mut opts, ConvertStage::Render, RENDER_START, None);
     let books = render_books(
         &fountain_text,
@@ -474,6 +495,7 @@ fn convert_read(
         warnings,
         spacing_repairs: pending.text.spacing_repairs,
         images,
+        scene_measures,
     })
 }
 
@@ -570,6 +592,7 @@ pub fn convert_fountain(
         warnings: stage_one_warnings(fountain_text, &format),
         spacing_repairs: 0,
         images: Vec::new(),
+        scene_measures: None,
     })
 }
 
