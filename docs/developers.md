@@ -130,9 +130,24 @@ older Final Draft refuses the file.
 
 ### Fountain input
 
-`.fountain` input is partly supported: 18 of the 20 formatting options apply,
-and one piece of syntax renders differently than another tool would render it.
-See [Fountain input](fountain-input.md).
+A `.fountain` converts like a PDF, in the window (drop it, or Choose a
+script) and on the command line (`method-reader script.fountain`, the same
+flags and the same `--json` answer, less the counts only a PDF's pages give:
+`pages`, `scenes`, `characters`). It skips the first half of the pipeline
+and goes through the same second half a PDF does: a PDF converted to its
+`.fountain`, and that `.fountain` converted again, gives the same EPUB bytes
+(`sp-engine/tests/fountain_in.rs`).
+
+A `.fountain` you choose has to be UTF-8 text with something in it, and one
+with no scene heading and no dialogue is refused as not a screenplay, the PDF
+refusal, which `--force` overrules. A `.fountain` in a library folder (one the
+library made) is not checked again. Under `--library` the script's folder
+keeps a copy of the `.fountain` and the pictures its notes name, the way it
+keeps a PDF's, and the answer's `fountainPath` names that copy.
+
+18 of the 20 formatting options apply, and one piece of syntax renders
+differently than another tool would render it. See
+[Fountain input](fountain-input.md).
 
 ## The library
 
@@ -184,6 +199,20 @@ script follows the app defaults until it is tuned.
 
 `method-reader reveal <file>` shows a converted file in the system's file manager.
 
+`method-reader shape <file.fountain> [--json]` counts a script's shape for a
+problem report, reading the `.fountain` the way every book is made from it:
+
+```json
+{"ok":true,"pages":18,"sceneHeadings":11,"cues":103,"dialogueBlocks":103,"dualExchanges":0,"pictures":0,"transitions":3}
+```
+
+The answer is integers only: no name, no word and no file name from the
+script, and a refusal names neither. `pages` is one more than the script's
+`= pg N` page markers, and is left out when it has none (a one-page script,
+`showPageMarkers` off, or a `.fountain` written by hand). `pictures` counts
+the `[[img: ...]]` notes that name a picture. The window's report sheet adds
+these counts to an email only when the person ticks the box.
+
 The app settings live in one small file outside the library, in the app's
 data folder, which is named after the bundle identifier
 (`com.methodreader.desktop`) and also holds the window's own storage:
@@ -217,12 +246,17 @@ first, for the Method suite's launcher:
 entry, which is every Convert in the window; a conversion with `-o` or
 beside its input does not, and neither does anything inside the data
 folder itself, so the built-in sample is never listed. The list keeps at
-most 20 entries, one per path: a script opened again moves to the top. An
+most 20 entries, one per file: a script opened again moves to the top, and
+on Windows the same file spelled with different capitals is one entry. An
 entry stays when its file is gone (the launcher shows it greyed), and keys
-another program added to an entry are kept. A missing or damaged
-`recent.json` reads as empty and is replaced on the next write, which goes
-through a temp file and a rename. A write that fails never fails the
-conversion: it is noted on stderr and the book is made as usual.
+another program added to an entry are kept. A missing `recent.json` starts
+a new list. A damaged one (not JSON, or not a list) is first kept as
+`recent.json.damaged` beside it, replacing any older damaged copy, and the
+conversion says so once on stderr. Each write holds a lock on
+`recent.json.lock` beside the file, so the window and the command line
+converting at the same moment both get their entry, and goes through a temp
+file and a rename. A write that fails never fails the conversion: it is
+noted on stderr and the book is made as usual.
 
 ## Devices and routes
 
@@ -233,6 +267,8 @@ method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx] 
 method-reader routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
 method-reader route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
 method-reader eject <volume> [--json]                   # safely remove a reader before unplugging
+method-reader device-books <volume> [--json]            # the books on a reader, and which are the library's
+method-reader device-remove <volume> <book> [--json]    # take one book off a reader (docs/device-library.md)
 method-reader kfx-status [--json]                       # can this computer make KFX for a Kindle?
 method-reader kfx-install [--json]                      # install the KFX plugin into Calibre (online)
 ```

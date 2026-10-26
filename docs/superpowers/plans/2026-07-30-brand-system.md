@@ -1230,5 +1230,5 @@ git commit -m "brand/README.md: the operating manual, including why var() is fin
 ## Not in this plan
 
 The site itself. `site/` gets built in Claude Design from these components,
-which is Sam driving, not an implementation task. Self-hosting the fonts,
+which is the owner driving, not an implementation task. Self-hosting the fonts,
 the deploy workflow, and the `site/LICENSE` question all belong to that work.

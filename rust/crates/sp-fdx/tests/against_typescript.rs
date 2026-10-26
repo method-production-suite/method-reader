@@ -7,7 +7,7 @@
 
 mod common;
 
-use common::{fountain_to_fdx, recorded_sources, typescript_fdx};
+use common::{fountain_to_fdx, recorded_sources, typescript_fdx, without_scene_properties};
 
 /// Corners of the writer, beyond the behavior tests' own sources.
 const CORNERS: &[&str] = &[
@@ -63,15 +63,28 @@ fn every_corner_matches_the_typescript() {
     assert!(differ.is_empty(), "{}", differ.join("\n\n"));
 }
 
+/// Every recorded source is the TypeScript's FDX byte for byte, except that
+/// a scene heading now carries its SceneProperties (rust/PARITY.md,
+/// Decisions, 2026-10-16). Only a source with a `= pg N` marker can name a
+/// page, and taking the SceneProperties out again gives back the
+/// TypeScript's bytes exactly, so nothing else moved.
 #[test]
 fn every_recorded_source_matches_the_typescript() {
     let sources = recorded_sources();
     assert!(sources.len() >= CORNERS.len());
+    let mut with_pages = 0;
     for source in sources {
-        assert_eq!(
-            fountain_to_fdx(source),
-            typescript_fdx(source).unwrap(),
-            "{source:?}"
-        );
+        let got = fountain_to_fdx(source);
+        let want = typescript_fdx(source).unwrap();
+        if got != want {
+            assert!(
+                source.contains("= pg "),
+                "{source:?}: only a marker names a page"
+            );
+            with_pages += 1;
+        }
+        assert_eq!(without_scene_properties(&got), want, "{source:?}");
     }
+    // The one recorded source with a page marker.
+    assert_eq!(with_pages, 1);
 }

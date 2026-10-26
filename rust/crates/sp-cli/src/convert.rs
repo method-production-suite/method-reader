@@ -8,7 +8,9 @@ use serde_json::{Map, Value};
 use sp_engine::convert::{ConvertError, ConvertOptions, ConvertResult, ConvertStage};
 use sp_engine::env::{Env, host_platform};
 use sp_engine::errors::{EngineError, is_write_refusal, plain_reason, unwritable_error};
-use sp_engine::library::{adopt_sidecar, existing_library_output, library_output, library_root};
+use sp_engine::library::{
+    adopt_sidecar, existing_library_output, in_script_folder, library_output, library_root,
+};
 use sp_engine::library_images::{
     image_folder_warnings, images_dir_for, prune_images, read_images, write_images,
 };
@@ -169,6 +171,9 @@ fn conversion_failed(err: ConvertError) -> Stop {
             "unreadable",
             "this file is not a readable PDF. It may be corrupt or mislabeled",
         ),
+        ConvertError::NotUtf8 | ConvertError::EmptyScript => {
+            Stop::fail("unreadable", err.to_string())
+        }
         ConvertError::Fountain(m) => Stop::Internal(format!("TypeError: {m}")),
         ConvertError::Book(m) => Stop::internal(m),
     }
@@ -381,15 +386,18 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
         picture_bytes: None,
     };
 
+    let mut carried: Vec<(String, Vec<u8>)> = Vec::new();
     let result: ConvertResult = if is_pdf {
         let bytes = fsx::read(input).map_err(|e| read_failed(&e))?;
         sp_engine::convert::convert_pdf(bytes, opts).map_err(conversion_failed)?
     } else if is_fountain {
-        let text = fsx::read_text(input).map_err(|e| read_failed(&e))?;
+        let bytes = fsx::read(input).map_err(|e| read_failed(&e))?;
+        let text = sp_engine::convert::fountain_text(bytes).map_err(conversion_failed)?;
         // The pictures the notes name, from the folder beside the text; not
         // read at all with pictures off.
+        let mut asked: BTreeSet<String> = BTreeSet::new();
         let pictures = if format_for_convert.include_images {
-            let asked: BTreeSet<String> = sp_fountain::image_note_files(&text)
+            asked = sp_fountain::image_note_files(&text)
                 .map_err(|e| Stop::Internal(format!("TypeError: {e}")))?
                 .into_iter()
                 .collect();
@@ -397,11 +405,26 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
         } else {
             None
         };
-        let mut r =
-            sp_engine::convert::convert_fountain(&text, opts, pictures.as_ref().map(|p| &p.images))
-                .map_err(conversion_failed)?;
+        let images = pictures.as_ref().map(|p| &p.images);
+        // A script someone chose is held to the .fountain guards; one the
+        // library made (the window renders it again on every tune) is not.
+        let mut r = if in_script_folder(input) {
+            sp_engine::convert::convert_fountain(&text, opts, images)
+        } else {
+            sp_engine::convert::convert_chosen_fountain(&text, opts, images)
+        }
+        .map_err(conversion_failed)?;
         if let Some(p) = &pictures {
             r.warnings.extend(image_folder_warnings(p));
+        }
+        // What a library copy of this script carries with it: the pictures
+        // its notes name, as a PDF's copy carries only its own.
+        if library {
+            carried = sp_engine::convert::carried_pictures(images)
+                .into_iter()
+                .filter(|i| asked.contains(&i.name))
+                .map(|i| (i.name, i.bytes))
+                .collect();
         }
         r
     } else {
@@ -429,6 +452,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
             preview_html,
             fdx,
             azw3,
+            carried,
         },
     )
 }
@@ -455,6 +479,8 @@ struct Finish<'a> {
     preview_html: Option<&'a str>,
     fdx: Option<&'a str>,
     azw3: Option<&'a str>,
+    /// A .fountain input's pictures, for its copy in the library.
+    carried: Vec<(String, Vec<u8>)>,
 }
 
 /// Everything after the conversion: where the output goes (decided only
@@ -517,19 +543,34 @@ fn finish(
 
     let mut fountain_path = None;
     let mut images_path = None;
-    if is_pdf && !parsed.flag("no-fountain") {
-        let fp = parsed
-            .string("fountain")
-            .map_or_else(|| format!("{stem}.fountain"), str::to_owned);
-        let dir = images_dir_for(&fp);
-        if result.images.is_empty() {
-            prune_images(&dir, &BTreeSet::new());
-        } else {
-            let pictures: Vec<(String, Vec<u8>)> = result
+    // A PDF's .fountain is written wherever the book goes (unless asked
+    // not to). A .fountain input is already one, so it is written only
+    // into the library, where the script's folder keeps its own copy (and
+    // its pictures) the way it keeps a PDF's, for the window to tune and
+    // export from. Never over the input itself.
+    let fountain_out = if is_pdf && !parsed.flag("no-fountain") {
+        Some((
+            parsed
+                .string("fountain")
+                .map_or_else(|| format!("{stem}.fountain"), str::to_owned),
+            result
                 .images
                 .iter()
                 .map(|i| (i.name.clone(), i.bytes.clone()))
-                .collect();
+                .collect::<Vec<(String, Vec<u8>)>>(),
+        ))
+    } else if !is_pdf && f.library && !parsed.flag("no-fountain") {
+        let fp = format!("{stem}.fountain");
+        (host::resolve(&[fp.as_str()]) != host::resolve(&[input])).then_some((fp, f.carried))
+    } else {
+        None
+    };
+    let stored_fountain = !is_pdf && fountain_out.is_some();
+    if let Some((fp, pictures)) = fountain_out {
+        let dir = images_dir_for(&fp);
+        if pictures.is_empty() {
+            prune_images(&dir, &BTreeSet::new());
+        } else {
             if let Err(err) = write_images(&dir, &pictures) {
                 let already: Vec<String> =
                     [Some(&epub_path), mobi_path.as_ref(), azw3_path.as_ref()]
@@ -545,6 +586,21 @@ fn finish(
             images_path = Some(dir);
         }
         write_output(&fp, result.fountain_text.as_bytes())?;
+        // The scene lengths the PDF measured, kept in the script folder's
+        // source.json for a later FDX export (nothing is kept outside the
+        // library). Best effort: the book is already made.
+        if f.library
+            && let Err(e) = sp_engine::library::save_scene_measures(
+                &fp,
+                &result.fountain_text,
+                result.scene_measures.as_deref(),
+            )
+        {
+            eprint_line(&format!(
+                "method-reader: could not keep the scene lengths beside {fp}: {}",
+                e.message()
+            ));
+        }
         fountain_path = Some(fp);
     }
     let mut preview_path = None;
@@ -556,7 +612,8 @@ fn finish(
     if let Some(p) = f.fdx {
         let tokens = sp_fountain::tokenize(&result.fountain_text)
             .map_err(|e| Stop::Internal(format!("TypeError: {e}")))?;
-        write_output(p, sp_fdx::tokens_to_fdx(&tokens).as_bytes())?;
+        let fdx = sp_fdx::tokens_to_fdx_measured(&tokens, result.scene_measures.as_deref());
+        write_output(p, fdx.as_bytes())?;
         fdx_path = Some(p.to_owned());
     }
     let mut debug_path = None;
@@ -572,9 +629,9 @@ fn finish(
     }
 
     // The pin: what an untuned script started from becomes its own the
-    // first time it lands in the library (PDF input only; never over a
-    // sidecar that is there).
-    if f.keep_settings && is_pdf {
+    // first time it lands in the library (a PDF, or a .fountain that now
+    // has its copy there; never over a sidecar that is there).
+    if f.keep_settings && (is_pdf || stored_fountain) {
         let pin = sidecar_path(&input_stem);
         if !std::path::Path::new(&pin).exists()
             && let Err(e) = save_pin(&f.app_defaults, &input_stem)
@@ -587,19 +644,27 @@ fn finish(
     }
 
     // The suite launcher's recent list (sp_engine::recent decides what
-    // counts): after every write, and never a reason to fail.
-    if let Err(e) = sp_engine::recent::record_conversion(
+    // counts): after every write, and never a reason to fail. A damaged
+    // file set aside is said here, once, by the run that set it aside.
+    match sp_engine::recent::record_conversion(
         host_platform(),
         &Env::process(),
         input,
         f.library,
         sp_engine::recent::now_seconds(),
     ) {
-        eprint_line(&format!(
+        Ok(Some(sp_engine::recent::Recorded {
+            damaged: Some(aside),
+        })) => eprint_line(&format!(
+            "method-reader: {} was damaged, so it was kept as {aside} and a new list was started",
+            sp_engine::recent::RECENT_FILE
+        )),
+        Ok(_) => {}
+        Err(e) => eprint_line(&format!(
             "method-reader: could not add this script to {}: {}",
             sp_engine::recent::RECENT_FILE,
             e.message()
-        ));
+        )),
     }
 
     let sp = result.screenplay.as_ref();

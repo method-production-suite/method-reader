@@ -56,10 +56,26 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
     ),
     (
         "USAGE",
-        " (offline)\n\nA verb is only a verb when no file of that name exists",
-        " (offline)\n  method-reader mcp [--root <dir>]... [--read-only]\n                                            these tools for an MCP client, over stdio\n\nA verb is only a verb when no file of that name exists",
-        // The MCP server is Rust's alone (PARITY.md, Decisions: "method-reader
-        // mcp"): the TypeScript had none to list.
+        "effect here (asking to strip (CONT'D) warns rather than failing silently),\nand the scanned-PDF and not-a-screenplay guards are PDF-only. See\ndocs/fountain-input.md.",
+        "effect here (asking to strip (CONT'D) warns rather than failing silently).\nA .fountain must be UTF-8 text with something in it, and one with no scene\nheading and no dialogue is refused as a PDF would be (--force overrules\nthat); the scanned-PDF guard is PDF-only. Under --library a .fountain is\ncopied into its library folder beside the book. See docs/fountain-input.md.",
+        // A .fountain someone chose has guards of its own, and a library
+        // conversion keeps a copy of it (PARITY.md, Decisions: "Fountain
+        // in").
+    ),
+    (
+        "USAGE",
+        "settings command. The first --library conversion of a PDF with none saves\nthe settings it started from as the script's own, so a later change to the\napp defaults reaches only new scripts. Turn that off with",
+        "settings command. The first --library conversion of a script (PDF or\n.fountain) with none saves the settings it started from as its own, so a\nlater change to the app defaults reaches only new scripts. Turn that off with",
+        // The pin reaches a .fountain's library copy too (the same Decision).
+    ),
+    (
+        "USAGE",
+        "                                            may a check be made now? (offline)\n\nA verb",
+        "                                            may a check be made now? (offline)\n  method-reader shape <file.fountain> [--json]\n                                            a script's shape as counts, no words from it\n  method-reader mcp [--root <dir>]... [--read-only]\n                                            these tools for an MCP client, over stdio\n\nA verb",
+        // A problem report's counts (PARITY.md, Decisions: "The shape verb"),
+        // then the MCP server, Rust's alone (PARITY.md, Decisions:
+        // "method-reader mcp"): the TypeScript had neither to list. The
+        // TypeScript's line said screepub; renamed() moves it first.
     ),
 ];
 

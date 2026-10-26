@@ -1,7 +1,7 @@
 # The update flow's edges: design
 
 Date: 2026-08-04
-Status: awaiting Sam's review
+Status: awaiting the owner's review
 Branch: worktree-release-notes-in-app (continues the in-app release notes work)
 
 ## Goal
@@ -145,7 +145,7 @@ Check for Updates works from the menu bar regardless, so setting
 `notesRequest` can raise a sheet with no `ContentView` alive to present it.
 The user would pick "View Release" and nothing would happen.
 
-Sam did not pick between the options when asked. **This spec assumes the main
+The owner did not pick between the options when asked. **This spec assumes the main
 window is reopened**, because the update decision belongs on the app's own
 surface and silently doing nothing is the worst of the available behaviors.
 Overrule this at review if you would rather keep the browser for that case.

@@ -105,3 +105,137 @@ fn every_request_is_the_argv_app_js_built() {
     // Every builder app.js exported was asked at least once.
     assert_eq!(seen.len(), 19, "{seen:?}");
 }
+
+/// What a CLI run printed, kept for the test to read.
+struct Keep(std::sync::Arc<std::sync::Mutex<String>>);
+
+impl sp_cli::Sink for Keep {
+    fn out(&mut self, line: &str) {
+        let mut said = self.0.lock().unwrap();
+        said.push_str(line);
+        said.push('\n');
+    }
+    fn err(&mut self, line: &str) {
+        self.out(line);
+    }
+}
+
+/// The device library's two requests are the window's own (app.js had no
+/// device library, so there is nothing frozen to hold them to): each must
+/// be the CLI's verb exactly as its `--help` spells it, so the direct
+/// engine runs that verb (tests/direct_engine.rs runs both for real).
+#[test]
+fn the_device_library_requests_are_the_clis_verbs() {
+    let books = Request::DeviceBooks {
+        volume: "/Volumes/Kindle".into(),
+    };
+    assert_eq!(books.argv(), ["device-books", "/Volumes/Kindle", "--json"]);
+    assert_eq!(books.kind(), "device-books");
+    let remove = Request::DeviceRemove {
+        volume: "/Volumes/Kindle".into(),
+        file: "/Volumes/Kindle/documents/Field Station.azw3".into(),
+    };
+    assert_eq!(
+        remove.argv(),
+        [
+            "device-remove",
+            "/Volumes/Kindle",
+            "/Volumes/Kindle/documents/Field Station.azw3",
+            "--json"
+        ]
+    );
+    assert_eq!(remove.kind(), "device-remove");
+    // Listing is a look, not somebody's work; removing is work.
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(!counts_toward_busy(books.call()));
+    assert!(counts_toward_busy(remove.call()));
+    // Each verb's own --help names the argv's shape.
+    for (verb, shape) in [
+        (
+            "device-books",
+            "method-reader device-books <volume> [--json]",
+        ),
+        (
+            "device-remove",
+            "method-reader device-remove <volume> <book> [--json]",
+        ),
+    ] {
+        let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let code = sp_cli::run(
+            &[verb.to_string(), "--help".to_string()],
+            Box::new(Keep(said.clone())),
+        );
+        assert_eq!(code, 0, "{verb} --help");
+        let said = said.lock().unwrap().clone();
+        assert!(said.contains(shape), "{verb} --help: {said}");
+    }
+}
+
+/// Fountain in: a .fountain the window converts (dropped, or picked with
+/// Choose a script) is the same Convert request a PDF is, so its argv is
+/// the PDF's with the path swapped, flag for flag. app.js never sent one,
+/// so there is no frozen answer to hold it to; the CLI's side of the same
+/// argv runs in sp-cli/tests/fountain_in.rs
+/// (`the_window_s_convert_argv_works_on_a_fountain`).
+#[test]
+fn a_fountain_converts_with_the_argv_a_pdf_does() {
+    for (force, options) in [(false, None), (true, Some(r#"{"cueIndentPct":41}"#))] {
+        let request = |path: &str| Request::Convert {
+            path: path.into(),
+            force,
+            options: options.map(str::to_owned),
+        };
+        let pdf = request("/s/Weather Log.pdf").argv();
+        let fountain = request("/s/Weather Log.fountain").argv();
+        assert_eq!(fountain[0], "/s/Weather Log.fountain");
+        assert_eq!(
+            fountain[1..],
+            pdf[1..],
+            "force {force}, options {options:?}"
+        );
+    }
+    assert_eq!(
+        Request::Convert {
+            path: "/s/Weather Log.fountain".into(),
+            force: false,
+            options: None,
+        }
+        .argv(),
+        [
+            "/s/Weather Log.fountain",
+            "--json",
+            "--progress",
+            "--preview-inline",
+            "--library"
+        ]
+    );
+}
+
+/// The report sheet's counts: `shape <fountain> --json`, a verb app.js
+/// never had, so it is held here to the CLI's own argv and run through the
+/// direct engine (src/direct.rs), which answers integers only. The CLI's
+/// side is sp-cli/tests/cli_shape.rs.
+#[test]
+fn the_shape_request_is_the_cli_s_shape_verb() {
+    use sp_app::engine::Engine;
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../oracle/field-station/script.fountain")
+        .to_string_lossy()
+        .into_owned();
+    let request = Request::Shape {
+        fountain: path.clone(),
+    };
+    assert_eq!(request.argv(), ["shape", path.as_str(), "--json"]);
+    assert_eq!(request.kind(), "shape");
+    let reply = sp_app::direct::DirectEngine::new().run(&request, &mut |_| {});
+    let answer = reply.answer.expect("an answer");
+    assert_eq!(answer["ok"], true);
+    for (key, value) in answer.as_object().unwrap() {
+        assert!(key == "ok" || value.is_u64(), "{key} is {value}");
+    }
+    let shape = sp_app::model::feedback::Shape::from_answer(&answer).expect("a shape");
+    assert_eq!(shape.pages, Some(18));
+    assert_eq!(shape.scene_headings, 11);
+    // The fake answers what the real engine does for the demo script.
+    assert_eq!(answer, sp_app::engine::default_answer(&request));
+}

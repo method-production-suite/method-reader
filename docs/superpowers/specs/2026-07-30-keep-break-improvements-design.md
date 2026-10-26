@@ -26,7 +26,7 @@ Everything here is engine + docs + one app toggle; no parser changes.
   wrapper (re-introduces the half-page-push problem registry #5a
   killed), and Courier Prime embedding (moved to ROADMAP.md "Later",
   done alongside this spec).
-- **Knob shape (Sam's call):** widows/orphans ships as a toggle,
+- **Knob shape (the owner's call):** widows/orphans ships as a toggle,
   default on at the print-rule value of 2; off means 1 (tight packing).
   Fits the registry convention that house-style rules get options.
 - **Landing shape:** one branch, six ordered commits, one review.
@@ -174,7 +174,7 @@ TDD per item, in the standing bun:test suite:
    epubcheck stays clean.
 5. Fixture sweep + epubcheck (CSS change rule), end-to-end spot check
    with a real PDF, app bundle rebuild (engine changed).
-6. Device verdicts stay pending until Sam's next KFX pass: the knob's
+6. Device verdicts stay pending until the owner's next KFX pass: the knob's
    entry, #8c with the oversize caveat, #16 (plus an Apple Books look
    at ragged-right holding with Justify on, for item 5).
 

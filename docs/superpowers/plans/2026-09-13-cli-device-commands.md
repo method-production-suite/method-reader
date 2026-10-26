@@ -576,13 +576,13 @@ Append to `tests/cli-devices.test.ts`:
 import { devicesCommand } from '../src/cli-devices';
 import type { ConnectedDevice } from '../src/device/types';
 
-const kobo: ConnectedDevice = { kind: 'kobo', name: 'KOBOeReader', volume: '/run/media/sam/KOBOeReader' };
-const kindle: ConnectedDevice = { kind: 'kindle', name: 'Kindle', volume: '/run/media/sam/Kindle' };
+const kobo: ConnectedDevice = { kind: 'kobo', name: 'KOBOeReader', volume: '/run/media/you/KOBOeReader' };
+const kindle: ConnectedDevice = { kind: 'kindle', name: 'Kindle', volume: '/run/media/you/Kindle' };
 
 test('devicesCommand reports each device with the id send accepts', async () => {
   const { devices } = await devicesCommand({ scan: () => [kobo], probe: async () => true });
   expect(devices).toEqual([
-    { id: '/run/media/sam/KOBOeReader', kind: 'kobo', name: 'KOBOeReader', volume: '/run/media/sam/KOBOeReader' },
+    { id: '/run/media/you/KOBOeReader', kind: 'kobo', name: 'KOBOeReader', volume: '/run/media/you/KOBOeReader' },
     { id: 'remarkable', kind: 'remarkable', name: 'reMarkable', volume: null },
   ]);
 });
@@ -684,7 +684,7 @@ test('an explicit id picks that device even when several are connected', () => {
   // Ordering test: "ambiguous when >1" and "honour --device first" disagree
   // on exactly this input. An implementation that checks the count before the
   // id throws ambiguous-device here.
-  expect(selectDevice([kobo, kindle], '/run/media/sam/Kindle')).toBe(kindle);
+  expect(selectDevice([kobo, kindle], '/run/media/you/Kindle')).toBe(kindle);
   expect(selectDevice([kobo, kindle, remarkable], 'remarkable')).toBe(remarkable);
 });
 
@@ -694,8 +694,8 @@ test('several connected and no --device is ambiguous-device, listing the ids', (
   expect(thrown).toBeInstanceOf(CliError);
   expect((thrown as CliError).code).toBe('ambiguous-device');
   // The message must name both, or the user has no way to pick one.
-  expect((thrown as CliError).message).toContain('/run/media/sam/KOBOeReader');
-  expect((thrown as CliError).message).toContain('/run/media/sam/Kindle');
+  expect((thrown as CliError).message).toContain('/run/media/you/KOBOeReader');
+  expect((thrown as CliError).message).toContain('/run/media/you/Kindle');
 });
 
 test('nothing connected is no-devices even when --device was given', () => {
@@ -704,7 +704,7 @@ test('nothing connected is no-devices even when --device was given', () => {
   // in" is the actionable fact. An implementation that checks the requested
   // id first reports unknown-device and fails here.
   let thrown: unknown;
-  try { selectDevice([], '/run/media/sam/Kindle'); } catch (err) { thrown = err; }
+  try { selectDevice([], '/run/media/you/Kindle'); } catch (err) { thrown = err; }
   expect(thrown).toBeInstanceOf(CliError);
   expect((thrown as CliError).code).toBe('no-devices');
 });
@@ -717,17 +717,17 @@ test('nothing connected and no --device is also no-devices', () => {
 
 test('an id that matches nothing connected is unknown-device, listing what is', () => {
   let thrown: unknown;
-  try { selectDevice([kobo, kindle], '/run/media/sam/Nope'); } catch (err) { thrown = err; }
+  try { selectDevice([kobo, kindle], '/run/media/you/Nope'); } catch (err) { thrown = err; }
   expect(thrown).toBeInstanceOf(CliError);
   expect((thrown as CliError).code).toBe('unknown-device');
-  expect((thrown as CliError).message).toContain('/run/media/sam/Nope');
-  expect((thrown as CliError).message).toContain('/run/media/sam/KOBOeReader');
+  expect((thrown as CliError).message).toContain('/run/media/you/Nope');
+  expect((thrown as CliError).message).toContain('/run/media/you/KOBOeReader');
 });
 
 test('selection matches on the id, never on a prefix or the name', () => {
   // Catches `deviceId(d).includes(requested)` and `d.name === requested`.
   let thrown: unknown;
-  try { selectDevice([kindle], '/run/media/sam'); } catch (err) { thrown = err; }
+  try { selectDevice([kindle], '/run/media/you'); } catch (err) { thrown = err; }
   expect((thrown as CliError).code).toBe('unknown-device');
   let byName: unknown;
   try { selectDevice([kindle], 'Kindle'); } catch (err) { byName = err; }
@@ -750,7 +750,7 @@ Append to `src/cli-devices.ts` (and add `CliError` to its import from `./cli-err
  * Precedence is deliberate and tested on inputs where the orders disagree:
  *   1. Nothing connected -> no-devices, EVEN IF --device was given. The
  *      actionable fact is that nothing is plugged in; "no device matches
- *      /run/media/sam/Kindle" would send the user hunting for a typo.
+ *      /run/media/you/Kindle" would send the user hunting for a typo.
  *   2. --device given -> exact id match, or unknown-device. It wins over the
  *      ambiguity check: the user has already answered that question.
  *   3. Exactly one connected -> that one.
@@ -1718,7 +1718,7 @@ Expected: pass. Then confirm no test reads a real mount or a real network:
 ```bash
 grep -rn "SCREEPUB_VOLUME_ROOTS\|10\.11\.99\.1\|/Volumes\|/run/media" tests/device-list.test.ts tests/cli-devices.test.ts tests/cli-device-commands.test.ts
 ```
-Expected: every hit is either a `SCREEPUB_VOLUME_ROOTS` injection or a hard-coded fake path in an in-process fixture object (`/run/media/sam/Kindle` in `tests/cli-devices.test.ts`, which is never touched on disk). No `10.11.99.1` anywhere, and every `Bun.serve` stub is stopped in an `afterAll` or immediately after use.
+Expected: every hit is either a `SCREEPUB_VOLUME_ROOTS` injection or a hard-coded fake path in an in-process fixture object (`/run/media/you/Kindle` in `tests/cli-devices.test.ts`, which is never touched on disk). No `10.11.99.1` anywhere, and every `Bun.serve` stub is stopped in an `afterAll` or immediately after use.
 
 - [ ] **5b. `devices` runs for real on this machine**
 

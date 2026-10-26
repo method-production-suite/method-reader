@@ -218,12 +218,16 @@ fn its_brass_button_carries_the_badge_beside_it_and_a_mounted_kindle_none() {
     calm_kindle(&w, mounted);
     let mut h = harness(&w, Platform::Mac);
     convert(&w, &mut h);
-    // Our own AZW3 wears one badge on a mounted Kindle; MTP adds none.
-    let badges = h.query_all_by_label("Beta").count();
+    // Our own AZW3 wears one badge on a mounted Kindle, and so does its
+    // list of books (docs/device-library.md); MTP adds one to the brass
+    // button and has no list.
+    h.get_by_role_and_label(Role::Button, "Books on your Kindle");
+    let badges = h.query_all_by_label("Beta").count() - 1;
     let mut mtp = world();
     calm_kindle(&mtp, answer(None));
     let mut hm = harness(&mtp, Platform::Mac);
     convert(&mtp, &mut hm);
+    assert!(hm.query_by_label("Books on your Kindle").is_none());
     assert_eq!(hm.query_all_by_label("Beta").count(), badges + 1);
     let _ = &mut mtp;
 }

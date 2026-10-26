@@ -13,10 +13,8 @@ use crate::engine::{Reply, Request};
 use crate::model::convert::{
     self as m, Library, LibraryAction, Progress, Refusal, failure_for, internal_failure,
 };
-use crate::model::feedback::{new_issue_url, os_label};
 use crate::model::frame::Surface;
 use crate::model::layout;
-use crate::model::notes::RELEASE;
 use crate::model::page_show::{can_show, page_paragraphs, page_switches_from};
 use crate::theme::{self, size};
 
@@ -442,13 +440,7 @@ fn reveal(app: &mut App, book: String) {
 }
 
 fn report(app: &mut App, refusal: &Refusal) {
-    let url = new_issue_url(
-        RELEASE.version,
-        &os_label(app.host.platform.word()),
-        Some(&format!("{}: {}", refusal.code, refusal.message)),
-        app.convert.known_home.as_deref(),
-    );
-    app.host.open(&url);
+    super::help::open_report(app, Some((&refusal.code, &refusal.message)));
 }
 
 // ---------------------------------------------------------------- drawing

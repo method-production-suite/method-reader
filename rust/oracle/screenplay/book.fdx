@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <FinalDraft DocumentType="Script" Template="No" Version="2">
   <Content>
-    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>INT. THE LAST VIDEO STORE - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.</Text></Paragraph>
     <Paragraph Type="Action"><Text>MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.</Text></Paragraph>
     <Paragraph Type="Action"><Text>The bell over the door RINGS.</Text></Paragraph>
@@ -20,7 +20,7 @@
     <Paragraph Type="Parenthetical"><Text>(a small conversion)</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Sit down.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="1"/><Text>INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</Text></Paragraph>
     <Paragraph Type="Action"><Text>Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.</Text></Paragraph>
     <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Fourteen. Scared, or pretending not to be?</Text></Paragraph>
@@ -36,7 +36,7 @@
     <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>That’s a promise.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>DISSOLVE TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>EXT. STRIP MALL - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>EXT. STRIP MALL - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.</Text></Paragraph>
     <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
     <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
@@ -44,7 +44,7 @@
     <Paragraph Type="Character"><Text>MARGO</Text></Paragraph>
     <Paragraph Type="Parenthetical"><Text>(O.S.)</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>Since people still rewound.</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. THE LAST VIDEO STORE - COUNTER - LATER</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="2"/><Text>INT. THE LAST VIDEO STORE - COUNTER - LATER</Text></Paragraph>
     <Paragraph Type="Action"><Text>A shoebox of index cards. Margo writes on one in careful block letters and slides it across.</Text></Paragraph>
     <Paragraph Type="Character"><Text>DEV</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>What’s this?</Text></Paragraph>
@@ -66,7 +66,7 @@
     <Paragraph Type="Parenthetical"><Text>(not grim at all)</Text></Paragraph>
     <Paragraph Type="Dialogue"><Text>It’s Tuesday.</Text></Paragraph>
     <Paragraph Type="Transition"><Text>SMASH CUT TO:</Text></Paragraph>
-    <Paragraph Type="Scene Heading"><Text>INT. DEV’S APARTMENT - NIGHT</Text></Paragraph>
+    <Paragraph Type="Scene Heading"><SceneProperties Page="3"/><Text>INT. DEV’S APARTMENT - NIGHT</Text></Paragraph>
     <Paragraph Type="Action"><Text>A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.</Text></Paragraph>
     <Paragraph Type="Action"><Text>His NIECE, 14, arms folded, sits as far from the screen as the room allows.</Text></Paragraph>
     <Paragraph Type="Character"><Text>NIECE</Text></Paragraph>
