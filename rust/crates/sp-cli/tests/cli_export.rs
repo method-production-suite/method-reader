@@ -1390,7 +1390,7 @@ fn kfx_check_with_a_fresh_sibling_reports_it_never_the_azw3_beside_it() {
 }
 
 #[test]
-fn an_unknown_value_is_usage_and_the_sentence_lists_all_six() {
+fn an_unknown_value_is_usage_and_the_sentence_lists_every_one() {
     let c = Case::new();
     let b = Builders::default();
     let mut deps = safe(false, None, &b);
@@ -1399,7 +1399,7 @@ fn an_unknown_value_is_usage_and_the_sentence_lists_all_six() {
     assert_eq!(code, "usage");
     assert_eq!(
         message,
-        "--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not \"nook\""
+        "--for takes epub, kindle, kfx, azw3, mobi, fountain, fdx or osf, not \"nook\""
     );
 }
 

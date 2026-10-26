@@ -1,8 +1,8 @@
 //! What the export path needs from the crates that make books, as one
 //! seam: the AZW3 (from the EPUB's bytes, sp-azw3, with its writer
 //! revision for the staleness rule), the MOBI (from the `.fountain`,
-//! through [`crate::convert::convert_fountain`]), the FDX (sp-fdx) and the
-//! note stripping (sp-fountain).
+//! through [`crate::convert::convert_fountain`]), the FDX (sp-fdx), the OSF
+//! (sp-osf) and the note stripping (sp-fountain).
 //!
 //! [`Books`] is the real thing, and what every caller passes. The trait
 //! stays so the ladder's own tests can hand it stand-in book makers and pin
@@ -40,6 +40,13 @@ pub trait Renderers {
     ) -> Result<String, String> {
         let tokens = sp_fountain::tokenize(fountain).map_err(|e| e.to_string())?;
         Ok(sp_fdx::tokens_to_fdx_measured(&tokens, measures))
+    }
+
+    /// The Open Screenplay Format document: fountain-js's tokens, then
+    /// sp-osf. The same tokens the FDX is written from.
+    fn fountain_to_osf(&self, fountain: &str) -> Result<String, String> {
+        let tokens = sp_fountain::tokenize(fountain).map_err(|e| e.to_string())?;
+        Ok(sp_osf::tokens_to_osf(&tokens))
     }
 
     /// `stripScreepubNotes(text)`.

@@ -1,0 +1,21 @@
+[package]
+name = "sp-osf"
+description = "Method Reader's Open Screenplay Format (.osf) writer: fountain-js tokens to an editable screenplay"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+sp-model.workspace = true
+sp-fountain.workspace = true
+# The one copy of Fountain emphasis as styled runs, shared with the .fdx.
+sp-fdx.workspace = true
+
+[dev-dependencies]
+roxmltree.workspace = true
+serde_json.workspace = true

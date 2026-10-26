@@ -54,6 +54,33 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
         // There is no pdf.js in the Rust reader, so --debug has no warnings to
         // let through (PARITY.md, Decisions: "No pdf.js warnings").
     ),
+    // The OSF, a third editable script (2026-10-20, PARITY.md Decisions:
+    // "OSF out"): export --for osf, in the verb list and the export help.
+    (
+        "USAGE",
+        "|mobi|fountain|fdx] [--json]",
+        "|mobi|fountain|fdx|osf] [--json]",
+    ),
+    (
+        "EXPORT_USAGE",
+        " --for fdx --fountain <f> [--out <path>] [--json]   (beta)\n",
+        " --for fdx --fountain <f> [--out <path>] [--json]   (beta)\n  method-reader export <file.epub> --for osf --fountain <f> [--out <path>] [--json]   (beta)\n",
+    ),
+    (
+        "EXPORT_USAGE",
+        "the exact page breaks, do not carry over.\n\nOptions:",
+        "the exact page breaks, do not carry over.\n\nosf (beta) is the same script in the Open Screenplay Format, an open\nformat that screenwriting apps can read. It is built and rebuilt the same\nway as fdx, and leaves the same things behind.\n\nOptions:",
+    ),
+    (
+        "EXPORT_USAGE",
+        "mobi, fountain or fdx (beta)\n  --fountain <file>      the script's .fountain: required by mobi, fountain\n                         and fdx\n",
+        "mobi, fountain, fdx (beta) or\n                         osf (beta)\n  --fountain <file>      the script's .fountain: required by mobi, fountain,\n                         fdx and osf\n",
+    ),
+    (
+        "EXPORT_USAGE",
+        "An FDX\n                         is written only there, not beside the book\n",
+        "An FDX\n                         or an OSF is written only there, not beside the\n                         book\n",
+    ),
     (
         "USAGE",
         "effect here (asking to strip (CONT'D) warns rather than failing silently),\nand the scanned-PDF and not-a-screenplay guards are PDF-only. See\ndocs/fountain-input.md.",

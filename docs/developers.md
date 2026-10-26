@@ -128,6 +128,28 @@ breaks: the app lays the pages out again. The format version it declares is
 one constant, `FDX_VERSION` in `rust/crates/sp-fdx/src/lib.rs`, in case an
 older Final Draft refuses the file.
 
+### OSF (beta)
+
+The same script can also come out in the Open Screenplay Format, an open
+XML format for screenplays:
+
+```bash
+method-reader export <file.epub> --for osf --fountain <file.fountain> [--out <path>] [--json]
+```
+
+It takes the FDX's route: built from the `.fountain` (so `--fountain` is
+required), written as `<stem>.osf` beside the book without `--out`,
+rebuilt on every call, and `--check` says whether it is current. It
+carries the same elements as the FDX, a lyric as dialogue inside a speech
+and as action outside one, and leaves out the same things. A paragraph
+typed with hard returns stays one paragraph with its line breaks, the way
+OSF keeps one. It names no fonts, margins or page layout either.
+
+What it writes and why, from the format's published examples alone, and
+the questions still open (among them the version it declares, one
+constant, `OSF_VERSION` in `rust/crates/sp-osf/src/lib.rs`), are in
+[the OSF design](superpowers/specs/2026-10-20-osf-out-design.md).
+
 ### Fountain input
 
 A `.fountain` converts like a PDF, in the window (drop it, or Choose a
@@ -366,6 +388,7 @@ rust/crates/
   sp-azw3             the EPUB to AZW3 (KF8), ported from Calibre's KF8
                       writer (beta)
   sp-fdx              tokens to Final Draft (.fdx) (beta)
+  sp-osf              tokens to the Open Screenplay Format (.osf) (beta)
   sp-fsutil           write-then-rename, the flushed replace, path rules
   sp-device           USB volumes, eject, reveal, the reMarkable web
                       interface, and MTP Kindles (beta, switched off)

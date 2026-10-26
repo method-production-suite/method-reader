@@ -1299,6 +1299,21 @@ names the check it affects.
   torture book's digest with the picture gate open, now what the engine
   builds from the re-frozen tokens (its comment, "computed with bun",
   now holds for the images and jpx digests only).
+- **OSF out (2026-10-20, branch feat/osf-out): a third editable script.**
+  `export --for osf` writes the script as an Open Screenplay Format
+  document (sp-osf; docs/superpowers/specs/2026-10-20-osf-out-design.md),
+  through the FDX's route. The TypeScript had no OSF, so no frozen answer
+  holds one and no parity row was added: the harness asks no row of each
+  `--for` value. Three texts that frozen answers hold now name it: the verb
+  list's `export` line, the export help, and the unknown `--for` refusal.
+  The seven screenplay rows that print them (help, help-short, help-json,
+  refuse-no-input, export-help, export-help-json, export-bad-for) were
+  moved with `cargo xtask parity --accept`, and each diff it showed was
+  those lines alone. sp-cli's tests/usage.rs lists the help lines in
+  `CHANGED_ON_PURPOSE`. sp-engine's frozen TypeScript lines
+  (tests/data/parity-cli.json) are left as frozen: its common/frozen.rs
+  reads the refusal's one sentence as it is now, the same way it reads the
+  product's new name.
 - **The FDX gives each scene heading its page, length and number (decided
   by the owner, 2026-10-16, for 1.0.0): a deliberate output change, FDX
   only.** Each Scene Heading paragraph gains Final Draft's

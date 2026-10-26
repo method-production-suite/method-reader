@@ -27,7 +27,8 @@ use crate::settings::app_defaults::app_default_options;
 use crate::settings::sidecar::load_script_settings;
 
 /// `ExportResult`. Serialized in the TypeScript's field order, which is
-/// not one order: the FDX answer lists `available` last.
+/// not one order: the FDX answer (and the OSF's, which follows it) lists
+/// `available` last.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ExportResult {
     pub path: String,
@@ -269,6 +270,11 @@ pub fn fdx_sibling(epub: &str) -> String {
     format!("{}.fdx", strip_epub(epub))
 }
 
+/// Where the OSF goes beside the book, as the FDX does.
+pub fn osf_sibling(epub: &str) -> String {
+    format!("{}.osf", strip_epub(epub))
+}
+
 fn result(
     path: String,
     format: ExportFormat,
@@ -292,8 +298,10 @@ fn result(
 }
 
 /// `exportFdx`: the editable screenplay, rebuilt from the .fountain on
-/// every call and written atomically.
-fn export_fdx(
+/// every call and written atomically. The OSF takes the same route with
+/// its own writer, sibling and name.
+fn export_script(
+    format: ExportFormat,
     epub: &str,
     fountain_path: &str,
     out: Option<&str>,
@@ -302,11 +310,16 @@ fn export_fdx(
     renderers: &dyn Renderers,
 ) -> Result<ExportResult, EngineError> {
     let state = ToolchainState::default();
-    let extension = file_extension(ExportFormat::Fdx, state);
+    let extension = file_extension(format, state);
     if let Some(out) = out {
         check_out_extension(out, extension)?;
     }
-    let path = out.map_or_else(|| fdx_sibling(epub), str::to_owned);
+    let sibling = if format == ExportFormat::Osf {
+        osf_sibling
+    } else {
+        fdx_sibling
+    };
+    let path = out.map_or_else(|| sibling(epub), str::to_owned);
 
     let read = fsx::read_text(fountain_path)
         .ok()
@@ -316,13 +329,7 @@ fn export_fdx(
             "cannot read the script's .fountain: {fountain_path}"
         )));
     };
-    let mut base = result(
-        path.clone(),
-        ExportFormat::Fdx,
-        state,
-        available,
-        Vec::new(),
-    );
+    let mut base = result(path.clone(), format, state, available, Vec::new());
     base.available_last = true;
 
     if check {
@@ -330,19 +337,22 @@ fn export_fdx(
         return Ok(base);
     }
 
-    // A library script's lengths, measured from its PDF, kept beside it.
-    let measures = read_scene_measures(fountain_path, &fountain_text);
-    let written = renderers
-        .fountain_to_fdx(&fountain_text, measures.as_deref())
-        .map_err(EngineError::plain)
-        .and_then(|fdx| {
-            fsx::mkdir_all(&host::dirname(&path))?;
-            fsx::write_atomic(&path, fdx.as_bytes())
-        });
+    let rendered = if format == ExportFormat::Osf {
+        renderers.fountain_to_osf(&fountain_text)
+    } else {
+        // A library script's lengths, measured from its PDF, kept beside it.
+        let measures = read_scene_measures(fountain_path, &fountain_text);
+        renderers.fountain_to_fdx(&fountain_text, measures.as_deref())
+    };
+    let written = rendered.map_err(EngineError::plain).and_then(|script| {
+        fsx::mkdir_all(&host::dirname(&path))?;
+        fsx::write_atomic(&path, script.as_bytes())
+    });
     if let Err(err) = written {
         let reason = fsx::hide_temp(&err.message(), &path);
+        let kind = extension.to_uppercase();
         return Err(export_failed(format!(
-            "could not save the FDX to {path}: {reason}"
+            "could not save the {kind} to {path}: {reason}"
         )));
     }
     Ok(base)
@@ -369,7 +379,7 @@ fn export_file(
     let wanted = options.for_.as_deref().unwrap_or("epub");
     let Some(format) = ExportFormat::parse(wanted) else {
         return Err(usage(format!(
-            "--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not \"{wanted}\""
+            "--for takes epub, kindle, kfx, azw3, mobi, fountain, fdx or osf, not \"{wanted}\""
         )));
     };
 
@@ -408,14 +418,15 @@ fn export_file(
             )));
         }
     }
-    if format == ExportFormat::Fdx && options.fountain.is_none() {
-        return Err(usage(
-            "--for fdx is built from the script's .fountain: pass it with --fountain",
-        ));
+    if matches!(format, ExportFormat::Fdx | ExportFormat::Osf) && options.fountain.is_none() {
+        return Err(usage(format!(
+            "--for {} is built from the script's .fountain: pass it with --fountain",
+            format.as_str()
+        )));
     }
     if matches!(
         format,
-        ExportFormat::Mobi | ExportFormat::Fountain | ExportFormat::Fdx
+        ExportFormat::Mobi | ExportFormat::Fountain | ExportFormat::Fdx | ExportFormat::Osf
     ) {
         check_script_readable(options.fountain.as_deref().unwrap_or_default())?;
     }
@@ -486,8 +497,9 @@ fn export_file(
         );
     }
 
-    if format == ExportFormat::Fdx {
-        return export_fdx(
+    if matches!(format, ExportFormat::Fdx | ExportFormat::Osf) {
+        return export_script(
+            format,
             &options.epub,
             options.fountain.as_deref().unwrap_or_default(),
             options.out.as_deref(),

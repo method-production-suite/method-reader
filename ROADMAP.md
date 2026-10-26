@@ -132,7 +132,9 @@ In order. Each is one small pull request.
   a page, get an editable script, make an e-book, all on local files. Built
   and in review; it merges after 0.13.1.
 - **OSF out.** A third editable script beside Fountain and .fdx, written from
-  the same structure, and `method-reader export --for osf`.
+  the same structure, and `method-reader export --for osf`. Built (beta);
+  its pull request merges after 0.13.1. Design and open questions:
+  docs/superpowers/specs/2026-10-20-osf-out-design.md.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
   .fountain, so a script from Method Storyteller becomes an e-book without a
   PDF. The Fountain half is built: a .fountain converts in the window and on

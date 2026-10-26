@@ -61,7 +61,26 @@ pub fn same_machine(home: Option<&std::path::Path>) -> bool {
 }
 
 fn decode(text: &str, root: &str) -> String {
-    renamed(&text.replace("$ROOT", root))
+    changed_on_purpose(&renamed(&text.replace("$ROOT", root)))
+}
+
+/// The sentences changed on purpose since the answers were frozen, as (the
+/// frozen words, the words now). Besides the product's name ([`renamed`]),
+/// these are the only things a frozen answer is read differently for; the
+/// data itself stays as it was frozen.
+const CHANGED_ON_PURPOSE: &[(&str, &str)] = &[
+    // `export --for osf`, the third editable script (2026-10-20; PARITY.md,
+    // Decisions: "OSF out"): the unknown --for refusal names it.
+    (
+        "--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not ",
+        "--for takes epub, kindle, kfx, azw3, mobi, fountain, fdx or osf, not ",
+    ),
+];
+
+fn changed_on_purpose(text: &str) -> String {
+    CHANGED_ON_PURPOSE
+        .iter()
+        .fold(text.to_owned(), |t, (was, now)| t.replace(was, now))
 }
 
 /// A frozen answer with the product's name as it is now. The TypeScript
