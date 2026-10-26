@@ -1,6 +1,6 @@
 # Design: the KFX install surface (parity piece D)
 
-Date: 2026-09-23 · Status: accepted (Sam, 2026-09-23: "add the permissions
+Date: 2026-09-23 · Status: accepted (the owner, 2026-09-23: "add the permissions
 that's fine. make it easy to use.")
 Piece D of [the parity plan](../plans/2026-09-21-parity.md).
 Evidence: [the parity audit](https://github.com/method-production-suite/method-reader/blob/7eb40e5/docs/parity-audit.md), row "KFX plugin install:
@@ -52,7 +52,7 @@ Kindle gets AZW3 nor fix it.
 3. **Install only on an explicit request.** It writes to the user's Calibre
    and fetches third-party code, so nothing calls it on its own: the CLI
    verb and the window's button are the only callers.
-4. **Links get scoped grants, approved by Sam on 2026-09-23.** Three exact
+4. **Links get scoped grants, approved by the owner on 2026-09-23.** Three exact
    URLs join the existing `opener:allow-open-url` list. No wildcard.
 5. **The window shows the block only when it helps.** Details below.
 

@@ -195,7 +195,7 @@ describes as "off by default, and the first-launch page asks once". This
 is a privacy promise the product has already made and the new app
 inherits it.
 
-## What Sam has to do, and it is twice
+## What the owner has to do, and it is twice
 
 1. **Generate the key pair**, on his machine, and store the private half
    where the Apple certificate lives. Not me: losing it is unrecoverable

@@ -42,7 +42,8 @@ back out as a file you can edit: Fountain, or .fdx for screenwriting apps.
 
 ## What it does
 
-- **Drop a PDF, get a clean e-book.** Nothing to set up first.
+- **Drop a PDF, get a clean e-book.** Nothing to set up first. A Fountain
+  script (.fountain) works the same way, no PDF needed.
 - **A book to look at from the start.** The first time it opens, Method
   Reader shows Field Station, an invented sample script, as a book, so you
   can see what it makes before you convert your own. Open Sample in the Help
@@ -136,6 +137,14 @@ one, or
 [open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose)
 to say more. A reader that is not on the list goes in **My device isn't
 here** on the same screen (beta).
+
+**Something came out wrong?** You don't need a GitHub account to say so.
+Choose **Help > Report a Bug**, or **Report a bug** on a conversion that
+failed, write what happened, and press **Send by email**: your mail app opens
+a message to hello@methodproduction.com that you can read and change before
+it goes. No words from your script are sent. A box, off unless you tick it,
+adds counts of the script's shape (pages, scenes, cues), and the same window
+can open an issue on GitHub instead.
 
 **What beta means here.** A feature marked (beta) works in our tests, but
 has not been tried widely on real devices or apps yet: tell us how it goes.

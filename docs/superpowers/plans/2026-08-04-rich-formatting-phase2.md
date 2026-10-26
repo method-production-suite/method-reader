@@ -1944,7 +1944,7 @@ dates, and repoint §Phase B and §Phase C at the real filenames
 (`2026-08-04-rich-formatting-phase1.md` / `-phase2.md`) rather than the
 `2026-07-30-` names they predicted.
 
-- [ ] **Step 7:** Phase D (the combined device pass) is Sam-owned and stays
+- [ ] **Step 7:** Phase D (the combined device pass) is owned by the owner and stays
 open: registry #18's verdict is pending, and the umbrella's Phase D checklist
 already lists "underline renders on device; font shifts render and degrade
 sanely" as items to settle in that session.

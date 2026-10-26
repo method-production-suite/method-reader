@@ -15,27 +15,10 @@ recommendation are built on the recommendation and marked so here.
 
 Release go-aheads:
 
-- **0.13.1.** The clearer window wording, the Field Station sample on first
-  launch, Linux app data moved to `~/.local/share`, Homebrew retired, one
-  `SHA256SUMS` for every download, the shared updater, the list of recent
-  scripts for the suite's launcher, on a Mac the app renaming itself Method
-  Reader where an older install still calls it Screepub Desktop or Screepub
-  and showing its own icon in the Dock, a long side-by-side exchange coming
-  through as two speeches, several scripts copied to a Kindle in a row, and
-  a tidier Other ways. The new release order (every build before any
-  signing key) was proved on 2026-10-19 by a rehearsal of the release on
-  main, with no tag. Three things before the tag:
-  1. No young crate is left in the exception list. The earliest that holds
-     is 2026-10-23, and the release workflow refuses an earlier tag on its
-     own.
-  2. Done 2026-10-20: the update is rehearsed from 0.13.0, headless,
-     because 0.13.0's own updater is what installs 0.13.1. It installed
-     0.13.1 with its signature verified.
-  3. Done 2026-10-20: the rehearsal is green on the release commit,
-     b0a211b. Since 2026-10-19 it is the only full build before a release.
-
-  Then the tag goes to the owner through MOrg; one yes covers the tag and
-  the publish, after the draft checks pass (docs/RELEASING.md).
+- **0.13.1: skipped** (the owner, 2026-10-26). Its fixes ship in 1.0.0,
+  from main. The day its last young crates aged, every release of
+  clipboard-win (the Windows clipboard) up to 5.4.1 was yanked, and the
+  owner chose its replacement, 5.4.3, which is 14 days old on 2026-11-06.
 - **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
   is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
   command line's MCP server, what's on a reader, a SHA256SUMS signed with
@@ -45,20 +28,34 @@ Release go-aheads:
   tools and the version check take it, and the site's download links name
   no version. Launcher 0.1.2, which accepts a universal app, is out.
 
-  One decision for the owner, before the universal build is written
-  (docs/superpowers/specs/2026-10-20-universal-mac-design.md): every Intel
-  copy of 0.9.0 reads the same update file, so once 1.0.0 lists Intel it is
-  offered 1.0.0 straight from 0.9.0, a jump nothing has proved yet.
-  Recommended: offer it, with a new rehearsal step in which 0.9.0's own
-  updater installs the release and the app starts on 0.9.0's settings. The
-  fallback, if that proof is slow to build: ship 1.0.0 universal but list
-  Intel only from 1.0.1.
+  Built and on main: the universal Mac build, its 0.9.0 Intel proof and
+  the signed SHA256SUMS (#78, #79). The four features are finished as
+  draft pull requests, merging now that 0.13.1 is skipped: the MCP server
+  (#62), what's on a reader (#67), the .fdx scene pages (#76) and OSF out
+  (#77). 1.0.0 also carries everything 0.13.1 would have. Then the public
+  text, the notes and a rehearsal. It tags on or after 2026-11-06, when
+  clipboard-win 5.4.3 is 14 days old, unless the owner approves an earlier
+  override; the release check refuses it before then on its own.
 
 Built on the recommendation (reversible):
+
+- **Intel Macs on 0.9.0 are offered 1.0.0** (2026-10-20). Every Intel
+  copy of 0.9.0 reads the same update file, so the release now proves,
+  before anything is published, that 0.9.0's own updater installs it under
+  Rosetta from the Intel entry and that the app then starts and renames
+  itself. Proved on this Mac with a throwaway key. The fallback, listing
+  Intel only from 1.0.1, is a small change in the release tools.
 
 - **What counts as a recent script** for the launcher's list: a conversion
   into the library, recorded under the file you chose. Opening a book that is
   already in the library, without converting it, does not count yet.
+- **The checks a .fountain you bring has to pass** (Fountain in): it must be
+  UTF-8 text, it must not be empty, and one with no scene heading and no
+  dialogue is refused as not a screenplay, the same refusal a PDF gets, with
+  the same Convert anyway. Until now a .fountain was taken on trust; with
+  the window accepting one by drop, a stray text file would otherwise become
+  a book. A .fountain the library made itself is still taken on trust, so
+  tuning a script that was converted anyway keeps working.
 
 Tests that need a device (hands only; everything else is automated):
 
@@ -78,11 +75,24 @@ Tests that need a device (hands only; everything else is automated):
      from Screepub Desktop or Screepub). Check that Finder, Spotlight and
      Launchpad show the new name, and whether a Dock icon you kept still
      opens the app or shows a question mark.
-   - **Linux:** the owner's Arch check (AppImage, converting, USB detection,
-     copy and eject on Hyprland, the command line); findings arrive as an
-     issue.
+   - **Linux, eventually:** the owner's Arch check (AppImage, converting,
+     USB detection, copy and eject on Hyprland, the command line); findings
+     arrive as an issue. Nothing waits on it.
+
+Deferred (the owner, 2026-10-20): **hands-on tests on Windows**, with no
+date. The Windows build is still built and tested automatically on every
+release and every Monday, and its notes keep saying it has not been
+installed by a person yet.
 
 Decided:
+
+- **Reporting a problem without a GitHub account** (the owner,
+  2026-10-21: option 1). Help > Report a Bug, and Report a bug on a failed
+  conversion, open a sheet that sends a pre-filled email to
+  hello@methodproduction.com: what the person typed, the version, and for a
+  failed conversion the app's own message. No words from the script; counts
+  of its shape only if they tick a box. GitHub stays as a second link.
+  Built (docs/superpowers/specs/2026-10-21-report-without-github-design.md).
 
 - **The two Dependabot alerts for `glib`** (2026-10-20): dismissed as
   "vulnerable code not used". `glib` reaches the lock files only through
@@ -111,13 +121,6 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **Three small fixes to the recent list.** A damaged `recent.json` is
-  replaced without a word; the window and the command line converting at the
-  same moment can drop one entry; and on Windows the same file spelled with
-  different capitals is listed twice.
-- **Scene pages, lengths and numbers in the .fdx** (1.0.0). Built and
-  brought up to date with main; its draft pull request is open and merges
-  after 0.13.1.
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
   a page, get an editable script, make an e-book, all on local files. Built
   and in review; it merges after 0.13.1.
@@ -125,11 +128,10 @@ In order. Each is one small pull request.
   the same structure, and `method-reader export --for osf`.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
   .fountain, so a script from Method Storyteller becomes an e-book without a
-  PDF.
-- **A way to report problems without a GitHub account.** Asking for a device
-  and saying whether a reader worked need none now: the window sends both.
-  Telling us a script converted badly still means opening an issue, which
-  excludes most of the people Method Reader is built for.
+  PDF. The Fountain half is built: a .fountain converts in the window and on
+  the command line the way a PDF does, and the library keeps a copy of it
+  beside its book. The OSF half is still to come; it waits for the OSF
+  reader.
 - **Copying to new Kindles over USB.** Every Kindle sold since late 2024
   connects the way a phone does (MTP) instead of showing up as a drive, so
   Method Reader cannot see one, and its owners are sent to email. Email

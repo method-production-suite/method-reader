@@ -544,7 +544,7 @@ fn each_change_runs_only_the_quick_dependency_checks() {
     // push to main run cargo deny and the crate-age check, and nothing that
     // builds or tests; main's ruleset requires exactly those two. A draft
     // runs neither, and ready_for_review starts the run. A newer push
-    // cancels the run it replaces, on main too (Sam, 2026-10-19). release.yml
+    // cancels the run it replaces, on main too (the owner, 2026-10-19). release.yml
     // runs its own checks on the tag and never cancels.
     let wf = workflow("checks.yml");
     let on = &wf["on"];
