@@ -15,40 +15,10 @@ recommendation are built on the recommendation and marked so here.
 
 Release go-aheads:
 
-- **0.13.1.** The clearer window wording, the Field Station sample on first
-  launch, Linux app data moved to `~/.local/share`, Homebrew retired, one
-  `SHA256SUMS` for every download, the shared updater, the list of recent
-  scripts for the suite's launcher, on a Mac the app renaming itself Method
-  Reader where an older install still calls it Screepub Desktop or Screepub
-  and showing its own icon in the Dock, a long side-by-side exchange coming
-  through as two speeches, several scripts copied to a Kindle in a row, and
-  a tidier Other ways. The new release order (every build before any
-  signing key) was proved on 2026-10-19 by a rehearsal of the release on
-  main, with no tag. Three things before the tag:
-  1. No young crate is left in the exception list. The earliest that holds
-     is 2026-10-23, and the release workflow refuses an earlier tag on its
-     own.
-  2. Done 2026-10-20: the update is rehearsed from 0.13.0, headless,
-     because 0.13.0's own updater is what installs 0.13.1. It installed
-     0.13.1 with its signature verified.
-  3. Done 2026-10-20: the rehearsal is green on the release commit,
-     b0a211b. Since 2026-10-19 it is the only full build before a release.
-
-  **Blocked since 2026-10-23.** On the day its last young crates aged,
-  every release of clipboard-win (the Windows clipboard, through the
-  window's toolkit) up to 5.4.1 was yanked, with no reason given and no
-  security advisory. 5.4.1 is in b0a211b, in main and in the 0.13.0 people
-  already have; its replacements, 5.4.2 and 5.4.3, were both published that
-  day. The release's crate check refuses any yanked crate, and in a release
-  it allows only security exceptions, so a 0.13.1 tag would fail.
-
-  Decision for the owner. Recommended: skip 0.13.1 and ship its fixes in
-  1.0.0 from main, which already holds them. The release check would allow
-  clipboard-win 5.4.1, yanked, as one named exception until 5.4.3 is 14
-  days old on 2026-11-06: the same code every installed copy runs today,
-  and Windows only. The alternatives are a 0.13.1 from a release branch
-  (b0a211b plus that exception, outside the main-only rehearsal), moving to
-  5.4.3 now (new code, yank unexplained), or waiting until 2026-11-06.
+- **0.13.1: skipped** (the owner, 2026-10-26). Its fixes ship in 1.0.0,
+  from main. The day its last young crates aged, every release of
+  clipboard-win (the Windows clipboard) up to 5.4.1 was yanked, and the
+  owner chose its replacement, 5.4.3, which is 14 days old on 2026-11-06.
 - **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
   is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
   command line's MCP server, what's on a reader, a SHA256SUMS signed with
@@ -60,10 +30,12 @@ Release go-aheads:
 
   Built and on main: the universal Mac build, its 0.9.0 Intel proof and
   the signed SHA256SUMS (#78, #79). The four features are finished as
-  draft pull requests that merge after the 0.13.1 tag: the MCP server
+  draft pull requests, merging now that 0.13.1 is skipped: the MCP server
   (#62), what's on a reader (#67), the .fdx scene pages (#76) and OSF out
-  (#77). Then the public text, the notes and a rehearsal, and 1.0.0 goes
-  to the owner like 0.13.1.
+  (#77). 1.0.0 also carries everything 0.13.1 would have. Then the public
+  text, the notes and a rehearsal. It tags on or after 2026-11-06, when
+  clipboard-win 5.4.3 is 14 days old, unless the owner approves an earlier
+  override; the release check refuses it before then on its own.
 
 Built on the recommendation (reversible):
 
