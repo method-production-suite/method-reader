@@ -106,6 +106,71 @@ fn every_request_is_the_argv_app_js_built() {
     assert_eq!(seen.len(), 19, "{seen:?}");
 }
 
+/// What a CLI run printed, kept for the test to read.
+struct Keep(std::sync::Arc<std::sync::Mutex<String>>);
+
+impl sp_cli::Sink for Keep {
+    fn out(&mut self, line: &str) {
+        let mut said = self.0.lock().unwrap();
+        said.push_str(line);
+        said.push('\n');
+    }
+    fn err(&mut self, line: &str) {
+        self.out(line);
+    }
+}
+
+/// The device library's two requests are the window's own (app.js had no
+/// device library, so there is nothing frozen to hold them to): each must
+/// be the CLI's verb exactly as its `--help` spells it, so the direct
+/// engine runs that verb (tests/direct_engine.rs runs both for real).
+#[test]
+fn the_device_library_requests_are_the_clis_verbs() {
+    let books = Request::DeviceBooks {
+        volume: "/Volumes/Kindle".into(),
+    };
+    assert_eq!(books.argv(), ["device-books", "/Volumes/Kindle", "--json"]);
+    assert_eq!(books.kind(), "device-books");
+    let remove = Request::DeviceRemove {
+        volume: "/Volumes/Kindle".into(),
+        file: "/Volumes/Kindle/documents/Field Station.azw3".into(),
+    };
+    assert_eq!(
+        remove.argv(),
+        [
+            "device-remove",
+            "/Volumes/Kindle",
+            "/Volumes/Kindle/documents/Field Station.azw3",
+            "--json"
+        ]
+    );
+    assert_eq!(remove.kind(), "device-remove");
+    // Listing is a look, not somebody's work; removing is work.
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(!counts_toward_busy(books.call()));
+    assert!(counts_toward_busy(remove.call()));
+    // Each verb's own --help names the argv's shape.
+    for (verb, shape) in [
+        (
+            "device-books",
+            "method-reader device-books <volume> [--json]",
+        ),
+        (
+            "device-remove",
+            "method-reader device-remove <volume> <book> [--json]",
+        ),
+    ] {
+        let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let code = sp_cli::run(
+            &[verb.to_string(), "--help".to_string()],
+            Box::new(Keep(said.clone())),
+        );
+        assert_eq!(code, 0, "{verb} --help");
+        let said = said.lock().unwrap().clone();
+        assert!(said.contains(shape), "{verb} --help: {said}");
+    }
+}
+
 /// Fountain in: a .fountain the window converts (dropped, or picked with
 /// Choose a script) is the same Convert request a PDF is, so its argv is
 /// the PDF's with the path swapped, flag for flag. app.js never sent one,

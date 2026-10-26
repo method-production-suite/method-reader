@@ -240,6 +240,39 @@ Options:
   -h, --help             show this help
 "#;
 
+pub const DEVICE_BOOKS_USAGE: &str = r#"method-reader device-books: the books on a connected reader
+
+Usage:
+  method-reader device-books <volume> [--json]
+
+<volume> must be the full path of a reader that `method-reader devices` lists
+right now. Lists every book in the folder the reader keeps them in (a
+Kindle's documents folder, a Kobo's whole volume, a tolino's Books folder),
+with its size and format, and names the library folder of each one Method
+Reader made: the same size and the same bytes. Links are never followed.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
+pub const DEVICE_REMOVE_USAGE: &str = r#"method-reader device-remove: take one book off a connected reader
+
+Usage:
+  method-reader device-remove <volume> <book> [--json]
+
+<volume> must be a reader `method-reader devices` lists right now, and <book>
+the full path of a book in that reader's books folder, as device-books
+lists it. Anything else is refused before anything is touched. On a Kindle,
+the book's .sdr folder (its reading position, highlights and notes) goes
+with it, as it does when the Kindle itself deletes a book. It does not ask
+first.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
 pub const EJECT_USAGE: &str = r#"method-reader eject: safely remove a reader before unplugging it
 
 Usage:

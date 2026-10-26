@@ -193,3 +193,132 @@ fn child_converts_the_sample() {
     assert_eq!(again["epubPath"], p.epub.as_str());
     assert_eq!(again["previewHtml"], answer["previewHtml"], "the same book");
 }
+
+const SHELF_CHILD: &str = "SP_APP_DIRECT_ENGINE_SHELF_CHILD";
+
+/// The device library as the window asks for it (src/app/device_library.rs),
+/// on an invented Kindle in a scratch folder: the engine's real answers
+/// read back by the window's own model, and only the one book removed. The
+/// reader list is METHOD_READER_VOLUME_ROOTS pointed at the scratch
+/// volumes, so no real reader is ever looked at, and the reMarkable
+/// address is one nothing listens on.
+#[test]
+fn the_device_library_lists_a_readers_books_and_removes_one() {
+    let scratch = tempfile::tempdir().expect("scratch");
+    let root = scratch.path().canonicalize().unwrap();
+    let config = root.join("config");
+    let library = root.join("library");
+    let kindle = root.join("vols").join("Kindle");
+    for d in [
+        config.clone(),
+        library.join("Field Station"),
+        kindle.join("documents").join("Field Station.sdr"),
+        kindle.join("system"),
+    ] {
+        std::fs::create_dir_all(d).unwrap();
+    }
+    let ours = b"the library's own bytes";
+    std::fs::write(library.join("Field Station/Field Station.azw3"), ours).unwrap();
+    std::fs::write(kindle.join("documents/Field Station.azw3"), ours).unwrap();
+    std::fs::write(
+        kindle.join("documents/Field Station.sdr/Field Station.apnx"),
+        b"notes",
+    )
+    .unwrap();
+    std::fs::write(kindle.join("documents/Reading list.pdf"), b"not ours").unwrap();
+    let out = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "child_reads_the_shelf", "--nocapture"])
+        .env(SHELF_CHILD, kindle.to_string_lossy().as_ref())
+        .env("METHOD_READER_CONFIG_DIR", &config)
+        .env("METHOD_READER_LIBRARY", &library)
+        .env("SCREEPUB_CONFIG_DIR", &config)
+        .env("SCREEPUB_LIBRARY", &library)
+        .env("METHOD_READER_VOLUME_ROOTS", root.join("vols"))
+        .env("METHOD_READER_REMARKABLE_ENDPOINT", "http://127.0.0.1:9")
+        .env(
+            "CALIBRE_CONFIG_DIRECTORY",
+            "/dev/null/method-reader-test-guard",
+        )
+        .output()
+        .expect("the child runs");
+    let said =
+        String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{said}");
+    assert!(said.contains("1 passed"), "the child really ran: {said}");
+    assert!(!kindle.join("documents/Field Station.azw3").exists());
+    assert!(!kindle.join("documents/Field Station.sdr").exists());
+    assert!(kindle.join("documents/Reading list.pdf").exists());
+    assert!(
+        library.join("Field Station/Field Station.azw3").exists(),
+        "the library's copy is never touched"
+    );
+}
+
+#[test]
+fn child_reads_the_shelf() {
+    let Ok(volume) = std::env::var(SHELF_CHILD) else {
+        return;
+    };
+    use sp_app::model::device_library::{removed_line, shelf_from};
+    use sp_app::model::send_routes::Device;
+    let engine = sp_app::direct::DirectEngine::new();
+    let answer = engine
+        .run(
+            &Request::DeviceBooks {
+                volume: volume.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    let shelf = shelf_from(&answer).unwrap_or_else(|| panic!("a list the window reads: {answer}"));
+    assert_eq!(shelf.kind, "kindle");
+    let (ours, others) = shelf.groups();
+    let names = |l: &[&sp_app::model::device_library::Book]| {
+        l.iter().map(|b| b.name.clone()).collect::<Vec<_>>()
+    };
+    assert_eq!(names(&ours), ["Field Station.azw3"]);
+    assert_eq!(ours[0].library.as_deref(), Some("Field Station"));
+    assert_eq!(names(&others), ["Reading list.pdf"]);
+
+    let book = ours[0].clone();
+    let device = Device {
+        id: "k".into(),
+        kind: "kindle".into(),
+        name: "Kindle".into(),
+        volume: Some(volume.clone()),
+        transport: None,
+        copy_note: None,
+    };
+    let answer = engine
+        .run(
+            &Request::DeviceRemove {
+                volume: volume.clone(),
+                file: book.path.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(
+        removed_line(&answer, &book, &device),
+        (
+            "Removed Field Station.azw3 and its notes from your Kindle.".to_string(),
+            false
+        ),
+        "{answer}"
+    );
+    // A file outside the books folder is refused in the engine's words.
+    let answer = engine
+        .run(
+            &Request::DeviceRemove {
+                volume: volume.clone(),
+                file: format!("{volume}/system"),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(answer["error"]["code"], "not-a-book", "{answer}");
+    assert!(removed_line(&answer, &book, &device).1);
+}

@@ -10,6 +10,7 @@
 pub mod book;
 pub mod bookview;
 pub mod convert;
+pub mod device_library;
 pub mod frame;
 pub mod help;
 pub mod host;
@@ -48,6 +49,7 @@ pub enum Purpose {
     Convert(convert::Purpose),
     Tune(tune::Purpose),
     Panel(panel::Purpose),
+    Shelf(device_library::Purpose),
     DevicesPoll {
         era: u64,
     },
@@ -124,6 +126,8 @@ pub struct App {
     pub read: read::State,
     pub tune: tune::State,
     pub panel: panel::State,
+    /// What is on the connected reader (device_library.rs).
+    pub shelf: device_library::State,
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
@@ -188,6 +192,7 @@ impl App {
             read: read::State::default(),
             tune: tune::State::default(),
             panel: panel::State::default(),
+            shelf: device_library::State::default(),
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
@@ -393,6 +398,7 @@ impl App {
             Purpose::Convert(p) => convert::answered(self, p, reply),
             Purpose::Tune(p) => tune::answered(self, p, reply),
             Purpose::Panel(p) => panel::answered(self, p, reply),
+            Purpose::Shelf(p) => device_library::answered(self, p, reply),
             Purpose::Shape { fountain } => help::shape_answered(self, &fountain, &reply),
             Purpose::DevicesPoll { era } => {
                 let answer = reply.answer.ok();
@@ -407,6 +413,7 @@ impl App {
     fn devices_changed(&mut self, list: Vec<Device>) {
         self.devices = Some(list.clone());
         panel::devices_changed(self, &list);
+        device_library::devices_changed(self, &list);
         frame::heads_up_heard(self, &list);
     }
 

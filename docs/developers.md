@@ -267,6 +267,8 @@ method-reader export <file.epub> [--for epub|kindle|kfx|azw3|mobi|fountain|fdx] 
 method-reader routes <file.epub> [--quick] [--json]     # every way this book can leave, best first
 method-reader route <key> <file.epub> [--out <path>]    # Apple Books, Amazon, Mail, or save a copy
 method-reader eject <volume> [--json]                   # safely remove a reader before unplugging
+method-reader device-books <volume> [--json]            # the books on a reader, and which are the library's
+method-reader device-remove <volume> <book> [--json]    # take one book off a reader (docs/device-library.md)
 method-reader kfx-status [--json]                       # can this computer make KFX for a Kindle?
 method-reader kfx-install [--json]                      # install the KFX plugin into Calibre (online)
 ```

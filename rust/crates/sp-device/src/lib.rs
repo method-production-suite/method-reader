@@ -8,7 +8,9 @@
 //!   together.
 //! - Sending: [`transfer`] copies to where each vendor indexes a book,
 //!   through sp-fsutil's flushed replace; [`remarkable`] uploads.
-//! - The verbs: [`commands`] (`devices`, `send`), [`eject`], [`reveal`].
+//! - The verbs: [`commands`] (`devices`, `send`), [`eject`], [`reveal`],
+//!   and [`books`] (`device-books`, `device-remove`: what is on a reader,
+//!   and taking a book off it; docs/device-library.md).
 //!   Each returns a serde value whose JSON is the TypeScript's field for
 //!   field, or a [`error::CliError`] with the same code and words.
 //! - BETA and off until hardware day: [`mtp`] (Kindles that connect over
@@ -20,6 +22,7 @@
 //! [`remarkable::HttpClient`], so the tests use fakes and nothing real is
 //! ever ejected, revealed, paused or written to.
 
+pub mod books;
 pub mod camera_import;
 pub mod classify;
 pub mod commands;

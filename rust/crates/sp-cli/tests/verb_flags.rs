@@ -62,6 +62,12 @@ const VERB_SHAPE: &[(&str, &[&str], &[&str])] = &[
         &["save-kindle", "/nowhere/x.epub"],
     ),
     ("eject", &[], &["/nowhere/Kindle"]),
+    ("device-books", &[], &["/nowhere/Kindle"]),
+    (
+        "device-remove",
+        &[],
+        &["/nowhere/Kindle", "/nowhere/Kindle/documents/x.azw3"],
+    ),
     ("shape", &[], &["/nowhere/x.fountain"]),
 ];
 

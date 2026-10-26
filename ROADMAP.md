@@ -49,6 +49,9 @@ Built on the recommendation (reversible):
 - **What counts as a recent script** for the launcher's list: a conversion
   into the library, recorded under the file you chose. Opening a book that is
   already in the library, without converting it, does not count yet.
+- **Replacing a book on a reader** is the send panel's own copy, after
+  converting again; the list of what is on a reader has no button that sends
+  some other library book (the window has no library list to pick from).
 - **The checks a .fountain you bring has to pass** (Fountain in): it must be
   UTF-8 text, it must not be empty, and one with no scene heading and no
   dialogue is refused as not a screenplay, the same refusal a PDF gets, with
@@ -75,6 +78,10 @@ Tests that need a device (hands only; everything else is automated):
      from Screepub Desktop or Screepub). Check that Finder, Spotlight and
      Launchpad show the new name, and whether a Dock icon you kept still
      opens the app or shows a question mark.
+   - **What's on a reader** (for 1.0.0): with a
+     Kindle, a Kobo and a tolino, list the books, remove one Method Reader
+     made, and check on the reader that it is gone, and on the Kindle that
+     its notes went with it.
    - **Linux, eventually:** the owner's Arch check (AppImage, converting,
      USB detection, copy and eject on Hyprland, the command line); findings
      arrive as an issue. Nothing waits on it.

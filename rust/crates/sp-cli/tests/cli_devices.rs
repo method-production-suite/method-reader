@@ -143,6 +143,8 @@ fn verbs_is_the_single_list_of_known_verbs() {
         "routes",
         "route",
         "eject",
+        "device-books",
+        "device-remove",
     ] {
         let ran = sb.run(&[verb, "--help", "--json"]);
         assert_eq!(ran.code, 0, "{verb}");
