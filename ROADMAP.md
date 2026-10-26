@@ -34,9 +34,21 @@ Release go-aheads:
   3. Done 2026-10-20: the rehearsal is green on the release commit,
      b0a211b. Since 2026-10-19 it is the only full build before a release.
 
-  **Waiting on:** the owner's yes for the tag on b0a211b, on or after
-  2026-10-23, through MOrg. One yes covers the tag and the publish, after
-  the draft checks pass (docs/RELEASING.md).
+  **Blocked since 2026-10-23.** On the day its last young crates aged,
+  every release of clipboard-win (the Windows clipboard, through the
+  window's toolkit) up to 5.4.1 was yanked, with no reason given and no
+  security advisory. 5.4.1 is in b0a211b, in main and in the 0.13.0 people
+  already have; its replacements, 5.4.2 and 5.4.3, were both published that
+  day. The release's crate check refuses any yanked crate, and in a release
+  it allows only security exceptions, so a 0.13.1 tag would fail.
+
+  Decision for the owner. Recommended: skip 0.13.1 and ship its fixes in
+  1.0.0 from main, which already holds them. The release check would allow
+  clipboard-win 5.4.1, yanked, as one named exception until 5.4.3 is 14
+  days old on 2026-11-06: the same code every installed copy runs today,
+  and Windows only. The alternatives are a 0.13.1 from a release branch
+  (b0a211b plus that exception, outside the main-only rehearsal), moving to
+  5.4.3 now (new code, yank unexplained), or waiting until 2026-11-06.
 - **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
   is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
   command line's MCP server, what's on a reader, a SHA256SUMS signed with
