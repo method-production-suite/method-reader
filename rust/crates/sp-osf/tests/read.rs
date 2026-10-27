@@ -82,7 +82,7 @@ fn kept_body(tokens: &[Token]) -> Vec<Kept> {
             kind,
             text,
             scene_number: t.scene_number.clone(),
-            dual: t.dual.clone(),
+            dual: t.dual,
         });
     }
     out
@@ -163,11 +163,14 @@ fn not_xml_is_refused_plainly() {
         "INT. HUT - NIGHT",
         "<document><paragraphs>",
         "<?xml version=\"1.0\"?><a></b>",
+        // A DTD is refused: no entity from one is ever expanded.
+        "<!DOCTYPE document [<!ENTITY x \"INT. HUT - DAY\">]><document><paragraphs><para><style basestylename=\"Action\"/><text>&x;</text></para></paragraphs></document>",
     ] {
         let err = osf_to_fountain(bad).expect_err(bad);
         assert!(matches!(err, ReadError::NotXml(_)), "{bad:?}: {err:?}");
         assert!(
-            err.to_string().starts_with("this script is not a readable OSF file"),
+            err.to_string()
+                .starts_with("this script is not a readable OSF file"),
             "{err}"
         );
     }
@@ -282,7 +285,11 @@ fn a_parenthetical_without_its_brackets_gets_them() {
 
 #[test]
 fn speech_with_no_cue_reads_as_action() {
-    let xml = doc(&[para("Scene Heading", "INT. HUT - DAY"), para("Dialogue", "Hello?")].join("\n"));
+    let xml = doc(&[
+        para("Scene Heading", "INT. HUT - DAY"),
+        para("Dialogue", "Hello?"),
+    ]
+    .join("\n"));
     let got = kinds(&read(&xml));
     assert_eq!(got[1], (TokenType::Action, "Hello?".into()));
 }
@@ -322,7 +329,7 @@ fn dual_dialogue_marked_on_the_first_cue_becomes_a_caret_on_the_second() {
     let cues: Vec<(String, Option<Dual>)> = tokens
         .windows(2)
         .filter(|w| w[0].kind == TokenType::DialogueBegin && w[1].kind == TokenType::Character)
-        .map(|w| (w[1].text.clone().unwrap_or_default(), w[0].dual.clone()))
+        .map(|w| (w[1].text.clone().unwrap_or_default(), w[0].dual))
         .collect();
     assert_eq!(
         cues,
@@ -346,8 +353,7 @@ fn runs_become_fountain_emphasis_and_literal_markers_are_escaped() {
         .find(|t| t.kind == TokenType::Action)
         .expect("an action");
     let runs = sp_fdx::text_runs(action.text.as_deref().unwrap_or(""));
-    let got: Vec<(String, Option<String>)> =
-        runs.into_iter().map(|r| (r.text, r.style)).collect();
+    let got: Vec<(String, Option<String>)> = runs.into_iter().map(|r| (r.text, r.style)).collect();
     assert_eq!(
         got,
         vec![
@@ -414,5 +420,8 @@ fn a_utf8_byte_order_mark_and_entities_are_read() {
         doc(&para("Action", "Salt &amp; pepper &lt;here&gt;"))
     );
     let got = kinds(&read(&xml));
-    assert_eq!(got, vec![(TokenType::Action, "Salt & pepper <here>".into())]);
+    assert_eq!(
+        got,
+        vec![(TokenType::Action, "Salt & pepper <here>".into())]
+    );
 }

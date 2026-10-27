@@ -1352,6 +1352,15 @@ names the check it affects.
     against main's answers with the same command. Each of the 43 differed
     in exactly one value, an `.fdx` hash or a library source.json hash;
     the other 404 committed runs matched untouched.
+- **OSF in (2026-10-27).** An `.osf` input is read into a `.fountain`
+  text (`sp_osf::osf_to_fountain`) and converted as a chosen `.fountain`,
+  guards and all; one that is not XML or has no `<paragraphs>` is refused
+  as `unreadable`. The TypeScript had no OSF input, so the `unsupported-type`
+  refusal now names it: "expected .pdf, .fountain, .txt, or .osf", and the
+  usage text gains a paragraph on it. The eight command rows that print
+  either were accepted with `cargo xtask parity --accept` (refuse-no-input,
+  refuse-unsupported, refuse-unsupported-human, refuse-verb-after-flag,
+  help, help-short, help-json, verb-shadowed-by-file). docs/osf-input.md.
 - **Fountain in (2026-10-21).** A `.fountain` someone chose is held to
   guards of its own (`sp_engine::convert::fountain_guards`): bytes that are
   not UTF-8 are refused as `unreadable` instead of being read lossily, an

@@ -84,10 +84,10 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
     (
         "USAGE",
         "effect here (asking to strip (CONT'D) warns rather than failing silently),\nand the scanned-PDF and not-a-screenplay guards are PDF-only. See\ndocs/fountain-input.md.",
-        "effect here (asking to strip (CONT'D) warns rather than failing silently).\nA .fountain must be UTF-8 text with something in it, and one with no scene\nheading and no dialogue is refused as a PDF would be (--force overrules\nthat); the scanned-PDF guard is PDF-only. Under --library a .fountain is\ncopied into its library folder beside the book. See docs/fountain-input.md.",
+        "effect here (asking to strip (CONT'D) warns rather than failing silently).\nA .fountain must be UTF-8 text with something in it, and one with no scene\nheading and no dialogue is refused as a PDF would be (--force overrules\nthat); the scanned-PDF guard is PDF-only. Under --library a .fountain is\ncopied into its library folder beside the book. See docs/fountain-input.md.\nAn .osf (Open Screenplay Format) is read into a .fountain and converted as\none, the same guards included; under --library its folder keeps that\n.fountain. See docs/osf-input.md.",
         // A .fountain someone chose has guards of its own, and a library
         // conversion keeps a copy of it (PARITY.md, Decisions: "Fountain
-        // in").
+        // in"), and an .osf is read into one (docs/osf-input.md).
     ),
     (
         "USAGE",

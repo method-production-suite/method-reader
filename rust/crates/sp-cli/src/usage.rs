@@ -15,6 +15,9 @@ A .fountain must be UTF-8 text with something in it, and one with no scene
 heading and no dialogue is refused as a PDF would be (--force overrules
 that); the scanned-PDF guard is PDF-only. Under --library a .fountain is
 copied into its library folder beside the book. See docs/fountain-input.md.
+An .osf (Open Screenplay Format) is read into a .fountain and converted as
+one, the same guards included; under --library its folder keeps that
+.fountain. See docs/osf-input.md.
 
 A script's saved settings are used by the conversion that finds them: if
 <script>.method-reader.json sits beside the input (or in the script's library

@@ -318,8 +318,10 @@ fn normalized(runs: &[Run]) -> Vec<(String, Option<String>)> {
 fn markup(runs: &[Run]) -> String {
     let want = normalized(runs);
     let reads_back = |s: &str| {
-        let got: Vec<(String, Option<String>)> =
-            text_runs(s).into_iter().map(|r| (r.text, r.style)).collect();
+        let got: Vec<(String, Option<String>)> = text_runs(s)
+            .into_iter()
+            .map(|r| (r.text, r.style))
+            .collect();
         got == want
     };
     let bare = markup_with(runs, false);
@@ -532,11 +534,12 @@ fn title_block(paras: &[Para]) -> Option<String> {
     let mut groups: Vec<(bool, Vec<String>)> = Vec::new();
     let mut open_key: Option<&'static str> = None;
     let mut open_group = false;
-    let mut push_keyed = |keyed: &mut Vec<(&'static str, Vec<String>)>, key, line: String| {
-        match keyed.iter_mut().find(|(k, _)| *k == key) {
-            Some((_, lines)) => lines.push(line),
-            None => keyed.push((key, vec![line])),
-        }
+    let push_keyed = |keyed: &mut Vec<(&'static str, Vec<String>)>, key, line: String| match keyed
+        .iter_mut()
+        .find(|(k, _)| *k == key)
+    {
+        Some((_, lines)) => lines.push(line),
+        None => keyed.push((key, vec![line])),
     };
     for p in paras {
         let lines: Vec<String> = p
@@ -568,7 +571,8 @@ fn title_block(paras: &[Para]) -> Option<String> {
         }
     }
 
-    let taken = |keyed: &[(&'static str, Vec<String>)], key: &str| keyed.iter().any(|(k, _)| *k == key);
+    let taken =
+        |keyed: &[(&'static str, Vec<String>)], key: &str| keyed.iter().any(|(k, _)| *k == key);
     for (center, lines) in groups {
         let key = if center {
             if !taken(&keyed, "Title") {
@@ -625,7 +629,11 @@ pub fn osf_to_fountain(xml: &str) -> Result<String, ReadError> {
         .map(|p| read_para(p, &declared))
         .collect();
     let title: Vec<Para> = child(root, "titlepage")
-        .map(|t| elements(t, "para").map(|p| read_para(p, &declared)).collect())
+        .map(|t| {
+            elements(t, "para")
+                .map(|p| read_para(p, &declared))
+                .collect()
+        })
         .unwrap_or_default();
 
     let mut blocks: Vec<String> = Vec::new();

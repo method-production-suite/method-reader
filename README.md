@@ -44,7 +44,8 @@ apps.
 ## What it does
 
 - **Drop a PDF, get a clean e-book.** Nothing to set up first. A Fountain
-  script (.fountain) works the same way, no PDF needed.
+  script (.fountain) or an Open Screenplay Format script (.osf) works the
+  same way, no PDF needed.
 - **A book to look at from the start.** The first time it opens, Method
   Reader shows Field Station, an invented sample script, as a book, so you
   can see what it makes before you convert your own. Open Sample in the Help

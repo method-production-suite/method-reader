@@ -429,7 +429,7 @@ fn json_devices_says_the_verb_must_come_first() {
     assert_eq!(ran.error_code(), "unsupported-type");
     assert_eq!(
         ran.error_message(),
-        "unsupported input type \"\": expected .pdf, .fountain, or .txt. Did you mean `method-reader devices`? The verb must come first"
+        "unsupported input type \"\": expected .pdf, .fountain, .txt, or .osf. Did you mean `method-reader devices`? The verb must come first"
     );
 }
 
