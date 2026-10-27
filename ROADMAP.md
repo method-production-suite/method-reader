@@ -30,12 +30,13 @@ Release go-aheads:
 
   Built and on main: the universal Mac build, its 0.9.0 Intel proof and
   the signed SHA256SUMS (#78, #79). The four features are finished as
-  draft pull requests, merging now that 0.13.1 is skipped: the MCP server
-  (#62), what's on a reader (#67), the .fdx scene pages (#76) and OSF out
-  (#77). 1.0.0 also carries everything 0.13.1 would have. Then the public
-  text, the notes and a rehearsal. It tags on or after 2026-11-06, when
-  clipboard-win 5.4.3 is 14 days old, unless the owner approves an earlier
-  override; the release check refuses it before then on its own.
+  draft pull requests, now merged: the MCP server (#62), what's on a
+  reader (#67), the .fdx scene pages (#76) and OSF out (#77). 1.0.0 also
+  carries everything 0.13.1 would have. Then the public text, the notes and
+  a rehearsal. It may tag before 2026-11-06: the owner approved
+  clipboard-win 5.4.3 for 1.0.0 (2026-10-27), and the release check honours
+  that override for v1.0.0 alone. The tag itself still waits for the
+  owner's yes.
 
 Built on the recommendation (reversible):
 
