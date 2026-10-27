@@ -96,6 +96,35 @@ fn an_owner_approved_override_holds_for_its_named_release_only() {
 }
 
 #[test]
+fn an_override_for_a_near_miss_version_never_counts_for_v1_0_0() {
+    let Some(py) = python() else {
+        eprintln!("skipped: no Python 3.11 or later on PATH");
+        return;
+    };
+    let sc = Scratch::new("crate-ages-near-miss");
+    for (tag, named) in [
+        ("rc", "v1.0.0-rc1"),
+        ("four-part", "v1.0.0.1"),
+        ("build", "v1.0.0+build"),
+        ("suffix", "v1.0.0x"),
+    ] {
+        let f = sc.write(
+            &format!("{tag}.txt"),
+            format!("{BOTH}foo 1.2.3   # owner-approved override, the owner, 2026-10-27, release {named}\n"),
+        );
+        // Not read as v1.0.0: the line names no release the check knows,
+        // so it is refused outright, whatever the tag.
+        let out = run_tag(py, &f, true, Some("v1.0.0"));
+        assert!(!out.status.success(), "{named} counted for v1.0.0");
+        assert!(
+            said(&out).contains("names no \"release vX.Y.Z\""),
+            "{named}: {}",
+            said(&out)
+        );
+    }
+}
+
+#[test]
 fn the_release_workflow_names_its_tag_to_the_crate_age_check() {
     let wf = std::fs::read_to_string(root().join(".github/workflows/release.yml")).unwrap();
     assert!(

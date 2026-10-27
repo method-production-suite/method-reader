@@ -47,7 +47,8 @@ EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
 SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}")
 AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
 OWNER_APPROVED = "owner-approved override"
-RELEASE = re.compile(r"\brelease (v\d+\.\d+\.\d+)\b")
+# The version must end there: "v1.0.0-rc1", "v1.0.0.1" or "v1.0.0+build" is not v1.0.0.
+RELEASE = re.compile(r"\brelease (v\d+\.\d+\.\d+)(?![\w.+-])")
 
 
 class BadExceptions(Exception):
