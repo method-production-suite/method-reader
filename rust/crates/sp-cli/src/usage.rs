@@ -102,6 +102,10 @@ Commands:
                                             may a check be made now? (offline)
   method-reader shape <file.fountain> [--json]
                                             a script's shape as counts, no words from it
+  method-reader device-books <volume> [--json]
+                                            the books on a connected reader
+  method-reader device-remove <volume> <book> [--json]
+                                            take one book off a connected reader
   method-reader mcp [--root <dir>]... [--read-only]
                                             these tools for an MCP client, over stdio
 

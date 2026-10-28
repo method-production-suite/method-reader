@@ -98,11 +98,12 @@ const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
     (
         "USAGE",
         "                                            may a check be made now? (offline)\n\nA verb",
-        "                                            may a check be made now? (offline)\n  method-reader shape <file.fountain> [--json]\n                                            a script's shape as counts, no words from it\n  method-reader mcp [--root <dir>]... [--read-only]\n                                            these tools for an MCP client, over stdio\n\nA verb",
+        "                                            may a check be made now? (offline)\n  method-reader shape <file.fountain> [--json]\n                                            a script's shape as counts, no words from it\n  method-reader device-books <volume> [--json]\n                                            the books on a connected reader\n  method-reader device-remove <volume> <book> [--json]\n                                            take one book off a connected reader\n  method-reader mcp [--root <dir>]... [--read-only]\n                                            these tools for an MCP client, over stdio\n\nA verb",
         // A problem report's counts (PARITY.md, Decisions: "The shape verb"),
-        // then the MCP server, Rust's alone (PARITY.md, Decisions:
-        // "method-reader mcp"): the TypeScript had neither to list. The
-        // TypeScript's line said screepub; renamed() moves it first.
+        // the device library's two verbs (docs/device-library.md), then the
+        // MCP server, Rust's alone (PARITY.md, Decisions: "method-reader
+        // mcp"): the TypeScript had none of them to list. The TypeScript's
+        // line said screepub; renamed() moves it first.
     ),
 ];
 

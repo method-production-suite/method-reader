@@ -15,7 +15,8 @@ repository listed in scripts/crate-age-git-allow.txt passes when Cargo.toml pins
 rev = the full 40-character commit (and the lock agrees), because a pinned commit cannot change under us and the
 repository was reviewed when it was added to that list. Anything else from git still
 fails. And one more: an exact NAME VERSION listed in scripts/crate-age-exceptions.txt, with
-its reason, may be younger than the cooldown (a security fix that cannot wait). A yanked
+its reason, may be younger than the cooldown (a security fix that cannot wait, a version
+waiting out its cooldown, or the owner's override for one named release). A yanked
 version always fails.
 """
 
@@ -45,6 +46,9 @@ PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
 SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}")
 AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
+OWNER_APPROVED = "owner-approved override"
+# The version must end there: "v1.0.0-rc1", "v1.0.0.1" or "v1.0.0+build" is not v1.0.0.
+RELEASE = re.compile(r"\brelease (v\d+\.\d+\.\d+)(?![\w.+-])")
 
 
 class BadExceptions(Exception):
@@ -52,11 +56,14 @@ class BadExceptions(Exception):
 
 
 def parse_exceptions(text):
-    """{(name, version): "security" | "ages-out"}, or BadExceptions naming each bad line.
+    """{(name, version): "security" | "ages-out" | ("owner-approved", tag)}, or
+    BadExceptions naming each bad line.
 
     A comment-only or blank line is skipped. Every other line is "name version  # reason",
     and the reason says its kind: a RUSTSEC id makes it a security exception (whatever
-    else it says), a leading "ages-out YYYY-MM-DD" an ages-out one.
+    else it says), a leading "ages-out YYYY-MM-DD" an ages-out one, and a leading
+    "owner-approved override" the owner's override for the one release it names
+    ("release vX.Y.Z"), which a line of that kind must name.
     """
     out, bad = {}, []
     for n, line in enumerate(text.splitlines(), 1):
@@ -71,22 +78,34 @@ def parse_exceptions(text):
             out[(words[0], words[1])] = "security"
         elif AGES_OUT.match(reason):
             out[(words[0], words[1])] = "ages-out"
+        elif reason.startswith(OWNER_APPROVED) and RELEASE.search(reason):
+            out[(words[0], words[1])] = ("owner-approved", RELEASE.search(reason).group(1))
+        elif reason.startswith(OWNER_APPROVED):
+            bad.append(
+                f"line {n}: {words[0]} {words[1]} is an owner-approved override that names "
+                f"no \"release vX.Y.Z\": {line.strip()}"
+            )
         else:
             bad.append(
-                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC id nor "
-                f"\"ages-out YYYY-MM-DD\": {line.strip()}"
+                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC id, "
+                f"\"ages-out YYYY-MM-DD\" nor \"owner-approved override\": {line.strip()}"
             )
     if bad:
         raise BadExceptions("\n".join(bad))
     return out
 
 
-def excepted(path, release):
-    """{(name, version)} allowed under the cooldown: under --release, security ones only."""
+def excepted(path, release, tag=None):
+    """{(name, version)} allowed under the cooldown. Under --release, the security ones,
+    and an owner-approved override only when it names this release's tag."""
     if not path.exists():
         return set()
     kinds = parse_exceptions(path.read_text())
-    return {k for k, kind in kinds.items() if kind == "security" or not release}
+    return {
+        k
+        for k, kind in kinds.items()
+        if not release or kind == "security" or (tag is not None and kind == ("owner-approved", tag))
+    }
 
 
 def git_allowed(source):
@@ -167,7 +186,13 @@ def main():
     ap.add_argument(
         "--release",
         action="store_true",
-        help="honour only security (RUSTSEC) exceptions; a young ages-out crate fails",
+        help="honour only security (RUSTSEC) exceptions and the owner's override for --tag; "
+        "a young ages-out crate fails",
+    )
+    ap.add_argument(
+        "--tag",
+        metavar="vX.Y.Z",
+        help="the release being tagged: with --release, an owner-approved override naming it is honoured",
     )
     ap.add_argument("--exceptions", type=pathlib.Path, default=EXCEPTIONS)
     ap.add_argument(
@@ -178,7 +203,7 @@ def main():
     args = ap.parse_args()
 
     try:
-        allowed_young = excepted(args.exceptions, args.release)
+        allowed_young = excepted(args.exceptions, args.release, args.tag)
     except BadExceptions as e:
         print(f"{args.exceptions}: every exception needs a kind\n{e}", file=sys.stderr)
         sys.exit(2)
