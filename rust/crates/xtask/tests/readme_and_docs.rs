@@ -97,7 +97,7 @@ fn the_readme_says_the_windows_download_is_unsigned() {
 fn the_developer_page_names_every_command_line_archive_and_the_readme_links_to_it() {
     let dev = developers();
     for name in [
-        names::CLI_MAC_ARM64,
+        names::CLI_MAC,
         names::CLI_LINUX_X64,
         names::CLI_LINUX_ARM64,
         names::CLI_WINDOWS_X64,
@@ -251,17 +251,19 @@ fn the_readme_install_statuses_agree_with_the_verification_ledger() {
 }
 
 #[test]
-fn the_readme_tells_an_intel_mac_which_version_is_its_last_and_where_it_is() {
+fn the_readme_tells_an_intel_mac_the_download_runs_and_0_9_0_updates() {
     let install = install();
+    assert!(flat(&install).contains("for Macs with Apple silicon or Intel, macOS 13 or later"));
     let at = install.find("Intel Mac").expect("an Intel Mac sentence");
-    let intel = &install[at..];
-    assert!(intel.contains("0.9.0"));
+    let intel = flat(&install[at..]);
     assert!(
-        intel.contains(
-            "https://github.com/method-production-suite/method-reader/releases/tag/v0.9.0"
-        )
+        intel.contains("the same download runs, from 1.0.0"),
+        "{intel}"
     );
-    assert!(intel.contains("keeps working"));
+    // The release proves it (release.yml's 0.9.0 handover step), so it is said.
+    assert!(intel.contains("still on 0.9.0"), "{intel}");
+    assert!(intel.contains("is offered 1.0.0 as an update"), "{intel}");
+    assert!(!install.contains("0.9.0 is the last version"));
 }
 
 #[test]
@@ -367,9 +369,7 @@ fn the_by_a_person_list_claims_only_the_architecture_that_was_built() {
     assert!(person.contains("/Applications"));
     assert!(person.contains("0.7.2 to 0.7.3"));
     let f = flat(&person);
-    assert!(f.contains(
-        "Each Mac that ran these is Apple silicon, the only kind the Mac download is built for"
-    ));
+    assert!(f.contains("Each Mac that ran these is Apple silicon."));
     assert!(!f.contains("ARM half"));
 }
 
@@ -385,10 +385,12 @@ fn the_nobody_list_keeps_what_nobody_has_done_and_only_that() {
     assert!(!nobody.contains("x86_64-apple-darwin"));
     let intel = &nobody[nobody.find("- The Intel SLICE").unwrap()..];
     let bullet = flat(&intel[..intel.find("\n- ").unwrap_or(intel.len())]);
-    assert!(bullet.contains("the last Mac download to carry one"));
+    assert!(bullet.contains("the last Mac download to carry one before 1.0.0"));
     assert!(bullet.contains("never ran"));
     assert!(bullet.contains("Apple silicon only"));
     assert!(!bullet.contains("has never executed"));
+    // 1.0.0's Intel half runs in CI under Rosetta, and nowhere else yet.
+    assert!(flat(&nobody).contains("1.0.0's universal `.dmg` on an Intel Mac"));
 }
 
 #[test]
@@ -402,7 +404,9 @@ fn the_ci_list_says_what_release_yml_does_and_that_the_mac_image_runs_whole() {
             .is_match(&ci)
     );
     let f = flat(&ci);
-    assert!(f.contains("The Mac `.dmg` is built for Apple silicon only"));
+    assert!(f.contains("From 0.10.0 to 0.13.0 the Mac `.dmg` was built for Apple silicon only"));
+    assert!(f.contains("From 1.0.0 it is universal again"));
+    assert!(f.contains("under Rosetta"));
     assert!(!f.contains("prints a notice"));
 }
 
@@ -432,14 +436,15 @@ fn contributing_and_the_device_map_no_longer_speak_of_a_universal_mac_build() {
 }
 
 #[test]
-fn contributing_says_an_intel_mac_cannot_run_the_window_where_it_says_to_open_it() {
+fn contributing_says_what_an_intel_mac_can_run_where_it_says_to_open_it() {
     let c = read("CONTRIBUTING.md");
     let at = c
         .find("cargo run -p sp-app")
         .expect("CONTRIBUTING says how to open the window");
     let after = flat(&c[at..(at + 800).min(c.len())]);
     assert!(
-        after.contains("On an Intel Mac** the window is not offered"),
+        after.contains("On an Intel Mac** the released window runs")
+            && after.contains("still builds for Apple silicon only"),
         "{after}"
     );
 }

@@ -523,8 +523,8 @@ helper binary on `mtp-rs`, shipped as a second sidecar beside the engine
 and called from `src/device/` the way `src/export/` calls Calibre. Roughly
 two verbs: list MTP devices as JSON (vendor, product, serial, model, or
 who holds exclusive access), and put a file at a device path. One more
-signed binary in the bundle and no dylibs, built for Apple silicon only, as
-the engine is.
+signed binary in the bundle and no dylibs, built for both Mac chips, as the
+window is from 1.0.0.
 
 **Kindle behavior to copy, from GPL-3 tools** (behavior reference;
 Method Reader is MIT OR Apache-2.0 outside sp-azw3, so code from these must not

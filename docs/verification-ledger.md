@@ -32,8 +32,7 @@ its own updater, where it is switched on, installs the window in its place.
   Settings, the Send page's routes, Apple Books, Send to Kindle on the web, a
   Kindle over USB, and installing the KFX plugin into a scratch Calibre. The
   0.7.4 candidate passed the items that pass rechecked. Each Mac that ran
-  these is Apple silicon, the only kind the Mac download is built for since
-  Intel Macs were dropped after 0.9.0.
+  these is Apple silicon.
 - **A Kindle**, firmware 5.19.2, over USB (KFX, AZW3 and MOBI) and by email.
 - **Apple Books** on a Mac: the book arrives in the library.
 - **The window on Linux, ARM.** `Screepub_0.6.0_arm64.deb` and
@@ -62,9 +61,13 @@ its own updater, where it is switched on, installs the window in its place.
   claims before anything is uploaded (until the Rust cutover, its engine was
   run too; `full.yml` runs the Mac app's headless conversion), and once a
   person publishes the draft, `release-published.yml` reads the update
-  manifest (`latest.json`, Mac only) back from GitHub. The Mac `.dmg` is built for Apple silicon only, the
-  runner's own kind, so all of it runs; of 0.9.0's universal `.dmg`, the
-  last, only the ARM half ran.
+  manifest (`latest.json`, Mac only) back from GitHub. From 0.10.0 to 0.13.0
+  the Mac `.dmg` was built for Apple silicon only, the runner's own kind, so
+  all of it ran. From 1.0.0 it is universal again, and its Intel half runs
+  on that Apple silicon runner under Rosetta: the window's and the command
+  line's `--version`, and 0.9.0's own updater, built for Intel, installing
+  the release from the Intel entry of the update file. Of 0.9.0's universal
+  `.dmg`, only the ARM half ran.
 - Weekly: the update manifest still matches the newest release, and
   the Calibre tests (KEPUB, the KFX plugin listing, and Calibre's
   own reader opening Method Reader's AZW3) still pass against Calibre's newest
@@ -77,9 +80,11 @@ its own updater, where it is switched on, installs the window in its place.
 - The Windows installer itself, run by a person, and the SmartScreen screen
   the README describes.
 - The Intel SLICE of 0.9.0's universal `.dmg`, the last Mac download to
-  carry one. It was built, checked as a container, signed and
-  published, and never ran. Every Mac download after it is Apple silicon
-  only.
+  carry one before 1.0.0. It was built, checked as a container, signed and
+  published, and never ran. From 0.10.0 to 0.13.0 every Mac download was
+  Apple silicon only.
+- 1.0.0's universal `.dmg` on an Intel Mac. CI runs its Intel half under
+  Rosetta; no person has opened it on Intel hardware.
 - The window's launcher entry, opened from a Linux desktop menu.
 - Dragging a file onto the window on Linux or Windows. On a Mac it is
   verified: the 0.7.3 pass converted a script dropped on the window.

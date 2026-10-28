@@ -18,7 +18,7 @@ unpack it, and run it.
 
 | Machine | File |
 | --- | --- |
-| Mac, Apple silicon | `method-reader-cli-macos-arm64.tar.gz` |
+| Mac, Apple silicon or Intel | `method-reader-cli-macos.tar.gz` |
 | Linux, Intel or AMD | `method-reader-cli-linux-x64.tar.gz` |
 | Linux, ARM (Asahi, Raspberry Pi, ARM servers) | `method-reader-cli-linux-arm64.tar.gz` |
 | Windows, 64-bit | `method-reader-cli-windows-x64.zip` |
@@ -28,7 +28,8 @@ tar -xzf method-reader-cli-linux-x64.tar.gz
 ./method-reader script.pdf
 ```
 
-There is no build for Intel Macs: Method Reader supports Macs with Apple
+The Mac archive is one universal file, for Apple silicon and Intel, since
+1.0.0; up to 0.13.0 it was `method-reader-cli-macos-arm64.tar.gz`, Apple
 silicon only.
 
 If you installed the converter with Homebrew: Method Reader is no longer

@@ -52,11 +52,12 @@ sudo apt-get install -y sqlite3 libasound2-dev libfontconfig1-dev libxkbcommon-d
 
 (`sqlite3` is for the device-request service's tests, not the window.)
 
-**On an Intel Mac** the window is not offered: Method Reader ships it for Macs
-with Apple silicon only, and `cargo xtask build-app-bundle` refuses to make
-an Intel bundle. An Intel Mac can still build and run the command line from
-source with `cargo`, and can cross-build the Apple silicon bundle
-(`rustup target add aarch64-apple-darwin`, then `--arch arm64`).
+**On an Intel Mac** the released window runs (it is universal from 1.0.0),
+but `cargo xtask build-app-bundle`, the local bundle tool, still builds for
+Apple silicon only and refuses to make an Intel bundle: the universal one is
+built by `release.yml`. An Intel Mac can build and run the window and the
+command line from source with `cargo`, and can cross-build the Apple silicon
+bundle (`rustup target add aarch64-apple-darwin`, then `--arch arm64`).
 
 `cargo xtask --help` lists the developer tools (fixtures, screenshots,
 release helpers). [docs/developers.md](docs/developers.md) covers the
