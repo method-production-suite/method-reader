@@ -10,7 +10,7 @@ use sp_mtp::ioreg;
 use sp_mtp::kindle::{AMAZON_VENDOR_ID, is_kindle, is_mass_storage};
 use sp_mtp::output::{Code, Failure, render, success};
 use sp_mtp::paths::parse_device_path;
-use sp_mtp::put::{device_failure, list_folder, put};
+use sp_mtp::put::{device_failure, list_folder, put, remove};
 use sp_mtp::real::{RealSession, map_error, open_by_serial};
 use sp_mtp::session::Session;
 use std::time::{Duration, Instant};
@@ -363,6 +363,25 @@ fn ls_command(serial: &str, folder: Option<&str>) -> Result<Value, Failure> {
     Ok(success(fields))
 }
 
+/// `rm`: delete one book, then close the session.
+fn rm_command(serial: &str, raw_path: &str) -> Result<Value, Failure> {
+    let path = parse_device_path(raw_path)?;
+    let found = find_kindle(serial)?;
+    let device = match open_by_serial(found.vendor_id, found.product_id, serial, TRANSFER_TIMEOUT) {
+        Ok(d) => d,
+        Err(e) if e.is_exclusive_access() => return Err(busy(&found)),
+        Err(e) => return Err(device_failure("open the Kindle", &map_error(&e))),
+    };
+    let mut session = RealSession::new(device);
+    let removed = remove(&mut session, &path);
+    let _ = session.close();
+    let storage = removed?;
+    let mut fields = Map::new();
+    fields.insert("storage".into(), json!(storage));
+    fields.insert("removed".into(), json!(path.display()));
+    Ok(success(fields))
+}
+
 fn run(argv: &[String]) -> Result<Value, Failure> {
     match args::parse(argv)? {
         Command::Version => {
@@ -388,6 +407,10 @@ fn run(argv: &[String]) -> Result<Value, Failure> {
             keep_session,
         } => put_command(&serial, &local, &device_path, wait_ms, keep_session),
         Command::Ls { serial, folder } => ls_command(&serial, folder.as_deref()),
+        Command::Rm {
+            serial,
+            device_path,
+        } => rm_command(&serial, &device_path),
     }
 }
 

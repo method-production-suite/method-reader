@@ -11,6 +11,7 @@ Usage:
   method-reader-mtp list [--kindles] [--storages]
   method-reader-mtp put <serial> <local-file> <device-path> [--wait-ms <ms>] [--keep-session]
   method-reader-mtp ls <serial> [<device-folder>]
+  method-reader-mtp rm <serial> <device-path>
   method-reader-mtp --version
 
 Every run prints one JSON object on stdout.
@@ -23,7 +24,9 @@ put             copy <local-file> to <device-path> (e.g. documents/Title.kfx)
   --wait-ms     keep retrying for this long while another program holds it
   --keep-session  leave the MTP session open afterwards (a hardware-day test)
 ls              what is in a folder on the Kindle (default: the storage's top
-                level). Reads only; for checking a copy by hand";
+                level). Reads only; for checking a copy by hand
+rm              delete one book (e.g. documents/Title.kfx) from the Kindle.
+                Files inside documents only, exact name only; never a folder";
 
 /// Upper bound on --wait-ms: a minute is longer than any release takes, and
 /// a typo of an extra zero must not hang the engine's send for an hour.
@@ -48,6 +51,10 @@ pub enum Command {
         serial: String,
         folder: Option<String>,
     },
+    Rm {
+        serial: String,
+        device_path: String,
+    },
 }
 
 fn usage(message: impl Into<String>) -> Failure {
@@ -57,7 +64,7 @@ fn usage(message: impl Into<String>) -> Failure {
 pub fn parse(argv: &[String]) -> Result<Command, Failure> {
     let mut rest = argv.iter();
     let verb = match rest.next() {
-        None => return Err(usage("say what to do: list or put (see --help)")),
+        None => return Err(usage("say what to do: list, put, ls or rm (see --help)")),
         Some(v) => v.as_str(),
     };
     match verb {
@@ -159,8 +166,23 @@ pub fn parse(argv: &[String]) -> Result<Command, Failure> {
                 )),
             }
         }
+        "rm" => {
+            let rest: Vec<String> = rest.cloned().collect();
+            if let Some(flag) = rest.iter().find(|a| a.starts_with("--")) {
+                return Err(usage(format!("rm takes no flags (got \"{flag}\")")));
+            }
+            match rest.as_slice() {
+                [serial, device_path] if !serial.trim().is_empty() => Ok(Command::Rm {
+                    serial: serial.clone(),
+                    device_path: device_path.clone(),
+                }),
+                _ => Err(usage(
+                    "rm needs the Kindle's serial and the book's path on it, like documents/Title.kfx",
+                )),
+            }
+        }
         other => Err(usage(format!(
-            "no command is called \"{other}\": use list, put or ls (see --help)"
+            "no command is called \"{other}\": use list, put, ls or rm (see --help)"
         ))),
     }
 }
@@ -271,6 +293,26 @@ mod tests {
             vec!["ls", "G0X", "a", "b"],
             vec!["ls", "G0X", "--all"],
             vec!["ls", " "],
+        ] {
+            assert_eq!(parse(&argv(&bad)).unwrap_err().code, Code::Usage, "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn rm_takes_exactly_a_serial_and_a_path() {
+        assert_eq!(
+            parse(&argv(&["rm", "G0X", "documents/a.kfx"])).unwrap(),
+            Command::Rm {
+                serial: "G0X".into(),
+                device_path: "documents/a.kfx".into()
+            }
+        );
+        for bad in [
+            vec!["rm"],
+            vec!["rm", "G0X"],
+            vec!["rm", "G0X", "documents/a.kfx", "documents/b.kfx"],
+            vec!["rm", "G0X", "documents/a.kfx", "--force"],
+            vec!["rm", " ", "documents/a.kfx"],
         ] {
             assert_eq!(parse(&argv(&bad)).unwrap_err().code, Code::Usage, "{bad:?}");
         }
