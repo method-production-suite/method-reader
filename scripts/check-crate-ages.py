@@ -44,7 +44,8 @@ PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 
 
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
-SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}")
+# A RustSec id, or a GitHub advisory id: GitHub can publish one days before RustSec does.
+SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}|GHSA(?:-[23456789cfghjmpqrvwx]{4}){3}")
 AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
 OWNER_APPROVED = "owner-approved override"
 # The version must end there: "v1.0.0-rc1", "v1.0.0.1" or "v1.0.0+build" is not v1.0.0.
@@ -60,7 +61,7 @@ def parse_exceptions(text):
     BadExceptions naming each bad line.
 
     A comment-only or blank line is skipped. Every other line is "name version  # reason",
-    and the reason says its kind: a RUSTSEC id makes it a security exception (whatever
+    and the reason says its kind: a RUSTSEC or GHSA id makes it a security exception (whatever
     else it says), a leading "ages-out YYYY-MM-DD" an ages-out one, and a leading
     "owner-approved override" the owner's override for the one release it names
     ("release vX.Y.Z"), which a line of that kind must name.
@@ -87,7 +88,7 @@ def parse_exceptions(text):
             )
         else:
             bad.append(
-                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC id, "
+                f"line {n}: {words[0]} {words[1]} says neither a RUSTSEC or GHSA id, "
                 f"\"ages-out YYYY-MM-DD\" nor \"owner-approved override\": {line.strip()}"
             )
     if bad:
@@ -186,7 +187,7 @@ def main():
     ap.add_argument(
         "--release",
         action="store_true",
-        help="honour only security (RUSTSEC) exceptions and the owner's override for --tag; "
+        help="honour only security (RUSTSEC or GHSA) exceptions and the owner's override for --tag; "
         "a young ages-out crate fails",
     )
     ap.add_argument(

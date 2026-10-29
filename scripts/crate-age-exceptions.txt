@@ -1,7 +1,8 @@
 # Exact versions allowed under the 14-day cooldown, read by scripts/check-crate-ages.py.
 # One "name version  # reason" per line, and the reason says its kind (SUITE-STANDARDS.md
 # section 6); the script refuses a line that says neither:
-#   - a security fix that cannot wait: the reason names its RUSTSEC id (RUSTSEC-YYYY-NNNN).
+#   - a security fix that cannot wait: the reason names its RUSTSEC id (RUSTSEC-YYYY-NNNN),
+#     or its GitHub advisory id (GHSA-xxxx-xxxx-xxxx) while RustSec has none yet.
 #     The release workflow (--release) honours these.
 #   - a version already in the lock, waiting out its cooldown: the reason starts
 #     "ages-out YYYY-MM-DD" (the day it turns 14 days old). A release ignores these, so it
@@ -12,4 +13,5 @@
 # Remove a line once the version is 14 days old.
 rustls-webpki 0.103.16   # RUSTSEC-2026-0382 (2026-10-20): rejects certificate paths through the distrusted emSign intermediates
 webpki-roots 1.0.10      # RUSTSEC-2026-0381 (2026-10-20): drops the emSign ECC Root CA - G3 those intermediates chain to
+zip 9.0.5            # GHSA-m665-v7pm-7grj (CVE-2026-115905, 2026-10-28): zip up to 9.0.4 reads a different name from the central directory than from the local header; 9.0.5 is the fix, 14 days old on 2026-10-31, remove the line then
 clipboard-win 5.4.3  # owner-approved override, the owner, 2026-10-27, release v1.0.0 ("Yes: owner-approved override for clipboard-win 5.4.3 in Method Storyteller 0.6.0, Method Reader 1.0.0 and the next Method Launcher release, so they can release before 2026-11-06."); the Windows clipboard (arboard, through the window's toolkit); every release up to 5.4.1 was yanked on 2026-10-23, and 5.4.3's one code change from 5.4.1 is a bounds fix in raw::get_html (Windows only, no RUSTSEC id); 14 days old on 2026-11-06, remove the line then
