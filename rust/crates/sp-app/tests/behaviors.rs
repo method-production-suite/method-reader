@@ -307,7 +307,7 @@ fn c3_the_well_keeps_its_820_column() {
     let w = world();
     let h = harness(&w, Platform::Mac);
     let call = h
-        .query_all_by_value("A PDF with selectable text, or a .fountain.")
+        .query_all_by_value("A PDF with selectable text, a .fountain or an .osf.")
         .next()
         .unwrap()
         .rect();

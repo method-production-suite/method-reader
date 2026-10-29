@@ -52,3 +52,10 @@ the path. The app's preview window re-renders a script it already converted,
 where the options were settled when the PDF was read and the dot-forced lines
 are Method Reader's own. They matter when you bring a `.fountain` from
 another tool.
+
+## OSF
+
+An `.osf` (Open Screenplay Format) is read into a `.fountain` text first,
+and then everything on this page applies to it as to a `.fountain` you
+chose. What the reader takes, what it drops, and what the library keeps:
+[osf-input.md](osf-input.md).

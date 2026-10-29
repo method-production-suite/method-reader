@@ -128,6 +128,9 @@ pub enum ConvertError {
     NotUtf8,
     /// A `.fountain` with nothing in it but white space.
     EmptyScript,
+    /// An `.osf` that is not well-formed XML, or has no `<paragraphs>`: the
+    /// reader's plain words.
+    NotOsf(String),
     /// fountain-js's one throw.
     Fountain(String),
     /// A book maker refused (a bug of ours: the callers keep these out of
@@ -155,7 +158,9 @@ impl fmt::Display for ConvertError {
             ConvertError::EmptyScript => {
                 f.write_str("this script is empty: there is nothing in it to make a book from")
             }
-            ConvertError::Fountain(m) | ConvertError::Book(m) => f.write_str(m),
+            ConvertError::NotOsf(m) | ConvertError::Fountain(m) | ConvertError::Book(m) => {
+                f.write_str(m)
+            }
         }
     }
 }
@@ -617,6 +622,16 @@ pub fn carried_pictures(images: Option<&BTreeMap<String, Vec<u8>>>) -> Vec<BookI
 /// tokenizer treats it as white space.
 pub fn fountain_text(bytes: Vec<u8>) -> Result<String, ConvertError> {
     String::from_utf8(bytes).map_err(|_| ConvertError::NotUtf8)
+}
+
+/// An `.osf`'s bytes as the `.fountain` text it converts from (OSF in,
+/// docs/osf-input.md): UTF-8 first, as a `.fountain` is held to, then
+/// sp-osf's reader, which refuses a file that is not XML or has no
+/// `<paragraphs>`. What it answers then goes through
+/// [`convert_chosen_fountain`], the guards included.
+pub fn osf_fountain_text(bytes: Vec<u8>) -> Result<String, ConvertError> {
+    let xml = fountain_text(bytes)?;
+    sp_osf::osf_to_fountain(&xml).map_err(|e| ConvertError::NotOsf(e.to_string()))
 }
 
 /// The guards a `.fountain` someone chose passes before it becomes a book

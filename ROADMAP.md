@@ -47,6 +47,16 @@ Built on the recommendation (reversible):
   the window accepting one by drop, a stray text file would otherwise become
   a book. A .fountain the library made itself is still taken on trust, so
   tuning a script that was converted anyway keeps working.
+- **What the library keeps for an .osf** (OSF in, 2026-10-27): the
+  .fountain the OSF was read into, beside the book, which is what tuning
+  and Get an editable script read; source.json names the .osf you chose.
+  The .osf itself is not copied. Keeping it too is a small change.
+- **How the OSF reader fills gaps** (OSF in, 2026-10-27): any style it does
+  not know is action; a heading that does not open like INT., EXT. or EST.
+  becomes a mini-slug, as in every .fountain Method Reader reads; and a
+  title page with no bookmarks is read back by the writer's own layout
+  (title, credit, author and source centered; contact, draft date and
+  copyright at the foot). docs/osf-input.md has the rest.
 
 Tests that need a device (hands only; everything else is automated):
 
@@ -127,8 +137,10 @@ In order. Each is one small pull request.
   .fountain, so a script from Method Storyteller becomes an e-book without a
   PDF. The Fountain half is built: a .fountain converts in the window and on
   the command line the way a PDF does, and the library keeps a copy of it
-  beside its book. The OSF half is still to come; it waits for the OSF
-  reader.
+  beside its book. The OSF half is built too: an .osf is read into a
+  .fountain and converts the same way, with the same checks
+  (docs/osf-input.md). Neither has been tried yet on a script Method
+  Storyteller itself wrote.
 - **Copying to new Kindles over USB.** Every Kindle sold since late 2024
   connects the way a phone does (MTP) instead of showing up as a drive, so
   Method Reader cannot see one, and its owners are sent to email. Email

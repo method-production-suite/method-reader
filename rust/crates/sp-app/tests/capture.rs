@@ -469,7 +469,10 @@ fn the_picture_hides_the_stamp_and_the_library_slot_and_nothing_else() {
             .any(|c| shape_says(&c.shape, "rev "));
     assert!(!painted, "the stamp is painted");
     // The well itself is still there.
-    assert!(has(&w.0, "A PDF with selectable text, or a .fountain."));
+    assert!(has(
+        &w.0,
+        "A PDF with selectable text, a .fountain or an .osf."
+    ));
     assert_eq!(w.app().convert.view, convert::View::Idle);
 }
 

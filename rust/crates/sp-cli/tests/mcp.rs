@@ -512,6 +512,25 @@ fn make_ebook_writes_each_format_asked_for() {
         .expect("a book from Fountain");
     assert_eq!(files(&fbooks), ["check.epub"]);
     assert!(got["title"].is_string());
+
+    // And an .osf, read into the Fountain it stands for.
+    let osf = sb.p("check.osf");
+    sb.run(&[
+        "export",
+        &sb.p("check.epub"),
+        "--for",
+        "osf",
+        "--fountain",
+        &fountain,
+        "--out",
+        &osf,
+    ]);
+    let obooks = sb.mkdir("from-osf");
+    let got = m
+        .tool("make_ebook", json!({"path": osf, "output_dir": s(&obooks)}))
+        .expect("a book from OSF");
+    assert_eq!(files(&obooks), ["check.epub"]);
+    assert!(got["title"].is_string());
     m.finish();
 }
 
