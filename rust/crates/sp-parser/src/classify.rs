@@ -266,9 +266,17 @@ pub fn classify_block(
         };
     }
 
-    // Priority 6: Parenthetical
+    // Priority 6: Parenthetical. Straight after its cue one may sit as deep
+    // as the cue band's edge: some scripts print it right of the cue itself
+    // (cue 41%, parenthetical 43%), and the bracketed text, which no cue can
+    // match, is the signal there. Mid-speech the 40% limit holds.
+    let paren_max = if prev_element.is_some_and(|p| p.kind == ElementType::Character) {
+        R::CHARACTER_MAX
+    } else {
+        40.0
+    };
     if let Some(current) = &current_character
-        && (R::DIALOGUE_MIN..=40.0).contains(&indent)
+        && (R::DIALOGUE_MIN..=paren_max).contains(&indent)
         && (PARENTHETICAL.is_match(text) || PARENTHETICAL_TRUNCATED.is_match(text))
     {
         return ScreenplayElement {
