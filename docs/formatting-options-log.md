@@ -964,8 +964,11 @@ and the suite will say so if you forget.
   speaker, and the cue, left with no speech, was demoted too. Straight
   after a cue, a parenthetical is now accepted up to the cue band's edge
   (50%); the bracketed text, which no cue can match, is the signal there.
-  Mid-speech the 40% limit holds. Corpus diff: two speeches in one script,
-  nothing else.
+  Corpus diff: two speeches in one script, nothing else. The same script
+  then showed a mid-speech "(pause)" at 41% (found by `cargo xtask
+  audit-corpus`), so the wider band now holds anywhere inside a speech, not
+  only straight after the cue: a line wholly in brackets has already been
+  refused by the cue rule. One more spot moved, nothing else.
 - **Code:** `rust/crates/sp-parser/src/group.rs` (`continues_open_parenthetical`),
   `rust/crates/sp-parser/src/classify.rs` (priority 6).
 
