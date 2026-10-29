@@ -35,6 +35,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo run -p sp-cli --bin method-reader -- <pdf>   # convert (see --help; --json is the app contract)
 cargo run -p sp-app         # the window (bundles: cargo xtask build-app-bundle)
 cargo xtask parity          # the release CLI against the TypeScript's frozen answers
+cargo xtask audit-corpus    # every real script: count the shapes of a misread speech
 epubcheck <out.epub>        # validate output (brew-installed)
 cargo xtask capture-screens # retake README + site pictures (needs Chrome; macOS)
 cargo xtask review-screens --out <page.html>   # which pictures changed, old beside new
@@ -248,6 +249,12 @@ The crates, in the order a conversion passes through them (each one's
   was inert. Synthetic fixtures cannot answer that question.
   `cargo xtask parity` runs the real scripts too, against their frozen
   answers in rust/oracle-real/ (counts only, never names).
+- **The audit asks the corpus before a reader does.** `cargo xtask
+  audit-corpus [--dir <folder>]` converts every real script and counts the
+  shapes a misread speech leaves behind: a parenthetical read as
+  description, one cut in two, a name inside someone's speech. Every misread
+  found on a Kindle on 2026-10-29 left one. Run it after any parser change
+  and before a release; `--show` prints each spot (local only: real text).
 - **Rebuild `torture.pdf` before any device pass.** A stale build once put
   an already-fixed defect in front of a reviewer and nearly cost a verdict.
 
