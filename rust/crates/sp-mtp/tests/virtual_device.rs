@@ -9,7 +9,7 @@
 use futures::executor::block_on;
 use mtp_rs::{MtpDevice, VirtualDeviceConfig, VirtualStorageConfig};
 use sp_mtp::paths::parse_device_path;
-use sp_mtp::put::{Method, list_folder, put};
+use sp_mtp::put::{Method, list_folder, put, remove};
 use sp_mtp::real::RealSession;
 use sp_mtp::session::Session;
 use std::path::{Path, PathBuf};
@@ -215,6 +215,29 @@ fn ls_shows_the_book_and_no_temp_file_after_a_copy() {
         entries.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(),
         vec!["Title.kfx"]
     );
+}
+
+#[test]
+fn rm_takes_one_book_off_and_leaves_its_neighbour() {
+    let s = Scratch::new("rm");
+    let (a, a_size) = s.book("A.kfx", b"KFX-A");
+    let (b, b_size) = s.book("B.kfx", b"KFX-B");
+    let mut session = kindle(&s.device(), true);
+    for (book, size, path) in [
+        (&a, a_size, "documents/A.kfx"),
+        (&b, b_size, "documents/B.kfx"),
+    ] {
+        put(&mut session, book, size, &parse_device_path(path).unwrap()).unwrap();
+    }
+    remove(&mut session, &parse_device_path("documents/A.kfx").unwrap()).unwrap();
+    let (_, entries) = list_folder(&mut session, Some("documents")).unwrap();
+    session.close().unwrap();
+    assert_eq!(
+        entries.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(),
+        vec!["B.kfx"]
+    );
+    assert!(!s.device().join("documents/A.kfx").exists());
+    assert!(s.device().join("documents/B.kfx").exists());
 }
 
 #[test]

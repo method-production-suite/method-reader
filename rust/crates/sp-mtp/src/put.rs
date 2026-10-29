@@ -292,6 +292,72 @@ pub fn list_folder(
     Ok((storage.description, kids))
 }
 
+/// `rm`: delete one book. Deliberately narrow, because a delete cannot be
+/// undone: only a file, only inside `documents` (where books live; never the
+/// Kindle's own folders), and only an exact name match, never `ls`'s
+/// case-insensitive one. The Kindle's `.sdr` folder of reading positions
+/// beside a book is left alone. Returns the storage's description.
+pub fn remove(session: &mut dyn Session, path: &DevicePath) -> Result<String, Failure> {
+    if !path
+        .folders
+        .first()
+        .is_some_and(|f| f.eq_ignore_ascii_case("documents"))
+    {
+        return Err(Failure::new(
+            Code::BadPath,
+            format!(
+                "rm only removes books inside documents, and \"{}\" is not there",
+                path.display()
+            ),
+        ));
+    }
+    let storages = session
+        .storages()
+        .map_err(|e| device_failure("read the Kindle's storage", &e))?;
+    let storage = storages
+        .first()
+        .cloned()
+        .ok_or_else(|| Failure::new(Code::NoStorage, "the Kindle offers no storage"))?;
+    let mut parent: Option<u64> = None;
+    for part in &path.folders {
+        let kids = session
+            .children(storage.id, parent)
+            .map_err(|e| device_failure("look inside a folder", &e))?;
+        let found = kids
+            .iter()
+            .find(|e| e.folder && e.name.eq_ignore_ascii_case(part))
+            .ok_or_else(|| {
+                Failure::new(
+                    Code::BadPath,
+                    format!("there is no folder \"{part}\" on the Kindle"),
+                )
+            })?;
+        parent = Some(found.handle);
+    }
+    let kids = session
+        .children(storage.id, parent)
+        .map_err(|e| device_failure("look inside a folder", &e))?;
+    let target = kids.iter().find(|e| e.name == path.name).ok_or_else(|| {
+        Failure::new(
+            Code::BadPath,
+            format!("there is no \"{}\" on the Kindle", path.display()),
+        )
+    })?;
+    if target.folder {
+        return Err(Failure::new(
+            Code::BadPath,
+            format!(
+                "\"{}\" is a folder, and rm removes only files",
+                path.display()
+            ),
+        ));
+    }
+    session
+        .delete(storage.id, target.handle)
+        .map_err(|e| device_failure("remove the book", &e))?;
+    Ok(storage.description)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -554,6 +620,47 @@ mod tests {
                 || l.starts_with("upload")
                 || l.starts_with("delete"))
         );
+    }
+
+    #[test]
+    fn rm_deletes_one_book_and_nothing_else() {
+        let mut s = FakeSession::kindle();
+        let docs = s.add(None, "documents", true, &[]);
+        s.add(Some(docs), "A.kfx", false, b"a");
+        s.add(Some(docs), "B.kfx", false, b"b");
+        s.add(Some(docs), "A.sdr", true, &[]);
+        let storage = remove(&mut s, &dest("documents/A.kfx")).unwrap();
+        assert_eq!(storage, "Internal Storage");
+        assert_eq!(
+            s.tree(),
+            vec!["documents/", "documents/A.sdr/", "documents/B.kfx"]
+        );
+    }
+
+    #[test]
+    fn rm_refuses_a_folder_a_missing_file_and_anything_outside_documents() {
+        let mut s = FakeSession::kindle();
+        let docs = s.add(None, "documents", true, &[]);
+        s.add(Some(docs), "A.sdr", true, &[]);
+        s.add(Some(docs), "a.kfx", false, b"a");
+        let sys = s.add(None, "system", true, &[]);
+        s.add(Some(sys), "x.bin", false, b"x");
+        s.add(None, "top.kfx", false, b"t");
+        for path in [
+            "documents/A.sdr", // a folder
+            "documents/B.kfx", // not there
+            "documents/A.kfx", // only a different case is there
+            "system/x.bin",    // not a book folder
+            "top.kfx",         // the storage's top level
+        ] {
+            assert_eq!(
+                remove(&mut s, &dest(path)).unwrap_err().code,
+                Code::BadPath,
+                "{path}"
+            );
+        }
+        assert!(!s.log.iter().any(|l| l.starts_with("delete")));
+        assert_eq!(s.objects.len(), 6);
     }
 
     #[test]
