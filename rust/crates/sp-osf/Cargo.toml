@@ -15,7 +15,8 @@ sp-model.workspace = true
 sp-fountain.workspace = true
 # The one copy of Fountain emphasis as styled runs, shared with the .fdx.
 sp-fdx.workspace = true
+# OSF in: the reader's XML (already the workspace's, for the writers' tests).
+roxmltree.workspace = true
 
 [dev-dependencies]
-roxmltree.workspace = true
 serde_json.workspace = true

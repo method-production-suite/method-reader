@@ -42,17 +42,17 @@ pub fn window_title(script: Option<&str>) -> String {
     }
 }
 
-/// The drop well's words. A script is a PDF or a .fountain (ROADMAP.md,
+/// The drop well's words. A script is a PDF, a .fountain or an .osf (ROADMAP.md,
 /// Decisions: "Scripts as input"); the engine decides what it takes, so
 /// these only say so.
 pub const WELL_CALL: &str = "Drop a script";
 pub const WELL_OR: &str = "or";
 /// The well's one button: the page's primary action.
 pub const CHOOSE: &str = "Choose a script…";
-pub const WELL_LIMITS: &str = "A PDF with selectable text, or a .fountain.";
+pub const WELL_LIMITS: &str = "A PDF with selectable text, a .fountain or an .osf.";
 /// What Choose a script's open box shows: the kinds of file the engine
-/// converts (its `unsupported-type` refusal names the same three).
-pub const SCRIPT_FILTER: (&str, &[&str]) = ("Script", &["pdf", "fountain", "txt"]);
+/// converts (its `unsupported-type` refusal names the same four).
+pub const SCRIPT_FILTER: (&str, &[&str]) = ("Script", &["pdf", "fountain", "txt", "osf"]);
 
 /// The one guard a reader can meaningfully overrule.
 pub const OVERRIDABLE: &str = "not-screenplay";
@@ -730,13 +730,19 @@ mod tests {
         assert_eq!(CHOOSE, "Choose a script…");
         let (name, extensions) = SCRIPT_FILTER;
         assert_eq!(name, "Script");
-        for ext in ["pdf", "fountain"] {
+        for ext in ["pdf", "fountain", "osf"] {
             assert!(extensions.contains(&ext), "{ext}");
         }
-        // A dropped .fountain is taken like a dropped PDF.
+        // A dropped .fountain or .osf is taken like a dropped PDF.
+        for path in ["/x/Weather Log.fountain", "/x/Weather Log.osf"] {
+            assert_eq!(
+                dropped_path(&["".into(), path.into()]).as_deref(),
+                Some(path)
+            );
+        }
         assert_eq!(
-            dropped_path(&["".into(), "/x/Weather Log.fountain".into()]).as_deref(),
-            Some("/x/Weather Log.fountain")
+            WELL_LIMITS,
+            "A PDF with selectable text, a .fountain or an .osf."
         );
     }
 

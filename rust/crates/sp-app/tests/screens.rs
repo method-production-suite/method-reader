@@ -66,7 +66,10 @@ fn the_idle_screen_names_the_app_and_asks_for_a_pdf() {
         choose.accesskit_node().data().keyboard_shortcut(),
         Some("⌘O")
     );
-    assert!(has_value(&h, "A PDF with selectable text, or a .fountain."));
+    assert!(has_value(
+        &h,
+        "A PDF with selectable text, a .fountain or an .osf."
+    ));
     assert!(has_value(&h, "Books are saved in ~/Method Reader."));
     h.get_by_role_and_label(Role::Button, "Change…");
     assert!(

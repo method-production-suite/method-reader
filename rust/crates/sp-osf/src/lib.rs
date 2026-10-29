@@ -18,6 +18,9 @@
 //! through its slug.rs, as in every renderer; the emphasis pairing is
 //! sp-fdx's `text_runs`, so the two editable scripts agree on every style.
 
+pub mod read;
+pub use read::{ReadError, osf_to_fountain};
+
 use sp_model::{Token, TokenType};
 
 use sp_fdx::{TextRun, text_runs};

@@ -23,9 +23,9 @@ use super::tools::ToolError;
 
 /// Screenplay PDFs.
 pub const PDF_EXTS: &[&str] = &["pdf"];
-/// What a conversion reads: a PDF, or a Fountain script (`.txt` too, as the
-/// command line takes it).
-pub const SCRIPT_EXTS: &[&str] = &["pdf", "fountain", "txt"];
+/// What a conversion reads: a PDF, a Fountain script (`.txt` too, as the
+/// command line takes it), or an .osf.
+pub const SCRIPT_EXTS: &[&str] = &["pdf", "fountain", "txt", "osf"];
 
 /// The folders the server works in, each canonical (symlinks resolved).
 #[derive(Clone, Debug)]

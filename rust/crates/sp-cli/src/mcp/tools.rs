@@ -254,7 +254,7 @@ pub fn all() -> Vec<Tool> {
         Tool {
             name: "make_ebook",
             title: "Make an e-book",
-            description: "Make an e-book from a screenplay PDF, or from a .fountain script: an \
+            description: "Make an e-book from a screenplay PDF, or from a .fountain or .osf script: an \
                 EPUB (for most readers and apps), an AZW3 (beta: for Kindles over USB, made by \
                 Method Reader from the EPUB) and a MOBI (for the oldest Kindles over USB; text \
                 only, no pictures). Files are named after the script (<name>.epub, \

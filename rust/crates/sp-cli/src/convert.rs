@@ -171,7 +171,7 @@ fn conversion_failed(err: ConvertError) -> Stop {
             "unreadable",
             "this file is not a readable PDF. It may be corrupt or mislabeled",
         ),
-        ConvertError::NotUtf8 | ConvertError::EmptyScript => {
+        ConvertError::NotUtf8 | ConvertError::EmptyScript | ConvertError::NotOsf(_) => {
             Stop::fail("unreadable", err.to_string())
         }
         ConvertError::Fountain(m) => Stop::Internal(format!("TypeError: {m}")),
@@ -228,6 +228,8 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
     let ext = host::extname(input).to_lowercase();
     let is_pdf = ext == ".pdf";
     let is_fountain = ext == ".fountain" || ext == ".txt";
+    // OSF in: read into a .fountain text, then converted as one.
+    let is_osf = ext == ".osf";
     let fountain_flag = parsed.string("fountain");
     let no_fountain = parsed.flag("no-fountain");
     let output = parsed.string("output");
@@ -237,7 +239,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
             "pass --fountain or --no-fountain, not both (--no-fountain writes no .fountain for --fountain to name)",
         ));
     }
-    if fountain_flag.is_some() && is_fountain {
+    if fountain_flag.is_some() && (is_fountain || is_osf) {
         return Err(Stop::usage(format!(
             "a {ext} input takes no --fountain (only a PDF conversion writes a .fountain)"
         )));
@@ -250,7 +252,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
     let preview_html = parsed.string("preview-html").filter(|s| !s.is_empty());
     let fdx = parsed.string("fdx").filter(|s| !s.is_empty());
     let azw3 = parsed.string("azw3").filter(|s| !s.is_empty());
-    if is_pdf || is_fountain {
+    if is_pdf || is_fountain || is_osf {
         if let Some(o) = output {
             check_output_path("-o", o)?;
         }
@@ -427,11 +429,18 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
                 .collect();
         }
         r
+    } else if is_osf {
+        // An .osf is always one someone chose (the library keeps the
+        // .fountain it was read into, never the .osf), so it is held to the
+        // .fountain guards. OSF carries no pictures.
+        let bytes = fsx::read(input).map_err(|e| read_failed(&e))?;
+        let text = sp_engine::convert::osf_fountain_text(bytes).map_err(conversion_failed)?;
+        sp_engine::convert::convert_chosen_fountain(&text, opts, None).map_err(conversion_failed)?
     } else {
         return Err(Stop::fail(
             "unsupported-type",
             format!(
-                "unsupported input type \"{ext}\": expected .pdf, .fountain, or .txt{}",
+                "unsupported input type \"{ext}\": expected .pdf, .fountain, .txt, or .osf{}",
                 verb_hint(input)
             ),
         ));
