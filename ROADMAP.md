@@ -24,6 +24,21 @@ Release go-aheads:
 - **The next release** tags on or after 2026-11-06, when clipboard-win
   5.4.3 is 14 days old: the owner's override for it held for v1.0.0
   alone, and the release check refuses it for any other tag until then.
+  The zip fix (9.0.5) rides in it: 1.0.0 reads zips only with the one
+  reader the advisory does not set against another, so no 1.0.1 is
+  recommended.
+
+Open decisions:
+
+- **Security exceptions named by a GitHub advisory id** (recommended: yes).
+  GitHub published the zip advisory (GHSA-m665-v7pm-7grj) with no RustSec
+  id, and the crate-age check counts only RustSec ids as security, so the
+  fix went in as an exception that ages out. Ready on branch
+  `feat/ghsa-kind`; it widens SUITE-STANDARDS section 6, so it waits.
+- **The zip alert on the update proof** (Dependabot #9; recommended:
+  dismiss as "vulnerable code not used"). The old updater it runs asks for
+  zip 4 on Windows only, the proof is built for the two Mac targets only,
+  and it never ships. Dismissing an alert is a repository setting.
 
 Built on the recommendation (reversible):
 
@@ -67,6 +82,11 @@ Tests that need a device (hands only; everything else is automated):
    says which file to build, which folder it goes in, and what to look for,
    item by item.
 3. In order of what each answers:
+   - **The new Kindle, first test** (the owner has one, 2026-10-28):
+     plug it in and unlock it, and say so. Everything after that runs
+     from here, reads only, and opens no window: the MTP helper lists it
+     from its USB description, then opens it and lists its storage and
+     its top folder. A copy comes only after those answers are read.
    - **A Kindle that mounts as a drive:** Method Reader's own AZW3 (beta)
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
