@@ -85,7 +85,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -103,8 +103,8 @@
         "header": "061891acbb3736c1",
         "records": [
           "21eb8e9e5aa505eb",
-          "49b04f15a30daabc",
-          "b1abaee83d8e0268",
+          "ddc4650775b4c801",
+          "9f86c09915269729",
           "6f1a9aecb012ad9b",
           "fed98b2e3c8ce0f4",
           "96a296d224f285c6",
@@ -129,7 +129,7 @@
         "text": "c2e64b9221adc61b"
       },
       "out/book.preview.html": {
-        "html": "e9474276a31cc91e"
+        "html": "3ebbed1676bc55e9"
       },
       "out/book.elements.json": {
         "json": "e768a35408b074a8"
@@ -216,7 +216,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -234,8 +234,8 @@
         "header": "061891acbb3736c1",
         "records": [
           "21eb8e9e5aa505eb",
-          "49b04f15a30daabc",
-          "b1abaee83d8e0268",
+          "ddc4650775b4c801",
+          "9f86c09915269729",
           "6b184a5c8db26a44",
           "fed98b2e3c8ce0f4",
           "709e80c88487a241",
@@ -260,7 +260,7 @@
         "text": "c2e64b9221adc61b"
       },
       "out/book.preview.html": {
-        "html": "c486e3951d0eab72"
+        "html": "99bd27feccec1c6a"
       },
       "out/book.elements.json": {
         "json": "e768a35408b074a8"
@@ -326,7 +326,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -384,7 +384,7 @@
       "warnings": [],
       "spacingRepairs": 0,
       "epubPath": "$WORK/out/book.epub",
-      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. THE LAST VIDEO STORE - NIGHT</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - NIGHT</h2>\n<p class=\"action\">Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.</p>\n<p class=\"action\">MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.</p>\n<p class=\"action\">The bell over the door RINGS.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">We close at ten.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">It’s nine forty.</p>\n</div>\n<p class=\"action\">DEV OKONKWO, 20s, soaked through, shakes off a jacket that was never waterproof.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">And yet.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">I need something for a fourteen- year-old who thinks movies started with streaming.</p>\n</div>\n<p class=\"action\">Margo looks up for the first time.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(a small conversion)</p>\n<p class=\"dialogue\">Sit down.</p>\n</div>\n<p class=\"transition\">CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</h2>\n<p class=\"action\">Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Fourteen. Scared, or pretending not to be?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">Pretending. Loudly.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>MARGO</p>\n<p class=\"dialogue\">Then not the one with the mask. Everyone starts with the mask and nobody remembers it.</p>\n</div>\n<p class=\"action\">She pulls a battered clamshell case and holds it like evidence.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO (CONT&apos;D)</p>\n<p class=\"dialogue\">This one. Nothing happens for forty minutes and then you never sleep facing a closet again.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">That’s a pitch?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">That’s a promise.</p>\n</div>\n<p class=\"transition\">DISSOLVE TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\">EXT. STRIP MALL - NIGHT</h2>\n<p class=\"action\">Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">How long have you been here?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">Since people still rewound.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - COUNTER - LATER</h2>\n<p class=\"action\">A shoebox of index cards. Margo writes on one in careful block letters and slides it across.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">What’s this?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Your card. Nineteen years running, four hundred and six members. You’re four hundred and seven.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>DEV</p>\n<p class=\"dialogue\">You’re closing in a week.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Then it’ll be a short membership.</p>\n</div>\n<p class=\"action\">Dev takes the card anyway. Pockets it like it matters, because it does.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">What happens to all of it?</p>\n</div>\n<p class=\"action\">Margo looks down the aisles. Twenty thousand tapes. A lifetime of other people’s Friday nights.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Somebody buys the shelves. The rest goes where the rest goes.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">That’s grim.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(not grim at all)</p>\n<p class=\"dialogue\">It’s Tuesday.</p>\n</div>\n<p class=\"transition\">SMASH CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-005\">\n<h2 class=\"scene-heading\">INT. DEV’S APARTMENT - NIGHT</h2>\n<p class=\"action\">A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.</p>\n<p class=\"action\">His NIECE, 14, arms folded, sits as far from the screen as the room allows.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">NIECE</p>\n<p class=\"dialogue\">This is going to be so boring.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">Forty minutes. Give it forty minutes.</p>\n</div>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>The countdown hits 1. The room goes dark blue.</p>\n<p class=\"action\">Forty minutes later, she has not moved, and she is sitting considerably closer.</p>\n<p class=\"transition\">FADE OUT.</p>\n</section>\n</body>\n</html>\n"
+      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. THE LAST VIDEO STORE - NIGHT</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - NIGHT</h2>\n<p class=\"action\">Fluorescent light hums over aisles of VHS tapes. Rain streaks the front window. A hand-lettered sign reads: EVERYTHING MUST GO.</p>\n<p class=\"action\">MARGO SHAW, 60s, cardigan with a pen through the pocket, alphabetizes a shelf that nobody will browse.</p>\n<p class=\"action\">The bell over the door RINGS.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">We close at ten.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">It’s nine forty.</p>\n</div>\n<p class=\"action\">DEV OKONKWO, 20s, soaked through, shakes off a jacket that was never waterproof.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">And yet.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">I need something for a fourteen- year-old who thinks movies started with streaming.</p>\n</div>\n<p class=\"action\">Margo looks up for the first time.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(a small conversion)</p>\n<p class=\"dialogue\">Sit down.</p>\n</div>\n<p class=\"transition\">CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - HORROR AISLE - CONTINUOUS</h2>\n<p class=\"action\">Margo moves like she’s done this ten thousand times, because she has. Dev trails her, dripping.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Fourteen. Scared, or pretending not to be?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">Pretending. Loudly.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Then not the one with the mask. Everyone starts with the mask and nobody remembers it.</p>\n</div>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>She pulls a battered clamshell case and holds it like evidence.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO (CONT&apos;D)</p>\n<p class=\"dialogue\">This one. Nothing happens for forty minutes and then you never sleep facing a closet again.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">That’s a pitch?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">That’s a promise.</p>\n</div>\n<p class=\"transition\">DISSOLVE TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\">EXT. STRIP MALL - NIGHT</h2>\n<p class=\"action\">Rain. The store’s neon sign flickers between LAST and AST. Behind the glass, two silhouettes argue happily about something that doesn’t matter.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">How long have you been here?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(O.S.)</p>\n<p class=\"dialogue\">Since people still rewound.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\">INT. THE LAST VIDEO STORE - COUNTER - LATER</h2>\n<p class=\"action\">A shoebox of index cards. Margo writes on one in careful block letters and slides it across.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">What’s this?</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Your card. Nineteen years running, four hundred and six members. You’re four hundred and seven.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">You’re closing in a week.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Then it’ll be a short membership.</p>\n</div>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>Dev takes the card anyway. Pockets it like it matters, because it does.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">What happens to all of it?</p>\n</div>\n<p class=\"action\">Margo looks down the aisles. Twenty thousand tapes. A lifetime of other people’s Friday nights.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"dialogue\">Somebody buys the shelves. The rest goes where the rest goes.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">That’s grim.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">MARGO</p>\n<p class=\"parenthetical\">(not grim at all)</p>\n<p class=\"dialogue\">It’s Tuesday.</p>\n</div>\n<p class=\"transition\">SMASH CUT TO:</p>\n</section>\n<section class=\"scene\" id=\"sc-005\">\n<h2 class=\"scene-heading\">INT. DEV’S APARTMENT - NIGHT</h2>\n<p class=\"action\">A television old enough to have a dial. Dev threads the tape in. Static, then a countdown leader -- 5, 4, 3.</p>\n<p class=\"action\">His NIECE, 14, arms folded, sits as far from the screen as the room allows.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">NIECE</p>\n<p class=\"dialogue\">This is going to be so boring.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">DEV</p>\n<p class=\"dialogue\">Forty minutes. Give it forty minutes.</p>\n</div>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>The countdown hits 1. The room goes dark blue.</p>\n<p class=\"action\">Forty minutes later, she has not moved, and she is sitting considerably closer.</p>\n<p class=\"transition\">FADE OUT.</p>\n</section>\n</body>\n</html>\n"
     },
     "stderr": "",
     "outputs": {}
@@ -463,7 +463,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -560,7 +560,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -652,7 +652,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -753,7 +753,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -845,7 +845,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       }
@@ -922,7 +922,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       }
@@ -1001,7 +1001,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -1098,7 +1098,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -1178,7 +1178,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -1259,7 +1259,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -1348,7 +1348,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       }
@@ -1427,7 +1427,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -1505,7 +1505,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       },
@@ -1523,8 +1523,8 @@
         "header": "061891acbb3736c1",
         "records": [
           "21eb8e9e5aa505eb",
-          "49b04f15a30daabc",
-          "b1abaee83d8e0268",
+          "ddc4650775b4c801",
+          "9f86c09915269729",
           "6f1a9aecb012ad9b",
           "fed98b2e3c8ce0f4",
           "96a296d224f285c6",
@@ -1549,7 +1549,7 @@
         "text": "2d20bcee09bb0514"
       },
       "out/f.html": {
-        "html": "e9474276a31cc91e"
+        "html": "3ebbed1676bc55e9"
       }
     }
   },
@@ -1618,7 +1618,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "16aef672327d80c6"
+            "content": "ebf37b27d25f405e"
           }
         ]
       }
@@ -1689,7 +1689,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -1743,7 +1743,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -2298,7 +2298,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           }
@@ -2370,7 +2370,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           }
@@ -2443,7 +2443,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           }
@@ -2921,7 +2921,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "124e9a8562bb48e5"
+                "content": "f5e9903566114b86"
               }
             ]
           },
@@ -3418,7 +3418,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "124e9a8562bb48e5"
+            "content": "f5e9903566114b86"
           }
         ]
       }
@@ -3447,8 +3447,8 @@
         "header": "061891acbb3736c1",
         "records": [
           "21eb8e9e5aa505eb",
-          "49b04f15a30daabc",
-          "b1abaee83d8e0268",
+          "ddc4650775b4c801",
+          "9f86c09915269729",
           "6f1a9aecb012ad9b",
           "fed98b2e3c8ce0f4",
           "96a296d224f285c6",
@@ -3473,8 +3473,8 @@
         "header": "061891acbb3736c1",
         "records": [
           "21eb8e9e5aa505eb",
-          "49b04f15a30daabc",
-          "b1abaee83d8e0268",
+          "ddc4650775b4c801",
+          "9f86c09915269729",
           "6f1a9aecb012ad9b",
           "fed98b2e3c8ce0f4",
           "96a296d224f285c6",

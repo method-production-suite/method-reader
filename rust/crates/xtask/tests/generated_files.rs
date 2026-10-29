@@ -43,7 +43,7 @@ const PINNED: &[(&str, &str, &str)] = &[
     (
         "rust/crates/sp-epub/tests/data/options-golden.json",
         "rust/crates/sp-epub/tests/data/options-golden.ts",
-        "7081b533896f858d53decb34f36e4ec4b9e2eb2d0ebbf2b491e8df6383607d36",
+        "811937b22cd9a8a5e6171e9f2c332909ae177e1c7e343a3401777bc0ca49e033",
     ),
     (
         "rust/crates/sp-mobi/tests/data/mobi-sources.json",

@@ -1402,3 +1402,52 @@ names the check it affects.
   `cargo xtask parity --accept`; sp-cli/tests/usage.rs lists the line in
   `CHANGED_ON_PURPOSE`. The parity table's own verb list
   (xtask/src/table.rs) is the TypeScript's and stays without it.
+- **Page numbers ride on description only (decided by the owner after
+  Kindle device tests, 2026-10-29, branch fix/page-number-off-speeches): a
+  deliberate EPUB output change.** On a Kindle's KFX book a page marker on
+  a cue, under it, or on a line of its own before it let the cue strand at
+  a page's foot apart from its lines; a book whose markers sat only on
+  description paragraphs stranded none and kept "Go to page". So a pending
+  marker now passes headings, speeches, transitions and centred lines and
+  lands on the next `<p class="action">` paragraph, and a newer page number
+  replaces a waiting one, which is then neither shown nor listed in the
+  page-list nav (sp-epub/src/html.rs `Blocks::emit`, registry #13a). The
+  MOBI renderer is unchanged, and so are every .fountain, FDX, MOBI and
+  stage answer before the book. What was re-frozen, each new answer the
+  Rust engine's and each diffed against the old frozen answer first, with
+  every difference a marker span moving later onto a description
+  paragraph, a skipped marker dropped with its page-list entry, or a size,
+  digest or offset that follows from those:
+  - rust/oracle/{field-station,images,screenplay,torture}/: book.epub's
+    body001.xhtml from the Rust writer, every other entry kept as the
+    TypeScript compressed it, and for torture nav.xhtml too;
+    book.preview.html, the same moves; book.azw3, the Rust writer's bytes
+    built from the new book.epub; meta.json, those three files' sizes and
+    digests. Field Station: 11 of its 17 markers moved, 6 already sat on
+    description. Images: all 3 moved. Screenplay: 2 of 3 moved, 1 already
+    on description. Torture: 8 of 14 moved, and the 6 that a newer page
+    number overtook before any description (pages 9 to 13 and 15) were
+    dropped from the body and the page-list. jpx has no markers and did
+    not move; no book.mobi moved.
+  - sp-epub/tests/data/options-golden.json: under each of its 20 option
+    sets, body001.xhtml and the preview for field-station, images and
+    screenplay, and body001.xhtml, nav.xhtml and the preview for torture
+    (180 values, 77 distinct old digests). Every set was built with the
+    old renderer and the new one and the two compared as above; the old
+    builds matched the old golden exactly. Its pin in
+    xtask/tests/generated_files.rs moved with it.
+  - 88 parity runs (21 field-station, 21 images, 25 screenplay, 21
+    torture), accepted with `cargo xtask parity --accept convert
+    convert-app-defaults convert-beside convert-follow-defaults
+    convert-force convert-fountain convert-fountain-strip convert-human
+    convert-inline convert-library convert-library-again
+    convert-no-pictures convert-options-file convert-phone
+    convert-sidecar convert-sidecar-broken convert-sidecar-override
+    convert-title convert-txt export-azw3 export-epub-out send-device
+    send-human send-one settings-set`; the other 63 runs of those rows
+    already matched. Every value that moved is an EPUB's body001.xhtml or
+    nav.xhtml digest, a preview (the `--preview-inline` text itself
+    differs only by the markers), or an AZW3's header and records (the
+    torture convert-phone AZW3 has one record more). The same rows were
+    also run with the old renderer and the new, scratch folders kept, and
+    every file that differed between the two runs passed the same check.

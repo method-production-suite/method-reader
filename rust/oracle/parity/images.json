@@ -86,7 +86,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -119,8 +119,8 @@
         "header": "4ff6d9e92a4e3b33",
         "records": [
           "12d711f5a8e31b5b",
-          "a4fe9b316a831726",
-          "e5d479449a76bf1e",
+          "6953da86e5877a11",
+          "353386d18ea16f88",
           "915d816caba24711",
           "6e340b9cffb37a98",
           "3d9e80b5103517ab",
@@ -146,7 +146,7 @@
         "text": "758645e3fdc33cbe"
       },
       "out/book.preview.html": {
-        "html": "f6371806cfa18fd6"
+        "html": "550c0d0f74a25350"
       },
       "out/book.elements.json": {
         "json": "67d6742e5ff1a7c5"
@@ -239,7 +239,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -272,8 +272,8 @@
         "header": "4ff6d9e92a4e3b33",
         "records": [
           "12d711f5a8e31b5b",
-          "a4fe9b316a831726",
-          "df7deda7f5c2fdc6",
+          "6953da86e5877a11",
+          "2c021280d452cf0b",
           "915d816caba24711",
           "6e340b9cffb37a98",
           "3d9e80b5103517ab",
@@ -299,7 +299,7 @@
         "text": "758645e3fdc33cbe"
       },
       "out/book.preview.html": {
-        "html": "75f5538c177c1352"
+        "html": "3712de344712a475"
       },
       "out/book.elements.json": {
         "json": "67d6742e5ff1a7c5"
@@ -370,7 +370,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -448,7 +448,7 @@
       "spacingRepairs": 0,
       "epubPath": "$WORK/out/book.epub",
       "imageCount": 2,
-      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. ARCHIVE ROOM - DAY</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* A picture carried out of the source PDF (registry #19). These rules are\n   only in a book that shows one. No keep, on purpose: this box holds one\n   line box, so there is nothing inside it to keep together. The reasons in\n   full are in src/epub/css.ts, above screenplayCss; this file is generated\n   from it, so that header is not here. */\n.figure {\n  margin: 1em 0;\n  text-align: center;\n}\n\n/* Only the width is authored, so the height follows the aspect ratio. A\n   defensive restatement of the initial value, against a reading system\n   whose own stylesheet sets a height on images. */\n.figure img {\n  height: auto;\n}\n\n/* The width the picture had on the printed page, as a share of the text\n   column to the nearest five. A class rather than an inline style, which\n   the reader preview refuses. */\np.w5 img { width: 5%; }\np.w10 img { width: 10%; }\np.w15 img { width: 15%; }\np.w20 img { width: 20%; }\np.w25 img { width: 25%; }\np.w30 img { width: 30%; }\np.w35 img { width: 35%; }\np.w40 img { width: 40%; }\np.w45 img { width: 45%; }\np.w50 img { width: 50%; }\np.w55 img { width: 55%; }\np.w60 img { width: 60%; }\np.w65 img { width: 65%; }\np.w70 img { width: 70%; }\np.w75 img { width: 75%; }\np.w80 img { width: 80%; }\np.w85 img { width: 85%; }\np.w90 img { width: 90%; }\np.w95 img { width: 95%; }\np.w100 img { width: 100%; }\n\n/* A plate that filled its printed page gets a page here too: before puts it\n   at the top of one, after stops the next paragraph sharing what is left.\n   No margin: the plate owns its page, and a top margin kept after the break\n   is what pushes a page-tall plate onto the next page and leaves a blank\n   one in front of it. */\np.figure-full {\n  margin: 0;\n  page-break-before: always;\n  page-break-after: always;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. ARCHIVE ROOM - DAY</h2>\n<p class=\"figure w40\"><img src=\"data:image/png;base64,<pixels 3bc24c163335c1ae>\" alt=\"Illustration\"/></p>\n<p class=\"action\">WREN, 30s, holds a storyboard panel up to the window and squints at it.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Somebody drew this in 1974 and nobody has looked at it since.</p>\n</div>\n<p class=\"action\">HOLT sets down a box of film cans.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">That is the job.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER</h2>\n<p class=\"action\">A splice reel turns. The room smells of vinegar and dust.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">Two frames are missing from the head of the roll.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Then we cut around them.</p>\n</div>\n<p class=\"action\">She threads the leader by feel, the way she was taught.</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>EXT. LOADING DOCK - NIGHT</h2>\n<p class=\"action\">Rain on corrugated steel. WREN wheels a cart of film cans out under a sodium lamp and counts them twice.</p>\n<p class=\"action\">HOLT holds an umbrella over the cart and not over himself.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Forty-one. There were forty-three when we started.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">Two of them went out for repair in March and nobody wrote it down.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Nobody ever writes it down.</p>\n</div>\n<p class=\"action\">She pulls a tarp over the cart and ties it at the corners.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">The truck comes at six. Everything on that manifest has to be on the dock by then, in order, and dry.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Then we work through it.</p>\n</div>\n<p class=\"action\">The lamp buzzes and cuts out. Neither of them stops moving.</p>\n<p class=\"action\">In the dark the cart is a long shape and the rain is louder than it was.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN (CONT&apos;D)</p>\n<p class=\"dialogue\">Bring the second cart. And the good tarp, not the one with the hole in it.</p>\n</div>\n<p class=\"action\">Holt goes. Wren stands in the rain with a clipboard and does not hurry.</p>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>INT. ARCHIVE ROOM - DAWN</h2>\n<p class=\"action\">The cart is gone. A single storyboard panel is still pinned to the window.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Leave that one.</p>\n</div>\n<p class=\"transition\">FADE OUT.</p>\n</section>\n</body>\n</html>\n"
+      "previewHtml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">\n<head>\n<title>INT. ARCHIVE ROOM - DAY</title>\n<style>\nhtml, body {\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\nh2.scene-heading {\n  font-size: 1em;\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.6em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\nspan.scene-number {\n  font-weight: normal;\n}\n\nspan.underline {\n  text-decoration: underline;\n}\n\n/* Original PDF page numbers — a marginal reference, out of the flow so\n   they cost no line. Horizontal in %, per the CSS invariants. Dimming is\n   opacity rather than a fixed gray, which would fight dark and sepia\n   themes; opacity dims against whatever the theme's text color is, and\n   engines lacking it just render full strength (registry #13a). */\nspan.page-marker {\n  float: right;\n  font-size: 0.75em;\n  opacity: 0.6;\n  margin-left: 1%;\n}\n\np {\n  margin: 0;\n  text-indent: 0;\n}\n\np.action {\n  margin: 1em 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\np.mini-slug {\n  font-weight: bold;\n  text-transform: uppercase;\n  margin: 1.4em 0 1em 0;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Print geometry, reflowed: dialogue is a narrow column (58% of the body\n   column in print). Cue and parenthetical indent WITHIN the column as\n   percentages of it (print: cue +1.2\" and parenthetical +0.6\" into the\n   3.5\" column). */\n.dialogue-block {\n  margin-top: 1em;\n  margin-bottom: 1em;\n  margin-left: 20%;\n  margin-right: 20%;\n}\n\n/* A cue must never orphan from its dialogue at a page break. Centered\n   alignment reads naturally at any screen width; indented reproduces\n   print's fixed offsets (which only optically center on paper). */\np.character {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\n/* Chained forward as of 2026-09-14, reversing a deliberate refusal. #5 is\n   right that every avoid link grows the chunk a renderer pushes, and while\n   the cue keep was a WRAPPER that argument held: the chunk already carried\n   the cue and the speech, and one more link made a blank-bottom page. With\n   the wrapper gone the chunk is cue + parenthetical + the orphans minimum\n   (#17), about four lines, which is the same bound #5a accepted when it\n   traded the heading wrapper for a chain.\n\n   Without this link a cue and its parenthetical strand together, which is\n   the defect #8b exists to prevent wearing a different hat. */\np.parenthetical {\n  text-align: center;\n  page-break-after: avoid;\n  break-after: avoid;\n}\n\np.dialogue {\n  margin: 0;\n  text-align: left;\n  widows: 2;\n  orphans: 2;\n}\n\n/* Simultaneous speech: two half-width columns, kept on one page. The\n   table spans full width (wider than the dialogue column) by design. */\ntable.dual-dialogue {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n  break-inside: avoid;\n}\n\n\ntable.dual-dialogue td {\n  width: 50%;\n  vertical-align: top;\n  padding: 0 2%;\n}\n\n/* A transition belongs to the shot before it: it may end a page, never\n   begin one (the universal print rule, docs/pagination-reference.md §2 —\n   that doc lands from branch worktree-device-map). */\np.transition {\n  text-align: right;\n  text-transform: uppercase;\n  margin: 1em 0;\n  page-break-before: avoid;\n  break-before: avoid;\n}\n\np.centered {\n  text-align: center;\n  margin: 1em 0;\n}\n\n/* A picture carried out of the source PDF (registry #19). These rules are\n   only in a book that shows one. No keep, on purpose: this box holds one\n   line box, so there is nothing inside it to keep together. The reasons in\n   full are in src/epub/css.ts, above screenplayCss; this file is generated\n   from it, so that header is not here. */\n.figure {\n  margin: 1em 0;\n  text-align: center;\n}\n\n/* Only the width is authored, so the height follows the aspect ratio. A\n   defensive restatement of the initial value, against a reading system\n   whose own stylesheet sets a height on images. */\n.figure img {\n  height: auto;\n}\n\n/* The width the picture had on the printed page, as a share of the text\n   column to the nearest five. A class rather than an inline style, which\n   the reader preview refuses. */\np.w5 img { width: 5%; }\np.w10 img { width: 10%; }\np.w15 img { width: 15%; }\np.w20 img { width: 20%; }\np.w25 img { width: 25%; }\np.w30 img { width: 30%; }\np.w35 img { width: 35%; }\np.w40 img { width: 40%; }\np.w45 img { width: 45%; }\np.w50 img { width: 50%; }\np.w55 img { width: 55%; }\np.w60 img { width: 60%; }\np.w65 img { width: 65%; }\np.w70 img { width: 70%; }\np.w75 img { width: 75%; }\np.w80 img { width: 80%; }\np.w85 img { width: 85%; }\np.w90 img { width: 90%; }\np.w95 img { width: 95%; }\np.w100 img { width: 100%; }\n\n/* A plate that filled its printed page gets a page here too: before puts it\n   at the top of one, after stops the next paragraph sharing what is left.\n   No margin: the plate owns its page, and a top margin kept after the break\n   is what pushes a page-tall plate onto the next page and leaves a blank\n   one in front of it. */\np.figure-full {\n  margin: 0;\n  page-break-before: always;\n  page-break-after: always;\n}\n\n/* Title page */\nsection.titlepage {\n  text-align: center;\n  margin-top: 20%;\n}\n\nsection.titlepage h1 {\n  font-size: 1.6em;\n  text-transform: uppercase;\n  font-weight: bold;\n  margin-bottom: 2em;\n}\n\nsection.titlepage p.credit {\n  margin: 0.4em 0;\n}\n\nsection.titlepage p.author {\n  font-size: 1.1em;\n  margin: 0.4em 0;\n}\n\n/* Block font shifts the PDF carried (registry #18), gated by\n   preserveFontShifts. Sizes are em, per the vertical-in-em invariant, and\n   carry no line-height. A family class sits on the paragraph itself, so it\n   locally overrides the body fontFamily option (#6) without !important.\n   Values stay CSS-2.1-vintage: RMSDK can blank a whole book on a value\n   function it cannot parse. */\n.fmt-mono {\n  font-family: \"Courier Prime\", \"Courier New\", Courier, monospace;\n}\n\n.fmt-serif {\n  font-family: serif;\n}\n\n.fmt-sans {\n  font-family: sans-serif;\n}\n\n.fmt-cursive {\n  font-family: \"Comic Sans MS\", cursive;\n}\n\n.fmt-minus1 {\n  font-size: 0.85em;\n}\n\n.fmt-plus1 {\n  font-size: 1.2em;\n}\n\n.fmt-plus2 {\n  font-size: 1.5em;\n}\n\n/* ── the multicol spelling of every break rule above ──────────────────\n\n   Some engines paginate by laying the book out in CSS multi-column and\n   showing one column per screen, and they read ONLY the multicol\n   vocabulary for fragmentation: Apple Books, whose WebKit honors nothing\n   else, and the Readium family (Thorium, Kobo's phone and tablet apps).\n\n   SEPARATE rules on purpose, and last on purpose. Separate because iBooks\n   drops BOTH spellings when they share one declaration block. Last because\n   these selectors repeat ones used above, and a shadow placed first would\n   make ruleFor() in the tests answer with the spelling nothing else reads\n   (the incident 3abeba3 is named for). Unguarded by @supports on purpose:\n   the engines that need this largely predate it.\n\n   Derived from the same gating that emits the real rules, never a second\n   list kept by hand. A hand-kept copy once left the whole-speech keep\n   silently inert in Apple Books while the cue keep worked. */\ntable.dual-dialogue { -webkit-column-break-inside: avoid; }\n\nh2.scene-heading, p.mini-slug, p.character, p.parenthetical { -webkit-column-break-after: avoid; }\n\np.transition { -webkit-column-break-before: avoid; }\n</style>\n</head>\n<body>\n<section class=\"scene\" id=\"sc-001\">\n<h2 class=\"scene-heading\">INT. ARCHIVE ROOM - DAY</h2>\n<p class=\"figure w40\"><img src=\"data:image/png;base64,<pixels 3bc24c163335c1ae>\" alt=\"Illustration\"/></p>\n<p class=\"action\">WREN, 30s, holds a storyboard panel up to the window and squints at it.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Somebody drew this in 1974 and nobody has looked at it since.</p>\n</div>\n<p class=\"action\">HOLT sets down a box of film cans.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">That is the job.</p>\n</div>\n</section>\n<section class=\"scene\" id=\"sc-002\">\n<h2 class=\"scene-heading\">INT. ARCHIVE ROOM - PROJECTION BOOTH - LATER</h2>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg2\" title=\"2\" class=\"page-marker\">2.</span>A splice reel turns. The room smells of vinegar and dust.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">Two frames are missing from the head of the roll.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Then we cut around them.</p>\n</div>\n<p class=\"action\">She threads the leader by feel, the way she was taught.</p>\n</section>\n<section class=\"scene\" id=\"sc-003\">\n<h2 class=\"scene-heading\">EXT. LOADING DOCK - NIGHT</h2>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg3\" title=\"3\" class=\"page-marker\">3.</span>Rain on corrugated steel. WREN wheels a cart of film cans out under a sodium lamp and counts them twice.</p>\n<p class=\"action\">HOLT holds an umbrella over the cart and not over himself.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Forty-one. There were forty-three when we started.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">Two of them went out for repair in March and nobody wrote it down.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Nobody ever writes it down.</p>\n</div>\n<p class=\"action\">She pulls a tarp over the cart and ties it at the corners.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">HOLT</p>\n<p class=\"dialogue\">The truck comes at six. Everything on that manifest has to be on the dock by then, in order, and dry.</p>\n</div>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Then we work through it.</p>\n</div>\n<p class=\"action\">The lamp buzzes and cuts out. Neither of them stops moving.</p>\n<p class=\"action\">In the dark the cart is a long shape and the rain is louder than it was.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN (CONT&apos;D)</p>\n<p class=\"dialogue\">Bring the second cart. And the good tarp, not the one with the hole in it.</p>\n</div>\n<p class=\"action\">Holt goes. Wren stands in the rain with a clipboard and does not hurry.</p>\n</section>\n<section class=\"scene\" id=\"sc-004\">\n<h2 class=\"scene-heading\">INT. ARCHIVE ROOM - DAWN</h2>\n<p class=\"action\"><span epub:type=\"pagebreak\" role=\"doc-pagebreak\" id=\"pg4\" title=\"4\" class=\"page-marker\">4.</span>The cart is gone. A single storyboard panel is still pinned to the window.</p>\n<div class=\"dialogue-block\">\n<p class=\"character\">WREN</p>\n<p class=\"dialogue\">Leave that one.</p>\n</div>\n<p class=\"transition\">FADE OUT.</p>\n</section>\n</body>\n</html>\n"
     },
     "stderr": "",
     "outputs": {}
@@ -528,7 +528,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -647,7 +647,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -761,7 +761,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -884,7 +884,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -998,7 +998,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1091,7 +1091,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1186,7 +1186,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -1305,7 +1305,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -1407,7 +1407,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1504,7 +1504,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1608,7 +1608,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1703,7 +1703,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "1e22a6a06ad9cd29"
+                "content": "e43c4111826c6f1c"
               }
             ]
           },
@@ -1787,7 +1787,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "42fc91ab5892a973"
+            "content": "777d037078b61ce6"
           },
           {
             "name": "OEBPS/images/",
@@ -1820,8 +1820,8 @@
         "header": "4ff6d9e92a4e3b33",
         "records": [
           "12d711f5a8e31b5b",
-          "a4fe9b316a831726",
-          "e5d479449a76bf1e",
+          "6953da86e5877a11",
+          "353386d18ea16f88",
           "915d816caba24711",
           "6e340b9cffb37a98",
           "3d9e80b5103517ab",
@@ -1847,7 +1847,7 @@
         "text": "b2052128c4349d27"
       },
       "out/f.html": {
-        "html": "f6371806cfa18fd6"
+        "html": "550c0d0f74a25350"
       }
     }
   },
@@ -1914,7 +1914,7 @@
           {
             "name": "OEBPS/text/body001.xhtml",
             "stored": false,
-            "content": "777886dc250f8745"
+            "content": "f5109db714835967"
           }
         ]
       }
@@ -1985,7 +1985,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -2054,7 +2054,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -2151,7 +2151,7 @@
               {
                 "name": "OEBPS/text/body001.xhtml",
                 "stored": false,
-                "content": "42fc91ab5892a973"
+                "content": "777d037078b61ce6"
               },
               {
                 "name": "OEBPS/images/",
@@ -2352,8 +2352,8 @@
         "header": "4ff6d9e92a4e3b33",
         "records": [
           "12d711f5a8e31b5b",
-          "a4fe9b316a831726",
-          "e5d479449a76bf1e",
+          "6953da86e5877a11",
+          "353386d18ea16f88",
           "915d816caba24711",
           "6e340b9cffb37a98",
           "3d9e80b5103517ab",
@@ -2379,8 +2379,8 @@
         "header": "4ff6d9e92a4e3b33",
         "records": [
           "12d711f5a8e31b5b",
-          "a4fe9b316a831726",
-          "e5d479449a76bf1e",
+          "6953da86e5877a11",
+          "353386d18ea16f88",
           "915d816caba24711",
           "6e340b9cffb37a98",
           "3d9e80b5103517ab",

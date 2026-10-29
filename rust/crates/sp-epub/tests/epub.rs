@@ -575,7 +575,10 @@ mod page_markers_in_xhtml {
         let xhtml = first_xhtml(
             "INT. A - DAY\n\nAction.\n\n= pg 3\n\n@LOU\nHello.\n\n@SYD\nHi.\n\nThey sit.\n",
         );
-        assert!(!matches(&xhtml, r#"dialogue-block">\s*<p class="character"><span"#));
+        assert!(!matches(
+            &xhtml,
+            r#"dialogue-block">\s*<p class="character"><span"#
+        ));
         let block_start = xhtml.find("dialogue-block").unwrap();
         let block_end = xhtml.rfind("</div>").unwrap();
         assert!(!xhtml[block_start..block_end].contains("page-marker"));
