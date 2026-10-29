@@ -25,20 +25,8 @@ Release go-aheads:
   5.4.3 is 14 days old: the owner's override for it held for v1.0.0
   alone, and the release check refuses it for any other tag until then.
   The zip fix (9.0.5) rides in it: 1.0.0 reads zips only with the one
-  reader the advisory does not set against another, so no 1.0.1 is
-  recommended.
-
-Open decisions:
-
-- **Security exceptions named by a GitHub advisory id** (recommended: yes).
-  GitHub published the zip advisory (GHSA-m665-v7pm-7grj) with no RustSec
-  id, and the crate-age check counts only RustSec ids as security, so the
-  fix went in as an exception that ages out. Ready on branch
-  `feat/ghsa-kind`; it widens SUITE-STANDARDS section 6, so it waits.
-- **The zip alert on the update proof** (Dependabot #9; recommended:
-  dismiss as "vulnerable code not used"). The old updater it runs asks for
-  zip 4 on Windows only, the proof is built for the two Mac targets only,
-  and it never ships. Dismissing an alert is a repository setting.
+  reader the advisory does not set against another, so there is no
+  1.0.1 (the owner, 2026-10-29).
 
 Built on the recommendation (reversible):
 
@@ -110,6 +98,14 @@ release and every Monday, and its notes keep saying it has not been
 installed by a person yet.
 
 Decided:
+
+- **Security exceptions named by a GitHub advisory id** (the owner,
+  2026-10-29: yes). While RustSec has no id for an advisory, its GHSA id
+  makes a crate-age exception a security one, the zip 9.0.5 line
+  included (SUITE-STANDARDS section 6).
+- **The zip alert on the update proof** (the owner, 2026-10-29): dismissed
+  as not shipped. The old updater it runs asks for zip 4 on Windows only,
+  and the proof is built for the two Mac targets only.
 
 - **Reporting a problem without a GitHub account** (the owner,
   2026-10-21: option 1). Help > Report a Bug, and Report a bug on a failed
