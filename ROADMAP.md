@@ -15,6 +15,9 @@ recommendation are built on the recommendation and marked so here.
 
 Release go-aheads:
 
+- **1.0.0's notes and pictures** (shown 2026-10-27): waiting for ship. Then
+  the version bump, the release pull request (reviewed before merge), a
+  rehearsal from main, and the tag request through MOrg.
 - **0.13.1: skipped** (the owner, 2026-10-26). Its fixes ship in 1.0.0,
   from main. The day its last young crates aged, every release of
   clipboard-win (the Windows clipboard) up to 5.4.1 was yanked, and the
@@ -30,12 +33,13 @@ Release go-aheads:
 
   Built and on main: the universal Mac build, its 0.9.0 Intel proof and
   the signed SHA256SUMS (#78, #79). The four features are finished as
-  draft pull requests, merging now that 0.13.1 is skipped: the MCP server
-  (#62), what's on a reader (#67), the .fdx scene pages (#76) and OSF out
-  (#77). 1.0.0 also carries everything 0.13.1 would have. Then the public
-  text, the notes and a rehearsal. It tags on or after 2026-11-06, when
-  clipboard-win 5.4.3 is 14 days old, unless the owner approves an earlier
-  override; the release check refuses it before then on its own.
+  draft pull requests, now merged: the MCP server (#62), what's on a
+  reader (#67), the .fdx scene pages (#76) and OSF out (#77). 1.0.0 also
+  carries everything 0.13.1 would have. Then the public text, the notes and
+  a rehearsal. It may tag before 2026-11-06: the owner approved
+  clipboard-win 5.4.3 for 1.0.0 (2026-10-27), and the release check honours
+  that override for v1.0.0 alone. The tag itself still waits for the
+  owner's yes.
 
 Built on the recommendation (reversible):
 
@@ -139,11 +143,11 @@ Decided:
 In order. Each is one small pull request.
 
 - **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
-  a page, get an editable script, make an e-book, all on local files. Built
-  and in review; it merges after 0.13.1.
+  a page, get an editable script, make an e-book, all on local files. On
+  main; it ships in 1.0.0.
 - **OSF out.** A third editable script beside Fountain and .fdx, written from
-  the same structure, and `method-reader export --for osf`. Built (beta);
-  its pull request merges after 0.13.1. Design and open questions:
+  the same structure, and `method-reader export --for osf`. On main (beta);
+  it ships in 1.0.0. Design and open questions:
   docs/superpowers/specs/2026-10-20-osf-out-design.md.
 - **OSF and Fountain in.** The drop area and Choose a script accept .osf and
   .fountain, so a script from Method Storyteller becomes an e-book without a

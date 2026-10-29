@@ -156,14 +156,13 @@ has not been tried widely on real devices or apps yet: tell us how it goes.
 ## Install
 
 **On a Mac, download `Method-Reader-macOS.dmg`**: the Mac app, signed and
-notarized by Apple, for Macs with Apple silicon, macOS 13 or
+notarized by Apple, for Macs with Apple silicon or Intel, macOS 13 or
 later. It is the file the download button gives you, and it updates itself.
 The same app runs on Windows and Linux.
 
-**On an Intel Mac, 0.9.0 is the last version**, released under the app's
-earlier name, Screepub. It keeps working, but it will not be offered updates.
-To install it, download `Screepub-macOS.dmg` from
-[the 0.9.0 release page](https://github.com/method-production-suite/method-reader/releases/tag/v0.9.0).
+**On an Intel Mac** the same download runs, from 1.0.0. An Intel Mac still on
+0.9.0, released under the app's earlier name, Screepub, is offered 1.0.0 as
+an update the next time it checks.
 
 | Computer | File | Status |
 | --- | --- | --- |

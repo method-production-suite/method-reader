@@ -24,15 +24,17 @@ use sp_app::model::update::{
 };
 use sp_app::runtime::Mode;
 
+/// Far ahead of any real version, so it stays newer after every bump
+/// (0.99.0 stopped being newer at 1.0.0).
 fn newer() -> Result<Option<Found>, String> {
     Ok(Some(Found {
-        version: "0.99.0".into(),
+        version: "99.0.0".into(),
         current_version: env!("CARGO_PKG_VERSION").into(),
         body: Some("Faster pages.".into()),
     }))
 }
 
-/// A Mac window whose updater finds 0.99.0, its schedule armed as the
+/// A Mac window whose updater finds 99.0.0, its schedule armed as the
 /// shipped window arms it; and the count of downloads ahead of the click.
 fn scheduled(w: &World) -> (H, Arc<std::sync::atomic::AtomicUsize>) {
     let mut h = harness(w, Platform::Mac);
@@ -155,7 +157,7 @@ fn whoever_said_no_to_the_old_question_keeps_the_switch_off() {
         Some(Toggled::False)
     );
     assert!(stamp(&h).is_some(), "a check a person asks for always runs");
-    h.get_by_role_and_label(Role::Button, "Install 0.99.0");
+    h.get_by_role_and_label(Role::Button, "Install 99.0.0");
 }
 
 #[test]
@@ -192,7 +194,7 @@ fn a_download_that_fails_ahead_of_the_click_leaves_the_offer() {
         h.query_by_role_and_label(Role::Button, READY_LABEL)
             .is_none()
     );
-    h.get_by_role_and_label(Role::Button, "Update to 0.99.0");
+    h.get_by_role_and_label(Role::Button, "Update to 99.0.0");
 }
 
 #[test]

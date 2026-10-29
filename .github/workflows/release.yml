@@ -98,7 +98,8 @@ jobs:
               echo "::notice::Rehearsal: the crate-age check honours the age-out entries, as main does. A real release does not."
               python3 scripts/check-crate-ages.py --lock "$lock"
             else
-              python3 scripts/check-crate-ages.py --lock "$lock" --release
+              # An owner-approved override is honoured for the tag it names only.
+              python3 scripts/check-crate-ages.py --lock "$lock" --release --tag "$GITHUB_REF_NAME"
             fi
           done
       - name: Release notes and tag are publishable

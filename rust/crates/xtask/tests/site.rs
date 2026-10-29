@@ -320,16 +320,17 @@ fn every_offered_file_has_a_status_and_the_statuses_follow_the_ledger() {
 }
 
 #[test]
-fn an_intel_mac_is_told_0_9_0_is_its_last_version() {
+fn an_intel_mac_is_told_the_download_runs_and_0_9_0_updates() {
     let downloads = section("downloads");
+    assert!(flat(&downloads).contains("for Macs with Apple silicon or Intel, macOS 13 or later"));
     let at = downloads.find("Intel Mac").expect("an Intel Mac sentence");
-    let intel = &downloads[at..];
-    assert!(intel.contains("0.9.0"));
-    assert!(intel.contains("keeps working"));
+    let intel = flat(&downloads[at..]);
     assert!(
-        intel
-            .contains("href=\"https://github.com/method-production-suite/method-reader/releases\"")
+        intel.contains("the same download runs, from 1.0.0"),
+        "{intel}"
     );
+    assert!(intel.contains("is offered 1.0.0 as an update"), "{intel}");
+    assert!(!downloads.contains("0.9.0 is the last version"));
 }
 
 #[test]
