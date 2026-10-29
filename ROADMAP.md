@@ -15,31 +15,15 @@ recommendation are built on the recommendation and marked so here.
 
 Release go-aheads:
 
-- **1.0.0's notes and pictures** (shown 2026-10-27): waiting for ship. Then
-  the version bump, the release pull request (reviewed before merge), a
-  rehearsal from main, and the tag request through MOrg.
-- **0.13.1: skipped** (the owner, 2026-10-26). Its fixes ship in 1.0.0,
-  from main. The day its last young crates aged, every release of
-  clipboard-win (the Windows clipboard) up to 5.4.1 was yanked, and the
-  owner chose its replacement, 5.4.3, which is 14 days old on 2026-11-06.
-- **1.0.0** (the owner, 2026-10-19). The next feature release after 0.13.1
-  is 1.0.0, not 0.14: the .fdx scene pages, lengths and numbers, the
-  command line's MCP server, what's on a reader, a SHA256SUMS signed with
-  the update key, and the first universal Mac build (Intel and Apple
-  silicon, the owner's decision of 2026-10-19). Checked ahead: every
-  updater out there (0.12.x, 0.13.x) offers 1.0.0 as newer, the release
-  tools and the version check take it, and the site's download links name
-  no version. Launcher 0.1.2, which accepts a universal app, is out.
-
-  Built and on main: the universal Mac build, its 0.9.0 Intel proof and
-  the signed SHA256SUMS (#78, #79). The four features are finished as
-  draft pull requests, now merged: the MCP server (#62), what's on a
-  reader (#67), the .fdx scene pages (#76) and OSF out (#77). 1.0.0 also
-  carries everything 0.13.1 would have. Then the public text, the notes and
-  a rehearsal. It may tag before 2026-11-06: the owner approved
-  clipboard-win 5.4.3 for 1.0.0 (2026-10-27), and the release check honours
-  that override for v1.0.0 alone. The tag itself still waits for the
-  owner's yes.
+- **1.0.0: released** (2026-10-28, on the owner's yes). The first
+  universal Mac build, the .fdx scene pages, the MCP server, what's on a
+  reader, OSF out, the signed SHA256SUMS, and everything 0.13.1 would have
+  carried (0.13.1 itself was skipped, the owner, 2026-10-26). Its draft
+  passed every check before it was published, and 0.11.1, 0.13.0 and
+  0.9.0 on Intel each install it.
+- **The next release** tags on or after 2026-11-06, when clipboard-win
+  5.4.3 is 14 days old: the owner's override for it held for v1.0.0
+  alone, and the release check refuses it for any other tag until then.
 
 Built on the recommendation (reversible):
 
@@ -77,8 +61,8 @@ Tests that need a device (hands only; everything else is automated):
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
      either way (issues #26, #27, #28).
-   - **The Mac after 0.13.1 arrives:** the app in Applications should be
-     called Method Reader (it renames itself the first time 0.13.1 opens,
+   - **The Mac after 1.0.0 arrives:** the app in Applications should be
+     called Method Reader (it renames itself the first time 1.0.0 opens,
      from Screepub Desktop or Screepub). Check that Finder, Spotlight and
      Launchpad show the new name, and whether a Dock icon you kept still
      opens the app or shows a question mark.
@@ -149,8 +133,9 @@ In order. Each is one small pull request.
   connects the way a phone does (MTP) instead of showing up as a drive, so
   Method Reader cannot see one, and its owners are sent to email. Email
   cannot carry the Kindle file with the best layout. The plan is a small
-  helper that talks to the Kindle directly; it needs a new Kindle to test
-  on.
+  helper that talks to the Kindle directly. The owner has a new Kindle to
+  test on (2026-10-28); the first test only reads what it reports when
+  connected.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current
