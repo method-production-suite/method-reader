@@ -179,6 +179,9 @@ fn an_exception_that_says_neither_kind_is_refused() {
             "foo 1.2.3   # owner-approved override, the owner, 2026-10-27\n",
         ),
         ("three-words", "foo 1.2.3 extra   # RUSTSEC-2026-0001\n"),
+        // An id with more after it is not that id.
+        ("long-rustsec", "foo 1.2.3   # RUSTSEC-2026-03460\n"),
+        ("long-ghsa", "foo 1.2.3   # GHSA-m665-v7pm-7grjzz\n"),
     ] {
         let f = sc.write(&format!("{tag}.txt"), format!("{BOTH}{line}"));
         for release in [false, true] {

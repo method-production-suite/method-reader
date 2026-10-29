@@ -45,7 +45,8 @@ PINNED = re.compile(r"^git\+(https://[^?#]+)\?rev=([0-9a-f]{40})#\2$")
 
 EXCEPTIONS = pathlib.Path(__file__).with_name("crate-age-exceptions.txt")
 # A RustSec id, or a GitHub advisory id: GitHub can publish one days before RustSec does.
-SECURITY = re.compile(r"RUSTSEC-\d{4}-\d{4}|GHSA(?:-[23456789cfghjmpqrvwx]{4}){3}")
+# Whole ids only: "RUSTSEC-2026-03460" or "GHSA-m665-v7pm-7grjzz" is not one.
+SECURITY = re.compile(r"\b(?:RUSTSEC-\d{4}-\d{4}|GHSA(?:-[23456789cfghjmpqrvwx]{4}){3})\b")
 AGES_OUT = re.compile(r"^ages-out \d{4}-\d{2}-\d{2}\b")
 OWNER_APPROVED = "owner-approved override"
 # The version must end there: "v1.0.0-rc1", "v1.0.0.1" or "v1.0.0+build" is not v1.0.0.
