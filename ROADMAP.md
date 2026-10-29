@@ -70,11 +70,15 @@ Tests that need a device (hands only; everything else is automated):
    says which file to build, which folder it goes in, and what to look for,
    item by item.
 3. In order of what each answers:
-   - **The new Kindle, first test** (the owner has one, 2026-10-28):
-     plug it in and unlock it, and say so. Everything after that runs
-     from here, reads only, and opens no window: the MTP helper lists it
-     from its USB description, then opens it and lists its storage and
-     its top folder. A copy comes only after those answers are read.
+   - **The new Kindle, page-foot test:** a cue left alone at the foot of
+     a page, its speech on the next, in a KFX book. Every one seen sat on
+     a cue that also carried a printed page number. Three test books
+     (number in the cue, number under it, no numbers) are sent with the
+     app and paged through, counting the cues left alone in each.
+   - Done 2026-10-29, the new Kindle's first test: the MTP helper saw
+     the Kindle, its one storage and its folders, copied Field Station's
+     AZW3 over, and the Kindle opened it with every check passing
+     (registry #20).
    - **A Kindle that mounts as a drive:** Method Reader's own AZW3 (beta)
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report

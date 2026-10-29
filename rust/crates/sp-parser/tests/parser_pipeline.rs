@@ -118,6 +118,61 @@ mod parse_lines_metadata {
     }
 }
 
+// A parenthetical that wraps. Printed at 37% of the page (a real script's
+// geometry), it sits inside the cue band (35-50), and a line in that band
+// always opened a new block, so each half became a block of its own. Neither
+// half is a whole parenthetical, both fell to action, and the speech below
+// went with them: the reader got a name, three paragraphs of action and no
+// dialogue, every time the script wrapped one.
+mod a_wrapped_parenthetical {
+    use super::*;
+    use sp_model::ElementType::{Character, Dialogue, Parenthetical};
+
+    fn speech() -> Vec<RawLine> {
+        vec![
+            line("NOOR", 44.0, 200.0, 1),
+            line("(low, to the radio", 37.0, 188.0, 1),
+            line("operator)", 38.0, 176.0, 1),
+            line("Copy that.", 30.0, 164.0, 1),
+        ]
+    }
+
+    #[test]
+    fn stays_one_parenthetical_and_keeps_its_speech() {
+        let sp = parse_lines(&speech(), &[]);
+        let got: Vec<(ElementType, &str)> = sp
+            .elements
+            .iter()
+            .map(|e| (e.kind, e.text.as_str()))
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                (Character, "NOOR"),
+                (Parenthetical, "(low, to the radio operator)"),
+                (Dialogue, "Copy that."),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_closed_parenthetical_still_ends_its_block() {
+        // The join is only for an open "(": a whole parenthetical on one
+        // line must not pull the next band line into it.
+        let mut lines = speech();
+        lines[1].text = "(low)".to_string();
+        lines[2].text = "(to the radio)".to_string();
+        let sp = parse_lines(&lines, &[]);
+        let parens: Vec<&str> = sp
+            .elements
+            .iter()
+            .filter(|e| e.kind == Parenthetical)
+            .map(|e| e.text.as_str())
+            .collect();
+        assert_eq!(parens, vec!["(low)", "(to the radio)"]);
+    }
+}
+
 // Classification (priority 9) runs BEFORE suppressBoilerplate, so anything
 // the mini-slug rule claims leaves the recurrence layer's view. A left-flush
 // all-caps watermark is mini-slug-shaped, and it recurs by definition — the

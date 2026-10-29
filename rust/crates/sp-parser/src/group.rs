@@ -69,6 +69,16 @@ fn should_break(line: &RawLine, prev: Option<&RawLine>, current: &[RawLine]) -> 
         return true;
     }
 
+    // A parenthetical still open carries on. Printed parentheticals can sit
+    // just inside the cue band (35-50), so without this each wrapped line
+    // opened a block of its own, neither half was a whole parenthetical, and
+    // both fell to action with the speech beneath them. Only an open "("
+    // joins, only at a parenthetical's indent (classify's own 40 limit) and
+    // only one character's step from the line above.
+    if continues_open_parenthetical(line, current) {
+        return false;
+    }
+
     // Classify both lines
     let prev_type = quick_classify(prev.indent);
     let curr_type = quick_classify(line.indent);
@@ -91,6 +101,18 @@ fn should_break(line: &RawLine, prev: Option<&RawLine>, current: &[RawLine]) -> 
     // Same type: allow if indent differs by <= 2
     let prev_indent = current[current.len() - 1].indent;
     (line.indent - prev_indent).abs() > 2.0
+}
+
+/// The block so far opens a parenthetical that has not closed, and `line`
+/// sits where its next line would.
+fn continues_open_parenthetical(line: &RawLine, current: &[RawLine]) -> bool {
+    let (Some(first), Some(last)) = (current.first(), current.last()) else {
+        return false;
+    };
+    let open =
+        js::trim(&first.text).starts_with('(') && !current.iter().any(|l| l.text.contains(')'));
+    open && (R::DIALOGUE_MIN..=40.0).contains(&line.indent)
+        && (line.indent - last.indent).abs() <= 2.0
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

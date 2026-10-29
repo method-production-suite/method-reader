@@ -99,6 +99,10 @@
     "covered": true, "page": 4, "side": "source",
     "how": "a recurring cast of four, so the roster exists for the rescue pass to draw on" },
 
+  { "entry": "9g", "title": "Wrapped parentheticals in the cue band",
+    "covered": false,
+    "why": "torture.pdf's parentheticals sit below the cue band, and moving one would reflow every sheet after it. Pinned instead by sp-parser's parser_pipeline tests with a real script's geometry (37% and 38%)" },
+
   { "entry": "10a", "title": "Dual dialogue, de-interleaved to sequential speeches",
     "covered": true, "page": 7, "side": "both",
     "how": "a short exchange with both cues sharing one Y, asserted to de-interleave into left speech then right with no element mixing the columns" },

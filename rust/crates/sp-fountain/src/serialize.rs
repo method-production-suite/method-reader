@@ -250,6 +250,17 @@ fn speaks(el: Option<&ScreenplayElement>) -> bool {
     el.is_some_and(|e| matches!(e.kind, ElementType::Dialogue | ElementType::Parenthetical))
 }
 
+/// The speech so far is the right column of a dual exchange: its cue, the
+/// last one, is flagged `dual_right`. A `(CONT'D)` after it is said after
+/// both columns, so it must not rejoin into one.
+fn in_dual_column(merged: &[ScreenplayElement]) -> bool {
+    merged
+        .iter()
+        .rev()
+        .find(|e| e.kind == ElementType::Character)
+        .is_some_and(|c| c.dual_right == Some(true))
+}
+
 /// The pre-passes: drop `(MORE)` markers, drop `(CONT'D)` cues that directly
 /// continue the previous speech (page-break splits) so it rejoins, and
 /// demote cues with no speech after them to action.
@@ -265,6 +276,7 @@ fn prepare(elements: &[ScreenplayElement], rejoin: bool) -> Vec<ScreenplayElemen
             && P.contd.test(&el.text)
             && speaks(prev)
             && prev.is_some_and(|p| p.character == el.character)
+            && !in_dual_column(&merged)
         {
             continue; // same speech continues: drop the repeated cue
         }
