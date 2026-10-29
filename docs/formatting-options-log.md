@@ -926,7 +926,7 @@ and the suite will say so if you forget.
 - **Code:** `rust/crates/sp-parser/src/rescue.rs`, `rust/crates/sp-parser/src/lib.rs`,
   `rust/crates/sp-parser/src/classify.rs` (`normalizeCueName`, `CHARACTER_NAME`).
 
-### 9g. Wrapped parentheticals in the cue band (always on; 2026-10-29)
+### 9g. Parentheticals in the cue band (always on; 2026-10-29)
 - **What:** a printed parenthetical can sit just inside the cue band
   (35-50% of the page; one real script prints them at 37%). Grouping opens
   a new block for every line in that band, so a parenthetical that wrapped
@@ -940,7 +940,16 @@ and the suite will say so if you forget.
 - **Corpus diff:** every wrapped parenthetical in two real scripts (four
   in all) now reads as a parenthetical with its speech; nothing else
   moved.
-- **Code:** `rust/crates/sp-parser/src/group.rs` (`continues_open_parenthetical`).
+- **Deeper than the cue (2026-10-29):** another real script prints the
+  cue at 41% and its parenthetical at 43%, past the parenthetical's 40%
+  limit, so "(whispering)" fell to action, the speech under it lost its
+  speaker, and the cue, left with no speech, was demoted too. Straight
+  after a cue, a parenthetical is now accepted up to the cue band's edge
+  (50%); the bracketed text, which no cue can match, is the signal there.
+  Mid-speech the 40% limit holds. Corpus diff: two speeches in one script,
+  nothing else.
+- **Code:** `rust/crates/sp-parser/src/group.rs` (`continues_open_parenthetical`),
+  `rust/crates/sp-parser/src/classify.rs` (priority 6).
 
 ### 10a. Dual dialogue — de-interleaved to sequential speeches
 - **What:** simultaneous two-column speeches (seen in two different test

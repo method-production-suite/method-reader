@@ -173,6 +173,49 @@ mod a_wrapped_parenthetical {
     }
 }
 
+// A parenthetical printed deeper than its own cue. One real script puts the
+// cue at 41% of the page and "(whispering)" at 43%, past the old 40% limit,
+// so the parenthetical fell to action, the speech under it lost its speaker,
+// and the cue, left with no speech, was demoted too.
+mod a_parenthetical_deeper_than_its_cue {
+    use super::*;
+    use sp_model::ElementType::{Character, Dialogue, Parenthetical};
+
+    #[test]
+    fn stays_a_parenthetical_and_keeps_its_speech() {
+        let lines = vec![
+            line("NOOR (V.O.)", 41.0, 200.0, 1),
+            line("(whispering)", 43.0, 188.0, 1),
+            line("Come back.", 29.0, 176.0, 1),
+        ];
+        let sp = parse_lines(&lines, &[]);
+        let got: Vec<(ElementType, &str)> = sp
+            .elements
+            .iter()
+            .map(|e| (e.kind, e.text.as_str()))
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                (Character, "NOOR (V.O.)"),
+                (Parenthetical, "(whispering)"),
+                (Dialogue, "Come back."),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_bracketed_line_outside_a_speech_is_still_action() {
+        // The wider band is only for a line that follows a cue.
+        let lines = vec![
+            line("The radio crackles.", 10.0, 200.0, 1),
+            line("(whispering)", 43.0, 176.0, 1),
+        ];
+        let sp = parse_lines(&lines, &[]);
+        assert!(sp.elements.iter().all(|e| e.kind != Parenthetical));
+    }
+}
+
 // Classification (priority 9) runs BEFORE suppressBoilerplate, so anything
 // the mini-slug rule claims leaves the recurrence layer's view. A left-flush
 // all-caps watermark is mini-slug-shaped, and it recurs by definition — the
