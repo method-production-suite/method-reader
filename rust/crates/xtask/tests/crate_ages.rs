@@ -74,6 +74,36 @@ fn a_release_honours_only_the_security_exceptions() {
 }
 
 #[test]
+fn a_github_advisory_id_makes_an_exception_security() {
+    let Some(py) = python() else {
+        eprintln!("skipped: no Python 3.11 or later on PATH");
+        return;
+    };
+    let sc = Scratch::new("crate-ages-ghsa");
+    // GitHub can publish an advisory days before RustSec gives it an id.
+    let f = sc.write(
+        "exceptions.txt",
+        format!("{BOTH}foo 1.2.3   # GHSA-m665-v7pm-7grj (2026-10-28), the fix\n"),
+    );
+    assert_eq!(
+        honoured(&run(py, &f, true)),
+        vec!["foo 1.2.3", "rustls 0.23.46", "zip 9.0.3"]
+    );
+    // Something shaped only roughly like one says no kind.
+    let bad = sc.write(
+        "bad.txt",
+        format!("{BOTH}foo 1.2.3   # GHSA-1234-5678-abcd\n"),
+    );
+    let out = run(py, &bad, true);
+    assert!(!out.status.success(), "a malformed GHSA id passed");
+    assert!(
+        said(&out).contains("every exception needs a kind"),
+        "{}",
+        said(&out)
+    );
+}
+
+#[test]
 fn an_owner_approved_override_holds_for_its_named_release_only() {
     let Some(py) = python() else {
         eprintln!("skipped: no Python 3.11 or later on PATH");
@@ -149,6 +179,9 @@ fn an_exception_that_says_neither_kind_is_refused() {
             "foo 1.2.3   # owner-approved override, the owner, 2026-10-27\n",
         ),
         ("three-words", "foo 1.2.3 extra   # RUSTSEC-2026-0001\n"),
+        // An id with more after it is not that id.
+        ("long-rustsec", "foo 1.2.3   # RUSTSEC-2026-03460\n"),
+        ("long-ghsa", "foo 1.2.3   # GHSA-m665-v7pm-7grjzz\n"),
     ] {
         let f = sc.write(&format!("{tag}.txt"), format!("{BOTH}{line}"));
         for release in [false, true] {
