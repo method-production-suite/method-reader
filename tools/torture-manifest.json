@@ -103,6 +103,10 @@
     "covered": false,
     "why": "torture.pdf's parentheticals sit below the cue band, and moving one would reflow every sheet after it. Pinned instead by sp-parser's parser_pipeline tests with a real script's geometry (37% and 38%)" },
 
+  { "entry": "9h", "title": "Rotated text dropped",
+    "covered": false,
+    "why": "torture.pdf has no rotated text, and adding a watermark to a sheet would move every answer frozen from it. Pinned instead by sp-parser's extract tests: a diagonal watermark and sideways text dropped, slanted text kept" },
+
   { "entry": "10a", "title": "Dual dialogue, de-interleaved to sequential speeches",
     "covered": true, "page": 7, "side": "both",
     "how": "a short exchange with both cues sharing one Y, asserted to de-interleave into left speech then right with no element mixing the columns" },

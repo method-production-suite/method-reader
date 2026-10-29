@@ -800,6 +800,24 @@ and the suite will say so if you forget.
   watermark recurrence threshold as advanced only.
 - **Code:** `rust/crates/sp-parser/src/classify.rs`, `rust/crates/sp-parser/src/boilerplate.rs`.
 
+### 9h. Rotated text dropped (always on; 2026-10-29)
+- **What:** scripts sent out to read often carry the reader's name as a
+  watermark, printed large and diagonally across every page. The
+  recurrence layer above does remove it, but only after classification, so
+  wherever it landed between a cue and its lines it had already broken the
+  speech: lines split mid-sentence, a stray "NAME (CONT'D)", and cues and
+  parentheticals left without their speech. Two real scripts carried one
+  (one item a page, about 52 degrees). Extraction now drops any text item
+  whose baseline is turned more than 2 degrees, before the page is read.
+  A screenplay's own text is never rotated. Slanted text (a faked italic
+  shears; its baseline stays level) is kept, and so is a mirrored page
+  (180 degrees).
+- **Corpus diff:** the two watermarked scripts of 15: split speeches whole
+  again, the stray cues gone, speeches restored to their cues. Nothing
+  else moved; `cargo xtask audit-corpus` finds nothing left in either.
+- **Default:** always on; not an option (pure artifact fix).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`is_rotated`).
+
 ### 10. Final Draft double-print dedup
 - **What:** FD double-prints (MORE)/(CONT'D) furniture at identical
   coordinates with a zero-width item between copies → text doubled
