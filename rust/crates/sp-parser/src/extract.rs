@@ -1217,6 +1217,21 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
                 break; // full-width line — region over
             }
 
+            // One cue running across the boundary with no column gap in it
+            // is the next speaker's ordinary centred cue: "SYD (cont'd)" at
+            // the cue indent puts the name left of the boundary and the
+            // extension right of it. Partitioned, it read as a name in one
+            // column and body text in the other, so the region ran on and
+            // swallowed it.
+            let crosses = items.first().is_some_and(|it| it.t(4) < boundary)
+                && items.iter().any(|it| it.t(4) >= boundary);
+            if crosses
+                && cluster_split(&items, page_width).is_none()
+                && is_cue_text(&join_items(&items))
+            {
+                break; // a normal cue — back to single-column flow
+            }
+
             let left_items: Vec<&TextItem> = items
                 .iter()
                 .copied()

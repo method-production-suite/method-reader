@@ -47,6 +47,24 @@ fn rejoin_off_keeps_the_contd_cue() {
     );
 }
 
+#[test]
+fn rejoin_never_pulls_a_speech_into_a_dual_column() {
+    // A (CONT'D) straight after a side-by-side exchange is said after both
+    // speeches, not alongside one: rejoined, it became the right column's
+    // last line and lost its cue.
+    let els = vec![
+        said(Character, "LOU", "LOU"),
+        said(Dialogue, "Keep it down.", "LOU"),
+        said(Character, "SYD", "SYD").dual_right(),
+        said(Dialogue, "Not a chance.", "SYD"),
+        said(Character, "SYD (CONT'D)", "SYD"),
+        said(Dialogue, "Never mind.", "SYD"),
+    ];
+    let o = out(els, DEFAULT_FORMAT_OPTIONS);
+    assert!(o.contains("@SYD ^\nNot a chance.\n\n@SYD"), "{o}");
+    assert!(o.ends_with("\nNever mind.\n"), "{o}");
+}
+
 // ── contdMode ────────────────────────────────────────────
 
 fn interrupted() -> Vec<ScreenplayElement> {

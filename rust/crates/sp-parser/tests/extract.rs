@@ -1303,6 +1303,54 @@ mod dual_dialogue_body_lines {
     }
 }
 
+// ── dual dialogue: a centred cue after the columns ends them ─────────
+//
+// Geometry lifted from a real script (page width 612). Straight after the
+// two columns, the next speaker's cue sits at the ordinary cue indent,
+// x=269.5, LEFT of the column boundary, and its extension "(cont'd)" runs
+// on past it. Split at the boundary, the line read as a name in the left
+// column and body text in the right, so the region never ended: the name
+// was appended to the left speech, the extension to the right one, and the
+// cue was lost.
+mod dual_dialogue_followed_by_a_centred_cue {
+    use super::*;
+
+    fn exchange() -> Vec<RawLine> {
+        group_items_into_lines(
+            &[
+                item("LOU", 155.3, 560.0),
+                item("SYD", 381.6, 560.0),
+                item("Keep it down, both of", 89.5, 548.0),
+                item("Not a chance, not", 315.8, 548.0),
+                item("you.", 89.5, 536.0),
+                item("tonight.", 315.8, 536.0),
+                item("SYD", 269.5, 500.0),
+                item("(cont'd)", 312.0, 500.0),
+                item("Never mind.", 183.1, 488.0),
+            ],
+            612.0,
+            84,
+        )
+    }
+
+    #[test]
+    fn the_cue_after_the_columns_is_a_line_of_its_own() {
+        assert_eq!(
+            texts(&exchange()),
+            [
+                "LOU",
+                "Keep it down, both of",
+                "you.",
+                "SYD",
+                "Not a chance, not",
+                "tonight.",
+                "SYD (cont'd)",
+                "Never mind.",
+            ]
+        );
+    }
+}
+
 // ── phantom spaces invented by pdf.js ────────────────────────────────
 //
 // Found 2026-09-16 in a Final Draft script that had been re-saved through

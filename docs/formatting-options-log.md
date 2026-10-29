@@ -519,7 +519,8 @@ and the suite will say so if you forget.
   indent classified them; a `(CONT'D)` cue (straight or curly apostrophe)
   directly following the same character's dialogue merges into one
   speech. Mid-scene `(CONT'D)` after intervening action keeps its cue
-  (authentic convention).
+  (authentic convention), and so does one after a dual exchange's right
+  column (2026-10-29, see #10a).
 - **Default:** rejoin on.
 - **App options:** toggle "Rejoin dialogue split by page breaks";
   possible extra: "strip all (CONT'D) extensions" (not built).
@@ -925,6 +926,22 @@ and the suite will say so if you forget.
 - **Code:** `rust/crates/sp-parser/src/rescue.rs`, `rust/crates/sp-parser/src/lib.rs`,
   `rust/crates/sp-parser/src/classify.rs` (`normalizeCueName`, `CHARACTER_NAME`).
 
+### 9g. Wrapped parentheticals in the cue band (always on; 2026-10-29)
+- **What:** a printed parenthetical can sit just inside the cue band
+  (35-50% of the page; one real script prints them at 37%). Grouping opens
+  a new block for every line in that band, so a parenthetical that wrapped
+  became two blocks, "(low, to the radio" and "operator)". Neither is a
+  whole parenthetical, so both fell to action, and with no speaker left
+  the speech beneath went too: the reader got a name, three paragraphs of
+  action and no dialogue. Grouping now carries on a block that opens a
+  parenthetical not yet closed, when the next line sits at a
+  parenthetical's indent (classify's own 40% limit) within a character's
+  step of the line above. A closed parenthetical still ends its block.
+- **Corpus diff:** every wrapped parenthetical in two real scripts (four
+  in all) now reads as a parenthetical with its speech; nothing else
+  moved.
+- **Code:** `rust/crates/sp-parser/src/group.rs` (`continues_open_parenthetical`).
+
 ### 10a. Dual dialogue — de-interleaved to sequential speeches
 - **What:** simultaneous two-column speeches (seen in two different test
   scripts, one with 23 lines of dual dialogue) previously interleaved
@@ -945,6 +962,17 @@ and the suite will say so if you forget.
   sheet 9's second exchange). Once a body line has split cleanly, the test
   is now whether an item runs past the right column's shown text edge.
   The boundary that assigns items to columns is unchanged.
+- **Fixed 2026-10-29: the next speaker's cue ends the region.** A cue at
+  the ordinary cue indent straight after the columns, "SYD (cont'd)", puts
+  its name left of the column boundary and its extension right of it.
+  Partitioned, that read as a name in the left column and body text in the
+  right, so the region ran on: the name was appended to the left speech,
+  the extension to the right one, and the cue was lost. A cue-shaped line
+  that crosses the boundary with no column gap in it now ends the region.
+  And §8's rejoin no longer pulls a `(CONT'D)` speech into the right
+  column: one that follows a dual exchange is said after both columns.
+  Corpus diff: one dual exchange in each of two real scripts, nothing
+  else.
 - **Default:** de-interleaving always on (correctness); rendering mode
   `dualDialogue: 'sideBySide'` (default) | `'sequential'`. Side-by-side:
   the right cue serializes with Fountain's `^`, and the renderer emits a
@@ -1954,6 +1982,12 @@ engine needs to change.
   any device check, by the owner's choice: the Save a file row and Copy to
   Kindle carry the Beta badge, the CLI help says "(beta)", the export answer
   says `"beta": true`.
+- **Device verdict (2026-10-29), first Kindle:** a Paperwhite Signature
+  Edition (2024, connects over MTP) opened Field Station's AZW3, copied
+  into its documents folder by the MTP helper. It is in the library, it
+  opens (a blank screen for a moment first), every cue stayed with its
+  speech on the pages read, and the contents menu lists the scenes. The
+  beta badge stays until the owner says otherwise.
 - **Why:** the Kindle build was the slowest step in the app, because it
   started Calibre. Measured inside `bun test` on 2026-10-10 (Calibre 9.11.0,
   the recipe the ladder used, `ebook-convert` with the format guards):
