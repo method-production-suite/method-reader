@@ -6,6 +6,7 @@
 //! its TypeScript had, and the tests in `tests/` can call it directly.
 //! rust/PARITY.md's "Tools" table says which tool became which command.
 
+pub mod audit;
 pub mod compare;
 #[path = "../../sp-engine/tests/common/machine.rs"]
 pub mod machine;
@@ -74,6 +75,12 @@ pub const COMMANDS: &[Command] = &[
         help: "run the Rust CLI over every fixture against the TypeScript's frozen answers (see --help)",
         main: parity_main,
         usage: Usage::Own,
+    },
+    Command {
+        name: "audit-corpus",
+        help: "convert every real script and count the shapes of a misread speech",
+        main: audit::main,
+        usage: Usage::Text(audit::USAGE),
     },
     Command {
         name: "make-fixture",

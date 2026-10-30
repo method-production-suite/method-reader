@@ -41,7 +41,7 @@ use crate::table::{CommandRow, EnvValue, Invocation, commands};
 const DEFAULT_EPOCH: u64 = 1_767_225_600;
 
 /// Calibre's guard: a path no Calibre can start against.
-const CALIBRE_GUARD: &str = "/dev/null/method-reader-parity-calibre-guard";
+pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-parity-calibre-guard";
 /// `cargo xtask parity --help`.
 pub const USAGE: &str = "\
 usage: cargo xtask parity [options]
@@ -172,7 +172,7 @@ impl Side {
 /// crates/sp-cli in the RELEASE profile, the one that ships: the picture
 /// budget is wall-clock, and a debug build would spend it on unoptimized
 /// decoding. `Ok(None)` while there is no sp-cli crate.
-fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
+pub fn rust_cli(explicit: Option<PathBuf>) -> Result<Option<PathBuf>, String> {
     if let Some(p) =
         explicit.or_else(|| std::env::var_os("METHOD_READER_RUST_CLI").map(PathBuf::from))
     {

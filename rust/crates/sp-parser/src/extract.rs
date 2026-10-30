@@ -211,7 +211,12 @@ pub fn extract_text<'a>(
             width: page.width,
             height: page.height,
         });
-        let mut items: Vec<TextItem> = page.items.iter().map(TextItem::from_fact).collect();
+        let mut items: Vec<TextItem> = page
+            .items
+            .iter()
+            .map(TextItem::from_fact)
+            .filter(|it| !is_rotated(it))
+            .collect();
         let ops = page.ops.as_deref();
         stamp_font_styles(page, &mut items);
         if let Some(ops) = ops {
@@ -292,6 +297,23 @@ impl TextItem {
     pub fn t(&self, i: usize) -> f64 {
         self.transform.get(i).copied().unwrap_or(f64::NAN)
     }
+}
+
+/// Text turned more than a couple of degrees off the line: a diagonal
+/// watermark (the reader's name across every page of a script sent out to
+/// read), or sideways margin text. A screenplay's own text is never rotated,
+/// and a rotated item joined into a line breaks the speech it lands in. The
+/// angle is the baseline's, `atan2(b, a)`; a shear (`c` alone, a faked
+/// italic) leaves the baseline level and is kept, and so does a mirrored
+/// one (180 degrees), which is how some writers flip the whole page.
+fn is_rotated(item: &TextItem) -> bool {
+    let (a, b) = (item.t(0), item.t(1));
+    if !a.is_finite() || !b.is_finite() || (a == 0.0 && b == 0.0) {
+        return false;
+    }
+    let angle = b.atan2(a).abs();
+    let tolerance = 2f64.to_radians();
+    angle > tolerance && (std::f64::consts::PI - angle) > tolerance
 }
 
 #[allow(clippy::cast_precision_loss)]
