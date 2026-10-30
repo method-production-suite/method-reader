@@ -1813,6 +1813,18 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             asterisk(app, ui, kind);
         }
     });
+    // What the engine says about the file this copy hands over (its own
+    // AZW3: a name can land at a page's foot), under the button.
+    if let Some(act) = &brass
+        && r::hands_over_kindle_file(&act.route)
+        && let Some(note) = app
+            .panel
+            .kindle
+            .as_ref()
+            .and_then(|f| f.layout_note.clone())
+    {
+        widgets::caption(ui, &t, &note, false);
+    }
     asterisk_notes(app, ui, vec![kind.to_string()]);
     // The Kindle file building: its line and a bar that keeps moving.
     if let Some(b) = book(app)

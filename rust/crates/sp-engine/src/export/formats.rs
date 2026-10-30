@@ -134,6 +134,13 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
     }
 }
 
+/// What the window says beside a copy of Method Reader's own AZW3: a Kindle
+/// reads a book copied over USB in that format without the keeps that hold
+/// a name to its lines (registry #8b, photo-confirmed 2026-07-22, seen again
+/// on a 2024 Kindle on 2026-10-30), so a name can land alone at the foot of
+/// a page. KFX keeps them, and so does a book sent by email.
+pub const AZW3_LAYOUT_NOTE: &str = "In this Kindle file a name can land alone at the foot of a page. KFX, or sending by email, keeps names with their lines.";
+
 /// `isBetaFile(extension)`: the FDX and the OSF. The AZW3 Method Reader
 /// writes itself was beta too until a Kindle opened one (2026-10-29,
 /// registry #20) and the owner removed the label.

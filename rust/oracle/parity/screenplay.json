@@ -3590,7 +3590,8 @@
       "stages": [],
       "fresh": false,
       "builtBy": "screepub",
-      "bookDate": "$TIME"
+      "bookDate": "$TIME",
+      "layoutNote": "In this Kindle file a name can land alone at the foot of a page. KFX, or sending by email, keeps names with their lines."
     },
     "stderr": "",
     "outputs": {}
