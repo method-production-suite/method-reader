@@ -1252,7 +1252,7 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
                 && cluster_split(&items, page_width).is_none()
                 && is_cue_text(&join_items(&items))
             {
-                break; // a normal cue — back to single-column flow
+                break; // a normal cue: back to single-column flow
             }
 
             let left_items: Vec<&TextItem> = items

@@ -350,8 +350,12 @@ fn text_with_no_scene_heading_and_no_dialogue_is_not_a_screenplay_unless_forced(
 #[test]
 fn the_committed_fixture_round_trips_through_the_command_line() {
     // field-station.pdf to its .fountain, then that .fountain as a chosen
-    // script: the same EPUB bytes.
-    let sb = Sandbox::new();
+    // script: the same EPUB bytes. The book's clock is pinned: unset, each
+    // conversion stamps the current second into the package and every zip
+    // entry, and two runs either side of a second's edge differed (it failed
+    // about one run in three).
+    let mut sb = Sandbox::new();
+    sb.set("SOURCE_DATE_EPOCH", "1767225600");
     let pdf = s(&sb.copy_fixture("field-station.pdf", "a/Field Station.pdf"));
     let first = ok(&sb, &[&pdf, "--json"]);
     let fountain = first["fountainPath"].as_str().unwrap().to_owned();
