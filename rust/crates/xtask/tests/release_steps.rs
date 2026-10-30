@@ -505,6 +505,18 @@ fn mac_step_starts_both_slices_of_the_mtp_helper_then_signs_it_inside_the_app() 
         })
         .expect("the bundle is signed");
     assert!(signed < bundle_line, "inside out: {calls:#?}");
+    // The helper before the window too: signing the bundle's main
+    // executable seals its nested code, and lipo leaves the universal
+    // helper unsigned until it is signed here (the 1.1.0 rehearsal).
+    let window = calls
+        .iter()
+        .position(|c| {
+            *c == format!(
+                "codesign\t--force\t--options\truntime\t--timestamp\t--sign\tDeveloper ID Application: Test\t{app}/Contents/MacOS/method-reader-app"
+            )
+        })
+        .expect("the window is signed");
+    assert!(signed < window && window < bundle_line, "{calls:#?}");
 }
 
 #[test]
