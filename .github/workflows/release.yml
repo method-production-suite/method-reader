@@ -449,11 +449,16 @@ jobs:
             --icon rust/crates/sp-app/icons/icon.icns \
             --resource LICENSE-MIT --resource LICENSE-APACHE --resource rust/crates/sp-azw3/LICENSE-GPL-3.0 --resource THIRD-PARTY-NOTICES.md --out "$RUNNER_TEMP/app"
           APP="$RUNNER_TEMP/app/Method Reader.app"
-          # Inside out, never --deep: every executable in Contents/MacOS (the
-          # window and the MTP helper), then the bundle. Hardened runtime, timestamp, no entitlements.
+          # Inside out, never --deep: every executable in Contents/MacOS but
+          # the window (the MTP helper), then the window, then the bundle.
+          # Signing the window, the bundle's main executable, seals its nested
+          # code, so it fails over a helper lipo left unsigned (the 1.1.0
+          # rehearsal). Hardened runtime, timestamp, no entitlements.
           for exe in "$APP"/Contents/MacOS/*; do
+            case "$exe" in */method-reader-app) continue ;; esac
             codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$exe"
           done
+          codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP/Contents/MacOS/method-reader-app"
           codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
           # The designated requirement TCC compares: the identifier and the

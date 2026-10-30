@@ -522,9 +522,26 @@ fn the_mac_app_carries_the_mtp_helper_universal_and_started_before_signing() {
     let sign = mac.find("codesign").expect("signing");
     assert!(helper < archs && archs < native && native < intel && intel < lay_out);
     assert!(lay_out < sign);
-    // Inside out: the loop signs every executable in Contents/MacOS, the
-    // helper among them, before the bundle.
-    assert!(mac.contains(r#"for exe in "$APP"/Contents/MacOS/*; do"#));
+    // Inside out: the loop signs every executable in Contents/MacOS but the
+    // window, the helper among them; then the window, then the bundle.
+    // Signing the window seals the bundle's nested code, so it fails over a
+    // helper not yet signed (the 1.1.0 rehearsal).
+    let each = mac
+        .find(r#"for exe in "$APP"/Contents/MacOS/*; do"#)
+        .expect("the loop");
+    let skip = mac
+        .find(r#"*/method-reader-app) continue ;;"#)
+        .expect("the loop leaves the window for last");
+    let window = mac
+        .find(r#"--sign "$SIGN_IDENTITY" "$APP/Contents/MacOS/method-reader-app""#)
+        .expect("the window signed after the loop");
+    let bundle = mac
+        .find(
+            r#"--sign "$SIGN_IDENTITY" "$APP"
+"#,
+        )
+        .expect("the bundle signed");
+    assert!(each < skip && skip < window && window < bundle);
     // No other step or job builds, packs or names it: not the Windows or
     // Linux packages, not the CLI downloads. The bundle check reads it back
     // out of the image and the update archive, and that is all.

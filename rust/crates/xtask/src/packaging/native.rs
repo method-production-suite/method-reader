@@ -418,8 +418,10 @@ pub fn notary_credentials(env: &Env) -> Option<Vec<String>> {
     None
 }
 
-/// Every file in `<app>/Contents/MacOS`, sorted: what is signed before the
-/// bundle.
+/// Every file in `<app>/Contents/MacOS`, sorted, the window last: what is
+/// signed before the bundle. The window is the bundle's main executable, and
+/// signing it seals the bundle's nested code, so every helper beside it must
+/// be signed first (a universal helper from lipo arrives unsigned).
 fn executables(app: &Path) -> Result<Vec<PathBuf>, String> {
     let dir = app.join("Contents").join("MacOS");
     let mut found: Vec<PathBuf> = io(
@@ -430,7 +432,12 @@ fn executables(app: &Path) -> Result<Vec<PathBuf>, String> {
     .map(|e| e.path())
     .filter(|p| p.is_file())
     .collect();
-    found.sort();
+    found.sort_by_key(|p| {
+        (
+            p.file_name() == Some(NATIVE_APP.mac_executable.as_ref()),
+            p.clone(),
+        )
+    });
     Ok(found)
 }
 
@@ -455,7 +462,7 @@ fn build_mac(
     // Hardened runtime and a timestamp with a real identity, which
     // notarization requires; ad hoc otherwise, so a local build still opens.
     // Inside out, never --deep, as release.yml signs: every executable in
-    // Contents/MacOS (the window and the MTP helper), then the bundle. Ad
+    // Contents/MacOS (the MTP helper, then the window), then the bundle. Ad
     // hoc too, since a bundle's seal fails over nested code that is not
     // signed.
     let sign = |path: &Path| match &identity {
