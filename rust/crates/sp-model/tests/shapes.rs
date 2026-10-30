@@ -69,6 +69,7 @@ fn a_raw_line_writes_whole_numbers_as_javascript_does() {
         dual_right: None,
         fonts: None,
         fmt: None,
+        placed: false,
     };
     assert_eq!(
         serde_json::to_string(&line).unwrap(),

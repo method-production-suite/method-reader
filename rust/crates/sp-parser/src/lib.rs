@@ -36,6 +36,7 @@ pub mod first_page;
 pub mod group;
 pub mod images;
 pub mod js;
+pub mod layout;
 pub mod png;
 pub mod rescue;
 pub mod title_page;
@@ -75,6 +76,12 @@ pub fn parse_lines(lines: &[RawLine], images: &[RawImage]) -> ParsedScreenplay {
         element_counter += 1;
         id
     };
+
+    // Step 1.5: read the script against its own columns. A script whose
+    // columns already sit inside the bands comes back untouched (registry
+    // #9i).
+    let calibrated = layout::calibrate(lines);
+    let lines: &[RawLine] = &calibrated;
 
     // Step 2: Group into text blocks
     let blocks = group_blocks(lines);

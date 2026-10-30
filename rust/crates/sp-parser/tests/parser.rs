@@ -79,6 +79,7 @@ fn make_line(text: &str, indent: f64, y: f64, page_num: u32) -> RawLine {
         dual_right: None,
         fonts: None,
         fmt: None,
+        placed: false,
     }
 }
 

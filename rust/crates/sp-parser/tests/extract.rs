@@ -986,6 +986,7 @@ mod stamp_line_fmt {
             dual_right: None,
             fonts: Some(fonts),
             fmt: None,
+            placed: false,
         }
     }
 

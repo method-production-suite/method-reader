@@ -34,6 +34,7 @@ fn line(text: &str, y: f64, indent: f64) -> RawLine {
         dual_right: None,
         fonts: None,
         fmt: None,
+        placed: false,
     }
 }
 
