@@ -27,6 +27,12 @@ Release go-aheads:
   The zip fix (9.0.5) rides in it: 1.0.0 reads zips only with the one
   reader the advisory does not set against another, so there is no
   1.0.1 (the owner, 2026-10-29).
+- **Before that release, on the machine whose answers they are:** run
+  `cargo xtask parity --accept route-help route-help-json` (from `rust/`,
+  with that checkout's `CARGO_TARGET_DIR`). Those two rows of the
+  screenplay fixture are frozen on another machine, so this Mac skips
+  them, and they still hold the old save-kindle line that called the
+  AZW3 beta (#109). Read each diff first: only that wording may change.
 
 Built on the recommendation (reversible):
 
