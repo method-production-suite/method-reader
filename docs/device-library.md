@@ -13,7 +13,7 @@ of both halves: the engine's two commands and the window's list. Target:
 | Kobo | its volume | the whole volume, but not dot folders | yes, as today | yes |
 | tolino | its volume | `Books/`, all depths | yes, as today | yes |
 | reMarkable | its USB web interface | not yet | yes, as today | no: the interface has no delete |
-| Kindle over MTP (late 2024 on) | the MTP helper, still off | later | later | later |
+| Kindle over MTP (late 2024 on) | the MTP helper, in the Mac app only (beta) | later | yes, from the Mac app | later |
 
 Listing and removing work only on a reader the engine itself lists right now,
 matched on its resolved volume path, exactly as `eject` does. A path the

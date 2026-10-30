@@ -29,7 +29,7 @@ use xtask::packaging::kinds::{
     UPDATER_KINDS, arch_of, bundle_dir_for, discover_artifact, kinds_for_os, platform_keys,
     released_name, updater_kinds_for_os, verify_bundle_file,
 };
-use xtask::packaging::native::binary_path;
+use xtask::packaging::native::{binary_path, helper_path};
 use xtask::packaging::util::{RunResult, parse_checksums, sha256_file};
 
 fn kind(id: &str) -> Kind {
@@ -943,6 +943,18 @@ fn the_macos_run_builds_for_the_apple_silicon_triple() {
         assert!(call.iter().any(|a| a == want), "{want}");
     }
     assert!(binary_path(&dirs.rust_dir, Some(MAC_TARGET), BundleOs::Macos).is_file());
+    // The MTP helper, for the same triple, laid out beside the window.
+    let helper = &tools.calls[1];
+    assert_eq!(helper[..2], ["cargo", "build"]);
+    for want in [
+        "sp-mtp",
+        "method-reader-mtp",
+        "--target",
+        "aarch64-apple-darwin",
+    ] {
+        assert!(helper.iter().any(|a| a == want), "{want}");
+    }
+    assert!(helper_path(&dirs.rust_dir, Some(MAC_TARGET)).is_file());
     assert_eq!(names_of(&made), ["Method-Reader-macOS.dmg"]);
 }
 

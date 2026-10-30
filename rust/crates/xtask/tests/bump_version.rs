@@ -168,8 +168,8 @@ fn rust_cargo_lock_every_crate_that_inherits_the_workspace_version_and_only_thos
     let crates = workspace_crates(&root()).expect("crates");
     assert!(crates.contains(&"xtask".to_string()));
     assert!(crates.contains(&"sp-app".to_string()));
-    // A crate with its own version keeps it.
-    assert!(!crates.contains(&"sp-mtp".to_string()));
+    // The MTP helper ships inside the Mac app, so it moves with the app.
+    assert!(crates.contains(&"sp-mtp".to_string()));
     let before = real("rust/Cargo.lock");
     let mut after = before.clone();
     for name in &crates {
@@ -210,6 +210,11 @@ fn assert_bumped(dir: &Path, version: &str) {
 #[test]
 fn sets_every_file_and_writes_the_windows_notes_from_the_release_notes() {
     let dir = repo(Some(GOOD_NOTES));
+    // A crate with its own version, which the bump leaves alone.
+    dir.write(
+        "rust/crates/own-version/Cargo.toml",
+        "[package]\nname = \"own-version\"\nversion = \"0.1.0\"\n",
+    );
     let written = bump_version(dir.path(), "9.8.7", false).expect("bump");
     assert_eq!(
         written,
@@ -225,10 +230,20 @@ fn sets_every_file_and_writes_the_windows_notes_from_the_release_notes() {
         dir.read("rust/crates/sp-app/src/model/notes_release.rs"),
         render_notes_rust(&notes)
     );
-    // The crate with its own version keeps it.
+    // The MTP helper moves with the app; a crate with its own version
+    // keeps it.
     assert!(
         dir.read("rust/Cargo.lock")
-            .contains("name = \"sp-mtp\"\nversion = \"0.1.0\"\n")
+            .contains("name = \"sp-mtp\"\nversion = \"9.8.7\"\n")
+    );
+    assert!(
+        !workspace_crates(dir.path())
+            .expect("crates")
+            .contains(&"own-version".to_string())
+    );
+    assert_eq!(
+        dir.read("rust/crates/own-version/Cargo.toml"),
+        "[package]\nname = \"own-version\"\nversion = \"0.1.0\"\n"
     );
 }
 

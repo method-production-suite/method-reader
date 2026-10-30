@@ -465,13 +465,42 @@ comes from jhowell's device-test reporting rather than any Amazon artifact
 ## 7. MTP Kindles from the Tauri window (researched 2026-09-30)
 
 **Since then (2026-10-12):** this was built as `rust/crates/sp-mtp` (the
-`method-reader-mtp` helper) and the MTP route in `rust/crates/sp-device`, beta
-and switched off until it has run on a real Kindle. The window is native
-Rust now with the engine linked in, so there is no sidecar; the plan below
-is kept as written.
+`method-reader-mtp` helper) and the MTP route in `rust/crates/sp-device`. The
+window is native Rust now with the engine linked in, so there is no sidecar:
+the helper is a second program beside the window instead. The research and
+plan below are kept as written; what a real Kindle showed is next.
 
-Research only. Nothing below has been built or run here, and nobody on the
-project has a 2024-or-newer Kindle to run it on.
+**On a real Kindle (2026-10-29).** A Kindle Paperwhite Signature Edition
+(2024), USB vendor `0x1949`, product `0x9981`, on a Mac, through the
+helper:
+
+- `list` found it, with one storage, "Internal Storage", and a
+  `documents/` folder at its root, where books go.
+- `put` copied a book into `documents/`, `ls` listed it and `rm` took it
+  off again.
+- The test books opened on the Kindle: Method Reader's own AZW3 and a KFX.
+- macOS's camera import (`ptpcamerad`) was paused for the copy and turned
+  back on afterwards, the way `rust/crates/sp-device/src/camera_import.rs`
+  does it.
+
+So the route ships in Method Reader 1.1.0, in the Mac app only (the helper
+sits in `Contents/MacOS` beside the window, which is what switches it on),
+and keeps its Beta badge.
+
+**Still unproven:**
+
+- Windows (WPD) with a Kindle: `mtp-rs`'s Windows path has only been tried
+  on a phone. The Windows installer does not carry the helper yet.
+- Linux: an ordinary user needs a udev rule to open the device, which the
+  packages do not install. The Linux packages do not carry the helper yet.
+- Recovery of the camera-import pause after a crash in the middle of a copy
+  (the engine turns it back on at start; that path has not met a real
+  crash).
+- Enhanced Typesetting for a KFX copied over MTP: confirmed only through
+  books whose scene headings and character names sit at the foot of a
+  page, not by an index or a setting the Kindle shows.
+
+The original research follows, unchanged.
 
 **Why it matters.** Every Kindle sold since Oct 2024 is MTP-only (§2.1), so
 the engine's volume scan never sees it and the README sends those owners
@@ -551,7 +580,8 @@ Swift) and `SwiftMTP-dev` (Swift, pre-alpha, one device ever transferred
 a file). Amazon's USB File Manager and OpenMTP stay as the handoff
 fallback in §5 item 7.
 
-**Unproven.**
+**Unproven** (as of 2026-09-30; the 2026-10-29 run above settled the first
+item, and the second only in part).
 
 - The whole route on a real 2024+ Kindle from a Mac, with Method Reader's files.
 - That sideloaded KFX over MTP gets Enhanced Typesetting and indexes. The

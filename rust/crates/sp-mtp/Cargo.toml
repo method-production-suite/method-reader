@@ -1,22 +1,22 @@
-# The MTP helper, `method-reader-mtp` (BETA, not shipped: it stays off for users
-# until a 2024-or-newer Kindle has been on the owner's desk; see
-# docs/superpowers/specs/2026-10-10-mtp-kindle-design.md on branch
-# mtp-kindle). It lists Kindles that connect over MTP (every Kindle since
-# October 2024) and copies one file to one of them. It knows nothing about
-# books. sp-device (src/mtp.rs) runs it and reads the one JSON object it
-# prints.
+# The MTP helper, `method-reader-mtp` (BETA). It lists Kindles that connect
+# over MTP (every Kindle since October 2024) and copies one file to one of
+# them. It knows nothing about books. sp-device (src/mtp.rs) runs it and reads
+# the one JSON object it prints. It ships inside the Mac app, in
+# Contents/MacOS beside the window, which is what switches the MTP route on;
+# a Kindle took a book through it on 2026-10-29 (docs/device-map.md §7).
+# Windows and Linux do not ship it yet.
 #
 # Brought here from branch mtp-kindle's native/mtp-helper. Every direct
 # dependency stays pinned exactly: a helper that changed under us between two
-# builds would be the hardest kind of bug to find, because nobody on the
-# project can run it yet. mtp-rs 0.33.0 and the nusb it resolves to were read
-# from their crates.io tarballs on 2026-10-10.
+# builds would be the hardest kind of bug to find, because so few people on
+# the project can run it against a Kindle. mtp-rs 0.33.0 and the nusb it
+# resolves to were read from their crates.io tarballs on 2026-10-10.
 [package]
 name = "sp-mtp"
-description = "method-reader-mtp: lists MTP Kindles and copies one file to one (beta, off until hardware day)"
+description = "method-reader-mtp: lists MTP Kindles and copies one file to one (beta, ships in the Mac app)"
 edition.workspace = true
 license.workspace = true
-version = "0.1.0"
+version.workspace = true
 rust-version.workspace = true
 publish = false
 

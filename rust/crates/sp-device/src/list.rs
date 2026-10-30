@@ -1,7 +1,7 @@
 //! src/device/list.ts: the one list of everything reachable right now.
 //! Volume-mounted vendors (by on-disk signature), Kindles that connect over
-//! MTP (beta, off: [`crate::mtp`]), and a reMarkable, which never mounts and
-//! is only there if its USB web interface answers.
+//! MTP (beta, on where the helper ships: [`crate::mtp`]), and a reMarkable,
+//! which never mounts and is only there if its USB web interface answers.
 
 use crate::mtp::{HelperLocation, list_mtp_kindles_here, mtp_enabled};
 use crate::remarkable::{

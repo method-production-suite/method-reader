@@ -392,9 +392,10 @@ rust/crates/
   sp-osf              tokens to the Open Screenplay Format (.osf) (beta)
   sp-fsutil           write-then-rename, the flushed replace, path rules
   sp-device           USB volumes, eject, reveal, the reMarkable web
-                      interface, and MTP Kindles (beta, switched off)
-  sp-mtp              method-reader-mtp, the MTP helper (off until it is tried on
-                      hardware)
+                      interface, and MTP Kindles (beta, on where the
+                      helper ships)
+  sp-mtp              method-reader-mtp, the MTP helper (beta; the Mac app
+                      carries it beside the window)
   sp-engine           conversion and its scanned and not-a-screenplay guards,
                       settings, the library, the Kindle ladder, Calibre for
                       KFX, the send routes and update decisions

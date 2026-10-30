@@ -28,8 +28,8 @@ rust/
     sp-fdx/             tokens to Final Draft (beta)
     sp-osf/             tokens to the Open Screenplay Format (beta)
     sp-fsutil/          atomic writes, file replacement, node:path's algorithms
-    sp-device/          readers on USB, the reMarkable, eject, reveal, the MTP route (off)
-    sp-mtp/             the MTP helper binary (method-reader-mtp; off until hardware day)
+    sp-device/          readers on USB, the reMarkable, eject, reveal, the MTP route (beta)
+    sp-mtp/             the MTP helper binary (method-reader-mtp; beta, in the Mac app)
     sp-engine/          conversion, library, settings, update decisions, export, routes
     sp-cli/             the `method-reader` binary and its --json contract
     sp-app/             the window (egui and AccessKit), its fonts and icons

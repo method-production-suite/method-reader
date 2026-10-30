@@ -36,6 +36,17 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **New Kindles over USB, from the Mac app only in 1.1.0** (2026-10-29).
+  On Windows the helper's path has never met a Kindle, only a phone, and on
+  Linux an ordinary user needs a udev rule the packages do not install, so
+  only the Mac app carries the helper. To reverse: build `sp-mtp` in
+  release.yml's Windows and Linux legs and lay it beside the window in
+  their packages, once a Kindle has copied on each.
+- **The MTP route keeps its Beta badge** (2026-10-29). One Kindle has
+  copied through it, on one Mac. To reverse: the window draws the badge
+  for any route whose device says transport "mtp" (sp-app's send panel);
+  drop that rule once more Kindles have copied.
+
 - **Intel Macs on 0.9.0 are offered 1.0.0** (2026-10-20). Every Intel
   copy of 0.9.0 reads the same update file, so the release now proves,
   before anything is published, that 0.9.0's own updater installs it under
@@ -167,13 +178,14 @@ In order. Each is one small pull request.
   .fountain and converts the same way, with the same checks
   (docs/osf-input.md). Neither has been tried yet on a script Method
   Storyteller itself wrote.
-- **Copying to new Kindles over USB.** Every Kindle sold since late 2024
-  connects the way a phone does (MTP) instead of showing up as a drive, so
-  Method Reader cannot see one, and its owners are sent to email. Email
-  cannot carry the Kindle file with the best layout. The plan is a small
-  helper that talks to the Kindle directly. The owner has a new Kindle to
-  test on (2026-10-28); the first test only reads what it reports when
-  connected.
+- **Copying to new Kindles over USB** (1.1.0, Mac, beta). Every Kindle
+  sold since late 2024 connects the way a phone does (MTP) instead of
+  showing up as a drive, and email cannot carry the Kindle file with the
+  best layout. The Mac app now carries a small helper, `method-reader-mtp`,
+  beside the window, which copies the book to the Kindle directly; a 2024
+  Paperwhite took the AZW3 and a KFX through it and opened both
+  (2026-10-29). On main; it ships in 1.1.0. From Windows and Linux those
+  Kindles still go by email.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

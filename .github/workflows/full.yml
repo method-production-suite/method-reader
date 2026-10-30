@@ -315,7 +315,13 @@ jobs:
           sudo apt-get install -y dpkg-dev rpm libasound2-dev libfontconfig1-dev libxkbcommon-dev libwayland-dev libgl-dev libgtk-3-dev
       - name: Build the window and the release tools
         working-directory: rust
-        run: cargo build --release --locked -p sp-app -p sp-release
+        run: |
+          set -euo pipefail
+          cargo build --release --locked -p sp-app -p sp-release
+          # The MTP helper ships in the Mac app only, beside the window.
+          if [ "$RUNNER_OS" = macOS ]; then
+            cargo build --release --locked -p sp-mtp --bin method-reader-mtp
+          fi
       - name: Lay out, package and check
         run: |
           set -euo pipefail
@@ -327,7 +333,11 @@ jobs:
           mkdir -p "$W"
           case "$RUNNER_OS" in
             macOS)
-              "$SP" mac-app --version "$VERSION" --window rust/target/release/method-reader-app \
+              # The MTP helper answers before it is laid out beside the window.
+              MTP=rust/target/release/method-reader-mtp
+              "$MTP" --version | tee "$W/mtp-version.json"
+              grep -q "\"version\":\"$VERSION\"" "$W/mtp-version.json"
+              "$SP" mac-app --version "$VERSION" --window rust/target/release/method-reader-app --helper "$MTP" \
                 --icon "$ICONS_DIR/icon.icns" "${RES[@]}" --out "$W/app"
               # The window's headless mode, out of the bundle: its version,
               # then a conversion in a scratch library and settings folder.
@@ -361,6 +371,7 @@ jobs:
               hdiutil attach -nobrowse -readonly -mountpoint "$M" "$W/Method-Reader-macOS.dmg"
               [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$M/Method Reader.app/Contents/Info.plist")" = com.methodreader.desktop ]
               test -x "$M/Method Reader.app/Contents/MacOS/method-reader-app"
+              test -x "$M/Method Reader.app/Contents/MacOS/method-reader-mtp"
               hdiutil detach "$M"
               ;;
             Linux)

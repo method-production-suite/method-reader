@@ -178,8 +178,9 @@ static NAME_LINE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?m)^[ \t]*name[ \t]*=[ \t]*"([^"]*)""#).expect("regex"));
 
 /// The name of every crate under rust/crates/ whose `[package]` says
-/// `version.workspace = true`, sorted. A crate with its own version (the
-/// MTP crate, say) keeps it.
+/// `version.workspace = true`, sorted. A crate with its own version keeps
+/// it; none has one now that the MTP helper ships inside the Mac app and
+/// reports the app's version.
 pub fn workspace_crates(repo: &Path) -> Result<Vec<String>, String> {
     let dir = repo.join("rust/crates");
     let read = std::fs::read_dir(&dir).map_err(|e| format!("cannot list rust/crates: {e}"))?;

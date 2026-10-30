@@ -53,8 +53,9 @@ allow = [
   "BSD-2-Clause",
   "BSD-3-Clause",
   "BSL-1.0",
-  # Only notify, through mtp-rs, in sp-mtp, which no release ships yet (the
-  # MTP route is off until hardware day); the notices name it when it ships.
+  # Only notify, through mtp-rs's virtual-device feature, which sp-mtp's
+  # tests use. The helper the Mac app ships is built without it; the notices
+  # say so where they list what is left out.
   "CC0-1.0",
   "CDLA-Permissive-2.0",
   "ISC",

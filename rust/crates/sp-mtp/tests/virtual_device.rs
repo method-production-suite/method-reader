@@ -4,7 +4,7 @@
 //! session does except the USB transport and the Kindle's own firmware.
 //!
 //! What it cannot say: how a real Kindle answers (rename support, folder
-//! names, timing). That is docs/mtp-kindle-hardware-day.md's job.
+//! names, timing). docs/device-map.md §7 records what one did.
 
 use futures::executor::block_on;
 use mtp_rs::{MtpDevice, VirtualDeviceConfig, VirtualStorageConfig};

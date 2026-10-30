@@ -10,8 +10,9 @@ itself, with nothing else installed; it, and the MOBI for the oldest
 Kindles, can strand a heading or a name at the foot of a page. Email needs no
 tools at all.
 
-Email is also the route for newer Kindles that never appear as a drive when
-plugged in, so there is nothing to copy onto.
+Email is also the route for newer Kindles (2024 and later) on Windows and
+Linux: they never appear as a drive when plugged in, so there is nothing to
+copy onto. The Mac app copies to one over USB anyway, through MTP (beta).
 
 The trade: email goes through Amazon, USB never leaves your desk. See
 [What Amazon receives](#what-amazon-receives).

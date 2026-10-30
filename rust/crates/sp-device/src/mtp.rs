@@ -1,4 +1,5 @@
-//! BETA, and off for users until hardware day (see [`mtp_enabled`]).
+//! BETA. On where the helper ships: the Mac app carries it beside the
+//! window (see [`mtp_enabled`]); Windows and Linux do not ship it yet.
 //!
 //! Kindles that connect over MTP (every Kindle sold since October 2024),
 //! reached through the MTP helper `method-reader-mtp` (crate sp-mtp). Ported from
@@ -37,11 +38,16 @@ pub const MTP_LIST_TIMEOUT: Duration = Duration::from_secs(3);
 /// How long one copy may take, all told: a ceiling, not an estimate.
 pub const MTP_PUT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 
-/// Whether the engine looks for MTP Kindles at all: when a helper ships
-/// beside the running program (the Mac app carries one in Contents/MacOS;
-/// a Kindle tried on 2026-10-29), or when `METHOD_READER_MTP_HELPER` names
-/// one (a developer's own helper, and the test guard). The dev checkout's
-/// release folder never switches it on by itself.
+/// Whether the engine looks for MTP Kindles at all: when a helper sits
+/// beside the running program, or when `METHOD_READER_MTP_HELPER` names one
+/// (a developer's own helper, and the test guard). Beside the program means
+/// the Mac app, which carries one in Contents/MacOS (a Kindle tried on
+/// 2026-10-29), and equally a development build's CLI or window in
+/// target/debug or target/release once the helper is built there: that is
+/// why every test and developer tool sets [`MTP_HELPER_GUARD`]. The dev
+/// fallback ([`HelperLocation::dev_target_dir`], step 3 of
+/// [`mtp_helper_path`]) never switches it on by itself: it is only where an
+/// already switched-on engine may find a helper.
 pub fn mtp_enabled(loc: &HelperLocation) -> bool {
     (loc.env)("METHOD_READER_MTP_HELPER").is_some_and(|v| !v.trim().is_empty())
         || helper_beside(loc).is_some()
@@ -123,8 +129,8 @@ fn dev_target_dir() -> Option<PathBuf> {
 
 /// Where the helper is, or None when there is none to run.
 ///
-/// 1. `METHOD_READER_MTP_HELPER`, when set: hardware day, tests, and the test
-///    guard. Used only if it is there, so a guard under /dev/null/ means none.
+/// 1. `METHOD_READER_MTP_HELPER`, when set: a developer's own helper, tests,
+///    and the test guard. Used only if it is there, so a guard under /dev/null/ means none.
 /// 2. Beside the running program: the bundled app.
 /// 3. A dev checkout's own release build (`cargo build --release`).
 pub fn mtp_helper_path(loc: &HelperLocation) -> Option<String> {

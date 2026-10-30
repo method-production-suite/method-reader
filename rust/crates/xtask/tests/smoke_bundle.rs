@@ -19,9 +19,10 @@ use packaging_common::*;
 use xtask::packaging::bundle::{Env, build_bundles};
 use xtask::packaging::kinds::{BundleArch, BundleOs, bundle_dir_for, kinds_for_os};
 use xtask::packaging::smoke::{
-    BuiltSmoke, check_window_version, default_fixture, detach, extract_archive_window,
-    extract_dmg_window, extract_exe_window, platform_refusal, smoke_built_bundles, smoke_bundle,
-    smoke_window, window_env,
+    BuiltSmoke, check_helper_version, check_window_version, default_fixture, detach,
+    extract_archive_window, extract_dmg_window, extract_exe_window, helper_in_app,
+    platform_refusal, smoke_built_bundles, smoke_bundle, smoke_mac_helper, smoke_window,
+    window_env,
 };
 use xtask::packaging::util::{RunResult, real_run_env};
 use xtask::paths::{repo_root, workspace_root};
@@ -674,6 +675,7 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
                 let contents = mount.join("Method Reader.app/Contents");
                 fs::create_dir_all(contents.join("MacOS")).unwrap();
                 fs::write(contents.join("MacOS/method-reader-app"), "BIN").unwrap();
+                executable(&contents.join("MacOS/method-reader-mtp"), "HELPER");
                 fs::write(
                     contents.join("Info.plist"),
                     info_plist(version).replace(sp_update_config::IDENTIFIER, identifier),
@@ -697,13 +699,24 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         &mut renaming(window_run(&mut calls, V, Some(&ZIP), 18), true),
     )
     .unwrap();
-    assert_eq!(calls.len(), 3);
+    assert_eq!(calls.len(), 4);
     assert!(
         Path::new(&calls[0].0[0]).ends_with("Method Reader.app/Contents/MacOS/method-reader-app")
     );
+    // The MTP helper beside it answers its version, MTP guarded.
+    assert!(
+        Path::new(&calls[2].0[0]).ends_with("Method Reader.app/Contents/MacOS/method-reader-mtp")
+    );
+    assert_eq!(calls[2].0[1..], ["--version"]);
+    assert!(
+        calls[2]
+            .1
+            .iter()
+            .any(|(k, v)| k == "METHOD_READER_MTP_HELPER" && v == xtask::parity::MTP_HELPER_GUARD)
+    );
     // Then the copy under the old name, which must rename itself.
     assert!(
-        Path::new(&calls[2].0[0])
+        Path::new(&calls[3].0[0])
             .ends_with("Screepub Desktop.app/Contents/MacOS/method-reader-app")
     );
     assert!(work.join("old-name/Method Reader.app").is_dir());
@@ -739,6 +752,90 @@ fn a_native_image_must_carry_the_identifier_and_the_version_and_its_window_runs(
         );
         assert!(calls.is_empty());
     }
+}
+
+/// Writes an executable file.
+fn executable(path: &Path, text: &str) {
+    fs::write(path, text).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+}
+
+// ---- the MTP helper in the Mac app ----
+
+#[test]
+fn the_helper_must_report_the_bundle_s_version_and_ok() {
+    check_helper_version(&ok(&version_line(V)), V).unwrap();
+    let e = check_helper_version(&ok(&version_line("0.1.0")), V).unwrap_err();
+    assert!(e.contains("0.1.0") && e.contains(V), "{e}");
+    err_contains(
+        check_helper_version(&ok(&format!("{{\"ok\":false,\"version\":\"{V}\"}}\n")), V),
+        "reported",
+    );
+    err_contains(
+        check_helper_version(
+            &RunResult {
+                exit_code: 1,
+                stdout: String::new(),
+                stderr: "dyld: missing symbol".into(),
+            },
+            V,
+        ),
+        "dyld: missing symbol",
+    );
+}
+
+#[test]
+fn a_mac_app_without_an_executable_helper_is_refused_before_it_runs() {
+    let s = Scratch::new("smoke-helper");
+    let app = s.fresh("app").join("Method Reader.app");
+    fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
+    let mut calls = vec![];
+    err_contains(
+        smoke_mac_helper(
+            &app,
+            &s.fresh("w1"),
+            V,
+            &mut window_run(&mut calls, V, None, 0),
+        ),
+        "no MTP helper",
+    );
+    fs::write(helper_in_app(&app), "").unwrap();
+    err_contains(
+        smoke_mac_helper(
+            &app,
+            &s.fresh("w2"),
+            V,
+            &mut window_run(&mut calls, V, None, 0),
+        ),
+        "is empty",
+    );
+    #[cfg(unix)]
+    {
+        fs::write(helper_in_app(&app), "HELPER").unwrap();
+        err_contains(
+            smoke_mac_helper(
+                &app,
+                &s.fresh("w3"),
+                V,
+                &mut window_run(&mut calls, V, None, 0),
+            ),
+            "not executable",
+        );
+    }
+    assert!(calls.is_empty());
+    executable(&helper_in_app(&app), "HELPER");
+    smoke_mac_helper(
+        &app,
+        &s.fresh("w4"),
+        V,
+        &mut window_run(&mut calls, V, None, 0),
+    )
+    .unwrap();
+    assert_eq!(calls.len(), 1);
 }
 
 // ---- finding and smoking whatever this runner just built ----

@@ -16,7 +16,9 @@
 //! library or Calibre folder. Before that, the binary must be present,
 //! non-empty and executable, and the version the package declares (the
 //! .deb's control file, the .rpm's header, the .app's Info.plist) must be
-//! the one expected.
+//! the one expected. The Mac app also carries the MTP helper beside the
+//! window: it must be there, non-empty and executable, and its `--version`
+//! must answer `{"ok":true,...}` with the bundle's version.
 //!
 //! A .deb or .rpm needs Linux, a .dmg needs hdiutil (macOS) and an NSIS .exe
 //! needs 7z (Windows): each is REFUSED off its own OS rather than skipped,
@@ -103,6 +105,78 @@ pub fn check_window_version(result: &RunResult, expected: &str) -> Result<(), St
         ));
     }
     Ok(())
+}
+
+/// The bundled MTP helper's `--version`: one object, `ok`, and the version
+/// the bundle claims (sp-mtp inherits the workspace version).
+pub fn check_helper_version(result: &RunResult, expected: &str) -> Result<(), String> {
+    if result.exit_code != 0 {
+        return Err(format!(
+            "smoke-bundle: the MTP helper inside the bundle exited {}: {}",
+            result.exit_code,
+            trimmed(&result.stderr, 500)
+        ));
+    }
+    let json = sole_json(&result.stdout, "the bundled MTP helper")?;
+    if json.get("ok") != Some(&Value::Bool(true)) {
+        return Err(format!(
+            "smoke-bundle: the bundled MTP helper reported {}",
+            Value::Object(json)
+        ));
+    }
+    if json.get("version").and_then(Value::as_str) != Some(expected) {
+        let said = json
+            .get("version")
+            .map_or("undefined".to_string(), |v| v.to_string());
+        return Err(format!(
+            "smoke-bundle: the MTP helper inside this bundle says {said} but the bundle is {expected}: it was built from another commit than the window beside it"
+        ));
+    }
+    Ok(())
+}
+
+/// Where the Mac app carries the MTP helper: beside the window.
+pub fn helper_in_app(app: &Path) -> PathBuf {
+    app.join("Contents")
+        .join("MacOS")
+        .join(NATIVE_APP.mac_helper_binary)
+}
+
+/// The MTP helper in a Mac app: present, non-empty, executable, and its
+/// `--version` answers with the bundle's version. It reads no USB device
+/// for that, and runs with the same scratch environment as the window.
+pub fn smoke_mac_helper(
+    app: &Path,
+    work: &Path,
+    expected: &str,
+    run_window: &mut WindowRunner<'_>,
+) -> Result<(), String> {
+    let helper = helper_in_app(app);
+    let Ok(meta) = std::fs::metadata(&helper) else {
+        return Err(format!(
+            "smoke-bundle: no MTP helper at {}: the Mac app copies to newer Kindles through it",
+            helper.display()
+        ));
+    };
+    if meta.len() == 0 {
+        return Err(format!("smoke-bundle: {} is empty", helper.display()));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if meta.permissions().mode() & 0o111 == 0 {
+            return Err(format!(
+                "smoke-bundle: {} is not executable (mode {:o})",
+                helper.display(),
+                meta.permissions().mode() & 0o777
+            ));
+        }
+    }
+    let env = window_env(work)?;
+    check_helper_version(
+        &run_window(&[helper.display().to_string(), "--version".into()], &env),
+        expected,
+    )
 }
 
 /// smoke-cli's conversion check, applied to the bundled window's `--smoke`.
@@ -486,6 +560,7 @@ pub fn smoke_bundle(
                 "Info.plist",
             )?;
             smoke_window(&exe, fixture, work, expected, run_window)?;
+            smoke_mac_helper(&m.app_path, work, expected, run_window)?;
             old_name_moves_once(&m.app_path, work, run, run_window)
         })();
         detach(&m, run);

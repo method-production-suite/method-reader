@@ -53,11 +53,6 @@ fn the_licenses_allowed_are_named_in_the_notices() {
             continue;
         };
         n += 1;
-        // CC0-1.0 is only notify's, inside sp-mtp, which ships in no release
-        // yet (deny.toml says so beside it).
-        if name == "CC0-1.0" {
-            continue;
-        }
         // The notices name a license by its SPDX id somewhere in their tables.
         let id = name.split(" WITH ").next().unwrap();
         assert!(
