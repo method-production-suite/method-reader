@@ -711,8 +711,12 @@ mod tests {
         let html = oracle();
         let view = views.get(Place::FirstPage, &html, 400.0, &LIGHT, false);
         assert!(view.laid().is_none(), "asked, not waited for");
+        // A deadline, not a count: alone the layout takes about three
+        // seconds, and with the whole workspace's tests beside it once took
+        // more than the five the old count allowed.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         let mut fresh = false;
-        for _ in 0..500 {
+        while std::time::Instant::now() < deadline {
             views.pump(&ctx);
             if views.peek_fresh(Place::FirstPage).is_some() {
                 fresh = true;

@@ -87,6 +87,13 @@ const CHANGED_ON_PURPOSE: &[(&str, &str)] = &[
         "\"format\":\"azw3\",\"extension\":\"azw3\",\"label\":\"AZW3: for Kindles over USB, made by Method Reader with nothing else installed\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568,\"beta\":true}",
         "\"format\":\"azw3\",\"extension\":\"azw3\",\"label\":\"AZW3: for Kindles over USB, made by Method Reader with nothing else installed\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568}",
     ),
+    // The same answer says where the AZW3 can strand a name (the owner,
+    // 2026-10-30, after a 2024 Kindle showed a cue alone at page one's
+    // foot; registry #8b, PARITY.md, Decisions: "The AZW3's layout note").
+    (
+        "\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568}",
+        "\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568,\"layoutNote\":\"In this Kindle file a name can land alone at the foot of a page. KFX, or sending by email, keeps names with their lines.\"}",
+    ),
 ];
 
 fn changed_on_purpose(text: &str) -> String {

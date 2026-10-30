@@ -422,7 +422,7 @@ pub fn default_answer(request: &Request) -> Value {
             json!({"ok": true, "path": path, "extension": ext, "label": format!("{} (Method Reader)", ext.to_uppercase())})
         }
         Request::KindleCheck { .. } => {
-            json!({"ok": true, "extension": "azw3", "fresh": false, "builtBy": "method-reader", "bookDate": 1})
+            json!({"ok": true, "extension": "azw3", "fresh": false, "builtBy": "method-reader", "bookDate": 1, "layoutNote": sp_cli::AZW3_LAYOUT_NOTE})
         }
         Request::KfxStatus => json!({"ok": true, "ready": false, "possible": true,
         "summary": "Kindles get AZW3 today. Calibre with its KFX plugin and Kindle Previewer makes KFX, the best layout.",

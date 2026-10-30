@@ -45,6 +45,9 @@ pub struct ExportResult {
     pub book_date: Option<Option<f64>>,
     /// True when the file is one Method Reader still calls beta.
     pub beta: bool,
+    /// --check on a Kindle rung only: what the window says beside the copy
+    /// (Method Reader's own AZW3: formats::AZW3_LAYOUT_NOTE).
+    pub layout_note: Option<&'static str>,
     /// The FDX answer's own order: `available` after `stages` and `fresh`.
     available_last: bool,
 }
@@ -86,6 +89,9 @@ impl ExportResult {
         }
         if self.beta {
             m.insert("beta".into(), Value::Bool(true));
+        }
+        if let Some(note) = self.layout_note {
+            m.insert("layoutNote".into(), Value::String(note.into()));
         }
         Value::Object(m)
     }
@@ -291,6 +297,7 @@ fn result(
         stages,
         fresh: None,
         built_by: None,
+        layout_note: None,
         book_date: None,
         beta: false,
         available_last: false,
@@ -541,6 +548,8 @@ fn export_file(
         r.fresh = Some(plan.fresh);
         r.built_by = Some(plan.built_by);
         r.book_date = Some(plan.book_date);
+        r.layout_note = (plan.built_by == BuiltBy::Screepub)
+            .then_some(crate::export::formats::AZW3_LAYOUT_NOTE);
         return Ok(r);
     }
     let mut stages: Vec<String> = Vec::new();
@@ -608,6 +617,8 @@ fn export_rung(
         r.fresh = Some(plan.fresh);
         r.built_by = Some(plan.built_by);
         r.book_date = Some(plan.book_date);
+        r.layout_note = (plan.built_by == BuiltBy::Screepub)
+            .then_some(crate::export::formats::AZW3_LAYOUT_NOTE);
         return Ok(r);
     }
 

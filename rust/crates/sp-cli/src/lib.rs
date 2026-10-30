@@ -62,6 +62,9 @@ pub fn move_legacy_folders() {
     );
 }
 
+/// What the window says beside a copy of Method Reader's own AZW3; the
+/// window's stand-in engine answers with it too.
+pub use sp_engine::export::formats::AZW3_LAYOUT_NOTE;
 /// The app-data folder's name: the bundle identifier, which the window's
 /// tests hold to sp_update_config::IDENTIFIER.
 pub use sp_engine::settings::app::APP_DATA_FOLDER;

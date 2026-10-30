@@ -1771,6 +1771,20 @@ fn a4_a_focused_control_wears_a_2px_accent_ring_outside_it() {
 }
 
 #[test]
+fn copying_our_own_azw3_says_a_name_can_land_at_a_pages_foot() {
+    // The engine's note rides on its Kindle-file answer; the window says it
+    // under the copy, in words the engine chose.
+    let note = sp_engine::export::formats::AZW3_LAYOUT_NOTE;
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in_a_kindle(&w);
+    let mut h = harness(&w, Platform::Mac);
+    convert(&w, &mut h);
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)");
+    assert!(h.query_by_label(note).is_some(), "the note is shown");
+}
+
+#[test]
 fn b4_eject_off_a_mac_wears_it_and_our_own_azw3_no_longer_does() {
     for (platform, eject_beta) in [(Platform::Mac, false), (Platform::Linux, true)] {
         let w = world();
