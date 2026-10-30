@@ -12,7 +12,7 @@ pub const RELEASE: Release = Release {
             items: &[
                 Item {
                     lead: "Copy to a newer Kindle over USB (beta).",
-                    body: "Kindles from late 2024 on connect the way a phone does, so until now they could only take books by email. On a Mac, plug one in and choose Copy to Kindle.",
+                    body: "Kindles from late 2024 on connect the way a phone does, so until now they could only take books by email. On a Mac, plug one in and choose Copy to Kindle. Photos and Image Capture pause while it copies.",
                 },
                 Item {
                     lead: "Bring an .osf as well.",
@@ -20,7 +20,7 @@ pub const RELEASE: Release = Release {
                 },
                 Item {
                     lead: "Method Reader's own Kindle file is no longer beta.",
-                    body: "A newer Kindle opened it with every scene in its contents and every name beside its lines.",
+                    body: "A newer Kindle opened it with every scene in its contents.",
                 },
             ],
         },
@@ -28,7 +28,7 @@ pub const RELEASE: Release = Release {
             title: "Fixed",
             items: &[
                 Item {
-                    lead: "Names left alone at the foot of a Kindle page.",
+                    lead: "Names left alone at the foot of a page in a KFX book.",
                     body: "The printed page number pulled a name away from its lines. It now sits on the nearest description, usually a few lines on, and Go to page still works.",
                 },
                 Item {
@@ -54,7 +54,7 @@ pub const RELEASE: Release = Release {
                 },
                 Item {
                     lead: "",
-                    body: "While a book copies to a newer Kindle, Photos and Image Capture cannot import from a camera or phone. Method Reader turns that back on when the copy ends.",
+                    body: "In the Kindle file Method Reader makes itself (AZW3), a name can still land at the foot of a page, and Method Reader says so beside the copy. KFX, or sending by email, keeps names with their lines.",
                 },
             ],
         },
