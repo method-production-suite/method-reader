@@ -112,7 +112,7 @@ apps.
 | --- | --- | --- |
 | Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Method Reader makes itself; MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Method Reader's own AZW3 opened on a newer Kindle, not yet on one that mounts as a drive |
 | Any Kindle, by email | EPUB to your `@kindle.com` address | Verified |
-| Newer Kindles (2024 and later) that don't appear as a drive | Over USB from the Mac app (beta), the same book a cable gets; from Windows and Linux, email or Amazon's Send to Kindle app or web page | Mac: copied to a 2024 Paperwhite, which opened the AZW3 and the KFX. Windows and Linux: use email delivery |
+| Newer Kindles (2024 and later) that don't appear as a drive | Over USB from the Mac app (beta), the same book a cable gets; from Windows and Linux, email or Amazon's Send to Kindle app or web page | Mac: copied to a 2024 Kindle, which opened the AZW3 and the KFX. Windows and Linux: use email delivery |
 | iPhone, iPad, Mac (Apple Books) | Added to Books on a Mac, then synced through iCloud | Verified |
 | Kobo | EPUB (or KEPUB) over USB | Built and tested in code, never on a real device |
 | tolino | EPUB into the device's `Books` folder | Built and tested in code, never on a real device |

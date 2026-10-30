@@ -565,6 +565,9 @@ jobs:
                 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PL")" = "$VERSION" ]
                 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PL")" = com.methodreader.desktop ]
                 codesign --verify --deep --strict "$M/Method Reader.app"
+                # The MTP helper is in the image, beside the window, and answers
+                # with this release's version.
+                "$M/Method Reader.app/Contents/MacOS/method-reader-mtp" --version | grep -q "\"version\":\"$VERSION\""
                 hdiutil detach "$M"
                 ;;
               *.app.tar.gz)
@@ -573,6 +576,8 @@ jobs:
                 [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$M/Method Reader.app/Contents/Info.plist")" = "$VERSION" ]
                 codesign --verify --deep --strict "$M/Method Reader.app"
                 xcrun stapler validate "$M/Method Reader.app"
+                # An update brings the helper too.
+                test -x "$M/Method Reader.app/Contents/MacOS/method-reader-mtp"
                 ;;
               *.deb)
                 dpkg-deb --info "$B" | grep -q "Version: $VERSION"

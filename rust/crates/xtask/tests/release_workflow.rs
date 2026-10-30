@@ -526,7 +526,8 @@ fn the_mac_app_carries_the_mtp_helper_universal_and_started_before_signing() {
     // helper among them, before the bundle.
     assert!(mac.contains(r#"for exe in "$APP"/Contents/MacOS/*; do"#));
     // No other step or job builds, packs or names it: not the Windows or
-    // Linux packages, not the CLI downloads.
+    // Linux packages, not the CLI downloads. The bundle check reads it back
+    // out of the image and the update archive, and that is all.
     for (name, job) in jobs(&rel) {
         for st in steps(job) {
             let text = serde_yaml::to_string(st).unwrap();
@@ -534,12 +535,18 @@ fn the_mac_app_carries_the_mtp_helper_universal_and_started_before_signing() {
                 let at = (name.as_str(), s(st, "name"));
                 assert!(
                     at == ("app-bundles", "Build the window and the release tools")
-                        || at == ("app-bundles", "macOS app, update archive and image"),
+                        || at == ("app-bundles", "macOS app, update archive and image")
+                        || at.1 == "Check each bundle",
                     "{at:?}"
                 );
             }
         }
     }
+    let check = step_named(&rel, "app-bundles", "Check each bundle");
+    assert!(check.contains(
+        r#""$M/Method Reader.app/Contents/MacOS/method-reader-mtp" --version | grep -q "\"version\":\"$VERSION\"""#
+    ));
+    assert!(check.contains(r#"test -x "$M/Method Reader.app/Contents/MacOS/method-reader-mtp""#));
 }
 
 #[test]
