@@ -656,7 +656,14 @@ and the suite will say so if you forget.
   mechanism: page-break-*:avoid ignored; single-cell table wrappers
   split mid-cell; single-paragraph fusion still orphans the cue line
   (no widow/orphan control); display:inline-block overflows the text
-  horizontally off-screen. Do not re-attempt IN AZW3. Books delivered
+  horizontally off-screen. Do not re-attempt IN AZW3. **Seen again
+  2026-10-30 on a 2024 Kindle (copied over MTP): a cue alone at page one's
+  foot.** So the window now says so where it offers the copy: the engine's
+  Kindle-file answer (`export --check --for kindle`) carries `layoutNote`
+  when the file is its own AZW3 (`formats::AZW3_LAYOUT_NOTE`: "In this
+  Kindle file a name can land alone at the foot of a page. KFX, or sending
+  by email, keeps names with their lines."), and the window shows it under
+  the copy button. A KFX answer carries none. Books delivered
   via Send-to-Kindle (email/app/web) get Enhanced Typesetting, which
   honors the CSS keeps (and, 2026-07-29: arrive as KFX — observed on
   device in documents/Downloads/Items01/). Dual-dialogue side-by-side

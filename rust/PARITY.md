@@ -1482,3 +1482,14 @@ names the check it affects.
   route-help and route-help-json rows hold the save-kindle line too, but
   are bound to the machine their answers were frozen on, so `--accept`
   left them alone here; they move with the same command on that machine.
+- **The AZW3's layout note (asked for by the owner, 2026-10-30, branch
+  feat/azw3-layout-note).** A Kindle reads a book copied over USB as AZW3
+  without the keeps that hold a name to its lines (registry #8b), and the
+  owner saw a cue alone at page one's foot on a 2024 Kindle. The engine's
+  `export --check` answer on a Kindle rung (`--for kindle`, `--for azw3`)
+  now carries `layoutNote` when the file is its own AZW3
+  (`formats::AZW3_LAYOUT_NOTE`); a KFX answer carries none. The window
+  shows it under the copy. One parity run moved with `cargo xtask parity
+  --accept export-check-azw3`, its only change the new field; sp-engine's
+  common/frozen.rs reads the frozen TypeScript `export --for azw3 --check`
+  answer with it.

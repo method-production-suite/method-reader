@@ -832,6 +832,7 @@ mod tests {
             built_by_calibre: false,
             book_date: None,
             beta: false,
+            layout_note: None,
         };
         let rows = save_rows(Some(&no_fountain), Some(&azw3));
         let kfx = rows.iter().find(|r| r.kind == "kfx").unwrap();

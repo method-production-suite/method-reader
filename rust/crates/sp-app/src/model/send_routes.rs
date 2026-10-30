@@ -222,6 +222,9 @@ pub struct KindleFile {
     pub built_by_calibre: bool,
     pub book_date: Option<f64>,
     pub beta: bool,
+    /// What the engine says beside a copy of this file (its own AZW3: a
+    /// name can land at a page's foot). Shown as it comes.
+    pub layout_note: Option<String>,
 }
 
 fn bare_extension(extension: &str) -> &str {
@@ -255,6 +258,10 @@ pub fn kindle_check_from(answer: &Value) -> Option<KindleFile> {
         built_by_calibre,
         book_date: answer.get("bookDate").and_then(Value::as_f64),
         beta: answer.get("beta") == Some(&Value::Bool(true)),
+        layout_note: str_at(answer, "layoutNote")
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_string),
     })
 }
 
@@ -800,6 +807,7 @@ mod tests {
             built_by_calibre: true,
             book_date: Some(9.0),
             beta: false,
+            layout_note: None,
         };
         assert!(builds_ahead(Some(&stale), false, false, None, true));
         assert!(

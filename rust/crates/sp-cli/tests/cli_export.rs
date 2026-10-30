@@ -621,6 +621,24 @@ fn neither_an_azw3_nor_a_kfx_answer_says_beta_since_a_kindle_opened_our_azw3() {
 }
 
 #[test]
+fn our_azw3_says_a_name_can_land_at_a_pages_foot_and_kfx_says_nothing() {
+    // A Kindle reads a book copied over USB as AZW3 without the keeps that
+    // hold a name to its lines (registry #8b's 2026-07-22 verdict, seen again
+    // on a 2024 Kindle on 2026-10-30), so the window says so where it offers
+    // the copy. KFX keeps them; so does sending by email.
+    let c = Case::new();
+    let azw3 = run(&checking(c.opts("kindle")), &never(false, NO_TOOLCHAIN)).expect("checked");
+    assert_eq!(
+        azw3.to_json()["layoutNote"],
+        json!(sp_engine::export::formats::AZW3_LAYOUT_NOTE)
+    );
+    let kfx = run(&checking(c.opts("kindle")), &never(true, KFX_READY)).expect("checked");
+    assert!(kfx.to_json().get("layoutNote").is_none());
+    let epub = run(&checking(c.opts("epub")), &plain()).expect("checked");
+    assert!(epub.to_json().get("layoutNote").is_none());
+}
+
+#[test]
 fn calibre_alone_with_an_azw3_newer_than_the_book_azw3_fresh_and_method_reader_builds_it() {
     let c = Case::new();
     c.older(&c.epub);
