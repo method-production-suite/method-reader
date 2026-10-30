@@ -5476,6 +5476,7 @@ dependencies = [
  "skrifa",
  "sp-cli",
  "sp-device",
+ "sp-engine",
  "sp-fsutil",
  "sp-update-config",
  "tempfile",

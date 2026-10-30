@@ -1,8 +1,8 @@
 //! Port of the two end-to-end runs in branch mtp-kindle's
 //! tests/cli-mtp-send.test.ts: `send` to a Kindle that connects over MTP,
-//! through the spawned CLI. MTP is off in this build
-//! (sp_device::mtp::MTP_SHIPPED is false) and on only when
-//! METHOD_READER_MTP_HELPER names a helper, which these runs do: a stand-in
+//! through the spawned CLI. MTP is on where a helper ships beside the
+//! program (the Mac app) or when METHOD_READER_MTP_HELPER names one, which
+//! these runs do (every other test's sandbox names the guard): a stand-in
 //! shell script, beside stand-in `launchctl` and `pkill`, each logging what
 //! it was asked. No real USB device, no real ptpcamerad, no real settings.
 //! The in-process half is sp-device's (tests/commands.rs) and sp-engine's

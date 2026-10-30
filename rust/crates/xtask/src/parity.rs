@@ -42,6 +42,11 @@ const DEFAULT_EPOCH: u64 = 1_767_225_600;
 
 /// Calibre's guard: a path no Calibre can start against.
 pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-parity-calibre-guard";
+
+/// sp_device::mtp::MTP_HELPER_GUARD: the release CLI has the MTP helper
+/// beside it in target/release, which switches MTP on; this leaves it on
+/// with nothing to run, so a Kindle left plugged in never reaches an answer.
+pub const MTP_HELPER_GUARD: &str = "/dev/null/method-reader-mtp-guard";
 /// `cargo xtask parity --help`.
 pub const USAGE: &str = "\
 usage: cargo xtask parity [options]
@@ -326,6 +331,7 @@ fn run_side(
             .env("METHOD_READER_CONFIG_DIR", work.join("config"))
             .env("METHOD_READER_LIBRARY", work.join("library"))
             .env("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD)
+            .env("METHOD_READER_MTP_HELPER", MTP_HELPER_GUARD)
             .env("SOURCE_DATE_EPOCH", epoch.to_string())
             .env("TZ", "UTC")
             // A home of its own: a frozen answer names no one's home folder.

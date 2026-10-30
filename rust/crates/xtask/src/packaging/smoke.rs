@@ -182,6 +182,12 @@ pub fn window_env(work: &Path) -> Result<Vec<(String, String)>, String> {
         ("METHOD_READER_CONFIG_DIR".into(), s(work.join("config"))),
         ("METHOD_READER_LIBRARY".into(), s(work.join("library"))),
         ("CALIBRE_CONFIG_DIRECTORY".into(), s(guard.join("config"))),
+        // The bundle carries the MTP helper beside the window: on, with
+        // nothing to run, so a plugged-in Kindle never meets the smoke run.
+        (
+            "METHOD_READER_MTP_HELPER".into(),
+            crate::parity::MTP_HELPER_GUARD.into(),
+        ),
     ])
 }
 

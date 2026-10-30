@@ -177,6 +177,7 @@ fn elements_of(cli: &Path, pdf: &Path, work: &Path) -> Result<Vec<Value>, String
         .env("METHOD_READER_CONFIG_DIR", work.join("config"))
         .env("METHOD_READER_LIBRARY", work.join("library"))
         .env("CALIBRE_CONFIG_DIRECTORY", crate::parity::CALIBRE_GUARD)
+        .env("METHOD_READER_MTP_HELPER", crate::parity::MTP_HELPER_GUARD)
         .env("HOME", work.join("home"))
         .env("USERPROFILE", work.join("home"))
         .output()

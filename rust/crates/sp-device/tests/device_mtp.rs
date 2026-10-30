@@ -1,4 +1,4 @@
-//! Branch mtp-kindle's tests/device-mtp.test.ts, ported (BETA, off). The
+//! Branch mtp-kindle's tests/device-mtp.test.ts, ported (BETA). The
 //! engine's side of the MTP helper: finding it, reading its answers, and
 //! the listing that never fails. Every helper here is a fake (an injected
 //! runner, or a shell script in a scratch folder): no test lists or writes
@@ -6,8 +6,10 @@
 //!
 //! The TypeScript's "test guard" block pinned root .env.test's
 //! METHOD_READER_MTP_HELPER / METHOD_READER_LAUNCHCTL / METHOD_READER_PKILL guard paths.
-//! The Rust side needs no guard file: MTP is off unless METHOD_READER_MTP_HELPER
-//! names a helper (mtp_enabled), and every runner here is injected.
+//! The Rust side needs no guard file: MTP is on only where a helper ships
+//! beside the program or METHOD_READER_MTP_HELPER names one (mtp_enabled),
+//! the CLI sandboxes and developer tools name MTP_HELPER_GUARD, and every
+//! runner here is injected.
 
 mod common;
 use common::{Recording, exit, strings};
@@ -168,12 +170,67 @@ fn none_anywhere_is_none() {
 }
 
 #[test]
-fn mtp_is_off_unless_a_helper_is_named() {
-    assert!(!mtp_enabled(&|_| None));
-    assert!(!mtp_enabled(&|_| Some("  ".into())));
-    assert!(mtp_enabled(
-        &|k| (k == "METHOD_READER_MTP_HELPER").then(|| "/x/method-reader-mtp".into())
-    ));
+fn mtp_is_on_where_the_app_ships_its_helper_beside_it() {
+    // The Mac app carries method-reader-mtp in Contents/MacOS beside the
+    // window, so a user's copy finds it there.
+    let env = |_: &str| None;
+    let beside = |p: &str| p == "/Applications/Method Reader.app/Contents/MacOS/method-reader-mtp";
+    assert!(mtp_enabled(&location(
+        &env,
+        "/Applications/Method Reader.app/Contents/MacOS/method-reader-app",
+        Platform::Darwin,
+        &beside
+    )));
+}
+
+#[test]
+fn mtp_is_off_where_no_helper_ships_even_with_a_dev_build_around() {
+    // A CLI download carries no helper; and the dev checkout's release
+    // folder never switches it on by itself, so no test or tool reaches a
+    // real Kindle by accident.
+    let env = |_: &str| None;
+    let only_dev = |p: &str| p == "/repo/rust/target/release/method-reader-mtp";
+    assert!(!mtp_enabled(&location(
+        &env,
+        "/usr/local/bin/method-reader",
+        Platform::Darwin,
+        &only_dev
+    )));
+    let blank = |_: &str| Some("  ".to_string());
+    let none = |_: &str| false;
+    assert!(!mtp_enabled(&location(
+        &blank,
+        "/usr/local/bin/method-reader",
+        Platform::Darwin,
+        &none
+    )));
+}
+
+#[test]
+fn naming_a_helper_switches_it_on_and_a_guard_path_means_none_to_run() {
+    let named = |k: &str| (k == "METHOD_READER_MTP_HELPER").then(|| "/x/method-reader-mtp".into());
+    let none = |_: &str| false;
+    let loc = location(
+        &named,
+        "/usr/local/bin/method-reader",
+        Platform::Darwin,
+        &none,
+    );
+    assert!(mtp_enabled(&loc));
+    // The test guard: on, but nothing there, so the listing finds nothing
+    // and never falls back to a helper beside the program.
+    let guard = |k: &str| {
+        (k == "METHOD_READER_MTP_HELPER").then(|| sp_device::mtp::MTP_HELPER_GUARD.to_string())
+    };
+    let beside_too = |p: &str| p != sp_device::mtp::MTP_HELPER_GUARD;
+    let guarded = location(
+        &guard,
+        "/a/MacOS/method-reader-app",
+        Platform::Darwin,
+        &beside_too,
+    );
+    assert!(mtp_enabled(&guarded));
+    assert_eq!(mtp_helper_path(&guarded), None);
 }
 
 // parseMtpList

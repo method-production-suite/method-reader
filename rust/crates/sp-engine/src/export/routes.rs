@@ -8,7 +8,8 @@
 use serde::Serialize;
 use serde_json::Value;
 
-use sp_device::types::{ConnectedDevice, DeviceKind, device_id};
+use sp_device::camera_import::CAMERA_IMPORT_NOTE;
+use sp_device::types::{ConnectedDevice, DeviceKind, Transport, device_id};
 
 /// `Unavailable`: why a listed row cannot fire right now.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -29,6 +30,15 @@ pub struct RouteDevice {
     pub kind: DeviceKind,
     pub name: String,
     pub volume: Option<String>,
+    /// "mtp" for a Kindle that connects the way a phone does (2024 and
+    /// later): the window gives its row the Beta badge, and "safe to unplug"
+    /// in place of Eject. Absent for a reader that mounts as a drive.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transport: Option<String>,
+    /// What copying to it pauses, said while it copies (a Mac's photo
+    /// import, for an MTP Kindle). Absent when nothing pauses.
+    #[serde(rename = "copyNote", skip_serializing_if = "Option::is_none")]
+    pub copy_note: Option<String>,
 }
 
 /// `Route`.
@@ -89,12 +99,15 @@ fn name_of(device: &ConnectedDevice) -> String {
     }
 }
 
-fn summarize(device: &ConnectedDevice) -> RouteDevice {
+fn summarize(device: &ConnectedDevice, platform: &str) -> RouteDevice {
+    let mtp = device.transport == Some(Transport::Mtp);
     RouteDevice {
         id: device_id(device),
         kind: device.kind,
         name: name_of(device),
         volume: device.volume.clone(),
+        transport: mtp.then(|| "mtp".to_string()),
+        copy_note: (mtp && platform == "darwin").then(|| CAMERA_IMPORT_NOTE.to_string()),
     }
 }
 
@@ -143,7 +156,7 @@ pub fn routes(facts: &RouteFacts) -> Vec<Route> {
             "{key}#{}",
             device.volume.clone().unwrap_or_else(|| device_id(device))
         );
-        r.device = Some(summarize(device));
+        r.device = Some(summarize(device, &facts.platform));
         list.push(r);
     }
     if let Some(remarkable) = remarkable {
@@ -153,7 +166,7 @@ pub fn routes(facts: &RouteFacts) -> Vec<Route> {
             "the EPUB, over its USB connection",
             REMARKABLE_BUTTON,
         );
-        r.device = Some(summarize(remarkable));
+        r.device = Some(summarize(remarkable, &facts.platform));
         list.push(r);
     }
     if on_mac && facts.books_app {

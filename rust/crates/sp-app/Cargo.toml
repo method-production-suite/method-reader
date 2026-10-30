@@ -67,6 +67,9 @@ tempfile = "3"
 sha2.workspace = true
 # The engine's own words about camera import, for the MTP window rules.
 sp-device = { path = "../sp-device" }
+# The engine's real route answer for an MTP Kindle, read by the window's
+# own parser (tests/mtp_window_rules.rs).
+sp-engine.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 arboard = { version = "3.6", default-features = false }

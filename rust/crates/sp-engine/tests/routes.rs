@@ -843,3 +843,76 @@ fn the_matrix_holds_every_rule() {
         assert!(!list.iter().any(|r| r.key == "device:remarkable"));
     }
 }
+
+// ── a Kindle over MTP (2024 and later) ───────────────────────────────
+//
+// It has no volume: it is addressed by its USB serial. Its row is an
+// ordinary Kindle row, and carries what the window needs to say it is
+// different: the transport (the Beta badge, "safe to unplug" instead of
+// Eject) and, on a Mac, that photo import pauses while it copies.
+
+fn mtp_kindle() -> ConnectedDevice {
+    ConnectedDevice {
+        kind: DeviceKind::Kindle,
+        name: "Kindle Paperwhite".into(),
+        volume: None,
+        transport: Some(sp_device::types::Transport::Mtp),
+        serial: Some("G000INVENTED01".into()),
+    }
+}
+
+#[test]
+fn an_mtp_kindle_is_a_kindle_row_addressed_by_its_serial() {
+    let list = routes(&with_devices(vec![mtp_kindle()]));
+    let row = list.iter().find(|r| r.key == "device:kindle").unwrap();
+    assert!(row.available);
+    assert_eq!(row.id, "device:kindle#mtp:G000INVENTED01");
+    assert_eq!(row.button, "Copy to Kindle Paperwhite");
+    assert_eq!(row.device.as_ref().unwrap().id, "mtp:G000INVENTED01");
+}
+
+#[test]
+fn an_mtp_kindles_row_tells_the_window_its_transport_and_on_a_mac_the_copy_note() {
+    let list = routes(&with_devices(vec![mtp_kindle()]));
+    let row = list.iter().find(|r| r.key == "device:kindle").unwrap();
+    let device = serde_json::to_value(row.device.as_ref().unwrap()).unwrap();
+    assert_eq!(device["transport"], json!("mtp"));
+    assert_eq!(
+        device["copyNote"],
+        json!(sp_device::camera_import::CAMERA_IMPORT_NOTE)
+    );
+    // Off a Mac there is no camera import to pause, so no note.
+    let mut f = with_devices(vec![mtp_kindle()]);
+    f.platform = "win32".into();
+    let list = routes(&f);
+    let row = list.iter().find(|r| r.key == "device:kindle").unwrap();
+    let device = serde_json::to_value(row.device.as_ref().unwrap()).unwrap();
+    assert_eq!(device["transport"], json!("mtp"));
+    assert!(device.get("copyNote").is_none());
+}
+
+#[test]
+fn a_kindle_that_mounts_as_a_drive_says_neither() {
+    let list = routes(&with_devices(vec![kindle()]));
+    let row = list.iter().find(|r| r.key == "device:kindle").unwrap();
+    let device = serde_json::to_value(row.device.as_ref().unwrap()).unwrap();
+    assert!(device.get("transport").is_none());
+    assert!(device.get("copyNote").is_none());
+}
+
+#[test]
+fn an_mtp_kindle_beside_a_mounted_one_gets_a_row_of_its_own() {
+    let list = routes(&with_devices(vec![kindle(), mtp_kindle()]));
+    let ids: Vec<&str> = list
+        .iter()
+        .filter(|r| r.key == "device:kindle")
+        .map(|r| r.id.as_str())
+        .collect();
+    assert_eq!(
+        ids,
+        [
+            "device:kindle#/Volumes/Kindle",
+            "device:kindle#mtp:G000INVENTED01"
+        ]
+    );
+}
