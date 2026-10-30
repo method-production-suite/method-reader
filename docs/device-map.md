@@ -482,6 +482,15 @@ helper:
 - macOS's camera import (`ptpcamerad`) was paused for the copy and turned
   back on afterwards, the way `rust/crates/sp-device/src/camera_import.rs`
   does it.
+- **The engine's own path (2026-10-30)**, the one Copy to Kindle takes: a
+  release `method-reader` with `method-reader-mtp` beside it (as the Mac
+  app carries it), under scratch settings. `devices --json` listed the
+  Kindle as `mtp:<serial>` with `transport: "mtp"` and the copy note;
+  `send <book>.azw3 --device mtp:<serial> --json` copied it to
+  `documents/` in 1.7 seconds and answered `safeToUnplug: true` and
+  `cameraImportPaused: true`; camera import was enabled again afterwards
+  and its marker gone. A Thunderbolt 3 cable connected nothing (the Mac
+  saw no device at all); an ordinary USB-C cable worked.
 
 So the route ships in Method Reader 1.1.0, in the Mac app only (the helper
 sits in `Contents/MacOS` beside the window, which is what switches it on),

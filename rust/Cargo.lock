@@ -5453,7 +5453,7 @@ dependencies = [
 
 [[package]]
 name = "sp-app"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anyrender_vello_cpu",
  "arboard",
@@ -5489,7 +5489,7 @@ dependencies = [
 
 [[package]]
 name = "sp-azw3"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "regex",
  "serde_json",
@@ -5502,7 +5502,7 @@ dependencies = [
 
 [[package]]
 name = "sp-cli"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5520,7 +5520,7 @@ dependencies = [
 
 [[package]]
 name = "sp-device"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "rustix 1.1.5",
  "serde",
@@ -5532,7 +5532,7 @@ dependencies = [
 
 [[package]]
 name = "sp-device-requests"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "serde_json",
  "tempfile",
@@ -5541,7 +5541,7 @@ dependencies = [
 
 [[package]]
 name = "sp-engine"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "regex",
  "roxmltree 0.20.0",
@@ -5566,7 +5566,7 @@ dependencies = [
 
 [[package]]
 name = "sp-epub"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "flate2",
  "regex",
@@ -5579,7 +5579,7 @@ dependencies = [
 
 [[package]]
 name = "sp-fdx"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "roxmltree 0.20.0",
  "serde",
@@ -5590,7 +5590,7 @@ dependencies = [
 
 [[package]]
 name = "sp-fountain"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "serde_json",
  "sha2",
@@ -5601,7 +5601,7 @@ dependencies = [
 
 [[package]]
 name = "sp-fsutil"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "libc",
  "serde_json",
@@ -5611,7 +5611,7 @@ dependencies = [
 
 [[package]]
 name = "sp-mobi"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "miniz_oxide 0.9.1",
  "regex",
@@ -5625,7 +5625,7 @@ dependencies = [
 
 [[package]]
 name = "sp-model"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -5633,7 +5633,7 @@ dependencies = [
 
 [[package]]
 name = "sp-mtp"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bytes",
  "futures",
@@ -5644,7 +5644,7 @@ dependencies = [
 
 [[package]]
 name = "sp-osf"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "roxmltree 0.20.0",
  "serde_json",
@@ -5655,7 +5655,7 @@ dependencies = [
 
 [[package]]
 name = "sp-parser"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "flate2",
  "miniz_oxide 0.9.1",
@@ -5668,7 +5668,7 @@ dependencies = [
 
 [[package]]
 name = "sp-pdf"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "hayro-jpeg2000",
  "hayro-syntax",
@@ -5682,7 +5682,7 @@ dependencies = [
 
 [[package]]
 name = "sp-release"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "base64",
  "flate2",
@@ -5701,7 +5701,7 @@ dependencies = [
 
 [[package]]
 name = "sp-update-config"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "flate2",
  "method-update",
@@ -7702,7 +7702,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 
 [[package]]
 name = "xtask"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "base64",
  "fancy-regex",
