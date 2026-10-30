@@ -13,6 +13,8 @@ tools at all.
 Email is also the route for newer Kindles (2024 and later) on Windows and
 Linux: they never appear as a drive when plugged in, so there is nothing to
 copy onto. The Mac app copies to one over USB anyway, through MTP (beta).
+If the Kindle does not show up there, unlock it, and try another USB-C
+cable: a Thunderbolt cable has been seen to connect nothing at all.
 
 The trade: email goes through Amazon, USB never leaves your desk. See
 [What Amazon receives](#what-amazon-receives).
