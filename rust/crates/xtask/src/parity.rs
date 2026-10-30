@@ -43,9 +43,12 @@ const DEFAULT_EPOCH: u64 = 1_767_225_600;
 /// Calibre's guard: a path no Calibre can start against.
 pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-parity-calibre-guard";
 
-/// sp_device::mtp::MTP_HELPER_GUARD: the release CLI has the MTP helper
-/// beside it in target/release, which switches MTP on; this leaves it on
-/// with nothing to run, so a Kindle left plugged in never reaches an answer.
+/// sp_device::mtp::MTP_HELPER_GUARD, copied rather than depended on (one
+/// string is not worth sp-device's rustix in the developer tools;
+/// tests/mtp_guard.rs holds the copy to the original): the release CLI has
+/// the MTP helper beside it in target/release, which switches MTP on; this
+/// leaves it on with nothing to run, so a Kindle left plugged in never
+/// reaches an answer.
 pub const MTP_HELPER_GUARD: &str = "/dev/null/method-reader-mtp-guard";
 /// `cargo xtask parity --help`.
 pub const USAGE: &str = "\

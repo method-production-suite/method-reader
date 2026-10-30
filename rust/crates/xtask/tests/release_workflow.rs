@@ -379,8 +379,9 @@ fn every_mac_binary_is_universal_and_checked_to_be_exactly_both_slices() {
     assert!(!yml.contains("screepub-cli-macos-x64.tar.gz"));
     assert!(!yml.contains(names::CLI_MAC_ARM64));
     let code = commands(&yml);
-    // The command-line tool and the window, each from both slices.
-    assert_eq!(code.matches("lipo -create").count(), 2);
+    // The command-line tool, the window and the MTP helper, each from both
+    // slices.
+    assert_eq!(code.matches("lipo -create").count(), 3);
     assert_eq!(
         code.matches("rustup target add aarch64-apple-darwin x86_64-apple-darwin")
             .count(),
@@ -388,11 +389,11 @@ fn every_mac_binary_is_universal_and_checked_to_be_exactly_both_slices() {
     );
     // Each is checked to be exactly both, in lipo's order, before it is signed.
     let exact = code.matches(r#"= "x86_64 arm64" ]"#).count();
-    assert_eq!(exact, 2, "{code}");
+    assert_eq!(exact, 3, "{code}");
     assert_eq!(
         code.matches("lipo -archs").count(),
-        4,
-        "the check and its error message, twice"
+        6,
+        "the check and its error message, three times"
     );
     assert!(!code.contains(r#"= arm64 ]"#));
 }
@@ -485,6 +486,60 @@ fn app_bundles_builds_on_all_three_runners_after_the_checks() {
         .find(|st| s(st, "uses").contains("upload-artifact"))
         .expect("an upload-artifact step");
     assert_eq!(s(upload.get("with").unwrap(), "if-no-files-found"), "error");
+}
+
+#[test]
+fn the_mac_app_carries_the_mtp_helper_universal_and_started_before_signing() {
+    let rel = rel();
+    let build = step_named(
+        &rel,
+        "app-bundles",
+        "Build the window and the release tools",
+    );
+    // Built for both slices in the macOS branch only, and joined by lipo.
+    let mac_branch = &build[build.find("if [ \"$RUNNER_OS\" = macOS ]").unwrap()
+        ..build.find("\nelse\n").expect("the other runners' branch")];
+    assert!(mac_branch.contains(
+        "cargo build --release --locked -p sp-mtp --bin method-reader-mtp --target \"$t\""
+    ));
+    assert!(mac_branch.contains(
+        "lipo -create -output target/universal-apple-darwin/release/method-reader-mtp \\\n    target/aarch64-apple-darwin/release/method-reader-mtp target/x86_64-apple-darwin/release/method-reader-mtp"
+    ));
+    let mac = step_named(&rel, "app-bundles", "macOS app, update archive and image");
+    let helper = mac
+        .find("MTP=rust/target/universal-apple-darwin/release/method-reader-mtp")
+        .expect("the helper");
+    let archs = mac
+        .find(r#"[ "$(lipo -archs "$MTP")" = "x86_64 arm64" ]"#)
+        .expect("the helper's arch check");
+    let native = mac.find(r#""$MTP" --version >/dev/null"#).expect("a run");
+    let intel = mac
+        .find(r#"arch -x86_64 "$MTP" --version >/dev/null"#)
+        .expect("a Rosetta run");
+    let lay_out = mac
+        .find(r#""$SP" mac-app --version "$VERSION" --window "$WIN" --helper "$MTP""#)
+        .expect("mac-app gets the helper");
+    let sign = mac.find("codesign").expect("signing");
+    assert!(helper < archs && archs < native && native < intel && intel < lay_out);
+    assert!(lay_out < sign);
+    // Inside out: the loop signs every executable in Contents/MacOS, the
+    // helper among them, before the bundle.
+    assert!(mac.contains(r#"for exe in "$APP"/Contents/MacOS/*; do"#));
+    // No other step or job builds, packs or names it: not the Windows or
+    // Linux packages, not the CLI downloads.
+    for (name, job) in jobs(&rel) {
+        for st in steps(job) {
+            let text = serde_yaml::to_string(st).unwrap();
+            if text.contains("sp-mtp") || text.contains("method-reader-mtp") {
+                let at = (name.as_str(), s(st, "name"));
+                assert!(
+                    at == ("app-bundles", "Build the window and the release tools")
+                        || at == ("app-bundles", "macOS app, update archive and image"),
+                    "{at:?}"
+                );
+            }
+        }
+    }
 }
 
 #[test]

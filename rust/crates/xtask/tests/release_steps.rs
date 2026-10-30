@@ -358,17 +358,42 @@ fn mac_step(
     archs: &str,
     validate_fails: &str,
 ) -> (Output, Vec<String>) {
-    // sp-release writes the bundle mac-app is asked for; nothing else.
+    mac_step_with(sc, env_key, archs, "x86_64 arm64", validate_fails)
+}
+
+/// The Mac step, with what lipo says of the window (`archs`) and of the MTP
+/// helper (`helper_archs`).
+fn mac_step_with(
+    sc: &Scratch,
+    env_key: bool,
+    archs: &str,
+    helper_archs: &str,
+    validate_fails: &str,
+) -> (Output, Vec<String>) {
+    // sp-release writes the bundle mac-app is asked for, the window and
+    // each --helper in Contents/MacOS; nothing else.
     tool(
         sc,
         "rust/target/release/sp-release",
-        "if [ \"$1\" = mac-app ]; then while [ $# -gt 0 ]; do [ \"$1\" = --out ] && mkdir -p \"$2/Method Reader.app/Contents/MacOS\" && : > \"$2/Method Reader.app/Contents/MacOS/method-reader-app\"; shift; done; fi",
+        "if [ \"$1\" = mac-app ]; then out=; helpers=; while [ $# -gt 0 ]; do case \"$1\" in --out) out=\"$2\" ;; --helper) helpers=\"$helpers $2\" ;; esac; shift; done; mkdir -p \"$out/Method Reader.app/Contents/MacOS\"; : > \"$out/Method Reader.app/Contents/MacOS/method-reader-app\"; for h in $helpers; do : > \"$out/Method Reader.app/Contents/MacOS/$(basename \"$h\")\"; done; fi",
     );
-    tool(sc, "bin/lipo", &format!("echo '{archs}'"));
+    tool(
+        sc,
+        "bin/lipo",
+        &format!(
+            "case \"$2\" in *method-reader-mtp) echo '{helper_archs}' ;; *) echo '{archs}' ;; esac"
+        ),
+    );
     // The joined window, and Rosetta: both start and say nothing here.
     sc.script(
         "rust/target/universal-apple-darwin/release/method-reader-app",
         "exit 0\n",
+    );
+    // The joined MTP helper: logged, so its runs can be counted.
+    tool(
+        sc,
+        "rust/target/universal-apple-darwin/release/method-reader-mtp",
+        "",
     );
     sc.script("bin/arch", "shift\nexec \"$@\"\n");
     tool(
@@ -426,6 +451,60 @@ fn mac_step_refuses_a_window_that_is_not_universal() {
     assert!(!out.status.success());
     assert!(said(&out).contains("not universal (x86_64 arm64): arm64"));
     assert!(!calls.iter().any(|c| c.starts_with("sp-release\tmac-app")));
+}
+
+#[test]
+fn mac_step_refuses_an_mtp_helper_that_is_not_universal() {
+    let sc = Scratch::new("mac-thin-helper");
+    let (out, calls) = mac_step_with(&sc, true, "x86_64 arm64", "arm64", "none");
+    assert!(!out.status.success());
+    assert!(
+        said(&out).contains("the MTP helper is not universal (x86_64 arm64): arm64"),
+        "{}",
+        said(&out)
+    );
+    assert!(!calls.iter().any(|c| c.starts_with("method-reader-mtp")));
+    assert!(!calls.iter().any(|c| c.starts_with("sp-release\tmac-app")));
+    assert!(!calls.iter().any(|c| c.starts_with("codesign")));
+}
+
+#[test]
+fn mac_step_starts_both_slices_of_the_mtp_helper_then_signs_it_inside_the_app() {
+    let sc = Scratch::new("mac-helper");
+    let (out, calls) = mac_step(&sc, true, "x86_64 arm64", "none");
+    assert!(out.status.success(), "{}", said(&out));
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
+    let helper = format!("{app}/Contents/MacOS/method-reader-mtp");
+    let runs: Vec<usize> = calls
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| *c == "method-reader-mtp\t--version")
+        .map(|(i, _)| i)
+        .collect();
+    assert_eq!(runs.len(), 2, "native and Rosetta: {calls:#?}");
+    let lay_out = at(
+        &calls,
+        "sp-release\tmac-app\t--version\t0.12.0\t--window\trust/target/universal-apple-darwin/release/method-reader-app\t--helper\trust/target/universal-apple-darwin/release/method-reader-mtp\t",
+    );
+    assert!(runs.iter().all(|&r| r < lay_out));
+    let signed = at(
+        &calls,
+        &format!(
+            "codesign\t--force\t--options\truntime\t--timestamp\t--sign\tDeveloper ID Application: Test\t{helper}"
+        ),
+    );
+    assert!(lay_out < signed, "{calls:#?}");
+    // at() matches a prefix, and the bundle's path is a prefix of the
+    // helper's: find the bundle's own line.
+    let bundle_line = calls
+        .iter()
+        .position(|c| {
+            *c == format!(
+                "codesign\t--force\t--options\truntime\t--timestamp\t--sign\tDeveloper ID Application: Test\t{app}"
+            )
+        })
+        .expect("the bundle is signed");
+    assert!(signed < bundle_line, "inside out: {calls:#?}");
 }
 
 #[test]

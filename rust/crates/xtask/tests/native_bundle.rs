@@ -20,8 +20,8 @@ use xtask::packaging::bundle::{
 use xtask::packaging::kinds::{BundleArch, BundleOs, MAC_TARGET, bundle_dir_for};
 use xtask::packaging::manifest::collect_signed_artifacts;
 use xtask::packaging::native::{
-    NATIVE_APP, NativeTools, binary_path, cargo_argv, info_plist, package_version, plist_string,
-    trusted_pubkey,
+    NATIVE_APP, NativeTools, binary_path, cargo_argv, helper_cargo_argv, helper_path, info_plist,
+    package_version, plist_string, trusted_pubkey,
 };
 use xtask::packaging::signature::verify_file;
 use xtask::packaging::util::{parse_checksums, sha256_file};
@@ -198,6 +198,30 @@ fn the_cargo_build_is_the_window_crate_locked_and_targeted() {
     assert!(
         binary_path(Path::new("r"), None, BundleOs::Windows)
             .ends_with("target/release/method-reader-app.exe")
+    );
+}
+
+#[test]
+fn the_mac_app_s_mtp_helper_is_built_locked_and_for_the_same_target() {
+    let tools = NativeTools::from_env(&Env::new());
+    assert_eq!(
+        helper_cargo_argv(&tools, Some(MAC_TARGET)),
+        [
+            "cargo",
+            "build",
+            "--release",
+            "--locked",
+            "--package",
+            "sp-mtp",
+            "--bin",
+            "method-reader-mtp",
+            "--target",
+            MAC_TARGET
+        ]
+    );
+    assert!(
+        helper_path(Path::new("r"), Some(MAC_TARGET))
+            .ends_with(format!("target/{MAC_TARGET}/release/method-reader-mtp"))
     );
 }
 
@@ -482,13 +506,47 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
     )
     .unwrap();
     assert_eq!(names_of(&made), ["Method-Reader-macOS.dmg"]);
-    assert_eq!(fake.tools(), ["cargo", "codesign", "hdiutil"]);
-    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Method Reader.app");
     assert_eq!(
-        fake.calls[1],
+        fake.tools(),
+        [
+            "cargo", "cargo", "codesign", "codesign", "codesign", "hdiutil"
+        ]
+    );
+    // The window, then the MTP helper, for the same target.
+    assert!(fake.calls[0].iter().any(|a| a == "method-reader-app"));
+    assert_eq!(
+        fake.calls[1][5..8],
+        ["sp-mtp", "--bin", "method-reader-mtp"]
+    );
+    assert!(fake.calls[1].iter().any(|a| a == MAC_TARGET));
+    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Method Reader.app");
+    // Inside out: each executable in Contents/MacOS, then the bundle.
+    let exe = |n: &str| app.join("Contents/MacOS").join(n);
+    assert_eq!(
+        fake.calls[2],
+        [
+            "codesign",
+            "--force",
+            "--sign",
+            "-",
+            exe("method-reader-app").to_str().unwrap()
+        ]
+    );
+    assert_eq!(
+        fake.calls[3],
+        [
+            "codesign",
+            "--force",
+            "--sign",
+            "-",
+            exe("method-reader-mtp").to_str().unwrap()
+        ]
+    );
+    assert_eq!(
+        fake.calls[4],
         ["codesign", "--force", "--sign", "-", app.to_str().unwrap()]
     );
-    let hd = &fake.calls[2];
+    let hd = &fake.calls[5];
     assert_eq!(
         hd[..5],
         [
@@ -509,6 +567,24 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
         fs::read(app.join("Contents/MacOS/method-reader-app")).unwrap(),
         the_binary()
     );
+    // The MTP helper beside the window, executable: what switches the MTP
+    // route on in the shipped app.
+    let helper = app.join("Contents/MacOS/method-reader-mtp");
+    assert_eq!(fs::read(&helper).unwrap(), the_helper());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            fs::metadata(&helper).unwrap().permissions().mode() & 0o777,
+            0o755
+        );
+    }
+    let mut inside: Vec<String> = fs::read_dir(app.join("Contents/MacOS"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    inside.sort();
+    assert_eq!(inside, ["method-reader-app", "method-reader-mtp"]);
     assert!(app.join("Contents/Resources/icon.icns").is_file());
     for lic in ["LICENSE-MIT", "LICENSE-APACHE", "LICENSE-GPL-3.0"] {
         assert!(app.join("Contents/Resources").join(lic).is_file(), "{lic}");
@@ -583,6 +659,9 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
         fake.tools(),
         [
             "cargo",
+            "cargo",
+            "codesign",
+            "codesign",
             "codesign",
             "ditto",
             "xcrun notarytool",
@@ -591,20 +670,41 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
             "codesign"
         ]
     );
-    let sign = &fake.calls[1];
-    for want in [
-        "--options",
-        "runtime",
-        "--timestamp",
-        "Developer ID Application: Example (TEAMID1234)",
-    ] {
-        assert!(sign.iter().any(|a| a == want), "{want}");
+    // Inside out with the identity, hardened runtime and a timestamp: the
+    // window, the MTP helper, then the bundle.
+    let app = bundle_dir_for("macos", Some(MAC_TARGET), &dirs.rust_dir).join("Method Reader.app");
+    let signed: Vec<&str> = fake.calls[2..5]
+        .iter()
+        .map(|c| c.last().unwrap().as_str())
+        .collect();
+    assert_eq!(
+        signed,
+        [
+            app.join("Contents/MacOS/method-reader-app")
+                .to_str()
+                .unwrap(),
+            app.join("Contents/MacOS/method-reader-mtp")
+                .to_str()
+                .unwrap(),
+            app.to_str().unwrap()
+        ]
+    );
+    for sign in &fake.calls[2..5] {
+        for want in [
+            "--options",
+            "runtime",
+            "--timestamp",
+            "Developer ID Application: Example (TEAMID1234)",
+        ] {
+            assert!(sign.iter().any(|a| a == want), "{want}");
+        }
+        assert!(!sign.iter().any(|a| a == "--deep"));
     }
-    let submit = &fake.calls[3];
+    let submit = &fake.calls[6];
     for want in ["submit", "--apple-id", "--team-id", "--wait"] {
         assert!(submit.iter().any(|a| a == want), "{want}");
     }
-    assert!(fake.calls[6].last().unwrap().ends_with(".dmg"));
+    assert!(fake.calls[9].last().unwrap().ends_with(".dmg"));
 
     // The archive verifies against the key the shipped app trusts, and the
     // manifest builder takes it for both chips.
@@ -626,6 +726,10 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     let (_, mode, data) = file("Contents/MacOS/method-reader-app");
     assert_eq!(mode & 0o777, 0o755);
     assert_eq!(*data, the_binary());
+    // An update brings the MTP helper too.
+    let (_, mode, data) = file("Contents/MacOS/method-reader-mtp");
+    assert_eq!(mode & 0o777, 0o755);
+    assert_eq!(*data, the_helper());
     let (_, mode, plist) = file("Contents/Info.plist");
     assert_eq!(mode & 0o777, 0o644);
     let plist = String::from_utf8_lossy(plist);

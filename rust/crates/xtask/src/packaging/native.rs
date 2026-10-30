@@ -1,5 +1,7 @@
 //! Bundling the native window (rust/crates/sp-app's `method-reader-app`) for
-//! `cargo xtask build-app-bundle`.
+//! `cargo xtask build-app-bundle`. The Mac app also carries the MTP helper
+//! (rust/crates/sp-mtp's `method-reader-mtp`) beside the window in
+//! Contents/MacOS, as release.yml lays it out; no other package does.
 //!
 //! Every file is written by sp-release, the library release.yml runs: the
 //! `.app` ([`sp_release::mac`]), the update archive
@@ -45,6 +47,11 @@ pub struct NativeApp {
     pub crate_name: &'static str,
     /// What cargo builds.
     pub binary: &'static str,
+    /// The MTP helper's crate and binary, built for the Mac app only and
+    /// laid out beside the window (sp-device's `helper_beside` finds it
+    /// there, which is what switches the MTP route on).
+    pub mac_helper_crate: &'static str,
+    pub mac_helper_binary: &'static str,
     /// The installed executable on every platform (`.exe` on Windows).
     pub mac_executable: &'static str,
     pub linux_executable: &'static str,
@@ -66,6 +73,8 @@ pub const NATIVE_APP: NativeApp = NativeApp {
     package: sp_release::linux::PACKAGE,
     crate_name: "sp-app",
     binary: names::WINDOW_EXE,
+    mac_helper_crate: "sp-mtp",
+    mac_helper_binary: "method-reader-mtp",
     mac_executable: names::WINDOW_EXE,
     linux_executable: names::WINDOW_EXE,
     windows_executable: "method-reader-app.exe",
@@ -164,6 +173,33 @@ pub fn cargo_argv(tools: &NativeTools, target: Option<&str>) -> Vec<String> {
     argv
 }
 
+/// The cargo invocation that builds the MTP helper (the Mac app only).
+pub fn helper_cargo_argv(tools: &NativeTools, target: Option<&str>) -> Vec<String> {
+    let mut argv = vec![
+        tools.cargo.clone(),
+        "build".into(),
+        "--release".into(),
+        "--locked".into(),
+        "--package".into(),
+        NATIVE_APP.mac_helper_crate.into(),
+        "--bin".into(),
+        NATIVE_APP.mac_helper_binary.into(),
+    ];
+    if let Some(t) = target {
+        argv.extend(["--target".into(), t.to_string()]);
+    }
+    argv
+}
+
+/// Where cargo leaves the MTP helper.
+pub fn helper_path(rust_dir: &Path, target: Option<&str>) -> PathBuf {
+    let mut dir = rust_dir.join("target");
+    if let Some(t) = target {
+        dir.push(t);
+    }
+    dir.join("release").join(NATIVE_APP.mac_helper_binary)
+}
+
 /// Where cargo leaves the binary.
 pub fn binary_path(rust_dir: &Path, target: Option<&str>, os: BundleOs) -> PathBuf {
     let mut dir = rust_dir.join("target");
@@ -246,10 +282,12 @@ fn linux_icons(repo: &Path) -> Result<Vec<(String, PathBuf)>, String> {
     .collect())
 }
 
-/// Lays out `<dir>/Method Reader.app` around `binary` with [`sp_release::mac::build_app`].
+/// Lays out `<dir>/Method Reader.app` around `binary`, with each of
+/// `helpers` beside it in Contents/MacOS, with [`sp_release::mac::build_app`].
 pub fn assemble_app(
     dir: &Path,
     binary: &Path,
+    helpers: &[PathBuf],
     version: &str,
     repo: &Path,
 ) -> Result<PathBuf, String> {
@@ -262,7 +300,7 @@ pub fn assemble_app(
                 version,
                 identifier: NATIVE_APP.identifier,
                 window: binary,
-                helpers: &[],
+                helpers,
                 icon: &icons.join("icon.icns"),
                 resources: &resources,
             },
@@ -380,6 +418,22 @@ pub fn notary_credentials(env: &Env) -> Option<Vec<String>> {
     None
 }
 
+/// Every file in `<app>/Contents/MacOS`, sorted: what is signed before the
+/// bundle.
+fn executables(app: &Path) -> Result<Vec<PathBuf>, String> {
+    let dir = app.join("Contents").join("MacOS");
+    let mut found: Vec<PathBuf> = io(
+        &format!("cannot list {}", dir.display()),
+        std::fs::read_dir(&dir),
+    )?
+    .filter_map(Result::ok)
+    .map(|e| e.path())
+    .filter(|p| p.is_file())
+    .collect();
+    found.sort();
+    Ok(found)
+}
+
 fn build_mac(
     args: &BundleArgs,
     run: &mut Runner<'_>,
@@ -387,11 +441,12 @@ fn build_mac(
     env: &Env,
     tools: &NativeTools,
     binary: &Path,
+    helpers: &[PathBuf],
 ) -> Result<(), String> {
     let target = args.target.as_deref();
     let macos = bundle_dir_for("macos", target, &dirs.rust_dir);
     fresh_dir(&macos)?;
-    let app = assemble_app(&macos, binary, &args.version, &dirs.repo_dir)?;
+    let app = assemble_app(&macos, binary, helpers, &args.version, &dirs.repo_dir)?;
     let identity = env
         .get("APPLE_SIGNING_IDENTITY")
         .filter(|v| !v.is_empty())
@@ -399,7 +454,11 @@ fn build_mac(
 
     // Hardened runtime and a timestamp with a real identity, which
     // notarization requires; ad hoc otherwise, so a local build still opens.
-    let sign = match &identity {
+    // Inside out, never --deep, as release.yml signs: every executable in
+    // Contents/MacOS (the window and the MTP helper), then the bundle. Ad
+    // hoc too, since a bundle's seal fails over nested code that is not
+    // signed.
+    let sign = |path: &Path| match &identity {
         Some(id) => vec![
             tools.codesign.clone(),
             "--force".into(),
@@ -408,17 +467,20 @@ fn build_mac(
             "--timestamp".into(),
             "--sign".into(),
             id.clone(),
-            p(&app),
+            p(path),
         ],
         None => vec![
             tools.codesign.clone(),
             "--force".into(),
             "--sign".into(),
             "-".into(),
-            p(&app),
+            p(path),
         ],
     };
-    step(run, sign, None, "codesign")?;
+    for exe in executables(&app)? {
+        step(run, sign(&exe), None, "codesign an executable")?;
+    }
+    step(run, sign(&app), None, "codesign")?;
 
     if let (Some(_), Some(creds)) = (&identity, notary_credentials(env)) {
         let zip = macos.join(format!("{}.zip", NATIVE_APP.product_name));
@@ -664,7 +726,22 @@ pub fn build_native(
         ));
     }
     match args.os {
-        BundleOs::Macos => build_mac(args, run, dirs, env, &tools, &bin),
+        BundleOs::Macos => {
+            step(
+                run,
+                helper_cargo_argv(&tools, target),
+                Some(&dirs.rust_dir),
+                "cargo build of the MTP helper",
+            )?;
+            let helper = helper_path(&dirs.rust_dir, target);
+            if !helper.is_file() {
+                return Err(format!(
+                    "build-app-bundle: cargo reported success and there is no {}",
+                    helper.display()
+                ));
+            }
+            build_mac(args, run, dirs, env, &tools, &bin, &[helper])
+        }
         BundleOs::Linux => build_linux(args, dirs, env, &bin),
         BundleOs::Windows => build_windows(args, run, dirs, &tools, &bin),
     }

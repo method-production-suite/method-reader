@@ -267,7 +267,7 @@ use xtask::packaging::bundle::{BundleArgs, BundleDirs, Env};
 use xtask::packaging::kinds::{
     BUNDLE_KINDS, BundleArch, BundleOs, Kind, MAC_TARGET, MagicAt, NATIVE_FLOOR,
 };
-use xtask::packaging::native::binary_path;
+use xtask::packaging::native::{binary_path, helper_path};
 use xtask::packaging::util::RunResult;
 
 /// The version the native tests bundle.
@@ -344,6 +344,12 @@ pub fn the_binary() -> Vec<u8> {
     noise(NATIVE_FLOOR as usize + 65_536, 0x5EED)
 }
 
+/// What the fake cargo builds for the MTP helper: other bytes, so a test
+/// can tell which file landed where.
+pub fn the_helper() -> Vec<u8> {
+    noise(4096, 0x4D54)
+}
+
 /// Every outside tool the native path calls, faked: cargo writes the
 /// binary, hdiutil and makensis write their containers, notarytool answers.
 pub struct FakeTools {
@@ -379,9 +385,19 @@ impl FakeTools {
                     .iter()
                     .position(|a| a == "--target")
                     .map(|i| argv[i + 1].clone());
-                let bin = binary_path(&self.rust, target.as_deref(), self.os);
+                let helper = argv
+                    .windows(2)
+                    .any(|w| w[0] == "--bin" && w[1] == "method-reader-mtp");
+                let (bin, bytes) = if helper {
+                    (helper_path(&self.rust, target.as_deref()), the_helper())
+                } else {
+                    (
+                        binary_path(&self.rust, target.as_deref(), self.os),
+                        the_binary(),
+                    )
+                };
                 fs::create_dir_all(bin.parent().unwrap()).unwrap();
-                fs::write(&bin, the_binary()).unwrap();
+                fs::write(&bin, bytes).unwrap();
             }
             "hdiutil" => {
                 let out = Path::new(argv.last().unwrap());

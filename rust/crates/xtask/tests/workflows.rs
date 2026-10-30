@@ -644,6 +644,27 @@ fn the_weekly_full_build_runs_everything_on_every_system() {
 }
 
 #[test]
+fn the_weekly_mac_app_carries_the_mtp_helper_and_no_other_package_does() {
+    let wf = workflow("full.yml");
+    let build = step_named(&wf, "bundles", "Build the window and the release tools");
+    let mac_only = &build[build
+        .find(r#"if [ "$RUNNER_OS" = macOS ]; then"#)
+        .expect("a Mac branch")..];
+    assert!(mac_only.contains("cargo build --release --locked -p sp-mtp --bin method-reader-mtp"));
+    let pack = step_named(&wf, "bundles", "Lay out, package and check");
+    let mac = &pack[pack.find("macOS)").unwrap()..pack.find("Linux)").unwrap()];
+    let version = mac.find(r#""$MTP" --version"#).expect("the helper answers");
+    let lay_out = mac
+        .find(r#"--window rust/target/release/method-reader-app --helper "$MTP""#)
+        .expect("mac-app gets the helper");
+    assert!(version < lay_out);
+    assert!(mac.contains(r#"grep -q "\"version\":\"$VERSION\"" "$W/mtp-version.json""#));
+    assert!(mac.contains(r#"test -x "$M/Method Reader.app/Contents/MacOS/method-reader-mtp""#));
+    let others = &pack[pack.find("Linux)").unwrap()..];
+    assert!(!others.contains("method-reader-mtp") && !others.contains("--helper"));
+}
+
+#[test]
 fn only_the_weekly_full_build_saves_a_cache() {
     // checks.yml restores (cargo-deny's) and never saves, so each change adds
     // nothing to the repository's 10 GB; full.yml saves every cache, on main.
