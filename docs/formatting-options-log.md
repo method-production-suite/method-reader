@@ -1129,6 +1129,16 @@ and the suite will say so if you forget.
   capable readers real page numbers and page-jump. MOBI gets the floated
   span only. If a legacy renderer ignores `float`, the number degrades to
   inline text at the head of the paragraph.
+  **In the EPUB, only description carries it (2026-10-29):** the marker
+  rides only on the next description paragraph (`<p class="action">`). It
+  passes headings, speeches, transitions and centred lines and waits for
+  the next description. A newer page number replaces a waiting one; the
+  waiting one is dropped, neither shown nor listed in the page-list. Why:
+  in the owner's KFX device tests on a Kindle, any marker in or beside a
+  speech, on its cue, under it, or on a line of its own before it,
+  stranded cues at a page's foot apart from their lines. A book whose
+  markers sat only on description stranded none and kept "Go to page".
+  MOBI is unchanged: its marker still rides the next block.
 - **Dimming, not gray (2026-07-30):** the marker now recedes via
   `opacity: 0.6` instead of a hardcoded gray. A fixed gray was picked
   against a white page and fought every themed background; opacity is
