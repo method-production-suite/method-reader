@@ -107,6 +107,10 @@
     "covered": false,
     "why": "torture.pdf has no rotated text, and adding a watermark to a sheet would move every answer frozen from it. Pinned instead by sp-parser's extract tests: a diagonal watermark and sideways text dropped, slanted text kept" },
 
+  { "entry": "9i", "title": "Layout learning: each script read against its own columns",
+    "covered": false,
+    "why": "torture.pdf sits on the standard columns, where this pass does nothing by design. Pinned instead by sp-parser's layout_variants tests: Field Station re-laid nine ways, four of which only read correctly with it" },
+
   { "entry": "10a", "title": "Dual dialogue, de-interleaved to sequential speeches",
     "covered": true, "page": 7, "side": "both",
     "how": "a short exchange with both cues sharing one Y, asserted to de-interleave into left speech then right with no element mixing the columns" },

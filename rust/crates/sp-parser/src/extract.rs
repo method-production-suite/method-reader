@@ -1166,6 +1166,7 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
                     dual_right: None,
                     fonts: font_runs(&lines[i].items),
                     fmt: None,
+                    placed: false,
                 });
             }
             i += 1;
@@ -1316,6 +1317,7 @@ fn deinterleave_dual_dialogue(lines: &[LineItems], page_width: f64, page_num: u3
                     dual_right: (is_right && k == 0).then_some(true),
                     fonts: None,
                     fmt: None,
+                    placed: true,
                 });
             }
         }

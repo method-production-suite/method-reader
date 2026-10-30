@@ -818,6 +818,30 @@ and the suite will say so if you forget.
 - **Default:** always on; not an option (pure artifact fix).
 - **Code:** `rust/crates/sp-parser/src/extract.rs` (`is_rotated`).
 
+### 9i. Layout learning: each script read against its own columns (always on; 2026-10-29)
+- **What:** classification is by fixed bands of page width (action under
+  20%, dialogue 25-35%, cues 35-50%). Every real script measured so far
+  sits inside them (15 scripts: action 15-18%, dialogue 28-30%, cues
+  40-44%), but a script typed with a word processor's one-inch margins puts
+  its dialogue at 24% and its cues at 35%, and every speech in it read as
+  action. Before reading, the parser now measures the script's own action,
+  dialogue and cue columns from its speeches (a cue-shaped line with a
+  shallower line straight under it, at least 20 of them, each column
+  agreeing on 60% of its samples). Only when a column falls outside its
+  band does it move every line proportionally between the script's columns
+  and the standard ones (18%, 29%, 42%), then read as usual. A script that
+  fits, or cannot be measured, is read exactly as before; a dual column's
+  de-interleaved lines (placed by extraction at standard indents) are never
+  moved.
+- **Proof:** sp-parser's `tests/layout_variants.rs` re-lays Field Station
+  nine ways. Without this pass four of them misread 103 to 208 of 350
+  elements (Word margins on Letter and A4, names at 2.75 inches, deep
+  columns); with it all nine read exactly as the original. Corpus diff: 0
+  of 15 real scripts change; parity clean; `cargo xtask audit-corpus`
+  finds nothing.
+- **Code:** `rust/crates/sp-parser/src/layout.rs`, called first in
+  `parse_lines` (`lib.rs`); `RawLine::placed` (sp-model, never serialized).
+
 ### 10. Final Draft double-print dedup
 - **What:** FD double-prints (MORE)/(CONT'D) furniture at identical
   coordinates with a zero-width item between copies → text doubled

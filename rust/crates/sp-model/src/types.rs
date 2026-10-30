@@ -191,6 +191,12 @@ pub struct RawLine {
     /// Block-level font shift relative to the document's dominant font.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fmt: Option<Fmt>,
+    /// The indent was set by extraction, not read off the page (a dual
+    /// column's de-interleaved lines sit at fixed standard indents), so the
+    /// layout pass must not translate it. Never serialized: the frozen
+    /// lines.json predates it and has nothing to say about it.
+    #[serde(skip)]
+    pub placed: bool,
 }
 
 /// `RawImage`: an image carried out of the PDF, positioned alongside
