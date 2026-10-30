@@ -210,8 +210,17 @@ impl Blocks<'_> {
         }
     }
 
-    /// A block, with the pending page marker slipped inside its opening tag.
+    /// A block, with the pending page marker slipped inside its opening tag
+    /// when the block is description. Any other block leaves it waiting: on
+    /// a Kindle's KFX book a number in or beside a speech let its cue strand
+    /// at a page's foot, and one on a heading sits on a keep chain too
+    /// (registry #13a, 2026-10-29). A newer page number replaces a waiting
+    /// one, which is then never shown or listed.
     fn emit(&mut self, mut s: String) {
+        if !s.starts_with("<p class=\"action") {
+            self.place(s);
+            return;
+        }
         if let Some((label, html)) = self.markers.pending.take() {
             if let Some(open) = opening_tag_len(&s) {
                 s.insert_str(open, &html);

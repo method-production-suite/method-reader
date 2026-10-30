@@ -14,11 +14,11 @@
   "files": {
     "book.azw3": {
       "bytes": 18572,
-      "sha256": "cebe448e5e8482ea27a786d1a63408ed1f7b5e4adf8116bbf29b0ac5e862e981"
+      "sha256": "a33a6505b58130af2b1629591b72f849b703a22ea98f10a9d17323ba5871a5ba"
     },
     "book.epub": {
-      "bytes": 8385,
-      "sha256": "fe48021faaeea24b93020fd1ce33503ff6ec2164b726bcd1bb3ffe4f3fb6a9bf"
+      "bytes": 8382,
+      "sha256": "36a17988c8d87150bd7b4aeed97b09d8d1c26d05b90c3271df896bdfd401d07d"
     },
     "book.fdx": {
       "bytes": 5218,
@@ -30,7 +30,7 @@
     },
     "book.preview.html": {
       "bytes": 11498,
-      "sha256": "cac5b79ee168d7eb1467ad5ccfd2a81c1d77fc7371174e461668f16466851d50"
+      "sha256": "1ca373678eec38d3ef55c9b64dbdedf65333196c838427ddbe28f163d8a99484"
     },
     "convert.json": {
       "bytes": 569,

@@ -557,12 +557,52 @@ mod page_markers_in_xhtml {
     }
 
     #[test]
-    fn a_marker_at_a_scene_seam_rides_into_the_next_heading_not_lost() {
+    fn a_marker_at_a_scene_seam_passes_the_heading_and_lands_on_its_description() {
         let xhtml = first_xhtml("INT. A - DAY\n\nAction.\n\n= pg 12\n\nINT. B - NIGHT\n\nMore.\n");
+        assert!(xhtml.contains("<h2 class=\"scene-heading\">INT. B - NIGHT</h2>"));
         assert!(matches(
             &xhtml,
-            r#"<h2 class="scene-heading"><span[^>]*class="page-marker"[^>]*>12\.</span>INT\. B - NIGHT</h2>"#
+            r#"<p class="action"><span[^>]*class="page-marker"[^>]*>12\.</span>More\.</p>"#
         ));
+    }
+
+    // Registry #13a, 2026-10-29: on a Kindle's KFX book a page number
+    // anywhere in a speech (on the cue, under it, or on a line of its own
+    // before it) let the cue strand at a page's foot, apart from its lines.
+    // A book whose numbers sit only on description paragraphs stranded none.
+    #[test]
+    fn a_page_that_starts_mid_conversation_numbers_the_next_description() {
+        let xhtml = first_xhtml(
+            "INT. A - DAY\n\nAction.\n\n= pg 3\n\n@LOU\nHello.\n\n@SYD\nHi.\n\nThey sit.\n",
+        );
+        assert!(!matches(
+            &xhtml,
+            r#"dialogue-block">\s*<p class="character"><span"#
+        ));
+        let block_start = xhtml.find("dialogue-block").unwrap();
+        let block_end = xhtml.rfind("</div>").unwrap();
+        assert!(!xhtml[block_start..block_end].contains("page-marker"));
+        assert!(matches(
+            &xhtml,
+            r#"<p class="action"><span[^>]*class="page-marker"[^>]*>3\.</span>They sit\.</p>"#
+        ));
+    }
+
+    #[test]
+    fn a_page_of_dialogue_alone_gives_way_to_the_next_page_number() {
+        // Page 3 holds only speech, so page 4 begins before any description:
+        // 3 is skipped, and the page list does not point at it.
+        let body = default_body(
+            "INT. A - DAY\n\nAction.\n\n= pg 3\n\n@LOU\nHello.\n\n= pg 4\n\n@SYD\nHi.\n\nThey sit.\n",
+        );
+        let xhtml = &body.files[0].xhtml;
+        assert!(!xhtml.contains(">3.</span>"));
+        assert!(matches(
+            xhtml,
+            r#"<p class="action"><span[^>]*class="page-marker"[^>]*>4\.</span>They sit\.</p>"#
+        ));
+        let labels: Vec<&str> = body.page_list.iter().map(|p| p.label.as_str()).collect();
+        assert_eq!(labels, ["4"]);
     }
 
     #[test]
