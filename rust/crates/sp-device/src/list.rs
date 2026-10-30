@@ -3,7 +3,7 @@
 //! MTP (beta, off: [`crate::mtp`]), and a reMarkable, which never mounts and
 //! is only there if its USB web interface answers.
 
-use crate::mtp::{list_mtp_kindles_here, mtp_enabled, process_env};
+use crate::mtp::{HelperLocation, list_mtp_kindles_here, mtp_enabled};
 use crate::remarkable::{
     REMARKABLE_ENDPOINT, REMARKABLE_PROBE_TIMEOUT, UreqClient, probe_remarkable,
 };
@@ -91,7 +91,7 @@ pub fn list_devices(options: &ListDevicesOptions) -> Vec<ConnectedDevice> {
         let mtp_listing = (!options.skip_mtp).then(|| {
             s.spawn(move || match options.mtp {
                 Some(mtp) => mtp().unwrap_or_default(),
-                None if mtp_enabled(&process_env) => list_mtp_kindles_here(),
+                None if mtp_enabled(&HelperLocation::host()) => list_mtp_kindles_here(),
                 None => Vec::new(),
             })
         });

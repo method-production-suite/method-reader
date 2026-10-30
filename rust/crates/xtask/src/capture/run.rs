@@ -262,8 +262,10 @@ fn empty_library(library: &Path) -> std::io::Result<()> {
 ///   it before every shot, which reads back as no settings at all, so the
 ///   pictures never drift with whatever the developer last chose in their
 ///   own app settings. The window's guard lets nothing write into it.
-/// - METHOD_READER_VOLUME_ROOTS, METHOD_READER_REMARKABLE_ENDPOINT: no real reader,
-///   ever: an empty mount parent, and a reMarkable address nothing listens on.
+/// - METHOD_READER_VOLUME_ROOTS, METHOD_READER_REMARKABLE_ENDPOINT,
+///   METHOD_READER_MTP_HELPER: no real reader, ever: an empty mount parent, a
+///   reMarkable address nothing listens on, and an MTP helper that is not
+///   there.
 /// - CALIBRE_CONFIG_DIRECTORY: Calibre run against its real settings
 ///   folder rewrites files there (gui.json, 0.7.3 QA). The window's guard
 ///   keeps every question that would start Calibre out, and this is the
@@ -282,6 +284,12 @@ pub fn engine_env(library: &Path, calibre: &Path) -> Vec<(&'static str, PathBuf)
             PathBuf::from("http://127.0.0.1:9"),
         ),
         ("CALIBRE_CONFIG_DIRECTORY", calibre.to_path_buf()),
+        // No Kindle over MTP either: the window has the helper beside it
+        // in a development build.
+        (
+            "METHOD_READER_MTP_HELPER",
+            PathBuf::from(crate::parity::MTP_HELPER_GUARD),
+        ),
     ]
 }
 

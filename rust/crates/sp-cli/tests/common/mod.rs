@@ -127,6 +127,13 @@ impl Sandbox {
             "http://127.0.0.1:9".into(),
         );
         env.insert("CALIBRE_CONFIG_DIRECTORY".into(), CALIBRE_GUARD.into());
+        // A development build keeps the MTP helper beside this CLI, which
+        // switches MTP on; the guard leaves it on with nothing to run, so a
+        // Kindle left plugged in never reaches a test.
+        env.insert(
+            "METHOD_READER_MTP_HELPER".into(),
+            sp_device::mtp::MTP_HELPER_GUARD.into(),
+        );
         Sandbox { dir, env }
     }
 

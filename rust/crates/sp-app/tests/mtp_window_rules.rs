@@ -1,8 +1,8 @@
 //! tests/mtp-window-rules.test.ts and send-panel-ui.test.ts's "a Kindle over
 //! MTP": the window's rules for a Kindle the engine reaches over MTP, which
 //! fields survive the clean rebuild of the engine's answers, the words while
-//! it copies and when it is done, and the Beta badge. MTP itself stays off
-//! in the engine; these hold the window ready for it.
+//! it copies and when it is done, and the Beta badge. The last test feeds
+//! the window the engine's own route answer for an MTP Kindle.
 
 mod common;
 
@@ -299,4 +299,36 @@ fn while_it_copies_on_a_mac_the_status_says_camera_import_is_paused() {
     assert!(line.contains("Photos and Image Capture cannot import from a camera or phone"));
     w.engine.release("send");
     settle(&mut h);
+}
+
+// ------------------------------------------- the engine's own answer, read
+
+#[test]
+fn the_engines_real_route_answer_reaches_the_window_with_its_transport_and_note() {
+    // Every other test here hands the window a route answer written by
+    // hand. This one builds it with the engine's own route list, so the
+    // window's Beta badge, copy note and "safe to unplug" are fed by what
+    // the engine really says about an MTP Kindle.
+    use sp_device::types::{ConnectedDevice, DeviceKind, Transport};
+    use sp_engine::export::routes::{RouteFacts, preselected, routes};
+    let facts = RouteFacts {
+        platform: "darwin".into(),
+        devices: vec![ConnectedDevice {
+            kind: DeviceKind::Kindle,
+            name: "Kindle Paperwhite".into(),
+            volume: None,
+            transport: Some(Transport::Mtp),
+            serial: Some("S1".into()),
+        }],
+        remarkable_checked: None,
+        books_app: true,
+        send_to_kindle_app: false,
+        apple_mail_default: false,
+    };
+    let list = routes(&facts);
+    let chosen = preselected(&list, None).id.clone();
+    let answer = json!({"ok": true, "routes": list, "chosen": chosen});
+    let d = device_of(&answer);
+    assert_eq!(d, mtp_device());
+    assert!(is_beta_device(Some(&d)));
 }

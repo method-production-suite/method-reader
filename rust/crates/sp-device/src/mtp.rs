@@ -22,12 +22,12 @@ use std::time::Duration;
 /// The helper's file name, without `.exe`. sp-mtp's `[[bin]]` name.
 pub const MTP_HELPER_NAME: &str = "method-reader-mtp";
 
-/// Whether MTP Kindles have shipped. They have not: the route stays off for
-/// users until a 2024-or-newer Kindle has been tried (the hardware-day
-/// checklist on branch mtp-kindle). Until then MTP is on only when
-/// `METHOD_READER_MTP_HELPER` names a helper, which is how hardware day turns it
-/// on and how no user ever meets it.
-pub const MTP_SHIPPED: bool = false;
+/// What every test sandbox and developer tool sets `METHOD_READER_MTP_HELPER`
+/// to: a path nothing can create, so MTP is on but there is no helper to
+/// run. A development build keeps the helper beside the CLI and the window
+/// (target/debug, target/release), which would otherwise switch MTP on and
+/// let a Kindle left plugged in leak into a test's answer or a picture.
+pub const MTP_HELPER_GUARD: &str = "/dev/null/method-reader-mtp-guard";
 
 /// How long `list --kindles` may take. It reads USB descriptors and opens
 /// nothing; three seconds is for a slow system, and keeps the two-second
@@ -37,10 +37,35 @@ pub const MTP_LIST_TIMEOUT: Duration = Duration::from_secs(3);
 /// How long one copy may take, all told: a ceiling, not an estimate.
 pub const MTP_PUT_TIMEOUT: Duration = Duration::from_secs(10 * 60);
 
-/// Whether the engine looks for MTP Kindles at all: when they have shipped,
-/// or when `METHOD_READER_MTP_HELPER` is set (hardware day, and the tests).
-pub fn mtp_enabled(env: &dyn Fn(&str) -> Option<String>) -> bool {
-    MTP_SHIPPED || env("METHOD_READER_MTP_HELPER").is_some_and(|v| !v.trim().is_empty())
+/// Whether the engine looks for MTP Kindles at all: when a helper ships
+/// beside the running program (the Mac app carries one in Contents/MacOS;
+/// a Kindle tried on 2026-10-29), or when `METHOD_READER_MTP_HELPER` names
+/// one (a developer's own helper, and the test guard). The dev checkout's
+/// release folder never switches it on by itself.
+pub fn mtp_enabled(loc: &HelperLocation) -> bool {
+    (loc.env)("METHOD_READER_MTP_HELPER").is_some_and(|v| !v.trim().is_empty())
+        || helper_beside(loc).is_some()
+}
+
+/// The helper beside the running program, if there is one.
+fn helper_beside(loc: &HelperLocation) -> Option<String> {
+    let file = format!(
+        "{MTP_HELPER_NAME}{}",
+        if loc.platform == Platform::Win32 {
+            ".exe"
+        } else {
+            ""
+        }
+    );
+    let exec = loc.exec_path.to_string_lossy();
+    let beside = if loc.platform == Platform::Win32 {
+        let dir = sp_fsutil::nodepath::win32::dirname(&exec);
+        sp_fsutil::nodepath::win32::join(&[&dir, &file])
+    } else {
+        let dir = sp_fsutil::nodepath::posix::dirname(&exec);
+        sp_fsutil::nodepath::posix::join(&[&dir, &file])
+    };
+    (loc.exists)(&beside).then_some(beside)
 }
 
 /// Where to look for the helper.
@@ -116,18 +141,7 @@ pub fn mtp_helper_path(loc: &HelperLocation) -> Option<String> {
     if !over.is_empty() {
         return (loc.exists)(over).then(|| over.to_string());
     }
-    let exec = loc.exec_path.to_string_lossy();
-    let dir = if loc.platform == Platform::Win32 {
-        sp_fsutil::nodepath::win32::dirname(&exec)
-    } else {
-        sp_fsutil::nodepath::posix::dirname(&exec)
-    };
-    let beside = if loc.platform == Platform::Win32 {
-        sp_fsutil::nodepath::win32::join(&[&dir, &file])
-    } else {
-        sp_fsutil::nodepath::posix::join(&[&dir, &file])
-    };
-    if (loc.exists)(&beside) {
+    if let Some(beside) = helper_beside(loc) {
         return Some(beside);
     }
     let dev = match &loc.dev_target_dir {
