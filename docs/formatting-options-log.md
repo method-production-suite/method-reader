@@ -800,6 +800,24 @@ and the suite will say so if you forget.
   watermark recurrence threshold as advanced only.
 - **Code:** `rust/crates/sp-parser/src/classify.rs`, `rust/crates/sp-parser/src/boilerplate.rs`.
 
+### 9h. Rotated text dropped (always on; 2026-10-29)
+- **What:** scripts sent out to read often carry the reader's name as a
+  watermark, printed large and diagonally across every page. The
+  recurrence layer above does remove it, but only after classification, so
+  wherever it landed between a cue and its lines it had already broken the
+  speech: lines split mid-sentence, a stray "NAME (CONT'D)", and cues and
+  parentheticals left without their speech. Two real scripts carried one
+  (one item a page, about 52 degrees). Extraction now drops any text item
+  whose baseline is turned more than 2 degrees, before the page is read.
+  A screenplay's own text is never rotated. Slanted text (a faked italic
+  shears; its baseline stays level) is kept, and so is a mirrored page
+  (180 degrees).
+- **Corpus diff:** the two watermarked scripts of 15: split speeches whole
+  again, the stray cues gone, speeches restored to their cues. Nothing
+  else moved; `cargo xtask audit-corpus` finds nothing left in either.
+- **Default:** always on; not an option (pure artifact fix).
+- **Code:** `rust/crates/sp-parser/src/extract.rs` (`is_rotated`).
+
 ### 10. Final Draft double-print dedup
 - **What:** FD double-prints (MORE)/(CONT'D) furniture at identical
   coordinates with a zero-width item between copies → text doubled
@@ -946,8 +964,11 @@ and the suite will say so if you forget.
   speaker, and the cue, left with no speech, was demoted too. Straight
   after a cue, a parenthetical is now accepted up to the cue band's edge
   (50%); the bracketed text, which no cue can match, is the signal there.
-  Mid-speech the 40% limit holds. Corpus diff: two speeches in one script,
-  nothing else.
+  Corpus diff: two speeches in one script, nothing else. The same script
+  then showed a mid-speech "(pause)" at 41% (found by `cargo xtask
+  audit-corpus`), so the wider band now holds anywhere inside a speech, not
+  only straight after the cue: a line wholly in brackets has already been
+  refused by the cue rule. One more spot moved, nothing else.
 - **Code:** `rust/crates/sp-parser/src/group.rs` (`continues_open_parenthetical`),
   `rust/crates/sp-parser/src/classify.rs` (priority 6).
 

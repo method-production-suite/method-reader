@@ -205,8 +205,23 @@ mod a_parenthetical_deeper_than_its_cue {
     }
 
     #[test]
+    fn so_does_one_in_the_middle_of_a_speech() {
+        // The same script prints a mid-speech "(pause)" at 41%, past the old
+        // mid-speech limit of 40%; the line after it lost its speaker.
+        let lines = vec![
+            line("NOOR", 41.0, 200.0, 1),
+            line("A little.", 29.0, 188.0, 1),
+            line("(pause)", 41.0, 176.0, 1),
+            line("Then why stay?", 29.0, 164.0, 1),
+        ];
+        let sp = parse_lines(&lines, &[]);
+        let kinds: Vec<ElementType> = sp.elements.iter().map(|e| e.kind).collect();
+        assert_eq!(kinds, vec![Character, Dialogue, Parenthetical, Dialogue]);
+    }
+
+    #[test]
     fn a_bracketed_line_outside_a_speech_is_still_action() {
-        // The wider band is only for a line that follows a cue.
+        // The wider band is only for a line inside a speech.
         let lines = vec![
             line("The radio crackles.", 10.0, 200.0, 1),
             line("(whispering)", 43.0, 176.0, 1),

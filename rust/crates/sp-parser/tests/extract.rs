@@ -1243,6 +1243,56 @@ mod decode_images_progress {
     }
 }
 
+// ── rotated text is never the script ─────────────────────────────────
+//
+// Scripts sent out to read often carry the reader's name as a watermark,
+// printed large and diagonally across every page. A real one (one item a
+// page, rotated about 52 degrees) landed between cues and their lines, so
+// a parenthetical after it fell to description. A screenplay's own text is
+// never rotated; slanted text (a faked italic shears, it does not rotate)
+// still is the script, and stays.
+mod rotated_text {
+    use super::*;
+
+    fn with_item(text: &str, transform: Vec<f64>) -> (Vec<String>, Vec<String>) {
+        let base = common::facts("screenplay");
+        let mut stamped = base.clone();
+        let page = &mut stamped.pages[1];
+        let mut item = page.items[0].clone();
+        item.str = text.to_string();
+        item.transform = transform;
+        page.items.push(item);
+        let lines = |f| -> Vec<String> {
+            extract_text(f, None, None)
+                .text
+                .lines
+                .into_iter()
+                .map(|l| l.text)
+                .collect()
+        };
+        (lines(&base), lines(&stamped))
+    }
+
+    #[test]
+    fn a_diagonal_watermark_is_dropped_before_the_page_is_read() {
+        let (base, stamped) = with_item("READER NAME", vec![68.3, -87.5, 87.5, 68.3, 68.9, 400.0]);
+        assert_eq!(stamped, base);
+    }
+
+    #[test]
+    fn sideways_margin_text_is_dropped_too() {
+        let (base, stamped) = with_item("DRAFT", vec![0.0, 12.0, -12.0, 0.0, 20.0, 400.0]);
+        assert_eq!(stamped, base);
+    }
+
+    #[test]
+    fn slanted_text_is_kept() {
+        let (base, stamped) = with_item("Slanted aside.", vec![12.0, 0.0, 2.5, 12.0, 108.0, 90.0]);
+        assert_eq!(stamped.len(), base.len() + 1);
+        assert!(stamped.iter().any(|l| l.contains("Slanted aside.")));
+    }
+}
+
 // ── dual dialogue: the boundary must refine before it judges ─────────
 //
 // Geometry lifted from a real script (page width 612): the right column's
