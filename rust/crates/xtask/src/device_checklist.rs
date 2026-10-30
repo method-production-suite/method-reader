@@ -218,9 +218,10 @@ pub fn render(manifest: &[Row]) -> String {
             "",
             "The same book as an AZW3 that Method Reader writes itself, with no",
             "Calibre: what a Kindle gets over USB wherever KFX is not set up. It",
-            "has passed Calibre's own reader in the tests and has never been on a",
-            "Kindle, so these come first on a device pass. The command that builds",
-            "it is in the #20 entry above.",
+            "has passed Calibre's own reader in the tests, and a newer Kindle",
+            "opened Field Station's on 2026-10-29; the proof sheet, with its",
+            "pictures and cover, has not been on one yet, so these come first on",
+            "a device pass. The command that builds it is in the #20 entry above.",
             "",
         ] {
             push(line);
