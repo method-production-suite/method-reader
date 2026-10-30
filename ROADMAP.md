@@ -27,6 +27,12 @@ Release go-aheads:
   The zip fix (9.0.5) rides in it: 1.0.0 reads zips only with the one
   reader the advisory does not set against another, so there is no
   1.0.1 (the owner, 2026-10-29).
+- **Before that release, on the machine whose answers they are:** run
+  `cargo xtask parity --accept route-help route-help-json` (from `rust/`,
+  with that checkout's `CARGO_TARGET_DIR`). Those two rows of the
+  screenplay fixture are frozen on another machine, so this Mac skips
+  them, and they still hold the old save-kindle line that called the
+  AZW3 beta (#109). Read each diff first: only that wording may change.
 
 Built on the recommendation (reversible):
 
@@ -79,7 +85,7 @@ Tests that need a device (hands only; everything else is automated):
      the Kindle, its one storage and its folders, copied Field Station's
      AZW3 over, and the Kindle opened it with every check passing
      (registry #20).
-   - **A Kindle that mounts as a drive:** Method Reader's own AZW3 (beta)
+   - **A Kindle that mounts as a drive:** Method Reader's own AZW3
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
      either way (issues #26, #27, #28).

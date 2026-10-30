@@ -63,7 +63,7 @@ Options:
   --author <text>        override detected author
   --force                convert even if it doesn't look like a screenplay
   --mobi                 also write a .mobi (for the oldest Kindles over USB)
-  --azw3 <file>          also write an AZW3 for Kindles over USB (beta),
+  --azw3 <file>          also write an AZW3 for Kindles over USB,
                          made by Method Reader from the EPUB, nothing else needed
   --preview-html <file>  also write the script as one self-contained HTML file
   --preview-inline       put that same HTML in the --json result (for the app)
@@ -175,7 +175,7 @@ Usage:
 export never sends: it produces (or reuses) the right file, and
 `method-reader send` moves it. kindle is a KFX where Calibre, its KFX Output
 plugin and Kindle Previewer are all installed, and otherwise an AZW3
-(beta) that Method Reader writes itself, with nothing else needed. kfx, azw3
+that Method Reader writes itself, with nothing else needed. kfx, azw3
 and mobi each make only that file: kfx refuses when this computer lacks
 its tools, and mobi, for the oldest Kindles, is rebuilt from the
 .fountain. fountain hands over the script itself; the copy --out writes leaves out Method Reader's own [[fmt: ...]]
@@ -193,7 +193,7 @@ way as fdx, and leaves the same things behind.
 
 Options:
   --for <type>           which file you want (default epub): epub, kindle,
-                         kfx, azw3 (beta), mobi, fountain, fdx (beta) or
+                         kfx, azw3, mobi, fountain, fdx (beta) or
                          osf (beta)
   --fountain <file>      the script's .fountain: required by mobi, fountain,
                          fdx and osf
@@ -379,8 +379,7 @@ Keys:
                          Mac, with Apple Mail as the default mail app). A
                          book over 50 MB is refused: Amazon drops it
   save-epub              save a copy of the EPUB at --out
-  save-kindle            save a Kindle file (KFX, or an AZW3 that is beta)
-                         at --out
+  save-kindle            save a Kindle file (KFX or AZW3) at --out
   kindle-email-setup     open Amazon's settings page, where your Kindle's
                          email address and the approved senders are. Takes
                          no book, and is not remembered

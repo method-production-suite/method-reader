@@ -110,7 +110,7 @@ apps.
 
 | Device | How it's sent | Status |
 | --- | --- | --- |
-| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Method Reader makes itself (beta); MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Method Reader's own AZW3 not yet tried on a Kindle |
+| Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Method Reader makes itself; MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Method Reader's own AZW3 opened on a newer Kindle, not yet on one that mounts as a drive |
 | Any Kindle, by email | EPUB to your `@kindle.com` address | Verified |
 | Newer Kindles that don't appear as a drive | Email, or Amazon's Send to Kindle app or web page | Use email delivery |
 | iPhone, iPad, Mac (Apple Books) | Added to Books on a Mac, then synced through iCloud | Verified |
@@ -119,8 +119,8 @@ apps.
 | reMarkable | The EPUB over its USB web interface | Built and tested in code, never on a real device |
 
 **What each Kindle file needs.** Copying to a Kindle over USB needs nothing
-installed: Method Reader writes the AZW3 itself (beta: Calibre's own reader opens
-every one in our tests, and it has not yet been tried on a Kindle). KFX is
+installed: Method Reader writes the AZW3 itself (Calibre's own reader opens
+every one in our tests, and a newer Kindle has opened one). KFX is
 optional, and looks better: it needs three free tools on your computer
 (Calibre, Amazon's Kindle Previewer and the KFX Output plugin), and Other
 ways, on the result screen, lists what is missing and installs the plugin for

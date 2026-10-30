@@ -88,8 +88,8 @@ The crates, in the order a conversion passes through them (each one's
   dependency-free USB sideload).
 - `sp-azw3`: the EPUB's own bytes → AZW3 (KF8), with no Calibre: a port
   of Calibre's KF8 writer (credited in each file and
-  THIRD-PARTY-NOTICES.md), reusing sp-mobi's PalmDB container. BETA until
-  a Kindle has opened one (registry #20). It reads the EPUB back out of its
+  THIRD-PARTY-NOTICES.md), reusing sp-mobi's PalmDB container. A Kindle
+  opened one on 2026-10-29 and the beta label is gone (registry #20). It reads the EPUB back out of its
   zip rather than rendering tokens, so the AZW3 can never disagree with the
   book; tests/common/kf8_reader.rs reads it back structurally, and
   tests/readers.rs through Calibre's reader.
@@ -176,7 +176,7 @@ The crates, in the order a conversion passes through them (each one's
   `rust/crates/sp-engine/src/export/calibre.rs`) beats AZW3 whenever that
   toolchain is present. The renderer follows the FORMAT, not the delivery
   route; registry §8b has the full verdict. **2026-10-10: everywhere else
-  the AZW3 is Method Reader's own** (sp-azw3, beta, registry #20), even where
+  the AZW3 is Method Reader's own** (sp-azw3, registry #20), even where
   Calibre is installed; Calibre is for KFX only. The engine's MOBI is the
   file for the oldest Kindles, asked for by name, never the ladder's answer.
 - **sp-pdf reproduces pdf.js, it does not improve on it.** The parser's

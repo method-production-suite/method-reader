@@ -2034,7 +2034,7 @@ engine needs to change.
 
 ## Kindle files
 
-### 20. Method Reader's own AZW3 (always on where KFX is not; beta; 2026-10-10)
+### 20. Method Reader's own AZW3 (always on where KFX is not; 2026-10-10; beta until 2026-10-29)
 - **What:** the Kindle file over USB, wherever the KFX toolchain is not
   ready, is an AZW3 (KF8) the engine writes itself from the EPUB, with no
   Calibre. The ladder is KFX when Calibre, the KFX Output plugin and Kindle
@@ -2050,8 +2050,14 @@ engine needs to change.
   Edition (2024, connects over MTP) opened Field Station's AZW3, copied
   into its documents folder by the MTP helper. It is in the library, it
   opens (a blank screen for a moment first), every cue stayed with its
-  speech on the pages read, and the contents menu lists the scenes. The
-  beta badge stays until the owner says otherwise.
+  speech on the pages read, and the contents menu lists the scenes.
+- **No longer beta (the owner, 2026-10-29):** after that verdict the owner
+  removed the label from Method Reader's own AZW3, and from nothing else.
+  The Save a file row and Copy to Kindle no longer carry the Beta badge
+  for it, the CLI help and the MCP tools no longer say "(beta)" beside it,
+  the export answer no longer says `"beta": true` for it, and the README,
+  the site and the docs no longer call it beta. The FDX, the OSF, pictures
+  in books, Eject on Windows and Linux and the MTP route keep theirs.
 - **Why:** the Kindle build was the slowest step in the app, because it
   started Calibre. Measured inside `bun test` on 2026-10-10 (Calibre 9.11.0,
   the recipe the ladder used, `ebook-convert` with the format guards):

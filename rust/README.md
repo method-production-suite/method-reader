@@ -24,7 +24,7 @@ rust/
     sp-fountain/        elements to Fountain; notes, slugs, the fountain-js tokenizer
     sp-epub/            tokens to EPUB3 and the preview
     sp-mobi/            tokens to MOBI 6, and the PalmDB container
-    sp-azw3/            the EPUB to AZW3 (KF8), ported from Calibre's writer (beta)
+    sp-azw3/            the EPUB to AZW3 (KF8), ported from Calibre's writer
     sp-fdx/             tokens to Final Draft (beta)
     sp-osf/             tokens to the Open Screenplay Format (beta)
     sp-fsutil/          atomic writes, file replacement, node:path's algorithms

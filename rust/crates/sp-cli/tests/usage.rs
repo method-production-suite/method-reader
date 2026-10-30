@@ -47,6 +47,30 @@ fn verb_of(name: &str) -> Option<&'static str> {
 /// TypeScript's line, the line now), each with its reason. The parity
 /// table's help rows were moved with `cargo xtask parity --accept`.
 const CHANGED_ON_PURPOSE: &[(&str, &str, &str)] = &[
+    // Method Reader's own AZW3 is no longer beta (the owner, 2026-10-29,
+    // after a Kindle opened one; PARITY.md, Decisions: "The AZW3 is not
+    // beta"): --azw3, the export help's kindle paragraph and --for list,
+    // and the route help's save-kindle line.
+    (
+        "USAGE",
+        "  --azw3 <file>          also write an AZW3 for Kindles over USB (beta),\n",
+        "  --azw3 <file>          also write an AZW3 for Kindles over USB,\n",
+    ),
+    (
+        "EXPORT_USAGE",
+        "otherwise an AZW3\n(beta) that ",
+        "otherwise an AZW3\nthat ",
+    ),
+    (
+        "EXPORT_USAGE",
+        "kfx, azw3 (beta), mobi,",
+        "kfx, azw3, mobi,",
+    ),
+    (
+        "ROUTE_USAGE",
+        "  save-kindle            save a Kindle file (KFX, or an AZW3 that is beta)\n                         at --out\n",
+        "  save-kindle            save a Kindle file (KFX or AZW3) at --out\n",
+    ),
     (
         "USAGE",
         "  --debug                also dump classified elements, and let pdf.js's\n                         internal warnings through to stderr",

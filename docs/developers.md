@@ -68,7 +68,7 @@ window's device requests and route reports. The options most people want:
 | `-o, --output <file>` | EPUB path (default `<input>.epub`; companions follow it) |
 | `--library` | write into the library instead of beside the input (see below) |
 | `--mobi` | also write a MOBI 6, for the oldest Kindles (text-only for now, see Pictures below) |
-| `--azw3 <file>` | also write an AZW3 for Kindles over USB, made by Method Reader from the EPUB with nothing else installed (beta) |
+| `--azw3 <file>` | also write an AZW3 for Kindles over USB, made by Method Reader from the EPUB with nothing else installed |
 | `--preview-html <file>` | also write the script as one self-contained HTML file |
 | `--fdx <file>` | also write the script as a Final Draft file (beta; see [Final Draft (FDX)](#final-draft-fdx-beta)) |
 | `--fountain <file>` / `--no-fountain` | where the intermediate `.fountain` goes, or skip it |
@@ -307,16 +307,16 @@ tablet, which accepts only PDF and EPUB. With several readers connected,
 `export --for` takes seven values:
 
 - `epub`: the EPUB itself (the default).
-- `kindle`: the Kindle file this computer makes: KFX where its tools are installed, and otherwise the AZW3 Method Reader writes itself (beta).
+- `kindle`: the Kindle file this computer makes: KFX where its tools are installed, and otherwise the AZW3 Method Reader writes itself.
 - `kfx`: a KFX file, and only that.
-- `azw3` (beta): Method Reader's own AZW3, made from the EPUB with nothing else installed.
+- `azw3`: Method Reader's own AZW3, made from the EPUB with nothing else installed.
 - `mobi`: the engine's own MOBI, for the oldest Kindles, and only that; the EPUB is left as it is. It needs `--fountain`.
 - `fountain`: the script, for a screenwriting app. It needs `--fountain`, and that file must end in `.fountain`. With `--out`, the copy written there leaves out Method Reader's own `[[fmt: ...]]` and `[[img: ...]]` notes and keeps every other line as it is; the `.fountain` beside the book keeps them, because rebuilds read them, and an `--out` naming that file is refused while it carries one. Without `--out`, the answer names the `.fountain` beside the book, notes and all.
 - `fdx` (beta): a Final Draft file rebuilt from the `.fountain` (see above).
 
 `kfx` refuses, with an error, when this computer lacks the tools to make it;
 `mobi` and `fountain` refuse without `--fountain`. The `--json` answer says
-`"beta": true` for a file Method Reader still calls beta (the AZW3 and the FDX).
+`"beta": true` for a file Method Reader still calls beta (the FDX and the OSF).
 `export` never sends. It makes or reuses the file, and `send` moves it.
 
 `eject <volume>` (beta on Windows and Linux) takes the full path of a reader that `devices` lists right
@@ -343,7 +343,7 @@ A Kindle gets its best rendering from KFX, which needs Calibre, Amazon's
 Kindle Previewer and the KFX Output plugin inside Calibre. `kfx-status` says
 which are installed; `kfx-install` installs the plugin from Calibre's own
 plugin index. Amazon makes no Kindle Previewer for Linux. Without all three,
-a Kindle gets the AZW3 Method Reader writes itself (beta), which needs nothing
+a Kindle gets the AZW3 Method Reader writes itself, which needs nothing
 installed. KFX is optional; email and Send to Kindle need no tools at all and
 get Amazon's own conversion.
 
@@ -387,7 +387,7 @@ rust/crates/
   sp-epub             tokens to EPUB3 (options-driven CSS) and the preview
   sp-mobi             tokens to MOBI 6, and the PalmDB container
   sp-azw3             the EPUB to AZW3 (KF8), ported from Calibre's KF8
-                      writer (beta)
+                      writer
   sp-fdx              tokens to Final Draft (.fdx) (beta)
   sp-osf              tokens to the Open Screenplay Format (.osf) (beta)
   sp-fsutil           write-then-rename, the flushed replace, path rules

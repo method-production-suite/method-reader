@@ -1,6 +1,7 @@
 //! Method Reader's own AZW3 (KF8) writer: the EPUB in, a Kindle book out, with
-//! no Calibre. BETA: tried in our tests and in Calibre's reader, not yet on
-//! a Kindle (docs/formatting-options-log.md, the in-house AZW3 entry).
+//! no Calibre. Tried in our tests, in Calibre's reader and, on 2026-10-29, on
+//! a Kindle, after which it stopped being beta (docs/formatting-options-log.md,
+//! the in-house AZW3 entry, registry #20).
 //!
 //! Ported from Calibre 9.11.0's src/calibre/ebooks/mobi/writer8/ (main.py's
 //! text records, FDST, indices and guide; mobi.py's record 0 and record

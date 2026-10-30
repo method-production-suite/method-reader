@@ -333,7 +333,8 @@ fn kindle_rung_neither_calibre_nor_kfx_builds_our_own_azw3_from_the_epub() {
     opts.options_json = Some(r#"{"showSceneNumbers":true}"#.into());
     let result = run(&opts, &probes(false, NO_TOOLCHAIN)).expect("exported");
     assert_eq!(result.extension, "azw3");
-    assert!(result.label.contains("(beta)"), "{}", result.label);
+    assert!(!result.label.contains("beta"), "{}", result.label);
+    assert!(!result.beta);
     assert_eq!(result.path, c.join("Script.azw3"));
     assert_eq!(mobi_header_version(&read(&result.path)), 8);
     assert_eq!(result.stages, ["building the AZW3 for Kindle…"]);
@@ -607,11 +608,12 @@ fn kfx_ready_and_no_kfx_yet_kfx_not_fresh_built_by_calibre_and_nothing_is_built(
 }
 
 #[test]
-fn an_azw3_answer_says_it_is_beta_so_the_window_can_mark_the_file_a_kfx_answer_does_not() {
+fn neither_an_azw3_nor_a_kfx_answer_says_beta_since_a_kindle_opened_our_azw3() {
     let c = Case::new();
     let azw3 = run(&checking(c.opts("kindle")), &never(false, NO_TOOLCHAIN)).expect("checked");
-    assert!(azw3.beta);
-    assert_eq!(azw3.to_json()["beta"], json!(true));
+    assert_eq!(azw3.extension, "azw3");
+    assert!(!azw3.beta);
+    assert!(azw3.to_json().get("beta").is_none());
     let kfx = run(&checking(c.opts("kindle")), &never(true, KFX_READY)).expect("checked");
     assert!(kfx.to_json().get("beta").is_none());
     let epub = run(&checking(c.opts("epub")), &plain()).expect("checked");

@@ -323,7 +323,7 @@ app's code; the engine's `rust/crates/sp-device/` and `rust/crates/sp-engine/src
 - **Kindle MSC** via volume signature; AZW3 (ebook-convert), KFX (when the
   Calibre+plugin+Previewer toolchain exists), engine MOBI as fallback.
   **Since 2026-10-10** the AZW3 is Method Reader's own (`rust/crates/sp-azw3/`, a port of
-  Calibre's KF8 writer, beta) and is made on every machine with no Calibre;
+  Calibre's KF8 writer) and is made on every machine with no Calibre;
   Calibre is needed for KFX alone, and the MOBI is asked for by name.
 - **Kobo** via `KOBOeReader` volume, EPUB with KEPUB choice on the send
   block; **tolino** via `Books/` folder copy; **reMarkable** via the USB web
