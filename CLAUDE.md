@@ -118,7 +118,8 @@ The crates, in the order a conversion passes through them (each one's
 - `sp-device` + `sp-fsutil` + `sp-mtp`: device detection, USB copy, eject,
   reveal, the reMarkable client, the Kindle ladder's device half; atomic
   writes and node:path's algorithms (`sp-fsutil/src/nodepath.rs`, the one
-  copy; sp-engine re-exports it); the MTP helper (off until hardware day).
+  copy; sp-engine re-exports it); the MTP helper (beta; ships in the Mac
+  app beside the window, which is what switches the MTP route on).
 - `sp-cli`: the `method-reader` binary (and the `screepub` alias): the same flags, verbs and `--json`
   contract the TypeScript CLI had.
 - `sp-app`: the window, drawn with egui, screen-reader accessible through

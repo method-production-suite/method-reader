@@ -112,7 +112,7 @@ apps.
 | --- | --- | --- |
 | Kindle that mounts as a drive | Over USB: KFX when your computer has the tools for it, otherwise an AZW3 Method Reader makes itself; MOBI for the oldest Kindles | KFX verified on hardware, firmware 5.19.2; Method Reader's own AZW3 opened on a newer Kindle, not yet on one that mounts as a drive |
 | Any Kindle, by email | EPUB to your `@kindle.com` address | Verified |
-| Newer Kindles that don't appear as a drive | Email, or Amazon's Send to Kindle app or web page | Use email delivery |
+| Newer Kindles (2024 and later) that don't appear as a drive | Over USB from the Mac app (beta), the same book a cable gets; from Windows and Linux, email or Amazon's Send to Kindle app or web page | Mac: copied to a 2024 Paperwhite, which opened the AZW3 and the KFX. Windows and Linux: use email delivery |
 | iPhone, iPad, Mac (Apple Books) | Added to Books on a Mac, then synced through iCloud | Verified |
 | Kobo | EPUB (or KEPUB) over USB | Built and tested in code, never on a real device |
 | tolino | EPUB into the device's `Books` folder | Built and tested in code, never on a real device |
@@ -131,8 +131,12 @@ Kindle, needs no tools at all and already gets Amazon's own best layout.
 emailed to your Kindle, or copied over USB as KFX, keeps a scene heading and a
 character name on the same page as the line that follows. AZW3 and MOBI can
 strand one at the foot of a page, and so can Apple Books.
-A newer Kindle that never shows up as a drive speaks a protocol your computer
-does not mount: see [Emailing scripts to your Kindle](docs/send-to-kindle.md).
+A newer Kindle (2024 and later) never shows up as a drive: it speaks MTP, the
+protocol phones and cameras use, which your computer does not mount. The Mac
+app copies to one over USB anyway (beta: tried on one Kindle so far); while it
+copies, macOS's own photo import is paused, and afterwards it is safe to
+unplug. From Windows or Linux, email it instead: see
+[Emailing scripts to your Kindle](docs/send-to-kindle.md).
 
 **Own a Kobo, a tolino or a reMarkable?** A five-minute report either way is
 the most useful thing you can send. On the result screen, that reader's

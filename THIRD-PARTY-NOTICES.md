@@ -12,9 +12,9 @@ MIT or Apache-2.0. All three licence files travel inside each app bundle.
 
 ## What ships, and what it carries
 
-Method Reader is written in Rust, as one Cargo workspace (`rust/`). Two programs
-are built from it for download, and everything third-party that either one
-carries is listed in this file.
+Method Reader is written in Rust, as one Cargo workspace (`rust/`). Three
+programs are built from it for download, and everything third-party that any
+of them carries is listed in this file.
 
 - **The command line**, `method-reader` (crate `sp-cli`), ships as the
   command-line archives for macOS (Apple silicon), Linux (x64 and arm64) and
@@ -31,11 +31,16 @@ carries is listed in this file.
   blitz and stylo for the preview, rustls and ring for HTTPS, and the rest
   marked "app" in the tables) and the two typefaces below. This file travels
   inside each bundle beside `LICENSE`.
+- **The MTP helper**, `method-reader-mtp` (crate `sp-mtp`, beta), ships
+  inside the Mac app only, in `Contents/MacOS` beside the window, which runs
+  it to copy a book to a Kindle that connects over MTP. It is a separate
+  program and carries none of the engine: its crates (mtp-rs and nusb for
+  MTP over USB, and what they use) are marked "app" with the platform macOS
+  in the tables.
 - **The device-request service** (crate `sp-device-requests`) is a
   Cloudflare Worker that Method Reader runs for itself. It is not in any download,
   so its crates are not listed here.
-- **Developer tools** (`xtask`, `sp-release`) and the beta MTP helper
-  (`sp-mtp`, `method-reader-mtp`, not yet shipped) are not in any download either.
+- **Developer tools** (`xtask`, `sp-release`) are not in any download either.
 
 The installers wrap the window in other people's packaging programs, which
 are not part of Method Reader: the Windows installer is made with NSIS, and the
@@ -243,18 +248,22 @@ with the full GPL-3 text and their own copy of this notice beside it.
 
 ## The Rust crates that ship
 
-Every third-party crate built into `method-reader` or `method-reader-app`, on any
-platform: 453 crates (62 of them in the command line; all of them
-in the window, which contains the command line's engine). The list comes from
-Cargo itself, at the versions `rust/Cargo.lock` pins: `cargo tree --locked -p
-sp-cli` and `-p sp-app`, each with `-e normal,no-proc-macro`, for each
-shipped target (`aarch64-apple-darwin`, `x86_64-pc-windows-msvc`,
-`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`), with each crate's
+Every third-party crate built into `method-reader`, `method-reader-app` or
+`method-reader-mtp`, on any platform: 463 crates (62 of them in the command
+line; 453 in the window, which contains the command line's engine; 30 in the
+MTP helper, 10 of them in nothing else). The list comes from Cargo itself, at
+the versions `rust/Cargo.lock` pins: `cargo tree --locked -p sp-cli` and `-p
+sp-app`, each with `-e normal,no-proc-macro`, for each shipped target
+(`aarch64-apple-darwin`, `x86_64-pc-windows-msvc`,
+`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`), and `-p sp-mtp`
+for `aarch64-apple-darwin` and `x86_64-apple-darwin`, with each crate's
 version, licence and authors read from `cargo metadata --format-version 1
 --locked --filter-platform` for the same targets. Development and test
-dependencies are left out. So are the 34 procedural-macro crates (and
-what only they use) and every build script and build-only dependency: they
-run while compiling and are not part of the program that ships.
+dependencies are left out (among them notify, CC0-1.0, which only the
+helper's tests use, through mtp-rs's virtual device). So are the
+procedural-macro crates (and what only they use) and every build script and
+build-only dependency: they run while compiling and are not part of the
+program that ships.
 
 "Platforms" says where a crate is built in: "all", or the systems named
 (macOS is Apple silicon only; on Linux the command line is built for x64
@@ -284,7 +293,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 <https://github.com/DioxusLabs/taffy> at revision
 7d33901cc383489d9945ae796a1ceed0a935ef66, which the blitz crates name. Their rows say so.
 
-### MIT (386)
+### MIT (396)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
@@ -350,6 +359,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | color | 0.3.3 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | color_quant | 1.1.0 | MIT | app | all | Copyright (c) 2016 PistonDevelopers |
 | concurrent-queue | 2.5.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, Taiki Endo, John Nunley) |
+| core-foundation | 0.10.1 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-foundation | 0.9.4 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-foundation-sys | 0.8.7 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-graphics | 0.23.2 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
@@ -408,12 +418,16 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | foreign-types | 0.5.0 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2017 The foreign-types Developers |
 | foreign-types-shared | 0.3.1 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2017 The foreign-types Developers |
 | form_urlencoded | 1.2.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2013-2016 The rust-url developers |
+| futures | 0.3.34 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | futures-channel | 0.3.34 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | futures-core | 0.3.34 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
+| futures-executor | 0.3.34 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | futures-io | 0.3.34 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | futures-lite | 2.6.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
-| futures-task | 0.3.34 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
-| futures-util | 0.3.34 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
+| futures-sink | 0.3.34 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
+| futures-task | 0.3.34 | MIT OR Apache-2.0 | app | Linux, macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
+| futures-timer | 3.0.4 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2014 Alex Crichton |
+| futures-util | 0.3.34 | MIT OR Apache-2.0 | app | Linux, macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | generic-array | 0.14.7 | MIT | CLI and app | all | Copyright (c) 2015 Bartłomiej Kamiński |
 | getrandom | 0.2.17 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018-2024 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
 | getrandom | 0.3.4 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018-2025 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
@@ -441,6 +455,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | image-webp | 0.2.4 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | imagesize | 0.15.0 | MIT | app | all | Copyright (c) 2017 Maiddog |
 | indexmap | 2.14.2 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2016--2017 (no holder named, and its Cargo.toml names no authors) |
+| io-kit-sys | 0.5.0 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2017-2018 Junji Takakura |
 | itertools | 0.14.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 (no holder named; authors: bluss) |
 | itertools | 0.15.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 (no holder named; authors: bluss) |
 | itoa | 1.0.18 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: David Tolnay) |
@@ -455,6 +470,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | linux-raw-sys | 0.4.15 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Dan Gohman) |
 | lock_api | 0.4.14 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 The Rust Project Developers |
 | log | 0.4.34 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
+| mach2 | 0.5.0 | BSD-2-Clause OR MIT OR Apache-2.0 | app | macOS | Copyright (c) 2019 Nick Fitzgerald, 2021 Yuki Okushi |
 | mach2 | 0.6.0 | BSD-2-Clause OR MIT OR Apache-2.0 | app | macOS | Copyright (c) 2019 Nick Fitzgerald, 2021 Yuki Okushi |
 | markup5ever | 0.40.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2014 The html5ever Project Developers |
 | memchr | 2.8.3 | Unlicense OR MIT | CLI and app | all | Copyright (c) 2015 Andrew Gallant |
@@ -463,6 +479,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | minisign-verify | 0.2.5 | MIT | app | all | Copyright (c) 2019-2025 Frank Denis; Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation |
 | miniz_oxide | 0.8.9 | MIT OR Zlib OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
 | miniz_oxide | 0.9.1 | MIT OR Zlib OR Apache-2.0 | app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
+| mtp-rs | 0.33.0 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2026 David Veszelovszki |
 | muda | 0.21.2 | Apache-2.0 OR MIT | app | macOS | Copyright (c) 2022-2022 Tauri Programme within The Commons Conservancy |
 | naga | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
 | naga-types | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
@@ -473,6 +490,8 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | num-integer | 0.1.47 | MIT OR Apache-2.0 | app | all | Copyright (c) 2014 The Rust Project Developers |
 | num-traits | 0.2.19 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
 | num_cpus | 1.17.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015-2025 Sean McArthur |
+| num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 | app | macOS | Copyright (c) 2018, Daniel Wagner-Hall |
+| nusb | 0.2.7 | Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Kevin Mehall) |
 | objc-sys | 0.3.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2 | 0.5.3 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
 | objc2 | 0.6.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
@@ -561,7 +580,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | simplecss | 0.2.2 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Reizner Evgeniy |
 | siphasher | 1.0.4 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Frank Denis) |
 | skrifa | 0.44.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
-| slab | 0.4.12 | MIT | app | Linux | Copyright (c) 2019 Carl Lerche |
+| slab | 0.4.12 | MIT | app | Linux, macOS | Copyright (c) 2019 Carl Lerche |
 | smallbitvec | 2.6.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2017 Matt Brubeck |
 | smallvec | 1.16.3 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018 The Servo Project Developers |
 | smithay-client-toolkit | 0.19.2 | MIT | app | Linux | Copyright (c) 2018 Victor Berger |

@@ -13,9 +13,9 @@
 //!   and taking a book off it; docs/device-library.md).
 //!   Each returns a serde value whose JSON is the TypeScript's field for
 //!   field, or a [`error::CliError`] with the same code and words.
-//! - BETA and off until hardware day: [`mtp`] (Kindles that connect over
-//!   MTP, through the `method-reader-mtp` helper in sp-mtp) and
-//!   [`camera_import`] (macOS's ptpcamerad, paused for one copy).
+//! - BETA, on where the helper ships (the Mac app): [`mtp`] (Kindles that
+//!   connect over MTP, through the `method-reader-mtp` helper in sp-mtp)
+//!   and [`camera_import`] (macOS's ptpcamerad, paused for one copy).
 //!
 //! Every child process goes through [`process::Runner`] or
 //! [`process::Opener`] and every HTTP request through

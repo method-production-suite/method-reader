@@ -159,19 +159,20 @@ move too.
 | tests/workflow-shell.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (3): over every workflow, a bare `"${A[@]}"` only of an array its step fills with a literal list and never empties; the guarded spelling under the real /bin/bash, empty and not. release_steps.rs runs the draft and draft-check steps under that bash too |
 | tests/workflows.test.ts | 3 | xtask | done | xtask/tests/workflows.rs (with workflow-shell, weekly-toolchain and the pin rule: 15 in all): every workflow parsed, every needs: resolves, no Swift; added: no workflow runs bun, node or npm, every action pinned to a full SHA with its version comment and one pin per action, least-privilege permissions, bash on every step that can reach Windows, and tap-freshness watching the tap and the manifest |
 
-### Branch mtp-kindle (BETA, not shipped)
+### Branch mtp-kindle (BETA, in the Mac app from 1.1.0)
 
 Merged into the port by sp-device's helper on 2026-10-11 and kept off for
-users until hardware day (see Decisions). These files exist only on branch
-`mtp-kindle`, so they are not in the count above.
+users until a Kindle had run it (see Decisions). A 2024 Paperwhite did on
+2026-10-29, and the Mac app carries the helper from 1.1.0. These files exist
+only on branch `mtp-kindle`, so they are not in the count above.
 
 | TypeScript or Rust | tests | Rust owner | status | notes |
 |---|---:|---|---|---|
 | native/mtp-helper (cargo tests) | 47 | sp-mtp | done | moved to rust/crates/sp-mtp unchanged but for the crate name; 40 unit tests and tests/virtual_device.rs (7, mtp-rs's in-memory device) |
-| tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is off unless SCREEPUB_MTP_HELPER names a helper, and every runner is injected |
+| tests/device-mtp.test.ts | 23 | sp-device | done | sp-device/tests/device_mtp.rs; the listing block is in device_list.rs. The `.env.test` guard block retires: MTP is on only where the helper sits beside the running program or METHOD_READER_MTP_HELPER names one, every runner is injected, and every test sets METHOD_READER_MTP_HELPER to the guard |
 | tests/camera-import.test.ts | 19 | sp-device | done | sp-device/tests/camera_import.rs; "the marker sits under the /dev/null config guard" moves to sp-engine, which owns the settings path the marker sits beside |
-| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | partial | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs, and the two end-to-end runs in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli). Left: the route list (3), because sp-engine's routes do not list an MTP Kindle yet. MTP is off until hardware day (Decisions), and those three are written when the route is switched on |
-| tests/mtp-window-rules.test.ts | 7 | sp-app | done | tests/mtp_window_rules.rs (and send-panel-ui's "a Kindle over MTP"); MTP stays off in the engine |
+| tests/cli-mtp-send.test.ts | 13 | sp-device + sp-engine + sp-cli | done | "send to an MTP Kindle" (8) is in sp-device/tests/commands.rs, and the two end-to-end runs in sp-cli/tests/cli_mtp_send.rs (stand-in helper, launchctl and pkill; they found the CLI never wired the camera-import pause or its recovery, fixed in sp-cli). The route list (3) is in sp-engine/tests/routes.rs, written when the route was switched on (2026-10-29), with one more: a Kindle that mounts says neither transport nor copy note |
+| tests/mtp-window-rules.test.ts | 7 | sp-app | done | tests/mtp_window_rules.rs (and send-panel-ui's "a Kindle over MTP"), and one that feeds the window the engine's real route answer |
 
 ### Test helpers: tests/helpers/
 
@@ -842,11 +843,18 @@ names the check it affects.
   their words: "Unable to connect. Is the computer able to access the url?"
   and "The operation timed out." (device_remarkable.rs). Any other transport
   failure also reads as the first; Bun has a few rarer sentences.
-- **MTP stays off (sp-device, 2026-10-11).** `sp_device::mtp::MTP_SHIPPED` is
-  false. Until hardware day the engine looks for MTP Kindles only when
-  SCREEPUB_MTP_HELPER names a helper, which is how hardware day turns it on
-  and why no user meets it. That replaces mtp-kindle's `.env.test` guard
-  paths. A dev checkout's helper is now `rust/target/release/screepub-mtp`.
+- **MTP stays off (sp-device, 2026-10-11).** `sp_device::mtp::MTP_SHIPPED` was
+  false. Until hardware day the engine looked for MTP Kindles only when
+  `METHOD_READER_MTP_HELPER` named a helper, which is how hardware day
+  turned it on and why no user met it. That replaced mtp-kindle's
+  `.env.test` guard paths. A dev checkout's helper is
+  `rust/target/release/method-reader-mtp`.
+  **Superseded (2026-10-29):** `MTP_SHIPPED` is gone. MTP is on where the
+  helper sits beside the running program, which the Mac app arranges from
+  1.1.0 (the helper in `Contents/MacOS`), or where
+  `METHOD_READER_MTP_HELPER` names one; every test and developer tool sets
+  it to `sp_device::mtp::MTP_HELPER_GUARD`. The Windows and Linux packages
+  do not carry the helper yet.
   The helper's release profile (strip, lto, one codegen unit) was a
   per-crate profile and is not carried into the workspace: the packaging
   wave decides the release profile for every binary.

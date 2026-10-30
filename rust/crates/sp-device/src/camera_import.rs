@@ -1,4 +1,4 @@
-//! BETA, with MTP Kindles (off until hardware day).
+//! BETA, with MTP Kindles (on in the Mac app, which ships the helper).
 //!
 //! macOS's camera import, paused for the length of one copy to an MTP
 //! Kindle. Ported from branch mtp-kindle's src/device/camera-import.ts.
