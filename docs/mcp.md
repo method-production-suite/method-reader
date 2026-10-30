@@ -62,7 +62,7 @@ else the format defaults chosen in the app, else Method Reader's own.
 | `inspect_script` | `path` (.pdf), `force` | Title and author as detected, page count, every scene (heading, the scene number a shooting script prints, the page it starts on), every speaking character (name, number of speeches, first page), warnings. Writes nothing. |
 | `preview_page` | `path` (.pdf), `page`, `force` | One page as plain text, and each element on it with its kind (scene, action, character, parenthetical, dialogue, transition...). Pages are the PDF's sheets counted from 1, which may differ from the numbers printed on them. Writes nothing. |
 | `convert_to_script` | `path` (.pdf), `formats` (`fountain`, `fdx`; default both), `output_dir`, `overwrite`, `force` | Writes `<name>.fountain` and `<name>.fdx` (beta: a reconstruction, so revision marks and exact page breaks do not carry over). Pictures (beta) go in `<name>.images` beside the `.fountain`. Answers with the paths and the counts. |
-| `make_ebook` | `path` (.pdf, .fountain, .txt or .osf), `formats` (`epub`, `azw3`, `mobi`; default `epub`), `output_dir`, `title`, `author`, `overwrite`, `force` | Writes `<name>.epub`, `<name>.azw3` (beta, for Kindles over USB) and `<name>.mobi` (the oldest Kindles; text only). Answers with the paths. |
+| `make_ebook` | `path` (.pdf, .fountain, .txt or .osf), `formats` (`epub`, `azw3`, `mobi`; default `epub`), `output_dir`, `title`, `author`, `overwrite`, `force` | Writes `<name>.epub`, `<name>.azw3` (for Kindles over USB) and `<name>.mobi` (the oldest Kindles; text only). Answers with the paths. |
 
 Files are named as the command line names them, after the script, and go
 into `output_dir` (an existing folder inside a root), or the script's own

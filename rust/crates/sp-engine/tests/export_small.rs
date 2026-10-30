@@ -42,11 +42,13 @@ fn the_ladder_is_kfx_when_ready_and_our_azw3_otherwise() {
 }
 
 #[test]
-fn the_kindle_label_names_its_format_and_says_azw3_is_beta() {
+fn the_kindle_label_names_its_format_and_neither_rung_says_beta() {
+    // Our own AZW3 lost its beta label on 2026-10-29, once a Kindle had
+    // opened one (registry #20).
     for calibre in [true, false] {
         let label = format_label(ExportFormat::Kindle, st(calibre, false));
         assert!(label.contains("AZW3"));
-        assert!(label.contains("(beta)"));
+        assert!(!label.contains("beta"), "{label}");
     }
     assert!(!format_label(ExportFormat::Kindle, st(true, true)).contains("beta"));
 }
@@ -67,7 +69,7 @@ fn kfx_wins_even_without_calibre_detected_separately() {
 fn a_named_file_type_is_its_own_extension_and_label() {
     let names = [
         (ExportFormat::Kfx, "kfx", "KFX"),
-        (ExportFormat::Azw3, "azw3", "AZW3 (beta)"),
+        (ExportFormat::Azw3, "azw3", "AZW3"),
         (ExportFormat::Mobi, "mobi", "MOBI"),
         (ExportFormat::Fountain, "fountain", "Fountain"),
         (ExportFormat::Fdx, "fdx", "FDX"),
@@ -85,10 +87,10 @@ fn a_named_file_type_is_its_own_extension_and_label() {
 fn the_osf_is_the_last_value_for_takes_and_is_beta_like_the_fdx() {
     assert_eq!(EXPORT_FORMATS.last(), Some(&ExportFormat::Osf));
     assert_eq!(ExportFormat::parse("osf"), Some(ExportFormat::Osf));
-    for ext in ["azw3", "fdx", "osf"] {
+    for ext in ["fdx", "osf"] {
         assert!(is_beta_file(ext), "{ext}");
     }
-    for ext in ["epub", "kfx", "mobi", "fountain"] {
+    for ext in ["epub", "kfx", "azw3", "mobi", "fountain"] {
         assert!(!is_beta_file(ext), "{ext}");
     }
 }
@@ -346,7 +348,7 @@ fn plugin_installed_means_nothing_without_calibre() {
 
 #[test]
 fn the_summary_names_the_rung_a_kindle_gets_today() {
-    let today = "Kindles get AZW3 (beta) for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.";
+    let today = "Kindles get AZW3 for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.";
     assert_eq!(
         kfx_setup(&status(true, false, false), "darwin").summary,
         today
@@ -355,7 +357,7 @@ fn the_summary_names_the_rung_a_kindle_gets_today() {
         kfx_setup(&status(false, false, false), "win32").summary,
         today
     );
-    let linux = "Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3 (beta), which Method Reader makes itself.";
+    let linux = "Amazon does not make Kindle Previewer for Linux, so Kindles get AZW3, which Method Reader makes itself.";
     assert_eq!(
         kfx_setup(&status(true, false, false), "linux").summary,
         linux

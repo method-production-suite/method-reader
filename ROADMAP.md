@@ -79,7 +79,7 @@ Tests that need a device (hands only; everything else is automated):
      the Kindle, its one storage and its folders, copied Field Station's
      AZW3 over, and the Kindle opened it with every check passing
      (registry #20).
-   - **A Kindle that mounts as a drive:** Method Reader's own AZW3 (beta)
+   - **A Kindle that mounts as a drive:** Method Reader's own AZW3
      and the pictures in a .mobi (the `mobi-picture-probe` books).
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
      either way (issues #26, #27, #28).

@@ -1503,7 +1503,7 @@ fn b4_the_badge_is_worn_where_the_inventory_says_and_nowhere_else() {
     open_other_ways(&mut h);
     for (save, beta) in [
         ("EPUB", false),
-        ("AZW3", true),
+        ("AZW3", false),
         ("MOBI", false),
         ("Fountain", false),
         ("FDX", true),
@@ -1771,7 +1771,7 @@ fn a4_a_focused_control_wears_a_2px_accent_ring_outside_it() {
 }
 
 #[test]
-fn b4_our_own_azw3_and_eject_off_a_mac_wear_it_too() {
+fn b4_eject_off_a_mac_wears_it_and_our_own_azw3_no_longer_does() {
     for (platform, eject_beta) in [(Platform::Mac, false), (Platform::Linux, true)] {
         let w = world();
         calm_as(&w, "kindle");
@@ -1781,7 +1781,8 @@ fn b4_our_own_azw3_and_eject_off_a_mac_wear_it_too() {
         let copy = h
             .get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
             .rect();
-        assert!(wears_beta(&h, copy), "our own AZW3");
+        // A Kindle opened one on 2026-10-29 (registry #20).
+        assert!(!wears_beta(&h, copy), "our own AZW3");
         h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
             .click_accesskit();
         steps(&mut h);

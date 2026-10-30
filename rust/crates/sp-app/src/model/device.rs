@@ -432,7 +432,7 @@ pub const SAVE_TYPES: [SaveType; 7] = [
         kind: "azw3",
         label: "AZW3",
         who: "Kindles over USB, made by Method Reader with nothing else installed.",
-        beta: true,
+        beta: false,
     },
     SaveType {
         kind: "mobi",
@@ -831,7 +831,7 @@ mod tests {
             fresh: Some(true),
             built_by_calibre: false,
             book_date: None,
-            beta: true,
+            beta: false,
         };
         let rows = save_rows(Some(&no_fountain), Some(&azw3));
         let kfx = rows.iter().find(|r| r.kind == "kfx").unwrap();
@@ -844,7 +844,7 @@ mod tests {
             .filter(|t| t.beta)
             .map(|t| t.kind)
             .collect();
-        assert_eq!(betas, vec!["azw3", "fdx", "osf"]);
+        assert_eq!(betas, vec!["fdx", "osf"]);
     }
 
     #[test]

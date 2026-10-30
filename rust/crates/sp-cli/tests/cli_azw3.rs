@@ -93,7 +93,7 @@ fn without_azw3_no_azw3_is_written_and_the_answer_has_no_azw3_path() {
 }
 
 #[test]
-fn export_for_azw3_makes_it_beside_the_book_with_no_calibre_and_says_it_is_beta() {
+fn export_for_azw3_makes_it_beside_the_book_with_no_calibre_and_is_not_beta() {
     // The sandbox points Calibre at a guard path: were the export to reach
     // for Calibre, it could not start.
     let sb = Sandbox::new();
@@ -106,7 +106,8 @@ fn export_for_azw3_makes_it_beside_the_book_with_no_calibre_and_says_it_is_beta(
     assert_eq!(answer["ok"], true);
     assert_eq!(answer["path"], sb.p("Script.azw3").as_str());
     assert_eq!(answer["extension"], "azw3");
-    assert!(answer["label"].as_str().unwrap().contains("(beta)"));
+    assert!(!answer["label"].as_str().unwrap().contains("beta"));
+    assert!(answer.get("beta").is_none());
     let bytes = std::fs::read(answer["path"].as_str().unwrap()).unwrap();
     assert_eq!(read_kf8(&bytes).unwrap().header.version, 8);
 }

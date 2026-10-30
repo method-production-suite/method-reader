@@ -35,7 +35,7 @@ Method Reader works on files on this computer and sends nothing anywhere.
   .fdx. A reconstruction: revision marks and exact page breaks do not carry
   over.
 - **EPUB**: a reflowable e-book for most readers and reading apps.
-- **AZW3** (beta): for Kindles over USB, made by Method Reader from the
+- **AZW3**: for Kindles over USB, made by Method Reader from the
   EPUB, with nothing else installed.
 - **MOBI**: for the oldest Kindles over USB. Text only for now: no pictures
   and no cover.
@@ -125,8 +125,8 @@ const PROMPTS: &[Prompt] = &[
             };
             format!(
                 "Make an e-book of the screenplay at {} with Method Reader's make_ebook \
-                 tool.{reader} For a Kindle over USB, ask for azw3 (beta), and add mobi \
-                 for the oldest Kindles; for any other reader or app, ask for epub. If you \
+                 tool.{reader} For a Kindle over USB, ask for azw3, and add mobi for \
+                 the oldest Kindles; for any other reader or app, ask for epub. If you \
                  can't tell which reader it is for, ask me. Tell me where the book went and \
                  any warnings.",
                 arg(a, "path")

@@ -42,11 +42,14 @@ fn fdx_on_a_conversion_says_beta() {
 }
 
 #[test]
-fn azw3_on_a_conversion_and_the_azw3_in_export_say_beta() {
-    assert!(help_entry(&help(&["--help"]), "--azw3 <file>").contains("(beta)"));
+fn azw3_is_no_longer_beta_on_a_conversion_or_in_export() {
+    // A Kindle opened one on 2026-10-29 and the owner removed the label
+    // (registry #20).
+    assert!(!help_entry(&help(&["--help"]), "--azw3 <file>").contains("beta"));
     let text = help(&["export", "--help"]);
-    assert!(flat(&text).contains("an AZW3 (beta) that Method Reader writes itself"));
-    assert!(help_entry(&text, "--for <type>").contains("azw3 (beta)"));
+    assert!(flat(&text).contains("an AZW3 that Method Reader writes itself"));
+    assert!(!help_entry(&text, "--for <type>").contains("azw3 (beta)"));
+    assert!(!flat(&help(&["route", "--help"])).contains("beta"));
 }
 
 #[test]
@@ -84,10 +87,10 @@ fn eject_says_beta_on_windows_and_linux_only() {
 #[test]
 fn beta_is_said_exactly_where_it_belongs_and_nowhere_else() {
     let count = |t: &str| t.to_lowercase().matches("beta").count();
-    // Pictures, --fdx, --azw3 and eject in the conversion help.
-    assert_eq!(count(&help(&["--help"])), 4);
-    // The fdx and osf usage lines and their paragraphs, the AZW3 in the
-    // kindle paragraph, and azw3, fdx and osf in the --for list.
-    assert_eq!(count(&help(&["export", "--help"])), 8);
+    // Pictures, --fdx and eject in the conversion help.
+    assert_eq!(count(&help(&["--help"])), 3);
+    // The fdx and osf usage lines and their paragraphs, and fdx and osf in
+    // the --for list.
+    assert_eq!(count(&help(&["export", "--help"])), 6);
     assert_eq!(count(&help(&["eject", "--help"])), 1);
 }

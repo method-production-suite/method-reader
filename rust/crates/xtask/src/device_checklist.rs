@@ -214,7 +214,7 @@ pub fn render(manifest: &[Row]) -> String {
 
     if !azw3.is_empty() {
         for line in [
-            "## Method Reader's own AZW3 (beta)",
+            "## Method Reader's own AZW3",
             "",
             "The same book as an AZW3 that Method Reader writes itself, with no",
             "Calibre: what a Kindle gets over USB wherever KFX is not set up. It",

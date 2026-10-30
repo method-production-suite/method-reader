@@ -113,8 +113,7 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
         }
         ExportFormat::Kfx => "KFX: for modern Kindles over USB, the best layout".into(),
         ExportFormat::Azw3 => {
-            "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed"
-                .into()
+            "AZW3: for Kindles over USB, made by Method Reader with nothing else installed".into()
         }
         ExportFormat::Mobi => "MOBI: for the oldest Kindles".into(),
         ExportFormat::Fdx => {
@@ -130,14 +129,14 @@ pub fn format_label(format: ExportFormat, state: ToolchainState) -> String {
             } else {
                 ""
             };
-            let beta = if ext == "AZW3" { " (beta)" } else { "" };
-            format!("{ext}{beta}: for USB sideload to Kindle{hint}")
+            format!("{ext}: for USB sideload to Kindle{hint}")
         }
     }
 }
 
-/// `isBetaFile(extension)`: the AZW3 Method Reader writes itself, the FDX,
-/// and the OSF.
+/// `isBetaFile(extension)`: the FDX and the OSF. The AZW3 Method Reader
+/// writes itself was beta too until a Kindle opened one (2026-10-29,
+/// registry #20) and the owner removed the label.
 pub fn is_beta_file(extension: &str) -> bool {
-    matches!(extension, "azw3" | "fdx" | "osf")
+    matches!(extension, "fdx" | "osf")
 }

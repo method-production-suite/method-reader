@@ -431,7 +431,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | D6 | The asterisk on what nobody has run on that hardware (everything but a Kindle on a Mac; Apple never): "About <Name>: never tried on real hardware"; hover opens the note, leaving closes it after 400 ms; a press pins it (expanded state exposed) | ui/send-panel.js asterisk, device.js asteriskNote | done |
 | D7 | The note: "Built and tested in code, never tried with a real Kindle on Windows/Linux yet…" or "… on a real <Name> yet…", then It worked / It did not work (Beta) where there is a route to report | ui/device.js, ui/requests.js reportRoute | done (tests/model_rows.rs) |
 | D8 | A report: both answers dead while it is out; thanks takes them away; a failure offers Try again for the same answer | ui/send-panel.js reportAnswers | done |
-| D9 | Calm screen: one brass button for the way that fits (device.js offerFor), its Beta badge for our own AZW3, "Plugged in" beside a device button, the asterisk; the lines under it (the web-drag line, the plug-in line, Apple elsewhere, tolino on Windows) | ui/send-panel.js drawCalm, device.js offerFor | done |
+| D9 | Calm screen: one brass button for the way that fits (device.js offerFor), its Beta badge for our own AZW3 (the AZW3 no longer wears it since 2026-10-29: Decisions, "The AZW3 is not beta"), "Plugged in" beside a device button, the asterisk; the lines under it (the web-drag line, the plug-in line, Apple elsewhere, tolino on Windows) | ui/send-panel.js drawCalm, device.js offerFor | done |
 | D10 | Kindle: plugged in → copy (then web and email lead Other ways); otherwise Send to Kindle (web), then email, then Save the EPUB | ui/device.js offerFor | done (tests/model_rows.rs) |
 | D11 | Apple: Books on a Mac; elsewhere Save the EPUB with the iCloud line | ui/device.js offerFor | done (tests/model_rows.rs) |
 | D12 | While the route list is out: "Looking for every way to send it…" | ui/device.js LOOKING | done (tests/model_rows.rs) |
@@ -443,7 +443,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | D18 | Readers that only need plugging in or docking folded into one muted line ("Kobo, tolino and reMarkable: plug in over USB to send."), each name with its own asterisk; fewer than two stay rows | ui/device.js foldUnplugged | done (tests/model_rows.rs) |
 | D19 | A route row: title, the engine's detail, the volume for a mounted reader, the email row's "First time? Amazon needs your sender address approved…" with Open Amazon’s page; the button (none when dimmed) | ui/send-panel.js routeRow, send-routes.js routeLines, emailSetupHint | done |
 | D20 | Buttons that hand over the Kindle file name it: "Copy to Kindle (.kfx)", "Save a Kindle file (.azw3)…" | ui/send-routes.js buttonLabel | done |
-| D21 | Save a file: EPUB, KFX, AZW3 (Beta), MOBI, Fountain, FDX (Beta), each with who it is for and Save…; KFX not makeable here: "This computer cannot make one yet." and Set it up; no .fountain: "This book was made without a .fountain, so there is none to work from." | ui/device.js SAVE_TYPES, saveRows | done |
+| D21 | Save a file: EPUB, KFX, AZW3 (Beta; no badge since 2026-10-29: Decisions, "The AZW3 is not beta"), MOBI, Fountain, FDX (Beta), each with who it is for and Save…; KFX not makeable here: "This computer cannot make one yet." and Set it up; no .fountain: "This book was made without a .fountain, so there is none to work from." | ui/device.js SAVE_TYPES, saveRows | done |
 | D22 | A save: the Save box first (named for the book, one filter), then the engine writes there; "Saving…", "Saved <file>.", or the refusal | ui/send-panel.js saveFile | done |
 | D23 | A copy to a reader: "Getting the book ready for <Name>…" (or the build line), "Copying it to <Name>…", then "<Title> is on your <Name>. Eject it before you unplug." with Eject in the brass place, or "Sent to <Name>." for one that does not mount; what went across in the engine's words under it | ui/send-panel.js sendTo, device.js copiedState | done |
 | D24 | A route the engine performs: "Opening <title>…", then the engine's note or "The engine said it worked, without saying what it did." | ui/send-panel.js perform, send-routes.js routeNoteFrom | done |
@@ -513,7 +513,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | B1 | Report a bug opens a pre-filled GitHub issue: an instruction, "What happened:" with the code and the engine's sentence, cut to fit 2000 characters, and "Screepub <version> · <platform>" | ui/feedback.js newIssueUrl | done |
 | B2 | Every absolute path in it becomes `<path>` plus its extension; the home folder becomes ~ | ui/feedback.js redact | done |
 | B3 | The Beta badge: "Beta", in a hairline box, beside (never inside) what it qualifies, read out with its line, described as "New: works in our tests, not yet tried widely on real devices or apps." | ui/beta.js | done |
-| B4 | Where it is worn: the FDX and AZW3 save rows, our own AZW3 on Copy to Kindle, the two picture switches, Eject off a Mac, the device-request Send, the report answers, the My device isn’t here card | ui/beta.js, callers | done |
+| B4 | Where it is worn: the FDX and AZW3 save rows, our own AZW3 on Copy to Kindle (the AZW3 no longer wears it since 2026-10-29: Decisions, "The AZW3 is not beta"), the two picture switches, Eject off a Mac, the device-request Send, the report answers, the My device isn’t here card | ui/beta.js, callers | done |
 | B5 | The request service: POST JSON to https://screepub-device-requests.<the old workers.dev account>.workers.dev/request; a device form or a report form with version and platform; 15 s timeout; "Thanks. We count every request.", offline, too many (429), garbled, or "Could not send. <reason>" | ui/requests.js | done |
 | B6 | The window's network allow-list (CSP connect-src): only that address; the opener allow-list: only the four pages in K6 | tauri/tauri.conf.json, capabilities | done |
 | B7 | Report a problem opens a sheet: what happened (required), Send by email to the suite's address or open a GitHub issue, and for a converted script the shape's counts, off by default (Decisions: "The shape verb") | new (2026-10-21) | done |
@@ -1451,3 +1451,26 @@ names the check it affects.
     torture convert-phone AZW3 has one record more). The same rows were
     also run with the old renderer and the new, scratch folders kept, and
     every file that differed between the two runs passed the same check.
+- **The AZW3 is not beta (decided by the owner, 2026-10-29, branch
+  feat/azw3-not-beta).** A Kindle opened Method Reader's own AZW3 that day
+  (registry #20, device verdict), and the owner said to remove the beta
+  label from it, and from nothing else. The engine no longer counts the
+  AZW3 as a beta file (sp-engine's `is_beta_file`: the FDX and the OSF), so
+  its export answer drops `"beta": true`; its label and the Kindle label
+  for the AZW3 rung drop "(beta)", and so does kfx-status's summary. The
+  window's Save a file row and Copy to Kindle no longer wear the Beta badge
+  for it (rows D9, D21 and B4 above were the TypeScript's, and are kept as
+  they were ported). The CLI help drops it from `--azw3`, from the export
+  help's kindle paragraph and `--for` list, and from the route help's
+  save-kindle line; sp-cli's tests/usage.rs lists those four lines in
+  `CHANGED_ON_PURPOSE`. sp-engine's frozen TypeScript lines
+  (tests/data/parity-cli.json) are left as frozen: its common/frozen.rs
+  reads the one answer that held either (`export --for azw3 --check`) as
+  it is now. 13 parity runs were moved with `cargo xtask parity --accept
+  export-azw3 export-check-azw3 export-human export-help export-help-json
+  help help-short help-json refuse-no-input` (export-azw3 on field-station,
+  images, jpx, screenplay and torture, the rest on screenplay), and each
+  diff it showed was the AZW3's "(beta)" or its `beta` flag alone. The
+  route-help and route-help-json rows hold the save-kindle line too, but
+  are bound to the machine their answers were frozen on, so `--accept`
+  left them alone here; they move with the same command on that machine.

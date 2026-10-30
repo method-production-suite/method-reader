@@ -75,6 +75,18 @@ const CHANGED_ON_PURPOSE: &[(&str, &str)] = &[
         "--for takes epub, kindle, kfx, azw3, mobi, fountain or fdx, not ",
         "--for takes epub, kindle, kfx, azw3, mobi, fountain, fdx or osf, not ",
     ),
+    // Method Reader's own AZW3 is no longer beta (the owner, 2026-10-29,
+    // after a Kindle opened one; PARITY.md, Decisions: "The AZW3 is not
+    // beta"): its label drops "(beta)" and its answer the beta flag. Only
+    // the `export --for azw3 --check` answer held either.
+    (
+        "\"label\":\"AZW3 (beta): for Kindles over USB, made by ",
+        "\"label\":\"AZW3: for Kindles over USB, made by ",
+    ),
+    (
+        "\"format\":\"azw3\",\"extension\":\"azw3\",\"label\":\"AZW3: for Kindles over USB, made by Method Reader with nothing else installed\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568,\"beta\":true}",
+        "\"format\":\"azw3\",\"extension\":\"azw3\",\"label\":\"AZW3: for Kindles over USB, made by Method Reader with nothing else installed\",\"available\":[\"epub\",\"kindle\"],\"stages\":[],\"fresh\":false,\"builtBy\":\"screepub\",\"bookDate\":1767225600123.4568}",
+    ),
 ];
 
 fn changed_on_purpose(text: &str) -> String {

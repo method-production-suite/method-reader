@@ -338,7 +338,7 @@ fn a_card_goes_calm_at_once_stores_the_choice_and_other_ways_opens_in_place() {
     h.get_by_role_and_label(Role::Button, "Show in Finder");
     assert!(
         h.query_all_by_label("Beta").count() >= 2,
-        "AZW3 and FDX wear the badge"
+        "FDX and OSF wear the badge"
     );
     h.get_by_role_and_label(Role::Button, "Different device")
         .click();

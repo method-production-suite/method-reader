@@ -150,17 +150,14 @@ pub fn kfx_setup(status: &KfxStatus, platform: &str) -> KfxSetup {
             fix: plugin_fix(status, plugin_installed, possible),
         },
     ];
-    let today = format!(
-        "{} (beta)",
-        file_extension(
-            ExportFormat::Kindle,
-            ToolchainState {
-                calibre_available: status.calibre,
-                kfx_ready: false,
-            }
-        )
-        .to_uppercase()
-    );
+    let today = file_extension(
+        ExportFormat::Kindle,
+        ToolchainState {
+            calibre_available: status.calibre,
+            kfx_ready: false,
+        },
+    )
+    .to_uppercase();
     let summary = if status.ready {
         "Kindles get KFX, the best quality Method Reader can make.".to_owned()
     } else if !possible {

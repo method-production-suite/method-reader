@@ -2662,15 +2662,14 @@
       "path": "$WORK/out/copy.azw3",
       "format": "azw3",
       "extension": "azw3",
-      "label": "AZW3 (beta): for Kindles over USB, made by Method Reader with nothing else installed",
+      "label": "AZW3: for Kindles over USB, made by Method Reader with nothing else installed",
       "available": [
         "epub",
         "kindle"
       ],
       "stages": [
         "building the AZW3 for Kindle…"
-      ],
-      "beta": true
+      ]
     },
     "stderr": "",
     "outputs": {

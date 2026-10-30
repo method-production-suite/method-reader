@@ -301,7 +301,7 @@ fn status_the_summary_then_one_aligned_line_per_step_with_its_fix() {
     assert_eq!(
         setup_lines(&setup),
         vec![
-            "Kindles get AZW3 (beta) for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.",
+            "Kindles get AZW3 for now, which Method Reader makes itself. KFX looks better, and needs the three free tools below.",
             "  Calibre           installed",
             "  Kindle Previewer  not installed: https://kdp.amazon.com/en_US/help/topic/G202131170",
             "  KFX plugin        not installed: run method-reader kfx-install",

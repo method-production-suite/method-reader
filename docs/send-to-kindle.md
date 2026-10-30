@@ -6,7 +6,7 @@ send with its modern typesetting, so a scene heading or a character name stays
 on the same page as the line after it. The other is copying a KFX file over
 USB, which needs Calibre, Kindle Previewer and the KFX plugin on your
 computer. Without those, a Kindle over USB gets an AZW3 that Method Reader makes
-itself (beta), with nothing else installed; it, and the MOBI for the oldest
+itself, with nothing else installed; it, and the MOBI for the oldest
 Kindles, can strand a heading or a name at the foot of a page. Email needs no
 tools at all.
 

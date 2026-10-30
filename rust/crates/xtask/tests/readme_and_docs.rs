@@ -452,8 +452,11 @@ fn contributing_says_what_an_intel_mac_can_run_where_it_says_to_open_it() {
 // ---- beta, in the README and on the site ------------------------------
 
 #[test]
-fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
+fn the_readme_and_the_site_say_what_beta_means_and_mark_the_four() {
     let meaning = "works in our tests, but has not been tried widely on real devices or apps yet";
+    // Method Reader's own AZW3 is no longer beta (the owner, 2026-10-29,
+    // registry #20).
+    let azw3_beta = Regex::new(r"AZW3[^.]{0,120}\(beta").unwrap();
     for f in ["README.md"] {
         let text = flat(&read(f));
         assert!(text.contains(meaning), "{f}");
@@ -463,16 +466,19 @@ fn the_readme_and_the_site_say_what_beta_means_and_mark_the_five() {
             ("pictures", r"[Pp]ictures[^.]{0,160}\(beta\)"),
             ("eject", r"[Ee]ject[^.]{0,160}\(beta on Windows and Linux\)"),
             ("requests", r"isn.t here[^.]{0,200}\(beta\)"),
-            ("AZW3", r"AZW3[^.]{0,120}\(beta"),
         ] {
             assert!(Regex::new(re).unwrap().is_match(&text), "{f}: {what}");
         }
+        assert!(
+            !azw3_beta.is_match(&text),
+            "{f}: the AZW3 is still called beta"
+        );
     }
 }
 
 #[test]
-fn the_site_lists_the_five_beta_features_under_one_label() {
-    // The site names the five in one list already labelled beta, without a
+fn the_site_lists_the_four_beta_features_under_one_label() {
+    // The site names the four in one list already labelled beta, without a
     // "(beta)" after each (the 2026-10-19 site audit, R1), and says what beta
     // means right after it.
     let text = flat(&read("site/index.html"));
@@ -485,7 +491,6 @@ fn the_site_lists_the_five_beta_features_under_one_label() {
         .expect("what beta means, right after the list");
     let list = &text[at..at + end];
     for (what, needle) in [
-        ("AZW3", "AZW3"),
         ("pictures", "pictures"),
         ("FDX", ".fdx"),
         ("eject", "eject on Windows and Linux"),
@@ -494,6 +499,9 @@ fn the_site_lists_the_five_beta_features_under_one_label() {
         assert!(list.contains(needle), "{what}: {list}");
     }
     assert!(!list.contains("(beta"), "{list}");
+    // Method Reader's own AZW3 left the list on 2026-10-29 (registry #20).
+    assert!(!list.contains("AZW3"), "{list}");
+    assert!(!text.contains("(beta, not yet tried on a Kindle)"));
 }
 
 #[test]
