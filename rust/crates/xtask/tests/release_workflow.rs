@@ -615,7 +615,7 @@ fn the_mac_leg_refuses_to_start_without_the_update_key_and_signs_the_archive() {
     let build = mac.find("mac-app").unwrap();
     assert!(refuse < build);
     // The archive is made from the stapled bundle, then signed.
-    let staple = mac.find(r#"xcrun stapler staple "$APP""#).unwrap();
+    let staple = mac.find(r#"staple "$APP""#).unwrap();
     let archive = mac.find("update-archive").unwrap();
     let sign = mac.find("sign-update").unwrap();
     assert!(staple < archive && archive < sign);

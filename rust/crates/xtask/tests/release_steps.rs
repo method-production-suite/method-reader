@@ -370,6 +370,19 @@ fn mac_step_with(
     helper_archs: &str,
     validate_fails: &str,
 ) -> (Output, Vec<String>) {
+    mac_step_full(sc, env_key, archs, helper_archs, validate_fails, 0)
+}
+
+/// The Mac step, with the first `staple_fails` runs of `stapler staple`
+/// failing as Apple's ticket fetch does when its connection drops.
+fn mac_step_full(
+    sc: &Scratch,
+    env_key: bool,
+    archs: &str,
+    helper_archs: &str,
+    validate_fails: &str,
+    staple_fails: u32,
+) -> (Output, Vec<String>) {
     // sp-release writes the bundle mac-app is asked for, the window and
     // each --helper in Contents/MacOS; nothing else.
     tool(
@@ -404,8 +417,13 @@ fn mac_step_with(
     tool(
         sc,
         "bin/xcrun",
-        &format!("[ \"$1 $2 $3\" = 'stapler validate {validate_fails}' ] && exit 1"),
+        &format!(
+            "[ \"$1 $2 $3\" = 'stapler validate {validate_fails}' ] && exit 1\nif [ \"$1 $2\" = 'stapler staple' ]; then n=$(cat '{count}' 2>/dev/null || echo 0); n=$((n + 1)); echo \"$n\" > '{count}'; [ \"$n\" -le {staple_fails} ] && {{ echo 'The staple and validate action failed! Error 68.' >&2; exit 68; }}; fi",
+            count = sc.join("staples").display()
+        ),
     );
+    // The waits between tries are logged, not slept.
+    tool(sc, "bin/sleep", "");
     for t in ["ditto", "spctl", "hdiutil"] {
         tool(sc, &format!("bin/{t}"), "");
     }
@@ -579,6 +597,60 @@ fn mac_step_fails_when_a_staple_leaves_no_ticket() {
     let app = sc.join("temp/app/Method Reader.app").display().to_string();
     let (out, calls) = mac_step(&sc, true, "x86_64 arm64", &app);
     assert!(!out.status.success());
+    assert!(
+        !calls
+            .iter()
+            .any(|c| c.starts_with("sp-release\tupdate-archive"))
+    );
+}
+
+#[test]
+fn mac_step_tries_a_failed_staple_again_after_a_wait() {
+    // Apple hands the ticket out from CloudKit, and that fetch can drop
+    // ("The network connection was lost", error 68) seconds after the
+    // notarization was accepted: the 1.1.0 release run failed so twice, once
+    // on the app and once on the image.
+    let sc = Scratch::new("mac-staple-retry");
+    let (out, calls) = mac_step_full(&sc, true, "x86_64 arm64", "x86_64 arm64", "none", 2);
+    assert!(out.status.success(), "{}", said(&out));
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
+    let staples: Vec<&String> = calls
+        .iter()
+        .filter(|c| **c == format!("xcrun\tstapler\tstaple\t{app}"))
+        .collect();
+    assert_eq!(staples.len(), 3, "{calls:#?}");
+    let waits: Vec<&String> = calls.iter().filter(|c| c.starts_with("sleep")).collect();
+    assert_eq!(waits, ["sleep\t15", "sleep\t30"]);
+    assert!(said(&out).contains("stapling"), "{}", said(&out));
+    // The image staples first time, and both tickets are still validated.
+    let dmg = "bundles/Method-Reader-macOS.dmg";
+    assert_eq!(
+        calls
+            .iter()
+            .filter(|c| **c == format!("xcrun\tstapler\tstaple\t{dmg}"))
+            .count(),
+        1
+    );
+    assert!(calls.contains(&format!("xcrun\tstapler\tvalidate\t{app}")));
+    assert!(calls.contains(&format!("xcrun\tstapler\tvalidate\t{dmg}")));
+}
+
+#[test]
+fn mac_step_gives_up_after_four_staples() {
+    let sc = Scratch::new("mac-staple-gives-up");
+    let (out, calls) = mac_step_full(&sc, true, "x86_64 arm64", "x86_64 arm64", "none", 99);
+    assert!(!out.status.success());
+    let app = sc.join("temp/app/Method Reader.app").display().to_string();
+    assert_eq!(
+        calls
+            .iter()
+            .filter(|c| **c == format!("xcrun\tstapler\tstaple\t{app}"))
+            .count(),
+        4,
+        "{calls:#?}"
+    );
+    let waits: Vec<&String> = calls.iter().filter(|c| c.starts_with("sleep")).collect();
+    assert_eq!(waits, ["sleep\t15", "sleep\t30", "sleep\t60"]);
     assert!(
         !calls
             .iter()
