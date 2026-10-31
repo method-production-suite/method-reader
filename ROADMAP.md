@@ -21,18 +21,19 @@ Release go-aheads:
   carried (0.13.1 itself was skipped, the owner, 2026-10-26). Its draft
   passed every check before it was published, and 0.11.1, 0.13.0 and
   0.9.0 on Intel each install it.
-- **The next release** tags on or after 2026-11-06, when clipboard-win
-  5.4.3 is 14 days old: the owner's override for it held for v1.0.0
-  alone, and the release check refuses it for any other tag until then.
-  The zip fix (9.0.5) rides in it: 1.0.0 reads zips only with the one
-  reader the advisory does not set against another, so there is no
-  1.0.1 (the owner, 2026-10-29).
-- **Before that release, on the machine whose answers they are:** run
+- **1.1.0: released** (2026-10-31, on the owner's yes). New Kindles over
+  USB from the Mac app, .osf in, Method Reader's own AZW3 out of beta, and
+  the zip fix (9.0.5). Its crate-age exceptions (the zip advisory, and
+  clipboard-win 5.4.3 for v1.1.0 alone) come out once each crate is 14
+  days old: zip from 2026-10-31, clipboard-win from 2026-11-06.
+- **Before the next release, on the machine whose answers they are:** run
   `cargo xtask parity --accept route-help route-help-json` (from `rust/`,
   with that checkout's `CARGO_TARGET_DIR`). Those two rows of the
   screenplay fixture are frozen on another machine, so this Mac skips
   them, and they still hold the old save-kindle line that called the
   AZW3 beta (#109). Read each diff first: only that wording may change.
+  Waived for 1.1.0 alone (the owner, 2026-10-31: "Yes, waive it"), so it
+  is still due before the next release.
 
 Built on the recommendation (reversible):
 
