@@ -428,6 +428,19 @@ jobs:
           # sign its update is the one ADR 2026-09-21 forbids.
           [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] || { echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set"; exit 1; }
           SP=rust/target/release/sp-release
+          # Apple hands the ticket out from CloudKit, and that fetch can drop
+          # ("The network connection was lost", error 68) seconds after the
+          # notarization was accepted: the 1.1.0 release run failed so twice.
+          # Four tries, the last a minute after the third. Each staple is
+          # still validated after, since a staple can exit 0 and leave nothing.
+          staple() {
+            for wait in 15 30 60; do
+              xcrun stapler staple "$1" && return 0
+              echo "::warning::stapling $1 failed; trying again in ${wait}s"
+              sleep "$wait"
+            done
+            xcrun stapler staple "$1"
+          }
           # The checksums job signs SHA256SUMS with this key after the
           # draft is complete, which a rehearsal never reaches: prove here,
           # every run, that the key signs a .minisig the app's key checks.
@@ -471,7 +484,7 @@ jobs:
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/app-notarize.zip"
           xcrun notarytool submit "$RUNNER_TEMP/app-notarize.zip" \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
-          xcrun stapler staple "$APP"
+          staple "$APP"
           xcrun stapler validate "$APP"
           spctl -a -t exec -vv "$APP"
           # The update archive is made from the stapled bundle, so a Tauri
@@ -487,7 +500,7 @@ jobs:
           codesign --force --timestamp --sign "$SIGN_IDENTITY" bundles/Method-Reader-macOS.dmg
           xcrun notarytool submit bundles/Method-Reader-macOS.dmg \
             --key "$AC_API_KEY_PATH" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
-          xcrun stapler staple bundles/Method-Reader-macOS.dmg
+          staple bundles/Method-Reader-macOS.dmg
           xcrun stapler validate bundles/Method-Reader-macOS.dmg
           spctl -a -t open --context context:primary-signature -v bundles/Method-Reader-macOS.dmg
       - name: Linux packages
