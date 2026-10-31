@@ -17,7 +17,7 @@ programs are built from it for download, and everything third-party that any
 of them carries is listed in this file.
 
 - **The command line**, `method-reader` (crate `sp-cli`), ships as the
-  command-line archives for macOS (Apple silicon), Linux (x64 and arm64) and
+  command-line archives for macOS (universal: Apple silicon and Intel), Linux (x64 and arm64) and
   Windows (x64). An archive holds only the binary; this file is its notice.
   The binary carries the conversion engine (Method Reader's own crates, including
   the ported code credited below) and the third-party Rust crates marked
@@ -266,7 +266,7 @@ build-only dependency: they run while compiling and are not part of the
 program that ships.
 
 "Platforms" says where a crate is built in: "all", or the systems named
-(macOS is Apple silicon only; on Linux the command line is built for x64
+(macOS builds are universal, Apple silicon and Intel; on Linux the command line is built for x64
 and arm64, the window for x64). Each download carries only its own
 platform's share.
 
@@ -571,7 +571,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | semver | 1.0.28 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: David Tolnay) |
 | serde | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
 | serde_core | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
-| serde_json | 1.0.154 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| serde_json | 1.0.151 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | servo_arc | 0.5.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The Servo Project Developers) |
 | sha2 | 0.10.9 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation; Copyright (c) 2016 Artyom Pavlov |
 | signal-hook-registry | 1.4.8 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2017 tokio-jsonrpc developers |
