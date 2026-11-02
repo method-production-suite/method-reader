@@ -65,6 +65,10 @@ pub enum Purpose {
         path: String,
         stamp: Option<Value>,
     },
+    /// A script reopened from the Library tab (library.rs): its book
+    /// remade from the library `.fountain`, never its PDF. Boxed: a row is
+    /// many times a path.
+    Reopen(Box<crate::model::library::Row>),
     Reveal {
         book: String,
     },
@@ -155,6 +159,30 @@ pub fn convert_sample(
     epub: String,
     stamp: Option<Value>,
 ) {
+    let purpose = Purpose::Sample {
+        path: pdf.clone(),
+        stamp,
+    };
+    convert_to(app, request, pdf, epub, purpose);
+}
+
+/// A library row's Open (library.rs): its book remade from its `.fountain`
+/// as the sample's is, then Preview with the row's pages and scenes. The
+/// script open is the row's own source, so Settings and the send panel
+/// work on it as after a conversion.
+pub fn reopen(app: &mut App, row: crate::model::library::Row) {
+    let epub = crate::model::library::book_path(&row);
+    let request = Request::ConvertTo {
+        path: row.fountain.clone(),
+        out: epub.clone(),
+    };
+    let source = row.source.clone();
+    convert_to(app, request, source, epub, Purpose::Reopen(Box::new(row)));
+}
+
+/// A `convert-to` (the sample's and a library row's): the bar on the
+/// Convert page, on its turn on the book, then Preview.
+fn convert_to(app: &mut App, request: Request, pdf: String, epub: String, purpose: Purpose) {
     if app.convert.converting {
         return;
     }
@@ -167,12 +195,11 @@ pub fn convert_sample(
     let ahead = app.queue.holders(&epub);
     super::panel::hidden(app);
     let c = &mut app.convert;
-    c.path = pdf.clone();
+    c.path = pdf;
     c.progress = Progress::start();
     c.waiting = m::waiting_label(&ahead);
     app.restore_focus = true;
-    let purpose = AppPurpose::Convert(Purpose::Sample { path: pdf, stamp });
-    app.on_book(&epub, "convert", request, purpose);
+    app.on_book(&epub, "convert", request, AppPurpose::Convert(purpose));
 }
 
 /// The sample could not even be put in its folder.
@@ -194,7 +221,7 @@ const FILL: &str = "progress-fill";
 
 /// One progress line from the engine.
 pub fn progress(app: &mut App, purpose: &Purpose, line: &Value) {
-    if let Purpose::Sample { .. } = purpose {
+    if let Purpose::Sample { .. } | Purpose::Reopen(_) = purpose {
         if app.convert.waiting.is_some() {
             started(app);
         }
@@ -306,6 +333,25 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     // it, so the result is drawn behind it: the Convert
                     // page's panel (the Kindle file checked and built ahead)
                     // starts only when a person goes there.
+                    app.go_to(Surface::Read);
+                    draw_result(app, &path, &answer);
+                }
+                Ok(answer) => draw_failure(app, failure_for(answer.get("error")), &path),
+            }
+        }
+        Purpose::Reopen(row) => {
+            app.convert.converting = false;
+            let path = row.source.clone();
+            match reply.answer {
+                Err(message) => draw_failure(app, internal_failure(&message), &path),
+                Ok(answer) if crate::model::json::ok(&answer) => {
+                    let answer = crate::model::library::reopened(&answer, &row);
+                    if let Some(epub) = answer.get("epubPath").and_then(Value::as_str) {
+                        app.convert.landed.insert(path.clone(), epub.into());
+                    }
+                    // Preview, as the sample lands there: the result is
+                    // drawn behind it, and the Convert page's panel starts
+                    // only when a person goes there.
                     app.go_to(Surface::Read);
                     draw_result(app, &path, &answer);
                 }

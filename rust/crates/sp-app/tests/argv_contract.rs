@@ -286,3 +286,33 @@ fn the_shape_request_is_the_cli_s_shape_verb() {
     // The fake answers what the real engine does for the demo script.
     assert_eq!(answer, sp_app::engine::default_answer(&request));
 }
+
+/// The Library tab's list: `library --json`, a verb app.js never had, so it
+/// is held here to the CLI's own argv and to what its `--help` spells. It
+/// reads the library folder and nothing else, so it is a look, not
+/// somebody's work. The direct engine runs it for real against a scratch
+/// library in tests/direct_engine.rs; the CLI's side is
+/// sp-cli/tests/cli_library_list.rs.
+#[test]
+fn the_library_request_is_the_cli_s_library_verb() {
+    let request = Request::Library;
+    assert_eq!(request.argv(), ["library", "--json"]);
+    assert_eq!(request.kind(), "library");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(!counts_toward_busy(request.call()));
+    let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+    let code = sp_cli::run(
+        &["library".to_string(), "--help".to_string()],
+        Box::new(Keep(said.clone())),
+    );
+    assert_eq!(code, 0, "library --help");
+    let said = said.lock().unwrap().clone();
+    assert!(
+        said.contains("method-reader library [--json]"),
+        "library --help: {said}"
+    );
+    // The fake's list is one the window reads.
+    let answer = sp_app::engine::default_answer(&request);
+    let listing = sp_app::model::library::listing_from(&answer).expect("a list");
+    assert_eq!(listing.rows.len(), 1);
+}

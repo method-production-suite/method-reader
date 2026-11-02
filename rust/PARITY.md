@@ -315,7 +315,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E27 | Book queue: one queue per library EPUB; readers side by side, a writer alone, arrival order kept, a failure never stops the queue; turns save/convert write, kindle/send/copy/check read; a settle still counting down is cut short before any turn (its save goes first) | ui/book-queue.js | | done |
 | E28 | Kindle line: Kindle-file exports of one book one at a time, before their book turn | ui/send-panel.js inKindleLine | | done |
 | E29 | `shape <fountain> --json` (a problem report's counts; new, not app.js's) | `shape(fountain)` | no | done |
-| E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()`, for the Library tab still to come | no | engine and CLI done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs); the window's call to come |
+| E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()` (`Request::Library`: the Library tab, sp-app/src/app/library.rs; a row's Open is the sample's `convert-to` from the library `.fountain`) | no | done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, screens.rs, behaviors.rs) |
 
 ### C. Convert
 

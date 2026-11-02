@@ -153,7 +153,7 @@ pub fn shortcuts(platform: Platform) -> Vec<(String, &'static str)> {
         ),
         (
             "Left, Right, Home, End".into(),
-            "On the tabs: move between Convert, Preview and Settings",
+            "On the tabs: move between Convert, Library, Preview and Settings",
         ),
         (
             "Arrows, Home, End".into(),

@@ -322,3 +322,109 @@ fn child_reads_the_shelf() {
     assert_eq!(answer["error"]["code"], "not-a-book", "{answer}");
     assert!(removed_line(&answer, &book, &device).1);
 }
+
+const LIBRARY_CHILD: &str = "SP_APP_DIRECT_ENGINE_LIBRARY_CHILD";
+
+/// The Library tab as the window asks for it (src/app/library.rs): the
+/// demo script converted into a scratch library, the engine's real
+/// `library` answer read back by the window's own model, and the row's
+/// Open (`convert-to` from the library `.fountain` to its `.epub`) making
+/// the same book again without the PDF.
+#[test]
+fn the_library_lists_a_converted_script_and_reopens_it_from_its_fountain() {
+    let scratch = tempfile::tempdir().expect("scratch");
+    let root = scratch.path().canonicalize().unwrap();
+    let config = root.join("config");
+    let library = root.join("library");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(&library).unwrap();
+    let out = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "child_lists_the_library", "--nocapture"])
+        .env(LIBRARY_CHILD, "1")
+        .env("METHOD_READER_CONFIG_DIR", &config)
+        .env("METHOD_READER_LIBRARY", &library)
+        .env("SCREEPUB_CONFIG_DIR", &config)
+        .env("SCREEPUB_LIBRARY", &library)
+        .env(
+            "CALIBRE_CONFIG_DIRECTORY",
+            "/dev/null/method-reader-test-guard",
+        )
+        .output()
+        .expect("the child runs");
+    let said =
+        String::from_utf8_lossy(&out.stdout).into_owned() + &String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{said}");
+    assert!(said.contains("1 passed"), "the child really ran: {said}");
+}
+
+#[test]
+fn child_lists_the_library() {
+    if std::env::var(LIBRARY_CHILD).is_err() {
+        return;
+    }
+    use sp_app::model::library::{book_path, listing_from, reopened};
+    let library = std::env::var("METHOD_READER_LIBRARY").unwrap();
+    let engine = sp_app::direct::DirectEngine::new();
+    let empty = engine
+        .run(&Request::Library, &mut |_| {})
+        .answer
+        .expect("an answer");
+    let none = listing_from(&empty).unwrap_or_else(|| panic!("a list: {empty}"));
+    assert!(none.rows.is_empty(), "{empty}");
+    assert_eq!(none.root, library);
+
+    let pdf = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../tests/fixtures/field-station.pdf")
+        .canonicalize()
+        .expect("the committed fixture");
+    let converted = engine
+        .run(
+            &Request::Convert {
+                path: pdf.to_string_lossy().into_owned(),
+                force: false,
+                options: None,
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(converted["ok"], true, "{converted}");
+
+    let answer = engine
+        .run(&Request::Library, &mut |_| {})
+        .answer
+        .expect("an answer");
+    let listing = listing_from(&answer).unwrap_or_else(|| panic!("a list: {answer}"));
+    assert_eq!(listing.rows.len(), 1, "{answer}");
+    let row = &listing.rows[0];
+    assert_eq!(row.source, pdf.to_string_lossy());
+    assert!(row.source_exists);
+    // The highest `= pg N` marker in its .fountain (the spec's `pages`),
+    // which is not the conversion's own page count: 18 here against the
+    // conversion's 19, so a reopened book says one page fewer.
+    assert_eq!(row.pages, Some(18));
+    assert_eq!(converted["pages"], 19);
+    assert!(row.fountain.ends_with(".fountain"));
+    assert_eq!(row.epub.as_deref(), converted["epubPath"].as_str());
+
+    let again = engine
+        .run(
+            &Request::ConvertTo {
+                path: row.fountain.clone(),
+                out: book_path(row),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(again["ok"], true, "{again}");
+    assert_eq!(again["epubPath"], converted["epubPath"]);
+    assert_eq!(
+        again["previewHtml"], converted["previewHtml"],
+        "the same book"
+    );
+    let as_converted = reopened(&again, row);
+    assert_eq!(as_converted["pages"], 18, "the row's pages");
+    assert_eq!(as_converted["scenes"], converted["scenes"]);
+    assert_eq!(as_converted["fountainPath"], row.fountain.as_str());
+}

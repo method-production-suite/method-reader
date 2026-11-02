@@ -135,6 +135,13 @@ fn n5_the_arrows_move_between_tabs_and_wrap() {
     assert_eq!(h.state().surface, Surface::Convert);
     h.key_press(Key::ArrowRight);
     steps(&mut h);
+    assert_eq!(
+        h.state().surface,
+        Surface::Library,
+        "the Library comes next"
+    );
+    h.key_press(Key::ArrowRight);
+    steps(&mut h);
     assert_eq!(h.state().surface, Surface::Read);
 }
 
@@ -1804,4 +1811,143 @@ fn b4_eject_off_a_mac_wears_it_and_our_own_azw3_no_longer_does() {
         let eject = h.get_by_role_and_label(Role::Button, "Eject Kindle").rect();
         assert_eq!(wears_beta(&h, eject), eject_beta, "{platform:?}");
     }
+}
+
+// ---------------------------------------------------------------- library
+// docs/superpowers/specs/2026-11-02-library-view-design.md, part 2.
+
+fn library_row(name: &str, epub: bool) -> serde_json::Value {
+    let folder = format!("/Users/reader/Method Reader/{name}");
+    json!({"folder": folder, "name": name, "title": name.to_uppercase(),
+        "source": format!("/scripts/{name}.pdf"), "sourceExists": true,
+        "fountain": format!("{folder}/{name}.fountain"),
+        "epub": if epub { json!(format!("{folder}/{name}.epub")) } else { json!(null) },
+        "pages": 18, "scenes": 11, "converted": "2026-11-02T18:00:00Z",
+        "others": [], "settings": null})
+}
+
+fn library_of(rows: Vec<serde_json::Value>) -> Reply {
+    Reply::ok(json!({"ok": true, "root": "/Users/reader/Method Reader", "scripts": rows}))
+}
+
+#[test]
+fn library_open_remakes_the_book_from_its_fountain_and_lands_on_preview() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    let mut h = harness(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Open FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    let folder = "/Users/reader/Method Reader/Field Station";
+    assert_eq!(
+        w.engine.calls_of("convert-to"),
+        [Request::ConvertTo {
+            path: format!("{folder}/Field Station.fountain"),
+            out: format!("{folder}/Field Station.epub"),
+        }],
+        "the book is remade from the library .fountain"
+    );
+    assert!(w.engine.calls_of("convert").is_empty(), "never the PDF");
+    let app = h.state();
+    assert_eq!(app.surface, Surface::Read);
+    assert!(
+        h.get_by_role_and_label(Role::Tab, "Preview")
+            .accesskit_node()
+            .is_selected()
+            == Some(true)
+    );
+    let script = app.script.as_ref().expect("the script is open");
+    assert_eq!(script.path, "/scripts/Field Station.pdf", "its own PDF");
+    assert_eq!(script.title, "FIELD STATION");
+    assert_eq!((script.pages, script.scenes), (Some(18), Some(11)));
+    assert_eq!(
+        script.fountain_path.as_deref(),
+        Some(format!("{folder}/Field Station.fountain").as_str())
+    );
+    assert_eq!(
+        script.epub_path.as_deref(),
+        Some(format!("{folder}/Field Station.epub").as_str())
+    );
+}
+
+#[test]
+fn library_open_makes_the_book_a_row_does_not_have_yet() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Weather Log", false)]),
+    );
+    let mut h = harness(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Open WEATHER LOG")
+        .click_accesskit();
+    steps(&mut h);
+    let folder = std::path::Path::new("/Users/reader/Method Reader/Weather Log");
+    assert_eq!(
+        w.engine.calls_of("convert-to"),
+        [Request::ConvertTo {
+            path: format!("{}/Weather Log.fountain", folder.display()),
+            out: folder
+                .join("Weather Log.epub")
+                .to_string_lossy()
+                .into_owned(),
+        }]
+    );
+    assert_eq!(h.state().surface, Surface::Read);
+}
+
+#[test]
+fn library_asks_each_time_it_is_shown_and_drops_a_stale_answer() {
+    let w = world();
+    let mut h = harness(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Tab, "Convert").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("library").len(), 2, "once per showing");
+
+    // Two asks out at once: the first one's answer is old news.
+    w.engine
+        .once("library", library_of(vec![library_row("Old News", true)]));
+    w.engine.once(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    sp_app::app::library::look(h.state_mut());
+    sp_app::app::library::look(h.state_mut());
+    steps(&mut h);
+    assert!(has(&h, "Open FIELD STATION"));
+    assert!(!has(&h, "Open OLD NEWS"), "the stale answer is dropped");
+}
+
+#[test]
+fn library_open_waits_while_a_conversion_runs() {
+    let w = world();
+    w.engine.hold("convert");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    w.fakes.answer_dialog(Some("/scripts/field-station.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    settle(&mut h);
+    assert!(h.state().convert.converting);
+    sp_app::app::library::look(h.state_mut());
+    settle(&mut h);
+    h.state_mut().go_to(Surface::Library);
+    settle(&mut h);
+    let open = h.get_by_role_and_label(Role::Button, "Open FIELD STATION");
+    assert!(
+        open.accesskit_node().is_disabled(),
+        "one conversion at a time"
+    );
+    w.engine.release("convert");
+    settle(&mut h);
 }

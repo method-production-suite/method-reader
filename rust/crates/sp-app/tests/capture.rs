@@ -221,6 +221,7 @@ fn it_runs_the_reads_and_the_demo_scripts_conversion() {
     for r in [
         Request::Version,
         Request::AppSettings,
+        Request::Library,
         Request::Devices { quick: true },
         Request::Devices { quick: false },
         Request::Convert {
