@@ -299,7 +299,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "parking_lot",
  "percent-encoding",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
  "wl-clipboard-rs",
  "x11rb",
 ]
@@ -1263,8 +1263,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a"
 dependencies = [
  "quote",
- "syn 2.0.119",
+ "syn 3.0.6",
 ]
+
+[[package]]
+name = "ct-codecs"
+version = "1.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fd9f3db6f2cfef61c10613071955154ffdc9e515daebff26de4b54e35038fdd"
 
 [[package]]
 name = "cursor-icon"
@@ -1740,7 +1746,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2231,9 +2237,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi 6.0.0",
  "rand_core",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -3336,11 +3344,12 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minisign"
-version = "0.7.3"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b23ef13ff1d745b1e52397daaa247e333c607f3cff96d4df2b798dc252db974b"
+checksum = "3062dbbf4d8f57899e2252804f7512a4fd89c8211c58fa6c786d38794a0c809d"
 dependencies = [
- "getrandom 0.2.17",
+ "ct-codecs",
+ "getrandom 0.4.3",
  "rpassword",
  "scrypt",
 ]
@@ -3428,7 +3437,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "png",
  "thiserror 2.0.21",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3743,7 +3752,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4215,7 +4224,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4958,7 +4967,7 @@ dependencies = [
  "num-traits",
  "rpm-version",
  "sha1 0.10.7",
- "sha2",
+ "sha2 0.10.9",
  "sha3",
  "thiserror 2.0.21",
  "zeroize",
@@ -5024,7 +5033,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5112,7 +5121,7 @@ checksum = "0516a385866c09368f0b5bcd1caff3366aace790fcd46e2bb032697bb172fd1f"
 dependencies = [
  "pbkdf2",
  "salsa20",
- "sha2",
+ "sha2 0.10.9",
 ]
 
 [[package]]
@@ -5316,6 +5325,17 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
  "digest 0.10.7",
+]
+
+[[package]]
+name = "sha2"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47d7069beb7d6ac7b9acd1039986e73443f24234f41074da099d6f994ac9ad19"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.3.1",
+ "digest 0.11.3",
 ]
 
 [[package]]
@@ -5541,7 +5561,7 @@ dependencies = [
  "parley",
  "rfd",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "skrifa 0.48.0",
  "sp-cli",
  "sp-device",
@@ -5562,7 +5582,7 @@ version = "1.1.0"
 dependencies = [
  "regex",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-fountain",
  "sp-mobi",
  "unicode-normalization",
@@ -5617,7 +5637,7 @@ dependencies = [
  "rustix 1.1.5",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-azw3",
  "sp-device",
  "sp-epub",
@@ -5640,7 +5660,7 @@ dependencies = [
  "flate2",
  "regex",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-fountain",
  "sp-model",
  "zip",
@@ -5662,7 +5682,7 @@ name = "sp-fountain"
 version = "1.1.0"
 dependencies = [
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-model",
  "sp-parser",
  "unicode-general-category",
@@ -5674,7 +5694,7 @@ version = "1.1.0"
 dependencies = [
  "libc",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "tempfile",
 ]
 
@@ -5686,7 +5706,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-fountain",
  "sp-model",
  "zip",
@@ -5744,7 +5764,7 @@ dependencies = [
  "miniz_oxide 0.9.1",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-model",
  "sp-parser",
 ]
@@ -5760,7 +5780,7 @@ dependencies = [
  "rpm",
  "serde",
  "serde_json",
- "sha2",
+ "sha2 0.11.1",
  "sp-update-config",
  "tar",
  "tempfile",
@@ -6131,10 +6151,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.5",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6533,7 +6553,7 @@ checksum = "f2f6fb2847f6742cd76af783a2a2c49e9375d0a111c7bef6f71cd9e738c72d6e"
 dependencies = [
  "memoffset",
  "tempfile",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7282,7 +7302,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -7830,7 +7850,7 @@ dependencies = [
  "regex",
  "serde_json",
  "serde_yaml",
- "sha2",
+ "sha2 0.11.1",
  "signal-hook",
  "sp-epub",
  "sp-fountain",
