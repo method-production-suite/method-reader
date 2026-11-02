@@ -463,7 +463,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | keyboard-types | 0.8.3 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2017 Pyfisch |
 | khronos-egl | 6.0.0 | MIT/Apache-2.0 | app | Linux, Windows | copyright its authors, see the crate (authors: Timothée Haudebourg, Sean Kerr) |
 | kurbo | 0.13.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Raph Levien |
-| libc | 0.2.190 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) The Rust Project Developers |
+| libc | 0.2.191 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) The Rust Project Developers |
 | libm | 0.2.16 | MIT | app | all | Copyright (c) 2018 Jorge Aparicio; Copyright © 2005-2020 Rich Felker, et al.; Copyright © 1993,2004 Sun Microsystems or; Copyright © 2003-2011 David Schultz or; Copyright © 2003-2009 Steven G. Kargl or; Copyright © 2003-2009 Bruce D. Evans or; Copyright © 2008 Stephen L. Moshier or; Copyright © 2017-2018 Arm Limited |
 | linebender_resource_handle | 0.1.1 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | CLI and app | Linux | copyright its authors, see the crate (authors: Dan Gohman) |
@@ -491,7 +491,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | num-traits | 0.2.19 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
 | num_cpus | 1.17.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015-2025 Sean McArthur |
 | num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 | app | macOS | Copyright (c) 2018, Daniel Wagner-Hall |
-| nusb | 0.2.7 | Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Kevin Mehall) |
+| nusb | 0.2.8 | Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Kevin Mehall) |
 | objc-sys | 0.3.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2 | 0.5.3 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
 | objc2 | 0.6.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
@@ -571,7 +571,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | semver | 1.0.28 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: David Tolnay) |
 | serde | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
 | serde_core | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
-| serde_json | 1.0.151 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| serde_json | 1.0.154 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | servo_arc | 0.5.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The Servo Project Developers) |
 | sha2 | 0.10.9 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation; Copyright (c) 2016 Artyom Pavlov |
 | signal-hook-registry | 1.4.8 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2017 tokio-jsonrpc developers |
@@ -615,7 +615,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | typed-path | 0.12.3 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Chip Senkbeil) |
 | typenum | 1.20.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 Paho Lurie-Gregg |
 | unicode-bidi | 0.3.18 | MIT OR Apache-2.0 | app | all | This project is copyright 2015, The Servo Project Developers (given in the; Copyright (c) 2015 The Rust Project Developers |
-| unicode-normalization | 0.1.25 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2015 The Rust Project Developers |
+| unicode-normalization | 0.1.26 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2015 The Rust Project Developers |
 | unicode-script | 0.5.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Manish Goregaokar |
 | unicode-segmentation | 1.13.3 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 The Rust Project Developers |
 | unicode-vo | 0.1.0 | MIT/Apache-2.0 | app | all | Copyright (c) 2018 Reizner Evgeniy |
