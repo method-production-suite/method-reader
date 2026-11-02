@@ -68,8 +68,14 @@ A new verb, `library`, that takes no arguments and answers, with `--json`:
 - **`epub`** is null when the folder has no book yet. **`others`** lists the
   `.azw3`, `.kfx`, `.mobi` and `.fdx` beside it, sorted. **`settings`** is
   the per-script settings file, or null.
-- **`converted`** is the `.fountain`'s modified time, as ISO 8601 UTC.
-  Scripts come newest first, then by name.
+- **`converted`** is when the script's library conversion converted, as
+  ISO 8601 UTC to the second (`2026-11-02T18:00:00Z`). Every `--library`
+  conversion that writes the folder's `.fountain` (from a PDF or from a
+  `.fountain` elsewhere) keeps it in source.json under `"converted"`, so a
+  reconversion moves it and an edit to the `.fountain` outside the app does
+  not. A folder made before that was kept (or one whose value is not of that
+  shape) answers the `.fountain`'s modified time instead. Scripts come
+  newest conversion first, then by name.
 - **The root** comes from `library_root`, the same lookup a conversion
   uses. A root that does not exist yet answers `scripts: []`, not an error.
 

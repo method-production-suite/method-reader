@@ -624,6 +624,17 @@ fn finish(
                 e.message()
             ));
         }
+        // When it converted, kept the same way: the library lists this
+        // rather than the .fountain's modified time, which an edit moves.
+        if f.library
+            && let Err(e) =
+                sp_engine::library::save_converted_time(&fp, sp_engine::recent::now_seconds())
+        {
+            eprint_line(&format!(
+                "method-reader: could not keep the conversion time beside {fp}: {}",
+                e.message()
+            ));
+        }
         fountain_path = Some(fp);
     }
     let mut preview_path = None;
