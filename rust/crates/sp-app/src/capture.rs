@@ -323,7 +323,9 @@ pub fn is_demo(path: &str, demo: &Path) -> bool {
 /// the demo script into the scratch library.
 pub fn verdict(request: &Request, demo: &Path, library: &Path) -> Verdict {
     match request {
-        Request::Version | Request::AppSettings | Request::Devices { .. } => Verdict::Run,
+        Request::Version | Request::AppSettings | Request::Library | Request::Devices { .. } => {
+            Verdict::Run
+        }
         Request::Convert { path, options, .. } if is_demo(path, demo) && options.is_none() => {
             Verdict::Run
         }

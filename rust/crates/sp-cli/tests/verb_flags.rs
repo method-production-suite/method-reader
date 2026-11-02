@@ -69,6 +69,7 @@ const VERB_SHAPE: &[(&str, &[&str], &[&str])] = &[
         &["/nowhere/Kindle", "/nowhere/Kindle/documents/x.azw3"],
     ),
     ("shape", &[], &["/nowhere/x.fountain"]),
+    ("library", &[], &[]),
 ];
 
 /// sp-cli's verbs.rs, whose VERBS and VERB_SPECS lists are read below.
@@ -147,7 +148,9 @@ fn every_verb_refuses_every_flag_that_is_not_its_own() {
             args.extend_from_slice(positionals);
             args.extend_from_slice(values);
             args.push("--json");
-            let ran = sb.run(&args);
+            // From `empty/`: the sandbox's own folder holds `library/`,
+            // which a bare `library` would name instead of the verb.
+            let ran = sb.run_in(&sb.path("empty"), &args);
             let v = ran.json();
             got.push(format!(
                 "{verb} {flag}: {} {} {}",

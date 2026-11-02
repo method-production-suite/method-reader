@@ -6,6 +6,7 @@
 pub mod app_settings;
 pub mod export;
 pub mod kfx;
+pub mod library;
 pub mod routes;
 pub mod settings;
 pub mod shape;

@@ -661,6 +661,7 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     let surface_end = page_top + window.y - foot_height(app, ui, block);
     match app.surface {
         Surface::Convert => convert::draw(app, ui, block, window),
+        Surface::Library => super::library::draw(app, ui),
         Surface::Read => read::draw(app, ui, block, window, surface_end),
         Surface::Tune => tune::draw(app, ui, block, window),
     }
@@ -715,19 +716,15 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
     let reduced = app.reduced_motion();
     let bar = ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 2.0;
-        for (index, s) in Surface::ALL.into_iter().enumerate() {
+        for s in Surface::ALL {
             let presence = tab_presence(app.tab_available(s), s == app.surface);
             if !presence.shown {
                 continue;
             }
             // Arriving: fade and rise over 0.2 s, eased out, staggered by
-            // position (style.css tab-arrive).
+            // place among the tabs that arrive (style.css tab-arrive).
             let arrival = app.arriving.get(&s).map(|at| {
-                let delay = if index >= 2 {
-                    motion::TAB_STAGGER_MS * (index - 1) as f64
-                } else {
-                    0.0
-                };
+                let delay = motion::TAB_STAGGER_MS * s.arrival_place().unwrap_or(0) as f64;
                 let timing = motion::TAB_ARRIVE.delayed(delay);
                 (timing.progress(now - at), timing.running(now - at))
             });

@@ -315,6 +315,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E27 | Book queue: one queue per library EPUB; readers side by side, a writer alone, arrival order kept, a failure never stops the queue; turns save/convert write, kindle/send/copy/check read; a settle still counting down is cut short before any turn (its save goes first) | ui/book-queue.js | | done |
 | E28 | Kindle line: Kindle-file exports of one book one at a time, before their book turn | ui/send-panel.js inKindleLine | | done |
 | E29 | `shape <fountain> --json` (a problem report's counts; new, not app.js's) | `shape(fountain)` | no | done |
+| E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()` (`Request::Library`: the Library tab, sp-app/src/app/library.rs; a row's Open is the sample's `convert-to` from the library `.fountain`) | no | done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, screens.rs, behaviors.rs) |
 
 ### C. Convert
 
@@ -1493,3 +1494,27 @@ names the check it affects.
   --accept export-check-azw3`, its only change the new field; sp-engine's
   common/frozen.rs reads the frozen TypeScript `export --for azw3 --check`
   answer with it.
+- **The library verb, and the page count source.json keeps (2026-11-02,
+  branch feat/library-view).** `method-reader library [--json]` is new:
+  not one of the TypeScript's verbs (row E30). It lists the library
+  folder's scripts for the window's Library tab
+  (docs/superpowers/specs/2026-11-02-library-view-design.md), and the main
+  help does not list it yet, so no help row moved. The Library must show a
+  reopened book with the page count its conversion showed, the PDF's
+  pages, title page included (19 for Field Station), which the `.fountain`
+  alone cannot say: its highest `= pg N` marker is one fewer (18). So a
+  `--library` conversion now keeps that count in the script folder's
+  source.json beside `"source"` and `"scenes"`, as `"pages": {"count": N,
+  "fountainSha256": "<the .fountain's sha256>"}`, trusted only while the
+  `.fountain` still has that digest, as the scene lengths are; a
+  conversion from a `.fountain` has no PDF pages and clears it
+  (sp-engine's library.rs `PAGES_KEY`). The listing falls back to the
+  highest marker for older folders and edited scripts. No `--json` answer
+  changes. What was re-frozen, diffed first: 25 parity runs, accepted with
+  `cargo xtask parity --accept convert-library convert-library-again
+  convert-sidecar convert-app-defaults convert-follow-defaults` (the five
+  library rows on field-station, images, jpx, screenplay and torture; 10
+  runs on blank-pages and prose already matched). Each differed in exactly
+  one value, the hash of the library's source.json, and nothing else; the
+  other 422 committed runs matched untouched. A kept scratch folder's
+  source.json holds exactly `"source"`, `"scenes"` and `"pages"`.

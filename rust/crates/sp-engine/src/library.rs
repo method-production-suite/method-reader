@@ -163,8 +163,9 @@ pub fn library_root(platform: &str, env: &Env, settings_path: Option<&str>) -> S
     platform_library_default(platform, env)
 }
 
-/// The folder name a script would like: its own, undecorated.
-fn stem_of(input: &str) -> String {
+/// The folder name a script would like: its own, undecorated. Also the
+/// stem of every file in its folder (`<stem>.fountain`, `<stem>.epub`).
+pub(crate) fn stem_of(input: &str) -> String {
     let stem = host::basename_ext(input, &host::extname(input));
     let stem = js_trim(&stem);
     if stem.is_empty() || stem == "." || stem == ".." {
@@ -176,7 +177,7 @@ fn stem_of(input: &str) -> String {
 
 /// The absolute path recorded in a folder's source.json, or `None` if the
 /// folder is not a script folder this engine made.
-fn recorded_source(folder: &str) -> Option<String> {
+pub(crate) fn recorded_source(folder: &str) -> Option<String> {
     let text = fsx::read_text(&host::join(&[folder, SOURCE_FILE])).ok()?;
     match jsjson::parse(&text)? {
         Value::Object(map) => match map.get("source") {
@@ -284,6 +285,34 @@ fn marker_beside(fountain_path: &str) -> String {
     host::join(&[host::dirname(fountain_path), SOURCE_FILE.to_owned()])
 }
 
+/// Set `key` to `value` in the source.json beside `fountain_path`, or
+/// remove it when `None`, keeping every other key. Only a library script
+/// folder has that marker: anywhere else nothing is written. A marker that
+/// would not change is not rewritten.
+fn keep_in_marker(fountain_path: &str, key: &str, value: Option<Value>) -> Result<(), EngineError> {
+    let path = marker_beside(fountain_path);
+    let Ok(text) = fsx::read_text(&path) else {
+        return Ok(());
+    };
+    let Some(Value::Object(mut marker)) = jsjson::parse(&text) else {
+        return Ok(());
+    };
+    let before = marker.get(key).cloned();
+    match value {
+        Some(value) => {
+            marker.insert(key.into(), value);
+        }
+        None => {
+            marker.remove(key);
+        }
+    }
+    if marker.get(key) == before.as_ref() {
+        return Ok(());
+    }
+    let text = format!("{}\n", jsjson::stringify_pretty(&Value::Object(marker)));
+    fsx::write_atomic(&path, text.as_bytes())
+}
+
 /// Keep `measures` (measured with `fountain_text`) in the source.json
 /// beside `fountain_path`, or clear what is kept there when `None`. Only a
 /// library script folder has that marker: anywhere else nothing is written.
@@ -292,44 +321,27 @@ pub fn save_scene_measures(
     fountain_text: &str,
     measures: Option<&[SceneMeasure]>,
 ) -> Result<(), EngineError> {
-    let path = marker_beside(fountain_path);
-    let Ok(text) = fsx::read_text(&path) else {
-        return Ok(());
-    };
-    let Some(Value::Object(mut marker)) = jsjson::parse(&text) else {
-        return Ok(());
-    };
-    let before = marker.get(SCENES_KEY).cloned();
-    match measures {
-        Some(measures) => {
-            let measured: Vec<Value> = measures
-                .iter()
-                .map(|m| {
-                    let mut entry = serde_json::Map::new();
-                    entry.insert("eighths".into(), Value::from(m.eighths));
-                    if let Some(page) = &m.page {
-                        entry.insert("page".into(), Value::String(page.clone()));
-                    }
-                    Value::Object(entry)
-                })
-                .collect();
-            let mut scenes = serde_json::Map::new();
-            scenes.insert(
-                "fountainSha256".into(),
-                Value::String(sha256_hex(fountain_text)),
-            );
-            scenes.insert("measured".into(), Value::Array(measured));
-            marker.insert(SCENES_KEY.into(), Value::Object(scenes));
-        }
-        None => {
-            marker.remove(SCENES_KEY);
-        }
-    }
-    if marker.get(SCENES_KEY) == before.as_ref() {
-        return Ok(());
-    }
-    let text = format!("{}\n", jsjson::stringify_pretty(&Value::Object(marker)));
-    fsx::write_atomic(&path, text.as_bytes())
+    let scenes = measures.map(|measures| {
+        let measured: Vec<Value> = measures
+            .iter()
+            .map(|m| {
+                let mut entry = serde_json::Map::new();
+                entry.insert("eighths".into(), Value::from(m.eighths));
+                if let Some(page) = &m.page {
+                    entry.insert("page".into(), Value::String(page.clone()));
+                }
+                Value::Object(entry)
+            })
+            .collect();
+        let mut scenes = serde_json::Map::new();
+        scenes.insert(
+            "fountainSha256".into(),
+            Value::String(sha256_hex(fountain_text)),
+        );
+        scenes.insert("measured".into(), Value::Array(measured));
+        Value::Object(scenes)
+    });
+    keep_in_marker(fountain_path, SCENES_KEY, scenes)
 }
 
 /// The scene lengths kept beside `fountain_path`, when they were measured
@@ -356,6 +368,62 @@ pub fn read_scene_measures(fountain_path: &str, fountain_text: &str) -> Option<V
             Some(SceneMeasure { page, eighths })
         })
         .collect()
+}
+
+/// source.json's key for the page count a PDF conversion answered (its
+/// `--json` `pages`: the PDF's pages, the title page among them). Added for the
+/// Library (2026-11-02) beside `"source"` and `"scenes"`, and bound to the
+/// .fountain the same way:
+///
+/// ```json
+/// {
+///   "pages": {
+///     "count": 19,
+///     "fountainSha256": "<sha256 of the .fountain it was counted with>"
+///   },
+///   "source": "/path/to/Script.pdf"
+/// }
+/// ```
+///
+/// The Library lists a reopened book with the page count its conversion
+/// showed, which the .fountain alone cannot say: its `= pg N` markers start
+/// on the first page of the script, and a title page carries none. An
+/// edited .fountain no longer matches the digest, and its count is then
+/// read from its markers rather than kept stale.
+pub const PAGES_KEY: &str = "pages";
+
+/// Keep `count` (the conversion of `fountain_text`'s PDF) in the
+/// source.json beside `fountain_path`, or clear what is kept there when
+/// `None` (a conversion from a .fountain, which has no PDF pages to count).
+/// Only a library script folder has that marker: anywhere else nothing is
+/// written.
+pub fn save_page_count(
+    fountain_path: &str,
+    fountain_text: &str,
+    count: Option<u32>,
+) -> Result<(), EngineError> {
+    let pages = count.map(|count| {
+        let mut pages = serde_json::Map::new();
+        pages.insert("count".into(), Value::from(count));
+        pages.insert(
+            "fountainSha256".into(),
+            Value::String(sha256_hex(fountain_text)),
+        );
+        Value::Object(pages)
+    });
+    keep_in_marker(fountain_path, PAGES_KEY, pages)
+}
+
+/// The page count kept beside `fountain_path`, when it was counted for
+/// exactly `fountain_text`; `None` otherwise (no marker, an older marker,
+/// another text, or an entry this version cannot read).
+pub fn read_page_count(fountain_path: &str, fountain_text: &str) -> Option<u32> {
+    let text = fsx::read_text(&marker_beside(fountain_path)).ok()?;
+    let pages = jsjson::parse(&text)?.get(PAGES_KEY)?.clone();
+    if pages.get("fountainSha256")?.as_str()? != sha256_hex(fountain_text) {
+        return None;
+    }
+    u32::try_from(pages.get("count")?.as_u64()?).ok()
 }
 
 /// `adoptSidecar(input, output)`: carry a sidecar from beside the PDF into

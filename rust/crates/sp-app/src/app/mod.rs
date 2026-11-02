@@ -1,4 +1,4 @@
-//! The window: one `App`, three surfaces, the release notes sheet, the
+//! The window: one `App`, four surfaces, the release notes sheet, the
 //! heads-up, and the plumbing every engine call goes through
 //! (was `desktop/ui/main.js` and `app.js`).
 //!
@@ -14,6 +14,7 @@ pub mod device_library;
 pub mod frame;
 pub mod help;
 pub mod host;
+pub mod library;
 pub mod menu;
 pub mod panel;
 pub mod read;
@@ -50,6 +51,8 @@ pub enum Purpose {
     Tune(tune::Purpose),
     Panel(panel::Purpose),
     Shelf(device_library::Purpose),
+    /// The Library tab's list (library.rs).
+    Library(library::Purpose),
     DevicesPoll {
         era: u64,
     },
@@ -128,6 +131,8 @@ pub struct App {
     pub panel: panel::State,
     /// What is on the connected reader (device_library.rs).
     pub shelf: device_library::State,
+    /// The Library tab's list (library.rs).
+    pub library: library::State,
     pub heads_up: frame::HeadsUp,
     pub watcher: Watcher,
     pub update: frame::UpdateState,
@@ -193,6 +198,7 @@ impl App {
             tune: tune::State::default(),
             panel: panel::State::default(),
             shelf: device_library::State::default(),
+            library: library::State::default(),
             heads_up: frame::HeadsUp::default(),
             watcher: Watcher::default(),
             update: frame::UpdateState::default(),
@@ -399,6 +405,7 @@ impl App {
             Purpose::Tune(p) => tune::answered(self, p, reply),
             Purpose::Panel(p) => panel::answered(self, p, reply),
             Purpose::Shelf(p) => device_library::answered(self, p, reply),
+            Purpose::Library(p) => library::answered(self, p, reply),
             Purpose::Shape { fountain } => help::shape_answered(self, &fountain, &reply),
             Purpose::DevicesPoll { era } => {
                 let answer = reply.answer.ok();
@@ -536,7 +543,7 @@ impl App {
         match was {
             Surface::Convert => panel::hidden(self),
             Surface::Read => read::hidden(self),
-            Surface::Tune => {}
+            Surface::Library | Surface::Tune => {}
         }
         match s {
             Surface::Convert => {
@@ -544,6 +551,7 @@ impl App {
                     panel::shown(self);
                 }
             }
+            Surface::Library => library::shown(self),
             Surface::Read => read::shown(self),
             Surface::Tune => tune::shown(self),
         }

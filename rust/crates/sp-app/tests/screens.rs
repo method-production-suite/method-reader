@@ -757,3 +757,93 @@ fn release_headline() -> String {
         .join(" ")
         .replace("**", "")
 }
+
+// ------------------------------------------------------------- the library
+// docs/superpowers/specs/2026-11-02-library-view-design.md, part 2.
+
+/// Two scripts as the engine lists them: one whose PDF has gone, one with
+/// no book yet and no page markers.
+fn two_scripts() -> Value {
+    json!({"ok": true, "root": "/Users/reader/Method Reader", "scripts": [
+        {"folder": "/Users/reader/Method Reader/Field Station", "name": "Field Station",
+         "title": "FIELD STATION", "source": "/gone/Field Station.pdf", "sourceExists": false,
+         "fountain": "/Users/reader/Method Reader/Field Station/Field Station.fountain",
+         "epub": "/Users/reader/Method Reader/Field Station/Field Station.epub",
+         "pages": 18, "scenes": 11, "converted": "2026-11-02T18:00:00Z",
+         "others": [], "settings": null},
+        {"folder": "/Users/reader/Method Reader/Weather Log", "name": "Weather Log",
+         "title": null, "source": "/scripts/Weather Log.fountain", "sourceExists": true,
+         "fountain": "/Users/reader/Method Reader/Weather Log/Weather Log.fountain",
+         "epub": null, "pages": null, "scenes": 1, "converted": "2026-10-30T09:15:00Z",
+         "others": [], "settings": null},
+    ]})
+}
+
+#[test]
+fn the_library_tab_is_there_with_no_script_open_and_names_each_row() {
+    let w = world();
+    w.engine.always("library", Reply::ok(two_scripts()));
+    let mut h = harness(&w, Platform::Mac);
+    assert!(h.state().script.is_none());
+    assert!(
+        w.engine.calls_of("library").is_empty(),
+        "asked only when shown"
+    );
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("library"), [Request::Library]);
+    h.get_by_role_and_label(Role::Heading, "Your library");
+    // Each row: its title (or its name), its counts and date, and a note
+    // when its PDF has gone; its Open button names the script.
+    assert!(has_value(&h, "FIELD STATION"));
+    assert!(has_value(
+        &h,
+        "18 pages, 11 scenes, converted 2 November 2026"
+    ));
+    assert!(has_value(
+        &h,
+        "Its PDF has moved or gone; the book still opens."
+    ));
+    h.get_by_role_and_label(Role::Button, "Open FIELD STATION");
+    assert!(has_value(&h, "Weather Log"), "no title: the name");
+    assert!(has_value(&h, "1 scene, converted 30 October 2026"));
+    h.get_by_role_and_label(Role::Button, "Open Weather Log");
+    assert!(
+        !has_value(
+            &h,
+            "The file it came from has moved or gone; the book still opens."
+        ),
+        "its source is there"
+    );
+}
+
+#[test]
+fn an_empty_library_says_where_it_is_and_that_conversions_land_there() {
+    let w = world();
+    w.engine.always(
+        "library",
+        Reply::ok(json!({"ok": true, "root": "/Users/reader/Method Reader", "scripts": []})),
+    );
+    let mut h = harness(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    assert!(has_value(&h, "Nothing in the library yet."));
+    assert!(has_value(
+        &h,
+        "Every script you convert lands in ~/Method Reader, in a folder of its own."
+    ));
+    assert!(h.query_by_role_and_label(Role::Button, "Open").is_none());
+}
+
+#[test]
+fn a_library_that_cannot_be_read_says_so() {
+    let w = world();
+    w.engine.always(
+        "library",
+        Reply::ok(json!({"ok": false, "error": {"code": "internal", "message": "The library folder could not be read."}})),
+    );
+    let mut h = harness(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    assert!(has_value(&h, "The library folder could not be read."));
+}

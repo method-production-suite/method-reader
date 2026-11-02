@@ -101,6 +101,9 @@ pub enum Request {
     Shape {
         fountain: String,
     },
+    /// Every script in the library folder, for the Library tab (`library`,
+    /// new: not one of app.js's).
+    Library,
 }
 
 impl Request {
@@ -128,6 +131,7 @@ impl Request {
             Self::Route { .. } => Call::Route,
             Self::EmailSetup => Call::EmailSetup,
             Self::Shape { .. } => Call::Shape,
+            Self::Library => Call::Library,
         }
     }
 
@@ -270,6 +274,7 @@ impl Request {
             ]),
             Self::EmailSetup => v(&[Some("route"), Some("kindle-email-setup"), Some("--json")]),
             Self::Shape { fountain } => v(&[Some("shape"), Some(fountain), Some("--json")]),
+            Self::Library => v(&[Some("library"), Some("--json")]),
         }
     }
 
@@ -298,6 +303,7 @@ impl Request {
             Self::Route { .. } => "route",
             Self::EmailSetup => "email-setup",
             Self::Shape { .. } => "shape",
+            Self::Library => "library",
         }
     }
 }
@@ -461,6 +467,18 @@ pub fn default_answer(request: &Request) -> Value {
             "ok": true, "pages": 18, "sceneHeadings": 11, "cues": 103,
             "dialogueBlocks": 103, "dualExchanges": 0, "pictures": 0, "transitions": 3,
         }),
+        // The demo script, converted into the default library.
+        Request::Library => {
+            let folder = "/Users/reader/Method Reader/Field Station";
+            json!({"ok": true, "root": "/Users/reader/Method Reader", "scripts": [{
+                "folder": folder, "name": "Field Station", "title": "FIELD STATION",
+                "source": "/scripts/field-station.pdf", "sourceExists": true,
+                "fountain": format!("{folder}/Field Station.fountain"),
+                "epub": format!("{folder}/Field Station.epub"),
+                "pages": 18, "scenes": 11, "converted": "2026-11-02T18:00:00Z",
+                "others": [], "settings": null,
+            }]})
+        }
     }
 }
 

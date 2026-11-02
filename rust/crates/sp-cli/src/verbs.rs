@@ -12,6 +12,7 @@ use sp_engine::commands::export::{ExportDeps, ExportOptions, export_command};
 use sp_engine::commands::kfx::{
     KfxCommandDeps, install_lines, kfx_install_command, kfx_status_command, setup_lines,
 };
+use sp_engine::commands::library::{LibraryScript, library_command};
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -33,7 +34,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 16] = [
+pub const VERBS: [&str; 17] = [
     "devices",
     "send",
     "settings",
@@ -50,6 +51,7 @@ pub const VERBS: [&str; 16] = [
     "device-books",
     "device-remove",
     "shape",
+    "library",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -155,6 +157,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "device-books" => DEVICE_BOOKS_USAGE,
         "device-remove" => DEVICE_REMOVE_USAGE,
         "shape" => SHAPE_USAGE,
+        "library" => LIBRARY_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -205,6 +208,29 @@ fn no_arguments(verb: &str, positionals: &[String]) -> Run {
             "{verb} takes no arguments (got \"{p}\")"
         ))),
         None => Ok(()),
+    }
+}
+
+/// One count, singular or plural: "1 scene", "11 scenes".
+fn counted(n: u64, one: &str) -> String {
+    if n == 1 {
+        format!("1 {one}")
+    } else {
+        format!("{n} {one}s")
+    }
+}
+
+/// A library script on one line: its name, then pages (when its
+/// `.fountain` carries page markers) and scenes.
+fn library_line(script: &LibraryScript) -> String {
+    let scenes = counted(script.scenes as u64, "scene");
+    match script.pages {
+        Some(pages) => format!(
+            "{}: {}, {scenes}",
+            script.name,
+            counted(u64::from(pages), "page")
+        ),
+        None => format!("{}: {scenes}", script.name),
     }
 }
 
@@ -530,6 +556,20 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 ));
                 io.say(&format!("pictures: {}", shape.pictures));
                 io.say(&format!("transitions: {}", shape.transitions));
+            }
+            Ok(())
+        }
+        "library" => {
+            no_arguments(verb, pos)?;
+            let listing = library_command(host_platform(), &Env::process(), Some(&settings_file()));
+            if io.json {
+                io.ok(value(&listing));
+            } else if listing.scripts.is_empty() {
+                io.say(&format!("no scripts in the library yet ({})", listing.root));
+            } else {
+                for script in &listing.scripts {
+                    io.say(&library_line(script));
+                }
             }
             Ok(())
         }

@@ -14,6 +14,7 @@ pub mod intent;
 pub mod json;
 pub mod kfx;
 pub mod layout;
+pub mod library;
 pub mod motion;
 pub mod names;
 pub mod notes;

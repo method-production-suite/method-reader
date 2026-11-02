@@ -145,8 +145,10 @@ fn verbs_is_the_single_list_of_known_verbs() {
         "eject",
         "device-books",
         "device-remove",
+        "shape",
+        "library",
     ] {
-        let ran = sb.run(&[verb, "--help", "--json"]);
+        let ran = sb.run_in(&sb.path("empty"), &[verb, "--help", "--json"]);
         assert_eq!(ran.code, 0, "{verb}");
         let usage = ran.json()["usage"].as_str().unwrap().to_owned();
         assert!(usage.contains(&format!("method-reader {verb}")), "{verb}");

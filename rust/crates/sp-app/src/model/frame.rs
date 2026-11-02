@@ -4,18 +4,26 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Surface {
     Convert,
+    /// Every script in the library folder (src/model/library.rs).
+    Library,
     Read,
     Tune,
 }
 
 impl Surface {
-    pub const ALL: [Surface; 3] = [Surface::Convert, Surface::Read, Surface::Tune];
+    pub const ALL: [Surface; 4] = [
+        Surface::Convert,
+        Surface::Library,
+        Surface::Read,
+        Surface::Tune,
+    ];
 
     /// What the tab says. The ids stay `read` and `tune`; the labels are
     /// Preview and Settings.
     pub fn label(self) -> &'static str {
         match self {
             Self::Convert => "Convert",
+            Self::Library => "Library",
             Self::Read => "Preview",
             Self::Tune => "Settings",
         }
@@ -23,7 +31,17 @@ impl Surface {
 
     /// The surfaces that have nothing to show until a script is open.
     pub fn needs_script(self) -> bool {
-        !matches!(self, Self::Convert)
+        !matches!(self, Self::Convert | Self::Library)
+    }
+
+    /// How many staggers late this tab arrives when a script opens: the
+    /// tabs that arrive, in order, the second one a stagger behind the
+    /// first (style.css tab-arrive). None for a tab that is always there.
+    pub fn arrival_place(self) -> Option<usize> {
+        Self::ALL
+            .iter()
+            .filter(|s| s.needs_script())
+            .position(|s| *s == self)
     }
 }
 
@@ -85,11 +103,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_bar_is_convert_preview_settings() {
+    fn the_bar_is_convert_library_preview_settings() {
         let labels: Vec<_> = Surface::ALL.iter().map(|s| s.label()).collect();
-        assert_eq!(labels, vec!["Convert", "Preview", "Settings"]);
+        assert_eq!(labels, vec!["Convert", "Library", "Preview", "Settings"]);
         assert!(!Surface::Convert.needs_script());
+        assert!(
+            !Surface::Library.needs_script(),
+            "there with no script open"
+        );
         assert!(Surface::Read.needs_script() && Surface::Tune.needs_script());
+    }
+
+    #[test]
+    fn preview_arrives_first_and_settings_a_stagger_after() {
+        assert_eq!(Surface::Convert.arrival_place(), None);
+        assert_eq!(Surface::Library.arrival_place(), None);
+        assert_eq!(Surface::Read.arrival_place(), Some(0));
+        assert_eq!(Surface::Tune.arrival_place(), Some(1));
     }
 
     #[test]
@@ -140,6 +170,28 @@ mod tests {
         assert_eq!(
             tab_step(TabKey::End, Surface::Convert, all),
             Some(Surface::Tune)
+        );
+        assert_eq!(
+            tab_step(TabKey::Right, Surface::Convert, all),
+            Some(Surface::Library)
+        );
+        assert_eq!(
+            tab_step(TabKey::Left, Surface::Read, all),
+            Some(Surface::Library)
+        );
+        // No script open: Convert and Library, and the arrows wrap between them.
+        let no_script = |s: Surface| !s.needs_script();
+        assert_eq!(
+            tab_step(TabKey::Right, Surface::Library, no_script),
+            Some(Surface::Convert)
+        );
+        assert_eq!(
+            tab_step(TabKey::Left, Surface::Convert, no_script),
+            Some(Surface::Library)
+        );
+        assert_eq!(
+            tab_step(TabKey::End, Surface::Convert, no_script),
+            Some(Surface::Library)
         );
         let only_convert = |s| s == Surface::Convert;
         assert_eq!(

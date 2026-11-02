@@ -60,7 +60,8 @@ Built on the recommendation (reversible):
   already in the library, without converting it, does not count yet.
 - **Replacing a book on a reader** is the send panel's own copy, after
   converting again; the list of what is on a reader has no button that sends
-  some other library book (the window has no library list to pick from).
+  some other library book (the Library tab reopens a book; sending one
+  from there is not built yet).
 - **The checks a .fountain you bring has to pass** (Fountain in): it must be
   UTF-8 text, it must not be empty, and one with no scene heading and no
   dialogue is refused as not a screenplay, the same refusal a PDF gets, with
@@ -164,29 +165,13 @@ Decided:
 
 In order. Each is one small pull request.
 
-- **An MCP server** (1.0.0). `method-reader mcp`: inspect a script, preview
-  a page, get an editable script, make an e-book, all on local files. On
-  main; it ships in 1.0.0.
-- **OSF out.** A third editable script beside Fountain and .fdx, written from
-  the same structure, and `method-reader export --for osf`. On main (beta);
-  it ships in 1.0.0. Design and open questions:
-  docs/superpowers/specs/2026-10-20-osf-out-design.md.
-- **OSF and Fountain in.** The drop area and Choose a script accept .osf and
-  .fountain, so a script from Method Storyteller becomes an e-book without a
-  PDF. The Fountain half is built: a .fountain converts in the window and on
-  the command line the way a PDF does, and the library keeps a copy of it
-  beside its book. The OSF half is built too: an .osf is read into a
-  .fountain and converts the same way, with the same checks
-  (docs/osf-input.md). Neither has been tried yet on a script Method
-  Storyteller itself wrote.
-- **Copying to new Kindles over USB** (1.1.0, Mac, beta). Every Kindle
-  sold since late 2024 connects the way a phone does (MTP) instead of
-  showing up as a drive, and email cannot carry the Kindle file with the
-  best layout. The Mac app now carries a small helper, `method-reader-mtp`,
-  beside the window, which copies the book to the Kindle directly; a 2024
-  Paperwhite took the AZW3 and a KFX through it and opened both
-  (2026-10-29). On main; it ships in 1.1.0. From Windows and Linux those
-  Kindles still go by email.
+- **The library view** (the owner's pick, 2026-11-02). A Library tab lists
+  the books in the library folder, newest first, with their pages, scenes
+  and when each was converted, and Open reopens one without converting its
+  PDF again, even when that PDF has moved or gone. On the command line,
+  `method-reader library`. On main (design:
+  docs/superpowers/specs/2026-11-02-library-view-design.md). Next: removing
+  a script from the library, and each script's settings from its row.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current
@@ -199,12 +184,6 @@ you're using Method Reader, what annoys you is more useful than anything on this
 page.
 
 ## Later
-
-**A library: seeing the books you have made.** The window writes every
-conversion into the library folder and offers no way to look at what is in
-there: its tabs are Convert, Preview and Settings. A library view would
-list your books, reopen one without converting its PDF again, and be the
-obvious home for each script's settings.
 
 **Sides: reading one character's script.** Extract only the scenes a given
 character appears in, or emphasise their lines throughout. Method Reader already

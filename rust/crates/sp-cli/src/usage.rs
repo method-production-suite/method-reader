@@ -433,6 +433,25 @@ Options:
   -h, --help               show this help
 "#;
 
+pub const LIBRARY_USAGE: &str = r#"method-reader library: the scripts in the library, newest first
+
+Usage:
+  method-reader library [--json]
+
+Lists every script the library folder holds: the folder each --library
+conversion makes, the one METHOD_READER_LIBRARY names or the one chosen in
+the app (see app-settings). For each: its name and title, the file it was
+converted from and whether that file is still there, its .fountain, its
+book when it has one, pages and scenes as its .fountain counts them, when
+it was converted, the Kindle and Final Draft files beside the book, and its
+own settings file. Folders that are not a script's are left out. Reads
+only: a library that does not exist yet lists nothing and is not made.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
 pub const SHAPE_USAGE: &str = r#"method-reader shape: a script's shape as counts, no words from it
 
 Usage:
