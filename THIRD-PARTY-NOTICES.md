@@ -249,8 +249,8 @@ with the full GPL-3 text and their own copy of this notice beside it.
 ## The Rust crates that ship
 
 Every third-party crate built into `method-reader`, `method-reader-app` or
-`method-reader-mtp`, on any platform: 470 crates (63 of them in the command
-line; 460 in the window, which contains the command line's engine; 31 in the
+`method-reader-mtp`, on any platform: 471 crates (64 of them in the command
+line; 461 in the window, which contains the command line's engine; 31 in the
 MTP helper, 10 of them in nothing else). The list comes from Cargo itself, at
 the versions `rust/Cargo.lock` pins: `cargo tree --locked -p sp-cli` and `-p
 sp-app`, each with `-e normal,no-proc-macro`, for each shipped target
@@ -294,7 +294,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 <https://github.com/DioxusLabs/taffy> at revision
 7d33901cc383489d9945ae796a1ceed0a935ef66, which the blitz crates name. Their rows say so.
 
-### MIT (401)
+### MIT (402)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
@@ -340,7 +340,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | blitz-html | 0.3.0-beta.2 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | blitz-paint | 0.3.0-beta.2 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | blitz-traits | 0.3.0-beta.2 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| block-buffer | 0.10.4 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018-2019 The RustCrypto Project Developers |
+| block-buffer | 0.12.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018-2025 The RustCrypto Project Developers |
 | block2 | 0.5.1 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
 | block2 | 0.6.2 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | blocking | 1.7.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (its Cargo.toml names no authors) |
@@ -357,6 +357,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | color | 0.3.3 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | color_quant | 1.1.0 | MIT | app | all | Copyright (c) 2016 PistonDevelopers |
 | concurrent-queue | 2.5.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, Taiki Endo, John Nunley) |
+| const-oid | 0.10.2 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2020-2026 The RustCrypto Project Developers |
 | core-foundation | 0.10.1 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-foundation | 0.9.4 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-foundation-sys | 0.8.7 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
@@ -365,20 +366,20 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | core_detect | 1.0.0 | MIT/Apache-2.0 | app | all | Copyright (c) 2017-2020 The Rust Project Developers |
 | core_maths | 0.1.1 | MIT | app | all | Copyright (c) 2024 Robert Bastian |
 | coreaudio-rs | 0.14.2 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2015 (no holder named; authors: mitchmindtree, yupferris) |
-| cpufeatures | 0.2.17 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2020-2025 The RustCrypto Project Developers |
+| cpufeatures | 0.3.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2020-2026 The RustCrypto Project Developers |
 | crc32fast | 1.5.2 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018 Sam Rijs, Alex Crichton and contributors |
 | crossbeam-channel | 0.5.17 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2019 The Crossbeam Project Developers; Copyright (c) 2009 The Go Authors. All rights reserved. |
 | crossbeam-deque | 0.8.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 The Crossbeam Project Developers |
 | crossbeam-epoch | 0.9.21 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 The Crossbeam Project Developers |
 | crossbeam-utils | 0.8.23 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 The Crossbeam Project Developers |
-| crypto-common | 0.1.7 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2021 RustCrypto Developers |
+| crypto-common | 0.2.2 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2021-2026 RustCrypto Developers |
 | cursor-icon | 1.2.0 | MIT OR Apache-2.0 OR Zlib | app | all | Copyright (c) 2023 Kirill Chibisov |
 | dasp_sample | 0.11.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: mitchmindtree) |
 | data-url | 0.3.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2013-2025 The rust-url developers |
 | debug_timer | 0.1.3 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | deranged | 0.5.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2024 Jacob Pratt et al. |
 | derive_more | 2.1.1 | MIT | app | all | Copyright (c) 2016 Jelte Fennema |
-| digest | 0.10.7 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 Artyom Pavlov |
+| digest | 0.11.3 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2017-2025 RustCrypto Developers; Copyright (c) 2017 Artyom Pavlov |
 | dispatch | 0.2.0 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon) |
 | dispatch2 | 0.3.1 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart, Mary) |
 | dlib | 0.5.3 | MIT | app | Linux | Copyright (c) 2015 Victor Berger |
@@ -428,7 +429,6 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | futures-task | 0.3.34 | MIT OR Apache-2.0 | app | Linux, macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
 | futures-timer | 3.0.4 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2014 Alex Crichton |
 | futures-util | 0.3.34 | MIT OR Apache-2.0 | app | Linux, macOS | Copyright (c) 2016 Alex Crichton; Copyright (c) 2017 The Tokio Authors |
-| generic-array | 0.14.7 | MIT | CLI and app | all | Copyright (c) 2015 Bartłomiej Kamiński |
 | getrandom | 0.2.17 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018-2024 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
 | getrandom | 0.3.4 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018-2025 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
 | gif | 0.14.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 nwin |
@@ -451,6 +451,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | html5ever | 0.40.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2014 The html5ever Project Developers |
 | http | 1.5.0 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 http-rs authors |
 | httparse | 1.10.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2015-2025 Sean McArthur |
+| hybrid-array | 0.4.15 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2022-2026 The RustCrypto Project Developers |
 | idna | 1.1.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2013-2025 The rust-url developers |
 | idna_adapter | 1.2.2 | Apache-2.0 OR MIT | app | all | Copyright (c) The rust-url developers |
 | image | 0.25.10 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: The image-rs Developers) |
@@ -578,7 +579,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | serde_core | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
 | serde_json | 1.0.154 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | servo_arc | 0.5.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The Servo Project Developers) |
-| sha2 | 0.10.9 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation; Copyright (c) 2016 Artyom Pavlov |
+| sha2 | 0.11.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation; Copyright (c) 2016 Artyom Pavlov; Copyright (c) 2016-2026 The RustCrypto Project Developers |
 | signal-hook-registry | 1.4.8 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2017 tokio-jsonrpc developers |
 | simd-adler32 | 0.3.10 | MIT | app | all | Copyright (c) [2021] [Marvin Countryman] |
 | simdutf8 | 0.1.5 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Hans Kratz) |
