@@ -183,9 +183,9 @@ folder checks the ones you have). Reports from Windows and Linux are welcome:
 [open an issue](https://github.com/method-production-suite/method-reader/issues/new/choose).
 Who has checked what, in full: [the verification ledger](docs/verification-ledger.md).
 
-**Windows will warn you.** The Windows downloads are unsigned, so SmartScreen
-shows a "publisher unknown" screen the first time: choose **More info**, then
-**Run anyway**.
+**Windows will warn you.** Not signed, and no certificate is planned: Windows
+warns that the publisher is unknown before it opens. On that screen choose
+**More info**, then **Run anyway**.
 
 **Sending to a reader is only proven on a Mac.** On Windows and Linux,
 converting is well tested and sending to a device has never been tried on
