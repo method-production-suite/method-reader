@@ -319,7 +319,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | ash | 0.38.0+1.3.281 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2016 ASH |
 | async-broadcast | 0.7.2 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2020 Yoshua Wuyts |
 | async-channel | 2.5.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina) |
-| async-executor | 1.14.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, John Nunley) |
+| async-executor | 1.13.3 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, John Nunley) |
 | async-io | 2.6.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina) |
 | async-lock | 3.4.2 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina) |
 | async-process | 2.5.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina) |
