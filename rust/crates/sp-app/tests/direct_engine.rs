@@ -399,11 +399,14 @@ fn child_lists_the_library() {
     let row = &listing.rows[0];
     assert_eq!(row.source, pdf.to_string_lossy());
     assert!(row.source_exists);
-    // The highest `= pg N` marker in its .fountain (the spec's `pages`),
-    // which is not the conversion's own page count: 18 here against the
-    // conversion's 19, so a reopened book says one page fewer.
-    assert_eq!(row.pages, Some(18));
+    // The conversion's own page count, title page and all, kept in the
+    // script folder for its .fountain: a reopened book shows the pages the
+    // converted one did.
     assert_eq!(converted["pages"], 19);
+    assert_eq!(
+        row.pages.map(serde_json::Value::from),
+        Some(converted["pages"].clone())
+    );
     assert!(row.fountain.ends_with(".fountain"));
     assert_eq!(row.epub.as_deref(), converted["epubPath"].as_str());
 
@@ -424,7 +427,7 @@ fn child_lists_the_library() {
         "the same book"
     );
     let as_converted = reopened(&again, row);
-    assert_eq!(as_converted["pages"], 18, "the row's pages");
+    assert_eq!(as_converted["pages"], converted["pages"], "the row's pages");
     assert_eq!(as_converted["scenes"], converted["scenes"]);
     assert_eq!(as_converted["fountainPath"], row.fountain.as_str());
 }

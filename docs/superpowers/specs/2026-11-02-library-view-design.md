@@ -34,7 +34,7 @@ A new verb, `library`, that takes no arguments and answers, with `--json`:
       "sourceExists": true,
       "fountain": ".../Field Station/Field Station.fountain",
       "epub": ".../Field Station/Field Station.epub",
-      "pages": 18,
+      "pages": 19,
       "scenes": 24,
       "converted": "2026-11-02T18:00:00Z",
       "others": [".../Field Station/Field Station.azw3"],
@@ -51,11 +51,20 @@ A new verb, `library`, that takes no arguments and answers, with `--json`:
   not followed.
 - **`name`** is the stem, and **`title`** is the `.fountain` title page's
   Title, with its emphasis and notes stripped (sp-fountain), or null.
-- **`pages`** is the highest `= pg N` marker in the `.fountain`
-  (sp-fountain's pages.rs). **`scenes`** is the number of scene headings the
-  tokenizer finds, counting mini-slugs out (sp-fountain's slug.rs). The
-  window needs both to show a reopened book the way it shows a converted
-  one, so they come from the `.fountain` itself, never a separate cache.
+- **`pages`** is the page count the PDF conversion answered (its `--json`
+  `pages`, the title page among them), which a `--library` conversion keeps
+  in source.json as `"pages": {"count": 19, "fountainSha256": "..."}`. It
+  is trusted only while the `.fountain` still has that digest, the way the
+  scene lengths are, so an edited `.fountain` never shows a stale count; a
+  conversion from a `.fountain` has no PDF pages and clears it. Without a
+  kept count (an older folder, an edited or `.fountain`-made script),
+  `pages` is the highest `= pg N` marker in the `.fountain` (sp-fountain's
+  pages.rs), or null. The markers alone say one page fewer than the
+  conversion for a script with a title page (18 against 19 for Field
+  Station), which is why the count is kept. **`scenes`** is the number of
+  scene headings the tokenizer finds, counting mini-slugs out (sp-fountain's
+  slug.rs), from the `.fountain` itself. The window needs both to show a
+  reopened book the way it shows a converted one.
 - **`epub`** is null when the folder has no book yet. **`others`** lists the
   `.azw3`, `.kfx`, `.mobi` and `.fdx` beside it, sorted. **`settings`** is
   the per-script settings file, or null.

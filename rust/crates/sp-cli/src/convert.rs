@@ -610,6 +610,20 @@ fn finish(
                 e.message()
             ));
         }
+        // The page count this answer gives, kept the same way so the
+        // library lists the book with it; a .fountain has none to keep.
+        if f.library
+            && let Err(e) = sp_engine::library::save_page_count(
+                &fp,
+                &result.fountain_text,
+                result.screenplay.as_ref().map(|s| s.page_count),
+            )
+        {
+            eprint_line(&format!(
+                "method-reader: could not keep the page count beside {fp}: {}",
+                e.message()
+            ));
+        }
         fountain_path = Some(fp);
     }
     let mut preview_path = None;

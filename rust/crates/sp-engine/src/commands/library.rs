@@ -10,9 +10,12 @@
 //!
 //! What the answer says about a script comes from its `.fountain`, tokenized
 //! by sp-fountain as every book is made from it, never from a cache that
-//! could disagree with it: the title page's Title, the highest `= pg N`
-//! marker, and the scene headings the FDX makes Scene Headings of
-//! (mini-slugs counted out).
+//! could disagree with it: the title page's Title and the scene headings
+//! the FDX makes Scene Headings of (mini-slugs counted out). Pages are the
+//! one exception: the count the PDF conversion answered (title page
+//! included), which source.json keeps bound to the `.fountain`'s digest
+//! ([`crate::library::PAGES_KEY`]), so an edited `.fountain` never shows a
+//! stale count; without it, the highest `= pg N` marker.
 //!
 //! The listing READS ONLY: it never makes the root, rewrites a source.json
 //! or touches the recent list.
@@ -26,7 +29,7 @@ use sp_fountain::{page_marker_label, strip_notes, tokenize};
 use sp_model::{Token, TokenType};
 
 use crate::env::Env;
-use crate::library::{library_root, recorded_source, stem_of};
+use crate::library::{library_root, read_page_count, recorded_source, stem_of};
 use crate::nodepath::host;
 use crate::recent::rfc3339;
 use crate::settings::sidecar::{legacy_sidecar_path, sidecar_path};
@@ -52,7 +55,8 @@ pub struct LibraryScript {
     pub fountain: String,
     /// `<stem>.epub`, when the folder has a book yet.
     pub epub: Option<String>,
-    /// The highest `= pg N` marker; absent when it has none.
+    /// The page count its conversion answered, kept in source.json for
+    /// this very `.fountain`; else the highest `= pg N` marker; else none.
     pub pages: Option<u32>,
     /// Scene headings, mini-slugs counted out.
     pub scenes: usize,
@@ -138,7 +142,7 @@ fn script_in(folder: &str) -> Option<(LibraryScript, SystemTime)> {
         source_exists: fs::metadata(&source).is_ok(),
         source,
         epub: is_plain_file(&epub).then_some(epub),
-        pages: highest_page(&tokens),
+        pages: read_page_count(&fountain, &text).or_else(|| highest_page(&tokens)),
         scenes: scene_heading_count(&tokens),
         converted: rfc3339(seconds),
         others,
