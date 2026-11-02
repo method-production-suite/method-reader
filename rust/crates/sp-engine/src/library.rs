@@ -163,8 +163,9 @@ pub fn library_root(platform: &str, env: &Env, settings_path: Option<&str>) -> S
     platform_library_default(platform, env)
 }
 
-/// The folder name a script would like: its own, undecorated.
-fn stem_of(input: &str) -> String {
+/// The folder name a script would like: its own, undecorated. Also the
+/// stem of every file in its folder (`<stem>.fountain`, `<stem>.epub`).
+pub(crate) fn stem_of(input: &str) -> String {
     let stem = host::basename_ext(input, &host::extname(input));
     let stem = js_trim(&stem);
     if stem.is_empty() || stem == "." || stem == ".." {
@@ -176,7 +177,7 @@ fn stem_of(input: &str) -> String {
 
 /// The absolute path recorded in a folder's source.json, or `None` if the
 /// folder is not a script folder this engine made.
-fn recorded_source(folder: &str) -> Option<String> {
+pub(crate) fn recorded_source(folder: &str) -> Option<String> {
     let text = fsx::read_text(&host::join(&[folder, SOURCE_FILE])).ok()?;
     match jsjson::parse(&text)? {
         Value::Object(map) => match map.get("source") {
