@@ -232,7 +232,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let (said, bad) = app.shelf.said.clone().unwrap_or_default();
     widgets::live(
         ui,
-        Id::new("shelf-status"),
+        Id::unique("shelf-status"),
         &said,
         theme::chrome(size::LABEL),
         if bad { t.alarm } else { t.ink_muted },

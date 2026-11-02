@@ -186,7 +186,7 @@ pub fn sample_failed(app: &mut App, message: &str, path: &str) {
 pub fn started(app: &mut App) {
     app.convert.waiting = None;
     // A fresh bar for a fresh conversion, as drawProgress built one.
-    app.forget_motion(Id::new(FILL));
+    app.forget_motion(Id::unique(FILL));
 }
 
 /// The progress bar's fill, easing to each new figure (surfaces.css .fill).
@@ -627,7 +627,7 @@ fn draw_working(app: &mut App, ui: &mut Ui) {
     ui.add_space(layout::SPACE[6]);
     ui.vertical_centered(|ui| {
         let fill = app.ease(
-            Id::new(FILL),
+            Id::unique(FILL),
             f32::from(app.convert.progress.percent) / 100.0,
             crate::model::motion::PROGRESS_FILL,
         );
@@ -640,7 +640,7 @@ fn draw_working(app: &mut App, ui: &mut Ui) {
             .unwrap_or_else(|| app.convert.progress.label.clone());
         widgets::live(
             ui,
-            Id::new("read-out"),
+            Id::unique("read-out"),
             &words,
             theme::chrome(size::LABEL),
             t.ink_muted,

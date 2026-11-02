@@ -5,8 +5,8 @@
 //! hears. Every word is drawn as written: sentence case, no caps.
 
 use egui::{
-    Align2, Color32, CornerRadius, FontId, Id, Response, RichText, Sense, Stroke, StrokeKind, Ui,
-    Vec2, WidgetInfo, WidgetType, accesskit,
+    Align2, Color32, CornerRadius, FontId, Id, Response, RichText, Role, Sense, Stroke, StrokeKind,
+    Ui, Vec2, WidgetInfo, accesskit,
 };
 
 use crate::theme::{self, Tokens, size};
@@ -81,7 +81,7 @@ fn draw_button(
             (rect, ui.interact(rect, id, sense))
         }
     };
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, enabled, words));
+    response.widget_info(|| WidgetInfo::labeled(Role::Button, enabled, words));
     if ui.is_rect_visible(rect) {
         let hovered = enabled && response.hovered();
         let pressed = enabled && response.is_pointer_button_down_on();
@@ -135,7 +135,7 @@ fn draw_button(
 
 /// Where the window keeps whether rings show (egui's per-window memory).
 fn rings_id() -> Id {
-    Id::new("sp-app focus rings shown")
+    Id::unique("sp-app focus rings shown")
 }
 
 /// Read this frame's input for the focus ring's mode (model/focus.rs
@@ -285,7 +285,7 @@ pub fn beta_badge(ui: &mut Ui, t: &Tokens) -> Response {
     );
     ui.painter()
         .galley(rect.center() - galley.size() / 2.0, galley, t.note);
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, BETA_LABEL));
+    response.widget_info(|| WidgetInfo::labeled(Role::Label, true, BETA_LABEL));
     ui.ctx()
         .accesskit_node_builder(response.id, |n| n.set_description(BETA_NOTE));
     response.on_hover_text(BETA_NOTE)

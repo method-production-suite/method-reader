@@ -23,15 +23,15 @@ path = "src/main.rs"
 # The toolkit, chosen in docs/superpowers/specs/2026-10-11-sp-app-design.md.
 # Default features on purpose: `accesskit` (the screen reader, on every
 # platform) and `wgpu` are both in them.
-eframe = "0.36.2"
-egui = "0.36.2"
+eframe = "0.37.0"
+egui = "0.37.0"
 # The fonts ship as the same WOFF2 subsets the website serves; this decodes
 # them to the TrueType bytes egui's font stack reads, once, at start.
 wuff = "0.2.9"
 # The system's UI face is read from disk at start (src/fonts.rs); this is
 # the reader egui itself parses fonts with, asked first so a face egui
 # could not parse is never handed to it.
-skrifa = "0.44"
+skrifa = "0.48"
 # The engine's answers keep the CLI's --json shape (see src/engine.rs).
 serde_json = "1"
 # Native file dialogs: open a screenplay, pick a folder, save a copy.
@@ -61,7 +61,7 @@ sp-cli = { path = "../sp-cli" }
 sp-fsutil.workspace = true
 
 [dev-dependencies]
-egui_kittest = { version = "0.36.2", features = ["wgpu"] }
+egui_kittest = { version = "0.37.0", features = ["wgpu"] }
 tempfile = "3"
 # The bundled fonts are pinned by their SHA-256 (src/fonts.rs).
 sha2.workspace = true

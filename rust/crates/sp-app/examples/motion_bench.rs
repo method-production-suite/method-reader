@@ -257,6 +257,7 @@ impl eframe::App for Bench {
                 delta: Vec2::new(0.0, dy),
                 phase: egui::TouchPhase::Move,
                 modifiers: egui::Modifiers::NONE,
+                source: egui::MouseWheelSource::Unknown,
             });
         }
     }

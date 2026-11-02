@@ -1,7 +1,7 @@
 //! Read: the converted script, keeping its shape, with its scene index
 //! (was `desktop/ui/read.js`, below its line).
 
-use egui::{Id, Key, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType, accesskit};
+use egui::{Id, Key, Pos2, Rect, Role, Sense, Ui, Vec2, WidgetInfo, accesskit};
 
 use super::bookview::{Place as Shown, sheet};
 use super::widgets::{self, Look};
@@ -204,7 +204,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         if open { 1.0 } else { 0.0 }
     } else {
         app.ease(
-            Id::new("scene-rail-shown"),
+            Id::unique("scene-rail-shown"),
             if open { 1.0 } else { 0.0 },
             motion::INDEX_SLIDE,
         )
@@ -238,7 +238,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
         Vec2::new(geometry.script.width, height),
     );
     // The stage: the reader's Tab stop, a group named for the script.
-    let stage_id = Id::new("script-stage");
+    let stage_id = Id::unique("script-stage");
     let stage = ui.interact(script_rect, stage_id, Sense::focusable_noninteractive());
     ui.ctx().accesskit_node_builder(stage.id, |n| {
         n.set_role(accesskit::Role::Group);
@@ -329,7 +329,7 @@ fn draw_ready(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2, end
             })
         },
     );
-    app.read.offset = out.inner.state.offset.y;
+    app.read.offset = out.inner.state.clamped_offset().y;
     // The reader scrolled during a glide: theirs wins, as in a browser.
     if gliding_at.is_some_and(|y| (y - app.read.offset).abs() > 0.5) {
         app.read.glide = None;
@@ -407,7 +407,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                 for (i, entry) in entries.iter().enumerate() {
                     let current = app.read.marked.as_deref() == Some(entry.id.as_str());
                     let stop = i == app.read.rail_stop;
-                    let id = Id::new(("scene-link", &entry.id));
+                    let id = Id::unique(("scene-link", &entry.id));
                     let mut job = egui::text::LayoutJob::default();
                     job.wrap.max_width = ui.available_width() - 8.0;
                     let ink = if current { t.ink } else { t.ink_muted };
@@ -442,7 +442,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
                         Some(time) => format!("{} {} {}", entry.label.place, m::SEPARATOR, time),
                         None => entry.label.place.clone(),
                     };
-                    r.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, &name));
+                    r.widget_info(|| WidgetInfo::labeled(Role::Button, true, &name));
                     if current {
                         ui.ctx().accesskit_node_builder(r.id, |n| {
                             n.set_aria_current(accesskit::AriaCurrent::True)
@@ -480,7 +480,7 @@ fn draw_rail(app: &mut App, ui: &mut Ui, entries: &[m::RailEntry], stacked: bool
         });
         if let Some(next) = walk {
             app.read.rail_stop = next;
-            ui.memory_mut(|m| m.request_focus(Id::new(("scene-link", &entries[next].id))));
+            ui.memory_mut(|m| m.request_focus(Id::unique(("scene-link", &entries[next].id))));
         }
     });
     ui.ctx().accesskit_node_builder(nav.response.id, |n| {

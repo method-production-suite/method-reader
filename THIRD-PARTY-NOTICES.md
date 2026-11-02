@@ -220,8 +220,8 @@ forbids using the reserved font names on a modified version. The files here
 are unmodified upstream builds. The full licence text is under
 [Licence texts](#sil-open-font-license-11).
 
-The window also carries the default fonts of its toolkit, egui (Hack, Noto
-Emoji, Ubuntu Light and an emoji icon font); see
+The window also carries the default fonts of its toolkit, egui (Hack, Ubuntu
+Light and five icons cut from an emoji icon font); see
 [The fonts inside egui](#the-fonts-inside-egui).
 
 ---
@@ -249,13 +249,14 @@ with the full GPL-3 text and their own copy of this notice beside it.
 ## The Rust crates that ship
 
 Every third-party crate built into `method-reader`, `method-reader-app` or
-`method-reader-mtp`, on any platform: 463 crates (62 of them in the command
-line; 453 in the window, which contains the command line's engine; 30 in the
+`method-reader-mtp`, on any platform: 470 crates (63 of them in the command
+line; 460 in the window, which contains the command line's engine; 31 in the
 MTP helper, 10 of them in nothing else). The list comes from Cargo itself, at
 the versions `rust/Cargo.lock` pins: `cargo tree --locked -p sp-cli` and `-p
 sp-app`, each with `-e normal,no-proc-macro`, for each shipped target
-(`aarch64-apple-darwin`, `x86_64-pc-windows-msvc`,
-`x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`), and `-p sp-mtp`
+(`aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-pc-windows-msvc`,
+`x86_64-unknown-linux-gnu`, and for the command line
+`aarch64-unknown-linux-gnu`), and `-p sp-mtp`
 for `aarch64-apple-darwin` and `x86_64-apple-darwin`, with each crate's
 version, licence and authors read from `cargo metadata --format-version 1
 --locked --filter-platform` for the same targets. Development and test
@@ -293,19 +294,16 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 <https://github.com/DioxusLabs/taffy> at revision
 7d33901cc383489d9945ae796a1ceed0a935ef66, which the blitz crates name. Their rows say so.
 
-### MIT (396)
+### MIT (401)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
-| accesskit | 0.24.1 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The AccessKit contributors) |
 | accesskit | 0.25.1 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_atspi_common | 0.18.1 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_consumer | 0.35.0 | MIT OR Apache-2.0 | app | Windows | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_consumer | 0.36.0 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_consumer | 0.38.0 | MIT OR Apache-2.0 | app | macOS | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_macos | 0.26.3 | MIT OR Apache-2.0 | app | macOS | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_unix | 0.21.1 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: The AccessKit contributors) |
-| accesskit_windows | 0.32.1 | MIT OR Apache-2.0 | app | Windows | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_atspi_common | 0.21.0 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_consumer | 0.39.1 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_macos | 0.27.1 | MIT OR Apache-2.0 | app | macOS | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_unix | 0.24.0 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_windows | 0.35.1 | MIT OR Apache-2.0 | app | Windows | copyright its authors, see the crate (authors: The AccessKit contributors) |
 | adler2 | 2.0.1 | 0BSD OR MIT OR Apache-2.0 | CLI and app | all | Copyright (C) Jonas Schievink <jonasschievink@gmail.com> |
 | ahash | 0.8.12 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018 Tom Kaitchuck |
 | aho-corasick | 1.1.5 | Unlicense OR MIT | CLI and app | all | Copyright (c) 2015 Andrew Gallant |
@@ -315,7 +313,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | anyrender | 0.14.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | anyrender_svg | 0.15.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | anyrender_vello_cpu | 0.18.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| arboard | 3.6.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2022 The Arboard contributors |
+| arboard | 3.7.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2022 The Arboard contributors |
 | arrayvec | 0.7.8 | MIT OR Apache-2.0 | app | all | Copyright (c) Ulrik Sverdrup "bluss" 2015-2023 |
 | as-raw-xcb-connection | 1.0.1 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | ash | 0.38.0+1.3.281 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2016 ASH |
@@ -364,7 +362,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | core-foundation-sys | 0.8.7 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-graphics | 0.23.2 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
 | core-graphics-types | 0.1.3 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2012-2013 Mozilla Foundation |
-| core_detect | 1.0.0 | MIT/Apache-2.0 | app | Linux, Windows | Copyright (c) 2017-2020 The Rust Project Developers |
+| core_detect | 1.0.0 | MIT/Apache-2.0 | app | all | Copyright (c) 2017-2020 The Rust Project Developers |
 | core_maths | 0.1.1 | MIT | app | all | Copyright (c) 2024 Robert Bastian |
 | coreaudio-rs | 0.14.2 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2015 (no holder named; authors: mitchmindtree, yupferris) |
 | cpufeatures | 0.2.17 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2020-2025 The RustCrypto Project Developers |
@@ -378,7 +376,6 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | dasp_sample | 0.11.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: mitchmindtree) |
 | data-url | 0.3.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2013-2025 The rust-url developers |
 | debug_timer | 0.1.3 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| debug_timer | 0.1.3 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | deranged | 0.5.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2024 Jacob Pratt et al. |
 | derive_more | 2.1.1 | MIT | app | all | Copyright (c) 2016 Jelte Fennema |
 | digest | 0.10.7 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 Artyom Pavlov |
@@ -387,16 +384,17 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | dlib | 0.5.3 | MIT | app | Linux | Copyright (c) 2015 Victor Berger |
 | downcast-rs | 1.2.1 | MIT/Apache-2.0 | app | Linux | Copyright (c) 2020 Ashish Myles and contributors |
 | dtoa | 1.0.11 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: David Tolnay) |
-| ecolor | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt, Andreas Reich) |
-| eframe | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
-| egui | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
-| egui-wgpu | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Nils Hasenbanck, embotech, Emil Ernerfeldt) |
-| egui-winit | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
-| either | 1.19.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 (no holder named, and its Cargo.toml names no authors) |
-| emath | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| ecolor | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt, Andreas Reich) |
+| eframe | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| egui | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| egui-wgpu | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Nils Hasenbanck, embotech, Emil Ernerfeldt) |
+| egui-winit | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| egui_system_font_provider | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| either | 1.18.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 (no holder named, and its Cargo.toml names no authors) |
+| emath | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
 | endi | 1.1.1 | MIT | app | Linux | copyright its authors, see the crate (authors: Zeeshan Ali Khan) |
 | enumflags2 | 0.7.12 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2017-2023 Maik Klein, Maja Kądziołka |
-| epaint | 0.36.2 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
+| epaint | 0.37.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Emil Ernerfeldt) |
 | equivalent | 1.0.2 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2016--2023 (no holder named, and its Cargo.toml names no authors) |
 | errno | 0.3.14 | MIT OR Apache-2.0 | CLI and app | Linux, macOS | Copyright (c) 2014 Chris Wong |
 | euclid | 0.22.14 | MIT OR Apache-2.0 | app | all | Copyright (c) 2012-2013 Mozilla Foundation |
@@ -407,13 +405,15 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | fdeflate | 0.3.7 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The image-rs Developers) |
 | fearless_simd | 0.4.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Raph Levien |
 | fearless_simd | 0.7.0 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Raph Levien |
-| fearless_simd | 1.1.0 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2018 Raph Levien |
+| fearless_simd | 1.0.0 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2018 Raph Levien |
 | filetime | 0.2.29 | MIT/Apache-2.0 | app | all | Copyright (c) 2014 Alex Crichton |
+| fixedbitset | 0.5.7 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2015-2017 (no holder named; authors: bluss) |
 | flate2 | 1.1.10 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014-2026 Alex Crichton |
 | float-cmp | 0.9.0 | MIT | app | all | Copyright (c) 2014-2020 Optimal Computing (NZ) Ltd |
-| font-types | 0.12.6 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
+| font-types | 0.12.7 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
 | fontconfig-parser | 0.5.8 | MIT | app | Linux | Copyright (c) 2021 Riey |
 | fontdb | 0.24.0 | MIT | app | all | Copyright (c) 2020 Yevhenii Reizner |
+| fontique | 0.11.1 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | fontique | 0.12.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | foreign-types | 0.5.0 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2017 The foreign-types Developers |
 | foreign-types-shared | 0.3.1 | MIT/Apache-2.0 | app | macOS | Copyright (c) 2017 The foreign-types Developers |
@@ -432,13 +432,15 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | getrandom | 0.2.17 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018-2024 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
 | getrandom | 0.3.4 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018-2025 The rust-random Project Developers; Copyright (c) 2014 The Rust Project Developers |
 | gif | 0.14.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 nwin |
+| glifo | 0.3.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | glifo | 0.4.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | glow | 0.17.0 | MIT OR Apache-2.0 OR Zlib | app | Linux, Windows | copyright its authors, see the crate (authors: Joshua Groves, Dzmitry Malyshau) |
 | gpu-allocator | 0.28.0 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2021 Traverse Research B.V. |
 | guillotiere | 0.7.0 | MIT/Apache-2.0 | app | all | Copyright (c) 2019 Nicolas Silva |
 | half | 2.7.1 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Kathryn Long) |
 | harfrust | 0.12.0 | MIT | app | all | Copyright (c) HarfBuzz developers; Copyright (c) 2020 Yevhenii Reizner |
-| hashbrown | 0.16.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 Amanieu d'Antras |
+| hashbrown | 0.15.5 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2016 Amanieu d'Antras |
+| hashbrown | 0.16.1 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2016 Amanieu d'Antras |
 | hashbrown | 0.17.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2016 Amanieu d'Antras |
 | hayro-ccitt | 0.4.0 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) The Hayro Authors |
 | hayro-jbig2 | 0.3.1 | Apache-2.0 OR MIT | CLI and app | all | Copyright (c) The Hayro Authors |
@@ -477,8 +479,8 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | memmap2 | 0.9.11 | MIT OR Apache-2.0 | app | all | Copyright (c) 2020 Yevhenii Reizner; Copyright (c) 2015 Dan Burkert |
 | mime | 0.3.17 | MIT OR Apache-2.0 | app | all | Copyright (c) 2014 Sean McArthur |
 | minisign-verify | 0.2.5 | MIT | app | all | Copyright (c) 2019-2025 Frank Denis; Copyright (c) 2006-2009 Graydon Hoare; Copyright (c) 2009-2013 Mozilla Foundation |
-| miniz_oxide | 0.8.9 | MIT OR Zlib OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
-| miniz_oxide | 0.9.1 | MIT OR Zlib OR Apache-2.0 | app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
+| miniz_oxide | 0.8.9 | MIT OR Zlib OR Apache-2.0 | app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
+| miniz_oxide | 0.9.1 | MIT OR Zlib OR Apache-2.0 | CLI and app | all | Copyright (c) 2017 Frommi; Copyright (c) 2017-2024 oyvindln; Copyright (c) 2020 Frommi |
 | mtp-rs | 0.33.0 | MIT OR Apache-2.0 | app | macOS | Copyright (c) 2026 David Veszelovszki |
 | muda | 0.21.2 | Apache-2.0 OR MIT | app | macOS | Copyright (c) 2022-2022 Tauri Programme within The Commons Conservancy |
 | naga | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
@@ -486,6 +488,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | new_debug_unreachable | 1.0.6 | MIT | app | all | Copyright (c) 2015 Jonathan Reem |
 | nix | 0.31.3 | MIT | CLI and app | macOS | Copyright (c) 2015 Carl Lerche + nix-rust Authors |
 | nohash-hasher | 0.2.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (authors: Parity Technologies) |
+| nom | 8.0.0 | MIT | app | Linux | Copyright (c) 2014-2019 Geoffroy Couprie |
 | num-conv | 0.2.2 | MIT OR Apache-2.0 | app | all | Copyright (c) Jacob Pratt |
 | num-integer | 0.1.47 | MIT OR Apache-2.0 | app | all | Copyright (c) 2014 The Rust Project Developers |
 | num-traits | 0.2.19 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
@@ -493,7 +496,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | num_enum | 0.7.6 | BSD-3-Clause OR MIT OR Apache-2.0 | app | macOS | Copyright (c) 2018, Daniel Wagner-Hall |
 | nusb | 0.2.8 | Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Kevin Mehall) |
 | objc-sys | 0.3.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
-| objc2 | 0.5.3 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
+| objc2 | 0.5.2 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
 | objc2 | 0.6.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2-app-kit | 0.2.2 | MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-app-kit | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
@@ -515,6 +518,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | once_cell | 1.21.4 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Aleksey Kladov) |
 | ordered-float | 5.5.0 | MIT | app | Linux, Windows | Copyright (c) 2015 Jonathan Reem |
 | ordered-stream | 0.2.0 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Daniel De Graaf, Zeeshan Ali Khan) |
+| os_pipe | 1.2.3 | MIT | app | Linux | copyright its authors, see the crate (authors: Jack O'Connor) |
 | parking | 2.2.1 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (authors: Stjepan Glavina, The Rust Project Developers) |
 | parking_lot | 0.12.5 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 The Rust Project Developers |
 | parking_lot_core | 0.9.12 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 The Rust Project Developers |
@@ -525,20 +529,20 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | parley_engine | 0.12.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | peniko | 0.6.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Raph Levien |
 | percent-encoding | 2.3.2 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2013-2025 The rust-url developers |
-| phf | 0.13.1 | MIT | app | Linux | Copyright (c) 2014-2022 Steven Fackler, Yuki Okushi |
+| petgraph | 0.8.3 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2015 (no holder named; authors: bluss, mitchmindtree) |
 | phf | 0.14.0 | MIT | app | all | Copyright (c) 2014-2022 Steven Fackler, Yuki Okushi |
-| phf_shared | 0.13.1 | MIT | app | Linux | Copyright (c) 2014-2022 Steven Fackler, Yuki Okushi |
 | phf_shared | 0.14.0 | MIT | app | all | Copyright (c) 2014-2022 Steven Fackler, Yuki Okushi |
 | pico-args | 0.5.0 | MIT | app | all | Copyright (c) 2019 Yevhenii Reizner |
 | pin-project-lite | 0.2.17 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | piper | 0.2.5 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, John Nunley) |
 | plist | 1.10.1 | MIT | app | all | Copyright (c) 2015 Edward Barnard |
 | png | 0.18.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 nwin |
+| poll-promise | 0.3.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Embark Studios |
 | polling | 3.11.0 | Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Stjepan Glavina, John Nunley) |
 | pollster | 0.4.0 | Apache-2.0/MIT | app | Linux | Copyright (c) 2020-2021 Joshua Barretto |
 | pollster | 1.0.1 | Apache-2.0/MIT | app | all | Copyright (c) 2020-2021 Joshua Barretto |
 | polycool | 0.4.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018 Raph Levien |
-| powerfmt | 0.2.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2023 Jacob Pratt et al. |
+| powerfmt | 0.2.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2023 Jacob Pratt et al. |
 | precomputed-hash | 0.1.1 | MIT | app | all | Copyright (c) 2017 Emilio Cobos Álvarez |
 | presser | 0.3.1 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2019 Embark Studios |
 | proc-macro2 | 1.0.107 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: David Tolnay, Alex Crichton) |
@@ -552,18 +556,19 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | rayon | 1.12.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2010 The Rust Project Developers |
 | rayon-core | 1.13.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2010 The Rust Project Developers |
 | read-fonts | 0.41.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
+| read-fonts | 0.45.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
 | regex | 1.13.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
 | regex-automata | 0.4.18 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
 | regex-syntax | 0.8.11 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 The Rust Project Developers |
 | renderdoc-sys | 1.1.0 | MIT OR Apache-2.0 | app | Linux, Windows | Copyright (c) 2022 Eyal Kalderon |
 | rfd | 0.17.2 | MIT | app | all | Copyright (c) 2022 Bartłomiej Maryńczak |
 | roxmltree | 0.20.0 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018 Yevhenii Reizner |
-| roxmltree | 0.21.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2018 Yevhenii Reizner |
+| roxmltree | 0.21.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018 Yevhenii Reizner |
 | rustc-hash | 1.1.0 | Apache-2.0/MIT | app | all | copyright its authors, see the crate (authors: The Rust Project Developers) |
 | rustc-hash | 2.1.3 | Apache-2.0 OR MIT | CLI and app | all | copyright its authors, see the crate (authors: The Rust Project Developers) |
 | rustix | 0.38.44 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | app | Linux | copyright its authors, see the crate (authors: Dan Gohman, Jakub Konka) |
 | rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | CLI and app | Linux, macOS | copyright its authors, see the crate (authors: Dan Gohman, Jakub Konka) |
-| rustls | 0.23.45 | Apache-2.0 OR ISC OR MIT | app | all | Copyright (c) 2016, Joseph Birr-Pixton <jpixton@gmail.com>; Copyright (c) 2016 Joseph Birr-Pixton <jpixton@gmail.com> |
+| rustls | 0.23.46 | Apache-2.0 OR ISC OR MIT | app | all | Copyright (c) 2016, Joseph Birr-Pixton <jpixton@gmail.com>; Copyright (c) 2016 Joseph Birr-Pixton <jpixton@gmail.com> |
 | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2023 Dirkjan Ochtman <dirkjan@ochtman.nl> |
 | scoped-tls | 1.0.1 | MIT/Apache-2.0 | app | Linux | Copyright (c) 2014 Alex Crichton |
 | scopeguard | 1.2.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016-2019 Ulrik Sverdrup "bluss" and scopeguard developers |
@@ -580,9 +585,10 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | simplecss | 0.2.2 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Reizner Evgeniy |
 | siphasher | 1.0.4 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Frank Denis) |
 | skrifa | 0.44.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
+| skrifa | 0.48.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Fontations Developers |
 | slab | 0.4.12 | MIT | app | Linux, macOS | Copyright (c) 2019 Carl Lerche |
 | smallbitvec | 2.6.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2017 Matt Brubeck |
-| smallvec | 1.16.3 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018 The Servo Project Developers |
+| smallvec | 1.16.2 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2018 The Servo Project Developers |
 | smithay-client-toolkit | 0.19.2 | MIT | app | Linux | Copyright (c) 2018 Victor Berger |
 | smithay-client-toolkit | 0.20.0 | MIT | app | Linux | Copyright (c) 2018 Victor Berger |
 | smithay-clipboard | 0.7.3 | MIT | app | Linux | Copyright (c) 2018 Lucas Timmins & Victor Berger |
@@ -596,11 +602,12 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | stylo_malloc_size_of | 0.22.0 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: The Servo Project Developers) |
 | stylo_taffy | 0.3.0-beta.2 (git: https://github.com/DioxusLabs/blitz, revision 45496d9288b063719ebeae4e0761273f7881b3d7) | MIT OR Apache-2.0 OR MPL-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | svgtypes | 0.16.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018 Yevhenii Reizner |
-| syn | 3.0.8 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: David Tolnay) |
+| syn | 3.0.6 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: David Tolnay) |
+| sys-locale | 0.3.2 | MIT OR Apache-2.0 | app | all | Copyright (c) 2021 1Password |
 | taffy | 0.14.0 (git: https://github.com/DioxusLabs/taffy, revision 7d33901cc383489d9945ae796a1ceed0a935ef66) | MIT | app | all | Copyright (c) 2018 Visly Inc.; Copyright (c) 2026 Taffy Authors |
 | tar | 0.4.46 | MIT OR Apache-2.0 | app | all | Copyright (c) The tar-rs Project Contributors |
 | tendril | 0.5.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 Keegan McAllister |
-| thin-vec | 0.2.21 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Aria Beingessner) |
+| thin-vec | 0.2.20 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Aria Beingessner) |
 | thiserror | 1.0.69 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: David Tolnay) |
 | thiserror | 2.0.21 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: David Tolnay) |
 | thread_local | 1.1.10 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016 The Rust Project Developers |
@@ -610,12 +617,13 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | tinyvec | 1.13.3 | Zlib OR Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2019 Daniel "Lokathor" Gee. |
 | tracing | 0.1.44 | MIT | app | all | Copyright (c) 2019 Tokio Contributors |
 | tracing-core | 0.1.36 | MIT | app | all | Copyright (c) 2019 Tokio Contributors |
+| tree_magic_mini | 3.2.2 | MIT | app | Linux | Copyright (c) 2017 Aaron Hancock |
 | ttf-parser | 0.25.1 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018 Yevhenii Reizner |
 | type-map | 0.5.1 | MIT/Apache-2.0 | app | all | Copyright (c) 2022 Jacob Brown; Copyright (c) 2017-NOW Actix Team |
 | typed-path | 0.12.3 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Chip Senkbeil) |
 | typenum | 1.20.1 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2014 Paho Lurie-Gregg |
 | unicode-bidi | 0.3.18 | MIT OR Apache-2.0 | app | all | This project is copyright 2015, The Servo Project Developers (given in the; Copyright (c) 2015 The Rust Project Developers |
-| unicode-normalization | 0.1.26 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2015 The Rust Project Developers |
+| unicode-properties | 0.1.4 | MIT/Apache-2.0 | app | all | Copyright (c) 2015 The Rust Project Developers |
 | unicode-script | 0.5.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2019 Manish Goregaokar |
 | unicode-segmentation | 1.13.3 | MIT OR Apache-2.0 | app | all | Copyright (c) 2015 The Rust Project Developers |
 | unicode-vo | 0.1.0 | MIT/Apache-2.0 | app | all | Copyright (c) 2018 Reizner Evgeniy |
@@ -626,10 +634,10 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | usvg | 0.48.1 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | utf8-zero | 0.8.1 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Simon Sapin, Martin Algesten) |
 | utf8_iter | 1.0.4 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (authors: Henri Sivonen) |
-| uuid | 1.28.0 | Apache-2.0 OR MIT | app | all | Copyright (c) 2014 The Rust Project Developers; Copyright (c) 2018 Ashley Mannix, Christopher Armstrong, Dylan DPC, Hunar Roop Kahlon |
-| vello_common | 0.1.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| uuid | 1.27.0 | Apache-2.0 OR MIT | app | all | Copyright (c) 2014 The Rust Project Developers; Copyright (c) 2018 Ashley Mannix, Christopher Armstrong, Dylan DPC, Hunar Roop Kahlon |
+| vello_common | 0.2.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | vello_common | 0.3.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| vello_cpu | 0.1.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| vello_cpu | 0.2.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | vello_cpu | 0.3.0 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | void | 1.0.2 | MIT | app | all | copyright its authors, see the crate (authors: Jonathan Reem) |
 | wayland-backend | 0.3.17 | MIT | app | Linux | Copyright (c) 2015 Elinor Berger |
@@ -662,14 +670,12 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | windows-result | 0.4.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-strings | 0.5.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-sys | 0.52.0 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-sys | 0.60.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-sys | 0.61.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-targets | 0.52.6 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-targets | 0.53.5 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-threading | 0.2.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows_x86_64_msvc | 0.52.6 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows_x86_64_msvc | 0.53.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | winnow | 1.0.4 | MIT | app | Linux | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| wl-clipboard-rs | 0.9.4 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2019 Ivan Molodetskikh |
 | wuff | 0.2.9 | MIT | app | all | copyright its authors, see the crate (authors: Nico Burns) |
 | x11-dl | 2.21.0 | MIT | app | Linux | copyright its authors, see the crate (authors: daggerbot, Erle Pereira, AltF02) |
 | x11rb | 0.13.2 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Uli Schlachter, Eduardo Sánchez Muñoz, notgull) |
@@ -685,9 +691,9 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | zbus_names | 4.3.4 | MIT | app | Linux | Copyright (c) 2024 Zeeshan Ali Khan & zbus contributors |
 | zbus_xml | 5.2.1 | MIT | app | Linux | Copyright (c) 2024 Zeeshan Ali Khan & zbus contributors |
 | zcheapstr | 1.1.0 | MIT | app | Linux | Copyright (c) 2026 Zeeshan Ali Khan & zcheapstr contributors |
-| zerocopy | 0.8.62 | BSD-2-Clause OR Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| zeroize | 1.9.1 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018-2026 The RustCrypto Project Developers |
-| zip | 9.0.2 | MIT | CLI and app | all | Copyright (c) 2014 Mathijs van de Nes |
+| zerocopy | 0.8.59 | BSD-2-Clause OR Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| zeroize | 1.9.0 | Apache-2.0 OR MIT | app | all | Copyright (c) 2018-2026 The RustCrypto Project Developers |
+| zip | 9.0.5 | MIT | CLI and app | all | Copyright (c) 2014 Mathijs van de Nes |
 | zmij | 1.0.23 | MIT | CLI and app | all | copyright its authors, see the crate (authors: David Tolnay) |
 | zune-core | 0.5.3 | MIT OR Apache-2.0 OR Zlib | CLI and app | all | Copyright (c) zune-image developers |
 | zune-jpeg | 0.5.15 | MIT OR Apache-2.0 OR Zlib | CLI and app | all | Copyright (c) zune-image developers |
@@ -700,7 +706,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | --- | --- | --- | --- | --- | --- |
 | ab_glyph | 0.2.32 | Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Alex Butler) |
 | ab_glyph_rasterizer | 0.1.10 | Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Alex Butler) |
-| accesskit_winit | 0.32.2 | Apache-2.0 | app | all | copyright its authors, see the crate (authors: The AccessKit contributors) |
+| accesskit_winit | 0.34.1 | Apache-2.0 | app | all | copyright its authors, see the crate (authors: The AccessKit contributors) |
 | codespan-reporting | 0.13.1 | Apache-2.0 | app | all | copyright its authors, see the crate (authors: Brendan Zabarauskas) |
 | cpal | 0.18.2 | Apache-2.0 | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | gethostname | 1.1.0 | Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Sebastian Wiesner) |
@@ -777,13 +783,14 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
 | libloading | 0.8.9 | ISC | app | all | Copyright © 2015, Simonas Kazlauskas |
-| rustls-webpki | 0.103.15 | ISC | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| rustls-webpki | 0.103.16 | ISC | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | untrusted | 0.9.0 | ISC | app | all | copyright its authors, see the crate (authors: Brian Smith) |
 
-### Zlib (3)
+### Zlib (4)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
+| foldhash | 0.1.5 | Zlib | app | Linux | Copyright (c) 2024 Orson Peters |
 | foldhash | 0.2.0 | Zlib | CLI and app | all | Copyright (c) 2024 Orson Peters |
 | slotmap | 1.1.1 | Zlib | app | all | Copyright (c) 2021 Orson Peters <orsonpeters@gmail.com> |
 | zlib-rs | 0.6.8 | Zlib | CLI and app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
@@ -792,14 +799,14 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
-| clipboard-win | 5.4.1 | BSL-1.0 | app | Windows | copyright its authors, see the crate (authors: Douman) |
+| clipboard-win | 5.4.3 | BSL-1.0 | app | Windows | copyright its authors, see the crate (authors: Douman) |
 | error-code | 3.4.0 | BSL-1.0 | app | Windows | copyright its authors, see the crate (authors: Douman) |
 
 ### CDLA-Permissive-2.0 (1)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
-| webpki-roots | 1.0.9 | CDLA-Permissive-2.0 | app | all | Mozilla's root certificates, derived from the Common CA Database (CCADB) data under the CCADB Data Usage Terms (authors not named) |
+| webpki-roots | 1.0.10 | CDLA-Permissive-2.0 | app | all | Mozilla's root certificates, derived from the Common CA Database (CCADB) data under the CCADB Data Usage Terms (authors not named) |
 
 ### Apache-2.0 + ISC (1)
 
@@ -823,13 +830,14 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
-| epaint_default_fonts | 0.36.2 | (MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0 | app | all | Hack: Copyright (c) 2018 Source Foundry Authors, and Copyright (c) 2003 by Bitstream, Inc.; Noto Emoji: Copyright 2013 Google Inc.; Ubuntu Light: Copyright 2011 Canonical Ltd.; emoji-icon-font: Copyright (c) 2014 John Slegers; see "The fonts inside egui" below |
+| epaint_default_fonts | 0.37.0 | (MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0 | app | all | Hack: Copyright (c) 2018 Source Foundry Authors, and Copyright (c) 2003 by Bitstream, Inc.; Ubuntu Light: Copyright 2011 Canonical Ltd.; egui-icons (from emoji-icon-font): Copyright (c) 2014 John Slegers; see "The fonts inside egui" below |
 
-### MIT + Unicode-3.0 (1)
+### MIT + Unicode-3.0 (2)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
-| unicode-ident | 1.0.27 | (MIT OR Apache-2.0) AND Unicode-3.0 | app | all | Copyright © 1991-2023 Unicode, Inc. |
+| unicode-ident | 1.0.26 | (MIT OR Apache-2.0) AND Unicode-3.0 | app | all | Copyright © 1991-2023 Unicode, Inc. |
+| unicode-normalization | 0.1.26 | (MIT OR Apache-2.0) AND Unicode-3.0 | CLI and app | all | Copyright (c) 2015 The Rust Project Developers; Copyright © 1991-2023 Unicode, Inc. |
 
 ---
 
@@ -1052,7 +1060,7 @@ END OF TERMS AND CONDITIONS
 
 ### Unicode License v3
 
-Quoted from icu_collections 2.3.0's LICENSE; the ICU4X crates all carry this file. unicode-ident carries the same licence for its Unicode data, with the line "Copyright © 1991-2023 Unicode, Inc.".
+Quoted from icu_collections 2.3.0's LICENSE; the ICU4X crates all carry this file. unicode-ident and unicode-normalization carry the same licence for their Unicode data, with the line "Copyright © 1991-2023 Unicode, Inc.".
 
 ```text
 UNICODE LICENSE V3
@@ -1724,7 +1732,7 @@ NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE US
 THIS SOFTWARE.
 ```
 
-rustls-webpki 0.103.15:
+rustls-webpki 0.103.16:
 
 ```text
 Except as otherwise noted, this project is licensed under the following
@@ -1768,7 +1776,7 @@ untrusted 0.9.0:
 
 ### zlib License
 
-foldhash 0.2.0:
+foldhash 0.2.0 (0.1.5 carries the same file):
 
 ```text
 Copyright (c) 2024 Orson Peters
@@ -1842,7 +1850,7 @@ freely, subject to the following restrictions:
 
 ### Boost Software License 1.0
 
-Quoted from error-code 3.4.0's LICENSE. clipboard-win 5.4.1, by the same author, declares the same licence and carries no licence file of its own.
+Quoted from error-code 3.4.0's LICENSE. clipboard-win 5.4.3, by the same author, declares the same licence and carries no licence file of its own.
 
 ```text
 Boost Software License - Version 1.0 - August 17th, 2003
@@ -1872,7 +1880,7 @@ DEALINGS IN THE SOFTWARE.
 
 ### Community Data License Agreement, Permissive, 2.0
 
-webpki-roots 1.0.9's LICENSE, for the root certificate data:
+webpki-roots 1.0.10's LICENSE, for the root certificate data:
 
 ```text
 # Community Data License Agreement - Permissive - Version 2.0
@@ -1982,11 +1990,13 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ### The fonts inside egui
 
-egui, the window's toolkit, builds four fonts into every program that uses
-it, through the crate epaint_default_fonts 0.36.2. Its Cargo.toml declares
+egui, the window's toolkit, builds three fonts into every program that uses
+it, through the crate epaint_default_fonts 0.37.0. Its Cargo.toml declares
 `(MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0`: the crate's code is
 MIT, and the fonts are under their own licences, quoted from the crate's
-`fonts/` folder.
+`fonts/` folder. The crate also holds Noto Emoji and the whole
+emoji-icon-font, but egui builds those in only with its
+`monochrome_emoji_fonts` feature, which the window leaves off.
 
 **Hack** (Hack-Regular.ttf). Copyright (c) 2018 Source Foundry Authors, and
 Copyright (c) 2003 by Bitstream, Inc. for the Bitstream Vera glyphs it
@@ -2026,15 +2036,13 @@ THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
 Except as contained in this notice, the names of Gnome, the Gnome Foundation, and Bitstream Inc., shall not be used in advertising or otherwise to promote the sale, use or other dealings in this Font Software without prior written authorization from the Gnome Foundation or Bitstream Inc., respectively. For further information, contact: fonts at gnome dot org.
 ```
 
-**Noto Emoji** (NotoEmoji-Regular.ttf). Copyright 2013 Google Inc. All
-Rights Reserved. Noto is a trademark of Google Inc. Under the SIL Open Font
-License 1.1, below.
-
 **Ubuntu Light** (Ubuntu-Light.ttf). Copyright 2011 Canonical Ltd. Ubuntu
 and Canonical are registered trademarks of Canonical Ltd. Under the Ubuntu
 Font Licence 1.0, below.
 
-**emoji-icon-font** (emoji-icon-font.ttf):
+**egui-icons** (egui-icons.ttf): five glyphs (the Android, Apple, GitHub and
+Windows logos and the word `git`) cut from emoji-icon-font, under
+emoji-icon-font's licence:
 
 ```text
 MIT License
@@ -2050,8 +2058,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### SIL Open Font License 1.1
 
-For Courier Prime, Literata, Inter and Noto Emoji. Quoted from
-epaint_default_fonts 0.36.2's `fonts/OFL.txt`:
+For Courier Prime, Literata and Inter. Quoted from
+epaint_default_fonts 0.37.0's `fonts/OFL.txt`:
 
 ```text
 This Font Software is licensed under the SIL Open Font License,
@@ -2150,7 +2158,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 ### Ubuntu Font Licence 1.0
 
-For Ubuntu Light. Quoted from epaint_default_fonts 0.36.2's `fonts/UFL.txt`:
+For Ubuntu Light. Quoted from epaint_default_fonts 0.37.0's `fonts/UFL.txt`:
 
 ```text
 -------------------------------

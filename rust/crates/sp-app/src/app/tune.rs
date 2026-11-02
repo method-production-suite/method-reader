@@ -696,7 +696,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
             );
             let (rect, r) = ui.allocate_exact_size(size, Sense::click());
             r.widget_info(|| {
-                egui::WidgetInfo::labeled(egui::WidgetType::CollapsingHeader, true, group.title)
+                egui::WidgetInfo::labeled(egui::Role::DisclosureTriangle, true, group.title)
             });
             ui.ctx()
                 .accesskit_node_builder(r.id, |n| n.set_expanded(open));
@@ -747,7 +747,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
     let status = app.tune.status.clone();
     widgets::live(
         ui,
-        Id::new("tune-status"),
+        Id::unique("tune-status"),
         &status.line,
         theme::chrome(size::LABEL),
         if status.bad { t.alarm } else { t.ink_muted },
@@ -755,7 +755,7 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
     let warnings = app.tune.warnings.join("\n");
     widgets::live(
         ui,
-        Id::new("tune-warnings"),
+        Id::unique("tune-warnings"),
         &warnings,
         theme::chrome(size::LABEL),
         t.ink_muted,
@@ -930,7 +930,7 @@ fn draw_defaults_foot(app: &mut App, ui: &mut Ui) {
     let note = app.tune.defaults_note.clone();
     widgets::live(
         ui,
-        Id::new("defaults-note"),
+        Id::unique("defaults-note"),
         &note,
         theme::chrome(size::LABEL),
         t.ink_muted,
@@ -963,7 +963,7 @@ fn draw_keep_choice(app: &mut App, ui: &mut Ui) {
         let note = app.tune.keep_note.clone();
         widgets::live(
             ui,
-            Id::new("keep-note"),
+            Id::unique("keep-note"),
             &note,
             theme::chrome(size::LABEL),
             t.ink_muted,
@@ -1020,7 +1020,7 @@ fn draw_page_switches(app: &mut App, ui: &mut Ui) {
         let note = app.tune.switch_note.clone();
         widgets::live(
             ui,
-            Id::new("switch-note"),
+            Id::unique("switch-note"),
             &note,
             theme::chrome(size::LABEL),
             t.ink_muted,
