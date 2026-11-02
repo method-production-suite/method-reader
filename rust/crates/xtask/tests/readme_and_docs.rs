@@ -92,7 +92,6 @@ fn unsigned(s: &str) -> bool {
 
 #[test]
 fn the_readme_says_the_windows_download_is_unsigned() {
-    let l = lower(&readme());
     assert!(flat(&readme()).contains(WINDOWS_UNSIGNED));
     assert!(unsigned(&readme()));
 }
