@@ -109,6 +109,7 @@ Commands:
                                             the books on a connected reader
   method-reader device-remove <volume> <book> [--json]
                                             take one book off a connected reader
+  method-reader library [--json]            the scripts in the library, newest first
   method-reader mcp [--root <dir>]... [--read-only]
                                             these tools for an MCP client, over stdio
 

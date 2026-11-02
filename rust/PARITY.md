@@ -1518,3 +1518,10 @@ names the check it affects.
   one value, the hash of the library's source.json, and nothing else; the
   other 422 committed runs matched untouched. A kept scratch folder's
   source.json holds exactly `"source"`, `"scenes"` and `"pages"`.
+  Then the main help (2026-11-02, branch cli/help-lists-library) gained the
+  verb's line, `method-reader library [--json]` with "the scripts in the
+  library, newest first", after device-remove: re-frozen with `cargo xtask
+  parity --accept help help-json help-short refuse-no-input` (screenplay;
+  each of the four differed only by that inserted line), and the line
+  joins tests/usage.rs's `CHANGED_ON_PURPOSE` entry for the verbs the
+  TypeScript had none of.
