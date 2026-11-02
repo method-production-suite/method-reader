@@ -329,7 +329,10 @@ fn an_intel_mac_is_told_the_download_runs_and_0_9_0_updates() {
         intel.contains("the same download runs, from 1.0.0"),
         "{intel}"
     );
-    assert!(intel.contains("is offered 1.0.0 as an update"), "{intel}");
+    assert!(
+        intel.contains("is offered the current version the next time it checks"),
+        "{intel}"
+    );
     assert!(!downloads.contains("0.9.0 is the last version"));
 }
 
