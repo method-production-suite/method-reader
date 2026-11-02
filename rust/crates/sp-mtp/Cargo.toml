@@ -35,7 +35,7 @@ path = "src/lib.rs"
 mtp-rs = "=0.33.0"
 # The same nusb mtp-rs uses, for the one thing done without it: listing USB
 # devices without opening any of them (the engine's two-second poll).
-nusb = "=0.2.7"
+nusb = "=0.2.8"
 futures = "=0.3.34"
 bytes = "=1.12.1"
 # preserve_order: `ok` prints first, as the engine's own answers do.
