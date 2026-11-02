@@ -8,7 +8,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::mpsc::{Receiver, Sender, channel};
 
-use egui::{Id, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType, accesskit};
+use egui::{Id, Rect, Role, Sense, Ui, Vec2, WidgetInfo, accesskit};
 use serde_json::{Value, json};
 
 use super::widgets::{self, Look};
@@ -1237,7 +1237,7 @@ pub(super) fn keyed(
 ) -> egui::Response {
     let t = app.tokens();
     let n = app.panel.keyed.iter().filter(|k| k.key == key).count();
-    let id = Id::new(("send-panel", key, n));
+    let id = Id::unique(("send-panel", key, n));
     let held = ui.memory(|m| m.has_focus(id));
     let b = widgets::button_id(ui, &t, look, words, enabled, id);
     let entry = Keyed {
@@ -1350,7 +1350,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let status = app.panel.status.clone();
     widgets::live(
         ui,
-        Id::new("send-status"),
+        Id::unique("send-status"),
         &status.line,
         theme::chrome(size::LABEL),
         if status.bad { t.alarm } else { t.ink_muted },
@@ -1364,7 +1364,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
 // ------------------------------- Send to e-reader | Get an editable script
 
 pub fn intent_id(intent: Intent) -> Id {
-    Id::new(("panel-intent", intent.stored()))
+    Id::unique(("panel-intent", intent.stored()))
 }
 
 /// The choice changed: drawn at once, remembered app-wide.
@@ -1399,7 +1399,7 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
         .fold(Vec2::ZERO, |a, b| a.max(b));
     let half = Vec2::new(widest.x + pad.x * 2.0, widgets::CONTROL_HEIGHT).ceil();
     let knob = app.ease(
-        Id::new("panel-intent-knob"),
+        Id::unique("panel-intent-knob"),
         app.panel.intent.knob(),
         motion::STATE,
     );
@@ -1440,9 +1440,8 @@ fn intent_switch(app: &mut App, ui: &mut Ui) {
                     Sense::CLICK
                 },
             );
-            response.widget_info(|| {
-                WidgetInfo::selected(WidgetType::Button, true, selected, intent.label())
-            });
+            response
+                .widget_info(|| WidgetInfo::selected(Role::Button, true, selected, intent.label()));
             ui.ctx().accesskit_node_builder(id, |n| {
                 n.set_role(accesskit::Role::Tab);
                 n.set_selected(selected);
@@ -1531,10 +1530,10 @@ fn draw_edit(app: &mut App, ui: &mut Ui) {
         for card in EDIT_CARDS {
             let (rect, _) = ui.allocate_exact_size(Vec2::new(width, 72.0), Sense::hover());
             let key = format!("edit-{}", card.kind);
-            let id = Id::new(("send-panel", key.as_str(), 0));
+            let id = Id::unique(("send-panel", key.as_str(), 0));
             let held = ui.memory(|m| m.has_focus(id));
             let resp = ui.interact(rect, id, if live { Sense::click() } else { Sense::hover() });
-            resp.widget_info(|| WidgetInfo::labeled(WidgetType::Button, live, card.name));
+            resp.widget_info(|| WidgetInfo::labeled(Role::Button, live, card.name));
             ui.ctx()
                 .accesskit_node_builder(id, |n| n.set_description(card.sub));
             let hovered = live && resp.hovered();
@@ -1619,14 +1618,14 @@ fn draw_cards(app: &mut App, ui: &mut Ui) {
             ui.spacing_mut().item_spacing.x = 12.8;
             for card in row {
                 let (rect, resp) = ui.allocate_exact_size(Vec2::new(width, 72.0), Sense::click());
-                let id = Id::new(("card", card.kind));
+                let id = Id::unique(("card", card.kind));
                 let resp = ui.interact(rect, id, Sense::click()).union(resp);
                 let name = if card.here {
                     format!("{}, plugged in", card.name)
                 } else {
                     card.name.to_string()
                 };
-                resp.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, &name));
+                resp.widget_info(|| WidgetInfo::labeled(Role::Button, true, &name));
                 let border = if card.here {
                     t.brass
                 } else if resp.hovered() {
@@ -1833,7 +1832,7 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
         ui.add_space(layout::SPACE[3]);
         widgets::live(
             ui,
-            Id::new("kindle-build"),
+            Id::unique("kindle-build"),
             build_line(build.extension.as_deref()),
             theme::chrome(size::LABEL),
             t.ink_muted,
@@ -2163,7 +2162,7 @@ fn draw_missing(app: &mut App, ui: &mut Ui) {
     let (said, bad) = app.panel.request.said.clone().unwrap_or_default();
     widgets::live(
         ui,
-        Id::new("request-status"),
+        Id::unique("request-status"),
         &said,
         theme::chrome(size::LABEL),
         if bad { t.alarm } else { t.ink_muted },
@@ -2206,10 +2205,10 @@ fn asterisk(app: &mut App, ui: &mut Ui, kind: &str) {
     let n = app.panel.asterisks.iter().filter(|k| *k == kind).count();
     app.panel.asterisks.push(kind.to_string());
     let resp = ui
-        .interact(rect, Id::new(("asterisk", kind, n)), Sense::click())
+        .interact(rect, Id::unique(("asterisk", kind, n)), Sense::click())
         .union(resp);
     let name = format!("About {}: never tried on real hardware", d::name_of(kind));
-    resp.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, &name));
+    resp.widget_info(|| WidgetInfo::labeled(Role::Button, true, &name));
     ui.ctx()
         .accesskit_node_builder(resp.id, |n| n.set_expanded(pinned));
     let ink = if resp.hovered() || pinned {
@@ -2229,9 +2228,12 @@ fn asterisk(app: &mut App, ui: &mut Ui, kind: &str) {
         }
     }
     if resp.hovered() {
-        ui.memory_mut(|m| m.data.insert_temp(Id::new(("asterisk-hover", kind)), true));
+        ui.memory_mut(|m| {
+            m.data
+                .insert_temp(Id::unique(("asterisk-hover", kind)), true)
+        });
     } else {
-        ui.memory_mut(|m| m.data.remove::<bool>(Id::new(("asterisk-hover", kind))));
+        ui.memory_mut(|m| m.data.remove::<bool>(Id::unique(("asterisk-hover", kind))));
     }
 }
 
@@ -2242,7 +2244,7 @@ fn asterisk_notes(app: &mut App, ui: &mut Ui, kinds: Vec<String>) {
     for kind in kinds {
         let hovered = ui.memory(|m| {
             m.data
-                .get_temp::<bool>(Id::new(("asterisk-hover", &kind)))
+                .get_temp::<bool>(Id::unique(("asterisk-hover", &kind)))
                 .unwrap_or(false)
         });
         if !app.panel.pinned.contains(&kind) && !hovered {
@@ -2294,7 +2296,7 @@ fn asterisk_notes(app: &mut App, ui: &mut Ui, kinds: Vec<String>) {
                         let (said, bad) = rep.said.clone().unwrap_or_default();
                         widgets::live(
                             ui,
-                            Id::new(("report-status", &kind)),
+                            Id::unique(("report-status", &kind)),
                             &said,
                             theme::chrome(size::LABEL),
                             if bad { t.alarm } else { t.ink_muted },
@@ -2363,7 +2365,7 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
         let status = app.panel.kfx.status.clone();
         widgets::live(
             ui,
-            Id::new("kfx-status"),
+            Id::unique("kfx-status"),
             &status.line,
             theme::chrome(size::LABEL),
             if status.bad { t.alarm } else { t.ink_muted },

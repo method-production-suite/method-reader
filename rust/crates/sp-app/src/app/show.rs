@@ -2,7 +2,7 @@
 //! Its clock is page-timing's; its words are page-show's.
 
 use egui::text::{LayoutJob, TextFormat};
-use egui::{FontId, Id, Pos2, Rect, Sense, Ui, Vec2, WidgetInfo, WidgetType};
+use egui::{FontId, Id, Pos2, Rect, Role, Sense, Ui, Vec2, WidgetInfo};
 use serde_json::Value;
 
 use super::App;
@@ -213,10 +213,10 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span) {
         for (i, words) in show.words().iter().enumerate() {
             let r = ui.interact(
                 Rect::from_min_size(ui.cursor().min, Vec2::ZERO),
-                Id::new(("show-words", i)),
+                Id::unique(("show-words", i)),
                 Sense::hover(),
             );
-            r.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, words));
+            r.widget_info(|| WidgetInfo::labeled(Role::Label, true, words));
         }
     });
     let page_top = if geometry.stacked {
@@ -239,7 +239,7 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span) {
         ui.vertical_centered(|ui| {
             widgets::live(
                 ui,
-                Id::new("page-show-line"),
+                Id::unique("page-show-line"),
                 &words,
                 theme::chrome(size::LABEL),
                 t.ink_muted,

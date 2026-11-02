@@ -5,8 +5,8 @@
 //! `heads-up.js`, `notes-surface.js`).
 
 use egui::{
-    Align, Color32, CornerRadius, Id, Key, Layout, Modifiers, Rect, Sense, Stroke, Ui, Vec2,
-    WidgetInfo, WidgetType, accesskit,
+    Align, Color32, CornerRadius, Id, Key, Layout, Modifiers, Rect, Role, Sense, Stroke, Ui, Vec2,
+    WidgetInfo, accesskit,
 };
 
 use super::widgets::{self, Look};
@@ -32,7 +32,7 @@ use crate::model::update_flow::{Flow, Offer, RunOutcome, Start};
 use crate::theme::{self, Tokens, size};
 
 pub fn tab_id(s: Surface) -> Id {
-    Id::new(("tab", s.label()))
+    Id::unique(("tab", s.label()))
 }
 
 // --------------------------------------------------------------- updates
@@ -642,7 +642,7 @@ fn sheet(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     heads_up(app, ui);
     // The pane: a focusable tabpanel, labelled by its tab, so Tab can leave
     // the bar and land in the surface before it has a control.
-    let pane_id = Id::new(("surface", app.surface.label()));
+    let pane_id = Id::unique(("surface", app.surface.label()));
     app.pane_id = pane_id;
     let pane = ui.interact(
         Rect::from_min_size(ui.cursor().min, Vec2::new(1.0, 1.0)),
@@ -758,9 +758,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             };
             let rect = ui.allocate_space(size).1;
             let response = ui.interact(rect, tab_id(s), sense);
-            response.widget_info(|| {
-                WidgetInfo::selected(WidgetType::Button, true, selected, s.label())
-            });
+            response.widget_info(|| WidgetInfo::selected(Role::Button, true, selected, s.label()));
             ui.ctx().accesskit_node_builder(response.id, |n| {
                 n.set_role(accesskit::Role::Tab);
                 n.set_selected(selected);
@@ -793,7 +791,7 @@ fn tab_bar(app: &mut App, ui: &mut Ui) {
             let painter = if selected {
                 ui.ctx().layer_painter(egui::LayerId::new(
                     egui::Order::Middle,
-                    Id::new("selected-tab-words"),
+                    Id::unique("selected-tab-words"),
                 ))
             } else {
                 ui.painter().clone()
@@ -871,7 +869,7 @@ fn stamp_button(ui: &mut Ui, t: &Tokens, words: &str) -> egui::Response {
         .painter()
         .layout_no_wrap(words.to_string(), font, t.ink_muted);
     let (rect, response) = ui.allocate_exact_size(galley.size(), Sense::click());
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, words));
+    response.widget_info(|| WidgetInfo::labeled(Role::Button, true, words));
     let ink = if response.hovered() {
         t.ink
     } else {
@@ -899,7 +897,7 @@ fn update_button(ui: &mut Ui, t: &Tokens, words: &str, actionable: bool) -> egui
             Sense::focusable_noninteractive()
         },
     );
-    response.widget_info(|| WidgetInfo::labeled(WidgetType::Button, actionable, words));
+    response.widget_info(|| WidgetInfo::labeled(Role::Button, actionable, words));
     ui.painter().galley(rect.min, galley, ink);
     if actionable {
         ui.painter()
@@ -910,7 +908,7 @@ fn update_button(ui: &mut Ui, t: &Tokens, words: &str, actionable: bool) -> egui
 }
 
 fn heads_up(app: &mut App, ui: &mut Ui) {
-    let motion_id = Id::new("heads-up-in");
+    let motion_id = Id::unique("heads-up-in");
     let Some(device) = app.heads_up.offered.clone() else {
         app.forget_motion(motion_id);
         return;
@@ -918,7 +916,7 @@ fn heads_up(app: &mut App, ui: &mut Ui) {
     // heads-up-in: it takes its place in the page at once, and slides down
     // half its own height into it as it fades in.
     let k = app.ease_from(motion_id, 0.0, 1.0, motion::HEADS_UP_IN);
-    let height_id = Id::new("heads-up-height");
+    let height_id = Id::unique("heads-up-height");
     let height = ui
         .memory(|m| m.data.get_temp::<f32>(height_id))
         .unwrap_or(0.0);
@@ -945,7 +943,7 @@ fn heads_up(app: &mut App, ui: &mut Ui) {
             ui.horizontal_wrapped(|ui| {
                 widgets::live(
                     ui,
-                    Id::new("heads-up"),
+                    Id::unique("heads-up"),
                     &heads_up_line(&title),
                     theme::chrome(size::UI),
                     t.ink,
@@ -976,7 +974,7 @@ fn heads_up(app: &mut App, ui: &mut Ui) {
 // -------------------------------------------------------------- the notes
 
 fn notes_sheet(app: &mut App, ui: &mut Ui) {
-    let motion_id = Id::new("sheet-rise");
+    let motion_id = Id::unique("sheet-rise");
     if !app.notes_open {
         app.forget_motion(motion_id);
         return;
@@ -986,13 +984,13 @@ fn notes_sheet(app: &mut App, ui: &mut Ui) {
     // sheet-rise: the sheet comes up 16px as it fades in; the dimming
     // behind it is there at once.
     let k = app.ease_from(motion_id, 0.0, 1.0, motion::SHEET_RISE);
-    let area = egui::Modal::default_area(Id::new("release-notes"))
+    let area = egui::Modal::default_area(Id::unique("release-notes"))
         .fade_in(false)
         .anchor(
             egui::Align2::CENTER_CENTER,
             Vec2::new(0.0, (1.0 - k) * motion::SHEET_RISE_PX),
         );
-    let modal = egui::Modal::new(Id::new("release-notes"))
+    let modal = egui::Modal::new(Id::unique("release-notes"))
         .area(area)
         .frame(sheet_frame(&t, k))
         .backdrop_color(sheet_backdrop(&t))
@@ -1000,7 +998,7 @@ fn notes_sheet(app: &mut App, ui: &mut Ui) {
             ui.multiply_opacity(k);
             let width = (44.0 * 16.0f32).min(ctx.content_rect().width() * 0.88);
             ui.set_width(width);
-            ui.ctx().accesskit_node_builder(ui.id(), |n| {
+            ui.ctx().accesskit_node_builder(ui.scope_id(), |n| {
                 n.set_role(accesskit::Role::Dialog);
                 n.set_label("Release notes");
             });
@@ -1139,7 +1137,7 @@ pub(super) fn updates_block(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
         .unwrap_or_default();
     widgets::live(
         ui,
-        Id::new("update-status"),
+        Id::unique("update-status"),
         &said,
         theme::chrome(size::LABEL),
         t.ink_muted,

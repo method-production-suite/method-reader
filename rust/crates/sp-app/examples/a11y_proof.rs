@@ -52,11 +52,7 @@ impl eframe::App for Proof {
                     egui::Color32::from_white_alpha(150),
                 );
                 response.widget_info(|| {
-                    egui::WidgetInfo::labeled(
-                        egui::WidgetType::Other,
-                        true,
-                        "A brass brad, painted",
-                    )
+                    egui::WidgetInfo::labeled(egui::Role::Unknown, true, "A brass brad, painted")
                 });
             });
     }

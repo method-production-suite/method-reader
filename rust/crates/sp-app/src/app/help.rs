@@ -7,7 +7,7 @@
 //! here. What the menu holds is model/help.rs.
 
 use egui::accesskit;
-use egui::{Id, Sense, Ui, Vec2, WidgetInfo, WidgetType};
+use egui::{Id, Role, Sense, Ui, Vec2, WidgetInfo};
 
 use super::widgets::{self, Look};
 use super::{App, Purpose, frame};
@@ -148,7 +148,7 @@ pub fn menu(app: &mut App, ui: &mut Ui, t: &Tokens) {
         .painter()
         .layout_no_wrap(words.to_string(), font, t.ink_muted);
     let (rect, button) = ui.allocate_exact_size(galley.size(), Sense::click());
-    button.widget_info(|| WidgetInfo::labeled(WidgetType::Button, true, words));
+    button.widget_info(|| WidgetInfo::labeled(Role::Button, true, words));
     ui.ctx().accesskit_node_builder(button.id, |n| {
         n.set_has_popup(accesskit::HasPopup::Menu);
     });
@@ -162,7 +162,7 @@ pub fn menu(app: &mut App, ui: &mut Ui, t: &Tokens) {
     egui::Popup::menu(&button)
         .align(egui::RectAlign::TOP_END)
         .show(|ui| {
-            ui.ctx().accesskit_node_builder(ui.id(), |n| {
+            ui.ctx().accesskit_node_builder(ui.scope_id(), |n| {
                 n.set_role(accesskit::Role::Menu);
                 n.set_label("Help");
             });
@@ -202,7 +202,7 @@ pub fn menu(app: &mut App, ui: &mut Ui, t: &Tokens) {
 
 /// The open Help sheet, over the page like the release notes.
 pub fn draw(app: &mut App, ui: &mut Ui) {
-    let motion_id = Id::new("help-sheet-rise");
+    let motion_id = Id::unique("help-sheet-rise");
     let Some(sheet) = app.help.sheet else {
         app.forget_motion(motion_id);
         return;
@@ -210,7 +210,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     let ctx = ui.ctx().clone();
     let k = app.ease_from(motion_id, 0.0, 1.0, motion::SHEET_RISE);
-    let modal_id = Id::new(("help-sheet", sheet.title()));
+    let modal_id = Id::unique(("help-sheet", sheet.title()));
     let area = egui::Modal::default_area(modal_id).fade_in(false).anchor(
         egui::Align2::CENTER_CENTER,
         Vec2::new(0.0, (1.0 - k) * motion::SHEET_RISE_PX),
@@ -225,7 +225,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
             let width = (rem * 16.0f32).min(ctx.content_rect().width() * 0.88);
             ui.set_width(width);
             let title = sheet.title();
-            ui.ctx().accesskit_node_builder(ui.id(), |n| {
+            ui.ctx().accesskit_node_builder(ui.scope_id(), |n| {
                 n.set_role(accesskit::Role::Dialog);
                 n.set_label(title.as_str());
             });
@@ -398,7 +398,7 @@ fn report(app: &mut App, ui: &mut Ui, t: &Tokens) -> bool {
     };
     widgets::live(
         ui,
-        Id::new("report-said"),
+        Id::unique("report-said"),
         &said,
         theme::chrome(size::LABEL),
         if app.help.report.mail_failed && !app.help.report.copied {

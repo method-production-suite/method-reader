@@ -638,6 +638,7 @@ fn scroll_page_to_end(h: &mut H, height: f32) {
             delta: egui::vec2(0.0, -4000.0),
             phase: egui::TouchPhase::Move,
             modifiers: Modifiers::NONE,
+            source: egui::MouseWheelSource::Unknown,
         });
         h.run_steps(30);
     }
@@ -781,7 +782,7 @@ fn s7_s8_every_group_opens_and_every_knob_is_named() {
         "What the book carries",
         "Taken from the PDF",
     ] {
-        h.get_by_role_and_label(Role::Button, group)
+        h.get_by_role_and_label(Role::DisclosureTriangle, group)
             .click_accesskit();
         steps(&mut h);
     }
@@ -1511,7 +1512,7 @@ fn b4_the_badge_is_worn_where_the_inventory_says_and_nowhere_else() {
         assert_eq!(wears_beta(&h, row(&h, save)), beta, "{save}");
     }
     settings(&mut h);
-    h.get_by_role_and_label(Role::Button, "What the book carries")
+    h.get_by_role_and_label(Role::DisclosureTriangle, "What the book carries")
         .click_accesskit();
     steps(&mut h);
     for knob in ["Pictures from the script", "Title card as the cover"] {

@@ -124,9 +124,8 @@ const LINUX_FILES: [(&str, &str); 9] = [
 fn read_face(path: &std::path::Path) -> Option<SystemFace> {
     let bytes = std::fs::read(path).ok()?;
     // A face egui cannot read is no face at all.
-    let probe = FontData::from_owned(bytes);
-    skrifa_ok(&probe)?;
-    let bytes: &'static [u8] = Box::leak(probe.font.into_owned().into_boxed_slice());
+    skrifa_ok(&bytes, 0)?;
+    let bytes: &'static [u8] = Box::leak(bytes.into_boxed_slice());
     let path: &'static str = Box::leak(path.to_string_lossy().into_owned().into_boxed_str());
     Some(SystemFace {
         bytes,
@@ -137,9 +136,9 @@ fn read_face(path: &std::path::Path) -> Option<SystemFace> {
 
 /// Whether egui's font reader (skrifa) opens this face and maps the
 /// letters a UI needs: egui panics on a face it cannot parse.
-fn skrifa_ok(data: &FontData) -> Option<()> {
+fn skrifa_ok(bytes: &[u8], index: u32) -> Option<()> {
     use skrifa::MetadataProvider as _;
-    let font = skrifa::FontRef::from_index(data.font.as_ref(), data.index).ok()?;
+    let font = skrifa::FontRef::from_index(bytes, index).ok()?;
     let map = font.charmap();
     "Aa0".chars().all(|c| map.map(c).is_some()).then_some(())
 }

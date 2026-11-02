@@ -23,8 +23,8 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex};
 
 use egui::{
-    ColorImage, CornerRadius, Id, Rect, Sense, Stroke, StrokeKind, TextureHandle, TextureOptions,
-    Ui, Vec2, WidgetInfo, WidgetType,
+    ColorImage, CornerRadius, Id, Rect, Role, Sense, Stroke, StrokeKind, TextureHandle,
+    TextureOptions, Ui, Vec2, WidgetInfo,
 };
 
 use super::book::{Block, Book};
@@ -609,8 +609,8 @@ impl View {
         };
         for (i, block) in laid.blocks.iter().enumerate() {
             let r = block.rect.translate(origin.to_vec2());
-            let node = ui.interact(r, Id::new((salt, "book-block", i)), Sense::hover());
-            node.widget_info(|| WidgetInfo::labeled(WidgetType::Label, true, &block.words));
+            let node = ui.interact(r, Id::unique((salt, "book-block", i)), Sense::hover());
+            node.widget_info(|| WidgetInfo::labeled(Role::Label, true, &block.words));
         }
     }
 }

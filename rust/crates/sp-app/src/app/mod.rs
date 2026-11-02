@@ -177,7 +177,7 @@ impl App {
             engine_fault: None,
             restore_focus: false,
             stops: Vec::new(),
-            pane_id: Id::new("surface-convert"),
+            pane_id: Id::unique("surface-convert"),
             drag_hover: false,
             dark: false,
             fonts_set: false,

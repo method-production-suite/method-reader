@@ -600,9 +600,9 @@ fn settings_load_the_scripts_own_knobs_and_explain_the_idle_ones() {
     );
     h.get_by_role_and_label(Role::Button, "Phone");
     assert!(has_value(&h, "Overwrites every setting below."));
-    h.get_by_role_and_label(Role::Button, "The page");
+    h.get_by_role_and_label(Role::DisclosureTriangle, "The page");
     assert!(
-        h.query_by_role_and_label(Role::Button, "Dialogue")
+        h.query_by_role_and_label(Role::DisclosureTriangle, "Dialogue")
             .is_some()
     );
     assert!(
@@ -610,7 +610,7 @@ fn settings_load_the_scripts_own_knobs_and_explain_the_idle_ones() {
         "only the first group arrives open"
     );
     // Below the fold at 800 tall: pressed as a screen reader presses it.
-    h.get_by_role_and_label(Role::Button, "Dialogue")
+    h.get_by_role_and_label(Role::DisclosureTriangle, "Dialogue")
         .click_accesskit();
     steps(&mut h);
     let indent = h.get_by_role_and_label(Role::Slider, "Character name indent");
