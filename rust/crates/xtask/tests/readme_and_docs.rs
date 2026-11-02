@@ -79,6 +79,10 @@ fn lower(s: &str) -> String {
     flat(s).to_lowercase()
 }
 
+/// The suite's one sentence for the unsigned Windows download, said the
+/// same way on every page that offers one (2026-11-02).
+const WINDOWS_UNSIGNED: &str = "Not signed, and no certificate is planned: Windows warns that the publisher is unknown before it opens.";
+
 fn unsigned(s: &str) -> bool {
     let l = lower(s);
     l.contains("not signed") || l.contains("unsigned")
@@ -89,7 +93,7 @@ fn unsigned(s: &str) -> bool {
 #[test]
 fn the_readme_says_the_windows_download_is_unsigned() {
     let l = lower(&readme());
-    assert!(l.contains("windows") && l.contains("smartscreen"));
+    assert!(flat(&readme()).contains(WINDOWS_UNSIGNED));
     assert!(unsigned(&readme()));
 }
 
@@ -212,7 +216,7 @@ fn the_windows_warning_says_what_to_press_on_both_pages_that_offer_a_windows_dow
         section_of(&developers(), "## Install the command-line converter"),
     ] {
         let l = lower(&text);
-        assert!(l.contains("smartscreen"));
+        assert!(flat(&text).contains(WINDOWS_UNSIGNED));
         assert!(unsigned(&text));
         assert!(l.contains("more info"));
         assert!(l.contains("run anyway"));
@@ -269,7 +273,7 @@ fn the_readme_tells_an_intel_mac_the_download_runs_and_0_9_0_updates() {
 #[test]
 fn the_download_page_carries_the_unsigned_windows_warning() {
     let site = read("site/index.html");
-    assert!(lower(&site).contains("smartscreen"));
+    assert!(flat(&site).contains(WINDOWS_UNSIGNED));
     assert!(unsigned(&site));
 }
 
