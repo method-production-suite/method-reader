@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Method Reader: screenplay PDFs into e-books and editable scripts</title>
-<meta name="description" content="Method Reader turns a screenplay PDF into an e-book that reflows on your Kindle or other e-reader, and into a script you can edit again, as Fountain or .fdx. Free, open source, and your script never leaves your machine. Formerly Screepub.">
+<meta name="description" content="Method Reader turns a screenplay PDF into an e-book that reflows on your Kindle or other e-reader, and into a script you can edit again, as Fountain, .fdx (beta) or .osf (beta). Free, open source, and your script never leaves your machine. Formerly Screepub.">
 <link rel="canonical" href="https://methodreader.com/">
 <!-- Share cards. og:image must be absolute, and 1200x630 is the size every unfurler
      expects. Regenerate og.png from og-card.html with `cargo xtask make-og`. -->
@@ -12,14 +12,14 @@
 <meta property="og:site_name" content="Method Reader">
 <meta property="og:url" content="https://methodreader.com/">
 <meta property="og:title" content="Method Reader: screenplay PDFs into e-books and editable scripts">
-<meta property="og:description" content="Drag a screenplay PDF on the window and get an e-book that reflows at any text size with the script's shape intact, or a script you can edit as Fountain or .fdx. Free and open source. Your script never leaves your machine.">
+<meta property="og:description" content="Drag a screenplay PDF on the window and get an e-book that reflows at any text size with the script's shape intact, or a script you can edit as Fountain, .fdx (beta) or .osf (beta). Free and open source. Your script never leaves your machine.">
 <meta property="og:image" content="https://methodreader.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Method Reader: reading scripts on an e-reader shouldn't be difficult.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Method Reader: screenplay PDFs, readable on your e-reader">
-<meta name="twitter:description" content="Drag a screenplay PDF on the window and get an e-book that reflows at any text size with the script's shape intact, or a script you can edit as Fountain or .fdx. Free and open source.">
+<meta name="twitter:description" content="Drag a screenplay PDF on the window and get an e-book that reflows at any text size with the script's shape intact, or a script you can edit as Fountain, .fdx (beta) or .osf (beta). Free and open source.">
 <meta name="twitter:image" content="https://methodreader.com/og.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -84,12 +84,12 @@
     <div class="stick">
       <div class="phase" id="p1">
         <div class="slug">INT. YOUR E-READER - PAGE ONE</div>
-        <h1>Reading PDFs on an e&#8209;reader sucks.</h1>
-        <p class="lead">A script is laid out for paper. On a six-inch screen the page shrinks to fit, and you pinch and pan to read a line.</p>
+        <h1>Scripts are laid out for paper, not a six&#8209;inch screen.</h1>
+        <p class="lead">On an e-reader the PDF page shrinks to fit, and you pinch and pan to read a line.</p>
       </div>
       <div class="phase out" id="p2">
         <div class="slug">INT. THE SAME SCENE - TWO FILES</div>
-        <h2>Read scripts natively.<span class="answer">Adjustable to your preferences.</span></h2>
+        <h2>Read scripts natively. <span class="answer">Adjustable to your preferences.</span></h2>
       </div>
       <div class="phase col out" id="p3">
         <div class="slug">INT. ANY TEXT SIZE - CONTINUOUS</div>
@@ -151,8 +151,8 @@
       </h2>
       <p class="pitch">A screenplay PDF in.
         <span class="answer">An e&#8209;book that reads like a script out.</span></p>
-      <p class="lede">Drag a screenplay PDF onto the window and get an e-book that reflows at any text size, with the script's shape intact: scene headings, cues and dialogue where they belong. Then send it to the reader you already own. The same PDF also comes back as a script you can edit, as Fountain or .fdx.</p>
-      <p class="lede">To try it first, open Field Station, an invented script that comes with the app: Help, Open Sample.</p>
+      <p class="lede">Drag a screenplay PDF onto the window and get an e-book that reflows at any text size, with the script's shape intact: scene headings, cues and dialogue where they belong. Then send it to the reader you already own. The same PDF also comes back as a script you can edit, as Fountain, .fdx (beta) or .osf (beta). A .fountain or .osf script works the same way, no PDF needed.</p>
+      <p class="lede">To try it first, open Field Station, an invented script that comes with the app: Help &gt; Open Sample. It also opens on its own the first time you start the app.</p>
       <div class="cta">
         <a class="btn" href="https://github.com/method-production-suite/method-reader/releases/latest/download/Method-Reader-macOS.dmg">Download for Mac</a>
         <span class="fine">Free and open source. No account. Works offline.</span>
@@ -203,7 +203,7 @@
     <div class="cards">
       <div class="card">
         <h3>WRITERS</h3>
-        <p>Reading your own draft on something that isn't a laptop. And when all you have is the PDF, getting the script back to edit, as Fountain or .fdx (beta).</p>
+        <p>Reading your own draft on something that isn't a laptop. And when all you have is the PDF, getting the script back to edit, as Fountain, .fdx (beta) or .osf (beta).</p>
       </div>
       <div class="card">
         <h3>ACTORS</h3>
@@ -214,8 +214,8 @@
         <p>Anyone handed a production draft who would rather not read it hunched over a phone.</p>
       </div>
     </div>
-    <p class="note">Verified on a Kindle: over USB on the models that still mount as a drive, and by email on any of them. Newer Kindles (2024 and later) speak MTP instead and never appear in Finder: the Mac app copies to them over USB too (beta, tried on one Kindle so far), and from Windows and Linux they go by email. Over USB a Kindle gets an AZW3 that Method Reader makes itself, with nothing else installed; KFX looks better and is optional, needing Calibre and two other free tools; and email needs no tools at all and gets Amazon's own best layout. Kobo, tolino and reMarkable are written and code-tested, but nobody has plugged one in. <a href="https://github.com/method-production-suite/method-reader#which-readers">The full device table is on GitHub.</a></p>
-    <p class="note">Also marked beta: pictures from the script carried into the book (with a designed title card as its cover), the .fdx output, eject on Windows and Linux, and My device isn't here (with It worked and It did not work). A beta feature works in our tests but hasn't been tried widely on real devices or apps yet: tell us how it goes.</p>
+    <p class="note">Verified on a Kindle: over USB on the models that still mount as a drive, and by email on any of them. Newer Kindles (2024 and later) speak MTP instead and never appear in Finder: the Mac app copies to them over USB too (beta, tried on one Kindle so far), and from Windows and Linux they go by email. Over USB a Kindle gets an AZW3 that Method Reader makes itself, with nothing else installed (a name can still land at the foot of a page, and the app says so); KFX looks better and is optional, needing Calibre and two other free tools; and email needs no tools at all and gets Amazon's own best layout. Kobo, tolino and reMarkable are written and code-tested, but nobody has plugged one in. <a href="https://github.com/method-production-suite/method-reader#which-readers">The full device table is on GitHub.</a></p>
+    <p class="note">Also marked beta: pictures from the script carried into the book (with a designed title card as its cover), the .fdx and .osf output, seeing and removing the books on a plugged-in reader, eject on Windows and Linux, and My device isn't here (with It worked and It did not work). A beta feature works in our tests but hasn't been tried widely on real devices or apps yet: tell us how it goes.</p>
     <div class="closer">
       <a class="btn" href="https://github.com/method-production-suite/method-reader/releases/latest/download/Method-Reader-macOS.dmg">Download for Mac</a>
       <span class="fine">Free. No account. Your script never leaves your machine.</span>
@@ -230,7 +230,7 @@
     <div class="cards">
       <div class="card">
         <h3>FREE, FOR GOOD</h3>
-        <p>Open source under MIT or Apache 2.0, with the AZW3 writer under GPL v3. No account, no subscription.</p>
+        <p>Open source. The code is MIT or Apache 2.0, except the Kindle file writer, which is GPL v3, so the released app as a whole is GPL v3. No account, no subscription.</p>
       </div>
       <div class="card">
         <h3>NOTHING UPLOADED</h3>
@@ -238,7 +238,7 @@
       </div>
       <div class="card">
         <h3>FILES THAT LAST</h3>
-        <p>An EPUB 3 book, and the script as plain <a href="https://fountain.io/syntax">Fountain</a> text or as .fdx. Every word is the PDF's own: nothing writes your script for you.</p>
+        <p>An EPUB 3 book, and the script as plain <a href="https://fountain.io/syntax">Fountain</a> text or as .fdx or .osf (both beta). Every word is the PDF's own: nothing writes your script for you.</p>
       </div>
     </div>
     <figure class="shot">
@@ -277,7 +277,7 @@
     <p>
       <strong>On an Intel Mac the same download runs, from 1.0.0.</strong>
       An Intel Mac still on 0.9.0, released under the app's earlier name,
-      Screepub, is offered 1.0.0 as an update the next time it checks.
+      Screepub, is offered the current version the next time it checks.
     </p>
     <!-- Each link names the file without a version, so /latest/download/
          always reaches the newest one. The status column follows
@@ -319,6 +319,9 @@
     <p>
       Command line, any platform: see the
       <a href="https://github.com/method-production-suite/method-reader/blob/main/docs/developers.md#install-the-command-line-converter">developer page</a>.
+      The command line also runs as an MCP server, so coding agents can read
+      a script's pages and scenes and write the same files, on your machine
+      only.
       Who has checked each file, and how far:
       <a href="https://github.com/method-production-suite/method-reader/blob/main/docs/verification-ledger.md">the verification ledger</a>.
     </p>
@@ -327,11 +330,10 @@
       it carries no code-signing certificate, so SmartScreen
       shows a &ldquo;publisher unknown&rdquo; screen the first time you run
       it. Choose <strong>More info</strong>, then
-      <strong>Run anyway</strong>. Certificates cost money this project does
-      not spend yet; this note exists so the warning is expected rather than
-      alarming. The Windows installer also fetches Microsoft&rsquo;s WebView2
-      runtime once if your machine has none. Converting never touches the
-      network, on any platform.
+      <strong>Run anyway</strong>. Not signed, and no certificate is planned:
+      Windows warns that the publisher is unknown before it opens. This note
+      is here so the warning is expected rather than alarming. Converting
+      never touches the network, on any platform.
     </p>
     <p><a href="https://github.com/method-production-suite/method-reader/releases/latest">All files on the latest release &rarr;</a></p>
     </div>
