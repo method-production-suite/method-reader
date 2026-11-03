@@ -1951,3 +1951,167 @@ fn library_open_waits_while_a_conversion_runs() {
     w.engine.release("convert");
     settle(&mut h);
 }
+
+// docs/superpowers/specs/2026-11-03-library-remove-design.md, part 2.
+
+fn library_tab_with(w: &World, rows: Vec<serde_json::Value>) -> H {
+    w.engine.always("library", library_of(rows));
+    let mut h = harness(w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    h
+}
+
+fn ask_to_remove(h: &mut H, title: &str) {
+    h.get_by_role_and_label(Role::Button, &format!("Remove {title} from the library"))
+        .click_accesskit();
+    steps(h);
+}
+
+#[test]
+fn library_remove_asks_first_with_cancel_focused_and_cancel_sends_nothing() {
+    let w = world();
+    let mut h = library_tab_with(
+        &w,
+        vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ],
+    );
+    // Each row has its Remove from library beside its Open.
+    let remove = h.get_by_role_and_label(Role::Button, "Remove FIELD STATION from the library");
+    assert!(!remove.accesskit_node().is_disabled());
+    h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library");
+    ask_to_remove(&mut h, "FIELD STATION");
+    assert!(has(&h, "Move FIELD STATION to the Trash?"));
+    assert!(has(&h, sp_app::model::library::QUESTION_NOTE));
+    h.get_by_role_and_label(Role::Button, "Move FIELD STATION to the Trash");
+    assert_eq!(
+        focused_label(&h).as_deref(),
+        Some("Cancel"),
+        "the keyboard lands on Cancel"
+    );
+    assert!(w.engine.calls_of("library-remove").is_empty(), "not yet");
+    // The question replaces the row's own Remove until it is answered.
+    assert!(
+        h.query_by_role_and_label(Role::Button, "Remove FIELD STATION from the library")
+            .is_none()
+    );
+    h.get_by_role_and_label(Role::Button, "Cancel")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(!has(&h, "Move FIELD STATION to the Trash?"));
+    assert!(w.engine.calls_of("library-remove").is_empty());
+    h.get_by_role_and_label(Role::Button, "Remove FIELD STATION from the library");
+}
+
+#[test]
+fn library_move_to_trash_sends_one_removal_then_lists_again_and_says_so() {
+    let w = world();
+    let mut h = library_tab_with(
+        &w,
+        vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ],
+    );
+    assert_eq!(w.engine.calls_of("library").len(), 1);
+    ask_to_remove(&mut h, "WEATHER LOG");
+    // The library now lists only the script that stays.
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    h.get_by_role_and_label(Role::Button, "Move WEATHER LOG to the Trash")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-remove"),
+        [Request::LibraryRemove {
+            folder: "/Users/reader/Method Reader/Weather Log".into(),
+        }]
+    );
+    assert_eq!(w.engine.calls_of("library").len(), 2, "listed again");
+    h.get_by_role_and_label(Role::Status, "WEATHER LOG is in the Trash.");
+    assert!(
+        h.query_by_role_and_label(Role::Button, "Open WEATHER LOG")
+            .is_none()
+    );
+    h.get_by_role_and_label(Role::Button, "Open FIELD STATION");
+}
+
+#[test]
+fn library_a_refused_removal_says_the_engines_sentence_and_keeps_the_row() {
+    let w = world();
+    w.engine.always(
+        "library-remove",
+        Reply::ok(json!({"ok": false, "error": {"code": "not-a-script",
+            "message": "not a script in the library (it is a link): /Users/reader/Method Reader/Field Station"}})),
+    );
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    ask_to_remove(&mut h, "FIELD STATION");
+    h.get_by_role_and_label(Role::Button, "Move FIELD STATION to the Trash")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("library-remove").len(), 1);
+    h.get_by_role_and_label(
+        Role::Status,
+        "not a script in the library (it is a link): /Users/reader/Method Reader/Field Station",
+    );
+    h.get_by_role_and_label(Role::Button, "Open FIELD STATION");
+    h.get_by_role_and_label(Role::Button, "Remove FIELD STATION from the library");
+}
+
+#[test]
+fn library_remove_waits_while_a_conversion_or_another_removal_runs() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ]),
+    );
+    w.engine.hold("library-remove");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Remove FIELD STATION from the library")
+        .click_accesskit();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Move FIELD STATION to the Trash")
+        .click_accesskit();
+    settle(&mut h);
+    assert!(has(&h, "Moving FIELD STATION to the Trash…"));
+    assert!(!h.state().quiet(), "the removal is out");
+    let other = h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library");
+    assert!(
+        other.accesskit_node().is_disabled(),
+        "one removal at a time"
+    );
+    let going = h.get_by_role_and_label(Role::Button, "Open FIELD STATION");
+    assert!(
+        going.accesskit_node().is_disabled(),
+        "not opened on its way out"
+    );
+    w.engine.release("library-remove");
+    settle(&mut h);
+    let other = h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library");
+    assert!(!other.accesskit_node().is_disabled());
+
+    // While a conversion runs, nothing goes.
+    w.engine.hold("convert");
+    w.fakes.answer_dialog(Some("/scripts/field-station.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    settle(&mut h);
+    assert!(h.state().convert.converting);
+    h.state_mut().go_to(Surface::Library);
+    settle(&mut h);
+    let remove = h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library");
+    assert!(
+        remove.accesskit_node().is_disabled(),
+        "not during a conversion"
+    );
+    w.engine.release("convert");
+    settle(&mut h);
+}

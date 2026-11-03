@@ -7,7 +7,9 @@
 //! library), the same under their old SCREEPUB_ names the engine falls
 //! back to, and a
 //! Calibre guard path, so a Calibre started by mistake fails instead of
-//! reaching the real one. The workspace forbids unsafe code, so the test
+//! reaching the real one. METHOD_READER_TRASH is a guard path too (or, for
+//! the library's child, a scratch folder), so a `library-remove` never
+//! reaches the system Trash. The workspace forbids unsafe code, so the test
 //! cannot set its own environment: it runs itself again as a child with
 //! that environment, and the child does the work.
 
@@ -15,6 +17,10 @@ use serde_json::Value;
 use sp_app::engine::{Engine, Request};
 
 const CHILD: &str = "SP_APP_DIRECT_ENGINE_CHILD";
+
+/// A stand-in Trash nothing can be moved into (sp-engine's tests/common
+/// TRASH_GUARD).
+const TRASH_GUARD: &str = "/dev/null/method-reader-test-trash-guard";
 
 #[test]
 fn a_conversion_streams_its_progress_and_answers_with_the_book() {
@@ -34,6 +40,7 @@ fn a_conversion_streams_its_progress_and_answers_with_the_book() {
             "CALIBRE_CONFIG_DIRECTORY",
             "/dev/null/method-reader-test-guard",
         )
+        .env("METHOD_READER_TRASH", TRASH_GUARD)
         .output()
         .expect("the child runs");
     let said =
@@ -130,6 +137,7 @@ fn the_sample_converts_into_its_own_folder_and_reopens_from_its_fountain() {
             "CALIBRE_CONFIG_DIRECTORY",
             "/dev/null/method-reader-test-guard",
         )
+        .env("METHOD_READER_TRASH", TRASH_GUARD)
         .output()
         .expect("the child runs");
     let said =
@@ -239,6 +247,7 @@ fn the_device_library_lists_a_readers_books_and_removes_one() {
             "CALIBRE_CONFIG_DIRECTORY",
             "/dev/null/method-reader-test-guard",
         )
+        .env("METHOD_READER_TRASH", TRASH_GUARD)
         .output()
         .expect("the child runs");
     let said =
@@ -329,7 +338,8 @@ const LIBRARY_CHILD: &str = "SP_APP_DIRECT_ENGINE_LIBRARY_CHILD";
 /// demo script converted into a scratch library, the engine's real
 /// `library` answer read back by the window's own model, and the row's
 /// Open (`convert-to` from the library `.fountain` to its `.epub`) making
-/// the same book again without the PDF.
+/// the same book again without the PDF, then its Remove from library
+/// (`library-remove`) moving the folder into a scratch stand-in Trash.
 #[test]
 fn the_library_lists_a_converted_script_and_reopens_it_from_its_fountain() {
     let scratch = tempfile::tempdir().expect("scratch");
@@ -338,6 +348,8 @@ fn the_library_lists_a_converted_script_and_reopens_it_from_its_fountain() {
     let library = root.join("library");
     std::fs::create_dir_all(&config).unwrap();
     std::fs::create_dir_all(&library).unwrap();
+    let trash = root.join("trash");
+    std::fs::create_dir_all(&trash).unwrap();
     let out = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", "child_lists_the_library", "--nocapture"])
         .env(LIBRARY_CHILD, "1")
@@ -349,6 +361,7 @@ fn the_library_lists_a_converted_script_and_reopens_it_from_its_fountain() {
             "CALIBRE_CONFIG_DIRECTORY",
             "/dev/null/method-reader-test-guard",
         )
+        .env("METHOD_READER_TRASH", &trash)
         .output()
         .expect("the child runs");
     let said =
@@ -430,4 +443,35 @@ fn child_lists_the_library() {
     assert_eq!(as_converted["pages"], converted["pages"], "the row's pages");
     assert_eq!(as_converted["scenes"], converted["scenes"]);
     assert_eq!(as_converted["fountainPath"], row.fountain.as_str());
+
+    // Remove from library: the folder into the stand-in Trash, read back
+    // by the window's own words, and off the next listing.
+    let trash = std::env::var("METHOD_READER_TRASH").unwrap();
+    assert!(!trash.starts_with("/dev/null"), "a scratch Trash: {trash}");
+    let answer = engine
+        .run(
+            &Request::LibraryRemove {
+                folder: row.folder.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    let (line, bad) = sp_app::model::library::removed_line(&answer, row);
+    assert!(!bad, "{answer}");
+    assert_eq!(
+        line,
+        format!(
+            "{} is in the Trash.",
+            sp_app::model::library::row_title(row)
+        )
+    );
+    assert!(!std::path::Path::new(&row.folder).exists());
+    let name = std::path::Path::new(&row.folder).file_name().unwrap();
+    assert!(std::path::Path::new(&trash).join(name).is_dir());
+    let after = engine
+        .run(&Request::Library, &mut |_| {})
+        .answer
+        .expect("an answer");
+    assert!(listing_from(&after).unwrap().rows.is_empty(), "{after}");
 }

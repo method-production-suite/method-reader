@@ -39,6 +39,11 @@ pub const SETTINGS_GUARD: &str = "/dev/null/method-reader-test-guard";
 /// `CALIBRE_CONFIG_GUARD` (tools/calibre-config.ts and .env.test).
 pub const CALIBRE_GUARD: &str = "/dev/null/method-reader-test-calibre-guard";
 
+/// `METHOD_READER_TRASH`'s guard: the stand-in Trash `library-remove`
+/// moves a script into, under /dev/null, so a test that forgets its own
+/// scratch Trash moves nothing instead of filling the owner's.
+pub const TRASH_GUARD: &str = "/dev/null/method-reader-test-trash-guard";
+
 /// The repository root (rust/crates/sp-engine/../../..).
 pub fn repo_root() -> PathBuf {
     canonical(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.."))
@@ -98,7 +103,7 @@ impl Scratch {
 }
 
 /// The environment a test hands the engine: PATH, so tools resolve as they
-/// would, and both guards. Nothing else from this process.
+/// would, and the three guards. Nothing else from this process.
 pub fn guarded_env() -> Env {
     let mut env = Env::new();
     if let Some(path) = std::env::var_os("PATH").and_then(|p| p.into_string().ok()) {
@@ -106,6 +111,7 @@ pub fn guarded_env() -> Env {
     }
     env.set("METHOD_READER_CONFIG_DIR", SETTINGS_GUARD);
     env.set("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD);
+    env.set("METHOD_READER_TRASH", TRASH_GUARD);
     env
 }
 

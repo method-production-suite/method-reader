@@ -42,6 +42,11 @@ pub enum ErrorCode {
     RouteUnavailable,
     RouteFailed,
     EjectFailed,
+    /// library-remove: the folder is not one script the library lists
+    /// (outside the root, a link, the root itself, or not a script's).
+    NotAScript,
+    /// library-remove: the script's folder could not go to the Trash.
+    TrashFailed,
 }
 
 impl ErrorCode {
@@ -70,6 +75,8 @@ impl ErrorCode {
             ErrorCode::RouteUnavailable => "route-unavailable",
             ErrorCode::RouteFailed => "route-failed",
             ErrorCode::EjectFailed => "eject-failed",
+            ErrorCode::NotAScript => "not-a-script",
+            ErrorCode::TrashFailed => "trash-failed",
         }
     }
 }

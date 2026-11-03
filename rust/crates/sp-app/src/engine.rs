@@ -104,6 +104,11 @@ pub enum Request {
     /// Every script in the library folder, for the Library tab (`library`,
     /// new: not one of app.js's).
     Library,
+    /// One script's folder out of the library, to the Trash
+    /// (`library-remove`, new: not one of app.js's).
+    LibraryRemove {
+        folder: String,
+    },
 }
 
 impl Request {
@@ -132,6 +137,7 @@ impl Request {
             Self::EmailSetup => Call::EmailSetup,
             Self::Shape { .. } => Call::Shape,
             Self::Library => Call::Library,
+            Self::LibraryRemove { .. } => Call::LibraryRemove,
         }
     }
 
@@ -275,6 +281,9 @@ impl Request {
             Self::EmailSetup => v(&[Some("route"), Some("kindle-email-setup"), Some("--json")]),
             Self::Shape { fountain } => v(&[Some("shape"), Some(fountain), Some("--json")]),
             Self::Library => v(&[Some("library"), Some("--json")]),
+            Self::LibraryRemove { folder } => {
+                v(&[Some("library-remove"), Some(folder), Some("--json")])
+            }
         }
     }
 
@@ -304,6 +313,7 @@ impl Request {
             Self::EmailSetup => "email-setup",
             Self::Shape { .. } => "shape",
             Self::Library => "library",
+            Self::LibraryRemove { .. } => "library-remove",
         }
     }
 }
@@ -478,6 +488,13 @@ pub fn default_answer(request: &Request) -> Value {
                 "pages": 18, "scenes": 11, "converted": "2026-11-02T18:00:00Z",
                 "others": [], "settings": null,
             }]})
+        }
+        // The folder gone, named by its last part as a script's files are.
+        Request::LibraryRemove { folder } => {
+            let name = std::path::Path::new(folder)
+                .file_name()
+                .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
+            json!({"ok": true, "removed": folder, "name": name})
         }
     }
 }

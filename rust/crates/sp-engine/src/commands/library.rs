@@ -120,7 +120,7 @@ fn highest_page(tokens: &[Token]) -> Option<u32> {
 }
 
 /// The script in `folder`, or `None` when the folder is not one.
-fn script_in(folder: &str) -> Option<LibraryScript> {
+pub(crate) fn script_in(folder: &str) -> Option<LibraryScript> {
     let source = recorded_source(folder)?;
     let name = stem_of(&source);
     let prefix = host::join(&[folder, name.as_str()]);

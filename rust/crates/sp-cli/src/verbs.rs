@@ -13,6 +13,7 @@ use sp_engine::commands::kfx::{
     KfxCommandDeps, install_lines, kfx_install_command, kfx_status_command, setup_lines,
 };
 use sp_engine::commands::library::{LibraryScript, library_command};
+use sp_engine::commands::library_remove::library_remove_command;
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -34,7 +35,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 17] = [
+pub const VERBS: [&str; 18] = [
     "devices",
     "send",
     "settings",
@@ -52,6 +53,7 @@ pub const VERBS: [&str; 17] = [
     "device-remove",
     "shape",
     "library",
+    "library-remove",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -158,6 +160,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "device-remove" => DEVICE_REMOVE_USAGE,
         "shape" => SHAPE_USAGE,
         "library" => LIBRARY_USAGE,
+        "library-remove" => LIBRARY_REMOVE_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -570,6 +573,26 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 for script in &listing.scripts {
                     io.say(&library_line(script));
                 }
+            }
+            Ok(())
+        }
+        "library-remove" => {
+            if pos.len() != 1 {
+                return Err(Stop::usage(
+                    "expected exactly one script folder in the library (see --help)",
+                ));
+            }
+            let removed = library_remove_command(
+                host_platform(),
+                &Env::process(),
+                Some(&settings_file()),
+                &pos[0],
+            )
+            .map_err(engine)?;
+            if io.json {
+                io.ok(value(&removed));
+            } else {
+                io.say(&format!("moved {} to the Trash", removed.removed));
             }
             Ok(())
         }

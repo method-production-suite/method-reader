@@ -26,6 +26,13 @@ sp-fsutil.workspace = true
 sp-pdf.workspace = true
 sha2 = "0.11"
 regex.workspace = true
+# The system Trash (the Recycle Bin on Windows, the freedesktop trash on
+# Linux) for `library-remove`: moving a file there takes a system call no
+# safe standard-library function makes, and the workspace forbids unsafe
+# code. No chrono (it only dates a Linux trash listing, which nothing here
+# reads); Windows needs one COM threading feature named, and the default's
+# is kept.
+trash = { version = "=5.2.9", default-features = false, features = ["coinit_apartmentthreaded"] }
 
 [target.'cfg(unix)'.dependencies]
 # Safe wrappers for the two process-group calls a Calibre timeout needs
