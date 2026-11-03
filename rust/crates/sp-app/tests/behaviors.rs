@@ -1952,6 +1952,107 @@ fn library_open_waits_while_a_conversion_runs() {
     settle(&mut h);
 }
 
+// docs/superpowers/specs/2026-11-03-library-row-settings-design.md.
+
+#[test]
+fn library_settings_reopens_from_the_fountain_and_lands_on_settings_for_that_script() {
+    let w = world();
+    let mut own = library_row("Weather Log", true);
+    own["settings"] =
+        json!("/Users/reader/Method Reader/Weather Log/Weather Log.method-reader.json");
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true), own]),
+    );
+    let mut h = harness(&w, Platform::Mac);
+    // Another script open first, its settings already read.
+    convert(&w, &mut h);
+    let before = h
+        .state()
+        .script
+        .as_ref()
+        .and_then(|s| s.fountain_path.clone())
+        .expect("a script open");
+    h.get_by_role_and_label(Role::Tab, "Settings").click();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("settings"),
+        [Request::Settings {
+            fountain: before.clone(),
+            set: None,
+        }]
+    );
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    // Only the row with settings of its own says so.
+    assert!(has(
+        &h,
+        "18 pages, 11 scenes, converted 2 November 2026, its own settings"
+    ));
+    assert!(has(&h, "18 pages, 11 scenes, converted 2 November 2026"));
+    h.get_by_role_and_label(Role::Button, "Settings for FIELD STATION");
+    let asked = w.engine.calls_of("settings").len();
+    h.get_by_role_and_label(Role::Button, "Settings for WEATHER LOG")
+        .click_accesskit();
+    steps(&mut h);
+    let folder = "/Users/reader/Method Reader/Weather Log";
+    let fountain = format!("{folder}/Weather Log.fountain");
+    assert_eq!(
+        w.engine.calls_of("convert-to"),
+        [Request::ConvertTo {
+            path: fountain.clone(),
+            out: format!("{folder}/Weather Log.epub"),
+        }],
+        "the book is remade from the library .fountain, once"
+    );
+    assert_eq!(w.engine.calls_of("convert").len(), 1, "never its PDF");
+    let app = h.state();
+    assert_eq!(app.surface, Surface::Tune);
+    assert!(
+        h.get_by_role_and_label(Role::Tab, "Settings")
+            .accesskit_node()
+            .is_selected()
+            == Some(true)
+    );
+    let script = app.script.as_ref().expect("the script is open");
+    assert_eq!(script.path, "/scripts/Weather Log.pdf", "its own PDF");
+    assert_eq!(script.fountain_path.as_deref(), Some(fountain.as_str()));
+    // The tab asks for the reopened script's settings, and only for them.
+    assert_eq!(
+        w.engine.calls_of("settings")[asked..],
+        [Request::Settings {
+            fountain,
+            set: None,
+        }]
+    );
+}
+
+#[test]
+fn library_settings_waits_while_a_conversion_runs() {
+    let w = world();
+    w.engine.hold("convert");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    w.fakes.answer_dialog(Some("/scripts/field-station.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    settle(&mut h);
+    assert!(h.state().convert.converting);
+    sp_app::app::library::look(h.state_mut());
+    settle(&mut h);
+    h.state_mut().go_to(Surface::Library);
+    settle(&mut h);
+    let tune = h.get_by_role_and_label(Role::Button, "Settings for FIELD STATION");
+    assert!(
+        tune.accesskit_node().is_disabled(),
+        "one conversion at a time"
+    );
+    w.engine.release("convert");
+    settle(&mut h);
+    let tune = h.get_by_role_and_label(Role::Button, "Settings for FIELD STATION");
+    assert!(!tune.accesskit_node().is_disabled());
+}
+
 // docs/superpowers/specs/2026-11-03-library-remove-design.md, part 2.
 
 fn library_tab_with(w: &World, rows: Vec<serde_json::Value>) -> H {
@@ -1984,7 +2085,7 @@ fn library_remove_asks_first_with_cancel_focused_and_cancel_sends_nothing() {
     h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library");
     ask_to_remove(&mut h, "FIELD STATION");
     assert!(has(&h, "Move FIELD STATION to the Trash?"));
-    assert!(has(&h, sp_app::model::library::QUESTION_NOTE));
+    assert!(has(&h, &sp_app::model::library::question_note(false)));
     h.get_by_role_and_label(Role::Button, "Move FIELD STATION to the Trash");
     assert_eq!(
         focused_label(&h).as_deref(),
@@ -2114,4 +2215,24 @@ fn library_remove_waits_while_a_conversion_or_another_removal_runs() {
     );
     w.engine.release("convert");
     settle(&mut h);
+}
+
+#[test]
+fn library_remove_says_recycle_bin_on_windows() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    let mut h = harness(&w, Platform::Windows);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    ask_to_remove(&mut h, "FIELD STATION");
+    assert!(has(&h, "Move FIELD STATION to the Recycle Bin?"));
+    assert!(has(&h, &sp_app::model::library::question_note(true)));
+    assert!(!has(&h, "Move FIELD STATION to the Trash?"));
+    h.get_by_role_and_label(Role::Button, "Move FIELD STATION to the Recycle Bin")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Status, "FIELD STATION is in the Recycle Bin.");
 }

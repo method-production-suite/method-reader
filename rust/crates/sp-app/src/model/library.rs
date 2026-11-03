@@ -2,8 +2,11 @@
 //! as the window decides it: the engine's `library` answer read field by
 //! field, the words each row says, the empty library's words, how a
 //! row's Open is asked and answered, and the question and answer of its
-//! Remove from library (docs/superpowers/specs/2026-11-03-library-remove-design.md).
-//! No toolkit in it; the drawing is src/app/library.rs.
+//! Remove from library (docs/superpowers/specs/2026-11-03-library-remove-design.md),
+//! and its Settings (docs/superpowers/specs/2026-11-03-library-row-settings-design.md).
+//! Every word about the Trash takes the platform: Windows calls it the
+//! Recycle Bin ([`bin_name`]). No toolkit in it; the drawing is
+//! src/app/library.rs.
 
 use std::path::Path;
 
@@ -20,12 +23,39 @@ pub const UNREADABLE: &str = "The library could not be read.";
 pub const EMPTY: &str = "Nothing in the library yet.";
 /// A row's second button, which asks first.
 pub const REMOVE: &str = "Remove from library";
-/// The question's two answers.
-pub const MOVE: &str = "Move to Trash";
+/// A row's third button: Open, landing on the Settings tab.
+pub const SETTINGS: &str = "Settings";
 pub const CANCEL: &str = "Cancel";
+
+/// What the system Trash is called: the Recycle Bin on Windows, the Trash
+/// everywhere else. Every Trash word below takes it. The command line's
+/// own is sp-engine's `library_remove::bin_name`; tests/argv_contract.rs
+/// holds the two to the same answer for both platforms.
+pub fn bin_name(windows: bool) -> &'static str {
+    if windows { "Recycle Bin" } else { "Trash" }
+}
+
+/// The question's first answer: "Move to Trash", or "Move to Recycle Bin"
+/// on Windows.
+pub fn move_button(windows: bool) -> String {
+    format!("Move to {}", bin_name(windows))
+}
+
 /// What the question says goes, and what stays.
-pub const QUESTION_NOTE: &str = "Its folder, book and settings go to the Trash, where you can put them back. The PDF stays where it is.";
-pub const NOT_REMOVED: &str = "The script was not moved to the Trash, and nothing said why.";
+pub fn question_note(windows: bool) -> String {
+    format!(
+        "Its folder, book and settings go to the {}, where you can put them back. The PDF stays where it is.",
+        bin_name(windows)
+    )
+}
+
+/// What a removal says when its answer says nothing usable.
+pub fn not_removed(windows: bool) -> String {
+    format!(
+        "The script was not moved to the {}, and nothing said why.",
+        bin_name(windows)
+    )
+}
 
 /// One script in the library, as the engine listed it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,6 +76,8 @@ pub struct Row {
     pub scenes: i64,
     /// When it was converted, RFC 3339 UTC.
     pub converted: String,
+    /// Its own settings file, when it has one.
+    pub settings: Option<String>,
 }
 
 /// `library`'s answer.
@@ -84,6 +116,7 @@ fn row_from(v: &Value) -> Option<Row> {
         pages: optional(v, "pages", Value::as_i64)?,
         scenes: v.get("scenes")?.as_i64()?,
         converted: text_at(v, "converted")?,
+        settings: optional(v, "settings", words)?,
     })
 }
 
@@ -152,7 +185,8 @@ pub fn date_words(rfc3339: &str) -> Option<String> {
 }
 
 /// The line under a row's title: its pages (when its `.fountain` marks
-/// them), its scenes, and the day it was converted.
+/// them), its scenes, the day it was converted, and whether it has
+/// settings of its own.
 pub fn detail(row: &Row) -> String {
     let mut parts = Vec::new();
     if let Some(pages) = row.pages {
@@ -161,6 +195,9 @@ pub fn detail(row: &Row) -> String {
     parts.push(count(row.scenes, "scene", "scenes"));
     if let Some(day) = date_words(&row.converted) {
         parts.push(format!("converted {day}"));
+    }
+    if row.settings.is_some() {
+        parts.push("its own settings".to_string());
     }
     parts.join(", ")
 }
@@ -187,33 +224,41 @@ pub fn remove_label(row: &Row) -> String {
     format!("Remove {} from the library", row_title(row))
 }
 
+/// The Settings button's name for a screen reader.
+pub fn settings_label(row: &Row) -> String {
+    format!("Settings for {}", row_title(row))
+}
+
 /// The question asked before a script goes.
-pub fn question(row: &Row) -> String {
-    format!("Move {} to the Trash?", row_title(row))
+pub fn question(row: &Row, windows: bool) -> String {
+    format!("Move {} to the {}?", row_title(row), bin_name(windows))
 }
 
 /// The question's Move to Trash button's name for a screen reader.
-pub fn move_label(row: &Row) -> String {
-    format!("Move {} to the Trash", row_title(row))
+pub fn move_label(row: &Row, windows: bool) -> String {
+    format!("Move {} to the {}", row_title(row), bin_name(windows))
 }
 
 /// What the tab says while a script goes.
-pub fn moving(row: &Row) -> String {
-    format!("Moving {} to the Trash…", row_title(row))
+pub fn moving(row: &Row, windows: bool) -> String {
+    format!("Moving {} to the {}…", row_title(row), bin_name(windows))
 }
 
 /// What `library-remove` answered, as a line and whether it is bad news:
 /// the engine's own sentence for a refusal, and ours when the answer does
 /// not name the row's folder as the one removed.
-pub fn removed_line(answer: &Value, row: &Row) -> (String, bool) {
+pub fn removed_line(answer: &Value, row: &Row, windows: bool) -> (String, bool) {
     if !ok(answer) {
-        let line = error_message(answer).unwrap_or_else(|| NOT_REMOVED.to_string());
+        let line = error_message(answer).unwrap_or_else(|| not_removed(windows));
         return (line, true);
     }
     if text_at(answer, "removed").as_deref() != Some(row.folder.as_str()) {
-        return (NOT_REMOVED.to_string(), true);
+        return (not_removed(windows), true);
     }
-    (format!("{} is in the Trash.", row_title(row)), false)
+    (
+        format!("{} is in the {}.", row_title(row), bin_name(windows)),
+        false,
+    )
 }
 
 /// The empty library's second line: where it is, with home folded to `~`.
@@ -272,7 +317,7 @@ mod tests {
              "title": null, "source": "/s/Weather Log.osf", "sourceExists": false,
              "fountain": "/Users/ann/Method Reader/Weather Log/Weather Log.fountain",
              "epub": null, "pages": null, "scenes": 1, "converted": "2026-01-09T00:00:00Z",
-             "others": [], "settings": null},
+             "others": [], "settings": "/Users/ann/Method Reader/Weather Log/Weather Log.method-reader.json"},
         ]})
     }
 
@@ -289,6 +334,11 @@ mod tests {
         assert_eq!(second.title, None);
         assert_eq!((second.epub.as_ref(), second.pages), (None, None));
         assert!(!second.source_exists);
+        assert_eq!(first.settings, None);
+        assert_eq!(
+            second.settings.as_deref(),
+            Some("/Users/ann/Method Reader/Weather Log/Weather Log.method-reader.json")
+        );
     }
 
     #[test]
@@ -299,6 +349,7 @@ mod tests {
         }
         let rows = listing_from(&absent).expect("still a list").rows;
         assert_eq!((rows[1].title.as_ref(), rows[1].pages), (None, None));
+        assert_eq!(rows[1].settings, None);
         // A blank title is no title.
         let mut blank = answer();
         blank["scripts"][0]["title"] = json!("  ");
@@ -314,6 +365,7 @@ mod tests {
             ("pages", json!("18")),
             ("scenes", json!(null)),
             ("converted", json!(7)),
+            ("settings", json!(true)),
         ] {
             let mut broken = answer();
             broken["scripts"][0][key] = bad;
@@ -341,7 +393,10 @@ mod tests {
             detail(&rows[0]),
             "18 pages, 24 scenes, converted 2 November 2026"
         );
-        assert_eq!(detail(&rows[1]), "1 scene, converted 9 January 2026");
+        assert_eq!(
+            detail(&rows[1]),
+            "1 scene, converted 9 January 2026, its own settings"
+        );
         let one_page = Row {
             pages: Some(1),
             converted: "not a date".into(),
@@ -349,6 +404,9 @@ mod tests {
         };
         assert_eq!(detail(&one_page), "1 page, 24 scenes");
         assert_eq!(open_label(&rows[0]), "Open FIELD STATION");
+        assert_eq!(SETTINGS, "Settings");
+        assert_eq!(settings_label(&rows[0]), "Settings for FIELD STATION");
+        assert_eq!(settings_label(&rows[1]), "Settings for Weather Log");
         assert_eq!(gone_note(&rows[0]), None);
         assert_eq!(
             gone_note(&rows[1]),
@@ -384,52 +442,74 @@ mod tests {
         assert_eq!(REMOVE, "Remove from library");
         assert_eq!(remove_label(field), "Remove FIELD STATION from the library");
         assert_eq!(remove_label(log), "Remove Weather Log from the library");
-        assert_eq!(question(field), "Move FIELD STATION to the Trash?");
-        assert_eq!(
-            QUESTION_NOTE,
-            "Its folder, book and settings go to the Trash, where you can put them back. The PDF stays where it is."
-        );
-        assert_eq!((MOVE, CANCEL), ("Move to Trash", "Cancel"));
-        assert_eq!(move_label(log), "Move Weather Log to the Trash");
-        assert_eq!(moving(field), "Moving FIELD STATION to the Trash…");
-        let gone = json!({"ok": true, "removed": field.folder, "name": "Field Station"});
-        assert_eq!(
-            removed_line(&gone, field),
-            ("FIELD STATION is in the Trash.".to_string(), false)
-        );
-        // An answer about another folder, or none, is not this row gone.
-        assert_eq!(removed_line(&gone, log), (NOT_REMOVED.to_string(), true));
-        assert_eq!(
-            removed_line(&json!({"ok": true}), field),
-            (NOT_REMOVED.to_string(), true)
-        );
-        let refused = json!({"ok": false, "error": {"code": "not-a-script",
-            "message": "not a script in the library (it is a link): /x"}});
-        assert_eq!(
-            removed_line(&refused, field),
-            (
-                "not a script in the library (it is a link): /x".to_string(),
-                true
-            )
-        );
-        assert_eq!(
-            removed_line(&json!({"ok": false}), field),
-            (NOT_REMOVED.to_string(), true)
-        );
-        // No exclamation mark in any of it (tests/no_em_dash.rs reads the
-        // dashes).
-        for words in [
-            REMOVE,
-            MOVE,
-            CANCEL,
-            QUESTION_NOTE,
-            NOT_REMOVED,
-            &question(field),
-            &moving(field),
-            &remove_label(field),
-            &move_label(field),
-        ] {
-            assert!(!words.contains('!'), "{words}");
+        assert_eq!(CANCEL, "Cancel");
+        // Every word about the Trash, on a Mac or Linux and then on
+        // Windows.
+        for (windows, bin) in [(false, "Trash"), (true, "Recycle Bin")] {
+            assert_eq!(bin_name(windows), bin);
+            assert_eq!(
+                question(field, windows),
+                format!("Move FIELD STATION to the {bin}?")
+            );
+            assert_eq!(
+                question_note(windows),
+                format!(
+                    "Its folder, book and settings go to the {bin}, where you can put them back. The PDF stays where it is."
+                )
+            );
+            assert_eq!(move_button(windows), format!("Move to {bin}"));
+            assert_eq!(
+                move_label(log, windows),
+                format!("Move Weather Log to the {bin}")
+            );
+            assert_eq!(
+                moving(field, windows),
+                format!("Moving FIELD STATION to the {bin}…")
+            );
+            let not = format!("The script was not moved to the {bin}, and nothing said why.");
+            assert_eq!(not_removed(windows), not);
+            let gone = json!({"ok": true, "removed": field.folder, "name": "Field Station"});
+            assert_eq!(
+                removed_line(&gone, field, windows),
+                (format!("FIELD STATION is in the {bin}."), false)
+            );
+            // An answer about another folder, or none, is not this row gone.
+            assert_eq!(removed_line(&gone, log, windows), (not.clone(), true));
+            assert_eq!(
+                removed_line(&json!({"ok": true}), field, windows),
+                (not.clone(), true)
+            );
+            let refused = json!({"ok": false, "error": {"code": "not-a-script",
+                "message": "not a script in the library (it is a link): /x"}});
+            assert_eq!(
+                removed_line(&refused, field, windows),
+                (
+                    "not a script in the library (it is a link): /x".to_string(),
+                    true
+                )
+            );
+            assert_eq!(
+                removed_line(&json!({"ok": false}), field, windows),
+                (not.clone(), true)
+            );
+            // No exclamation mark in any of it (tests/no_em_dash.rs reads
+            // the dashes).
+            for words in [
+                REMOVE.to_string(),
+                SETTINGS.to_string(),
+                CANCEL.to_string(),
+                move_button(windows),
+                question_note(windows),
+                not,
+                question(field, windows),
+                moving(field, windows),
+                remove_label(field),
+                move_label(field, windows),
+                settings_label(field),
+                detail(log),
+            ] {
+                assert!(!words.contains('!'), "{words}");
+            }
         }
     }
 

@@ -424,6 +424,38 @@ layout code, read
 [screenplay-format-reference.md](screenplay-format-reference.md): it records
 print geometry and what each e-reader's renderer honours.
 
+## Environment variables for tests
+
+These exist so a test can stand something in for the real thing: a folder
+for the Trash, fake readers, a helper that is not there. They work in a
+release build too, so a test can run the shipped command line, but nobody
+should set them in normal use.
+
+- `METHOD_READER_TRASH`: a folder, already there, that `library-remove`
+  moves a script's folder into instead of the system Trash.
+- `METHOD_READER_VOLUME_ROOTS`: the folders device detection looks in for
+  mounted readers instead of the system's own (`:` between them, `;` on
+  Windows).
+- `METHOD_READER_REMARKABLE_ENDPOINT`: the address the reMarkable's USB web
+  interface is looked for at, so a test can serve a fake one.
+- `METHOD_READER_MTP_HELPER`: the MTP helper to run for new Kindles. Every
+  test sandbox sets it to a path nothing can make, so a Kindle left plugged
+  in never reaches a test.
+- `METHOD_READER_LAUNCHCTL` and `METHOD_READER_PKILL`: the two Mac tools a
+  copy to a new Kindle runs to pause the system's camera import, which
+  would otherwise hold the Kindle, so a test can point them where nothing
+  real runs.
+- `METHOD_READER_FRAME_LOG`: a file the window writes one line to per frame
+  it draws, for measuring how smoothly it moves.
+- `METHOD_READER_BUNDLED_UI_FONT`: when set, the window draws its controls in
+  the bundled Inter instead of the system's own face.
+- `METHOD_READER_TEST_FAIL_PIN`: makes saving a conversion's settings fail,
+  for the test of what a conversion says then. Debug builds only: a release
+  build ignores it.
+
+`METHOD_READER_LIBRARY` and `METHOD_READER_CONFIG_DIR` are not among them:
+they are real settings, described above.
+
 ## Continuous integration
 
 GitHub builds and tests nothing on a pull request. Each pull request and

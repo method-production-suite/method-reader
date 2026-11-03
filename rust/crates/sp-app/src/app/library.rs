@@ -2,7 +2,9 @@
 //! every script in the library folder, Open, which reopens one without
 //! converting its PDF again, and Remove from library, which asks first and
 //! then moves the script's folder to the Trash
-//! (docs/superpowers/specs/2026-11-03-library-remove-design.md). Every rule
+//! (docs/superpowers/specs/2026-11-03-library-remove-design.md), and
+//! Settings, which reopens it as Open does and lands on the Settings tab
+//! (docs/superpowers/specs/2026-11-03-library-row-settings-design.md). Every rule
 //! and word is in src/model/library.rs; the engine lists (`library`),
 //! remakes the book (`convert-to` from the library `.fountain`, as the
 //! sample reopens) and removes (`library-remove`). This draws the answers.
@@ -13,10 +15,13 @@ use super::panel::way_row;
 use super::widgets::{self, Look};
 use super::{App, Purpose as AppPurpose};
 use crate::engine::{Reply, Request};
+use crate::model::convert::Platform;
+use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
     self as m, Listing, Row, detail, empty_line, gone_note, listing_failure, listing_from,
-    move_label, moving, open_label, question, remove_label, removed_line, row_title,
+    move_button, move_label, moving, open_label, question, question_note, remove_label,
+    removed_line, row_title, settings_label,
 };
 use crate::theme::{self, size};
 
@@ -59,12 +64,18 @@ pub fn look(app: &mut App) {
     app.call(Request::Library, AppPurpose::Library(Purpose::List { ask }));
 }
 
+/// Whether the Trash words are Windows' (the Recycle Bin).
+fn windows(app: &App) -> bool {
+    app.host.platform == Platform::Windows
+}
+
 /// Move to Trash: one `library-remove` for the row's folder.
 fn remove(app: &mut App, row: Row) {
+    let said = moving(&row, windows(app));
     let s = &mut app.library;
     s.confirm = None;
     s.removing = Some(row.folder.clone());
-    s.said = Some((moving(&row), false));
+    s.said = Some((said, false));
     app.call(
         Request::LibraryRemove {
             folder: row.folder.clone(),
@@ -83,7 +94,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
     match purpose {
         Purpose::Remove(row) => {
             app.library.removing = None;
-            app.library.said = Some(removed_line(&answer, &row));
+            app.library.said = Some(removed_line(&answer, &row, windows(app)));
             app.restore_focus = true;
             look(app);
         }
@@ -162,6 +173,7 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     let can_remove = !app.convert.converting && idle(app);
     let asking = app.library.confirm.as_deref() == Some(row.folder.as_str());
     let mut open = None;
+    let mut tune = None;
     let mut ask = None;
     way_row(
         ui,
@@ -171,14 +183,25 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
             if let Some(note) = gone_note(row) {
                 widgets::caption(ui, &t, note, false);
             }
-            if !asking {
-                let id = Id::unique(("library-remove", row.folder.as_str()));
-                let b = widgets::button_id(ui, &t, Look::Quiet, m::REMOVE, can_remove, id);
-                let label = remove_label(row);
+            // Settings and Remove on one line when the column has room
+            // for both, one under the other when it has not.
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = layout::SPACE[3];
+                let id = Id::unique(("library-settings", row.folder.as_str()));
+                let b = widgets::button_id(ui, &t, Look::Quiet, m::SETTINGS, live, id);
+                let label = settings_label(row);
                 ui.ctx()
                     .accesskit_node_builder(b.id, |n| n.set_label(label));
-                ask = Some((b.id, b.clicked()));
-            }
+                tune = Some((b.id, b.clicked()));
+                if !asking {
+                    let id = Id::unique(("library-remove", row.folder.as_str()));
+                    let b = widgets::button_id(ui, &t, Look::Quiet, m::REMOVE, can_remove, id);
+                    let label = remove_label(row);
+                    ui.ctx()
+                        .accesskit_node_builder(b.id, |n| n.set_label(label));
+                    ask = Some((b.id, b.clicked()));
+                }
+            });
         },
         |ui| {
             let id = Id::unique(("library-open", row.folder.as_str()));
@@ -192,7 +215,14 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     if let Some((id, clicked)) = open {
         app.stop(id, live);
         if clicked && live {
-            super::convert::reopen(app, row.clone());
+            super::convert::reopen(app, row.clone(), Surface::Read);
+            return;
+        }
+    }
+    if let Some((id, clicked)) = tune {
+        app.stop(id, live);
+        if clicked && live {
+            super::convert::reopen(app, row.clone(), Surface::Tune);
             return;
         }
     }
@@ -215,16 +245,17 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
 fn confirm(app: &mut App, ui: &mut Ui, row: &Row) {
     let t = app.tokens();
     ui.add_space(layout::SPACE[2]);
-    widgets::prose(ui, &t, &question(row));
-    widgets::caption(ui, &t, m::QUESTION_NOTE, false);
+    let windows = windows(app);
+    widgets::prose(ui, &t, &question(row, windows));
+    widgets::caption(ui, &t, &question_note(windows), false);
     let live = !app.convert.converting && idle(app);
     let mut yes = None;
     let mut no = None;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = layout::SPACE[3];
         let id = Id::unique(("library-move", row.folder.as_str()));
-        let r = widgets::button_id(ui, &t, Look::Outline, m::MOVE, live, id);
-        let label = move_label(row);
+        let r = widgets::button_id(ui, &t, Look::Outline, &move_button(windows), live, id);
+        let label = move_label(row, windows);
         ui.ctx()
             .accesskit_node_builder(r.id, |n| n.set_label(label));
         let id = Id::unique(("library-cancel", row.folder.as_str()));

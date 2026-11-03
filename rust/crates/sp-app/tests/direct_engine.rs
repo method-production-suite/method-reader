@@ -457,7 +457,7 @@ fn child_lists_the_library() {
         )
         .answer
         .expect("an answer");
-    let (line, bad) = sp_app::model::library::removed_line(&answer, row);
+    let (line, bad) = sp_app::model::library::removed_line(&answer, row, false);
     assert!(!bad, "{answer}");
     assert_eq!(
         line,
