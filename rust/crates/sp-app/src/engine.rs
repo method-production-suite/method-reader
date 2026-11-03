@@ -109,6 +109,13 @@ pub enum Request {
     LibraryRemove {
         folder: String,
     },
+    /// The name one script goes by in the library, kept in its folder's
+    /// source.json, its book made again under it; an empty name goes back
+    /// to its title page's (`library-rename`, new: not one of app.js's).
+    LibraryRename {
+        folder: String,
+        name: String,
+    },
 }
 
 impl Request {
@@ -138,6 +145,7 @@ impl Request {
             Self::Shape { .. } => Call::Shape,
             Self::Library => Call::Library,
             Self::LibraryRemove { .. } => Call::LibraryRemove,
+            Self::LibraryRename { .. } => Call::LibraryRename,
         }
     }
 
@@ -284,6 +292,15 @@ impl Request {
             Self::LibraryRemove { folder } => {
                 v(&[Some("library-remove"), Some(folder), Some("--json")])
             }
+            // The name after `--`, so one that starts with a dash is a
+            // name and not a flag.
+            Self::LibraryRename { folder, name } => v(&[
+                Some("library-rename"),
+                Some(folder),
+                Some("--json"),
+                Some("--"),
+                Some(name),
+            ]),
         }
     }
 
@@ -314,6 +331,7 @@ impl Request {
             Self::Shape { .. } => "shape",
             Self::Library => "library",
             Self::LibraryRemove { .. } => "library-remove",
+            Self::LibraryRename { .. } => "library-rename",
         }
     }
 }
@@ -495,6 +513,19 @@ pub fn default_answer(request: &Request) -> Value {
                 .file_name()
                 .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
             json!({"ok": true, "removed": folder, "name": name})
+        }
+        // The fake's one row renamed: the name kept, or, cleared, its
+        // title page's Title; its book beside it, named by its last part.
+        Request::LibraryRename { folder, name } => {
+            let stem = std::path::Path::new(folder)
+                .file_name()
+                .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
+            let title = match name.trim() {
+                "" => "FIELD STATION".to_string(),
+                kept => kept.to_string(),
+            };
+            json!({"ok": true, "folder": folder, "title": title,
+                "epub": format!("{folder}/{stem}.epub")})
         }
     }
 }

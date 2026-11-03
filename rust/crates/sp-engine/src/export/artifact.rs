@@ -195,8 +195,16 @@ fn build_rung(
                 .format
                 .include_images
                 .then(|| read_images(fountain_path, &BTreeSet::new()).images);
+            // Titled as the EPUB beside it is: by the name the script is
+            // kept under in the library, when it has one.
+            let kept_name = crate::library::read_kept_name(fountain_path);
             let rendered = renderers
-                .render_mobi(&fountain_text, &opts.format, images.as_ref())
+                .render_mobi(
+                    &fountain_text,
+                    kept_name.as_deref(),
+                    &opts.format,
+                    images.as_ref(),
+                )
                 .map_err(EngineError::plain)?;
             let Some(bytes) = rendered else {
                 return Err(regeneration_failed(

@@ -23,9 +23,12 @@ pub trait Renderers {
     fn build_azw3(&self, epub: &[u8]) -> Result<Vec<u8>, String>;
     /// `convertFountain(text, { format, mobi: true, images }).mobi`:
     /// `Ok(None)` when the engine reported success and made no .mobi.
+    /// `kept_name` is the name the script is kept under in the library,
+    /// which titles the book as it titles the EPUB beside it.
     fn render_mobi(
         &self,
         fountain: &str,
+        kept_name: Option<&str>,
         format: &FormatOptions,
         images: Option<&BTreeMap<String, Vec<u8>>>,
     ) -> Result<Option<Vec<u8>>, String>;
@@ -71,10 +74,12 @@ impl Renderers for Books {
     fn render_mobi(
         &self,
         fountain: &str,
+        kept_name: Option<&str>,
         format: &FormatOptions,
         images: Option<&BTreeMap<String, Vec<u8>>>,
     ) -> Result<Option<Vec<u8>>, String> {
         let opts = ConvertOptions {
+            kept_name: kept_name.map(str::to_owned),
             format: *format,
             mobi: true,
             ..ConvertOptions::default()

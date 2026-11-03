@@ -2236,3 +2236,204 @@ fn library_remove_says_recycle_bin_on_windows() {
     steps(&mut h);
     h.get_by_role_and_label(Role::Status, "FIELD STATION is in the Recycle Bin.");
 }
+
+// docs/superpowers/specs/2026-11-03-library-rename-design.md, part 2.
+
+fn ask_to_rename(h: &mut H, title: &str) {
+    h.get_by_role_and_label(Role::Button, &format!("Rename {title}"))
+        .click_accesskit();
+    steps(h);
+}
+
+#[test]
+fn library_rename_opens_a_field_with_the_current_name_and_cancel_sends_nothing() {
+    let w = world();
+    let mut h = library_tab_with(
+        &w,
+        vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ],
+    );
+    // Each row has its Rename beside its Settings and Remove.
+    h.get_by_role_and_label(Role::Button, "Rename WEATHER LOG");
+    ask_to_rename(&mut h, "FIELD STATION");
+    h.get_by_role_and_label(Role::TextInput, "New name for FIELD STATION");
+    assert_eq!(
+        h.state().library.draft,
+        "FIELD STATION",
+        "the name it goes by"
+    );
+    assert_eq!(
+        focused_label(&h).as_deref(),
+        Some("New name for FIELD STATION"),
+        "the keyboard goes to the field"
+    );
+    h.get_by_role_and_label(Role::Button, "Save the new name for FIELD STATION");
+    // The field replaces the row's own Rename until it is answered.
+    assert!(
+        h.query_by_role_and_label(Role::Button, "Rename FIELD STATION")
+            .is_none()
+    );
+    h.get_by_role_and_label(Role::Button, "Cancel")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(
+        h.query_by_role_and_label(Role::TextInput, "New name for FIELD STATION")
+            .is_none()
+    );
+    assert!(w.engine.calls_of("library-rename").is_empty());
+
+    // Escape, from the field, is Cancel too.
+    ask_to_rename(&mut h, "FIELD STATION");
+    h.key_press(Key::Escape);
+    steps(&mut h);
+    assert!(
+        h.query_by_role_and_label(Role::TextInput, "New name for FIELD STATION")
+            .is_none()
+    );
+    assert!(w.engine.calls_of("library-rename").is_empty());
+    h.get_by_role_and_label(Role::Button, "Rename FIELD STATION");
+}
+
+#[test]
+fn library_save_sends_one_rename_then_lists_again_and_says_so() {
+    let w = world();
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    assert_eq!(w.engine.calls_of("library").len(), 1);
+    ask_to_rename(&mut h, "FIELD STATION");
+    h.state_mut().library.draft = "  Harbour Light ".into();
+    h.get_by_role_and_label(Role::Button, "Save the new name for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-rename"),
+        [Request::LibraryRename {
+            folder: folder.into(),
+            name: "Harbour Light".into(),
+        }],
+        "one rename, the name trimmed"
+    );
+    assert_eq!(w.engine.calls_of("library").len(), 2, "listed again");
+    h.get_by_role_and_label(Role::Status, "Renamed to Harbour Light.");
+    assert!(
+        h.query_by_role_and_label(Role::TextInput, "New name for FIELD STATION")
+            .is_none(),
+        "the field closes"
+    );
+
+    // Return, from the field, saves; an empty name clears it.
+    ask_to_rename(&mut h, "FIELD STATION");
+    h.state_mut().library.draft = String::new();
+    h.key_press(Key::Enter);
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-rename")[1],
+        Request::LibraryRename {
+            folder: folder.into(),
+            name: String::new(),
+        }
+    );
+    h.get_by_role_and_label(
+        Role::Status,
+        "FIELD STATION is called by its title page again.",
+    );
+    assert_eq!(w.engine.calls_of("library").len(), 3);
+}
+
+#[test]
+fn library_a_refused_rename_says_the_engines_sentence_and_keeps_the_field() {
+    let w = world();
+    w.engine.always(
+        "library-rename",
+        Reply::ok(json!({"ok": false, "error": {"code": "usage",
+            "message": "a script's name is one line: it cannot hold a line break"}})),
+    );
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    ask_to_rename(&mut h, "FIELD STATION");
+    h.get_by_role_and_label(Role::Button, "Save the new name for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(w.engine.calls_of("library-rename").len(), 1);
+    h.get_by_role_and_label(
+        Role::Status,
+        "a script's name is one line: it cannot hold a line break",
+    );
+    h.get_by_role_and_label(Role::TextInput, "New name for FIELD STATION");
+}
+
+#[test]
+fn library_rename_waits_while_a_conversion_a_removal_or_another_rename_runs() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ]),
+    );
+    w.engine.hold("library-rename");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Rename FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Save the new name for FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    assert!(has(&h, "Renaming FIELD STATION…"));
+    assert!(!h.state().quiet(), "the rename is out");
+    for (label, why) in [
+        ("Rename WEATHER LOG", "one rename at a time"),
+        (
+            "Remove WEATHER LOG from the library",
+            "no removal meanwhile",
+        ),
+        (
+            "Open FIELD STATION",
+            "not opened while its book is made again",
+        ),
+        ("Save the new name for FIELD STATION", "not saved twice"),
+    ] {
+        let b = h.get_by_role_and_label(Role::Button, label);
+        assert!(b.accesskit_node().is_disabled(), "{why}");
+    }
+    w.engine.release("library-rename");
+    settle(&mut h);
+    let other = h.get_by_role_and_label(Role::Button, "Rename WEATHER LOG");
+    assert!(!other.accesskit_node().is_disabled());
+
+    // While a removal is out, nothing is renamed.
+    w.engine.hold("library-remove");
+    h.get_by_role_and_label(Role::Button, "Remove WEATHER LOG from the library")
+        .click_accesskit();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Move WEATHER LOG to the Trash")
+        .click_accesskit();
+    settle(&mut h);
+    let rename = h.get_by_role_and_label(Role::Button, "Rename FIELD STATION");
+    assert!(
+        rename.accesskit_node().is_disabled(),
+        "not during a removal"
+    );
+    w.engine.release("library-remove");
+    settle(&mut h);
+
+    // While a conversion runs, nothing is renamed.
+    w.engine.hold("convert");
+    w.fakes.answer_dialog(Some("/scripts/field-station.pdf"));
+    h.key_press_modifiers(Modifiers::COMMAND, Key::O);
+    settle(&mut h);
+    assert!(h.state().convert.converting);
+    h.state_mut().go_to(Surface::Library);
+    settle(&mut h);
+    let rename = h.get_by_role_and_label(Role::Button, "Rename FIELD STATION");
+    assert!(
+        rename.accesskit_node().is_disabled(),
+        "not during a conversion"
+    );
+    w.engine.release("convert");
+    settle(&mut h);
+}

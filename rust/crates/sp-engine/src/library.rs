@@ -481,6 +481,73 @@ pub fn read_converted_time(fountain_path: &str) -> Option<String> {
     is_utc_seconds(&converted).then_some(converted)
 }
 
+/// source.json's key for the name a script is kept under in the library,
+/// when someone renamed it (`library-rename`, 2026-11-03). Added beside
+/// `"source"`, `"scenes"`, `"pages"` and `"converted"`:
+///
+/// ```json
+/// {
+///   "name": "The Lamp Keeper",
+///   "source": "/path/to/lampkeeper_v3_FINAL.pdf"
+/// }
+/// ```
+///
+/// Nothing on disk is renamed by it: the folder and its files keep the
+/// source's stem, which is how a conversion finds the folder again. The
+/// library listing calls the script by it, and a conversion into the
+/// folder titles the book by it unless `--title` says otherwise. It is
+/// not bound to the .fountain's digest: it names the script, which editing
+/// the .fountain does not change. A reconversion keeps it, as it keeps
+/// every key it does not write.
+pub const NAME_KEY: &str = "name";
+
+/// The longest name a script is kept under, in characters.
+pub const MAX_NAME_CHARS: usize = 200;
+
+/// Whether `c` breaks a line: what a one-line name must not hold.
+fn is_line_break(c: char) -> bool {
+    matches!(
+        c,
+        '\n' | '\r' | '\u{0B}' | '\u{0C}' | '\u{85}' | '\u{2028}' | '\u{2029}'
+    )
+}
+
+/// Why `name` cannot be a kept name, or `None` when it can. `name` is
+/// already trimmed and not empty.
+pub fn kept_name_refusal(name: &str) -> Option<String> {
+    if name.chars().any(is_line_break) {
+        return Some("a script's name is one line: it cannot hold a line break".into());
+    }
+    let chars = name.chars().count();
+    if chars > MAX_NAME_CHARS {
+        return Some(format!(
+            "a script's name can be at most {MAX_NAME_CHARS} characters long, and this one is {chars}"
+        ));
+    }
+    None
+}
+
+/// Keep `name` as the script's name in the source.json beside
+/// `fountain_path`, or clear it when `None`. Only a library script folder
+/// has that marker: anywhere else nothing is written.
+pub fn save_kept_name(fountain_path: &str, name: Option<&str>) -> Result<(), EngineError> {
+    keep_in_marker(
+        fountain_path,
+        NAME_KEY,
+        name.map(|n| Value::String(n.to_owned())),
+    )
+}
+
+/// The name kept beside `fountain_path`, trimmed; `None` when there is
+/// none (no marker, an older marker, or a value [`save_kept_name`] would
+/// not have written: not text, blank, too long, or more than one line).
+pub fn read_kept_name(fountain_path: &str) -> Option<String> {
+    let text = fsx::read_text(&marker_beside(fountain_path)).ok()?;
+    let marker = jsjson::parse(&text)?;
+    let name = js_trim(marker.get(NAME_KEY)?.as_str()?);
+    (!name.is_empty() && kept_name_refusal(name).is_none()).then(|| name.to_owned())
+}
+
 /// `adoptSidecar(input, output)`: carry a sidecar from beside the PDF into
 /// the library on the first library conversion. Copied, never moved, and
 /// never over a sidecar already in the library.

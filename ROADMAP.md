@@ -37,6 +37,18 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **Renaming a script keeps a name; its files keep the PDF's** (2026-11-03).
+  The Library tab's Rename keeps the new name in the script folder's
+  source.json: the row is called by it, and every book made into the folder
+  (the PDF converted again, or the book tuned or reopened) takes it as its
+  title, unless `--title` gives another. Its book is made again at once.
+  Nothing on disk is renamed: the folder and its files keep the PDF's name,
+  which is how the next conversion of that PDF finds its folder, and the
+  `.fountain` is not edited. An empty name goes back to the title page's.
+  On the command line, `method-reader library-rename <folder> <name>`. To
+  reverse: rename the folder and its files instead, which needs the folder
+  lookup (sp-engine's `library.rs`, `folder_for`) to read the kept name
+  too.
 - **Removing a script from the library goes to the Trash** (2026-11-03).
   The Library tab's Remove from library, after asking, moves the script's
   whole folder (its `.fountain`, book and own settings) to the system Trash,
@@ -187,8 +199,11 @@ In order. Each is one small pull request.
   docs/superpowers/specs/2026-11-03-library-remove-design.md). Each row's
   settings are built too: the row says when a script has settings of its
   own, and its Settings button reopens it on the Settings tab (design:
-  docs/superpowers/specs/2026-11-03-library-row-settings-design.md). Next:
-  renaming a script.
+  docs/superpowers/specs/2026-11-03-library-row-settings-design.md).
+  Renaming a script is built: Rename on each row keeps a name the row and
+  its books go by, its files untouched (`method-reader library-rename`;
+  design: docs/superpowers/specs/2026-11-03-library-rename-design.md). The
+  library view's planned slices are done.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

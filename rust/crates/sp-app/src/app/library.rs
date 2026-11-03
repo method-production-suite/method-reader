@@ -4,12 +4,15 @@
 //! then moves the script's folder to the Trash
 //! (docs/superpowers/specs/2026-11-03-library-remove-design.md), and
 //! Settings, which reopens it as Open does and lands on the Settings tab
-//! (docs/superpowers/specs/2026-11-03-library-row-settings-design.md). Every rule
+//! (docs/superpowers/specs/2026-11-03-library-row-settings-design.md), and
+//! Rename, a one-line field for the name the script goes by
+//! (docs/superpowers/specs/2026-11-03-library-rename-design.md). Every rule
 //! and word is in src/model/library.rs; the engine lists (`library`),
 //! remakes the book (`convert-to` from the library `.fountain`, as the
-//! sample reopens) and removes (`library-remove`). This draws the answers.
+//! sample reopens), removes (`library-remove`) and renames
+//! (`library-rename`). This draws the answers.
 
-use egui::{Id, Ui};
+use egui::{Id, Key, Ui};
 
 use super::panel::way_row;
 use super::widgets::{self, Look};
@@ -20,8 +23,9 @@ use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
     self as m, Listing, Row, detail, empty_line, gone_note, listing_failure, listing_from,
-    move_button, move_label, moving, open_label, question, question_note, remove_label,
-    removed_line, row_title, settings_label,
+    move_button, move_label, moving, name_field_label, open_label, question, question_note,
+    remove_label, removed_line, rename_label, renamed_line, renaming, row_title, save_label,
+    settings_label,
 };
 use crate::theme::{self, size};
 
@@ -40,6 +44,14 @@ pub struct State {
     pub said: Option<(String, bool)>,
     /// The question has just opened: the keyboard goes to its Cancel.
     focus_cancel: bool,
+    /// The script whose rename field is showing, by folder.
+    pub editing: Option<String>,
+    /// What the rename field holds.
+    pub draft: String,
+    /// The script being renamed now, by folder.
+    pub renaming: Option<String>,
+    /// The rename field has just opened: the keyboard goes to it.
+    focus_field: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -49,6 +61,8 @@ pub enum Purpose {
     },
     /// Boxed: a row is many times a list's ask.
     Remove(Box<Row>),
+    /// The row, and the name it was sent (empty: cleared).
+    Rename(Box<Row>, String),
 }
 
 /// The tab is showing: the folder may have changed since, so ask again.
@@ -84,9 +98,25 @@ fn remove(app: &mut App, row: Row) {
     );
 }
 
-/// Whether nothing is going to the Trash right now.
+/// Save: one `library-rename` for the row's folder and the field's name.
+fn rename(app: &mut App, row: Row) {
+    let name = app.library.draft.trim().to_string();
+    let s = &mut app.library;
+    s.renaming = Some(row.folder.clone());
+    s.said = Some((renaming(&row), false));
+    app.call(
+        Request::LibraryRename {
+            folder: row.folder.clone(),
+            name: name.clone(),
+        },
+        AppPurpose::Library(Purpose::Rename(Box::new(row), name)),
+    );
+}
+
+/// Whether nothing is going to the Trash, and nothing is being renamed,
+/// right now.
 pub fn idle(app: &App) -> bool {
-    app.library.removing.is_none()
+    app.library.removing.is_none() && app.library.renaming.is_none()
 }
 
 pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
@@ -98,6 +128,24 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.restore_focus = true;
             look(app);
         }
+        Purpose::Rename(row, name) => {
+            app.library.renaming = None;
+            let (line, bad) = renamed_line(&answer, &row, &name);
+            if !bad {
+                app.library.editing = None;
+                app.restore_focus = true;
+                // The script open is this one: it keeps its place, called
+                // by its new name; the engine titles its next book so.
+                if let Some(title) = crate::model::json::text_at(&answer, "title")
+                    && let Some(script) = app.script.as_mut()
+                    && script.fountain_path.as_deref() == Some(row.fountain.as_str())
+                {
+                    script.title = title;
+                }
+            }
+            app.library.said = Some((line, bad));
+            look(app);
+        }
         Purpose::List { ask } => {
             if ask != app.library.asks {
                 return;
@@ -106,11 +154,17 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             s.looking = false;
             match listing_from(&answer) {
                 Some(listing) => {
-                    // A question about a script that has gone goes with it.
-                    if let Some(c) = &s.confirm
-                        && !listing.rows.iter().any(|r| &r.folder == c)
-                    {
+                    // A question or a field about a script that has gone
+                    // goes with it.
+                    let gone = |f: &Option<String>| {
+                        f.as_ref()
+                            .is_some_and(|f| !listing.rows.iter().any(|r| &r.folder == f))
+                    };
+                    if gone(&s.confirm) {
                         s.confirm = None;
+                    }
+                    if gone(&s.editing) {
+                        s.editing = None;
                     }
                     s.listing = Some(listing);
                     s.fault = None;
@@ -167,14 +221,18 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
 fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     let t = app.tokens();
     // One conversion at a time, as the Convert page has it, and one
-    // removal at a time; the script going cannot be opened on its way.
-    let going = app.library.removing.as_deref() == Some(row.folder.as_str());
+    // removal or rename at a time; the script going cannot be opened on
+    // its way, nor the one whose book is being made again.
+    let this = Some(row.folder.as_str());
+    let going = app.library.removing.as_deref() == this || app.library.renaming.as_deref() == this;
     let live = !app.convert.converting && !going;
     let can_remove = !app.convert.converting && idle(app);
     let asking = app.library.confirm.as_deref() == Some(row.folder.as_str());
+    let editing = app.library.editing.as_deref() == Some(row.folder.as_str());
     let mut open = None;
     let mut tune = None;
     let mut ask = None;
+    let mut name = None;
     way_row(
         ui,
         |ui| {
@@ -183,8 +241,8 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
             if let Some(note) = gone_note(row) {
                 widgets::caption(ui, &t, note, false);
             }
-            // Settings and Remove on one line when the column has room
-            // for both, one under the other when it has not.
+            // Settings, Rename and Remove on one line when the column has
+            // room for them, wrapped onto the next when it has not.
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = layout::SPACE[3];
                 let id = Id::unique(("library-settings", row.folder.as_str()));
@@ -193,6 +251,14 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
                 ui.ctx()
                     .accesskit_node_builder(b.id, |n| n.set_label(label));
                 tune = Some((b.id, b.clicked()));
+                if !editing {
+                    let id = Id::unique(("library-rename", row.folder.as_str()));
+                    let b = widgets::button_id(ui, &t, Look::Quiet, m::RENAME, can_remove, id);
+                    let label = rename_label(row);
+                    ui.ctx()
+                        .accesskit_node_builder(b.id, |n| n.set_label(label));
+                    name = Some((b.id, b.clicked()));
+                }
                 if !asking {
                     let id = Id::unique(("library-remove", row.folder.as_str()));
                     let b = widgets::button_id(ui, &t, Look::Quiet, m::REMOVE, can_remove, id);
@@ -226,17 +292,87 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
             return;
         }
     }
+    if let Some((id, clicked)) = name {
+        app.stop(id, can_remove);
+        if clicked && can_remove {
+            let s = &mut app.library;
+            s.editing = Some(row.folder.clone());
+            s.draft = row_title(row).to_string();
+            s.confirm = None;
+            s.said = None;
+            s.focus_field = true;
+        }
+    }
     if let Some((id, clicked)) = ask {
         app.stop(id, can_remove);
         if clicked && can_remove {
             let s = &mut app.library;
             s.confirm = Some(row.folder.clone());
+            s.editing = None;
             s.said = None;
             s.focus_cancel = true;
         }
     }
     if asking {
         confirm(app, ui, row);
+    }
+    if editing {
+        name_field(app, ui, row);
+    }
+}
+
+/// The rename field, under its script: the name it goes by now, Save and
+/// Cancel, the keyboard in the field. Return saves, Escape cancels.
+fn name_field(app: &mut App, ui: &mut Ui, row: &Row) {
+    let t = app.tokens();
+    ui.add_space(layout::SPACE[2]);
+    let live = !app.convert.converting && idle(app);
+    let mut field = None;
+    let mut save = None;
+    let mut cancel = None;
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing.x = layout::SPACE[3];
+        let f = ui.add(
+            egui::TextEdit::singleline(&mut app.library.draft)
+                .id_salt(("library-name", row.folder.as_str()))
+                .char_limit(m::MAX_NAME)
+                .font(theme::chrome(size::UI))
+                .desired_width(260.0),
+        );
+        let label = name_field_label(row);
+        ui.ctx()
+            .accesskit_node_builder(f.id, |n| n.set_label(label));
+        if app.library.focus_field {
+            app.library.focus_field = false;
+            f.request_focus();
+        }
+        let id = Id::unique(("library-name-save", row.folder.as_str()));
+        let s = widgets::button_id(ui, &t, Look::Outline, m::SAVE, live, id);
+        let label = save_label(row);
+        ui.ctx()
+            .accesskit_node_builder(s.id, |n| n.set_label(label));
+        let id = Id::unique(("library-name-cancel", row.folder.as_str()));
+        let c = widgets::button_id(ui, &t, Look::Quiet, m::CANCEL, true, id);
+        let (enter, escape) = ui.input(|i| (i.key_pressed(Key::Enter), i.key_pressed(Key::Escape)));
+        let typing = f.has_focus() || f.lost_focus();
+        field = Some((f.id, typing && enter, typing && escape));
+        save = Some((s.id, s.clicked()));
+        cancel = Some((c.id, c.clicked()));
+    });
+    ui.add_space(layout::SPACE[2]);
+    let (Some((field_id, entered, escaped)), Some((save_id, saved)), Some((cancel_id, cancelled))) =
+        (field, save, cancel)
+    else {
+        return;
+    };
+    app.stop(field_id, true);
+    app.stop(save_id, live);
+    app.stop(cancel_id, true);
+    if (saved || entered) && live {
+        rename(app, row.clone());
+    } else if cancelled || escaped {
+        app.library.editing = None;
+        app.restore_focus = true;
     }
 }
 

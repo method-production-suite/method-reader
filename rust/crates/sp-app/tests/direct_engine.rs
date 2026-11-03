@@ -444,6 +444,43 @@ fn child_lists_the_library() {
     assert_eq!(as_converted["scenes"], converted["scenes"]);
     assert_eq!(as_converted["fountainPath"], row.fountain.as_str());
 
+    // Rename: the name kept, the book made again under it, and the next
+    // listing and reopen calling the script by it.
+    let renamed = engine
+        .run(
+            &Request::LibraryRename {
+                folder: row.folder.clone(),
+                name: "Harbour Light".into(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(
+        sp_app::model::library::renamed_line(&renamed, row, "Harbour Light"),
+        ("Renamed to Harbour Light.".to_string(), false),
+        "{renamed}"
+    );
+    assert_eq!(renamed["epub"], converted["epubPath"]);
+    let after = engine
+        .run(&Request::Library, &mut |_| {})
+        .answer
+        .expect("an answer");
+    let listed = listing_from(&after).unwrap_or_else(|| panic!("a list: {after}"));
+    assert_eq!(listed.rows[0].title.as_deref(), Some("Harbour Light"));
+    assert_eq!(listed.rows[0].folder, row.folder, "nothing renamed on disk");
+    let reopened_again = engine
+        .run(
+            &Request::ConvertTo {
+                path: row.fountain.clone(),
+                out: book_path(row),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    assert_eq!(reopened_again["title"], "Harbour Light", "{reopened_again}");
+
     // Remove from library: the folder into the stand-in Trash, read back
     // by the window's own words, and off the next listing.
     let trash = std::env::var("METHOD_READER_TRASH").unwrap();
