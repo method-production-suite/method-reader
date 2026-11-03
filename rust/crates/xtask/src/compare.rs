@@ -36,12 +36,35 @@ pub fn path_spellings(work: &Path) -> Vec<String> {
     out
 }
 
-fn normalize(v: &Value, roots: &[String], key: Option<&str>) -> Value {
-    if key.is_some_and(|k| TIME_KEYS.contains(&k)) && !v.is_null() {
+/// Whether `v` (under `key`) is a time: a [`TIME_KEYS`] value, or a string
+/// that reads as an ISO-8601 date-time.
+fn is_time(v: &Value, key: Option<&str>) -> bool {
+    (key.is_some_and(|k| TIME_KEYS.contains(&k)) && !v.is_null())
+        || v.as_str().is_some_and(looks_like_iso_time)
+}
+
+/// `v` with every time spelled `$TIME`, as [`normalize_json`] spells them,
+/// and nothing else changed.
+fn times_masked(v: &Value, key: Option<&str>) -> Value {
+    if is_time(v, key) {
         return Value::String("$TIME".into());
     }
     match v {
-        Value::String(s) if looks_like_iso_time(s) => Value::String("$TIME".into()),
+        Value::Array(a) => Value::Array(a.iter().map(|x| times_masked(x, None)).collect()),
+        Value::Object(o) => Value::Object(
+            o.iter()
+                .map(|(k, x)| (k.clone(), times_masked(x, Some(k))))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
+fn normalize(v: &Value, roots: &[String], key: Option<&str>) -> Value {
+    if is_time(v, key) {
+        return Value::String("$TIME".into());
+    }
+    match v {
         Value::String(s) => {
             let mut s = pictures_by_content(s);
             for r in roots {
@@ -401,13 +424,14 @@ pub fn png(a: &[u8], b: &[u8]) -> Option<String> {
     }
 }
 
-/// Two JSON files as values (key order does not count).
+/// Two JSON files as values (key order does not count, nor what time it
+/// was: every time is `$TIME`, as in [`summary`]).
 pub fn json_text(a: &[u8], b: &[u8]) -> Option<String> {
     match (
         serde_json::from_slice::<Value>(a),
         serde_json::from_slice::<Value>(b),
     ) {
-        (Ok(x), Ok(y)) => json(&x, &y),
+        (Ok(x), Ok(y)) => json(&times_masked(&x, None), &times_masked(&y, None)),
         _ => text(a, b),
     }
 }
@@ -544,7 +568,7 @@ pub fn palm_db(a: &[u8], b: &[u8]) -> Option<String> {
 // and content (a PNG by its pixels), a PalmDB's header and each record (a
 // PNG record by its pixels), a folder's names and each file by its rule,
 // a text with each run's scratch folder spelled `$WORK`, JSON as a value
-// with its keys sorted. Two files whose summaries are equal are files the
+// with its keys sorted and its times spelled `$TIME`. Two files whose summaries are equal are files the
 // comparisons above call the same.
 
 /// 16 hex digits of the SHA-256 of `b`.
@@ -646,7 +670,9 @@ pub fn summary(path: &Path, how: Compare, work: &Path) -> Value {
         Compare::Json => {
             let b = spelled_work(&b, work);
             match serde_json::from_slice::<Value>(&b) {
-                Ok(v) => json!({ "json": digest(canonical(&v).as_bytes()) }),
+                // Its times masked as a `--json` answer's are: a library
+                // folder's source.json keeps when it converted.
+                Ok(v) => json!({ "json": digest(canonical(&times_masked(&v, None)).as_bytes()) }),
                 Err(_) => json!({ "text": digest(&b) }),
             }
         }
@@ -709,6 +735,27 @@ mod tests {
         assert_eq!(n["list"][0]["at"], json!("$TIME"));
         assert_eq!(n["title"], v["title"]);
         assert_eq!(n["ok"], json!(true));
+    }
+
+    #[test]
+    fn a_json_files_summary_masks_its_times_and_keeps_the_rest() {
+        let scratch = crate::scratch::TempDir::new("xtask-summary-times-").unwrap();
+        let dir = scratch.path();
+        let file = |name: &str, text: &str| {
+            let path = dir.join(name);
+            std::fs::write(&path, text).unwrap();
+            summary(&path, Compare::Json, dir)
+        };
+        let source = dir.join("x.pdf").to_string_lossy().into_owned();
+        let marker = |converted: &str, count: u32| {
+            json!({ "converted": converted, "pages": { "count": count }, "source": source })
+                .to_string()
+        };
+        let first = file("a.json", &marker("2026-11-02T18:00:00Z", 19));
+        let later = file("b.json", &marker("2027-01-09T07:41:12Z", 19));
+        let other = file("c.json", &marker("2026-11-02T18:00:00Z", 18));
+        assert_eq!(first, later, "a time is a time, whichever");
+        assert_ne!(first, other, "everything else still counts");
     }
 
     #[test]

@@ -15,13 +15,17 @@
 //! one exception: the count the PDF conversion answered (title page
 //! included), which source.json keeps bound to the `.fountain`'s digest
 //! ([`crate::library::PAGES_KEY`]), so an edited `.fountain` never shows a
-//! stale count; without it, the highest `= pg N` marker.
+//! stale count; without it, the highest `= pg N` marker. And the time it
+//! was converted, which source.json keeps too
+//! ([`crate::library::CONVERTED_KEY`]), so editing the `.fountain` outside
+//! the app does not move it; a folder made before that was kept answers
+//! the `.fountain`'s modified time.
 //!
 //! The listing READS ONLY: it never makes the root, rewrites a source.json
 //! or touches the recent list.
 
 use std::fs;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use serde::Serialize;
 use sp_fdx::{scene_heading_count, text_runs};
@@ -29,7 +33,9 @@ use sp_fountain::{page_marker_label, strip_notes, tokenize};
 use sp_model::{Token, TokenType};
 
 use crate::env::Env;
-use crate::library::{library_root, read_page_count, recorded_source, stem_of};
+use crate::library::{
+    library_root, read_converted_time, read_page_count, recorded_source, stem_of,
+};
 use crate::nodepath::host;
 use crate::recent::rfc3339;
 use crate::settings::sidecar::{legacy_sidecar_path, sidecar_path};
@@ -60,7 +66,9 @@ pub struct LibraryScript {
     pub pages: Option<u32>,
     /// Scene headings, mini-slugs counted out.
     pub scenes: usize,
-    /// The `.fountain`'s modified time, RFC 3339 UTC to the second.
+    /// When its library conversion converted, as source.json keeps it;
+    /// for a folder made before that was kept, the `.fountain`'s modified
+    /// time. RFC 3339 UTC to the second either way.
     pub converted: String,
     /// `<stem>.azw3`, `.fdx`, `.kfx` and `.mobi`, those that are there.
     pub others: Vec<String>,
@@ -69,7 +77,7 @@ pub struct LibraryScript {
     pub settings: Option<String>,
 }
 
-/// The answer: the root it read and its scripts, newest first.
+/// The answer: the root it read and its scripts, newest conversion first.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LibraryListing {
     pub root: String,
@@ -112,7 +120,7 @@ fn highest_page(tokens: &[Token]) -> Option<u32> {
 }
 
 /// The script in `folder`, or `None` when the folder is not one.
-fn script_in(folder: &str) -> Option<(LibraryScript, SystemTime)> {
+fn script_in(folder: &str) -> Option<LibraryScript> {
     let source = recorded_source(folder)?;
     let name = stem_of(&source);
     let prefix = host::join(&[folder, name.as_str()]);
@@ -123,10 +131,13 @@ fn script_in(folder: &str) -> Option<(LibraryScript, SystemTime)> {
     let modified = meta.modified().ok()?;
     let text = String::from_utf8(fs::read(&fountain).ok()?).ok()?;
     let tokens = tokenize(&text).ok()?;
-    let seconds = match modified.duration_since(UNIX_EPOCH) {
-        Ok(after) => i64::try_from(after.as_secs()).unwrap_or(i64::MAX),
-        Err(before) => -i64::try_from(before.duration().as_secs()).unwrap_or(i64::MAX),
-    };
+    let converted = read_converted_time(&fountain).unwrap_or_else(|| {
+        let seconds = match modified.duration_since(UNIX_EPOCH) {
+            Ok(after) => i64::try_from(after.as_secs()).unwrap_or(i64::MAX),
+            Err(before) => -i64::try_from(before.duration().as_secs()).unwrap_or(i64::MAX),
+        };
+        rfc3339(seconds)
+    });
     let epub = format!("{prefix}.epub");
     let others = OTHER_EXTENSIONS
         .iter()
@@ -144,20 +155,21 @@ fn script_in(folder: &str) -> Option<(LibraryScript, SystemTime)> {
         epub: is_plain_file(&epub).then_some(epub),
         pages: read_page_count(&fountain, &text).or_else(|| highest_page(&tokens)),
         scenes: scene_heading_count(&tokens),
-        converted: rfc3339(seconds),
+        converted,
         others,
         settings,
         fountain,
         name,
     };
-    Some((script, modified))
+    Some(script)
 }
 
-/// Every script directly under `root`, newest `.fountain` first, then by
-/// name (then by folder, for two scripts of one name). A root that does
-/// not exist, or is not a folder, holds none.
+/// Every script directly under `root`, newest conversion first (its
+/// `converted`: one shape, so text order is time order), then by name
+/// (then by folder, for two scripts of one name). A root that does not
+/// exist, or is not a folder, holds none.
 pub fn list_library(root: &str) -> LibraryListing {
-    let mut found: Vec<(LibraryScript, SystemTime)> = fs::read_dir(root)
+    let mut found: Vec<LibraryScript> = fs::read_dir(root)
         .into_iter()
         .flatten()
         .flatten()
@@ -167,14 +179,15 @@ pub fn list_library(root: &str) -> LibraryListing {
             script_in(&host::join(&[root, name.as_str()]))
         })
         .collect();
-    found.sort_by(|(a, a_at), (b, b_at)| {
-        b_at.cmp(a_at)
+    found.sort_by(|a, b| {
+        b.converted
+            .cmp(&a.converted)
             .then_with(|| a.name.cmp(&b.name))
             .then_with(|| a.folder.cmp(&b.folder))
     });
     LibraryListing {
         root: root.to_owned(),
-        scripts: found.into_iter().map(|(script, _)| script).collect(),
+        scripts: found,
     }
 }
 

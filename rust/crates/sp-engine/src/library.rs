@@ -426,6 +426,61 @@ pub fn read_page_count(fountain_path: &str, fountain_text: &str) -> Option<u32> 
     u32::try_from(pages.get("count")?.as_u64()?).ok()
 }
 
+/// source.json's key for when a library conversion converted: an RFC 3339
+/// UTC time to the second. Added for the Library (2026-11-02) beside
+/// `"source"`, `"scenes"` and `"pages"`:
+///
+/// ```json
+/// {
+///   "converted": "2026-11-02T18:00:00Z",
+///   "source": "/path/to/Script.pdf"
+/// }
+/// ```
+///
+/// Written by every library conversion that writes the folder's .fountain
+/// (from a PDF or from a .fountain elsewhere), so a reconversion moves it.
+/// It is not bound to the .fountain's digest: it says when the script was
+/// converted, which editing the .fountain afterwards does not change. The
+/// Library lists it instead of the .fountain's modified time, which an edit
+/// outside the app would move.
+pub const CONVERTED_KEY: &str = "converted";
+
+/// Keep `epoch_seconds` as the conversion time in the source.json beside
+/// `fountain_path`. Only a library script folder has that marker: anywhere
+/// else nothing is written.
+pub fn save_converted_time(fountain_path: &str, epoch_seconds: i64) -> Result<(), EngineError> {
+    keep_in_marker(
+        fountain_path,
+        CONVERTED_KEY,
+        Some(Value::String(crate::recent::rfc3339(epoch_seconds))),
+    )
+}
+
+/// `YYYY-MM-DDTHH:MM:SSZ`, the one shape [`save_converted_time`] writes.
+fn is_utc_seconds(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() == 20
+        && b.iter().enumerate().all(|(i, c)| match i {
+            4 | 7 => *c == b'-',
+            10 => *c == b'T',
+            13 | 16 => *c == b':',
+            19 => *c == b'Z',
+            _ => c.is_ascii_digit(),
+        })
+}
+
+/// The conversion time kept beside `fountain_path`, as it was written;
+/// `None` when there is none (no marker, an older marker, or a value not of
+/// the shape this engine writes).
+pub fn read_converted_time(fountain_path: &str) -> Option<String> {
+    let text = fsx::read_text(&marker_beside(fountain_path)).ok()?;
+    let converted = jsjson::parse(&text)?
+        .get(CONVERTED_KEY)?
+        .as_str()?
+        .to_owned();
+    is_utc_seconds(&converted).then_some(converted)
+}
+
 /// `adoptSidecar(input, output)`: carry a sidecar from beside the PDF into
 /// the library on the first library conversion. Copied, never moved, and
 /// never over a sidecar already in the library.

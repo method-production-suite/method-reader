@@ -133,6 +133,72 @@ fn a_pdf_conversion_and_its_listing_agree_on_the_page_count() {
 }
 
 #[test]
+fn a_library_conversion_keeps_when_it_converted_and_the_listing_shows_it() {
+    use sp_engine::recent::{now_seconds, rfc3339};
+    let mut sb = Sandbox::new();
+    let root = sb.p("lib");
+    sb.set("METHOD_READER_LIBRARY", root.clone());
+    let pdf = sb
+        .copy_fixture("field-station.pdf", "scripts/Field Station.pdf")
+        .to_string_lossy()
+        .into_owned();
+    let marker = || -> Value {
+        serde_json::from_str(
+            &std::fs::read_to_string(join(&root, "Field Station/source.json")).unwrap(),
+        )
+        .unwrap()
+    };
+    let before = rfc3339(now_seconds());
+    ok(&sb, &[&pdf, "--library", "--json"]);
+    let after = rfc3339(now_seconds());
+    // One shape, so text order is time order.
+    let kept = marker()["converted"].as_str().unwrap().to_owned();
+    assert!(
+        before <= kept && kept <= after,
+        "{before} <= {kept} <= {after}"
+    );
+    assert_eq!(kept.len(), 20, "{kept}");
+    assert_eq!(marker()["source"], json!(pdf), "the source is kept");
+    assert_eq!(marker()["pages"]["count"], json!(19), "the count is kept");
+    let listed = |sb: &Sandbox| ok(sb, &["library", "--json"])["scripts"][0]["converted"].clone();
+    assert_eq!(listed(&sb), json!(kept));
+
+    // Edited outside the app, a day on: the listed date stays the
+    // conversion's.
+    let fountain = join(&root, "Field Station/Field Station.fountain");
+    let mut text = std::fs::read_to_string(&fountain).unwrap();
+    text.push_str("\nThe end, revised.\n");
+    std::fs::write(&fountain, text).unwrap();
+    std::fs::File::options()
+        .write(true)
+        .open(&fountain)
+        .unwrap()
+        .set_modified(std::time::SystemTime::now() + std::time::Duration::from_secs(86_400))
+        .unwrap();
+    assert_eq!(listed(&sb), json!(kept));
+
+    // A conversion from a .fountain records its time as well.
+    let input = field_station(&sb);
+    let before = rfc3339(now_seconds());
+    ok(&sb, &[&input, "--library", "--json"]);
+    let after = rfc3339(now_seconds());
+    let v = ok(&sb, &["library", "--json"]);
+    let folder = v["scripts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["source"] == json!(input))
+        .expect("the .fountain's own folder")["folder"]
+        .as_str()
+        .unwrap();
+    let again: Value =
+        serde_json::from_str(&std::fs::read_to_string(join(folder, "source.json")).unwrap())
+            .unwrap();
+    let kept = again["converted"].as_str().unwrap();
+    assert!(before.as_str() <= kept && kept <= after.as_str(), "{kept}");
+}
+
+#[test]
 fn an_empty_library_says_so_and_where_it_is_and_is_not_made() {
     let mut sb = Sandbox::new();
     let root = sb.p("lib/not-yet");

@@ -1525,3 +1525,21 @@ names the check it affects.
   each of the four differed only by that inserted line), and the line
   joins tests/usage.rs's `CHANGED_ON_PURPOSE` entry for the verbs the
   TypeScript had none of.
+  Then the conversion time (2026-11-02, branch feat/library-converted-time):
+  the listing's `converted` was the `.fountain`'s modified time, so editing
+  a script outside the app moved its date. A `--library` conversion that
+  writes the folder's `.fountain` (from a PDF or from a `.fountain`
+  elsewhere) now also keeps `"converted": "<RFC 3339 UTC, to the second>"`
+  in source.json (sp-engine's library.rs `CONVERTED_KEY`), not bound to the
+  digest, since editing the script does not change when it was converted;
+  a reconversion moves it. The listing answers it, and the `.fountain`'s
+  modified time only for a folder without one, and orders newest
+  conversion first. No `--json` answer changes. A time differs on every
+  run, so the harness now masks times in a JSON output file's summary (and
+  in `json_text`) exactly as it masks a `--json` answer's: a `TIME_KEYS`
+  value or an ISO-8601-looking string is `$TIME` (xtask's compare.rs
+  `times_masked`). Diffed first, `cargo xtask parity --committed-only`
+  showed exactly the same 25 library runs differing, each only in the
+  library's source.json hash (the new key), and no other run: no other
+  frozen JSON file held a time. Two runs gave the same new hashes, so the
+  time is masked; accepted with the same five-row `--accept` as above.
