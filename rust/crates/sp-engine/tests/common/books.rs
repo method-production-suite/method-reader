@@ -99,6 +99,7 @@ impl Renderers for FakeRenderers {
     fn render_mobi(
         &self,
         _fountain: &str,
+        _kept_name: Option<&str>,
         _format: &FormatOptions,
         images: Option<&BTreeMap<String, Vec<u8>>>,
     ) -> Result<Option<Vec<u8>>, String> {

@@ -148,6 +148,7 @@ fn verbs_is_the_single_list_of_known_verbs() {
         "shape",
         "library",
         "library-remove",
+        "library-rename",
     ] {
         let ran = sb.run_in(&sb.path("empty"), &[verb, "--help", "--json"]);
         assert_eq!(ran.code, 0, "{verb}");

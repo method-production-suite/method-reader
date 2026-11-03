@@ -14,6 +14,7 @@ use sp_engine::commands::kfx::{
 };
 use sp_engine::commands::library::{LibraryScript, library_command};
 use sp_engine::commands::library_remove::{library_remove_command, moved_line};
+use sp_engine::commands::library_rename::{library_rename_command, renamed_line};
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -35,7 +36,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 18] = [
+pub const VERBS: [&str; 19] = [
     "devices",
     "send",
     "settings",
@@ -54,6 +55,7 @@ pub const VERBS: [&str; 18] = [
     "shape",
     "library",
     "library-remove",
+    "library-rename",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -161,6 +163,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "shape" => SHAPE_USAGE,
         "library" => LIBRARY_USAGE,
         "library-remove" => LIBRARY_REMOVE_USAGE,
+        "library-rename" => LIBRARY_RENAME_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -593,6 +596,30 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&removed));
             } else {
                 io.say(&moved_line(&removed.removed, cfg!(windows)));
+            }
+            Ok(())
+        }
+        "library-rename" => {
+            if pos.len() != 2 {
+                return Err(Stop::usage(
+                    "expected one script folder in the library and its new name (see --help)",
+                ));
+            }
+            let renamed = library_rename_command(
+                host_platform(),
+                &Env::process(),
+                Some(&settings_file()),
+                &pos[0],
+                &pos[1],
+            )
+            .map_err(engine)?;
+            // The book, made again under its new name by the conversion a
+            // reopen runs.
+            crate::convert::rebuild_book(io, &renamed.fountain, &renamed.epub)?;
+            if io.json {
+                io.ok(value(&renamed));
+            } else {
+                io.say(&renamed_line(&renamed));
             }
             Ok(())
         }

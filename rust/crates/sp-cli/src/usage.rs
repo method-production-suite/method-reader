@@ -472,6 +472,32 @@ Options:
   -h, --help             show this help
 "#;
 
+pub const LIBRARY_RENAME_USAGE: &str = r#"method-reader library-rename: call one script in the library by another name
+
+Usage:
+  method-reader library-rename <folder> <name> [--json]
+  method-reader library-rename <folder> [--json] -- <name>
+
+<folder> must be a script's own folder directly inside the library, as
+`method-reader library` lists it, checked as library-remove checks it. The
+name is kept in the folder's source.json: the library lists the script by
+it, and every book made into the folder takes it as its title (a --title
+given to a conversion still wins). Its book is made again at once, from its
+.fountain with its own settings, so it is called by the new name; its
+Kindle files are made again from that book the next time they are asked
+for. A Final Draft file is the script itself and keeps its title page's
+Title. Nothing is renamed on disk: the folder and its files keep the name of the
+file the script was converted from, and its .fountain is not edited.
+
+The name is trimmed; an empty name ("") goes back to the title page's
+Title. A name longer than 200 characters, or holding a line break, is
+refused. A name that starts with a dash goes after --.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
 pub const SHAPE_USAGE: &str = r#"method-reader shape: a script's shape as counts, no words from it
 
 Usage:

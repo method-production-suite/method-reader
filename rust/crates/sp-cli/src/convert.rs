@@ -10,6 +10,7 @@ use sp_engine::env::{Env, host_platform};
 use sp_engine::errors::{EngineError, is_write_refusal, plain_reason, unwritable_error};
 use sp_engine::library::{
     adopt_sidecar, existing_library_output, in_script_folder, library_output, library_root,
+    read_kept_name,
 };
 use sp_engine::library_images::{
     image_folder_warnings, images_dir_for, prune_images, read_images, write_images,
@@ -317,12 +318,24 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
     let mut settings_path: Option<String> = None;
     let mut candidates: Vec<String> = Vec::new();
     let mut lib_root: Option<String> = None;
+    // The name the script is kept under in the library (library-rename),
+    // for a book made into its script folder: a --library conversion's
+    // folder, or the library .fountain's own folder when the book lands
+    // beside it (a tune or a reopen). Nowhere else.
+    let mut kept_name: Option<String> = None;
     if library {
         let root = library_root(platform, &env, Some(&settings_file));
         if let Ok(Some(prefix)) = existing_library_output(input, &root) {
-            candidates.push(format!("{prefix}.fountain"));
+            let fountain = format!("{prefix}.fountain");
+            kept_name = read_kept_name(&fountain);
+            candidates.push(fountain);
         }
         lib_root = Some(root);
+    } else if is_fountain && in_script_folder(input) {
+        let epub = output.map_or_else(|| default_epub(input), str::to_owned);
+        if book_beside(input, &epub) {
+            kept_name = read_kept_name(input);
+        }
     }
     candidates.push(input.to_owned());
     for candidate in &candidates {
@@ -370,6 +383,7 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
     let mobi = parsed.flag("mobi");
     let opts = ConvertOptions {
         title: parsed.string("title").map(str::to_owned),
+        kept_name,
         author: parsed.string("author").map(str::to_owned),
         force: parsed.flag("force"),
         mobi,
@@ -464,6 +478,21 @@ pub fn run(io: &mut Io, argv: &[String]) -> Run {
             carried,
         },
     )
+}
+
+/// The book a conversion without -o writes: `<input stem>.epub` beside
+/// the input.
+fn default_epub(input: &str) -> String {
+    let stem = host::join(&[
+        host::dirname(input),
+        host::basename_ext(input, &host::extname(input)),
+    ]);
+    format!("{stem}.epub")
+}
+
+/// Whether `epub` lands in `input`'s own folder.
+fn book_beside(input: &str, epub: &str) -> bool {
+    host::dirname(&host::resolve(&[epub])) == host::dirname(&host::resolve(&[input]))
 }
 
 /// `saveScriptSettings` for the pin. A debug build (the one the tests run)
@@ -804,4 +833,65 @@ fn finish(
         }
     }
     Ok(())
+}
+
+/// The conversion's stdout, kept; its stderr, said on the caller's.
+struct Rebuild {
+    out: std::sync::Arc<std::sync::Mutex<Vec<String>>>,
+    err: crate::out::ErrLine,
+}
+
+impl crate::out::Sink for Rebuild {
+    fn out(&mut self, line: &str) {
+        self.out
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(line.to_owned());
+    }
+
+    fn err(&mut self, line: &str) {
+        self.err.line(line);
+    }
+}
+
+/// A library script's book made again from its `.fountain`, at `epub`,
+/// by the very conversion the window's reopen runs (`<fountain> -o <epub>`):
+/// the script's own settings, its pictures, and the name it is kept under
+/// as the title. What the conversion says on stderr is said on `io`'s; a
+/// refusal is this run's.
+pub fn rebuild_book(io: &Io, fountain: &str, epub: &str) -> Run {
+    let out = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mut inner = Io::with_sink(
+        true,
+        Box::new(Rebuild {
+            out: out.clone(),
+            err: io.err_line(),
+        }),
+    );
+    let argv = [fountain, "--json", "-o", epub].map(str::to_owned);
+    if let Err(stop) = run(&mut inner, &argv) {
+        inner.finish(stop);
+    }
+    let said = out.lock().unwrap_or_else(|e| e.into_inner()).clone();
+    let answer = said.last().and_then(|line| jsjson::parse(line));
+    match answer {
+        Some(a) if a.get("ok") == Some(&Value::Bool(true)) => Ok(()),
+        Some(a) => {
+            let error = a.get("error");
+            let field = |k: &str| {
+                error
+                    .and_then(|e| e.get(k))
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned()
+            };
+            let (code, message) = (field("code"), field("message"));
+            if code == "internal" || code.is_empty() {
+                Err(Stop::Internal(message))
+            } else {
+                Err(Stop::fail(&code, message))
+            }
+        }
+        None => Err(Stop::internal("the book was not made again")),
+    }
 }

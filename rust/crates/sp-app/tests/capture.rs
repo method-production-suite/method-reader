@@ -255,7 +255,7 @@ fn it_keeps_calibre_out_as_a_machine_without_it_would() {
 }
 
 #[test]
-fn it_refuses_everything_that_copies_sends_builds_ejects_exports_removes_or_installs() {
+fn it_refuses_everything_that_copies_sends_builds_ejects_exports_removes_renames_or_installs() {
     let epub = book("Field Station.epub");
     for r in [
         Request::Send {
@@ -313,6 +313,12 @@ fn it_refuses_everything_that_copies_sends_builds_ejects_exports_removes_or_inst
         },
         Request::LibraryRemove {
             folder: format!("{LIB}/Field Station"),
+        },
+        // Renaming a script makes its book again: never on the way to a
+        // picture either.
+        Request::LibraryRename {
+            folder: format!("{LIB}/Field Station"),
+            name: "Harbour Light".into(),
         },
     ] {
         assert_eq!(ask(r.clone()), Verdict::Refuse, "{r:?}");

@@ -317,6 +317,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E29 | `shape <fountain> --json` (a problem report's counts; new, not app.js's) | `shape(fountain)` | no | done |
 | E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()` (`Request::Library`: the Library tab, sp-app/src/app/library.rs; a row's Open is the sample's `convert-to` from the library `.fountain`) | no | done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, screens.rs, behaviors.rs) |
 | E31 | `library-remove <folder> --json` (one script's folder off the library, to the Trash; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-remove-design.md) | `libraryRemove(folder)` (`Request::LibraryRemove`: a Library row's Remove from library, after its question, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_remove.rs, sp-cli/tests/cli_library_remove.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
+| E32 | `library-rename <folder> --json -- <name>` (the name one script goes by in the library, kept in its source.json, its book made again under it; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-rename-design.md) | `libraryRename(folder, name)` (`Request::LibraryRename`: a Library row's Rename, then Save or Return in its field, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_rename.rs, sp-cli/tests/cli_library_rename.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 
 ### C. Convert
 
@@ -1568,3 +1569,21 @@ names the check it affects.
   with no Recycle Bin, so nothing was moved: <folder>". The `--json` answer
   is the same everywhere, and parity runs on a Mac, so no frozen answer
   moves.
+- **The library-rename verb (2026-11-03, branch feat/library-rename).**
+  `method-reader library-rename <folder> <name> [--json]` is new: not one
+  of the TypeScript's verbs (row E32). It checks the folder exactly as
+  `library-remove` does (one function, `commands/library.rs`
+  `listed_script`), trims the name, refuses one over 200 characters or
+  holding a line break (code `usage`), keeps it in the folder's
+  source.json under `"name"` (an empty name removes the key), then makes
+  `<stem>.epub` again by the very conversion a reopen runs (`<fountain>
+  --json -o <epub>`), and answers `{"ok": true, "folder", "title",
+  "epub"}`. Nothing on disk is renamed. A conversion whose book lands in a
+  script folder (a `--library` conversion, or the library `.fountain` made
+  into a book beside it) takes the kept name as its title, between
+  `--title` and the title page's Title; the library listing's `title` is
+  the kept name when there is one, and the MOBI the Kindle ladder makes
+  again from the `.fountain` takes it too. No committed fixture has a kept
+  name, so `cargo xtask parity --committed-only` is unchanged. The main
+  help does not list the verb, so no help row moved; its own `--help`
+  does.

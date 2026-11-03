@@ -6,10 +6,11 @@
 //! so it goes where the person can put it back.
 //!
 //! It takes only what the `library` listing would list, by the listing's
-//! own rule ([`super::library::script_in`]): a folder directly under the
-//! library root, compared with links resolved on both sides so `..` and a
-//! linked root cannot reach outside it; not a link itself; not the root.
-//! Anything else is refused with its reason and nothing is moved.
+//! own rule ([`super::library::listed_script`], which `library-rename`
+//! asks too): a folder directly under the library root, compared with
+//! links resolved on both sides so `..` and a linked root cannot reach
+//! outside it; not a link itself; not the root. Anything else is refused
+//! with its reason and nothing is moved.
 //!
 //! THE SEAM: [`TRASH_ENV`], when set, names a folder (already there) that
 //! stands for the Trash, and the script's folder is renamed into it (under "<name> 2",
@@ -31,7 +32,7 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-use super::library::script_in;
+use super::library::listed_script;
 use crate::env::Env;
 use crate::errors::{CliError, EngineError, ErrorCode};
 use crate::library::library_root;
@@ -60,14 +61,6 @@ pub struct LibraryRemoved {
     pub name: String,
 }
 
-fn not_a_script(why: &str, folder: &str) -> EngineError {
-    CliError::new(
-        ErrorCode::NotAScript,
-        format!("not a script in the library ({why}): {folder}"),
-    )
-    .into()
-}
-
 /// `library-remove <folder>`: the library a conversion would land in
 /// ([`library_root`]), and `folder` off it.
 pub fn library_remove_command(
@@ -86,38 +79,7 @@ pub fn remove_from_library(
     folder: &str,
     env: &Env,
 ) -> Result<LibraryRemoved, EngineError> {
-    if !Path::new(folder).is_absolute() {
-        return Err(CliError::new(
-            ErrorCode::Usage,
-            format!("library-remove needs a script folder's full path, not \"{folder}\""),
-        )
-        .into());
-    }
-    let meta = fs::symlink_metadata(folder).map_err(|_| not_a_script("it is not there", folder))?;
-    if meta.file_type().is_symlink() {
-        return Err(not_a_script("it is a link", folder));
-    }
-    if !meta.is_dir() {
-        return Err(not_a_script("it is not a folder", folder));
-    }
-    let real_root = fs::canonicalize(root)
-        .map_err(|_| not_a_script("the library folder is not there", folder))?;
-    let real = fs::canonicalize(folder).map_err(|_| not_a_script("it is not there", folder))?;
-    if real == real_root {
-        return Err(not_a_script("it is the library folder itself", folder));
-    }
-    if real.parent() != Some(real_root.as_path()) {
-        return Err(not_a_script(
-            &format!("it is not directly inside {root}"),
-            folder,
-        ));
-    }
-    let script = script_in(&real.to_string_lossy()).ok_or_else(|| {
-        not_a_script(
-            "it has no source.json naming its source, or no .fountain of that name",
-            folder,
-        )
-    })?;
+    let (real, script) = listed_script("library-remove", root, folder)?;
     match env.get(TRASH_ENV) {
         Some(stand_in) => into_stand_in(stand_in, &real, &script.name)?,
         None => into_system_trash(

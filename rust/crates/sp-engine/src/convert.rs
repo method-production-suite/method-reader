@@ -74,7 +74,13 @@ pub type PictureBytes<'a> = dyn Fn(&RawImage) -> Option<Vec<u8>> + 'a;
 /// `ConvertOptions`.
 #[derive(Default)]
 pub struct ConvertOptions<'a> {
+    /// The book's title, given outright (`--title`): wins over everything.
     pub title: Option<String>,
+    /// The name the script is kept under in the library
+    /// ([`crate::library::NAME_KEY`]), when the book is made into its
+    /// script folder: the title when `title` gives none, ahead of the
+    /// title page's.
+    pub kept_name: Option<String>,
     pub author: Option<String>,
     /// Convert even when the document does not look like a screenplay.
     pub force: bool,
@@ -219,6 +225,7 @@ fn resolve_meta(detected: &TitleMeta, opts: &ConvertOptions) -> (String, Option<
     let title = opts
         .title
         .clone()
+        .or_else(|| opts.kept_name.clone())
         .or_else(|| detected.title.clone())
         .unwrap_or_else(|| "Untitled Screenplay".to_owned());
     let author = opts.author.clone().or_else(|| detected.author.clone());

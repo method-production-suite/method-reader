@@ -43,6 +43,7 @@ pub enum Call {
     Shape,
     Library,
     LibraryRemove,
+    LibraryRename,
 }
 
 pub fn counts_toward_busy(call: Call) -> bool {

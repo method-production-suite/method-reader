@@ -3,7 +3,8 @@
 //! field, the words each row says, the empty library's words, how a
 //! row's Open is asked and answered, and the question and answer of its
 //! Remove from library (docs/superpowers/specs/2026-11-03-library-remove-design.md),
-//! and its Settings (docs/superpowers/specs/2026-11-03-library-row-settings-design.md).
+//! and its Settings (docs/superpowers/specs/2026-11-03-library-row-settings-design.md),
+//! and its Rename (docs/superpowers/specs/2026-11-03-library-rename-design.md).
 //! Every word about the Trash takes the platform: Windows calls it the
 //! Recycle Bin ([`bin_name`]). No toolkit in it; the drawing is
 //! src/app/library.rs.
@@ -26,6 +27,14 @@ pub const REMOVE: &str = "Remove from library";
 /// A row's third button: Open, landing on the Settings tab.
 pub const SETTINGS: &str = "Settings";
 pub const CANCEL: &str = "Cancel";
+/// A row's fourth button: a one-line field for the name it goes by.
+pub const RENAME: &str = "Rename";
+/// The rename field's first answer.
+pub const SAVE: &str = "Save";
+/// The longest name the field takes, in characters: the engine's own
+/// limit (sp-engine's `library::MAX_NAME_CHARS`; tests/argv_contract.rs
+/// holds the two together).
+pub const MAX_NAME: usize = 200;
 
 /// What the system Trash is called: the Recycle Bin on Windows, the Trash
 /// everywhere else. Every Trash word below takes it. The command line's
@@ -227,6 +236,50 @@ pub fn remove_label(row: &Row) -> String {
 /// The Settings button's name for a screen reader.
 pub fn settings_label(row: &Row) -> String {
     format!("Settings for {}", row_title(row))
+}
+
+/// The Rename button's name for a screen reader.
+pub fn rename_label(row: &Row) -> String {
+    format!("Rename {}", row_title(row))
+}
+
+/// The rename field's name for a screen reader.
+pub fn name_field_label(row: &Row) -> String {
+    format!("New name for {}", row_title(row))
+}
+
+/// The rename field's Save button's name for a screen reader.
+pub fn save_label(row: &Row) -> String {
+    format!("Save the new name for {}", row_title(row))
+}
+
+/// What the tab says while a rename is under way.
+pub fn renaming(row: &Row) -> String {
+    format!("Renaming {}…", row_title(row))
+}
+
+/// What a rename says when its answer says nothing usable.
+pub const NOT_RENAMED: &str = "The script was not renamed, and nothing said why.";
+
+/// What `library-rename` answered, as a line and whether it is bad news:
+/// "Renamed to <name>." for a name kept, "<title> is called by its title
+/// page again." for a name cleared (`name` empty after trimming), the
+/// engine's own sentence for a refusal, and ours when the answer does not
+/// name the row's folder.
+pub fn renamed_line(answer: &Value, row: &Row, name: &str) -> (String, bool) {
+    if !ok(answer) {
+        let line = error_message(answer).unwrap_or_else(|| NOT_RENAMED.to_string());
+        return (line, true);
+    }
+    if text_at(answer, "folder").as_deref() != Some(row.folder.as_str()) {
+        return (NOT_RENAMED.to_string(), true);
+    }
+    let name = name.trim();
+    if !name.is_empty() {
+        return (format!("Renamed to {name}."), false);
+    }
+    let title = text_at(answer, "title").unwrap_or_else(|| row.name.clone());
+    (format!("{title} is called by its title page again."), false)
 }
 
 /// The question asked before a script goes.
@@ -510,6 +563,65 @@ mod tests {
             ] {
                 assert!(!words.contains('!'), "{words}");
             }
+        }
+    }
+
+    #[test]
+    fn rename_says_the_new_name_or_that_the_title_page_is_back() {
+        let rows = listing_from(&answer()).unwrap().rows;
+        let (field, log) = (&rows[0], &rows[1]);
+        assert_eq!((RENAME, SAVE), ("Rename", "Save"));
+        assert_eq!(rename_label(field), "Rename FIELD STATION");
+        assert_eq!(rename_label(log), "Rename Weather Log");
+        assert_eq!(name_field_label(field), "New name for FIELD STATION");
+        assert_eq!(save_label(log), "Save the new name for Weather Log");
+        assert_eq!(renaming(field), "Renaming FIELD STATION…");
+        let kept = json!({"ok": true, "folder": field.folder, "title": "Harbour Light",
+            "epub": "/b.epub"});
+        assert_eq!(
+            renamed_line(&kept, field, " Harbour Light "),
+            ("Renamed to Harbour Light.".to_string(), false)
+        );
+        let cleared = json!({"ok": true, "folder": field.folder, "title": "FIELD STATION",
+            "epub": "/b.epub"});
+        assert_eq!(
+            renamed_line(&cleared, field, "  "),
+            (
+                "FIELD STATION is called by its title page again.".to_string(),
+                false
+            )
+        );
+        // An answer about another folder, or a refusal, is not this row
+        // renamed.
+        assert_eq!(
+            renamed_line(&kept, log, "Harbour Light"),
+            (NOT_RENAMED.to_string(), true)
+        );
+        let refused = json!({"ok": false, "error": {"code": "usage",
+            "message": "a script's name is one line: it cannot hold a line break"}});
+        assert_eq!(
+            renamed_line(&refused, field, "x"),
+            (
+                "a script's name is one line: it cannot hold a line break".to_string(),
+                true
+            )
+        );
+        assert_eq!(
+            renamed_line(&json!({"ok": false}), field, "x"),
+            (NOT_RENAMED.to_string(), true)
+        );
+        for words in [
+            RENAME.to_string(),
+            SAVE.to_string(),
+            NOT_RENAMED.to_string(),
+            rename_label(field),
+            name_field_label(field),
+            save_label(field),
+            renaming(field),
+            renamed_line(&kept, field, "Harbour Light").0,
+            renamed_line(&cleared, field, "").0,
+        ] {
+            assert!(!words.contains('!'), "{words}");
         }
     }
 

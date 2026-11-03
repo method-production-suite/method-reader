@@ -367,3 +367,73 @@ fn the_window_and_the_command_line_call_the_trash_the_same() {
         );
     }
 }
+
+/// Rename (docs/superpowers/specs/2026-11-03-library-rename-design.md) is
+/// the window's own too: the CLI's `library-rename` verb with the name
+/// after `--`, as its `--help` spells it, so a name that starts with a
+/// dash is still a name; and work, since it makes the book again. The
+/// field takes no more than the engine keeps. The CLI's side is
+/// sp-cli/tests/cli_library_rename.rs.
+#[test]
+fn the_library_rename_request_is_the_cli_s_library_rename_verb() {
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let request = Request::LibraryRename {
+        folder: folder.into(),
+        name: "-30- Harbour Light".into(),
+    };
+    assert_eq!(
+        request.argv(),
+        [
+            "library-rename",
+            folder,
+            "--json",
+            "--",
+            "-30- Harbour Light"
+        ]
+    );
+    assert_eq!(request.kind(), "library-rename");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(counts_toward_busy(request.call()));
+    let cleared = Request::LibraryRename {
+        folder: folder.into(),
+        name: String::new(),
+    };
+    assert_eq!(
+        cleared.argv(),
+        ["library-rename", folder, "--json", "--", ""],
+        "an empty name rides along: it clears the kept one"
+    );
+    let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+    let code = sp_cli::run(
+        &["library-rename".to_string(), "--help".to_string()],
+        Box::new(Keep(said.clone())),
+    );
+    assert_eq!(code, 0, "library-rename --help");
+    let said = said.lock().unwrap().clone();
+    assert!(
+        said.contains("method-reader library-rename <folder> [--json] -- <name>"),
+        "library-rename --help: {said}"
+    );
+    assert_eq!(
+        sp_app::model::library::MAX_NAME,
+        sp_engine::library::MAX_NAME_CHARS
+    );
+    // The fake answers as the engine does for the fake's own row.
+    let row =
+        &sp_app::model::library::listing_from(&sp_app::engine::default_answer(&Request::Library))
+            .unwrap()
+            .rows[0];
+    for (name, line) in [
+        ("Harbour Light", "Renamed to Harbour Light."),
+        ("", "FIELD STATION is called by its title page again."),
+    ] {
+        let answer = sp_app::engine::default_answer(&Request::LibraryRename {
+            folder: row.folder.clone(),
+            name: name.into(),
+        });
+        assert_eq!(
+            sp_app::model::library::renamed_line(&answer, row, name),
+            (line.to_string(), false)
+        );
+    }
+}

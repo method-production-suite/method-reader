@@ -21,10 +21,16 @@
 //! the app does not move it; a folder made before that was kept answers
 //! the `.fountain`'s modified time.
 //!
+//! The one thing it says that the `.fountain` does not is the name a
+//! script was renamed to (`library-rename`), which source.json keeps
+//! ([`crate::library::NAME_KEY`]): the listing's `title` is that name when
+//! there is one.
+//!
 //! The listing READS ONLY: it never makes the root, rewrites a source.json
 //! or touches the recent list.
 
 use std::fs;
+use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
 use serde::Serialize;
@@ -33,8 +39,9 @@ use sp_fountain::{page_marker_label, strip_notes, tokenize};
 use sp_model::{Token, TokenType};
 
 use crate::env::Env;
+use crate::errors::{CliError, EngineError, ErrorCode};
 use crate::library::{
-    library_root, read_converted_time, read_page_count, recorded_source, stem_of,
+    library_root, read_converted_time, read_kept_name, read_page_count, recorded_source, stem_of,
 };
 use crate::nodepath::host;
 use crate::recent::rfc3339;
@@ -52,7 +59,9 @@ pub struct LibraryScript {
     pub folder: String,
     /// The stem of its source's file name, which names its files.
     pub name: String,
-    /// The `.fountain` title page's Title, emphasis and notes stripped.
+    /// The name it is kept under in the library when it was renamed
+    /// (source.json's `"name"`), else the `.fountain` title page's Title,
+    /// emphasis and notes stripped.
     pub title: Option<String>,
     /// The file it was converted from, as source.json records it.
     pub source: String,
@@ -149,7 +158,7 @@ pub(crate) fn script_in(folder: &str) -> Option<LibraryScript> {
         .find(|p| is_plain_file(p));
     let script = LibraryScript {
         folder: folder.to_owned(),
-        title: plain_title(&tokens),
+        title: read_kept_name(&fountain).or_else(|| plain_title(&tokens)),
         source_exists: fs::metadata(&source).is_ok(),
         source,
         epub: is_plain_file(&epub).then_some(epub),
@@ -162,6 +171,61 @@ pub(crate) fn script_in(folder: &str) -> Option<LibraryScript> {
         name,
     };
     Some(script)
+}
+
+fn not_a_script(why: &str, folder: &str) -> EngineError {
+    CliError::new(
+        ErrorCode::NotAScript,
+        format!("not a script in the library ({why}): {folder}"),
+    )
+    .into()
+}
+
+/// The script `folder` is, for a verb that acts on one (`library-remove`,
+/// `library-rename`), by the listing's own rule ([`script_in`]): an
+/// absolute path to a folder directly under `root`, compared with links
+/// resolved on both sides so `..` and a linked root cannot reach outside
+/// it; not a link itself; not the root. Answers the folder with its links
+/// resolved, and the script. Anything else is refused with its reason:
+/// `usage` for a path that is not absolute, `not-a-script` for the rest.
+pub fn listed_script(
+    verb: &str,
+    root: &str,
+    folder: &str,
+) -> Result<(PathBuf, LibraryScript), EngineError> {
+    if !Path::new(folder).is_absolute() {
+        return Err(CliError::new(
+            ErrorCode::Usage,
+            format!("{verb} needs a script folder's full path, not \"{folder}\""),
+        )
+        .into());
+    }
+    let meta = fs::symlink_metadata(folder).map_err(|_| not_a_script("it is not there", folder))?;
+    if meta.file_type().is_symlink() {
+        return Err(not_a_script("it is a link", folder));
+    }
+    if !meta.is_dir() {
+        return Err(not_a_script("it is not a folder", folder));
+    }
+    let real_root = fs::canonicalize(root)
+        .map_err(|_| not_a_script("the library folder is not there", folder))?;
+    let real = fs::canonicalize(folder).map_err(|_| not_a_script("it is not there", folder))?;
+    if real == real_root {
+        return Err(not_a_script("it is the library folder itself", folder));
+    }
+    if real.parent() != Some(real_root.as_path()) {
+        return Err(not_a_script(
+            &format!("it is not directly inside {root}"),
+            folder,
+        ));
+    }
+    let script = script_in(&real.to_string_lossy()).ok_or_else(|| {
+        not_a_script(
+            "it has no source.json naming its source, or no .fountain of that name",
+            folder,
+        )
+    })?;
+    Ok((real, script))
 }
 
 /// Every script directly under `root`, newest conversion first (its
