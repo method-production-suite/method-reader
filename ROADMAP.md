@@ -43,7 +43,10 @@ Built on the recommendation (reversible):
   the Recycle Bin on Windows, where it can be put back; nothing is deleted
   outright, since that folder can hold the only copy of the script and its
   settings. On the command line, `method-reader library-remove <folder>`.
-  To reverse: the engine's one trash call (sp-engine's
+  On Windows a library on a drive with no Recycle Bin (a network drive, most
+  memory cards) is refused with nothing moved, since Windows would offer to
+  delete it outright there instead; the window and the command line say
+  "Recycle Bin" there wherever they say "Trash". To reverse: the engine's one trash call (sp-engine's
   `commands/library_remove.rs`, `into_trash`) becomes a removal.
 - **New Kindles over USB, from the Mac app only in 1.1.0** (2026-10-29).
   On Windows the helper's path has never met a Kindle, only a phone, and on
@@ -181,8 +184,11 @@ In order. Each is one small pull request.
   docs/superpowers/specs/2026-11-02-library-view-design.md). Removing a
   script is built: Remove from library on each row asks first, then moves
   its folder to the Trash (`method-reader library-remove`; design:
-  docs/superpowers/specs/2026-11-03-library-remove-design.md). Next: each
-  script's settings from its row, and renaming a script.
+  docs/superpowers/specs/2026-11-03-library-remove-design.md). Each row's
+  settings are built too: the row says when a script has settings of its
+  own, and its Settings button reopens it on the Settings tab (design:
+  docs/superpowers/specs/2026-11-03-library-row-settings-design.md). Next:
+  renaming a script.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

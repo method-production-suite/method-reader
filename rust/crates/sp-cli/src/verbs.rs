@@ -13,7 +13,7 @@ use sp_engine::commands::kfx::{
     KfxCommandDeps, install_lines, kfx_install_command, kfx_status_command, setup_lines,
 };
 use sp_engine::commands::library::{LibraryScript, library_command};
-use sp_engine::commands::library_remove::library_remove_command;
+use sp_engine::commands::library_remove::{library_remove_command, moved_line};
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -592,7 +592,7 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
             if io.json {
                 io.ok(value(&removed));
             } else {
-                io.say(&format!("moved {} to the Trash", removed.removed));
+                io.say(&moved_line(&removed.removed, cfg!(windows)));
             }
             Ok(())
         }

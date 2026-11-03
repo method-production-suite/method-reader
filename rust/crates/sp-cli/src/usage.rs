@@ -463,8 +463,9 @@ Usage:
 own settings go to the system Trash (the Recycle Bin on Windows), where they
 can be put back. Nothing is deleted. A folder outside the library, a link,
 the library folder itself, or a folder the listing would not list is refused
-before anything moves. The PDF it was converted from stays where it is. It
-does not ask first.
+before anything moves. On Windows, a library on a drive with no Recycle Bin
+(a network drive, most memory cards) is refused too, with nothing moved. The
+PDF it was converted from stays where it is. It does not ask first.
 
 Options:
   --json                 machine-readable result on stdout (for the app)

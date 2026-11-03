@@ -1560,4 +1560,11 @@ names the check it affects.
   names a folder (already there) that stands for the Trash, which every
   test sets; sp-engine's test guard puts it under /dev/null. The main
   help does not list the verb yet, so no help row moved; its own `--help`
-  does. No frozen answer changes.
+  does. No frozen answer changes. On Windows (2026-11-03, branch
+  feat/library-row-settings) the plain-words line says `moved <folder> to
+  the Recycle Bin` and the `trash-failed` messages say Recycle Bin where
+  they say Trash elsewhere; a library on a drive with no `$Recycle.Bin` at
+  its root is refused, code `trash-failed`, with "The library is on a drive
+  with no Recycle Bin, so nothing was moved: <folder>". The `--json` answer
+  is the same everywhere, and parity runs on a Mac, so no frozen answer
+  moves.

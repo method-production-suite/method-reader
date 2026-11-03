@@ -10,7 +10,7 @@ mod common;
 use common::{Scratch, TRASH_GUARD, guarded_env, names, write};
 use serde_json::json;
 use sp_engine::commands::library::list_library;
-use sp_engine::commands::library_remove::{library_remove_command, remove_from_library};
+use sp_engine::commands::library_remove::{bin_name, library_remove_command, remove_from_library};
 use sp_engine::env::Env;
 use sp_engine::errors::EngineError;
 use sp_engine::library::library_output;
@@ -120,7 +120,10 @@ fn the_guards_stand_in_moves_nothing() {
     let (code, message) = refusal(remove_from_library(&root, &folder, &env).unwrap_err());
     assert_eq!(code, "trash-failed");
     assert!(
-        message.starts_with("could not move Anchorage to the Trash: "),
+        message.starts_with(&format!(
+            "could not move Anchorage to the {}: ",
+            bin_name(cfg!(windows))
+        )),
         "{message}"
     );
     assert!(message.contains(TRASH_GUARD), "{message}");

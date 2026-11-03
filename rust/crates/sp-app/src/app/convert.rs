@@ -66,9 +66,13 @@ pub enum Purpose {
         stamp: Option<Value>,
     },
     /// A script reopened from the Library tab (library.rs): its book
-    /// remade from the library `.fountain`, never its PDF. Boxed: a row is
+    /// remade from the library `.fountain`, never its PDF, landing on
+    /// `land` (Preview for Open, Settings for Settings). Boxed: a row is
     /// many times a path.
-    Reopen(Box<crate::model::library::Row>),
+    Reopen {
+        row: Box<crate::model::library::Row>,
+        land: Surface,
+    },
     Reveal {
         book: String,
     },
@@ -166,18 +170,22 @@ pub fn convert_sample(
     convert_to(app, request, pdf, epub, purpose);
 }
 
-/// A library row's Open (library.rs): its book remade from its `.fountain`
-/// as the sample's is, then Preview with the row's pages and scenes. The
-/// script open is the row's own source, so Settings and the send panel
-/// work on it as after a conversion.
-pub fn reopen(app: &mut App, row: crate::model::library::Row) {
+/// A library row's Open or Settings (library.rs): its book remade from its
+/// `.fountain` as the sample's is, then `land` (Preview or Settings) with
+/// the row's pages and scenes. The script open is the row's own source, so
+/// Settings and the send panel work on it as after a conversion.
+pub fn reopen(app: &mut App, row: crate::model::library::Row, land: Surface) {
     let epub = crate::model::library::book_path(&row);
     let request = Request::ConvertTo {
         path: row.fountain.clone(),
         out: epub.clone(),
     };
     let source = row.source.clone();
-    convert_to(app, request, source, epub, Purpose::Reopen(Box::new(row)));
+    let purpose = Purpose::Reopen {
+        row: Box::new(row),
+        land,
+    };
+    convert_to(app, request, source, epub, purpose);
 }
 
 /// A `convert-to` (the sample's and a library row's): the bar on the
@@ -221,7 +229,7 @@ const FILL: &str = "progress-fill";
 
 /// One progress line from the engine.
 pub fn progress(app: &mut App, purpose: &Purpose, line: &Value) {
-    if let Purpose::Sample { .. } | Purpose::Reopen(_) = purpose {
+    if let Purpose::Sample { .. } | Purpose::Reopen { .. } = purpose {
         if app.convert.waiting.is_some() {
             started(app);
         }
@@ -339,7 +347,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 Ok(answer) => draw_failure(app, failure_for(answer.get("error")), &path),
             }
         }
-        Purpose::Reopen(row) => {
+        Purpose::Reopen { row, land } => {
             app.convert.converting = false;
             let path = row.source.clone();
             match reply.answer {
@@ -351,9 +359,15 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     }
                     // Preview, as the sample lands there: the result is
                     // drawn behind it, and the Convert page's panel starts
-                    // only when a person goes there.
+                    // only when a person goes there. Settings goes on from
+                    // there once the reopened script is the one open, so
+                    // the tab asks for that script's settings, not the one
+                    // open before.
                     app.go_to(Surface::Read);
                     draw_result(app, &path, &answer);
+                    if land != Surface::Read {
+                        app.go_to(land);
+                    }
                 }
                 Ok(answer) => draw_failure(app, failure_for(answer.get("error")), &path),
             }

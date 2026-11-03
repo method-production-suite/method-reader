@@ -351,8 +351,19 @@ fn the_library_remove_request_is_the_cli_s_library_remove_verb() {
         folder: row.folder.clone(),
     });
     assert_eq!(
-        sp_app::model::library::removed_line(&answer, row),
+        sp_app::model::library::removed_line(&answer, row, false),
         ("FIELD STATION is in the Trash.".to_string(), false)
     );
     assert_eq!(answer["name"], "Field Station");
+}
+
+#[test]
+fn the_window_and_the_command_line_call_the_trash_the_same() {
+    for windows in [false, true] {
+        assert_eq!(
+            sp_app::model::library::bin_name(windows),
+            sp_engine::commands::library_remove::bin_name(windows),
+            "windows: {windows}"
+        );
+    }
 }

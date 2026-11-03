@@ -9,6 +9,7 @@ mod common;
 use serde_json::{Value, json};
 
 use common::{Ran, Sandbox, join, repo_root};
+use sp_engine::commands::library_remove::{bin_name, moved_line};
 
 /// Run in the sandbox's `empty/` folder: its own folder holds `library/`,
 /// and a word is only a verb when no file of that name is there.
@@ -54,6 +55,12 @@ fn library_remove_help_describes_the_verb_and_exits_0() {
         ran.stdout
             .contains("method-reader library-remove <folder> [--json]")
     );
+    assert!(
+        ran.stdout
+            .contains("a library on a drive with no Recycle Bin"),
+        "{}",
+        ran.stdout
+    );
     let json = run(&sb, &["library-remove", "-h", "--json"]).json();
     assert!(
         json["usage"]
@@ -89,8 +96,23 @@ fn a_listed_script_goes_to_the_trash_and_off_the_listing() {
     let again = converted(&sb);
     let human = run(&sb, &["library-remove", &again]);
     assert_eq!(human.code, 0, "{}", human.stderr);
-    assert_eq!(human.stdout, format!("moved {again} to the Trash\n"));
+    assert_eq!(
+        human.stdout,
+        format!("{}\n", moved_line(&again, cfg!(windows)))
+    );
     assert_eq!(names(&trash), ["Field Station", "Field Station 2"]);
+}
+
+#[test]
+fn the_plain_words_line_names_each_platforms_bin() {
+    assert_eq!(
+        moved_line(r"C:\Users\ann\Method Reader\Field Station", true),
+        r"moved C:\Users\ann\Method Reader\Field Station to the Recycle Bin"
+    );
+    assert_eq!(
+        moved_line("/Users/ann/Method Reader/Field Station", false),
+        "moved /Users/ann/Method Reader/Field Station to the Trash"
+    );
 }
 
 #[test]
@@ -149,8 +171,10 @@ fn a_trash_that_cannot_be_used_moves_nothing() {
     assert_eq!(ran.code, 1);
     assert_eq!(ran.error_code(), "trash-failed");
     assert!(
-        ran.error_message()
-            .starts_with("could not move Field Station to the Trash: "),
+        ran.error_message().starts_with(&format!(
+            "could not move Field Station to the {}: ",
+            bin_name(cfg!(windows))
+        )),
         "{}",
         ran.error_message()
     );
