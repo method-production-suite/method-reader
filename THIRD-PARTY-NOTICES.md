@@ -249,8 +249,8 @@ with the full GPL-3 text and their own copy of this notice beside it.
 ## The Rust crates that ship
 
 Every third-party crate built into `method-reader`, `method-reader-app` or
-`method-reader-mtp`, on any platform: 471 crates (64 of them in the command
-line; 461 in the window, which contains the command line's engine; 31 in the
+`method-reader-mtp`, on any platform: 473 crates (80 of them in the command
+line; 463 in the window, which contains the command line's engine; 31 in the
 MTP helper, 10 of them in nothing else). The list comes from Cargo itself, at
 the versions `rust/Cargo.lock` pins: `cargo tree --locked -p sp-cli` and `-p
 sp-app`, each with `-e normal,no-proc-macro`, for each shipped target
@@ -294,7 +294,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 <https://github.com/DioxusLabs/taffy> at revision
 7d33901cc383489d9945ae796a1ceed0a935ef66, which the blitz crates name. Their rows say so.
 
-### MIT (402)
+### MIT (404)
 
 | Crate | Version | Licence as declared | Ships in | Platforms | Copyright |
 | --- | --- | --- | --- | --- | --- |
@@ -498,7 +498,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | nusb | 0.2.8 | Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (authors: Kevin Mehall) |
 | objc-sys | 0.3.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2 | 0.5.2 | MIT | app | macOS | copyright its authors, see the crate (authors: Steven Sheldon, Mads Marquart) |
-| objc2 | 0.6.5 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
+| objc2 | 0.6.5 | MIT | CLI and app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2-app-kit | 0.2.2 | MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-app-kit | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-audio-toolbox | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
@@ -511,12 +511,12 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | objc2-core-image | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-core-text | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-core-video | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| objc2-encode | 4.1.0 | MIT | app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
+| objc2-encode | 4.1.0 | MIT | CLI and app | macOS | copyright its authors, see the crate (authors: Mads Marquart) |
 | objc2-foundation | 0.2.2 | MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| objc2-foundation | 0.3.2 | MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
+| objc2-foundation | 0.3.2 | MIT | CLI and app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-metal | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | objc2-quartz-core | 0.3.2 | Zlib OR Apache-2.0 OR MIT | app | macOS | copyright its authors, see the crate (its Cargo.toml names no authors) |
-| once_cell | 1.21.4 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: Aleksey Kladov) |
+| once_cell | 1.21.4 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Aleksey Kladov) |
 | ordered-float | 5.5.0 | MIT | app | Linux, Windows | Copyright (c) 2015 Jonathan Reem |
 | ordered-stream | 0.2.0 | MIT OR Apache-2.0 | app | Linux | copyright its authors, see the crate (authors: Daniel De Graaf, Zeeshan Ali Khan) |
 | os_pipe | 1.2.3 | MIT | app | Linux | copyright its authors, see the crate (authors: Jack O'Connor) |
@@ -572,7 +572,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | rustls | 0.23.46 | Apache-2.0 OR ISC OR MIT | app | all | Copyright (c) 2016, Joseph Birr-Pixton <jpixton@gmail.com>; Copyright (c) 2016 Joseph Birr-Pixton <jpixton@gmail.com> |
 | rustls-pki-types | 1.15.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2023 Dirkjan Ochtman <dirkjan@ochtman.nl> |
 | scoped-tls | 1.0.1 | MIT/Apache-2.0 | app | Linux | Copyright (c) 2014 Alex Crichton |
-| scopeguard | 1.2.0 | MIT OR Apache-2.0 | app | all | Copyright (c) 2016-2019 Ulrik Sverdrup "bluss" and scopeguard developers |
+| scopeguard | 1.2.0 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2016-2019 Ulrik Sverdrup "bluss" and scopeguard developers |
 | sctk-adwaita | 0.10.1 | MIT | app | Linux | Copyright (c) 2022 Bartłomiej Maryńczak |
 | semver | 1.0.28 | MIT OR Apache-2.0 | app | all | copyright its authors, see the crate (authors: David Tolnay) |
 | serde | 1.0.229 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Erick Tryzelaar, David Tolnay) |
@@ -618,6 +618,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | tinyvec | 1.13.3 | Zlib OR Apache-2.0 OR MIT | CLI and app | all | Copyright (c) 2019 Daniel "Lokathor" Gee. |
 | tracing | 0.1.44 | MIT | app | all | Copyright (c) 2019 Tokio Contributors |
 | tracing-core | 0.1.36 | MIT | app | all | Copyright (c) 2019 Tokio Contributors |
+| trash | 5.2.9 | MIT | CLI and app | all | Copyright 2019 Artúr Barnabás Kovács |
 | tree_magic_mini | 3.2.2 | MIT | app | Linux | Copyright (c) 2017 Aaron Hancock |
 | ttf-parser | 0.25.1 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2018 Yevhenii Reizner |
 | type-map | 0.5.1 | MIT/Apache-2.0 | app | all | Copyright (c) 2022 Jacob Brown; Copyright (c) 2017-NOW Actix Team |
@@ -632,6 +633,7 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | ureq | 3.4.2 | MIT OR Apache-2.0 | CLI and app | all | Copyright (c) 2019 Martin Algesten |
 | ureq-proto | 0.6.4 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Martin Algesten) |
 | url | 2.5.8 | MIT OR Apache-2.0 | app | all | Copyright (c) 2013-2025 The rust-url developers |
+| urlencoding | 2.1.3 | MIT | CLI and app | Linux | copyright its authors, see the crate (authors: Kornel, Bertram Truong) |
 | usvg | 0.48.1 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | utf8-zero | 0.8.1 | MIT OR Apache-2.0 | CLI and app | all | copyright its authors, see the crate (authors: Simon Sapin, Martin Algesten) |
 | utf8_iter | 1.0.4 | Apache-2.0 OR MIT | app | all | copyright its authors, see the crate (authors: Henri Sivonen) |
@@ -662,18 +664,18 @@ at revision 45496d9288b063719ebeae4e0761273f7881b3d7 (the `rev =
 | wgpu-hal | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
 | wgpu-naga-bridge | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
 | wgpu-types | 30.0.1 | MIT OR Apache-2.0 | app | all | Copyright (c) 2025 The gfx-rs developers |
-| windows | 0.62.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-collections | 0.3.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-core | 0.62.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-future | 0.3.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-link | 0.2.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-numerics | 0.3.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-result | 0.4.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-strings | 0.5.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
+| windows | 0.62.2 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-collections | 0.3.2 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-core | 0.62.2 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-future | 0.3.2 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-link | 0.2.1 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-numerics | 0.3.1 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-result | 0.4.1 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-strings | 0.5.1 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-sys | 0.52.0 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-sys | 0.61.2 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | windows-targets | 0.52.6 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
-| windows-threading | 0.2.1 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
+| windows-threading | 0.2.1 | MIT OR Apache-2.0 | CLI and app | Windows | Copyright (c) Microsoft Corporation. |
 | windows_x86_64_msvc | 0.52.6 | MIT OR Apache-2.0 | app | Windows | Copyright (c) Microsoft Corporation. |
 | winnow | 1.0.4 | MIT | app | Linux | copyright its authors, see the crate (its Cargo.toml names no authors) |
 | wl-clipboard-rs | 0.9.4 | MIT OR Apache-2.0 | app | Linux | Copyright (c) 2019 Ivan Molodetskikh |

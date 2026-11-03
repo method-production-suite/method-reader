@@ -316,3 +316,43 @@ fn the_library_request_is_the_cli_s_library_verb() {
     let listing = sp_app::model::library::listing_from(&answer).expect("a list");
     assert_eq!(listing.rows.len(), 1);
 }
+
+/// Remove from library (docs/superpowers/specs/2026-11-03-library-remove-design.md)
+/// is the window's own too: the CLI's `library-remove` verb exactly as its
+/// `--help` spells it, and work, so it counts toward busy as taking a book
+/// off a reader does. The CLI's side is sp-cli/tests/cli_library_remove.rs.
+#[test]
+fn the_library_remove_request_is_the_cli_s_library_remove_verb() {
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let request = Request::LibraryRemove {
+        folder: folder.into(),
+    };
+    assert_eq!(request.argv(), ["library-remove", folder, "--json"]);
+    assert_eq!(request.kind(), "library-remove");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(counts_toward_busy(request.call()));
+    let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+    let code = sp_cli::run(
+        &["library-remove".to_string(), "--help".to_string()],
+        Box::new(Keep(said.clone())),
+    );
+    assert_eq!(code, 0, "library-remove --help");
+    let said = said.lock().unwrap().clone();
+    assert!(
+        said.contains("method-reader library-remove <folder> [--json]"),
+        "library-remove --help: {said}"
+    );
+    // The fake answers as the engine does for the fake's own row.
+    let row =
+        &sp_app::model::library::listing_from(&sp_app::engine::default_answer(&Request::Library))
+            .unwrap()
+            .rows[0];
+    let answer = sp_app::engine::default_answer(&Request::LibraryRemove {
+        folder: row.folder.clone(),
+    });
+    assert_eq!(
+        sp_app::model::library::removed_line(&answer, row),
+        ("FIELD STATION is in the Trash.".to_string(), false)
+    );
+    assert_eq!(answer["name"], "Field Station");
+}

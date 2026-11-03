@@ -17,6 +17,10 @@ use super::CALIBRE_GUARD;
 /// `TEST_SETTINGS_GUARD` (tests/isolate-app-settings.ts and .env.test).
 pub const SETTINGS_GUARD: &str = "/dev/null/method-reader-test-guard";
 
+/// `METHOD_READER_TRASH`'s guard (sp-engine's tests/common TRASH_GUARD):
+/// a stand-in Trash nothing can be moved into.
+pub const TRASH_GUARD: &str = "/dev/null/method-reader-test-trash-guard";
+
 /// The environment a test hands an engine handler called in process: PATH,
 /// so tools resolve as they would, and both guards. Nothing else from this
 /// process.
@@ -27,6 +31,7 @@ pub fn guarded_env() -> Env {
     }
     env.set("METHOD_READER_CONFIG_DIR", SETTINGS_GUARD);
     env.set("CALIBRE_CONFIG_DIRECTORY", CALIBRE_GUARD);
+    env.set("METHOD_READER_TRASH", TRASH_GUARD);
     env
 }
 

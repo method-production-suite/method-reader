@@ -453,6 +453,24 @@ Options:
   -h, --help             show this help
 "#;
 
+pub const LIBRARY_REMOVE_USAGE: &str = r#"method-reader library-remove: move one script out of the library, to the Trash
+
+Usage:
+  method-reader library-remove <folder> [--json]
+
+<folder> must be a script's own folder directly inside the library, as
+`method-reader library` lists it: the folder, its .fountain, its book and its
+own settings go to the system Trash (the Recycle Bin on Windows), where they
+can be put back. Nothing is deleted. A folder outside the library, a link,
+the library folder itself, or a folder the listing would not list is refused
+before anything moves. The PDF it was converted from stays where it is. It
+does not ask first.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;
+
 pub const SHAPE_USAGE: &str = r#"method-reader shape: a script's shape as counts, no words from it
 
 Usage:

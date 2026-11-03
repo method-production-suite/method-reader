@@ -316,6 +316,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E28 | Kindle line: Kindle-file exports of one book one at a time, before their book turn | ui/send-panel.js inKindleLine | | done |
 | E29 | `shape <fountain> --json` (a problem report's counts; new, not app.js's) | `shape(fountain)` | no | done |
 | E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()` (`Request::Library`: the Library tab, sp-app/src/app/library.rs; a row's Open is the sample's `convert-to` from the library `.fountain`) | no | done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, screens.rs, behaviors.rs) |
+| E31 | `library-remove <folder> --json` (one script's folder off the library, to the Trash; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-remove-design.md) | `libraryRemove(folder)` (`Request::LibraryRemove`: a Library row's Remove from library, after its question, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_remove.rs, sp-cli/tests/cli_library_remove.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 
 ### C. Convert
 
@@ -1543,3 +1544,20 @@ names the check it affects.
   library's source.json hash (the new key), and no other run: no other
   frozen JSON file held a time. Two runs gave the same new hashes, so the
   time is masked; accepted with the same five-row `--accept` as above.
+- **The library-remove verb (2026-11-03, branch feat/library-remove).**
+  `method-reader library-remove <folder> [--json]` is new: not one of the
+  TypeScript's verbs (row E31). It moves one script's folder, as the
+  `library` listing gives it, to the system Trash (the Recycle Bin on
+  Windows, the freedesktop trash on Linux) through the `trash` crate
+  (5.2.9, MIT), and answers `{"ok": true, "removed": <folder>, "name":
+  <stem>}`; it never deletes. It refuses, code `not-a-script`, anything the
+  listing would not list: a folder not directly inside the library root
+  (links resolved on both sides), a link, the root itself, a folder with no
+  source.json naming its source or no `.fountain` of that name; a Trash
+  that fails is `trash-failed`. Nothing moves on a refusal. On a Mac it
+  uses the file manager's own trash call, not the Finder's, so the signed
+  app needs no permission to drive another app. `METHOD_READER_TRASH`
+  names a folder (already there) that stands for the Trash, which every
+  test sets; sp-engine's test guard puts it under /dev/null. The main
+  help does not list the verb yet, so no help row moved; its own `--help`
+  does. No frozen answer changes.

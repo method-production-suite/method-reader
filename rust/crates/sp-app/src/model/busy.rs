@@ -42,6 +42,7 @@ pub enum Call {
     EmailSetup,
     Shape,
     Library,
+    LibraryRemove,
 }
 
 pub fn counts_toward_busy(call: Call) -> bool {

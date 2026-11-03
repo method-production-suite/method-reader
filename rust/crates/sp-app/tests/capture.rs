@@ -255,7 +255,7 @@ fn it_keeps_calibre_out_as_a_machine_without_it_would() {
 }
 
 #[test]
-fn it_refuses_everything_that_copies_sends_builds_ejects_exports_or_installs() {
+fn it_refuses_everything_that_copies_sends_builds_ejects_exports_removes_or_installs() {
     let epub = book("Field Station.epub");
     for r in [
         Request::Send {
@@ -304,6 +304,15 @@ fn it_refuses_everything_that_copies_sends_builds_ejects_exports_or_installs() {
         Request::Settings {
             fountain: book("Field Station.fountain"),
             set: Some(r#"{"x":1}"#.into()),
+        },
+        // Taking a book off a reader, or a script off the library, moves
+        // something: never on the way to a picture.
+        Request::DeviceRemove {
+            volume: "/Volumes/Kindle".into(),
+            file: "/Volumes/Kindle/documents/Field Station.azw3".into(),
+        },
+        Request::LibraryRemove {
+            folder: format!("{LIB}/Field Station"),
         },
     ] {
         assert_eq!(ask(r.clone()), Verdict::Refuse, "{r:?}");

@@ -37,6 +37,14 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **Removing a script from the library goes to the Trash** (2026-11-03).
+  The Library tab's Remove from library, after asking, moves the script's
+  whole folder (its `.fountain`, book and own settings) to the system Trash,
+  the Recycle Bin on Windows, where it can be put back; nothing is deleted
+  outright, since that folder can hold the only copy of the script and its
+  settings. On the command line, `method-reader library-remove <folder>`.
+  To reverse: the engine's one trash call (sp-engine's
+  `commands/library_remove.rs`, `into_trash`) becomes a removal.
 - **New Kindles over USB, from the Mac app only in 1.1.0** (2026-10-29).
   On Windows the helper's path has never met a Kindle, only a phone, and on
   Linux an ordinary user needs a udev rule the packages do not install, so
@@ -170,8 +178,11 @@ In order. Each is one small pull request.
   and when each was converted, and Open reopens one without converting its
   PDF again, even when that PDF has moved or gone. On the command line,
   `method-reader library`. On main (design:
-  docs/superpowers/specs/2026-11-02-library-view-design.md). Next: removing
-  a script from the library, and each script's settings from its row.
+  docs/superpowers/specs/2026-11-02-library-view-design.md). Removing a
+  script is built: Remove from library on each row asks first, then moves
+  its folder to the Trash (`method-reader library-remove`; design:
+  docs/superpowers/specs/2026-11-03-library-remove-design.md). Next: each
+  script's settings from its row, and renaming a script.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

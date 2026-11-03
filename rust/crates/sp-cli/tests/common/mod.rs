@@ -5,8 +5,10 @@
 //! The pins mirror the TypeScript tests' `runCli`: METHOD_READER_CONFIG_DIR and
 //! METHOD_READER_LIBRARY in the scratch folder, METHOD_READER_VOLUME_ROOTS at an
 //! empty folder, the reMarkable probe at a closed local port, and Calibre
-//! at a guard path no Calibre can start against. A test that cares passes
-//! its own values over these.
+//! at a guard path no Calibre can start against. Rust's own pin beside
+//! them: METHOD_READER_TRASH at the scratch `trash/` folder, so
+//! `library-remove` never reaches the system Trash. A test that cares
+//! passes its own values over these.
 
 #![allow(dead_code)]
 
@@ -100,8 +102,9 @@ impl Ran {
     }
 }
 
-/// A scratch folder with `config/`, `library/` and `empty/` (the default
-/// mount parent, scanning nothing), removed when dropped.
+/// A scratch folder with `config/`, `library/`, `empty/` (the default
+/// mount parent, scanning nothing) and `trash/` (the stand-in Trash),
+/// removed when dropped.
 pub struct Sandbox {
     pub dir: tempfile::TempDir,
     pub env: BTreeMap<String, String>,
@@ -114,7 +117,7 @@ impl Sandbox {
             .tempdir()
             .expect("a scratch folder");
         let root = canonical(dir.path());
-        for d in ["config", "library", "empty"] {
+        for d in ["config", "library", "empty", "trash"] {
             std::fs::create_dir_all(root.join(d)).expect("mkdir");
         }
         let mut env = BTreeMap::new();
@@ -122,6 +125,7 @@ impl Sandbox {
         env.insert("METHOD_READER_CONFIG_DIR".into(), s(root.join("config")));
         env.insert("METHOD_READER_LIBRARY".into(), s(root.join("library")));
         env.insert("METHOD_READER_VOLUME_ROOTS".into(), s(root.join("empty")));
+        env.insert("METHOD_READER_TRASH".into(), s(root.join("trash")));
         env.insert(
             "METHOD_READER_REMARKABLE_ENDPOINT".into(),
             "http://127.0.0.1:9".into(),
