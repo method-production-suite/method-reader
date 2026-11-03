@@ -167,6 +167,22 @@ fn a_long_name_or_one_with_a_line_break_is_refused_and_nothing_is_written() {
             "Harbour\u{2028}Light".to_owned(),
             "a script's name is one line: it cannot hold a line break",
         ),
+        (
+            "Harbour\u{1}Light".to_owned(),
+            "a script's name cannot hold a control character, such as a tab",
+        ),
+        (
+            "Harbour\tLight".to_owned(),
+            "a script's name cannot hold a control character, such as a tab",
+        ),
+        (
+            "Harbour\u{7F}Light".to_owned(),
+            "a script's name cannot hold a control character, such as a tab",
+        ),
+        (
+            "Harbour\u{FFFF}Light".to_owned(),
+            "a script's name cannot hold a control character, such as a tab",
+        ),
     ] {
         let err = rename_in_library(&root, &folder, &name).unwrap_err();
         assert_eq!(

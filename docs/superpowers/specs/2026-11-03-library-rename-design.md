@@ -45,7 +45,8 @@ needs the folder lookup to read the kept name too.
   checked exactly as `library-remove` checks it (directly under the root,
   not a link, a folder the listing lists), and a name.
 - **The name:** trimmed. Empty clears it. Longer than 200 characters, or
-  holding a line break, is refused.
+  holding a line break or another control character, is refused
+  (a book's title is XML, which cannot carry them).
 - **What it does:** keeps the name in source.json, then rebuilds the
   script's book (`<stem>.epub`) from its library `.fountain` with its own
   settings, so the file on disk is called by the new name at once. The
