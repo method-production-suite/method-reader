@@ -437,3 +437,30 @@ fn the_library_rename_request_is_the_cli_s_library_rename_verb() {
         );
     }
 }
+
+/// Report (docs/superpowers/specs/2026-11-04-conversion-report-design.md)
+/// is the CLI's `library-report` verb for one folder; it reads only, so it
+/// is not work the busy count waits on. The CLI's side is
+/// sp-cli/tests/cli_library_report.rs.
+#[test]
+fn the_library_report_request_is_the_cli_s_library_report_verb() {
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let request = Request::LibraryReport {
+        folder: folder.into(),
+    };
+    assert_eq!(request.argv(), ["library-report", folder, "--json"]);
+    assert_eq!(request.kind(), "library-report");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(!counts_toward_busy(request.call()));
+    let said = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+    let code = sp_cli::run(
+        &["library-report".to_string(), "--help".to_string()],
+        Box::new(Keep(said.clone())),
+    );
+    assert_eq!(code, 0, "library-report --help");
+    let said = said.lock().unwrap().clone();
+    assert!(
+        said.contains("method-reader library-report <folder> [--json]"),
+        "library-report --help: {said}"
+    );
+}

@@ -2437,3 +2437,116 @@ fn library_rename_waits_while_a_conversion_a_removal_or_another_rename_runs() {
     w.engine.release("convert");
     settle(&mut h);
 }
+
+// docs/superpowers/specs/2026-11-04-conversion-report-design.md, part 2.
+
+#[test]
+fn library_report_sends_one_report_and_shows_its_totals_and_who_speaks() {
+    let w = world();
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let mut h = library_tab_with(
+        &w,
+        vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ],
+    );
+    h.get_by_role_and_label(Role::Button, "Report for WEATHER LOG");
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-report"),
+        [Request::LibraryReport {
+            folder: folder.into()
+        }]
+    );
+    assert!(has(
+        &h,
+        "18 pages, 11 scenes, 1,204 speeches, 9,876 words of dialogue"
+    ));
+    h.get_by_role_and_label(Role::Table, "Who speaks in FIELD STATION");
+    for words in [
+        "Character",
+        "First speaks",
+        "MARA",
+        "1,200",
+        "Scene 1, page 2",
+        "RADIO",
+        "Before the first scene",
+    ] {
+        assert!(has(&h, words), "{words}");
+    }
+
+    // Pressed again, it hides, and asks nothing.
+    h.get_by_role_and_label(Role::Button, "Hide the report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(!has(&h, "Scene 1, page 2"));
+    assert_eq!(w.engine.calls_of("library-report").len(), 1);
+
+    // One row's report at a time: the other's replaces it.
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Report for WEATHER LOG")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION");
+    h.get_by_role_and_label(Role::Button, "Hide the report for WEATHER LOG");
+    assert_eq!(w.engine.calls_of("library-report").len(), 3);
+}
+
+#[test]
+fn library_report_says_why_when_there_is_none() {
+    let w = world();
+    w.engine.always(
+        "library-report",
+        Reply::ok(json!({"ok": false, "error": {"code": "not-a-script",
+            "message": "That folder is not one script in the library."}})),
+    );
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(has(&h, "That folder is not one script in the library."));
+}
+
+#[test]
+fn library_report_waits_while_its_script_is_renamed_and_says_it_is_reading() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", false),
+        ]),
+    );
+    w.engine.hold("library-report");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    assert!(has(&h, "Reading the report for FIELD STATION…"));
+    w.engine.release("library-report");
+    settle(&mut h);
+    assert!(has(&h, "MARA"));
+
+    w.engine.hold("library-rename");
+    h.get_by_role_and_label(Role::Button, "Rename FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Save the new name for FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    let b = h.get_by_role_and_label(Role::Button, "Hide the report for FIELD STATION");
+    assert!(b.accesskit_node().is_disabled(), "not while it is renamed");
+    let other = h.get_by_role_and_label(Role::Button, "Report for WEATHER LOG");
+    assert!(!other.accesskit_node().is_disabled());
+    w.engine.release("library-rename");
+    settle(&mut h);
+    // Its report carried the old name, so it closes.
+    assert!(!has(&h, "MARA"));
+}

@@ -333,6 +333,7 @@ pub fn verdict(request: &Request, demo: &Path, library: &Path) -> Verdict {
             fountain,
             set: None,
         } if inside(fountain, library) => Verdict::Run,
+        Request::LibraryReport { folder } if inside(folder, library) => Verdict::Run,
         Request::KindleCheck { .. } | Request::KfxStatus => Verdict::KeepOut,
         _ => Verdict::Refuse,
     }
