@@ -1787,3 +1787,57 @@ mod the_column_spelling_of_the_forward_binds {
         );
     }
 }
+
+// ── Characters XML cannot carry ──────────────────────────
+// A title from `--title` or a title page, or text a PDF painted, can hold a
+// control character. XML 1.0 forbids those even escaped, and one of them
+// anywhere made the whole book fail to open (epubcheck: fatal). The FDX and
+// OSF writers already dropped them; the book now does too.
+
+mod characters_xml_cannot_carry {
+    use super::*;
+
+    const FORBIDDEN: [char; 6] = ['\u{1}', '\u{8}', '\u{B}', '\u{1F}', '\u{FFFE}', '\u{FFFF}'];
+
+    #[test]
+    fn escape_xml_drops_them_and_keeps_tab_and_line_breaks() {
+        assert_eq!(
+            sp_epub::escape_xml("A\u{1}B\u{8}C\u{B}D\u{C}E\u{1F}F\u{FFFE}G\u{FFFF}H"),
+            "ABCDEFGH"
+        );
+        assert_eq!(sp_epub::escape_xml("a\tb\nc\rd & e"), "a\tb\nc\rd &amp; e");
+    }
+
+    #[test]
+    fn no_entry_of_the_book_holds_one() {
+        let src = "INT. LIGHT\u{1}HOUSE - NIGHT\n\nA lamp\u{8} turns.\n\nMARA\u{B}\n(quiet\u{1F})\nWho is \u{FFFE}there\u{FFFF}?\n";
+        let bytes = build_epub(
+            &meta("The Lamp\u{1} Keeper", Some("Pat\u{1F} Doe")),
+            &default_body(src),
+            &DEFAULT_FORMAT_OPTIONS,
+            &[],
+            EPOCH,
+        )
+        .unwrap();
+        let mut seen = String::new();
+        for e in common::read_zip(&bytes) {
+            if let Ok(text) = String::from_utf8(e.data) {
+                assert!(
+                    !text.chars().any(|c| FORBIDDEN.contains(&c)),
+                    "{} holds a character XML forbids",
+                    e.name
+                );
+                seen.push_str(&text);
+            }
+        }
+        for kept in [
+            "The Lamp Keeper",
+            "Pat Doe",
+            "LIGHTHOUSE",
+            "A lamp turns.",
+            "Who is there?",
+        ] {
+            assert!(seen.contains(kept), "the book lost {kept:?}");
+        }
+    }
+}

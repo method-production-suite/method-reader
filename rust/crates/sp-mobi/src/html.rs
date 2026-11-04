@@ -91,9 +91,18 @@ fn recindex(i: usize) -> String {
     format!("{:05}", i + 1)
 }
 
+/// XML 1.0's Char production, inverted, as sp-epub, sp-fdx and sp-osf
+/// spell it: the MOBI drops what the EPUB drops, so both books read the same.
+fn is_forbidden_xml(c: char) -> bool {
+    matches!(
+        c,
+        '\u{0}'..='\u{8}' | '\u{B}' | '\u{C}' | '\u{E}'..='\u{1F}' | '\u{FFFE}' | '\u{FFFF}'
+    )
+}
+
 fn esc(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
+    for c in s.chars().filter(|&c| !is_forbidden_xml(c)) {
         match c {
             '&' => out.push_str("&amp;"),
             '<' => out.push_str("&lt;"),

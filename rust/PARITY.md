@@ -1587,3 +1587,15 @@ names the check it affects.
   name, so `cargo xtask parity --committed-only` is unchanged. The main
   help does not list the verb, so no help row moved; its own `--help`
   does.
+- **The book drops characters XML cannot carry (2026-11-03, branch
+  book/no-control-characters).** The TypeScript's `escapeXml` and the
+  MOBI's `esc` passed every character through, so a title from `--title`
+  or a title page, or text a PDF painted, holding a control character
+  (U+0000 to U+0008, U+000B, U+000C, U+000E to U+001F, U+FFFE, U+FFFF)
+  made a book that would not open: epubcheck calls it fatal, and so does
+  every reader's XML parser. sp-epub's `escape_xml` and sp-mobi's `esc`
+  now drop that set, the one sp-fdx and sp-osf already dropped; tab, line
+  feed and carriage return stay. The AZW3 is read from the EPUB's bytes,
+  so it follows. The `--json` answer's `title` and `author` are not
+  filtered (JSON carries them escaped). No committed fixture holds such a
+  character, so `cargo xtask parity --committed-only` is unchanged.
