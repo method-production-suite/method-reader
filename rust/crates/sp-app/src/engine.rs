@@ -116,6 +116,11 @@ pub enum Request {
         folder: String,
         name: String,
     },
+    /// One script's report: its length and who speaks how much, read from
+    /// its `.fountain` (`library-report`, new: not one of app.js's).
+    LibraryReport {
+        folder: String,
+    },
 }
 
 impl Request {
@@ -146,6 +151,7 @@ impl Request {
             Self::Library => Call::Library,
             Self::LibraryRemove { .. } => Call::LibraryRemove,
             Self::LibraryRename { .. } => Call::LibraryRename,
+            Self::LibraryReport { .. } => Call::LibraryReport,
         }
     }
 
@@ -301,6 +307,9 @@ impl Request {
                 Some("--"),
                 Some(name),
             ]),
+            Self::LibraryReport { folder } => {
+                v(&[Some("library-report"), Some(folder), Some("--json")])
+            }
         }
     }
 
@@ -332,6 +341,7 @@ impl Request {
             Self::Library => "library",
             Self::LibraryRemove { .. } => "library-remove",
             Self::LibraryRename { .. } => "library-rename",
+            Self::LibraryReport { .. } => "library-report",
         }
     }
 }
@@ -527,6 +537,18 @@ pub fn default_answer(request: &Request) -> Value {
             json!({"ok": true, "folder": folder, "title": title,
                 "epub": format!("{folder}/{stem}.epub")})
         }
+        // The fake's one row's report: two speakers, one before the first
+        // scene and without a page.
+        Request::LibraryReport { folder } => json!({
+            "ok": true, "folder": folder, "title": "FIELD STATION",
+            "pages": 18, "scenes": 11, "speeches": 1204, "words": 9876,
+            "characters": [
+                {"name": "MARA", "speeches": 1200, "words": 9870, "scenes": 11,
+                    "firstScene": 1, "firstPage": "2"},
+                {"name": "RADIO", "speeches": 4, "words": 6, "scenes": 0,
+                    "firstScene": null, "firstPage": null},
+            ],
+        }),
     }
 }
 

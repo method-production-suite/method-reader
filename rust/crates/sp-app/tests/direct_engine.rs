@@ -444,6 +444,36 @@ fn child_lists_the_library() {
     assert_eq!(as_converted["scenes"], converted["scenes"]);
     assert_eq!(as_converted["fountainPath"], row.fountain.as_str());
 
+    // Report: read from the .fountain by the real engine, in the window's
+    // own words, its totals the row's and its speeches its speakers'.
+    let answer = engine
+        .run(
+            &Request::LibraryReport {
+                folder: row.folder.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    let report = sp_app::model::library::report_from(&answer, row)
+        .unwrap_or_else(|why| panic!("{why}: {answer}"));
+    assert!(
+        report.totals.starts_with(&format!(
+            "{} pages, {} scenes, ",
+            converted["pages"], row.scenes
+        )),
+        "{}",
+        report.totals
+    );
+    assert!(!report.characters.is_empty(), "{answer}");
+    let speeches: u64 = answer["characters"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["speeches"].as_u64().unwrap())
+        .sum();
+    assert_eq!(Some(speeches), answer["speeches"].as_u64());
+
     // Rename: the name kept, the book made again under it, and the next
     // listing and reopen calling the script by it.
     let renamed = engine

@@ -37,6 +37,13 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **A script's report is read from its `.fountain`** (2026-11-04), not
+  from numbers kept at convert time, so every script in the library has
+  one, including those brought in as a `.fountain` or an `.osf`, and it
+  cannot disagree with the book. A speech is a cue; a character is the
+  cue's name without its extensions, so MARA (V.O.) is MARA; words are
+  those of the dialogue lines, parentheticals left out. To reverse: keep
+  the parser's counts in source.json at convert time and read them there.
 - **Renaming a script keeps a name; its files keep the PDF's** (2026-11-03).
   The Library tab's Rename keeps the new name in the script folder's
   source.json: the row is called by it, and every book made into the folder
@@ -204,6 +211,12 @@ In order. Each is one small pull request.
   its books go by, its files untouched (`method-reader library-rename`;
   design: docs/superpowers/specs/2026-11-03-library-rename-design.md). The
   library view's planned slices are done.
+- **A script's report** (the owner's pick, 2026-11-04). Report on each
+  library row shows the script's pages, scenes, speeches and words of
+  dialogue, then each character, most speeches first: their speeches,
+  words, scenes, and the scene and page they first speak in. On the
+  command line, `method-reader library-report <folder>`. Built (design:
+  docs/superpowers/specs/2026-11-04-conversion-report-design.md).
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current
@@ -225,10 +238,6 @@ directors and anyone running a table read do this by hand today.
 **Comparing drafts.** Show what changed between two revisions of a script,
 scene by scene, instead of a page-by-page PDF diff that reflows into noise.
 Method Reader already recognises revision marks and scene boundaries.
-
-**A conversion report.** Page count, scene count, and how many lines each
-character speaks, all computed during conversion and then thrown away.
-Useful if you read scripts in volume.
 
 **A guide inside the app.** The most useful support writing this project has
 is the Send-to-Kindle setup, because Amazon silently discards documents from

@@ -318,6 +318,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E30 | `library --json` (every script in the library folder, newest first; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-02-library-view-design.md) | `library()` (`Request::Library`: the Library tab, sp-app/src/app/library.rs; a row's Open is the sample's `convert-to` from the library `.fountain`) | no | done (sp-engine/tests/library_list.rs, sp-cli/tests/cli_library_list.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, screens.rs, behaviors.rs) |
 | E31 | `library-remove <folder> --json` (one script's folder off the library, to the Trash; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-remove-design.md) | `libraryRemove(folder)` (`Request::LibraryRemove`: a Library row's Remove from library, after its question, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_remove.rs, sp-cli/tests/cli_library_remove.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 | E32 | `library-rename <folder> --json -- <name>` (the name one script goes by in the library, kept in its source.json, its book made again under it; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-rename-design.md) | `libraryRename(folder, name)` (`Request::LibraryRename`: a Library row's Rename, then Save or Return in its field, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_rename.rs, sp-cli/tests/cli_library_rename.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
+| E33 | `library-report <folder> --json` (one script's length and who speaks how much, read from its library `.fountain`; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-04-conversion-report-design.md) | `libraryReport(folder)` (`Request::LibraryReport`: a Library row's Report, the answer drawn under the row as totals and a table, sp-app/src/app/library.rs) | no | done (sp-engine/tests/library_report.rs, sp-cli/tests/cli_library_report.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 
 ### C. Convert
 
@@ -1599,3 +1600,19 @@ names the check it affects.
   so it follows. The `--json` answer's `title` and `author` are not
   filtered (JSON carries them escaped). No committed fixture holds such a
   character, so `cargo xtask parity --committed-only` is unchanged.
+- **The library-report verb (2026-11-04, branch library/report).**
+  `method-reader library-report <folder> [--json]` is new: not one of the
+  TypeScript's verbs (row E33). It checks the folder exactly as
+  `library-remove` does (`listed_script`), reads only, and counts the
+  script's library `.fountain` (title page left out): scenes as sp-fdx's
+  `is_scene` (made public; mini-slugs counted out), a speech per cue, the
+  words of its dialogue lines, and per character (the cue's name without
+  `@`, `^` or its trailing parentheticals, by sp-parser's
+  `strip_extensions`; spellings that differ only in case are one) their
+  speeches, words, scenes, and the scene and page they first speak in.
+  The first page comes from the `= pg N` markers, and before the first
+  marker it is the page before it: the rule the .fdx's scene pages
+  already used, moved into sp-fountain's pages.rs as `opening_page` so
+  both ask one copy (the .fdx's output is unchanged). Its title and pages
+  are the Library row's. The main help does not list the verb, so no help
+  row moved; its own `--help` does.

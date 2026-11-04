@@ -6,11 +6,14 @@
 //! Settings, which reopens it as Open does and lands on the Settings tab
 //! (docs/superpowers/specs/2026-11-03-library-row-settings-design.md), and
 //! Rename, a one-line field for the name the script goes by
-//! (docs/superpowers/specs/2026-11-03-library-rename-design.md). Every rule
+//! (docs/superpowers/specs/2026-11-03-library-rename-design.md), and
+//! Report, the script's length and who speaks how much, under its row
+//! (docs/superpowers/specs/2026-11-04-conversion-report-design.md). Every rule
 //! and word is in src/model/library.rs; the engine lists (`library`),
 //! remakes the book (`convert-to` from the library `.fountain`, as the
-//! sample reopens), removes (`library-remove`) and renames
-//! (`library-rename`). This draws the answers.
+//! sample reopens), removes (`library-remove`), renames
+//! (`library-rename`) and reports (`library-report`). This draws the
+//! answers.
 
 use egui::{Id, Key, Ui};
 
@@ -22,9 +25,10 @@ use crate::model::convert::Platform;
 use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
-    self as m, Listing, Row, detail, empty_line, gone_note, listing_failure, listing_from,
-    move_button, move_label, moving, name_field_label, open_label, question, question_note,
-    remove_label, removed_line, rename_label, renamed_line, renaming, row_title, save_label,
+    self as m, Listing, Report, Row, detail, empty_line, gone_note, hide_report_label,
+    listing_failure, listing_from, move_button, move_label, moving, name_field_label, open_label,
+    question, question_note, remove_label, removed_line, rename_label, renamed_line, renaming,
+    report_from, report_label, report_table_label, reporting, row_title, save_label,
     settings_label,
 };
 use crate::theme::{self, size};
@@ -52,6 +56,13 @@ pub struct State {
     pub renaming: Option<String>,
     /// The rename field has just opened: the keyboard goes to it.
     focus_field: bool,
+    /// The script whose report is showing (or being read), by folder: one
+    /// at a time.
+    pub report_for: Option<String>,
+    /// Its report, or why there is none; `None` while it is being read.
+    pub report: Option<Result<Report, String>>,
+    /// Each report ask's number: only the latest one's answer is drawn.
+    report_asks: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -63,6 +74,8 @@ pub enum Purpose {
     Remove(Box<Row>),
     /// The row, and the name it was sent (empty: cleared).
     Rename(Box<Row>, String),
+    /// The row whose report was asked for, and which ask it was.
+    Report(Box<Row>, u64),
 }
 
 /// The tab is showing: the folder may have changed since, so ask again.
@@ -113,6 +126,31 @@ fn rename(app: &mut App, row: Row) {
     );
 }
 
+/// Report: one `library-report` for the row's folder, its answer shown
+/// under the row.
+fn report(app: &mut App, row: Row) {
+    let s = &mut app.library;
+    s.report_asks += 1;
+    s.report_for = Some(row.folder.clone());
+    s.report = None;
+    let ask = s.report_asks;
+    app.call(
+        Request::LibraryReport {
+            folder: row.folder.clone(),
+        },
+        AppPurpose::Library(Purpose::Report(Box::new(row), ask)),
+    );
+}
+
+/// Close the report, if it is `folder`'s (any, for `None`).
+fn close_report(app: &mut App, folder: Option<&str>) {
+    let s = &mut app.library;
+    if folder.is_none() || s.report_for.as_deref() == folder {
+        s.report_for = None;
+        s.report = None;
+    }
+}
+
 /// Whether nothing is going to the Trash, and nothing is being renamed,
 /// right now.
 pub fn idle(app: &App) -> bool {
@@ -122,7 +160,14 @@ pub fn idle(app: &App) -> bool {
 pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
     let answer = App::answer_or(&reply);
     match purpose {
+        Purpose::Report(row, ask) => {
+            if ask != app.library.report_asks {
+                return;
+            }
+            app.library.report = Some(report_from(&answer, &row));
+        }
         Purpose::Remove(row) => {
+            close_report(app, Some(&row.folder));
             app.library.removing = None;
             app.library.said = Some(removed_line(&answer, &row, windows(app)));
             app.restore_focus = true;
@@ -132,6 +177,8 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.library.renaming = None;
             let (line, bad) = renamed_line(&answer, &row, &name);
             if !bad {
+                // Its report carried the old name.
+                close_report(app, Some(&row.folder));
                 app.library.editing = None;
                 app.restore_focus = true;
                 // The script open is this one: it keeps its place, called
@@ -165,6 +212,10 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     }
                     if gone(&s.editing) {
                         s.editing = None;
+                    }
+                    if gone(&s.report_for) {
+                        s.report_for = None;
+                        s.report = None;
                     }
                     s.listing = Some(listing);
                     s.fault = None;
@@ -229,7 +280,9 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     let can_remove = !app.convert.converting && idle(app);
     let asking = app.library.confirm.as_deref() == Some(row.folder.as_str());
     let editing = app.library.editing.as_deref() == Some(row.folder.as_str());
+    let reporting_this = app.library.report_for.as_deref() == this;
     let mut open = None;
+    let mut facts = None;
     let mut tune = None;
     let mut ask = None;
     let mut name = None;
@@ -251,6 +304,16 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
                 ui.ctx()
                     .accesskit_node_builder(b.id, |n| n.set_label(label));
                 tune = Some((b.id, b.clicked()));
+                let (word, label) = if reporting_this {
+                    (m::HIDE_REPORT, hide_report_label(row))
+                } else {
+                    (m::REPORT, report_label(row))
+                };
+                let id = Id::unique(("library-report", row.folder.as_str()));
+                let b = widgets::button_id(ui, &t, Look::Quiet, word, !going, id);
+                ui.ctx()
+                    .accesskit_node_builder(b.id, |n| n.set_label(label));
+                facts = Some((b.id, b.clicked()));
                 if !editing {
                     let id = Id::unique(("library-rename", row.folder.as_str()));
                     let b = widgets::button_id(ui, &t, Look::Quiet, m::RENAME, can_remove, id);
@@ -292,6 +355,17 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
             return;
         }
     }
+    if let Some((id, clicked)) = facts {
+        app.stop(id, !going);
+        if clicked && !going {
+            if reporting_this {
+                close_report(app, None);
+                app.restore_focus = true;
+            } else {
+                report(app, row.clone());
+            }
+        }
+    }
     if let Some((id, clicked)) = name {
         app.stop(id, can_remove);
         if clicked && can_remove {
@@ -319,6 +393,54 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     if editing {
         name_field(app, ui, row);
     }
+    if app.library.report_for.as_deref() == this {
+        report_view(app, ui, row);
+    }
+}
+
+/// The report, under its script: a line of totals, then who speaks, most
+/// first, as a table.
+fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
+    let t = app.tokens();
+    ui.add_space(layout::SPACE[2]);
+    let report = match app.library.report.clone() {
+        None => {
+            widgets::caption(ui, &t, &reporting(row), false);
+            return;
+        }
+        Some(Err(why)) => {
+            widgets::prose(ui, &t, &why);
+            return;
+        }
+        Some(Ok(report)) => report,
+    };
+    widgets::text(ui, &report.totals, theme::chrome(size::LABEL), t.ink_muted);
+    if report.characters.is_empty() {
+        return;
+    }
+    ui.add_space(layout::SPACE[2]);
+    let grid = egui::Grid::new(("library-report-table", row.folder.as_str()))
+        .num_columns(m::REPORT_COLUMNS.len())
+        .spacing([layout::SPACE[4], layout::SPACE[1]])
+        .show(ui, |ui| {
+            for heading in m::REPORT_COLUMNS {
+                widgets::text(ui, heading, theme::chrome_strong(size::LABEL), t.ink);
+            }
+            ui.end_row();
+            for c in &report.characters {
+                widgets::text(ui, &c.name, theme::chrome(size::LABEL), t.ink);
+                for cell in [&c.speeches, &c.words, &c.scenes, &c.first] {
+                    widgets::text(ui, cell, theme::chrome(size::LABEL), t.ink_muted);
+                }
+                ui.end_row();
+            }
+        });
+    let label = report_table_label(row);
+    ui.ctx().accesskit_node_builder(grid.response.id, |n| {
+        n.set_role(egui::accesskit::Role::Table);
+        n.set_label(label);
+    });
+    ui.add_space(layout::SPACE[2]);
 }
 
 /// The rename field, under its script: the name it goes by now, Save and

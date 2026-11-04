@@ -584,3 +584,17 @@ fn a_shot_drawn_for_real_is_the_windows_size_at_two_pixels_a_point() {
         "the drop well drew differently twice"
     );
 }
+
+/// A script's report reads only, so a picture of it may ask for one, of a
+/// script inside the scratch library and of no other.
+#[test]
+fn it_reports_only_scripts_inside_the_scratch_library() {
+    let inside_lib = Request::LibraryReport {
+        folder: format!("{LIB}/Field Station"),
+    };
+    assert_eq!(ask(inside_lib), Verdict::Run);
+    let outside = Request::LibraryReport {
+        folder: "/Users/someone/Method Reader/Field Station".into(),
+    };
+    assert_eq!(ask(outside), Verdict::Refuse);
+}

@@ -28,7 +28,7 @@ mod js;
 
 use sp_model::{Token, TokenType};
 
-use sp_fountain::{is_mini_slug, page_marker_label, strip_notes};
+use sp_fountain::{is_mini_slug, opening_page, page_marker_label, strip_notes};
 
 /// The FinalDraft root's Version attribute. ONE constant, because the
 /// owner's Final Draft is an older licence and this may have to come down:
@@ -349,8 +349,9 @@ pub struct SceneMeasure {
 
 /// True for a token that becomes a Scene Heading paragraph (and so carries
 /// SceneProperties): a scene heading that is not a mini-slug, which is a
-/// Shot.
-fn is_scene(t: &Token) -> bool {
+/// Shot. The one definition of a scene: the library's count and a
+/// script's report (sp-engine) ask this too.
+pub fn is_scene(t: &Token) -> bool {
     t.kind == TokenType::SceneHeading && !is_mini_slug(t) && !t.is_title()
 }
 
@@ -400,10 +401,7 @@ fn marker_pages(tokens: &[Token]) -> Vec<Option<String>> {
             .then(|| page_marker_label(t.text_or_empty()))
             .flatten()
     }
-    let mut page: Option<String> = tokens.iter().find_map(label_of).and_then(|first| {
-        let n: i64 = first.parse().ok()?;
-        (n > 1).then(|| (n - 1).to_string())
-    });
+    let mut page: Option<String> = opening_page(tokens);
     let mut out = Vec::new();
     for t in tokens {
         if let Some(label) = label_of(t) {

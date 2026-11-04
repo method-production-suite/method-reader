@@ -514,3 +514,22 @@ Options:
   --json                 machine-readable result on stdout (for the app)
   -h, --help             show this help
 "#;
+
+pub const LIBRARY_REPORT_USAGE: &str = r#"method-reader library-report: how long one script in the library is, and who speaks how much
+
+Usage:
+  method-reader library-report <folder> [--json]
+
+<folder> must be a script's own folder directly inside the library, as
+`method-reader library` lists it, checked as library-remove checks it. The
+report is read from its .fountain, as its book is made: its pages (as the
+library lists them), its scenes (secondary headings counted out), its
+speeches and the words of their dialogue, then each character, most
+speeches first: their speeches, words, the scenes they speak in, and the
+scene and page they first speak in. A character is a cue's name without
+its extensions, so MARA (V.O.) is MARA. Reads only.
+
+Options:
+  --json                 machine-readable result on stdout (for the app)
+  -h, --help             show this help
+"#;

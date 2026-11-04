@@ -44,6 +44,7 @@ pub enum Call {
     Library,
     LibraryRemove,
     LibraryRename,
+    LibraryReport,
 }
 
 pub fn counts_toward_busy(call: Call) -> bool {
@@ -58,6 +59,7 @@ pub fn counts_toward_busy(call: Call) -> bool {
             | Call::Reveal
             | Call::Shape
             | Call::Library
+            | Call::LibraryReport
     )
 }
 

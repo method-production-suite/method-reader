@@ -4,7 +4,8 @@
 //! row's Open is asked and answered, and the question and answer of its
 //! Remove from library (docs/superpowers/specs/2026-11-03-library-remove-design.md),
 //! and its Settings (docs/superpowers/specs/2026-11-03-library-row-settings-design.md),
-//! and its Rename (docs/superpowers/specs/2026-11-03-library-rename-design.md).
+//! and its Rename (docs/superpowers/specs/2026-11-03-library-rename-design.md),
+//! and its Report (docs/superpowers/specs/2026-11-04-conversion-report-design.md).
 //! Every word about the Trash takes the platform: Windows calls it the
 //! Recycle Bin ([`bin_name`]). No toolkit in it; the drawing is
 //! src/app/library.rs.
@@ -352,6 +353,129 @@ pub fn reopened(answer: &Value, row: &Row) -> Value {
     answer
 }
 
+// ---------------------------------------------------------------- report
+
+/// The row's Report button, and what it says while its report is showing.
+pub const REPORT: &str = "Report";
+pub const HIDE_REPORT: &str = "Hide report";
+/// The report table's column headings.
+pub const REPORT_COLUMNS: [&str; 5] = ["Character", "Speeches", "Words", "Scenes", "First speaks"];
+/// What a report says when its answer says nothing usable.
+pub const NOT_REPORTED: &str = "The report could not be made, and nothing said why.";
+
+/// One character's line of a report, in words.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CharacterLine {
+    pub name: String,
+    pub speeches: String,
+    pub words: String,
+    pub scenes: String,
+    /// "Scene 1, page 2", "Scene 3", or "Before the first scene".
+    pub first: String,
+}
+
+/// `library-report`'s answer, in words.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Report {
+    /// The line of totals, as the command line's second line says it.
+    pub totals: String,
+    pub characters: Vec<CharacterLine>,
+}
+
+/// `1,234,567`, as the command line groups it.
+pub fn grouped(n: i64) -> String {
+    let digits = n.unsigned_abs().to_string();
+    let mut out = String::new();
+    if n < 0 {
+        out.push('-');
+    }
+    for (i, c) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
+}
+
+fn counted(n: i64, one: &str, many: &str) -> String {
+    format!("{} {}", grouped(n), if n == 1 { one } else { many })
+}
+
+fn character_line(v: &Value) -> Option<CharacterLine> {
+    let n = |key: &str| v.get(key)?.as_i64();
+    let first_scene = optional(v, "firstScene", Value::as_i64)?;
+    let first_page = optional(v, "firstPage", |x| x.as_str().map(str::to_string))?;
+    let first = match (first_scene, first_page) {
+        (Some(s), Some(p)) => format!("Scene {s}, page {p}"),
+        (Some(s), None) => format!("Scene {s}"),
+        (None, Some(p)) => format!("Before the first scene, page {p}"),
+        (None, None) => "Before the first scene".to_string(),
+    };
+    Some(CharacterLine {
+        name: text_at(v, "name")?,
+        speeches: grouped(n("speeches")?),
+        words: grouped(n("words")?),
+        scenes: grouped(n("scenes")?),
+        first,
+    })
+}
+
+/// What `library-report` answered for `row`: its report, or the line that
+/// says why there is none (the engine's own sentence for a refusal, ours
+/// when the answer does not name the row's folder or a field is broken).
+pub fn report_from(answer: &Value, row: &Row) -> Result<Report, String> {
+    if !ok(answer) {
+        return Err(error_message(answer).unwrap_or_else(|| NOT_REPORTED.to_string()));
+    }
+    let read = || {
+        if text_at(answer, "folder").as_deref() != Some(row.folder.as_str()) {
+            return None;
+        }
+        let n = |key: &str| answer.get(key)?.as_i64();
+        let mut totals = Vec::new();
+        if let Some(pages) = optional(answer, "pages", Value::as_i64)? {
+            totals.push(counted(pages, "page", "pages"));
+        }
+        totals.push(counted(n("scenes")?, "scene", "scenes"));
+        totals.push(counted(n("speeches")?, "speech", "speeches"));
+        totals.push(format!(
+            "{} of dialogue",
+            counted(n("words")?, "word", "words")
+        ));
+        Some(Report {
+            totals: totals.join(", "),
+            characters: answer
+                .get("characters")?
+                .as_array()?
+                .iter()
+                .map(character_line)
+                .collect::<Option<_>>()?,
+        })
+    };
+    read().ok_or_else(|| NOT_REPORTED.to_string())
+}
+
+/// The Report button's name for a screen reader.
+pub fn report_label(row: &Row) -> String {
+    format!("Report for {}", row_title(row))
+}
+
+/// The Hide report button's name for a screen reader.
+pub fn hide_report_label(row: &Row) -> String {
+    format!("Hide the report for {}", row_title(row))
+}
+
+/// The report table's name for a screen reader.
+pub fn report_table_label(row: &Row) -> String {
+    format!("Who speaks in {}", row_title(row))
+}
+
+/// What the row says while its report is being read.
+pub fn reporting(row: &Row) -> String {
+    format!("Reading the report for {}…", row_title(row))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -664,5 +788,72 @@ mod tests {
         let shown = reopened(&converted, &rows[1]);
         assert_eq!(shown["title"], "Field Station");
         assert!(shown.get("pages").is_none());
+    }
+
+    fn the_row() -> Row {
+        listing_from(&answer()).unwrap().rows.remove(0)
+    }
+
+    #[test]
+    fn a_report_reads_as_the_command_line_says_it() {
+        let row = the_row();
+        let answer = json!({"ok": true, "folder": row.folder, "title": "FIELD STATION",
+        "pages": 18, "scenes": 1, "speeches": 1204, "words": 1,
+        "characters": [
+            {"name": "MARA", "speeches": 1200, "words": 1, "scenes": 1,
+                "firstScene": 1, "firstPage": "2"},
+            {"name": "OTTO", "speeches": 3, "words": 0, "scenes": 1,
+                "firstScene": 1, "firstPage": null},
+            {"name": "RADIO", "speeches": 1, "words": 0, "scenes": 0,
+                "firstScene": null, "firstPage": "1"},
+            {"name": "VOICE", "speeches": 0, "words": 0, "scenes": 0,
+                "firstScene": null, "firstPage": null},
+        ]});
+        let report = report_from(&answer, &row).unwrap();
+        assert_eq!(
+            report.totals,
+            "18 pages, 1 scene, 1,204 speeches, 1 word of dialogue"
+        );
+        let first: Vec<&str> = report.characters.iter().map(|c| c.first.as_str()).collect();
+        assert_eq!(
+            first,
+            [
+                "Scene 1, page 2",
+                "Scene 1",
+                "Before the first scene, page 1",
+                "Before the first scene"
+            ]
+        );
+        assert_eq!(report.characters[0].speeches, "1,200");
+
+        let mut no_pages = answer.clone();
+        no_pages["pages"] = Value::Null;
+        assert!(
+            report_from(&no_pages, &row)
+                .unwrap()
+                .totals
+                .starts_with("1 scene, ")
+        );
+    }
+
+    #[test]
+    fn a_report_that_is_not_this_row_s_or_is_broken_says_so() {
+        let row = the_row();
+        let refused = json!({"ok": false, "error": {"code": "not-a-script", "message": "No."}});
+        assert_eq!(report_from(&refused, &row), Err("No.".to_string()));
+        let other = json!({"ok": true, "folder": "/elsewhere", "scenes": 1, "speeches": 0,
+            "words": 0, "characters": []});
+        assert_eq!(report_from(&other, &row), Err(NOT_REPORTED.to_string()));
+        let broken = json!({"ok": true, "folder": row.folder, "scenes": 1, "speeches": 0,
+            "words": 0, "characters": [{"name": "MARA"}]});
+        assert_eq!(report_from(&broken, &row), Err(NOT_REPORTED.to_string()));
+    }
+
+    #[test]
+    fn numbers_group_by_thousands() {
+        assert_eq!(grouped(0), "0");
+        assert_eq!(grouped(999), "999");
+        assert_eq!(grouped(1000), "1,000");
+        assert_eq!(grouped(1_234_567), "1,234,567");
     }
 }
