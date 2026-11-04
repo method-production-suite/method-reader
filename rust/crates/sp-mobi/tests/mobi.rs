@@ -1010,3 +1010,35 @@ fn a_cover_index_the_pictures_cannot_answer_is_a_caller_bug() {
     );
     assert!(build_cover(Some(2), cover_pictures()).is_ok());
 }
+
+// ── Characters XML cannot carry ──
+// The MOBI's markup drops them as the EPUB's does, so a title or a line
+// holding one reads the same in either book.
+
+#[test]
+fn control_characters_never_reach_the_markup() {
+    let src = "INT. LIGHT\u{1}HOUSE - NIGHT\n\nA lamp\u{8} turns.\n\nMARA\u{B}\nWho is \u{FFFE}there\u{FFFF}?\n";
+    // Not one of the generator's sources: tokenized here, as fountain-js
+    // was never asked about it.
+    let html = tokens_to_mobi_html(
+        &sp_fountain::tokenize(src).expect("the source tokenizes"),
+        &meta("The Lamp\u{1} Keeper", Some("Pat\u{1F} Doe")),
+        &OPTS,
+        &MobiArt::default(),
+    );
+    assert!(
+        !html
+            .chars()
+            .any(|c| matches!(c, '\u{0}'..='\u{8}' | '\u{B}' | '\u{C}' | '\u{E}'..='\u{1F}' | '\u{FFFE}' | '\u{FFFF}')),
+        "{html}"
+    );
+    for kept in [
+        "The Lamp Keeper",
+        "Pat Doe",
+        "LIGHTHOUSE",
+        "A lamp turns.",
+        "Who is there?",
+    ] {
+        assert!(html.contains(kept), "the MOBI lost {kept:?}");
+    }
+}

@@ -109,10 +109,22 @@ pub const DEFAULT_MAX_FILE_BYTES: usize = 250_000;
 const DUAL_SEQUENTIAL_LINE_THRESHOLD: usize = 12;
 const EST_CHARS_PER_DUAL_LINE: usize = 30;
 
-/// `escapeXml(s)`.
+/// XML 1.0's Char production, inverted: what may never appear in a
+/// document, escaped or not. One such character anywhere stops the whole
+/// book opening, and a title from `--title` or a title page, or text a PDF
+/// painted, can hold one; sp-fdx and sp-osf drop the same set.
+fn is_forbidden_xml(c: char) -> bool {
+    matches!(
+        c,
+        '\u{0}'..='\u{8}' | '\u{B}' | '\u{C}' | '\u{E}'..='\u{1F}' | '\u{FFFE}' | '\u{FFFF}'
+    )
+}
+
+/// `escapeXml(s)`, dropping what XML cannot carry (the TypeScript kept it,
+/// and the book it made then failed to open).
 pub fn escape_xml(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
-    for c in s.chars() {
+    for c in s.chars().filter(|&c| !is_forbidden_xml(c)) {
         match c {
             '&' => out.push_str("&amp;"),
             '<' => out.push_str("&lt;"),
