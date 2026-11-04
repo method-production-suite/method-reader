@@ -518,6 +518,13 @@ pub fn kept_name_refusal(name: &str) -> Option<String> {
     if name.chars().any(is_line_break) {
         return Some("a script's name is one line: it cannot hold a line break".into());
     }
+    // A book's title is XML, and XML 1.0 cannot carry these even escaped.
+    if name
+        .chars()
+        .any(|c| c.is_control() || matches!(c, '\u{FFFE}' | '\u{FFFF}'))
+    {
+        return Some("a script's name cannot hold a control character, such as a tab".into());
+    }
     let chars = name.chars().count();
     if chars > MAX_NAME_CHARS {
         return Some(format!(

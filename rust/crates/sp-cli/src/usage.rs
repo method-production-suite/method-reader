@@ -490,8 +490,8 @@ Title. Nothing is renamed on disk: the folder and its files keep the name of the
 file the script was converted from, and its .fountain is not edited.
 
 The name is trimmed; an empty name ("") goes back to the title page's
-Title. A name longer than 200 characters, or holding a line break, is
-refused. A name that starts with a dash goes after --.
+Title. A name longer than 200 characters, or holding a line break or
+another control character (a tab, say), is refused. A name that starts with a dash goes after --.
 
 Options:
   --json                 machine-readable result on stdout (for the app)
