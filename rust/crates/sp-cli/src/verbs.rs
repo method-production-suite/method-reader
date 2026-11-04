@@ -15,6 +15,7 @@ use sp_engine::commands::kfx::{
 use sp_engine::commands::library::{LibraryScript, library_command};
 use sp_engine::commands::library_remove::{library_remove_command, moved_line};
 use sp_engine::commands::library_rename::{library_rename_command, renamed_line};
+use sp_engine::commands::library_report::{library_report_command, report_lines};
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -36,7 +37,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 19] = [
+pub const VERBS: [&str; 20] = [
     "devices",
     "send",
     "settings",
@@ -56,6 +57,7 @@ pub const VERBS: [&str; 19] = [
     "library",
     "library-remove",
     "library-rename",
+    "library-report",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -164,6 +166,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "library" => LIBRARY_USAGE,
         "library-remove" => LIBRARY_REMOVE_USAGE,
         "library-rename" => LIBRARY_RENAME_USAGE,
+        "library-report" => LIBRARY_REPORT_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -620,6 +623,26 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&renamed));
             } else {
                 io.say(&renamed_line(&renamed));
+            }
+            Ok(())
+        }
+        "library-report" => {
+            if pos.len() != 1 {
+                return Err(Stop::usage(
+                    "expected exactly one script folder in the library (see --help)",
+                ));
+            }
+            let report = library_report_command(
+                host_platform(),
+                &Env::process(),
+                Some(&settings_file()),
+                &pos[0],
+            )
+            .map_err(engine)?;
+            if io.json {
+                io.ok(value(&report));
+            } else {
+                io.say(&report_lines(&report));
             }
             Ok(())
         }
