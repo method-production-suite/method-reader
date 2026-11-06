@@ -19,6 +19,8 @@ all-features = true
 # Every advisory is an error unless it is listed here, with its reason.
 # The first three were known at the cutover (2026-10-12). None is a
 # vulnerability; each says a crate is no longer maintained.
+# `unsound` says so out loud: by default cargo-deny reports those only for a direct dependency.
+unsound = "all"
 ignore = [
   # proc-macro-error 1.0.4: a build-time macro helper inside glib-macros,
   # which reaches the lock file only through GTK, through muda, which
@@ -41,6 +43,11 @@ ignore = [
   { id = "RUSTSEC-2026-0370", reason = "zvariant: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
   { id = "RUSTSEC-2026-0371", reason = "zbus_names: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
   { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: folded into zbus 6; reached through AccessKit's Linux bridge on zbus 5" },
+  # glib 0.18.5: unsound in one iterator. It reaches the lock file only through GTK,
+  # through muda, which sp-app builds for macOS alone (where muda does not use GTK). Our
+  # crates don't use it directly. Surfaced when `unsound` went to "all". Goes when muda
+  # moves off gtk-rs 0.18.
+  { id = "RUSTSEC-2024-0429", reason = "glib VariantStrIter: via muda's Linux-only GTK, which sp-app never builds on Linux; no direct use in ours" },
 ]
 
 [licenses]
