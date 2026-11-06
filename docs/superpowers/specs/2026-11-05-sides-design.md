@@ -16,8 +16,10 @@ every book is and with the scenes the character is not in left out. The
 `.fountain`, the script's book and its settings are not touched.
 
 **A character is in a scene** when they have a cue in it, or when an action
-line in it names them as a whole word, in capitals or capitalized (MARA or
-Mara, for the cue MARA). An extra scene costs a page turn and a missing one
+line in it names them as a whole word with at least one capital (MARA or
+Mara for the cue MARA, McCoy for MCCOY, Jean-Luc for JEAN-LUC, a curly
+apostrophe reading as a straight one). All in lower case it is an ordinary
+word: the wren on the sill is not WREN. An extra scene costs a page turn and a missing one
 costs an actor their entrance, so a mention counts. Dialogue that mentions
 them does not: that is someone talking about them. Built on that
 recommendation and marked so in the roadmap. To reverse: count cues alone.

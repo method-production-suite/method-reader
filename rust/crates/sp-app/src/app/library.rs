@@ -141,6 +141,7 @@ fn report(app: &mut App, row: Row) {
     s.report_asks += 1;
     s.report_for = Some(row.folder.clone());
     s.report = None;
+    s.sides_file = None;
     let ask = s.report_asks;
     app.call(
         Request::LibraryReport {

@@ -63,40 +63,55 @@ pub struct Sides {
     pub of_scenes: u32,
 }
 
-/// Whether `text` holds `form` as a whole word.
-fn holds_word(text: &str, form: &str) -> bool {
-    text.match_indices(form).any(|(i, m)| {
-        let before = text[..i].chars().next_back();
-        let after = text[i + m.len()..].chars().next();
-        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
-    })
+/// A character as a name is compared: in capitals, with a curly apostrophe
+/// read as a straight one.
+fn folded(c: char) -> impl Iterator<Item = char> {
+    (if c == '\u{2019}' { '\'' } else { c }).to_uppercase()
 }
 
-/// The spellings an action line names a character by: as the cue spells
-/// them, in capitals, and capitalized (MARA, Mara).
-fn spellings(name: &str) -> Vec<String> {
-    let capitalized = name
-        .split(' ')
-        .map(|word| {
-            let mut chars = word.chars();
-            chars.next().map_or_else(String::new, |first| {
-                first
-                    .to_uppercase()
-                    .chain(chars.flat_map(char::to_lowercase))
-                    .collect()
-            })
+/// How many bytes of `text` spell `key` (already folded) from its start.
+fn spelled_len(text: &str, key: &str) -> Option<usize> {
+    let mut want = key.chars();
+    for (i, c) in text.char_indices() {
+        for got in folded(c) {
+            if want.next() != Some(got) {
+                return None;
+            }
+        }
+        if want.as_str().is_empty() {
+            return Some(i + c.len_utf8());
+        }
+    }
+    None
+}
+
+/// Whether `text` names the character as a whole word: spelled as the cue
+/// spells it, or in any capitals so long as it has one (Mara, McCoy,
+/// Jean-Luc, van der Berg). All in lower case it is an ordinary word: the
+/// wren on the sill is not WREN.
+fn names(text: &str, name: &str) -> bool {
+    let key: String = name.chars().flat_map(folded).collect();
+    !key.is_empty()
+        && text.char_indices().any(|(i, _)| {
+            let Some(len) = spelled_len(&text[i..], &key) else {
+                return false;
+            };
+            let word = &text[i..i + len];
+            !text[..i]
+                .chars()
+                .next_back()
+                .is_some_and(char::is_alphanumeric)
+                && !text[i + len..]
+                    .chars()
+                    .next()
+                    .is_some_and(char::is_alphanumeric)
+                && (word.chars().any(char::is_uppercase) || word == name)
         })
-        .collect::<Vec<_>>()
-        .join(" ");
-    let mut forms = vec![name.to_owned(), name.to_uppercase(), capitalized];
-    forms.sort();
-    forms.dedup();
-    forms
 }
 
 /// The character `name` is in these tokens: a cue of theirs, or an action
 /// line naming them. Dialogue that mentions them does not count.
-fn is_in(section: &[&Token], key: &str, forms: &[String]) -> bool {
+fn is_in(section: &[&Token], name: &str, key: &str) -> bool {
     section.iter().any(|t| match t.kind {
         TokenType::Character => cue_name(t.text_or_empty()).to_uppercase() == key,
         TokenType::Action => {
@@ -104,7 +119,7 @@ fn is_in(section: &[&Token], key: &str, forms: &[String]) -> bool {
                 .into_iter()
                 .map(|r| r.text)
                 .collect();
-            forms.iter().any(|form| holds_word(&text, form))
+            names(&text, name)
         }
         _ => false,
     })
@@ -116,7 +131,6 @@ fn is_in(section: &[&Token], key: &str, forms: &[String]) -> bool {
 /// again just before its heading.
 pub fn sides_of(tokens: &[Token], name: &str) -> Sides {
     let key = name.to_uppercase();
-    let forms = spellings(name);
     let mut sides = Sides {
         tokens: tokens.iter().filter(|t| t.is_title()).cloned().collect(),
         ..Sides::default()
@@ -133,7 +147,7 @@ pub fn sides_of(tokens: &[Token], name: &str) -> Sides {
     }
     let mut dropped_marker: Option<&Token> = None;
     for (i, section) in sections.iter().enumerate() {
-        if is_in(section, &key, &forms) {
+        if is_in(section, name, &key) {
             sides.tokens.extend(dropped_marker.take().cloned());
             sides.tokens.extend(section.iter().map(|t| (*t).clone()));
             sides.scenes += u32::from(i > 0);
