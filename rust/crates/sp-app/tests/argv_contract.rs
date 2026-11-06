@@ -438,6 +438,26 @@ fn the_library_rename_request_is_the_cli_s_library_rename_verb() {
     }
 }
 
+/// Sides (docs/superpowers/specs/2026-11-05-sides-design.md) are the CLI's
+/// `library-sides` verb, a name that starts with a dash safe after `--`; it
+/// writes a book, so the busy count waits on it.
+/// The CLI's side is sp-cli/tests/cli_library_sides.rs.
+#[test]
+fn the_library_sides_request_is_the_cli_s_library_sides_verb() {
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let request = Request::LibrarySides {
+        folder: folder.into(),
+        name: "MARA".into(),
+    };
+    assert_eq!(
+        request.argv(),
+        ["library-sides", folder, "--json", "--", "MARA"]
+    );
+    assert_eq!(request.kind(), "library-sides");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(counts_toward_busy(request.call()), "it writes a book");
+}
+
 /// Report (docs/superpowers/specs/2026-11-04-conversion-report-design.md)
 /// is the CLI's `library-report` verb for one folder; it reads only, so it
 /// is not work the busy count waits on. The CLI's side is

@@ -238,6 +238,46 @@ struct Books {
     preview_html: String,
 }
 
+/// The author a title page names.
+pub fn detected_author(tokens: &[Token]) -> Option<String> {
+    first_text(tokens, &["author", "authors"]).flatten()
+}
+
+/// The EPUB of `tokens`, which need not be a whole script (library-sides).
+/// `identity` is the text its identifier is taken from: the book's identity
+/// is its CONTENT, not the moment of rendering.
+pub fn epub_of_tokens(
+    tokens: &[Token],
+    identity: &str,
+    title: &str,
+    author: Option<&str>,
+    format: &FormatOptions,
+    images: &[BookImage],
+) -> Result<Vec<u8>, ConvertError> {
+    let meta = BookMeta {
+        title: title.to_owned(),
+        author: author.map(str::to_owned),
+        language: None,
+        identifier: Some(content_identifier(identity)),
+    };
+    let names: HashSet<String> = images.iter().map(|i| i.name.clone()).collect();
+    let body = tokens_to_body(
+        tokens,
+        &BodyOptions {
+            format: *format,
+            images: names,
+            ..BodyOptions::default()
+        },
+    );
+    Ok(build_epub(
+        &meta,
+        &body,
+        format,
+        images,
+        source_date_epoch(),
+    )?)
+}
+
 /// `renderBooks`: the books for one `.fountain`, with the pictures its
 /// notes may show (see convert.ts for why one array feeds every renderer).
 fn render_books(
@@ -250,23 +290,7 @@ fn render_books(
     mobi_pictures: bool,
 ) -> Result<Books, ConvertError> {
     let tokens = sp_fountain::tokenize(fountain_text)?;
-    // The book's identity is its CONTENT, not the moment of rendering.
-    let meta = BookMeta {
-        title: title.to_owned(),
-        author: author.map(str::to_owned),
-        language: None,
-        identifier: Some(content_identifier(fountain_text)),
-    };
-    let names: HashSet<String> = images.iter().map(|i| i.name.clone()).collect();
-    let body = tokens_to_body(
-        &tokens,
-        &BodyOptions {
-            format: *format,
-            images: names,
-            ..BodyOptions::default()
-        },
-    );
-    let epub = build_epub(&meta, &body, format, images, source_date_epoch())?;
+    let epub = epub_of_tokens(&tokens, fountain_text, title, author, format, images)?;
     // First bytes win for a name passed twice, as they do in build_epub.
     let mut by_name: Vec<(String, Vec<u8>)> = Vec::new();
     for img in images {
@@ -579,7 +603,7 @@ pub fn convert_fountain(
         title: first_text(&tokens, &["title"])
             .flatten()
             .map(|t| strip_tags(&t)),
-        author: first_text(&tokens, &["author", "authors"]).flatten(),
+        author: detected_author(&tokens),
     };
     let format = opts.format;
     let (title, author) = resolve_meta(&detected, &opts);

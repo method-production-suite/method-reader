@@ -515,6 +515,27 @@ Options:
   -h, --help             show this help
 "#;
 
+pub const LIBRARY_SIDES_USAGE: &str = r#"method-reader library-sides: one character's scenes as a book of their own
+
+Usage:
+  method-reader library-sides <folder> <character> [--json]
+
+<folder> must be a script's own folder directly inside the library, as
+`method-reader library` lists it, checked as library-remove checks it.
+<character> is a name `method-reader library-report` lists; case and
+extensions do not matter.
+
+The book holds the title page and each scene the character is in: one with
+a cue of theirs, or an action line naming them, in capitals or capitalized.
+It is made from the script's .fountain with the script's own settings, into
+<folder>/sides/<name> sides - <character>.epub, again each time. Nothing else
+is touched.
+
+Options:
+  --json   One JSON line: folder, name, title, scenes, ofScenes, epub.
+  --help   This.
+"#;
+
 pub const LIBRARY_REPORT_USAGE: &str = r#"method-reader library-report: how long one script in the library is, and who speaks how much
 
 Usage:

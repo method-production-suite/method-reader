@@ -21,15 +21,15 @@ use super::panel::way_row;
 use super::widgets::{self, Look};
 use super::{App, Purpose as AppPurpose};
 use crate::engine::{Reply, Request};
-use crate::model::convert::Platform;
+use crate::model::convert::{Platform, reveal_failure_message};
 use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
     self as m, Listing, Report, Row, detail, empty_line, gone_note, hide_report_label,
-    listing_failure, listing_from, move_button, move_label, moving, name_field_label, open_label,
-    question, question_note, remove_label, removed_line, rename_label, renamed_line, renaming,
-    report_from, report_label, report_table_label, reporting, row_title, save_label,
-    settings_label,
+    listing_failure, listing_from, make_sides_label, making_sides, move_button, move_label, moving,
+    name_field_label, open_label, question, question_note, remove_label, removed_line,
+    rename_label, renamed_line, renaming, report_from, report_label, report_table_label, reporting,
+    row_title, save_label, settings_label, sides_from,
 };
 use crate::theme::{self, size};
 
@@ -63,6 +63,10 @@ pub struct State {
     pub report: Option<Result<Report, String>>,
     /// Each report ask's number: only the latest one's answer is drawn.
     report_asks: u64,
+    /// The character whose sides are being made now.
+    pub making_sides: Option<String>,
+    /// The book of the sides last made for the report showing.
+    pub sides_file: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -76,6 +80,10 @@ pub enum Purpose {
     Rename(Box<Row>, String),
     /// The row whose report was asked for, and which ask it was.
     Report(Box<Row>, u64),
+    /// The row, and the character whose sides were asked for.
+    Sides(Box<Row>, String),
+    /// The sides just made, shown in the file manager.
+    RevealSides,
 }
 
 /// The tab is showing: the folder may have changed since, so ask again.
@@ -148,13 +156,31 @@ fn close_report(app: &mut App, folder: Option<&str>) {
     if folder.is_none() || s.report_for.as_deref() == folder {
         s.report_for = None;
         s.report = None;
+        s.sides_file = None;
     }
 }
 
-/// Whether nothing is going to the Trash, and nothing is being renamed,
-/// right now.
+/// Make `name`'s sides, as the report on `row` lists them.
+fn make_sides(app: &mut App, row: Row, name: String) {
+    let s = &mut app.library;
+    s.making_sides = Some(name.clone());
+    s.sides_file = None;
+    s.said = Some((making_sides(&name), false));
+    app.call(
+        Request::LibrarySides {
+            folder: row.folder.clone(),
+            name: name.clone(),
+        },
+        AppPurpose::Library(Purpose::Sides(Box::new(row), name)),
+    );
+}
+
+/// Whether nothing is going to the Trash, being renamed or having its
+/// sides made, right now.
 pub fn idle(app: &App) -> bool {
-    app.library.removing.is_none() && app.library.renaming.is_none()
+    app.library.removing.is_none()
+        && app.library.renaming.is_none()
+        && app.library.making_sides.is_none()
 }
 
 pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
@@ -165,6 +191,23 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 return;
             }
             app.library.report = Some(report_from(&answer, &row));
+        }
+        Purpose::Sides(row, name) => {
+            app.library.making_sides = None;
+            app.library.said = Some(match sides_from(&answer, &row, &name) {
+                Ok((line, epub)) => {
+                    if app.library.report_for.as_deref() == Some(row.folder.as_str()) {
+                        app.library.sides_file = Some(epub);
+                    }
+                    (line, false)
+                }
+                Err(why) => (why, true),
+            });
+        }
+        Purpose::RevealSides => {
+            if let Some(why) = reveal_failure_message(&answer) {
+                app.library.said = Some((why, true));
+            }
         }
         Purpose::Remove(row) => {
             close_report(app, Some(&row.folder));
@@ -216,6 +259,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                     if gone(&s.report_for) {
                         s.report_for = None;
                         s.report = None;
+                        s.sides_file = None;
                     }
                     s.listing = Some(listing);
                     s.fault = None;
@@ -419,6 +463,8 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
         return;
     }
     ui.add_space(layout::SPACE[2]);
+    let live = idle(app);
+    let mut make = None;
     let grid = egui::Grid::new(("library-report-table", row.folder.as_str()))
         .num_columns(m::REPORT_COLUMNS.len())
         .spacing([layout::SPACE[4], layout::SPACE[1]])
@@ -432,6 +478,14 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
                 for cell in [&c.speeches, &c.words, &c.scenes, &c.first] {
                     widgets::text(ui, cell, theme::chrome(size::LABEL), t.ink_muted);
                 }
+                let id = Id::unique(("library-sides", row.folder.as_str(), c.name.as_str()));
+                let b = widgets::button_id(ui, &t, Look::Quiet, m::MAKE_SIDES, live, id);
+                let label = make_sides_label(&c.name);
+                ui.ctx()
+                    .accesskit_node_builder(b.id, |n| n.set_label(label));
+                if b.clicked() {
+                    make = Some(c.name.clone());
+                }
                 ui.end_row();
             }
         });
@@ -441,6 +495,19 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
         n.set_label(label);
     });
     ui.add_space(layout::SPACE[2]);
+    if let Some(epub) = app.library.sides_file.clone() {
+        let id = Id::unique(("library-sides-show", row.folder.as_str()));
+        if widgets::button_id(ui, &t, Look::Outline, m::SHOW_SIDES, true, id).clicked() {
+            app.call(
+                Request::Reveal { path: epub },
+                AppPurpose::Library(Purpose::RevealSides),
+            );
+        }
+        ui.add_space(layout::SPACE[2]);
+    }
+    if let Some(name) = make {
+        make_sides(app, row.clone(), name);
+    }
 }
 
 /// The rename field, under its script: the name it goes by now, Save and

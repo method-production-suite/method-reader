@@ -474,6 +474,26 @@ fn child_lists_the_library() {
         .sum();
     assert_eq!(Some(speeches), answer["speeches"].as_u64());
 
+    // Sides: the first speaker's scenes, a real book beside the real
+    // script, the row's script untouched.
+    let name = report.characters[0].name.clone();
+    let fountain_before = std::fs::read(&row.fountain).expect("the .fountain");
+    let answer = engine
+        .run(
+            &Request::LibrarySides {
+                folder: row.folder.clone(),
+                name: name.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    let (line, epub) = sp_app::model::library::sides_from(&answer, row, &name)
+        .unwrap_or_else(|why| panic!("{why}: {answer}"));
+    assert!(line.starts_with(&format!("Sides for {name}: ")), "{line}");
+    assert!(std::path::Path::new(&epub).is_file(), "{epub}");
+    assert_eq!(std::fs::read(&row.fountain).unwrap(), fountain_before);
+
     // Rename: the name kept, the book made again under it, and the next
     // listing and reopen calling the script by it.
     let renamed = engine
