@@ -2498,6 +2498,91 @@ fn library_report_sends_one_report_and_shows_its_totals_and_who_speaks() {
 }
 
 #[test]
+fn library_sides_makes_one_book_says_so_and_shows_the_file() {
+    let w = world();
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(h.query_by_label("Show the file").is_none());
+    h.get_by_role_and_label(Role::Button, "Make sides for MARA")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-sides"),
+        [Request::LibrarySides {
+            folder: folder.into(),
+            name: "MARA".into(),
+        }]
+    );
+    assert!(has(&h, "Sides for MARA: 9 of 11 scenes."));
+    h.get_by_role_and_label(Role::Button, "Show the file")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("reveal"),
+        [Request::Reveal {
+            path: format!("{folder}/sides/Field Station sides - MARA.epub"),
+        }]
+    );
+
+    // Hiding the report takes the button with it.
+    h.get_by_role_and_label(Role::Button, "Hide the report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(h.query_by_label("Show the file").is_none());
+}
+
+#[test]
+fn library_sides_says_why_when_there_are_none() {
+    let w = world();
+    w.engine.always(
+        "library-sides",
+        Reply::ok(json!({"ok": false, "error": {"code": "usage",
+            "message": "\"MARA\" does not speak in FIELD STATION"}})),
+    );
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Make sides for MARA")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(has(&h, "\"MARA\" does not speak in FIELD STATION"));
+    assert!(h.query_by_label("Show the file").is_none());
+}
+
+#[test]
+fn library_sides_wait_for_each_other_and_hold_the_row_while_they_are_made() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    w.engine.hold("library-sides");
+    let mut h = harness_threads(&w, Platform::Mac);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    settle(&mut h);
+    h.get_by_role_and_label(Role::Button, "Make sides for MARA")
+        .click_accesskit();
+    settle(&mut h);
+    assert!(has(&h, "Making sides for MARA…"));
+    let other = h.get_by_role_and_label(Role::Button, "Make sides for RADIO");
+    assert!(other.accesskit_node().is_disabled());
+    let rename = h.get_by_role_and_label(Role::Button, "Rename FIELD STATION");
+    assert!(rename.accesskit_node().is_disabled());
+    w.engine.release("library-sides");
+    settle(&mut h);
+    assert!(has(&h, "Sides for MARA: 9 of 11 scenes."));
+    let other = h.get_by_role_and_label(Role::Button, "Make sides for RADIO");
+    assert!(!other.accesskit_node().is_disabled());
+}
+
+#[test]
 fn library_report_says_why_when_there_is_none() {
     let w = world();
     w.engine.always(

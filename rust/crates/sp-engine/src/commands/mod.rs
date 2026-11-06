@@ -10,6 +10,7 @@ pub mod library;
 pub mod library_remove;
 pub mod library_rename;
 pub mod library_report;
+pub mod library_sides;
 pub mod routes;
 pub mod settings;
 pub mod shape;

@@ -121,6 +121,12 @@ pub enum Request {
     LibraryReport {
         folder: String,
     },
+    /// One character's scenes as a book (`library-sides`, new: not one of
+    /// app.js's).
+    LibrarySides {
+        folder: String,
+        name: String,
+    },
 }
 
 impl Request {
@@ -152,6 +158,7 @@ impl Request {
             Self::LibraryRemove { .. } => Call::LibraryRemove,
             Self::LibraryRename { .. } => Call::LibraryRename,
             Self::LibraryReport { .. } => Call::LibraryReport,
+            Self::LibrarySides { .. } => Call::LibrarySides,
         }
     }
 
@@ -310,6 +317,13 @@ impl Request {
             Self::LibraryReport { folder } => {
                 v(&[Some("library-report"), Some(folder), Some("--json")])
             }
+            Self::LibrarySides { folder, name } => v(&[
+                Some("library-sides"),
+                Some(folder),
+                Some("--json"),
+                Some("--"),
+                Some(name),
+            ]),
         }
     }
 
@@ -342,6 +356,7 @@ impl Request {
             Self::LibraryRemove { .. } => "library-remove",
             Self::LibraryRename { .. } => "library-rename",
             Self::LibraryReport { .. } => "library-report",
+            Self::LibrarySides { .. } => "library-sides",
         }
     }
 }
@@ -548,6 +563,12 @@ pub fn default_answer(request: &Request) -> Value {
                 {"name": "RADIO", "speeches": 4, "words": 6, "scenes": 0,
                     "firstScene": null, "firstPage": null},
             ],
+        }),
+        Request::LibrarySides { folder, name } => json!({
+            "ok": true, "folder": folder, "name": name,
+            "title": format!("FIELD STATION: {name} sides"),
+            "scenes": 9, "ofScenes": 11,
+            "epub": format!("{folder}/sides/Field Station sides - {name}.epub"),
         }),
     }
 }

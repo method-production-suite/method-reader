@@ -359,7 +359,20 @@ pub fn reopened(answer: &Value, row: &Row) -> Value {
 pub const REPORT: &str = "Report";
 pub const HIDE_REPORT: &str = "Hide report";
 /// The report table's column headings.
-pub const REPORT_COLUMNS: [&str; 5] = ["Character", "Speeches", "Words", "Scenes", "First speaks"];
+pub const REPORT_COLUMNS: [&str; 6] = [
+    "Character",
+    "Speeches",
+    "Words",
+    "Scenes",
+    "First speaks",
+    "Sides",
+];
+/// The button on each character's line that makes their sides.
+pub const MAKE_SIDES: &str = "Make";
+/// The button that shows the sides just made.
+pub const SHOW_SIDES: &str = "Show the file";
+/// What the status line says when an answer says nothing usable.
+pub const NOT_MADE: &str = "The sides could not be made, and nothing said why.";
 /// What a report says when its answer says nothing usable.
 pub const NOT_REPORTED: &str = "The report could not be made, and nothing said why.";
 
@@ -469,6 +482,37 @@ pub fn hide_report_label(row: &Row) -> String {
 /// The report table's name for a screen reader.
 pub fn report_table_label(row: &Row) -> String {
     format!("Who speaks in {}", row_title(row))
+}
+
+/// A character's Make button's name for a screen reader.
+pub fn make_sides_label(name: &str) -> String {
+    format!("Make sides for {name}")
+}
+
+/// The status line while a character's sides are being made.
+pub fn making_sides(name: &str) -> String {
+    format!("Making sides for {name}…")
+}
+
+/// `library-sides`'s answer: the status line, and the book when it was
+/// made for this row; otherwise why not.
+pub fn sides_from(answer: &Value, row: &Row, name: &str) -> Result<(String, String), String> {
+    if !ok(answer) {
+        return Err(error_message(answer).unwrap_or_else(|| NOT_MADE.to_string()));
+    }
+    let count = |key: &str| answer.get(key).and_then(Value::as_u64);
+    match (
+        text_at(answer, "folder").as_deref() == Some(row.folder.as_str()),
+        count("scenes"),
+        count("ofScenes"),
+        text_at(answer, "epub"),
+    ) {
+        (true, Some(scenes), Some(of), Some(epub)) => {
+            let noun = if of == 1 { "scene" } else { "scenes" };
+            Ok((format!("Sides for {name}: {scenes} of {of} {noun}."), epub))
+        }
+        _ => Err(NOT_MADE.to_string()),
+    }
 }
 
 /// What the row says while its report is being read.

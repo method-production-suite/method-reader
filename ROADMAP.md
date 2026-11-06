@@ -37,6 +37,12 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **A character is in a scene when a cue or an action line says so**
+  (2026-11-05, for Sides). A scene is kept when the character has a cue in
+  it or an action line names them as a whole word (MARA or Mara), since an
+  extra scene costs a page turn and a missing one costs an entrance.
+  Dialogue that mentions them does not count. To reverse: count cues alone
+  (sp-engine's `commands/library_sides.rs`, `is_in`).
 - **A script's report is read from its `.fountain`** (2026-11-04), not
   from numbers kept at convert time, so every script in the library has
   one, including those brought in as a `.fountain` or an `.osf`, and it
@@ -217,6 +223,14 @@ In order. Each is one small pull request.
   words, scenes, and the scene and page they first speak in. On the
   command line, `method-reader library-report <folder>`. Built (design:
   docs/superpowers/specs/2026-11-04-conversion-report-design.md).
+- **Sides** (the owner's pick, 2026-11-05). In a script's report, Make on
+  a character's line makes a book of the title page and only the scenes
+  they are in, into the script's `sides` folder, and Show the file finds
+  it. On the command line, `method-reader library-sides <folder>
+  <character>`. Built (design:
+  docs/superpowers/specs/2026-11-05-sides-design.md). Still to come:
+  emphasising a character's lines throughout, and sending sides from the
+  window.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current
@@ -229,11 +243,6 @@ you're using Method Reader, what annoys you is more useful than anything on this
 page.
 
 ## Later
-
-**Sides: reading one character's script.** Extract only the scenes a given
-character appears in, or emphasise their lines throughout. Method Reader already
-identifies every scene and every character cue while converting. Actors,
-directors and anyone running a table read do this by hand today.
 
 **Comparing drafts.** Show what changed between two revisions of a script,
 scene by scene, instead of a page-by-page PDF diff that reflows into noise.
