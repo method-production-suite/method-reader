@@ -11,4 +11,3 @@
 #     override", then who approved it, when, and "release vX.Y.Z". The release workflow
 #     honours it for that tag only.
 # Remove a line once the version is 14 days old.
-clipboard-win 5.4.3  # owner-approved override, the owner, 2026-10-29, release v1.1.0 ("Yes, both", relayed by MOrg, to "Mark Reader's zip line as GHSA security and extend clipboard-win to Reader's next release?"; it first held for Method Reader 1.0.0 on the owner's 2026-10-27 yes); the Windows clipboard (arboard, through the window's toolkit); every release up to 5.4.1 was yanked on 2026-10-23, and 5.4.3's one code change from 5.4.1 is a bounds fix in raw::get_html (Windows only, no RUSTSEC id); 14 days old on 2026-11-06, remove the line then

@@ -24,8 +24,8 @@ Release go-aheads:
 - **1.1.0: released** (2026-10-31, on the owner's yes). New Kindles over
   USB from the Mac app, .osf in, Method Reader's own AZW3 out of beta, and
   the zip fix (9.0.5). Its crate-age exceptions (the zip advisory, and
-  clipboard-win 5.4.3 for v1.1.0 alone) come out once each crate is 14
-  days old: zip from 2026-10-31, clipboard-win from 2026-11-06.
+  clipboard-win 5.4.3 for v1.1.0 alone) have both come out, each crate
+  now being 14 days old.
 - **Before the next release, on the machine whose answers they are:** run
   `cargo xtask parity --accept route-help route-help-json` (from `rust/`,
   with that checkout's `CARGO_TARGET_DIR`). Those two rows of the
