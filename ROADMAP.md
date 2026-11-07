@@ -144,6 +144,10 @@ Tests that need a device (hands only; everything else is automated):
      (registry #20).
    - **A Kindle that mounts as a drive:** Method Reader's own AZW3
      and the pictures in a .mobi (the `mobi-picture-probe` books).
+   - **Sides and lines in bold on a reader:** in a report, make MARA's sides
+     and DELACROIX's lines in bold, and send each with Send to e-reader. On
+     the Kindle, check the sides hold only their scenes and the bold shows,
+     in both the AZW3 and the KFX if you have that set up.
    - **A Kobo, a tolino, a reMarkable:** send Field Station and report
      either way (issues #26, #27, #28).
    - **The Mac after 1.0.0 arrives:** the app in Applications should be
