@@ -444,6 +444,9 @@ pub fn warning_lines(answer: &Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// What Settings says of a book the report made.
+pub const MADE_SLUG: &str = "Set by its script";
+pub const MADE_LINE: &str = "This book takes its settings from its script. To change them, open the script from the Library, then make this book again.";
 pub const FAULT_SLUG: &str = "Settings out of reach";
 pub const FAULT_LINE: &str = "Method Reader could not read this script’s settings. The book itself is fine and can still be sent; converting the PDF again is the way to get the knobs back.";
 pub const FAULT_WAY: &str = "Convert it again";

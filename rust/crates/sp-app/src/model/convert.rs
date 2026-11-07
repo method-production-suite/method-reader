@@ -361,6 +361,9 @@ pub struct Script {
     pub preview_html: String,
     /// The script's settings once this window has read them.
     pub settings: Option<Map<String, Value>>,
+    /// A book the report made from a script (sides, lines in bold), not a
+    /// script: no `.fountain` of its own, and its settings are its script's.
+    pub made: bool,
 }
 
 /// `scriptFrom(path, answer)`.
@@ -386,6 +389,24 @@ pub fn script_from(path: &str, answer: &Value) -> Script {
         fountain_path: text("fountainPath"),
         preview_html: text("previewHtml").unwrap_or_default(),
         settings: None,
+        made: false,
+    }
+}
+
+/// A book the report made, as the open book.
+pub fn made_script(book: &super::library::MadeBook) -> Script {
+    Script {
+        path: String::new(),
+        title: book.title.clone(),
+        author: None,
+        pages: None,
+        scenes: None,
+        warnings: Vec::new(),
+        epub_path: Some(book.epub.clone()),
+        fountain_path: None,
+        preview_html: book.preview_html.clone(),
+        settings: None,
+        made: true,
     }
 }
 

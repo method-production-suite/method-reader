@@ -37,6 +37,10 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **Sending a made book opens it as the open book** (2026-11-06, for Sides).
+  Every route and the Kindle rule are then the send panel's own, with nothing
+  written twice. It replaces the book open in the window, as opening a library
+  row does. To reverse: a send panel of its own in the report.
 - **A character's lines are marked in bold, spoken words only** (2026-11-06,
   for Lines in bold). Most e-readers show no colour, and a cue is already easy
   to find. To reverse: pick another mark in sp-epub's `render_blocks`.
@@ -236,8 +240,9 @@ In order. Each is one small pull request.
   column makes a book of the whole script with that character's speech in
   bold, into the same folder; on the command line, `method-reader
   library-lines <folder> <character>` (design:
-  docs/superpowers/specs/2026-11-06-lines-in-bold-design.md). Still to come:
-  sending sides from the window.
+  docs/superpowers/specs/2026-11-06-lines-in-bold-design.md). Send to
+  e-reader, beside Show the file, opens either book on the Result page with
+  its send panel (design: docs/superpowers/specs/2026-11-06-send-sides-design.md).
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

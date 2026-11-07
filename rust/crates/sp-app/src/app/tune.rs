@@ -545,6 +545,11 @@ pub fn draw(app: &mut App, ui: &mut Ui, block: layout::Span, window: Vec2) {
     if app.script.is_none() {
         return;
     }
+    if app.script.as_ref().is_some_and(|s| s.made) {
+        head(app, ui, Some(m::MADE_SLUG));
+        widgets::prose(ui, &t, m::MADE_LINE);
+        return;
+    }
     if app.tune.open.is_empty() {
         app.tune.open = (0..groups().len()).map(group_starts_open).collect();
     }

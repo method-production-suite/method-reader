@@ -25,11 +25,12 @@ use crate::model::convert::{Platform, reveal_failure_message};
 use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
-    self as m, Listing, Report, Row, detail, empty_line, gone_note, hide_report_label, lines_from,
-    listing_failure, listing_from, make_lines_label, make_sides_label, making_lines, making_sides,
-    move_button, move_label, moving, name_field_label, open_label, question, question_note,
-    remove_label, removed_line, rename_label, renamed_line, renaming, report_from, report_label,
-    report_table_label, reporting, row_title, save_label, settings_label, sides_from,
+    self as m, Listing, MadeBook, Report, Row, detail, empty_line, gone_note, hide_report_label,
+    lines_from, listing_failure, listing_from, made_book, make_lines_label, make_sides_label,
+    making_lines, making_sides, move_button, move_label, moving, name_field_label, open_label,
+    question, question_note, remove_label, removed_line, rename_label, renamed_line, renaming,
+    report_from, report_label, report_table_label, reporting, row_title, save_label,
+    settings_label, sides_from,
 };
 use crate::theme::{self, size};
 
@@ -65,8 +66,8 @@ pub struct State {
     report_asks: u64,
     /// The character whose sides are being made now.
     pub making_sides: Option<String>,
-    /// The book of the sides last made for the report showing.
-    pub sides_file: Option<String>,
+    /// The book last made for the report showing.
+    pub sides_file: Option<MadeBook>,
 }
 
 #[derive(Clone, Debug)]
@@ -214,7 +215,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.library.said = Some(match sides_from(&answer, &row, &name) {
                 Ok((line, epub)) => {
                     if app.library.report_for.as_deref() == Some(row.folder.as_str()) {
-                        app.library.sides_file = Some(epub);
+                        app.library.sides_file = Some(made_book(&answer, epub));
                     }
                     (line, false)
                 }
@@ -226,7 +227,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.library.said = Some(match lines_from(&answer, &row, &name) {
                 Ok((line, epub)) => {
                     if app.library.report_for.as_deref() == Some(row.folder.as_str()) {
-                        app.library.sides_file = Some(epub);
+                        app.library.sides_file = Some(made_book(&answer, epub));
                     }
                     (line, false)
                 }
@@ -533,13 +534,26 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
         n.set_label(label);
     });
     ui.add_space(layout::SPACE[2]);
-    if let Some(epub) = app.library.sides_file.clone() {
-        let id = Id::unique(("library-sides-show", row.folder.as_str()));
-        if widgets::button_id(ui, &t, Look::Outline, m::SHOW_SIDES, true, id).clicked() {
+    if let Some(book) = app.library.sides_file.clone() {
+        let mut send = false;
+        let mut show = false;
+        ui.horizontal_wrapped(|ui| {
+            let id = Id::unique(("library-sides-send", row.folder.as_str()));
+            let free = live && !app.convert.converting;
+            send = widgets::button_id(ui, &t, Look::Outline, m::SEND_MADE, free, id).clicked();
+            let id = Id::unique(("library-sides-show", row.folder.as_str()));
+            show = widgets::button_id(ui, &t, Look::Outline, m::SHOW_SIDES, true, id).clicked();
+        });
+        if show {
             app.call(
-                Request::Reveal { path: epub },
+                Request::Reveal {
+                    path: book.epub.clone(),
+                },
                 AppPurpose::Library(Purpose::RevealSides),
             );
+        }
+        if send {
+            super::convert::open_made_book(app, &book);
         }
         ui.add_space(layout::SPACE[2]);
     }

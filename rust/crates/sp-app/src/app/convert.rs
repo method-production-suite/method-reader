@@ -398,6 +398,26 @@ fn draw_result(app: &mut App, path: &str, answer: &Value) {
     app.restore_focus = true;
 }
 
+/// A book the report made as the open book, on the Result page with its send
+/// panel (docs/superpowers/specs/2026-11-06-send-sides-design.md).
+pub fn open_made_book(app: &mut App, book: &crate::model::library::MadeBook) {
+    if app.convert.converting {
+        return;
+    }
+    let script = m::made_script(book);
+    if let Some(result) = &app.send_result
+        && result.book != script.epub_path
+        && result.eject.is_none()
+    {
+        app.send_result = None;
+    }
+    app.script = Some(script);
+    paint_result(app);
+    app.script_changed();
+    app.go_to(Surface::Convert);
+    app.restore_focus = true;
+}
+
 /// The result: the view, its book, and the send panel mounted for it.
 fn paint_result(app: &mut App) {
     let book = app

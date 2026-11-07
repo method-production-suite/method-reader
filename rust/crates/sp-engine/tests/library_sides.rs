@@ -361,3 +361,18 @@ fn a_lines_file_name_holds_the_stem_and_a_safe_name() {
         "keeper lines - DR. O_HARA_2.epub"
     );
 }
+
+#[test]
+fn each_answer_holds_its_book_for_the_preview() {
+    let s = Scratch::new("library-preview");
+    let (root, folder) = library(&s);
+    let sides = made(&root, &folder, "WREN");
+    assert!(sides.preview_html.contains("INT. LIGHTHOUSE - NIGHT"));
+    assert!(
+        !sides.preview_html.contains("INT. CELLAR - NIGHT"),
+        "only the scenes kept"
+    );
+    let lines = lines_in_library(&root, &folder, "OTTO", &FormatOptions::default()).unwrap();
+    assert!(lines.preview_html.contains("INT. CELLAR - NIGHT"));
+    assert!(lines.preview_html.contains("<strong>Again.</strong>"));
+}

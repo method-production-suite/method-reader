@@ -584,12 +584,14 @@ pub fn default_answer(request: &Request) -> Value {
             "title": format!("FIELD STATION: {name} lines"),
             "speeches": 12,
             "epub": format!("{folder}/sides/Field Station lines - {name}.epub"),
+            "previewHtml": "<html><body><p>The lines.</p></body></html>",
         }),
         Request::LibrarySides { folder, name } => json!({
             "ok": true, "folder": folder, "name": name,
             "title": format!("FIELD STATION: {name} sides"),
             "scenes": 9, "ofScenes": 11,
             "epub": format!("{folder}/sides/Field Station sides - {name}.epub"),
+            "previewHtml": "<html><body><p>The sides.</p></body></html>",
         }),
     }
 }

@@ -31,6 +31,6 @@ pub use build::{
 };
 pub use css::{default_css, screenplay_css};
 pub use html::{
-    BodyFile, BodyOptions, BookBody, PageEntry, TocEntry, escape_xml, tokens_to_body,
-    tokens_to_preview_html,
+    BodyFile, BodyOptions, BookBody, PageEntry, TocEntry, escape_xml, preview_with_bold_speech,
+    tokens_to_body, tokens_to_preview_html,
 };

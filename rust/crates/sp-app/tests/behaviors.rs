@@ -2565,6 +2565,77 @@ fn lines_in_bold_make_one_book_say_so_and_show_the_file() {
     );
 }
 
+/// A report open on Field Station, with MARA's sides just made.
+fn sides_made(w: &World) -> H {
+    let mut h = library_tab_with(w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Make sides for MARA")
+        .click_accesskit();
+    steps(&mut h);
+    h
+}
+
+const SIDES_BOOK: &str =
+    "/Users/reader/Method Reader/Field Station/sides/Field Station sides - MARA.epub";
+
+#[test]
+fn send_opens_the_book_made_and_a_kindle_gets_its_own_file() {
+    let w = world();
+    calm_as(&w, "kindle");
+    plug_in_a_kindle(&w);
+    let mut h = sides_made(&w);
+    assert!(w.engine.calls_of("routes").is_empty());
+    h.get_by_role_and_label(Role::Button, "Send to e-reader")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(h.state().surface, Surface::Convert);
+    let script = h.state().script.clone().unwrap();
+    assert_eq!(script.title, "FIELD STATION: MARA sides");
+    assert_eq!(script.epub_path.as_deref(), Some(SIDES_BOOK));
+    assert_eq!(
+        script.fountain_path, None,
+        "the script's would be the wrong book"
+    );
+    assert!(
+        w.engine
+            .calls_of("routes")
+            .iter()
+            .all(|r| r.argv().contains(&SIDES_BOOK.to_string()))
+    );
+
+    h.get_by_role_and_label(Role::Button, "Copy to Kindle (.azw3)")
+        .click_accesskit();
+    steps(&mut h);
+    let export = w.engine.calls_of("export");
+    let argv = export.last().expect("an export").argv();
+    assert!(argv.contains(&SIDES_BOOK.to_string()), "{argv:?}");
+    assert!(
+        argv.windows(2).any(|p| p == ["--for", "kindle"]),
+        "{argv:?}"
+    );
+    assert!(!argv.contains(&"--fountain".to_string()), "{argv:?}");
+    assert_eq!(w.engine.calls_of("send").len(), 1, "and it goes");
+}
+
+#[test]
+fn a_book_made_has_pages_to_preview_and_says_where_its_settings_are() {
+    let w = world();
+    let mut h = sides_made(&w);
+    h.get_by_role_and_label(Role::Button, "Send to e-reader")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Tab, "Preview").click();
+    steps(&mut h);
+    assert!(!has(&h, "No pages came back"));
+    h.get_by_role_and_label(Role::Tab, "Settings").click();
+    steps(&mut h);
+    assert!(has(&h, "Set by its script"));
+    assert!(!has(&h, "Settings out of reach"));
+    assert!(h.query_by_label("Convert it again").is_none());
+}
+
 #[test]
 fn the_report_table_fits_the_smallest_window() {
     let w = world();

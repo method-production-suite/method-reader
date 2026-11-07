@@ -63,7 +63,9 @@ recommendation and marked so in the roadmap. To reverse: count cues alone.
 
 - Emphasising a character's lines throughout the full script (built next:
   docs/superpowers/specs/2026-11-06-lines-in-bold-design.md).
-- Sending sides from the window, and formats other than EPUB.
+- Sending sides from the window (built since:
+  docs/superpowers/specs/2026-11-06-send-sides-design.md), and formats other
+  than EPUB.
 - A cover picture from before the first scene, unless that part is kept.
 - Listing a script's sides in the Library row.
 
