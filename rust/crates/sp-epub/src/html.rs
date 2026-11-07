@@ -266,7 +266,10 @@ fn render_blocks(
     format: &FormatOptions,
     markers: &mut MarkerState,
     art: &mut Art<'_>,
+    bold_speech: Option<&dyn Fn(&str) -> bool>,
 ) -> Vec<String> {
+    // Whether the speech under way is one to set in bold.
+    let mut speaking_bold = false;
     let mut out = Blocks {
         blocks: Vec::new(),
         speech: None,
@@ -333,18 +336,22 @@ fn render_blocks(
                 }
                 out.speech = Some(Vec::new());
             }
-            TokenType::DialogueEnd => match (&mut dual, out.speech.take()) {
-                (Some((left, right, on_right)), Some(cells)) => {
-                    if *on_right {
-                        right.extend(cells);
-                    } else {
-                        left.extend(cells);
+            TokenType::DialogueEnd => {
+                speaking_bold = false;
+                match (&mut dual, out.speech.take()) {
+                    (Some((left, right, on_right)), Some(cells)) => {
+                        if *on_right {
+                            right.extend(cells);
+                        } else {
+                            left.extend(cells);
+                        }
                     }
+                    (_, Some(cells)) => out.blocks.push(speech_block(&cells)),
+                    (_, None) => {}
                 }
-                (_, Some(cells)) => out.blocks.push(speech_block(&cells)),
-                (_, None) => {}
-            },
+            }
             TokenType::Character => {
+                speaking_bold = bold_speech.is_some_and(|asks| asks(&text));
                 out.emit(format!(
                     "<p class=\"character\">{}</p>\n",
                     escape_xml(&text)
@@ -361,10 +368,12 @@ fn render_blocks(
                 // newlines (lyrics, verse): each line its own paragraph.
                 for line in text.split('\n') {
                     if !trim(line).is_empty() {
-                        out.emit(format!(
-                            "<p class=\"dialogue{fmt}\">{}</p>\n",
-                            inline_emphasis(&escape_xml(line))
-                        ));
+                        let said = inline_emphasis(&escape_xml(line));
+                        out.emit(if speaking_bold {
+                            format!("<p class=\"dialogue{fmt}\"><strong>{said}</strong></p>\n")
+                        } else {
+                            format!("<p class=\"dialogue{fmt}\">{said}</p>\n")
+                        });
                     }
                 }
             }
@@ -438,6 +447,9 @@ pub struct BodyOptions<'a> {
     pub images: HashSet<String>,
     /// Where a figure's `<img>` points; the book's own path by default.
     pub image_src: Option<&'a dyn Fn(&str) -> String>,
+    /// Asked of each cue's text: whether that speech is set in bold. The
+    /// caller decides what a cue names. None sets nothing in bold.
+    pub bold_speech: Option<&'a dyn Fn(&str) -> bool>,
 }
 
 impl Default for BodyOptions<'_> {
@@ -447,6 +459,7 @@ impl Default for BodyOptions<'_> {
             format: FormatOptions::default(),
             images: HashSet::new(),
             image_src: None,
+            bold_speech: None,
         }
     }
 }
@@ -518,7 +531,7 @@ pub fn tokens_to_body(tokens: &[Token], opts: &BodyOptions<'_>) -> BookBody {
             markers.landed = Vec::new();
             let html = format!(
                 "<section class=\"scene\" id=\"{anchor}\">\n{}</section>\n",
-                render_blocks(toks, format, &mut markers, &mut art).concat()
+                render_blocks(toks, format, &mut markers, &mut art, opts.bold_speech).concat()
             );
             SceneSection {
                 anchor,
@@ -604,6 +617,7 @@ pub fn tokens_to_preview_html(
             format: *format,
             images: images.iter().map(|(name, _)| name.clone()).collect(),
             image_src: Some(&src),
+            bold_speech: None,
         },
     );
     let doc = body
@@ -649,6 +663,71 @@ mod tests {
         assert_eq!(base64(b"fo"), "Zm8=");
         assert_eq!(base64(b"foo"), "Zm9v");
         assert_eq!(base64(b"foob"), "Zm9vYg==");
+    }
+
+    /// The first section's markup, WREN's speech set in bold.
+    fn wrens_lines_in_bold(script: &str) -> String {
+        let tokens = sp_fountain::tokenize(script).unwrap();
+        let asks = |cue: &str| cue.starts_with("WREN");
+        let body = tokens_to_body(
+            &tokens,
+            &BodyOptions {
+                bold_speech: Some(&asks),
+                ..BodyOptions::default()
+            },
+        );
+        body.files.iter().map(|f| f.xhtml.as_str()).collect()
+    }
+
+    #[test]
+    fn only_the_words_the_chosen_character_speaks_are_bold() {
+        let html = wrens_lines_in_bold(
+            "INT. A - DAY\n\nA lamp.\n\nWREN (V.O.)\n(quietly)\nUp the *stairs*.\n\nOTTO\nAgain.\n",
+        );
+        assert!(
+            html.contains("<p class=\"dialogue\"><strong>Up the <em>stairs</em>.</strong></p>"),
+            "{html}"
+        );
+        assert!(html.contains("<p class=\"dialogue\">Again.</p>"), "{html}");
+        assert!(
+            html.contains("<p class=\"character\">WREN (V.O.)</p>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<p class=\"parenthetical\">(quietly)</p>"),
+            "{html}"
+        );
+        assert!(html.contains("A lamp.</p>"), "{html}");
+        assert!(!html.contains("<strong>A lamp"), "{html}");
+    }
+
+    #[test]
+    fn a_line_with_a_star_in_it_keeps_its_star_and_its_bold() {
+        let html = wrens_lines_in_bold("INT. A - DAY\n\nWREN\n2 * 3 is six.\n");
+        assert!(html.contains("<strong>2 * 3 is six.</strong>"), "{html}");
+    }
+
+    #[test]
+    fn dual_dialogue_is_bold_on_the_chosen_side_alone() {
+        let html = wrens_lines_in_bold("INT. A - DAY\n\nOTTO\nOne.\n\nWREN ^\nTwo.\n");
+        assert!(html.contains("<strong>Two.</strong>"), "{html}");
+        assert!(!html.contains("<strong>One."), "{html}");
+    }
+
+    #[test]
+    fn a_speech_after_the_chosen_one_is_not_bold() {
+        let html = wrens_lines_in_bold("INT. A - DAY\n\nWREN\nOne.\n\nOTTO\nTwo.\n\nThree.\n");
+        assert!(html.contains("<strong>One.</strong>"), "{html}");
+        assert!(!html.contains("<strong>Two."), "{html}");
+        assert!(!html.contains("<strong>Three."), "{html}");
+    }
+
+    #[test]
+    fn asked_nothing_no_line_is_bold() {
+        let tokens = sp_fountain::tokenize("INT. A - DAY\n\nWREN\nOne.\n").unwrap();
+        let body = tokens_to_body(&tokens, &BodyOptions::default());
+        let html: String = body.files.iter().map(|f| f.xhtml.as_str()).collect();
+        assert!(html.contains("<p class=\"dialogue\">One.</p>"), "{html}");
     }
 
     #[test]

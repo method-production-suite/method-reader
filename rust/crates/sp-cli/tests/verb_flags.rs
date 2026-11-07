@@ -82,6 +82,11 @@ const VERB_SHAPE: &[(&str, &[&str], &[&str])] = &[
         &[],
         &["/nowhere/library/Field Station", "MARA"],
     ),
+    (
+        "library-lines",
+        &[],
+        &["/nowhere/library/Field Station", "MARA"],
+    ),
 ];
 
 /// sp-cli's verbs.rs, whose VERBS and VERB_SPECS lists are read below.

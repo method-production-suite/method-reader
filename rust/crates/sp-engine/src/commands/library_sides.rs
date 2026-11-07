@@ -7,6 +7,10 @@
 //! and the script's settings are not touched: the only thing written is
 //! `<folder>/sides/<stem> sides - <NAME>.epub`.
 //!
+//! The `library-lines` verb lives here too, being the same book but for what
+//! it keeps and marks: the whole script, with one character's speech in bold
+//! (docs/superpowers/specs/2026-11-06-lines-in-bold-design.md).
+//!
 //! It takes only what the `library` listing would list, by the same check
 //! `library-report` makes ([`super::library::listed_script`]), and only a
 //! character the report names ([`super::library_report::count`]).
@@ -19,9 +23,11 @@ use sp_fdx::{is_scene, text_runs};
 use sp_fountain::{image_note_files, page_marker_label, strip_notes, tokenize};
 use sp_model::{FormatOptions, Token, TokenType};
 
-use super::library::listed_script;
+use super::library::{LibraryScript, listed_script};
 use super::library_report::{count, cue_name};
-use crate::convert::{carried_pictures, detected_author, epub_of_tokens, fountain_text};
+use crate::convert::{
+    carried_pictures, detected_author, epub_of_tokens, epub_with_bold_speech, fountain_text,
+};
 use crate::env::Env;
 use crate::errors::{CliError, EngineError, ErrorCode};
 use crate::fsx;
@@ -51,6 +57,22 @@ pub struct LibrarySides {
     pub scenes: u32,
     /// Scenes in the script.
     pub of_scenes: u32,
+    /// The book.
+    pub epub: String,
+}
+
+/// What `library-lines` answers.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryLines {
+    /// The folder, as it was given.
+    pub folder: String,
+    /// The character, as the report spells them.
+    pub name: String,
+    /// The book's title.
+    pub title: String,
+    /// Speeches set in bold.
+    pub speeches: u32,
     /// The book.
     pub epub: String,
 }
@@ -160,9 +182,9 @@ pub fn sides_of(tokens: &[Token], name: &str) -> Sides {
     sides
 }
 
-/// `<stem> sides - <NAME>.epub`: the stem tells it apart on a reader, and
-/// anything but a letter, a digit, a space, a dash or a dot becomes `_`.
-pub fn sides_file_name(stem: &str, name: &str) -> String {
+/// A character's name as a file name holds it: anything but a letter, a
+/// digit, a space, a dash or a dot becomes `_`.
+fn safe_name(name: &str) -> String {
     let safe: String = name
         .chars()
         .take(MAX_NAME_IN_FILE)
@@ -175,8 +197,21 @@ pub fn sides_file_name(stem: &str, name: &str) -> String {
         })
         .collect();
     let safe = safe.trim_matches([' ', '.']);
-    let safe = if safe.is_empty() { "character" } else { safe };
-    format!("{stem} sides - {safe}.epub")
+    if safe.is_empty() {
+        "character".to_owned()
+    } else {
+        safe.to_owned()
+    }
+}
+
+/// `<stem> sides - <NAME>.epub`: the stem tells it apart on a reader.
+pub fn sides_file_name(stem: &str, name: &str) -> String {
+    format!("{stem} sides - {}.epub", safe_name(name))
+}
+
+/// `<stem> lines - <NAME>.epub`.
+pub fn lines_file_name(stem: &str, name: &str) -> String {
+    format!("{stem} lines - {}.epub", safe_name(name))
 }
 
 /// The command line's plain-words answer.
@@ -192,6 +227,21 @@ pub fn sides_line(sides: &LibrarySides) -> String {
             "scenes"
         },
         sides.epub
+    )
+}
+
+/// The command line's plain-words answer.
+pub fn lines_line(lines: &LibraryLines) -> String {
+    format!(
+        "lines in bold for {}: {} {}, {}",
+        lines.name,
+        lines.speeches,
+        if lines.speeches == 1 {
+            "speech"
+        } else {
+            "speeches"
+        },
+        lines.epub
     )
 }
 
@@ -213,15 +263,38 @@ pub fn library_sides_command(
     )
 }
 
-/// The sides of `character` in the script `folder` is in the library at
-/// `root`, its own settings over `defaults`.
-pub fn sides_in_library(
-    root: &str,
+/// `library-lines <folder> <character>`: the library a conversion would
+/// land in ([`library_root`]), the app's default settings, and the book.
+pub fn library_lines_command(
+    platform: &str,
+    env: &Env,
+    settings_path: Option<&str>,
     folder: &str,
     character: &str,
-    defaults: &FormatOptions,
-) -> Result<LibrarySides, EngineError> {
-    let (_, script) = listed_script("library-sides", root, folder)?;
+) -> Result<LibraryLines, EngineError> {
+    let defaults = settings_path.map_or_else(FormatOptions::default, app_default_options);
+    lines_in_library(
+        &library_root(platform, env, settings_path),
+        folder,
+        character,
+        &defaults,
+    )
+}
+
+/// A listed script, read, and the character asked for, as the report names
+/// them.
+struct Chosen {
+    script: LibraryScript,
+    text: String,
+    tokens: Vec<Token>,
+    /// What the book's title opens with.
+    base: String,
+    name: String,
+    speeches: u32,
+}
+
+fn chosen(verb: &str, root: &str, folder: &str, character: &str) -> Result<Chosen, EngineError> {
+    let (_, script) = listed_script(verb, root, folder)?;
     let unreadable = || {
         CliError::new(
             ErrorCode::Unreadable,
@@ -246,55 +319,111 @@ pub fn sides_in_library(
         )
         .into());
     };
-    let sides = sides_of(&tokens, &found.name);
+    Ok(Chosen {
+        script,
+        text,
+        tokens,
+        base,
+        name: found.name,
+        speeches: found.speeches,
+    })
+}
 
-    let format = load_script_settings(&script.fountain, defaults);
+/// The pictures `kept` asks for, when the script's settings show pictures.
+fn pictures_of(c: &Chosen, kept: &[Token], format: &FormatOptions) -> Vec<sp_epub::BookImage> {
     let pictures = if format.include_images {
-        let named: BTreeSet<String> = image_note_files(&text)
+        let named: BTreeSet<String> = image_note_files(&c.text)
             .unwrap_or_default()
             .into_iter()
             .filter(|file| {
-                sides
-                    .tokens
-                    .iter()
+                kept.iter()
                     .any(|t| t.text_or_empty().contains(file.as_str()))
             })
             .collect();
-        Some(read_images(&script.fountain, &named))
+        Some(read_images(&c.script.fountain, &named))
     } else {
         None
     };
-    let images = carried_pictures(pictures.as_ref().map(|p| &p.images));
+    carried_pictures(pictures.as_ref().map(|p| &p.images))
+}
 
-    let title = format!("{base}: {} sides", found.name);
-    let bytes = epub_of_tokens(
-        &sides.tokens,
-        &format!("{text}\nsides: {}", found.name),
-        &title,
-        detected_author(&tokens).as_deref(),
-        &format,
-        &images,
-    )
-    .map_err(|e| CliError::new(ErrorCode::Internal, e.to_string()))?;
-
-    let dir = host::join(&[script.folder.as_str(), SIDES_FOLDER]);
-    let epub = host::join(&[
-        dir.as_str(),
-        sides_file_name(&script.name, &found.name).as_str(),
-    ]);
+/// `bytes` as `file` in the script's sides folder. Answers the path.
+fn write_book(c: &Chosen, file: &str, bytes: &[u8]) -> Result<String, EngineError> {
+    let dir = host::join(&[c.script.folder.as_str(), SIDES_FOLDER]);
+    let epub = host::join(&[dir.as_str(), file]);
     let unwritable = |why: String| CliError::new(ErrorCode::Unwritable, why);
     if fs::symlink_metadata(&dir).is_ok_and(|m| m.file_type().is_symlink()) {
         return Err(unwritable(format!("{dir} is a link")).into());
     }
     fsx::mkdir_all(&dir)
-        .and_then(|()| fsx::write_atomic(&epub, &bytes))
+        .and_then(|()| fsx::write_atomic(&epub, bytes))
         .map_err(|e| unwritable(format!("could not write {epub}: {e}")))?;
+    Ok(epub)
+}
+
+/// The sides of `character` in the script `folder` is in the library at
+/// `root`, its own settings over `defaults`.
+pub fn sides_in_library(
+    root: &str,
+    folder: &str,
+    character: &str,
+    defaults: &FormatOptions,
+) -> Result<LibrarySides, EngineError> {
+    let c = chosen("library-sides", root, folder, character)?;
+    let sides = sides_of(&c.tokens, &c.name);
+    let format = load_script_settings(&c.script.fountain, defaults);
+    let images = pictures_of(&c, &sides.tokens, &format);
+    let title = format!("{}: {} sides", c.base, c.name);
+    let bytes = epub_of_tokens(
+        &sides.tokens,
+        &format!("{}\nsides: {}", c.text, c.name),
+        &title,
+        detected_author(&c.tokens).as_deref(),
+        &format,
+        &images,
+    )
+    .map_err(|e| CliError::new(ErrorCode::Internal, e.to_string()))?;
+    let epub = write_book(&c, &sides_file_name(&c.script.name, &c.name), &bytes)?;
     Ok(LibrarySides {
         folder: folder.to_owned(),
-        name: found.name,
+        name: c.name,
         title,
         scenes: sides.scenes,
         of_scenes: sides.of_scenes,
+        epub,
+    })
+}
+
+/// The whole script `folder` is in the library at `root`, with `character`'s
+/// speech in bold, its own settings over `defaults`.
+pub fn lines_in_library(
+    root: &str,
+    folder: &str,
+    character: &str,
+    defaults: &FormatOptions,
+) -> Result<LibraryLines, EngineError> {
+    let c = chosen("library-lines", root, folder, character)?;
+    let format = load_script_settings(&c.script.fountain, defaults);
+    let images = pictures_of(&c, &c.tokens, &format);
+    let title = format!("{}: {} lines", c.base, c.name);
+    let key = c.name.to_uppercase();
+    let is_theirs = |cue: &str| cue_name(cue).to_uppercase() == key;
+    let bytes = epub_with_bold_speech(
+        &c.tokens,
+        &format!("{}\nlines: {}", c.text, c.name),
+        &title,
+        detected_author(&c.tokens).as_deref(),
+        &format,
+        &images,
+        Some(&is_theirs),
+    )
+    .map_err(|e| CliError::new(ErrorCode::Internal, e.to_string()))?;
+    let epub = write_book(&c, &lines_file_name(&c.script.name, &c.name), &bytes)?;
+    Ok(LibraryLines {
+        folder: folder.to_owned(),
+        name: c.name,
+        title,
+        speeches: c.speeches,
         epub,
     })
 }

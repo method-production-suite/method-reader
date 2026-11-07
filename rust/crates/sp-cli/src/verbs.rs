@@ -16,7 +16,9 @@ use sp_engine::commands::library::{LibraryScript, library_command};
 use sp_engine::commands::library_remove::{library_remove_command, moved_line};
 use sp_engine::commands::library_rename::{library_rename_command, renamed_line};
 use sp_engine::commands::library_report::{library_report_command, report_lines};
-use sp_engine::commands::library_sides::{library_sides_command, sides_line};
+use sp_engine::commands::library_sides::{
+    library_lines_command, library_sides_command, lines_line, sides_line,
+};
 use sp_engine::commands::routes::{
     RouteDeps, RouteOptions, remember_route, route_command, routes_command, routes_lines,
 };
@@ -38,7 +40,7 @@ use crate::out::{Io, Run, Stop};
 use crate::usage::*;
 
 /// `VERBS`, in their order.
-pub const VERBS: [&str; 21] = [
+pub const VERBS: [&str; 22] = [
     "devices",
     "send",
     "settings",
@@ -60,6 +62,7 @@ pub const VERBS: [&str; 21] = [
     "library-rename",
     "library-report",
     "library-sides",
+    "library-lines",
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
@@ -170,6 +173,7 @@ fn verb_usage(verb: &str) -> &'static str {
         "library-rename" => LIBRARY_RENAME_USAGE,
         "library-report" => LIBRARY_REPORT_USAGE,
         "library-sides" => LIBRARY_SIDES_USAGE,
+        "library-lines" => LIBRARY_LINES_USAGE,
         _ => SEND_USAGE,
     }
 }
@@ -667,6 +671,27 @@ pub fn run_verb(io: &mut Io, verb: &'static str, rest: &[String]) -> Run {
                 io.ok(value(&sides));
             } else {
                 io.say(&sides_line(&sides));
+            }
+            Ok(())
+        }
+        "library-lines" => {
+            if pos.len() != 2 {
+                return Err(Stop::usage(
+                    "expected one script folder in the library and a character (see --help)",
+                ));
+            }
+            let lines = library_lines_command(
+                host_platform(),
+                &Env::process(),
+                Some(&settings_file()),
+                &pos[0],
+                &pos[1],
+            )
+            .map_err(engine)?;
+            if io.json {
+                io.ok(value(&lines));
+            } else {
+                io.say(&lines_line(&lines));
             }
             Ok(())
         }

@@ -359,13 +359,14 @@ pub fn reopened(answer: &Value, row: &Row) -> Value {
 pub const REPORT: &str = "Report";
 pub const HIDE_REPORT: &str = "Hide report";
 /// The report table's column headings.
-pub const REPORT_COLUMNS: [&str; 6] = [
+pub const REPORT_COLUMNS: [&str; 7] = [
     "Character",
     "Speeches",
     "Words",
     "Scenes",
     "First speaks",
     "Sides",
+    "Lines in bold",
 ];
 /// The button on each character's line that makes their sides.
 pub const MAKE_SIDES: &str = "Make";
@@ -373,6 +374,8 @@ pub const MAKE_SIDES: &str = "Make";
 pub const SHOW_SIDES: &str = "Show the file";
 /// What the status line says when an answer says nothing usable.
 pub const NOT_MADE: &str = "The sides could not be made, and nothing said why.";
+/// What the status line says when a lines answer says nothing usable.
+pub const LINES_NOT_MADE: &str = "The book could not be made, and nothing said why.";
 /// What a report says when its answer says nothing usable.
 pub const NOT_REPORTED: &str = "The report could not be made, and nothing said why.";
 
@@ -512,6 +515,35 @@ pub fn sides_from(answer: &Value, row: &Row, name: &str) -> Result<(String, Stri
             Ok((format!("Sides for {name}: {scenes} of {of} {noun}."), epub))
         }
         _ => Err(NOT_MADE.to_string()),
+    }
+}
+
+/// A character's lines-in-bold Make button's name for a screen reader.
+pub fn make_lines_label(name: &str) -> String {
+    format!("Make a book with {name}'s lines in bold")
+}
+
+/// The status line while that book is being made.
+pub fn making_lines(name: &str) -> String {
+    format!("Making a book with {name}'s lines in bold…")
+}
+
+/// `library-lines`'s answer: the status line, and the book when it was made
+/// for this row; otherwise why not.
+pub fn lines_from(answer: &Value, row: &Row, name: &str) -> Result<(String, String), String> {
+    if !ok(answer) {
+        return Err(error_message(answer).unwrap_or_else(|| LINES_NOT_MADE.to_string()));
+    }
+    match (
+        text_at(answer, "folder").as_deref() == Some(row.folder.as_str()),
+        answer.get("speeches").and_then(Value::as_u64),
+        text_at(answer, "epub"),
+    ) {
+        (true, Some(speeches), Some(epub)) => {
+            let noun = if speeches == 1 { "speech" } else { "speeches" };
+            Ok((format!("{name}'s lines in bold: {speeches} {noun}."), epub))
+        }
+        _ => Err(LINES_NOT_MADE.to_string()),
     }
 }
 

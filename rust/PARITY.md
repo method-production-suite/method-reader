@@ -320,6 +320,7 @@ Sources are abbreviated: `ui/x.js` is `desktop/ui/x.js`, `tauri/` is
 | E32 | `library-rename <folder> --json -- <name>` (the name one script goes by in the library, kept in its source.json, its book made again under it; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-03-library-rename-design.md) | `libraryRename(folder, name)` (`Request::LibraryRename`: a Library row's Rename, then Save or Return in its field, sp-app/src/app/library.rs; then `library` again) | no | done (sp-engine/tests/library_rename.rs, sp-cli/tests/cli_library_rename.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 | E33 | `library-report <folder> --json` (one script's length and who speaks how much, read from its library `.fountain`; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-04-conversion-report-design.md) | `libraryReport(folder)` (`Request::LibraryReport`: a Library row's Report, the answer drawn under the row as totals and a table, sp-app/src/app/library.rs) | no | done (sp-engine/tests/library_report.rs, sp-cli/tests/cli_library_report.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs, capture.rs) |
 | E34 | `library-sides <folder> <character> --json` (one character's scenes as a book, made from the library `.fountain` into the script's `sides` folder; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-05-sides-design.md) | `librarySides(folder, name)` (`Request::LibrarySides`: Make on a character's line in a report, the answer on the status line, Show the file revealing the book, sp-app/src/app/library.rs) | no | done (sp-engine/tests/library_sides.rs, sp-cli/tests/cli_library_sides.rs; the window: sp-app/tests/argv_contract.rs, direct_engine.rs, behaviors.rs) |
+| E35 | `library-lines <folder> <character> --json` (the whole script with one character's lines in bold, made from the library `.fountain` into the script's `sides` folder; new, not app.js's, so there is no TypeScript answer to hold it to: docs/superpowers/specs/2026-11-06-lines-in-bold-design.md) | `libraryLines(folder, name)` (`Request::LibraryLines`: Make in the Lines in bold column of a report, the answer on the status line, Show the file revealing the book, sp-app/src/app/library.rs) | no | done (sp-engine/tests/library_sides.rs, sp-cli/tests/cli_library_sides.rs, sp-app/tests/argv_contract.rs) |
 
 ### C. Convert
 
@@ -1627,3 +1628,11 @@ names the check it affects.
   `render_books` gave up its EPUB half to `epub_of_tokens`, which takes
   tokens and the text the identifier comes from, so every other book's bytes
   are unchanged. The main help does not list the verb, so no help row moved.
+
+- **The library-lines verb (2026-11-06, branch library/lines-in-bold).**
+  `method-reader library-lines <folder> <character> [--json]` is new: not
+  one of the TypeScript's verbs (row E35). It makes the checks `library-sides`
+  makes and an EPUB of the whole script into `<folder>/sides/`, with the
+  character's dialogue lines wrapped in `<strong>`. sp-epub's `BodyOptions`
+  gained `bold_speech`, None for every other book, so their bytes are
+  unchanged. The main help does not list the verb, so no help row moved.
