@@ -8,7 +8,8 @@ use std::io::Read;
 
 use common::{Scratch, write};
 use sp_engine::commands::library_sides::{
-    LibrarySides, sides_file_name, sides_in_library, sides_line, sides_of,
+    LibrarySides, lines_file_name, lines_in_library, lines_line, sides_file_name, sides_in_library,
+    sides_line, sides_of,
 };
 use sp_engine::errors::EngineError;
 use sp_engine::library::{library_output, save_kept_name};
@@ -293,4 +294,70 @@ fn someone_with_no_cue_or_no_listed_folder_is_refused() {
     assert_eq!(refusal(&folder, "NOBODY"), "usage");
     assert_eq!(refusal(&folder, "   "), "usage");
     assert_eq!(refusal(&s.dir("elsewhere"), "WREN"), "not-a-script");
+}
+
+#[test]
+fn lines_in_bold_keep_every_scene_and_mark_only_that_speech() {
+    let s = Scratch::new("library-lines");
+    let (root, folder) = library(&s);
+    let fountain = format!("{}/keeper.fountain", folder);
+    let before = std::fs::read(&fountain).unwrap();
+
+    let lines = lines_in_library(&root, &folder, "otto", &FormatOptions::default()).unwrap();
+    assert_eq!(lines.name, "OTTO");
+    assert_eq!(lines.title, "The Lamp Keeper: OTTO lines");
+    assert_eq!(lines.speeches, 2);
+    assert_eq!(
+        lines.epub,
+        format!("{folder}/sides/{}", lines_file_name("keeper", "OTTO"))
+    );
+    assert_eq!(
+        lines_line(&lines),
+        format!("lines in bold for OTTO: 2 speeches, {}", lines.epub)
+    );
+
+    let opf = entry(&lines.epub, ".opf");
+    assert!(opf.contains("The Lamp Keeper: OTTO lines"), "{opf}");
+    let mut zip = zip::ZipArchive::new(std::fs::File::open(&lines.epub).unwrap()).unwrap();
+    let mut book = String::new();
+    for i in 0..zip.len() {
+        let mut f = zip.by_index(i).unwrap();
+        if f.name().unwrap().ends_with(".xhtml") {
+            f.read_to_string(&mut book).unwrap();
+        }
+    }
+    for heading in [
+        "INT. CELLAR - NIGHT",
+        "EXT. HARBOUR - DAY",
+        "INT. ATTIC - DAY",
+    ] {
+        assert!(book.contains(heading), "every scene stays: {heading}");
+    }
+    assert!(book.contains("<strong>Again.</strong>"), "{book}");
+    assert!(
+        book.contains("<strong>Wren would hate this.</strong>"),
+        "{book}"
+    );
+    assert!(book.contains(">Nobody down here.</p>"), "{book}");
+    assert!(!book.contains("<strong>Nobody"), "{book}");
+    assert!(!book.contains("<strong>Otto eats"), "{book}");
+
+    assert_eq!(std::fs::read(&fountain).unwrap(), before);
+}
+
+#[test]
+fn lines_in_bold_refuse_who_sides_refuse() {
+    let s = Scratch::new("library-lines-refused");
+    let (root, folder) = library(&s);
+    assert!(lines_in_library(&root, &folder, "NOBODY", &FormatOptions::default()).is_err());
+    assert!(lines_in_library(&root, "/nowhere", "OTTO", &FormatOptions::default()).is_err());
+    assert!(!std::path::Path::new(&format!("{folder}/sides")).exists());
+}
+
+#[test]
+fn a_lines_file_name_holds_the_stem_and_a_safe_name() {
+    assert_eq!(
+        lines_file_name("keeper", "DR. O'HARA/2"),
+        "keeper lines - DR. O_HARA_2.epub"
+    );
 }

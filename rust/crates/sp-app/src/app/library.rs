@@ -25,11 +25,11 @@ use crate::model::convert::{Platform, reveal_failure_message};
 use crate::model::frame::Surface;
 use crate::model::layout;
 use crate::model::library::{
-    self as m, Listing, Report, Row, detail, empty_line, gone_note, hide_report_label,
-    listing_failure, listing_from, make_sides_label, making_sides, move_button, move_label, moving,
-    name_field_label, open_label, question, question_note, remove_label, removed_line,
-    rename_label, renamed_line, renaming, report_from, report_label, report_table_label, reporting,
-    row_title, save_label, settings_label, sides_from,
+    self as m, Listing, Report, Row, detail, empty_line, gone_note, hide_report_label, lines_from,
+    listing_failure, listing_from, make_lines_label, make_sides_label, making_lines, making_sides,
+    move_button, move_label, moving, name_field_label, open_label, question, question_note,
+    remove_label, removed_line, rename_label, renamed_line, renaming, report_from, report_label,
+    report_table_label, reporting, row_title, save_label, settings_label, sides_from,
 };
 use crate::theme::{self, size};
 
@@ -82,6 +82,8 @@ pub enum Purpose {
     Report(Box<Row>, u64),
     /// The row, and the character whose sides were asked for.
     Sides(Box<Row>, String),
+    /// The row, and the character whose lines in bold were asked for.
+    Lines(Box<Row>, String),
     /// The sides just made, shown in the file manager.
     RevealSides,
 }
@@ -176,6 +178,20 @@ fn make_sides(app: &mut App, row: Row, name: String) {
     );
 }
 
+fn make_lines(app: &mut App, row: Row, name: String) {
+    let s = &mut app.library;
+    s.making_sides = Some(name.clone());
+    s.sides_file = None;
+    s.said = Some((making_lines(&name), false));
+    app.call(
+        Request::LibraryLines {
+            folder: row.folder.clone(),
+            name: name.clone(),
+        },
+        AppPurpose::Library(Purpose::Lines(Box::new(row), name)),
+    );
+}
+
 /// Whether nothing is going to the Trash, being renamed or having its
 /// sides made, right now.
 pub fn idle(app: &App) -> bool {
@@ -196,6 +212,18 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
         Purpose::Sides(row, name) => {
             app.library.making_sides = None;
             app.library.said = Some(match sides_from(&answer, &row, &name) {
+                Ok((line, epub)) => {
+                    if app.library.report_for.as_deref() == Some(row.folder.as_str()) {
+                        app.library.sides_file = Some(epub);
+                    }
+                    (line, false)
+                }
+                Err(why) => (why, true),
+            });
+        }
+        Purpose::Lines(row, name) => {
+            app.library.making_sides = None;
+            app.library.said = Some(match lines_from(&answer, &row, &name) {
                 Ok((line, epub)) => {
                     if app.library.report_for.as_deref() == Some(row.folder.as_str()) {
                         app.library.sides_file = Some(epub);
@@ -466,6 +494,7 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
     ui.add_space(layout::SPACE[2]);
     let live = idle(app);
     let mut make = None;
+    let mut make_bold = None;
     let grid = egui::Grid::new(("library-report-table", row.folder.as_str()))
         .num_columns(m::REPORT_COLUMNS.len())
         .spacing([layout::SPACE[4], layout::SPACE[1]])
@@ -486,6 +515,14 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
                     .accesskit_node_builder(b.id, |n| n.set_label(label));
                 if b.clicked() {
                     make = Some(c.name.clone());
+                }
+                let id = Id::unique(("library-lines", row.folder.as_str(), c.name.as_str()));
+                let b = widgets::button_id(ui, &t, Look::Quiet, m::MAKE_SIDES, live, id);
+                let label = make_lines_label(&c.name);
+                ui.ctx()
+                    .accesskit_node_builder(b.id, |n| n.set_label(label));
+                if b.clicked() {
+                    make_bold = Some(c.name.clone());
                 }
                 ui.end_row();
             }
@@ -508,6 +545,9 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
     }
     if let Some(name) = make {
         make_sides(app, row.clone(), name);
+    }
+    if let Some(name) = make_bold {
+        make_lines(app, row.clone(), name);
     }
 }
 

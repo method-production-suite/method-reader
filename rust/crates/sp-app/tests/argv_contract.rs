@@ -438,6 +438,25 @@ fn the_library_rename_request_is_the_cli_s_library_rename_verb() {
     }
 }
 
+/// Lines in bold (docs/superpowers/specs/2026-11-06-lines-in-bold-design.md)
+/// are the CLI's `library-lines` verb, and write a book as sides do.
+/// The CLI's side is sp-cli/tests/cli_library_sides.rs.
+#[test]
+fn the_library_lines_request_is_the_cli_s_library_lines_verb() {
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let request = Request::LibraryLines {
+        folder: folder.into(),
+        name: "MARA".into(),
+    };
+    assert_eq!(
+        request.argv(),
+        ["library-lines", folder, "--json", "--", "MARA"]
+    );
+    assert_eq!(request.kind(), "library-lines");
+    use sp_app::model::busy::counts_toward_busy;
+    assert!(counts_toward_busy(request.call()), "it writes a book");
+}
+
 /// Sides (docs/superpowers/specs/2026-11-05-sides-design.md) are the CLI's
 /// `library-sides` verb, a name that starts with a dash safe after `--`; it
 /// writes a book, so the busy count waits on it.

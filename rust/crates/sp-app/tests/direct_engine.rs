@@ -494,6 +494,26 @@ fn child_lists_the_library() {
     assert!(std::path::Path::new(&epub).is_file(), "{epub}");
     assert_eq!(std::fs::read(&row.fountain).unwrap(), fountain_before);
 
+    // Lines in bold: the same speaker, a real book beside it.
+    let answer = engine
+        .run(
+            &Request::LibraryLines {
+                folder: row.folder.clone(),
+                name: name.clone(),
+            },
+            &mut |_| {},
+        )
+        .answer
+        .expect("an answer");
+    let (line, epub) = sp_app::model::library::lines_from(&answer, row, &name)
+        .unwrap_or_else(|why| panic!("{why}: {answer}"));
+    assert!(
+        line.starts_with(&format!("{name}'s lines in bold: ")),
+        "{line}"
+    );
+    assert!(std::path::Path::new(&epub).is_file(), "{epub}");
+    assert_eq!(std::fs::read(&row.fountain).unwrap(), fountain_before);
+
     // Rename: the name kept, the book made again under it, and the next
     // listing and reopen calling the script by it.
     let renamed = engine

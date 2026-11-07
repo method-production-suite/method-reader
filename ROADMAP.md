@@ -37,6 +37,9 @@ Release go-aheads:
 
 Built on the recommendation (reversible):
 
+- **A character's lines are marked in bold, spoken words only** (2026-11-06,
+  for Lines in bold). Most e-readers show no colour, and a cue is already easy
+  to find. To reverse: pick another mark in sp-epub's `render_blocks`.
 - **A character is in a scene when a cue or an action line says so**
   (2026-11-05, for Sides). A scene is kept when the character has a cue in
   it or an action line names them as a whole word with a capital (MARA,
@@ -229,9 +232,12 @@ In order. Each is one small pull request.
   they are in, into the script's `sides` folder, and Show the file finds
   it. On the command line, `method-reader library-sides <folder>
   <character>`. Built (design:
-  docs/superpowers/specs/2026-11-05-sides-design.md). Still to come:
-  emphasising a character's lines throughout, and sending sides from the
-  window.
+  docs/superpowers/specs/2026-11-05-sides-design.md). The Lines in bold
+  column makes a book of the whole script with that character's speech in
+  bold, into the same folder; on the command line, `method-reader
+  library-lines <folder> <character>` (design:
+  docs/superpowers/specs/2026-11-06-lines-in-bold-design.md). Still to come:
+  sending sides from the window.
 - **Keeping the PDF reader's dependencies current.** The parser follows
   pdf.js 6.3.289 on purpose, so its numbers stay what the parser was tuned
   on, but the libraries that read untrusted PDFs and images are kept current

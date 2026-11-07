@@ -127,6 +127,12 @@ pub enum Request {
         folder: String,
         name: String,
     },
+    /// The whole script with one character's lines in bold (`library-lines`,
+    /// new: not one of app.js's).
+    LibraryLines {
+        folder: String,
+        name: String,
+    },
 }
 
 impl Request {
@@ -159,6 +165,7 @@ impl Request {
             Self::LibraryRename { .. } => Call::LibraryRename,
             Self::LibraryReport { .. } => Call::LibraryReport,
             Self::LibrarySides { .. } => Call::LibrarySides,
+            Self::LibraryLines { .. } => Call::LibraryLines,
         }
     }
 
@@ -324,6 +331,13 @@ impl Request {
                 Some("--"),
                 Some(name),
             ]),
+            Self::LibraryLines { folder, name } => v(&[
+                Some("library-lines"),
+                Some(folder),
+                Some("--json"),
+                Some("--"),
+                Some(name),
+            ]),
         }
     }
 
@@ -357,6 +371,7 @@ impl Request {
             Self::LibraryRename { .. } => "library-rename",
             Self::LibraryReport { .. } => "library-report",
             Self::LibrarySides { .. } => "library-sides",
+            Self::LibraryLines { .. } => "library-lines",
         }
     }
 }
@@ -563,6 +578,12 @@ pub fn default_answer(request: &Request) -> Value {
                 {"name": "RADIO", "speeches": 4, "words": 6, "scenes": 0,
                     "firstScene": null, "firstPage": null},
             ],
+        }),
+        Request::LibraryLines { folder, name } => json!({
+            "ok": true, "folder": folder, "name": name,
+            "title": format!("FIELD STATION: {name} lines"),
+            "speeches": 12,
+            "epub": format!("{folder}/sides/Field Station lines - {name}.epub"),
         }),
         Request::LibrarySides { folder, name } => json!({
             "ok": true, "folder": folder, "name": name,

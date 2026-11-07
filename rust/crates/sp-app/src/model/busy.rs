@@ -46,6 +46,7 @@ pub enum Call {
     LibraryRename,
     LibraryReport,
     LibrarySides,
+    LibraryLines,
 }
 
 pub fn counts_toward_busy(call: Call) -> bool {

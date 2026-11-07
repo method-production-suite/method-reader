@@ -515,6 +515,26 @@ Options:
   -h, --help             show this help
 "#;
 
+pub const LIBRARY_LINES_USAGE: &str = r#"method-reader library-lines: the whole script, with one character's lines in bold
+
+Usage:
+  method-reader library-lines <folder> <character> [--json]
+
+<folder> must be a script's own folder directly inside the library, as
+`method-reader library` lists it, checked as library-remove checks it.
+<character> is a name `method-reader library-report` lists; case and
+extensions do not matter.
+
+Every scene stays. The words the character speaks are in bold; their cues and
+parentheticals are not. It is made from the script's .fountain with the
+script's own settings, into <folder>/sides/<name> lines - <character>.epub,
+again each time. Nothing else is touched.
+
+Options:
+  --json   One JSON line: folder, name, title, speeches, epub.
+  -h, --help             show this help
+"#;
+
 pub const LIBRARY_SIDES_USAGE: &str = r#"method-reader library-sides: one character's scenes as a book of their own
 
 Usage:

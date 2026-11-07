@@ -2535,6 +2535,58 @@ fn library_sides_makes_one_book_says_so_and_shows_the_file() {
 }
 
 #[test]
+fn lines_in_bold_make_one_book_say_so_and_show_the_file() {
+    let w = world();
+    let folder = "/Users/reader/Method Reader/Field Station";
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Make a book with MARA's lines in bold")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("library-lines"),
+        [Request::LibraryLines {
+            folder: folder.into(),
+            name: "MARA".into(),
+        }]
+    );
+    assert!(w.engine.calls_of("library-sides").is_empty());
+    assert!(has(&h, "MARA's lines in bold: 12 speeches."));
+    h.get_by_role_and_label(Role::Button, "Show the file")
+        .click_accesskit();
+    steps(&mut h);
+    assert_eq!(
+        w.engine.calls_of("reveal"),
+        [Request::Reveal {
+            path: format!("{folder}/sides/Field Station lines - MARA.epub"),
+        }]
+    );
+}
+
+#[test]
+fn the_report_table_fits_the_smallest_window() {
+    let w = world();
+    w.engine.always(
+        "library",
+        library_of(vec![library_row("Field Station", true)]),
+    );
+    let width = 640.0;
+    let mut h = harness_sized(&w, Platform::Mac, [width, 480.0]);
+    h.get_by_role_and_label(Role::Tab, "Library").click();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    let right = h
+        .get_by_role_and_label(Role::Button, "Make a book with MARA's lines in bold")
+        .rect()
+        .right();
+    assert!(right <= width, "the last column ends at {right}");
+}
+
+#[test]
 fn a_sides_file_does_not_follow_the_report_to_another_script() {
     let w = world();
     let mut h = library_tab_with(

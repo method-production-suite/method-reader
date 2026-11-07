@@ -254,6 +254,20 @@ pub fn epub_of_tokens(
     format: &FormatOptions,
     images: &[BookImage],
 ) -> Result<Vec<u8>, ConvertError> {
+    epub_with_bold_speech(tokens, identity, title, author, format, images, None)
+}
+
+/// [`epub_of_tokens`], with the speech of each cue `bold_speech` says yes to
+/// set in bold.
+pub fn epub_with_bold_speech(
+    tokens: &[Token],
+    identity: &str,
+    title: &str,
+    author: Option<&str>,
+    format: &FormatOptions,
+    images: &[BookImage],
+    bold_speech: Option<&dyn Fn(&str) -> bool>,
+) -> Result<Vec<u8>, ConvertError> {
     let meta = BookMeta {
         title: title.to_owned(),
         author: author.map(str::to_owned),
@@ -266,6 +280,7 @@ pub fn epub_of_tokens(
         &BodyOptions {
             format: *format,
             images: names,
+            bold_speech,
             ..BodyOptions::default()
         },
     );

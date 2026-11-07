@@ -91,3 +91,43 @@ fn a_stranger_and_a_missing_character_are_usage_errors() {
     let missing = run(&sb, &["library-sides", &folder]);
     assert_ne!(missing.code, 0);
 }
+
+#[test]
+fn library_lines_makes_the_whole_book_in_both_forms() {
+    let sb = Sandbox::new();
+    assert!(
+        run(&sb, &["library-lines", "--help"])
+            .stdout
+            .contains("method-reader library-lines <folder> <character> [--json]")
+    );
+    let folder = converted(&sb);
+    let report = ok(&sb, &["library-report", &folder, "--json"]);
+    let who = &report["characters"][0];
+    let name = who["name"].as_str().unwrap().to_owned();
+
+    let lines = ok(
+        &sb,
+        &["library-lines", &folder, &name.to_lowercase(), "--json"],
+    );
+    assert_eq!(lines["name"], Value::String(name.clone()));
+    assert_eq!(lines["speeches"], who["speeches"]);
+    let epub = lines["epub"].as_str().unwrap();
+    assert!(std::path::Path::new(epub).is_file(), "{epub}");
+    assert!(
+        epub.ends_with(&format!("lamp_keeper lines - {name}.epub")),
+        "{epub}"
+    );
+
+    let plain = run(&sb, &["library-lines", &folder, &name]);
+    assert_eq!(plain.code, 0);
+    assert!(
+        plain
+            .stdout
+            .starts_with(&format!("lines in bold for {name}: ")),
+        "{}",
+        plain.stdout
+    );
+
+    let stranger = run(&sb, &["library-lines", &folder, "NOBODY AT ALL", "--json"]);
+    assert_ne!(stranger.code, 0);
+}
