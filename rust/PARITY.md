@@ -1636,3 +1636,7 @@ names the check it affects.
   character's dialogue lines wrapped in `<strong>`. sp-epub's `BodyOptions`
   gained `bold_speech`, None for every other book, so their bytes are
   unchanged. The main help does not list the verb, so no help row moved.
+- **Sending a made book (2026-11-06, branch library/send-sides).**
+  `library-sides` and `library-lines` also answer `previewHtml`, as a
+  conversion does. The window's Send to e-reader opens the book as the open
+  book with no `.fountain`, through the existing `routes` and `export` rows.

@@ -19,6 +19,7 @@ use std::collections::BTreeSet;
 use std::fs;
 
 use serde::Serialize;
+use sp_epub::preview_with_bold_speech;
 use sp_fdx::{is_scene, text_runs};
 use sp_fountain::{image_note_files, page_marker_label, strip_notes, tokenize};
 use sp_model::{FormatOptions, Token, TokenType};
@@ -59,6 +60,9 @@ pub struct LibrarySides {
     pub of_scenes: u32,
     /// The book.
     pub epub: String,
+    /// The book as one document for the window's Preview, as a conversion
+    /// answers.
+    pub preview_html: String,
 }
 
 /// What `library-lines` answers.
@@ -75,6 +79,9 @@ pub struct LibraryLines {
     pub speeches: u32,
     /// The book.
     pub epub: String,
+    /// The book as one document for the window's Preview, as a conversion
+    /// answers.
+    pub preview_html: String,
 }
 
 /// The tokens of one character's sides, and how many scenes they hold.
@@ -347,6 +354,14 @@ fn pictures_of(c: &Chosen, kept: &[Token], format: &FormatOptions) -> Vec<sp_epu
     carried_pictures(pictures.as_ref().map(|p| &p.images))
 }
 
+/// The book's pictures as the preview takes them.
+fn preview_images(images: &[sp_epub::BookImage]) -> Vec<(String, Vec<u8>)> {
+    images
+        .iter()
+        .map(|i| (i.name.clone(), i.bytes.clone()))
+        .collect()
+}
+
 /// `bytes` as `file` in the script's sides folder. Answers the path.
 fn write_book(c: &Chosen, file: &str, bytes: &[u8]) -> Result<String, EngineError> {
     let dir = host::join(&[c.script.folder.as_str(), SIDES_FOLDER]);
@@ -384,6 +399,8 @@ pub fn sides_in_library(
     )
     .map_err(|e| CliError::new(ErrorCode::Internal, e.to_string()))?;
     let epub = write_book(&c, &sides_file_name(&c.script.name, &c.name), &bytes)?;
+    let preview_html =
+        preview_with_bold_speech(&sides.tokens, &format, &preview_images(&images), None);
     Ok(LibrarySides {
         folder: folder.to_owned(),
         name: c.name,
@@ -391,6 +408,7 @@ pub fn sides_in_library(
         scenes: sides.scenes,
         of_scenes: sides.of_scenes,
         epub,
+        preview_html,
     })
 }
 
@@ -419,11 +437,18 @@ pub fn lines_in_library(
     )
     .map_err(|e| CliError::new(ErrorCode::Internal, e.to_string()))?;
     let epub = write_book(&c, &lines_file_name(&c.script.name, &c.name), &bytes)?;
+    let preview_html = preview_with_bold_speech(
+        &c.tokens,
+        &format,
+        &preview_images(&images),
+        Some(&is_theirs),
+    );
     Ok(LibraryLines {
         folder: folder.to_owned(),
         name: c.name,
         title,
         speeches: c.speeches,
         epub,
+        preview_html,
     })
 }

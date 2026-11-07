@@ -602,6 +602,17 @@ pub fn tokens_to_preview_html(
     format: &FormatOptions,
     images: &PreviewImages,
 ) -> String {
+    preview_with_bold_speech(tokens, format, images, None)
+}
+
+/// [`tokens_to_preview_html`], with the speech of each cue `bold_speech` says
+/// yes to set in bold, as [`BodyOptions::bold_speech`] does for the book.
+pub fn preview_with_bold_speech(
+    tokens: &[Token],
+    format: &FormatOptions,
+    images: &PreviewImages,
+    bold_speech: Option<&dyn Fn(&str) -> bool>,
+) -> String {
     let lookup = |file: &str| {
         images
             .iter()
@@ -617,7 +628,7 @@ pub fn tokens_to_preview_html(
             format: *format,
             images: images.iter().map(|(name, _)| name.clone()).collect(),
             image_src: Some(&src),
-            bold_speech: None,
+            bold_speech,
         },
     );
     let doc = body
@@ -720,6 +731,16 @@ mod tests {
         assert!(html.contains("<strong>One.</strong>"), "{html}");
         assert!(!html.contains("<strong>Two."), "{html}");
         assert!(!html.contains("<strong>Three."), "{html}");
+    }
+
+    #[test]
+    fn the_preview_takes_the_same_bold() {
+        let tokens = sp_fountain::tokenize("INT. A - DAY\n\nWREN\nOne.\n\nOTTO\nTwo.\n").unwrap();
+        let asks = |cue: &str| cue.starts_with("WREN");
+        let html =
+            preview_with_bold_speech(&tokens, &FormatOptions::default(), &Vec::new(), Some(&asks));
+        assert!(html.contains("<strong>One.</strong>"), "{html}");
+        assert!(!html.contains("<strong>Two."), "{html}");
     }
 
     #[test]

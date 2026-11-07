@@ -531,7 +531,7 @@ script's own settings, into <folder>/sides/<name> lines - <character>.epub,
 again each time. Nothing else is touched.
 
 Options:
-  --json   One JSON line: folder, name, title, speeches, epub.
+  --json   One JSON line: folder, name, title, speeches, epub, previewHtml.
   -h, --help             show this help
 "#;
 
@@ -552,7 +552,7 @@ It is made from the script's .fountain with the script's own settings, into
 is touched.
 
 Options:
-  --json   One JSON line: folder, name, title, scenes, ofScenes, epub.
+  --json   One JSON line: folder, name, title, scenes, ofScenes, epub, previewHtml.
   --help   This.
 "#;
 

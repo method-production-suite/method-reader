@@ -59,7 +59,9 @@ for sides.
 ## Not in this slice
 
 - Bold in the sides book itself.
-- Sending this book from the window, and formats other than EPUB.
+- Sending this book from the window (built since:
+  docs/superpowers/specs/2026-11-06-send-sides-design.md), and formats other
+  than EPUB.
 - Marking more than one character in a book.
 
 ## Tests

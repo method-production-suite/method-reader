@@ -372,6 +372,8 @@ pub const REPORT_COLUMNS: [&str; 7] = [
 pub const MAKE_SIDES: &str = "Make";
 /// The button that shows the sides just made.
 pub const SHOW_SIDES: &str = "Show the file";
+/// The button that opens the book just made, to send it.
+pub const SEND_MADE: &str = "Send to e-reader";
 /// What the status line says when an answer says nothing usable.
 pub const NOT_MADE: &str = "The sides could not be made, and nothing said why.";
 /// What the status line says when a lines answer says nothing usable.
@@ -485,6 +487,23 @@ pub fn hide_report_label(row: &Row) -> String {
 /// The report table's name for a screen reader.
 pub fn report_table_label(row: &Row) -> String {
     format!("Who speaks in {}", row_title(row))
+}
+
+/// A book the report just made.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MadeBook {
+    pub epub: String,
+    pub title: String,
+    pub preview_html: String,
+}
+
+/// The book an answer that made one says it made, at `epub`.
+pub fn made_book(answer: &Value, epub: String) -> MadeBook {
+    MadeBook {
+        title: text_at(answer, "title").unwrap_or_else(|| epub.clone()),
+        preview_html: text_at(answer, "previewHtml").unwrap_or_default(),
+        epub,
+    }
 }
 
 /// A character's Make button's name for a screen reader.
