@@ -2535,6 +2535,33 @@ fn library_sides_makes_one_book_says_so_and_shows_the_file() {
 }
 
 #[test]
+fn a_sides_file_does_not_follow_the_report_to_another_script() {
+    let w = world();
+    let mut h = library_tab_with(
+        &w,
+        vec![
+            library_row("Field Station", true),
+            library_row("Weather Log", true),
+        ],
+    );
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    h.get_by_role_and_label(Role::Button, "Make sides for MARA")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(h.query_by_label("Show the file").is_some());
+
+    h.get_by_role_and_label(Role::Button, "Report for WEATHER LOG")
+        .click_accesskit();
+    steps(&mut h);
+    assert!(
+        h.query_by_label("Show the file").is_none(),
+        "the file made from the other script is not this script's"
+    );
+}
+
+#[test]
 fn library_sides_says_why_when_there_are_none() {
     let w = world();
     w.engine.always(

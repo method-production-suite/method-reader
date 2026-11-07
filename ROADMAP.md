@@ -39,7 +39,8 @@ Built on the recommendation (reversible):
 
 - **A character is in a scene when a cue or an action line says so**
   (2026-11-05, for Sides). A scene is kept when the character has a cue in
-  it or an action line names them as a whole word (MARA or Mara), since an
+  it or an action line names them as a whole word with a capital (MARA,
+  Mara, McCoy), since an
   extra scene costs a page turn and a missing one costs an entrance.
   Dialogue that mentions them does not count. To reverse: count cues alone
   (sp-engine's `commands/library_sides.rs`, `is_in`).

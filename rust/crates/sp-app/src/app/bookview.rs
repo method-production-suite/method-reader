@@ -711,9 +711,10 @@ mod tests {
         let html = oracle();
         let view = views.get(Place::FirstPage, &html, 400.0, &LIGHT, false);
         assert!(view.laid().is_none(), "asked, not waited for");
-        // A deadline, not a count: alone the layout takes about three
-        // seconds, and with the whole workspace's tests beside it once took
-        // more than the five the old count allowed.
+        // A deadline, not a count: the layout is quick, but the first font
+        // lookup makes macOS list the folder this program sits in, and a
+        // build folder's debug/deps can hold enough files to take half a
+        // minute (empty the build folder if this test runs out of time).
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         let mut fresh = false;
         while std::time::Instant::now() < deadline {

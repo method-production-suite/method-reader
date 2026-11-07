@@ -90,6 +90,53 @@ fn a_character_is_in_the_scenes_they_speak_in_or_action_names_them() {
     assert_eq!((sides.scenes, sides.of_scenes), (3, 5));
 }
 
+/// The two scenes of a script: the first names `who` in its action, as
+/// `spelled`, and the second doesn't. How many scenes `who` is in.
+fn scenes_naming(who: &str, spelled: &str) -> u32 {
+    let script = format!(
+        "INT. BOATHOUSE - DAY\n\n{spelled} coils a rope.\n\nEXT. QUAY - DAY\n\nGulls circle.\n"
+    );
+    sides_of(&tokenize(&script).unwrap(), who).scenes
+}
+
+#[test]
+fn an_action_line_names_a_character_however_their_name_is_capitalized() {
+    for (who, spelled) in [
+        ("JEAN-LUC", "Jean-Luc"),
+        ("O'BRIEN", "O'Brien"),
+        ("O'BRIEN", "O\u{2019}Brien"),
+        ("O\u{2019}BRIEN", "O'Brien"),
+        ("MCCOY", "McCoy"),
+        ("MCCOY", "Mccoy"),
+        ("VAN DER BERG", "van der Berg"),
+        ("STRASSE", "Straße"),
+        ("WREN", "WREN"),
+        ("WREN", "Wren"),
+    ] {
+        assert_eq!(scenes_naming(who, spelled), 1, "{who} as {spelled}");
+    }
+}
+
+#[test]
+fn a_word_with_no_capital_or_more_letters_around_it_is_not_the_name() {
+    for (who, spelled) in [
+        ("WREN", "wren"),
+        ("WREN", "Wrench"),
+        ("WREN", "Swren"),
+        ("JEAN-LUC", "jean-luc"),
+        ("MCCOY", "mccoy"),
+    ] {
+        assert_eq!(scenes_naming(who, spelled), 0, "{who} as {spelled}");
+    }
+}
+
+#[test]
+fn a_name_with_no_capitals_to_it_is_found_as_it_is_spelled() {
+    assert_eq!(scenes_naming("R2", "R2"), 1);
+    assert_eq!(scenes_naming("r2", "r2"), 1);
+    assert_eq!(scenes_naming("\u{674e}", "\u{674e}"), 1);
+}
+
 #[test]
 fn the_title_page_stays() {
     let sides = sides_of(&tokenize(KEEPER).unwrap(), "BEA");
