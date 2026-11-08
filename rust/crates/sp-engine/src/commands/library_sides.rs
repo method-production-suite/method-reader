@@ -118,6 +118,10 @@ fn spelled_len(text: &str, key: &str) -> Option<usize> {
 /// spells it, or in any capitals so long as it has one (Mara, McCoy,
 /// Jean-Luc, van der Berg). All in lower case it is an ordinary word: the
 /// wren on the sill is not WREN.
+///
+/// A name joined to letters by a hyphen, or by an apostrophe in front of it,
+/// is part of a longer name: LUC is not in Jean-Luc, nor BRIEN in O'Brien.
+/// An apostrophe after it still names them (Wren's, Wren'll).
 fn names(text: &str, name: &str) -> bool {
     let key: String = name.chars().flat_map(folded).collect();
     !key.is_empty()
@@ -126,14 +130,20 @@ fn names(text: &str, name: &str) -> bool {
                 return false;
             };
             let word = &text[i..i + len];
-            !text[..i]
-                .chars()
-                .next_back()
-                .is_some_and(char::is_alphanumeric)
-                && !text[i + len..]
-                    .chars()
-                    .next()
-                    .is_some_and(char::is_alphanumeric)
+            let mut before = text[..i].chars().rev();
+            let mut after = text[i + len..].chars();
+            let joined_before = match before.next() {
+                Some(c) if c.is_alphanumeric() => true,
+                Some('-' | '\'' | '\u{2019}') => before.next().is_some_and(char::is_alphanumeric),
+                _ => false,
+            };
+            let joined_after = match after.next() {
+                Some(c) if c.is_alphanumeric() => true,
+                Some('-') => after.next().is_some_and(char::is_alphanumeric),
+                _ => false,
+            };
+            !joined_before
+                && !joined_after
                 && (word.chars().any(char::is_uppercase) || word == name)
         })
 }

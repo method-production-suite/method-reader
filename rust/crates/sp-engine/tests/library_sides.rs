@@ -113,6 +113,9 @@ fn an_action_line_names_a_character_however_their_name_is_capitalized() {
         ("STRASSE", "Straße"),
         ("WREN", "WREN"),
         ("WREN", "Wren"),
+        ("WREN", "Wren's"),
+        ("WREN", "Wren\u{2019}s"),
+        ("WREN", "Wren--"),
     ] {
         assert_eq!(scenes_naming(who, spelled), 1, "{who} as {spelled}");
     }
@@ -126,6 +129,18 @@ fn a_word_with_no_capital_or_more_letters_around_it_is_not_the_name() {
         ("WREN", "Swren"),
         ("JEAN-LUC", "jean-luc"),
         ("MCCOY", "mccoy"),
+    ] {
+        assert_eq!(scenes_naming(who, spelled), 0, "{who} as {spelled}");
+    }
+}
+
+#[test]
+fn a_name_inside_a_joined_name_is_not_that_character() {
+    for (who, spelled) in [
+        ("LUC", "Jean-Luc"),
+        ("JEAN", "Jean-Luc"),
+        ("BRIEN", "O'Brien"),
+        ("BRIEN", "O\u{2019}Brien"),
     ] {
         assert_eq!(scenes_naming(who, spelled), 0, "{who} as {spelled}");
     }

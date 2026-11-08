@@ -277,6 +277,11 @@ fn a_connection_dropped_on_navigate_fails_the_capture_at_once_and_close_still_cl
 #[test]
 fn a_chrome_that_exits_at_start_fails_the_launch_at_once_naming_it_and_leaves_no_profile() {
     let fake = FakeChrome::new(Fake::default(), true);
+    // macOS checks a program the first time it runs, which on a busy machine
+    // can outlast the limit below: run it once before the clock starts.
+    std::process::Command::new(&fake.chrome)
+        .status()
+        .expect("warm");
     let start = Instant::now();
     let err = launch(&fake.chrome).err().expect("the launch should fail");
     assert!(start.elapsed() < Duration::from_secs(3));
