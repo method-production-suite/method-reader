@@ -306,10 +306,13 @@ fn render_blocks(
                 });
             }
             TokenType::Action | TokenType::Lyrics => {
-                out.emit(format!(
-                    "<p class=\"action{fmt}\">{}</p>\n",
-                    inline_emphasis(&escape_xml(&text))
-                ));
+                let said = inline_emphasis(&escape_xml(&text));
+                // A sung line under the chosen cue is their speech too.
+                out.emit(if speaking_bold && t.kind == TokenType::Lyrics {
+                    format!("<p class=\"action{fmt}\"><strong>{said}</strong></p>\n")
+                } else {
+                    format!("<p class=\"action{fmt}\">{said}</p>\n")
+                });
             }
             TokenType::DualDialogueBegin => dual = Some((Vec::new(), Vec::new(), false)),
             TokenType::DualDialogueEnd => {
@@ -716,6 +719,18 @@ mod tests {
     fn a_line_with_a_star_in_it_keeps_its_star_and_its_bold() {
         let html = wrens_lines_in_bold("INT. A - DAY\n\nWREN\n2 * 3 is six.\n");
         assert!(html.contains("<strong>2 * 3 is six.</strong>"), "{html}");
+    }
+
+    #[test]
+    fn a_sung_line_under_the_chosen_cue_is_bold() {
+        let html = wrens_lines_in_bold(
+            "INT. A - DAY\n\nWREN\n(singing)\n~Over the sea\n~and home.\n\nOTTO\n(singing)\n~Not mine.\n",
+        );
+        assert!(
+            html.contains("<strong>Over the sea\nand home.</strong>"),
+            "{html}"
+        );
+        assert!(!html.contains("<strong>Not mine."), "{html}");
     }
 
     #[test]
