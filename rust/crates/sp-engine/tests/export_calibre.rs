@@ -143,8 +143,16 @@ fn a_run_that_outlives_its_timeout_is_stopped_children_and_all() {
     let child_pid = s.join("child.pid");
     common::executable(
         &tool,
-        format!("#!/bin/sh\nsleep 30 &\necho $! > \"{child_pid}\"\nwait\n"),
+        format!(
+            "#!/bin/sh\n[ \"$1\" = warm ] && exit 0\nsleep 30 &\necho $! > \"{child_pid}\"\nwait\n"
+        ),
     );
+    // macOS checks a program the first time it runs, which on a busy machine
+    // took longer than the whole timeout: run it once before the clock starts.
+    std::process::Command::new(&tool)
+        .arg("warm")
+        .status()
+        .expect("warm");
     let started = std::time::Instant::now();
     // Long enough that the script has started its child before the stop.
     let err = run_calibre(&tool, &[], &guarded_env(), 1500).unwrap_err();
