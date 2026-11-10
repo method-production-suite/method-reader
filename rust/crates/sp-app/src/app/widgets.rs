@@ -333,6 +333,86 @@ pub fn track(ui: &mut Ui, t: &Tokens, fraction: f32) -> egui::Rect {
     rect
 }
 
+/// The track that keeps moving while work with no figure to report runs
+/// (the Kindle file building, a copy, a save): a 30% bar across and off,
+/// or under Reduce Motion the whole track breathing. The caller asks for
+/// the next frame.
+pub fn moving_bar(ui: &mut Ui, t: &Tokens, now: f64, reduced: bool) -> egui::Rect {
+    let rect = track(ui, t, 0.0);
+    let painter = ui.painter().with_clip_rect(rect);
+    if reduced {
+        // build-breathe: the whole track, there and back, eased.
+        let k = crate::model::motion::breathe_at(now);
+        painter.rect_filled(rect, 0.0, t.brass.gamma_multiply(k));
+    } else {
+        // build-sweep: a 30% bar across and off, eased in and out.
+        let (left, width) = crate::model::motion::sweep_at(now);
+        let x = rect.left() + left * rect.width();
+        painter.rect_filled(
+            egui::Rect::from_min_size(
+                egui::pos2(x, rect.top()),
+                Vec2::new(width * rect.width(), rect.height()),
+            ),
+            0.0,
+            t.brass,
+        );
+    }
+    rect
+}
+
+/// A status line, announced when its words change, that looks like what
+/// it says: work under way wears the moving bar beneath it, work finished
+/// a check mark and the ink, a failure the alarm. Returns whether it is
+/// moving, so the caller asks for the next frame.
+pub fn status_line(
+    ui: &mut Ui,
+    t: &Tokens,
+    id: Id,
+    status: &crate::model::send_routes::Status,
+    now: f64,
+    reduced: bool,
+) -> bool {
+    let font = theme::chrome(size::LABEL);
+    if status.done() {
+        ui.horizontal_top(|ui| {
+            // Painted, not allocated: the mark is decoration, and the
+            // line's own words are what a screen reader hears.
+            let at = ui.cursor().min;
+            let mid = at.y + font.size * 0.62;
+            let stroke = Stroke::new(1.6, t.brass);
+            ui.painter().line_segment(
+                [
+                    egui::pos2(at.x + 1.0, mid),
+                    egui::pos2(at.x + 4.5, mid + 3.5),
+                ],
+                stroke,
+            );
+            ui.painter().line_segment(
+                [
+                    egui::pos2(at.x + 4.5, mid + 3.5),
+                    egui::pos2(at.x + 11.0, mid - 4.0),
+                ],
+                stroke,
+            );
+            ui.add_space(15.0);
+            ui.vertical(|ui| live(ui, id, &status.line, font.clone(), t.ink));
+        });
+        return false;
+    }
+    live(
+        ui,
+        id,
+        &status.line,
+        font,
+        if status.bad { t.alarm } else { t.ink_muted },
+    );
+    if status.working {
+        ui.add_space(6.0);
+        moving_bar(ui, t, now, reduced);
+    }
+    status.working
+}
+
 /// A rect as AccessKit takes it, for groups and regions egui itself does not
 /// give bounds to.
 pub fn bounds(r: egui::Rect) -> accesskit::Rect {

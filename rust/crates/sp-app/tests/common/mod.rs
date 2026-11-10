@@ -42,9 +42,14 @@ pub fn harness_sized(w: &World, platform: Platform, size: [f32; 2]) -> H {
 /// for a test that holds a call (FakeEngine::hold) and looks at the screen
 /// while it is out. `settle` steps it until the workers' events are in.
 pub fn harness_threads(w: &World, platform: Platform) -> H {
+    harness_threads_sized(w, platform, [1280.0, 800.0])
+}
+
+/// A threaded window at a given size: tall enough for a panel's lower rows.
+pub fn harness_threads_sized(w: &World, platform: Platform, size: [f32; 2]) -> H {
     let app = App::new(w.engine.clone(), Mode::Threads, w.fakes.host(platform));
     let mut h = Harness::builder()
-        .with_size([1280.0, 800.0])
+        .with_size(size)
         .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
     settle(&mut h);
     h

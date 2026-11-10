@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use super::widgets::{self, Look};
 use super::{App, Purpose as AppPurpose, SendResult, convert};
 use crate::engine::{Reply, Request};
+use crate::model::convert::{reveal_failure_message, reveal_saved_label};
 use crate::model::device::{
     self as d, Eject, WayItem, cards_for, copied_state, eject_is_beta, eject_label, eject_outcome,
     eject_still_there, fold_unplugged, kindle_session, offer_for, save_rows, save_turn,
@@ -119,6 +120,17 @@ pub struct State {
     pub kfx_open: bool,
     pub status: Status,
     pub artifact: String,
+    /// Where the last save put its file, while its line is the one shown:
+    /// what Show in Finder opens.
+    pub saved: Option<String>,
+    /// The Other ways row whose button started the line now shown, so the
+    /// line is drawn under it rather than past the end of a long list.
+    pub from: Option<String>,
+    /// A row's button pressed this frame, adopted by the flow it starts.
+    from_next: Option<String>,
+    /// Whether the line has been drawn this frame (under its row, or above
+    /// the list), so it is drawn once.
+    status_drawn: bool,
     pub request: RequestDraft,
     pub pinned: HashSet<String>,
     pub reports: HashMap<String, Report>,
@@ -174,6 +186,10 @@ impl Default for State {
             ways_open: false,
             kfx_open: false,
             status: Status::default(),
+            saved: None,
+            from: None,
+            from_next: None,
+            status_drawn: false,
             artifact: String::new(),
             request: RequestDraft::default(),
             pinned: HashSet::new(),
@@ -230,6 +246,8 @@ pub enum Purpose {
     Perform {
         era: u64,
     },
+    /// Show in Finder, for the file a save just wrote.
+    Reveal,
     Save {
         era: u64,
         kind: &'static str,
@@ -279,6 +297,8 @@ pub fn mount(app: &mut App) {
     }
     s.asked = false;
     s.artifact.clear();
+    s.saved = None;
+    s.from = None;
     // What the last send said about this book comes back; another book's
     // line does not, but a reader still waiting to be ejected does.
     match app.send_result.clone() {
@@ -286,6 +306,7 @@ pub fn mount(app: &mut App) {
             app.panel.status = Status {
                 line: kept.line,
                 bad: kept.bad,
+                working: false,
             }
         }
         Some(SendResult {
@@ -587,6 +608,9 @@ fn say(app: &mut App, status: Status, eject: Option<Option<Eject>>) {
         eject: eject.unwrap_or(kept),
     });
     app.panel.status = status;
+    if !app.panel.sending {
+        app.panel.from = None;
+    }
 }
 
 fn begin(app: &mut App) -> bool {
@@ -595,6 +619,8 @@ fn begin(app: &mut App) -> bool {
     }
     app.panel.sending = true;
     app.panel.artifact.clear();
+    app.panel.saved = None;
+    app.panel.from = app.panel.from_next.take();
     true
 }
 
@@ -779,7 +805,6 @@ fn save_dialog_then_export(app: &mut App, kind: &'static str) {
         out: Some(out),
     };
     if save_turn(kind) == "kindle" {
-        say(app, Status::default(), None);
         let same = app.panel.kindle_book.as_deref() == Some(b.as_str())
             && app
                 .panel
@@ -787,6 +812,17 @@ fn save_dialog_then_export(app: &mut App, kind: &'static str) {
                 .as_ref()
                 .is_some_and(|f| f.extension == kind);
         let tracked = !same || r::may_build(app.panel.kindle.as_ref());
+        // A build speaks through its own line and bar; a file already
+        // built is only copied, and says so.
+        say(
+            app,
+            if tracked {
+                Status::default()
+            } else {
+                Status::working(r::SAVING)
+            },
+            None,
+        );
         if tracked {
             let file = if same { app.panel.kindle.clone() } else { None };
             track(app, &b, file.as_ref(), Some(kind.into()));
@@ -803,7 +839,7 @@ fn save_dialog_then_export(app: &mut App, kind: &'static str) {
             }),
         );
     } else {
-        say(app, Status::good(r::SAVING), None);
+        say(app, Status::working(r::SAVING), None);
         app.on_book(
             &b,
             "copy",
@@ -825,7 +861,11 @@ fn eject_now(app: &mut App) {
     if !begin(app) {
         return;
     }
-    say(app, Status::good(format!("Ejecting {}…", eject.name)), None);
+    say(
+        app,
+        Status::working(format!("Ejecting {}…", eject.name)),
+        None,
+    );
     let era = app.panel.era;
     app.call(
         Request::Eject {
@@ -919,7 +959,7 @@ fn kfx_install(app: &mut App) {
     }
     app.panel.kfx.installing = true;
     app.panel.kfx.installs += 1;
-    app.panel.kfx.status = Status::good(k::INSTALLING);
+    app.panel.kfx.status = Status::working(k::INSTALLING);
     app.call(Request::KfxInstall, p(Purpose::KfxInstall));
 }
 
@@ -1166,15 +1206,25 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 }
             }
             if era == app.panel.era {
+                let written = match &reply.answer {
+                    Ok(a) if ok(a) => a
+                        .get("path")
+                        .and_then(Value::as_str)
+                        .map(str::trim)
+                        .filter(|p| !p.is_empty())
+                        .map(str::to_string),
+                    _ => None,
+                };
                 let status = match &reply.answer {
                     Err(m) => Status::failed(m),
                     Ok(a) if ok(a) => Status::good(format!(
                         "Saved {}.",
-                        r::base_name(a.get("path").and_then(Value::as_str).unwrap_or(""))
+                        r::base_name(written.as_deref().unwrap_or(""))
                     )),
                     Ok(a) => Status::failed(&failure_message(a)),
                 };
                 say(app, status, None);
+                app.panel.saved = written;
             }
             finish(app, false, era);
         }
@@ -1187,7 +1237,11 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
                 let still = eject_still_there(&eject, app.devices.as_deref());
                 say(
                     app,
-                    Status { line, bad },
+                    Status {
+                        line,
+                        bad,
+                        working: false,
+                    },
                     Some(if keep && still { Some(eject) } else { None }),
                 );
             }
@@ -1206,6 +1260,15 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.panel.kfx.just_installed = false;
             app.panel.kfx.status = Status::default();
         }
+        Purpose::Reveal => {
+            if let Some(why) = reveal_failure_message(&answer) {
+                // Said under the row whose save it was.
+                let from = app.panel.from.clone();
+                app.panel.saved = None;
+                say(app, Status::failed(&why), None);
+                app.panel.from = from;
+            }
+        }
         Purpose::KfxInstall => {
             app.panel.kfx.installing = false;
             let after = after_install(&answer, app.panel.kfx.setup.as_ref());
@@ -1214,6 +1277,7 @@ pub fn answered(app: &mut App, purpose: Purpose, reply: Reply) {
             app.panel.kfx.status = Status {
                 line: after.line,
                 bad: after.bad,
+                working: false,
             };
             check_kindle(app, true);
         }
@@ -1319,6 +1383,7 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     let t = app.tokens();
     app.panel.keyed.clear();
     app.panel.asterisks.clear();
+    app.panel.status_drawn = false;
     app.panel.brass = None;
     if let Some(blocked) = app.panel.blocked {
         widgets::heading(
@@ -1347,14 +1412,46 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
         (Some(Mode::Calm), Intent::Read) => draw_calm(app, ui),
         (Some(Mode::Missing), Intent::Read) => draw_missing(app, ui),
     }
+    if !app.panel.status_drawn {
+        status_block(app, ui);
+    }
+}
+
+/// The line, under the row that started it when that row is on screen.
+fn status_here(app: &mut App, ui: &mut Ui, key: &str) {
+    if app.panel.from.as_deref() == Some(key) && !app.panel.status_drawn {
+        status_block(app, ui);
+        ui.add_space(layout::SPACE[2]);
+    }
+}
+
+/// The status line, and what a finished save or copy leaves to press.
+fn status_block(app: &mut App, ui: &mut Ui) {
+    app.panel.status_drawn = true;
+    let t = app.tokens();
     let status = app.panel.status.clone();
-    widgets::live(
-        ui,
-        Id::unique("send-status"),
-        &status.line,
-        theme::chrome(size::LABEL),
-        if status.bad { t.alarm } else { t.ink_muted },
-    );
+    let (now, reduced) = (app.now(), app.reduced_motion());
+    if widgets::status_line(ui, &t, Id::unique("send-status"), &status, now, reduced) {
+        app.moving();
+    }
+    // A finished save: where it went, one press away.
+    if status.done()
+        && let Some(path) = app.panel.saved.clone()
+    {
+        ui.add_space(layout::SPACE[2]);
+        let label = reveal_saved_label(app.host.platform, &path);
+        let b = widgets::button_id(
+            ui,
+            &t,
+            Look::Small,
+            &label,
+            true,
+            Id::unique("send-saved-show"),
+        );
+        if b.clicked() {
+            app.call(Request::Reveal { path }, p(Purpose::Reveal));
+        }
+    }
     if !app.panel.artifact.is_empty() {
         let artifact = app.panel.artifact.clone();
         widgets::text(ui, &artifact, theme::chrome(size::NOTE), t.ink_muted);
@@ -1837,26 +1934,8 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
             theme::chrome(size::LABEL),
             t.ink_muted,
         );
-        let rect = widgets::track(ui, &t, 0.0);
-        let now = app.now();
-        let painter = ui.painter().with_clip_rect(rect);
-        if app.reduced_motion() {
-            // build-breathe: the whole track, there and back, eased.
-            let k = crate::model::motion::breathe_at(now);
-            painter.rect_filled(rect, 0.0, t.brass.gamma_multiply(k));
-        } else {
-            // build-sweep: a 30% bar across and off, eased in and out.
-            let (left, width) = crate::model::motion::sweep_at(now);
-            let x = rect.left() + left * rect.width();
-            painter.rect_filled(
-                Rect::from_min_size(
-                    egui::pos2(x, rect.top()),
-                    Vec2::new(width * rect.width(), rect.height()),
-                ),
-                0.0,
-                t.brass,
-            );
-        }
+        let (now, reduced) = (app.now(), app.reduced_motion());
+        widgets::moving_bar(ui, &t, now, reduced);
         app.moving();
     }
     if let Some(fault) = app.panel.routes_fault.clone() {
@@ -1893,6 +1972,11 @@ fn draw_calm(app: &mut App, ui: &mut Ui) {
         super::device_library::entry(app, ui);
     });
     super::device_library::draw(app, ui);
+    if app.panel.ways_open && app.panel.from.is_none() && !app.panel.status.line.is_empty() {
+        // Started by the button above: said here, not past the list.
+        ui.add_space(layout::SPACE[3]);
+        status_block(app, ui);
+    }
     if app.panel.ways_open {
         let offer = offer.map(|o| {
             if eject.is_some() {
@@ -2009,9 +2093,13 @@ fn draw_other_ways(app: &mut App, ui: &mut Ui, offer: Option<&d::Offer>) {
         if setup {
             open_kfx(app);
         }
+        let key = format!("save-file-{}", row.kind);
         if save {
+            app.panel.from_next = Some(key.clone());
             save_file(app, row.kind);
+            app.panel.from_next = None;
         }
+        status_here(app, ui, &key);
     }
     if app.panel.kfx_open {
         draw_kfx(app, ui);
@@ -2107,6 +2195,7 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
         },
     );
     if setup {
+        app.panel.from_next = Some(r::EMAIL_SETUP.into());
         perform(
             app,
             r::EMAIL_SETUP.into(),
@@ -2115,11 +2204,17 @@ fn route_row(app: &mut App, ui: &mut Ui, route: &Route) {
         );
     }
     if chosen {
+        app.panel.from_next = Some(route.id.clone());
         choose_route(app, route);
     }
+    app.panel.from_next = None;
     if let Some(kind) = kind {
         asterisk_notes(app, ui, vec![kind]);
     }
+    if hint.is_some() {
+        status_here(app, ui, r::EMAIL_SETUP);
+    }
+    status_here(app, ui, &route.id);
 }
 
 fn draw_missing(app: &mut App, ui: &mut Ui) {
@@ -2363,13 +2458,10 @@ fn draw_kfx(app: &mut App, ui: &mut Ui) {
             });
         }
         let status = app.panel.kfx.status.clone();
-        widgets::live(
-            ui,
-            Id::unique("kfx-status"),
-            &status.line,
-            theme::chrome(size::LABEL),
-            if status.bad { t.alarm } else { t.ink_muted },
-        );
+        let (now, reduced) = (app.now(), app.reduced_motion());
+        if widgets::status_line(ui, &t, Id::unique("kfx-status"), &status, now, reduced) {
+            app.moving();
+        }
     });
     ui.ctx().accesskit_node_builder(block.response.id, |n| {
         n.set_role(accesskit::Role::Region);
