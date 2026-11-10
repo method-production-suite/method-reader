@@ -136,18 +136,30 @@ pub fn artifact_line(built: &Value) -> String {
 
 pub const NO_MESSAGE: &str = "The engine refused to send without saying why.";
 
-/// The status line: its words and whether it is an alarm.
+/// The status line: its words, whether it is an alarm, and whether the
+/// work it names is still going (drawn with a moving bar under it, where
+/// a finished line wears a check mark instead).
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Status {
     pub line: String,
     pub bad: bool,
+    pub working: bool,
 }
 
 impl Status {
+    /// Something finished, and this is what came of it.
     pub fn good(line: impl Into<String>) -> Self {
         Self {
             line: line.into(),
-            bad: false,
+            ..Self::default()
+        }
+    }
+    /// Something is under way and has not answered yet.
+    pub fn working(line: impl Into<String>) -> Self {
+        Self {
+            line: line.into(),
+            working: true,
+            ..Self::default()
         }
     }
     pub fn failed(detail: &str) -> Self {
@@ -159,16 +171,21 @@ impl Status {
                 said.into()
             },
             bad: true,
+            working: false,
         }
+    }
+    /// Finished well, with words to show: what earns the check mark.
+    pub fn done(&self) -> bool {
+        !self.bad && !self.working && !self.line.trim().is_empty()
     }
 }
 
 pub fn preparing(device: &Device) -> Status {
-    Status::good(format!("Getting the book ready for {}…", device.name))
+    Status::working(format!("Getting the book ready for {}…", device.name))
 }
 
 pub fn copying(device: &Device) -> Status {
-    Status::good(match copy_note_of(device) {
+    Status::working(match copy_note_of(device) {
         Some(note) => format!("Copying it to {}… {note}", device.name),
         None => format!("Copying it to {}…", device.name),
     })
@@ -176,7 +193,7 @@ pub fn copying(device: &Device) -> Status {
 
 pub fn opening(title: &str) -> Status {
     let t = title.trim();
-    Status::good(if t.is_empty() {
+    Status::working(if t.is_empty() {
         "Opening…".to_string()
     } else {
         format!("Opening {t}…")
@@ -657,6 +674,17 @@ mod tests {
             volume: volume.map(str::to_string),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn a_line_for_work_under_way_is_working_and_only_a_finished_one_is_done() {
+        let kindle = device("kindle", Some("/Volumes/Kindle"));
+        for under_way in [preparing(&kindle), copying(&kindle), opening("Mail")] {
+            assert!(under_way.working && !under_way.done(), "{under_way:?}");
+        }
+        assert!(Status::good("Saved Field Station.fdx.").done());
+        assert!(!Status::failed("no room").done());
+        assert!(!Status::default().done(), "an empty line marks nothing");
     }
 
     #[test]

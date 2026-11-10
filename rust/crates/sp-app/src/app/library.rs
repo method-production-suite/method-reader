@@ -32,6 +32,7 @@ use crate::model::library::{
     report_from, report_label, report_table_label, reporting, row_title, save_label,
     settings_label, sides_from,
 };
+use crate::model::send_routes::Status;
 use crate::theme::{self, size};
 
 #[derive(Default)]
@@ -310,13 +311,15 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     widgets::title(ui, &t, m::TITLE);
     ui.add_space(layout::SPACE[3]);
     let (said, bad) = app.library.said.clone().unwrap_or_default();
-    widgets::live(
-        ui,
-        Id::unique("library-status"),
-        &said,
-        theme::chrome(size::LABEL),
-        if bad { t.alarm } else { t.ink_muted },
-    );
+    let status = Status {
+        line: said.clone(),
+        bad,
+        working: !idle(app),
+    };
+    let (now, reduced) = (app.now(), app.reduced_motion());
+    if widgets::status_line(ui, &t, Id::unique("library-status"), &status, now, reduced) {
+        app.moving();
+    }
     if !said.is_empty() {
         ui.add_space(layout::SPACE[3]);
     }

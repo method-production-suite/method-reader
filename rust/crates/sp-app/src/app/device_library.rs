@@ -16,6 +16,7 @@ use crate::model::device_library::{
 };
 use crate::model::layout;
 use crate::model::send_routes::Device;
+use crate::model::send_routes::Status;
 use crate::theme::{self, size};
 
 #[derive(Default)]
@@ -229,14 +230,16 @@ pub fn draw(app: &mut App, ui: &mut Ui) {
     } else if app.shelf.looking {
         widgets::text(ui, &looking(&device), theme::chrome(size::UI), t.ink_muted);
     }
-    let (said, bad) = app.shelf.said.clone().unwrap_or_default();
-    widgets::live(
-        ui,
-        Id::unique("shelf-status"),
-        &said,
-        theme::chrome(size::LABEL),
-        if bad { t.alarm } else { t.ink_muted },
-    );
+    let (line, bad) = app.shelf.said.clone().unwrap_or_default();
+    let status = Status {
+        line,
+        bad,
+        working: !idle(app),
+    };
+    let (now, reduced) = (app.now(), app.reduced_motion());
+    if widgets::status_line(ui, &t, Id::unique("shelf-status"), &status, now, reduced) {
+        app.moving();
+    }
 }
 
 fn book_row(app: &mut App, ui: &mut Ui, device: &Device, book: &Book) {

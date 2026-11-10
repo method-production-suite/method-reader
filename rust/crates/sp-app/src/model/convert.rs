@@ -207,6 +207,17 @@ pub fn reveal_label(platform: Platform) -> &'static str {
     }
 }
 
+/// The button under a finished save, naming the file it wrote, so it is
+/// never mistaken for the book's own Show in Finder beside it.
+pub fn reveal_saved_label(platform: Platform, path: &str) -> String {
+    let name = file_name(path);
+    match platform {
+        Platform::Mac => format!("Show {name} in Finder"),
+        Platform::Windows => format!("Show {name} in File Explorer"),
+        _ => format!("Show {name} in its folder"),
+    }
+}
+
 /// Take out the sentence telling a CLI user to type the flag the window has
 /// drawn a button for. Never down to nothing.
 pub fn without_cli_remedy(message: &str, flag: &str) -> String {
@@ -569,6 +580,19 @@ mod tests {
         assert_eq!(reveal_label(Platform::Windows), "Show in File Explorer");
         assert_eq!(reveal_label(Platform::Linux), "Show in folder");
         assert_eq!(reveal_label(Platform::Unknown), "Show in folder");
+        let saved = "/Users/reader/Desktop/Field Station.fdx";
+        assert_eq!(
+            reveal_saved_label(Platform::Mac, saved),
+            "Show Field Station.fdx in Finder"
+        );
+        assert_eq!(
+            reveal_saved_label(Platform::Windows, "C:\\Users\\r\\Field Station.osf"),
+            "Show Field Station.osf in File Explorer"
+        );
+        assert_eq!(
+            reveal_saved_label(Platform::Linux, "/home/r/Field Station.fountain"),
+            "Show Field Station.fountain in its folder"
+        );
     }
 
     #[test]
