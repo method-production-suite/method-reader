@@ -48,6 +48,11 @@ ignore = [
   # crates don't use it directly. Surfaced when `unsound` went to "all". Goes when muda
   # moves off gtk-rs 0.18.
   { id = "RUSTSEC-2024-0429", reason = "glib VariantStrIter: via muda's Linux-only GTK, which sp-app never builds on Linux; no direct use in ours" },
+  # chrono 0.4.45 (2026-11): unmaintained, every version, no fixed release. It
+  # reaches the lock only through workers-rs (`worker`), in sp-device-requests,
+  # the Cloudflare Worker behind "My device isn't here". None of the apps or
+  # the CLI link it. Not a vulnerability. Goes when workers-rs moves off chrono.
+  { id = "RUSTSEC-2026-0543", reason = "chrono: unmaintained; only via workers-rs in the device-request Worker, which no app or CLI links" },
 ]
 
 [licenses]
