@@ -15,7 +15,9 @@ fn every_ignored_advisory_says_why() {
     // Named, not counted: a new exception is a decision, made here too.
     // The first three were known at the cutover (2026-10-12); 0370 to 0372
     // are zbus 5's helper crates, folded into zbus 6 (2026-10-16); 0429 is
-    // glib's unsound iterator, surfaced by `unsound = "all"` (2026-11-06).
+    // glib's unsound iterator, surfaced by `unsound = "all"` (2026-11-06);
+    // 0543 is chrono, unmaintained, reached only through the Worker
+    // (2026-11-17).
     let named: Vec<&str> = ids
         .iter()
         .filter_map(|l| l.split("id = \"").nth(1).and_then(|r| r.split('"').next()))
@@ -30,6 +32,7 @@ fn every_ignored_advisory_says_why() {
             "RUSTSEC-2026-0371",
             "RUSTSEC-2026-0372",
             "RUSTSEC-2024-0429",
+            "RUSTSEC-2026-0543",
         ],
         "every ignored advisory, in order: {ids:?}"
     );
