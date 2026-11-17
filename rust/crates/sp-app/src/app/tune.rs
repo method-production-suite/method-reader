@@ -688,16 +688,20 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
             let title = group.title.to_string();
             let font = theme::chrome_strong(size::UI);
             // The disclosure triangle, then the title a space-2 after it.
-            let triangle = ui.painter().layout_no_wrap(
-                "\u{25B8}".into(),
-                theme::chrome(size::LABEL),
-                t.ink_muted,
+            // It is painted, not set as U+25B8: Windows' UI face has no such
+            // glyph and nothing behind it does either, so it drew as a box
+            // there (fonts_fallback.rs). Its box is the glyph's was: half
+            // the label size wide, one label line tall.
+            let label = theme::chrome(size::LABEL);
+            let triangle = Vec2::new(
+                (size::LABEL * 0.5).round(),
+                ui.fonts_mut(|f| f.row_height(&label)),
             );
             let words = ui.painter().layout_no_wrap(title, font, t.ink);
             let gap = layout::SPACE[2];
             let size = Vec2::new(
-                triangle.size().x + gap + words.size().x,
-                triangle.size().y.max(words.size().y),
+                triangle.x + gap + words.size().x,
+                triangle.y.max(words.size().y),
             );
             let (rect, r) = ui.allocate_exact_size(size, Sense::click());
             r.widget_info(|| {
@@ -718,15 +722,26 @@ fn draw_knobs(app: &mut App, ui: &mut Ui) {
                 if r.hovered() { 1.0 } else { 0.0 },
                 motion::STATE,
             );
-            let half = triangle.size() / 2.0;
+            // A right-pointing triangle turned about its own centre: a
+            // quarter turn points it down.
             let angle = turn * std::f32::consts::FRAC_PI_2;
-            let at = rect.min + half - egui::emath::Rot2::from_angle(angle) * half;
-            let at = at + Vec2::new(0.0, (size.y - triangle.size().y) / 2.0);
-            ui.painter().add(
-                egui::epaint::TextShape::new(at, triangle.clone(), t.ink_muted).with_angle(angle),
-            );
+            let centre = rect.min + Vec2::new(triangle.x / 2.0, size.y / 2.0);
+            let (w, h) = (triangle.x * 0.8, triangle.x * 0.9);
+            let rot = egui::emath::Rot2::from_angle(angle);
+            let points = [
+                Vec2::new(w / 2.0, 0.0),
+                Vec2::new(-w / 2.0, -h / 2.0),
+                Vec2::new(-w / 2.0, h / 2.0),
+            ]
+            .map(|p| centre + rot * p)
+            .to_vec();
+            ui.painter().add(egui::Shape::convex_polygon(
+                points,
+                t.ink_muted,
+                egui::Stroke::NONE,
+            ));
             ui.painter().galley_with_override_text_color(
-                rect.min + Vec2::new(triangle.size().x + gap, 0.0),
+                rect.min + Vec2::new(triangle.x + gap, 0.0),
                 words,
                 super::bookview::mix(t.ink_soft, t.ink, lit),
             );

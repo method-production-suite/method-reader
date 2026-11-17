@@ -74,3 +74,12 @@ sp-engine.workspace = true
 [target.'cfg(target_os = "macos")'.dependencies]
 arboard = { version = "3.6", default-features = false }
 muda = "0.21"
+
+# Two fontiques reach the lock on Linux: 0.11 through egui's system-font
+# provider, which turns on fontconfig's dlopen mode, and 0.12 through parley
+# and Blitz, which does not. The fontconfig crate is shared, so it builds in
+# dlopen mode for both, and 0.12, expecting linked functions, fails to
+# compile (the full run, 2026-11-02 onward). Asking 0.12 for dlopen too makes
+# the two agree. Goes when the two settle on one fontique.
+[target.'cfg(target_os = "linux")'.dependencies]
+fontique = { version = "0.12", default-features = false, features = ["fontconfig-dlopen"] }
