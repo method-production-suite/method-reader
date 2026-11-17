@@ -82,7 +82,12 @@ fn a_name_is_kept_beside_the_source_and_the_listing_calls_the_script_by_it() {
     // was renamed.
     assert_eq!(
         marker(&folder),
-        json!({"name": "Harbour Light", "source": "/scripts/lampkeeper_v3_FINAL.pdf"})
+        // The source as the library keeps it: resolved, so on Windows on
+        // the current drive.
+        json!({
+            "name": "Harbour Light",
+            "source": host::resolve(&["/scripts/lampkeeper_v3_FINAL.pdf"])
+        })
     );
     assert_eq!(
         names(&folder),

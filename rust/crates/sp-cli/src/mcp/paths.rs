@@ -18,6 +18,8 @@
 
 use std::path::{Component, Path, PathBuf};
 
+use sp_engine::verbatim::plain_path;
+
 use super::limits;
 use super::tools::ToolError;
 
@@ -104,7 +106,7 @@ impl Roots {
     fn list(&self) -> String {
         self.dirs
             .iter()
-            .map(|d| d.display().to_string())
+            .map(|d| plain_path(d).display().to_string())
             .collect::<Vec<_>>()
             .join(", ")
     }
@@ -124,7 +126,7 @@ impl Roots {
             return Err(ToolError::path(format!("{typed}: not a file")));
         }
         check_ext(&real, exts, typed)?;
-        Ok(real)
+        Ok(plain_path(&real))
     }
 
     /// A file to write, with one of `exts`: its folder must exist inside a
@@ -153,7 +155,7 @@ impl Roots {
                 "{typed}: is a symbolic link; refusing to write through it"
             ))),
             Ok(m) if !m.is_file() => Err(ToolError::path(format!("{typed}: not a file"))),
-            _ => Ok(real),
+            _ => Ok(plain_path(&real)),
         }
     }
 
@@ -166,13 +168,14 @@ impl Roots {
         if !real.is_dir() {
             return Err(ToolError::path(format!("{typed}: not a folder")));
         }
-        Ok(real)
+        Ok(plain_path(&real))
     }
 
     /// How a real path is shown back: absolute, as the system writes it, so
-    /// it can be passed back as is.
+    /// it can be passed back as is (on Windows without `canonicalize`'s
+    /// `\\?\` prefix where the plain form names the same file).
     pub fn show(&self, real: &Path) -> String {
-        real.display().to_string()
+        plain_path(real).display().to_string()
     }
 }
 

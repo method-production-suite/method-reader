@@ -146,7 +146,7 @@ pub fn serve_stdio(config: Config) -> Result<(), String> {
         server
             .roots()
             .iter()
-            .map(|p| p.display().to_string())
+            .map(|p| sp_engine::verbatim::plain_path(p).display().to_string())
             .collect::<Vec<_>>()
             .join(", ")
     );

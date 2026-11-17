@@ -30,6 +30,8 @@ pub mod scene_lengths;
 /// node:path's functions: sp-fsutil's, the one copy (re-exported so the
 /// engine's callers keep their paths).
 pub use sp_fsutil::nodepath;
+/// A canonical Windows path in the form a person writes (sp-fsutil's).
+pub use sp_fsutil::verbatim;
 pub mod settings;
 pub mod update;
 

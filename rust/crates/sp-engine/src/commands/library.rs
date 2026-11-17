@@ -219,6 +219,9 @@ pub fn listed_script(
             folder,
         ));
     }
+    // Reported back to a person, so in the form they write it (on Windows,
+    // not canonicalize's `\\?\C:\...`).
+    let real = sp_fsutil::verbatim::plain_path(&real);
     let script = script_in(&real.to_string_lossy()).ok_or_else(|| {
         not_a_script(
             "it has no source.json naming its source, or no .fountain of that name",
