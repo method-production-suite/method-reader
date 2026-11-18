@@ -81,6 +81,25 @@ fn a_file_literally_named_devices_beats_the_verb() {
 }
 
 #[test]
+fn a_folder_named_like_a_verb_does_not_beat_it() {
+    // A folder is never a script, so only a FILE takes the name from a
+    // verb. The window runs `library --json` in whatever folder it was
+    // opened from: Finder opens it in `/`, where macOS's `/Library`
+    // answers to "library" (names there ignore case), and the 1.2.0
+    // Library tab showed the conversion's refusal instead of the scripts.
+    let sb = Sandbox::new();
+    sb.mkdir("library");
+    sb.mkdir("Devices");
+    let listed = sb.run(&["library", "--json"]).json();
+    assert_eq!(listed["ok"], true, "{listed}");
+    assert!(listed["scripts"].is_array(), "{listed}");
+    assert_eq!(
+        sb.run(&["devices", "--json"]).json(),
+        json!({ "ok": true, "devices": [] })
+    );
+}
+
+#[test]
 fn an_explicit_path_is_never_a_verb_even_with_no_such_file() {
     // `./devices` is how a person disambiguates when a verb would win.
     let sb = Sandbox::new();
