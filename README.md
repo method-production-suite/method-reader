@@ -61,6 +61,16 @@ apps.
   will, and the Settings page changes margins, spacing and page numbers live.
   "Use these for new scripts" makes your choices the starting point for every
   script after.
+- **Every script kept, with a report.** The Library tab keeps every script
+  you convert, so you can reopen its book without converting the PDF again,
+  give it a name its books take as their title, or remove it (it goes to the
+  Trash, or the Recycle Bin on Windows, so you can put it back). Each
+  script's report counts its pages and scenes and, for every character,
+  their speeches, words and scenes, and where they first speak.
+- **Sides, and an actor's own copy.** From the report, make a book of only
+  the scenes one character is in, or the whole script with that character's
+  lines in bold, sung lines included. Send to e-reader puts either one on
+  your reader.
 - **Built for real scripts.** Dual dialogue, revision marks, watermarks,
   page-break interruptions and offbeat character cues, with bold, italic and
   underline carried across.
