@@ -445,3 +445,22 @@ jobs:
             ~/.cargo/git
             rust/target
           key: bundles-${{ matrix.os }}-${{ hashFiles('rust/Cargo.lock', 'rust/rust-toolchain.toml') }}
+  # A scheduled run that fails opens one issue, "Weekly build failed", or
+  # comments on the one already open, so a red Monday is seen without
+  # anyone opening Actions (the owner, 2026-11-17, the same in every repo).
+  # A manual run never alerts: whoever ran it is watching.
+  alert:
+    needs: [check, rust, parity, cli, worker, deny, bundles]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          n=$(gh issue list --state open --search 'in:title "Weekly build failed"' --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then gh issue comment "$n" --body "Failed again: $RUN"; else gh issue create --title "Weekly build failed" --body "Run: $RUN"; fi
