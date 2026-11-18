@@ -407,7 +407,7 @@ jobs:
               done
               rpm -qp --requires "$W/Method-Reader-linux-x86_64.rpm" | tee "$W/requires.txt"
               for s in $(objdump -p rust/target/release/method-reader-app | awk '/NEEDED/ {print $2}') \
-                       libxkbcommon.so.0 libxkbcommon-x11.so.0 libwayland-client.so.0 libX11.so.6 libEGL.so.1; do
+                       libfontconfig.so.1 libxkbcommon.so.0 libxkbcommon-x11.so.0 libwayland-client.so.0 libX11.so.6 libEGL.so.1; do
                 grep -qxF -- "$s()(64bit)" "$W/requires.txt"
               done
               "$SP" appdir --version "$VERSION" --window rust/target/release/method-reader-app "${ICONS[@]}" "${RES[@]}" --out "$W"

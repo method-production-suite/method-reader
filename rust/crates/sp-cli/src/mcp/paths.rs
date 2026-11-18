@@ -228,9 +228,12 @@ mod tests {
 
         assert!(roots.existing(&abs("a.pdf"), p).unwrap().ends_with("a.pdf"));
         assert!(roots.existing(&abs("sub/b.pdf"), p).is_ok());
+        // Shown as a person writes it: on Windows without `\\?\`.
         assert_eq!(
             roots.show(&roots.existing(&abs("sub/b.pdf"), p).unwrap()),
-            abs("sub/b.pdf")
+            plain_path(&real_root.join("sub").join("b.pdf"))
+                .display()
+                .to_string()
         );
 
         let refused = |r: Result<PathBuf, ToolError>, want: &str| {
