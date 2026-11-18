@@ -26,14 +26,11 @@ Release go-aheads:
   the zip fix (9.0.5). Its crate-age exceptions (the zip advisory, and
   clipboard-win 5.4.3 for v1.1.0 alone) have both come out, each crate
   now being 14 days old.
-- **Before the next release, on the machine whose answers they are:** run
-  `cargo xtask parity --accept route-help route-help-json` (from `rust/`,
-  with that checkout's `CARGO_TARGET_DIR`). Those two rows of the
-  screenplay fixture are frozen on another machine, so this Mac skips
-  them, and they still hold the old save-kindle line that called the
-  AZW3 beta (#109). Read each diff first: only that wording may change.
-  Waived for 1.1.0 alone (the owner, 2026-10-31: "Yes, waive it"), so it
-  is still due before the next release.
+- **The parity accept on the other Mac is no longer needed** (2026-11-17).
+  The route rows that only read their arguments (help, an unknown flag,
+  a refused flag) now compare on every machine, and the four help rows
+  were accepted here: they held the old program name and the save-kindle
+  line that called the AZW3 beta (#109), and nothing else changed.
 
 Built on the recommendation (reversible):
 

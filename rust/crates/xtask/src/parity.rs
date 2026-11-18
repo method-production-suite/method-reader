@@ -478,13 +478,25 @@ fn diff_frozen(row: &CommandRow, ts: &Value, rs: &Run) -> Vec<(String, String)> 
     out
 }
 
-/// Rows whose answers depend on what this machine has installed.
+/// Rows whose answers depend on what this machine has installed: the
+/// route rows and every row that runs a copy of Calibre's folder. A route
+/// row that only reads its arguments (its help, an unknown flag, a flag
+/// it refuses) answers the same anywhere, so it is compared everywhere.
 fn machine_bound(row: &CommandRow) -> bool {
-    row.name.starts_with("route")
+    (row.name.starts_with("route") && !arguments_only(&row.name))
         || row
             .env
             .iter()
             .any(|(_, v)| matches!(v, EnvValue::CalibreCopy))
+}
+
+/// A row that stops at the argument check, before anything about the
+/// machine is read.
+fn arguments_only(name: &str) -> bool {
+    name.ends_with("-help")
+        || name.ends_with("-help-json")
+        || name.ends_with("-unknown-flag")
+        || name.contains("-refuses--")
 }
 
 /// Where an input's frozen answers live.
@@ -891,4 +903,32 @@ pub fn line_diff(before: &str, after: &str) -> String {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::arguments_only;
+
+    #[test]
+    fn only_rows_that_stop_at_the_arguments_compare_everywhere() {
+        for name in [
+            "route-help",
+            "routes-help-json",
+            "route-unknown-flag",
+            "routes-refuses--device",
+        ] {
+            assert!(arguments_only(name), "{name}");
+        }
+        // These read the machine: its settings, its apps, its readers.
+        for name in [
+            "routes",
+            "routes-quick",
+            "route-save-epub",
+            "route-unknown-key",
+            "route-too-many",
+            "route-setup-with-book",
+        ] {
+            assert!(!arguments_only(name), "{name}");
+        }
+    }
 }
