@@ -111,10 +111,15 @@ fn tree(files: &[(String, Vec<u8>, bool)]) -> Vec<Entry> {
 
 /// The libraries the window OPENS at run time (dlopen) rather than links,
 /// as (soname, Debian package). `dpkg-shlibdeps` and rpm's own dependency
-/// finder only read the binary's DT_NEEDED list, which holds ALSA,
-/// fontconfig and the C runtime; these never appear there, so they are
-/// declared here, from the crates that open them:
+/// finder only read the binary's DT_NEEDED list, which holds ALSA and the
+/// C runtime; these never appear there, so they are declared here, from
+/// the crates that open them:
 ///
+/// - fontique, both copies (egui's system fonts, and parley's for the
+///   book preview), in fontconfig's `dlopen` mode: libfontconfig. Linked
+///   until #147 (2026-11-17) asked the second copy for dlopen too, so the
+///   two could build together; from then on DT_NEEDED no longer names it,
+///   and without this line the packages would not either;
 /// - xkbcommon-dl: libxkbcommon (Wayland and X11) and libxkbcommon-x11;
 /// - wayland-sys (built with `dlopen`): libwayland-client, and
 ///   libwayland-egl for wgpu's GL path on Wayland;
@@ -126,6 +131,7 @@ fn tree(files: &[(String, Vec<u8>, bool)]) -> Vec<Entry> {
 /// portal over D-Bus, and the only GTK user in the lock file (muda) is
 /// built for macOS alone.
 pub const LOADED_AT_RUN_TIME: &[(&str, &str)] = &[
+    ("libfontconfig.so.1", "libfontconfig1"),
     ("libxkbcommon.so.0", "libxkbcommon0"),
     ("libxkbcommon-x11.so.0", "libxkbcommon-x11-0"),
     ("libwayland-client.so.0", "libwayland-client0"),
@@ -487,6 +493,19 @@ mod tests {
         assert_eq!(package_version("0.12.0-rc1"), "0.12.0~rc1");
         assert_eq!(package_version("0.12.0"), "0.12.0");
         assert!(control("0.12.0-rc1", "amd64", 1, "").contains("\nVersion: 0.12.0~rc1\n"));
+    }
+
+    #[test]
+    fn fontconfig_is_declared_because_nothing_links_it() {
+        // Both fontiques open it with dlopen (sp-app's Cargo.toml asks for
+        // that on Linux), so dpkg-shlibdeps never measures it: a package
+        // without this entry installs a window that finds no fonts.
+        assert!(LOADED_AT_RUN_TIME.contains(&("libfontconfig.so.1", "libfontconfig1")));
+        let manifest = include_str!("../../sp-app/Cargo.toml");
+        assert!(
+            manifest.contains("features = [\"fontconfig-dlopen\"]"),
+            "sp-app no longer asks for dlopen: is fontconfig linked again?"
+        );
     }
 
     #[test]
