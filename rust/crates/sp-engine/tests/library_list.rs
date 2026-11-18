@@ -165,8 +165,8 @@ fn two_scripts_with_one_name_are_both_listed_one_in_its_hashed_folder() {
     let s = Scratch::new("library-list");
     let root = s.dir("lib");
     let (drafts, last) = (
-        s.join("drafts/The Moth Hour.pdf"),
-        s.join("final/The Moth Hour.pdf"),
+        host::join(&[&s.str(), "drafts", "The Moth Hour.pdf"]),
+        host::join(&[&s.str(), "final", "The Moth Hour.pdf"]),
     );
     let first = script(&root, &drafts, MOTH_HOUR, EVENING);
     let second = script(&root, &last, MOTH_HOUR, EVENING - 60);

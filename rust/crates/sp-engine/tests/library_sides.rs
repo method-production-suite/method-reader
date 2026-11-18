@@ -315,7 +315,7 @@ fn someone_with_no_cue_or_no_listed_folder_is_refused() {
 fn lines_in_bold_keep_every_scene_and_mark_only_that_speech() {
     let s = Scratch::new("library-lines");
     let (root, folder) = library(&s);
-    let fountain = format!("{}/keeper.fountain", folder);
+    let fountain = host::join(&[folder.as_str(), "keeper.fountain"]);
     let before = std::fs::read(&fountain).unwrap();
 
     let lines = lines_in_library(&root, &folder, "otto", &FormatOptions::default()).unwrap();
@@ -324,7 +324,7 @@ fn lines_in_bold_keep_every_scene_and_mark_only_that_speech() {
     assert_eq!(lines.speeches, 2);
     assert_eq!(
         lines.epub,
-        format!("{folder}/sides/{}", lines_file_name("keeper", "OTTO"))
+        host::join(&[folder.as_str(), "sides", &lines_file_name("keeper", "OTTO")])
     );
     assert_eq!(
         lines_line(&lines),

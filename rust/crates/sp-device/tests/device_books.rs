@@ -9,8 +9,15 @@ use sp_device::books::{BooksDeps, device_books_command, device_remove_command};
 use sp_device::{ConnectedDevice, DeviceKind, ErrorCode};
 use std::path::Path;
 
+/// `rel`, written with `/`, under `root` in the system's own separators, as
+/// the reader's listing reports it.
+fn at(root: &str, rel: &str) -> std::path::PathBuf {
+    rel.split('/')
+        .fold(Path::new(root).to_path_buf(), |p, n| p.join(n))
+}
+
 fn write(root: &str, rel: &str, bytes: &[u8]) -> String {
-    let p = Path::new(root).join(rel);
+    let p = at(root, rel);
     std::fs::create_dir_all(p.parent().unwrap()).unwrap();
     std::fs::write(&p, bytes).unwrap();
     s(&p)
@@ -169,7 +176,7 @@ fn removing_a_kindle_book_takes_its_sdr_folder_with_it() {
     write(&vol, "documents/Field Station.sdr/Field Station.apnx", b"x");
     let other = write(&vol, "documents/Other.azw3", b"b");
     let removed = remove(&vol, DeviceKind::Kindle, &book).unwrap();
-    let sdr = s(&Path::new(&vol).join("documents/Field Station.sdr"));
+    let sdr = s(&at(&vol, "documents/Field Station.sdr"));
     assert_eq!(removed, [book.clone(), sdr.clone()]);
     assert!(!Path::new(&book).exists() && !Path::new(&sdr).exists());
     assert!(Path::new(&other).exists());
@@ -261,8 +268,11 @@ fn a_remarkable_has_no_volume_to_read() {
         serial: None,
     }];
     let list = move || devices.clone();
+    // A full path on every system, so the refusal is the device's, not the
+    // path's ("/remarkable" is not absolute on Windows).
+    let tmp = scratch("books");
     let err = device_books_command(
-        "/remarkable",
+        &s(&tmp.path().join("remarkable")),
         &BooksDeps {
             devices: Some(&list),
         },

@@ -524,7 +524,7 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
     // bundle. The window is the bundle's main executable, and signing it
     // seals the bundle's nested code, so a helper still unsigned then fails
     // it (the 1.1.0 rehearsal: lipo leaves the universal helper unsigned).
-    let exe = |n: &str| app.join("Contents/MacOS").join(n);
+    let exe = |n: &str| app.join("Contents").join("MacOS").join(n);
     assert_eq!(
         fake.calls[2],
         [
@@ -567,12 +567,12 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
         Some("com.methodreader.desktop")
     );
     assert_eq!(
-        fs::read(app.join("Contents/MacOS/method-reader-app")).unwrap(),
+        fs::read(app.join("Contents").join("MacOS").join("method-reader-app")).unwrap(),
         the_binary()
     );
     // The MTP helper beside the window, executable: what switches the MTP
     // route on in the shipped app.
-    let helper = app.join("Contents/MacOS/method-reader-mtp");
+    let helper = app.join("Contents").join("MacOS").join("method-reader-mtp");
     assert_eq!(fs::read(&helper).unwrap(), the_helper());
     #[cfg(unix)]
     {
@@ -582,7 +582,7 @@ fn a_local_mac_build_is_signed_ad_hoc_and_never_notarized() {
             0o755
         );
     }
-    let mut inside: Vec<String> = fs::read_dir(app.join("Contents/MacOS"))
+    let mut inside: Vec<String> = fs::read_dir(app.join("Contents").join("MacOS"))
         .unwrap()
         .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
         .collect();
@@ -683,10 +683,14 @@ fn a_release_mac_build_signs_notarizes_staples_and_signs_the_updater_archive() {
     assert_eq!(
         signed,
         [
-            app.join("Contents/MacOS/method-reader-mtp")
+            app.join("Contents")
+                .join("MacOS")
+                .join("method-reader-mtp")
                 .to_str()
                 .unwrap(),
-            app.join("Contents/MacOS/method-reader-app")
+            app.join("Contents")
+                .join("MacOS")
+                .join("method-reader-app")
                 .to_str()
                 .unwrap(),
             app.to_str().unwrap()
