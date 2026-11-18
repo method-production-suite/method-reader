@@ -29,6 +29,9 @@
 //!   is the demo PDF dropped on it and converted into the scratch library,
 //!   the send panel's device cards beside the book's first page; `read` is
 //!   the same book on the Preview tab, its scene index and script drawn;
+//!   `library` is the Library tab with the converted script's row and its
+//!   Report open under it (the row's conversion day pinned, so a new day
+//!   is not a new picture);
 //! - waits until nothing moves, then draws with the version stamp and the
 //!   library line hidden, so a picture changes only when the window's look
 //!   does;

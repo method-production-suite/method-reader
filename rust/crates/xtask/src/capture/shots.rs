@@ -7,7 +7,9 @@
 //! `compare`, the site's own two-reader section held still; (3) open:
 //! `drop`, with `result` beside it, the same window once the script is in;
 //! (4) the file you own: `cli`, a terminal running the real command line
-//! on Field Station and showing the files it wrote.
+//! on Field Station and showing the files it wrote. Beside the four,
+//! `library`: the Library tab with Field Station's row and its Report open
+//! (1.2.0), on the site under who reads scripts, beside working from sides.
 //!
 //! Every shot in light AND dark, each written twice, to assets/screens/ for
 //! the README and to site/img/ for the site (the website copies site/ alone),
@@ -100,6 +102,14 @@ pub const SHOTS: &[Shot] = &[
     },
     Shot {
         name: "result",
+        kind: Kind::Window,
+        width: 1280,
+        height: 800,
+        themes: BOTH,
+        title: "Field Station - Method Reader",
+    },
+    Shot {
+        name: "library",
         kind: Kind::Window,
         width: 1280,
         height: 800,

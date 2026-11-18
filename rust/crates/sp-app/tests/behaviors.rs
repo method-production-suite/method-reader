@@ -2441,6 +2441,33 @@ fn library_rename_waits_while_a_conversion_a_removal_or_another_rename_runs() {
 // docs/superpowers/specs/2026-11-04-conversion-report-design.md, part 2.
 
 #[test]
+fn library_report_cells_keep_to_one_line_in_a_wide_window() {
+    // A word in the table broke mid-word ("Chara / cter", a name split in
+    // two) while the window had room to spare beside it.
+    let w = world();
+    let mut h = library_tab_with(&w, vec![library_row("Field Station", true)]);
+    h.get_by_role_and_label(Role::Button, "Report for FIELD STATION")
+        .click_accesskit();
+    steps(&mut h);
+    let height = |words: &str| {
+        h.query_all_by_value(words)
+            .chain(h.query_all_by_label(words))
+            .next()
+            .unwrap_or_else(|| panic!("{words} is not drawn"))
+            .rect()
+            .height()
+    };
+    let line = height("Words");
+    for words in ["Character", "Speeches", "First speaks", "Scene 1, page 2"] {
+        assert!(
+            height(words) < line * 1.5,
+            "{words} wraps: {} against one line's {line}",
+            height(words)
+        );
+    }
+}
+
+#[test]
 fn library_report_sends_one_report_and_shows_its_totals_and_who_speaks() {
     let w = world();
     let folder = "/Users/reader/Method Reader/Field Station";
