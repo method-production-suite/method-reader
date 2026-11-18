@@ -96,6 +96,9 @@ fn each_capture_sits_where_the_suite_order_puts_it() {
     // under "Drag and drop"; (4) the command line under "Yours to keep".
     assert_eq!(shots_in("hero"), ["read"]);
     assert_eq!(shots_in("drop"), ["drop", "result"]);
+    // Beside them, the library and a script's report, under who reads
+    // scripts (an actor working from sides).
+    assert_eq!(shots_in("beat band"), ["library"]);
     assert_eq!(shots_in("beat band alt"), ["cli"]);
 }
 
@@ -107,7 +110,7 @@ fn every_picture_is_the_capture_tools_own_light_with_its_dark_beside_it() {
         .filter_map(|p| p.strip_prefix("site/").map(str::to_string))
         .collect();
     let all = pictures(&site());
-    assert_eq!(all.len(), 4);
+    assert_eq!(all.len(), 5);
     for (img, dark) in &all {
         let light = &attrs(img, "src")[0];
         assert!(site_outputs.contains(light), "{light}");

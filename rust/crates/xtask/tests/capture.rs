@@ -83,15 +83,20 @@ fn demo() -> PathBuf {
 fn shots_are_the_suites_four_in_its_order_every_one_light_and_dark() {
     // SUITE-STANDARDS.md 7.1: (1) the hero, the main view; (2) the
     // signature feature, the before and after; (3) open, with the result
-    // beside it; (4) the file you own, the command line.
+    // beside it; (4) the file you own, the command line. And beside them
+    // the library with a script's report open (1.2.0).
     let names: Vec<&str> = SHOTS.iter().map(|s| s.name).collect();
-    assert_eq!(names, ["read", "compare", "drop", "result", "cli"]);
+    assert_eq!(
+        names,
+        ["read", "compare", "drop", "result", "library", "cli"]
+    );
     let kinds: Vec<Kind> = SHOTS.iter().map(|s| s.kind).collect();
     assert_eq!(
         kinds,
         [
             Kind::Window,
             Kind::Site,
+            Kind::Window,
             Kind::Window,
             Kind::Window,
             Kind::Terminal
@@ -127,9 +132,9 @@ fn every_picture_goes_to_the_readme_and_to_the_site_alike() {
         .iter()
         .filter_map(|p| p.strip_prefix("site/img/"))
         .collect();
-    assert_eq!(readme.len(), 10);
+    assert_eq!(readme.len(), 12);
     assert_eq!(readme, site);
-    assert_eq!(all.len(), 20);
+    assert_eq!(all.len(), 24);
 }
 
 #[test]
@@ -845,17 +850,17 @@ fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() 
     })));
     run_capture(o).unwrap();
     let seen = seen.lock().unwrap();
-    // Six window pictures, and the command line once for both its themes.
-    assert_eq!(seen.len(), 7);
+    // Eight window pictures, and the command line once for both its themes.
+    assert_eq!(seen.len(), 9);
     for e in seen.iter() {
         let mut want = vec![".no-volumes".to_string(), MARKER.to_string()];
         want.sort();
         assert_eq!(e, &want);
     }
-    // Chrome framed each of the window's six pictures, drew the before and
-    // after twice, and drew the terminal then framed it, in each theme.
+    // Chrome framed each of the window's eight pictures, drew the before
+    // and after twice, and drew the terminal then framed it, in each theme.
     let framed = framed.lock().unwrap();
-    assert_eq!(framed.len(), 12);
+    assert_eq!(framed.len(), 14);
     assert!(
         framed[0].contains("/tools/capture/frame.html?img=/pass-one/read-light.png&w=1280&h=800")
     );
@@ -864,11 +869,15 @@ fn run_writes_every_picture_and_each_window_shot_starts_from_an_empty_library() 
     assert!(
         framed[4].contains("/tools/capture/frame.html?img=/pass-one/drop-light.png&w=1280&h=800")
     );
-    assert!(framed[8].contains("/tools/capture/terminal.html?t=%5B%7B%22c%22"));
-    assert!(framed[9].contains(
+    assert!(
+        framed[8]
+            .contains("/tools/capture/frame.html?img=/pass-one/library-light.png&w=1280&h=800")
+    );
+    assert!(framed[10].contains("/tools/capture/terminal.html?t=%5B%7B%22c%22"));
+    assert!(framed[11].contains(
         "/tools/capture/frame.html?img=/pass-one/cli-light.png&w=1280&h=800&title=Terminal"
     ));
-    assert!(framed[10].contains("/tools/capture/terminal.html?t="));
+    assert!(framed[12].contains("/tools/capture/terminal.html?t="));
     let all = all_outputs(SHOTS);
     for out in &all {
         assert_eq!(std::fs::read(s.out.join(out)).unwrap(), PNG);

@@ -87,6 +87,13 @@ apps.
   </picture>
 </p>
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screens/library-dark.png">
+    <img src="assets/screens/library-light.png" alt="The Library tab with Field Station, an invented script, and its report open: 19 pages, 11 scenes, 103 speeches, then each character's speeches, words and scenes, where they first speak, and a Make button for their sides and for their lines in bold" width="92%">
+  </picture>
+</p>
+
 ## Yours to keep
 
 - **Free, for good, and open source** (MIT OR Apache-2.0; the AZW3 writer is

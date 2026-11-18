@@ -139,8 +139,9 @@ fn rename(app: &mut App, row: Row) {
 }
 
 /// Report: one `library-report` for the row's folder, its answer shown
-/// under the row.
-fn report(app: &mut App, row: Row) {
+/// under the row. Crate-wide for the capture, which opens Field Station's
+/// as the Report button would.
+pub(crate) fn report(app: &mut App, row: Row) {
     let s = &mut app.library;
     s.report_asks += 1;
     s.report_for = Some(row.folder.clone());
@@ -475,6 +476,13 @@ fn script_row(app: &mut App, ui: &mut Ui, row: &Row) {
     }
 }
 
+/// One cell of the report's table, on one line: a wrapping label in a grid
+/// takes the narrowest width it can, which broke words mid-word ("Chara /
+/// cter") with the window's whole width free beside the table.
+fn cell(ui: &mut Ui, words: &str, font: egui::FontId, color: egui::Color32) {
+    ui.add(egui::Label::new(egui::RichText::new(words).font(font).color(color)).extend());
+}
+
 /// The report, under its script: a line of totals, then who speaks, most
 /// first, as a table.
 fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
@@ -504,13 +512,13 @@ fn report_view(app: &mut App, ui: &mut Ui, row: &Row) {
         .spacing([layout::SPACE[4], layout::SPACE[1]])
         .show(ui, |ui| {
             for heading in m::REPORT_COLUMNS {
-                widgets::text(ui, heading, theme::chrome_strong(size::LABEL), t.ink);
+                cell(ui, heading, theme::chrome_strong(size::LABEL), t.ink);
             }
             ui.end_row();
             for c in &report.characters {
-                widgets::text(ui, &c.name, theme::chrome(size::LABEL), t.ink);
-                for cell in [&c.speeches, &c.words, &c.scenes, &c.first] {
-                    widgets::text(ui, cell, theme::chrome(size::LABEL), t.ink_muted);
+                cell(ui, &c.name, theme::chrome(size::LABEL), t.ink);
+                for words in [&c.speeches, &c.words, &c.scenes, &c.first] {
+                    cell(ui, words, theme::chrome(size::LABEL), t.ink_muted);
                 }
                 let id = Id::unique(("library-sides", row.folder.as_str(), c.name.as_str()));
                 let b = widgets::button_id(ui, &t, Look::Quiet, m::MAKE_SIDES, live, id);

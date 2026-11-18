@@ -4,7 +4,8 @@
 //! wgpu; it is a dev-dependency, so the drawing half lives in the example
 //! and everything it decides lives here, where the tests reach it).
 //!
-//! One run is one picture: one shot (`drop`, `result` or `read`) in one
+//! One run is one picture: one shot (`drop`, `result`, `read` or
+//! `library`) in one
 //! theme at one size. The window runs on the real engine linked in, which
 //! reads the process environment, so the xtask starts this program with
 //! the run's own: a scratch library, scratch app settings, no volumes, a
@@ -25,7 +26,7 @@
 //! no updater, no sound and no storage file, so nothing on the screen
 //! depends on this machine's own state, and [`reach`] drives the window
 //! into the shot the way a person would (a file dropped on the well, the
-//! Preview tab), waits for it to settle, and says what went wrong if it never
+//! Preview tab, the Library tab and its Report button), waits for it to settle, and says what went wrong if it never
 //! does.
 
 use std::path::{Component, Path, PathBuf};
@@ -37,7 +38,7 @@ use serde_json::{Value, json};
 
 use crate::app::bookview::Place;
 use crate::app::host::{FakeDialogs, FakeOpener, FakePoster, FakeSpeaker, Host, NoUpdater};
-use crate::app::{App, convert, panel};
+use crate::app::{App, convert, library, panel};
 use crate::engine::{Engine, Reply, Request};
 use crate::model::convert::Platform;
 use crate::model::frame::Surface;
@@ -54,6 +55,10 @@ pub enum Shot {
     Result,
     /// The same book on Read, with its scene index and the script.
     Read,
+    /// The Library tab with the demo script's row, its Report open under
+    /// it: the totals, and who speaks how much, each with Sides and Lines
+    /// in bold.
+    Library,
 }
 
 impl Shot {
@@ -62,11 +67,12 @@ impl Shot {
             Shot::Drop => "drop",
             Shot::Result => "result",
             Shot::Read => "read",
+            Shot::Library => "library",
         }
     }
 
     fn from_word(w: &str) -> Option<Shot> {
-        [Shot::Drop, Shot::Result, Shot::Read]
+        [Shot::Drop, Shot::Result, Shot::Read, Shot::Library]
             .into_iter()
             .find(|s| s.word() == w)
     }
@@ -123,7 +129,7 @@ pub struct Args {
     pub panel: Intent,
 }
 
-pub const USAGE: &str = "usage: capture --shot drop|result|read --theme light|dark \
+pub const USAGE: &str = "usage: capture --shot drop|result|read|library --theme light|dark \
      --width <points> --height <points> --demo <file.pdf> --out <file.rgba> \
      [--panel read|edit]\n\
      with METHOD_READER_CONFIG_DIR and METHOD_READER_LIBRARY set to scratch folders";
@@ -423,6 +429,11 @@ pub const SETTLE: Duration = Duration::from_millis(1500);
 
 const FRAME: Duration = Duration::from_millis(16);
 
+/// The day the library shot's row says its script was converted. The
+/// real one is the day of the run, so without this every capture on a new
+/// day would write a new picture.
+pub const PICTURE_DAY: &str = "2026-11-17T12:00:00Z";
+
 fn until(
     s: &mut dyn Stepper,
     what: &str,
@@ -509,6 +520,34 @@ pub fn reach_with(
                 Ok(app.surface == Surface::Read
                     && app.views.peek(Place::Read).is_some()
                     && !app.read.marks.is_empty())
+            })?;
+        }
+        Shot::Library => {
+            s.app_mut().go_to(Surface::Library);
+            until(s, "the library's list", limit, &|app| {
+                Ok(app.surface == Surface::Library
+                    && !app.library.looking
+                    && app.library.listing.is_some()
+                    && app.quiet())
+            })?;
+            let app = s.app_mut();
+            let Some(listing) = app.library.listing.as_mut() else {
+                return Err("capture: the library's list went away".into());
+            };
+            // The scratch library holds the demo script and nothing else.
+            if listing.rows.len() != 1 {
+                return Err(format!(
+                    "capture: the scratch library lists {} scripts, not the demo script alone",
+                    listing.rows.len()
+                ));
+            }
+            listing.rows[0].converted = PICTURE_DAY.to_string();
+            let row = listing.rows[0].clone();
+            library::report(app, row);
+            until(s, "the report", limit, &|app| match &app.library.report {
+                Some(Err(why)) => Err(format!("capture: the report was refused: {why}")),
+                Some(Ok(_)) => Ok(app.quiet()),
+                None => Ok(false),
             })?;
         }
     }

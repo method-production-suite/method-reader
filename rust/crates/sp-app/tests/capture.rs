@@ -170,6 +170,7 @@ fn it_refuses_orders_it_does_not_understand() {
         parse_args(&o, &scratch_env).unwrap_err()
     };
     assert!(with(1, "hero").contains("no shot named hero"));
+    assert!(with(1, "report").contains("no shot named report"));
     assert!(with(3, "sepia").contains("no theme named sepia"));
     assert!(with(5, "wide").contains("--width wide"));
     assert!(with(7, "0").contains("--height 0"));
@@ -528,6 +529,92 @@ fn the_read_shot_is_the_same_book_on_read_with_its_scene_index() {
     assert!(app.views.peek(Place::Read).is_some_and(|v| v.dark()));
     assert!(app.dark, "dark whatever the OS says");
     assert!(refused.lock().unwrap().is_empty(), "{:?}", refused.lock());
+}
+
+/// The capture's window on a fake engine whose library is the scratch
+/// one, so the guard lets its report through.
+fn library_window() -> (Window, Arc<std::sync::Mutex<Vec<String>>>, Arc<FakeEngine>) {
+    let fake = Arc::new(FakeEngine::new());
+    let folder = "/library/Field Station";
+    fake.always(
+        "library",
+        sp_app::engine::Reply::ok(serde_json::json!({"ok": true, "root": "/library",
+        "scripts": [{
+            "folder": folder, "name": "Field Station", "title": "FIELD STATION",
+            "source": "/scripts/field-station.pdf", "sourceExists": true,
+            "fountain": format!("{folder}/Field Station.fountain"),
+            "epub": format!("{folder}/Field Station.epub"),
+            "pages": 18, "scenes": 11, "converted": "2030-01-05T09:00:00Z",
+            "others": [], "settings": null,
+        }]})),
+    );
+    let guard = Guard::new(fake.clone(), demo(), PathBuf::from("/library"));
+    let refused = guard.refused();
+    let app = App::new(Arc::new(guard), Mode::Threads, capture_host());
+    let mut h = Harness::builder()
+        .with_size([1280.0, 800.0])
+        .with_theme(Theme::Light.egui())
+        .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
+    h.input_mut().system_theme = Some(Theme::Light.egui());
+    (Window(h), refused, fake)
+}
+
+#[test]
+fn the_library_shot_is_the_demo_scripts_row_with_its_report_open() {
+    let (mut w, refused, fake) = library_window();
+    reach(&mut w, Shot::Library, &demo().to_string_lossy(), LIMIT).unwrap();
+    let app = w.app();
+    assert_eq!(app.surface, Surface::Library);
+    assert_eq!(
+        app.library.report_for.as_deref(),
+        Some("/library/Field Station")
+    );
+    assert!(matches!(app.library.report, Some(Ok(_))));
+    assert_eq!(fake.calls_of("library-report").len(), 1);
+    // The row's day is the picture's, not the run's.
+    let row = &app.library.listing.as_ref().unwrap().rows[0];
+    assert_eq!(row.converted, sp_app::capture::PICTURE_DAY);
+    assert!(has(&w.0, "MARA"), "the report's table is drawn");
+    assert!(
+        has(&w.0, "18 pages, 11 scenes, converted 17 November 2026"),
+        "the row says the picture's day"
+    );
+    assert_eq!(
+        w.0.ctx.memory(|m| m.focused()),
+        None,
+        "a focus ring in the picture"
+    );
+    assert!(app.quiet());
+    assert!(refused.lock().unwrap().is_empty(), "{:?}", refused.lock());
+}
+
+#[test]
+fn a_library_holding_more_than_the_demo_script_fails_the_library_shot() {
+    let fake = Arc::new(FakeEngine::new());
+    let row = |name: &str| {
+        let folder = format!("/library/{name}");
+        serde_json::json!({
+            "folder": folder, "name": name, "title": name,
+            "source": "/scripts/x.pdf", "sourceExists": true,
+            "fountain": format!("{folder}/{name}.fountain"),
+            "epub": format!("{folder}/{name}.epub"),
+            "pages": 1, "scenes": 1, "converted": "2026-11-02T18:00:00Z",
+            "others": [], "settings": null,
+        })
+    };
+    fake.always(
+        "library",
+        sp_app::engine::Reply::ok(serde_json::json!({"ok": true, "root": "/library",
+            "scripts": [row("Field Station"), row("Another")]})),
+    );
+    let guard = Guard::new(fake, demo(), PathBuf::from("/library"));
+    let app = App::new(Arc::new(guard), Mode::Threads, capture_host());
+    let h = Harness::builder()
+        .with_size([1280.0, 800.0])
+        .build_ui_state(|ui, app: &mut App| app.frame(ui), app);
+    let mut w = Window(h);
+    let e = reach(&mut w, Shot::Library, &demo().to_string_lossy(), LIMIT).unwrap_err();
+    assert!(e.contains("lists 2 scripts"), "{e}");
 }
 
 #[test]
