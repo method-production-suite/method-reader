@@ -305,6 +305,11 @@ fn every_workflow_starts_read_only_and_grants_write_only_where_it_publishes() {
                 None => {}
                 Some(p) if p == map(&[("contents", "write")]) && writes => {}
                 Some(p) if p == map(&[("actions", "read")]) && reads_its_runs(&f, &name, job) => {}
+                // The weekly build's alert files its one issue, and only that.
+                Some(p)
+                    if p == map(&[("issues", "write")])
+                        && f.ends_with("full.yml")
+                        && name == "alert" => {}
                 Some(p) => wrong.push(format!(
                     "{f}: {name} asks for {p:?} but {}",
                     if writes {
@@ -610,7 +615,7 @@ fn the_weekly_full_build_runs_everything_on_every_system() {
     );
     let names: BTreeSet<String> = jobs(&wf).into_iter().map(|(n, _)| n).collect();
     let want: BTreeSet<String> = [
-        "check", "rust", "parity", "cli", "worker", "deny", "bundles",
+        "check", "rust", "parity", "cli", "worker", "deny", "bundles", "alert",
     ]
     .map(String::from)
     .into();
@@ -618,6 +623,19 @@ fn the_weekly_full_build_runs_everything_on_every_system() {
     for (name, j) in jobs(&wf) {
         if name == "check" {
             assert_eq!(job_if(j), "");
+            continue;
+        }
+        if name == "alert" {
+            // After every other job, and only for a scheduled run that failed.
+            let needs: BTreeSet<String> = j["needs"]
+                .as_sequence()
+                .expect("a list")
+                .iter()
+                .filter_map(|n| n.as_str().map(String::from))
+                .collect();
+            let others: BTreeSet<String> = want.iter().filter(|n| *n != "alert").cloned().collect();
+            assert_eq!(needs, others);
+            assert_eq!(job_if(j), "failure() && github.event_name == 'schedule'");
             continue;
         }
         assert_eq!(s(j, "needs"), "check", "{name}");
