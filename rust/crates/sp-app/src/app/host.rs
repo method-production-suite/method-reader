@@ -615,11 +615,13 @@ impl Speaker for Typewriter {
 // ------------------------------------------------------------------ fakes
 
 /// A speaker that remembers what it was asked to play.
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Clone, Default)]
 pub struct FakeSpeaker {
     pub played: Arc<Mutex<Vec<Sound>>>,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Speaker for FakeSpeaker {
     fn play(&mut self, sound: Sound) {
         self.played.lock().expect("fake").push(sound);
@@ -627,9 +629,11 @@ impl Speaker for FakeSpeaker {
 }
 
 /// A Save box's filter: the type's name and its extensions.
+#[cfg(any(test, feature = "fakes"))]
 pub type SaveFilter = (String, Vec<String>);
 
 /// Dialogs that answer from a script, and remember being asked.
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Clone, Default)]
 pub struct FakeDialogs {
     pub answers: Arc<Mutex<Vec<Option<String>>>>,
@@ -638,6 +642,7 @@ pub struct FakeDialogs {
     pub filters: Arc<Mutex<Vec<SaveFilter>>>,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl FakeDialogs {
     fn next(&self, what: String) -> Option<String> {
         self.asked.lock().expect("fake").push(what);
@@ -650,6 +655,7 @@ impl FakeDialogs {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Dialogs for FakeDialogs {
     fn pick_screenplay(&self) -> Option<String> {
         self.next("open".into())
@@ -663,6 +669,7 @@ impl Dialogs for FakeDialogs {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Clone, Default)]
 pub struct FakeOpener {
     pub opened: Arc<Mutex<Vec<String>>>,
@@ -671,6 +678,7 @@ pub struct FakeOpener {
     pub refuses: Arc<AtomicBool>,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Opener for FakeOpener {
     fn open_url(&self, url: &str) -> bool {
         if self.refuses.load(Ordering::Relaxed) {
@@ -681,12 +689,14 @@ impl Opener for FakeOpener {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Default)]
 pub struct FakePoster {
     pub sent: Mutex<Vec<(String, Value)>>,
     pub answer: Mutex<Option<(u16, Option<Value>)>>,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Poster for FakePoster {
     fn post(&self, url: &str, body: &Value) -> Option<(u16, Option<Value>)> {
         self.sent
@@ -700,6 +710,7 @@ impl Poster for FakePoster {
 /// An updater whose run is method-update's real flow over fake side effects:
 /// the download and the swap succeed at once, and the wait for quiet is
 /// the real gate's, with a cap a test can shorten.
+#[cfg(any(test, feature = "fakes"))]
 pub struct FakeUpdater {
     pub ready: bool,
     pub found: Result<Option<Found>, String>,
@@ -714,6 +725,7 @@ pub struct FakeUpdater {
     pub prepare_fails: Option<String>,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Default for FakeUpdater {
     fn default() -> Self {
         Self {
@@ -729,11 +741,13 @@ impl Default for FakeUpdater {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 struct FakeSteps<'a> {
     fake: &'a FakeUpdater,
     gate: &'a EngineGate,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Steps for FakeSteps<'_> {
     fn fresh_check(&mut self) -> Result<Option<method_update::Update>, String> {
         Ok(self.fake.found.clone()?.map(fake_update))
@@ -772,6 +786,7 @@ impl Steps for FakeSteps<'_> {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 fn fake_update(f: Found) -> method_update::Update {
     method_update::Update {
         current_version: f.current_version,
@@ -785,6 +800,7 @@ fn fake_update(f: Found) -> method_update::Update {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Updater for FakeUpdater {
     fn ready(&self) -> bool {
         self.ready
@@ -831,9 +847,11 @@ impl Updater for FakeUpdater {
 }
 
 /// A clock the test turns by hand.
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Clone, Default)]
 pub struct FakeClock(pub Arc<Mutex<f64>>);
 
+#[cfg(any(test, feature = "fakes"))]
 impl FakeClock {
     pub fn advance(&self, ms: f64) {
         *self.0.lock().expect("clock") += ms;
@@ -844,6 +862,7 @@ impl FakeClock {
 }
 
 /// Everything a test needs to see what the window did outside itself.
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Clone, Default)]
 pub struct Fakes {
     pub dialogs: FakeDialogs,
@@ -854,6 +873,7 @@ pub struct Fakes {
     pub speaker: FakeSpeaker,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Fakes {
     pub fn host(&self, platform: Platform) -> Host {
         let clock = self.clock.clone();

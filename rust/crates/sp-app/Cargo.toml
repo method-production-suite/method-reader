@@ -14,6 +14,9 @@ workspace = true
 # A handover-rehearsal window (sp-update-config's `rehearsal`): built only
 # by `cargo xtask rehearse-handover prepare`, never released.
 rehearsal = ["sp-update-config/rehearsal"]
+# The test fakes (FakeEngine, the host fakes, capture.rs): tests and examples
+# only, so the shipped window never compiles them.
+fakes = []
 
 [[bin]]
 name = "method-reader-app"
@@ -61,6 +64,9 @@ sp-cli = { path = "../sp-cli" }
 sp-fsutil.workspace = true
 
 [dev-dependencies]
+# This crate with its fakes on, for the integration tests and examples;
+# a plain build (the shipped window) leaves them out.
+sp-app = { path = ".", features = ["fakes"] }
 egui_kittest = { version = "0.37.0", features = ["wgpu"] }
 tempfile = "3"
 # The bundled fonts are pinned by their SHA-256 (src/fonts.rs).

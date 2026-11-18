@@ -8,13 +8,18 @@
 //! stands for, which keeps the contract readable in one place and lets the
 //! parity harness hold the two faces together.
 //!
-//! [`FakeEngine`] answers from fixtures for every state a screen can be in,
-//! so every screen is testable before sp-engine exists.
+//! `FakeEngine` (tests and examples only: feature `fakes`) answers from
+//! fixtures for every state a screen can be in, so every screen is testable
+//! before sp-engine exists.
 
+#[cfg(any(test, feature = "fakes"))]
 use std::collections::{HashMap, HashSet, VecDeque};
+#[cfg(any(test, feature = "fakes"))]
 use std::sync::{Condvar, Mutex};
 
-use serde_json::{Value, json};
+use serde_json::Value;
+#[cfg(any(test, feature = "fakes"))]
+use serde_json::json;
 
 use crate::model::busy::Call;
 
@@ -405,11 +410,13 @@ pub trait Engine: Send + Sync {
 
 /// The engine's own preview of the invented demo script (tests/fixtures/
 /// field-station.pdf), as the TypeScript engine wrote it: the oracle dump.
+#[cfg(any(test, feature = "fakes"))]
 pub const SAMPLE_PREVIEW: &str = include_str!("../../../oracle/field-station/book.preview.html");
 
 /// The answers a fresh fake engine gives: a clean conversion of an invented
 /// script, a default library, no devices, every route the engine lists on a
 /// Mac with nothing plugged in.
+#[cfg(any(test, feature = "fakes"))]
 pub fn default_answer(request: &Request) -> Value {
     let defaults: Value = crate::model::tune::fixtures::defaults();
     match request {
@@ -596,6 +603,7 @@ pub fn default_answer(request: &Request) -> Value {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 fn phone_preset() -> Value {
     let mut p = crate::model::tune::fixtures::defaults();
     p["dialogueSideMarginPct"] = json!(8);
@@ -605,6 +613,7 @@ fn phone_preset() -> Value {
 
 /// A fake engine: answers from fixtures, records every request, and can be
 /// told to answer one kind of request differently (once or always).
+#[cfg(any(test, feature = "fakes"))]
 #[derive(Default)]
 pub struct FakeEngine {
     always: Mutex<HashMap<&'static str, Reply>>,
@@ -618,6 +627,7 @@ pub struct FakeEngine {
     released: Condvar,
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl FakeEngine {
     pub fn new() -> Self {
         let fake = Self::default();
@@ -673,6 +683,7 @@ impl FakeEngine {
     }
 }
 
+#[cfg(any(test, feature = "fakes"))]
 impl Engine for FakeEngine {
     fn run(&self, request: &Request, progress: &mut dyn FnMut(Value)) -> Reply {
         self.calls.lock().expect("fake").push(request.clone());

@@ -668,6 +668,7 @@ pub fn group_starts_open(index: usize) -> bool {
 
 /// Method Reader's own defaults: the root format-defaults.json, the one file
 /// src/options.ts (and sp-model after it) is pinned to.
+#[cfg(any(test, feature = "fakes"))]
 pub mod fixtures {
     use serde_json::Value;
 

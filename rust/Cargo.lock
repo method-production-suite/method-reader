@@ -5555,6 +5555,7 @@ dependencies = [
  "serde_json",
  "sha2 0.11.1",
  "skrifa 0.48.0",
+ "sp-app",
  "sp-cli",
  "sp-device",
  "sp-engine",
