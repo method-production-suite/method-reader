@@ -1640,3 +1640,12 @@ names the check it affects.
   `library-sides` and `library-lines` also answer `previewHtml`, as a
   conversion does. The window's Send to e-reader opens the book as the open
   book with no `.fountain`, through the existing `routes` and `export` rows.
+- **A folder does not shadow a verb (2026-11-18, branch
+  fix/library-verb-folder).** `resolveCommand` let a verb name go to the
+  conversion whenever anything of that name existed (`existsSync`); now only
+  a FILE does, since a folder is never a script. The window runs its verbs
+  in the folder it was opened from, which from Finder is `/`, and macOS's
+  `/Library` answers to `library` there because names ignore case: 1.2.0's
+  Library tab showed the conversion's refusal instead of the scripts.
+  `sp-cli/tests/cli_devices.rs` holds both sides: a file still beats the
+  verb, a folder no longer does. No parity row moved.

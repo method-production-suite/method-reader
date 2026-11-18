@@ -66,11 +66,15 @@ pub const VERBS: [&str; 22] = [
 ];
 
 /// `resolveCommand(argv)`: the FIRST argument is a verb only when it is one
-/// exactly AND no file of that name exists.
+/// exactly AND no file of that name exists. A FOLDER of that name does not
+/// count (the TypeScript's `existsSync` let it): a folder is never a script,
+/// and the window runs its verbs in whatever folder it was opened from,
+/// which from Finder is `/`, where `/Library` answers to `library` on a
+/// disk whose names ignore case (1.2.0's Library tab, broken by it).
 pub fn resolve_command(argv: &[String]) -> Option<(&'static str, &[String])> {
     let first = argv.first()?;
     let verb = VERBS.iter().find(|v| **v == first.as_str())?;
-    if std::path::Path::new(first).exists() {
+    if std::path::Path::new(first).is_file() {
         return None;
     }
     Some((verb, &argv[1..]))
