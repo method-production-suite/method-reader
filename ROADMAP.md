@@ -26,6 +26,17 @@ Release go-aheads:
   the zip fix (9.0.5). Its crate-age exceptions (the zip advisory, and
   clipboard-win 5.4.3 for v1.1.0 alone) have both come out, each crate
   now being 14 days old.
+- **1.2.1: waiting on the owner's yes.** Recommendation: release it.
+  1.2.0's Library tab shows "unsupported input type" instead of the
+  scripts on every Mac where the app was opened from Finder or the Dock:
+  the tab's `library` request was read as the Mac's /Library folder. Fixed
+  on main (#156, c63d0be). A 1.2.1 would also carry the Library picture,
+  the report table's word breaks and the Library copy for the README and
+  site (#153 to #155). On a yes: notes and bump for MReview, a rehearsal
+  on the merged commit, then the tag question through MOrg.
+- **1.2.0: released** (2026-11-18, on the owner's yes). The Library
+  (reopen, rename, remove to the Trash), the script report, sides and
+  lines in bold, progress on saves and copies, and the Windows fixes.
 - **The parity accept on the other Mac is no longer needed** (2026-11-17).
   The route rows that only read their arguments (help, an unknown flag,
   a refused flag) now compare on every machine, and the four help rows
