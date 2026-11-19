@@ -12,11 +12,20 @@ pub const RELEASE: Release = Release {
             items: &[
                 Item {
                     lead: "The Library tab showed an error instead of your scripts.",
-                    body: "On a Mac, opening Method Reader from Finder or the Dock made the Library tab say \"unsupported input type\" and list nothing. It now lists every script you've converted. Your scripts were never lost: they were there all along and come back as soon as you update.",
+                    body: "On a Mac, opening Method Reader from Finder or the Dock made the Library tab say \"unsupported input type\" and list nothing. It now lists every script you've converted.",
                 },
                 Item {
                     lead: "Names broken in the middle in a script's report.",
                     body: "The report's table could split a character's name, or a column heading, across two lines with room to spare beside it. Each one now stays on one line.",
+                },
+            ],
+        },
+        Section {
+            title: "Good to know",
+            items: &[
+                Item {
+                    lead: "",
+                    body: "If the Library looked empty in 1.2.0, nothing was lost. Every script you converted was kept, and the Library shows them all once you update.",
                 },
             ],
         },
