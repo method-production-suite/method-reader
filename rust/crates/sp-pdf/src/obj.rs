@@ -14,16 +14,30 @@ use std::rc::Rc;
 
 use hayro_syntax::object::{MaybeRef, Object, ObjectIdentifier};
 
-/// An indirect reference.
+/// An indirect reference. `num` is wider than hayro-syntax's unsigned
+/// object number so that a reference read from a content stream keeps
+/// whatever integer pdf.js would have kept, a negative one included;
+/// such a reference names no object, and fetches as null.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
 pub struct Ref {
-    pub num: i32,
+    pub num: i64,
     pub generation: i32,
 }
 
 impl Ref {
-    fn id(self) -> ObjectIdentifier {
-        ObjectIdentifier::new(self.num, self.generation)
+    /// hayro-syntax's identifier for this reference, or none when the
+    /// object number cannot be one in a file.
+    pub(crate) fn id(self) -> Option<ObjectIdentifier> {
+        u32::try_from(self.num)
+            .ok()
+            .map(|num| ObjectIdentifier::new(num, self.generation))
+    }
+
+    pub(crate) fn from_id(id: ObjectIdentifier) -> Self {
+        Ref {
+            num: i64::from(id.obj_number),
+            generation: id.gen_number,
+        }
     }
 }
 
@@ -207,7 +221,7 @@ impl<'p> XRef<'p> {
         if let Some(o) = self.cache.borrow().get(&r) {
             return o.clone();
         }
-        let obj = match self.pdf.xref().get::<Object<'_>>(r.id()) {
+        let obj = match r.id().and_then(|id| self.pdf.xref().get::<Object<'_>>(id)) {
             Some(o) => convert(&o, 0, Some(r)),
             None => Obj::Null,
         };
@@ -255,7 +269,7 @@ impl<'p> XRef<'p> {
                 let st = self
                     .pdf
                     .xref()
-                    .get::<hayro_syntax::object::Stream<'_>>(r.id())?;
+                    .get::<hayro_syntax::object::Stream<'_>>(r.id()?)?;
                 st.decoded().ok().map(|c| c.into_owned())
             }
             StreamSource::Inline(_) => None,
@@ -269,7 +283,7 @@ impl<'p> XRef<'p> {
                 let st = self
                     .pdf
                     .xref()
-                    .get::<hayro_syntax::object::Stream<'_>>(r.id())?;
+                    .get::<hayro_syntax::object::Stream<'_>>(r.id()?)?;
                 Some(st.raw_data().into_owned())
             }
             StreamSource::Inline(b) => Some(b.clone()),
@@ -280,7 +294,7 @@ impl<'p> XRef<'p> {
 fn convert_maybe(m: &MaybeRef<Object<'_>>, depth: usize) -> Obj {
     match m {
         MaybeRef::Ref(r) => Obj::Ref(Ref {
-            num: r.obj_number,
+            num: i64::from(r.obj_number),
             generation: r.gen_number,
         }),
         MaybeRef::NotRef(o) => convert(o, depth, None),
@@ -421,10 +435,7 @@ fn convert(o: &Object<'_>, depth: usize, id: Option<Ref>) -> Obj {
         }
         Object::Stream(s) => {
             let sid = s.obj_id();
-            let r = id.unwrap_or(Ref {
-                num: sid.obj_number,
-                generation: sid.gen_number,
-            });
+            let r = id.unwrap_or(Ref::from_id(sid));
             let mut dict = convert_dict(s.dict(), depth, Some(r));
             dict.obj_id = Some(r);
             Obj::Stream(Rc::new(Stream {

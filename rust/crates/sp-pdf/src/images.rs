@@ -577,9 +577,10 @@ fn filter_params(xref: &XRef<'_>, dict: &Dict, i: usize, single: bool) -> Option
 
 fn hayro_stream<'p>(xref: &XRef<'p>, s: &Stream) -> Option<hayro_syntax::object::Stream<'p>> {
     match &s.source {
-        StreamSource::Indirect(r) => xref.pdf().xref().get::<hayro_syntax::object::Stream<'_>>(
-            hayro_syntax::object::ObjectIdentifier::new(r.num, r.generation),
-        ),
+        StreamSource::Indirect(r) => xref
+            .pdf()
+            .xref()
+            .get::<hayro_syntax::object::Stream<'_>>(r.id()?),
         StreamSource::Inline(_) => None,
     }
 }
