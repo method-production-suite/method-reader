@@ -49,7 +49,7 @@ base64 = "0.23"
 # The updater signature, made the way tauri-cli 2.11.4 makes it: the same
 # crate at the same pinned version (later 0.7.x releases could not open a
 # key encrypted with an empty password). Pure Rust.
-minisign = "=0.7.3"
+minisign = "=0.10.0"
 # Tar archives, written and read in pure Rust; xattr support left off.
 tar = { version = "0.4", default-features = false }
 sp-release = { path = "crates/sp-release" }
