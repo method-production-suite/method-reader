@@ -1263,7 +1263,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a"
 dependencies = [
  "quote",
- "syn 3.0.6",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -3323,7 +3323,7 @@ dependencies = [
 [[package]]
 name = "method-update"
 version = "0.1.0"
-source = "git+https://github.com/method-production-suite/method-libs?rev=25c80f8cfcc2e5222de4c5b79413a9de488196af#25c80f8cfcc2e5222de4c5b79413a9de488196af"
+source = "git+https://github.com/method-production-suite/method-libs?rev=bfc6441a1015793e665aa59478b6a434fb915062#bfc6441a1015793e665aa59478b6a434fb915062"
 dependencies = [
  "base64",
  "flate2",
@@ -6154,7 +6154,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.6",
  "windows-sys 0.61.2",
