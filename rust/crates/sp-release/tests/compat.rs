@@ -20,7 +20,8 @@ const TAURI_TEST_KEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZW
 fn the_pinned_minisign_opens_tauri_cli_s_own_key_and_signs_as_it_did() {
     // Later 0.7.x releases of minisign could not open a key encrypted with
     // an empty password, which is what `cargo tauri signer generate` makes
-    // when no password is given: the workspace pins =0.7.3 for this.
+    // when no password is given, so the workspace pinned =0.7.3; 0.10.0
+    // opens it again, and the workspace pins that.
     let sk = sign::load_secret_key(TAURI_TEST_KEY, "").unwrap();
     let pk = minisign::PublicKey::from_secret_key(&sk).unwrap();
     let pk = STANDARD.encode(pk.to_box().unwrap().to_string());
@@ -52,6 +53,107 @@ fn the_pinned_minisign_opens_tauri_cli_s_own_key_and_signs_as_it_did() {
         method_update::verify::verify_signature(data, &sig, &pk, "0.12.0", required).unwrap();
     }
     assert!(sign::load_secret_key(TAURI_TEST_KEY, "not the password").is_err());
+}
+
+/// What minisign 0.7.3, the version every release up to 1.2.1 signed with,
+/// made from tauri-cli's test key above: the update signature of
+/// `an update archive` and the plain signature of a one-line SHA256SUMS.
+/// Frozen here when the workspace moved to minisign 0.10, so a later
+/// version that signs or reads differently fails a test, not an update.
+const OLD_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZFOUJFNDg1NTU4NUZDQUQKUldTdC9JVlZoZVNiL2tVVG1hSFRETjRIZXE0a0F6d3dSY2ViYzdrSFh2MjBGWm1jM0NoWVFqM1YK";
+const OLD_UPDATE_SIG: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTdC9JVlZoZVNiL2t2TFhQQ3VYazJwMUdPSkhoQi9pNFl3Yk0ray90NnNLMytvakFKSjhxSk5FSmtGdkNpOGQza0ZHTjZWcWU5TUgyZkJ3ZkV5WUoxUklYVGpDNGEwenc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzU4NDcwMDAwCWZpbGU6TWV0aG9kLVJlYWRlci1tYWNPUy5hcHAudGFyLmd6CXZlcnNpb246MC4xMi4wCmlURnNzQi9nMmlwM2JZQ2EwNUlDN2lUSTI0RFBLdk1rSksvVVZKcDhZVm9sekV2bTlSdkMxY0hKWE4ybVR2elNuWDNyNW02eUtpNlNPdFVlTlVOdkNBPT0K";
+const OLD_PLAIN_SIG_B64: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRoZSBNZXRob2QgUmVhZGVyIHVwZGF0ZSBrZXkKUlVTdC9JVlZoZVNiL2l2ODZrSDlRczQ2bVJsQ1hXc2FyaE00MlgwTlRFekY1UTIxbndZaWpLamhiVUtsL08va1hwY1lpbEdRa1RyVVVudExvakxzUzhHTkh4WS9aZ3lsc1FNPQp0cnVzdGVkIGNvbW1lbnQ6IGZpbGU6U0hBMjU2U1VNUwpESjBjdFR4YTd2RVk3b1ZUU05Tc056UDgwNWxCVWh0VFMxM3dzM01PS1djVTQxMm1ZTk50Ym9LSmZzdklFU1VzZ0dUSWRkMXg2MkV2dDZXRkNUeG5DZz09Cg==";
+
+fn old_plain_sig() -> String {
+    String::from_utf8(STANDARD.decode(OLD_PLAIN_SIG_B64).unwrap()).unwrap()
+}
+
+#[test]
+fn what_minisign_0_7_3_signed_still_verifies_now() {
+    // The update signature, under the verifier every installed copy runs.
+    for required in [false, true] {
+        method_update::verify::verify_signature(
+            b"an update archive",
+            OLD_UPDATE_SIG,
+            OLD_PUBKEY,
+            "0.12.0",
+            required,
+        )
+        .unwrap();
+    }
+    // The plain signature, under this workspace's minisign.
+    let data = b"abc  Method-Reader-macOS.dmg\n";
+    assert_eq!(
+        sign::verify_plain(OLD_PUBKEY, data, &old_plain_sig()).unwrap(),
+        "file:SHA256SUMS"
+    );
+    assert!(sign::verify_plain(OLD_PUBKEY, b"changed", &old_plain_sig()).is_err());
+    // And the real thing: 1.2.1's published SHA256SUMS and its signature,
+    // made by the release key under 0.7.3, against the key the app ships.
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/v1.2.1");
+    let sums = std::fs::read(dir.join("SHA256SUMS")).unwrap();
+    let sig = std::fs::read_to_string(dir.join("SHA256SUMS.minisig")).unwrap();
+    assert_eq!(
+        sign::verify_plain(sp_update_config::PUBKEY, &sums, &sig).unwrap(),
+        "file:SHA256SUMS"
+    );
+}
+
+#[test]
+fn minisign_now_signs_in_the_shape_0_7_3_did_and_installed_copies_take_it() {
+    // 0.10 mixes randomness into each Ed25519 signature, so the bytes differ
+    // from 0.7.3's; everything a reader looks at must not: the algorithm
+    // (prehashed, "ED"), the key id, the length and both comments. Installed
+    // copies have checked with method-update at 25c80f8 and minisign-verify
+    // 0.2.5 since 1.0.0, the verifier this test runs.
+    fn parts(sig_text: &str) -> (Vec<u8>, String, String) {
+        let lines: Vec<&str> = sig_text.lines().collect();
+        assert_eq!(lines.len(), 4, "{sig_text}");
+        let raw = STANDARD.decode(lines[1]).unwrap();
+        assert_eq!(raw.len(), 74);
+        (
+            raw[..10].to_vec(),
+            lines[0].to_string(),
+            lines[2].to_string(),
+        )
+    }
+    let decoded = |b64: &str| String::from_utf8(STANDARD.decode(b64).unwrap()).unwrap();
+    let sk = sign::load_secret_key(TAURI_TEST_KEY, "").unwrap();
+    let pk = STANDARD.encode(
+        minisign::PublicKey::from_secret_key(&sk)
+            .unwrap()
+            .to_box()
+            .unwrap()
+            .to_string(),
+    );
+    assert_eq!(pk, OLD_PUBKEY);
+    let upd = sign::sign(
+        &sk,
+        b"an update archive",
+        "Method-Reader-macOS.app.tar.gz",
+        "0.12.0",
+        1_758_470_000,
+    )
+    .unwrap();
+    assert_eq!(parts(&decoded(&upd)), parts(&decoded(OLD_UPDATE_SIG)));
+    assert_eq!(&parts(&decoded(&upd)).0[..2], b"ED");
+    let data = b"abc  Method-Reader-macOS.dmg\n";
+    let plain = sign::sign_plain(&sk, &pk, data, "SHA256SUMS").unwrap();
+    assert_eq!(parts(&plain), parts(&old_plain_sig()));
+    assert_eq!(
+        sign::verify_plain(&pk, data, &plain).unwrap(),
+        "file:SHA256SUMS"
+    );
+    for required in [false, true] {
+        method_update::verify::verify_signature(
+            b"an update archive",
+            &upd,
+            &pk,
+            "0.12.0",
+            required,
+        )
+        .unwrap();
+    }
 }
 
 fn the_window() -> Vec<u8> {
