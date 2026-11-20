@@ -160,6 +160,9 @@ jobs:
   # Then the draft release, which stays a draft until a person publishes it.
   release:
     needs: checks
+    # The signing secrets live in the release environment, which only main
+    # and v* tags may deploy from (xtask/tests/release_workflow.rs).
+    environment: release
     runs-on: macos-15
     timeout-minutes: 60  # waits on Apple's notary service, 20 to 40 min on a slow day
     permissions:
@@ -352,6 +355,9 @@ jobs:
   # .deb, an .rpm and an AppImage, and one unsigned NSIS installer.
   app-bundles:
     needs: checks
+    # The signing secrets live in the release environment, which only main
+    # and v* tags may deploy from (xtask/tests/release_workflow.rs).
+    environment: release
     strategy:
       fail-fast: false
       matrix:
@@ -880,6 +886,9 @@ jobs:
   # SHA256SUMS-app beside it; that file goes.
   checksums:
     needs: [release, cli-upload, app-upload, handover-gate]
+    # The signing secrets live in the release environment, which only main
+    # and v* tags may deploy from (xtask/tests/release_workflow.rs).
+    environment: release
     if: ${{ !inputs.rehearse_version }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
