@@ -11,6 +11,7 @@ use serde_json::Value;
 
 use method_update::flow::{Event as UpdateEvent, Outcome, Steps};
 use method_update::gate::{ENGINE_QUIET, EngineGate, RESTART_WAIT_CAP};
+use method_update::highwater::HighWater;
 
 use crate::model::convert::Platform;
 use crate::model::update::{Found, MemoryStorage, Storage};
@@ -349,6 +350,71 @@ pub struct ManifestUpdater {
     /// and its bytes, which the next install of that version uses instead
     /// of downloading again.
     prepared: Mutex<Option<(String, Vec<u8>)>>,
+    /// The highest version a check offered whose download then verified:
+    /// a later offer below it is refused ([`admit_version`]).
+    high_water: Mutex<HighWater>,
+}
+
+/// The rollback mark's file, beside the window's storage file so that a
+/// scratch run's settings folder moves it too.
+const HIGH_WATER_FILE: &str = "updates.high-water.json";
+
+fn high_water() -> HighWater {
+    FileStorage::default_path()
+        .and_then(|file| file.parent().map(|dir| dir.join(HIGH_WATER_FILE)))
+        .map(HighWater::at)
+        .unwrap_or_else(HighWater::in_memory)
+}
+
+/// Refuses an offer lower than a version this copy already downloaded and
+/// verified (method-update's rollback protection, which Reader calls itself
+/// because it drives the check and the download itself).
+fn admit_version(mark: &Mutex<HighWater>, version: &str) -> Result<(), String> {
+    let offered = method_update::manifest::parse_version(version)?;
+    mark.lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .admit(&offered)
+        .map_err(|rollback| rollback.to_string())
+}
+
+/// What a check found, held to the mark.
+fn admit(
+    mark: &Mutex<HighWater>,
+    found: Option<method_update::Update>,
+) -> Result<Option<method_update::Update>, String> {
+    if let Some(update) = &found {
+        admit_version(mark, &update.version)?;
+    }
+    Ok(found)
+}
+
+/// Once a download passed its signature check, its version is the mark.
+/// A mark that cannot be written still holds for this run.
+fn record(mark: &Mutex<HighWater>, version: &str) {
+    if let Ok(accepted) = method_update::manifest::parse_version(version)
+        && let Err(e) = mark
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .record(&accepted)
+    {
+        eprintln!("method-reader: could not save the update mark: {e}");
+    }
+}
+
+/// What the person reads when an install fails. A refused code signature
+/// says what happened and what to do; its detail (teams, codesign's words)
+/// goes to the log, not the window.
+fn install_error_message(e: &method_update::InstallError) -> String {
+    match e {
+        method_update::InstallError::Signature(detail) => {
+            eprintln!("method-reader: update refused: {detail}");
+            format!(
+                "This update could not be confirmed as Method Reader's own, so it was not installed and this copy is unchanged. Download the latest version from {}.",
+                crate::model::help::WEBSITE_WORDS
+            )
+        }
+        other => other.to_string(),
+    }
 }
 
 /// latest.json, asked now: a newer release for this copy, or None.
@@ -370,11 +436,13 @@ struct RealSteps<'a> {
     gate: &'a EngineGate,
     /// What a quiet check already downloaded and verified, if anything.
     prepared: Option<(String, Vec<u8>)>,
+    /// The rollback mark, the updater's own.
+    high_water: &'a Mutex<HighWater>,
 }
 
 impl Steps for RealSteps<'_> {
     fn fresh_check(&mut self) -> Result<Option<method_update::Update>, String> {
-        check_now()
+        admit(self.high_water, check_now()?)
     }
     fn download(
         &mut self,
@@ -390,7 +458,10 @@ impl Steps for RealSteps<'_> {
             finished();
             return Ok(bytes);
         }
-        method_update::download(&config(), update, progress, finished).map_err(|e| e.to_string())
+        let bytes = method_update::download(&config(), update, progress, finished)
+            .map_err(|e| e.to_string())?;
+        record(self.high_water, &update.version);
+        Ok(bytes)
     }
     fn install(&mut self, _update: &method_update::Update, bytes: &[u8]) -> Result<(), String> {
         let names = sp_update_config::bundle_names();
@@ -398,7 +469,7 @@ impl Steps for RealSteps<'_> {
             method_update::install::install_app(bytes, &self.bundle, &names, &|bundle, new| {
                 method_update::install::admin_swap(bundle, new, &names)
             })
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| install_error_message(&e))?;
         self.bundle = installed.bundle;
         Ok(())
     }
@@ -433,6 +504,7 @@ impl ManifestUpdater {
             installed: Mutex::new(None),
             last: Mutex::new(None),
             prepared: Mutex::new(None),
+            high_water: Mutex::new(high_water()),
         }
     }
 
@@ -452,7 +524,7 @@ impl Updater for ManifestUpdater {
         self.bundle.is_some()
     }
     fn check(&self) -> Result<Option<Found>, String> {
-        let found = check_now()?;
+        let found = admit(&self.high_water, check_now()?)?;
         *self.last.lock().unwrap_or_else(|e| e.into_inner()) = found.clone();
         Ok(found.map(|u| Found {
             version: u.version,
@@ -479,6 +551,7 @@ impl Updater for ManifestUpdater {
         if !held {
             let bytes = method_update::download(&config(), &update, |_, _| {}, || {})
                 .map_err(|e| e.to_string())?;
+            record(&self.high_water, &update.version);
             *self.prepared.lock().unwrap_or_else(|e| e.into_inner()) =
                 Some((update.version.clone(), bytes));
         }
@@ -510,6 +583,7 @@ impl Updater for ManifestUpdater {
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .take(),
+            high_water: &self.high_water,
         };
         let outcome = method_update::flow::install_and_restart(update, &mut steps, emit);
         if steps.bundle != bundle {
@@ -526,6 +600,7 @@ impl Updater for ManifestUpdater {
             bundle,
             gate: &gate,
             prepared: None,
+            high_water: &self.high_water,
         };
         method_update::flow::restart_installed(version, &mut steps, emit)
             == method_update::flow::RestartOutcome::Restarting
@@ -940,5 +1015,57 @@ mod tests {
         assert!(!host.open("https://example.com"));
         assert!(host.open("https://calibre-ebook.com/download_windows"));
         assert_eq!(fakes.opener.opened.lock().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn an_offer_lower_than_a_verified_download_is_refused_across_runs() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join(HIGH_WATER_FILE);
+        let mark = Mutex::new(HighWater::at(file.clone()));
+        // No mark yet: anything is admitted.
+        assert!(admit_version(&mark, "1.2.0").is_ok());
+        // 1.4.0 offered, downloaded and verified.
+        assert!(admit_version(&mark, "1.4.0").is_ok());
+        record(&mark, "1.4.0");
+        // The next run reads the mark from its file.
+        let next = Mutex::new(HighWater::at(file));
+        let refused = admit_version(&next, "1.3.0").unwrap_err();
+        assert!(
+            refused.contains("1.3.0") && refused.contains("1.4.0"),
+            "{refused}"
+        );
+        // The same release again, and anything newer, still pass.
+        assert!(admit_version(&next, "1.4.0").is_ok());
+        assert!(admit_version(&next, "v1.5.0").is_ok());
+        // A lower record never lowers the mark.
+        record(&next, "1.1.0");
+        assert!(admit_version(&next, "1.3.0").is_err());
+        // A version that is not one is refused, and records nothing.
+        assert!(admit_version(&next, "not a version").is_err());
+        record(&next, "not a version");
+        assert!(admit_version(&next, "1.4.0").is_ok());
+    }
+
+    #[test]
+    fn a_refused_code_signature_reads_plainly_and_keeps_its_detail_out_of_the_window() {
+        let e = method_update::InstallError::Signature(
+            method_update::codesign::SignatureError::TeamMismatch {
+                expected: "AAAAAAAAAA".into(),
+                found: Some("BBBBBBBBBB".into()),
+            },
+        );
+        let said = install_error_message(&e);
+        assert!(
+            said.contains("not installed and this copy is unchanged"),
+            "{said}"
+        );
+        assert!(said.ends_with("methodreader.com."), "{said}");
+        assert!(
+            !said.contains("AAAAAAAAAA") && !said.contains("BBBBBBBBBB"),
+            "{said}"
+        );
+        // Every other failure says what method-update says.
+        let other = method_update::InstallError::NothingReady;
+        assert_eq!(install_error_message(&other), other.to_string());
     }
 }
