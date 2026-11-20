@@ -555,7 +555,7 @@ impl<'a> Parser<'a> {
                 && self.buf2.is_cmd("R")
             {
                 let r = crate::obj::Ref {
-                    num: *n as i32,
+                    num: *n as i64,
                     generation: *g as i32,
                 };
                 self.shift()?;

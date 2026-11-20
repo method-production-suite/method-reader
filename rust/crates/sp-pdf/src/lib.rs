@@ -124,10 +124,7 @@ impl Reader<'_> {
     /// One page: its text items, their font names, and its operators.
     pub fn page(&mut self, index: usize) -> PageData {
         let dict = match self.pdf.pages().get(index).and_then(|p| p.raw().obj_id()) {
-            Some(id) => self.xref.fetch(Ref {
-                num: id.obj_number,
-                generation: id.gen_number,
-            }),
+            Some(id) => self.xref.fetch(Ref::from_id(id)),
             None => Obj::Null,
         };
         let dict = match dict {
