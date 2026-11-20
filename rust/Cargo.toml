@@ -46,9 +46,12 @@ flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
 # One base64 for every crate (minisign boxes, the contents API, screenshots):
 # 0.23, the version plist, rpm and ureq already bring, so the lock holds one.
 base64 = "0.23"
-# The updater signature, made the way tauri-cli 2.11.4 makes it: the same
-# crate at the same pinned version (later 0.7.x releases could not open a
-# key encrypted with an empty password). Pure Rust.
+# The update signature and SHA256SUMS.minisig, signed in CI (installed
+# copies verify with method-update's minisign-verify, not this). Pinned
+# exactly: 0.7.3 was, because later 0.7.x releases could not open a key
+# encrypted with an empty password; 0.10.0 opens it again, and
+# sp-release/tests/compat.rs checks its signatures against 0.7.3's both
+# ways. Pure Rust.
 minisign = "=0.10.0"
 # Tar archives, written and read in pure Rust; xattr support left off.
 tar = { version = "0.4", default-features = false }
