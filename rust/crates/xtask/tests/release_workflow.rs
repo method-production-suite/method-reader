@@ -663,6 +663,41 @@ fn the_release_uses_only_the_secrets_the_repository_already_has() {
     }
 }
 
+/// The signing secrets live in the repository's `release` environment,
+/// which only main and `v*` tags may deploy from (2026-11-20). So a job
+/// that reads one must name that environment, or it gets nothing, and a
+/// job that reads none stays outside it, so a build without secrets never
+/// waits on the environment's rules. GITHUB_TOKEN is not a secret of ours.
+#[test]
+fn exactly_the_jobs_that_read_a_signing_secret_run_in_the_release_environment() {
+    let secret = Regex::new(r"secrets\.([A-Z0-9_]+)").unwrap();
+    let mut inside = vec![];
+    for file in workflow_files() {
+        let wf = workflow(&file);
+        for (name, job) in jobs(&wf) {
+            let text = serde_yaml::to_string(job).unwrap();
+            let reads = secret.captures_iter(&text).any(|c| &c[1] != "GITHUB_TOKEN");
+            let env = job.get("environment").and_then(Value::as_str);
+            assert_eq!(
+                env,
+                reads.then_some("release"),
+                "{file}: job {name} reads a signing secret: {reads}"
+            );
+            if reads {
+                inside.push(format!("{file}:{name}"));
+            }
+        }
+    }
+    assert_eq!(
+        sorted(inside),
+        strs(&[
+            "release.yml:app-bundles",
+            "release.yml:checksums",
+            "release.yml:release",
+        ])
+    );
+}
+
 #[test]
 fn the_windows_leg_is_deliberately_unsigned() {
     // Authenticode is a procurement problem, not an engineering one. This
