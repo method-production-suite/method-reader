@@ -16,7 +16,8 @@
 
 use std::path::{Path, PathBuf};
 
-/// The longest path the ordinary form may spell (MAX_PATH less the NUL).
+/// The longest path the ordinary form may spell (MAX_PATH less the NUL),
+/// in UTF-16 units, which is what Windows counts.
 const MAX_PLAIN: usize = 259;
 
 /// `s` without its verbatim prefix when the ordinary form names the same
@@ -41,7 +42,7 @@ fn plain_of(s: &str) -> Option<String> {
         }
         (rest.to_owned(), &rest[3..])
     };
-    if out.chars().count() > MAX_PLAIN {
+    if out.encode_utf16().count() > MAX_PLAIN {
         return None;
     }
     let mut parts: Vec<&str> = names.split('\\').collect();
@@ -71,10 +72,18 @@ fn ordinary(name: &str) -> bool {
     }
     let stem = name.split('.').next().unwrap_or(name).trim_end();
     let upper = stem.to_ascii_uppercase();
-    let reserved = matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || ((upper.starts_with("COM") || upper.starts_with("LPT"))
-            && upper.len() == 4
-            && upper.as_bytes()[3].is_ascii_digit());
+    let port = upper
+        .strip_prefix("COM")
+        .or_else(|| upper.strip_prefix("LPT"))
+        .is_some_and(|n| {
+            let mut c = n.chars();
+            // 0 to 9, or the superscripts 1, 2 and 3 Windows also reserves.
+            matches!(
+                (c.next(), c.next()),
+                (Some('0'..='9' | '\u{B9}' | '\u{B2}' | '\u{B3}'), None)
+            )
+        });
+    let reserved = port || matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL");
     !reserved
 }
 
@@ -138,6 +147,34 @@ mod tests {
         ] {
             assert_eq!(plain(p), p);
         }
+    }
+
+    #[test]
+    fn the_length_limit_counts_what_windows_counts_utf16_units() {
+        // 130 characters outside the Basic Multilingual Plane: 130 chars,
+        // but 260 UTF-16 units, past MAX_PATH. The ordinary form cannot
+        // spell it, so the verbatim one stays.
+        let wide = format!(r"\\?\C:\{}", "\u{1D11E}".repeat(130));
+        assert_eq!(plain(&wide), wide);
+        // The same count of characters inside the BMP fits.
+        let narrow = format!(r"\\?\C:\{}", "\u{00E9}".repeat(130));
+        assert_eq!(plain(&narrow), &narrow[4..]);
+    }
+
+    #[test]
+    fn the_superscript_ports_are_reserved_too() {
+        // Windows reserves COM and LPT with 0 to 9 and with the Latin-1
+        // superscripts 1, 2 and 3, whatever follows a dot.
+        for kept in [
+            "\\\\?\\C:\\Users\\COM\u{00B9}",
+            "\\\\?\\C:\\Users\\com\u{00B2}.txt",
+            "\\\\?\\C:\\Users\\LPT\u{00B3}.pdf",
+            "\\\\?\\C:\\Users\\lpt0",
+        ] {
+            assert_eq!(plain(kept), kept, "{kept}");
+        }
+        // Any other superscript is an ordinary name.
+        assert_eq!(plain("\\\\?\\C:\\COM\u{2074}.txt"), "C:\\COM\u{2074}.txt");
     }
 
     #[test]
