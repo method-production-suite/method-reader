@@ -49,6 +49,7 @@
 
 pub mod backend;
 pub mod cdp;
+pub mod film;
 pub mod http;
 pub mod picture;
 pub mod review;

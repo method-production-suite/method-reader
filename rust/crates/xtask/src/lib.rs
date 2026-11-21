@@ -118,6 +118,18 @@ pub const COMMANDS: &[Command] = &[
         ),
     },
     Command {
+        name: "capture-film",
+        help: "make the launch film from the real window (needs ffmpeg)",
+        main: capture::film::main,
+        usage: Usage::Text(
+            "usage: cargo xtask capture-film --out <folder> [--fps <n>]\n\n\
+             Drives the real window offscreen through the launch film on the\n\
+             committed invented scripts, on a scratch library, and writes\n\
+             method-reader-film.mp4, a 15-second method-reader-film.gif and\n\
+             method-reader-film-poster.png into <folder>. Needs ffmpeg.\n",
+        ),
+    },
+    Command {
         name: "review-screens",
         help: "which pictures changed, old beside new",
         main: capture::review_main,

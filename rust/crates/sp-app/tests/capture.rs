@@ -14,8 +14,8 @@ use egui_kittest::kittest::Queryable;
 use sp_app::app::bookview::Place;
 use sp_app::app::{App, convert, panel};
 use sp_app::capture::{
-    Args, Guard, PIXELS_PER_POINT, Shot, Stepper, Theme, Verdict, capture_host, inside, parse_args,
-    reach, verdict,
+    Args, Guard, PIXELS_PER_POINT, Shot, Stepper, Theme, Verdict, capture_host, film_verdict,
+    inside, parse_args, reach, verdict,
 };
 use sp_app::engine::{Engine, FakeEngine, Request};
 use sp_app::model::frame::Surface;
@@ -684,4 +684,105 @@ fn it_reports_only_scripts_inside_the_scratch_library() {
         folder: "/Users/someone/Method Reader/Field Station".into(),
     };
     assert_eq!(ask(outside), Verdict::Refuse);
+}
+
+// ------------------------------------------------------------- the film's line
+
+fn fixture(name: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../tests/fixtures")
+        .join(name)
+        .canonicalize()
+        .expect("a committed fixture")
+}
+
+fn film_scripts() -> Vec<PathBuf> {
+    ["field-station.pdf", "screenplay.pdf", "images.pdf"]
+        .map(fixture)
+        .to_vec()
+}
+
+fn film(r: Request) -> Verdict {
+    film_verdict(&r, &film_scripts(), Path::new(LIB))
+}
+
+#[test]
+fn the_film_runs_what_a_person_does_on_the_way_through_it() {
+    for script in film_scripts() {
+        let r = Request::Convert {
+            path: script.to_string_lossy().into_owned(),
+            force: false,
+            options: None,
+        };
+        assert_eq!(film(r.clone()), Verdict::Run, "{r:?}");
+    }
+    for r in [
+        Request::Library,
+        Request::Settings {
+            fountain: book("Field Station.fountain"),
+            set: Some(r#"{"fontFamily":"literata"}"#.into()),
+        },
+        Request::Reconvert {
+            fountain: book("Field Station.fountain"),
+            epub: book("Field Station.epub"),
+            options: "{}".into(),
+        },
+        Request::LibraryReport { folder: book("") },
+        Request::LibrarySides {
+            folder: book(""),
+            name: "MARA".into(),
+        },
+    ] {
+        assert_eq!(film(r.clone()), Verdict::Run, "{r:?}");
+    }
+    assert_eq!(film(Request::KfxStatus), Verdict::KeepOut);
+}
+
+#[test]
+fn the_film_refuses_anything_outside_the_scratch_library_and_every_send() {
+    let epub = book("Field Station.epub");
+    for r in [
+        Request::Convert {
+            path: fixture("torture.pdf").to_string_lossy().into_owned(),
+            force: false,
+            options: None,
+        },
+        Request::Convert {
+            path: fixture("field-station.pdf").to_string_lossy().into_owned(),
+            force: false,
+            options: Some("{}".into()),
+        },
+        Request::Settings {
+            fountain: "/Users/someone/Script.fountain".into(),
+            set: Some("{}".into()),
+        },
+        Request::Reconvert {
+            fountain: book("Field Station.fountain"),
+            epub: "/tmp/elsewhere.epub".into(),
+            options: "{}".into(),
+        },
+        Request::LibrarySides {
+            folder: "/Users/someone/library/Script".into(),
+            name: "MARA".into(),
+        },
+        Request::Send {
+            file: epub.clone(),
+            device: None,
+        },
+        Request::Export {
+            epub: epub.clone(),
+            for_format: "fountain".into(),
+            fountain: None,
+            options: None,
+            out: Some(book("copy.fountain")),
+        },
+        Request::LibraryRemove { folder: book("") },
+        Request::LibraryRename {
+            folder: book(""),
+            name: "x".into(),
+        },
+        Request::KfxInstall,
+    ] {
+        assert_eq!(film(r.clone()), Verdict::Refuse, "{r:?}");
+    }
 }
