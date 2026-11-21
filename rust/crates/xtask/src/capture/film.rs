@@ -5,8 +5,9 @@
 //! the launch posts use:
 //!
 //! - `method-reader-film.mp4`: H.264 at 1280 by 800, for the site and posts;
-//! - `method-reader-film.gif`: 15 seconds of the opening, smaller;
-//! - `method-reader-film-poster.png`: one frame of the book.
+//! - `method-reader-film.gif`: 12.5 seconds of the opening, smaller;
+//! - `method-reader-film-poster.png`: one frame of the book, and
+//!   `method-reader-film-card.png`, that frame as a 1200 by 630 share card.
 //!
 //! The film runs on a scratch library and scratch settings in a fresh temp
 //! folder, removed afterwards, with the same engine environment the
@@ -24,6 +25,8 @@ use crate::scratch::TempDir;
 pub const MP4: &str = "method-reader-film.mp4";
 pub const GIF: &str = "method-reader-film.gif";
 pub const POSTER: &str = "method-reader-film-poster.png";
+/// The poster as a share card, at the size every unfurler takes.
+pub const CARD: &str = "method-reader-film-card.png";
 
 /// The window's frame in pixels (1280 by 800 points at two pixels a point).
 const DRAWN: &str = "2560x1600";
@@ -87,14 +90,22 @@ pub fn mp4_args(fps: u32, out: &Path) -> Vec<String> {
     a
 }
 
-/// The GIF: the first three shots, a little of each (0.5 to 5 s, 6.5 to
-/// 11 s, 12 to 18 s: fifteen seconds), at 640 wide and 12 frames a second,
+/// The GIF: the first three shots, a little of each (0.5 to 4.5 s, 6.5 to
+/// 10.5 s, 12 to 16.5 s: twelve and a half seconds, ending on the finished
+/// book so it loops back to the PDF), at 640 wide and 12 frames a second,
 /// on a palette made from those frames.
-pub const GIF_FILTER: &str = "[0:v]trim=0.5:5,setpts=PTS-STARTPTS[a];\
-[0:v]trim=6.5:11,setpts=PTS-STARTPTS[b];\
-[0:v]trim=12:18,setpts=PTS-STARTPTS[c];\
+pub const GIF_FILTER: &str = "[0:v]trim=0.5:4.5,setpts=PTS-STARTPTS[a];\
+[0:v]trim=6.5:10.5,setpts=PTS-STARTPTS[b];\
+[0:v]trim=12:16.5,setpts=PTS-STARTPTS[c];\
 [a][b][c]concat=n=3:v=1,fps=12,scale=640:-1:flags=lanczos,split[x][y];\
 [x]palettegen=stats_mode=diff[p];[y][p]paletteuse=dither=bayer:bayer_scale=4";
+
+/// The poster scaled to the card's 630 high and centred on 1200 wide, the
+/// sides filled with its own page colour.
+pub fn card_filter(rgb: [u8; 3]) -> String {
+    let [r, g, b] = rgb;
+    format!("scale=-2:630:flags=lanczos,pad=1200:630:(ow-iw)/2:0:color=0x{r:02X}{g:02X}{b:02X}")
+}
 
 fn ffmpeg(args: &[String]) -> Result<(), String> {
     let status = Command::new("ffmpeg")
@@ -218,7 +229,37 @@ fn make(o: &Orders) -> Result<(), String> {
         "1".into(),
         s(&poster),
     ])?;
-    for f in [&mp4, &gif, &poster] {
+    // The card: the poster at the card's height, on its own page colour.
+    let corner = Command::new("ffmpeg")
+        .args(["-v", "error", "-i"])
+        .arg(&poster)
+        .args([
+            "-vf",
+            "crop=1:1:0:0",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "-",
+        ])
+        .output()
+        .map_err(|e| format!("could not run ffmpeg: {e}"))?
+        .stdout;
+    let [r, g, b] = corner[..] else {
+        return Err("could not read the poster's page colour".into());
+    };
+    let card = o.out.join(CARD);
+    ffmpeg(&[
+        "-v".into(),
+        "error".into(),
+        "-y".into(),
+        "-i".into(),
+        s(&poster),
+        "-vf".into(),
+        card_filter([r, g, b]),
+        s(&card),
+    ])?;
+    for f in [&mp4, &gif, &poster, &card] {
         let n = std::fs::metadata(f).map_err(|e| e.to_string())?.len();
         println!("{}  {} KB", f.display(), n / 1024);
     }
@@ -282,8 +323,8 @@ mod tests {
     }
 
     #[test]
-    fn the_gif_is_fifteen_seconds_of_the_first_three_shots() {
-        let spans: f32 = ["0.5:5", "6.5:11", "12:18"]
+    fn the_gif_is_twelve_and_a_half_seconds_of_the_first_three_shots() {
+        let spans: f32 = ["0.5:4.5", "6.5:10.5", "12:16.5"]
             .iter()
             .map(|s| {
                 assert!(GIF_FILTER.contains(&format!("trim={s}")), "{s}");
@@ -291,6 +332,14 @@ mod tests {
                 b.parse::<f32>().unwrap() - a.parse::<f32>().unwrap()
             })
             .sum();
-        assert_eq!(spans, 15.0);
+        assert_eq!(spans, 12.5);
+    }
+
+    #[test]
+    fn the_card_is_the_size_every_unfurler_takes_on_the_posters_own_colour() {
+        let f = card_filter([0xF5, 0xF4, 0xF0]);
+        assert!(f.starts_with("scale=-2:630"), "{f}");
+        assert!(f.contains("pad=1200:630"), "{f}");
+        assert!(f.ends_with("color=0xF5F4F0"), "{f}");
     }
 }

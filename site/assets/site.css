@@ -62,6 +62,16 @@ p { margin: 0 0 14px; }
 .fine { font-size: 14px; color: var(--muted); }
 
 /* ------------------------------------------------------------------ hero */
+/* ------------------------------------------------------------------ film */
+.film { padding: 64px 0 8px; }
+.film h2 { margin: 0 0 22px; }
+.reel { display: block; width: 100%; height: auto; aspect-ratio: 1280 / 800;
+  border: 1px solid var(--rule); border-radius: 12px; background: var(--surface-2);
+  box-shadow: var(--shadow); }
+.film-text { margin: 14px 0 0; color: var(--muted); max-width: 72ch; }
+.film-text summary { cursor: pointer; color: var(--ink-soft); }
+.film-text p { margin: 10px 0 0; }
+
 .hero { padding: 56px 0 40px; }
 .hero .brand { margin: 0 0 26px; }
 .hero .brand img { height: clamp(30px, 5.6vw, 58px); width: auto; }

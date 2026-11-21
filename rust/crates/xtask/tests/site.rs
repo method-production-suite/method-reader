@@ -363,3 +363,55 @@ fn the_download_page_says_what_the_update_check_sends_and_how_to_turn_it_off() {
     assert!(page.contains("nothing about your scripts"));
     assert!(page.contains("Help &gt; Check for Updates Automatically"));
 }
+
+// ------------------------------------------------------------------- the film
+
+/// The launch film: hosted on the site itself, silent, still until pressed,
+/// with its poster and a text alternative, small enough to keep in the repo
+/// for good. Made by `xtask capture-film`.
+#[test]
+fn the_film_is_the_sites_own_file_silent_still_until_pressed_and_described() {
+    let film = section("film");
+    let video = Regex::new(r"(?s)<video\b[^>]*>")
+        .unwrap()
+        .find(&film)
+        .expect("a <video> in the film section")
+        .as_str()
+        .to_string();
+    for word in [" controls", " muted", " playsinline", r#"preload="none""#] {
+        assert!(video.contains(word), "{word}: {video}");
+    }
+    assert!(!video.contains("autoplay"), "{video}");
+    let poster = attrs(&video, "poster");
+    assert_eq!(poster, ["img/method-reader-film-poster.png"]);
+    assert_eq!(png_size(&root().join("site").join(&poster[0])), (1280, 800));
+    let sources = attrs(&film, "src");
+    assert_eq!(sources, ["img/method-reader-film.mp4"]);
+    let mp4 = std::fs::metadata(root().join("site").join(&sources[0]))
+        .unwrap()
+        .len();
+    assert!(mp4 < 3 * 1024 * 1024, "the film is {mp4} bytes");
+    // Its words: what the film shows, for anyone who cannot watch it.
+    let described = attrs(&video, "aria-describedby");
+    assert_eq!(described, ["filmText"]);
+    assert!(film.contains(r#"id="filmText""#));
+    assert!(film.contains("What the film shows"));
+}
+
+#[test]
+fn every_share_card_is_the_films_card_at_the_size_unfurlers_take() {
+    let site = site();
+    let card = "https://methodreader.com/img/method-reader-film-card.png";
+    for meta in [r#"property="og:image""#, r#"name="twitter:image""#] {
+        assert!(
+            site.contains(&format!(r#"<meta {meta} content="{card}">"#)),
+            "{meta}"
+        );
+    }
+    assert_eq!(
+        png_size(&root().join("site/img/method-reader-film-card.png")),
+        (1200, 630)
+    );
+    assert!(site.contains(r#"<meta property="og:image:width" content="1200">"#));
+    assert!(site.contains(r#"<meta property="og:image:height" content="630">"#));
+}

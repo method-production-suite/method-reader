@@ -41,8 +41,8 @@ const H: f32 = 800.0;
 const COMPARE: [usize; 2] = [2560, 1600];
 /// The two e-readers in that picture, in its pixels: the PDF's, then the
 /// book's, each with a margin of the page around it.
-const PDF_DEVICE: [f32; 4] = [540.0, 770.0, 1150.0, 1560.0];
-const BOOK_DEVICE: [f32; 4] = [1436.0, 770.0, 2046.0, 1560.0];
+const PDF_DEVICE: [f32; 4] = [440.0, 680.0, 1250.0, 1600.0];
+const BOOK_DEVICE: [f32; 4] = [1336.0, 680.0, 2146.0, 1600.0];
 
 // The site's colours (site/assets/tokens.css).
 const PAPER: Color32 = Color32::from_rgb(0xF7, 0xF6, 0xF2);
@@ -385,7 +385,7 @@ fn film(o: &Orders) -> Result<(), String> {
     // 4: reading it, then a setting changed and the book made again.
     cam.set(
         Scene::App,
-        Some("Set it the way you like to read. It still reads like a script."),
+        Some("Adjust the spacing and page breaks. It still reads like a script."),
     );
     cam.tab("Preview");
     cam.until("the Preview", 10.0, |a| {
@@ -464,7 +464,7 @@ fn film(o: &Orders) -> Result<(), String> {
 
     // 9: the end card.
     cam.set(Scene::Card, Some("Free. No account. Nothing uploaded."));
-    cam.hold(6.0)?;
+    cam.hold(5.0)?;
 
     cam.out
         .flush()
