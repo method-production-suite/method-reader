@@ -7,6 +7,10 @@
 **Turn a screenplay PDF into an e-book for your Kindle or other e-reader,
 or into a script you can edit again (Fountain, .fdx or .osf).**
 
+<p align="center">
+  <img src="assets/film/method-reader-film.gif" alt="A short film of Method Reader: a screenplay page on an e-reader, too small to read; the same scene as a Method Reader book; then a PDF dropped onto the window becoming a book" width="640">
+</p>
+
 Method Reader is the new name for Screepub, and it is part of the
 [Method Production Suite](https://github.com/method-production-suite). Same
 app, same books: updating from Screepub keeps your settings and your library.

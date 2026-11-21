@@ -346,10 +346,38 @@ pub fn verdict(request: &Request, demo: &Path, library: &Path) -> Verdict {
 }
 
 /// The real engine behind the line.
+/// The film's line (`cargo xtask capture-film`): the picture's, and what a
+/// person does on the way through the film, every write inside the scratch
+/// library: converting any of the film's own scripts, a Settings change
+/// and the book it makes again, and one character's sides. Nothing copies,
+/// sends, exports, ejects, removes, renames or installs.
+pub fn film_verdict(request: &Request, scripts: &[PathBuf], library: &Path) -> Verdict {
+    match request {
+        Request::Convert {
+            path,
+            options: None,
+            ..
+        } if scripts.iter().any(|s| is_demo(path, s)) => Verdict::Run,
+        Request::Settings { fountain, .. } if inside(fountain, library) => Verdict::Run,
+        Request::Reconvert { fountain, epub, .. }
+            if inside(fountain, library) && inside(epub, library) =>
+        {
+            Verdict::Run
+        }
+        Request::LibrarySides { folder, .. } if inside(folder, library) => Verdict::Run,
+        _ => match scripts.first() {
+            Some(demo) => verdict(request, demo, library),
+            None => Verdict::Refuse,
+        },
+    }
+}
+
 pub struct Guard {
     inner: Arc<dyn Engine>,
     demo: PathBuf,
     library: PathBuf,
+    /// The film's scripts, when this guard holds the film's line.
+    film: Option<Vec<PathBuf>>,
     refused: Arc<Mutex<Vec<String>>>,
 }
 
@@ -359,6 +387,18 @@ impl Guard {
             inner,
             demo,
             library,
+            film: None,
+            refused: Arc::default(),
+        }
+    }
+
+    /// The film's guard: [`film_verdict`] over `scripts`.
+    pub fn film(inner: Arc<dyn Engine>, scripts: Vec<PathBuf>, library: PathBuf) -> Self {
+        Self {
+            inner,
+            demo: scripts.first().cloned().unwrap_or_default(),
+            library,
+            film: Some(scripts),
             refused: Arc::default(),
         }
     }
@@ -375,7 +415,11 @@ fn no(message: &str) -> Reply {
 
 impl Engine for Guard {
     fn run(&self, request: &Request, progress: &mut dyn FnMut(Value)) -> Reply {
-        match verdict(request, &self.demo, &self.library) {
+        let said = match &self.film {
+            Some(scripts) => film_verdict(request, scripts, &self.library),
+            None => verdict(request, &self.demo, &self.library),
+        };
+        match said {
             Verdict::Run => self.inner.run(request, progress),
             Verdict::KeepOut => no("Calibre is kept out of the capture."),
             Verdict::Refuse => {
