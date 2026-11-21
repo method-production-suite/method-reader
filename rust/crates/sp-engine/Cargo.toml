@@ -32,7 +32,7 @@ regex.workspace = true
 # code. No chrono (it only dates a Linux trash listing, which nothing here
 # reads); Windows needs one COM threading feature named, and the default's
 # is kept.
-trash = { version = "=5.2.9", default-features = false, features = ["coinit_apartmentthreaded"] }
+trash = { version = "=5.3.0", default-features = false, features = ["coinit_apartmentthreaded"] }
 
 [target.'cfg(unix)'.dependencies]
 # Safe wrappers for the two process-group calls a Calibre timeout needs
