@@ -158,7 +158,7 @@ fn the_section_keeps_its_words() {
     assert!(drop.contains("INT. THE APP - ONE STEP"));
     assert!(drop.contains("<h2>Drag and drop.</h2>"));
     assert!(drop.contains(
-        "It's that simple. Fine tune anything you like afterwards, and see exactly what the device gets."
+        "Change the spacing, dialogue margins, typeface or page numbers afterwards, and see exactly what the device gets."
     ));
 }
 
