@@ -32,10 +32,10 @@ name = "sp_mtp"
 path = "src/lib.rs"
 
 [dependencies]
-mtp-rs = "=0.33.0"
+mtp-rs = "=0.38.0"
 # The same nusb mtp-rs uses, for the one thing done without it: listing USB
 # devices without opening any of them (the engine's two-second poll).
-nusb = "=0.2.8"
+nusb = "=0.2.9"
 futures = "=0.3.34"
 bytes = "=1.12.1"
 # preserve_order: `ok` prints first, as the engine's own answers do.
@@ -44,4 +44,4 @@ serde_json.workspace = true
 [dev-dependencies]
 # An in-memory MTP device backed by a folder, for the integration tests only:
 # the shipped binary carries no virtual device.
-mtp-rs = { version = "=0.33.0", features = ["virtual-device"] }
+mtp-rs = { version = "=0.38.0", features = ["virtual-device"] }

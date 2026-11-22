@@ -7,7 +7,8 @@
 //! names, timing). docs/device-map.md §7 records what one did.
 
 use futures::executor::block_on;
-use mtp_rs::{MtpDevice, VirtualDeviceConfig, VirtualStorageConfig};
+use mtp_rs::MtpDevice;
+use mtp_rs::virtual_device::{VirtualDeviceConfig, VirtualStorageConfig};
 use sp_mtp::paths::parse_device_path;
 use sp_mtp::put::{Method, list_folder, put, remove};
 use sp_mtp::real::RealSession;
